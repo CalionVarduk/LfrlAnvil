@@ -13,10 +13,8 @@ namespace LfrlSoft.NET.Common
 
         public static Type GetUnderlyingType(Type type)
         {
-            if ( !UnderlyingTypeCheck.IsValidForType( type, typeof( Ref<> ) ) )
-                return null;
-
-            return type.GetGenericArguments()[0];
+            var result = UnderlyingType.GetForType( type, typeof( Ref<> ) );
+            return result.Length == 0 ? null : result[0];
         }
     }
 }

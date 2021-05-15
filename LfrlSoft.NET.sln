@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LfrlSoft.NET.Common", "src\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlSoft.NET.Common.Tests", "tests\LfrlSoft.NET.Common.Tests\LfrlSoft.NET.Common.Tests.csproj", "{E8B6E5EA-5E49-45BE-8849-CBA41284AD10}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmarks", "benchmarks", "{834C7885-FD66-44D4-A5ED-240E37BED6BD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
