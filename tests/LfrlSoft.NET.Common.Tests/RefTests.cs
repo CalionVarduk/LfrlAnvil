@@ -28,6 +28,27 @@ namespace LfrlSoft.NET.Common.Tests
         }
 
         [Fact]
+        public void ImplicitOperator_ShouldReturnUnderlyingValue()
+        {
+            var value = _fixture.Create<int>();
+            var sut = new Ref<int>( value );
+
+            var result = ( int )sut;
+
+            result.Should().Be( value );
+        }
+
+        [Fact]
+        public void Create_ShouldCreateWithCorrectValue()
+        {
+            var value = _fixture.Create<int>();
+
+            var sut = Ref.Create( value );
+
+            sut.Value.Should().Be( value );
+        }
+
+        [Fact]
         public void GetUnderlyingType_ShouldReturnNull_WhenTypeIsNull()
         {
             var result = Ref.GetUnderlyingType( null );
@@ -47,14 +68,14 @@ namespace LfrlSoft.NET.Common.Tests
         }
 
         [Theory]
-        [InlineData( typeof( Ref<int> ), typeof(int))]
-        [InlineData( typeof( Ref<decimal> ), typeof(decimal) )]
+        [InlineData( typeof( Ref<int> ), typeof( int ) )]
+        [InlineData( typeof( Ref<decimal> ), typeof( decimal ) )]
         [InlineData( typeof( Ref<double> ), typeof( double ) )]
         public void GetUnderlyingType_ShouldReturnCorrectType_WhenTypeIsRef(Type type, Type expected)
         {
             var result = Ref.GetUnderlyingType( type );
 
-            result.Should().Be(expected);
+            result.Should().Be( expected );
         }
 
         [Fact]
@@ -62,7 +83,7 @@ namespace LfrlSoft.NET.Common.Tests
         {
             var expected = typeof( Ref<> ).GetGenericArguments()[0];
 
-            var result = Ref.GetUnderlyingType( typeof(Ref<>) );
+            var result = Ref.GetUnderlyingType( typeof( Ref<> ) );
 
             result.Should().Be( expected );
         }
