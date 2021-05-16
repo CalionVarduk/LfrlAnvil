@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace LfrlSoft.NET.Common.Internal
@@ -8,12 +9,14 @@ namespace LfrlSoft.NET.Common.Internal
         public static readonly bool IsReferenceType = !typeof( T ).IsValueType;
         public static readonly bool IsValueType = typeof( T ).IsValueType;
         public static readonly bool IsNullableType = !(Nullable.GetUnderlyingType( typeof( T ) ) is null);
-        public static readonly bool IsEnumType = typeof( T ).IsEnum;
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static bool IsNull(T obj)
         {
-            return (IsReferenceType && ReferenceEquals( obj, null )) || (IsNullableType && obj.Equals( default( T ) ));
+            if ( IsReferenceType )
+                return ReferenceEquals( obj, null );
+
+            return IsNullableType && obj.Equals( default );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -25,7 +28,10 @@ namespace LfrlSoft.NET.Common.Internal
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static bool IsDefault(T obj)
         {
-            return (IsReferenceType && ReferenceEquals( obj, null )) || (IsValueType && obj.Equals( default( T ) ));
+            if ( IsReferenceType )
+                return ReferenceEquals( obj, null );
+
+            return EqualityComparer<T>.Default.Equals( obj, default );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -37,10 +43,7 @@ namespace LfrlSoft.NET.Common.Internal
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static bool AreEqual(T a, T b)
         {
-            if ( IsNull( a ) )
-                return IsNull( b );
-
-            return !IsNull( b ) && a.Equals( b );
+            return EqualityComparer<T>.Default.Equals( a, b );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]

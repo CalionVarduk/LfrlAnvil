@@ -5,12 +5,12 @@ using System;
 namespace LfrlSoft.NET.Common.Benchmarks
 {
     [MemoryDiagnoser]
-    public class ClassEqualityBenchmark
+    public class RefEqualityBenchmark
     {
         private readonly string _value1;
         private readonly string _value2;
 
-        public ClassEqualityBenchmark()
+        public RefEqualityBenchmark()
         {
             _value1 = Guid.NewGuid().ToString();
             _value2 = Guid.NewGuid().ToString();

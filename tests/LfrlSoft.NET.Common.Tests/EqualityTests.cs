@@ -1,5 +1,6 @@
 ﻿using AutoFixture;
 using FluentAssertions;
+using LfrlSoft.NET.Common.Tests.Extensions;
 using System;
 using Xunit;
 
@@ -22,8 +23,7 @@ namespace LfrlSoft.NET.Common.Tests
         [Fact]
         public void Ctor_ShouldCreateWithResultEqualToFalse_WhenBothValuesAreDifferent()
         {
-            var value1 = _fixture.Create<int>();
-            var value2 = value1 + 1;
+            var (value1, value2) = _fixture.CreateDistinctPair<int>();
 
             var sut = new Equality<int>( value1, value2 );
 

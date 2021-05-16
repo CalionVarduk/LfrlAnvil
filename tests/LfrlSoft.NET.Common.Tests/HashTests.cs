@@ -1,5 +1,6 @@
 ﻿using AutoFixture;
 using FluentAssertions;
+using LfrlSoft.NET.Common.Tests.Extensions;
 using Xunit;
 
 namespace LfrlSoft.NET.Common.Tests
@@ -21,7 +22,7 @@ namespace LfrlSoft.NET.Common.Tests
         [Fact]
         public void Add_ShouldCreateCorrectHashInstance_WhenParameterIsNull()
         {
-            Test obj = null;
+            var obj = _fixture.CreateDefault<Test>();
             var sut = Hash.Default;
 
             var result = sut.Add( obj );
@@ -93,11 +94,9 @@ namespace LfrlSoft.NET.Common.Tests
         [Fact]
         public void CompareTo_ShouldReturnOne_WhenOtherValueIsLesser()
         {
-            var value1 = _fixture.Create<int>();
-            var value2 = _fixture.Create<int>();
-
-            var a = new Hash( value1 > value2 ? value1 : value2 );
-            var b = new Hash( value1 > value2 ? value2 : value1 );
+            var (value1, value2) = _fixture.CreateDistinctPair<int>();
+            var a = new Hash( value2 );
+            var b = new Hash( value1 );
 
             var result = a.CompareTo( b );
 
@@ -107,11 +106,9 @@ namespace LfrlSoft.NET.Common.Tests
         [Fact]
         public void CompareTo_ShouldReturnMinusOne_WhenOtherValueIsGreater()
         {
-            var value1 = _fixture.Create<int>();
-            var value2 = _fixture.Create<int>();
-
-            var a = new Hash( value1 > value2 ? value2 : value1 );
-            var b = new Hash( value1 > value2 ? value1 : value2 );
+            var (value1, value2) = _fixture.CreateDistinctPair<int>();
+            var a = new Hash( value1 );
+            var b = new Hash( value2 );
 
             var result = a.CompareTo( b );
 

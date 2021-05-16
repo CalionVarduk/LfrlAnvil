@@ -9,6 +9,7 @@
     <Folder Include="Collections\" />
     <Folder Include="Events\" />
     <Folder Include="Identity\" />
+    <Folder Include="Extensions\" />
   </ItemGroup>
 
 </Project>
