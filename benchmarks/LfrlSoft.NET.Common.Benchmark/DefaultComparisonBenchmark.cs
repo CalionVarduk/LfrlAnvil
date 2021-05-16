@@ -28,7 +28,7 @@ namespace LfrlSoft.NET.Common.Benchmarks
         [Benchmark]
         public bool DefaultComparison_NullableInt_HasValue()
         {
-            return !_valueIntNullable.HasValue;
+            return ! _valueIntNullable.HasValue;
         }
 
         [Benchmark]

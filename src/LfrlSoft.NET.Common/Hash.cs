@@ -7,7 +7,7 @@ namespace LfrlSoft.NET.Common
 {
     public readonly struct Hash : IEquatable<Hash>, IComparable<Hash>, IComparable
     {
-        public static readonly int Offset = unchecked(( int )2166136261);
+        public static readonly int Offset = unchecked( (int) 2166136261 );
         public static readonly int Prime = 16777619;
 
         public static readonly Hash Null = new Hash( 0 );
@@ -30,7 +30,7 @@ namespace LfrlSoft.NET.Common
             return Value;
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is Hash h && Equals( h );
         }
@@ -40,7 +40,7 @@ namespace LfrlSoft.NET.Common
             return Value.Equals( other.Value );
         }
 
-        public int CompareTo(object obj)
+        public int CompareTo(object? obj)
         {
             return obj is Hash h ? CompareTo( h ) : 1;
         }
@@ -50,11 +50,11 @@ namespace LfrlSoft.NET.Common
             return Value.CompareTo( other.Value );
         }
 
-        public Hash Add<T>(T obj)
+        public Hash Add<T>(T? obj)
         {
-            return Generic<T>.IsNull( obj ) ?
-                new Hash( unchecked((Value ^ Null.Value) * Prime) ) :
-                new Hash( unchecked((Value ^ obj.GetHashCode()) * Prime) );
+            return Generic<T>.IsNull( obj )
+                ? new Hash( unchecked( (Value ^ Null.Value) * Prime ) )
+                : new Hash( unchecked( (Value ^ obj!.GetHashCode()) * Prime ) );
         }
 
         public Hash AddRange<T>(IEnumerable<T> range)
@@ -62,6 +62,7 @@ namespace LfrlSoft.NET.Common
             var result = new Hash( Value );
             foreach ( var obj in range )
                 result = result.Add( obj );
+
             return result;
         }
 

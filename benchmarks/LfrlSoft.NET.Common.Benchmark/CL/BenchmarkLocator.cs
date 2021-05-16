@@ -7,7 +7,7 @@ namespace LfrlSoft.NET.Common.Benchmarks.CL
 {
     public class BenchmarkLocator
     {
-        public IEnumerable<Type> LocateTypes(CommandLineBenchmarkOptions options)
+        public IEnumerable<Type> LocateTypes(CommandLineBenchmarkOptions? options)
         {
             if ( options is null )
                 return Enumerable.Empty<Type>();
@@ -15,7 +15,7 @@ namespace LfrlSoft.NET.Common.Benchmarks.CL
             var benchmarkProperties = FindBenchmarkProperties();
 
             var types = benchmarkProperties
-                .Where( x => (( bool )x.Property.GetValue( options )) == true )
+                .Where( x => ((bool) x.Property.GetValue( options )!) == true )
                 .Select( x => x.BenchmarkType )
                 .ToList();
 
@@ -27,12 +27,17 @@ namespace LfrlSoft.NET.Common.Benchmarks.CL
             var result = typeof( CommandLineBenchmarkOptions )
                 .GetProperties( BindingFlags.Instance | BindingFlags.Public )
                 .Where( p => p.PropertyType == typeof( bool ) )
-                .Select( p => (Property: p, Attribute: ( CommandLineBenchmarkAttribute )Attribute.GetCustomAttribute( p, typeof( CommandLineBenchmarkAttribute ) )) )
-                .Where( x => !(x.Attribute is null) )
-                .Select( x => (Property: x.Property, BenchmarkType: x.Attribute.BenchmarkType) )
+                .Select( p => (Property: p, Attribute: GetBenchmarkAttribute( p )) )
+                .Where( x => x.Attribute is not null )
+                .Select( x => (Property: x.Property, BenchmarkType: x.Attribute!.BenchmarkType) )
                 .ToList();
 
             return result;
+        }
+
+        private static CommandLineBenchmarkAttribute? GetBenchmarkAttribute(PropertyInfo property)
+        {
+            return (CommandLineBenchmarkAttribute?) Attribute.GetCustomAttribute( property, typeof( CommandLineBenchmarkAttribute ) );
         }
     }
 }

@@ -5,11 +5,11 @@ namespace LfrlSoft.NET.Common
 {
     public readonly struct Equality<T> : IEquatable<Equality<T>>
     {
-        public readonly T First;
-        public readonly T Second;
+        public readonly T? First;
+        public readonly T? Second;
         public readonly bool Result;
 
-        public Equality(T first, T second)
+        public Equality(T? first, T? second)
         {
             First = first;
             Second = second;
@@ -30,7 +30,7 @@ namespace LfrlSoft.NET.Common
                 .Value;
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is Equality<T> e && Equals( e );
         }
@@ -49,7 +49,7 @@ namespace LfrlSoft.NET.Common
 
         public static bool operator !(Equality<T> e)
         {
-            return !e.Result;
+            return ! e.Result;
         }
 
         public static bool operator ==(Equality<T> a, Equality<T> b)
@@ -59,7 +59,7 @@ namespace LfrlSoft.NET.Common
 
         public static bool operator !=(Equality<T> a, Equality<T> b)
         {
-            return !a.Equals( b );
+            return ! a.Equals( b );
         }
     }
 }

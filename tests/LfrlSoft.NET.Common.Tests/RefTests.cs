@@ -33,7 +33,7 @@ namespace LfrlSoft.NET.Common.Tests
             var value = _fixture.Create<int>();
             var sut = new Ref<int>( value );
 
-            var result = ( int )sut;
+            var result = (int) sut;
 
             result.Should().Be( value );
         }

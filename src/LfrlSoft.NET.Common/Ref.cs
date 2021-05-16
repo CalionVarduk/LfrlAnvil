@@ -6,9 +6,7 @@
         public T Value;
 
         public Ref()
-            : this( default )
-        {
-        }
+            : this( default ) { }
 
         public Ref(T value)
         {

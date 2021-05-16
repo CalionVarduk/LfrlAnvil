@@ -27,7 +27,7 @@ namespace LfrlSoft.NET.Common.Tests
 
             var sut = new Equality<int>( value1, value2 );
 
-            sut.Should().Match<Equality<int>>( e => !e.Result && e.First == value1 && e.Second == value2 );
+            sut.Should().Match<Equality<int>>( e => ! e.Result && e.First == value1 && e.Second == value2 );
         }
 
         [Fact]
@@ -37,7 +37,7 @@ namespace LfrlSoft.NET.Common.Tests
             var value2 = _fixture.Create<int>();
             var sut = new Equality<int>( value1, value2 );
 
-            var result = ( bool )sut;
+            var result = (bool) sut;
 
             result.Should().Be( sut.Result );
         }
@@ -49,9 +49,9 @@ namespace LfrlSoft.NET.Common.Tests
             var value2 = _fixture.Create<int>();
             var sut = new Equality<int>( value1, value2 );
 
-            var result = !sut;
+            var result = ! sut;
 
-            result.Should().Be( !sut.Result );
+            result.Should().Be( ! sut.Result );
         }
 
         [Fact]

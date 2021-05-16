@@ -32,7 +32,7 @@ namespace LfrlSoft.NET.Common.Benchmarks
         [Benchmark]
         public bool StructEquality_Boxing()
         {
-            return (( object )_value1).Equals( _value2 );
+            return ((object) _value1).Equals( _value2 );
         }
 
         [Benchmark]
