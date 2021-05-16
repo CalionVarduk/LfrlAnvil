@@ -32,7 +32,7 @@ namespace LfrlSoft.NET.Common
             if ( ! Generic<T>.IsReferenceType && ! Generic<T>.IsNullableType )
                 throw Exceptions.NotNull( param, paramName );
 
-            if ( ! comparer.Equals( param, default ) )
+            if ( ! comparer.Equals( param!, default! ) )
                 throw Exceptions.NotNull( param, paramName );
         }
 
@@ -58,7 +58,7 @@ namespace LfrlSoft.NET.Common
             if ( ! Generic<T>.IsReferenceType && ! Generic<T>.IsNullableType )
                 return;
 
-            if ( comparer.Equals( param, default ) )
+            if ( comparer.Equals( param!, default! ) )
                 throw Exceptions.Null( paramName );
         }
 
@@ -361,7 +361,7 @@ namespace LfrlSoft.NET.Common
             if ( ! Generic<T>.IsReferenceType && ! Generic<T>.IsNullableType )
                 throw Exceptions.NotContainsNull( paramName );
 
-            if ( param.All( e => ! comparer.Equals( e, default ) ) )
+            if ( param.All( e => ! comparer.Equals( e!, default! ) ) )
                 throw Exceptions.NotContainsNull( paramName );
         }
 
@@ -387,7 +387,7 @@ namespace LfrlSoft.NET.Common
             if ( ! Generic<T>.IsReferenceType && ! Generic<T>.IsNullableType )
                 return;
 
-            if ( param.Any( e => comparer.Equals( e, default ) ) )
+            if ( param.Any( e => comparer.Equals( e!, default! ) ) )
                 throw Exceptions.ContainsNull( paramName );
         }
 

@@ -31,7 +31,7 @@ namespace LfrlSoft.NET.Common.Internal
             if ( IsReferenceType )
                 return ReferenceEquals( obj, null );
 
-            return EqualityComparer<T>.Default.Equals( obj, default );
+            return EqualityComparer<T>.Default.Equals( obj!, default! );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -43,7 +43,7 @@ namespace LfrlSoft.NET.Common.Internal
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static bool AreEqual(T? a, T? b)
         {
-            return EqualityComparer<T>.Default.Equals( a, b );
+            return EqualityComparer<T>.Default.Equals( a!, b! );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
