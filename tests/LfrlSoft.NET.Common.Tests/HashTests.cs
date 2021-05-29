@@ -53,6 +53,17 @@ namespace LfrlSoft.NET.Common.Tests
         }
 
         [Fact]
+        public void GetHashCode_ShouldReturnValue()
+        {
+            var value = _fixture.Create<int>();
+            var sut = new Hash( value );
+
+            var result = sut.GetHashCode();
+
+            result.Should().Be( value );
+        }
+
+        [Fact]
         public void Equals_ShouldReturnTrue_WhenValuesAreEqual()
         {
             var value = _fixture.Create<int>();
@@ -124,6 +135,214 @@ namespace LfrlSoft.NET.Common.Tests
             var result = (int) sut;
 
             result.Should().Be( value );
+        }
+
+        [Fact]
+        public void EqualityOperator_ShouldReturnTrue_WhenValuesAreEqual()
+        {
+            var value = _fixture.Create<int>();
+
+            var a = new Hash( value );
+            var b = new Hash( value );
+
+            var result = a == b;
+
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public void EqualityOperator_ShouldReturnFalse_WhenValuesAreDifferent()
+        {
+            var value = _fixture.Create<int>();
+
+            var a = new Hash( value );
+            var b = new Hash( value + 1 );
+
+            var result = a == b;
+
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public void InequalityOperator_ShouldReturnTrue_WhenValuesAreDifferent()
+        {
+            var value = _fixture.Create<int>();
+
+            var a = new Hash( value );
+            var b = new Hash( value + 1 );
+
+            var result = a != b;
+
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public void InequalityOperator_ShouldReturnFalse_WhenValuesAreEqual()
+        {
+            var value = _fixture.Create<int>();
+
+            var a = new Hash( value );
+            var b = new Hash( value );
+
+            var result = a != b;
+
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public void GreaterThanOperator_ShouldReturnTrue_WhenFirstValueIsGreaterThanSecondValue()
+        {
+            var (second, first) = _fixture.CreateDistinctPair<int>();
+
+            var a = new Hash( first );
+            var b = new Hash( second );
+
+            var result = a > b;
+
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public void GreaterThanOperator_ShouldReturnFalse_WhenFirstValueIsLessThanSecondValue()
+        {
+            var (first, second) = _fixture.CreateDistinctPair<int>();
+
+            var a = new Hash( first );
+            var b = new Hash( second );
+
+            var result = a > b;
+
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public void GreaterThanOperator_ShouldReturnFalse_WhenBothValuesAreEqual()
+        {
+            var value = _fixture.Create<int>();
+
+            var a = new Hash( value );
+            var b = new Hash( value );
+
+            var result = a > b;
+
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public void LessThanOrEqualOperator_ShouldReturnTrue_WhenFirstValueIsLessThanSecondValue()
+        {
+            var (first, second) = _fixture.CreateDistinctPair<int>();
+
+            var a = new Hash( first );
+            var b = new Hash( second );
+
+            var result = a <= b;
+
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public void LessThanOrEqualOperator_ShouldReturnTrue_WhenBothValuesAreEqual()
+        {
+            var value = _fixture.Create<int>();
+
+            var a = new Hash( value );
+            var b = new Hash( value );
+
+            var result = a <= b;
+
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public void LessThanOrEqualOperator_ShouldReturnFalse_WhenFirstValueIsGreaterThanSecondValue()
+        {
+            var (second, first) = _fixture.CreateDistinctPair<int>();
+
+            var a = new Hash( first );
+            var b = new Hash( second );
+
+            var result = a <= b;
+
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public void LessThanOperator_ShouldReturnTrue_WhenFirstValueIsLessThanSecondValue()
+        {
+            var (first, second) = _fixture.CreateDistinctPair<int>();
+
+            var a = new Hash( first );
+            var b = new Hash( second );
+
+            var result = a < b;
+
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public void LessThanOperator_ShouldReturnFalse_WhenFirstValueIsGreaterThanSecondValue()
+        {
+            var (second, first) = _fixture.CreateDistinctPair<int>();
+
+            var a = new Hash( first );
+            var b = new Hash( second );
+
+            var result = a < b;
+
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public void LessThanOperator_ShouldReturnFalse_WhenBothValuesAreEqual()
+        {
+            var value = _fixture.Create<int>();
+
+            var a = new Hash( value );
+            var b = new Hash( value );
+
+            var result = a < b;
+
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public void GreaterThanOrEqualOperator_ShouldReturnTrue_WhenFirstValueIsGreaterThanSecondValue()
+        {
+            var (second, first) = _fixture.CreateDistinctPair<int>();
+
+            var a = new Hash( first );
+            var b = new Hash( second );
+
+            var result = a >= b;
+
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public void GreaterThanOrEqualOperator_ShouldReturnTrue_WhenBothValuesAreEqual()
+        {
+            var value = _fixture.Create<int>();
+
+            var a = new Hash( value );
+            var b = new Hash( value );
+
+            var result = a >= b;
+
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public void GreaterThanOrEqualOperator_ShouldReturnFalse_WhenFirstValueIsLessThanSecondValue()
+        {
+            var (first, second) = _fixture.CreateDistinctPair<int>();
+
+            var a = new Hash( first );
+            var b = new Hash( second );
+
+            var result = a >= b;
+
+            result.Should().BeFalse();
         }
 
         private class Test

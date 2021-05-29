@@ -7,8 +7,8 @@ namespace LfrlSoft.NET.Common
 {
     public readonly struct Hash : IEquatable<Hash>, IComparable<Hash>, IComparable
     {
-        public static readonly int Offset = unchecked( (int) 2166136261 );
-        public static readonly int Prime = 16777619;
+        public const int Offset = unchecked( (int) 2166136261 );
+        public const int Prime = 16777619;
 
         public static readonly Hash Null = new Hash( 0 );
         public static readonly Hash Default = new Hash( Offset );
@@ -57,7 +57,7 @@ namespace LfrlSoft.NET.Common
                 : new Hash( unchecked( (Value ^ obj!.GetHashCode()) * Prime ) );
         }
 
-        public Hash AddRange<T>(IEnumerable<T> range)
+        public Hash AddRange<T>(IEnumerable<T?> range)
         {
             var result = new Hash( Value );
             foreach ( var obj in range )
@@ -66,7 +66,7 @@ namespace LfrlSoft.NET.Common
             return result;
         }
 
-        public Hash AddRange<T>(params T[] range)
+        public Hash AddRange<T>(params T?[] range)
         {
             return AddRange( range.AsEnumerable() );
         }

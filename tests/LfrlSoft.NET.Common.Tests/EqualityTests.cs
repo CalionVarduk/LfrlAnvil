@@ -31,6 +31,42 @@ namespace LfrlSoft.NET.Common.Tests
         }
 
         [Fact]
+        public void GetHashCode_ShouldReturnCorrectResult()
+        {
+            var value1 = 1234567890;
+            var value2 = 987654321;
+            var sut = new Equality<int>( value1, value2 );
+
+            var result = sut.GetHashCode();
+
+            result.Should().Be( 2089901860 );
+        }
+
+        [Fact]
+        public void Equals_ShouldReturnTrue_WhenAllPropertiesAreEqual()
+        {
+            var value1 = _fixture.Create<int>();
+            var value2 = _fixture.Create<int>();
+            var sut = new Equality<int>( value1, value2 );
+
+            var result = sut.Equals( new Equality<int>( value1, value2 ) );
+
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public void Equals_ShouldReturnFalse_WhenAnyPropertiesAreDifferent()
+        {
+            var value1 = _fixture.Create<int>();
+            var value2 = _fixture.Create<int>();
+            var sut = new Equality<int>( value1, value2 );
+
+            var result = sut.Equals( new Equality<int>( value1, value2 + 1 ) );
+
+            result.Should().BeFalse();
+        }
+
+        [Fact]
         public void ImplicitOperator_ShouldReturnUnderlyingResult()
         {
             var value1 = _fixture.Create<int>();
@@ -52,6 +88,54 @@ namespace LfrlSoft.NET.Common.Tests
             var result = ! sut;
 
             result.Should().Be( ! sut.Result );
+        }
+
+        [Fact]
+        public void EqualityOperator_ShouldReturnTrue_WhenAllPropertiesAreEqual()
+        {
+            var value1 = _fixture.Create<int>();
+            var value2 = _fixture.Create<int>();
+            var sut = new Equality<int>( value1, value2 );
+
+            var result = sut == new Equality<int>( value1, value2 );
+
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public void EqualityOperator_ShouldReturnFalse_WhenAnyPropertiesAreDifferent()
+        {
+            var value1 = _fixture.Create<int>();
+            var value2 = _fixture.Create<int>();
+            var sut = new Equality<int>( value1, value2 );
+
+            var result = sut == new Equality<int>( value1, value2 + 1 );
+
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public void InequalityOperator_ShouldReturnTrue_WhenAnyPropertiesAreDifferent()
+        {
+            var value1 = _fixture.Create<int>();
+            var value2 = _fixture.Create<int>();
+            var sut = new Equality<int>( value1, value2 );
+
+            var result = sut != new Equality<int>( value1, value2 + 1 );
+
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public void InequalityOperator_ShouldReturnFalse_WhenAllPropertiesAreEqual()
+        {
+            var value1 = _fixture.Create<int>();
+            var value2 = _fixture.Create<int>();
+            var sut = new Equality<int>( value1, value2 );
+
+            var result = sut != new Equality<int>( value1, value2 );
+
+            result.Should().BeFalse();
         }
 
         [Fact]

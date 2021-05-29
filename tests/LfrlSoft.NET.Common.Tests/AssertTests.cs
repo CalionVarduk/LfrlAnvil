@@ -585,6 +585,56 @@ namespace LfrlSoft.NET.Common.Tests
         }
 
         [Fact]
+        public void IsBetween_ShouldPass_WhenParamIsBetweenTwoDistinctValues_WithExplicitComparer()
+        {
+            var (min, param, max) = _fixture.CreateDistinctTriple<int>();
+            ShouldPass( () => Assert.IsBetween( param, min, max, _structComparer ) );
+        }
+
+        [Fact]
+        public void IsBetween_ShouldPass_WhenParamIsEqualToMinValue_WithExplicitComparer()
+        {
+            var (param, max) = _fixture.CreateDistinctPair<int>();
+            ShouldPass( () => Assert.IsBetween( param, param, max, _structComparer ) );
+        }
+
+        [Fact]
+        public void IsBetween_ShouldPass_WhenParamIsEqualToMaxValue_WithExplicitComparer()
+        {
+            var (min, param) = _fixture.CreateDistinctPair<int>();
+            ShouldPass( () => Assert.IsBetween( param, min, param, _structComparer ) );
+        }
+
+        [Fact]
+        public void IsBetween_ShouldPass_WhenParamIsEqualToMinAndMaxValues_WithExplicitComparer()
+        {
+            var param = _fixture.Create<int>();
+            ShouldPass( () => Assert.IsBetween( param, param, param, _structComparer ) );
+        }
+
+        [Fact]
+        public void IsBetween_ShouldThrow_WhenParamIsLessThanMinValue_WithExplicitComparer()
+        {
+            var (param, min, max) = _fixture.CreateDistinctTriple<int>();
+            ShouldThrow( () => Assert.IsBetween( param, min, max, _structComparer ) );
+        }
+
+        [Fact]
+        public void IsBetween_ShouldThrow_WhenParamIsGreaterThanMaxValue_WithExplicitComparer()
+        {
+            var (min, max, param) = _fixture.CreateDistinctTriple<int>();
+            ShouldThrow( () => Assert.IsBetween( param, min, max, _structComparer ) );
+        }
+
+        [Fact]
+        public void IsBetween_ShouldThrow_WhenMinIsGreaterThanMax_WithExplicitComparer()
+        {
+            var param = _fixture.Create<int>();
+            var (max, min) = _fixture.CreateDistinctPair<int>();
+            ShouldThrow( () => Assert.IsBetween( param, min, max, _structComparer ) );
+        }
+
+        [Fact]
         public void IsNotBetween_ShouldPass_WhenParamIsLessThanMinValue()
         {
             var (param, min, max) = _fixture.CreateDistinctTriple<int>();
@@ -632,6 +682,56 @@ namespace LfrlSoft.NET.Common.Tests
         {
             var param = _fixture.Create<int>();
             ShouldThrow( () => Assert.IsNotBetween( param, param, param ) );
+        }
+
+        [Fact]
+        public void IsNotBetween_ShouldPass_WhenParamIsLessThanMinValue_WithExplicitComparer()
+        {
+            var (param, min, max) = _fixture.CreateDistinctTriple<int>();
+            ShouldPass( () => Assert.IsNotBetween( param, min, max, _structComparer ) );
+        }
+
+        [Fact]
+        public void IsNotBetween_ShouldPass_WhenParamIsGreaterThanMaxValue_WithExplicitComparer()
+        {
+            var (min, max, param) = _fixture.CreateDistinctTriple<int>();
+            ShouldPass( () => Assert.IsNotBetween( param, min, max, _structComparer ) );
+        }
+
+        [Fact]
+        public void IsNotBetween_ShouldPass_WhenMinIsGreaterThanMax_WithExplicitComparer()
+        {
+            var param = _fixture.Create<int>();
+            var (max, min) = _fixture.CreateDistinctPair<int>();
+            ShouldPass( () => Assert.IsNotBetween( param, min, max, _structComparer ) );
+        }
+
+        [Fact]
+        public void IsNotBetween_ShouldThrow_WhenParamIsBetweenTwoDistinctValues_WithExplicitComparer()
+        {
+            var (min, param, max) = _fixture.CreateDistinctTriple<int>();
+            ShouldThrow( () => Assert.IsNotBetween( param, min, max, _structComparer ) );
+        }
+
+        [Fact]
+        public void IsNotBetween_ShouldThrow_WhenParamIsEqualToMinValue_WithExplicitComparer()
+        {
+            var (param, max) = _fixture.CreateDistinctPair<int>();
+            ShouldThrow( () => Assert.IsNotBetween( param, param, max, _structComparer ) );
+        }
+
+        [Fact]
+        public void IsNotBetween_ShouldThrow_WhenParamIsEqualToMaxValue_WithExplicitComparer()
+        {
+            var (min, param) = _fixture.CreateDistinctPair<int>();
+            ShouldThrow( () => Assert.IsNotBetween( param, min, param, _structComparer ) );
+        }
+
+        [Fact]
+        public void IsNotBetween_ShouldThrow_WhenParamIsEqualToMinAndMaxValues_WithExplicitComparer()
+        {
+            var param = _fixture.Create<int>();
+            ShouldThrow( () => Assert.IsNotBetween( param, param, param, _structComparer ) );
         }
 
         [Fact]
@@ -1086,6 +1186,29 @@ namespace LfrlSoft.NET.Common.Tests
         }
 
         [Fact]
+        public void ForAny_ShouldPass_WhenAtLeastOneElementPassesThePredicate_WithDelegate()
+        {
+            var value = _fixture.Create<int>();
+            var param = _fixture.CreateMany<int>().Concat( new[] { value } );
+            ShouldPass( () => Assert.ForAny( param, e => e == value, () => string.Empty ) );
+        }
+
+        [Fact]
+        public void ForAny_ShouldThrow_WhenNoElementsPassThePredicate_WithDelegate()
+        {
+            var value = _fixture.Create<int>();
+            var param = _fixture.CreateMany<int>();
+            ShouldThrow( () => Assert.ForAny( param, e => e == value, () => string.Empty ) );
+        }
+
+        [Fact]
+        public void ForAny_ShouldThrow_WhenEnumerableIsEmpty_WithDelegate()
+        {
+            var param = Enumerable.Empty<int>();
+            ShouldThrow( () => Assert.ForAny( param, _ => true, () => string.Empty ) );
+        }
+
+        [Fact]
         public void ForAll_ShouldPass_WhenAllElementsPassThePredicate()
         {
             var value = _fixture.Create<int>();
@@ -1109,6 +1232,29 @@ namespace LfrlSoft.NET.Common.Tests
         }
 
         [Fact]
+        public void ForAll_ShouldPass_WhenAllElementsPassThePredicate_WithDelegate()
+        {
+            var value = _fixture.Create<int>();
+            var param = Enumerable.Range( 0, 3 ).Select( _ => value );
+            ShouldPass( () => Assert.ForAll( param, e => e == value, () => string.Empty ) );
+        }
+
+        [Fact]
+        public void ForAll_ShouldPass_WhenEnumerableIsEmpty_WithDelegate()
+        {
+            var param = Enumerable.Empty<int>();
+            ShouldPass( () => Assert.ForAll( param, _ => false, () => string.Empty ) );
+        }
+
+        [Fact]
+        public void ForAll_ShouldThrow_WhenAtLeastOneElementFailsThePredicate_WithDelegate()
+        {
+            var value = _fixture.Create<int>();
+            var param = Enumerable.Range( 0, 3 ).Select( _ => value ).Concat( new[] { _fixture.Create<int>() } );
+            ShouldThrow( () => Assert.ForAll( param, e => e == value, () => string.Empty ) );
+        }
+
+        [Fact]
         public void True_ShouldPass_WhenConditionIsTrue()
         {
             ShouldPass( () => Assert.True( true ) );
@@ -1121,6 +1267,18 @@ namespace LfrlSoft.NET.Common.Tests
         }
 
         [Fact]
+        public void True_ShouldPass_WhenConditionIsTrue_WithDelegate()
+        {
+            ShouldPass( () => Assert.True( true, () => string.Empty ) );
+        }
+
+        [Fact]
+        public void True_ShouldThrow_WhenConditionIsFalse_WithDelegate()
+        {
+            ShouldThrow( () => Assert.True( false, () => string.Empty ) );
+        }
+
+        [Fact]
         public void False_ShouldPass_WhenConditionIsFalse()
         {
             ShouldPass( () => Assert.False( false ) );
@@ -1130,6 +1288,18 @@ namespace LfrlSoft.NET.Common.Tests
         public void False_ShouldThrow_WhenConditionIsTrue()
         {
             ShouldThrow( () => Assert.False( true ) );
+        }
+
+        [Fact]
+        public void False_ShouldPass_WhenConditionIsFalse_WithDelegate()
+        {
+            ShouldPass( () => Assert.False( false, () => string.Empty ) );
+        }
+
+        [Fact]
+        public void False_ShouldThrow_WhenConditionIsTrue_WithDelegate()
+        {
+            ShouldThrow( () => Assert.False( true, () => string.Empty ) );
         }
 
         private static void ShouldPass(Action action)
