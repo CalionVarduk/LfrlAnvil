@@ -1,11 +1,10 @@
-﻿using System;
-using AutoFixture;
+﻿using AutoFixture;
 using FluentAssertions;
 using Xunit;
 
 namespace LfrlSoft.NET.Common.Tests
 {
-    public class PairTests
+    public partial class PairTests
     {
         private readonly IFixture _fixture = new Fixture();
 
@@ -33,30 +32,19 @@ namespace LfrlSoft.NET.Common.Tests
             result.Should().Be( -553869366 );
         }
 
-        [Fact]
-        public void Equals_ShouldReturnTrue_WhenAllPropertiesAreEqual()
+        [Theory]
+        [InlineData( 1, "a", 1, "a", true )]
+        [InlineData( 1, "a", 1, "b", false )]
+        [InlineData( 1, "a", 2, "a", false )]
+        [InlineData( 1, "a", 2, "b", false )]
+        public void Equals_ShouldReturnCorrectResult(int first1, string second1, int first2, string second2, bool expected)
         {
-            var first = _fixture.Create<int>();
-            var second = _fixture.Create<string>();
+            var a = new Pair<int, string>( first1, second1 );
+            var b = new Pair<int, string>( first2, second2 );
 
-            var sut = new Pair<int, string>( first, second );
+            var result = a.Equals( b );
 
-            var result = sut.Equals( new Pair<int, string>( first, second ) );
-
-            result.Should().BeTrue();
-        }
-
-        [Fact]
-        public void Equals_ShouldReturnFalse_WhenAnyPropertiesAreDifferent()
-        {
-            var first = _fixture.Create<int>();
-            var second = _fixture.Create<string>();
-
-            var sut = new Pair<int, string>( first, second );
-
-            var result = sut.Equals( new Pair<int, string>( first + 1, second ) );
-
-            result.Should().BeFalse();
+            result.Should().Be( expected );
         }
 
         [Fact]
@@ -87,190 +75,6 @@ namespace LfrlSoft.NET.Common.Tests
 
             result.First.Should().Be( first );
             result.Second.Should().Be( other );
-        }
-
-        [Fact]
-        public void EqualityOperator_ShouldReturnTrue_WhenAllPropertiesAreEqual()
-        {
-            var first = _fixture.Create<int>();
-            var second = _fixture.Create<string>();
-
-            var sut = new Pair<int, string>( first, second );
-
-            var result = sut == new Pair<int, string>( first, second );
-
-            result.Should().BeTrue();
-        }
-
-        [Fact]
-        public void EqualityOperator_ShouldReturnFalse_WhenAnyPropertiesAreDifferent()
-        {
-            var first = _fixture.Create<int>();
-            var second = _fixture.Create<string>();
-
-            var sut = new Pair<int, string>( first, second );
-
-            var result = sut == new Pair<int, string>( first + 1, second );
-
-            result.Should().BeFalse();
-        }
-
-        [Fact]
-        public void InequalityOperator_ShouldReturnTrue_WhenAnyPropertiesAreDifferent()
-        {
-            var first = _fixture.Create<int>();
-            var second = _fixture.Create<string>();
-
-            var sut = new Pair<int, string>( first, second );
-
-            var result = sut != new Pair<int, string>( first + 1, second );
-
-            result.Should().BeTrue();
-        }
-
-        [Fact]
-        public void InequalityOperator_ShouldReturnFalse_WhenAnyPropertiesAreEqual()
-        {
-            var first = _fixture.Create<int>();
-            var second = _fixture.Create<string>();
-
-            var sut = new Pair<int, string>( first, second );
-
-            var result = sut != new Pair<int, string>( first, second );
-
-            result.Should().BeFalse();
-        }
-
-        [Fact]
-        public void Create_ShouldCreateWithCorrectValues()
-        {
-            var first = _fixture.Create<int>();
-            var second = _fixture.Create<string>();
-
-            var sut = Pair.Create( first, second );
-
-            sut.First.Should().Be( first );
-            sut.Second.Should().Be( second );
-        }
-
-        [Fact]
-        public void GetUnderlyingFirstType_ShouldReturnNull_WhenTypeIsNull()
-        {
-            var result = Pair.GetUnderlyingFirstType( null );
-
-            result.Should().BeNull();
-        }
-
-        [Theory]
-        [InlineData( typeof( int ) )]
-        [InlineData( typeof( IEquatable<int> ) )]
-        [InlineData( typeof( IEquatable<> ) )]
-        public void GetUnderlyingFirstType_ShouldReturnNull_WhenTypeIsNotPair(Type type)
-        {
-            var result = Pair.GetUnderlyingFirstType( type );
-
-            result.Should().BeNull();
-        }
-
-        [Theory]
-        [InlineData( typeof( Pair<int, string> ), typeof( int ) )]
-        [InlineData( typeof( Pair<decimal, bool> ), typeof( decimal ) )]
-        [InlineData( typeof( Pair<double, byte> ), typeof( double ) )]
-        public void GetUnderlyingFirstType_ShouldReturnCorrectType_WhenTypeIsPair(Type type, Type expected)
-        {
-            var result = Pair.GetUnderlyingFirstType( type );
-
-            result.Should().Be( expected );
-        }
-
-        [Fact]
-        public void GetUnderlyingFirstType_ShouldReturnCorrectType_WhenTypeIsOpenPair()
-        {
-            var expected = typeof( Pair<,> ).GetGenericArguments()[0];
-
-            var result = Pair.GetUnderlyingFirstType( typeof( Pair<,> ) );
-
-            result.Should().Be( expected );
-        }
-
-        [Fact]
-        public void GetUnderlyingSecondType_ShouldReturnNull_WhenTypeIsNull()
-        {
-            var result = Pair.GetUnderlyingSecondType( null );
-
-            result.Should().BeNull();
-        }
-
-        [Theory]
-        [InlineData( typeof( int ) )]
-        [InlineData( typeof( IEquatable<int> ) )]
-        [InlineData( typeof( IEquatable<> ) )]
-        public void GetUnderlyingSecondType_ShouldReturnNull_WhenTypeIsNotPair(Type type)
-        {
-            var result = Pair.GetUnderlyingSecondType( type );
-
-            result.Should().BeNull();
-        }
-
-        [Theory]
-        [InlineData( typeof( Pair<int, string> ), typeof( string ) )]
-        [InlineData( typeof( Pair<decimal, bool> ), typeof( bool ) )]
-        [InlineData( typeof( Pair<double, byte> ), typeof( byte ) )]
-        public void GetUnderlyingSecondType_ShouldReturnCorrectType_WhenTypeIsPair(Type type, Type expected)
-        {
-            var result = Pair.GetUnderlyingSecondType( type );
-
-            result.Should().Be( expected );
-        }
-
-        [Fact]
-        public void GetUnderlyingSecondType_ShouldReturnCorrectType_WhenTypeIsOpenPair()
-        {
-            var expected = typeof( Pair<,> ).GetGenericArguments()[1];
-
-            var result = Pair.GetUnderlyingSecondType( typeof( Pair<,> ) );
-
-            result.Should().Be( expected );
-        }
-
-        [Fact]
-        public void GetUnderlyingTypes_ShouldReturnNull_WhenTypeIsNull()
-        {
-            var result = Pair.GetUnderlyingTypes( null );
-
-            result.Should().BeNull();
-        }
-
-        [Theory]
-        [InlineData( typeof( int ) )]
-        [InlineData( typeof( IEquatable<int> ) )]
-        [InlineData( typeof( IEquatable<> ) )]
-        public void GetUnderlyingTypes_ShouldReturnNull_WhenTypeIsNotPair(Type type)
-        {
-            var result = Pair.GetUnderlyingTypes( type );
-
-            result.Should().BeNull();
-        }
-
-        [Theory]
-        [InlineData( typeof( Pair<int, string> ), typeof( int ), typeof( string ) )]
-        [InlineData( typeof( Pair<decimal, bool> ), typeof( decimal ), typeof( bool ) )]
-        [InlineData( typeof( Pair<double, byte> ), typeof( double ), typeof( byte ) )]
-        public void GetUnderlyingTypes_ShouldReturnCorrectType_WhenTypeIsPair(Type type, Type expectedFirst, Type expectedSecond)
-        {
-            var result = Pair.GetUnderlyingTypes( type );
-
-            result.Should().BeEquivalentTo( new Pair<Type, Type>( expectedFirst, expectedSecond ) );
-        }
-
-        [Fact]
-        public void GetUnderlyingTypes_ShouldReturnCorrectType_WhenTypeIsOpenPair()
-        {
-            var expected = typeof( Pair<,> ).GetGenericArguments();
-
-            var result = Pair.GetUnderlyingTypes( typeof( Pair<,> ) );
-
-            result.Should().BeEquivalentTo( new Pair<Type, Type>( expected[0], expected[1] ) );
         }
     }
 }

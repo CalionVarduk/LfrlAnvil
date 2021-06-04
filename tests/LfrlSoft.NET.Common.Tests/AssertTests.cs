@@ -187,7 +187,7 @@ namespace LfrlSoft.NET.Common.Tests
         [Fact]
         public void IsDefault_ShouldThrow_WhenStructParamIsNotDefault()
         {
-            var param = _fixture.Create<Generator<int>>().First( v => v != default );
+            var param = _fixture.CreateNotDefault<int>();
             ShouldThrow( () => Assert.IsDefault( param ) );
         }
 
@@ -208,7 +208,7 @@ namespace LfrlSoft.NET.Common.Tests
         [Fact]
         public void IsNotDefault_ShouldPass_WhenStructParamIsNotDefault()
         {
-            var param = _fixture.Create<Generator<int>>().First( v => v != default );
+            var param = _fixture.CreateNotDefault<int>();
             ShouldPass( () => Assert.IsNotDefault( param ) );
         }
 

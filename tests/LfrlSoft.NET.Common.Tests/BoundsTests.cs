@@ -7,7 +7,7 @@ using Xunit;
 
 namespace LfrlSoft.NET.Common.Tests
 {
-    public class BoundsTests
+    public partial class BoundsTests
     {
         private readonly IFixture _fixture = new Fixture();
 
@@ -18,8 +18,13 @@ namespace LfrlSoft.NET.Common.Tests
 
             var sut = new Bounds<int>( min, max );
 
-            sut.Min.Should().Be( min );
-            sut.Max.Should().Be( max );
+            sut.Should()
+                .BeEquivalentTo(
+                    new
+                    {
+                        Min = min,
+                        Max = max
+                    } );
         }
 
         [Fact]
@@ -29,8 +34,13 @@ namespace LfrlSoft.NET.Common.Tests
 
             var sut = new Bounds<int>( value, value );
 
-            sut.Min.Should().Be( value );
-            sut.Max.Should().Be( value );
+            sut.Should()
+                .BeEquivalentTo(
+                    new
+                    {
+                        Min = value,
+                        Max = value
+                    } );
         }
 
         [Fact]
@@ -75,28 +85,19 @@ namespace LfrlSoft.NET.Common.Tests
             result.Should().Be( -553869366 );
         }
 
-        [Fact]
-        public void Equals_ShouldReturnTrue_WhenAllPropertiesAreEqual()
+        [Theory]
+        [InlineData( 1, 2, 1, 2, true )]
+        [InlineData( 1, 2, 1, 3, false )]
+        [InlineData( 0, 2, 1, 2, false )]
+        [InlineData( 1, 2, 3, 4, false )]
+        public void Equals_ShouldReturnCorrectResult(int min1, int max1, int min2, int max2, bool expected)
         {
-            var (min, max) = _fixture.CreateDistinctPair<int>();
+            var a = new Bounds<int>( min1, max1 );
+            var b = new Bounds<int>( min2, max2 );
 
-            var sut = new Bounds<int>( min, max );
+            var result = a.Equals( b );
 
-            var result = sut.Equals( new Bounds<int>( min, max ) );
-
-            result.Should().BeTrue();
-        }
-
-        [Fact]
-        public void Equals_ShouldReturnFalse_WhenAnyPropertiesAreDifferent()
-        {
-            var (min, max) = _fixture.CreateDistinctPair<int>();
-
-            var sut = new Bounds<int>( min, max );
-
-            var result = sut.Equals( new Bounds<int>( min, max + 1 ) );
-
-            result.Should().BeFalse();
+            result.Should().Be( expected );
         }
 
         [Fact]
@@ -108,8 +109,13 @@ namespace LfrlSoft.NET.Common.Tests
 
             var result = sut.SetMin( newMin );
 
-            result.Min.Should().Be( newMin );
-            result.Max.Should().Be( max );
+            result.Should()
+                .BeEquivalentTo(
+                    new
+                    {
+                        Min = newMin,
+                        Max = max
+                    } );
         }
 
         [Fact]
@@ -121,68 +127,28 @@ namespace LfrlSoft.NET.Common.Tests
 
             var result = sut.SetMax( newMax );
 
-            result.Min.Should().Be( min );
-            result.Max.Should().Be( newMax );
+            result.Should()
+                .BeEquivalentTo(
+                    new
+                    {
+                        Min = min,
+                        Max = newMax
+                    } );
         }
 
-        [Fact]
-        public void Contains_ShouldReturnTrue_WhenValueEqualsMin()
+        [Theory]
+        [InlineData( 1, 3, 0, false )]
+        [InlineData( 1, 3, 1, true )]
+        [InlineData( 1, 3, 2, true )]
+        [InlineData( 1, 3, 3, true )]
+        [InlineData( 1, 3, 4, false )]
+        public void Contains_ShouldReturnCorrectResult(int min, int max, int value, bool expected)
         {
-            var (min, max) = _fixture.CreateDistinctPair<int>();
-
-            var sut = new Bounds<int>( min, max );
-
-            var result = sut.Contains( min );
-
-            result.Should().BeTrue();
-        }
-
-        [Fact]
-        public void Contains_ShouldReturnTrue_WhenValueEqualsMax()
-        {
-            var (min, max) = _fixture.CreateDistinctPair<int>();
-
-            var sut = new Bounds<int>( min, max );
-
-            var result = sut.Contains( max );
-
-            result.Should().BeTrue();
-        }
-
-        [Fact]
-        public void Contains_ShouldReturnTrue_WhenValueIsBetweenMinAndMax()
-        {
-            var (min, value, max) = _fixture.CreateDistinctTriple<int>();
-
             var sut = new Bounds<int>( min, max );
 
             var result = sut.Contains( value );
 
-            result.Should().BeTrue();
-        }
-
-        [Fact]
-        public void Contains_ShouldReturnFalse_WhenValueIsLessThanMin()
-        {
-            var (value, min, max) = _fixture.CreateDistinctTriple<int>();
-
-            var sut = new Bounds<int>( min, max );
-
-            var result = sut.Contains( value );
-
-            result.Should().BeFalse();
-        }
-
-        [Fact]
-        public void Contains_ShouldReturnFalse_WhenValueIsGreaterThanMax()
-        {
-            var (min, max, value) = _fixture.CreateDistinctTriple<int>();
-
-            var sut = new Bounds<int>( min, max );
-
-            var result = sut.Contains( value );
-
-            result.Should().BeFalse();
+            result.Should().Be( expected );
         }
 
         [Theory]
@@ -228,7 +194,7 @@ namespace LfrlSoft.NET.Common.Tests
         }
 
         [Theory]
-        [MemberData(nameof(GetIntersectionTestData))]
+        [MemberData( nameof( GetIntersectionTestData ) )]
         public void GetIntersection_ShouldReturnCorrectResult(int min1, int max1, int min2, int max2, Bounds<int>? expected)
         {
             var sut = new Bounds<int>( min1, max1 );
@@ -238,161 +204,17 @@ namespace LfrlSoft.NET.Common.Tests
             result.Should().BeEquivalentTo( expected );
         }
 
-        [Fact]
-        public void Clamp_ShouldReturnMin_WhenValueIsLessThanMin()
-        {
-            var (value, min, max) = _fixture.CreateDistinctTriple<int>();
-
-            var sut = new Bounds<int>( min, max );
-
-            var result = sut.Clamp( value );
-
-            result.Should().Be( min );
-        }
-
-        [Fact]
-        public void Clamp_ShouldReturnMin_WhenValueIsEqualToMin()
-        {
-            var (min, max) = _fixture.CreateDistinctPair<int>();
-
-            var sut = new Bounds<int>( min, max );
-
-            var result = sut.Clamp( min );
-
-            result.Should().Be( min );
-        }
-
-        [Fact]
-        public void Clamp_ShouldReturnMax_WhenValueIsGreaterThanMax()
-        {
-            var (min, max, value) = _fixture.CreateDistinctTriple<int>();
-
-            var sut = new Bounds<int>( min, max );
-
-            var result = sut.Clamp( value );
-
-            result.Should().Be( max );
-        }
-
-        [Fact]
-        public void Clamp_ShouldReturnMax_WhenValueIsEqualToMax()
-        {
-            var (min, max) = _fixture.CreateDistinctPair<int>();
-
-            var sut = new Bounds<int>( min, max );
-
-            var result = sut.Clamp( max );
-
-            result.Should().Be( max );
-        }
-
-        [Fact]
-        public void Clamp_ShouldReturnValue_WhenValueIsBetweenMinAndMax()
-        {
-            var (min, value, max) = _fixture.CreateDistinctTriple<int>();
-
-            var sut = new Bounds<int>( min, max );
-
-            var result = sut.Clamp( value );
-
-            result.Should().Be( value );
-        }
-
-        [Fact]
-        public void EqualityOperator_ShouldReturnTrue_WhenAllPropertiesAreEqual()
-        {
-            var (min, max) = _fixture.CreateDistinctPair<int>();
-
-            var sut = new Bounds<int>( min, max );
-
-            var result = sut == new Bounds<int>( min, max );
-
-            result.Should().BeTrue();
-        }
-
-        [Fact]
-        public void EqualityOperator_ShouldReturnFalse_WhenAnyPropertiesAreDifferent()
-        {
-            var (min, max) = _fixture.CreateDistinctPair<int>();
-
-            var sut = new Bounds<int>( min, max );
-
-            var result = sut == new Bounds<int>( min, max + 1 );
-
-            result.Should().BeFalse();
-        }
-
-        [Fact]
-        public void InequalityOperator_ShouldReturnTrue_WhenAnyPropertiesAreDifferent()
-        {
-            var (min, max) = _fixture.CreateDistinctPair<int>();
-
-            var sut = new Bounds<int>( min, max );
-
-            var result = sut != new Bounds<int>( min, max + 1 );
-
-            result.Should().BeTrue();
-        }
-
-        [Fact]
-        public void InequalityOperator_ShouldReturnFalse_WhenAnyPropertiesAreEqual()
-        {
-            var (min, max) = _fixture.CreateDistinctPair<int>();
-
-            var sut = new Bounds<int>( min, max );
-
-            var result = sut != new Bounds<int>( min, max );
-
-            result.Should().BeFalse();
-        }
-
-        [Fact]
-        public void Create_ShouldCreateWithCorrectProperties()
-        {
-            var (min, max) = _fixture.CreateDistinctPair<int>();
-
-            var sut = Bounds.Create( min, max );
-
-            sut.Min.Should().Be( min );
-            sut.Max.Should().Be( max );
-        }
-
-        [Fact]
-        public void GetUnderlyingType_ShouldReturnNull_WhenTypeIsNull()
-        {
-            var result = Bounds.GetUnderlyingType( null );
-
-            result.Should().BeNull();
-        }
-
         [Theory]
-        [InlineData( typeof( int ) )]
-        [InlineData( typeof( IEquatable<int> ) )]
-        [InlineData( typeof( IEquatable<> ) )]
-        public void GetUnderlyingType_ShouldReturnNull_WhenTypeIsNotBounds(Type type)
+        [InlineData( 1, 3, 0, 1 )]
+        [InlineData( 1, 3, 1, 1 )]
+        [InlineData( 1, 3, 2, 2 )]
+        [InlineData( 1, 3, 3, 3 )]
+        [InlineData( 1, 3, 4, 3 )]
+        public void Clamp_ShouldReturnCorrectResult(int min, int max, int value, int expected)
         {
-            var result = Bounds.GetUnderlyingType( type );
+            var sut = new Bounds<int>( min, max );
 
-            result.Should().BeNull();
-        }
-
-        [Theory]
-        [InlineData( typeof( Bounds<int> ), typeof( int ) )]
-        [InlineData( typeof( Bounds<decimal> ), typeof( decimal ) )]
-        [InlineData( typeof( Bounds<double> ), typeof( double ) )]
-        public void GetUnderlyingType_ShouldReturnCorrectType_WhenTypeIsBounds(Type type, Type expected)
-        {
-            var result = Bounds.GetUnderlyingType( type );
-
-            result.Should().Be( expected );
-        }
-
-        [Fact]
-        public void GetUnderlyingType_ShouldReturnCorrectType_WhenTypeIsOpenBounds()
-        {
-            var expected = typeof( Bounds<> ).GetGenericArguments()[0];
-
-            var result = Bounds.GetUnderlyingType( typeof( Bounds<> ) );
+            var result = sut.Clamp( value );
 
             result.Should().Be( expected );
         }

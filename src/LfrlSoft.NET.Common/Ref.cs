@@ -22,5 +22,10 @@
         {
             return obj.Value;
         }
+
+        public static explicit operator Ref<T>(T value)
+        {
+            return new Ref<T>( value );
+        }
     }
 }

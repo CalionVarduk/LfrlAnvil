@@ -1,33 +1,28 @@
 ﻿using AutoFixture;
 using FluentAssertions;
-using LfrlSoft.NET.Common.Tests.Extensions;
-using System;
 using Xunit;
 
 namespace LfrlSoft.NET.Common.Tests
 {
-    public class EqualityTests
+    public partial class EqualityTests
     {
         private readonly IFixture _fixture = new Fixture();
 
-        [Fact]
-        public void Ctor_ShouldCreateWithResultEqualToTrue_WhenBothValuesAreEqual()
+        [Theory]
+        [InlineData( 1, 1, true )]
+        [InlineData( 1, 2, false )]
+        public void Ctor_ShouldCreateWithCorrectResult(int first, int second, bool expected)
         {
-            var value = _fixture.Create<int>();
+            var sut = new Equality<int>( first, second );
 
-            var sut = new Equality<int>( value, value );
-
-            sut.Should().Match<Equality<int>>( e => e.Result && e.First == value && e.Second == value );
-        }
-
-        [Fact]
-        public void Ctor_ShouldCreateWithResultEqualToFalse_WhenBothValuesAreDifferent()
-        {
-            var (value1, value2) = _fixture.CreateDistinctPair<int>();
-
-            var sut = new Equality<int>( value1, value2 );
-
-            sut.Should().Match<Equality<int>>( e => ! e.Result && e.First == value1 && e.Second == value2 );
+            sut.Should()
+                .BeEquivalentTo(
+                    new
+                    {
+                        First = first,
+                        Second = second,
+                        Result = expected
+                    } );
         }
 
         [Fact]
@@ -42,149 +37,17 @@ namespace LfrlSoft.NET.Common.Tests
             result.Should().Be( 2089901860 );
         }
 
-        [Fact]
-        public void Equals_ShouldReturnTrue_WhenAllPropertiesAreEqual()
-        {
-            var value1 = _fixture.Create<int>();
-            var value2 = _fixture.Create<int>();
-            var sut = new Equality<int>( value1, value2 );
-
-            var result = sut.Equals( new Equality<int>( value1, value2 ) );
-
-            result.Should().BeTrue();
-        }
-
-        [Fact]
-        public void Equals_ShouldReturnFalse_WhenAnyPropertiesAreDifferent()
-        {
-            var value1 = _fixture.Create<int>();
-            var value2 = _fixture.Create<int>();
-            var sut = new Equality<int>( value1, value2 );
-
-            var result = sut.Equals( new Equality<int>( value1, value2 + 1 ) );
-
-            result.Should().BeFalse();
-        }
-
-        [Fact]
-        public void ImplicitOperator_ShouldReturnUnderlyingResult()
-        {
-            var value1 = _fixture.Create<int>();
-            var value2 = _fixture.Create<int>();
-            var sut = new Equality<int>( value1, value2 );
-
-            var result = (bool) sut;
-
-            result.Should().Be( sut.Result );
-        }
-
-        [Fact]
-        public void NegateOperator_ShouldReturnNegatedUnderlyingResult()
-        {
-            var value1 = _fixture.Create<int>();
-            var value2 = _fixture.Create<int>();
-            var sut = new Equality<int>( value1, value2 );
-
-            var result = ! sut;
-
-            result.Should().Be( ! sut.Result );
-        }
-
-        [Fact]
-        public void EqualityOperator_ShouldReturnTrue_WhenAllPropertiesAreEqual()
-        {
-            var value1 = _fixture.Create<int>();
-            var value2 = _fixture.Create<int>();
-            var sut = new Equality<int>( value1, value2 );
-
-            var result = sut == new Equality<int>( value1, value2 );
-
-            result.Should().BeTrue();
-        }
-
-        [Fact]
-        public void EqualityOperator_ShouldReturnFalse_WhenAnyPropertiesAreDifferent()
-        {
-            var value1 = _fixture.Create<int>();
-            var value2 = _fixture.Create<int>();
-            var sut = new Equality<int>( value1, value2 );
-
-            var result = sut == new Equality<int>( value1, value2 + 1 );
-
-            result.Should().BeFalse();
-        }
-
-        [Fact]
-        public void InequalityOperator_ShouldReturnTrue_WhenAnyPropertiesAreDifferent()
-        {
-            var value1 = _fixture.Create<int>();
-            var value2 = _fixture.Create<int>();
-            var sut = new Equality<int>( value1, value2 );
-
-            var result = sut != new Equality<int>( value1, value2 + 1 );
-
-            result.Should().BeTrue();
-        }
-
-        [Fact]
-        public void InequalityOperator_ShouldReturnFalse_WhenAllPropertiesAreEqual()
-        {
-            var value1 = _fixture.Create<int>();
-            var value2 = _fixture.Create<int>();
-            var sut = new Equality<int>( value1, value2 );
-
-            var result = sut != new Equality<int>( value1, value2 );
-
-            result.Should().BeFalse();
-        }
-
-        [Fact]
-        public void Create_ShouldCreateWithCorrectProperties()
-        {
-            var value1 = _fixture.Create<int>();
-            var value2 = _fixture.Create<int>();
-
-            var sut = Equality.Create( value1, value2 );
-
-            sut.Should().Match<Equality<int>>( e => e.First == value1 && e.Second == value2 );
-        }
-
-        [Fact]
-        public void GetUnderlyingType_ShouldReturnNull_WhenTypeIsNull()
-        {
-            var result = Equality.GetUnderlyingType( null );
-
-            result.Should().BeNull();
-        }
-
         [Theory]
-        [InlineData( typeof( int ) )]
-        [InlineData( typeof( IEquatable<int> ) )]
-        [InlineData( typeof( IEquatable<> ) )]
-        public void GetUnderlyingType_ShouldReturnNull_WhenTypeIsNotEquality(Type type)
+        [InlineData( 1, 2, 1, 2, true )]
+        [InlineData( 1, 2, 1, 3, false )]
+        [InlineData( 0, 2, 1, 2, false )]
+        [InlineData( 1, 2, 3, 4, false )]
+        public void Equals_ShouldReturnCorrectResult(int first1, int second1, int first2, int second2, bool expected)
         {
-            var result = Equality.GetUnderlyingType( type );
+            var a = new Equality<int>( first1, second1 );
+            var b = new Equality<int>( first2, second2 );
 
-            result.Should().BeNull();
-        }
-
-        [Theory]
-        [InlineData( typeof( Equality<int> ), typeof( int ) )]
-        [InlineData( typeof( Equality<decimal> ), typeof( decimal ) )]
-        [InlineData( typeof( Equality<double> ), typeof( double ) )]
-        public void GetUnderlyingType_ShouldReturnCorrectType_WhenTypeIsEquality(Type type, Type expected)
-        {
-            var result = Equality.GetUnderlyingType( type );
-
-            result.Should().Be( expected );
-        }
-
-        [Fact]
-        public void GetUnderlyingType_ShouldReturnCorrectType_WhenTypeIsOpenEquality()
-        {
-            var expected = typeof( Equality<> ).GetGenericArguments()[0];
-
-            var result = Equality.GetUnderlyingType( typeof( Equality<> ) );
+            var result = a.Equals( b );
 
             result.Should().Be( expected );
         }

@@ -15,5 +15,9 @@ namespace LfrlSoft.NET.Common.Benchmarks.CL
         [CommandLineBenchmark( typeof( DefaultComparisonBenchmark ) )]
         [Option( "default-comparison", Default = false, Required = false, HelpText = "Run comparison with default value benchmark." )]
         public bool DefaultComparison { get; set; }
+
+        [CommandLineBenchmark( typeof( SafeBitCastBenchmark ) )]
+        [Option( "bit-cast", Default = false, Required = false, HelpText = "Run bit cast benchmark." )]
+        public bool BitCast { get; set; }
     }
 }

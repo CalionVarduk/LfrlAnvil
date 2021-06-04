@@ -48,7 +48,6 @@ namespace LfrlSoft.NET.Common
             return new Pair<T1, T>( First, second );
         }
 
-
         public static bool operator ==(Pair<T1, T2> a, Pair<T1, T2> b)
         {
             return a.Equals( b );
