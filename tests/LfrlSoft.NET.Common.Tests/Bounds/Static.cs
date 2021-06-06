@@ -1,26 +1,15 @@
 ﻿using System;
-using AutoFixture;
 using FluentAssertions;
 using Xunit;
 
-namespace LfrlSoft.NET.Common.Tests
+namespace LfrlSoft.NET.Common.Tests.Bounds
 {
-    public partial class BitmaskTests
+    public class Static
     {
-        [Fact]
-        public void Create_ShouldCreateCorrectBitmask()
-        {
-            var value = _fixture.Create<int>();
-
-            var sut = Bitmask.Create( value );
-
-            sut.Value.Should().Be( value );
-        }
-
         [Fact]
         public void GetUnderlyingType_ShouldReturnNull_WhenTypeIsNull()
         {
-            var result = Bitmask.GetUnderlyingType( null );
+            var result = Common.Bounds.GetUnderlyingType( null );
 
             result.Should().BeNull();
         }
@@ -31,18 +20,18 @@ namespace LfrlSoft.NET.Common.Tests
         [InlineData( typeof( IEquatable<> ) )]
         public void GetUnderlyingType_ShouldReturnNull_WhenTypeIsIncorrect(Type type)
         {
-            var result = Bitmask.GetUnderlyingType( type );
+            var result = Common.Bounds.GetUnderlyingType( type );
 
             result.Should().BeNull();
         }
 
         [Theory]
-        [InlineData( typeof( Bitmask<int> ), typeof( int ) )]
-        [InlineData( typeof( Bitmask<decimal> ), typeof( decimal ) )]
-        [InlineData( typeof( Bitmask<double> ), typeof( double ) )]
+        [InlineData( typeof( Bounds<int> ), typeof( int ) )]
+        [InlineData( typeof( Bounds<decimal> ), typeof( decimal ) )]
+        [InlineData( typeof( Bounds<double> ), typeof( double ) )]
         public void GetUnderlyingType_ShouldReturnCorrectType_WhenTypeIsCorrect(Type type, Type expected)
         {
-            var result = Bitmask.GetUnderlyingType( type );
+            var result = Common.Bounds.GetUnderlyingType( type );
 
             result.Should().Be( expected );
         }
@@ -50,9 +39,9 @@ namespace LfrlSoft.NET.Common.Tests
         [Fact]
         public void GetUnderlyingType_ShouldReturnCorrectType_WhenTypeIsCorrectAndOpen()
         {
-            var expected = typeof( Bitmask<> ).GetGenericArguments()[0];
+            var expected = typeof( Bounds<> ).GetGenericArguments()[0];
 
-            var result = Bitmask.GetUnderlyingType( typeof( Bitmask<> ) );
+            var result = Common.Bounds.GetUnderlyingType( typeof( Bounds<> ) );
 
             result.Should().Be( expected );
         }

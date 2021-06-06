@@ -1,26 +1,15 @@
 ﻿using System;
-using AutoFixture;
 using FluentAssertions;
 using Xunit;
 
-namespace LfrlSoft.NET.Common.Tests
+namespace LfrlSoft.NET.Common.Tests.Ref
 {
-    public partial class RefTests
+    public class Static
     {
-        [Fact]
-        public void Create_ShouldCreateCorrectRef()
-        {
-            var value = _fixture.Create<int>();
-
-            var sut = Ref.Create( value );
-
-            sut.Value.Should().Be( value );
-        }
-
         [Fact]
         public void GetUnderlyingType_ShouldReturnNull_WhenTypeIsNull()
         {
-            var result = Ref.GetUnderlyingType( null );
+            var result = Common.Ref.GetUnderlyingType( null );
 
             result.Should().BeNull();
         }
@@ -31,7 +20,7 @@ namespace LfrlSoft.NET.Common.Tests
         [InlineData( typeof( IEquatable<> ) )]
         public void GetUnderlyingType_ShouldReturnNull_WhenTypeIsIncorrect(Type type)
         {
-            var result = Ref.GetUnderlyingType( type );
+            var result = Common.Ref.GetUnderlyingType( type );
 
             result.Should().BeNull();
         }
@@ -42,7 +31,7 @@ namespace LfrlSoft.NET.Common.Tests
         [InlineData( typeof( Ref<double> ), typeof( double ) )]
         public void GetUnderlyingType_ShouldReturnCorrectType_WhenTypeIsCorrect(Type type, Type expected)
         {
-            var result = Ref.GetUnderlyingType( type );
+            var result = Common.Ref.GetUnderlyingType( type );
 
             result.Should().Be( expected );
         }
@@ -52,7 +41,7 @@ namespace LfrlSoft.NET.Common.Tests
         {
             var expected = typeof( Ref<> ).GetGenericArguments()[0];
 
-            var result = Ref.GetUnderlyingType( typeof( Ref<> ) );
+            var result = Common.Ref.GetUnderlyingType( typeof( Ref<> ) );
 
             result.Should().Be( expected );
         }

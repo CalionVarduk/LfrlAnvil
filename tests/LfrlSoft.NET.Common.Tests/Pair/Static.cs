@@ -1,28 +1,15 @@
 ﻿using System;
-using AutoFixture;
 using FluentAssertions;
 using Xunit;
 
-namespace LfrlSoft.NET.Common.Tests
+namespace LfrlSoft.NET.Common.Tests.Pair
 {
-    public partial class PairTests
+    public class Static
     {
-        [Fact]
-        public void Create_ShouldCreateCorrectPair()
-        {
-            var first = _fixture.Create<int>();
-            var second = _fixture.Create<string>();
-
-            var sut = Pair.Create( first, second );
-
-            sut.First.Should().Be( first );
-            sut.Second.Should().Be( second );
-        }
-
         [Fact]
         public void GetUnderlyingFirstType_ShouldReturnNull_WhenTypeIsNull()
         {
-            var result = Pair.GetUnderlyingFirstType( null );
+            var result = Common.Pair.GetUnderlyingFirstType( null );
 
             result.Should().BeNull();
         }
@@ -33,7 +20,7 @@ namespace LfrlSoft.NET.Common.Tests
         [InlineData( typeof( IEquatable<> ) )]
         public void GetUnderlyingFirstType_ShouldReturnNull_WhenTypeIsIncorrect(Type type)
         {
-            var result = Pair.GetUnderlyingFirstType( type );
+            var result = Common.Pair.GetUnderlyingFirstType( type );
 
             result.Should().BeNull();
         }
@@ -44,7 +31,7 @@ namespace LfrlSoft.NET.Common.Tests
         [InlineData( typeof( Pair<double, byte> ), typeof( double ) )]
         public void GetUnderlyingFirstType_ShouldReturnCorrectType_WhenTypeIsCorrect(Type type, Type expected)
         {
-            var result = Pair.GetUnderlyingFirstType( type );
+            var result = Common.Pair.GetUnderlyingFirstType( type );
 
             result.Should().Be( expected );
         }
@@ -54,7 +41,7 @@ namespace LfrlSoft.NET.Common.Tests
         {
             var expected = typeof( Pair<,> ).GetGenericArguments()[0];
 
-            var result = Pair.GetUnderlyingFirstType( typeof( Pair<,> ) );
+            var result = Common.Pair.GetUnderlyingFirstType( typeof( Pair<,> ) );
 
             result.Should().Be( expected );
         }
@@ -62,7 +49,7 @@ namespace LfrlSoft.NET.Common.Tests
         [Fact]
         public void GetUnderlyingSecondType_ShouldReturnNull_WhenTypeIsNull()
         {
-            var result = Pair.GetUnderlyingSecondType( null );
+            var result = Common.Pair.GetUnderlyingSecondType( null );
 
             result.Should().BeNull();
         }
@@ -73,7 +60,7 @@ namespace LfrlSoft.NET.Common.Tests
         [InlineData( typeof( IEquatable<> ) )]
         public void GetUnderlyingSecondType_ShouldReturnNull_WhenTypeIsIncorrect(Type type)
         {
-            var result = Pair.GetUnderlyingSecondType( type );
+            var result = Common.Pair.GetUnderlyingSecondType( type );
 
             result.Should().BeNull();
         }
@@ -84,7 +71,7 @@ namespace LfrlSoft.NET.Common.Tests
         [InlineData( typeof( Pair<double, byte> ), typeof( byte ) )]
         public void GetUnderlyingSecondType_ShouldReturnCorrectType_WhenTypeIsCorrect(Type type, Type expected)
         {
-            var result = Pair.GetUnderlyingSecondType( type );
+            var result = Common.Pair.GetUnderlyingSecondType( type );
 
             result.Should().Be( expected );
         }
@@ -94,7 +81,7 @@ namespace LfrlSoft.NET.Common.Tests
         {
             var expected = typeof( Pair<,> ).GetGenericArguments()[1];
 
-            var result = Pair.GetUnderlyingSecondType( typeof( Pair<,> ) );
+            var result = Common.Pair.GetUnderlyingSecondType( typeof( Pair<,> ) );
 
             result.Should().Be( expected );
         }
@@ -102,7 +89,7 @@ namespace LfrlSoft.NET.Common.Tests
         [Fact]
         public void GetUnderlyingTypes_ShouldReturnNull_WhenTypeIsNull()
         {
-            var result = Pair.GetUnderlyingTypes( null );
+            var result = Common.Pair.GetUnderlyingTypes( null );
 
             result.Should().BeNull();
         }
@@ -113,7 +100,7 @@ namespace LfrlSoft.NET.Common.Tests
         [InlineData( typeof( IEquatable<> ) )]
         public void GetUnderlyingTypes_ShouldReturnNull_WhenTypeIsNotCorrect(Type type)
         {
-            var result = Pair.GetUnderlyingTypes( type );
+            var result = Common.Pair.GetUnderlyingTypes( type );
 
             result.Should().BeNull();
         }
@@ -124,7 +111,7 @@ namespace LfrlSoft.NET.Common.Tests
         [InlineData( typeof( Pair<double, byte> ), typeof( double ), typeof( byte ) )]
         public void GetUnderlyingTypes_ShouldReturnCorrectTypes_WhenTypeIsCorrect(Type type, Type expectedFirst, Type expectedSecond)
         {
-            var result = Pair.GetUnderlyingTypes( type );
+            var result = Common.Pair.GetUnderlyingTypes( type );
 
             result.Should().BeEquivalentTo( new Pair<Type, Type>( expectedFirst, expectedSecond ) );
         }
@@ -134,7 +121,7 @@ namespace LfrlSoft.NET.Common.Tests
         {
             var expected = typeof( Pair<,> ).GetGenericArguments();
 
-            var result = Pair.GetUnderlyingTypes( typeof( Pair<,> ) );
+            var result = Common.Pair.GetUnderlyingTypes( typeof( Pair<,> ) );
 
             result.Should().BeEquivalentTo( new Pair<Type, Type>( expected[0], expected[1] ) );
         }

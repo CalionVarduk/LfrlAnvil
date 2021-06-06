@@ -1,27 +1,15 @@
 ﻿using System;
-using AutoFixture;
 using FluentAssertions;
 using Xunit;
 
-namespace LfrlSoft.NET.Common.Tests
+namespace LfrlSoft.NET.Common.Tests.Equality
 {
-    public partial class EqualityTests
+    public class Static
     {
-        [Fact]
-        public void Create_ShouldCreateWithCorrectProperties()
-        {
-            var value1 = _fixture.Create<int>();
-            var value2 = _fixture.Create<int>();
-
-            var sut = Equality.Create( value1, value2 );
-
-            sut.Should().Match<Equality<int>>( e => e.First == value1 && e.Second == value2 );
-        }
-
         [Fact]
         public void GetUnderlyingType_ShouldReturnNull_WhenTypeIsNull()
         {
-            var result = Equality.GetUnderlyingType( null );
+            var result = Common.Equality.GetUnderlyingType( null );
 
             result.Should().BeNull();
         }
@@ -32,7 +20,7 @@ namespace LfrlSoft.NET.Common.Tests
         [InlineData( typeof( IEquatable<> ) )]
         public void GetUnderlyingType_ShouldReturnNull_WhenTypeIsNotCorrect(Type type)
         {
-            var result = Equality.GetUnderlyingType( type );
+            var result = Common.Equality.GetUnderlyingType( type );
 
             result.Should().BeNull();
         }
@@ -43,7 +31,7 @@ namespace LfrlSoft.NET.Common.Tests
         [InlineData( typeof( Equality<double> ), typeof( double ) )]
         public void GetUnderlyingType_ShouldReturnCorrectType_WhenTypeIsCorrect(Type type, Type expected)
         {
-            var result = Equality.GetUnderlyingType( type );
+            var result = Common.Equality.GetUnderlyingType( type );
 
             result.Should().Be( expected );
         }
@@ -53,7 +41,7 @@ namespace LfrlSoft.NET.Common.Tests
         {
             var expected = typeof( Equality<> ).GetGenericArguments()[0];
 
-            var result = Equality.GetUnderlyingType( typeof( Equality<> ) );
+            var result = Common.Equality.GetUnderlyingType( typeof( Equality<> ) );
 
             result.Should().Be( expected );
         }

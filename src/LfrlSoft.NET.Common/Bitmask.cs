@@ -10,29 +10,38 @@ namespace LfrlSoft.NET.Common
     public readonly struct Bitmask<T> : IEquatable<Bitmask<T>>, IComparable<Bitmask<T>>, IComparable, IReadOnlyCollection<T>
         where T : struct, IConvertible, IComparable
     {
+        public static readonly Bitmask<T> Empty = new Bitmask<T>();
+        public static readonly Bitmask<T> All;
+
         public static readonly bool IsEnum = typeof( T ).IsEnum;
         public static readonly Type BaseType = IsEnum ? Enum.GetUnderlyingType( typeof( T ) ) : typeof( T );
         public static readonly int BitCount = Marshal.SizeOf( BaseType ) << 3;
-        public static readonly T SafeMask;
 
-        private static readonly Func<T, ulong> ToLongValue;
-        private static readonly Func<ulong, T> FromLongValue;
+        public static readonly Func<T, ulong> ToLongValue;
+        public static readonly Func<ulong, T> FromLongValue;
 
         public readonly T Value;
         public int Count => this.Count();
 
         static Bitmask()
         {
-            // TODO: if IsEnum, then assert that it has the FlagsAttribute
-            // TODO: if IsEnum, then assert that it has a default 0-value member
-            // TODO: assert that BaseType is convertible to & from ulong
-
             var toLongValueExpr = BuildToLongValueExpr();
             var fromLongValueExpr = BuildFromLongValueExpr();
             ToLongValue = toLongValueExpr.Compile();
             FromLongValue = fromLongValueExpr.Compile();
 
-            SafeMask = FromLongValue(~0UL);
+            TryAssertEnumType();
+
+            All = new Bitmask<T>( FromLongValue( ~0UL ) );
+            if ( ! IsEnum )
+                return;
+
+            var availableValues = All
+                .Where( v => Enum.IsDefined( typeof( T ), v ) )
+                .Select( ToLongValue )
+                .Aggregate( 0UL, (p, c) => p | c );
+
+            All = new Bitmask<T>( FromLongValue( availableValues ) );
         }
 
         public Bitmask(T value)
@@ -92,6 +101,12 @@ namespace LfrlSoft.NET.Common
             return ContainsAll( other.Value );
         }
 
+        public bool ContainsBit(int bitIndex)
+        {
+            Assert.IsBetween( bitIndex, 0, BitCount - 1, nameof( bitIndex ) );
+            return ContainsAll( FromLongValue( 1UL << bitIndex ) );
+        }
+
         public Bitmask<T> Set(T value)
         {
             var result = ToLongValue( Value ) | ToLongValue( value );
@@ -103,6 +118,12 @@ namespace LfrlSoft.NET.Common
             return Set( other.Value );
         }
 
+        public Bitmask<T> SetBit(int bitIndex)
+        {
+            Assert.IsBetween( bitIndex, 0, BitCount - 1, nameof( bitIndex ) );
+            return Set( FromLongValue( 1UL << bitIndex ) );
+        }
+
         public Bitmask<T> Unset(T value)
         {
             var result = ToLongValue( Value ) & ~ToLongValue( value );
@@ -112,6 +133,12 @@ namespace LfrlSoft.NET.Common
         public Bitmask<T> Unset(Bitmask<T> other)
         {
             return Unset( other.Value );
+        }
+
+        public Bitmask<T> UnsetBit(int bitIndex)
+        {
+            Assert.IsBetween( bitIndex, 0, BitCount - 1, nameof( bitIndex ) );
+            return Unset( FromLongValue( 1UL << bitIndex ) );
         }
 
         public Bitmask<T> Intersect(T value)
@@ -144,7 +171,7 @@ namespace LfrlSoft.NET.Common
 
         public Bitmask<T> Sanitize()
         {
-            return Intersect( SafeMask );
+            return Intersect( All.Value );
         }
 
         public Bitmask<T> Clear()
@@ -257,36 +284,63 @@ namespace LfrlSoft.NET.Common
             return a.Negate();
         }
 
+        private static void TryAssertEnumType()
+        {
+            if ( ! IsEnum )
+                return;
+
+            if ( ! Attribute.IsDefined( typeof( T ), typeof( FlagsAttribute ) ) )
+                throw new InvalidOperationException( $"Enum type {typeof( T ).FullName} doesn't have the Flags attribute" );
+
+            var values = Enum.GetValues( typeof( T ) ).Cast<object>();
+            if ( ! values.Any( v => v.Equals( FromLongValue( 0 ) ) ) )
+                throw new InvalidOperationException( $"Enum type {typeof( T ).FullName} doesn't have the 0-value member" );
+        }
+
         private static Expression<Func<T, ulong>> BuildToLongValueExpr()
         {
-            var parameterExpr = Expression.Parameter( typeof( T ), "value" );
-
-            if ( IsEnum )
+            try
             {
-                var underlyingTypeConvertExpr = Expression.Convert( parameterExpr, BaseType );
-                var enumUlongConvertExpr = Expression.Convert( underlyingTypeConvertExpr, typeof( ulong ) );
+                var parameterExpr = Expression.Parameter( typeof( T ), "value" );
 
-                return Expression.Lambda<Func<T, ulong>>( enumUlongConvertExpr, parameterExpr );
+                if ( IsEnum )
+                {
+                    var underlyingTypeConvertExpr = Expression.Convert( parameterExpr, BaseType );
+                    var enumUlongConvertExpr = Expression.Convert( underlyingTypeConvertExpr, typeof( ulong ) );
+
+                    return Expression.Lambda<Func<T, ulong>>( enumUlongConvertExpr, parameterExpr );
+                }
+
+                var ulongConvertExpr = Expression.Convert( parameterExpr, typeof( ulong ) );
+                return Expression.Lambda<Func<T, ulong>>( ulongConvertExpr, parameterExpr );
             }
-
-            var ulongConvertExpr = Expression.Convert( parameterExpr, typeof( ulong ) );
-            return Expression.Lambda<Func<T, ulong>>( ulongConvertExpr, parameterExpr );
+            catch ( Exception exc )
+            {
+                throw new InvalidOperationException( $"Failed to create ToLongValue converter for type {typeof( T ).FullName}", exc );
+            }
         }
 
         private static Expression<Func<ulong, T>> BuildFromLongValueExpr()
         {
-            var parameterExpr = Expression.Parameter( typeof( ulong ), "value" );
-
-            if ( IsEnum )
+            try
             {
-                var underlyingTypeConvertExpr = Expression.Convert( parameterExpr, BaseType );
-                var enumTypeConvertExpr = Expression.Convert( underlyingTypeConvertExpr, typeof( T ) );
+                var parameterExpr = Expression.Parameter( typeof( ulong ), "value" );
 
-                return Expression.Lambda<Func<ulong, T>>( enumTypeConvertExpr, parameterExpr );
+                if ( IsEnum )
+                {
+                    var underlyingTypeConvertExpr = Expression.Convert( parameterExpr, BaseType );
+                    var enumTypeConvertExpr = Expression.Convert( underlyingTypeConvertExpr, typeof( T ) );
+
+                    return Expression.Lambda<Func<ulong, T>>( enumTypeConvertExpr, parameterExpr );
+                }
+
+                var typeConvertExpr = Expression.Convert( parameterExpr, typeof( T ) );
+                return Expression.Lambda<Func<ulong, T>>( typeConvertExpr, parameterExpr );
             }
-
-            var typeConvertExpr = Expression.Convert( parameterExpr, typeof( T ) );
-            return Expression.Lambda<Func<ulong, T>>( typeConvertExpr, parameterExpr );
+            catch ( Exception exc )
+            {
+                throw new InvalidOperationException( $"Failed to create FromLongValue converter for type {typeof( T ).FullName}", exc );
+            }
         }
     }
 }
