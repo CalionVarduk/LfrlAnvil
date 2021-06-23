@@ -15,6 +15,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmarks", "benchmarks", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlSoft.NET.Common.Benchmarks", "benchmarks\LfrlSoft.NET.Common.Benchmark\LfrlSoft.NET.Common.Benchmarks.csproj", "{D446703D-5C74-4478-BDAE-4813082CDA48}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlSoft.NET.TestExtensions", "tests\LfrlSoft.NET.TestExtensions\LfrlSoft.NET.TestExtensions.csproj", "{80BD79F2-B835-4789-9FA6-A7238994C7C3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{D446703D-5C74-4478-BDAE-4813082CDA48}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D446703D-5C74-4478-BDAE-4813082CDA48}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D446703D-5C74-4478-BDAE-4813082CDA48}.Release|Any CPU.Build.0 = Release|Any CPU
+		{80BD79F2-B835-4789-9FA6-A7238994C7C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{80BD79F2-B835-4789-9FA6-A7238994C7C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{80BD79F2-B835-4789-9FA6-A7238994C7C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{80BD79F2-B835-4789-9FA6-A7238994C7C3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -41,6 +47,7 @@ Global
 		{D6B4176C-5059-4D99-84AD-1C489D092828} = {DA5FF8FC-7936-4469-94B0-34EF8455EE5D}
 		{E8B6E5EA-5E49-45BE-8849-CBA41284AD10} = {09DABFA2-E13A-419B-9EEC-11A014E1243C}
 		{D446703D-5C74-4478-BDAE-4813082CDA48} = {834C7885-FD66-44D4-A5ED-240E37BED6BD}
+		{80BD79F2-B835-4789-9FA6-A7238994C7C3} = {09DABFA2-E13A-419B-9EEC-11A014E1243C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3FEF45BB-2269-4080-B6FD-C782F257A901}

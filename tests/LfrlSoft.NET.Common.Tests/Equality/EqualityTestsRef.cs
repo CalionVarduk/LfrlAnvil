@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
 using AutoFixture;
 using FluentAssertions;
-using LfrlSoft.NET.Common.Tests.Extensions;
+using LfrlSoft.NET.TestExtensions;
+using LfrlSoft.NET.TestExtensions.Attributes;
 using Xunit;
 
 namespace LfrlSoft.NET.Common.Tests.Equality

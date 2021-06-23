@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using AutoFixture;
-using LfrlSoft.NET.Common.Tests.Extensions;
+using LfrlSoft.NET.TestExtensions;
 
 namespace LfrlSoft.NET.Common.Tests.Bounds
 {

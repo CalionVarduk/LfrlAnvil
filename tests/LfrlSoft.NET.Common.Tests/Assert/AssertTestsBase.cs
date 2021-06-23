@@ -1,9 +1,10 @@
 ﻿using System;
 using FluentAssertions;
+using LfrlSoft.NET.TestExtensions;
 
 namespace LfrlSoft.NET.Common.Tests.Assert
 {
-    public abstract class AssertTestsBase
+    public abstract class AssertTestsBase : TestsBase
     {
         protected static void ShouldPass(Action action)
         {

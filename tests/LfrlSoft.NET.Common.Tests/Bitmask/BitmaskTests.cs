@@ -3,17 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using AutoFixture;
 using FluentAssertions;
-using LfrlSoft.NET.Common.Tests.Extensions;
+using LfrlSoft.NET.TestExtensions;
+using LfrlSoft.NET.TestExtensions.Attributes;
 using Xunit;
 
 namespace LfrlSoft.NET.Common.Tests.Bitmask
 {
     [GenericTestClass( typeof( BitmaskTestsData<> ) )]
-    public abstract class BitmaskTests<T>
+    public abstract class BitmaskTests<T> : TestsBase
         where T : struct, IConvertible, IComparable
     {
-        protected readonly IFixture Fixture = new Fixture();
-
         [Fact]
         public void Create_ShouldCreateCorrectBitmask()
         {

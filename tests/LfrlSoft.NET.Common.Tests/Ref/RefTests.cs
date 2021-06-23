@@ -1,14 +1,13 @@
 ﻿using AutoFixture;
 using FluentAssertions;
+using LfrlSoft.NET.TestExtensions;
 using Xunit;
 
 namespace LfrlSoft.NET.Common.Tests.Ref
 {
-    public abstract class RefTests<T>
+    public abstract class RefTests<T> : TestsBase
         where T : struct
     {
-        protected readonly IFixture Fixture = new Fixture();
-
         [Fact]
         public void Create_ShouldCreateCorrectRef()
         {

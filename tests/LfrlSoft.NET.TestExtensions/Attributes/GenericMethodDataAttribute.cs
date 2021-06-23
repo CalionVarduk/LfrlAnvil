@@ -2,15 +2,13 @@
 using System.Reflection;
 using AutoFixture;
 
-namespace LfrlSoft.NET.Common.Tests.Extensions
+namespace LfrlSoft.NET.TestExtensions.Attributes
 {
     [AttributeUsage( AttributeTargets.Method )]
     public class GenericMethodDataAttribute : MethodDataAttributeBase
     {
         public GenericMethodDataAttribute(string memberName, params object[] parameters)
             : base( memberName, new Fixture(), parameters ) { }
-
-        public IFixture Fixture => (IFixture) Parameters[0];
 
         protected override Type GetTestMethodDeclaringType(Type? testClass)
         {

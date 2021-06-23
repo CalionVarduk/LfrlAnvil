@@ -2,14 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using AutoFixture;
-using LfrlSoft.NET.Common.Tests.Extensions;
+using LfrlSoft.NET.TestExtensions;
 using Xunit;
 
 namespace LfrlSoft.NET.Common.Tests.Assert
 {
     public abstract class AssertTests<T> : AssertTestsBase
     {
-        protected readonly IFixture Fixture = new Fixture();
         protected readonly IEqualityComparer<T> EqualityComparer = EqualityComparer<T>.Default;
         protected readonly IComparer<T> Comparer = Comparer<T>.Default;
 

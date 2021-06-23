@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using AutoFixture;
-using LfrlSoft.NET.Common.Tests.Extensions;
+using LfrlSoft.NET.TestExtensions;
 
 namespace LfrlSoft.NET.Common.Tests.Bitmask
 {

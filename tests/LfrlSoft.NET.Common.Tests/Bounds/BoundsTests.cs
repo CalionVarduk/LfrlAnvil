@@ -1,17 +1,16 @@
 ﻿using System;
 using AutoFixture;
 using FluentAssertions;
-using LfrlSoft.NET.Common.Tests.Extensions;
+using LfrlSoft.NET.TestExtensions;
+using LfrlSoft.NET.TestExtensions.Attributes;
 using Xunit;
 
 namespace LfrlSoft.NET.Common.Tests.Bounds
 {
     [GenericTestClass( typeof( BoundsTestsData<> ) )]
-    public abstract class BoundsTests<T>
+    public abstract class BoundsTests<T> : TestsBase
         where T : IComparable<T>
     {
-        protected readonly IFixture Fixture = new Fixture();
-
         [Fact]
         public void Create_ShouldCreateCorrectBounds()
         {

@@ -1,15 +1,14 @@
 ﻿using AutoFixture;
 using FluentAssertions;
-using LfrlSoft.NET.Common.Tests.Extensions;
+using LfrlSoft.NET.TestExtensions;
+using LfrlSoft.NET.TestExtensions.Attributes;
 using Xunit;
 
 namespace LfrlSoft.NET.Common.Tests.Equality
 {
     [GenericTestClass( typeof( EqualityTestsData<> ) )]
-    public abstract class EqualityTests<T>
+    public abstract class EqualityTests<T> : TestsBase
     {
-        protected readonly IFixture Fixture = new Fixture();
-
         [Theory]
         [GenericMethodData( nameof( EqualityTestsData<T>.CreateCtorTestData ) )]
         public void Create_ShouldCreateWithCorrectProperties(T first, T second, bool expected)

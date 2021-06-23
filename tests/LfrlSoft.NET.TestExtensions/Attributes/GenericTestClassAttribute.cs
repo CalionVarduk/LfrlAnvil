@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace LfrlSoft.NET.Common.Tests.Extensions
+namespace LfrlSoft.NET.TestExtensions.Attributes
 {
     [AttributeUsage( AttributeTargets.Class, Inherited = false )]
     public class GenericTestClassAttribute : Attribute

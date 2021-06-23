@@ -19,5 +19,9 @@ namespace LfrlSoft.NET.Common.Benchmarks.CL
         [CommandLineBenchmark( typeof( SafeBitCastBenchmark ) )]
         [Option( "bit-cast", Default = false, Required = false, HelpText = "Run bit cast benchmark." )]
         public bool BitCast { get; set; }
+
+        [CommandLineBenchmark( typeof( BackingFieldBenchmark ) )]
+        [Option( "backing-field", Default = false, Required = false, HelpText = "Run backing field access benchmark." )]
+        public bool BackingField { get; set; }
     }
 }

@@ -1,9 +1,9 @@
 ﻿using System;
-using AutoFixture;
 using System.Collections.Generic;
 using System.Linq;
+using AutoFixture;
 
-namespace LfrlSoft.NET.Common.Tests.Extensions
+namespace LfrlSoft.NET.TestExtensions
 {
     public static class FixtureExtensions
     {
@@ -14,7 +14,7 @@ namespace LfrlSoft.NET.Common.Tests.Extensions
 
         public static T CreateNotDefault<T>(this IFixture fixture)
         {
-            return fixture.Create<Generator<T>>().First( v => ! EqualityComparer<T>.Default.Equals( v, default ) );
+            return fixture.Create<Generator<T>>().First( v => ! EqualityComparer<T>.Default.Equals( v, default! ) );
         }
 
         public static IReadOnlyList<T> CreateDistinctCollection<T>(this IFixture fixture, int count)

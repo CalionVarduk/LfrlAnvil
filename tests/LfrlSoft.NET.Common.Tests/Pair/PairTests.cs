@@ -1,15 +1,14 @@
 ﻿using AutoFixture;
 using FluentAssertions;
-using LfrlSoft.NET.Common.Tests.Extensions;
+using LfrlSoft.NET.TestExtensions;
+using LfrlSoft.NET.TestExtensions.Attributes;
 using Xunit;
 
 namespace LfrlSoft.NET.Common.Tests.Pair
 {
     [GenericTestClass( typeof( PairTestsData<,> ) )]
-    public abstract class PairTests<T1, T2>
+    public abstract class PairTests<T1, T2> : TestsBase
     {
-        protected readonly IFixture Fixture = new Fixture();
-
         [Fact]
         public void Create_ShouldCreateCorrectPair()
         {

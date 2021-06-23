@@ -1,5 +1,4 @@
-﻿using AutoFixture;
-using LfrlSoft.NET.Common.Tests.Extensions;
+﻿using LfrlSoft.NET.TestExtensions;
 using Xunit;
 
 namespace LfrlSoft.NET.Common.Tests.Assert

@@ -6,7 +6,7 @@ using System.Reflection;
 using AutoFixture;
 using Xunit;
 
-namespace LfrlSoft.NET.Common.Tests.Extensions
+namespace LfrlSoft.NET.TestExtensions.Attributes
 {
     [AttributeUsage( AttributeTargets.Method )]
     public abstract class MethodDataAttributeBase : MemberDataAttributeBase
@@ -71,9 +71,9 @@ namespace LfrlSoft.NET.Common.Tests.Extensions
                         if ( parameters.Length != parameterTypes.Length )
                             return false;
 
-                        var zippedParams = parameters.Zip( parameterTypes );
+                        var zippedParams = parameters.Zip( parameterTypes, (a, b) => (First: a, Second: b) );
                         return zippedParams
-                            .All( x => x.Second?.IsAssignableTo( x.First.ParameterType ) ?? false );
+                            .All( x => x.First.ParameterType.IsAssignableFrom( x.Second ) );
                     } )
                 .FirstOrDefault();
 

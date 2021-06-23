@@ -1,16 +1,15 @@
 ﻿using System;
 using AutoFixture;
 using FluentAssertions;
-using LfrlSoft.NET.Common.Tests.Extensions;
+using LfrlSoft.NET.TestExtensions;
+using LfrlSoft.NET.TestExtensions.Attributes;
 using Xunit;
 
 namespace LfrlSoft.NET.Common.Tests.Hash
 {
     [TestClass( typeof( HashTestsData ) )]
-    public class Tests
+    public class Tests : TestsBase
     {
-        protected readonly IFixture Fixture = new Fixture();
-
         [Fact]
         public void Ctor_ShouldCreateWithCorrectValue()
         {
