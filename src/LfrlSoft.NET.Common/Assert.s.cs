@@ -1,8 +1,8 @@
-﻿using LfrlSoft.NET.Common.Internal;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using LfrlSoft.NET.Common.Internal;
 
 namespace LfrlSoft.NET.Common
 {
@@ -552,38 +552,38 @@ namespace LfrlSoft.NET.Common
                 return new( $"expected {paramName} to not be equal to {expectedValue}", paramName );
             }
 
-            public static ArgumentException NotGreaterThan<T>(T param, T expectedValue, string paramName)
+            public static ArgumentOutOfRangeException NotGreaterThan<T>(T param, T expectedValue, string paramName)
             {
-                return new( $"expected {paramName} to be greater than {expectedValue} but found {param}", paramName );
+                return new( paramName, $"expected {paramName} to be greater than {expectedValue} but found {param}" );
             }
 
-            public static ArgumentException NotGreaterThanOrEqual<T>(T param, T expectedValue, string paramName)
+            public static ArgumentOutOfRangeException NotGreaterThanOrEqual<T>(T param, T expectedValue, string paramName)
             {
                 return new(
-                    $"expected {paramName} to be greater than or equal to {expectedValue} but found {param}",
-                    paramName );
+                    paramName,
+                    $"expected {paramName} to be greater than or equal to {expectedValue} but found {param}" );
             }
 
-            public static ArgumentException NotLessThan<T>(T param, T expectedValue, string paramName)
+            public static ArgumentOutOfRangeException NotLessThan<T>(T param, T expectedValue, string paramName)
             {
-                return new( $"expected {paramName} to be less than {expectedValue} but found {param}", paramName );
+                return new( paramName, $"expected {paramName} to be less than {expectedValue} but found {param}" );
             }
 
-            public static ArgumentException NotLessThanOrEqual<T>(T param, T expectedValue, string paramName)
+            public static ArgumentOutOfRangeException NotLessThanOrEqual<T>(T param, T expectedValue, string paramName)
             {
                 return new(
-                    $"expected {paramName} to be less than or equal to {expectedValue} but found {param}",
-                    paramName );
+                    paramName,
+                    $"expected {paramName} to be less than or equal to {expectedValue} but found {param}" );
             }
 
-            public static ArgumentException Between<T>(T param, T min, T max, string paramName)
+            public static ArgumentOutOfRangeException Between<T>(T param, T min, T max, string paramName)
             {
-                return new( $"expected {paramName} to not be between {min} and {max} but found {param}", paramName );
+                return new( paramName, $"expected {paramName} to not be between {min} and {max} but found {param}" );
             }
 
-            public static ArgumentException NotBetween<T>(T param, T min, T max, string paramName)
+            public static ArgumentOutOfRangeException NotBetween<T>(T param, T min, T max, string paramName)
             {
-                return new( $"expected {paramName} to be between {min} and {max} but found {param}", paramName );
+                return new( paramName, $"expected {paramName} to be between {min} and {max} but found {param}" );
             }
 
             public static ArgumentException NotEmpty(string paramName)

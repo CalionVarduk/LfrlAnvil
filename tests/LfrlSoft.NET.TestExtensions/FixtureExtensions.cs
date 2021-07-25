@@ -95,5 +95,11 @@ namespace LfrlSoft.NET.TestExtensions
         {
             return fixture.CreateDefault<T>();
         }
+
+        public static int CreateNegativeInt32(this IFixture fixture)
+        {
+            var value = fixture.Create<Generator<int>>().First( x => x != 0 );
+            return value > 0 ? -value : value;
+        }
     }
 }

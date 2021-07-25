@@ -1,9 +1,9 @@
 ﻿using System;
-using LfrlSoft.NET.TestExtensions;
-using Xunit;
 using AutoFixture;
 using FluentAssertions;
 using LfrlSoft.NET.Common.Extensions;
+using LfrlSoft.NET.TestExtensions;
+using Xunit;
 
 namespace LfrlSoft.NET.Common.Tests.Extensions.Pair
 {

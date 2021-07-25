@@ -1,9 +1,9 @@
-﻿using BenchmarkDotNet.Running;
-using CommandLine;
-using LfrlSoft.NET.Common.Benchmarks.CL;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using BenchmarkDotNet.Running;
+using CommandLine;
+using LfrlSoft.NET.Common.Benchmarks.CL;
 
 namespace LfrlSoft.NET.Common.Benchmarks
 {

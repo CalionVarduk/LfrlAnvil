@@ -1,6 +1,6 @@
-﻿using BenchmarkDotNet.Attributes;
+﻿using System;
+using BenchmarkDotNet.Attributes;
 using LfrlSoft.NET.Common.Internal;
-using System;
 
 namespace LfrlSoft.NET.Common.Benchmarks
 {

@@ -1,10 +1,10 @@
 ﻿using System;
-using Xunit;
 using System.Collections.Generic;
-using LfrlSoft.NET.Common.Extensions;
-using LfrlSoft.NET.TestExtensions;
 using AutoFixture;
 using FluentAssertions;
+using LfrlSoft.NET.Common.Extensions;
+using LfrlSoft.NET.TestExtensions;
+using Xunit;
 
 namespace LfrlSoft.NET.Common.Tests.Extensions.Dictionary
 {

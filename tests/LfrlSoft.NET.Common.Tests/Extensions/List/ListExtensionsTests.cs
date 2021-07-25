@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
-using LfrlSoft.NET.TestExtensions;
-using Xunit;
 using FluentAssertions;
 using LfrlSoft.NET.Common.Extensions;
+using LfrlSoft.NET.TestExtensions;
 using LfrlSoft.NET.TestExtensions.Attributes;
+using Xunit;
 
 namespace LfrlSoft.NET.Common.Tests.Extensions.List
 {

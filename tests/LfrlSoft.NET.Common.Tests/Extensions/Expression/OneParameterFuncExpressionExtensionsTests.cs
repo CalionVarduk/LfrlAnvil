@@ -1,7 +1,8 @@
-﻿using Xunit;
-using System;
+﻿using System;
+using System.Linq.Expressions;
 using FluentAssertions;
 using LfrlSoft.NET.Common.Extensions;
+using Xunit;
 
 namespace LfrlSoft.NET.Common.Tests.Extensions.Expression
 {
@@ -24,7 +25,7 @@ namespace LfrlSoft.NET.Common.Tests.Extensions.Expression
         [Fact]
         public void GetMemberName_ShouldReturnCorrectResult_WhenMemberIsField()
         {
-            System.Linq.Expressions.Expression<Func<TestClass, string>> sut = t => t.Field;
+            Expression<Func<TestClass, string>> sut = t => t.Field;
 
             var result = sut.GetMemberName();
 
@@ -34,7 +35,7 @@ namespace LfrlSoft.NET.Common.Tests.Extensions.Expression
         [Fact]
         public void GetMemberName_ShouldReturnCorrectResult_WhenMemberIsProperty()
         {
-            System.Linq.Expressions.Expression<Func<TestClass, string>> sut = t => t.Property;
+            Expression<Func<TestClass, string>> sut = t => t.Property;
 
             var result = sut.GetMemberName();
 
@@ -44,7 +45,7 @@ namespace LfrlSoft.NET.Common.Tests.Extensions.Expression
         [Fact]
         public void GetMemberName_ShouldThrowWhenBodyIsMethodCall()
         {
-            System.Linq.Expressions.Expression<Func<TestClass, string>> sut = t => t.Method();
+            Expression<Func<TestClass, string>> sut = t => t.Method();
 
             Action action = () => sut.GetMemberName();
 
@@ -54,7 +55,7 @@ namespace LfrlSoft.NET.Common.Tests.Extensions.Expression
         [Fact]
         public void GetMemberName_ShouldThrowWhenBodyIsStaticMember()
         {
-            System.Linq.Expressions.Expression<Func<TestClass, string>> sut = _ => TestClass.StaticProperty;
+            Expression<Func<TestClass, string>> sut = _ => TestClass.StaticProperty;
 
             Action action = () => sut.GetMemberName();
 
@@ -64,7 +65,7 @@ namespace LfrlSoft.NET.Common.Tests.Extensions.Expression
         [Fact]
         public void GetMemberName_ShouldThrowWhenBodyIsStaticMemberFromDifferentType()
         {
-            System.Linq.Expressions.Expression<Func<TestClass, string>> sut = _ => string.Empty;
+            Expression<Func<TestClass, string>> sut = _ => string.Empty;
 
             Action action = () => sut.GetMemberName();
 
@@ -74,7 +75,7 @@ namespace LfrlSoft.NET.Common.Tests.Extensions.Expression
         [Fact]
         public void GetMemberName_ShouldThrowWhenBodyIsAccessingMemberOfMember()
         {
-            System.Linq.Expressions.Expression<Func<TestClass, string>> sut = t => t.Other.Property;
+            Expression<Func<TestClass, string>> sut = t => t.Other.Property;
 
             Action action = () => sut.GetMemberName();
 

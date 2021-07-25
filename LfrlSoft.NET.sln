@@ -17,6 +17,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlSoft.NET.Common.Benchma
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlSoft.NET.TestExtensions", "tests\LfrlSoft.NET.TestExtensions\LfrlSoft.NET.TestExtensions.csproj", "{80BD79F2-B835-4789-9FA6-A7238994C7C3}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "console", "console", "{DB23EBFC-46F1-4B6A-89D8-E046C7F5BCA3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlSoft.NET.ConsoleApp", "console\LfrlSoft.NET.ConsoleApp\LfrlSoft.NET.ConsoleApp.csproj", "{9FD358A6-D0AF-4D58-86D3-F13EEE8A0779}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +43,10 @@ Global
 		{80BD79F2-B835-4789-9FA6-A7238994C7C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{80BD79F2-B835-4789-9FA6-A7238994C7C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{80BD79F2-B835-4789-9FA6-A7238994C7C3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9FD358A6-D0AF-4D58-86D3-F13EEE8A0779}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9FD358A6-D0AF-4D58-86D3-F13EEE8A0779}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9FD358A6-D0AF-4D58-86D3-F13EEE8A0779}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9FD358A6-D0AF-4D58-86D3-F13EEE8A0779}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -48,6 +56,7 @@ Global
 		{E8B6E5EA-5E49-45BE-8849-CBA41284AD10} = {09DABFA2-E13A-419B-9EEC-11A014E1243C}
 		{D446703D-5C74-4478-BDAE-4813082CDA48} = {834C7885-FD66-44D4-A5ED-240E37BED6BD}
 		{80BD79F2-B835-4789-9FA6-A7238994C7C3} = {09DABFA2-E13A-419B-9EEC-11A014E1243C}
+		{9FD358A6-D0AF-4D58-86D3-F13EEE8A0779} = {DB23EBFC-46F1-4B6A-89D8-E046C7F5BCA3}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3FEF45BB-2269-4080-B6FD-C782F257A901}

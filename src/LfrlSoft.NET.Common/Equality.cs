@@ -1,5 +1,5 @@
-﻿using LfrlSoft.NET.Common.Internal;
-using System;
+﻿using System;
+using LfrlSoft.NET.Common.Internal;
 
 namespace LfrlSoft.NET.Common
 {

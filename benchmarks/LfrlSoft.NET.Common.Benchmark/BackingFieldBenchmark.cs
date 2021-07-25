@@ -52,26 +52,26 @@ namespace LfrlSoft.NET.Common.Benchmarks
             private int Property19 { get; }
             public int Property20 { get; set; }
 
-            public void Method1() {}
-            public void Method2() {}
-            public void Method3() {}
-            private void Method4() {}
-            private void Method5() {}
-            public void Method6() {}
-            public void Method7() {}
-            private void Method8() {}
-            public void Method9() {}
-            private void Method10() {}
-            public void Method11() {}
-            private void Method12() {}
-            public void Method13() {}
-            public void Method14() {}
-            public void Method15() {}
-            private void Method16() {}
-            public void Method17() {}
-            public void Method18() {}
-            private void Method19() {}
-            public void Method20() {}
+            public void Method1() { }
+            public void Method2() { }
+            public void Method3() { }
+            private void Method4() { }
+            private void Method5() { }
+            public void Method6() { }
+            public void Method7() { }
+            private void Method8() { }
+            public void Method9() { }
+            private void Method10() { }
+            public void Method11() { }
+            private void Method12() { }
+            public void Method13() { }
+            public void Method14() { }
+            public void Method15() { }
+            private void Method16() { }
+            public void Method17() { }
+            public void Method18() { }
+            private void Method19() { }
+            public void Method20() { }
         }
 
         public readonly string Name = "<Property1>k__BackingField";
@@ -82,7 +82,7 @@ namespace LfrlSoft.NET.Common.Benchmarks
             var type = typeof( Test );
 
             var fields = type.GetFields( BindingFlags.Instance | BindingFlags.NonPublic );
-            var result = fields.FirstOrDefault( f => f.Name == Name);
+            var result = fields.FirstOrDefault( f => f.Name == Name );
 
             return result != null;
         }
@@ -93,7 +93,7 @@ namespace LfrlSoft.NET.Common.Benchmarks
             var type = typeof( Test );
 
             var members = type.FindMembers( MemberTypes.Field, BindingFlags.Instance | BindingFlags.NonPublic, Type.FilterName, Name );
-            var result = (FieldInfo?)members.FirstOrDefault();
+            var result = (FieldInfo?) members.FirstOrDefault();
 
             return result != null;
         }

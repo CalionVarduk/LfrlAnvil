@@ -1,5 +1,4 @@
 ﻿using System;
-using AutoFixture;
 using Xunit;
 
 namespace LfrlSoft.NET.Common.Tests.Bitmask

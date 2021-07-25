@@ -1,7 +1,7 @@
-﻿using LfrlSoft.NET.Common.Internal;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using LfrlSoft.NET.Common.Internal;
 
 namespace LfrlSoft.NET.Common
 {

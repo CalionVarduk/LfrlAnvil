@@ -135,14 +135,14 @@ namespace LfrlSoft.NET.Common.Tests.Assert
         public void IsGreaterThan_ShouldThrow_WhenParamIsLessThanValue_WithExplicitComparer()
         {
             var (param, value) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldThrow( () => Common.Assert.IsGreaterThan( param, value, Comparer ) );
+            ShouldThrow<ArgumentOutOfRangeException>( () => Common.Assert.IsGreaterThan( param, value, Comparer ) );
         }
 
         [Fact]
         public void IsGreaterThan_ShouldThrow_WhenParamIsEqualToValue_WithExplicitComparer()
         {
             var param = Fixture.CreateNotDefault<T>();
-            ShouldThrow( () => Common.Assert.IsGreaterThan( param, param, Comparer ) );
+            ShouldThrow<ArgumentOutOfRangeException>( () => Common.Assert.IsGreaterThan( param, param, Comparer ) );
         }
 
         [Fact]
@@ -163,7 +163,7 @@ namespace LfrlSoft.NET.Common.Tests.Assert
         public void IsGreaterThanOrEqualTo_ShouldThrow_WhenParamIsLessThanValue_WithExplicitComparer()
         {
             var (param, value) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldThrow( () => Common.Assert.IsGreaterThanOrEqualTo( param, value, Comparer ) );
+            ShouldThrow<ArgumentOutOfRangeException>( () => Common.Assert.IsGreaterThanOrEqualTo( param, value, Comparer ) );
         }
 
         [Fact]
@@ -177,14 +177,14 @@ namespace LfrlSoft.NET.Common.Tests.Assert
         public void IsLessThan_ShouldThrow_WhenParamIsGreaterThanValue_WithExplicitComparer()
         {
             var (value, param) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldThrow( () => Common.Assert.IsLessThan( param, value, Comparer ) );
+            ShouldThrow<ArgumentOutOfRangeException>( () => Common.Assert.IsLessThan( param, value, Comparer ) );
         }
 
         [Fact]
         public void IsLessThan_ShouldThrow_WhenParamIsEqualToValue_WithExplicitComparer()
         {
             var param = Fixture.CreateNotDefault<T>();
-            ShouldThrow( () => Common.Assert.IsLessThan( param, param, Comparer ) );
+            ShouldThrow<ArgumentOutOfRangeException>( () => Common.Assert.IsLessThan( param, param, Comparer ) );
         }
 
         [Fact]
@@ -205,7 +205,7 @@ namespace LfrlSoft.NET.Common.Tests.Assert
         public void IsLessThanOrEqualTo_ShouldThrow_WhenParamIsGreaterThanValue_WithExplicitComparer()
         {
             var (value, param) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldThrow( () => Common.Assert.IsLessThanOrEqualTo( param, value, Comparer ) );
+            ShouldThrow<ArgumentOutOfRangeException>( () => Common.Assert.IsLessThanOrEqualTo( param, value, Comparer ) );
         }
 
         [Fact]
@@ -240,14 +240,14 @@ namespace LfrlSoft.NET.Common.Tests.Assert
         public void IsBetween_ShouldThrow_WhenParamIsLessThanMinValue_WithExplicitComparer()
         {
             var (param, min, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
-            ShouldThrow( () => Common.Assert.IsBetween( param, min, max, Comparer ) );
+            ShouldThrow<ArgumentOutOfRangeException>( () => Common.Assert.IsBetween( param, min, max, Comparer ) );
         }
 
         [Fact]
         public void IsBetween_ShouldThrow_WhenParamIsGreaterThanMaxValue_WithExplicitComparer()
         {
             var (min, max, param) = Fixture.CreateDistinctSortedCollection<T>( 3 );
-            ShouldThrow( () => Common.Assert.IsBetween( param, min, max, Comparer ) );
+            ShouldThrow<ArgumentOutOfRangeException>( () => Common.Assert.IsBetween( param, min, max, Comparer ) );
         }
 
         [Fact]
@@ -255,7 +255,7 @@ namespace LfrlSoft.NET.Common.Tests.Assert
         {
             var param = Fixture.CreateNotDefault<T>();
             var (max, min) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldThrow( () => Common.Assert.IsBetween( param, min, max, Comparer ) );
+            ShouldThrow<ArgumentOutOfRangeException>( () => Common.Assert.IsBetween( param, min, max, Comparer ) );
         }
 
         [Fact]
@@ -284,28 +284,28 @@ namespace LfrlSoft.NET.Common.Tests.Assert
         public void IsNotBetween_ShouldThrow_WhenParamIsBetweenTwoDistinctValues_WithExplicitComparer()
         {
             var (min, param, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
-            ShouldThrow( () => Common.Assert.IsNotBetween( param, min, max, Comparer ) );
+            ShouldThrow<ArgumentOutOfRangeException>( () => Common.Assert.IsNotBetween( param, min, max, Comparer ) );
         }
 
         [Fact]
         public void IsNotBetween_ShouldThrow_WhenParamIsEqualToMinValue_WithExplicitComparer()
         {
             var (param, max) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldThrow( () => Common.Assert.IsNotBetween( param, param, max, Comparer ) );
+            ShouldThrow<ArgumentOutOfRangeException>( () => Common.Assert.IsNotBetween( param, param, max, Comparer ) );
         }
 
         [Fact]
         public void IsNotBetween_ShouldThrow_WhenParamIsEqualToMaxValue_WithExplicitComparer()
         {
             var (min, param) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldThrow( () => Common.Assert.IsNotBetween( param, min, param, Comparer ) );
+            ShouldThrow<ArgumentOutOfRangeException>( () => Common.Assert.IsNotBetween( param, min, param, Comparer ) );
         }
 
         [Fact]
         public void IsNotBetween_ShouldThrow_WhenParamIsEqualToMinAndMaxValues_WithExplicitComparer()
         {
             var param = Fixture.CreateNotDefault<T>();
-            ShouldThrow( () => Common.Assert.IsNotBetween( param, param, param, Comparer ) );
+            ShouldThrow<ArgumentOutOfRangeException>( () => Common.Assert.IsNotBetween( param, param, param, Comparer ) );
         }
 
         [Fact]
