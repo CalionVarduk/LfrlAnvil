@@ -14,7 +14,7 @@ namespace LfrlSoft.NET.Core.Extensions
 
         public static IEnumerable<T2> Memoize<T1, T2>(this T1 source, Func<T1, IEnumerable<T2>> selector)
         {
-            return new MemoizedEnumeration<T2>( selector( source ) );
+            return new MemoizedEnumerable<T2>( selector( source ) );
         }
 
         public static IEnumerable<T> Visit<T>(this T? source, Func<T, T?> nodeSelector)

@@ -13,7 +13,7 @@ namespace LfrlSoft.NET.Core.Extensions
 
         public static IEnumerable<T> Memoize<T>(this Func<IEnumerable<T>> source)
         {
-            return new MemoizedEnumeration<T>( source() );
+            return new MemoizedEnumerable<T>( source() );
         }
     }
 }

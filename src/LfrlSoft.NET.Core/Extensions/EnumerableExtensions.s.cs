@@ -192,7 +192,7 @@ namespace LfrlSoft.NET.Core.Extensions
 
         public static IEnumerable<T> Memoize<T>(this IEnumerable<T> source)
         {
-            return new MemoizedEnumeration<T>( source );
+            return new MemoizedEnumerable<T>( source );
         }
 
         public static bool SetEquals<T>(this IEnumerable<T> source, IEnumerable<T> other)
