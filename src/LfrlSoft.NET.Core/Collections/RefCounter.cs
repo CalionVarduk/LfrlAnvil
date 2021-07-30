@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace LfrlSoft.NET.Core.Collections
 {
-    public class RefCounter<TKey> : IReadOnlyDictionary<TKey, int>
+    public class RefCounter<TKey> : IRefCounter<TKey>
         where TKey : notnull
     {
         private readonly Dictionary<TKey, Ref<int>> _map;

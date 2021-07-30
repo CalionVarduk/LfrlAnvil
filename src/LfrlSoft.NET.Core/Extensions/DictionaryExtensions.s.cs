@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using LfrlSoft.NET.Core.Collections.Enums;
 
 namespace LfrlSoft.NET.Core.Extensions
 {
@@ -36,6 +37,15 @@ namespace LfrlSoft.NET.Core.Extensions
             value = defaultValueProvider.Value;
             dictionary[key] = value;
             return value;
+        }
+
+        public static AddOrUpdateResult AddOrUpdate<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue value)
+        {
+            if ( dictionary.TryAdd( key, value ) )
+                return AddOrUpdateResult.Added;
+
+            dictionary[key] = value;
+            return AddOrUpdateResult.Updated;
         }
     }
 }

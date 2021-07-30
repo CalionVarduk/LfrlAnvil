@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using AutoFixture;
 using FluentAssertions;
+using FluentAssertions.Execution;
+using LfrlSoft.NET.Core.Collections.Enums;
 using LfrlSoft.NET.Core.Extensions;
 using LfrlSoft.NET.TestExtensions;
 using Xunit;
@@ -31,7 +33,11 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Dictionary
 
             var result = sut.GetOrAddDefault( key );
 
-            result.Should().Be( default( TValue? ) );
+            using ( new AssertionScope() )
+            {
+                result.Should().Be( default( TValue? ) );
+                sut[key].Should().Be( default( TValue? ) );
+            }
         }
 
         [Fact]
@@ -55,7 +61,11 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Dictionary
 
             var result = sut.GetOrAdd( key, () => providedValue );
 
-            result.Should().Be( providedValue );
+            using ( new AssertionScope() )
+            {
+                result.Should().Be( providedValue );
+                sut[key].Should().Be( providedValue );
+            }
         }
 
         [Fact]
@@ -79,7 +89,43 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Dictionary
 
             var result = sut.GetOrAdd( key, new Lazy<TValue>( () => providedValue ) );
 
-            result.Should().Be( providedValue );
+            using ( new AssertionScope() )
+            {
+                result.Should().Be( providedValue );
+                sut[key].Should().Be( providedValue );
+            }
+        }
+
+        [Fact]
+        public void AddOrUpdate_ShouldAddValue_WhenKeyDoesntExist()
+        {
+            var key = Fixture.Create<TKey>();
+            var value = Fixture.Create<TValue>();
+            var sut = new Dictionary<TKey, TValue>();
+
+            var result = sut.AddOrUpdate( key, value );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().Be( AddOrUpdateResult.Added );
+                sut[key].Should().Be( value );
+            }
+        }
+
+        [Fact]
+        public void AddOrUpdate_ShouldUpdateValue_WhenKeyExists()
+        {
+            var key = Fixture.Create<TKey>();
+            var (oldValue, newValue) = Fixture.CreateDistinctCollection<TValue>( 2 );
+            var sut = new Dictionary<TKey, TValue>() { { key, oldValue } };
+
+            var result = sut.AddOrUpdate( key, newValue );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().Be( AddOrUpdateResult.Updated );
+                sut[key].Should().Be( newValue );
+            }
         }
     }
 }

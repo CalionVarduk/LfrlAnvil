@@ -18,13 +18,17 @@ namespace LfrlSoft.NET.Core.Tests.Collections.RefCounter
         {
             var sut = new RefCounter<TKey>();
 
-            sut.Count.Should().Be( 0 );
+            using ( new AssertionScope() )
+            {
+                sut.Count.Should().Be( 0 );
+                sut.Comparer.Should().Be( EqualityComparer<TKey>.Default );
+            }
         }
 
         [Fact]
         public void Ctor_ShouldCreateWithExplicitComparer()
         {
-            var comparer = EqualityComparer<TKey>.Default;
+            var comparer = EqualityComparerFactory<TKey>.Create( (a, b) => a.Equals( b ) );
 
             var sut = new RefCounter<TKey>( comparer );
 

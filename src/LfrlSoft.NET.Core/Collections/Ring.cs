@@ -5,7 +5,7 @@ using LfrlSoft.NET.Core.Collections.Internal;
 
 namespace LfrlSoft.NET.Core.Collections
 {
-    public class Ring<T> : IReadOnlyList<T?>
+    public class Ring<T> : IRing<T>
     {
         private int _startIndex;
         private readonly T?[] _items;
