@@ -117,13 +117,45 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Dictionary
         {
             var key = Fixture.Create<TKey>();
             var (oldValue, newValue) = Fixture.CreateDistinctCollection<TValue>( 2 );
-            var sut = new Dictionary<TKey, TValue>() { { key, oldValue } };
+            var sut = new Dictionary<TKey, TValue> { { key, oldValue } };
 
             var result = sut.AddOrUpdate( key, newValue );
 
             using ( new AssertionScope() )
             {
                 result.Should().Be( AddOrUpdateResult.Updated );
+                sut[key].Should().Be( newValue );
+            }
+        }
+
+        [Fact]
+        public void TryUpdate_ShouldReturnFalse_WhenKeyDoesntExist()
+        {
+            var key = Fixture.Create<TKey>();
+            var value = Fixture.Create<TValue>();
+            var sut = new Dictionary<TKey, TValue>();
+
+            var result = sut.TryUpdate( key, value );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeFalse();
+                sut.Count.Should().Be( 0 );
+            }
+        }
+
+        [Fact]
+        public void TryUpdate_ShouldReturnTrue_WhenKeyExists()
+        {
+            var key = Fixture.Create<TKey>();
+            var (oldValue, newValue) = Fixture.CreateDistinctCollection<TValue>( 2 );
+            var sut = new Dictionary<TKey, TValue> { { key, oldValue } };
+
+            var result = sut.TryUpdate( key, newValue );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeTrue();
                 sut[key].Should().Be( newValue );
             }
         }

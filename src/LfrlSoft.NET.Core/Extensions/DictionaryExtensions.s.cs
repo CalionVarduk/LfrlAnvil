@@ -47,5 +47,14 @@ namespace LfrlSoft.NET.Core.Extensions
             dictionary[key] = value;
             return AddOrUpdateResult.Updated;
         }
+
+        public static bool TryUpdate<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue value)
+        {
+            if ( ! dictionary.ContainsKey( key ) )
+                return false;
+
+            dictionary[key] = value;
+            return true;
+        }
     }
 }

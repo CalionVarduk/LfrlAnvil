@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using LfrlSoft.NET.Core.Collections;
 using LfrlSoft.NET.Core.Collections.Internal;
 
@@ -7,22 +8,26 @@ namespace LfrlSoft.NET.Core.Extensions
 {
     public static class ObjectExtensions
     {
+        [Pure]
         public static One<T> ToOne<T>(this T source)
         {
             return One.Create( source );
         }
 
+        [Pure]
         public static IEnumerable<T2> Memoize<T1, T2>(this T1 source, Func<T1, IEnumerable<T2>> selector)
         {
             return new MemoizedEnumerable<T2>( selector( source ) );
         }
 
+        [Pure]
         public static IEnumerable<T> Visit<T>(this T? source, Func<T, T?> nodeSelector)
             where T : class
         {
             return source.Visit( nodeSelector!, e => e is null )!;
         }
 
+        [Pure]
         public static IEnumerable<T> Visit<T>(this T source, Func<T, T> nodeSelector, Func<T, bool> breakPredicate)
         {
             if ( breakPredicate( source ) )
@@ -38,17 +43,20 @@ namespace LfrlSoft.NET.Core.Extensions
             }
         }
 
+        [Pure]
         public static IEnumerable<T> VisitMany<T>(this T source, Func<T, IEnumerable<T>> nodeRangeSelector)
         {
             return nodeRangeSelector( source ).VisitMany( nodeRangeSelector );
         }
 
+        [Pure]
         public static IEnumerable<T> VisitWithSelf<T>(this T? source, Func<T, T?> nodeSelector)
             where T : class
         {
             return source.VisitWithSelf( nodeSelector!, e => e is null )!;
         }
 
+        [Pure]
         public static IEnumerable<T> VisitWithSelf<T>(this T source, Func<T, T> nodeSelector, Func<T, bool> breakPredicate)
         {
             if ( breakPredicate( source ) )
@@ -66,6 +74,7 @@ namespace LfrlSoft.NET.Core.Extensions
             }
         }
 
+        [Pure]
         public static IEnumerable<T> VisitManyWithSelf<T>(this T source, Func<T, IEnumerable<T>> nodeRangeSelector)
         {
             yield return source;

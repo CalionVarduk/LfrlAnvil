@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
 
 namespace LfrlSoft.NET.Core.Internal
 {
     public static class UnderlyingType
     {
+        [Pure]
         public static Type[] GetForType(Type? type, Type? targetType)
         {
             if ( type is null || ! type.IsGenericType )

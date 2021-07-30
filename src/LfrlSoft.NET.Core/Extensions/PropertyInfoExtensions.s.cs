@@ -1,9 +1,11 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics.Contracts;
+using System.Reflection;
 
 namespace LfrlSoft.NET.Core.Extensions
 {
     public static class PropertyInfoExtensions
     {
+        [Pure]
         public static FieldInfo? GetBackingField(this PropertyInfo source)
         {
             var backingFieldName = $"<{source.Name}>k__BackingField";

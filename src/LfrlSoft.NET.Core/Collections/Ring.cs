@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using LfrlSoft.NET.Core.Collections.Internal;
 
@@ -46,6 +47,7 @@ namespace LfrlSoft.NET.Core.Collections
             }
         }
 
+        [Pure]
         public int GetUnderlyingIndex(int index)
         {
             var i = (index + _startIndex) % _items.Length;
@@ -68,11 +70,13 @@ namespace LfrlSoft.NET.Core.Collections
             _startIndex = 0;
         }
 
+        [Pure]
         public IEnumerator<T?> GetEnumerator()
         {
             return new RingEnumerator<T>( _items, _startIndex );
         }
 
+        [Pure]
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();

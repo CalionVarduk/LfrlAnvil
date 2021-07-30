@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Runtime.InteropServices;
@@ -50,136 +51,161 @@ namespace LfrlSoft.NET.Core
             Value = value;
         }
 
+        [Pure]
         public override string ToString()
         {
             return $"{nameof( Bitmask )}({Value})";
         }
 
+        [Pure]
         public override bool Equals(object obj)
         {
             return obj is Bitmask<T> b && Equals( b );
         }
 
+        [Pure]
         public override int GetHashCode()
         {
             return Value.GetHashCode();
         }
 
+        [Pure]
         public bool Equals(Bitmask<T> other)
         {
             return Value.Equals( other.Value );
         }
 
+        [Pure]
         public int CompareTo(object obj)
         {
             return obj is Bitmask<T> b ? CompareTo( b ) : 1;
         }
 
+        [Pure]
         public int CompareTo(Bitmask<T> other)
         {
             return Value.CompareTo( other.Value );
         }
 
+        [Pure]
         public bool ContainsAny(T value)
         {
             var longValue = ToLongValue( value );
             return (ToLongValue( Value ) & longValue) != 0 || longValue == 0;
         }
 
+        [Pure]
         public bool ContainsAny(Bitmask<T> other)
         {
             return ContainsAny( other.Value );
         }
 
+        [Pure]
         public bool ContainsAll(T value)
         {
             var longValue = ToLongValue( value );
             return (ToLongValue( Value ) & longValue) == longValue;
         }
 
+        [Pure]
         public bool ContainsAll(Bitmask<T> other)
         {
             return ContainsAll( other.Value );
         }
 
+        [Pure]
         public bool ContainsBit(int bitIndex)
         {
             Assert.IsBetween( bitIndex, 0, BitCount - 1, nameof( bitIndex ) );
             return ContainsAll( FromLongValue( 1UL << bitIndex ) );
         }
 
+        [Pure]
         public Bitmask<T> Set(T value)
         {
             var result = ToLongValue( Value ) | ToLongValue( value );
             return new Bitmask<T>( FromLongValue( result ) );
         }
 
+        [Pure]
         public Bitmask<T> Set(Bitmask<T> other)
         {
             return Set( other.Value );
         }
 
+        [Pure]
         public Bitmask<T> SetBit(int bitIndex)
         {
             Assert.IsBetween( bitIndex, 0, BitCount - 1, nameof( bitIndex ) );
             return Set( FromLongValue( 1UL << bitIndex ) );
         }
 
+        [Pure]
         public Bitmask<T> Unset(T value)
         {
             var result = ToLongValue( Value ) & ~ToLongValue( value );
             return new Bitmask<T>( FromLongValue( result ) );
         }
 
+        [Pure]
         public Bitmask<T> Unset(Bitmask<T> other)
         {
             return Unset( other.Value );
         }
 
+        [Pure]
         public Bitmask<T> UnsetBit(int bitIndex)
         {
             Assert.IsBetween( bitIndex, 0, BitCount - 1, nameof( bitIndex ) );
             return Unset( FromLongValue( 1UL << bitIndex ) );
         }
 
+        [Pure]
         public Bitmask<T> Intersect(T value)
         {
             var result = ToLongValue( Value ) & ToLongValue( value );
             return new Bitmask<T>( FromLongValue( result ) );
         }
 
+        [Pure]
         public Bitmask<T> Intersect(Bitmask<T> other)
         {
             return Intersect( other.Value );
         }
 
+        [Pure]
         public Bitmask<T> Alternate(T value)
         {
             var result = ToLongValue( Value ) ^ ToLongValue( value );
             return new Bitmask<T>( FromLongValue( result ) );
         }
 
+        [Pure]
         public Bitmask<T> Alternate(Bitmask<T> other)
         {
             return Alternate( other.Value );
         }
 
+        [Pure]
         public Bitmask<T> Negate()
         {
             var result = ~ToLongValue( Value );
             return new Bitmask<T>( FromLongValue( result ) );
         }
 
+        [Pure]
         public Bitmask<T> Sanitize()
         {
             return Intersect( All.Value );
         }
 
+        [Pure]
         public Bitmask<T> Clear()
         {
             return new Bitmask<T>( FromLongValue( 0 ) );
         }
 
+        [Pure]
         public IEnumerator<T> GetEnumerator()
         {
             var longValue = ToLongValue( Value );
@@ -190,96 +216,115 @@ namespace LfrlSoft.NET.Core
                 .GetEnumerator();
         }
 
+        [Pure]
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
         }
 
+        [Pure]
         public static implicit operator T(Bitmask<T> b)
         {
             return b.Value;
         }
 
+        [Pure]
         public static implicit operator Bitmask<T>(T v)
         {
             return new Bitmask<T>( v );
         }
 
+        [Pure]
         public static bool operator ==(Bitmask<T> a, Bitmask<T> b)
         {
             return a.Equals( b );
         }
 
+        [Pure]
         public static bool operator !=(Bitmask<T> a, Bitmask<T> b)
         {
             return ! a.Equals( b );
         }
 
+        [Pure]
         public static bool operator >(Bitmask<T> a, Bitmask<T> b)
         {
             return a.CompareTo( b ) > 0;
         }
 
+        [Pure]
         public static bool operator <=(Bitmask<T> a, Bitmask<T> b)
         {
             return a.CompareTo( b ) <= 0;
         }
 
+        [Pure]
         public static bool operator <(Bitmask<T> a, Bitmask<T> b)
         {
             return a.CompareTo( b ) < 0;
         }
 
+        [Pure]
         public static bool operator >=(Bitmask<T> a, Bitmask<T> b)
         {
             return a.CompareTo( b ) >= 0;
         }
 
+        [Pure]
         public static Bitmask<T> operator |(Bitmask<T> a, Bitmask<T> b)
         {
             return a.Set( b );
         }
 
+        [Pure]
         public static Bitmask<T> operator |(Bitmask<T> a, T b)
         {
             return a.Set( b );
         }
 
+        [Pure]
         public static Bitmask<T> operator |(T a, Bitmask<T> b)
         {
             return new Bitmask<T>( a ).Set( b );
         }
 
+        [Pure]
         public static Bitmask<T> operator &(Bitmask<T> a, Bitmask<T> b)
         {
             return a.Intersect( b );
         }
 
+        [Pure]
         public static Bitmask<T> operator &(Bitmask<T> a, T b)
         {
             return a.Intersect( b );
         }
 
+        [Pure]
         public static Bitmask<T> operator &(T a, Bitmask<T> b)
         {
             return new Bitmask<T>( a ).Intersect( b );
         }
 
+        [Pure]
         public static Bitmask<T> operator ^(Bitmask<T> a, Bitmask<T> b)
         {
             return a.Alternate( b );
         }
 
+        [Pure]
         public static Bitmask<T> operator ^(Bitmask<T> a, T b)
         {
             return a.Alternate( b );
         }
 
+        [Pure]
         public static Bitmask<T> operator ^(T a, Bitmask<T> b)
         {
             return new Bitmask<T>( a ).Alternate( b );
         }
 
+        [Pure]
         public static Bitmask<T> operator ~(Bitmask<T> a)
         {
             return a.Negate();

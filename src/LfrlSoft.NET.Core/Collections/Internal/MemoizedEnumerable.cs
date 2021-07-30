@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using LfrlSoft.NET.Core.Extensions;
 
 namespace LfrlSoft.NET.Core.Collections.Internal
@@ -14,11 +15,13 @@ namespace LfrlSoft.NET.Core.Collections.Internal
             Source = new Lazy<IEnumerable<T>>( source.Materialize );
         }
 
+        [Pure]
         public IEnumerator<T> GetEnumerator()
         {
             return Source.Value.GetEnumerator();
         }
 
+        [Pure]
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();

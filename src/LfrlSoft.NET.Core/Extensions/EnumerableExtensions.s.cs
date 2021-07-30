@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using LfrlSoft.NET.Core.Collections.Internal;
 using LfrlSoft.NET.Core.Internal;
@@ -8,23 +9,27 @@ namespace LfrlSoft.NET.Core.Extensions
 {
     public static class EnumerableExtensions
     {
+        [Pure]
         public static IEnumerable<T> EmptyIfNull<T>(this IEnumerable<T>? source)
         {
             return source ?? Enumerable.Empty<T>();
         }
 
+        [Pure]
         public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> source)
             where T : class
         {
             return source.Where( e => e is not null )!;
         }
 
+        [Pure]
         public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> source)
             where T : struct
         {
             return source.Where( e => e.HasValue ).Select( e => e!.Value );
         }
 
+        [Pure]
         public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> source, IEqualityComparer<T> comparer)
         {
             if ( ! Generic<T>.IsReferenceType && ! Generic<T>.IsNullableType )
@@ -33,18 +38,21 @@ namespace LfrlSoft.NET.Core.Extensions
             return source.Where( e => ! comparer.Equals( e!, default! ) )!;
         }
 
+        [Pure]
         public static bool ContainsNull<T>(this IEnumerable<T?> source)
             where T : class
         {
             return source.Any( e => e is null );
         }
 
+        [Pure]
         public static bool ContainsNull<T>(this IEnumerable<T?> source)
             where T : struct
         {
             return source.Any( e => ! e.HasValue );
         }
 
+        [Pure]
         public static bool ContainsNull<T>(this IEnumerable<T> source, IEqualityComparer<T> comparer)
         {
             if ( ! Generic<T>.IsReferenceType && ! Generic<T>.IsNullableType )
@@ -53,26 +61,31 @@ namespace LfrlSoft.NET.Core.Extensions
             return source.Any( e => comparer.Equals( e!, default! ) );
         }
 
+        [Pure]
         public static bool IsNullOrEmpty<T>(this IEnumerable<T>? source)
         {
             return source is null || source.IsEmpty();
         }
 
+        [Pure]
         public static bool IsEmpty<T>(this IEnumerable<T> source)
         {
             return ! source.Any();
         }
 
+        [Pure]
         public static bool ContainsAtLeast<T>(this IEnumerable<T> source, int count)
         {
             return count <= 0 || source.Skip( count - 1 ).Any();
         }
 
+        [Pure]
         public static bool ContainsAtMost<T>(this IEnumerable<T> source, int count)
         {
             return count >= 0 && ! source.Skip( count ).Any();
         }
 
+        [Pure]
         public static bool ContainsBetween<T>(this IEnumerable<T> source, int minCount, int maxCount)
         {
             if ( maxCount < minCount )
@@ -98,6 +111,7 @@ namespace LfrlSoft.NET.Core.Extensions
             return true;
         }
 
+        [Pure]
         public static bool ContainsExactly<T>(this IEnumerable<T> source, int count)
         {
             if ( count < 0 )
@@ -115,11 +129,13 @@ namespace LfrlSoft.NET.Core.Extensions
             return counter == count;
         }
 
+        [Pure]
         public static IEnumerable<Pair<T1, T2>> Flatten<T1, T2>(this IEnumerable<T1> source, Func<T1, IEnumerable<T2>> selector)
         {
             return source.Flatten( selector, Pair.Create );
         }
 
+        [Pure]
         public static IEnumerable<TResult> Flatten<T1, T2, TResult>(
             this IEnumerable<T1> source,
             Func<T1, IEnumerable<T2>> selector,
@@ -148,11 +164,13 @@ namespace LfrlSoft.NET.Core.Extensions
             return source.TryAggregate( (a, b) => comparer.Compare( a, b ) > 0 ? a : b, out result );
         }
 
+        [Pure]
         public static bool ContainsDuplicates<T>(this IEnumerable<T> source)
         {
             return source.ContainsDuplicates( EqualityComparer<T>.Default );
         }
 
+        [Pure]
         public static bool ContainsDuplicates<T>(this IEnumerable<T> source, IEqualityComparer<T> comparer)
         {
             var set = new HashSet<T>( comparer );
@@ -166,6 +184,7 @@ namespace LfrlSoft.NET.Core.Extensions
             return false;
         }
 
+        [Pure]
         public static IEnumerable<T> Repeat<T>(this IEnumerable<T> source, int count)
         {
             if ( count == 0 )
@@ -185,21 +204,25 @@ namespace LfrlSoft.NET.Core.Extensions
             return result;
         }
 
+        [Pure]
         public static IEnumerable<T> Materialize<T>(this IEnumerable<T> source)
         {
             return source is IReadOnlyList<T> list ? list : source.ToList();
         }
 
+        [Pure]
         public static IEnumerable<T> Memoize<T>(this IEnumerable<T> source)
         {
             return new MemoizedEnumerable<T>( source );
         }
 
+        [Pure]
         public static bool SetEquals<T>(this IEnumerable<T> source, IEnumerable<T> other)
         {
             return source.SetEquals( other, EqualityComparer<T>.Default );
         }
 
+        [Pure]
         public static bool SetEquals<T>(this IEnumerable<T> source, IEnumerable<T> other, IEqualityComparer<T> comparer)
         {
             var sourceSet = source.ToHashSet( comparer );
@@ -216,6 +239,7 @@ namespace LfrlSoft.NET.Core.Extensions
             return sourceSet.Count == otherSet.Count;
         }
 
+        [Pure]
         public static IEnumerable<T> VisitMany<T>(this IEnumerable<T> source, Func<T, IEnumerable<T>> nodeRangeSelector)
         {
             var nodesToVisit = new Queue<T>( source );
@@ -255,21 +279,25 @@ namespace LfrlSoft.NET.Core.Extensions
             return true;
         }
 
+        [Pure]
         public static T1 MaxBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector)
         {
             return source.MaxBy( selector, Comparer<T2>.Default );
         }
 
+        [Pure]
         public static T1 MaxBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector, IComparer<T2> comparer)
         {
             return source.Aggregate( (a, b) => comparer.Compare( selector( a ), selector( b ) ) > 0 ? a : b );
         }
 
+        [Pure]
         public static T1 MinBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector)
         {
             return source.MinBy( selector, Comparer<T2>.Default );
         }
 
+        [Pure]
         public static T1 MinBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector, IComparer<T2> comparer)
         {
             return source.Aggregate( (a, b) => comparer.Compare( selector( a ), selector( b ) ) < 0 ? a : b );
@@ -295,11 +323,13 @@ namespace LfrlSoft.NET.Core.Extensions
             return source.TryAggregate( (a, b) => comparer.Compare( selector( a ), selector( b ) ) < 0 ? a : b, out result );
         }
 
+        [Pure]
         public static IEnumerable<T1> DistinctBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector)
         {
             return source.DistinctBy( selector, EqualityComparer<T2>.Default );
         }
 
+        [Pure]
         public static IEnumerable<T1> DistinctBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector, IEqualityComparer<T2> comparer)
         {
             var set = new HashSet<T2>( comparer );
@@ -311,6 +341,7 @@ namespace LfrlSoft.NET.Core.Extensions
             }
         }
 
+        [Pure]
         public static IEnumerable<TResult> LeftJoin<T1, T2, TKey, TResult>(
             this IEnumerable<T1> outer,
             IEnumerable<T2> inner,
@@ -321,6 +352,7 @@ namespace LfrlSoft.NET.Core.Extensions
             return outer.LeftJoin( inner, outerKeySelector, innerKeySelector, resultSelector, EqualityComparer<TKey>.Default );
         }
 
+        [Pure]
         public static IEnumerable<TResult> LeftJoin<T1, T2, TKey, TResult>(
             this IEnumerable<T1> outer,
             IEnumerable<T2> inner,
@@ -355,6 +387,7 @@ namespace LfrlSoft.NET.Core.Extensions
             }
         }
 
+        [Pure]
         public static IEnumerable<TResult> FullJoin<T1, T2, TKey, TResult>(
             this IEnumerable<T1> outer,
             IEnumerable<T2> inner,
@@ -365,6 +398,7 @@ namespace LfrlSoft.NET.Core.Extensions
             return outer.FullJoin( inner, outerKeySelector, innerKeySelector, resultSelector, EqualityComparer<TKey>.Default );
         }
 
+        [Pure]
         public static IEnumerable<TResult> FullJoin<T1, T2, TKey, TResult>(
             this IEnumerable<T1> outer,
             IEnumerable<T2> inner,

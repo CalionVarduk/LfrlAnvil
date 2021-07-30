@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
 using LfrlSoft.NET.Core.Internal;
 
 namespace LfrlSoft.NET.Core
@@ -16,11 +17,13 @@ namespace LfrlSoft.NET.Core
             Result = Generic<T>.AreEqual( First, Second );
         }
 
+        [Pure]
         public override string ToString()
         {
             return $"{nameof( Equality )}({Generic<T>.ToString( First )}, {Generic<T>.ToString( Second )})";
         }
 
+        [Pure]
         public override int GetHashCode()
         {
             return Hash.Default
@@ -30,11 +33,13 @@ namespace LfrlSoft.NET.Core
                 .Value;
         }
 
+        [Pure]
         public override bool Equals(object? obj)
         {
             return obj is Equality<T> e && Equals( e );
         }
 
+        [Pure]
         public bool Equals(Equality<T> other)
         {
             return Generic<T>.AreEqual( First, other.First ) &&
@@ -42,21 +47,25 @@ namespace LfrlSoft.NET.Core
                 Result == other.Result;
         }
 
+        [Pure]
         public static implicit operator bool(Equality<T> e)
         {
             return e.Result;
         }
 
+        [Pure]
         public static bool operator !(Equality<T> e)
         {
             return ! e.Result;
         }
 
+        [Pure]
         public static bool operator ==(Equality<T> a, Equality<T> b)
         {
             return a.Equals( b );
         }
 
+        [Pure]
         public static bool operator !=(Equality<T> a, Equality<T> b)
         {
             return ! a.Equals( b );

@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 
 namespace LfrlSoft.NET.Core.Collections
 {
@@ -22,11 +23,13 @@ namespace LfrlSoft.NET.Core.Collections
             }
         }
 
+        [Pure]
         public IEnumerator<T> GetEnumerator()
         {
             yield return Value;
         }
 
+        [Pure]
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();

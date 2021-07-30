@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 
 namespace LfrlSoft.NET.Core.Collections
@@ -79,6 +80,7 @@ namespace LfrlSoft.NET.Core.Collections
             _map.Clear();
         }
 
+        [Pure]
         public bool ContainsKey(TKey key)
         {
             return _map.ContainsKey( key );
@@ -86,6 +88,7 @@ namespace LfrlSoft.NET.Core.Collections
 
         public bool TryGetValue(TKey key, out int value)
         {
+            _map.TryGetValue( key, out var x );
             if ( _map.TryGetValue( key, out var @ref ) )
             {
                 value = @ref.Value;
@@ -96,11 +99,13 @@ namespace LfrlSoft.NET.Core.Collections
             return false;
         }
 
+        [Pure]
         public IEnumerator<KeyValuePair<TKey, int>> GetEnumerator()
         {
             return _map.Select( v => KeyValuePair.Create( v.Key, v.Value.Value ) ).GetEnumerator();
         }
 
+        [Pure]
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
