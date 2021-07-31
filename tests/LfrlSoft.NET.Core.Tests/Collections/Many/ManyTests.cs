@@ -17,7 +17,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Many
 
             var sut = Core.Collections.Many.Create( values );
 
-            sut.Should().BeEquivalentTo( values );
+            sut.Should().ContainInOrder( values );
         }
 
         [Fact]
@@ -27,7 +27,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Many
 
             var sut = new Many<T>( values );
 
-            sut.Should().BeEquivalentTo( values );
+            sut.Should().ContainInOrder( values );
         }
 
         [Theory]

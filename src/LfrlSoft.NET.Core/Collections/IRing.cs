@@ -3,7 +3,7 @@
     public interface IRing<T> : IReadOnlyRing<T>
     {
         new T? this[int index] { get; set; }
-        new int StartIndex { get; set; }
+        new int WriteIndex { get; set; }
         void SetNext(T item);
         void Clear();
     }

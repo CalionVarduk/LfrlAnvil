@@ -4,6 +4,7 @@ using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlSoft.NET.Core.Collections;
+using LfrlSoft.NET.Core.Extensions;
 using LfrlSoft.NET.Core.Internal;
 using LfrlSoft.NET.TestExtensions;
 using Xunit;
@@ -47,7 +48,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Ring
             using ( new AssertionScope() )
             {
                 sut.Count.Should().Be( count );
-                sut.StartIndex.Should().Be( 0 );
+                sut.WriteIndex.Should().Be( 0 );
             }
         }
 
@@ -70,51 +71,78 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Ring
         [InlineData( -1, 2 )]
         [InlineData( -2, 1 )]
         [InlineData( -3, 0 )]
-        public void StartIndexSet_ShouldUpdateStartIndexCorrectly(int startIndex, int expected)
+        public void WriteIndexSet_ShouldUpdateWriteIndexCorrectly(int writeIndex, int expected)
         {
             var sut = new Ring<T>( 3 );
 
-            sut.StartIndex = startIndex;
-            var result = sut.StartIndex;
+            sut.WriteIndex = writeIndex;
+            var result = sut.WriteIndex;
 
             result.Should().Be( expected );
         }
 
         [Theory]
-        [InlineData( 0, 0 )]
-        [InlineData( 0, 1 )]
-        [InlineData( 0, 2 )]
-        [InlineData( 0, 3 )]
-        [InlineData( 0, 4 )]
-        [InlineData( 0, -1 )]
-        [InlineData( 0, -2 )]
-        [InlineData( 0, -3 )]
-        [InlineData( 1, 0 )]
-        [InlineData( 1, 1 )]
-        [InlineData( 1, 2 )]
-        [InlineData( 1, 3 )]
-        [InlineData( 1, 4 )]
-        [InlineData( 1, -1 )]
-        [InlineData( 1, -2 )]
-        [InlineData( 1, -3 )]
-        [InlineData( 2, 0 )]
-        [InlineData( 2, 1 )]
-        [InlineData( 2, 2 )]
-        [InlineData( 2, 3 )]
-        [InlineData( 2, 4 )]
-        [InlineData( 2, -1 )]
-        [InlineData( 2, -2 )]
-        [InlineData( 2, -3 )]
-        public void IndexerSet_ShouldChangeCorrectItem(int startIndex, int setIndex)
+        [InlineData( -1 )]
+        [InlineData( 3 )]
+        public void IndexerGet_ShouldThrow_WhenIndexIsOutOfBounds(int index)
+        {
+            var sut = new Ring<T>( 3 );
+
+            Action action = () =>
+            {
+                var _ = sut[index];
+            };
+
+            action.Should().Throw<IndexOutOfRangeException>();
+        }
+
+        [Theory]
+        [InlineData( -1 )]
+        [InlineData( 3 )]
+        public void IndexerSet_ShouldThrow_WhenIndexIsOutOfBounds(int index)
         {
             var item = Fixture.Create<T>();
 
-            var sut = new Ring<T>( 3 ) { StartIndex = startIndex };
+            var sut = new Ring<T>( 3 );
 
-            sut[setIndex] = item;
-            var result = sut[setIndex];
+            Action action = () => sut[index] = item;
+
+            action.Should().Throw<IndexOutOfRangeException>();
+        }
+
+        [Theory]
+        [InlineData( 0 )]
+        [InlineData( 1 )]
+        [InlineData( 2 )]
+        public void IndexerSet_ShouldChangeCorrectItem(int index)
+        {
+            var item = Fixture.Create<T>();
+
+            var sut = new Ring<T>( 3 );
+
+            sut[index] = item;
+            var result = sut[index];
 
             result.Should().Be( item );
+        }
+
+        [Theory]
+        [InlineData( -3, 0 )]
+        [InlineData( -2, 1 )]
+        [InlineData( -1, 2 )]
+        [InlineData( 0, 0 )]
+        [InlineData( 1, 1 )]
+        [InlineData( 2, 2 )]
+        [InlineData( 3, 0 )]
+        [InlineData( 4, 1 )]
+        [InlineData( 5, 2 )]
+        public void GetWrappedIndex_ShouldReturnCorrectResult(int index, int expected)
+        {
+            var sut = new Ring<T>( 3 );
+
+            var result = sut.GetWrappedIndex( index );
+
+            result.Should().Be( expected );
         }
 
         [Theory]
@@ -142,11 +170,11 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Ring
         [InlineData( 0, -3, 0 )]
         [InlineData( 1, -3, 1 )]
         [InlineData( 2, -3, 2 )]
-        public void GetUnderlyingIndex_ShouldReturnCorrectResult(int startIndex, int index, int expected)
+        public void GetWriteIndex_ShouldReturnCorrectResult(int writeIndex, int offset, int expected)
         {
-            var sut = new Ring<T>( 3 ) { StartIndex = startIndex };
+            var sut = new Ring<T>( 3 ) { WriteIndex = writeIndex };
 
-            var result = sut.GetUnderlyingIndex( index );
+            var result = sut.GetWriteIndex( offset );
 
             result.Should().Be( expected );
         }
@@ -155,19 +183,19 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Ring
         [InlineData( 0, 1 )]
         [InlineData( 1, 2 )]
         [InlineData( 2, 0 )]
-        public void SetNext_ShouldChangeItemAtStartIndexAndIncrementStartIndex(int startIndex, int expectedStartIndex)
+        public void SetNext_ShouldChangeItemAtWriteIndexAndIncrementWriteIndex(int writeIndex, int expectedWriteIndex)
         {
             var item = Fixture.Create<T>();
 
-            var sut = new Ring<T>( 3 ) { StartIndex = startIndex };
+            var sut = new Ring<T>( 3 ) { WriteIndex = writeIndex };
 
             sut.SetNext( item );
 
             using ( new AssertionScope() )
             {
                 sut.Count.Should().Be( 3 );
-                sut.StartIndex.Should().Be( expectedStartIndex );
-                sut[-1].Should().Be( item );
+                sut.WriteIndex.Should().Be( expectedWriteIndex );
+                sut[writeIndex].Should().Be( item );
             }
         }
 
@@ -175,39 +203,66 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Ring
         [InlineData( 0 )]
         [InlineData( 1 )]
         [InlineData( 2 )]
-        public void Clear_ShouldResetItemsAndStartIndex(int startIndex)
+        public void Clear_ShouldResetItemsAndWriteIndex(int writeIndex)
         {
             var items = Fixture.CreateDistinctCollection<T>( 3 );
 
-            var sut = new Ring<T>( items ) { StartIndex = startIndex };
+            var sut = new Ring<T>( items ) { WriteIndex = writeIndex };
 
             sut.Clear();
 
             using ( new AssertionScope() )
             {
                 sut.Count.Should().Be( 3 );
-                sut.StartIndex.Should().Be( 0 );
+                sut.WriteIndex.Should().Be( 0 );
                 sut.Should().OnlyContain( i => Generic<T>.AreEqual( i, default ) );
             }
+        }
+
+        [Theory]
+        [InlineData( -3 )]
+        [InlineData( -2 )]
+        [InlineData( -1 )]
+        [InlineData( 0 )]
+        [InlineData( 1 )]
+        [InlineData( 2 )]
+        [InlineData( 3 )]
+        [InlineData( 4 )]
+        [InlineData( 5 )]
+        [InlineData( 6 )]
+        public void Read_ShouldReturnCorrectResult(int readIndex)
+        {
+            var items = Fixture.CreateDistinctCollection<T>( 3 );
+            var expected = new[]
+            {
+                items[(0 + readIndex).EuclidModulo( 3 )],
+                items[(1 + readIndex).EuclidModulo( 3 )],
+                items[(2 + readIndex).EuclidModulo( 3 )]
+            }.AsEnumerable();
+
+            var sut = new Ring<T>( items );
+            var result = sut.Read( readIndex );
+
+            result.Should().ContainInOrder( expected );
         }
 
         [Theory]
         [InlineData( 0 )]
         [InlineData( 1 )]
         [InlineData( 2 )]
-        public void GetEnumerator_ShouldReturnCorrectResult(int startIndex)
+        public void GetEnumerator_ShouldReturnCorrectResult(int writeIndex)
         {
             var items = Fixture.CreateDistinctCollection<T>( 3 );
             var expected = new[]
             {
-                items[(0 + startIndex) % 3],
-                items[(1 + startIndex) % 3],
-                items[(2 + startIndex) % 3]
+                items[(1 + writeIndex) % 3],
+                items[(2 + writeIndex) % 3],
+                items[(0 + writeIndex) % 3]
             }.AsEnumerable();
 
-            var sut = new Ring<T>( items ) { StartIndex = startIndex };
+            var sut = new Ring<T>( items ) { WriteIndex = writeIndex };
 
-            sut.Should().BeEquivalentTo( expected );
+            sut.Should().ContainInOrder( expected );
         }
     }
 }

@@ -5,9 +5,15 @@ namespace LfrlSoft.NET.Core.Collections
 {
     public interface IReadOnlyRing<out T> : IReadOnlyList<T?>
     {
-        int StartIndex { get; }
+        int WriteIndex { get; }
 
         [Pure]
-        int GetUnderlyingIndex(int index);
+        int GetWrappedIndex(int index);
+
+        [Pure]
+        int GetWriteIndex(int offset);
+
+        [Pure]
+        IEnumerable<T?> Read(int readIndex);
     }
 }

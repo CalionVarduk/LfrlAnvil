@@ -5,6 +5,7 @@ using System.Linq;
 
 namespace LfrlSoft.NET.Core.Collections
 {
+    // TODO: refactor into MultiSet<T>
     public class RefCounter<TKey> : IRefCounter<TKey>
         where TKey : notnull
     {

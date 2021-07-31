@@ -36,7 +36,7 @@ namespace LfrlSoft.NET.Core.Collections.Internal
 
         void IEnumerator.Reset()
         {
-            _index -= (_items.Length - _stepsLeft);
+            _index -= _items.Length - _stepsLeft;
 
             if ( _index < 0 )
                 _index += _items.Length;

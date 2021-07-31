@@ -285,7 +285,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
 
             var result = sut.AsEnumerable();
 
-            result.Should().BeEquivalentTo( expected );
+            result.Should().ContainInOrder( expected );
         }
 
         [Theory]
