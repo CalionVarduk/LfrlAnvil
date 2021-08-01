@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections;
 using System.Linq;
 using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlSoft.NET.Core.Collections;
+using LfrlSoft.NET.Core.Collections.Internal;
 using LfrlSoft.NET.Core.Extensions;
 using LfrlSoft.NET.Core.Internal;
 using LfrlSoft.NET.TestExtensions;
@@ -263,6 +265,45 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Ring
             var sut = new Ring<T>( items ) { WriteIndex = writeIndex };
 
             sut.Should().ContainInOrder( expected );
+        }
+
+        [Theory]
+        [InlineData( 0, 0 )]
+        [InlineData( 1, 0 )]
+        [InlineData( 2, 0 )]
+        [InlineData( 0, 1 )]
+        [InlineData( 1, 1 )]
+        [InlineData( 2, 1 )]
+        [InlineData( 0, 2 )]
+        [InlineData( 1, 2 )]
+        [InlineData( 2, 2 )]
+        [InlineData( 0, 3 )]
+        [InlineData( 1, 3 )]
+        [InlineData( 2, 3 )]
+        public void RingEnumeratorReset_ShouldResetEnumeratorCorrectly(int startIndex, int iterationCount)
+        {
+            var items = Fixture.CreateDistinctCollection<T>( 3 ).ToArray();
+
+            using var sut = new RingEnumerator<T>( items, startIndex );
+            IEnumerator enumerator = sut;
+
+            for ( var i = 0; i < iterationCount; ++i )
+                sut.MoveNext();
+
+            enumerator.Reset();
+            sut.MoveNext();
+
+            var firstItemAfterReset = enumerator.Current;
+
+            var availableSteps = 1;
+            while ( enumerator.MoveNext() )
+                ++availableSteps;
+
+            using ( new AssertionScope() )
+            {
+                firstItemAfterReset.Should().Be( items[startIndex] );
+                availableSteps.Should().Be( items.Length );
+            }
         }
     }
 }

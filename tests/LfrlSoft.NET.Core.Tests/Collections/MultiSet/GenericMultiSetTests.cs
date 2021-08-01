@@ -145,6 +145,26 @@ namespace LfrlSoft.NET.Core.Tests.Collections.MultiSet
         [InlineData( 1 )]
         [InlineData( 2 )]
         [InlineData( 3 )]
+        public void AddMany_ShouldAddNewItemWithMultiplicityEqualToCount_WhenOtherItemExists(int count)
+        {
+            var (other, item) = Fixture.CreateDistinctCollection<T>( 2 );
+
+            var sut = new MultiSet<T> { other };
+
+            var result = sut.AddMany( item, count );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().Be( count );
+                sut.FullCount.Should().Be( 1 + count );
+                sut.Count.Should().Be( 2 );
+            }
+        }
+
+        [Theory]
+        [InlineData( 1 )]
+        [InlineData( 2 )]
+        [InlineData( 3 )]
         public void AddMany_ShouldIncreaseMultiplicityOfExistingItemByCount(int count)
         {
             var item = Fixture.Create<T>();
@@ -158,6 +178,26 @@ namespace LfrlSoft.NET.Core.Tests.Collections.MultiSet
                 result.Should().Be( 1 + count );
                 sut.FullCount.Should().Be( 1 + count );
                 sut.Count.Should().Be( 1 );
+            }
+        }
+
+        [Theory]
+        [InlineData( 1 )]
+        [InlineData( 2 )]
+        [InlineData( 3 )]
+        public void AddMany_ShouldIncreaseMultiplicityOfExistingItemByCount_WhenOtherItemExists(int count)
+        {
+            var (other, item) = Fixture.CreateDistinctCollection<T>( 2 );
+
+            var sut = new MultiSet<T> { other, item };
+
+            var result = sut.AddMany( item, count );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().Be( 1 + count );
+                sut.FullCount.Should().Be( 2 + count );
+                sut.Count.Should().Be( 2 );
             }
         }
 
@@ -339,12 +379,12 @@ namespace LfrlSoft.NET.Core.Tests.Collections.MultiSet
         [Fact]
         public void Clear_ShouldRemoveAllItems()
         {
-            var keys = Fixture.CreateDistinctCollection<T>( 3 );
+            var items = Fixture.CreateDistinctCollection<T>( 3 );
 
             var sut = new MultiSet<T>();
 
-            foreach ( var key in keys )
-                sut.Add( key );
+            foreach ( var item in items )
+                sut.Add( item );
 
             sut.Clear();
 
@@ -423,6 +463,96 @@ namespace LfrlSoft.NET.Core.Tests.Collections.MultiSet
             }
         }
 
+        [Theory]
+        [InlineData( 1 )]
+        [InlineData( 2 )]
+        [InlineData( 3 )]
+        public void SetMultiplicity_ShouldReturnZeroAndAddNewItem_WhenItemDoesntExist(int value)
+        {
+            var item = Fixture.Create<T>();
+
+            var sut = new MultiSet<T>();
+
+            var result = sut.SetMultiplicity( item, value );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().Be( 0 );
+                sut.Count.Should().Be( 1 );
+                sut.FullCount.Should().Be( value );
+                sut.GetMultiplicity( item ).Should().Be( value );
+            }
+        }
+
+        [Theory]
+        [InlineData( 1 )]
+        [InlineData( 2 )]
+        [InlineData( 3 )]
+        public void SetMultiplicity_ShouldReturnMultiplicityOfExistingItemAndDoNothing_WhenNewMultiplicityIsTheSame(int value)
+        {
+            var item = Fixture.Create<T>();
+
+            var sut = new MultiSet<T>();
+            sut.AddMany( item, value );
+
+            var result = sut.SetMultiplicity( item, value );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().Be( value );
+                sut.Count.Should().Be( 1 );
+                sut.FullCount.Should().Be( value );
+                sut.GetMultiplicity( item ).Should().Be( value );
+            }
+        }
+
+        [Theory]
+        [InlineData( 2, 3 )]
+        [InlineData( 2, 4 )]
+        [InlineData( 2, 5 )]
+        [InlineData( 6, 3 )]
+        [InlineData( 6, 4 )]
+        [InlineData( 6, 5 )]
+        public void SetMultiplicity_ShouldReturnOldMultiplicityOfExistingItemAndUpdateMultiplicity(int oldMultiplicity, int newMultiplicity)
+        {
+            var item = Fixture.Create<T>();
+
+            var sut = new MultiSet<T>();
+            sut.AddMany( item, oldMultiplicity );
+
+            var result = sut.SetMultiplicity( item, newMultiplicity );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().Be( oldMultiplicity );
+                sut.Count.Should().Be( 1 );
+                sut.FullCount.Should().Be( newMultiplicity );
+                sut.GetMultiplicity( item ).Should().Be( newMultiplicity );
+            }
+        }
+
+        [Theory]
+        [InlineData( 1 )]
+        [InlineData( 2 )]
+        [InlineData( 3 )]
+        public void SetMultiplicity_ShouldReturnMultiplicityOfExistingItemRemoveIt_WhenNewMultiplicityIsZero(int oldMultiplicity)
+        {
+            var item = Fixture.Create<T>();
+
+            var sut = new MultiSet<T>();
+            sut.AddMany( item, oldMultiplicity );
+
+            var result = sut.SetMultiplicity( item, 0 );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().Be( oldMultiplicity );
+                sut.Count.Should().Be( 0 );
+                sut.FullCount.Should().Be( 0 );
+                sut.GetMultiplicity( item ).Should().Be( 0 );
+            }
+        }
+
         [Fact]
         public void DistinctItems_ShouldReturnCorrectResult()
         {
@@ -454,6 +584,269 @@ namespace LfrlSoft.NET.Core.Tests.Collections.MultiSet
                 sut.AddMany( items[i], i + 1 );
 
             sut.Should().BeEquivalentTo( expected );
+        }
+
+        [Fact]
+        public void ICollectionCopyTo_ShouldCopyAllItemsToArrayAtValidIndex()
+        {
+            var allItems = Fixture.CreateDistinctCollection<T>( 4 );
+            var items = allItems.Take( 3 ).ToList();
+            var arrayItem = allItems[^1];
+
+            var sut = new MultiSet<T>();
+
+            for ( var i = 0; i < items.Count; ++i )
+                sut.AddMany( items[i], i + 1 );
+
+            ICollection<Pair<T, int>> collection = sut;
+
+            var arr = new[]
+            {
+                Core.Pair.Create( arrayItem, 0 ),
+                Core.Pair.Create( arrayItem, 0 ),
+                Core.Pair.Create( arrayItem, 0 ),
+                Core.Pair.Create( arrayItem, 0 ),
+                Core.Pair.Create( arrayItem, 0 )
+            };
+
+            collection.CopyTo( arr, 1 );
+
+            var arrItem1 = arr[1].First;
+            var arrItem2 = arr[2].First;
+            var arrItem3 = arr[3].First;
+
+            using ( new AssertionScope() )
+            {
+                sut.Contains( arrItem1 ).Should().BeTrue();
+                sut.Contains( arrItem2 ).Should().BeTrue();
+                sut.Contains( arrItem3 ).Should().BeTrue();
+                new[] { arrItem1, arrItem2, arrItem3 }.Should().OnlyHaveUniqueItems();
+                arr[0].Should().BeEquivalentTo( Core.Pair.Create( arrayItem, 0 ) );
+                arr[1].Should().BeEquivalentTo( Core.Pair.Create( arrItem1, sut.GetMultiplicity( arrItem1 ) ) );
+                arr[2].Should().BeEquivalentTo( Core.Pair.Create( arrItem2, sut.GetMultiplicity( arrItem2 ) ) );
+                arr[3].Should().BeEquivalentTo( Core.Pair.Create( arrItem3, sut.GetMultiplicity( arrItem3 ) ) );
+                arr[4].Should().BeEquivalentTo( Core.Pair.Create( arrayItem, 0 ) );
+            }
+        }
+
+        [Fact]
+        public void ICollectionCopyTo_ShouldCopyItemsToArrayAtValidIndexAndNotExceedArrayLength()
+        {
+            var allItems = Fixture.CreateDistinctCollection<T>( 4 );
+            var items = allItems.Take( 3 ).ToList();
+            var arrayItem = allItems[^1];
+
+            var sut = new MultiSet<T>();
+
+            for ( var i = 0; i < items.Count; ++i )
+                sut.AddMany( items[i], i + 1 );
+
+            ICollection<Pair<T, int>> collection = sut;
+
+            var arr = new[]
+            {
+                Core.Pair.Create( arrayItem, 0 ),
+                Core.Pair.Create( arrayItem, 0 ),
+                Core.Pair.Create( arrayItem, 0 )
+            };
+
+            collection.CopyTo( arr, 1 );
+
+            var arrItem1 = arr[1].First;
+            var arrItem2 = arr[2].First;
+
+            using ( new AssertionScope() )
+            {
+                sut.Contains( arrItem1 ).Should().BeTrue();
+                sut.Contains( arrItem2 ).Should().BeTrue();
+                new[] { arrItem1, arrItem2 }.Should().OnlyHaveUniqueItems();
+                arr[0].Should().BeEquivalentTo( Core.Pair.Create( arrayItem, 0 ) );
+                arr[1].Should().BeEquivalentTo( Core.Pair.Create( arrItem1, sut.GetMultiplicity( arrItem1 ) ) );
+                arr[2].Should().BeEquivalentTo( Core.Pair.Create( arrItem2, sut.GetMultiplicity( arrItem2 ) ) );
+            }
+        }
+
+        [Fact]
+        public void ICollectionCopyTo_ShouldCopyItemsToArrayWithValidOffset_WhenIndexIsNegative()
+        {
+            var allItems = Fixture.CreateDistinctCollection<T>( 4 );
+            var items = allItems.Take( 3 ).ToList();
+            var arrayItem = allItems[^1];
+
+            var sut = new MultiSet<T>();
+
+            for ( var i = 0; i < items.Count; ++i )
+                sut.AddMany( items[i], i + 1 );
+
+            ICollection<Pair<T, int>> collection = sut;
+
+            var arr = new[]
+            {
+                Core.Pair.Create( arrayItem, 0 ),
+                Core.Pair.Create( arrayItem, 0 ),
+                Core.Pair.Create( arrayItem, 0 )
+            };
+
+            collection.CopyTo( arr, -1 );
+
+            var arrItem1 = arr[0].First;
+            var arrItem2 = arr[1].First;
+
+            using ( new AssertionScope() )
+            {
+                sut.Contains( arrItem1 ).Should().BeTrue();
+                sut.Contains( arrItem2 ).Should().BeTrue();
+                new[] { arrItem1, arrItem2 }.Should().OnlyHaveUniqueItems();
+                arr[0].Should().BeEquivalentTo( Core.Pair.Create( arrItem1, sut.GetMultiplicity( arrItem1 ) ) );
+                arr[1].Should().BeEquivalentTo( Core.Pair.Create( arrItem2, sut.GetMultiplicity( arrItem2 ) ) );
+                arr[2].Should().BeEquivalentTo( Core.Pair.Create( arrayItem, 0 ) );
+            }
+        }
+
+        [Fact]
+        public void ICollectionCopyTo_ShouldCopyItemsToArrayWithValidOffset_WhenIndexIsNegativeAndArrayIsTooSmall()
+        {
+            var allItems = Fixture.CreateDistinctCollection<T>( 6 );
+            var items = allItems.Take( 5 ).ToList();
+            var arrayItem = allItems[^1];
+
+            var sut = new MultiSet<T>();
+
+            for ( var i = 0; i < items.Count; ++i )
+                sut.AddMany( items[i], i + 1 );
+
+            ICollection<Pair<T, int>> collection = sut;
+
+            var arr = new[]
+            {
+                Core.Pair.Create( arrayItem, 0 ),
+                Core.Pair.Create( arrayItem, 0 ),
+                Core.Pair.Create( arrayItem, 0 )
+            };
+
+            collection.CopyTo( arr, -1 );
+
+            var arrItem1 = arr[0].First;
+            var arrItem2 = arr[1].First;
+            var arrItem3 = arr[2].First;
+
+            using ( new AssertionScope() )
+            {
+                sut.Contains( arrItem1 ).Should().BeTrue();
+                sut.Contains( arrItem2 ).Should().BeTrue();
+                sut.Contains( arrItem3 ).Should().BeTrue();
+                new[] { arrItem1, arrItem2, arrItem3 }.Should().OnlyHaveUniqueItems();
+                arr[0].Should().BeEquivalentTo( Core.Pair.Create( arrItem1, sut.GetMultiplicity( arrItem1 ) ) );
+                arr[1].Should().BeEquivalentTo( Core.Pair.Create( arrItem2, sut.GetMultiplicity( arrItem2 ) ) );
+                arr[2].Should().BeEquivalentTo( Core.Pair.Create( arrItem3, sut.GetMultiplicity( arrItem3 ) ) );
+            }
+        }
+
+        [Theory]
+        [InlineData( 3 )]
+        [InlineData( -3 )]
+        public void ICollectionCopyTo_ShouldDoNothing_WhenIndexIsOutOfBounds(int arrayIndex)
+        {
+            var allItems = Fixture.CreateDistinctCollection<T>( 4 );
+            var items = allItems.Take( 3 ).ToList();
+            var arrayItem = allItems[^1];
+
+            var sut = new MultiSet<T>();
+
+            for ( var i = 0; i < items.Count; ++i )
+                sut.AddMany( items[i], i + 1 );
+
+            ICollection<Pair<T, int>> collection = sut;
+
+            var arr = new[]
+            {
+                Core.Pair.Create( arrayItem, 0 ),
+                Core.Pair.Create( arrayItem, 0 ),
+                Core.Pair.Create( arrayItem, 0 )
+            };
+
+            collection.CopyTo( arr, arrayIndex );
+
+            arr.Should().OnlyContain( p => p.First.Equals( arrayItem ) && p.Second == 0 );
+        }
+
+        [Fact]
+        public void ICollectionAdd_ShouldAddItemCorrectly()
+        {
+            var item = Fixture.Create<T>();
+
+            var sut = new MultiSet<T> { item };
+            ICollection<Pair<T, int>> collection = sut;
+
+            collection.Add( Core.Pair.Create( item, 3 ) );
+
+            using ( new AssertionScope() )
+            {
+                sut.FullCount.Should().Be( 4 );
+                sut.Count.Should().Be( 1 );
+            }
+        }
+
+        [Fact]
+        public void ICollectionRemove_ShouldRemoveItemCorrectly()
+        {
+            var item = Fixture.Create<T>();
+
+            var sut = new MultiSet<T>();
+            sut.AddMany( item, 4 );
+            ICollection<Pair<T, int>> collection = sut;
+
+            var result = collection.Remove( Core.Pair.Create( item, 3 ) );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeTrue();
+                sut.FullCount.Should().Be( 1 );
+                sut.Count.Should().Be( 1 );
+            }
+        }
+
+        [Fact]
+        public void ICollectionRemove_ShouldReturnFalse_WhenItemDoesntExist()
+        {
+            var item = Fixture.Create<T>();
+
+            var sut = new MultiSet<T>();
+            ICollection<Pair<T, int>> collection = sut;
+
+            var result = collection.Remove( Core.Pair.Create( item, 1 ) );
+
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public void ICollectionContains_ShouldReturnTrue_WhenItemExistsWithExactMultiplicity()
+        {
+            var item = Fixture.Create<T>();
+            var multiplicity = 3;
+
+            var sut = new MultiSet<T>();
+            sut.AddMany( item, multiplicity );
+            ICollection<Pair<T, int>> collection = sut;
+
+            var result = collection.Contains( Core.Pair.Create( item, multiplicity ) );
+
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public void ICollectionContains_ShouldReturnFalse_WhenItemDoesntExistWithExactMultiplicity()
+        {
+            var item = Fixture.Create<T>();
+            var multiplicity = 3;
+
+            var sut = new MultiSet<T>();
+            sut.AddMany( item, multiplicity );
+            ICollection<Pair<T, int>> collection = sut;
+
+            var result = collection.Contains( Core.Pair.Create( item, multiplicity + 1 ) );
+
+            result.Should().BeFalse();
         }
     }
 }

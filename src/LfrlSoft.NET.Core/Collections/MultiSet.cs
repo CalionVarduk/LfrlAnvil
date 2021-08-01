@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
-using LfrlSoft.NET.Core.Extensions;
 
 namespace LfrlSoft.NET.Core.Collections
 {
@@ -47,18 +46,18 @@ namespace LfrlSoft.NET.Core.Collections
             if ( _map.TryGetValue( item, out var multiplicity ) )
             {
                 if ( value == 0 )
-                    return RemoveAllImpl( item, multiplicity );
+                    return RemoveAllImpl( item, multiplicity.Value );
 
                 var oldMultiplicity = multiplicity.Value;
-                FullCount = checked( FullCount + value - oldMultiplicity );
+                FullCount += value - oldMultiplicity;
                 multiplicity.Value = value;
                 return oldMultiplicity;
             }
 
-            if ( value == 0 )
-                return 0;
+            if ( value > 0 )
+                AddNewImpl( item, value );
 
-            return AddNewImpl( item, value );
+            return 0;
         }
 
         public int Add(T item)
@@ -95,221 +94,6 @@ namespace LfrlSoft.NET.Core.Collections
         {
             _map.Clear();
             FullCount = 0;
-        }
-
-        [Pure]
-        public bool IsProperSubsetOf(IEnumerable<T> other)
-        {
-            if ( ReferenceEquals( this, other ) )
-                return false;
-
-            var otherSet = GetOrCreateMultiSet( other );
-
-            foreach ( var (item, multiplicity) in _map )
-            {
-                var otherMultiplicity = otherSet.GetMultiplicity( item );
-                if ( otherMultiplicity < multiplicity.Value )
-                    return false;
-            }
-
-            foreach ( var (item, multiplicity) in _map )
-            {
-                var otherMultiplicity = otherSet.GetMultiplicity( item );
-                if ( otherMultiplicity != multiplicity.Value )
-                    return true;
-            }
-
-            return false;
-        }
-
-        private IReadOnlyMultiSet<T> GetOrCreateMultiSet(IEnumerable<T> other)
-        {
-            if ( other is IReadOnlyMultiSet<T> multi && ReferenceEquals( Comparer, multi.Comparer ) )
-                return multi;
-
-            var otherSet = new MultiSet<T>( Comparer );
-            foreach ( var item in other )
-                otherSet.Add( item );
-
-            return otherSet;
-        }
-
-        [Pure]
-        public bool IsProperSupersetOf(IEnumerable<T> other)
-        {
-            var otherSet = new MultiSet<T>( Comparer );
-
-            foreach ( var item in other )
-            {
-                if ( ! Contains( item ) )
-                    return false;
-
-                otherSet.Add( item );
-            }
-
-            foreach ( var (item, otherMultiplicity) in otherSet )
-            {
-                if ( GetMultiplicity( item ) < otherMultiplicity )
-                    return false;
-            }
-
-            foreach ( var (item, otherMultiplicity) in otherSet )
-            {
-                if ( GetMultiplicity( item ) != otherMultiplicity )
-                    return true;
-            }
-
-            return false;
-        }
-
-        [Pure]
-        public bool IsSubsetOf(IEnumerable<T> other)
-        {
-            if ( ReferenceEquals( this, other ) )
-                return true;
-
-            var otherSet = new MultiSet<T>( Comparer );
-            foreach ( var item in other )
-                otherSet.Add( item );
-
-            foreach ( var (item, multiplicity) in _map )
-            {
-                var otherMultiplicity = otherSet.GetMultiplicity( item );
-                if ( otherMultiplicity < multiplicity.Value )
-                    return false;
-            }
-
-            return true;
-        }
-
-        [Pure]
-        public bool IsSupersetOf(IEnumerable<T> other)
-        {
-            if ( ReferenceEquals( this, other ) )
-                return true;
-
-            var otherSet = new MultiSet<T>( Comparer );
-
-            foreach ( var item in other )
-            {
-                if ( ! Contains( item ) )
-                    return false;
-
-                otherSet.Add( item );
-            }
-
-            foreach ( var (item, otherMultiplicity) in otherSet )
-            {
-                if ( GetMultiplicity( item ) < otherMultiplicity )
-                    return false;
-            }
-
-            return false;
-        }
-
-        [Pure]
-        public bool Overlaps(IEnumerable<T> other)
-        {
-            return other.Any( Contains );
-        }
-
-        [Pure]
-        public bool SetEquals(IEnumerable<T> other)
-        {
-            var otherSet = new MultiSet<T>( Comparer );
-
-            foreach ( var item in other )
-            {
-                if ( ! Contains( item ) )
-                    return false;
-
-                otherSet.Add( item );
-            }
-
-            if ( Count != otherSet.Count )
-                return false;
-
-            foreach ( var (item, multiplicity) in _map )
-            {
-                if ( multiplicity.Value != otherSet.GetMultiplicity( item ) )
-                    return false;
-            }
-
-            return true;
-        }
-
-        public void ExceptWith(IEnumerable<T> other)
-        {
-            foreach ( var item in other )
-                Remove( item );
-        }
-
-        public void IntersectWith(IEnumerable<T> other)
-        {
-            var otherSet = new MultiSet<T>( Comparer );
-            foreach ( var item in other )
-                otherSet.Add( item );
-
-            var itemsToRemove = new List<T>();
-
-            foreach ( var (item, multiplicity) in _map )
-            {
-                var otherMultiplicity = otherSet.GetMultiplicity( item );
-                if ( otherMultiplicity == 0 )
-                {
-                    itemsToRemove.Add( item );
-                    continue;
-                }
-
-                if ( otherMultiplicity >= multiplicity.Value )
-                    continue;
-
-                FullCount -= multiplicity.Value - otherMultiplicity;
-                multiplicity.Value = otherMultiplicity;
-            }
-
-            foreach ( var item in itemsToRemove )
-                RemoveAll( item );
-        }
-
-        public void SymmetricExceptWith(IEnumerable<T> other)
-        {
-            var otherSet = new MultiSet<T>( Comparer );
-            foreach ( var item in other )
-                otherSet.Add( item );
-
-            foreach ( var (item, otherMultiplicity) in otherSet )
-            {
-                if ( ! Contains( item ) )
-                {
-                    AddImpl( item, otherMultiplicity );
-                    continue;
-                }
-
-                RemoveAll( item );
-            }
-        }
-
-        public void UnionWith(IEnumerable<T> other)
-        {
-            var otherSet = new MultiSet<T>( Comparer );
-            foreach ( var item in other )
-                otherSet.Add( item );
-
-            foreach ( var (item, otherMultiplicity) in otherSet )
-            {
-                if ( ! _map.TryGetValue( item, out var multiplicity ) )
-                {
-                    AddImpl( item, otherMultiplicity );
-                    continue;
-                }
-
-                if ( otherMultiplicity <= multiplicity.Value )
-                    continue;
-
-                FullCount += otherMultiplicity - multiplicity.Value;
-                multiplicity.Value = otherMultiplicity;
-            }
         }
 
         [Pure]
@@ -361,11 +145,17 @@ namespace LfrlSoft.NET.Core.Collections
 
         void ICollection<Pair<T, int>>.CopyTo(Pair<T, int>[] array, int arrayIndex)
         {
-            var count = Math.Min( FullCount, array.Length - arrayIndex );
+            var count = Math.Min( Count, array.Length - arrayIndex );
             var maxArrayIndex = arrayIndex + count - 1;
+
+            if ( maxArrayIndex < 0 )
+                return;
 
             using var enumerator = GetEnumerator();
             var index = arrayIndex;
+
+            while ( index < 0 && enumerator.MoveNext() )
+                ++index;
 
             while ( enumerator.MoveNext() && index <= maxArrayIndex )
                 array[index++] = enumerator.Current!;
@@ -381,6 +171,7 @@ namespace LfrlSoft.NET.Core.Collections
             return RemoveMany( item.First, item.Second ) != -1;
         }
 
+        [Pure]
         bool ICollection<Pair<T, int>>.Contains(Pair<T, int> item)
         {
             return GetMultiplicity( item.First ) == item.Second;
