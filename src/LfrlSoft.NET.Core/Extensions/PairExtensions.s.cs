@@ -28,5 +28,11 @@ namespace LfrlSoft.NET.Core.Extensions
         {
             return ValueTuple.Create( source.First, source.Second );
         }
+
+        public static void Deconstruct<T1, T2>(this Pair<T1, T2> source, out T1 first, out T2 second)
+        {
+            first = source.First;
+            second = source.Second;
+        }
     }
 }

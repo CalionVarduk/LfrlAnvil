@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using LfrlSoft.NET.Core.Collections;
 using LfrlSoft.NET.Core.Collections.Internal;
 using LfrlSoft.NET.Core.Internal;
 
@@ -205,15 +206,38 @@ namespace LfrlSoft.NET.Core.Extensions
         }
 
         [Pure]
-        public static IEnumerable<T> Materialize<T>(this IEnumerable<T> source)
+        public static IReadOnlyCollection<T> Materialize<T>(this IEnumerable<T> source)
         {
-            return source is IReadOnlyList<T> list ? list : source.ToList();
+            return source switch
+            {
+                IReadOnlyCollection<T> c => c,
+                MemoizedEnumerable<T> m => m.Source.Value,
+                _ => source.ToList()
+            };
         }
 
         [Pure]
         public static IEnumerable<T> Memoize<T>(this IEnumerable<T> source)
         {
             return new MemoizedEnumerable<T>( source );
+        }
+
+        [Pure]
+        public static MultiSet<T> ToMultiSet<T>(this IEnumerable<T> source)
+            where T : notnull
+        {
+            return source.ToMultiSet( EqualityComparer<T>.Default );
+        }
+
+        [Pure]
+        public static MultiSet<T> ToMultiSet<T>(this IEnumerable<T> source, IEqualityComparer<T> comparer)
+            where T : notnull
+        {
+            var result = new MultiSet<T>( comparer );
+            foreach ( var e in source )
+                result.Add( e );
+
+            return result;
         }
 
         [Pure]

@@ -1,9 +1,9 @@
 ﻿using System;
+using AutoFixture;
 using FluentAssertions;
 using LfrlSoft.NET.Core.Extensions;
 using LfrlSoft.NET.TestExtensions;
 using Xunit;
-using AutoFixture;
 
 namespace LfrlSoft.NET.Core.Tests.Extensions.Arithmetic
 {
