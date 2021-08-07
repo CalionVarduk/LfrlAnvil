@@ -448,6 +448,95 @@ namespace LfrlSoft.NET.Core.Tests.Assert
             ShouldThrow( () => Core.Assert.IsNotNullOrEmpty( param ) );
         }
 
+        [Theory]
+        [InlineData( -1 )]
+        [InlineData( 0 )]
+        [InlineData( 1 )]
+        [InlineData( 2 )]
+        [InlineData( 3 )]
+        public void ContainsAtLeast_ShouldPass_WhenCollectionContainsEnoughElements(int minCount)
+        {
+            var param = Fixture.CreateMany<T>( 3 );
+            ShouldPass( () => Core.Assert.ContainsAtLeast( param, minCount ) );
+        }
+
+        [Theory]
+        [InlineData( 4 )]
+        [InlineData( 5 )]
+        public void ContainsAtLeast_ShouldThrow_WhenCollectionContainsTooFewElements(int minCount)
+        {
+            var param = Fixture.CreateMany<T>( 3 );
+            ShouldThrow( () => Core.Assert.ContainsAtLeast( param, minCount ) );
+        }
+
+        [Theory]
+        [InlineData( 3 )]
+        [InlineData( 4 )]
+        [InlineData( 5 )]
+        public void ContainsAtMost_ShouldPass_WhenCollectionDoesntContainTooManyElements(int maxCount)
+        {
+            var param = Fixture.CreateMany<T>( 3 );
+            ShouldPass( () => Core.Assert.ContainsAtMost( param, maxCount ) );
+        }
+
+        [Theory]
+        [InlineData( -1 )]
+        [InlineData( 0 )]
+        [InlineData( 1 )]
+        [InlineData( 2 )]
+        public void ContainsAtMost_ShouldThrow_WhenCollectionContainsTooManyElements(int maxCount)
+        {
+            var param = Fixture.CreateMany<T>( 3 );
+            ShouldThrow( () => Core.Assert.ContainsAtMost( param, maxCount ) );
+        }
+
+        [Fact]
+        public void ContainsExactly_ShouldPass_WhenCollectionContainsExactlyTheRightAmountOfElements()
+        {
+            var param = Fixture.CreateMany<T>( 3 );
+            ShouldPass( () => Core.Assert.ContainsExactly( param, 3 ) );
+        }
+
+        [Theory]
+        [InlineData( 2 )]
+        [InlineData( 4 )]
+        public void ContainsExactly_ShouldThrow_WhenCollectionContainsTooFewOrManyElements(int count)
+        {
+            var param = Fixture.CreateMany<T>( 3 );
+            ShouldThrow( () => Core.Assert.ContainsExactly( param, count ) );
+        }
+
+        [Theory]
+        [InlineData( 0, 3 )]
+        [InlineData( 1, 3 )]
+        [InlineData( 2, 3 )]
+        [InlineData( 3, 3 )]
+        [InlineData( 0, 4 )]
+        [InlineData( 1, 4 )]
+        [InlineData( 2, 4 )]
+        [InlineData( 3, 4 )]
+        [InlineData( 3, 5 )]
+        [InlineData( 3, 6 )]
+        public void ContainsBetween_ShouldPass_WhenCollectionContainsCorrectAmountOfElements(int minCount, int maxCount)
+        {
+            var param = Fixture.CreateMany<T>( 3 );
+            ShouldPass( () => Core.Assert.ContainsBetween( param, minCount, maxCount ) );
+        }
+
+        [Theory]
+        [InlineData( 0, 2 )]
+        [InlineData( 1, 2 )]
+        [InlineData( 2, 2 )]
+        [InlineData( 4, 4 )]
+        [InlineData( 4, 5 )]
+        [InlineData( 4, 6 )]
+        [InlineData( 3, 2 )]
+        public void ContainsBetween_ShouldThrow_WhenCollectionContainsTooManyOrTooFewElements(int minCount, int maxCount)
+        {
+            var param = Fixture.CreateMany<T>( 3 );
+            ShouldThrow( () => Core.Assert.ContainsBetween( param, minCount, maxCount ) );
+        }
+
         [Fact]
         public void Contains_ShouldPass_WhenEnumerableContainsElement_WithExplicitComparer()
         {

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using LfrlSoft.NET.Core.Extensions;
 using LfrlSoft.NET.Core.Internal;
 
 namespace LfrlSoft.NET.Core
@@ -391,8 +392,33 @@ namespace LfrlSoft.NET.Core
                 throw Exceptions.ContainsNull( paramName );
         }
 
-        // TODO: other collection assertions
-        // HasExactly, HasAtLeast, HasAtMost, HasBetween
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static void ContainsAtLeast<T>(IEnumerable<T> param, int count, string paramName = DefaultParamName)
+        {
+            if ( ! param.ContainsAtLeast( count ) )
+                throw Exceptions.NotContainsAtLeast( count, paramName );
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static void ContainsAtMost<T>(IEnumerable<T> param, int count, string paramName = DefaultParamName)
+        {
+            if ( ! param.ContainsAtMost( count ) )
+                throw Exceptions.NotContainsAtMost( count, paramName );
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static void ContainsBetween<T>(IEnumerable<T> param, int minCount, int maxCount, string paramName = DefaultParamName)
+        {
+            if ( ! param.ContainsBetween( minCount, maxCount ) )
+                throw Exceptions.NotContainsBetween( minCount, maxCount, paramName );
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static void ContainsExactly<T>(IEnumerable<T> param, int count, string paramName = DefaultParamName)
+        {
+            if ( ! param.ContainsExactly( count ) )
+                throw Exceptions.NotContainsExactly( count, paramName );
+        }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static void Contains<T>(IEnumerable<T> param, T value, string paramName = DefaultParamName)
@@ -631,6 +657,26 @@ namespace LfrlSoft.NET.Core
                 return new( $"expected {paramName} to not contain null", paramName );
             }
 
+            public static ArgumentException NotContainsAtLeast(int count, string paramName)
+            {
+                return new( $"expected {paramName} to contain at least {count} items", paramName );
+            }
+
+            public static ArgumentException NotContainsAtMost(int count, string paramName)
+            {
+                return new( $"expected {paramName} to contain at most {count} items", paramName );
+            }
+
+            public static ArgumentException NotContainsBetween(int minCount, int maxCount, string paramName)
+            {
+                return new( $"expected {paramName} to contain between {minCount} and {maxCount} items", paramName );
+            }
+
+            public static ArgumentException NotContainsExactly(int count, string paramName)
+            {
+                return new( $"expected {paramName} to contain exactly {count} items", paramName );
+            }
+
             public static ArgumentException NotContains<T>(T value, string paramName)
             {
                 return new( $"expected {paramName} to contain {value}", paramName );
@@ -650,8 +696,6 @@ namespace LfrlSoft.NET.Core
             {
                 return new( description ?? $"expected all {paramName} elements to pass the predicate", paramName );
             }
-
-            // TODO: other collection assertion exceptions
 
             public static ArgumentException False(string? description)
             {

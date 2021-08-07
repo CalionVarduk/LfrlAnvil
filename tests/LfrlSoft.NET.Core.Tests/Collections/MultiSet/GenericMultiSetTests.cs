@@ -567,6 +567,29 @@ namespace LfrlSoft.NET.Core.Tests.Collections.MultiSet
         }
 
         [Fact]
+        public void Items_ShouldReturnCorrectResult()
+        {
+            var items = Fixture.CreateDistinctCollection<T>( 3 );
+
+            var expected = new[]
+            {
+                items[0],
+                items[1],
+                items[1],
+                items[2],
+                items[2],
+                items[2]
+            };
+
+            var sut = new MultiSet<T>();
+
+            for ( var i = 0; i < items.Count; ++i )
+                sut.AddMany( items[i], i + 1 );
+
+            sut.Items.Should().BeEquivalentTo( expected );
+        }
+
+        [Fact]
         public void GetEnumerator_ShouldReturnCorrectResult()
         {
             var items = Fixture.CreateDistinctCollection<T>( 3 );

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using LfrlSoft.NET.Core.Extensions;
 
 namespace LfrlSoft.NET.Core.Collections
 {
@@ -24,6 +25,21 @@ namespace LfrlSoft.NET.Core.Collections
         public int Count => _map.Count;
         public IEqualityComparer<T> Comparer => _map.Comparer;
         public IEnumerable<T> DistinctItems => _map.Keys;
+
+        public IEnumerable<T> Items
+        {
+            get
+            {
+                using var enumerator = GetEnumerator();
+
+                while ( enumerator.MoveNext() )
+                {
+                    var (item, multiplicity) = enumerator.Current!;
+                    for ( var i = 0; i < multiplicity; ++i )
+                        yield return item;
+                }
+            }
+        }
 
         bool ICollection<Pair<T, int>>.IsReadOnly => false;
 

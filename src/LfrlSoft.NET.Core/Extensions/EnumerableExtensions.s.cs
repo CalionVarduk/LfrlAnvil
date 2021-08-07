@@ -466,7 +466,44 @@ namespace LfrlSoft.NET.Core.Extensions
             }
         }
 
-        // TODO: Divide (divides enumerable into array blocks of the same length)
+        public static IEnumerable<T[]> Divide<T>(this IEnumerable<T> source, int partLength)
+        {
+            Assert.IsGreaterThan( partLength, 0, nameof( partLength ) );
+            return DivideImpl( source, partLength );
+        }
+
+        private static IEnumerable<T[]> DivideImpl<T>(IEnumerable<T> source, int partLength)
+        {
+            using var enumerator = source.GetEnumerator();
+
+            var partIndex = 0;
+            var partBuilder = new T[partLength];
+
+            while ( enumerator.MoveNext() )
+            {
+                partBuilder[partIndex++] = enumerator.Current;
+                if ( partIndex < partLength )
+                    continue;
+
+                partIndex = 0;
+
+                var part = new T[partLength];
+                for ( var i = 0; i < part.Length; ++i )
+                    part[i] = partBuilder[i];
+
+                yield return part;
+            }
+
+            if ( partIndex == 0 )
+                yield break;
+
+            var lastPart = new T[partIndex];
+            for ( var i = 0; i < lastPart.Length; ++i )
+                lastPart[i] = partBuilder[i];
+
+            yield return lastPart;
+        }
+
         // TODO: BinarySearch? with upper/lower variants? (maybe for IReadOnlyList???)
     }
 }

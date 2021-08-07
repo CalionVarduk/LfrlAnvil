@@ -822,6 +822,79 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
             result.Should().BeEquivalentTo( expected );
         }
 
+        [Theory]
+        [InlineData( 1 )]
+        [InlineData( 2 )]
+        [InlineData( 3 )]
+        [InlineData( 4 )]
+        [InlineData( 6 )]
+        [InlineData( 12 )]
+        public void Divide_ShouldReturnCorrectResult_WhenSourceCountIsDivisibleByPartLength(int partLength)
+        {
+            var sut = Fixture.CreateMany<T>( 12 ).ToList();
+            var expectedCount = 12 / partLength;
+
+            var result = sut.Divide( partLength ).ToList();
+
+            using ( new AssertionScope() )
+            {
+                result.Count.Should().Be( expectedCount );
+                for ( var i = 0; i < expectedCount; ++i )
+                    result[i].Should().ContainInOrder( sut.Skip( i * partLength ).Take( partLength ) );
+            }
+        }
+
+        [Theory]
+        [InlineData( 5, 2 )]
+        [InlineData( 7, 5 )]
+        [InlineData( 8, 4 )]
+        [InlineData( 9, 3 )]
+        [InlineData( 10, 2 )]
+        [InlineData( 11, 1 )]
+        [InlineData( 13, 12 )]
+        [InlineData( 24, 12 )]
+        public void Divide_ShouldReturnCorrectResult_WhenSourceCountIsNotDivisibleByPartLength(int partLength, int expectedLastPartLength)
+        {
+            var sut = Fixture.CreateMany<T>( 12 ).ToList();
+            var expectedFullCount = 12 / partLength;
+
+            var result = sut.Divide( partLength ).ToList();
+
+            using ( new AssertionScope() )
+            {
+                result.Count.Should().Be( expectedFullCount + 1 );
+                for ( var i = 0; i < expectedFullCount; ++i )
+                    result[i].Should().ContainInOrder( sut.Skip( i * partLength ).Take( partLength ) );
+
+                result[^1].Should().ContainInOrder( sut.TakeLast( expectedLastPartLength ) );
+            }
+        }
+
+        [Fact]
+        public void Divide_ShouldReturnEmptyResult_WhenSourceIsEmpty()
+        {
+            var sut = System.Linq.Enumerable.Empty<T>();
+
+            var result = sut.Divide( 1 );
+
+            result.Should().BeEmpty();
+        }
+
+        [Theory]
+        [InlineData( 0 )]
+        [InlineData( -1 )]
+        public void Divide_ShouldThrow_WhenPartLengthIsLessThanOne(int partLength)
+        {
+            var sut = Fixture.CreateMany<T>();
+
+            Action action = () =>
+            {
+                var _ = sut.Divide( partLength );
+            };
+
+            action.Should().Throw<ArgumentOutOfRangeException>();
+        }
+
         public class TestCollection : IReadOnlyCollection<T>
         {
             public int Count => 0;

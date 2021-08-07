@@ -7,6 +7,7 @@ namespace LfrlSoft.NET.Core.Collections
         where T : notnull
     {
         long FullCount { get; }
+        IEnumerable<T> Items { get; }
         IEnumerable<T> DistinctItems { get; }
         IEqualityComparer<T> Comparer { get; }
 
