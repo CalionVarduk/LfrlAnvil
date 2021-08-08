@@ -466,12 +466,14 @@ namespace LfrlSoft.NET.Core.Extensions
             }
         }
 
+        [Pure]
         public static IEnumerable<T[]> Divide<T>(this IEnumerable<T> source, int partLength)
         {
             Assert.IsGreaterThan( partLength, 0, nameof( partLength ) );
             return DivideImpl( source, partLength );
         }
 
+        [Pure]
         private static IEnumerable<T[]> DivideImpl<T>(IEnumerable<T> source, int partLength)
         {
             using var enumerator = source.GetEnumerator();
