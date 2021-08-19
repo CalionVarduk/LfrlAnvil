@@ -63,6 +63,13 @@ namespace LfrlSoft.NET.Core.Extensions
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static PartialTypeCast<T> TypeCast<T>(this T source)
+        {
+            return new PartialTypeCast<T>( source );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static IEnumerable<T2> Memoize<T1, T2>(this T1 source, Func<T1, IEnumerable<T2>> selector)
         {
             return new MemoizedEnumerable<T2>( selector( source ) );

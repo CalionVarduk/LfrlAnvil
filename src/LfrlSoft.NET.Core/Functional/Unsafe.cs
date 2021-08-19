@@ -194,12 +194,14 @@ namespace LfrlSoft.NET.Core.Functional
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static implicit operator Either<T, Exception>(Unsafe<T> value)
         {
             return value.HasError ? new Either<T, Exception>( value.Error! ) : new Either<T, Exception>( value.Value! );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static implicit operator Unsafe<T>(Either<T, Exception> value)
         {
             return value.HasFirst ? new Unsafe<T>( value.First! ) : new Unsafe<T>( value.Second! );

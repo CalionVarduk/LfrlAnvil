@@ -79,6 +79,16 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Object
         }
 
         [Fact]
+        public void TypeCast_ShouldReturnCorrectResult()
+        {
+            var value = Fixture.Create<T>();
+
+            var sut = value.TypeCast();
+
+            sut.Value.Should().Be( value );
+        }
+
+        [Fact]
         public void Memoize_ShouldMaterializeSourceAfterFirstEnumeration()
         {
             var iterationCount = 5;
