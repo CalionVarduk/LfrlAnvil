@@ -5,6 +5,9 @@ using AutoFixture;
 using FluentAssertions;
 using LfrlSoft.NET.Core.Extensions;
 using LfrlSoft.NET.TestExtensions;
+using LfrlSoft.NET.TestExtensions.FluentAssertions;
+using LfrlSoft.NET.TestExtensions.NSubstitute;
+using NSubstitute;
 using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.Extensions.Func
@@ -27,16 +30,10 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Func
         {
             var iterationCount = 5;
             var sourceCount = 3;
-            var callCount = 0;
+            var @delegate = Substitute.For<Func<int, TReturnValue>>().WithAnyArgs( _ => Fixture.Create<TReturnValue>() );
 
             Func<IEnumerable<TReturnValue>> sut = () =>
-                System.Linq.Enumerable.Range( 0, sourceCount )
-                    .Select(
-                        _ =>
-                        {
-                            ++callCount;
-                            return Fixture.Create<TReturnValue>();
-                        } );
+                System.Linq.Enumerable.Range( 0, sourceCount ).Select( @delegate );
 
             var result = sut.Memoize();
 
@@ -44,7 +41,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Func
             for ( var i = 0; i < iterationCount; ++i )
                 materialized.Add( result.ToList() );
 
-            callCount.Should().Be( sourceCount );
+            @delegate.Verify().CallCount.Should().Be( sourceCount );
         }
     }
 }

@@ -10,9 +10,9 @@ namespace LfrlSoft.NET.Core.Functional
         public static readonly Nil None = Nil.Instance;
 
         [Pure]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static Maybe<T> Some<T>(T? value)
-            where  T : notnull
+            where T : notnull
         {
             if ( Generic<T>.IsNull( value ) )
                 throw new ArgumentNullException( nameof( value ) );

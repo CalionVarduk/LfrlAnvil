@@ -1,12 +1,11 @@
 ﻿using AutoFixture;
 using FluentAssertions;
 using LfrlSoft.NET.Core.Extensions;
-using LfrlSoft.NET.TestExtensions;
 using Xunit;
 
-namespace LfrlSoft.NET.Core.Tests.Extensions.Nullable
+namespace LfrlSoft.NET.Core.Tests.Extensions.Object
 {
-    public abstract class GenericNullableExtensionsTests<T> : TestsBase
+    public abstract class GenericObjectExtensionsOfStructTypeTests<T> : GenericObjectExtensionsTests<T>
         where T : struct
     {
         [Fact]

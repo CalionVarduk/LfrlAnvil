@@ -1,14 +1,20 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using AutoFixture;
 using FluentAssertions;
+using FluentAssertions.Execution;
 using LfrlSoft.NET.Core.Extensions;
 using LfrlSoft.NET.TestExtensions;
+using LfrlSoft.NET.TestExtensions.FluentAssertions;
+using LfrlSoft.NET.TestExtensions.NSubstitute;
+using NSubstitute;
 using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.Extensions.Object
 {
     public abstract class GenericObjectExtensionsTests<T> : TestsBase
+        where T : notnull
     {
         [Fact]
         public void ToOne_ShouldReturnCorrectResult()
@@ -21,21 +27,39 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Object
         }
 
         [Fact]
+        public void ToMaybe_ShouldReturnCorrectResult_WhenNotNull()
+        {
+            var value = Fixture.CreateNotDefault<T>();
+
+            var sut = value.ToMaybe();
+
+            using ( new AssertionScope() )
+            {
+                sut.HasValue.Should().BeTrue();
+                sut.Value.Should().Be( value );
+            }
+        }
+
+        [Fact]
+        public void ToEither_ShouldReturnCorrectResult()
+        {
+            var value = Fixture.CreateNotDefault<T>();
+
+            var sut = value.ToEither();
+
+            sut.Value.Should().Be( value );
+        }
+
+        [Fact]
         public void Memoize_ShouldMaterializeSourceAfterFirstEnumeration()
         {
             var iterationCount = 5;
             var sourceCount = 3;
-            var callCount = 0;
+            var @delegate = Substitute.For<Func<int, T>>().WithAnyArgs( _ => Fixture.Create<T>() );
 
             var sut = new
             {
-                Values = System.Linq.Enumerable.Range( 0, sourceCount )
-                    .Select(
-                        _ =>
-                        {
-                            ++callCount;
-                            return Fixture.Create<T>();
-                        } )
+                Values = System.Linq.Enumerable.Range( 0, sourceCount ).Select( @delegate )
             };
 
             var result = sut.Memoize( o => o.Values );
@@ -44,7 +68,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Object
             for ( var i = 0; i < iterationCount; ++i )
                 materialized.Add( result.ToList() );
 
-            callCount.Should().Be( sourceCount );
+            @delegate.Verify().CallCount.Should().Be( sourceCount );
         }
 
         [Fact]

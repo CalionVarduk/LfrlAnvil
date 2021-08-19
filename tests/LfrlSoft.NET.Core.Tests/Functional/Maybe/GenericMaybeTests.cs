@@ -1,9 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlSoft.NET.Core.Functional;
 using LfrlSoft.NET.TestExtensions;
 using LfrlSoft.NET.TestExtensions.Attributes;
+using LfrlSoft.NET.TestExtensions.FluentAssertions;
+using LfrlSoft.NET.TestExtensions.NSubstitute;
+using NSubstitute;
 using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
@@ -40,7 +44,6 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
         public void Some_ShouldCreateWithValueWhenParameterIsNotNull()
         {
             var value = Fixture.CreateNotDefault<T>();
-
             var sut = Core.Functional.Maybe.Some( value );
 
             using ( new AssertionScope() )
@@ -54,7 +57,6 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
         public void GetHashCode_ShouldReturnCorrectResult_WhenHasValue()
         {
             var value = Fixture.CreateNotDefault<T>();
-
             var sut = Core.Functional.Maybe.Some( value );
 
             var result = sut.GetHashCode();
@@ -88,7 +90,6 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
         public void GetValue_ShouldReturnUnderlyingValue_WhenHasValue()
         {
             var value = Fixture.CreateNotDefault<T>();
-
             var sut = Core.Functional.Maybe.Some( value );
 
             var result = sut.GetValue();
@@ -113,7 +114,6 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
         public void GetValueOrDefault_ShouldReturnUnderlyingValue_WhenHasValue()
         {
             var value = Fixture.CreateNotDefault<T>();
-
             var sut = Core.Functional.Maybe.Some( value );
 
             var result = sut.GetValueOrDefault();
@@ -136,20 +136,15 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
         {
             var value = Fixture.CreateNotDefault<T>();
             var returnedValue = Fixture.CreateNotDefault<T>();
-            T? caughtValue = default;
+            var someDelegate = Substitute.For<Func<T, Maybe<T>>>().WithAnyArgs( _ => Core.Functional.Maybe.Some( returnedValue ) );
 
             var sut = Core.Functional.Maybe.Some( value );
 
-            var result = sut.Bind(
-                some: v =>
-                {
-                    caughtValue = v;
-                    return Core.Functional.Maybe.Some( returnedValue );
-                } );
+            var result = sut.Bind( some: someDelegate );
 
             using ( new AssertionScope() )
             {
-                caughtValue.Should().Be( value );
+                someDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
                 result.Value.Should().Be( returnedValue );
             }
         }
@@ -157,20 +152,15 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
         [Fact]
         public void Bind_ShouldNotCallSomeDelegateAndReturnNone_WhenDoesntHaveValue()
         {
-            T? caughtValue = default;
+            var someDelegate = Substitute.For<Func<T, Maybe<T>>>().WithAnyArgs( i => Core.Functional.Maybe.Some( i.ArgAt<T>( 0 ) ) );
 
             var sut = Maybe<T>.None;
 
-            var result = sut.Bind(
-                some: v =>
-                {
-                    caughtValue = v;
-                    return Core.Functional.Maybe.Some( v );
-                } );
+            var result = sut.Bind( some: someDelegate );
 
             using ( new AssertionScope() )
             {
-                caughtValue.Should().Be( default( T ) );
+                someDelegate.Verify().CallCount.Should().Be( 0 );
                 result.HasValue.Should().BeFalse();
             }
         }
@@ -180,27 +170,19 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
         {
             var value = Fixture.CreateNotDefault<T>();
             var returnedValue = Fixture.CreateNotDefault<T>();
-            T? caughtValue = default;
-            var wasNoneCalled = false;
+            var someDelegate = Substitute.For<Func<T, Maybe<T>>>().WithAnyArgs( _ => Core.Functional.Maybe.Some( returnedValue ) );
+            var noneDelegate = Substitute.For<Func<Maybe<T>>>().WithAnyArgs( _ => Maybe<T>.None );
 
             var sut = Core.Functional.Maybe.Some( value );
 
             var result = sut.Bind(
-                some: v =>
-                {
-                    caughtValue = v;
-                    return Core.Functional.Maybe.Some( returnedValue );
-                },
-                none: () =>
-                {
-                    wasNoneCalled = true;
-                    return Maybe<T>.None;
-                } );
+                some: someDelegate,
+                none: noneDelegate );
 
             using ( new AssertionScope() )
             {
-                wasNoneCalled.Should().BeFalse();
-                caughtValue.Should().Be( value );
+                someDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
+                noneDelegate.Verify().CallCount.Should().Be( 0 );
                 result.Value.Should().Be( returnedValue );
             }
         }
@@ -209,27 +191,19 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
         public void Bind_WithNone_ShouldCallNoneDelegate_WhenDoesntHaveValue()
         {
             var returnedValue = Fixture.CreateNotDefault<T>();
-            T? caughtValue = default;
-            var wasNoneCalled = false;
+            var someDelegate = Substitute.For<Func<T, Maybe<T>>>().WithAnyArgs( i => Core.Functional.Maybe.Some( i.ArgAt<T>( 0 ) ) );
+            var noneDelegate = Substitute.For<Func<Maybe<T>>>().WithAnyArgs( _ => Core.Functional.Maybe.Some( returnedValue ) );
 
             var sut = Maybe<T>.None;
 
             var result = sut.Bind(
-                some: v =>
-                {
-                    caughtValue = v;
-                    return Core.Functional.Maybe.Some( v );
-                },
-                none: () =>
-                {
-                    wasNoneCalled = true;
-                    return Core.Functional.Maybe.Some( returnedValue );
-                } );
+                some: someDelegate,
+                none: noneDelegate );
 
             using ( new AssertionScope() )
             {
-                caughtValue.Should().Be( default( T ) );
-                wasNoneCalled.Should().BeTrue();
+                someDelegate.Verify().CallCount.Should().Be( 0 );
+                noneDelegate.Verify().CallCount.Should().Be( 1 );
                 result.Value.Should().Be( returnedValue );
             }
         }
@@ -239,27 +213,19 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
         {
             var value = Fixture.CreateNotDefault<T>();
             var returnedValue = Fixture.CreateNotDefault<T>();
-            T? caughtValue = default;
-            var wasNoneCalled = false;
+            var someDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( _ => returnedValue );
+            var noneDelegate = Substitute.For<Func<T>>().WithAnyArgs( _ => value );
 
             var sut = Core.Functional.Maybe.Some( value );
 
             var result = sut.Match(
-                some: v =>
-                {
-                    caughtValue = v;
-                    return returnedValue;
-                },
-                none: () =>
-                {
-                    wasNoneCalled = true;
-                    return value;
-                } );
+                some: someDelegate,
+                none: noneDelegate );
 
             using ( new AssertionScope() )
             {
-                wasNoneCalled.Should().BeFalse();
-                caughtValue.Should().Be( value );
+                someDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
+                noneDelegate.Verify().CallCount.Should().Be( 0 );
                 result.Should().Be( returnedValue );
             }
         }
@@ -268,27 +234,19 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
         public void Match_ShouldCallNoneDelegate_WhenDoesntHaveValue()
         {
             var returnedValue = Fixture.CreateNotDefault<T>();
-            T? caughtValue = default;
-            var wasNoneCalled = false;
+            var someDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( i => i.ArgAt<T>( 0 ) );
+            var noneDelegate = Substitute.For<Func<T>>().WithAnyArgs( _ => returnedValue );
 
             var sut = Maybe<T>.None;
 
             var result = sut.Match(
-                some: v =>
-                {
-                    caughtValue = v;
-                    return v;
-                },
-                none: () =>
-                {
-                    wasNoneCalled = true;
-                    return returnedValue;
-                } );
+                some: someDelegate,
+                none: noneDelegate );
 
             using ( new AssertionScope() )
             {
-                caughtValue.Should().Be( default( T ) );
-                wasNoneCalled.Should().BeTrue();
+                someDelegate.Verify().CallCount.Should().Be( 0 );
+                noneDelegate.Verify().CallCount.Should().Be( 1 );
                 result.Should().Be( returnedValue );
             }
         }
@@ -297,38 +255,38 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
         public void Match_WithAction_ShouldCallSomeDelegate_WhenHasValue()
         {
             var value = Fixture.CreateNotDefault<T>();
-            T? caughtValue = default;
-            var wasNoneCalled = false;
+            var someDelegate = Substitute.For<Action<T>>();
+            var noneDelegate = Substitute.For<Action>();
 
             var sut = Core.Functional.Maybe.Some( value );
 
             sut.Match(
-                some: v => { caughtValue = v; },
-                none: () => { wasNoneCalled = true; } );
+                some: someDelegate,
+                none: noneDelegate );
 
             using ( new AssertionScope() )
             {
-                wasNoneCalled.Should().BeFalse();
-                caughtValue.Should().Be( value );
+                someDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
+                noneDelegate.Verify().CallCount.Should().Be( 0 );
             }
         }
 
         [Fact]
         public void Match_WithAction_ShouldCallNoneDelegate_WhenDoesntHaveValue()
         {
-            T? caughtValue = default;
-            var wasNoneCalled = false;
+            var someDelegate = Substitute.For<Action<T>>();
+            var noneDelegate = Substitute.For<Action>();
 
             var sut = Maybe<T>.None;
 
             sut.Match(
-                some: v => { caughtValue = v; },
-                none: () => { wasNoneCalled = true; } );
+                some: someDelegate,
+                none: noneDelegate );
 
             using ( new AssertionScope() )
             {
-                caughtValue.Should().Be( default( T ) );
-                wasNoneCalled.Should().BeTrue();
+                someDelegate.Verify().CallCount.Should().Be( 0 );
+                noneDelegate.Verify().CallCount.Should().Be( 1 );
             }
         }
 
@@ -337,20 +295,15 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
         {
             var value = Fixture.CreateNotDefault<T>();
             var returnedValue = Fixture.CreateNotDefault<T>();
-            T? caughtValue = default;
+            var someDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( _ => returnedValue );
 
             var sut = Core.Functional.Maybe.Some( value );
 
-            var result = sut.IfSome(
-                v =>
-                {
-                    caughtValue = v;
-                    return returnedValue;
-                } );
+            var result = sut.IfSome( someDelegate );
 
             using ( new AssertionScope() )
             {
-                caughtValue.Should().Be( value );
+                someDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
                 result.Value.Should().Be( returnedValue );
             }
         }
@@ -358,20 +311,15 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
         [Fact]
         public void IfSome_ShouldReturnNone_WhenDoesntHaveValue()
         {
-            T? caughtValue = default;
+            var someDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( i => i.ArgAt<T>( 0 ) );
 
             var sut = Maybe<T>.None;
 
-            var result = sut.IfSome(
-                v =>
-                {
-                    caughtValue = v;
-                    return v;
-                } );
+            var result = sut.IfSome( someDelegate );
 
             using ( new AssertionScope() )
             {
-                caughtValue.Should().Be( default( T ) );
+                someDelegate.Verify().CallCount.Should().Be( 0 );
                 result.HasValue.Should().BeFalse();
             }
         }
@@ -380,27 +328,25 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
         public void IfSome_WithAction_ShouldCallSomeDelegate_WhenHasValue()
         {
             var value = Fixture.CreateNotDefault<T>();
-            T? caughtValue = default;
+            var someDelegate = Substitute.For<Action<T>>();
 
             var sut = Core.Functional.Maybe.Some( value );
 
-            sut.IfSome(
-                v => { caughtValue = v; } );
+            sut.IfSome( someDelegate );
 
-            caughtValue.Should().Be( value );
+            someDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
         }
 
         [Fact]
         public void IfSome_WithAction_ShouldDoNothing_WhenDoesntHaveValue()
         {
-            T? caughtValue = default;
+            var someDelegate = Substitute.For<Action<T>>();
 
             var sut = Maybe<T>.None;
 
-            sut.IfSome(
-                v => { caughtValue = v; } );
+            sut.IfSome( someDelegate );
 
-            caughtValue.Should().Be( default( T ) );
+            someDelegate.Verify().CallCount.Should().Be( 0 );
         }
 
         [Fact]
@@ -408,20 +354,15 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
         {
             var value = Fixture.CreateNotDefault<T>();
             var returnedValue = Fixture.CreateNotDefault<T>();
-            T? caughtValue = default;
+            var someDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( _ => returnedValue );
 
             var sut = Core.Functional.Maybe.Some( value );
 
-            var result = sut.IfSomeOrDefault(
-                v =>
-                {
-                    caughtValue = v;
-                    return returnedValue;
-                } );
+            var result = sut.IfSomeOrDefault( someDelegate );
 
             using ( new AssertionScope() )
             {
-                caughtValue.Should().Be( value );
+                someDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
                 result.Should().Be( returnedValue );
             }
         }
@@ -429,20 +370,15 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
         [Fact]
         public void IfSomeOrDefault_ShouldReturnDefault_WhenDoesntHaveValue()
         {
-            T? caughtValue = default;
+            var someDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( i => i.ArgAt<T>( 0 ) );
 
             var sut = Maybe<T>.None;
 
-            var result = sut.IfSomeOrDefault(
-                v =>
-                {
-                    caughtValue = v;
-                    return v;
-                } );
+            var result = sut.IfSomeOrDefault( someDelegate );
 
             using ( new AssertionScope() )
             {
-                caughtValue.Should().Be( default( T ) );
+                someDelegate.Verify().CallCount.Should().Be( 0 );
                 result.Should().Be( default( T ) );
             }
         }
@@ -451,33 +387,32 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
         public void IfNone_ShouldCallNoneDelegate_WhenDoesntHaveValue()
         {
             var returnedValue = Fixture.CreateNotDefault<T>();
+            var noneDelegate = Substitute.For<Func<T>>().WithAnyArgs( _ => returnedValue );
 
             var sut = Maybe<T>.None;
 
-            var result = sut.IfNone(
-                () => returnedValue );
+            var result = sut.IfNone( noneDelegate );
 
-            result.Value.Should().Be( returnedValue );
+            using ( new AssertionScope() )
+            {
+                noneDelegate.Verify().CallCount.Should().Be( 1 );
+                result.Value.Should().Be( returnedValue );
+            }
         }
 
         [Fact]
         public void IfNone_ShouldReturnNone_WhenHasValue()
         {
             var value = Fixture.CreateNotDefault<T>();
-            var wasNoneCalled = false;
+            var noneDelegate = Substitute.For<Func<T>>().WithAnyArgs( _ => value );
 
             var sut = Core.Functional.Maybe.Some( value );
 
-            var result = sut.IfNone(
-                () =>
-                {
-                    wasNoneCalled = true;
-                    return value;
-                } );
+            var result = sut.IfNone( noneDelegate );
 
             using ( new AssertionScope() )
             {
-                wasNoneCalled.Should().BeFalse();
+                noneDelegate.Verify().CallCount.Should().Be( 0 );
                 result.HasValue.Should().BeFalse();
             }
         }
@@ -485,59 +420,56 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
         [Fact]
         public void IfNone_WithAction_ShouldCallNoneDelegate_WhenDoesntHaveValue()
         {
-            var wasNoneCalled = false;
+            var noneDelegate = Substitute.For<Action>();
 
             var sut = Maybe<T>.None;
 
-            sut.IfNone(
-                () => { wasNoneCalled = true; } );
+            sut.IfNone( noneDelegate );
 
-            wasNoneCalled.Should().BeTrue();
+            noneDelegate.Verify().CallCount.Should().Be( 1 );
         }
 
         [Fact]
         public void IfNone_WithAction_ShouldDoNothing_WhenHasValueValue()
         {
             var value = Fixture.CreateNotDefault<T>();
-            var wasNoneCalled = false;
+            var noneDelegate = Substitute.For<Action>();
 
             var sut = Core.Functional.Maybe.Some( value );
 
-            sut.IfNone(
-                () => { wasNoneCalled = true; } );
+            sut.IfNone( noneDelegate );
 
-            wasNoneCalled.Should().BeFalse();
+            noneDelegate.Verify().CallCount.Should().Be( 0 );
         }
 
         [Fact]
         public void IfNoneOrDefault_ShouldCallNoneDelegate_WhenDoesntHaveValue()
         {
             var returnedValue = Fixture.CreateNotDefault<T>();
+            var noneDelegate = Substitute.For<Func<T>>().WithAnyArgs( _ => returnedValue );
             var sut = Maybe<T>.None;
 
-            var result = sut.IfNoneOrDefault(
-                () => returnedValue );
+            var result = sut.IfNoneOrDefault( noneDelegate );
 
-            result.Should().Be( returnedValue );
+            using ( new AssertionScope() )
+            {
+                noneDelegate.Verify().CallCount.Should().Be( 1 );
+                result.Should().Be( returnedValue );
+            }
         }
 
         [Fact]
         public void IfNoneOrDefault_ShouldReturnDefault_WhenHasValue()
         {
             var value = Fixture.CreateNotDefault<T>();
-            var wasNoneCalled = false;
+            var noneDelegate = Substitute.For<Func<T>>().WithAnyArgs( _ => value );
             var sut = Core.Functional.Maybe.Some( value );
 
-            var result = sut.IfNoneOrDefault(
-                () =>
-                {
-                    wasNoneCalled = true;
-                    return value;
-                } );
+            var result = sut.IfNoneOrDefault( noneDelegate );
 
             using ( new AssertionScope() )
             {
-                wasNoneCalled.Should().BeFalse();
+                noneDelegate.Verify().CallCount.Should().Be( 0 );
                 result.Should().Be( default( T ) );
             }
         }
@@ -611,6 +543,48 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
             var result = a != b;
 
             result.Should().Be( expected );
+        }
+
+        [Fact]
+        public void IReadOnlyCollectionCount_ShouldReturnOne_WhenHasValue()
+        {
+            var value = Fixture.CreateNotDefault<T>();
+
+            var sut = Core.Functional.Maybe.Some( value );
+            IReadOnlyCollection<T> collection = sut;
+
+            var result = collection.Count;
+
+            result.Should().Be( 1 );
+        }
+
+        [Fact]
+        public void IReadOnlyCollectionCount_ShouldReturnZero_WhenDoesntHaveValue()
+        {
+            var sut = Maybe<T>.None;
+            IReadOnlyCollection<T> collection = sut;
+
+            var result = collection.Count;
+
+            result.Should().Be( 0 );
+        }
+
+        [Fact]
+        public void IEnumerableGetEnumerator_ShouldReturnEnumeratorWithOneItem_WhenHasValue()
+        {
+            var value = Fixture.CreateNotDefault<T>();
+
+            var sut = Core.Functional.Maybe.Some( value );
+
+            sut.Should().ContainInOrder( value );
+        }
+
+        [Fact]
+        public void IEnumerableGetEnumerator_ShouldReturnEmptyEnumerator_WhenDoesntHaveValue()
+        {
+            var sut = Maybe<T>.None;
+
+            sut.Should().BeEmpty();
         }
     }
 }

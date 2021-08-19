@@ -8,6 +8,9 @@ using FluentAssertions.Execution;
 using LfrlSoft.NET.Core.Extensions;
 using LfrlSoft.NET.TestExtensions;
 using LfrlSoft.NET.TestExtensions.Attributes;
+using LfrlSoft.NET.TestExtensions.FluentAssertions;
+using LfrlSoft.NET.TestExtensions.NSubstitute;
+using NSubstitute;
 using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
@@ -411,19 +414,13 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         [InlineData( 5 )]
         public void Repeat_ShouldNotEvaluateSourceWhenCountIsGreaterThanOne_BeforeResultIsEvaluated(int count)
         {
-            var callCount = 0;
+            var @delegate = Substitute.For<Func<int, T>>().WithAnyArgs( _ => Fixture.Create<T>() );
 
-            var sut = System.Linq.Enumerable.Range( 0, 1 )
-                .Select(
-                    _ =>
-                    {
-                        ++callCount;
-                        return Fixture.Create<T>();
-                    } );
+            var sut = System.Linq.Enumerable.Range( 0, 1 ).Select( @delegate );
 
             var _ = sut.Repeat( count );
 
-            callCount.Should().Be( 0 );
+            @delegate.Verify().CallCount.Should().Be( 0 );
         }
 
         [Theory]
@@ -432,19 +429,13 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         [InlineData( 5 )]
         public void Repeat_ShouldMemoizeSourceWhenCountIsGreaterThanOne(int count)
         {
-            var callCount = 0;
+            var @delegate = Substitute.For<Func<int, T>>().WithAnyArgs( _ => Fixture.Create<T>() );
 
-            var sut = System.Linq.Enumerable.Range( 0, 1 )
-                .Select(
-                    _ =>
-                    {
-                        ++callCount;
-                        return Fixture.Create<T>();
-                    } );
+            var sut = System.Linq.Enumerable.Range( 0, 1 ).Select( @delegate );
 
             var _ = sut.Repeat( count ).ToList();
 
-            callCount.Should().Be( 1 );
+            @delegate.Verify().CallCount.Should().Be( 1 );
         }
 
         [Fact]
@@ -460,22 +451,17 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         [Fact]
         public void Materialize_ShouldMaterializeMemoizedCollection()
         {
-            var callCount = 0;
+            var @delegate = Substitute.For<Func<int, T>>().WithAnyArgs( _ => Fixture.Create<T>() );
 
             var sut = System.Linq.Enumerable.Range( 0, 3 )
-                .Select(
-                    _ =>
-                    {
-                        ++callCount;
-                        return Fixture.Create<T>();
-                    } )
+                .Select( @delegate )
                 .Memoize();
 
             var result = sut.Materialize();
 
             using ( new AssertionScope() )
             {
-                callCount.Should().Be( result.Count );
+                @delegate.Verify().CallCount.Should().Be( result.Count );
                 result.Should().NotBeSameAs( sut );
                 result.Should().ContainInOrder( sut );
             }
@@ -510,22 +496,17 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         [InlineData( 3, 5 )]
         public void Memoize_ShouldMaterializeSourceAfterFirstEnumeration(int sourceCount, int iterationCount)
         {
-            var callCount = 0;
+            var @delegate = Substitute.For<Func<int, T>>().WithAnyArgs( _ => Fixture.Create<T>() );
 
             var sut = System.Linq.Enumerable.Range( 0, sourceCount )
-                .Select(
-                    _ =>
-                    {
-                        ++callCount;
-                        return Fixture.Create<T>();
-                    } )
+                .Select( @delegate )
                 .Memoize();
 
             var materialized = new List<IEnumerable<T>>();
             for ( var i = 0; i < iterationCount; ++i )
                 materialized.Add( sut.ToList() );
 
-            callCount.Should().Be( iterationCount == 0 ? 0 : sourceCount );
+            @delegate.Verify().CallCount.Should().Be( iterationCount == 0 ? 0 : sourceCount );
         }
 
         [Theory]

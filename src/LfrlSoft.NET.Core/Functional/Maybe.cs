@@ -1,11 +1,15 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using LfrlSoft.NET.Core.Collections;
 using LfrlSoft.NET.Core.Internal;
 
 namespace LfrlSoft.NET.Core.Functional
 {
-    public readonly struct Maybe<T> : IEquatable<Maybe<T>>
+    public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IReadOnlyCollection<T>
         where T : notnull
     {
         public static readonly Maybe<T> None = new Maybe<T>();
@@ -18,6 +22,8 @@ namespace LfrlSoft.NET.Core.Functional
             HasValue = true;
             Value = value;
         }
+
+        int IReadOnlyCollection<T>.Count => HasValue ? 1 : 0;
 
         [Pure]
         public override string ToString()
@@ -68,7 +74,7 @@ namespace LfrlSoft.NET.Core.Functional
         public Maybe<T2> Bind<T2>(Func<T, Maybe<T2>> some)
             where T2 : notnull
         {
-            return Bind( some, () => Maybe<T2>.None );
+            return HasValue ? some( Value! ) : Maybe<T2>.None;
         }
 
         [Pure]
@@ -102,7 +108,7 @@ namespace LfrlSoft.NET.Core.Functional
         public Maybe<T2> IfSome<T2>(Func<T, T2?> some)
             where T2 : notnull
         {
-            return Match( v => some( v ), () => Maybe<T2>.None )!;
+            return HasValue ? some( Value! ) : Maybe<T2>.None;
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -118,7 +124,7 @@ namespace LfrlSoft.NET.Core.Functional
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public T2? IfSomeOrDefault<T2>(Func<T, T2?> some)
         {
-            return Match( some, () => default );
+            return HasValue ? some( Value! ) : default;
         }
 
         [Pure]
@@ -126,7 +132,7 @@ namespace LfrlSoft.NET.Core.Functional
         public Maybe<T2> IfNone<T2>(Func<T2?> none)
             where T2 : notnull
         {
-            return Match( _ => Maybe<T2>.None, () => none() )!;
+            return HasValue ? Maybe<T2>.None : none();
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -142,7 +148,7 @@ namespace LfrlSoft.NET.Core.Functional
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public T2? IfNoneOrDefault<T2>(Func<T2?> none)
         {
-            return Match( _ => default, none );
+            return HasValue ? default : none();
         }
 
         [Pure]
@@ -176,6 +182,16 @@ namespace LfrlSoft.NET.Core.Functional
         public static bool operator !=(Maybe<T> a, Maybe<T> b)
         {
             return ! a.Equals( b );
+        }
+
+        IEnumerator<T> IEnumerable<T>.GetEnumerator()
+        {
+            return (HasValue ? One.Create( Value! ) : Enumerable.Empty<T>()).GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return ((IEnumerable<T>) this).GetEnumerator();
         }
     }
 }

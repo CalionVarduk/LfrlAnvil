@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using LfrlSoft.NET.Core.Collections;
 using LfrlSoft.NET.Core.Collections.Internal;
+using LfrlSoft.NET.Core.Functional;
 
 namespace LfrlSoft.NET.Core.Extensions
 {
@@ -12,6 +13,26 @@ namespace LfrlSoft.NET.Core.Extensions
         public static One<T> ToOne<T>(this T source)
         {
             return One.Create( source );
+        }
+
+        [Pure]
+        public static T? ToNullable<T>(this T source)
+            where T : struct
+        {
+            return source;
+        }
+
+        [Pure]
+        public static Maybe<T> ToMaybe<T>(this T? source)
+            where T : notnull
+        {
+            return source;
+        }
+
+        [Pure]
+        public static PartialEither<T> ToEither<T>(this T source)
+        {
+            return new PartialEither<T>( source );
         }
 
         [Pure]
