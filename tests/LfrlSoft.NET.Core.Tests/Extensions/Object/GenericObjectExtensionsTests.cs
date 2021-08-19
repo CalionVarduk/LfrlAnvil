@@ -51,6 +51,34 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Object
         }
 
         [Fact]
+        public void ToUnsafe_WithValue_ShouldReturnCorrectResult()
+        {
+            var value = Fixture.CreateNotDefault<T>();
+
+            var sut = value.ToUnsafe();
+
+            using ( new AssertionScope() )
+            {
+                sut.IsOk.Should().BeTrue();
+                sut.Value.Should().Be( value );
+            }
+        }
+
+        [Fact]
+        public void ToUnsafe_WithException_ShouldReturnCorrectResult()
+        {
+            var error = new Exception();
+
+            var sut = error.ToUnsafe();
+
+            using ( new AssertionScope() )
+            {
+                sut.HasError.Should().BeTrue();
+                sut.Error.Should().Be( error );
+            }
+        }
+
+        [Fact]
         public void Memoize_ShouldMaterializeSourceAfterFirstEnumeration()
         {
             var iterationCount = 5;

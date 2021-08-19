@@ -32,7 +32,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Arithmetic
         {
             var dividend = Fixture.Create<long>();
 
-            Action action = () =>
+            System.Action action = () =>
             {
                 var _ = dividend.EuclidModulo( 0 );
             };
@@ -63,7 +63,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Arithmetic
         {
             var dividend = Fixture.Create<int>();
 
-            Action action = () =>
+            System.Action action = () =>
             {
                 var _ = dividend.EuclidModulo( 0 );
             };
@@ -94,7 +94,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Arithmetic
         {
             var dividend = Fixture.Create<short>();
 
-            Action action = () =>
+            System.Action action = () =>
             {
                 var _ = dividend.EuclidModulo( 0 );
             };
@@ -125,7 +125,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Arithmetic
         {
             var dividend = Fixture.Create<sbyte>();
 
-            Action action = () =>
+            System.Action action = () =>
             {
                 var _ = dividend.EuclidModulo( 0 );
             };

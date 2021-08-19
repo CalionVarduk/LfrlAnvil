@@ -33,7 +33,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Expression
         {
             Expression<Func<TestClass, string?>> sut = t => t.Method();
 
-            Action action = () =>
+            System.Action action = () =>
             {
                 var _ = sut.GetMemberName();
             };
@@ -46,7 +46,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Expression
         {
             Expression<Func<TestClass, string?>> sut = _ => TestClass.StaticProperty;
 
-            Action action = () =>
+            System.Action action = () =>
             {
                 var _ = sut.GetMemberName();
             };
@@ -59,7 +59,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Expression
         {
             Expression<Func<TestClass, string>> sut = _ => string.Empty;
 
-            Action action = () =>
+            System.Action action = () =>
             {
                 var _ = sut.GetMemberName();
             };
@@ -72,7 +72,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Expression
         {
             Expression<Func<TestClass, string?>> sut = t => t.Other!.Property;
 
-            Action action = () =>
+            System.Action action = () =>
             {
                 var _ = sut.GetMemberName();
             };

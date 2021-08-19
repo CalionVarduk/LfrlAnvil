@@ -184,11 +184,13 @@ namespace LfrlSoft.NET.Core.Functional
             return ! a.Equals( b );
         }
 
+        [Pure]
         IEnumerator<T> IEnumerable<T>.GetEnumerator()
         {
             return (HasValue ? One.Create( Value! ) : Enumerable.Empty<T>()).GetEnumerator();
         }
 
+        [Pure]
         IEnumerator IEnumerable.GetEnumerator()
         {
             return ((IEnumerable<T>) this).GetEnumerator();

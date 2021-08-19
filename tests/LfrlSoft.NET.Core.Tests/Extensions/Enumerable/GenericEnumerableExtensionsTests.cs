@@ -365,7 +365,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
             var count = Fixture.CreateNegativeInt32();
             var sut = Fixture.CreateMany<T>();
 
-            Action action = () =>
+            System.Action action = () =>
             {
                 var _ = sut.Repeat( count );
             };
@@ -604,7 +604,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         {
             var sut = System.Linq.Enumerable.Empty<Contained<T>>();
 
-            Action action = () =>
+            System.Action action = () =>
             {
                 var _ = sut.MaxBy( c => c.Value );
             };
@@ -628,7 +628,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         {
             var sut = System.Linq.Enumerable.Empty<Contained<T>>();
 
-            Action action = () =>
+            System.Action action = () =>
             {
                 var _ = sut.MinBy( c => c.Value );
             };
@@ -868,7 +868,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         {
             var sut = Fixture.CreateMany<T>();
 
-            Action action = () =>
+            System.Action action = () =>
             {
                 var _ = sut.Divide( partLength );
             };

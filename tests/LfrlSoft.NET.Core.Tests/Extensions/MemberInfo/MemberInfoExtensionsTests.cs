@@ -22,7 +22,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         public void GetAttribute_ShouldThrowWhenAttributeIsDuplicated()
         {
             var sut = typeof( BaseClass );
-            Action action = () =>
+            System.Action action = () =>
             {
                 var _ = sut.GetAttribute<TestMultiAttribute>();
             };

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AutoFixture;
 using FluentAssertions;
+using FluentAssertions.Execution;
 using LfrlSoft.NET.Core.Extensions;
 using LfrlSoft.NET.TestExtensions;
 using LfrlSoft.NET.TestExtensions.FluentAssertions;
@@ -42,6 +43,36 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Func
                 materialized.Add( result.ToList() );
 
             @delegate.Verify().CallCount.Should().Be( sourceCount );
+        }
+
+        [Fact]
+        public void TryInvoke_ShouldReturnCorrectResult_WhenDelegateDoesntThrow()
+        {
+            var value = Fixture.Create<TReturnValue>();
+            Func<TReturnValue> action = () => value;
+
+            var result = action.TryInvoke();
+
+            using ( new AssertionScope() )
+            {
+                result.IsOk.Should().BeTrue();
+                result.Value.Should().Be( value );
+            }
+        }
+
+        [Fact]
+        public void Try_ShouldReturnCorrectResult_WhenDelegateThrows()
+        {
+            var error = new Exception();
+            Func<TReturnValue> action = () => throw error;
+
+            var result = action.TryInvoke();
+
+            using ( new AssertionScope() )
+            {
+                result.HasError.Should().BeTrue();
+                result.Error.Should().Be( error );
+            }
         }
     }
 }

@@ -1,17 +1,18 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlSoft.NET.Core.Functional;
+using Unsafe = LfrlSoft.NET.Core.Functional.Unsafe;
 
 namespace LfrlSoft.NET.Core.Extensions
 {
-    public static class EnumExtensions
+    public static class ActionExtensions
     {
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static Bitmask<T> ToBitmask<T>(this T value)
-            where T : struct, Enum
+        public static Unsafe<Nil> TryInvoke(this Action source)
         {
-            return new Bitmask<T>( value );
+            return Unsafe.Try( source );
         }
     }
 }

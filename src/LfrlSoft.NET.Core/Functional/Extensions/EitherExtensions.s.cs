@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.Contracts;
+﻿using System;
+using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
 namespace LfrlSoft.NET.Core.Functional.Extensions
@@ -11,6 +12,13 @@ namespace LfrlSoft.NET.Core.Functional.Extensions
             where T1 : notnull
         {
             return source.HasFirst ? source.First : Maybe<T1>.None;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static Unsafe<T> ToUnsafe<T>(this Either<T, Exception> source)
+        {
+            return source.HasFirst ? new Unsafe<T>( source.First! ) : new Unsafe<T>( source.Second! );
         }
     }
 }
