@@ -20,5 +20,40 @@ namespace LfrlSoft.NET.Core.Functional.Extensions
         {
             return source.HasFirst ? new Unsafe<T>( source.First! ) : new Unsafe<T>( source.Second! );
         }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static Either<T1, T2> Reduce<T1, T2>(this Either<Either<T1, T2>, Either<T1, T2>> source)
+        {
+            return source.HasFirst ? source.First : source.Second;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static Either<T1, T2> Reduce<T1, T2>(this Either<Either<T1, T2>, T1> source)
+        {
+            return source.HasFirst ? source.First : source.Second!;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static Either<T1, T2> Reduce<T1, T2>(this Either<Either<T1, T2>, T2> source)
+        {
+            return source.HasFirst ? source.First : source.Second!;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static Either<T1, T2> Reduce<T1, T2>(this Either<T1, Either<T1, T2>> source)
+        {
+            return source.HasFirst ? source.First! : source.Second;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static Either<T1, T2> Reduce<T1, T2>(this Either<T2, Either<T1, T2>> source)
+        {
+            return source.HasFirst ? source.First! : source.Second;
+        }
     }
 }

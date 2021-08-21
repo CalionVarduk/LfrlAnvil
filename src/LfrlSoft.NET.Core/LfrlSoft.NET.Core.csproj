@@ -15,7 +15,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Atomic" />
     <Folder Include="Events\" />
     <Folder Include="Identity\" />
     <Folder Include="Extensions\" />

@@ -17,5 +17,11 @@ namespace LfrlSoft.NET.TestExtensions.NSubstitute
             source.Invoke( Arg.Any<T1>() ).Returns( returnValueProvider );
             return source;
         }
+
+        public static Func<T1, T2, T3> WithAnyArgs<T1, T2, T3>(this Func<T1, T2, T3> source, Func<CallInfo, T3> returnValueProvider)
+        {
+            source.Invoke( Arg.Any<T1>(), Arg.Any<T2>() ).Returns( returnValueProvider );
+            return source;
+        }
     }
 }

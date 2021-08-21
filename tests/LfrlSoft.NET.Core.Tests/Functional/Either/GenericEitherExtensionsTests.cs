@@ -2,6 +2,7 @@
 using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
+using LfrlSoft.NET.Core.Extensions;
 using LfrlSoft.NET.Core.Functional;
 using LfrlSoft.NET.Core.Functional.Extensions;
 using LfrlSoft.NET.TestExtensions;
@@ -69,6 +70,258 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
             {
                 result.HasError.Should().BeTrue();
                 result.Error.Should().Be( error );
+            }
+        }
+
+        [Fact]
+        public void Reduce_WithEitherAndEither_ShouldReturnCorrectResult_WhenHasFirstWithFirst()
+        {
+            var value = Fixture.Create<T1>();
+            var first = (Either<T1, T2>) value;
+            var sut = first.ToEither().WithSecond<Either<T1, T2>>();
+
+            var result = sut.Reduce();
+
+            using ( new AssertionScope() )
+            {
+                result.HasFirst.Should().BeTrue();
+                result.First.Should().Be( value );
+            }
+        }
+
+        [Fact]
+        public void Reduce_WithEitherAndEither_ShouldReturnCorrectResult_WhenHasFirstWithSecond()
+        {
+            var value = Fixture.Create<T2>();
+            var first = (Either<T1, T2>) value;
+            var sut = first.ToEither().WithSecond<Either<T1, T2>>();
+
+            var result = sut.Reduce();
+
+            using ( new AssertionScope() )
+            {
+                result.HasSecond.Should().BeTrue();
+                result.Second.Should().Be( value );
+            }
+        }
+
+        [Fact]
+        public void Reduce_WithEitherAndEither_ShouldReturnCorrectResult_WhenHasSecondWithFirst()
+        {
+            var value = Fixture.Create<T1>();
+            var first = (Either<T1, T2>) value;
+            var sut = first.ToEither().WithFirst<Either<T1, T2>>();
+
+            var result = sut.Reduce();
+
+            using ( new AssertionScope() )
+            {
+                result.HasFirst.Should().BeTrue();
+                result.First.Should().Be( value );
+            }
+        }
+
+        [Fact]
+        public void Reduce_WithEitherAndEither_ShouldReturnCorrectResult_WhenHasSecondWithSecond()
+        {
+            var value = Fixture.Create<T2>();
+            var first = (Either<T1, T2>) value;
+            var sut = first.ToEither().WithFirst<Either<T1, T2>>();
+
+            var result = sut.Reduce();
+
+            using ( new AssertionScope() )
+            {
+                result.HasSecond.Should().BeTrue();
+                result.Second.Should().Be( value );
+            }
+        }
+
+        [Fact]
+        public void Reduce_WithEitherAndT1_ShouldReturnCorrectResult_WhenHasFirstWithFirst()
+        {
+            var value = Fixture.Create<T1>();
+            var first = (Either<T1, T2>) value;
+            var sut = first.ToEither().WithSecond<T1>();
+
+            var result = sut.Reduce();
+
+            using ( new AssertionScope() )
+            {
+                result.HasFirst.Should().BeTrue();
+                result.First.Should().Be( value );
+            }
+        }
+
+        [Fact]
+        public void Reduce_WithEitherAndT1_ShouldReturnCorrectResult_WhenHasFirstWithSecond()
+        {
+            var value = Fixture.Create<T2>();
+            var first = (Either<T1, T2>) value;
+            var sut = first.ToEither().WithSecond<T1>();
+
+            var result = sut.Reduce();
+
+            using ( new AssertionScope() )
+            {
+                result.HasSecond.Should().BeTrue();
+                result.Second.Should().Be( value );
+            }
+        }
+
+        [Fact]
+        public void Reduce_WithEitherAndT1_ShouldReturnCorrectResult_WhenHasSecond()
+        {
+            var value = Fixture.Create<T1>();
+            var sut = value.ToEither().WithFirst<Either<T1, T2>>();
+
+            var result = sut.Reduce();
+
+            using ( new AssertionScope() )
+            {
+                result.HasFirst.Should().BeTrue();
+                result.First.Should().Be( value );
+            }
+        }
+
+        [Fact]
+        public void Reduce_WithEitherAndT2_ShouldReturnCorrectResult_WhenHasFirstWithFirst()
+        {
+            var value = Fixture.Create<T1>();
+            var first = (Either<T1, T2>) value;
+            var sut = first.ToEither().WithSecond<T2>();
+
+            var result = sut.Reduce();
+
+            using ( new AssertionScope() )
+            {
+                result.HasFirst.Should().BeTrue();
+                result.First.Should().Be( value );
+            }
+        }
+
+        [Fact]
+        public void Reduce_WithEitherAndT2_ShouldReturnCorrectResult_WhenHasFirstWithSecond()
+        {
+            var value = Fixture.Create<T2>();
+            var first = (Either<T1, T2>) value;
+            var sut = first.ToEither().WithSecond<T2>();
+
+            var result = sut.Reduce();
+
+            using ( new AssertionScope() )
+            {
+                result.HasSecond.Should().BeTrue();
+                result.Second.Should().Be( value );
+            }
+        }
+
+        [Fact]
+        public void Reduce_WithEitherAndT2_ShouldReturnCorrectResult_WhenHasSecond()
+        {
+            var value = Fixture.Create<T2>();
+            var sut = value.ToEither().WithFirst<Either<T1, T2>>();
+
+            var result = sut.Reduce();
+
+            using ( new AssertionScope() )
+            {
+                result.HasSecond.Should().BeTrue();
+                result.Second.Should().Be( value );
+            }
+        }
+
+        [Fact]
+        public void Reduce_WithT1AndEither_ShouldReturnCorrectResult_WhenHasFirst()
+        {
+            var value = Fixture.Create<T1>();
+            var sut = value.ToEither().WithSecond<Either<T1, T2>>();
+
+            var result = sut.Reduce();
+
+            using ( new AssertionScope() )
+            {
+                result.HasFirst.Should().BeTrue();
+                result.First.Should().Be( value );
+            }
+        }
+
+        [Fact]
+        public void Reduce_WithT1AndEither_ShouldReturnCorrectResult_WhenHasSecondWithFirst()
+        {
+            var value = Fixture.Create<T1>();
+            var second = (Either<T1, T2>) value;
+            var sut = second.ToEither().WithFirst<T1>();
+
+            var result = sut.Reduce();
+
+            using ( new AssertionScope() )
+            {
+                result.HasFirst.Should().BeTrue();
+                result.First.Should().Be( value );
+            }
+        }
+
+        [Fact]
+        public void Reduce_WithT1AndEither_ShouldReturnCorrectResult_WhenHasSecondWithSecond()
+        {
+            var value = Fixture.Create<T2>();
+            var second = (Either<T1, T2>) value;
+            var sut = second.ToEither().WithFirst<T1>();
+
+            var result = sut.Reduce();
+
+            using ( new AssertionScope() )
+            {
+                result.HasSecond.Should().BeTrue();
+                result.Second.Should().Be( value );
+            }
+        }
+
+        [Fact]
+        public void Reduce_WithT2AndEither_ShouldReturnCorrectResult_WhenHasFirst()
+        {
+            var value = Fixture.Create<T2>();
+            var sut = value.ToEither().WithSecond<Either<T1, T2>>();
+
+            var result = sut.Reduce();
+
+            using ( new AssertionScope() )
+            {
+                result.HasSecond.Should().BeTrue();
+                result.Second.Should().Be( value );
+            }
+        }
+
+        [Fact]
+        public void Reduce_WithT2AndEither_ShouldReturnCorrectResult_WhenHasSecondWithFirst()
+        {
+            var value = Fixture.Create<T1>();
+            var second = (Either<T1, T2>) value;
+            var sut = second.ToEither().WithFirst<T2>();
+
+            var result = sut.Reduce();
+
+            using ( new AssertionScope() )
+            {
+                result.HasFirst.Should().BeTrue();
+                result.First.Should().Be( value );
+            }
+        }
+
+        [Fact]
+        public void Reduce_WithT2AndEither_ShouldReturnCorrectResult_WhenHasSecondWithSecond()
+        {
+            var value = Fixture.Create<T2>();
+            var second = (Either<T1, T2>) value;
+            var sut = second.ToEither().WithFirst<T2>();
+
+            var result = sut.Reduce();
+
+            using ( new AssertionScope() )
+            {
+                result.HasSecond.Should().BeTrue();
+                result.Second.Should().Be( value );
             }
         }
     }

@@ -71,5 +71,55 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
                 result.Second.Should().Be( error );
             }
         }
+
+        [Fact]
+        public void Reduce_ShouldReturnCorrectResult_WhenHasError()
+        {
+            var error = new Exception();
+
+            var sut = (Unsafe<Unsafe<T>>) error;
+
+            var result = sut.Reduce();
+
+            using ( new AssertionScope() )
+            {
+                result.HasError.Should().BeTrue();
+                result.Error.Should().Be( error );
+            }
+        }
+
+        [Fact]
+        public void Reduce_ShouldReturnCorrectResult_WhenHasUnderlyingError()
+        {
+            var error = new Exception();
+            var underlying = (Unsafe<T>) error;
+
+            var sut = (Unsafe<Unsafe<T>>) underlying;
+
+            var result = sut.Reduce();
+
+            using ( new AssertionScope() )
+            {
+                result.HasError.Should().BeTrue();
+                result.Error.Should().Be( error );
+            }
+        }
+
+        [Fact]
+        public void Reduce_ShouldReturnCorrectResult_WhenHasUnderlyingValue()
+        {
+            var value = Fixture.Create<T>();
+            var underlying = (Unsafe<T>) value;
+
+            var sut = (Unsafe<Unsafe<T>>) underlying;
+
+            var result = sut.Reduce();
+
+            using ( new AssertionScope() )
+            {
+                result.IsOk.Should().BeTrue();
+                result.Value.Should().Be( value );
+            }
+        }
     }
 }

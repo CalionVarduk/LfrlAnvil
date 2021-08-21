@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Linq;
+using LfrlSoft.NET.Core.Extensions;
 
 namespace LfrlSoft.NET.ConsoleApp
 {
@@ -7,8 +7,13 @@ namespace LfrlSoft.NET.ConsoleApp
     {
         private static void Main(string[] args)
         {
-            var x = Array.Empty<int>();
-            var y = x.Aggregate( 0, (a, b) => a + b );
+            var a = "abc".ToMaybe();
+            var b = "def".ToMaybe();
+
+            var r = a.Match(
+                some: av => b.IfSomeOrDefault( bv => av == bv ),
+                none: () => ! b.HasValue );
+
             Console.WriteLine( "Hello World!" );
         }
     }
