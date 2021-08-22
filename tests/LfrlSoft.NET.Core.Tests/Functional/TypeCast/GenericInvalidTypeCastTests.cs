@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using LfrlSoft.NET.Core.Functional;
-using Xunit;
 using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
+using LfrlSoft.NET.Core.Functional;
 using LfrlSoft.NET.TestExtensions.Attributes;
 using LfrlSoft.NET.TestExtensions.FluentAssertions;
 using LfrlSoft.NET.TestExtensions.NSubstitute;
 using NSubstitute;
+using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
 {

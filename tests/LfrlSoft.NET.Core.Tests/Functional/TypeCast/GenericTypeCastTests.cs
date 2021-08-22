@@ -1,9 +1,9 @@
-﻿using FluentAssertions;
+﻿using AutoFixture;
+using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlSoft.NET.Core.Functional;
 using LfrlSoft.NET.TestExtensions;
 using Xunit;
-using AutoFixture;
 
 namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
 {
