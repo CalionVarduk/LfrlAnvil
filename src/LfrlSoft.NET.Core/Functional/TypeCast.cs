@@ -119,7 +119,7 @@ namespace LfrlSoft.NET.Core.Functional
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public Maybe<T> IfValid<T>(Func<TDestination, T> valid)
+        public Maybe<T> IfValid<T>(Func<TDestination, T?> valid)
             where T : notnull
         {
             return IsValid ? valid( Result! ) : Maybe<T>.None;
@@ -143,7 +143,7 @@ namespace LfrlSoft.NET.Core.Functional
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public Maybe<T> IfInvalid<T>(Func<TSource, T> invalid)
+        public Maybe<T> IfInvalid<T>(Func<TSource, T?> invalid)
             where T : notnull
         {
             return IsValid ? Maybe<T>.None : invalid( Source );

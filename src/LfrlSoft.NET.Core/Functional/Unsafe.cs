@@ -133,7 +133,7 @@ namespace LfrlSoft.NET.Core.Functional
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public Maybe<T2> IfOk<T2>(Func<T, T2> ok)
+        public Maybe<T2> IfOk<T2>(Func<T, T2?> ok)
             where T2 : notnull
         {
             return IsOk ? ok( Value! ) : Maybe<T2>.None;
@@ -157,7 +157,7 @@ namespace LfrlSoft.NET.Core.Functional
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public Maybe<T2> IfError<T2>(Func<Exception, T2> error)
+        public Maybe<T2> IfError<T2>(Func<Exception, T2?> error)
             where T2 : notnull
         {
             return HasError ? error( Error! ) : Maybe<T2>.None;

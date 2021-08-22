@@ -161,7 +161,7 @@ namespace LfrlSoft.NET.Core.Functional
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public T3? IfFirstOrDefault<T3>(Func<T1, T3?> first)
+        public T3? IfFirstOrDefault<T3>(Func<T1, T3> first)
         {
             return HasFirst ? first( First! ) : default;
         }
@@ -185,7 +185,7 @@ namespace LfrlSoft.NET.Core.Functional
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public T3? IfSecondOrDefault<T3>(Func<T2, T3?> second)
+        public T3? IfSecondOrDefault<T3>(Func<T2, T3> second)
         {
             return HasSecond ? second( Second! ) : default;
         }

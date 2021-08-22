@@ -70,6 +70,20 @@ namespace LfrlSoft.NET.Core.Extensions
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static Mutation<T> ToMutation<T>(this T source)
+        {
+            return source.Mutate( source );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static Mutation<T> Mutate<T>(this T source, T newValue)
+        {
+            return new Mutation<T>( source, newValue );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static IEnumerable<T2> Memoize<T1, T2>(this T1 source, Func<T1, IEnumerable<T2>> selector)
         {
             return new MemoizedEnumerable<T2>( selector( source ) );

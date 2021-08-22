@@ -122,7 +122,7 @@ namespace LfrlSoft.NET.Core.Functional
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public T2? IfSomeOrDefault<T2>(Func<T, T2?> some)
+        public T2? IfSomeOrDefault<T2>(Func<T, T2> some)
         {
             return HasValue ? some( Value! ) : default;
         }
@@ -146,7 +146,7 @@ namespace LfrlSoft.NET.Core.Functional
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public T2? IfNoneOrDefault<T2>(Func<T2?> none)
+        public T2? IfNoneOrDefault<T2>(Func<T2> none)
         {
             return HasValue ? default : none();
         }

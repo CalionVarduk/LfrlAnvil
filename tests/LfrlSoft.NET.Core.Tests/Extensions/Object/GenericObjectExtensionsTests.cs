@@ -89,6 +89,36 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Object
         }
 
         [Fact]
+        public void ToMutation_ShouldReturnCorrectResult()
+        {
+            var value = Fixture.Create<T>();
+
+            var sut = value.ToMutation();
+
+            using ( new AssertionScope() )
+            {
+                sut.OldValue.Should().Be( value );
+                sut.Value.Should().Be( value );
+                sut.HasChanged.Should().BeFalse();
+            }
+        }
+
+        [Fact]
+        public void Mutate_ShouldReturnCorrectResult()
+        {
+            var (value, newValue) = Fixture.CreateDistinctCollection<T>( 2 );
+
+            var sut = value.Mutate( newValue );
+
+            using ( new AssertionScope() )
+            {
+                sut.OldValue.Should().Be( value );
+                sut.Value.Should().Be( newValue );
+                sut.HasChanged.Should().BeTrue();
+            }
+        }
+
+        [Fact]
         public void Memoize_ShouldMaterializeSourceAfterFirstEnumeration()
         {
             var iterationCount = 5;
