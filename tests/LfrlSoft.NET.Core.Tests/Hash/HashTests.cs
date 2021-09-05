@@ -65,7 +65,7 @@ namespace LfrlSoft.NET.Core.Tests.Hash
         }
 
         [Theory]
-        [MethodData( nameof( HashTestsData.CreateEqualsTestData ) )]
+        [MethodData( nameof( HashTestsData.GetEqualsData ) )]
         public void Equals_ShouldReturnCorrectResult(int value1, int value2, bool expected)
         {
             var a = new Core.Hash( value1 );
@@ -77,7 +77,7 @@ namespace LfrlSoft.NET.Core.Tests.Hash
         }
 
         [Theory]
-        [MethodData( nameof( HashTestsData.CreateCompareToTestData ) )]
+        [MethodData( nameof( HashTestsData.GetCompareToData ) )]
         public void CompareTo_ShouldReturnCorrectResult(int value1, int value2, int expectedSign)
         {
             var a = new Core.Hash( value1 );
@@ -100,7 +100,7 @@ namespace LfrlSoft.NET.Core.Tests.Hash
         }
 
         [Theory]
-        [MethodData( nameof( HashTestsData.CreateEqualsTestData ) )]
+        [MethodData( nameof( HashTestsData.GetEqualsData ) )]
         public void EqualityOperator_ShouldReturnCorrectResult(int value1, int value2, bool expected)
         {
             var a = new Core.Hash( value1 );
@@ -112,7 +112,7 @@ namespace LfrlSoft.NET.Core.Tests.Hash
         }
 
         [Theory]
-        [MethodData( nameof( HashTestsData.CreateNotEqualsTestData ) )]
+        [MethodData( nameof( HashTestsData.GetNotEqualsData ) )]
         public void InequalityOperator_ShouldReturnCorrectResult(int value1, int value2, bool expected)
         {
             var a = new Core.Hash( value1 );
@@ -124,7 +124,7 @@ namespace LfrlSoft.NET.Core.Tests.Hash
         }
 
         [Theory]
-        [MethodData( nameof( HashTestsData.CreateGreaterThanComparisonTestData ) )]
+        [MethodData( nameof( HashTestsData.GetGreaterThanComparisonData ) )]
         public void GreaterThanOperator_ShouldReturnCorrectResult(int value1, int value2, bool expected)
         {
             var a = new Core.Hash( value1 );
@@ -136,7 +136,7 @@ namespace LfrlSoft.NET.Core.Tests.Hash
         }
 
         [Theory]
-        [MethodData( nameof( HashTestsData.CreateLessThanOrEqualToComparisonTestData ) )]
+        [MethodData( nameof( HashTestsData.GetLessThanOrEqualToComparisonData ) )]
         public void LessThanOrEqualToOperator_ShouldReturnCorrectResult(int value1, int value2, bool expected)
         {
             var a = new Core.Hash( value1 );
@@ -148,7 +148,7 @@ namespace LfrlSoft.NET.Core.Tests.Hash
         }
 
         [Theory]
-        [MethodData( nameof( HashTestsData.CreateLessThanComparisonTestData ) )]
+        [MethodData( nameof( HashTestsData.GetLessThanComparisonData ) )]
         public void LessThanOperator_ShouldReturnCorrectResult(int value1, int value2, bool expected)
         {
             var a = new Core.Hash( value1 );
@@ -160,7 +160,7 @@ namespace LfrlSoft.NET.Core.Tests.Hash
         }
 
         [Theory]
-        [MethodData( nameof( HashTestsData.CreateGreaterThanOrEqualToComparisonTestData ) )]
+        [MethodData( nameof( HashTestsData.GetGreaterThanOrEqualToComparisonData ) )]
         public void GreaterThanOrEqualToOperator_ShouldReturnCorrectResult(int value1, int value2, bool expected)
         {
             var a = new Core.Hash( value1 );

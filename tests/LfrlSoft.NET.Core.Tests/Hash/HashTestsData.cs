@@ -7,7 +7,7 @@ namespace LfrlSoft.NET.Core.Tests.Hash
 {
     public class HashTestsData
     {
-        public static TheoryData<int, int, bool> CreateEqualsTestData(IFixture fixture)
+        public static TheoryData<int, int, bool> GetEqualsData(IFixture fixture)
         {
             var (_1, _2) = fixture.CreateDistinctCollection<int>( 2 );
 
@@ -18,7 +18,7 @@ namespace LfrlSoft.NET.Core.Tests.Hash
             };
         }
 
-        public static TheoryData<int, int, int> CreateCompareToTestData(IFixture fixture)
+        public static TheoryData<int, int, int> GetCompareToData(IFixture fixture)
         {
             var (_1, _2) = fixture.CreateDistinctSortedCollection<int>( 2 );
 
@@ -30,29 +30,29 @@ namespace LfrlSoft.NET.Core.Tests.Hash
             };
         }
 
-        public static IEnumerable<object?[]> CreateNotEqualsTestData(IFixture fixture)
+        public static IEnumerable<object?[]> GetNotEqualsData(IFixture fixture)
         {
-            return CreateEqualsTestData( fixture ).ConvertResult( (bool r) => ! r );
+            return GetEqualsData( fixture ).ConvertResult( (bool r) => ! r );
         }
 
-        public static IEnumerable<object?[]> CreateGreaterThanComparisonTestData(IFixture fixture)
+        public static IEnumerable<object?[]> GetGreaterThanComparisonData(IFixture fixture)
         {
-            return CreateCompareToTestData( fixture ).ConvertResult( (int r) => r > 0 );
+            return GetCompareToData( fixture ).ConvertResult( (int r) => r > 0 );
         }
 
-        public static IEnumerable<object?[]> CreateGreaterThanOrEqualToComparisonTestData(IFixture fixture)
+        public static IEnumerable<object?[]> GetGreaterThanOrEqualToComparisonData(IFixture fixture)
         {
-            return CreateCompareToTestData( fixture ).ConvertResult( (int r) => r >= 0 );
+            return GetCompareToData( fixture ).ConvertResult( (int r) => r >= 0 );
         }
 
-        public static IEnumerable<object?[]> CreateLessThanComparisonTestData(IFixture fixture)
+        public static IEnumerable<object?[]> GetLessThanComparisonData(IFixture fixture)
         {
-            return CreateCompareToTestData( fixture ).ConvertResult( (int r) => r < 0 );
+            return GetCompareToData( fixture ).ConvertResult( (int r) => r < 0 );
         }
 
-        public static IEnumerable<object?[]> CreateLessThanOrEqualToComparisonTestData(IFixture fixture)
+        public static IEnumerable<object?[]> GetLessThanOrEqualToComparisonData(IFixture fixture)
         {
-            return CreateCompareToTestData( fixture ).ConvertResult( (int r) => r <= 0 );
+            return GetCompareToData( fixture ).ConvertResult( (int r) => r <= 0 );
         }
     }
 }
