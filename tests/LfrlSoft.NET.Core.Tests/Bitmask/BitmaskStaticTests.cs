@@ -49,36 +49,40 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         [Fact]
         public void StaticCtor_ShouldThrowWhenAttemptingToUseEnumWithoutFlagsAttribute()
         {
-            var bitCount = 0;
-            Action action = () => bitCount = Bitmask<EnumWithoutFlagsAttribute>.BitCount;
-
+            Action action = () =>
+            {
+                var _ = Bitmask<EnumWithoutFlagsAttribute>.BitCount;
+            };
             action.Should().Throw<TypeInitializationException>();
         }
 
         [Fact]
         public void StaticCtor_ShouldThrowWhenAttemptingToUseEnumWithoutZeroValueMember()
         {
-            var bitCount = 0;
-            Action action = () => bitCount = Bitmask<EnumWithoutZeroValueMember>.BitCount;
-
+            Action action = () =>
+            {
+                var _ = Bitmask<EnumWithoutZeroValueMember>.BitCount;
+            };
             action.Should().Throw<TypeInitializationException>();
         }
 
         [Fact]
         public void StaticCtor_ShouldThrowWhenAttemptingToUseStructThatDoesntSupportConversionToUInt64()
         {
-            var bitCount = 0;
-            Action action = () => bitCount = Bitmask<InvalidStructA>.BitCount;
-
+            Action action = () =>
+            {
+                var _ = Bitmask<InvalidStructA>.BitCount;
+            };
             action.Should().Throw<TypeInitializationException>();
         }
 
         [Fact]
         public void StaticCtor_ShouldThrowWhenAttemptingToUseStructThatDoesntSupportConversionFromUInt64()
         {
-            var bitCount = 0;
-            Action action = () => bitCount = Bitmask<InvalidStructB>.BitCount;
-
+            Action action = () =>
+            {
+                var _ = Bitmask<InvalidStructB>.BitCount;
+            };
             action.Should().Throw<TypeInitializationException>();
         }
     }

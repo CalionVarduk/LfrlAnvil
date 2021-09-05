@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using AutoFixture;
 using LfrlSoft.NET.TestExtensions;
+using LfrlSoft.NET.TestExtensions.Attributes;
 using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.Assert
 {
+    [GenericTestClass( typeof( GenericAssertTestsData<> ) )]
     public abstract class GenericAssertTests<T> : AssertTestsBase
     {
         protected readonly IEqualityComparer<T> EqualityComparer = EqualityComparer<T>.Default;
@@ -449,11 +451,7 @@ namespace LfrlSoft.NET.Core.Tests.Assert
         }
 
         [Theory]
-        [InlineData( -1 )]
-        [InlineData( 0 )]
-        [InlineData( 1 )]
-        [InlineData( 2 )]
-        [InlineData( 3 )]
+        [GenericMethodData( nameof( GenericAssertTestsData<T>.GetContainsAtLeastPassData ) )]
         public void ContainsAtLeast_ShouldPass_WhenCollectionContainsEnoughElements(int minCount)
         {
             var param = Fixture.CreateMany<T>( 3 );
@@ -461,8 +459,7 @@ namespace LfrlSoft.NET.Core.Tests.Assert
         }
 
         [Theory]
-        [InlineData( 4 )]
-        [InlineData( 5 )]
+        [GenericMethodData( nameof( GenericAssertTestsData<T>.GetContainsAtLeastThrowData ) )]
         public void ContainsAtLeast_ShouldThrow_WhenCollectionContainsTooFewElements(int minCount)
         {
             var param = Fixture.CreateMany<T>( 3 );
@@ -470,9 +467,7 @@ namespace LfrlSoft.NET.Core.Tests.Assert
         }
 
         [Theory]
-        [InlineData( 3 )]
-        [InlineData( 4 )]
-        [InlineData( 5 )]
+        [GenericMethodData( nameof( GenericAssertTestsData<T>.GetContainsAtMostPassData ) )]
         public void ContainsAtMost_ShouldPass_WhenCollectionDoesntContainTooManyElements(int maxCount)
         {
             var param = Fixture.CreateMany<T>( 3 );
@@ -480,10 +475,7 @@ namespace LfrlSoft.NET.Core.Tests.Assert
         }
 
         [Theory]
-        [InlineData( -1 )]
-        [InlineData( 0 )]
-        [InlineData( 1 )]
-        [InlineData( 2 )]
+        [GenericMethodData( nameof( GenericAssertTestsData<T>.GetContainsAtMostThrowData ) )]
         public void ContainsAtMost_ShouldThrow_WhenCollectionContainsTooManyElements(int maxCount)
         {
             var param = Fixture.CreateMany<T>( 3 );
@@ -498,8 +490,7 @@ namespace LfrlSoft.NET.Core.Tests.Assert
         }
 
         [Theory]
-        [InlineData( 2 )]
-        [InlineData( 4 )]
+        [GenericMethodData( nameof( GenericAssertTestsData<T>.GetContainsExactlyThrowData ) )]
         public void ContainsExactly_ShouldThrow_WhenCollectionContainsTooFewOrManyElements(int count)
         {
             var param = Fixture.CreateMany<T>( 3 );
@@ -507,16 +498,7 @@ namespace LfrlSoft.NET.Core.Tests.Assert
         }
 
         [Theory]
-        [InlineData( 0, 3 )]
-        [InlineData( 1, 3 )]
-        [InlineData( 2, 3 )]
-        [InlineData( 3, 3 )]
-        [InlineData( 0, 4 )]
-        [InlineData( 1, 4 )]
-        [InlineData( 2, 4 )]
-        [InlineData( 3, 4 )]
-        [InlineData( 3, 5 )]
-        [InlineData( 3, 6 )]
+        [GenericMethodData( nameof( GenericAssertTestsData<T>.GetContainsBetweenPassData ) )]
         public void ContainsBetween_ShouldPass_WhenCollectionContainsCorrectAmountOfElements(int minCount, int maxCount)
         {
             var param = Fixture.CreateMany<T>( 3 );
@@ -524,13 +506,7 @@ namespace LfrlSoft.NET.Core.Tests.Assert
         }
 
         [Theory]
-        [InlineData( 0, 2 )]
-        [InlineData( 1, 2 )]
-        [InlineData( 2, 2 )]
-        [InlineData( 4, 4 )]
-        [InlineData( 4, 5 )]
-        [InlineData( 4, 6 )]
-        [InlineData( 3, 2 )]
+        [GenericMethodData( nameof( GenericAssertTestsData<T>.GetContainsBetweenThrowData ) )]
         public void ContainsBetween_ShouldThrow_WhenCollectionContainsTooManyOrTooFewElements(int minCount, int maxCount)
         {
             var param = Fixture.CreateMany<T>( 3 );

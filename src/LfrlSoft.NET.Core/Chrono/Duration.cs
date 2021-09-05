@@ -54,6 +54,13 @@ namespace LfrlSoft.NET.Core.Chrono
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static Duration FromTicks(long ticks)
+        {
+            return new Duration( ticks );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static Duration FromMilliseconds(double milliseconds)
         {
             return new Duration( (long) Math.Round( milliseconds * Constants.TicksPerMillisecond ) );
@@ -324,6 +331,66 @@ namespace LfrlSoft.NET.Core.Chrono
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public Duration SetTicksInMillisecond(int value)
+        {
+            return Ticks switch
+            {
+                > 0 => SetTicksInMillisecondForPositive( value ),
+                < 0 => SetTicksInMillisecondForNegative( value ),
+                _ => SetTicksInMillisecondForZero( value )
+            };
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public Duration SetMillisecondsInSecond(int value)
+        {
+            return Ticks switch
+            {
+                > 0 => SetMillisecondsInSecondForPositive( value ),
+                < 0 => SetMillisecondsInSecondForNegative( value ),
+                _ => SetMillisecondsInSecondForZero( value )
+            };
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public Duration SetSecondsInMinute(int value)
+        {
+            return Ticks switch
+            {
+                > 0 => SetSecondsInMinuteForPositive( value ),
+                < 0 => SetSecondsInMinuteForNegative( value ),
+                _ => SetSecondsInMinuteForZero( value )
+            };
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public Duration SetMinutesInHour(int value)
+        {
+            return Ticks switch
+            {
+                > 0 => SetMinutesInHourForPositive( value ),
+                < 0 => SetMinutesInHourForNegative( value ),
+                _ => SetMinutesInHourForZero( value )
+            };
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public Duration SetHours(long value)
+        {
+            return Ticks switch
+            {
+                > 0 => SetHoursForPositive( value ),
+                < 0 => SetHoursForNegative( value ),
+                _ => SetHoursForZero( value )
+            };
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static explicit operator TimeSpan(Duration d)
         {
             return TimeSpan.FromTicks( d.Ticks );
@@ -390,6 +457,125 @@ namespace LfrlSoft.NET.Core.Chrono
         public static bool operator >=(Duration a, Duration b)
         {
             return a.CompareTo( b ) >= 0;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private Duration SetTicksInMillisecondForPositive(int value)
+        {
+            Assert.IsBetween( value, 0, Constants.TicksPerMillisecond - 1, nameof( value ) );
+            return AddTicks( value - TicksInMillisecond );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private Duration SetTicksInMillisecondForNegative(int value)
+        {
+            Assert.IsBetween( value, -Constants.TicksPerMillisecond + 1, 0, nameof( value ) );
+            return AddTicks( value - TicksInMillisecond );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private Duration SetTicksInMillisecondForZero(int value)
+        {
+            Assert.IsBetween( value, -Constants.TicksPerMillisecond + 1, Constants.TicksPerMillisecond - 1, nameof( value ) );
+            return AddTicks( value - TicksInMillisecond );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private Duration SetMillisecondsInSecondForPositive(int value)
+        {
+            Assert.IsBetween( value, 0, Constants.MillisecondsPerSecond - 1, nameof( value ) );
+            return AddMilliseconds( value - MillisecondsInSecond );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private Duration SetMillisecondsInSecondForNegative(int value)
+        {
+            Assert.IsBetween( value, -Constants.MillisecondsPerSecond + 1, 0, nameof( value ) );
+            return AddMilliseconds( value - MillisecondsInSecond );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private Duration SetMillisecondsInSecondForZero(int value)
+        {
+            Assert.IsBetween( value, -Constants.MillisecondsPerSecond + 1, Constants.MillisecondsPerSecond - 1, nameof( value ) );
+            return AddMilliseconds( value - MillisecondsInSecond );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private Duration SetSecondsInMinuteForPositive(int value)
+        {
+            Assert.IsBetween( value, 0, Constants.SecondsPerMinute - 1, nameof( value ) );
+            return AddSeconds( value - SecondsInMinute );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private Duration SetSecondsInMinuteForNegative(int value)
+        {
+            Assert.IsBetween( value, -Constants.SecondsPerMinute + 1, 0, nameof( value ) );
+            return AddSeconds( value - SecondsInMinute );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private Duration SetSecondsInMinuteForZero(int value)
+        {
+            Assert.IsBetween( value, -Constants.SecondsPerMinute + 1, Constants.SecondsPerMinute - 1, nameof( value ) );
+            return AddSeconds( value - SecondsInMinute );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private Duration SetMinutesInHourForPositive(int value)
+        {
+            Assert.IsBetween( value, 0, Constants.MinutesPerHour - 1, nameof( value ) );
+            return AddMinutes( value - MinutesInHour );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private Duration SetMinutesInHourForNegative(int value)
+        {
+            Assert.IsBetween( value, -Constants.MinutesPerHour + 1, 0, nameof( value ) );
+            return AddMinutes( value - MinutesInHour );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private Duration SetMinutesInHourForZero(int value)
+        {
+            Assert.IsBetween( value, -Constants.MinutesPerHour + 1, Constants.MinutesPerHour - 1, nameof( value ) );
+            return AddMinutes( value - MinutesInHour );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private Duration SetHoursForPositive(long value)
+        {
+            Assert.IsGreaterThanOrEqualTo( value, 0, nameof( value ) );
+            return AddHours( value - FullHours );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private Duration SetHoursForNegative(long value)
+        {
+            Assert.IsLessThanOrEqualTo( value, 0, nameof( value ) );
+            return AddHours( value - FullHours );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private Duration SetHoursForZero(long value)
+        {
+            return AddHours( value - FullHours );
         }
     }
 }

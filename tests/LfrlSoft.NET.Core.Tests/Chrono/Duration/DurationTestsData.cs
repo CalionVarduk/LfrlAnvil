@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using AutoFixture;
+using LfrlSoft.NET.Core.Chrono;
 using LfrlSoft.NET.TestExtensions;
 using Xunit;
 
@@ -758,6 +759,203 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Duration
                 { -36000000000, -36000000000 },
                 { -36000000001, -36000000000 },
                 { -107999999999, -72000000000 }
+            };
+        }
+
+        public static TheoryData<long, int> GetSetTicksInMillisecondThrowData(IFixture fixture)
+        {
+            return new()
+            {
+                { 1, -1 },
+                { 1, -2 },
+                { 1, (int) Constants.TicksPerMillisecond },
+                { 1, (int) Constants.TicksPerMillisecond + 1 },
+                { 1, (int) Constants.TicksPerMillisecond + 2 },
+                { -1, 1 },
+                { -1, 2 },
+                { -1, (int) -Constants.TicksPerMillisecond },
+                { -1, (int) -Constants.TicksPerMillisecond - 1 },
+                { -1, (int) -Constants.TicksPerMillisecond - 2 },
+                { 0, (int) Constants.TicksPerMillisecond },
+                { 0, (int) Constants.TicksPerMillisecond + 1 },
+                { 0, (int) Constants.TicksPerMillisecond + 2 },
+                { 0, (int) -Constants.TicksPerMillisecond },
+                { 0, (int) -Constants.TicksPerMillisecond - 1 },
+                { 0, (int) -Constants.TicksPerMillisecond - 2 }
+            };
+        }
+
+        public static TheoryData<long, int, long> GetSetTicksInMillisecondData(IFixture fixture)
+        {
+            return new()
+            {
+                { 0, 0, 0 },
+                { 0, 4567, 4567 },
+                { 0, -4567, -4567 },
+                { 1234, 0, 0 },
+                { 1234, 9999, 9999 },
+                { -1234, 0, 0 },
+                { -1234, -9999, -9999 },
+                { 36630046789, 0, 36630040000 },
+                { 36630046789, 9999, 36630049999 },
+                { 36630046789, 1234, 36630041234 },
+                { -36630046789, 0, -36630040000 },
+                { -36630046789, -9999, -36630049999 },
+                { -36630046789, -1234, -36630041234 }
+            };
+        }
+
+        public static TheoryData<long, int> GetSetMillisecondsInSecondThrowData(IFixture fixture)
+        {
+            return new()
+            {
+                { 1, -1 },
+                { 1, -2 },
+                { 1, Constants.MillisecondsPerSecond },
+                { 1, Constants.MillisecondsPerSecond + 1 },
+                { 1, Constants.MillisecondsPerSecond + 2 },
+                { -1, 1 },
+                { -1, 2 },
+                { -1, -Constants.MillisecondsPerSecond },
+                { -1, -Constants.MillisecondsPerSecond - 1 },
+                { -1, -Constants.MillisecondsPerSecond - 2 },
+                { 0, Constants.MillisecondsPerSecond },
+                { 0, Constants.MillisecondsPerSecond + 1 },
+                { 0, Constants.MillisecondsPerSecond + 2 },
+                { 0, -Constants.MillisecondsPerSecond },
+                { 0, -Constants.MillisecondsPerSecond - 1 },
+                { 0, -Constants.MillisecondsPerSecond - 2 }
+            };
+        }
+
+        public static TheoryData<long, int, long> GetSetMillisecondsInSecondData(IFixture fixture)
+        {
+            return new()
+            {
+                { 0, 0, 0 },
+                { 0, 456, 4560000 },
+                { 0, -456, -4560000 },
+                { 1230000, 0, 0 },
+                { 1230000, 999, 9990000 },
+                { -1230000, 0, 0 },
+                { -1230000, -999, -9990000 },
+                { 36637890005, 0, 36630000005 },
+                { 36637890005, 999, 36639990005 },
+                { 36637890005, 123, 36631230005 },
+                { -36637890005, 0, -36630000005 },
+                { -36637890005, -999, -36639990005 },
+                { -36637890005, -123, -36631230005 }
+            };
+        }
+
+        public static TheoryData<long, int> GetSetSecondsInMinuteThrowData(IFixture fixture)
+        {
+            return new()
+            {
+                { 1, -1 },
+                { 1, -2 },
+                { 1, Constants.SecondsPerMinute },
+                { 1, Constants.SecondsPerMinute + 1 },
+                { 1, Constants.SecondsPerMinute + 2 },
+                { -1, 1 },
+                { -1, 2 },
+                { -1, -Constants.SecondsPerMinute },
+                { -1, -Constants.SecondsPerMinute - 1 },
+                { -1, -Constants.SecondsPerMinute - 2 },
+                { 0, Constants.SecondsPerMinute },
+                { 0, Constants.SecondsPerMinute + 1 },
+                { 0, Constants.SecondsPerMinute + 2 },
+                { 0, -Constants.SecondsPerMinute },
+                { 0, -Constants.SecondsPerMinute - 1 },
+                { 0, -Constants.SecondsPerMinute - 2 }
+            };
+        }
+
+        public static TheoryData<long, int, long> GetSetSecondsInMinuteData(IFixture fixture)
+        {
+            return new()
+            {
+                { 0, 0, 0 },
+                { 0, 45, 450000000 },
+                { 0, -45, -450000000 },
+                { 120000000, 0, 0 },
+                { 120000000, 59, 590000000 },
+                { -120000000, 0, 0 },
+                { -120000000, -59, -590000000 },
+                { 36940040005, 0, 36600040005 },
+                { 36940040005, 59, 37190040005 },
+                { 36940040005, 12, 36720040005 },
+                { -36940040005, 0, -36600040005 },
+                { -36940040005, -59, -37190040005 },
+                { -36940040005, -12, -36720040005 }
+            };
+        }
+
+        public static TheoryData<long, int> GetSetMinutesInHourThrowData(IFixture fixture)
+        {
+            return new()
+            {
+                { 1, -1 },
+                { 1, -2 },
+                { 1, Constants.MinutesPerHour },
+                { 1, Constants.MinutesPerHour + 1 },
+                { 1, Constants.MinutesPerHour + 2 },
+                { -1, 1 },
+                { -1, 2 },
+                { -1, -Constants.MinutesPerHour },
+                { -1, -Constants.MinutesPerHour - 1 },
+                { -1, -Constants.MinutesPerHour - 2 },
+                { 0, Constants.MinutesPerHour },
+                { 0, Constants.MinutesPerHour + 1 },
+                { 0, Constants.MinutesPerHour + 2 },
+                { 0, -Constants.MinutesPerHour },
+                { 0, -Constants.MinutesPerHour - 1 },
+                { 0, -Constants.MinutesPerHour - 2 }
+            };
+        }
+
+        public static TheoryData<long, int, long> GetSetMinutesInHourData(IFixture fixture)
+        {
+            return new()
+            {
+                { 0, 0, 0 },
+                { 0, 45, 27000000000 },
+                { 0, -45, -27000000000 },
+                { 7200000000, 0, 0 },
+                { 7200000000, 59, 35400000000 },
+                { -7200000000, 0, 0 },
+                { -7200000000, -59, -35400000000 },
+                { 56430040005, 0, 36030040005 },
+                { 56430040005, 59, 71430040005 },
+                { 56430040005, 12, 43230040005 },
+                { -56430040005, 0, -36030040005 },
+                { -56430040005, -59, -71430040005 },
+                { -56430040005, -12, -43230040005 }
+            };
+        }
+
+        public static TheoryData<long, int> GetSetHoursThrowData(IFixture fixture)
+        {
+            return new()
+            {
+                { 1, -1 },
+                { 1, -2 },
+                { -1, 1 },
+                { -1, 2 }
+            };
+        }
+
+        public static TheoryData<long, int, long> GetSetHoursData(IFixture fixture)
+        {
+            return new()
+            {
+                { 0, 0, 0 },
+                { 0, 12, 432000000000 },
+                { 0, -12, -432000000000 },
+                { 109230040005, 0, 1230040005 },
+                { 109230040005, 12, 433230040005 },
+                { -109230040005, 0, -1230040005 },
+                { -109230040005, -12, -433230040005 }
             };
         }
     }

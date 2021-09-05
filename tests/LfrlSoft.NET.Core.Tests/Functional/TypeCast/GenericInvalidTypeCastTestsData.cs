@@ -1,19 +1,20 @@
 ﻿using System.Collections.Generic;
 using AutoFixture;
 using LfrlSoft.NET.TestExtensions;
+using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
 {
     public class GenericInvalidTypeCastTestsData<TSource, TDestination>
     {
-        public static IEnumerable<object?[]> CreateEqualsTestData(IFixture fixture)
+        public static TheoryData<TSource, TSource, bool> CreateEqualsTestData(IFixture fixture)
         {
             var (_1, _2) = fixture.CreateDistinctCollection<TSource>( 2 );
 
-            return new[]
+            return new TheoryData<TSource, TSource, bool>
             {
-                new object?[] { _1, _1, true },
-                new object?[] { _1, _2, false }
+                { _1, _1, true },
+                { _1, _2, false }
             };
         }
 

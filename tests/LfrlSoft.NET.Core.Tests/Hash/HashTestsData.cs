@@ -1,31 +1,32 @@
 ﻿using System.Collections.Generic;
 using AutoFixture;
 using LfrlSoft.NET.TestExtensions;
+using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.Hash
 {
     public class HashTestsData
     {
-        public static IEnumerable<object?[]> CreateEqualsTestData(IFixture fixture)
+        public static TheoryData<int, int, bool> CreateEqualsTestData(IFixture fixture)
         {
             var (_1, _2) = fixture.CreateDistinctCollection<int>( 2 );
 
-            return new[]
+            return new TheoryData<int, int, bool>
             {
-                new object?[] { _1, _1, true },
-                new object?[] { _1, _2, false }
+                { _1, _1, true },
+                { _1, _2, false }
             };
         }
 
-        public static IEnumerable<object?[]> CreateCompareToTestData(IFixture fixture)
+        public static TheoryData<int, int, int> CreateCompareToTestData(IFixture fixture)
         {
             var (_1, _2) = fixture.CreateDistinctSortedCollection<int>( 2 );
 
-            return new[]
+            return new TheoryData<int, int, int>
             {
-                new object?[] { _1, _1, 0 },
-                new object?[] { _1, _2, -1 },
-                new object?[] { _2, _1, 1 }
+                { _1, _1, 0 },
+                { _1, _2, -1 },
+                { _2, _1, 1 }
             };
         }
 

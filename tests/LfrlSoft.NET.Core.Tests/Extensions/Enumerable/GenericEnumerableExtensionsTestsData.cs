@@ -2,23 +2,20 @@
 using System.Collections.Generic;
 using AutoFixture;
 using LfrlSoft.NET.TestExtensions;
+using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
 {
     public class GenericEnumerableExtensionsTestsData<T>
     {
-        public static IEnumerable<object?[]> CreateFlattenTestData(IFixture fixture)
+        public static TheoryData<IEnumerable<Pair<T, IEnumerable<T>>>, IEnumerable<Pair<T, T>>> CreateFlattenTestData(IFixture fixture)
         {
             var (_1, _2, _3) = fixture.CreateDistinctCollection<T>( 3 );
 
-            return new[]
+            return new TheoryData<IEnumerable<Pair<T, IEnumerable<T>>>, IEnumerable<Pair<T, T>>>
             {
-                new object?[] { Array.Empty<Pair<T, IEnumerable<T>>>(), Array.Empty<Pair<T, T>>() },
-                new object?[]
-                {
-                    new[] { new Pair<T, IEnumerable<T>>( _1, new[] { _2 } ) }, new[] { Core.Pair.Create( _1, _2 ) }
-                },
-                new object?[]
+                { Array.Empty<Pair<T, IEnumerable<T>>>(), Array.Empty<Pair<T, T>>() },
+                { new[] { new Pair<T, IEnumerable<T>>( _1, new[] { _2 } ) }, new[] { Core.Pair.Create( _1, _2 ) } },
                 {
                     new[] { new Pair<T, IEnumerable<T>>( _1, new[] { _2, _3 } ), new Pair<T, IEnumerable<T>>( _2, new[] { _1, _3 } ) },
                     new[]
@@ -32,122 +29,122 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
             };
         }
 
-        public static IEnumerable<object?[]> CreateMinTestData(IFixture fixture)
+        public static TheoryData<IEnumerable<T>, T> CreateMinTestData(IFixture fixture)
         {
             var (_1, _2, _3) = fixture.CreateDistinctSortedCollection<T>( 3 );
 
-            return new[]
+            return new TheoryData<IEnumerable<T>, T>
             {
-                new object?[] { new[] { _1 }, _1 },
-                new object?[] { new[] { _1, _2 }, _1 },
-                new object?[] { new[] { _2, _1 }, _1 },
-                new object?[] { new[] { _1, _1 }, _1 },
-                new object?[] { new[] { _1, _2, _3 }, _1 },
-                new object?[] { new[] { _1, _3, _2 }, _1 },
-                new object?[] { new[] { _3, _1, _2 }, _1 },
-                new object?[] { new[] { _3, _2, _1 }, _1 },
-                new object?[] { new[] { _1, _1, _1 }, _1 }
+                { new[] { _1 }, _1 },
+                { new[] { _1, _2 }, _1 },
+                { new[] { _2, _1 }, _1 },
+                { new[] { _1, _1 }, _1 },
+                { new[] { _1, _2, _3 }, _1 },
+                { new[] { _1, _3, _2 }, _1 },
+                { new[] { _3, _1, _2 }, _1 },
+                { new[] { _3, _2, _1 }, _1 },
+                { new[] { _1, _1, _1 }, _1 }
             };
         }
 
-        public static IEnumerable<object?[]> CreateMaxTestData(IFixture fixture)
+        public static TheoryData<IEnumerable<T>, T> CreateMaxTestData(IFixture fixture)
         {
             var (_1, _2, _3) = fixture.CreateDistinctSortedCollection<T>( 3 );
 
-            return new[]
+            return new TheoryData<IEnumerable<T>, T>
             {
-                new object?[] { new[] { _1 }, _1 },
-                new object?[] { new[] { _1, _2 }, _2 },
-                new object?[] { new[] { _2, _1 }, _2 },
-                new object?[] { new[] { _1, _1 }, _1 },
-                new object?[] { new[] { _1, _2, _3 }, _3 },
-                new object?[] { new[] { _1, _3, _2 }, _3 },
-                new object?[] { new[] { _3, _1, _2 }, _3 },
-                new object?[] { new[] { _3, _2, _1 }, _3 },
-                new object?[] { new[] { _1, _1, _1 }, _1 }
+                { new[] { _1 }, _1 },
+                { new[] { _1, _2 }, _2 },
+                { new[] { _2, _1 }, _2 },
+                { new[] { _1, _1 }, _1 },
+                { new[] { _1, _2, _3 }, _3 },
+                { new[] { _1, _3, _2 }, _3 },
+                { new[] { _3, _1, _2 }, _3 },
+                { new[] { _3, _2, _1 }, _3 },
+                { new[] { _1, _1, _1 }, _1 }
             };
         }
 
-        public static IEnumerable<object?[]> CreateContainsDuplicatesTestData(IFixture fixture)
+        public static TheoryData<IEnumerable<T>, bool> CreateContainsDuplicatesTestData(IFixture fixture)
         {
             var (_1, _2, _3) = fixture.CreateDistinctCollection<T>( 3 );
 
-            return new[]
+            return new TheoryData<IEnumerable<T>, bool>
             {
-                new object?[] { new[] { _1 }, false },
-                new object?[] { new[] { _1, _1 }, true },
-                new object?[] { new[] { _1, _2 }, false },
-                new object?[] { new[] { _1, _1, _1 }, true },
-                new object?[] { new[] { _1, _1, _2 }, true },
-                new object?[] { new[] { _1, _2, _2 }, true },
-                new object?[] { new[] { _1, _2, _3 }, false },
-                new object?[] { new[] { _1, _1, _2, _3 }, true },
-                new object?[] { new[] { _1, _2, _2, _3 }, true },
-                new object?[] { new[] { _1, _2, _3, _3 }, true }
+                { new[] { _1 }, false },
+                { new[] { _1, _1 }, true },
+                { new[] { _1, _2 }, false },
+                { new[] { _1, _1, _1 }, true },
+                { new[] { _1, _1, _2 }, true },
+                { new[] { _1, _2, _2 }, true },
+                { new[] { _1, _2, _3 }, false },
+                { new[] { _1, _1, _2, _3 }, true },
+                { new[] { _1, _2, _2, _3 }, true },
+                { new[] { _1, _2, _3, _3 }, true }
             };
         }
 
-        public static IEnumerable<object?[]> CreateRepeatTestData(IFixture fixture)
+        public static TheoryData<IEnumerable<T>, int, IEnumerable<T>> CreateRepeatTestData(IFixture fixture)
         {
             var (_1, _2, _3) = fixture.CreateDistinctCollection<T>( 3 );
 
-            return new[]
+            return new TheoryData<IEnumerable<T>, int, IEnumerable<T>>
             {
-                new object?[] { Array.Empty<T>(), 2, Array.Empty<T>() },
-                new object?[] { Array.Empty<T>(), 5, Array.Empty<T>() },
-                new object?[] { new[] { _1 }, 2, new[] { _1, _1 } },
-                new object?[] { new[] { _1 }, 5, new[] { _1, _1, _1, _1, _1 } },
-                new object?[] { new[] { _1, _2, _3 }, 2, new[] { _1, _2, _3, _1, _2, _3 } },
-                new object?[] { new[] { _1, _2, _3 }, 5, new[] { _1, _2, _3, _1, _2, _3, _1, _2, _3, _1, _2, _3, _1, _2, _3 } }
+                { Array.Empty<T>(), 2, Array.Empty<T>() },
+                { Array.Empty<T>(), 5, Array.Empty<T>() },
+                { new[] { _1 }, 2, new[] { _1, _1 } },
+                { new[] { _1 }, 5, new[] { _1, _1, _1, _1, _1 } },
+                { new[] { _1, _2, _3 }, 2, new[] { _1, _2, _3, _1, _2, _3 } },
+                { new[] { _1, _2, _3 }, 5, new[] { _1, _2, _3, _1, _2, _3, _1, _2, _3, _1, _2, _3, _1, _2, _3 } }
             };
         }
 
-        public static IEnumerable<object?[]> CreateSetEqualsTestData(IFixture fixture)
+        public static TheoryData<IEnumerable<T>, IEnumerable<T>, bool> CreateSetEqualsTestData(IFixture fixture)
         {
             var (_1, _2, _3) = fixture.CreateDistinctCollection<T>( 3 );
 
-            return new[]
+            return new TheoryData<IEnumerable<T>, IEnumerable<T>, bool>
             {
-                new object?[] { Array.Empty<T>(), Array.Empty<T>(), true },
-                new object?[] { Array.Empty<T>(), new[] { _1 }, false },
-                new object?[] { new[] { _1 }, Array.Empty<T>(), false },
-                new object?[] { new[] { _1 }, new[] { _1 }, true },
-                new object?[] { new[] { _1, _1 }, new[] { _1 }, true },
-                new object?[] { new[] { _1 }, new[] { _1, _1 }, true },
-                new object?[] { new[] { _1, _1 }, new[] { _1, _1 }, true },
-                new object?[] { new[] { _1 }, new[] { _2 }, false },
-                new object?[] { new[] { _1 }, new[] { _1, _2 }, false },
-                new object?[] { new[] { _1 }, new[] { _2, _1 }, false },
-                new object?[] { new[] { _1, _2, _3 }, Array.Empty<T>(), false },
-                new object?[] { new[] { _1, _2, _3 }, new[] { _1, _2, _3 }, true },
-                new object?[] { new[] { _1, _3, _2 }, new[] { _2, _1, _3 }, true },
-                new object?[] { new[] { _1, _1, _2, _2, _3, _3 }, new[] { _1, _2, _3 }, true },
-                new object?[] { new[] { _3, _2, _1 }, new[] { _1, _2, _3, _1, _2, _3 }, true },
-                new object?[] { new[] { _1, _1, _2, _2, _3, _3 }, new[] { _3, _2, _1, _3, _2, _1 }, true },
-                new object?[] { new[] { _1, _1, _2, _2, _3, _3 }, new[] { _3, _2, _1, _3, _2, _1 }, true },
-                new object?[] { new[] { _1, _2, _3 }, new[] { _1, _2 }, false },
-                new object?[] { new[] { _1, _2, _3 }, new[] { _3, _1 }, false },
-                new object?[] { new[] { _1, _2, _3 }, new[] { _2 }, false },
-                new object?[] { new[] { _1, _2 }, new[] { _2, _3 }, false }
+                { Array.Empty<T>(), Array.Empty<T>(), true },
+                { Array.Empty<T>(), new[] { _1 }, false },
+                { new[] { _1 }, Array.Empty<T>(), false },
+                { new[] { _1 }, new[] { _1 }, true },
+                { new[] { _1, _1 }, new[] { _1 }, true },
+                { new[] { _1 }, new[] { _1, _1 }, true },
+                { new[] { _1, _1 }, new[] { _1, _1 }, true },
+                { new[] { _1 }, new[] { _2 }, false },
+                { new[] { _1 }, new[] { _1, _2 }, false },
+                { new[] { _1 }, new[] { _2, _1 }, false },
+                { new[] { _1, _2, _3 }, Array.Empty<T>(), false },
+                { new[] { _1, _2, _3 }, new[] { _1, _2, _3 }, true },
+                { new[] { _1, _3, _2 }, new[] { _2, _1, _3 }, true },
+                { new[] { _1, _1, _2, _2, _3, _3 }, new[] { _1, _2, _3 }, true },
+                { new[] { _3, _2, _1 }, new[] { _1, _2, _3, _1, _2, _3 }, true },
+                { new[] { _1, _1, _2, _2, _3, _3 }, new[] { _3, _2, _1, _3, _2, _1 }, true },
+                { new[] { _1, _1, _2, _2, _3, _3 }, new[] { _3, _2, _1, _3, _2, _1 }, true },
+                { new[] { _1, _2, _3 }, new[] { _1, _2 }, false },
+                { new[] { _1, _2, _3 }, new[] { _3, _1 }, false },
+                { new[] { _1, _2, _3 }, new[] { _2 }, false },
+                { new[] { _1, _2 }, new[] { _2, _3 }, false }
             };
         }
 
-        public static IEnumerable<object?[]> CreateDistinctTestData(IFixture fixture)
+        public static TheoryData<IEnumerable<T>, IEnumerable<T>> CreateDistinctTestData(IFixture fixture)
         {
             var (_1, _2, _3) = fixture.CreateDistinctSortedCollection<T>( 3 );
 
-            return new[]
+            return new TheoryData<IEnumerable<T>, IEnumerable<T>>
             {
-                new object?[] { new[] { _1 }, new[] { _1 } },
-                new object?[] { new[] { _1, _2 }, new[] { _1, _2 } },
-                new object?[] { new[] { _2, _1 }, new[] { _2, _1 } },
-                new object?[] { new[] { _1, _1 }, new[] { _1 } },
-                new object?[] { new[] { _1, _2, _3 }, new[] { _1, _2, _3 } },
-                new object?[] { new[] { _1, _3, _2 }, new[] { _1, _3, _2 } },
-                new object?[] { new[] { _3, _1, _2 }, new[] { _3, _1, _2 } },
-                new object?[] { new[] { _3, _2, _1 }, new[] { _3, _2, _1 } },
-                new object?[] { new[] { _1, _1, _1 }, new[] { _1 } },
-                new object?[] { new[] { _1, _1, _3, _3, _2, _2 }, new[] { _1, _3, _2 } }
+                { new[] { _1 }, new[] { _1 } },
+                { new[] { _1, _2 }, new[] { _1, _2 } },
+                { new[] { _2, _1 }, new[] { _2, _1 } },
+                { new[] { _1, _1 }, new[] { _1 } },
+                { new[] { _1, _2, _3 }, new[] { _1, _2, _3 } },
+                { new[] { _1, _3, _2 }, new[] { _1, _3, _2 } },
+                { new[] { _3, _1, _2 }, new[] { _3, _1, _2 } },
+                { new[] { _3, _2, _1 }, new[] { _3, _2, _1 } },
+                { new[] { _1, _1, _1 }, new[] { _1 } },
+                { new[] { _1, _1, _3, _3, _2, _2 }, new[] { _1, _3, _2 } }
             };
         }
     }

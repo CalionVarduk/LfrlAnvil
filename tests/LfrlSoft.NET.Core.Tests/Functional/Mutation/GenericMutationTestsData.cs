@@ -1,21 +1,22 @@
 ﻿using System.Collections.Generic;
 using AutoFixture;
 using LfrlSoft.NET.TestExtensions;
+using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.Functional.Mutation
 {
     public class GenericMutationTestsData<T>
     {
-        public static IEnumerable<object?[]> CreateEqualsTestData(IFixture fixture)
+        public static TheoryData<T, T, T, T, bool> CreateEqualsTestData(IFixture fixture)
         {
             var (old1, old2, new1, new2) = fixture.CreateDistinctCollection<T>( 4 );
 
-            return new[]
+            return new TheoryData<T, T, T, T, bool>
             {
-                new object?[] { old1, new1, old1, new1, true },
-                new object?[] { old1, new1, old1, new2, false },
-                new object?[] { old1, new1, old2, new1, false },
-                new object?[] { old1, new1, old2, new2, false }
+                { old1, new1, old1, new1, true },
+                { old1, new1, old1, new2, false },
+                { old1, new1, old2, new1, false },
+                { old1, new1, old2, new2, false }
             };
         }
 

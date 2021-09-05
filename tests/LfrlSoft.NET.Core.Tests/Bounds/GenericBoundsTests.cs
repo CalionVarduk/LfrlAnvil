@@ -122,7 +122,7 @@ namespace LfrlSoft.NET.Core.Tests.Bounds
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBoundsTestsData<T>.CreateEqualsTestData ) )]
+        [GenericMethodData( nameof( GenericBoundsTestsData<T>.GetEqualsData ) )]
         public void Equals_ShouldReturnCorrectResult(T min1, T max1, T min2, T max2, bool expected)
         {
             var a = new Bounds<T>( min1, max1 );
@@ -134,7 +134,7 @@ namespace LfrlSoft.NET.Core.Tests.Bounds
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBoundsTestsData<T>.CreateClampTestData ) )]
+        [GenericMethodData( nameof( GenericBoundsTestsData<T>.GetClampData ) )]
         public void Clamp_ShouldReturnCorrectResult(T min, T max, T value, T expected)
         {
             var sut = new Bounds<T>( min, max );
@@ -145,7 +145,7 @@ namespace LfrlSoft.NET.Core.Tests.Bounds
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBoundsTestsData<T>.CreateContainsTestData ) )]
+        [GenericMethodData( nameof( GenericBoundsTestsData<T>.GetContainsData ) )]
         public void Contains_ShouldReturnCorrectResult(T min, T max, T value, bool expected)
         {
             var sut = new Bounds<T>( min, max );
@@ -156,7 +156,7 @@ namespace LfrlSoft.NET.Core.Tests.Bounds
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBoundsTestsData<T>.CreateContainsForBoundsTestData ) )]
+        [GenericMethodData( nameof( GenericBoundsTestsData<T>.GetContainsForBoundsData ) )]
         public void Contains_ForBounds_ShouldReturnCorrectResult(T min1, T max1, T min2, T max2, bool expected)
         {
             var sut = new Bounds<T>( min1, max1 );
@@ -168,7 +168,7 @@ namespace LfrlSoft.NET.Core.Tests.Bounds
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBoundsTestsData<T>.CreateIntersectsForBoundsTestData ) )]
+        [GenericMethodData( nameof( GenericBoundsTestsData<T>.GetIntersectsForBoundsData ) )]
         public void Intersects_ShouldReturnCorrectResult(T min1, T max1, T min2, T max2, bool expected)
         {
             var sut = new Bounds<T>( min1, max1 );
@@ -180,7 +180,7 @@ namespace LfrlSoft.NET.Core.Tests.Bounds
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBoundsTestsData<T>.CreateIntersectionTestData ) )]
+        [GenericMethodData( nameof( GenericBoundsTestsData<T>.GetIntersectionData ) )]
         public void GetIntersection_ShouldReturnCorrectResult(T min1, T max1, T min2, T max2, Bounds<T>? expected)
         {
             var sut = new Bounds<T>( min1, max1 );
@@ -192,7 +192,7 @@ namespace LfrlSoft.NET.Core.Tests.Bounds
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBoundsTestsData<T>.CreateEqualsTestData ) )]
+        [GenericMethodData( nameof( GenericBoundsTestsData<T>.GetEqualsData ) )]
         public void EqualityOperator_ShouldReturnCorrectResult(T min1, T max1, T min2, T max2, bool expected)
         {
             var a = new Bounds<T>( min1, max1 );
@@ -204,7 +204,7 @@ namespace LfrlSoft.NET.Core.Tests.Bounds
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBoundsTestsData<T>.CreateNotEqualsTestData ) )]
+        [GenericMethodData( nameof( GenericBoundsTestsData<T>.GetNotEqualsData ) )]
         public void InequalityOperator_ShouldReturnCorrectResult(T min1, T max1, T min2, T max2, bool expected)
         {
             var a = new Bounds<T>( min1, max1 );

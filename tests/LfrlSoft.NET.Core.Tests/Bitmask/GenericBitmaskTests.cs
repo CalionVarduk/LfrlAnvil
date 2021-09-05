@@ -78,7 +78,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.CreateContainsAnyTestData ) )]
+        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.GetContainsAnyData ) )]
         public void ContainsAny_ShouldReturnCorrectResult(T value1, T value2, bool expected)
         {
             var a = new Bitmask<T>( value1 );
@@ -90,7 +90,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.CreateContainsAllTestData ) )]
+        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.GetContainsAllData ) )]
         public void ContainsAll_ShouldReturnCorrectResult(T value1, T value2, bool expected)
         {
             var a = new Bitmask<T>( value1 );
@@ -128,7 +128,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.CreateContainsBitTestData ) )]
+        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.GetContainsBitData ) )]
         public void ContainsBit_ShouldReturnCorrectResult(T value, int bitIndex, bool expected)
         {
             var sut = new Bitmask<T>( value );
@@ -139,7 +139,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.CreateSetTestData ) )]
+        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.GetSetData ) )]
         public void Set_ShouldReturnCorrectResult(T value1, T value2, T expected)
         {
             var a = new Bitmask<T>( value1 );
@@ -177,7 +177,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.CreateSetBitTestData ) )]
+        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.GetSetBitData ) )]
         public void SetBit_ShouldReturnCorrectResult(T value, int bitIndex, T expected)
         {
             var sut = new Bitmask<T>( value );
@@ -188,7 +188,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.CreateUnsetTestData ) )]
+        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.GetUnsetData ) )]
         public void Unset_ShouldReturnCorrectResult(T value1, T value2, T expected)
         {
             var a = new Bitmask<T>( value1 );
@@ -226,7 +226,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.CreateUnsetBitTestData ) )]
+        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.GetUnsetBitData ) )]
         public void UnsetBit_ShouldReturnCorrectResult(T value, int bitIndex, T expected)
         {
             var sut = new Bitmask<T>( value );
@@ -237,7 +237,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.CreateIntersectTestData ) )]
+        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.GetIntersectData ) )]
         public void Intersect_ShouldReturnCorrectResult(T value1, T value2, T expected)
         {
             var a = new Bitmask<T>( value1 );
@@ -249,7 +249,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.CreateAlternateTestData ) )]
+        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.GetAlternateData ) )]
         public void Alternate_ShouldReturnCorrectResult(T value1, T value2, T expected)
         {
             var a = new Bitmask<T>( value1 );
@@ -261,7 +261,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.CreateNegateTestData ) )]
+        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.GetNegateData ) )]
         public void Negate_ShouldReturnCorrectResult(T value, T expected)
         {
             var sut = new Bitmask<T>( value );
@@ -272,7 +272,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.CreateEqualsTestData ) )]
+        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.GetEqualsData ) )]
         public void Equals_ShouldReturnCorrectResult(T value1, T value2, bool expected)
         {
             var a = new Bitmask<T>( value1 );
@@ -284,7 +284,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.CreateCompareToTestData ) )]
+        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.GetCompareToData ) )]
         public void CompareTo_ShouldReturnCorrectResult(T value1, T value2, int expectedSign)
         {
             var a = new Bitmask<T>( value1 );
@@ -296,7 +296,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.CreateEnumeratorTestData ) )]
+        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.GetEnumeratorData ) )]
         public void GetEnumerator_ShouldReturnCorrectResult(T value, IEnumerable<T> expected)
         {
             var sut = new Bitmask<T>( value );
@@ -307,7 +307,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.CreateCountTestData ) )]
+        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.GetCountData ) )]
         public void Count_ShouldReturnCorrectResult(T value, int expected)
         {
             var sut = new Bitmask<T>( value );
@@ -339,7 +339,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.CreateEqualsTestData ) )]
+        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.GetEqualsData ) )]
         public void EqualityOperator_ShouldReturnCorrectResult(T value1, T value2, bool expected)
         {
             var a = new Bitmask<T>( value1 );
@@ -351,7 +351,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.CreateNotEqualsTestData ) )]
+        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.GetNotEqualsData ) )]
         public void InequalityOperator_ShouldReturnCorrectResult(T value1, T value2, bool expected)
         {
             var a = new Bitmask<T>( value1 );
@@ -411,7 +411,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.CreateSetTestData ) )]
+        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.GetSetData ) )]
         public void BitwiseOrOperator_ShouldReturnCorrectResult(T value1, T value2, T expected)
         {
             var a = new Bitmask<T>( value1 );
@@ -423,7 +423,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.CreateSetTestData ) )]
+        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.GetSetData ) )]
         public void BitwiseOrOperator_WithSecondAsT_ShouldReturnCorrectResult(T value1, T value2, T expected)
         {
             var a = new Bitmask<T>( value1 );
@@ -434,7 +434,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.CreateSetTestData ) )]
+        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.GetSetData ) )]
         public void BitwiseOrOperator_WithFirstAsT_ShouldReturnCorrectResult(T value1, T value2, T expected)
         {
             var b = new Bitmask<T>( value2 );
@@ -445,7 +445,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.CreateIntersectTestData ) )]
+        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.GetIntersectData ) )]
         public void BitwiseAndOperator_ShouldReturnCorrectResult(T value1, T value2, T expected)
         {
             var a = new Bitmask<T>( value1 );
@@ -457,7 +457,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.CreateIntersectTestData ) )]
+        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.GetIntersectData ) )]
         public void BitwiseAndOperator_WithSecondAsT_ShouldReturnCorrectResult(T value1, T value2, T expected)
         {
             var a = new Bitmask<T>( value1 );
@@ -468,7 +468,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.CreateIntersectTestData ) )]
+        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.GetIntersectData ) )]
         public void BitwiseAndOperator_WithFirstAsT_ShouldReturnCorrectResult(T value1, T value2, T expected)
         {
             var b = new Bitmask<T>( value2 );
@@ -479,7 +479,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.CreateAlternateTestData ) )]
+        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.GetAlternateData ) )]
         public void BitwiseXorOperator_ShouldReturnCorrectResult(T value1, T value2, T expected)
         {
             var a = new Bitmask<T>( value1 );
@@ -491,7 +491,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.CreateAlternateTestData ) )]
+        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.GetAlternateData ) )]
         public void BitwiseXorOperator_WithSecondAsT_ShouldReturnCorrectResult(T value1, T value2, T expected)
         {
             var a = new Bitmask<T>( value1 );
@@ -502,7 +502,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.CreateAlternateTestData ) )]
+        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.GetAlternateData ) )]
         public void BitwiseXorOperator_WithFirstAsT_ShouldReturnCorrectResult(T value1, T value2, T expected)
         {
             var b = new Bitmask<T>( value2 );
@@ -513,7 +513,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.CreateNegateTestData ) )]
+        [GenericMethodData( nameof( GenericBitmaskTestsData<T>.GetNegateData ) )]
         public void BitwiseNegateOperator_ShouldReturnCorrectResult(T value, T expected)
         {
             var sut = new Bitmask<T>( value );

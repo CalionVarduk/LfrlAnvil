@@ -1,32 +1,33 @@
 ﻿using System.Collections.Generic;
 using AutoFixture;
 using LfrlSoft.NET.TestExtensions;
+using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.Equality
 {
     public class GenericEqualityTestsData<T>
     {
-        public static IEnumerable<object?[]> CreateCtorTestData(IFixture fixture)
+        public static TheoryData<T, T, bool> CreateCtorTestData(IFixture fixture)
         {
             var (_1, _2) = fixture.CreateDistinctCollection<T>( 2 );
 
-            return new[]
+            return new TheoryData<T, T, bool>
             {
-                new object?[] { _1, _1, true },
-                new object?[] { _1, _2, false }
+                { _1, _1, true },
+                { _1, _2, false }
             };
         }
 
-        public static IEnumerable<object?[]> CreateEqualsTestData(IFixture fixture)
+        public static TheoryData<T, T, T, T, bool> CreateEqualsTestData(IFixture fixture)
         {
             var (_1, _2, _3, _4) = fixture.CreateDistinctCollection<T>( 4 );
 
-            return new[]
+            return new TheoryData<T, T, T, T, bool>
             {
-                new object?[] { _1, _2, _1, _2, true },
-                new object?[] { _1, _2, _1, _3, false },
-                new object?[] { _1, _3, _2, _3, false },
-                new object?[] { _1, _2, _3, _4, false }
+                { _1, _2, _1, _2, true },
+                { _1, _2, _1, _3, false },
+                { _1, _3, _2, _3, false },
+                { _1, _2, _3, _4, false }
             };
         }
 
@@ -35,14 +36,14 @@ namespace LfrlSoft.NET.Core.Tests.Equality
             return CreateEqualsTestData( fixture ).ConvertResult( (bool r) => ! r );
         }
 
-        public static IEnumerable<object?[]> CreateConversionOperatorTestData(IFixture fixture)
+        public static TheoryData<T, T> CreateConversionOperatorTestData(IFixture fixture)
         {
             var (_1, _2) = fixture.CreateDistinctCollection<T>( 2 );
 
-            return new[]
+            return new TheoryData<T, T>
             {
-                new object?[] { _1, _1 },
-                new object?[] { _1, _2 }
+                { _1, _1 },
+                { _1, _2 }
             };
         }
     }
