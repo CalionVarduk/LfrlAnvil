@@ -14,7 +14,6 @@ namespace LfrlSoft.NET.Core.Functional
     {
         public static readonly Maybe<T> None = new Maybe<T>();
 
-        public readonly bool HasValue;
         internal readonly T? Value;
 
         internal Maybe(T value)
@@ -23,6 +22,7 @@ namespace LfrlSoft.NET.Core.Functional
             Value = value;
         }
 
+        public bool HasValue { get; }
         int IReadOnlyCollection<T>.Count => HasValue ? 1 : 0;
 
         [Pure]

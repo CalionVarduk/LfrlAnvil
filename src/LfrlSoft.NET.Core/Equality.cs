@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 using LfrlSoft.NET.Core.Internal;
 
 namespace LfrlSoft.NET.Core
@@ -48,12 +49,14 @@ namespace LfrlSoft.NET.Core
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static implicit operator bool(Equality<T> e)
         {
             return e.Result;
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static bool operator !(Equality<T> e)
         {
             return ! e.Result;

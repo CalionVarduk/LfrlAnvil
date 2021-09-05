@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 using LfrlSoft.NET.Core.Internal;
 
 namespace LfrlSoft.NET.Core.Collections.Internal
@@ -23,12 +24,14 @@ namespace LfrlSoft.NET.Core.Collections.Internal
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public bool Equals(T x, T y)
         {
             return _equals( x, y );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public int GetHashCode(T obj)
         {
             return _getHashCode( obj );

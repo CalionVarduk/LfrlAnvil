@@ -56,7 +56,7 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
             };
         }
 
-        public static TheoryData<int, int> GetContainsBetweenPassData(IFixture fixture)
+        public static TheoryData<int, int> GetContainsInRangePassData(IFixture fixture)
         {
             return new()
             {
@@ -73,7 +73,7 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
             };
         }
 
-        public static TheoryData<int, int> GetContainsBetweenThrowData(IFixture fixture)
+        public static TheoryData<int, int> GetContainsInRangeThrowData(IFixture fixture)
         {
             return new()
             {

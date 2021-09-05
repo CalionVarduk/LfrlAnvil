@@ -9,7 +9,6 @@ namespace LfrlSoft.NET.Core.Functional
     {
         public static readonly Either<T1, T2> Empty = new Either<T1, T2>();
 
-        public readonly bool HasFirst;
         internal readonly T1? First;
         internal readonly T2? Second;
 
@@ -27,6 +26,7 @@ namespace LfrlSoft.NET.Core.Functional
             Second = second;
         }
 
+        public bool HasFirst { get; }
         public bool HasSecond => ! HasFirst;
 
         [Pure]

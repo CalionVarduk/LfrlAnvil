@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using LfrlSoft.NET.Core.Extensions;
 
 namespace LfrlSoft.NET.Core.Collections
@@ -132,6 +133,7 @@ namespace LfrlSoft.NET.Core.Collections
             return GetEnumerator();
         }
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         private void FixUp(int i)
         {
             var p = Heap.GetParentIndex( i );
@@ -144,6 +146,7 @@ namespace LfrlSoft.NET.Core.Collections
             }
         }
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         private void FixDown(int i)
         {
             var l = Heap.GetLeftChildIndex( i );

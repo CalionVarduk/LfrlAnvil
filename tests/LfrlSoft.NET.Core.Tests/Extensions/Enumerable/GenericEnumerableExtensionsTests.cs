@@ -150,7 +150,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
             var (max, min) = Fixture.CreateDistinctSortedCollection<int>( 2 );
             var sut = Fixture.CreateMany<T>( count );
 
-            var result = sut.ContainsBetween( min, max );
+            var result = sut.ContainsInRange( min, max );
 
             result.Should().BeFalse();
         }
@@ -173,7 +173,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         {
             var sut = Fixture.CreateMany<T>( count );
 
-            var result = sut.ContainsBetween( 0, maxCount );
+            var result = sut.ContainsInRange( 0, maxCount );
 
             result.Should().Be( expected );
         }
@@ -197,7 +197,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
             var minCount = Fixture.CreateNegativeInt32();
             var sut = Fixture.CreateMany<T>( count );
 
-            var result = sut.ContainsBetween( minCount, maxCount );
+            var result = sut.ContainsInRange( minCount, maxCount );
 
             result.Should().Be( expected );
         }
@@ -213,7 +213,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         {
             var sut = Fixture.CreateMany<T>( count );
 
-            var result = sut.ContainsBetween( minCount, minCount + 1 );
+            var result = sut.ContainsInRange( minCount, minCount + 1 );
 
             result.Should().BeFalse();
         }
@@ -228,7 +228,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         {
             var sut = Fixture.CreateMany<T>( count );
 
-            var result = sut.ContainsBetween( maxCount - 1, maxCount );
+            var result = sut.ContainsInRange( maxCount - 1, maxCount );
 
             result.Should().BeFalse();
         }
@@ -250,7 +250,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         {
             var sut = Fixture.CreateMany<T>( sourceCount );
 
-            var result = sut.ContainsBetween( minCount, maxCount );
+            var result = sut.ContainsInRange( minCount, maxCount );
 
             result.Should().BeTrue();
         }

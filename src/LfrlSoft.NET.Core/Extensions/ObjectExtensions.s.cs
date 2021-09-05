@@ -90,6 +90,7 @@ namespace LfrlSoft.NET.Core.Extensions
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static IEnumerable<T> Visit<T>(this T? source, Func<T, T?> nodeSelector)
             where T : class
         {
@@ -113,12 +114,14 @@ namespace LfrlSoft.NET.Core.Extensions
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static IEnumerable<T> VisitMany<T>(this T source, Func<T, IEnumerable<T>> nodeRangeSelector)
         {
             return nodeRangeSelector( source ).VisitMany( nodeRangeSelector );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static IEnumerable<T> VisitWithSelf<T>(this T? source, Func<T, T?> nodeSelector)
             where T : class
         {

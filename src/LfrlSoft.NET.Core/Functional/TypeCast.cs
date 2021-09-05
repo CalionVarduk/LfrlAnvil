@@ -13,7 +13,6 @@ namespace LfrlSoft.NET.Core.Functional
     {
         public static readonly TypeCast<TSource, TDestination> Empty = new TypeCast<TSource, TDestination>();
 
-        public readonly TSource Source;
         internal readonly TDestination? Result;
 
         internal TypeCast(TSource source)
@@ -31,6 +30,7 @@ namespace LfrlSoft.NET.Core.Functional
             }
         }
 
+        public TSource Source { get; }
         public bool IsValid { get; }
         public bool IsInvalid => ! IsValid;
         object? ITypeCast<TDestination>.Source => Source;

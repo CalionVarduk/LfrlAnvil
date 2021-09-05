@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using LfrlSoft.NET.Core.Collections;
 using LfrlSoft.NET.Core.Collections.Internal;
 using LfrlSoft.NET.Core.Internal;
@@ -11,12 +13,14 @@ namespace LfrlSoft.NET.Core.Extensions
     public static class EnumerableExtensions
     {
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static IEnumerable<T> EmptyIfNull<T>(this IEnumerable<T>? source)
         {
             return source ?? Enumerable.Empty<T>();
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> source)
             where T : class
         {
@@ -24,6 +28,7 @@ namespace LfrlSoft.NET.Core.Extensions
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> source)
             where T : struct
         {
@@ -31,6 +36,7 @@ namespace LfrlSoft.NET.Core.Extensions
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> source, IEqualityComparer<T> comparer)
         {
             if ( ! Generic<T>.IsReferenceType && ! Generic<T>.IsNullableType )
@@ -40,6 +46,7 @@ namespace LfrlSoft.NET.Core.Extensions
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static bool ContainsNull<T>(this IEnumerable<T?> source)
             where T : class
         {
@@ -47,6 +54,7 @@ namespace LfrlSoft.NET.Core.Extensions
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static bool ContainsNull<T>(this IEnumerable<T?> source)
             where T : struct
         {
@@ -54,6 +62,7 @@ namespace LfrlSoft.NET.Core.Extensions
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static bool ContainsNull<T>(this IEnumerable<T> source, IEqualityComparer<T> comparer)
         {
             if ( ! Generic<T>.IsReferenceType && ! Generic<T>.IsNullableType )
@@ -63,31 +72,35 @@ namespace LfrlSoft.NET.Core.Extensions
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static bool IsNullOrEmpty<T>(this IEnumerable<T>? source)
         {
             return source is null || source.IsEmpty();
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static bool IsEmpty<T>(this IEnumerable<T> source)
         {
             return ! source.Any();
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static bool ContainsAtLeast<T>(this IEnumerable<T> source, int count)
         {
             return count <= 0 || source.Skip( count - 1 ).Any();
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static bool ContainsAtMost<T>(this IEnumerable<T> source, int count)
         {
             return count >= 0 && ! source.Skip( count ).Any();
         }
 
         [Pure]
-        public static bool ContainsBetween<T>(this IEnumerable<T> source, int minCount, int maxCount)
+        public static bool ContainsInRange<T>(this IEnumerable<T> source, int minCount, int maxCount)
         {
             if ( maxCount < minCount )
                 return false;
@@ -131,12 +144,14 @@ namespace LfrlSoft.NET.Core.Extensions
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static IEnumerable<Pair<T1, T2>> Flatten<T1, T2>(this IEnumerable<T1> source, Func<T1, IEnumerable<T2>> selector)
         {
             return source.Flatten( selector, Pair.Create );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static IEnumerable<TResult> Flatten<T1, T2, TResult>(
             this IEnumerable<T1> source,
             Func<T1, IEnumerable<T2>> selector,
@@ -145,27 +160,32 @@ namespace LfrlSoft.NET.Core.Extensions
             return source.SelectMany( p => selector( p ).Select( c => resultMapper( p, c ) ) );
         }
 
-        public static bool TryMin<T>(this IEnumerable<T> source, out T? result)
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static bool TryMin<T>(this IEnumerable<T> source, [MaybeNullWhen( false )] out T? result)
         {
             return source.TryMin( Comparer<T>.Default, out result );
         }
 
-        public static bool TryMin<T>(this IEnumerable<T> source, IComparer<T> comparer, out T? result)
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static bool TryMin<T>(this IEnumerable<T> source, IComparer<T> comparer, [MaybeNullWhen( false )] out T? result)
         {
             return source.TryAggregate( (a, b) => comparer.Compare( a, b ) < 0 ? a : b, out result );
         }
 
-        public static bool TryMax<T>(this IEnumerable<T> source, out T? result)
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static bool TryMax<T>(this IEnumerable<T> source, [MaybeNullWhen( false )] out T? result)
         {
             return source.TryMax( Comparer<T>.Default, out result );
         }
 
-        public static bool TryMax<T>(this IEnumerable<T> source, IComparer<T> comparer, out T? result)
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static bool TryMax<T>(this IEnumerable<T> source, IComparer<T> comparer, [MaybeNullWhen( false )] out T? result)
         {
             return source.TryAggregate( (a, b) => comparer.Compare( a, b ) > 0 ? a : b, out result );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static bool ContainsDuplicates<T>(this IEnumerable<T> source)
         {
             return source.ContainsDuplicates( EqualityComparer<T>.Default );
@@ -206,6 +226,7 @@ namespace LfrlSoft.NET.Core.Extensions
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static IReadOnlyCollection<T> Materialize<T>(this IEnumerable<T> source)
         {
             return source switch
@@ -217,12 +238,14 @@ namespace LfrlSoft.NET.Core.Extensions
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static IEnumerable<T> Memoize<T>(this IEnumerable<T> source)
         {
             return new MemoizedEnumerable<T>( source );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static MultiSet<T> ToMultiSet<T>(this IEnumerable<T> source)
             where T : notnull
         {
@@ -241,6 +264,7 @@ namespace LfrlSoft.NET.Core.Extensions
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static bool SetEquals<T>(this IEnumerable<T> source, IEnumerable<T> other)
         {
             return source.SetEquals( other, EqualityComparer<T>.Default );
@@ -285,7 +309,7 @@ namespace LfrlSoft.NET.Core.Extensions
             }
         }
 
-        public static bool TryAggregate<T>(this IEnumerable<T> source, Func<T, T, T> func, out T? result)
+        public static bool TryAggregate<T>(this IEnumerable<T> source, Func<T, T, T> func, [MaybeNullWhen( false )] out T? result)
         {
             using var enumerator = source.GetEnumerator();
 
@@ -304,50 +328,67 @@ namespace LfrlSoft.NET.Core.Extensions
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static T1 MaxBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector)
         {
             return source.MaxBy( selector, Comparer<T2>.Default );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static T1 MaxBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector, IComparer<T2> comparer)
         {
             return source.Aggregate( (a, b) => comparer.Compare( selector( a ), selector( b ) ) > 0 ? a : b );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static T1 MinBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector)
         {
             return source.MinBy( selector, Comparer<T2>.Default );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static T1 MinBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector, IComparer<T2> comparer)
         {
             return source.Aggregate( (a, b) => comparer.Compare( selector( a ), selector( b ) ) < 0 ? a : b );
         }
 
-        public static bool TryMaxBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector, out T1? result)
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static bool TryMaxBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector, [MaybeNullWhen( false )] out T1? result)
         {
             return source.TryMaxBy( selector, Comparer<T2>.Default, out result );
         }
 
-        public static bool TryMaxBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector, IComparer<T2> comparer, out T1? result)
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static bool TryMaxBy<T1, T2>(
+            this IEnumerable<T1> source,
+            Func<T1, T2> selector,
+            IComparer<T2> comparer,
+            [MaybeNullWhen( false )] out T1? result)
         {
             return source.TryAggregate( (a, b) => comparer.Compare( selector( a ), selector( b ) ) > 0 ? a : b, out result );
         }
 
-        public static bool TryMinBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector, out T1? result)
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static bool TryMinBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector, [MaybeNullWhen( false )] out T1? result)
         {
             return source.TryMinBy( selector, Comparer<T2>.Default, out result );
         }
 
-        public static bool TryMinBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector, IComparer<T2> comparer, out T1? result)
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static bool TryMinBy<T1, T2>(
+            this IEnumerable<T1> source,
+            Func<T1, T2> selector,
+            IComparer<T2> comparer,
+            [MaybeNullWhen( false )] out T1? result)
         {
             return source.TryAggregate( (a, b) => comparer.Compare( selector( a ), selector( b ) ) < 0 ? a : b, out result );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static IEnumerable<T1> DistinctBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector)
         {
             return source.DistinctBy( selector, EqualityComparer<T2>.Default );
@@ -366,6 +407,7 @@ namespace LfrlSoft.NET.Core.Extensions
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static IEnumerable<TResult> LeftJoin<T1, T2, TKey, TResult>(
             this IEnumerable<T1> outer,
             IEnumerable<T2> inner,
@@ -412,6 +454,7 @@ namespace LfrlSoft.NET.Core.Extensions
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static IEnumerable<TResult> FullJoin<T1, T2, TKey, TResult>(
             this IEnumerable<T1> outer,
             IEnumerable<T2> inner,
@@ -474,6 +517,7 @@ namespace LfrlSoft.NET.Core.Extensions
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         private static IEnumerable<T[]> DivideImpl<T>(IEnumerable<T> source, int partLength)
         {
             using var enumerator = source.GetEnumerator();

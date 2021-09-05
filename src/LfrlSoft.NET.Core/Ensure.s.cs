@@ -220,33 +220,63 @@ namespace LfrlSoft.NET.Core
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static void IsBetween<T>(T param, T min, T max, string paramName = DefaultParamName)
+        public static void IsInRange<T>(T param, T min, T max, string paramName = DefaultParamName)
             where T : IComparable<T>
         {
             if ( param.CompareTo( min ) < 0 || param.CompareTo( max ) > 0 )
-                throw Exceptions.NotBetween( param, min, max, paramName );
+                throw Exceptions.NotInRange( param, min, max, paramName );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static void IsBetween<T>(T param, T min, T max, IComparer<T> comparer, string paramName = DefaultParamName)
+        public static void IsInRange<T>(T param, T min, T max, IComparer<T> comparer, string paramName = DefaultParamName)
         {
             if ( comparer.Compare( param, min ) < 0 || comparer.Compare( param, max ) > 0 )
-                throw Exceptions.NotBetween( param, min, max, paramName );
+                throw Exceptions.NotInRange( param, min, max, paramName );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static void IsNotBetween<T>(T param, T min, T max, string paramName = DefaultParamName)
+        public static void IsNotInRange<T>(T param, T min, T max, string paramName = DefaultParamName)
             where T : IComparable<T>
         {
             if ( param.CompareTo( min ) >= 0 && param.CompareTo( max ) <= 0 )
-                throw Exceptions.Between( param, min, max, paramName );
+                throw Exceptions.InRange( param, min, max, paramName );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static void IsNotBetween<T>(T param, T min, T max, IComparer<T> comparer, string paramName = DefaultParamName)
+        public static void IsNotInRange<T>(T param, T min, T max, IComparer<T> comparer, string paramName = DefaultParamName)
         {
             if ( comparer.Compare( param, min ) >= 0 && comparer.Compare( param, max ) <= 0 )
-                throw Exceptions.Between( param, min, max, paramName );
+                throw Exceptions.InRange( param, min, max, paramName );
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static void IsInExclusiveRange<T>(T param, T min, T max, string paramName = DefaultParamName)
+            where T : IComparable<T>
+        {
+            if ( param.CompareTo( min ) <= 0 || param.CompareTo( max ) >= 0 )
+                throw Exceptions.NotInExclusiveRange( param, min, max, paramName );
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static void IsInExclusiveRange<T>(T param, T min, T max, IComparer<T> comparer, string paramName = DefaultParamName)
+        {
+            if ( comparer.Compare( param, min ) <= 0 || comparer.Compare( param, max ) >= 0 )
+                throw Exceptions.NotInExclusiveRange( param, min, max, paramName );
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static void IsNotInExclusiveRange<T>(T param, T min, T max, string paramName = DefaultParamName)
+            where T : IComparable<T>
+        {
+            if ( param.CompareTo( min ) > 0 && param.CompareTo( max ) < 0 )
+                throw Exceptions.InExclusiveRange( param, min, max, paramName );
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static void IsNotInExclusiveRange<T>(T param, T min, T max, IComparer<T> comparer, string paramName = DefaultParamName)
+        {
+            if ( comparer.Compare( param, min ) > 0 && comparer.Compare( param, max ) < 0 )
+                throw Exceptions.InExclusiveRange( param, min, max, paramName );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -407,10 +437,10 @@ namespace LfrlSoft.NET.Core
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static void ContainsBetween<T>(IEnumerable<T> param, int minCount, int maxCount, string paramName = DefaultParamName)
+        public static void ContainsInRange<T>(IEnumerable<T> param, int minCount, int maxCount, string paramName = DefaultParamName)
         {
-            if ( ! param.ContainsBetween( minCount, maxCount ) )
-                throw Exceptions.NotContainsBetween( minCount, maxCount, paramName );
+            if ( ! param.ContainsInRange( minCount, maxCount ) )
+                throw Exceptions.NotContainsInRange( minCount, maxCount, paramName );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -602,14 +632,24 @@ namespace LfrlSoft.NET.Core
                     $"expected {paramName} to be less than or equal to {expectedValue} but found {param}" );
             }
 
-            public static ArgumentOutOfRangeException Between<T>(T param, T min, T max, string paramName)
+            public static ArgumentOutOfRangeException InRange<T>(T param, T min, T max, string paramName)
             {
-                return new( paramName, $"expected {paramName} to not be between {min} and {max} but found {param}" );
+                return new( paramName, $"expected {paramName} to not be in range [{min}, {max}] but found {param}" );
             }
 
-            public static ArgumentOutOfRangeException NotBetween<T>(T param, T min, T max, string paramName)
+            public static ArgumentOutOfRangeException NotInRange<T>(T param, T min, T max, string paramName)
             {
-                return new( paramName, $"expected {paramName} to be between {min} and {max} but found {param}" );
+                return new( paramName, $"expected {paramName} to be in range [{min}, {max}] but found {param}" );
+            }
+
+            public static ArgumentOutOfRangeException InExclusiveRange<T>(T param, T min, T max, string paramName)
+            {
+                return new( paramName, $"expected {paramName} to not be in range ({min}, {max}) but found {param}" );
+            }
+
+            public static ArgumentOutOfRangeException NotInExclusiveRange<T>(T param, T min, T max, string paramName)
+            {
+                return new( paramName, $"expected {paramName} to be in range ({min}, {max}) but found {param}" );
             }
 
             public static ArgumentException NotEmpty(string paramName)
@@ -667,9 +707,9 @@ namespace LfrlSoft.NET.Core
                 return new( $"expected {paramName} to contain at most {count} items", paramName );
             }
 
-            public static ArgumentException NotContainsBetween(int minCount, int maxCount, string paramName)
+            public static ArgumentException NotContainsInRange(int minCount, int maxCount, string paramName)
             {
-                return new( $"expected {paramName} to contain between {minCount} and {maxCount} items", paramName );
+                return new( $"expected {paramName} item count to be in range [{minCount}, {maxCount}]", paramName );
             }
 
             public static ArgumentException NotContainsExactly(int count, string paramName)

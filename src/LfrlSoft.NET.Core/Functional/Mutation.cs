@@ -9,15 +9,14 @@ namespace LfrlSoft.NET.Core.Functional
     {
         public static readonly Mutation<T> Empty = new Mutation<T>();
 
-        public readonly T OldValue;
-        public readonly T Value;
-
         public Mutation(T oldValue, T value)
         {
             OldValue = oldValue;
             Value = value;
         }
 
+        public T OldValue { get; }
+        public T Value { get; }
         public bool HasChanged => Generic<T>.AreNotEqual( OldValue, Value );
 
         [Pure]

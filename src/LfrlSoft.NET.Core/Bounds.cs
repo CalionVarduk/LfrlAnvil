@@ -1,15 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 
 namespace LfrlSoft.NET.Core
 {
     public readonly struct Bounds<T> : IEquatable<Bounds<T>>
         where T : IComparable<T>
     {
-        public readonly T Min;
-        public readonly T Max;
-
         public Bounds(T min, T max)
         {
             Ensure.IsNotNull( min, EqualityComparer<T>.Default, nameof( min ) );
@@ -21,6 +19,9 @@ namespace LfrlSoft.NET.Core
             Min = min;
             Max = max;
         }
+
+        public T Min { get; }
+        public T Max { get; }
 
         [Pure]
         public override string ToString()
@@ -51,30 +52,49 @@ namespace LfrlSoft.NET.Core
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Bounds<T> SetMin(T min)
         {
             return new Bounds<T>( min, Max );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Bounds<T> SetMax(T max)
         {
             return new Bounds<T>( Min, max );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public bool Contains(T value)
         {
             return Min.CompareTo( value ) <= 0 && Max.CompareTo( value ) >= 0;
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public bool ContainsExclusively(T value)
+        {
+            return Min.CompareTo( value ) < 0 && Max.CompareTo( value ) > 0;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public bool Contains(Bounds<T> other)
         {
             return Min.CompareTo( other.Min ) <= 0 && Max.CompareTo( other.Max ) >= 0;
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public bool ContainsExclusively(Bounds<T> other)
+        {
+            return Min.CompareTo( other.Min ) < 0 && Max.CompareTo( other.Max ) > 0;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public bool Intersects(Bounds<T> other)
         {
             return Min.CompareTo( other.Max ) <= 0 && Max.CompareTo( other.Min ) >= 0;
@@ -93,6 +113,48 @@ namespace LfrlSoft.NET.Core
         }
 
         [Pure]
+        public Bounds<T>? MergeWith(Bounds<T> other)
+        {
+            if ( ! Intersects( other ) )
+                return null;
+
+            var min = Min.CompareTo( other.Min ) > 0 ? other.Min : Min;
+            var max = Max.CompareTo( other.Max ) < 0 ? other.Max : Max;
+
+            return new Bounds<T>( min, max );
+        }
+
+        [Pure]
+        public Pair<Bounds<T>, Bounds<T>?> SplitAt(T value)
+        {
+            return ContainsExclusively( value )
+                ? Pair.Create( SetMax( value ), (Bounds<T>?) SetMin( value ) )
+                : Pair.Create( this, (Bounds<T>?) null );
+        }
+
+        [Pure]
+        public Pair<Bounds<T>?, Bounds<T>?> Remove(Bounds<T> other)
+        {
+            var minComparisonResult = Min.CompareTo( other.Min );
+            var maxComparisonResult = Max.CompareTo( other.Max );
+
+            if ( minComparisonResult >= 0 && maxComparisonResult <= 0 )
+                return Pair.Create( (Bounds<T>?) null, (Bounds<T>?) null );
+
+            if ( minComparisonResult > 0 || maxComparisonResult < 0 )
+                return Pair.Create( (Bounds<T>?) this, (Bounds<T>?) null );
+
+            if ( minComparisonResult == 0 )
+                return Pair.Create( (Bounds<T>?) SetMin( other.Max ), (Bounds<T>?) null );
+
+            if ( maxComparisonResult == 0 )
+                return Pair.Create( (Bounds<T>?) SetMax( other.Min ), (Bounds<T>?) null );
+
+            return Pair.Create( (Bounds<T>?) SetMax( other.Min ), (Bounds<T>?) SetMin( other.Max ) );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public T Clamp(T value)
         {
             if ( Min.CompareTo( value ) >= 0 )
@@ -105,12 +167,14 @@ namespace LfrlSoft.NET.Core
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static bool operator ==(Bounds<T> a, Bounds<T> b)
         {
             return a.Equals( b );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static bool operator !=(Bounds<T> a, Bounds<T> b)
         {
             return ! a.Equals( b );

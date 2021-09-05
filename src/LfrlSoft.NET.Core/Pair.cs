@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 using LfrlSoft.NET.Core.Internal;
 
 namespace LfrlSoft.NET.Core
@@ -44,12 +45,14 @@ namespace LfrlSoft.NET.Core
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Pair<T, T2> SetFirst<T>(T first)
         {
             return new Pair<T, T2>( first, Second );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Pair<T1, T> SetSecond<T>(T second)
         {
             return new Pair<T1, T>( First, second );

@@ -1,12 +1,11 @@
 ﻿using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 
 namespace LfrlSoft.NET.Core
 {
     public sealed class Ref<T> : IReadOnlyRef<T>
         where T : struct
     {
-        public T Value { get; set; }
-
         public Ref()
             : this( default ) { }
 
@@ -15,6 +14,8 @@ namespace LfrlSoft.NET.Core
             Value = value;
         }
 
+        public T Value { get; set; }
+
         [Pure]
         public override string ToString()
         {
@@ -22,6 +23,7 @@ namespace LfrlSoft.NET.Core
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static implicit operator T(Ref<T> obj)
         {
             return obj.Value;

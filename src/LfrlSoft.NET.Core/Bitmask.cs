@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using LfrlSoft.NET.Core.Extensions;
 
@@ -21,9 +22,6 @@ namespace LfrlSoft.NET.Core
 
         public static readonly Func<T, ulong> ToLongValue;
         public static readonly Func<ulong, T> FromLongValue;
-
-        public readonly T Value;
-        public int Count => this.Count();
 
         static Bitmask()
         {
@@ -51,6 +49,9 @@ namespace LfrlSoft.NET.Core
             Value = value;
         }
 
+        public T Value { get; }
+        public int Count => this.Count();
+
         [Pure]
         public override string ToString()
         {
@@ -64,12 +65,14 @@ namespace LfrlSoft.NET.Core
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public override int GetHashCode()
         {
             return Value.GetHashCode();
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public bool Equals(Bitmask<T> other)
         {
             return Value.Equals( other.Value );
@@ -82,12 +85,14 @@ namespace LfrlSoft.NET.Core
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public int CompareTo(Bitmask<T> other)
         {
             return Value.CompareTo( other.Value );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public bool ContainsAny(T value)
         {
             var longValue = ToLongValue( value );
@@ -95,12 +100,14 @@ namespace LfrlSoft.NET.Core
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public bool ContainsAny(Bitmask<T> other)
         {
             return ContainsAny( other.Value );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public bool ContainsAll(T value)
         {
             var longValue = ToLongValue( value );
@@ -108,19 +115,22 @@ namespace LfrlSoft.NET.Core
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public bool ContainsAll(Bitmask<T> other)
         {
             return ContainsAll( other.Value );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public bool ContainsBit(int bitIndex)
         {
-            Ensure.IsBetween( bitIndex, 0, BitCount - 1, nameof( bitIndex ) );
+            Ensure.IsInRange( bitIndex, 0, BitCount - 1, nameof( bitIndex ) );
             return ContainsAll( FromLongValue( 1UL << bitIndex ) );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Bitmask<T> Set(T value)
         {
             var result = ToLongValue( Value ) | ToLongValue( value );
@@ -128,19 +138,22 @@ namespace LfrlSoft.NET.Core
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Bitmask<T> Set(Bitmask<T> other)
         {
             return Set( other.Value );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Bitmask<T> SetBit(int bitIndex)
         {
-            Ensure.IsBetween( bitIndex, 0, BitCount - 1, nameof( bitIndex ) );
+            Ensure.IsInRange( bitIndex, 0, BitCount - 1, nameof( bitIndex ) );
             return Set( FromLongValue( 1UL << bitIndex ) );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Bitmask<T> Unset(T value)
         {
             var result = ToLongValue( Value ) & ~ToLongValue( value );
@@ -148,19 +161,22 @@ namespace LfrlSoft.NET.Core
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Bitmask<T> Unset(Bitmask<T> other)
         {
             return Unset( other.Value );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Bitmask<T> UnsetBit(int bitIndex)
         {
-            Ensure.IsBetween( bitIndex, 0, BitCount - 1, nameof( bitIndex ) );
+            Ensure.IsInRange( bitIndex, 0, BitCount - 1, nameof( bitIndex ) );
             return Unset( FromLongValue( 1UL << bitIndex ) );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Bitmask<T> Intersect(T value)
         {
             var result = ToLongValue( Value ) & ToLongValue( value );
@@ -168,12 +184,14 @@ namespace LfrlSoft.NET.Core
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Bitmask<T> Intersect(Bitmask<T> other)
         {
             return Intersect( other.Value );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Bitmask<T> Alternate(T value)
         {
             var result = ToLongValue( Value ) ^ ToLongValue( value );
@@ -181,12 +199,14 @@ namespace LfrlSoft.NET.Core
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Bitmask<T> Alternate(Bitmask<T> other)
         {
             return Alternate( other.Value );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Bitmask<T> Negate()
         {
             var result = ~ToLongValue( Value );
@@ -194,12 +214,14 @@ namespace LfrlSoft.NET.Core
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Bitmask<T> Sanitize()
         {
             return Intersect( All.Value );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Bitmask<T> Clear()
         {
             return new Bitmask<T>( FromLongValue( 0 ) );
@@ -223,108 +245,126 @@ namespace LfrlSoft.NET.Core
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static implicit operator T(Bitmask<T> b)
         {
             return b.Value;
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static implicit operator Bitmask<T>(T v)
         {
             return new Bitmask<T>( v );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static bool operator ==(Bitmask<T> a, Bitmask<T> b)
         {
             return a.Equals( b );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static bool operator !=(Bitmask<T> a, Bitmask<T> b)
         {
             return ! a.Equals( b );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static bool operator >(Bitmask<T> a, Bitmask<T> b)
         {
             return a.CompareTo( b ) > 0;
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static bool operator <=(Bitmask<T> a, Bitmask<T> b)
         {
             return a.CompareTo( b ) <= 0;
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static bool operator <(Bitmask<T> a, Bitmask<T> b)
         {
             return a.CompareTo( b ) < 0;
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static bool operator >=(Bitmask<T> a, Bitmask<T> b)
         {
             return a.CompareTo( b ) >= 0;
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static Bitmask<T> operator |(Bitmask<T> a, Bitmask<T> b)
         {
             return a.Set( b );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static Bitmask<T> operator |(Bitmask<T> a, T b)
         {
             return a.Set( b );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static Bitmask<T> operator |(T a, Bitmask<T> b)
         {
             return new Bitmask<T>( a ).Set( b );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static Bitmask<T> operator &(Bitmask<T> a, Bitmask<T> b)
         {
             return a.Intersect( b );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static Bitmask<T> operator &(Bitmask<T> a, T b)
         {
             return a.Intersect( b );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static Bitmask<T> operator &(T a, Bitmask<T> b)
         {
             return new Bitmask<T>( a ).Intersect( b );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static Bitmask<T> operator ^(Bitmask<T> a, Bitmask<T> b)
         {
             return a.Alternate( b );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static Bitmask<T> operator ^(Bitmask<T> a, T b)
         {
             return a.Alternate( b );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static Bitmask<T> operator ^(T a, Bitmask<T> b)
         {
             return new Bitmask<T>( a ).Alternate( b );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static Bitmask<T> operator ~(Bitmask<T> a)
         {
             return a.Negate();

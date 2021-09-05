@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 using LfrlSoft.NET.Core.Extensions;
 
 namespace LfrlSoft.NET.Core.Collections.Internal
@@ -16,6 +17,7 @@ namespace LfrlSoft.NET.Core.Collections.Internal
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public IEnumerator<T> GetEnumerator()
         {
             return Source.Value.GetEnumerator();

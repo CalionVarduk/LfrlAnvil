@@ -1,6 +1,7 @@
 ﻿using System;
 using AutoFixture;
 using FluentAssertions;
+using FluentAssertions.Execution;
 using LfrlSoft.NET.TestExtensions;
 using LfrlSoft.NET.TestExtensions.Attributes;
 using Xunit;
@@ -156,6 +157,17 @@ namespace LfrlSoft.NET.Core.Tests.Bounds
         }
 
         [Theory]
+        [GenericMethodData( nameof( GenericBoundsTestsData<T>.GetContainsExclusivelyData ) )]
+        public void ContainsExclusively_ShouldReturnCorrectResult(T min, T max, T value, bool expected)
+        {
+            var sut = new Bounds<T>( min, max );
+
+            var result = sut.ContainsExclusively( value );
+
+            result.Should().Be( expected );
+        }
+
+        [Theory]
         [GenericMethodData( nameof( GenericBoundsTestsData<T>.GetContainsForBoundsData ) )]
         public void Contains_ForBounds_ShouldReturnCorrectResult(T min1, T max1, T min2, T max2, bool expected)
         {
@@ -163,6 +175,18 @@ namespace LfrlSoft.NET.Core.Tests.Bounds
             var other = new Bounds<T>( min2, max2 );
 
             var result = sut.Contains( other );
+
+            result.Should().Be( expected );
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericBoundsTestsData<T>.GetContainsExclusivelyForBoundsData ) )]
+        public void ContainsExclusively_ForBounds_ShouldReturnCorrectResult(T min1, T max1, T min2, T max2, bool expected)
+        {
+            var sut = new Bounds<T>( min1, max1 );
+            var other = new Bounds<T>( min2, max2 );
+
+            var result = sut.ContainsExclusively( other );
 
             result.Should().Be( expected );
         }
@@ -189,6 +213,49 @@ namespace LfrlSoft.NET.Core.Tests.Bounds
             var result = sut.GetIntersection( other );
 
             result.Should().BeEquivalentTo( expected );
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericBoundsTestsData<T>.GetMergeWithData ) )]
+        public void MergeWith_ShouldReturnCorrectResult(T min1, T max1, T min2, T max2, Bounds<T>? expected)
+        {
+            var sut = new Bounds<T>( min1, max1 );
+            var other = new Bounds<T>( min2, max2 );
+
+            var result = sut.MergeWith( other );
+
+            result.Should().BeEquivalentTo( expected );
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericBoundsTestsData<T>.GetSplitAtData ) )]
+        public void SplitAt_ShouldReturnCorrectResult(T min, T max, T value, Bounds<T> expectedFirst, Bounds<T>? expectedSecond)
+        {
+            var sut = new Bounds<T>( min, max );
+
+            var result = sut.SplitAt( value );
+
+            using ( new AssertionScope() )
+            {
+                result.First.Should().BeEquivalentTo( expectedFirst );
+                result.Second.Should().BeEquivalentTo( expectedSecond );
+            }
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericBoundsTestsData<T>.GetRemoveData ) )]
+        public void Remove_ShouldReturnCorrectResult(T min1, T max1, T min2, T max2, Bounds<T>? expectedFirst, Bounds<T>? expectedSecond)
+        {
+            var sut = new Bounds<T>( min1, max1 );
+            var other = new Bounds<T>( min2, max2 );
+
+            var result = sut.Remove( other );
+
+            using ( new AssertionScope() )
+            {
+                result.First.Should().BeEquivalentTo( expectedFirst );
+                result.Second.Should().BeEquivalentTo( expectedSecond );
+            }
         }
 
         [Theory]

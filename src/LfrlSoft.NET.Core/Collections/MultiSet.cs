@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using LfrlSoft.NET.Core.Extensions;
 
 namespace LfrlSoft.NET.Core.Collections
@@ -118,6 +119,7 @@ namespace LfrlSoft.NET.Core.Collections
             return _map.Select( v => Pair.Create( v.Key, v.Value.Value ) ).GetEnumerator();
         }
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         private int AddImpl(T item, int count)
         {
             if ( ! _map.TryGetValue( item, out var multiplicity ) )
@@ -128,6 +130,7 @@ namespace LfrlSoft.NET.Core.Collections
             return multiplicity.Value;
         }
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         private int AddNewImpl(T item, int count)
         {
             FullCount += count;
@@ -135,6 +138,7 @@ namespace LfrlSoft.NET.Core.Collections
             return count;
         }
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         private int RemoveImpl(T item, int count)
         {
             if ( ! _map.TryGetValue( item, out var multiplicity ) )
@@ -152,6 +156,7 @@ namespace LfrlSoft.NET.Core.Collections
             return 0;
         }
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         private int RemoveAllImpl(T item, int multiplicity)
         {
             FullCount -= multiplicity;

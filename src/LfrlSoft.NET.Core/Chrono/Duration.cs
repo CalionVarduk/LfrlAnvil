@@ -463,7 +463,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         private Duration SetTicksInMillisecondForPositive(int value)
         {
-            Ensure.IsBetween( value, 0, Constants.TicksPerMillisecond - 1, nameof( value ) );
+            Ensure.IsInRange( value, 0, Constants.TicksPerMillisecond - 1, nameof( value ) );
             return AddTicks( value - TicksInMillisecond );
         }
 
@@ -471,7 +471,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         private Duration SetTicksInMillisecondForNegative(int value)
         {
-            Ensure.IsBetween( value, -Constants.TicksPerMillisecond + 1, 0, nameof( value ) );
+            Ensure.IsInRange( value, -Constants.TicksPerMillisecond + 1, 0, nameof( value ) );
             return AddTicks( value - TicksInMillisecond );
         }
 
@@ -479,7 +479,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         private Duration SetTicksInMillisecondForZero(int value)
         {
-            Ensure.IsBetween( value, -Constants.TicksPerMillisecond + 1, Constants.TicksPerMillisecond - 1, nameof( value ) );
+            Ensure.IsInRange( value, -Constants.TicksPerMillisecond + 1, Constants.TicksPerMillisecond - 1, nameof( value ) );
             return AddTicks( value - TicksInMillisecond );
         }
 
@@ -487,7 +487,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         private Duration SetMillisecondsInSecondForPositive(int value)
         {
-            Ensure.IsBetween( value, 0, Constants.MillisecondsPerSecond - 1, nameof( value ) );
+            Ensure.IsInRange( value, 0, Constants.MillisecondsPerSecond - 1, nameof( value ) );
             return AddMilliseconds( value - MillisecondsInSecond );
         }
 
@@ -495,7 +495,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         private Duration SetMillisecondsInSecondForNegative(int value)
         {
-            Ensure.IsBetween( value, -Constants.MillisecondsPerSecond + 1, 0, nameof( value ) );
+            Ensure.IsInRange( value, -Constants.MillisecondsPerSecond + 1, 0, nameof( value ) );
             return AddMilliseconds( value - MillisecondsInSecond );
         }
 
@@ -503,7 +503,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         private Duration SetMillisecondsInSecondForZero(int value)
         {
-            Ensure.IsBetween( value, -Constants.MillisecondsPerSecond + 1, Constants.MillisecondsPerSecond - 1, nameof( value ) );
+            Ensure.IsInRange( value, -Constants.MillisecondsPerSecond + 1, Constants.MillisecondsPerSecond - 1, nameof( value ) );
             return AddMilliseconds( value - MillisecondsInSecond );
         }
 
@@ -511,7 +511,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         private Duration SetSecondsInMinuteForPositive(int value)
         {
-            Ensure.IsBetween( value, 0, Constants.SecondsPerMinute - 1, nameof( value ) );
+            Ensure.IsInRange( value, 0, Constants.SecondsPerMinute - 1, nameof( value ) );
             return AddSeconds( value - SecondsInMinute );
         }
 
@@ -519,7 +519,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         private Duration SetSecondsInMinuteForNegative(int value)
         {
-            Ensure.IsBetween( value, -Constants.SecondsPerMinute + 1, 0, nameof( value ) );
+            Ensure.IsInRange( value, -Constants.SecondsPerMinute + 1, 0, nameof( value ) );
             return AddSeconds( value - SecondsInMinute );
         }
 
@@ -527,7 +527,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         private Duration SetSecondsInMinuteForZero(int value)
         {
-            Ensure.IsBetween( value, -Constants.SecondsPerMinute + 1, Constants.SecondsPerMinute - 1, nameof( value ) );
+            Ensure.IsInRange( value, -Constants.SecondsPerMinute + 1, Constants.SecondsPerMinute - 1, nameof( value ) );
             return AddSeconds( value - SecondsInMinute );
         }
 
@@ -535,7 +535,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         private Duration SetMinutesInHourForPositive(int value)
         {
-            Ensure.IsBetween( value, 0, Constants.MinutesPerHour - 1, nameof( value ) );
+            Ensure.IsInRange( value, 0, Constants.MinutesPerHour - 1, nameof( value ) );
             return AddMinutes( value - MinutesInHour );
         }
 
@@ -543,7 +543,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         private Duration SetMinutesInHourForNegative(int value)
         {
-            Ensure.IsBetween( value, -Constants.MinutesPerHour + 1, 0, nameof( value ) );
+            Ensure.IsInRange( value, -Constants.MinutesPerHour + 1, 0, nameof( value ) );
             return AddMinutes( value - MinutesInHour );
         }
 
@@ -551,7 +551,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         private Duration SetMinutesInHourForZero(int value)
         {
-            Ensure.IsBetween( value, -Constants.MinutesPerHour + 1, Constants.MinutesPerHour - 1, nameof( value ) );
+            Ensure.IsInRange( value, -Constants.MinutesPerHour + 1, Constants.MinutesPerHour - 1, nameof( value ) );
             return AddMinutes( value - MinutesInHour );
         }
 
