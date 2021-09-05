@@ -116,7 +116,7 @@ namespace LfrlSoft.NET.Core
         [Pure]
         public bool ContainsBit(int bitIndex)
         {
-            Assert.IsBetween( bitIndex, 0, BitCount - 1, nameof( bitIndex ) );
+            Ensure.IsBetween( bitIndex, 0, BitCount - 1, nameof( bitIndex ) );
             return ContainsAll( FromLongValue( 1UL << bitIndex ) );
         }
 
@@ -136,7 +136,7 @@ namespace LfrlSoft.NET.Core
         [Pure]
         public Bitmask<T> SetBit(int bitIndex)
         {
-            Assert.IsBetween( bitIndex, 0, BitCount - 1, nameof( bitIndex ) );
+            Ensure.IsBetween( bitIndex, 0, BitCount - 1, nameof( bitIndex ) );
             return Set( FromLongValue( 1UL << bitIndex ) );
         }
 
@@ -156,7 +156,7 @@ namespace LfrlSoft.NET.Core
         [Pure]
         public Bitmask<T> UnsetBit(int bitIndex)
         {
-            Assert.IsBetween( bitIndex, 0, BitCount - 1, nameof( bitIndex ) );
+            Ensure.IsBetween( bitIndex, 0, BitCount - 1, nameof( bitIndex ) );
             return Unset( FromLongValue( 1UL << bitIndex ) );
         }
 

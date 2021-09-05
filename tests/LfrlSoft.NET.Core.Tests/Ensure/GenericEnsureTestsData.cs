@@ -1,9 +1,9 @@
 ﻿using AutoFixture;
 using Xunit;
 
-namespace LfrlSoft.NET.Core.Tests.Assert
+namespace LfrlSoft.NET.Core.Tests.Ensure
 {
-    public class GenericAssertTestsData<T>
+    public class GenericEnsureTestsData<T>
     {
         public static TheoryData<int> GetContainsAtLeastPassData(IFixture fixture)
         {

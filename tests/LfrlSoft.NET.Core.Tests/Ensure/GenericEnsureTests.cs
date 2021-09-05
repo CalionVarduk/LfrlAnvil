@@ -6,10 +6,10 @@ using LfrlSoft.NET.TestExtensions;
 using LfrlSoft.NET.TestExtensions.Attributes;
 using Xunit;
 
-namespace LfrlSoft.NET.Core.Tests.Assert
+namespace LfrlSoft.NET.Core.Tests.Ensure
 {
-    [GenericTestClass( typeof( GenericAssertTestsData<> ) )]
-    public abstract class GenericAssertTests<T> : AssertTestsBase
+    [GenericTestClass( typeof( GenericEnsureTestsData<> ) )]
+    public abstract class GenericEnsureTests<T> : EnsureTestsBase
     {
         protected readonly IEqualityComparer<T> EqualityComparer = EqualityComparer<T>.Default;
         protected readonly IComparer<T> Comparer = Comparer<T>.Default;
@@ -18,238 +18,238 @@ namespace LfrlSoft.NET.Core.Tests.Assert
         public void IsDefault_ShouldPass_WhenParamIsDefault()
         {
             var param = Fixture.CreateDefault<T>();
-            ShouldPass( () => Core.Assert.IsDefault( param ) );
+            ShouldPass( () => Core.Ensure.IsDefault( param ) );
         }
 
         [Fact]
         public void IsDefault_ShouldThrow_WhenParamIsNotDefault()
         {
             var param = Fixture.CreateNotDefault<T>();
-            ShouldThrow( () => Core.Assert.IsDefault( param ) );
+            ShouldThrow( () => Core.Ensure.IsDefault( param ) );
         }
 
         [Fact]
         public void IsNotDefault_ShouldPass_WhenParamIsNotDefault()
         {
             var param = Fixture.CreateNotDefault<T>();
-            ShouldPass( () => Core.Assert.IsNotDefault( param ) );
+            ShouldPass( () => Core.Ensure.IsNotDefault( param ) );
         }
 
         [Fact]
         public void IsNotDefault_ShouldThrow_WhenParamIsDefault()
         {
             var param = Fixture.CreateDefault<T>();
-            ShouldThrow( () => Core.Assert.IsNotDefault( param ) );
+            ShouldThrow( () => Core.Ensure.IsNotDefault( param ) );
         }
 
         [Fact]
         public void IsOfType_ShouldThrow_WhenTypesDontMatch()
         {
             var param = Fixture.CreateNotDefault<T>()!;
-            ShouldThrow( () => Core.Assert.IsOfType<object>( param ) );
+            ShouldThrow( () => Core.Ensure.IsOfType<object>( param ) );
         }
 
         [Fact]
         public void IsNotOfType_ShouldPass_WhenTypesDontMatch()
         {
             var param = Fixture.CreateNotDefault<T>()!;
-            ShouldPass( () => Core.Assert.IsNotOfType<object>( param ) );
+            ShouldPass( () => Core.Ensure.IsNotOfType<object>( param ) );
         }
 
         [Fact]
         public void IsAssignableToType_ShouldPass_WhenParamIsAssignableToType()
         {
             var param = Fixture.CreateNotDefault<T>()!;
-            ShouldPass( () => Core.Assert.IsAssignableToType<object>( param ) );
+            ShouldPass( () => Core.Ensure.IsAssignableToType<object>( param ) );
         }
 
         [Fact]
         public void IsAssignableToType_ShouldPass_WhenParamIsOfExactType()
         {
             var param = Fixture.CreateNotDefault<T>()!;
-            ShouldPass( () => Core.Assert.IsAssignableToType<T>( param ) );
+            ShouldPass( () => Core.Ensure.IsAssignableToType<T>( param ) );
         }
 
         [Fact]
         public void IsAssignableToType_ShouldThrow_WhenParamIsNotAssignableToType()
         {
             var param = Fixture.CreateNotDefault<T>()!;
-            ShouldThrow( () => Core.Assert.IsAssignableToType<IEnumerable<T>>( param ) );
+            ShouldThrow( () => Core.Ensure.IsAssignableToType<IEnumerable<T>>( param ) );
         }
 
         [Fact]
         public void IsNotAssignableToType_ShouldPass_WhenParamIsNotAssignableToType()
         {
             var param = Fixture.CreateNotDefault<T>()!;
-            ShouldPass( () => Core.Assert.IsNotAssignableToType<IEnumerable<T>>( param ) );
+            ShouldPass( () => Core.Ensure.IsNotAssignableToType<IEnumerable<T>>( param ) );
         }
 
         [Fact]
         public void IsNotAssignableToType_ShouldThrow_WhenParamIsOfExactType()
         {
             var param = Fixture.CreateNotDefault<T>()!;
-            ShouldThrow( () => Core.Assert.IsNotAssignableToType<T>( param ) );
+            ShouldThrow( () => Core.Ensure.IsNotAssignableToType<T>( param ) );
         }
 
         [Fact]
         public void IsNotAssignableToType_ShouldThrow_WhenParamIsAssignableToType()
         {
             var param = Fixture.CreateNotDefault<T>()!;
-            ShouldThrow( () => Core.Assert.IsNotAssignableToType<object>( param ) );
+            ShouldThrow( () => Core.Ensure.IsNotAssignableToType<object>( param ) );
         }
 
         [Fact]
         public void Equals_ShouldPass_WhenParamIsEqualToValue_WithExplicitComparer()
         {
             var param = Fixture.CreateNotDefault<T>();
-            ShouldPass( () => Core.Assert.Equals( param, param, EqualityComparer ) );
+            ShouldPass( () => Core.Ensure.Equals( param, param, EqualityComparer ) );
         }
 
         [Fact]
         public void Equals_ShouldThrow_WhenParamIsNotEqualToValue_WithExplicitComparer()
         {
             var (param, value) = Fixture.CreateDistinctCollection<T>( 2 );
-            ShouldThrow( () => Core.Assert.Equals( param, value, EqualityComparer ) );
+            ShouldThrow( () => Core.Ensure.Equals( param, value, EqualityComparer ) );
         }
 
         [Fact]
         public void NotEquals_ShouldPass_WhenParamIsNotEqualToValue_WithExplicitComparer()
         {
             var (param, value) = Fixture.CreateDistinctCollection<T>( 2 );
-            ShouldPass( () => Core.Assert.NotEquals( param, value, EqualityComparer ) );
+            ShouldPass( () => Core.Ensure.NotEquals( param, value, EqualityComparer ) );
         }
 
         [Fact]
         public void NotEquals_ShouldThrow_WhenParamIsEqualToValue_WithExplicitComparer()
         {
             var param = Fixture.CreateNotDefault<T>();
-            ShouldThrow( () => Core.Assert.NotEquals( param, param, EqualityComparer ) );
+            ShouldThrow( () => Core.Ensure.NotEquals( param, param, EqualityComparer ) );
         }
 
         [Fact]
         public void IsGreaterThan_ShouldPass_WhenParamIsGreaterThanValue_WithExplicitComparer()
         {
             var (value, param) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldPass( () => Core.Assert.IsGreaterThan( param, value, Comparer ) );
+            ShouldPass( () => Core.Ensure.IsGreaterThan( param, value, Comparer ) );
         }
 
         [Fact]
         public void IsGreaterThan_ShouldThrow_WhenParamIsLessThanValue_WithExplicitComparer()
         {
             var (param, value) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Assert.IsGreaterThan( param, value, Comparer ) );
+            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsGreaterThan( param, value, Comparer ) );
         }
 
         [Fact]
         public void IsGreaterThan_ShouldThrow_WhenParamIsEqualToValue_WithExplicitComparer()
         {
             var param = Fixture.CreateNotDefault<T>();
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Assert.IsGreaterThan( param, param, Comparer ) );
+            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsGreaterThan( param, param, Comparer ) );
         }
 
         [Fact]
         public void IsGreaterThanOrEqualTo_ShouldPass_WhenParamIsGreaterThanValue_WithExplicitComparer()
         {
             var (value, param) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldPass( () => Core.Assert.IsGreaterThanOrEqualTo( param, value, Comparer ) );
+            ShouldPass( () => Core.Ensure.IsGreaterThanOrEqualTo( param, value, Comparer ) );
         }
 
         [Fact]
         public void IsGreaterThanOrEqualTo_ShouldPass_WhenParamIsEqualToValue_WithExplicitComparer()
         {
             var param = Fixture.CreateNotDefault<T>();
-            ShouldPass( () => Core.Assert.IsGreaterThanOrEqualTo( param, param, Comparer ) );
+            ShouldPass( () => Core.Ensure.IsGreaterThanOrEqualTo( param, param, Comparer ) );
         }
 
         [Fact]
         public void IsGreaterThanOrEqualTo_ShouldThrow_WhenParamIsLessThanValue_WithExplicitComparer()
         {
             var (param, value) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Assert.IsGreaterThanOrEqualTo( param, value, Comparer ) );
+            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsGreaterThanOrEqualTo( param, value, Comparer ) );
         }
 
         [Fact]
         public void IsLessThan_ShouldPass_WhenParamIsLessThanValue_WithExplicitComparer()
         {
             var (param, value) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldPass( () => Core.Assert.IsLessThan( param, value, Comparer ) );
+            ShouldPass( () => Core.Ensure.IsLessThan( param, value, Comparer ) );
         }
 
         [Fact]
         public void IsLessThan_ShouldThrow_WhenParamIsGreaterThanValue_WithExplicitComparer()
         {
             var (value, param) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Assert.IsLessThan( param, value, Comparer ) );
+            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsLessThan( param, value, Comparer ) );
         }
 
         [Fact]
         public void IsLessThan_ShouldThrow_WhenParamIsEqualToValue_WithExplicitComparer()
         {
             var param = Fixture.CreateNotDefault<T>();
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Assert.IsLessThan( param, param, Comparer ) );
+            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsLessThan( param, param, Comparer ) );
         }
 
         [Fact]
         public void IsLessThanOrEqualTo_ShouldPass_WhenParamIsLessThanValue_WithExplicitComparer()
         {
             var (param, value) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldPass( () => Core.Assert.IsLessThanOrEqualTo( param, value, Comparer ) );
+            ShouldPass( () => Core.Ensure.IsLessThanOrEqualTo( param, value, Comparer ) );
         }
 
         [Fact]
         public void IsLessThanOrEqualTo_ShouldPass_WhenParamIsEqualToValue_WithExplicitComparer()
         {
             var param = Fixture.CreateNotDefault<T>();
-            ShouldPass( () => Core.Assert.IsLessThanOrEqualTo( param, param, Comparer ) );
+            ShouldPass( () => Core.Ensure.IsLessThanOrEqualTo( param, param, Comparer ) );
         }
 
         [Fact]
         public void IsLessThanOrEqualTo_ShouldThrow_WhenParamIsGreaterThanValue_WithExplicitComparer()
         {
             var (value, param) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Assert.IsLessThanOrEqualTo( param, value, Comparer ) );
+            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsLessThanOrEqualTo( param, value, Comparer ) );
         }
 
         [Fact]
         public void IsBetween_ShouldPass_WhenParamIsBetweenTwoDistinctValues_WithExplicitComparer()
         {
             var (min, param, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
-            ShouldPass( () => Core.Assert.IsBetween( param, min, max, Comparer ) );
+            ShouldPass( () => Core.Ensure.IsBetween( param, min, max, Comparer ) );
         }
 
         [Fact]
         public void IsBetween_ShouldPass_WhenParamIsEqualToMinValue_WithExplicitComparer()
         {
             var (param, max) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldPass( () => Core.Assert.IsBetween( param, param, max, Comparer ) );
+            ShouldPass( () => Core.Ensure.IsBetween( param, param, max, Comparer ) );
         }
 
         [Fact]
         public void IsBetween_ShouldPass_WhenParamIsEqualToMaxValue_WithExplicitComparer()
         {
             var (min, param) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldPass( () => Core.Assert.IsBetween( param, min, param, Comparer ) );
+            ShouldPass( () => Core.Ensure.IsBetween( param, min, param, Comparer ) );
         }
 
         [Fact]
         public void IsBetween_ShouldPass_WhenParamIsEqualToMinAndMaxValues_WithExplicitComparer()
         {
             var param = Fixture.CreateNotDefault<T>();
-            ShouldPass( () => Core.Assert.IsBetween( param, param, param, Comparer ) );
+            ShouldPass( () => Core.Ensure.IsBetween( param, param, param, Comparer ) );
         }
 
         [Fact]
         public void IsBetween_ShouldThrow_WhenParamIsLessThanMinValue_WithExplicitComparer()
         {
             var (param, min, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Assert.IsBetween( param, min, max, Comparer ) );
+            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsBetween( param, min, max, Comparer ) );
         }
 
         [Fact]
         public void IsBetween_ShouldThrow_WhenParamIsGreaterThanMaxValue_WithExplicitComparer()
         {
             var (min, max, param) = Fixture.CreateDistinctSortedCollection<T>( 3 );
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Assert.IsBetween( param, min, max, Comparer ) );
+            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsBetween( param, min, max, Comparer ) );
         }
 
         [Fact]
@@ -257,21 +257,21 @@ namespace LfrlSoft.NET.Core.Tests.Assert
         {
             var param = Fixture.CreateNotDefault<T>();
             var (max, min) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Assert.IsBetween( param, min, max, Comparer ) );
+            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsBetween( param, min, max, Comparer ) );
         }
 
         [Fact]
         public void IsNotBetween_ShouldPass_WhenParamIsLessThanMinValue_WithExplicitComparer()
         {
             var (param, min, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
-            ShouldPass( () => Core.Assert.IsNotBetween( param, min, max, Comparer ) );
+            ShouldPass( () => Core.Ensure.IsNotBetween( param, min, max, Comparer ) );
         }
 
         [Fact]
         public void IsNotBetween_ShouldPass_WhenParamIsGreaterThanMaxValue_WithExplicitComparer()
         {
             var (min, max, param) = Fixture.CreateDistinctSortedCollection<T>( 3 );
-            ShouldPass( () => Core.Assert.IsNotBetween( param, min, max, Comparer ) );
+            ShouldPass( () => Core.Ensure.IsNotBetween( param, min, max, Comparer ) );
         }
 
         [Fact]
@@ -279,238 +279,238 @@ namespace LfrlSoft.NET.Core.Tests.Assert
         {
             var param = Fixture.CreateNotDefault<T>();
             var (max, min) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldPass( () => Core.Assert.IsNotBetween( param, min, max, Comparer ) );
+            ShouldPass( () => Core.Ensure.IsNotBetween( param, min, max, Comparer ) );
         }
 
         [Fact]
         public void IsNotBetween_ShouldThrow_WhenParamIsBetweenTwoDistinctValues_WithExplicitComparer()
         {
             var (min, param, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Assert.IsNotBetween( param, min, max, Comparer ) );
+            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsNotBetween( param, min, max, Comparer ) );
         }
 
         [Fact]
         public void IsNotBetween_ShouldThrow_WhenParamIsEqualToMinValue_WithExplicitComparer()
         {
             var (param, max) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Assert.IsNotBetween( param, param, max, Comparer ) );
+            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsNotBetween( param, param, max, Comparer ) );
         }
 
         [Fact]
         public void IsNotBetween_ShouldThrow_WhenParamIsEqualToMaxValue_WithExplicitComparer()
         {
             var (min, param) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Assert.IsNotBetween( param, min, param, Comparer ) );
+            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsNotBetween( param, min, param, Comparer ) );
         }
 
         [Fact]
         public void IsNotBetween_ShouldThrow_WhenParamIsEqualToMinAndMaxValues_WithExplicitComparer()
         {
             var param = Fixture.CreateNotDefault<T>();
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Assert.IsNotBetween( param, param, param, Comparer ) );
+            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsNotBetween( param, param, param, Comparer ) );
         }
 
         [Fact]
         public void IsEmpty_ShouldPass_WhenEnumerableIsEmpty()
         {
             var param = Enumerable.Empty<T>();
-            ShouldPass( () => Core.Assert.IsEmpty( param ) );
+            ShouldPass( () => Core.Ensure.IsEmpty( param ) );
         }
 
         [Fact]
         public void IsEmpty_ShouldPass_WhenCollectionIsEmpty()
         {
             var param = Array.Empty<T>();
-            ShouldPass( () => Core.Assert.IsEmpty( param ) );
+            ShouldPass( () => Core.Ensure.IsEmpty( param ) );
         }
 
         [Fact]
         public void IsEmpty_ShouldThrow_WhenEnumerableIsNotEmpty()
         {
             var param = Fixture.CreateMany<T>();
-            ShouldThrow( () => Core.Assert.IsEmpty( param ) );
+            ShouldThrow( () => Core.Ensure.IsEmpty( param ) );
         }
 
         [Fact]
         public void IsEmpty_ShouldThrow_WhenCollectionIsNotEmpty()
         {
             var param = Fixture.CreateMany<T>().ToList();
-            ShouldThrow( () => Core.Assert.IsEmpty( param ) );
+            ShouldThrow( () => Core.Ensure.IsEmpty( param ) );
         }
 
         [Fact]
         public void IsNotEmpty_ShouldPass_WhenEnumerableIsNotEmpty()
         {
             var param = Fixture.CreateMany<T>();
-            ShouldPass( () => Core.Assert.IsNotEmpty( param ) );
+            ShouldPass( () => Core.Ensure.IsNotEmpty( param ) );
         }
 
         [Fact]
         public void IsNotEmpty_ShouldPass_WhenCollectionIsNotEmpty()
         {
             var param = Fixture.CreateMany<T>().ToList();
-            ShouldPass( () => Core.Assert.IsNotEmpty( param ) );
+            ShouldPass( () => Core.Ensure.IsNotEmpty( param ) );
         }
 
         [Fact]
         public void IsNotEmpty_ShouldThrow_WhenEnumerableIsEmpty()
         {
             var param = Enumerable.Empty<T>();
-            ShouldThrow( () => Core.Assert.IsNotEmpty( param ) );
+            ShouldThrow( () => Core.Ensure.IsNotEmpty( param ) );
         }
 
         [Fact]
         public void IsNotEmpty_ShouldThrow_WhenCollectionIsEmpty()
         {
             var param = Array.Empty<T>();
-            ShouldThrow( () => Core.Assert.IsNotEmpty( param ) );
+            ShouldThrow( () => Core.Ensure.IsNotEmpty( param ) );
         }
 
         [Fact]
         public void IsNullOrEmpty_ShouldPass_WhenEnumerableIsNull()
         {
             var param = Fixture.CreateDefault<IEnumerable<T>>();
-            ShouldPass( () => Core.Assert.IsNullOrEmpty( param ) );
+            ShouldPass( () => Core.Ensure.IsNullOrEmpty( param ) );
         }
 
         [Fact]
         public void IsNullOrEmpty_ShouldPass_WhenEnumerableIsEmpty()
         {
             var param = Enumerable.Empty<T>();
-            ShouldPass( () => Core.Assert.IsNullOrEmpty( param ) );
+            ShouldPass( () => Core.Ensure.IsNullOrEmpty( param ) );
         }
 
         [Fact]
         public void IsNullOrEmpty_ShouldPass_WhenCollectionIsNull()
         {
             var param = Fixture.CreateDefault<T[]>();
-            ShouldPass( () => Core.Assert.IsNullOrEmpty( param ) );
+            ShouldPass( () => Core.Ensure.IsNullOrEmpty( param ) );
         }
 
         [Fact]
         public void IsNullOrEmpty_ShouldPass_WhenCollectionIsEmpty()
         {
             var param = Array.Empty<T>();
-            ShouldPass( () => Core.Assert.IsNullOrEmpty( param ) );
+            ShouldPass( () => Core.Ensure.IsNullOrEmpty( param ) );
         }
 
         [Fact]
         public void IsNullOrEmpty_ShouldThrow_WhenEnumerableIsNotEmpty()
         {
             var param = Fixture.CreateMany<T>();
-            ShouldThrow( () => Core.Assert.IsNullOrEmpty( param ) );
+            ShouldThrow( () => Core.Ensure.IsNullOrEmpty( param ) );
         }
 
         [Fact]
         public void IsNullOrEmpty_ShouldThrow_WhenCollectionIsNotEmpty()
         {
             var param = Fixture.CreateMany<T>().ToList();
-            ShouldThrow( () => Core.Assert.IsNullOrEmpty( param ) );
+            ShouldThrow( () => Core.Ensure.IsNullOrEmpty( param ) );
         }
 
         [Fact]
         public void IsNotNullOrEmpty_ShouldPass_WhenEnumerableIsNotEmpty()
         {
             var param = Fixture.CreateMany<T>();
-            ShouldPass( () => Core.Assert.IsNotNullOrEmpty( param ) );
+            ShouldPass( () => Core.Ensure.IsNotNullOrEmpty( param ) );
         }
 
         [Fact]
         public void IsNotNullOrEmpty_ShouldPass_WhenCollectionIsNotEmpty()
         {
             var param = Fixture.CreateMany<T>().ToList();
-            ShouldPass( () => Core.Assert.IsNotNullOrEmpty( param ) );
+            ShouldPass( () => Core.Ensure.IsNotNullOrEmpty( param ) );
         }
 
         [Fact]
         public void IsNotNullOrEmpty_ShouldThrow_WhenEnumerableIsNull()
         {
             var param = Fixture.CreateDefault<IEnumerable<T>>();
-            ShouldThrow( () => Core.Assert.IsNotNullOrEmpty( param ) );
+            ShouldThrow( () => Core.Ensure.IsNotNullOrEmpty( param ) );
         }
 
         [Fact]
         public void IsNotNullOrEmpty_ShouldThrow_WhenEnumerableIsEmpty()
         {
             var param = Enumerable.Empty<T>();
-            ShouldThrow( () => Core.Assert.IsNotNullOrEmpty( param ) );
+            ShouldThrow( () => Core.Ensure.IsNotNullOrEmpty( param ) );
         }
 
         [Fact]
         public void IsNotNullOrEmpty_ShouldThrow_WhenCollectionIsNull()
         {
             var param = Fixture.CreateDefault<T[]>();
-            ShouldThrow( () => Core.Assert.IsNotNullOrEmpty( param ) );
+            ShouldThrow( () => Core.Ensure.IsNotNullOrEmpty( param ) );
         }
 
         [Fact]
         public void IsNotNullOrEmpty_ShouldThrow_WhenCollectionIsEmpty()
         {
             var param = Array.Empty<T>();
-            ShouldThrow( () => Core.Assert.IsNotNullOrEmpty( param ) );
+            ShouldThrow( () => Core.Ensure.IsNotNullOrEmpty( param ) );
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericAssertTestsData<T>.GetContainsAtLeastPassData ) )]
+        [GenericMethodData( nameof( GenericEnsureTestsData<T>.GetContainsAtLeastPassData ) )]
         public void ContainsAtLeast_ShouldPass_WhenCollectionContainsEnoughElements(int minCount)
         {
             var param = Fixture.CreateMany<T>( 3 );
-            ShouldPass( () => Core.Assert.ContainsAtLeast( param, minCount ) );
+            ShouldPass( () => Core.Ensure.ContainsAtLeast( param, minCount ) );
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericAssertTestsData<T>.GetContainsAtLeastThrowData ) )]
+        [GenericMethodData( nameof( GenericEnsureTestsData<T>.GetContainsAtLeastThrowData ) )]
         public void ContainsAtLeast_ShouldThrow_WhenCollectionContainsTooFewElements(int minCount)
         {
             var param = Fixture.CreateMany<T>( 3 );
-            ShouldThrow( () => Core.Assert.ContainsAtLeast( param, minCount ) );
+            ShouldThrow( () => Core.Ensure.ContainsAtLeast( param, minCount ) );
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericAssertTestsData<T>.GetContainsAtMostPassData ) )]
+        [GenericMethodData( nameof( GenericEnsureTestsData<T>.GetContainsAtMostPassData ) )]
         public void ContainsAtMost_ShouldPass_WhenCollectionDoesntContainTooManyElements(int maxCount)
         {
             var param = Fixture.CreateMany<T>( 3 );
-            ShouldPass( () => Core.Assert.ContainsAtMost( param, maxCount ) );
+            ShouldPass( () => Core.Ensure.ContainsAtMost( param, maxCount ) );
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericAssertTestsData<T>.GetContainsAtMostThrowData ) )]
+        [GenericMethodData( nameof( GenericEnsureTestsData<T>.GetContainsAtMostThrowData ) )]
         public void ContainsAtMost_ShouldThrow_WhenCollectionContainsTooManyElements(int maxCount)
         {
             var param = Fixture.CreateMany<T>( 3 );
-            ShouldThrow( () => Core.Assert.ContainsAtMost( param, maxCount ) );
+            ShouldThrow( () => Core.Ensure.ContainsAtMost( param, maxCount ) );
         }
 
         [Fact]
         public void ContainsExactly_ShouldPass_WhenCollectionContainsExactlyTheRightAmountOfElements()
         {
             var param = Fixture.CreateMany<T>( 3 );
-            ShouldPass( () => Core.Assert.ContainsExactly( param, 3 ) );
+            ShouldPass( () => Core.Ensure.ContainsExactly( param, 3 ) );
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericAssertTestsData<T>.GetContainsExactlyThrowData ) )]
+        [GenericMethodData( nameof( GenericEnsureTestsData<T>.GetContainsExactlyThrowData ) )]
         public void ContainsExactly_ShouldThrow_WhenCollectionContainsTooFewOrManyElements(int count)
         {
             var param = Fixture.CreateMany<T>( 3 );
-            ShouldThrow( () => Core.Assert.ContainsExactly( param, count ) );
+            ShouldThrow( () => Core.Ensure.ContainsExactly( param, count ) );
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericAssertTestsData<T>.GetContainsBetweenPassData ) )]
+        [GenericMethodData( nameof( GenericEnsureTestsData<T>.GetContainsBetweenPassData ) )]
         public void ContainsBetween_ShouldPass_WhenCollectionContainsCorrectAmountOfElements(int minCount, int maxCount)
         {
             var param = Fixture.CreateMany<T>( 3 );
-            ShouldPass( () => Core.Assert.ContainsBetween( param, minCount, maxCount ) );
+            ShouldPass( () => Core.Ensure.ContainsBetween( param, minCount, maxCount ) );
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericAssertTestsData<T>.GetContainsBetweenThrowData ) )]
+        [GenericMethodData( nameof( GenericEnsureTestsData<T>.GetContainsBetweenThrowData ) )]
         public void ContainsBetween_ShouldThrow_WhenCollectionContainsTooManyOrTooFewElements(int minCount, int maxCount)
         {
             var param = Fixture.CreateMany<T>( 3 );
-            ShouldThrow( () => Core.Assert.ContainsBetween( param, minCount, maxCount ) );
+            ShouldThrow( () => Core.Ensure.ContainsBetween( param, minCount, maxCount ) );
         }
 
         [Fact]
@@ -518,7 +518,7 @@ namespace LfrlSoft.NET.Core.Tests.Assert
         {
             var value = Fixture.Create<T>();
             var param = Fixture.CreateMany<T>().Append( value );
-            ShouldPass( () => Core.Assert.Contains( param, value, EqualityComparer ) );
+            ShouldPass( () => Core.Ensure.Contains( param, value, EqualityComparer ) );
         }
 
         [Fact]
@@ -526,7 +526,7 @@ namespace LfrlSoft.NET.Core.Tests.Assert
         {
             var value = Fixture.Create<T>();
             var param = Fixture.CreateMany<T>().Except( new[] { value } );
-            ShouldThrow( () => Core.Assert.Contains( param, value, EqualityComparer ) );
+            ShouldThrow( () => Core.Ensure.Contains( param, value, EqualityComparer ) );
         }
 
         [Fact]
@@ -534,7 +534,7 @@ namespace LfrlSoft.NET.Core.Tests.Assert
         {
             var value = Fixture.Create<T>();
             var param = Fixture.CreateMany<T>().Except( new[] { value } );
-            ShouldPass( () => Core.Assert.NotContains( param, value, EqualityComparer ) );
+            ShouldPass( () => Core.Ensure.NotContains( param, value, EqualityComparer ) );
         }
 
         [Fact]
@@ -542,7 +542,7 @@ namespace LfrlSoft.NET.Core.Tests.Assert
         {
             var value = Fixture.Create<T>();
             var param = Fixture.CreateMany<T>().Append( value );
-            ShouldThrow( () => Core.Assert.NotContains( param, value, EqualityComparer ) );
+            ShouldThrow( () => Core.Ensure.NotContains( param, value, EqualityComparer ) );
         }
 
         [Fact]
@@ -550,7 +550,7 @@ namespace LfrlSoft.NET.Core.Tests.Assert
         {
             var value = Fixture.Create<T>();
             var param = Fixture.CreateMany<T>().Append( value );
-            ShouldPass( () => Core.Assert.ForAny( param, e => EqualityComparer.Equals( e, value ) ) );
+            ShouldPass( () => Core.Ensure.ForAny( param, e => EqualityComparer.Equals( e, value ) ) );
         }
 
         [Fact]
@@ -558,14 +558,14 @@ namespace LfrlSoft.NET.Core.Tests.Assert
         {
             var value = Fixture.Create<T>();
             var param = Fixture.CreateMany<T>().Except( new[] { value } );
-            ShouldThrow( () => Core.Assert.ForAny( param, e => EqualityComparer.Equals( e, value ) ) );
+            ShouldThrow( () => Core.Ensure.ForAny( param, e => EqualityComparer.Equals( e, value ) ) );
         }
 
         [Fact]
         public void ForAny_ShouldThrow_WhenEnumerableIsEmpty()
         {
             var param = Enumerable.Empty<T>();
-            ShouldThrow( () => Core.Assert.ForAny( param, _ => true ) );
+            ShouldThrow( () => Core.Ensure.ForAny( param, _ => true ) );
         }
 
         [Fact]
@@ -573,7 +573,7 @@ namespace LfrlSoft.NET.Core.Tests.Assert
         {
             var value = Fixture.Create<T>();
             var param = Fixture.CreateMany<T>().Append( value );
-            ShouldPass( () => Core.Assert.ForAny( param, e => EqualityComparer.Equals( e, value ), () => string.Empty ) );
+            ShouldPass( () => Core.Ensure.ForAny( param, e => EqualityComparer.Equals( e, value ), () => string.Empty ) );
         }
 
         [Fact]
@@ -581,14 +581,14 @@ namespace LfrlSoft.NET.Core.Tests.Assert
         {
             var value = Fixture.Create<T>();
             var param = Fixture.CreateMany<T>().Except( new[] { value } );
-            ShouldThrow( () => Core.Assert.ForAny( param, e => EqualityComparer.Equals( e, value ), () => string.Empty ) );
+            ShouldThrow( () => Core.Ensure.ForAny( param, e => EqualityComparer.Equals( e, value ), () => string.Empty ) );
         }
 
         [Fact]
         public void ForAny_ShouldThrow_WhenEnumerableIsEmpty_WithDelegate()
         {
             var param = Enumerable.Empty<T>();
-            ShouldThrow( () => Core.Assert.ForAny( param, _ => true, () => string.Empty ) );
+            ShouldThrow( () => Core.Ensure.ForAny( param, _ => true, () => string.Empty ) );
         }
 
         [Fact]
@@ -596,14 +596,14 @@ namespace LfrlSoft.NET.Core.Tests.Assert
         {
             var value = Fixture.Create<T>();
             var param = Enumerable.Range( 0, 3 ).Select( _ => value );
-            ShouldPass( () => Core.Assert.ForAll( param, e => EqualityComparer.Equals( e, value ) ) );
+            ShouldPass( () => Core.Ensure.ForAll( param, e => EqualityComparer.Equals( e, value ) ) );
         }
 
         [Fact]
         public void ForAll_ShouldPass_WhenEnumerableIsEmpty()
         {
             var param = Enumerable.Empty<T>();
-            ShouldPass( () => Core.Assert.ForAll( param, _ => false ) );
+            ShouldPass( () => Core.Ensure.ForAll( param, _ => false ) );
         }
 
         [Fact]
@@ -611,7 +611,7 @@ namespace LfrlSoft.NET.Core.Tests.Assert
         {
             var (value, other) = Fixture.CreateDistinctCollection<T>( 2 );
             var param = Enumerable.Range( 0, 3 ).Select( _ => value ).Append( other );
-            ShouldThrow( () => Core.Assert.ForAll( param, e => EqualityComparer.Equals( e, value ) ) );
+            ShouldThrow( () => Core.Ensure.ForAll( param, e => EqualityComparer.Equals( e, value ) ) );
         }
 
         [Fact]
@@ -619,14 +619,14 @@ namespace LfrlSoft.NET.Core.Tests.Assert
         {
             var value = Fixture.Create<T>();
             var param = Enumerable.Range( 0, 3 ).Select( _ => value );
-            ShouldPass( () => Core.Assert.ForAll( param, e => EqualityComparer.Equals( e, value ), () => string.Empty ) );
+            ShouldPass( () => Core.Ensure.ForAll( param, e => EqualityComparer.Equals( e, value ), () => string.Empty ) );
         }
 
         [Fact]
         public void ForAll_ShouldPass_WhenEnumerableIsEmpty_WithDelegate()
         {
             var param = Enumerable.Empty<T>();
-            ShouldPass( () => Core.Assert.ForAll( param, _ => false, () => string.Empty ) );
+            ShouldPass( () => Core.Ensure.ForAll( param, _ => false, () => string.Empty ) );
         }
 
         [Fact]
@@ -634,31 +634,31 @@ namespace LfrlSoft.NET.Core.Tests.Assert
         {
             var (value, other) = Fixture.CreateDistinctCollection<T>( 2 );
             var param = Enumerable.Range( 0, 3 ).Select( _ => value ).Append( other );
-            ShouldThrow( () => Core.Assert.ForAll( param, e => EqualityComparer.Equals( e, value ), () => string.Empty ) );
+            ShouldThrow( () => Core.Ensure.ForAll( param, e => EqualityComparer.Equals( e, value ), () => string.Empty ) );
         }
 
         protected void IsNull_ShouldPass_WhenParamIsNull_WithExplicitComparer_Impl()
         {
             var param = Fixture.CreateDefault<T>();
-            ShouldPass( () => Core.Assert.IsNull( param, EqualityComparer ) );
+            ShouldPass( () => Core.Ensure.IsNull( param, EqualityComparer ) );
         }
 
         protected void IsNull_ShouldThrow_WhenParamIsNotNull_WithExplicitComparer_Impl()
         {
             var param = Fixture.CreateNotDefault<T>();
-            ShouldThrow( () => Core.Assert.IsNull( param, EqualityComparer ) );
+            ShouldThrow( () => Core.Ensure.IsNull( param, EqualityComparer ) );
         }
 
         protected void IsNotNull_ShouldPass_WhenParamIsNotNull_WithExplicitComparer_Impl()
         {
             var param = Fixture.CreateNotDefault<T>();
-            ShouldPass( () => Core.Assert.IsNotNull( param, EqualityComparer ) );
+            ShouldPass( () => Core.Ensure.IsNotNull( param, EqualityComparer ) );
         }
 
         protected void IsNotNull_ShouldThrow_WhenParamIsNull_WithExplicitComparer_Impl()
         {
             var param = Fixture.CreateDefault<T>();
-            ShouldThrow<ArgumentNullException>( () => Core.Assert.IsNotNull( param, EqualityComparer ) );
+            ShouldThrow<ArgumentNullException>( () => Core.Ensure.IsNotNull( param, EqualityComparer ) );
         }
     }
 }

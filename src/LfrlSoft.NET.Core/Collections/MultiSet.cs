@@ -57,7 +57,7 @@ namespace LfrlSoft.NET.Core.Collections
 
         public int SetMultiplicity(T item, int value)
         {
-            Assert.IsGreaterThanOrEqualTo( value, 0, nameof( value ) );
+            Ensure.IsGreaterThanOrEqualTo( value, 0, nameof( value ) );
 
             if ( _map.TryGetValue( item, out var multiplicity ) )
             {
@@ -83,7 +83,7 @@ namespace LfrlSoft.NET.Core.Collections
 
         public int AddMany(T item, int count)
         {
-            Assert.IsGreaterThan( count, 0, nameof( count ) );
+            Ensure.IsGreaterThan( count, 0, nameof( count ) );
             return AddImpl( item, count );
         }
 
@@ -94,7 +94,7 @@ namespace LfrlSoft.NET.Core.Collections
 
         public int RemoveMany(T item, int count)
         {
-            Assert.IsGreaterThan( count, 0, nameof( count ) );
+            Ensure.IsGreaterThan( count, 0, nameof( count ) );
             return RemoveImpl( item, count );
         }
 

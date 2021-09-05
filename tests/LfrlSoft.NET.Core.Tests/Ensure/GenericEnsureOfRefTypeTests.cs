@@ -4,16 +4,16 @@ using AutoFixture;
 using LfrlSoft.NET.TestExtensions;
 using Xunit;
 
-namespace LfrlSoft.NET.Core.Tests.Assert
+namespace LfrlSoft.NET.Core.Tests.Ensure
 {
-    public abstract class GenericAssertOfRefTypeTests<T> : GenericAssertOfComparableTypeTests<T>
+    public abstract class GenericEnsureOfRefTypeTests<T> : GenericEnsureOfComparableTypeTests<T>
         where T : class, IEquatable<T>, IComparable<T>
     {
         [Fact]
         public void IsNull_ShouldPass_WhenParamIsNull()
         {
             var param = Fixture.CreateDefault<T>();
-            ShouldPass( () => Core.Assert.IsNull( param ) );
+            ShouldPass( () => Core.Ensure.IsNull( param ) );
         }
 
         [Fact]
@@ -26,7 +26,7 @@ namespace LfrlSoft.NET.Core.Tests.Assert
         public void IsNull_ShouldThrow_WhenParamIsNotNull()
         {
             var param = Fixture.CreateNotDefault<T>();
-            ShouldThrow( () => Core.Assert.IsNull( param ) );
+            ShouldThrow( () => Core.Ensure.IsNull( param ) );
         }
 
         [Fact]
@@ -39,7 +39,7 @@ namespace LfrlSoft.NET.Core.Tests.Assert
         public void IsNotNull_ShouldPass_WhenParamIsNotNull()
         {
             var param = Fixture.CreateNotDefault<T>();
-            ShouldPass( () => Core.Assert.IsNotNull( param ) );
+            ShouldPass( () => Core.Ensure.IsNotNull( param ) );
         }
 
         [Fact]
@@ -52,7 +52,7 @@ namespace LfrlSoft.NET.Core.Tests.Assert
         public void IsNotNull_ShouldThrow_WhenParamIsNull()
         {
             var param = Fixture.CreateDefault<T>();
-            ShouldThrow<ArgumentNullException>( () => Core.Assert.IsNotNull( param ) );
+            ShouldThrow<ArgumentNullException>( () => Core.Ensure.IsNotNull( param ) );
         }
 
         [Fact]
@@ -65,70 +65,70 @@ namespace LfrlSoft.NET.Core.Tests.Assert
         public void IsOfType_ShouldPass_WhenTypesMatch()
         {
             var param = Fixture.CreateNotDefault<T>()!;
-            ShouldPass( () => Core.Assert.IsOfType<T>( param ) );
+            ShouldPass( () => Core.Ensure.IsOfType<T>( param ) );
         }
 
         [Fact]
         public void IsNotOfType_ShouldThrow_WhenTypesMatch()
         {
             var param = Fixture.CreateNotDefault<T>()!;
-            ShouldThrow( () => Core.Assert.IsNotOfType<T>( param ) );
+            ShouldThrow( () => Core.Ensure.IsNotOfType<T>( param ) );
         }
 
         [Fact]
         public void ContainsNull_ShouldPass_WhenEnumerableContainsNullElement()
         {
             var param = Fixture.CreateMany<T>().Append( Fixture.CreateDefault<T>() );
-            ShouldPass( () => Core.Assert.ContainsNull( param ) );
+            ShouldPass( () => Core.Ensure.ContainsNull( param ) );
         }
 
         [Fact]
         public void ContainsNull_ShouldPass_WhenEnumerableContainsNullElement_WithExplicitComparer()
         {
             var param = Fixture.CreateMany<T>().Append( Fixture.CreateDefault<T>() );
-            ShouldPass( () => Core.Assert.ContainsNull( param, EqualityComparer ) );
+            ShouldPass( () => Core.Ensure.ContainsNull( param, EqualityComparer ) );
         }
 
         [Fact]
         public void ContainsNull_ShouldThrow_WhenEnumerableDoesntContainNullElement()
         {
             var param = Fixture.CreateMany<T>();
-            ShouldThrow( () => Core.Assert.ContainsNull( param ) );
+            ShouldThrow( () => Core.Ensure.ContainsNull( param ) );
         }
 
         [Fact]
         public void ContainsNull_ShouldThrow_WhenEnumerableDoesntContainNullElement_WithExplicitComparer()
         {
             var param = Fixture.CreateMany<T>();
-            ShouldThrow( () => Core.Assert.ContainsNull( param, EqualityComparer ) );
+            ShouldThrow( () => Core.Ensure.ContainsNull( param, EqualityComparer ) );
         }
 
         [Fact]
         public void NotContainsNull_ShouldPass_WhenEnumerableDoesntContainNullElement()
         {
             var param = Fixture.CreateMany<T>();
-            ShouldPass( () => Core.Assert.NotContainsNull( param ) );
+            ShouldPass( () => Core.Ensure.NotContainsNull( param ) );
         }
 
         [Fact]
         public void NotContainsNull_ShouldPass_WhenEnumerableDoesntContainNullElement_WithExplicitComparer()
         {
             var param = Fixture.CreateMany<T>();
-            ShouldPass( () => Core.Assert.NotContainsNull( param, EqualityComparer ) );
+            ShouldPass( () => Core.Ensure.NotContainsNull( param, EqualityComparer ) );
         }
 
         [Fact]
         public void NotContainsNull_ShouldThrow_WhenEnumerableContainsNullElement()
         {
             var param = Fixture.CreateMany<T>().Append( Fixture.CreateDefault<T>() );
-            ShouldThrow( () => Core.Assert.NotContainsNull( param ) );
+            ShouldThrow( () => Core.Ensure.NotContainsNull( param ) );
         }
 
         [Fact]
         public void NotContainsNull_ShouldThrow_WhenEnumerableContainsNullElement_WithExplicitComparer()
         {
             var param = Fixture.CreateMany<T>().Append( Fixture.CreateDefault<T>() );
-            ShouldThrow( () => Core.Assert.NotContainsNull( param, EqualityComparer ) );
+            ShouldThrow( () => Core.Ensure.NotContainsNull( param, EqualityComparer ) );
         }
     }
 }

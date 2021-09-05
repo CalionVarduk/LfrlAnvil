@@ -7,7 +7,7 @@ using LfrlSoft.NET.Core.Internal;
 
 namespace LfrlSoft.NET.Core
 {
-    public static class Assert
+    public static class Ensure
     {
         public const string DefaultParamName = "param";
 

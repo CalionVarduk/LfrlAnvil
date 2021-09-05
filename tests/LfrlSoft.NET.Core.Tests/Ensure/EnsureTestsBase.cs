@@ -2,9 +2,9 @@
 using FluentAssertions;
 using LfrlSoft.NET.TestExtensions;
 
-namespace LfrlSoft.NET.Core.Tests.Assert
+namespace LfrlSoft.NET.Core.Tests.Ensure
 {
-    public abstract class AssertTestsBase : TestsBase
+    public abstract class EnsureTestsBase : TestsBase
     {
         protected static void ShouldPass(Action action)
         {

@@ -12,8 +12,8 @@ namespace LfrlSoft.NET.Core
 
         public Bounds(T min, T max)
         {
-            Assert.IsNotNull( min, EqualityComparer<T>.Default, nameof( min ) );
-            Assert.IsNotNull( max, EqualityComparer<T>.Default, nameof( max ) );
+            Ensure.IsNotNull( min, EqualityComparer<T>.Default, nameof( min ) );
+            Ensure.IsNotNull( max, EqualityComparer<T>.Default, nameof( max ) );
 
             if ( min.CompareTo( max ) > 0 )
                 throw new ArgumentException( $"{nameof( Min )} ({min}) cannot be greater than {nameof( Max )} ({max})" );

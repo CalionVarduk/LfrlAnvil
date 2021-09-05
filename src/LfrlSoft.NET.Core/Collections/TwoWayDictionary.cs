@@ -43,8 +43,8 @@ namespace LfrlSoft.NET.Core.Collections
 
         public void Add(T1 first, T2 second)
         {
-            Assert.False( _forward.ContainsKey( first ), "key already exists in forward dictionary" );
-            Assert.False( _reverse.ContainsKey( second ), "key already exists in reverse dictionary" );
+            Ensure.False( _forward.ContainsKey( first ), "key already exists in forward dictionary" );
+            Ensure.False( _reverse.ContainsKey( second ), "key already exists in reverse dictionary" );
             _forward.Add( first, second );
             _reverse.Add( second, first );
         }
@@ -65,7 +65,7 @@ namespace LfrlSoft.NET.Core.Collections
 
         public void UpdateForward(T1 first, T2 second)
         {
-            Assert.False( _reverse.ContainsKey( second ), "key already exists in reverse dictionary" );
+            Ensure.False( _reverse.ContainsKey( second ), "key already exists in reverse dictionary" );
             var other = _forward[first];
             _forward[first] = second;
             _reverse.Remove( other );
@@ -88,7 +88,7 @@ namespace LfrlSoft.NET.Core.Collections
 
         public void UpdateReverse(T2 second, T1 first)
         {
-            Assert.False( _forward.ContainsKey( first ), "key already exists in forward dictionary" );
+            Ensure.False( _forward.ContainsKey( first ), "key already exists in forward dictionary" );
             var other = _reverse[second];
             _reverse[second] = first;
             _forward.Remove( other );

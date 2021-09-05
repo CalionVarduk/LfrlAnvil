@@ -1,55 +1,55 @@
 ﻿using Xunit;
 
-namespace LfrlSoft.NET.Core.Tests.Assert
+namespace LfrlSoft.NET.Core.Tests.Ensure
 {
-    public class AssertTypelessTests : AssertTestsBase
+    public class EnsureTypelessTests : EnsureTestsBase
     {
         [Fact]
         public void True_ShouldPass_WhenConditionIsTrue()
         {
-            ShouldPass( () => Core.Assert.True( true ) );
+            ShouldPass( () => Core.Ensure.True( true ) );
         }
 
         [Fact]
         public void True_ShouldThrow_WhenConditionIsFalse()
         {
-            ShouldThrow( () => Core.Assert.True( false ) );
+            ShouldThrow( () => Core.Ensure.True( false ) );
         }
 
         [Fact]
         public void True_ShouldPass_WhenConditionIsTrue_WithDelegate()
         {
-            ShouldPass( () => Core.Assert.True( true, () => string.Empty ) );
+            ShouldPass( () => Core.Ensure.True( true, () => string.Empty ) );
         }
 
         [Fact]
         public void True_ShouldThrow_WhenConditionIsFalse_WithDelegate()
         {
-            ShouldThrow( () => Core.Assert.True( false, () => string.Empty ) );
+            ShouldThrow( () => Core.Ensure.True( false, () => string.Empty ) );
         }
 
         [Fact]
         public void False_ShouldPass_WhenConditionIsFalse()
         {
-            ShouldPass( () => Core.Assert.False( false ) );
+            ShouldPass( () => Core.Ensure.False( false ) );
         }
 
         [Fact]
         public void False_ShouldThrow_WhenConditionIsTrue()
         {
-            ShouldThrow( () => Core.Assert.False( true ) );
+            ShouldThrow( () => Core.Ensure.False( true ) );
         }
 
         [Fact]
         public void False_ShouldPass_WhenConditionIsFalse_WithDelegate()
         {
-            ShouldPass( () => Core.Assert.False( false, () => string.Empty ) );
+            ShouldPass( () => Core.Ensure.False( false, () => string.Empty ) );
         }
 
         [Fact]
         public void False_ShouldThrow_WhenConditionIsTrue_WithDelegate()
         {
-            ShouldThrow( () => Core.Assert.False( true, () => string.Empty ) );
+            ShouldThrow( () => Core.Ensure.False( true, () => string.Empty ) );
         }
     }
 }

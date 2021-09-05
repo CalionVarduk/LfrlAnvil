@@ -18,7 +18,7 @@ namespace LfrlSoft.NET.Core.Collections
         {
             get
             {
-                Assert.Equals( index, 0, nameof( index ) );
+                Ensure.Equals( index, 0, nameof( index ) );
                 return Value;
             }
         }

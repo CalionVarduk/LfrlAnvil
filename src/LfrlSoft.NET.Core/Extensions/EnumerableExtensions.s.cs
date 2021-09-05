@@ -194,7 +194,7 @@ namespace LfrlSoft.NET.Core.Extensions
             if ( count == 1 )
                 return source;
 
-            Assert.IsGreaterThanOrEqualTo( count, 0, nameof( count ) );
+            Ensure.IsGreaterThanOrEqualTo( count, 0, nameof( count ) );
 
             var memoizedSource = source.Memoize();
 
@@ -469,7 +469,7 @@ namespace LfrlSoft.NET.Core.Extensions
         [Pure]
         public static IEnumerable<T[]> Divide<T>(this IEnumerable<T> source, int partLength)
         {
-            Assert.IsGreaterThan( partLength, 0, nameof( partLength ) );
+            Ensure.IsGreaterThan( partLength, 0, nameof( partLength ) );
             return DivideImpl( source, partLength );
         }
 

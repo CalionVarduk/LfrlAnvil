@@ -14,7 +14,7 @@ namespace LfrlSoft.NET.Core.Collections
 
         public Ring(int count)
         {
-            Assert.IsGreaterThan( count, 0, nameof( count ) );
+            Ensure.IsGreaterThan( count, 0, nameof( count ) );
             _items = new T?[count];
             _writeIndex = 0;
         }
@@ -22,7 +22,7 @@ namespace LfrlSoft.NET.Core.Collections
         public Ring(IEnumerable<T?> range)
         {
             _items = range.ToArray();
-            Assert.IsGreaterThan( _items.Length, 0, $"{nameof( range )}.{nameof( Enumerable.Count )}" );
+            Ensure.IsGreaterThan( _items.Length, 0, $"{nameof( range )}.{nameof( Enumerable.Count )}" );
             _writeIndex = 0;
         }
 
