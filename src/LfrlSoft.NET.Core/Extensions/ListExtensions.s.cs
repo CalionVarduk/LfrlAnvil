@@ -8,9 +8,7 @@ namespace LfrlSoft.NET.Core.Extensions
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static void SwapItems<T>(this IList<T> list, int index1, int index2)
         {
-            var temp = list[index2];
-            list[index2] = list[index1];
-            list[index1] = temp;
+            (list[index2], list[index1]) = (list[index1], list[index2]);
         }
     }
 }

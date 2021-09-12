@@ -1,4 +1,6 @@
-﻿using AutoFixture;
+﻿using System.Collections.Generic;
+using AutoFixture;
+using LfrlSoft.NET.TestExtensions;
 using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.Ensure
@@ -84,6 +86,35 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
                 { 4, 5 },
                 { 4, 6 },
                 { 3, 2 }
+            };
+        }
+
+        public static TheoryData<IEnumerable<T>> GetIsOrderedPassData(IFixture fixture)
+        {
+            var (_1, _2, _3) = fixture.CreateDistinctSortedCollection<T>( 3 );
+
+            return new TheoryData<IEnumerable<T>>
+            {
+                new[] { _1, _2 },
+                new[] { _1, _1 },
+                new[] { _1, _1, _2 },
+                new[] { _1, _2, _2 },
+                new[] { _1, _2, _3 }
+            };
+        }
+
+        public static TheoryData<IEnumerable<T>> GetIsOrderedThrowData(IFixture fixture)
+        {
+            var (_1, _2, _3) = fixture.CreateDistinctSortedCollection<T>( 3 );
+
+            return new TheoryData<IEnumerable<T>>
+            {
+                new[] { _2, _1 },
+                new[] { _2, _2, _1 },
+                new[] { _2, _1, _1 },
+                new[] { _3, _2, _1 },
+                new[] { _1, _3, _2 },
+                new[] { _2, _1, _3 }
             };
         }
     }

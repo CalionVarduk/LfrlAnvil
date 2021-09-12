@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlSoft.NET.Core.Functional
 {
-    public sealed class PartialEither<T1>
+    public readonly struct PartialEither<T1>
     {
         public readonly T1 Value;
 

@@ -737,6 +737,34 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
             ShouldThrow( () => Core.Ensure.ForAll( param, e => EqualityComparer.Equals( e, value ), () => string.Empty ) );
         }
 
+        [Fact]
+        public void IsOrdered_ShouldPass_ForEmptyCollection_WithExplicitComparer()
+        {
+            var param = Enumerable.Empty<T>();
+            ShouldPass( () => Core.Ensure.IsOrdered( param, Comparer ) );
+        }
+
+        [Fact]
+        public void IsOrdered_ShouldPass_ForCollectionWithOneElement_WithExplicitComparer()
+        {
+            var param = Fixture.CreateMany<T>( 1 );
+            ShouldPass( () => Core.Ensure.IsOrdered( param, Comparer ) );
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericEnsureTestsData<T>.GetIsOrderedPassData ) )]
+        public void IsOrdered_ShouldPass_ForOrderedCollection_WithExplicitComparer(IEnumerable<T> param)
+        {
+            ShouldPass( () => Core.Ensure.IsOrdered( param, Comparer ) );
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericEnsureTestsData<T>.GetIsOrderedThrowData ) )]
+        public void IsOrdered_ShouldThrow_ForUnorderedCollection_WithExplicitComparer(IEnumerable<T> param)
+        {
+            ShouldThrow( () => Core.Ensure.IsOrdered( param, Comparer ) );
+        }
+
         protected void IsNull_ShouldPass_WhenParamIsNull_WithExplicitComparer_Impl()
         {
             var param = Fixture.CreateDefault<T>();

@@ -72,7 +72,7 @@ namespace LfrlSoft.NET.Core.Collections
                     return null;
 
                 var node = _order[_order.WriteIndex == 0 ? Capacity - 1 : _order.WriteIndex - 1]!;
-                return KeyValuePair.Create( node!.Key, node!.Value );
+                return KeyValuePair.Create( node.Key, node.Value );
             }
         }
 
@@ -84,7 +84,7 @@ namespace LfrlSoft.NET.Core.Collections
                     return null;
 
                 var node = _order[Count == Capacity ? _order.WriteIndex : 0]!;
-                return KeyValuePair.Create( node!.Key, node!.Value );
+                return KeyValuePair.Create( node.Key, node.Value );
             }
         }
 

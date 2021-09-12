@@ -44,6 +44,7 @@ namespace LfrlSoft.NET.Core.Functional
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public bool Equals(Maybe<T> other)
         {
             if ( HasValue )

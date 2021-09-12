@@ -161,25 +161,25 @@ namespace LfrlSoft.NET.Core.Extensions
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static bool TryMin<T>(this IEnumerable<T> source, [MaybeNullWhen( false )] out T? result)
+        public static bool TryMin<T>(this IEnumerable<T> source, [MaybeNullWhen( false )] out T result)
         {
             return source.TryMin( Comparer<T>.Default, out result );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static bool TryMin<T>(this IEnumerable<T> source, IComparer<T> comparer, [MaybeNullWhen( false )] out T? result)
+        public static bool TryMin<T>(this IEnumerable<T> source, IComparer<T> comparer, [MaybeNullWhen( false )] out T result)
         {
             return source.TryAggregate( (a, b) => comparer.Compare( a, b ) < 0 ? a : b, out result );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static bool TryMax<T>(this IEnumerable<T> source, [MaybeNullWhen( false )] out T? result)
+        public static bool TryMax<T>(this IEnumerable<T> source, [MaybeNullWhen( false )] out T result)
         {
             return source.TryMax( Comparer<T>.Default, out result );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static bool TryMax<T>(this IEnumerable<T> source, IComparer<T> comparer, [MaybeNullWhen( false )] out T? result)
+        public static bool TryMax<T>(this IEnumerable<T> source, IComparer<T> comparer, [MaybeNullWhen( false )] out T result)
         {
             return source.TryAggregate( (a, b) => comparer.Compare( a, b ) > 0 ? a : b, out result );
         }
@@ -309,7 +309,7 @@ namespace LfrlSoft.NET.Core.Extensions
             }
         }
 
-        public static bool TryAggregate<T>(this IEnumerable<T> source, Func<T, T, T> func, [MaybeNullWhen( false )] out T? result)
+        public static bool TryAggregate<T>(this IEnumerable<T> source, Func<T, T, T> func, [MaybeNullWhen( false )] out T result)
         {
             using var enumerator = source.GetEnumerator();
 
@@ -356,7 +356,7 @@ namespace LfrlSoft.NET.Core.Extensions
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static bool TryMaxBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector, [MaybeNullWhen( false )] out T1? result)
+        public static bool TryMaxBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector, [MaybeNullWhen( false )] out T1 result)
         {
             return source.TryMaxBy( selector, Comparer<T2>.Default, out result );
         }
@@ -366,13 +366,13 @@ namespace LfrlSoft.NET.Core.Extensions
             this IEnumerable<T1> source,
             Func<T1, T2> selector,
             IComparer<T2> comparer,
-            [MaybeNullWhen( false )] out T1? result)
+            [MaybeNullWhen( false )] out T1 result)
         {
             return source.TryAggregate( (a, b) => comparer.Compare( selector( a ), selector( b ) ) > 0 ? a : b, out result );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static bool TryMinBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector, [MaybeNullWhen( false )] out T1? result)
+        public static bool TryMinBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector, [MaybeNullWhen( false )] out T1 result)
         {
             return source.TryMinBy( selector, Comparer<T2>.Default, out result );
         }
@@ -382,7 +382,7 @@ namespace LfrlSoft.NET.Core.Extensions
             this IEnumerable<T1> source,
             Func<T1, T2> selector,
             IComparer<T2> comparer,
-            [MaybeNullWhen( false )] out T1? result)
+            [MaybeNullWhen( false )] out T1 result)
         {
             return source.TryAggregate( (a, b) => comparer.Compare( selector( a ), selector( b ) ) < 0 ? a : b, out result );
         }
@@ -510,6 +510,35 @@ namespace LfrlSoft.NET.Core.Extensions
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static bool IsOrdered<T>(this IEnumerable<T> source)
+        {
+            return source.IsOrdered( Comparer<T>.Default );
+        }
+
+        [Pure]
+        public static bool IsOrdered<T>(this IEnumerable<T> source, IComparer<T> comparer)
+        {
+            using var enumerator = source.GetEnumerator();
+
+            if ( ! enumerator.MoveNext() )
+                return true;
+
+            var previous = enumerator.Current;
+
+            while ( enumerator.MoveNext() )
+            {
+                var next = enumerator.Current;
+                if ( comparer.Compare( previous, next ) > 0 )
+                    return false;
+
+                previous = next;
+            }
+
+            return true;
+        }
+
+        [Pure]
         public static IEnumerable<T[]> Divide<T>(this IEnumerable<T> source, int partLength)
         {
             Ensure.IsGreaterThan( partLength, 0, nameof( partLength ) );
@@ -549,7 +578,5 @@ namespace LfrlSoft.NET.Core.Extensions
 
             yield return lastPart;
         }
-
-        // TODO: BinarySearch? with upper/lower variants? (maybe for IReadOnlyList???)
     }
 }

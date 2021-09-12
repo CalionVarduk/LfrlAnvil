@@ -6,19 +6,18 @@ namespace LfrlSoft.NET.Core.Chrono
 {
     public readonly struct Timestamp : IEquatable<Timestamp>, IComparable<Timestamp>, IComparable
     {
-        public static readonly Timestamp Zero = new Timestamp( DateTime.UnixEpoch );
+        public static readonly Timestamp Zero = new Timestamp( 0 );
 
         public Timestamp(long unixEpochTicks)
-            : this( DateTime.UnixEpoch.AddTicks( unixEpochTicks ) ) { }
-
-        public Timestamp(DateTime utcValue)
         {
-            UtcValue = DateTime.SpecifyKind( utcValue, DateTimeKind.Utc );
-            UnixEpochTicks = UtcValue.Ticks - DateTime.UnixEpoch.Ticks;
+            UnixEpochTicks = unixEpochTicks;
         }
 
+        public Timestamp(DateTime utcValue)
+            : this( DateTime.SpecifyKind( utcValue, DateTimeKind.Utc ).Ticks - DateTime.UnixEpoch.Ticks ) { }
+
         public long UnixEpochTicks { get; }
-        public DateTime UtcValue { get; }
+        public DateTime UtcValue => DateTime.UnixEpoch.AddTicks( UnixEpochTicks );
 
         [Pure]
         public override string ToString()

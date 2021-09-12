@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
@@ -10,14 +9,18 @@ namespace LfrlSoft.NET.Core
     {
         public Bounds(T min, T max)
         {
-            Ensure.IsNotNull( min, EqualityComparer<T>.Default, nameof( min ) );
-            Ensure.IsNotNull( max, EqualityComparer<T>.Default, nameof( max ) );
-
             if ( min.CompareTo( max ) > 0 )
                 throw new ArgumentException( $"{nameof( Min )} ({min}) cannot be greater than {nameof( Max )} ({max})" );
 
             Min = min;
             Max = max;
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal Bounds((T Min, T Max) values)
+        {
+            Min = values.Min;
+            Max = values.Max;
         }
 
         public T Min { get; }
@@ -109,7 +112,7 @@ namespace LfrlSoft.NET.Core
             if ( min.CompareTo( max ) > 0 )
                 return null;
 
-            return new Bounds<T>( min, max );
+            return new Bounds<T>( (min, max) );
         }
 
         [Pure]
@@ -121,15 +124,15 @@ namespace LfrlSoft.NET.Core
             var min = Min.CompareTo( other.Min ) > 0 ? other.Min : Min;
             var max = Max.CompareTo( other.Max ) < 0 ? other.Max : Max;
 
-            return new Bounds<T>( min, max );
+            return new Bounds<T>( (min, max) );
         }
 
         [Pure]
         public Pair<Bounds<T>, Bounds<T>?> SplitAt(T value)
         {
             return ContainsExclusively( value )
-                ? Pair.Create( SetMax( value ), (Bounds<T>?) SetMin( value ) )
-                : Pair.Create( this, (Bounds<T>?) null );
+                ? Pair.Create( new Bounds<T>( (Min, value) ), (Bounds<T>?)new Bounds<T>( (value, Max) ) )
+                : Pair.Create( this, (Bounds<T>?)null );
         }
 
         [Pure]
@@ -139,18 +142,18 @@ namespace LfrlSoft.NET.Core
             var maxComparisonResult = Max.CompareTo( other.Max );
 
             if ( minComparisonResult >= 0 && maxComparisonResult <= 0 )
-                return Pair.Create( (Bounds<T>?) null, (Bounds<T>?) null );
+                return Pair.Create( (Bounds<T>?)null, (Bounds<T>?)null );
 
             if ( minComparisonResult > 0 || maxComparisonResult < 0 )
-                return Pair.Create( (Bounds<T>?) this, (Bounds<T>?) null );
+                return Pair.Create( (Bounds<T>?)this, (Bounds<T>?)null );
 
             if ( minComparisonResult == 0 )
-                return Pair.Create( (Bounds<T>?) SetMin( other.Max ), (Bounds<T>?) null );
+                return Pair.Create( (Bounds<T>?)new Bounds<T>( (other.Max, Max) ), (Bounds<T>?)null );
 
             if ( maxComparisonResult == 0 )
-                return Pair.Create( (Bounds<T>?) SetMax( other.Min ), (Bounds<T>?) null );
+                return Pair.Create( (Bounds<T>?)new Bounds<T>( (Min, other.Min) ), (Bounds<T>?)null );
 
-            return Pair.Create( (Bounds<T>?) SetMax( other.Min ), (Bounds<T>?) SetMin( other.Max ) );
+            return Pair.Create( (Bounds<T>?)new Bounds<T>( (Min, other.Min) ), (Bounds<T>?)new Bounds<T>( (other.Max, Max) ) );
         }
 
         [Pure]

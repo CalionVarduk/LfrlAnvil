@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using AutoFixture;
@@ -62,8 +61,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [InlineData( 1 )]
-        [InlineData( 3 )]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetIsEmptyData ) )]
         public void IsNullOrEmpty_ShouldReturnFalseWhenSourceHasSomeElements(int count)
         {
             var sut = Fixture.CreateMany<T>( count );
@@ -84,8 +82,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [InlineData( 1 )]
-        [InlineData( 3 )]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetIsEmptyData ) )]
         public void IsEmpty_ShouldReturnFalseWhenSourceHasSomeElements(int count)
         {
             var sut = Fixture.CreateMany<T>( count );
@@ -96,19 +93,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [InlineData( 0, -1, true )]
-        [InlineData( 0, 0, true )]
-        [InlineData( 0, 1, false )]
-        [InlineData( 1, -1, true )]
-        [InlineData( 1, 0, true )]
-        [InlineData( 1, 1, true )]
-        [InlineData( 1, 2, false )]
-        [InlineData( 3, -1, true )]
-        [InlineData( 3, 0, true )]
-        [InlineData( 3, 1, true )]
-        [InlineData( 3, 2, true )]
-        [InlineData( 3, 3, true )]
-        [InlineData( 3, 4, false )]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsAtLeastData ) )]
         public void ContainsAtLeast_ShouldReturnCorrectResult(int sourceCount, int minCount, bool expected)
         {
             var sut = Fixture.CreateMany<T>( sourceCount );
@@ -119,19 +104,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [InlineData( 0, -1, false )]
-        [InlineData( 0, 0, true )]
-        [InlineData( 0, 1, true )]
-        [InlineData( 1, -1, false )]
-        [InlineData( 1, 0, false )]
-        [InlineData( 1, 1, true )]
-        [InlineData( 1, 2, true )]
-        [InlineData( 3, -1, false )]
-        [InlineData( 3, 0, false )]
-        [InlineData( 3, 1, false )]
-        [InlineData( 3, 2, false )]
-        [InlineData( 3, 3, true )]
-        [InlineData( 3, 4, true )]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsAtMostData ) )]
         public void ContainsAtMost_ShouldReturnCorrectResult(int sourceCount, int maxCount, bool expected)
         {
             var sut = Fixture.CreateMany<T>( sourceCount );
@@ -142,10 +115,8 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [InlineData( 0 )]
-        [InlineData( 1 )]
-        [InlineData( 3 )]
-        public void ContainsBetween_ShouldReturnFalseWhenMaxCountIsLessThanMinCount(int count)
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForMaxCountLessThanMinCountData ) )]
+        public void ContainsInRange_ShouldReturnFalseWhenMaxCountIsLessThanMinCount(int count)
         {
             var (max, min) = Fixture.CreateDistinctSortedCollection<int>( 2 );
             var sut = Fixture.CreateMany<T>( count );
@@ -156,20 +127,8 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [InlineData( 0, -1, false )]
-        [InlineData( 0, 0, true )]
-        [InlineData( 0, 1, true )]
-        [InlineData( 1, -1, false )]
-        [InlineData( 1, 0, false )]
-        [InlineData( 1, 1, true )]
-        [InlineData( 1, 2, true )]
-        [InlineData( 3, -1, false )]
-        [InlineData( 3, 0, false )]
-        [InlineData( 3, 1, false )]
-        [InlineData( 3, 2, false )]
-        [InlineData( 3, 3, true )]
-        [InlineData( 3, 4, true )]
-        public void ContainsBetween_ShouldReturnCorrectResultWhenMinCountIsZero(int count, int maxCount, bool expected)
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForZeroMinCountData ) )]
+        public void ContainsInRange_ShouldReturnCorrectResultWhenMinCountIsZero(int count, int maxCount, bool expected)
         {
             var sut = Fixture.CreateMany<T>( count );
 
@@ -179,20 +138,8 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [InlineData( 0, -1, false )]
-        [InlineData( 0, 0, true )]
-        [InlineData( 0, 1, true )]
-        [InlineData( 1, -1, false )]
-        [InlineData( 1, 0, false )]
-        [InlineData( 1, 1, true )]
-        [InlineData( 1, 2, true )]
-        [InlineData( 3, -1, false )]
-        [InlineData( 3, 0, false )]
-        [InlineData( 3, 1, false )]
-        [InlineData( 3, 2, false )]
-        [InlineData( 3, 3, true )]
-        [InlineData( 3, 4, true )]
-        public void ContainsBetween_ShouldReturnCorrectResultWhenMinCountIsNegative(int count, int maxCount, bool expected)
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForNegativeMinCountData ) )]
+        public void ContainsInRange_ShouldReturnCorrectResultWhenMinCountIsNegative(int count, int maxCount, bool expected)
         {
             var minCount = Fixture.CreateNegativeInt32();
             var sut = Fixture.CreateMany<T>( count );
@@ -203,13 +150,8 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [InlineData( 0, 1 )]
-        [InlineData( 0, 2 )]
-        [InlineData( 1, 2 )]
-        [InlineData( 1, 3 )]
-        [InlineData( 3, 4 )]
-        [InlineData( 3, 5 )]
-        public void ContainsBetween_ShouldReturnFalseWhenSourceCountIsLessThanMinCount(int count, int minCount)
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForCountLessThanMinCountData ) )]
+        public void ContainsInRange_ShouldReturnFalseWhenSourceCountIsLessThanMinCount(int count, int minCount)
         {
             var sut = Fixture.CreateMany<T>( count );
 
@@ -219,12 +161,8 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [InlineData( 3, 2 )]
-        [InlineData( 4, 3 )]
-        [InlineData( 4, 2 )]
-        [InlineData( 5, 4 )]
-        [InlineData( 5, 3 )]
-        public void ContainsBetween_ShouldReturnFalseWhenSourceCountIsGreaterThanMaxCount(int count, int maxCount)
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForCountGreaterThanMaxCountData ) )]
+        public void ContainsInRange_ShouldReturnFalseWhenSourceCountIsGreaterThanMaxCount(int count, int maxCount)
         {
             var sut = Fixture.CreateMany<T>( count );
 
@@ -234,19 +172,8 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [InlineData( 1, 1, 1 )]
-        [InlineData( 1, 1, 2 )]
-        [InlineData( 1, 1, 3 )]
-        [InlineData( 3, 1, 3 )]
-        [InlineData( 3, 1, 4 )]
-        [InlineData( 3, 1, 5 )]
-        [InlineData( 3, 2, 3 )]
-        [InlineData( 3, 2, 4 )]
-        [InlineData( 3, 2, 5 )]
-        [InlineData( 3, 3, 3 )]
-        [InlineData( 3, 3, 4 )]
-        [InlineData( 3, 3, 5 )]
-        public void ContainsBetween_ShouldReturnTrueWhenSourceCountIsBetweenMinAndMaxCount(int sourceCount, int minCount, int maxCount)
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForCountBetweenMinAndMaxData ) )]
+        public void ContainsInRange_ShouldReturnTrueWhenSourceCountIsBetweenMinAndMaxCount(int sourceCount, int minCount, int maxCount)
         {
             var sut = Fixture.CreateMany<T>( sourceCount );
 
@@ -256,9 +183,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [InlineData( 0 )]
-        [InlineData( 1 )]
-        [InlineData( 3 )]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsExactlyForNegativeCountData ) )]
         public void ContainsExactly_ShouldReturnFalseWhenCountIsNegative(int sourceCount)
         {
             var count = Fixture.CreateNegativeInt32();
@@ -270,14 +195,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [InlineData( 0, 0, true )]
-        [InlineData( 0, 1, false )]
-        [InlineData( 1, 0, false )]
-        [InlineData( 1, 1, true )]
-        [InlineData( 1, 2, false )]
-        [InlineData( 3, 2, false )]
-        [InlineData( 3, 3, true )]
-        [InlineData( 3, 4, false )]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsExactlyForNonNegativeCountData ) )]
         public void ContainsExactly_ShouldReturnCorrectResultWhenCountIsNotNegative(int sourceCount, int count, bool expected)
         {
             var sut = Fixture.CreateMany<T>( sourceCount );
@@ -288,7 +206,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.CreateFlattenTestData ) )]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetFlattenData ) )]
         public void Flatten_ShouldReturnCorrectResult(IEnumerable<Pair<T, IEnumerable<T>>> data, IEnumerable<Pair<T, T>> expected)
         {
             var sut = data.Select( d => d.First );
@@ -310,7 +228,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.CreateMinTestData ) )]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetMinData ) )]
         public void TryMin_ShouldReturnTrueAndCorrectResultWhenSourceIsNotEmpty(IEnumerable<T> sut, T expected)
         {
             var result = sut.TryMin( out var min );
@@ -331,7 +249,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.CreateMaxTestData ) )]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetMaxData ) )]
         public void TryMax_ShouldReturnTrueAndCorrectResultWhenSourceIsNotEmpty(IEnumerable<T> sut, T expected)
         {
             var result = sut.TryMax( out var max );
@@ -351,7 +269,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.CreateContainsDuplicatesTestData ) )]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsDuplicatesData ) )]
         public void ContainsDuplicates_ShouldReturnCorrectResultWhenSourceIsNotEmpty(IEnumerable<T> sut, bool expected)
         {
             var result = sut.ContainsDuplicates();
@@ -374,9 +292,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [InlineData( 0 )]
-        [InlineData( 1 )]
-        [InlineData( 3 )]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetRepeatForZeroOrOneCountData ) )]
         public void Repeat_ShouldReturnEmptyWhenCountIsZero(int sourceCount)
         {
             var sut = Fixture.CreateMany<T>( sourceCount );
@@ -387,9 +303,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [InlineData( 0 )]
-        [InlineData( 1 )]
-        [InlineData( 3 )]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetRepeatForZeroOrOneCountData ) )]
         public void Repeat_ShouldReturnSourceWhenCountIsOne(int sourceCount)
         {
             var sut = Fixture.CreateMany<T>( sourceCount );
@@ -400,7 +314,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.CreateRepeatTestData ) )]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetRepeatForCountGreaterThanOneData ) )]
         public void Repeat_ShouldReturnCorrectResultWhenCountIsGreaterThanOne(IEnumerable<T> sut, int count, IEnumerable<T> expected)
         {
             var result = sut.Repeat( count );
@@ -409,9 +323,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [InlineData( 2 )]
-        [InlineData( 3 )]
-        [InlineData( 5 )]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetRepeatForMemoizationWithCountGreaterThanOneData ) )]
         public void Repeat_ShouldNotEvaluateSourceWhenCountIsGreaterThanOne_BeforeResultIsEvaluated(int count)
         {
             var @delegate = Substitute.For<Func<int, T>>().WithAnyArgs( _ => Fixture.Create<T>() );
@@ -424,9 +336,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [InlineData( 2 )]
-        [InlineData( 3 )]
-        [InlineData( 5 )]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetRepeatForMemoizationWithCountGreaterThanOneData ) )]
         public void Repeat_ShouldMemoizeSourceWhenCountIsGreaterThanOne(int count)
         {
             var @delegate = Substitute.For<Func<int, T>>().WithAnyArgs( _ => Fixture.Create<T>() );
@@ -441,7 +351,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         [Fact]
         public void Materialize_ShouldReturnSourceWhenSourceImplementsReadOnlyCollectionInterface()
         {
-            var sut = new TestCollection();
+            var sut = new TestCollection<T>();
 
             var result = sut.Materialize();
 
@@ -482,18 +392,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [InlineData( 0, 0 )]
-        [InlineData( 0, 1 )]
-        [InlineData( 0, 3 )]
-        [InlineData( 0, 5 )]
-        [InlineData( 1, 0 )]
-        [InlineData( 1, 1 )]
-        [InlineData( 1, 3 )]
-        [InlineData( 1, 5 )]
-        [InlineData( 3, 0 )]
-        [InlineData( 3, 1 )]
-        [InlineData( 3, 3 )]
-        [InlineData( 3, 5 )]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetMemoizeData ) )]
         public void Memoize_ShouldMaterializeSourceAfterFirstEnumeration(int sourceCount, int iterationCount)
         {
             var @delegate = Substitute.For<Func<int, T>>().WithAnyArgs( _ => Fixture.Create<T>() );
@@ -510,7 +409,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.CreateSetEqualsTestData ) )]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetSetEqualsData ) )]
         public void SetEquals_ShouldReturnCorrectResult(IEnumerable<T> sut, IEnumerable<T> other, bool expected)
         {
             var result = sut.SetEquals( other );
@@ -613,7 +512,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.CreateMaxTestData ) )]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetMaxData ) )]
         public void MaxBy_ShouldReturnCorrectResultWhenSourceIsNotEmpty(IEnumerable<T> values, T expected)
         {
             var sut = values.Select( v => new Contained<T> { Value = v } );
@@ -637,7 +536,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.CreateMinTestData ) )]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetMinData ) )]
         public void MinBy_ShouldReturnCorrectResultWhenSourceIsNotEmpty(IEnumerable<T> values, T expected)
         {
             var sut = values.Select( v => new Contained<T> { Value = v } );
@@ -659,7 +558,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.CreateMaxTestData ) )]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetMaxData ) )]
         public void TryMaxBy_ShouldReturnTrueAndCorrectResultWhenSourceIsNotEmpty(IEnumerable<T> values, T expected)
         {
             var sut = values.Select( v => new Contained<T> { Value = v } );
@@ -682,7 +581,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.CreateMinTestData ) )]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetMinData ) )]
         public void TryMinBy_ShouldReturnTrueAndCorrectResultWhenSourceIsNotEmpty(IEnumerable<T> values, T expected)
         {
             var sut = values.Select( v => new Contained<T> { Value = v } );
@@ -694,7 +593,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [GenericMethodData( (nameof( GenericEnumerableExtensionsTestsData<T>.CreateDistinctTestData )) )]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetDistinctData ) )]
         public void DistinctBy_ShouldReturnCorrectResult(IEnumerable<T> values, IEnumerable<T> expected)
         {
             var sut = values.Select( v => new Contained<T> { Value = v } );
@@ -803,13 +702,32 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
             result.Should().BeEquivalentTo( expected );
         }
 
+        [Fact]
+        public void IsOrdered_ShouldReturnTrue_WhenSourceIsEmpty()
+        {
+            var sut = System.Linq.Enumerable.Empty<T>();
+            var result = sut.IsOrdered();
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public void IsOrdered_ShouldReturnTrue_WhenSourceContainsOnlyOneElement()
+        {
+            var sut = Fixture.CreateMany<T>( 1 );
+            var result = sut.IsOrdered();
+            result.Should().BeTrue();
+        }
+
         [Theory]
-        [InlineData( 1 )]
-        [InlineData( 2 )]
-        [InlineData( 3 )]
-        [InlineData( 4 )]
-        [InlineData( 6 )]
-        [InlineData( 12 )]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetIsOrderedData ) )]
+        public void IsOrdered_ShouldReturnCorrectResult_WhenSourceHasMoreThanOneElement(IEnumerable<T> sut, bool expected)
+        {
+            var result = sut.IsOrdered();
+            result.Should().Be( expected );
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetDivideForDivisibleSourceCountData ) )]
         public void Divide_ShouldReturnCorrectResult_WhenSourceCountIsDivisibleByPartLength(int partLength)
         {
             var sut = Fixture.CreateMany<T>( 12 ).ToList();
@@ -826,14 +744,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [InlineData( 5, 2 )]
-        [InlineData( 7, 5 )]
-        [InlineData( 8, 4 )]
-        [InlineData( 9, 3 )]
-        [InlineData( 10, 2 )]
-        [InlineData( 11, 1 )]
-        [InlineData( 13, 12 )]
-        [InlineData( 24, 12 )]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetDivideForNonDivisibleSourceCountData ) )]
         public void Divide_ShouldReturnCorrectResult_WhenSourceCountIsNotDivisibleByPartLength(int partLength, int expectedLastPartLength)
         {
             var sut = Fixture.CreateMany<T>( 12 ).ToList();
@@ -862,8 +773,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Theory]
-        [InlineData( 0 )]
-        [InlineData( -1 )]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetDivideThrowData ) )]
         public void Divide_ShouldThrow_WhenPartLengthIsLessThanOne(int partLength)
         {
             var sut = Fixture.CreateMany<T>();
@@ -874,21 +784,6 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
             };
 
             action.Should().Throw<ArgumentOutOfRangeException>();
-        }
-
-        public class TestCollection : IReadOnlyCollection<T>
-        {
-            public int Count => 0;
-
-            public IEnumerator<T> GetEnumerator()
-            {
-                return System.Linq.Enumerable.Empty<T>().GetEnumerator();
-            }
-
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                return GetEnumerator();
-            }
         }
     }
 }

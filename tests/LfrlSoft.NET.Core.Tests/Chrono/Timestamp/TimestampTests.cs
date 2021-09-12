@@ -24,6 +24,19 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Timestamp
             }
         }
 
+        [Fact]
+        public void Default_ShouldReturnCorrectResult()
+        {
+            var sut = default( Core.Chrono.Timestamp );
+
+            using ( new AssertionScope() )
+            {
+                sut.UnixEpochTicks.Should().Be( 0 );
+                sut.UtcValue.Should().Be( DateTime.UnixEpoch );
+                sut.UtcValue.Kind.Should().Be( DateTimeKind.Utc );
+            }
+        }
+
         [Theory]
         [MethodData( nameof( TimestampTestsData.GetTicksCtorData ) )]
         public void Ctor_WithTicks_ShouldReturnCorrectResult(long ticks, DateTime expectedUtcValue)
@@ -140,7 +153,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Timestamp
         {
             var sut = new Core.Chrono.Timestamp( ticks );
 
-            var result = (DateTime) sut;
+            var result = (DateTime)sut;
 
             using ( new AssertionScope() )
             {

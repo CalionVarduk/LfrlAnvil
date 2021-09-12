@@ -339,7 +339,7 @@ namespace LfrlSoft.NET.Core
         public static void IsNullOrEmpty(string? param, string paramName = DefaultParamName)
         {
             if ( ! string.IsNullOrEmpty( param ) )
-                throw Exceptions.NotNullOrEmpty( param!, paramName );
+                throw Exceptions.NotNullOrEmpty( param, paramName );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -522,6 +522,21 @@ namespace LfrlSoft.NET.Core
         {
             if ( ! param.All( predicate ) )
                 throw Exceptions.NotAll( descriptionProvider?.Invoke(), paramName );
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static void IsOrdered<T>(IEnumerable<T> param, string paramName = DefaultParamName)
+            where T : IComparable<T>
+        {
+            if ( ! param.IsOrdered() )
+                throw Exceptions.NotOrdered( paramName );
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static void IsOrdered<T>(IEnumerable<T> param, IComparer<T> comparer, string paramName = DefaultParamName)
+        {
+            if ( ! param.IsOrdered( comparer ) )
+                throw Exceptions.NotOrdered( paramName );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -735,6 +750,11 @@ namespace LfrlSoft.NET.Core
             public static ArgumentException NotAll(string? description, string paramName)
             {
                 return new( description ?? $"expected all {paramName} elements to pass the predicate", paramName );
+            }
+
+            public static ArgumentException NotOrdered(string paramName)
+            {
+                return new( $"expected {paramName} to be ordered", paramName );
             }
 
             public static ArgumentException False(string? description)

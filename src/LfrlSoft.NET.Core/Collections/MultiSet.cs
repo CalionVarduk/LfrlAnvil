@@ -35,7 +35,7 @@ namespace LfrlSoft.NET.Core.Collections
 
                 while ( enumerator.MoveNext() )
                 {
-                    var (item, multiplicity) = enumerator.Current!;
+                    var (item, multiplicity) = enumerator.Current;
                     for ( var i = 0; i < multiplicity; ++i )
                         yield return item;
                 }
@@ -179,7 +179,7 @@ namespace LfrlSoft.NET.Core.Collections
                 ++index;
 
             while ( enumerator.MoveNext() && index <= maxArrayIndex )
-                array[index++] = enumerator.Current!;
+                array[index++] = enumerator.Current;
         }
 
         void ICollection<Pair<T, int>>.Add(Pair<T, int> item)

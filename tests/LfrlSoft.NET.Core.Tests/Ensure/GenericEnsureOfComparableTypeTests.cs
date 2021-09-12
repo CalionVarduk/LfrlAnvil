@@ -1,18 +1,21 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using AutoFixture;
 using LfrlSoft.NET.TestExtensions;
+using LfrlSoft.NET.TestExtensions.Attributes;
 using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.Ensure
 {
+    [GenericTestClass( typeof( GenericEnsureTestsData<> ) )]
     public abstract class GenericEnsureOfComparableTypeTests<T> : GenericEnsureTests<T>
         where T : IEquatable<T>, IComparable<T>
     {
         [Fact]
         public void Equals_ShouldPass_WhenParamIsEqualToValue()
         {
-            var param = Fixture.CreateNotDefault<T>()!;
+            var param = Fixture.CreateNotDefault<T>();
             ShouldPass( () => Core.Ensure.Equals( param, param ) );
         }
 
@@ -33,7 +36,7 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
         [Fact]
         public void NotEquals_ShouldThrow_WhenParamIsEqualToValue()
         {
-            var param = Fixture.CreateNotDefault<T>()!;
+            var param = Fixture.CreateNotDefault<T>();
             ShouldThrow( () => Core.Ensure.NotEquals( param, param ) );
         }
 
@@ -351,6 +354,34 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
             var value = Fixture.Create<T>();
             var param = Fixture.CreateMany<T>().Concat( new[] { value } );
             ShouldThrow( () => Core.Ensure.NotContains( param, value ) );
+        }
+
+        [Fact]
+        public void IsOrdered_ShouldPass_ForEmptyCollection()
+        {
+            var param = Enumerable.Empty<T>();
+            ShouldPass( () => Core.Ensure.IsOrdered( param ) );
+        }
+
+        [Fact]
+        public void IsOrdered_ShouldPass_ForCollectionWithOneElement()
+        {
+            var param = Fixture.CreateMany<T>( 1 );
+            ShouldPass( () => Core.Ensure.IsOrdered( param ) );
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericEnsureTestsData<T>.GetIsOrderedPassData ) )]
+        public void IsOrdered_ShouldPass_ForOrderedCollection(IEnumerable<T> param)
+        {
+            ShouldPass( () => Core.Ensure.IsOrdered( param ) );
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericEnsureTestsData<T>.GetIsOrderedThrowData ) )]
+        public void IsOrdered_ShouldThrow_ForUnorderedCollection(IEnumerable<T> param)
+        {
+            ShouldThrow( () => Core.Ensure.IsOrdered( param ) );
         }
     }
 }
