@@ -74,5 +74,17 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Func
                 result.Error.Should().Be( error );
             }
         }
+
+        [Fact]
+        public void IgnoreResult_ShouldReturnCorrectResult()
+        {
+            var value = Fixture.Create<TReturnValue>();
+            var sut = Substitute.For<Func<TReturnValue>>().WithAnyArgs( _ => value );
+
+            var result = sut.IgnoreResult();
+            result();
+
+            sut.Verify().CallCount.Should().Be( 1 );
+        }
     }
 }

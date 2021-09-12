@@ -30,5 +30,15 @@ namespace LfrlSoft.NET.Core.Extensions
         {
             return Unsafe.Try( source );
         }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static Action IgnoreResult<T>(this Func<T> source)
+        {
+            return () =>
+            {
+                var _ = source();
+            };
+        }
     }
 }
