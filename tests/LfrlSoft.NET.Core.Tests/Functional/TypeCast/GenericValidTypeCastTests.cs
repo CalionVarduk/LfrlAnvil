@@ -21,8 +21,8 @@ namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
         [GenericMethodData( nameof( GenericValidTypeCastTestsData<TSource, TDestination>.CreateEqualsTestData ) )]
         public void Equals_ShouldReturnCorrectResult(object? value1, object? value2, bool expected)
         {
-            var a = value1 is null ? TypeCast<TSource, TDestination>.Empty : (TSource) value1;
-            var b = value2 is null ? TypeCast<TSource, TDestination>.Empty : (TSource) value2;
+            var a = value1 is null ? TypeCast<TSource, TDestination>.Empty : (TSource)value1;
+            var b = value2 is null ? TypeCast<TSource, TDestination>.Empty : (TSource)value2;
 
             var result = a.Equals( b );
 
@@ -33,7 +33,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
         public void GetResult_ShouldReturnCorrectResult()
         {
             var value = Fixture.Create<TSource>();
-            var sut = (TypeCast<TSource, TDestination>) value;
+            var sut = (TypeCast<TSource, TDestination>)value;
 
             var result = sut.GetResult();
 
@@ -44,7 +44,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
         public void GetResultOrDefault_ShouldReturnCorrectResult()
         {
             var value = Fixture.Create<TSource>();
-            var sut = (TypeCast<TSource, TDestination>) value;
+            var sut = (TypeCast<TSource, TDestination>)value;
 
             var result = sut.GetResultOrDefault();
 
@@ -59,7 +59,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
             var validDelegate = Substitute.For<Func<TDestination, TypeCast<TDestination, TDestination>>>()
                 .WithAnyArgs( _ => returnedValue );
 
-            var sut = (TypeCast<TSource, TDestination>) value;
+            var sut = (TypeCast<TSource, TDestination>)value;
 
             var result = sut.Bind( validDelegate );
 
@@ -82,7 +82,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
             var invalidDelegate = Substitute.For<Func<TSource, TypeCast<TDestination, TDestination>>>()
                 .WithAnyArgs( _ => TypeCast<TDestination, TDestination>.Empty );
 
-            var sut = (TypeCast<TSource, TDestination>) value;
+            var sut = (TypeCast<TSource, TDestination>)value;
 
             var result = sut.Bind( validDelegate, invalidDelegate );
 
@@ -103,7 +103,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
             var validDelegate = Substitute.For<Func<TDestination, TDestination>>().WithAnyArgs( _ => returnedValue );
             var invalidDelegate = Substitute.For<Func<TSource, TDestination>>().WithAnyArgs( _ => default! );
 
-            var sut = (TypeCast<TSource, TDestination>) value;
+            var sut = (TypeCast<TSource, TDestination>)value;
 
             var result = sut.Match( validDelegate, invalidDelegate );
 
@@ -122,7 +122,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
             var validDelegate = Substitute.For<Action<TDestination>>();
             var invalidDelegate = Substitute.For<Action<TSource>>();
 
-            var sut = (TypeCast<TSource, TDestination>) value;
+            var sut = (TypeCast<TSource, TDestination>)value;
 
             sut.Match( validDelegate, invalidDelegate );
 
@@ -140,7 +140,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
             var returnedValue = Fixture.Create<TDestination>();
             var validDelegate = Substitute.For<Func<TDestination, TDestination>>().WithAnyArgs( _ => returnedValue );
 
-            var sut = (TypeCast<TSource, TDestination>) value;
+            var sut = (TypeCast<TSource, TDestination>)value;
 
             var result = sut.IfValid( validDelegate );
 
@@ -157,7 +157,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
             var value = Fixture.Create<TSource>();
             var validDelegate = Substitute.For<Action<TDestination>>();
 
-            var sut = (TypeCast<TSource, TDestination>) value;
+            var sut = (TypeCast<TSource, TDestination>)value;
 
             sut.IfValid( validDelegate );
 
@@ -171,7 +171,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
             var returnedValue = Fixture.Create<TDestination>();
             var validDelegate = Substitute.For<Func<TDestination, TDestination>>().WithAnyArgs( _ => returnedValue );
 
-            var sut = (TypeCast<TSource, TDestination>) value;
+            var sut = (TypeCast<TSource, TDestination>)value;
 
             var result = sut.IfValidOrDefault( validDelegate );
 
@@ -188,7 +188,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
             var value = Fixture.Create<TSource>();
             var invalidDelegate = Substitute.For<Func<TSource, TDestination>>().WithAnyArgs( _ => value );
 
-            var sut = (TypeCast<TSource, TDestination>) value;
+            var sut = (TypeCast<TSource, TDestination>)value;
 
             var result = sut.IfInvalid( invalidDelegate );
 
@@ -205,7 +205,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
             var value = Fixture.Create<TSource>();
             var invalidDelegate = Substitute.For<Action<TSource>>();
 
-            var sut = (TypeCast<TSource, TDestination>) value;
+            var sut = (TypeCast<TSource, TDestination>)value;
 
             sut.IfInvalid( invalidDelegate );
 
@@ -218,7 +218,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
             var value = Fixture.Create<TSource>();
             var invalidDelegate = Substitute.For<Func<TSource, TDestination>>().WithAnyArgs( _ => value );
 
-            var sut = (TypeCast<TSource, TDestination>) value;
+            var sut = (TypeCast<TSource, TDestination>)value;
 
             var result = sut.IfInvalidOrDefault( invalidDelegate );
 
@@ -234,7 +234,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
         {
             var value = Fixture.Create<TSource>();
 
-            var result = (TypeCast<TSource, TDestination>) value;
+            var result = (TypeCast<TSource, TDestination>)value;
 
             using ( new AssertionScope() )
             {
@@ -251,7 +251,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
             var value = Fixture.Create<TSource>();
             var partial = new PartialTypeCast<TSource>( value );
 
-            var result = (TypeCast<TSource, TDestination>) partial;
+            var result = (TypeCast<TSource, TDestination>)partial;
 
             using ( new AssertionScope() )
             {
@@ -266,9 +266,9 @@ namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
         public void TDestinationConversionOperator_ShouldReturnCorrectResult()
         {
             var value = Fixture.Create<TSource>();
-            var sut = (TypeCast<TSource, TDestination>) value;
+            var sut = (TypeCast<TSource, TDestination>)value;
 
-            var result = (TDestination) sut;
+            var result = (TDestination)sut;
 
             result.Should().Be( value );
         }
@@ -277,8 +277,8 @@ namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
         [GenericMethodData( nameof( GenericValidTypeCastTestsData<TSource, TDestination>.CreateEqualsTestData ) )]
         public void EqualityOperator_ShouldReturnCorrectResult(object? value1, object? value2, bool expected)
         {
-            var a = value1 is null ? TypeCast<TSource, TDestination>.Empty : (TSource) value1;
-            var b = value2 is null ? TypeCast<TSource, TDestination>.Empty : (TSource) value2;
+            var a = value1 is null ? TypeCast<TSource, TDestination>.Empty : (TSource)value1;
+            var b = value2 is null ? TypeCast<TSource, TDestination>.Empty : (TSource)value2;
 
             var result = a == b;
 
@@ -289,8 +289,8 @@ namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
         [GenericMethodData( nameof( GenericValidTypeCastTestsData<TSource, TDestination>.CreateNotEqualsTestData ) )]
         public void InequalityOperator_ShouldReturnCorrectResult(object? value1, object? value2, bool expected)
         {
-            var a = value1 is null ? TypeCast<TSource, TDestination>.Empty : (TSource) value1;
-            var b = value2 is null ? TypeCast<TSource, TDestination>.Empty : (TSource) value2;
+            var a = value1 is null ? TypeCast<TSource, TDestination>.Empty : (TSource)value1;
+            var b = value2 is null ? TypeCast<TSource, TDestination>.Empty : (TSource)value2;
 
             var result = a != b;
 
@@ -302,7 +302,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
         {
             var value = Fixture.Create<TSource>();
 
-            var sut = (TypeCast<TSource, TDestination>) value;
+            var sut = (TypeCast<TSource, TDestination>)value;
             IReadOnlyCollection<TDestination> collection = sut;
 
             var result = collection.Count;
@@ -315,9 +315,9 @@ namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
         {
             var value = Fixture.Create<TSource>();
 
-            var sut = (TypeCast<TSource, TDestination>) value;
+            var sut = (TypeCast<TSource, TDestination>)value;
 
-            sut.Should().ContainInOrder( value );
+            sut.Should().BeSequentiallyEqualTo( value );
         }
     }
 }

@@ -53,6 +53,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
             {
                 var _ = Bitmask<EnumWithoutFlagsAttribute>.BitCount;
             };
+
             action.Should().Throw<TypeInitializationException>();
         }
 
@@ -63,6 +64,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
             {
                 var _ = Bitmask<EnumWithoutZeroValueMember>.BitCount;
             };
+
             action.Should().Throw<TypeInitializationException>();
         }
 
@@ -73,6 +75,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
             {
                 var _ = Bitmask<InvalidStructA>.BitCount;
             };
+
             action.Should().Throw<TypeInitializationException>();
         }
 
@@ -83,6 +86,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
             {
                 var _ = Bitmask<InvalidStructB>.BitCount;
             };
+
             action.Should().Throw<TypeInitializationException>();
         }
     }

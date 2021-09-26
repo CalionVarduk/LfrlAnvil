@@ -27,7 +27,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
         public void GetHashCode_ShouldReturnCorrectResult()
         {
             var value = Fixture.Create<TSource>();
-            var sut = (TypeCast<TSource, TDestination>) value;
+            var sut = (TypeCast<TSource, TDestination>)value;
             var expected = Core.Hash.Default.Add( value ).Value;
 
             var result = sut.GetHashCode();
@@ -38,7 +38,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
         [Fact]
         public void TypeCastConversionOperator_FromNil_ShouldReturnCorrectResult()
         {
-            var result = (TypeCast<TSource, TDestination>) Core.Functional.Nil.Instance;
+            var result = (TypeCast<TSource, TDestination>)Core.Functional.Nil.Instance;
 
             using ( new AssertionScope() )
             {
@@ -54,7 +54,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
         {
             var value = Fixture.Create<TSource>();
 
-            ITypeCast<TDestination> sut = (TypeCast<TSource, TDestination>) value;
+            ITypeCast<TDestination> sut = (TypeCast<TSource, TDestination>)value;
 
             var result = sut.Source;
 

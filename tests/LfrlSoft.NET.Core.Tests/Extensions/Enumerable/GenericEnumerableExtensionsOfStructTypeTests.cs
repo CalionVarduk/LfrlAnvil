@@ -5,6 +5,7 @@ using FluentAssertions;
 using LfrlSoft.NET.Core.Collections;
 using LfrlSoft.NET.Core.Extensions;
 using LfrlSoft.NET.TestExtensions;
+using LfrlSoft.NET.TestExtensions.FluentAssertions;
 using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
@@ -15,22 +16,22 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         [Fact]
         public void WhereNotNull_ShouldFilterOutNullElements()
         {
-            var expected = Fixture.CreateMany<T?>();
-            var sut = expected.Append( null );
+            var expected = Fixture.CreateMany<T>();
+            var sut = expected.Select( v => (T?)v ).Append( null );
 
             var result = sut.WhereNotNull();
 
-            result.Should().ContainInOrder( expected );
+            result.Should().BeSequentiallyEqualTo( expected );
         }
 
         [Fact]
         public void WhereNotNull_ShouldReturnFalseWhenSourceContainsNullElement()
         {
-            var sut = Fixture.CreateMany<T?>();
+            var sut = Fixture.CreateMany<T>();
 
-            var result = sut.WhereNotNull();
+            var result = sut.Select( v => (T?)v ).WhereNotNull();
 
-            result.Should().ContainInOrder( sut );
+            result.Should().BeSequentiallyEqualTo( sut );
         }
 
         [Fact]
@@ -41,7 +42,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
 
             var result = sut.WhereNotNull( EqualityComparer<T?>.Default );
 
-            result.Should().ContainInOrder( expected );
+            result.Should().BeSequentiallyEqualTo( expected );
         }
 
         [Fact]
@@ -51,7 +52,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
 
             var result = sut.WhereNotNull( EqualityComparer<T?>.Default );
 
-            result.Should().ContainInOrder( sut );
+            result.Should().BeSequentiallyEqualTo( sut );
         }
 
         [Fact]

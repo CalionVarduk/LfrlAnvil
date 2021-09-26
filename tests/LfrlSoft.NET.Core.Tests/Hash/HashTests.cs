@@ -94,7 +94,7 @@ namespace LfrlSoft.NET.Core.Tests.Hash
             var value = Fixture.Create<int>();
             var sut = new Core.Hash( value );
 
-            var result = (int) sut;
+            var result = (int)sut;
 
             result.Should().Be( value );
         }

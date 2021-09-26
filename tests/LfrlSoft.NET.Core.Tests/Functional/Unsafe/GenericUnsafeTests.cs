@@ -73,7 +73,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         public void GetHashCode_ShouldReturnCorrectResult_WhenHasValue()
         {
             var value = Fixture.Create<T>();
-            var sut = (Unsafe<T>) value;
+            var sut = (Unsafe<T>)value;
             var expected = Core.Hash.Default.Add( value ).Value;
 
             var result = sut.GetHashCode();
@@ -85,7 +85,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         public void GetHashCode_ShouldReturnCorrectResult_WhenHasError()
         {
             var error = new Exception();
-            var sut = (Unsafe<T>) error;
+            var sut = (Unsafe<T>)error;
             var expected = Core.Hash.Default.Add( error ).Value;
 
             var result = sut.GetHashCode();
@@ -97,8 +97,8 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         [GenericMethodData( nameof( GenericUnsafeTestsData<T>.CreateEqualsTestData ) )]
         public void Equals_ShouldReturnCorrectResult(object value1, bool isOk1, object value2, bool isOk2, bool expected)
         {
-            var a = (Unsafe<T>) (isOk1 ? (T) value1 : (Exception) value1);
-            var b = (Unsafe<T>) (isOk2 ? (T) value2 : (Exception) value2);
+            var a = (Unsafe<T>)(isOk1 ? (T)value1 : (Exception)value1);
+            var b = (Unsafe<T>)(isOk2 ? (T)value2 : (Exception)value2);
 
             var result = a.Equals( b );
 
@@ -109,7 +109,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         public void GetValue_ShouldReturnCorrectResult_WhenHasValue()
         {
             var value = Fixture.Create<T>();
-            IUnsafe sut = (Unsafe<T>) value;
+            IUnsafe sut = (Unsafe<T>)value;
 
             var result = sut.GetValue();
 
@@ -120,7 +120,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         public void GetValue_ShouldThrow_WhenHasError()
         {
             var error = new Exception();
-            IUnsafe sut = (Unsafe<T>) error;
+            IUnsafe sut = (Unsafe<T>)error;
 
             Action action = () =>
             {
@@ -134,7 +134,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         public void GetValueOrDefault_ShouldReturnCorrectResult_WhenHasValue()
         {
             var value = Fixture.CreateNotDefault<T>();
-            IUnsafe sut = (Unsafe<T>) value;
+            IUnsafe sut = (Unsafe<T>)value;
 
             var result = sut.GetValueOrDefault();
 
@@ -145,7 +145,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         public void GetValueOrDefault_ShouldReturnDefaultValue_WhenHasError()
         {
             var error = new Exception();
-            IUnsafe sut = (Unsafe<T>) error;
+            IUnsafe sut = (Unsafe<T>)error;
 
             var result = sut.GetValueOrDefault();
 
@@ -156,7 +156,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         public void GetError_ShouldReturnCorrectResult_WhenHasError()
         {
             var error = new Exception();
-            IUnsafe sut = (Unsafe<T>) error;
+            IUnsafe sut = (Unsafe<T>)error;
 
             var result = sut.GetError();
 
@@ -167,7 +167,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         public void GetError_ShouldThrow_WhenHasValue()
         {
             var value = Fixture.Create<T>();
-            IUnsafe sut = (Unsafe<T>) value;
+            IUnsafe sut = (Unsafe<T>)value;
 
             Action action = () =>
             {
@@ -181,7 +181,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         public void GetErrorOrDefault_ShouldReturnCorrectResult_WhenHasError()
         {
             var error = new Exception();
-            IUnsafe sut = (Unsafe<T>) error;
+            IUnsafe sut = (Unsafe<T>)error;
 
             var result = sut.GetErrorOrDefault();
 
@@ -192,7 +192,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         public void GetErrorOrDefault_ShouldReturnNull_WhenHasValue()
         {
             var value = Fixture.Create<T>();
-            IUnsafe sut = (Unsafe<T>) value;
+            IUnsafe sut = (Unsafe<T>)value;
 
             var result = sut.GetErrorOrDefault();
 
@@ -206,7 +206,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
             var returnedValue = Fixture.Create<T>();
             var okDelegate = Substitute.For<Func<T, Unsafe<T>>>().WithAnyArgs( _ => returnedValue );
 
-            var sut = (Unsafe<T>) value;
+            var sut = (Unsafe<T>)value;
 
             var result = sut.Bind( okDelegate );
 
@@ -224,7 +224,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
             var error = new Exception();
             var okDelegate = Substitute.For<Func<T, Unsafe<T>>>().WithAnyArgs( i => i.ArgAt<T>( 0 ) );
 
-            var sut = (Unsafe<T>) error;
+            var sut = (Unsafe<T>)error;
 
             var result = sut.Bind( okDelegate );
 
@@ -244,7 +244,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
             var okDelegate = Substitute.For<Func<T, Unsafe<T>>>().WithAnyArgs( _ => returnedValue );
             var errorDelegate = Substitute.For<Func<Exception, Unsafe<T>>>().WithAnyArgs( _ => value );
 
-            var sut = (Unsafe<T>) value;
+            var sut = (Unsafe<T>)value;
 
             var result = sut.Bind( okDelegate, errorDelegate );
 
@@ -265,7 +265,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
             var okDelegate = Substitute.For<Func<T, Unsafe<T>>>().WithAnyArgs( i => i.ArgAt<T>( 0 ) );
             var errorDelegate = Substitute.For<Func<Exception, Unsafe<T>>>().WithAnyArgs( _ => returnedValue );
 
-            var sut = (Unsafe<T>) error;
+            var sut = (Unsafe<T>)error;
 
             var result = sut.Bind( okDelegate, errorDelegate );
 
@@ -286,7 +286,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
             var okDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( _ => returnedValue );
             var errorDelegate = Substitute.For<Func<Exception, T>>().WithAnyArgs( _ => value );
 
-            var sut = (Unsafe<T>) value;
+            var sut = (Unsafe<T>)value;
 
             var result = sut.Match( okDelegate, errorDelegate );
 
@@ -306,7 +306,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
             var okDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( i => i.ArgAt<T>( 0 ) );
             var errorDelegate = Substitute.For<Func<Exception, T>>().WithAnyArgs( _ => returnedValue );
 
-            var sut = (Unsafe<T>) error;
+            var sut = (Unsafe<T>)error;
 
             var result = sut.Match( okDelegate, errorDelegate );
 
@@ -325,7 +325,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
             var okDelegate = Substitute.For<Action<T>>();
             var errorDelegate = Substitute.For<Action<Exception>>();
 
-            var sut = (Unsafe<T>) value;
+            var sut = (Unsafe<T>)value;
 
             sut.Match( okDelegate, errorDelegate );
 
@@ -343,7 +343,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
             var okDelegate = Substitute.For<Action<T>>();
             var errorDelegate = Substitute.For<Action<Exception>>();
 
-            var sut = (Unsafe<T>) error;
+            var sut = (Unsafe<T>)error;
 
             sut.Match( okDelegate, errorDelegate );
 
@@ -361,7 +361,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
             var returnedValue = Fixture.Create<T>();
             var okDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( _ => returnedValue );
 
-            var sut = (Unsafe<T>) value;
+            var sut = (Unsafe<T>)value;
 
             var result = sut.IfOk( okDelegate );
 
@@ -378,7 +378,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
             var error = new Exception();
             var okDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( i => i.ArgAt<T>( 0 ) );
 
-            var sut = (Unsafe<T>) error;
+            var sut = (Unsafe<T>)error;
 
             var result = sut.IfOk( okDelegate );
 
@@ -395,7 +395,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
             var value = Fixture.Create<T>();
             var okDelegate = Substitute.For<Action<T>>();
 
-            var sut = (Unsafe<T>) value;
+            var sut = (Unsafe<T>)value;
 
             sut.IfOk( okDelegate );
 
@@ -408,7 +408,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
             var error = new Exception();
             var okDelegate = Substitute.For<Action<T>>();
 
-            var sut = (Unsafe<T>) error;
+            var sut = (Unsafe<T>)error;
 
             sut.IfOk( okDelegate );
 
@@ -422,7 +422,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
             var returnedValue = Fixture.Create<T>();
             var okDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( _ => returnedValue );
 
-            var sut = (Unsafe<T>) value;
+            var sut = (Unsafe<T>)value;
 
             var result = sut.IfOkOrDefault( okDelegate );
 
@@ -439,7 +439,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
             var error = new Exception();
             var okDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( i => i.ArgAt<T>( 0 ) );
 
-            var sut = (Unsafe<T>) error;
+            var sut = (Unsafe<T>)error;
 
             var result = sut.IfOkOrDefault( okDelegate );
 
@@ -457,7 +457,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
             var returnedValue = Fixture.Create<T>();
             var errorDelegate = Substitute.For<Func<Exception, T>>().WithAnyArgs( _ => returnedValue );
 
-            var sut = (Unsafe<T>) error;
+            var sut = (Unsafe<T>)error;
 
             var result = sut.IfError( errorDelegate );
 
@@ -474,7 +474,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
             var value = Fixture.Create<T>();
             var errorDelegate = Substitute.For<Func<Exception, T>>().WithAnyArgs( _ => value );
 
-            var sut = (Unsafe<T>) value;
+            var sut = (Unsafe<T>)value;
 
             var result = sut.IfError( errorDelegate );
 
@@ -491,7 +491,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
             var error = new Exception();
             var errorDelegate = Substitute.For<Action<Exception>>();
 
-            var sut = (Unsafe<T>) error;
+            var sut = (Unsafe<T>)error;
 
             sut.IfError( errorDelegate );
 
@@ -504,7 +504,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
             var value = Fixture.Create<T>();
             var errorDelegate = Substitute.For<Action<Exception>>();
 
-            var sut = (Unsafe<T>) value;
+            var sut = (Unsafe<T>)value;
 
             sut.IfError( errorDelegate );
 
@@ -518,7 +518,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
             var returnedValue = Fixture.Create<T>();
             var errorDelegate = Substitute.For<Func<Exception, T>>().WithAnyArgs( _ => returnedValue );
 
-            var sut = (Unsafe<T>) error;
+            var sut = (Unsafe<T>)error;
 
             var result = sut.IfErrorOrDefault( errorDelegate );
 
@@ -535,7 +535,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
             var value = Fixture.Create<T>();
             var errorDelegate = Substitute.For<Func<Exception, T>>().WithAnyArgs( _ => value );
 
-            var sut = (Unsafe<T>) value;
+            var sut = (Unsafe<T>)value;
 
             var result = sut.IfErrorOrDefault( errorDelegate );
 
@@ -551,7 +551,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         {
             var value = Fixture.Create<T>();
 
-            var result = (Unsafe<T>) value;
+            var result = (Unsafe<T>)value;
 
             using ( new AssertionScope() )
             {
@@ -565,7 +565,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         {
             var error = new Exception();
 
-            var result = (Unsafe<T>) error;
+            var result = (Unsafe<T>)error;
 
             using ( new AssertionScope() )
             {
@@ -579,9 +579,9 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         {
             var value = Fixture.Create<T>();
 
-            var sut = (Unsafe<T>) value;
+            var sut = (Unsafe<T>)value;
 
-            var result = (Either<T, Exception>) sut;
+            var result = (Either<T, Exception>)sut;
 
             using ( new AssertionScope() )
             {
@@ -595,9 +595,9 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         {
             var error = new Exception();
 
-            var sut = (Unsafe<T>) error;
+            var sut = (Unsafe<T>)error;
 
-            var result = (Either<T, Exception>) sut;
+            var result = (Either<T, Exception>)sut;
 
             using ( new AssertionScope() )
             {
@@ -611,9 +611,9 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         {
             var value = Fixture.Create<T>();
 
-            var sut = (Either<T, Exception>) value;
+            var sut = (Either<T, Exception>)value;
 
-            var result = (Unsafe<T>) sut;
+            var result = (Unsafe<T>)sut;
 
             using ( new AssertionScope() )
             {
@@ -627,9 +627,9 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         {
             var error = new Exception();
 
-            var sut = (Either<T, Exception>) error;
+            var sut = (Either<T, Exception>)error;
 
-            var result = (Unsafe<T>) sut;
+            var result = (Unsafe<T>)sut;
 
             using ( new AssertionScope() )
             {
@@ -641,7 +641,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         [Fact]
         public void UnsafeConversionOperator_FromNil_ShouldReturnCorrectResult()
         {
-            var result = (Unsafe<T>) Core.Functional.Nil.Instance;
+            var result = (Unsafe<T>)Core.Functional.Nil.Instance;
 
             using ( new AssertionScope() )
             {
@@ -656,9 +656,9 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         public void TConversionOperator_ShouldReturnCorrectResult_WhenHasValue()
         {
             var value = Fixture.Create<T>();
-            var sut = (Unsafe<T>) value;
+            var sut = (Unsafe<T>)value;
 
-            var result = (T) sut;
+            var result = (T)sut;
 
             result.Should().Be( value );
         }
@@ -667,11 +667,11 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         public void TConversionOperator_ShouldThrow_WhenHasError()
         {
             var error = new Exception();
-            var sut = (Unsafe<T>) error;
+            var sut = (Unsafe<T>)error;
 
             Action action = () =>
             {
-                var _ = (T) sut;
+                var _ = (T)sut;
             };
 
             action.Should().Throw<ArgumentNullException>();
@@ -681,9 +681,9 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         public void ExceptionConversionOperator_ShouldReturnCorrectResult_WhenHasError()
         {
             var error = new Exception();
-            var sut = (Unsafe<T>) error;
+            var sut = (Unsafe<T>)error;
 
-            var result = (Exception) sut;
+            var result = (Exception)sut;
 
             result.Should().Be( error );
         }
@@ -692,11 +692,11 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         public void ExceptionConversionOperator_ShouldThrow_WhenHasValue()
         {
             var value = Fixture.Create<T>();
-            var sut = (Unsafe<T>) value;
+            var sut = (Unsafe<T>)value;
 
             Action action = () =>
             {
-                var _ = (Exception) sut;
+                var _ = (Exception)sut;
             };
 
             action.Should().Throw<ArgumentNullException>();
@@ -706,8 +706,8 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         [GenericMethodData( nameof( GenericUnsafeTestsData<T>.CreateEqualsTestData ) )]
         public void EqualityOperator_ShouldReturnCorrectResult(object value1, bool isOk1, object value2, bool isOk2, bool expected)
         {
-            var a = (Unsafe<T>) (isOk1 ? (T) value1 : (Exception) value1);
-            var b = (Unsafe<T>) (isOk2 ? (T) value2 : (Exception) value2);
+            var a = (Unsafe<T>)(isOk1 ? (T)value1 : (Exception)value1);
+            var b = (Unsafe<T>)(isOk2 ? (T)value2 : (Exception)value2);
 
             var result = a == b;
 
@@ -718,8 +718,8 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         [GenericMethodData( nameof( GenericUnsafeTestsData<T>.CreateNotEqualsTestData ) )]
         public void InequalityOperator_ShouldReturnCorrectResult(object value1, bool isOk1, object value2, bool isOk2, bool expected)
         {
-            var a = (Unsafe<T>) (isOk1 ? (T) value1 : (Exception) value1);
-            var b = (Unsafe<T>) (isOk2 ? (T) value2 : (Exception) value2);
+            var a = (Unsafe<T>)(isOk1 ? (T)value1 : (Exception)value1);
+            var b = (Unsafe<T>)(isOk2 ? (T)value2 : (Exception)value2);
 
             var result = a != b;
 
@@ -731,7 +731,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         {
             var value = Fixture.CreateNotDefault<T>();
 
-            var sut = (Unsafe<T>) value;
+            var sut = (Unsafe<T>)value;
             IReadOnlyCollection<T> collection = sut;
 
             var result = collection.Count;
@@ -744,7 +744,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         {
             var error = new Exception();
 
-            var sut = (Unsafe<T>) error;
+            var sut = (Unsafe<T>)error;
             IReadOnlyCollection<T> collection = sut;
 
             var result = collection.Count;
@@ -757,9 +757,9 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         {
             var value = Fixture.CreateNotDefault<T>();
 
-            var sut = (Unsafe<T>) value;
+            var sut = (Unsafe<T>)value;
 
-            sut.Should().ContainInOrder( value );
+            sut.Should().BeSequentiallyEqualTo( value );
         }
 
         [Fact]
@@ -767,7 +767,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         {
             var error = new Exception();
 
-            var sut = (Unsafe<T>) error;
+            var sut = (Unsafe<T>)error;
 
             sut.Should().BeEmpty();
         }

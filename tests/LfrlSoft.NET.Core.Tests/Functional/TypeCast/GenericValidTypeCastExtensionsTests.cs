@@ -16,7 +16,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
         {
             var value = Fixture.CreateNotDefault<TSource>();
 
-            var sut = (TypeCast<TSource, TDestination>) value;
+            var sut = (TypeCast<TSource, TDestination>)value;
 
             var result = sut.ToMaybe();
 

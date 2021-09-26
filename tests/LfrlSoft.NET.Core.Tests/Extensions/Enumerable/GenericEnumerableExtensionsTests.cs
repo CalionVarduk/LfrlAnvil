@@ -213,7 +213,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
 
             var result = sut.Flatten( x => data.First( y => x!.Equals( y.First ) ).Second );
 
-            result.Should().ContainInOrder( expected );
+            result.Should().BeSequentiallyEqualTo( expected );
         }
 
         [Fact]
@@ -319,7 +319,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         {
             var result = sut.Repeat( count );
 
-            result.Should().ContainInOrder( expected );
+            result.Should().BeSequentiallyEqualTo( expected );
         }
 
         [Theory]
@@ -373,7 +373,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
             {
                 @delegate.Verify().CallCount.Should().Be( result.Count );
                 result.Should().NotBeSameAs( sut );
-                result.Should().ContainInOrder( sut );
+                result.Should().BeSequentiallyEqualTo( sut );
             }
         }
 
@@ -387,7 +387,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
             using ( new AssertionScope() )
             {
                 result.Should().NotBeSameAs( sut );
-                result.Should().ContainInOrder( sut );
+                result.Should().BeSequentiallyEqualTo( sut );
             }
         }
 
@@ -472,7 +472,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
 
             var result = sut.VisitMany( n => n.Children ).Select( n => n.Value );
 
-            result.Should().ContainInOrder( expected );
+            result.Should().BeSequentiallyEqualTo( expected );
         }
 
         [Fact]
@@ -600,7 +600,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
 
             var result = sut.DistinctBy( c => c.Value ).Select( c => c.Value );
 
-            result.Should().ContainInOrder( expected );
+            result.Should().BeSequentiallyEqualTo( expected );
         }
 
         [Fact]
@@ -739,7 +739,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
             {
                 result.Count.Should().Be( expectedCount );
                 for ( var i = 0; i < expectedCount; ++i )
-                    result[i].Should().ContainInOrder( sut.Skip( i * partLength ).Take( partLength ) );
+                    result[i].Should().BeSequentiallyEqualTo( sut.Skip( i * partLength ).Take( partLength ) );
             }
         }
 
@@ -756,9 +756,9 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
             {
                 result.Count.Should().Be( expectedFullCount + 1 );
                 for ( var i = 0; i < expectedFullCount; ++i )
-                    result[i].Should().ContainInOrder( sut.Skip( i * partLength ).Take( partLength ) );
+                    result[i].Should().BeSequentiallyEqualTo( sut.Skip( i * partLength ).Take( partLength ) );
 
-                result[^1].Should().ContainInOrder( sut.TakeLast( expectedLastPartLength ) );
+                result[^1].Should().BeSequentiallyEqualTo( sut.TakeLast( expectedLastPartLength ) );
             }
         }
 

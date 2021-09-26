@@ -35,7 +35,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
         public void GetHashCode_ShouldReturnCorrectResult_WhenHasFirst()
         {
             var value = Fixture.Create<T1>();
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
             var expected = Core.Hash.Default.Add( value ).Value;
 
             var result = sut.GetHashCode();
@@ -47,7 +47,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
         public void GetHashCode_ShouldReturnCorrectResult_WhenHasSecond()
         {
             var value = Fixture.Create<T2>();
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
             var expected = Core.Hash.Default.Add( value ).Value;
 
             var result = sut.GetHashCode();
@@ -59,8 +59,8 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
         [GenericMethodData( nameof( GenericEitherTestsData<T1, T2>.CreateEqualsTestData ) )]
         public void Equals_ShouldReturnCorrectResult(object value1, bool hasFirst1, object value2, bool hasFirst2, bool expected)
         {
-            var a = (Either<T1, T2>) (hasFirst1 ? (T1) value1 : (T2) value1);
-            var b = (Either<T1, T2>) (hasFirst2 ? (T1) value2 : (T2) value2);
+            var a = (Either<T1, T2>)(hasFirst1 ? (T1)value1 : (T2)value1);
+            var b = (Either<T1, T2>)(hasFirst2 ? (T1)value2 : (T2)value2);
 
             var result = a.Equals( b );
 
@@ -71,7 +71,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
         public void GetFirst_ShouldReturnCorrectResult_WhenHasFirst()
         {
             var value = Fixture.Create<T1>();
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             var result = sut.GetFirst();
 
@@ -82,7 +82,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
         public void GetFirst_ShouldThrow_WhenHasSecond()
         {
             var value = Fixture.Create<T2>();
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             Action action = () =>
             {
@@ -96,7 +96,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
         public void GetFirstOrDefault_ShouldReturnCorrectResult_WhenHasFirst()
         {
             var value = Fixture.CreateNotDefault<T1>();
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             var result = sut.GetFirstOrDefault();
 
@@ -107,7 +107,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
         public void GetFirstOrDefault_ShouldReturnDefaultValue_WhenHasSecond()
         {
             var value = Fixture.Create<T2>();
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             var result = sut.GetFirstOrDefault();
 
@@ -118,7 +118,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
         public void GetSecond_ShouldReturnCorrectResult_WhenHasSecond()
         {
             var value = Fixture.Create<T2>();
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             var result = sut.GetSecond();
 
@@ -129,7 +129,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
         public void GetSecond_ShouldThrow_WhenHasFirst()
         {
             var value = Fixture.Create<T1>();
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             Action action = () =>
             {
@@ -143,7 +143,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
         public void GetSecondOrDefault_ShouldReturnCorrectResult_WhenHasSecond()
         {
             var value = Fixture.CreateNotDefault<T2>();
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             var result = sut.GetSecondOrDefault();
 
@@ -154,7 +154,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
         public void GetSecondOrDefault_ShouldReturnDefaultValue_WhenHasFirst()
         {
             var value = Fixture.Create<T1>();
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             var result = sut.GetSecondOrDefault();
 
@@ -165,7 +165,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
         public void Swap_ShouldReturnCorrectResult_WhenHasFirst()
         {
             var value = Fixture.Create<T1>();
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             var result = sut.Swap();
 
@@ -180,7 +180,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
         public void Swap_ShouldReturnCorrectResult_WhenHasSecond()
         {
             var value = Fixture.Create<T2>();
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             var result = sut.Swap();
 
@@ -198,7 +198,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
             var returnedValue = Fixture.Create<T1>();
             var firstDelegate = Substitute.For<Func<T1, Either<T1, T2>>>().WithAnyArgs( _ => returnedValue );
 
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             var result = sut.Bind( firstDelegate );
 
@@ -216,7 +216,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
             var value = Fixture.Create<T2>();
             var firstDelegate = Substitute.For<Func<T1, Either<T1, T2>>>().WithAnyArgs( i => i.ArgAt<T1>( 0 ) );
 
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             var result = sut.Bind( firstDelegate );
 
@@ -235,7 +235,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
             var returnedValue = Fixture.Create<T2>();
             var secondDelegate = Substitute.For<Func<T2, Either<T1, T2>>>().WithAnyArgs( _ => returnedValue );
 
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             var result = sut.BindSecond( secondDelegate );
 
@@ -253,7 +253,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
             var value = Fixture.Create<T1>();
             var secondDelegate = Substitute.For<Func<T2, Either<T1, T2>>>().WithAnyArgs( i => i.ArgAt<T2>( 0 ) );
 
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             var result = sut.BindSecond( secondDelegate );
 
@@ -273,7 +273,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
             var firstDelegate = Substitute.For<Func<T1, Either<T1, T2>>>().WithAnyArgs( _ => returnedValue );
             var secondDelegate = Substitute.For<Func<T2, Either<T1, T2>>>().WithAnyArgs( i => i.ArgAt<T2>( 0 ) );
 
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             var result = sut.Bind( first: firstDelegate, second: secondDelegate );
 
@@ -294,7 +294,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
             var firstDelegate = Substitute.For<Func<T1, Either<T1, T2>>>().WithAnyArgs( i => i.ArgAt<T1>( 0 ) );
             var secondDelegate = Substitute.For<Func<T2, Either<T1, T2>>>().WithAnyArgs( _ => returnedValue );
 
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             var result = sut.Bind( first: firstDelegate, second: secondDelegate );
 
@@ -315,7 +315,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
             var firstDelegate = Substitute.For<Func<T1, T1>>().WithAnyArgs( _ => returnedValue );
             var secondDelegate = Substitute.For<Func<T2, T1>>().WithAnyArgs( _ => value );
 
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             var result = sut.Match( first: firstDelegate, second: secondDelegate );
 
@@ -335,7 +335,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
             var firstDelegate = Substitute.For<Func<T1, T2>>().WithAnyArgs( _ => value );
             var secondDelegate = Substitute.For<Func<T2, T2>>().WithAnyArgs( _ => returnedValue );
 
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             var result = sut.Match( first: firstDelegate, second: secondDelegate );
 
@@ -354,7 +354,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
             var firstDelegate = Substitute.For<Action<T1>>();
             var secondDelegate = Substitute.For<Action<T2>>();
 
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             sut.Match( first: firstDelegate, second: secondDelegate );
 
@@ -372,7 +372,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
             var firstDelegate = Substitute.For<Action<T1>>();
             var secondDelegate = Substitute.For<Action<T2>>();
 
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             sut.Match( first: firstDelegate, second: secondDelegate );
 
@@ -390,7 +390,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
             var returnedValue = Fixture.Create<T1>();
             var firstDelegate = Substitute.For<Func<T1, T1>>().WithAnyArgs( _ => returnedValue );
 
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             var result = sut.IfFirst( firstDelegate );
 
@@ -407,7 +407,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
             var value = Fixture.Create<T2>();
             var firstDelegate = Substitute.For<Func<T1, T1>>().WithAnyArgs( i => i.ArgAt<T1>( 0 ) );
 
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             var result = sut.IfFirst( firstDelegate );
 
@@ -424,7 +424,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
             var value = Fixture.Create<T1>();
             var firstDelegate = Substitute.For<Action<T1>>();
 
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             sut.IfFirst( firstDelegate );
 
@@ -437,7 +437,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
             var value = Fixture.Create<T2>();
             var firstDelegate = Substitute.For<Action<T1>>();
 
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             sut.IfFirst( firstDelegate );
 
@@ -451,7 +451,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
             var returnedValue = Fixture.Create<T1>();
             var firstDelegate = Substitute.For<Func<T1, T1>>().WithAnyArgs( _ => returnedValue );
 
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             var result = sut.IfFirstOrDefault( firstDelegate );
 
@@ -468,7 +468,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
             var value = Fixture.Create<T2>();
             var firstDelegate = Substitute.For<Func<T1, T1>>().WithAnyArgs( i => i.ArgAt<T1>( 0 ) );
 
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             var result = sut.IfFirstOrDefault( firstDelegate );
 
@@ -486,7 +486,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
             var returnedValue = Fixture.Create<T2>();
             var secondDelegate = Substitute.For<Func<T2, T2>>().WithAnyArgs( _ => returnedValue );
 
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             var result = sut.IfSecond( secondDelegate );
 
@@ -503,7 +503,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
             var value = Fixture.Create<T1>();
             var secondDelegate = Substitute.For<Func<T2, T2>>().WithAnyArgs( i => i.ArgAt<T2>( 0 ) );
 
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             var result = sut.IfSecond( secondDelegate );
 
@@ -520,7 +520,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
             var value = Fixture.Create<T2>();
             var secondDelegate = Substitute.For<Action<T2>>();
 
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             sut.IfSecond( secondDelegate );
 
@@ -533,7 +533,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
             var value = Fixture.Create<T1>();
             var secondDelegate = Substitute.For<Action<T2>>();
 
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             sut.IfSecond( secondDelegate );
 
@@ -547,7 +547,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
             var returnedValue = Fixture.Create<T2>();
             var secondDelegate = Substitute.For<Func<T2, T2>>().WithAnyArgs( _ => returnedValue );
 
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             var result = sut.IfSecondOrDefault( secondDelegate );
 
@@ -564,7 +564,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
             var value = Fixture.Create<T1>();
             var secondDelegate = Substitute.For<Func<T2, T2>>().WithAnyArgs( i => i.ArgAt<T2>( 0 ) );
 
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             var result = sut.IfSecondOrDefault( secondDelegate );
 
@@ -580,7 +580,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
         {
             var value = Fixture.Create<T1>();
 
-            var result = (Either<T1, T2>) value;
+            var result = (Either<T1, T2>)value;
 
             using ( new AssertionScope() )
             {
@@ -594,7 +594,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
         {
             var value = Fixture.Create<T2>();
 
-            var result = (Either<T1, T2>) value;
+            var result = (Either<T1, T2>)value;
 
             using ( new AssertionScope() )
             {
@@ -609,7 +609,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
             var value = Fixture.Create<T1>();
             var partial = new PartialEither<T1>( value );
 
-            var result = (Either<T1, T2>) partial;
+            var result = (Either<T1, T2>)partial;
 
             using ( new AssertionScope() )
             {
@@ -624,7 +624,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
             var value = Fixture.Create<T2>();
             var partial = new PartialEither<T2>( value );
 
-            var result = (Either<T1, T2>) partial;
+            var result = (Either<T1, T2>)partial;
 
             using ( new AssertionScope() )
             {
@@ -636,7 +636,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
         [Fact]
         public void EitherConversionOperator_FromNil_ShouldReturnCorrectResult()
         {
-            var result = (Either<T1, T2>) Core.Functional.Nil.Instance;
+            var result = (Either<T1, T2>)Core.Functional.Nil.Instance;
 
             using ( new AssertionScope() )
             {
@@ -651,9 +651,9 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
         public void T1ConversionOperator_ShouldReturnCorrectResult_WhenHasFirst()
         {
             var value = Fixture.Create<T1>();
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
-            var result = (T1) sut;
+            var result = (T1)sut;
 
             result.Should().Be( value );
         }
@@ -662,11 +662,11 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
         public void T1ConversionOperator_ShouldThrow_WhenHasSecond()
         {
             var value = Fixture.Create<T2>();
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             Action action = () =>
             {
-                var _ = (T1) sut;
+                var _ = (T1)sut;
             };
 
             action.Should().Throw<ArgumentNullException>();
@@ -676,9 +676,9 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
         public void T2ConversionOperator_ShouldReturnCorrectResult_WhenHasSecond()
         {
             var value = Fixture.Create<T2>();
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
-            var result = (T2) sut;
+            var result = (T2)sut;
 
             result.Should().Be( value );
         }
@@ -687,11 +687,11 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
         public void T2ConversionOperator_ShouldThrow_WhenHasFirst()
         {
             var value = Fixture.Create<T1>();
-            var sut = (Either<T1, T2>) value;
+            var sut = (Either<T1, T2>)value;
 
             Action action = () =>
             {
-                var _ = (T2) sut;
+                var _ = (T2)sut;
             };
 
             action.Should().Throw<ArgumentNullException>();
@@ -701,8 +701,8 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
         [GenericMethodData( nameof( GenericEitherTestsData<T1, T2>.CreateEqualsTestData ) )]
         public void EqualityOperator_ShouldReturnCorrectResult(object value1, bool hasFirst1, object value2, bool hasFirst2, bool expected)
         {
-            var a = (Either<T1, T2>) (hasFirst1 ? (T1) value1 : (T2) value1);
-            var b = (Either<T1, T2>) (hasFirst2 ? (T1) value2 : (T2) value2);
+            var a = (Either<T1, T2>)(hasFirst1 ? (T1)value1 : (T2)value1);
+            var b = (Either<T1, T2>)(hasFirst2 ? (T1)value2 : (T2)value2);
 
             var result = a == b;
 
@@ -718,8 +718,8 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
             bool hasFirst2,
             bool expected)
         {
-            var a = (Either<T1, T2>) (hasFirst1 ? (T1) value1 : (T2) value1);
-            var b = (Either<T1, T2>) (hasFirst2 ? (T1) value2 : (T2) value2);
+            var a = (Either<T1, T2>)(hasFirst1 ? (T1)value1 : (T2)value1);
+            var b = (Either<T1, T2>)(hasFirst2 ? (T1)value2 : (T2)value2);
 
             var result = a != b;
 

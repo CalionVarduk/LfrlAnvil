@@ -73,7 +73,7 @@ namespace LfrlSoft.NET.Core.Tests.Equality
         {
             var sut = new Equality<T>( first, second );
 
-            var result = (bool) sut;
+            var result = (bool)sut;
 
             result.Should().Be( sut.Result );
         }

@@ -4,6 +4,7 @@ using AutoFixture;
 using FluentAssertions;
 using LfrlSoft.NET.Core.Collections;
 using LfrlSoft.NET.TestExtensions;
+using LfrlSoft.NET.TestExtensions.FluentAssertions;
 using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.Collections.Many
@@ -17,7 +18,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Many
 
             var sut = Core.Collections.Many.Create( values );
 
-            sut.Should().ContainInOrder( values );
+            sut.Should().BeSequentiallyEqualTo( values );
         }
 
         [Fact]
@@ -27,7 +28,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Many
 
             var sut = new Many<T>( values );
 
-            sut.Should().ContainInOrder( values );
+            sut.Should().BeSequentiallyEqualTo( values );
         }
 
         [Theory]

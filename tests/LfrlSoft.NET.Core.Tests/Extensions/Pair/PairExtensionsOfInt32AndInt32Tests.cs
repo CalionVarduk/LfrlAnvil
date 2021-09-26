@@ -1,8 +1,9 @@
-﻿using Xunit;
-using AutoFixture;
+﻿using AutoFixture;
 using FluentAssertions;
 using LfrlSoft.NET.Core.Extensions;
 using LfrlSoft.NET.TestExtensions;
+using LfrlSoft.NET.TestExtensions.FluentAssertions;
+using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.Extensions.Pair
 {
@@ -16,90 +17,90 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Pair
 
             var result = sut.AsEnumerable();
 
-            result.Should().ContainInOrder( first, second );
+            result.Should().BeSequentiallyEqualTo( first, second );
         }
 
         [Fact]
         public void AsEnumerable_ShouldReturnCorrectResult_WhenSecondIsNullableWithValue()
         {
             var (first, second) = Fixture.CreateDistinctCollection<int>( 2 );
-            var sut = Core.Pair.Create( first, (int?) second );
+            var sut = Core.Pair.Create( first, (int?)second );
 
             var result = sut.AsEnumerable();
 
-            result.Should().ContainInOrder( first, second );
+            result.Should().BeSequentiallyEqualTo( first, second );
         }
 
         [Fact]
         public void AsEnumerable_ShouldReturnCorrectResult_WhenSecondIsNullableWithoutValue()
         {
             var first = Fixture.Create<int>();
-            var sut = Core.Pair.Create( first, (int?) null );
+            var sut = Core.Pair.Create( first, (int?)null );
 
             var result = sut.AsEnumerable();
 
-            result.Should().ContainInOrder( first );
+            result.Should().BeSequentiallyEqualTo( first );
         }
 
         [Fact]
         public void AsEnumerable_ShouldReturnCorrectResult_WhenFirstIsNullableWithValue()
         {
             var (first, second) = Fixture.CreateDistinctCollection<int>( 2 );
-            var sut = Core.Pair.Create( (int?) first, second );
+            var sut = Core.Pair.Create( (int?)first, second );
 
             var result = sut.AsEnumerable();
 
-            result.Should().ContainInOrder( first, second );
+            result.Should().BeSequentiallyEqualTo( first, second );
         }
 
         [Fact]
         public void AsEnumerable_ShouldReturnCorrectResult_WhenFirstIsNullableWithoutValue()
         {
             var second = Fixture.Create<int>();
-            var sut = Core.Pair.Create( (int?) null, second );
+            var sut = Core.Pair.Create( (int?)null, second );
 
             var result = sut.AsEnumerable();
 
-            result.Should().ContainInOrder( second );
+            result.Should().BeSequentiallyEqualTo( second );
         }
 
         [Fact]
         public void AsEnumerable_ShouldReturnCorrectResult_WhenNullableWithBothValues()
         {
             var (first, second) = Fixture.CreateDistinctCollection<int>( 2 );
-            var sut = Core.Pair.Create( (int?) first, (int?) second );
+            var sut = Core.Pair.Create( (int?)first, (int?)second );
 
             var result = sut.AsEnumerable();
 
-            result.Should().ContainInOrder( first, second );
+            result.Should().BeSequentiallyEqualTo( first, second );
         }
 
         [Fact]
         public void AsEnumerable_ShouldReturnCorrectResult_WhenNullableWithOnlyFirstValue()
         {
             var first = Fixture.Create<int>();
-            var sut = Core.Pair.Create( (int?) first, (int?) null );
+            var sut = Core.Pair.Create( (int?)first, (int?)null );
 
             var result = sut.AsEnumerable();
 
-            result.Should().ContainInOrder( first );
+            result.Should().BeSequentiallyEqualTo( first );
         }
 
         [Fact]
         public void AsEnumerable_ShouldReturnCorrectResult_WhenNullableWithOnlySecondValue()
         {
             var second = Fixture.Create<int>();
-            var sut = Core.Pair.Create( (int?) null, (int?) second );
+            var sut = Core.Pair.Create( (int?)null, (int?)second );
 
             var result = sut.AsEnumerable();
 
-            result.Should().ContainInOrder( second );
+            result.Should().BeSequentiallyEqualTo( second );
         }
 
         [Fact]
         public void AsEnumerable_ShouldReturnCorrectResult_WhenNullableWithNoValues()
         {
-            var sut = Core.Pair.Create( (int?) null, (int?) null );
+            var sut = Core.Pair.Create( (int?)null, (int?)null );
 
             var result = sut.AsEnumerable();
 

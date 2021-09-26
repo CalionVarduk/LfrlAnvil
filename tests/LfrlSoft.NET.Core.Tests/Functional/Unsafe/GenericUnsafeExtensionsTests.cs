@@ -17,7 +17,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         {
             var value = Fixture.CreateNotDefault<T>();
 
-            var sut = (Unsafe<T>) value;
+            var sut = (Unsafe<T>)value;
 
             var result = sut.ToMaybe();
 
@@ -33,7 +33,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         {
             var error = new Exception();
 
-            var sut = (Unsafe<T>) error;
+            var sut = (Unsafe<T>)error;
 
             var result = sut.ToMaybe();
 
@@ -45,7 +45,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         {
             var value = Fixture.Create<T>();
 
-            var sut = (Unsafe<T>) value;
+            var sut = (Unsafe<T>)value;
 
             var result = sut.ToEither();
 
@@ -61,7 +61,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         {
             var error = new Exception();
 
-            var sut = (Unsafe<T>) error;
+            var sut = (Unsafe<T>)error;
 
             var result = sut.ToEither();
 
@@ -77,7 +77,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         {
             var error = new Exception();
 
-            var sut = (Unsafe<Unsafe<T>>) error;
+            var sut = (Unsafe<Unsafe<T>>)error;
 
             var result = sut.Reduce();
 
@@ -92,9 +92,9 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         public void Reduce_ShouldReturnCorrectResult_WhenHasUnderlyingError()
         {
             var error = new Exception();
-            var underlying = (Unsafe<T>) error;
+            var underlying = (Unsafe<T>)error;
 
-            var sut = (Unsafe<Unsafe<T>>) underlying;
+            var sut = (Unsafe<Unsafe<T>>)underlying;
 
             var result = sut.Reduce();
 
@@ -109,9 +109,9 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         public void Reduce_ShouldReturnCorrectResult_WhenHasUnderlyingValue()
         {
             var value = Fixture.Create<T>();
-            var underlying = (Unsafe<T>) value;
+            var underlying = (Unsafe<T>)value;
 
-            var sut = (Unsafe<Unsafe<T>>) underlying;
+            var sut = (Unsafe<Unsafe<T>>)underlying;
 
             var result = sut.Reduce();
 

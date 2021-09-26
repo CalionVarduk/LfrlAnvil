@@ -32,7 +32,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Lambda
 
             sut( a1 );
 
-            action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().ContainInOrder( a1 );
+            action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( a1 );
         }
 
         [Fact]
@@ -45,7 +45,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Lambda
 
             sut( a1, a2 );
 
-            action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().ContainInOrder( a1, a2 );
+            action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( a1, a2 );
         }
 
         [Fact]
@@ -59,7 +59,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Lambda
 
             sut( a1, a2, a3 );
 
-            action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().ContainInOrder( a1, a2, a3 );
+            action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( a1, a2, a3 );
         }
 
         [Fact]
@@ -74,7 +74,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Lambda
 
             sut( a1, a2, a3, a4 );
 
-            action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().ContainInOrder( a1, a2, a3, a4 );
+            action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( a1, a2, a3, a4 );
         }
 
         [Fact]
@@ -90,7 +90,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Lambda
 
             sut( a1, a2, a3, a4, a5 );
 
-            action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().ContainInOrder( a1, a2, a3, a4, a5 );
+            action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( a1, a2, a3, a4, a5 );
         }
 
         [Fact]
@@ -107,7 +107,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Lambda
 
             sut( a1, a2, a3, a4, a5, a6 );
 
-            action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().ContainInOrder( a1, a2, a3, a4, a5, a6 );
+            action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( a1, a2, a3, a4, a5, a6 );
         }
 
         [Fact]
@@ -125,7 +125,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Lambda
 
             sut( a1, a2, a3, a4, a5, a6, a7 );
 
-            action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().ContainInOrder( a1, a2, a3, a4, a5, a6, a7 );
+            action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( a1, a2, a3, a4, a5, a6, a7 );
         }
 
         [Fact]
@@ -148,7 +148,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Lambda
 
             sut( a1 );
 
-            func.Verify().CallAt( 0 ).Exists().And.Arguments.Should().ContainInOrder( a1 );
+            func.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( a1 );
         }
 
         [Fact]
@@ -161,7 +161,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Lambda
 
             sut( a1, a2 );
 
-            func.Verify().CallAt( 0 ).Exists().And.Arguments.Should().ContainInOrder( a1, a2 );
+            func.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( a1, a2 );
         }
 
         [Fact]
@@ -175,7 +175,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Lambda
 
             sut( a1, a2, a3 );
 
-            func.Verify().CallAt( 0 ).Exists().And.Arguments.Should().ContainInOrder( a1, a2, a3 );
+            func.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( a1, a2, a3 );
         }
 
         [Fact]
@@ -190,7 +190,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Lambda
 
             sut( a1, a2, a3, a4 );
 
-            func.Verify().CallAt( 0 ).Exists().And.Arguments.Should().ContainInOrder( a1, a2, a3, a4 );
+            func.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( a1, a2, a3, a4 );
         }
 
         [Fact]
@@ -206,7 +206,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Lambda
 
             sut( a1, a2, a3, a4, a5 );
 
-            func.Verify().CallAt( 0 ).Exists().And.Arguments.Should().ContainInOrder( a1, a2, a3, a4, a5 );
+            func.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( a1, a2, a3, a4, a5 );
         }
 
         [Fact]
@@ -223,7 +223,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Lambda
 
             sut( a1, a2, a3, a4, a5, a6 );
 
-            func.Verify().CallAt( 0 ).Exists().And.Arguments.Should().ContainInOrder( a1, a2, a3, a4, a5, a6 );
+            func.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( a1, a2, a3, a4, a5, a6 );
         }
 
         [Fact]
@@ -241,7 +241,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Lambda
 
             sut( a1, a2, a3, a4, a5, a6, a7 );
 
-            func.Verify().CallAt( 0 ).Exists().And.Arguments.Should().ContainInOrder( a1, a2, a3, a4, a5, a6, a7 );
+            func.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( a1, a2, a3, a4, a5, a6, a7 );
         }
 
         [Fact]

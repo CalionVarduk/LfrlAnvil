@@ -2,6 +2,7 @@
 using FluentAssertions;
 using LfrlSoft.NET.Core.Extensions;
 using LfrlSoft.NET.TestExtensions;
+using LfrlSoft.NET.TestExtensions.FluentAssertions;
 using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.Extensions.Bounds
@@ -17,7 +18,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Bounds
 
             var result = sut.AsEnumerable();
 
-            result.Should().ContainInOrder( min, max );
+            result.Should().BeSequentiallyEqualTo( min, max );
         }
     }
 }

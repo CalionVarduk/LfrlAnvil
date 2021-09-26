@@ -768,20 +768,20 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Duration
             {
                 { 1, -1 },
                 { 1, -2 },
-                { 1, (int) Constants.TicksPerMillisecond },
-                { 1, (int) Constants.TicksPerMillisecond + 1 },
-                { 1, (int) Constants.TicksPerMillisecond + 2 },
+                { 1, (int)Constants.TicksPerMillisecond },
+                { 1, (int)Constants.TicksPerMillisecond + 1 },
+                { 1, (int)Constants.TicksPerMillisecond + 2 },
                 { -1, 1 },
                 { -1, 2 },
-                { -1, (int) -Constants.TicksPerMillisecond },
-                { -1, (int) -Constants.TicksPerMillisecond - 1 },
-                { -1, (int) -Constants.TicksPerMillisecond - 2 },
-                { 0, (int) Constants.TicksPerMillisecond },
-                { 0, (int) Constants.TicksPerMillisecond + 1 },
-                { 0, (int) Constants.TicksPerMillisecond + 2 },
-                { 0, (int) -Constants.TicksPerMillisecond },
-                { 0, (int) -Constants.TicksPerMillisecond - 1 },
-                { 0, (int) -Constants.TicksPerMillisecond - 2 }
+                { -1, (int)-Constants.TicksPerMillisecond },
+                { -1, (int)-Constants.TicksPerMillisecond - 1 },
+                { -1, (int)-Constants.TicksPerMillisecond - 2 },
+                { 0, (int)Constants.TicksPerMillisecond },
+                { 0, (int)Constants.TicksPerMillisecond + 1 },
+                { 0, (int)Constants.TicksPerMillisecond + 2 },
+                { 0, (int)-Constants.TicksPerMillisecond },
+                { 0, (int)-Constants.TicksPerMillisecond - 1 },
+                { 0, (int)-Constants.TicksPerMillisecond - 2 }
             };
         }
 

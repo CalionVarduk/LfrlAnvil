@@ -1,10 +1,10 @@
 ﻿using System;
+using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlSoft.NET.TestExtensions;
 using LfrlSoft.NET.TestExtensions.Attributes;
 using Xunit;
-using AutoFixture;
 
 namespace LfrlSoft.NET.Core.Tests.Chrono.Timestamp
 {

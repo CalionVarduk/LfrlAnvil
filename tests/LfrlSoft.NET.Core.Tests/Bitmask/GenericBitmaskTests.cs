@@ -5,6 +5,7 @@ using AutoFixture;
 using FluentAssertions;
 using LfrlSoft.NET.TestExtensions;
 using LfrlSoft.NET.TestExtensions.Attributes;
+using LfrlSoft.NET.TestExtensions.FluentAssertions;
 using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.Bitmask
@@ -303,7 +304,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
 
             var result = sut.AsEnumerable();
 
-            result.Should().ContainInOrder( expected );
+            result.Should().BeSequentiallyEqualTo( expected );
         }
 
         [Theory]
@@ -323,7 +324,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
             var value = Fixture.Create<T>();
             var sut = new Bitmask<T>( value );
 
-            var result = (T) sut;
+            var result = (T)sut;
 
             result.Should().Be( value );
         }
@@ -333,7 +334,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         {
             var value = Fixture.Create<T>();
 
-            var result = (Bitmask<T>) value;
+            var result = (Bitmask<T>)value;
 
             result.Value.Should().Be( value );
         }

@@ -34,6 +34,13 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Duration
             sut.Ticks.Should().Be( long.MaxValue );
         }
 
+        [Fact]
+        public void Default_ShouldReturnCorrectResult()
+        {
+            var sut = default( Core.Chrono.Duration );
+            sut.Ticks.Should().Be( 0 );
+        }
+
         [Theory]
         [MethodData( nameof( DurationTestsData.GetTicksData ) )]
         public void Ctor_WithTicks_ShouldCreateCorrectly(long ticks)
@@ -648,7 +655,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Duration
         public void TimeSpanConversionOperator_ShouldReturnCorrectResult(long ticks)
         {
             var sut = new Core.Chrono.Duration( ticks );
-            var result = (TimeSpan) sut;
+            var result = (TimeSpan)sut;
             result.Ticks.Should().Be( sut.Ticks );
         }
 

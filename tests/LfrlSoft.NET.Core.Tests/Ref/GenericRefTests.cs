@@ -42,7 +42,7 @@ namespace LfrlSoft.NET.Core.Tests.Ref
             var value = Fixture.Create<T>();
             var sut = new Ref<T>( value );
 
-            var result = (T) sut;
+            var result = (T)sut;
 
             result.Should().Be( value );
         }
@@ -52,7 +52,7 @@ namespace LfrlSoft.NET.Core.Tests.Ref
         {
             var value = Fixture.Create<T>();
 
-            var result = (Ref<T>) value;
+            var result = (Ref<T>)value;
 
             result.Value.Should().Be( value );
         }

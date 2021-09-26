@@ -22,7 +22,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         [MethodData( nameof( BitmaskOfEnumUnit32TestsData.GetSanitizeData ) )]
         public void Sanitize_ShouldReturnCorrectResult(uint value, TestEnumUInt32 expected)
         {
-            Sanitize_ShouldReturnCorrectResult_Impl( (TestEnumUInt32) value, expected );
+            Sanitize_ShouldReturnCorrectResult_Impl( (TestEnumUInt32)value, expected );
         }
     }
 }

@@ -6,6 +6,7 @@ using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlSoft.NET.Core.Collections;
 using LfrlSoft.NET.TestExtensions;
+using LfrlSoft.NET.TestExtensions.FluentAssertions;
 using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.Collections.Heap
@@ -109,11 +110,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Heap
 
             sut.Add( item );
 
-            using ( new AssertionScope() )
-            {
-                sut.Count.Should().Be( 2 );
-                sut.Should().ContainInOrder( new[] { item, other } );
-            }
+            sut.Should().BeSequentiallyEqualTo( item, other );
         }
 
         [Fact]
@@ -125,11 +122,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Heap
 
             sut.Add( item );
 
-            using ( new AssertionScope() )
-            {
-                sut.Count.Should().Be( 2 );
-                sut.Should().ContainInOrder( new[] { other, item } );
-            }
+            sut.Should().BeSequentiallyEqualTo( other, item );
         }
 
         [Fact]
@@ -141,11 +134,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Heap
 
             sut.Add( item );
 
-            using ( new AssertionScope() )
-            {
-                sut.Count.Should().Be( 3 );
-                sut.Should().ContainInOrder( new[] { other, left, item } );
-            }
+            sut.Should().BeSequentiallyEqualTo( other, left, item );
         }
 
         [Fact]
@@ -223,7 +212,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Heap
             {
                 result.Should().BeTrue();
                 peeked.Should().Be( expected );
-                sut.Should().ContainInOrder( heapifiedItems );
+                sut.Should().BeSequentiallyEqualTo( heapifiedItems );
             }
         }
 
@@ -389,7 +378,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Heap
             {
                 result.Should().BeTrue();
                 replaced.Should().Be( oldItem );
-                sut.Should().ContainInOrder( new[] { newItem } );
+                sut.Should().BeSequentiallyEqualTo( newItem );
             }
         }
 

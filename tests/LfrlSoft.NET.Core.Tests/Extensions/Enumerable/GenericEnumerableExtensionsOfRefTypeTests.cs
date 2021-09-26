@@ -4,6 +4,7 @@ using AutoFixture;
 using FluentAssertions;
 using LfrlSoft.NET.Core.Extensions;
 using LfrlSoft.NET.TestExtensions;
+using LfrlSoft.NET.TestExtensions.FluentAssertions;
 using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
@@ -19,7 +20,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
 
             var result = sut.WhereNotNull();
 
-            result.Should().ContainInOrder( expected );
+            result.Should().BeSequentiallyEqualTo( expected );
         }
 
         [Fact]
@@ -29,7 +30,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
 
             var result = sut.WhereNotNull();
 
-            result.Should().ContainInOrder( sut );
+            result.Should().BeSequentiallyEqualTo( sut );
         }
 
         [Fact]
@@ -40,7 +41,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
 
             var result = sut.WhereNotNull( EqualityComparer<T>.Default );
 
-            result.Should().ContainInOrder( expected );
+            result.Should().BeSequentiallyEqualTo( expected );
         }
 
         [Fact]
@@ -50,7 +51,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
 
             var result = sut.WhereNotNull( EqualityComparer<T>.Default );
 
-            result.Should().ContainInOrder( sut );
+            result.Should().BeSequentiallyEqualTo( sut );
         }
 
         [Fact]

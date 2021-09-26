@@ -537,7 +537,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Mutation
             var (oldValue, value) = Fixture.CreateDistinctCollection<T>( 2 );
             var sut = new Mutation<T>( oldValue, value );
 
-            var result = (T) sut;
+            var result = (T)sut;
 
             result.Should().Be( value );
         }
@@ -545,7 +545,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Mutation
         [Fact]
         public void MutationConversionOperator_FromNil_ShouldReturnCorrectResult()
         {
-            var result = (Mutation<T>) Core.Functional.Nil.Instance;
+            var result = (Mutation<T>)Core.Functional.Nil.Instance;
 
             using ( new AssertionScope() )
             {

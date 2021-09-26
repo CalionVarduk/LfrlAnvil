@@ -72,7 +72,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
             using ( new AssertionScope() )
             {
                 result.Should().Be( returnedValue );
-                bothDelegate.Verify().CallAt( 0 ).Exists().And.Arguments.Should().ContainInOrder( value, otherValue );
+                bothDelegate.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( value, otherValue );
                 firstDelegate.Verify().CallCount.Should().Be( 0 );
                 secondDelegate.Verify().CallCount.Should().Be( 0 );
                 noneDelegate.Verify().CallCount.Should().Be( 0 );
@@ -171,7 +171,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
 
             using ( new AssertionScope() )
             {
-                bothDelegate.Verify().CallAt( 0 ).Exists().And.Arguments.Should().ContainInOrder( value, otherValue );
+                bothDelegate.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( value, otherValue );
                 firstDelegate.Verify().CallCount.Should().Be( 0 );
                 secondDelegate.Verify().CallCount.Should().Be( 0 );
                 noneDelegate.Verify().CallCount.Should().Be( 0 );

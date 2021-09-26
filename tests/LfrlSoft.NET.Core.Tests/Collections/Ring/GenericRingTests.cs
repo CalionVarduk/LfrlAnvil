@@ -9,6 +9,7 @@ using LfrlSoft.NET.Core.Collections.Internal;
 using LfrlSoft.NET.Core.Extensions;
 using LfrlSoft.NET.Core.Internal;
 using LfrlSoft.NET.TestExtensions;
+using LfrlSoft.NET.TestExtensions.FluentAssertions;
 using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.Collections.Ring
@@ -245,7 +246,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Ring
             var sut = new Ring<T>( items );
             var result = sut.Read( readIndex );
 
-            result.Should().ContainInOrder( expected );
+            result.Should().BeSequentiallyEqualTo( expected );
         }
 
         [Theory]
@@ -264,7 +265,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Ring
 
             var sut = new Ring<T>( items ) { WriteIndex = writeIndex };
 
-            sut.Should().ContainInOrder( expected );
+            sut.Should().BeSequentiallyEqualTo( expected );
         }
 
         [Theory]

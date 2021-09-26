@@ -6,6 +6,7 @@ using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlSoft.NET.Core.Collections;
 using LfrlSoft.NET.TestExtensions;
+using LfrlSoft.NET.TestExtensions.FluentAssertions;
 using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.Collections.FixedCache
@@ -420,7 +421,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.FixedCache
 
             var result = sut.Keys;
 
-            result.Should().ContainInOrder( keys[0], keys[1] );
+            result.Should().BeSequentiallyEqualTo( keys[0], keys[1] );
         }
 
         [Fact]
@@ -435,7 +436,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.FixedCache
 
             var result = sut.Keys;
 
-            result.Should().ContainInOrder( keys[^3], keys[^2], keys[^1] );
+            result.Should().BeSequentiallyEqualTo( keys[^3], keys[^2], keys[^1] );
         }
 
         [Fact]
@@ -450,7 +451,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.FixedCache
 
             var result = sut.Values;
 
-            result.Should().ContainInOrder( values[0], values[1] );
+            result.Should().BeSequentiallyEqualTo( values[0], values[1] );
         }
 
         [Fact]
@@ -465,7 +466,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.FixedCache
 
             var result = sut.Values;
 
-            result.Should().ContainInOrder( values[^3], values[^2], values[^1] );
+            result.Should().BeSequentiallyEqualTo( values[^3], values[^2], values[^1] );
         }
 
         [Fact]
@@ -484,7 +485,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.FixedCache
             foreach ( var (key, value) in keys.Zip( values ) )
                 sut.Add( key, value );
 
-            sut.Should().ContainInOrder( expected );
+            sut.Should().BeSequentiallyEqualTo( expected );
         }
 
         [Fact]
@@ -504,7 +505,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.FixedCache
             foreach ( var (key, value) in keys.Zip( values ) )
                 sut.Add( key, value );
 
-            sut.Should().ContainInOrder( expected );
+            sut.Should().BeSequentiallyEqualTo( expected );
         }
     }
 }

@@ -31,7 +31,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
         [Fact]
         public void StaticNone_ShouldNotHaveValue()
         {
-            var sut = (Maybe<T>) Core.Functional.Maybe.None;
+            var sut = (Maybe<T>)Core.Functional.Maybe.None;
 
             using ( new AssertionScope() )
             {
@@ -479,7 +479,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
         {
             var value = Fixture.CreateNotDefault<T>();
 
-            var sut = (Maybe<T>) value;
+            var sut = (Maybe<T>)value;
 
             using ( new AssertionScope() )
             {
@@ -491,7 +491,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
         [Fact]
         public void MaybeConversionOperator_FromNil_ReturnNone()
         {
-            var sut = (Maybe<T>) Core.Functional.Nil.Instance;
+            var sut = (Maybe<T>)Core.Functional.Nil.Instance;
 
             sut.HasValue.Should().BeFalse();
         }
@@ -503,7 +503,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
 
             var sut = Core.Functional.Maybe.Some( value );
 
-            var result = (T) sut;
+            var result = (T)sut;
 
             result.Should().Be( value );
         }
@@ -515,7 +515,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
 
             Action action = () =>
             {
-                var _ = (T) sut;
+                var _ = (T)sut;
             };
 
             action.Should().Throw<ArgumentNullException>();
@@ -576,7 +576,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
 
             var sut = Core.Functional.Maybe.Some( value );
 
-            sut.Should().ContainInOrder( value );
+            sut.Should().BeSequentiallyEqualTo( value );
         }
 
         [Fact]

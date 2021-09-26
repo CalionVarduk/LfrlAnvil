@@ -70,6 +70,18 @@ namespace LfrlSoft.NET.TestExtensions
             v4 = list[3];
         }
 
+        public static void Deconstruct<T>(this IReadOnlyList<T> list, out T v1, out T v2, out T v3, out T v4, out T v5)
+        {
+            list.Deconstruct( out v1, out v2, out v3, out v4 );
+            v5 = list[4];
+        }
+
+        public static void Deconstruct<T>(this IReadOnlyList<T> list, out T v1, out T v2, out T v3, out T v4, out T v5, out T v6)
+        {
+            list.Deconstruct( out v1, out v2, out v3, out v4, out v5 );
+            v6 = list[5];
+        }
+
         public static IEnumerable<object?[]> ConvertResult<TSource, TDest>(this IEnumerable<object?[]> source, Func<TSource, TDest> mapper)
         {
             return source

@@ -11,7 +11,7 @@ namespace LfrlSoft.NET.TestExtensions.FluentAssertions
         internal NSubstituteDelegateMockAssertions(T @delegate)
             : base( @delegate ) { }
 
-        public new T Subject => (T) base.Subject;
+        public new T Subject => (T)base.Subject;
         public int CallCount => Subject.ReceivedCalls().Count();
 
         public NSubstituteDelegateMockCallAssertions<T> CallAt(int callIndex)
