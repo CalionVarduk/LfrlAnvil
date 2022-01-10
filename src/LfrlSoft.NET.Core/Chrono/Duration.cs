@@ -43,14 +43,14 @@ namespace LfrlSoft.NET.Core.Chrono
         public long FullSeconds => Ticks / Constants.TicksPerSecond;
         public long FullMinutes => Ticks / Constants.TicksPerMinute;
         public long FullHours => Ticks / Constants.TicksPerHour;
-        public int TicksInMillisecond => (int) (Ticks % Constants.TicksPerMillisecond);
-        public int MillisecondsInSecond => (int) (Ticks / Constants.TicksPerMillisecond % Constants.MillisecondsPerSecond);
-        public int SecondsInMinute => (int) (Ticks / Constants.TicksPerSecond % Constants.SecondsPerMinute);
-        public int MinutesInHour => (int) (Ticks / Constants.TicksPerMinute % Constants.MinutesPerHour);
-        public double TotalMilliseconds => (double) Ticks / Constants.TicksPerMillisecond;
-        public double TotalSeconds => (double) Ticks / Constants.TicksPerSecond;
-        public double TotalMinutes => (double) Ticks / Constants.TicksPerMinute;
-        public double TotalHours => (double) Ticks / Constants.TicksPerHour;
+        public int TicksInMillisecond => (int)(Ticks % Constants.TicksPerMillisecond);
+        public int MillisecondsInSecond => (int)(Ticks / Constants.TicksPerMillisecond % Constants.MillisecondsPerSecond);
+        public int SecondsInMinute => (int)(Ticks / Constants.TicksPerSecond % Constants.SecondsPerMinute);
+        public int MinutesInHour => (int)(Ticks / Constants.TicksPerMinute % Constants.MinutesPerHour);
+        public double TotalMilliseconds => (double)Ticks / Constants.TicksPerMillisecond;
+        public double TotalSeconds => (double)Ticks / Constants.TicksPerSecond;
+        public double TotalMinutes => (double)Ticks / Constants.TicksPerMinute;
+        public double TotalHours => (double)Ticks / Constants.TicksPerHour;
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -63,7 +63,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static Duration FromMilliseconds(double milliseconds)
         {
-            return new Duration( (long) Math.Round( milliseconds * Constants.TicksPerMillisecond ) );
+            return new Duration( (long)Math.Round( milliseconds * Constants.TicksPerMillisecond, MidpointRounding.AwayFromZero ) );
         }
 
         [Pure]
@@ -77,7 +77,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static Duration FromSeconds(double seconds)
         {
-            return new Duration( (long) Math.Round( seconds * Constants.TicksPerSecond ) );
+            return new Duration( (long)Math.Round( seconds * Constants.TicksPerSecond, MidpointRounding.AwayFromZero ) );
         }
 
         [Pure]
@@ -91,7 +91,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static Duration FromMinutes(double minutes)
         {
-            return new Duration( (long) Math.Round( minutes * Constants.TicksPerMinute ) );
+            return new Duration( (long)Math.Round( minutes * Constants.TicksPerMinute, MidpointRounding.AwayFromZero ) );
         }
 
         [Pure]
@@ -105,7 +105,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static Duration FromHours(double hours)
         {
-            return new Duration( (long) Math.Round( hours * Constants.TicksPerHour ) );
+            return new Duration( (long)Math.Round( hours * Constants.TicksPerHour, MidpointRounding.AwayFromZero ) );
         }
 
         [Pure]
@@ -179,7 +179,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Duration AddMilliseconds(double milliseconds)
         {
-            return AddTicks( (long) Math.Round( milliseconds * Constants.TicksPerMillisecond ) );
+            return AddTicks( (long)Math.Round( milliseconds * Constants.TicksPerMillisecond, MidpointRounding.AwayFromZero) );
         }
 
         [Pure]
@@ -193,7 +193,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Duration AddSeconds(double seconds)
         {
-            return AddTicks( (long) Math.Round( seconds * Constants.TicksPerSecond ) );
+            return AddTicks( (long)Math.Round( seconds * Constants.TicksPerSecond, MidpointRounding.AwayFromZero ) );
         }
 
         [Pure]
@@ -207,7 +207,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Duration AddMinutes(double minutes)
         {
-            return AddTicks( (long) Math.Round( minutes * Constants.TicksPerMinute ) );
+            return AddTicks( (long)Math.Round( minutes * Constants.TicksPerMinute, MidpointRounding.AwayFromZero ) );
         }
 
         [Pure]
@@ -221,7 +221,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Duration AddHours(double hours)
         {
-            return AddTicks( (long) Math.Round( hours * Constants.TicksPerHour ) );
+            return AddTicks( (long)Math.Round( hours * Constants.TicksPerHour, MidpointRounding.AwayFromZero ) );
         }
 
         [Pure]
@@ -249,7 +249,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Duration SubtractMilliseconds(double milliseconds)
         {
-            return SubtractTicks( (long) Math.Round( milliseconds * Constants.TicksPerMillisecond ) );
+            return SubtractTicks( (long)Math.Round( milliseconds * Constants.TicksPerMillisecond, MidpointRounding.AwayFromZero ) );
         }
 
         [Pure]
@@ -263,7 +263,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Duration SubtractSeconds(double seconds)
         {
-            return SubtractTicks( (long) Math.Round( seconds * Constants.TicksPerSecond ) );
+            return SubtractTicks( (long)Math.Round( seconds * Constants.TicksPerSecond, MidpointRounding.AwayFromZero ) );
         }
 
         [Pure]
@@ -277,7 +277,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Duration SubtractMinutes(double minutes)
         {
-            return SubtractTicks( (long) Math.Round( minutes * Constants.TicksPerMinute ) );
+            return SubtractTicks( (long)Math.Round( minutes * Constants.TicksPerMinute, MidpointRounding.AwayFromZero ) );
         }
 
         [Pure]
@@ -291,7 +291,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Duration SubtractHours(double hours)
         {
-            return SubtractTicks( (long) Math.Round( hours * Constants.TicksPerHour ) );
+            return SubtractTicks( (long)Math.Round( hours * Constants.TicksPerHour, MidpointRounding.AwayFromZero ) );
         }
 
         [Pure]
@@ -299,6 +299,23 @@ namespace LfrlSoft.NET.Core.Chrono
         public Duration SubtractHours(long hours)
         {
             return SubtractTicks( hours * Constants.TicksPerHour );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public Duration Multiply(double multiplier)
+        {
+            return FromTicks( (long)Math.Round( Ticks * multiplier, MidpointRounding.AwayFromZero ) );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public Duration Divide(double divisor)
+        {
+            if ( divisor == 0 )
+                throw new DivideByZeroException("Attempted to divide by zero.");
+
+            return FromTicks( (long)Math.Round( Ticks / divisor, MidpointRounding.AwayFromZero ) );
         }
 
         [Pure]
@@ -415,6 +432,20 @@ namespace LfrlSoft.NET.Core.Chrono
         public static Duration operator -(Duration a, Duration b)
         {
             return a.Subtract( b );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static Duration operator *(Duration a, double b)
+        {
+            return a.Multiply( b );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static Duration operator /(Duration a, double b)
+        {
+            return a.Divide( b );
         }
 
         [Pure]

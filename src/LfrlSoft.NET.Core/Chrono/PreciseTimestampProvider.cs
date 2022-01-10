@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 
 namespace LfrlSoft.NET.Core.Chrono
 {
@@ -20,14 +19,13 @@ namespace LfrlSoft.NET.Core.Chrono
 
         public double MaxIdleTimeInTicks { get; }
 
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Timestamp GetNow()
         {
             var endTimestamp = Stopwatch.GetTimestamp();
             var idleTimeInTicks = (endTimestamp - _startTimestamp) / Stopwatch.Frequency * TimeSpan.TicksPerSecond;
 
             if ( idleTimeInTicks < MaxIdleTimeInTicks )
-                return new Timestamp( _utcStartTicks + (long) idleTimeInTicks );
+                return new Timestamp( _utcStartTicks + (long)idleTimeInTicks );
 
             _startTimestamp = Stopwatch.GetTimestamp();
             _utcStartTicks = DateTime.UtcNow.Ticks - DateTime.UnixEpoch.Ticks;

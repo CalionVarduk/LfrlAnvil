@@ -145,6 +145,14 @@ namespace LfrlSoft.NET.Core.Extensions
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEnumerable<T?> AsNullable<T>(this IEnumerable<T> source)
+            where T : struct
+        {
+            return source.Select(e => (T?)e);
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static IEnumerable<Pair<T1, T2>> Flatten<T1, T2>(this IEnumerable<T1> source, Func<T1, IEnumerable<T2>> selector)
         {
             return source.Flatten( selector, Pair.Create );

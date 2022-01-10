@@ -690,6 +690,44 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Duration
             };
         }
 
+        public static TheoryData<long, double, long> GetMultiplyData(IFixture fixture)
+        {
+            return new()
+            {
+                { 0, 0.0, 0 },
+                { 1, 0.0, 0 },
+                { -1, 0.0, 0 },
+                { 5, 1.0, 5 },
+                { -5, -1.0, 5 },
+                { 5, -1.0, -5 },
+                { -5, 1.0, -5 },
+                { 2, 1.5, 3 },
+                { 3, 1.5, 5 },
+                { 4, 0.5, 2 },
+                { 5, 0.5, 3 },
+                { 7, 11.0, 77 },
+                { 7, -11.0, -77 }
+            };
+        }
+
+        public static TheoryData<long, double, long> GetDivideData(IFixture fixture)
+        {
+            return new()
+            {
+                { 0, 1.0, 0 },
+                { 5, 1.0, 5 },
+                { -5, -1.0, 5 },
+                { 5, -1.0, -5 },
+                { -5, 1.0, -5 },
+                { 2, 0.666, 3 },
+                { 3, 0.666, 5 },
+                { 4, 2.0, 2 },
+                { 5, 2.0, 3 },
+                { 77, 11.0, 7 },
+                { 77, -11.0, -7 }
+            };
+        }
+
         public static TheoryData<long, long> GetTrimToMillisecondData(IFixture fixture)
         {
             return new()

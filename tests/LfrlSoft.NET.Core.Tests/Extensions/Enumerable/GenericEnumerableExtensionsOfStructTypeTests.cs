@@ -116,6 +116,16 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
         }
 
         [Fact]
+        public void AsNullable_ShouldReturnCorrectResult()
+        {
+            var sut = Fixture.CreateMany<T>();
+
+            var result = sut.AsNullable();
+
+            result.Select( r => r.Value ).Should().BeSequentiallyEqualTo( sut );
+        }
+
+        [Fact]
         public void ToMultiSet_ShouldReturnCorrectResult()
         {
             var distinctItems = Fixture.CreateDistinctCollection<T>( 5 );

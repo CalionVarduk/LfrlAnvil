@@ -500,6 +500,32 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Duration
         }
 
         [Theory]
+        [MethodData( nameof( DurationTestsData.GetMultiplyData ) )]
+        public void Multiply_ShouldReturnCorrectResult(long ticks, double multiplier, long expectedTicks)
+        {
+            var sut = new Core.Chrono.Duration( ticks );
+            var result = sut.Multiply( multiplier );
+            result.Ticks.Should().Be( expectedTicks );
+        }
+
+        [Fact]
+        public void Divide_ShouldThrowDivideByZeroException_WhenDivisorIsZero()
+        {
+            var sut = Core.Chrono.Duration.FromTicks( Fixture.Create<long>() );
+            var action = Lambda.Of( () => sut.Divide( 0 ) );
+            action.Should().ThrowExactly<DivideByZeroException>();
+        }
+
+        [Theory]
+        [MethodData( nameof( DurationTestsData.GetDivideData ) )]
+        public void Divide_ShouldReturnCorrectResult(long ticks, double divisor, long expectedTicks)
+        {
+            var sut = new Core.Chrono.Duration( ticks );
+            var result = sut.Divide( divisor );
+            result.Ticks.Should().Be( expectedTicks );
+        }
+
+        [Theory]
         [MethodData( nameof( DurationTestsData.GetTrimToMillisecondData ) )]
         public void TrimToMillisecond_ShouldReturnCorrectResult(long ticks, long expectedTicks)
         {
@@ -689,6 +715,32 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Duration
 
             var result = sut - other;
 
+            result.Ticks.Should().Be( expectedTicks );
+        }
+
+        [Theory]
+        [MethodData( nameof( DurationTestsData.GetMultiplyData ) )]
+        public void MultiplyOperator_ShouldReturnCorrectResult(long ticks, double multiplier, long expectedTicks)
+        {
+            var sut = new Core.Chrono.Duration( ticks );
+            var result = sut * multiplier;
+            result.Ticks.Should().Be( expectedTicks );
+        }
+
+        [Fact]
+        public void DivideOperator_ShouldThrowDivideByZeroException_WhenDivisorIsZero()
+        {
+            var sut = Core.Chrono.Duration.FromTicks( Fixture.Create<long>() );
+            var action = Lambda.Of( () => sut / 0 );
+            action.Should().ThrowExactly<DivideByZeroException>();
+        }
+
+        [Theory]
+        [MethodData( nameof( DurationTestsData.GetDivideData ) )]
+        public void DivideOperator_ShouldReturnCorrectResult(long ticks, double divisor, long expectedTicks)
+        {
+            var sut = new Core.Chrono.Duration( ticks );
+            var result = sut / divisor;
             result.Ticks.Should().Be( expectedTicks );
         }
 
