@@ -753,6 +753,48 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             result.Should().Be( expected );
         }
 
+        [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetGetOppositeAmbiguousDateTimeWithUnambiguousData ) )]
+        public void GetOppositeAmbiguousDateTime_WithUnambiguousDateTime_ShouldReturnCorrectResult(
+            DateTime dateTime,
+            TimeZoneInfo timeZone)
+        {
+            var sut = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
+            var result = sut.GetOppositeAmbiguousDateTime();
+            result.Should().Be( sut );
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetGetOppositeAmbiguousDateTimeData ) )]
+        public void GetOppositeAmbiguousDateTime_ShouldReturnCorrectResult(
+            DateTime utcDateTime,
+            TimeZoneInfo timeZone,
+            DateTime expectedUtcDateTime)
+        {
+            var sut = Core.Chrono.ZonedDateTime.CreateUtc( utcDateTime ).ToTimeZone( timeZone );
+
+            var result = sut.GetOppositeAmbiguousDateTime();
+
+            var daylightSavingOffset = timeZone.GetAdjustmentRules()[0].DaylightDelta;
+            var expectedUtcOffset = sut.IsInDaylightSavingTime
+                ? timeZone.BaseUtcOffset
+                : timeZone.BaseUtcOffset + daylightSavingOffset;
+
+            using ( new AssertionScope() )
+            {
+                result.Timestamp.Should().Be( new Core.Chrono.Timestamp( expectedUtcDateTime ) );
+                result.Value.Should().Be( sut.Value );
+                result.Value.Kind.Should().Be( sut.Value.Kind );
+                result.TimeZone.Should().Be( sut.TimeZone );
+                result.UtcOffset.Should().Be( new Core.Chrono.Duration( expectedUtcOffset ) );
+                result.TimeOfDay.Should().Be( sut.TimeOfDay );
+                result.IsLocal.Should().Be( sut.IsLocal );
+                result.IsUtc.Should().Be( sut.IsUtc );
+                result.IsInDaylightSavingTime.Should().Be( ! sut.IsInDaylightSavingTime );
+                result.IsAmbiguous.Should().BeTrue();
+            }
+        }
+
         [Fact]
         public void DateTimeConversionOperator_ShouldReturnCorrectResult()
         {

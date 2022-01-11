@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using LfrlSoft.NET.Core.Chrono.Exceptions;
 
@@ -195,7 +196,24 @@ namespace LfrlSoft.NET.Core.Chrono
 
         // TODO (LF): add methods that allow to set component (year, month, dayinmonth, dayinweek (via enum), hour, minute, second, ms, tickinms) + time of day
 
-        // TODO (LF): add method -> GetOppositeAmbiguousDateTime()
+        [Pure]
+        public ZonedDateTime GetOppositeAmbiguousDateTime()
+        {
+            if ( ! IsAmbiguous )
+                return this;
+
+            var value = Value;
+
+            var activeAdjustmentRule = TimeZone
+                .GetAdjustmentRules()
+                .First(r => r.DateStart <= value && r.DateEnd >= value );
+
+            var daylightDelta = new Duration( activeAdjustmentRule.DaylightDelta );
+
+            return IsInDaylightSavingTime
+                ? new ZonedDateTime( Timestamp.Add( daylightDelta ), Value, TimeZone )
+                : new ZonedDateTime( Timestamp.Subtract( daylightDelta ), Value, TimeZone );
+        }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]

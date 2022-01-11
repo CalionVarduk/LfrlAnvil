@@ -1068,6 +1068,126 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             };
         }
 
+        public static TheoryData<DateTime, TimeZoneInfo> GetGetOppositeAmbiguousDateTimeWithUnambiguousData(
+            IFixture fixture)
+        {
+            var (tStart, tEnd) = (new DateTime( 1, 3, 26, 12, 0, 0 ), new DateTime( 1, 9, 26, 12, 0, 0 ));
+
+            return new TheoryData<DateTime, TimeZoneInfo>
+            {
+                { new DateTime( 2021, 9, 26, 12, 0, 0 ), GetTimeZone( "1", 1 ) },
+                { new DateTime( 2021, 9, 26, 12, 0, 0 ), GetTimeZone( "1 (+DS)", 1, tStart, tEnd ) },
+                { new DateTime( 2021, 9, 26, 10, 59, 59, 999 ).AddTicks( 9999 ), GetTimeZone( "1 (+DS)", 1, tStart, tEnd ) },
+                { new DateTime( 2021, 3, 26, 12, 0, 0 ), GetTimeZone( "1 (+DS)", 1, tStart, tEnd, daylightSavingOffsetInHours: -1 ) },
+                {
+                    new DateTime( 2021, 3, 26, 10, 59, 59, 999 ).AddTicks( 9999 ),
+                    GetTimeZone( "1 (+DS)", 1, tStart, tEnd, daylightSavingOffsetInHours: -1 )
+                }
+            };
+        }
+
+        public static TheoryData<DateTime, TimeZoneInfo, DateTime> GetGetOppositeAmbiguousDateTimeData(
+            IFixture fixture)
+        {
+            var (tStart, tEnd) = (new DateTime( 1, 3, 26, 12, 0, 0 ), new DateTime( 1, 9, 26, 12, 0, 0 ));
+
+            return new TheoryData<DateTime, TimeZoneInfo, DateTime>
+            {
+                { new DateTime( 2021, 9, 26, 9, 0, 0 ), GetTimeZone( "1 (+DS)", 1, tStart, tEnd ), new DateTime( 2021, 9, 26, 10, 0, 0 ) },
+                { new DateTime( 2021, 9, 26, 10, 0, 0 ), GetTimeZone( "1 (+DS)", 1, tStart, tEnd ), new DateTime( 2021, 9, 26, 9, 0, 0 ) },
+                {
+                    new DateTime( 2021, 9, 26, 9, 30, 0 ),
+                    GetTimeZone( "1 (+DS)", 1, tStart, tEnd ),
+                    new DateTime( 2021, 9, 26, 10, 30, 0 )
+                },
+                {
+                    new DateTime( 2021, 9, 26, 10, 30, 0 ),
+                    GetTimeZone( "1 (+DS)", 1, tStart, tEnd ),
+                    new DateTime( 2021, 9, 26, 9, 30, 0 )
+                },
+                {
+                    new DateTime( 2021, 9, 26, 9, 59, 59, 999 ).AddTicks( 9999 ),
+                    GetTimeZone( "1 (+DS)", 1, tStart, tEnd ),
+                    new DateTime( 2021, 9, 26, 10, 59, 59, 999 ).AddTicks( 9999 )
+                },
+                {
+                    new DateTime( 2021, 9, 26, 10, 59, 59, 999 ).AddTicks( 9999 ),
+                    GetTimeZone( "1 (+DS)", 1, tStart, tEnd ),
+                    new DateTime( 2021, 9, 26, 9, 59, 59, 999 ).AddTicks( 9999 )
+                },
+                {
+                    new DateTime( 2021, 9, 26, 7, 0, 0 ),
+                    GetTimeZone( "1 (+DS)", 1, tStart, tEnd, daylightSavingOffsetInHours: 3 ),
+                    new DateTime( 2021, 9, 26, 10, 0, 0 )
+                },
+                {
+                    new DateTime( 2021, 9, 26, 10, 0, 0 ),
+                    GetTimeZone( "1 (+DS)", 1, tStart, tEnd, daylightSavingOffsetInHours: 3 ),
+                    new DateTime( 2021, 9, 26, 7, 0, 0 )
+                },
+                {
+                    new DateTime( 2021, 9, 26, 7, 59, 59, 999 ).AddTicks( 9999 ),
+                    GetTimeZone( "1 (+DS)", 1, tStart, tEnd, daylightSavingOffsetInHours: 3 ),
+                    new DateTime( 2021, 9, 26, 10, 59, 59, 999 ).AddTicks( 9999 )
+                },
+                {
+                    new DateTime( 2021, 9, 26, 10, 59, 59, 999 ).AddTicks( 9999 ),
+                    GetTimeZone( "1 (+DS)", 1, tStart, tEnd, daylightSavingOffsetInHours: 3 ),
+                    new DateTime( 2021, 9, 26, 7, 59, 59, 999 ).AddTicks( 9999 )
+                },
+                {
+                    new DateTime( 2021, 3, 26, 10, 0, 0 ),
+                    GetTimeZone( "1 (-DS)", 1, tStart, tEnd, daylightSavingOffsetInHours: -1 ),
+                    new DateTime( 2021, 3, 26, 11, 0, 0 )
+                },
+                {
+                    new DateTime( 2021, 3, 26, 11, 0, 0 ),
+                    GetTimeZone( "1 (-DS)", 1, tStart, tEnd, daylightSavingOffsetInHours: -1 ),
+                    new DateTime( 2021, 3, 26, 10, 0, 0 )
+                },
+                {
+                    new DateTime( 2021, 3, 26, 10, 30, 0 ),
+                    GetTimeZone( "1 (-DS)", 1, tStart, tEnd, daylightSavingOffsetInHours: -1 ),
+                    new DateTime( 2021, 3, 26, 11, 30, 0 )
+                },
+                {
+                    new DateTime( 2021, 3, 26, 11, 30, 0 ),
+                    GetTimeZone( "1 (-DS)", 1, tStart, tEnd, daylightSavingOffsetInHours: -1 ),
+                    new DateTime( 2021, 3, 26, 10, 30, 0 )
+                },
+                {
+                    new DateTime( 2021, 3, 26, 10, 59, 59, 999 ).AddTicks( 9999 ),
+                    GetTimeZone( "1 (-DS)", 1, tStart, tEnd, daylightSavingOffsetInHours: -1 ),
+                    new DateTime( 2021, 3, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
+                },
+                {
+                    new DateTime( 2021, 3, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
+                    GetTimeZone( "1 (-DS)", 1, tStart, tEnd, daylightSavingOffsetInHours: -1 ),
+                    new DateTime( 2021, 3, 26, 10, 59, 59, 999 ).AddTicks( 9999 )
+                },
+                {
+                    new DateTime( 2021, 3, 26, 8, 0, 0 ),
+                    GetTimeZone( "1 (-DS)", 1, tStart, tEnd, daylightSavingOffsetInHours: -3 ),
+                    new DateTime( 2021, 3, 26, 11, 0, 0 )
+                },
+                {
+                    new DateTime( 2021, 3, 26, 11, 0, 0 ),
+                    GetTimeZone( "1 (-DS)", 1, tStart, tEnd, daylightSavingOffsetInHours: -3 ),
+                    new DateTime( 2021, 3, 26, 8, 0, 0 )
+                },
+                {
+                    new DateTime( 2021, 3, 26, 8, 59, 59, 999 ).AddTicks( 9999 ),
+                    GetTimeZone( "1 (-DS)", 1, tStart, tEnd, daylightSavingOffsetInHours: -3 ),
+                    new DateTime( 2021, 3, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
+                },
+                {
+                    new DateTime( 2021, 3, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
+                    GetTimeZone( "1 (-DS)", 1, tStart, tEnd, daylightSavingOffsetInHours: -3 ),
+                    new DateTime( 2021, 3, 26, 8, 59, 59, 999 ).AddTicks( 9999 )
+                }
+            };
+        }
+
         public static IEnumerable<object?[]> GetNotEqualsData(IFixture fixture)
         {
             return GetEqualsData( fixture ).ConvertResult( (bool r) => ! r );
