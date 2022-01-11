@@ -43,6 +43,8 @@ namespace LfrlSoft.NET.Core.Chrono
             return new ZonedDateTime( timestamp, dateTime, timeZone );
         }
 
+        // TODO (LF): add TryCreate static method
+
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static ZonedDateTime CreateUtc(Timestamp timestamp)
