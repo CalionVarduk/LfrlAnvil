@@ -3,6 +3,7 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using LfrlSoft.NET.Core.Chrono.Exceptions;
+using LfrlSoft.NET.Core.Chrono.Extensions;
 
 namespace LfrlSoft.NET.Core.Chrono
 {
@@ -29,21 +30,32 @@ namespace LfrlSoft.NET.Core.Chrono
         public bool IsAmbiguous => TimeZone.IsAmbiguousTime( Value );
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static ZonedDateTime Create(DateTime dateTime, TimeZoneInfo timeZone)
         {
-            var kind = GetExpectedDateTimeKind( timeZone );
+            if ( ! TryCreate( dateTime, timeZone, out var result ) )
+                throw new InvalidZonedDateTimeException( dateTime, timeZone );
+
+            return result;
+        }
+
+        public static bool TryCreate(DateTime dateTime, TimeZoneInfo timeZone, out ZonedDateTime result)
+        {
+            var kind = timeZone.GetDateTimeKind();
             dateTime = DateTime.SpecifyKind( dateTime, kind );
 
             if ( timeZone.IsInvalidTime( dateTime ) )
-                throw new InvalidZonedDateTimeException( dateTime, timeZone );
+            {
+                result = default;
+                return false;
+            }
 
             var utcDateTime = TimeZoneInfo.ConvertTimeToUtc( dateTime, timeZone );
             var timestamp = new Timestamp( utcDateTime );
 
-            return new ZonedDateTime( timestamp, dateTime, timeZone );
+            result = new ZonedDateTime( timestamp, dateTime, timeZone );
+            return true;
         }
-
-        // TODO (LF): add TryCreate static method
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -208,7 +220,7 @@ namespace LfrlSoft.NET.Core.Chrono
 
             var activeAdjustmentRule = TimeZone
                 .GetAdjustmentRules()
-                .First(r => r.DateStart <= value && r.DateEnd >= value );
+                .First( r => r.DateStart <= value && r.DateEnd >= value );
 
             var daylightDelta = new Duration( activeAdjustmentRule.DaylightDelta );
 
@@ -289,17 +301,6 @@ namespace LfrlSoft.NET.Core.Chrono
         public static bool operator >=(ZonedDateTime a, ZonedDateTime b)
         {
             return a.CompareTo( b ) >= 0;
-        }
-
-        private static DateTimeKind GetExpectedDateTimeKind(TimeZoneInfo timeZone)
-        {
-            if ( ReferenceEquals( timeZone, TimeZoneInfo.Utc ) )
-                return DateTimeKind.Utc;
-
-            if ( ReferenceEquals( timeZone, TimeZoneInfo.Local ) )
-                return DateTimeKind.Local;
-
-            return DateTimeKind.Unspecified;
         }
     }
 }

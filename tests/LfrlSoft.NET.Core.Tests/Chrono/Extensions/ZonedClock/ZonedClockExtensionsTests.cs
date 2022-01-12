@@ -122,14 +122,14 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Extensions.ZonedClock
             }
         }
 
-        private static IZonedClock GetMockedClock(TimeZoneInfo timeZone)
+        private static IZonedClock GetMockedClock(System.TimeZoneInfo timeZone)
         {
             var result = Substitute.For<IZonedClock>();
             result.TimeZone.Returns( timeZone );
             return result;
         }
 
-        private static IZonedClock GetMockedClock(TimeZoneInfo timeZone, long timestampTicks, params long[] additionalTimestampTicks)
+        private static IZonedClock GetMockedClock(System.TimeZoneInfo timeZone, long timestampTicks, params long[] additionalTimestampTicks)
         {
             var result = GetMockedClock( timeZone );
 
@@ -142,9 +142,9 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Extensions.ZonedClock
             return result;
         }
 
-        private static Core.Chrono.ZonedDateTime CreateDateTime(long ticks, TimeZoneInfo timeZone)
+        private static Core.Chrono.ZonedDateTime CreateDateTime(long ticks, System.TimeZoneInfo timeZone)
         {
-            return Core.Chrono.ZonedDateTime.Create( System.DateTime.UnixEpoch + TimeSpan.FromTicks( ticks ), timeZone );
+            return Core.Chrono.ZonedDateTime.CreateUtc( System.DateTime.UnixEpoch + TimeSpan.FromTicks( ticks ) ).ToTimeZone( timeZone );
         }
     }
 }

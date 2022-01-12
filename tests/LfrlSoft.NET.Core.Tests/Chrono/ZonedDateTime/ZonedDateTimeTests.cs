@@ -302,6 +302,38 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             }
         }
 
+        [Fact]
+        public void TryCreate_ShouldReturnCorrectResult()
+        {
+            var dateTime = Fixture.Create<DateTime>();
+            var timeZoneOffset = Fixture.Create<int>() % 12;
+            var timeZone = ZonedDateTimeTestsData.GetTimeZone( $"{timeZoneOffset}", timeZoneOffset );
+            var expected = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
+
+            var result = Core.Chrono.ZonedDateTime.TryCreate( dateTime, timeZone, out var zonedDateTime );
+
+            using ( new AssertionScope() )
+            {
+                zonedDateTime.Should().Be( expected );
+                result.Should().BeTrue();
+            }
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetCreateShouldThrowInvalidZonedDateTimeExceptionData ) )]
+        public void TryCreate_ShouldReturnFalse_WhenDateTimeIsInvalidInTheProvidedTimeZone(
+            DateTime dateTime,
+            TimeZoneInfo timeZone)
+        {
+            var result = Core.Chrono.ZonedDateTime.TryCreate( dateTime, timeZone, out var zonedDateTime );
+
+            using ( new AssertionScope() )
+            {
+                zonedDateTime.Should().Be( default );
+                result.Should().BeFalse();
+            }
+        }
+
         [Theory]
         [MethodData( nameof( ZonedDateTimeTestsData.GetToStringData ) )]
         public void ToString_ShouldReturnCorrectResult(DateTime dateTime, TimeZoneInfo timeZone, string expected)
