@@ -1,10 +1,10 @@
-﻿using LfrlSoft.NET.TestExtensions;
-using Xunit;
-using AutoFixture;
+﻿using AutoFixture;
 using FluentAssertions;
 using LfrlSoft.NET.Core.Chrono;
 using LfrlSoft.NET.Core.Chrono.Extensions;
+using LfrlSoft.NET.TestExtensions;
 using LfrlSoft.NET.TestExtensions.Attributes;
+using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.Chrono.Extensions.DateTime
 {
@@ -41,6 +41,22 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Extensions.DateTime
         public void GetEndOfDay_ShouldReturnCorrectResult(System.DateTime value, System.DateTime expected)
         {
             var result = value.GetEndOfDay();
+            result.Should().Be( expected );
+        }
+
+        [Theory]
+        [MethodData( nameof( DateTimeExtensionsTestsData.GetGetStartOfWeekData ) )]
+        public void GetStartOfWeek_ShouldReturnCorrectResult(System.DateTime value, System.DayOfWeek weekStart, System.DateTime expected)
+        {
+            var result = value.GetStartOfWeek( weekStart );
+            result.Should().Be( expected );
+        }
+
+        [Theory]
+        [MethodData( nameof( DateTimeExtensionsTestsData.GetGetEndOfWeekData ) )]
+        public void GetEndOfWeek_ShouldReturnCorrectResult(System.DateTime value, System.DayOfWeek weekStart, System.DateTime expected)
+        {
+            var result = value.GetEndOfWeek( weekStart );
             result.Should().Be( expected );
         }
 

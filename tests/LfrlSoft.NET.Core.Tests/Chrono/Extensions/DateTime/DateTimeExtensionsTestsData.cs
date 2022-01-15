@@ -48,6 +48,174 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Extensions.DateTime
             };
         }
 
+        public static TheoryData<System.DateTime, System.DayOfWeek, System.DateTime> GetGetStartOfWeekData(IFixture fixture)
+        {
+            return new TheoryData<System.DateTime, System.DayOfWeek, System.DateTime>
+            {
+                { new System.DateTime( 2021, 3, 26 ), System.DayOfWeek.Monday, new System.DateTime( 2021, 3, 22 ) },
+                { new System.DateTime( 2021, 3, 26 ), System.DayOfWeek.Tuesday, new System.DateTime( 2021, 3, 23 ) },
+                { new System.DateTime( 2021, 3, 26 ), System.DayOfWeek.Wednesday, new System.DateTime( 2021, 3, 24 ) },
+                { new System.DateTime( 2021, 3, 26 ), System.DayOfWeek.Thursday, new System.DateTime( 2021, 3, 25 ) },
+                { new System.DateTime( 2021, 3, 26 ), System.DayOfWeek.Friday, new System.DateTime( 2021, 3, 26 ) },
+                { new System.DateTime( 2021, 3, 26 ), System.DayOfWeek.Saturday, new System.DateTime( 2021, 3, 20 ) },
+                { new System.DateTime( 2021, 3, 26 ), System.DayOfWeek.Sunday, new System.DateTime( 2021, 3, 21 ) },
+                { new System.DateTime( 2021, 3, 26, 12, 0, 0 ), System.DayOfWeek.Monday, new System.DateTime( 2021, 3, 22 ) },
+                { new System.DateTime( 2021, 3, 26, 12, 0, 0 ), System.DayOfWeek.Tuesday, new System.DateTime( 2021, 3, 23 ) },
+                { new System.DateTime( 2021, 3, 26, 12, 0, 0 ), System.DayOfWeek.Wednesday, new System.DateTime( 2021, 3, 24 ) },
+                { new System.DateTime( 2021, 3, 26, 12, 0, 0 ), System.DayOfWeek.Thursday, new System.DateTime( 2021, 3, 25 ) },
+                { new System.DateTime( 2021, 3, 26, 12, 0, 0 ), System.DayOfWeek.Friday, new System.DateTime( 2021, 3, 26 ) },
+                { new System.DateTime( 2021, 3, 26, 12, 0, 0 ), System.DayOfWeek.Saturday, new System.DateTime( 2021, 3, 20 ) },
+                { new System.DateTime( 2021, 3, 26, 12, 0, 0 ), System.DayOfWeek.Sunday, new System.DateTime( 2021, 3, 21 ) },
+                {
+                    new System.DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ),
+                    System.DayOfWeek.Monday,
+                    new System.DateTime( 2021, 3, 22 )
+                },
+                {
+                    new System.DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ),
+                    System.DayOfWeek.Tuesday,
+                    new System.DateTime( 2021, 3, 23 )
+                },
+                {
+                    new System.DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ),
+                    System.DayOfWeek.Wednesday,
+                    new System.DateTime( 2021, 3, 24 )
+                },
+                {
+                    new System.DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ),
+                    System.DayOfWeek.Thursday,
+                    new System.DateTime( 2021, 3, 25 )
+                },
+                {
+                    new System.DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ),
+                    System.DayOfWeek.Friday,
+                    new System.DateTime( 2021, 3, 26 )
+                },
+                {
+                    new System.DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ),
+                    System.DayOfWeek.Saturday,
+                    new System.DateTime( 2021, 3, 20 )
+                },
+                {
+                    new System.DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ),
+                    System.DayOfWeek.Sunday,
+                    new System.DateTime( 2021, 3, 21 )
+                }
+            };
+        }
+
+        public static TheoryData<System.DateTime, System.DayOfWeek, System.DateTime> GetGetEndOfWeekData(IFixture fixture)
+        {
+            return new TheoryData<System.DateTime, System.DayOfWeek, System.DateTime>
+            {
+                {
+                    new System.DateTime( 2021, 3, 26 ),
+                    System.DayOfWeek.Monday,
+                    new System.DateTime( 2021, 3, 28, 23, 59, 59, 999 ).AddTicks( 9999 )
+                },
+                {
+                    new System.DateTime( 2021, 3, 26 ),
+                    System.DayOfWeek.Tuesday,
+                    new System.DateTime( 2021, 3, 29, 23, 59, 59, 999 ).AddTicks( 9999 )
+                },
+                {
+                    new System.DateTime( 2021, 3, 26 ),
+                    System.DayOfWeek.Wednesday,
+                    new System.DateTime( 2021, 3, 30, 23, 59, 59, 999 ).AddTicks( 9999 )
+                },
+                {
+                    new System.DateTime( 2021, 3, 26 ),
+                    System.DayOfWeek.Thursday,
+                    new System.DateTime( 2021, 3, 31, 23, 59, 59, 999 ).AddTicks( 9999 )
+                },
+                {
+                    new System.DateTime( 2021, 3, 26 ),
+                    System.DayOfWeek.Friday,
+                    new System.DateTime( 2021, 4, 1, 23, 59, 59, 999 ).AddTicks( 9999 )
+                },
+                {
+                    new System.DateTime( 2021, 3, 26 ),
+                    System.DayOfWeek.Saturday,
+                    new System.DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 )
+                },
+                {
+                    new System.DateTime( 2021, 3, 26 ),
+                    System.DayOfWeek.Sunday,
+                    new System.DateTime( 2021, 3, 27, 23, 59, 59, 999 ).AddTicks( 9999 )
+                },
+                {
+                    new System.DateTime( 2021, 3, 26, 12, 0, 0 ),
+                    System.DayOfWeek.Monday,
+                    new System.DateTime( 2021, 3, 28, 23, 59, 59, 999 ).AddTicks( 9999 )
+                },
+                {
+                    new System.DateTime( 2021, 3, 26, 12, 0, 0 ),
+                    System.DayOfWeek.Tuesday,
+                    new System.DateTime( 2021, 3, 29, 23, 59, 59, 999 ).AddTicks( 9999 )
+                },
+                {
+                    new System.DateTime( 2021, 3, 26, 12, 0, 0 ),
+                    System.DayOfWeek.Wednesday,
+                    new System.DateTime( 2021, 3, 30, 23, 59, 59, 999 ).AddTicks( 9999 )
+                },
+                {
+                    new System.DateTime( 2021, 3, 26, 12, 0, 0 ),
+                    System.DayOfWeek.Thursday,
+                    new System.DateTime( 2021, 3, 31, 23, 59, 59, 999 ).AddTicks( 9999 )
+                },
+                {
+                    new System.DateTime( 2021, 3, 26, 12, 0, 0 ),
+                    System.DayOfWeek.Friday,
+                    new System.DateTime( 2021, 4, 1, 23, 59, 59, 999 ).AddTicks( 9999 )
+                },
+                {
+                    new System.DateTime( 2021, 3, 26, 12, 0, 0 ),
+                    System.DayOfWeek.Saturday,
+                    new System.DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 )
+                },
+                {
+                    new System.DateTime( 2021, 3, 26, 12, 0, 0 ),
+                    System.DayOfWeek.Sunday,
+                    new System.DateTime( 2021, 3, 27, 23, 59, 59, 999 ).AddTicks( 9999 )
+                },
+                {
+                    new System.DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ),
+                    System.DayOfWeek.Monday,
+                    new System.DateTime( 2021, 3, 28, 23, 59, 59, 999 ).AddTicks( 9999 )
+                },
+                {
+                    new System.DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ),
+                    System.DayOfWeek.Tuesday,
+                    new System.DateTime( 2021, 3, 29, 23, 59, 59, 999 ).AddTicks( 9999 )
+                },
+                {
+                    new System.DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ),
+                    System.DayOfWeek.Wednesday,
+                    new System.DateTime( 2021, 3, 30, 23, 59, 59, 999 ).AddTicks( 9999 )
+                },
+                {
+                    new System.DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ),
+                    System.DayOfWeek.Thursday,
+                    new System.DateTime( 2021, 3, 31, 23, 59, 59, 999 ).AddTicks( 9999 )
+                },
+                {
+                    new System.DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ),
+                    System.DayOfWeek.Friday,
+                    new System.DateTime( 2021, 4, 1, 23, 59, 59, 999 ).AddTicks( 9999 )
+                },
+                {
+                    new System.DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ),
+                    System.DayOfWeek.Saturday,
+                    new System.DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 )
+                },
+                {
+                    new System.DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ),
+                    System.DayOfWeek.Sunday,
+                    new System.DateTime( 2021, 3, 27, 23, 59, 59, 999 ).AddTicks( 9999 )
+                }
+            };
+        }
+
         public static TheoryData<System.DateTime, System.DateTime> GetGetStartOfMonthData(IFixture fixture)
         {
             return new TheoryData<System.DateTime, System.DateTime>

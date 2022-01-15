@@ -93,7 +93,7 @@ namespace LfrlSoft.NET.Core.Benchmarks
             var type = typeof( Test );
 
             var members = type.FindMembers( MemberTypes.Field, BindingFlags.Instance | BindingFlags.NonPublic, Type.FilterName, Name );
-            var result = (FieldInfo?) members.FirstOrDefault();
+            var result = (FieldInfo?)members.FirstOrDefault();
 
             return result != null;
         }

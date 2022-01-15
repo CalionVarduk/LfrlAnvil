@@ -1,7 +1,7 @@
 ﻿using System;
 using FluentAssertions;
-using Xunit;
 using FluentAssertions.Execution;
+using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedClock
 {

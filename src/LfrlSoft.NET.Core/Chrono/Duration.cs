@@ -179,7 +179,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Duration AddMilliseconds(double milliseconds)
         {
-            return AddTicks( (long)Math.Round( milliseconds * Constants.TicksPerMillisecond, MidpointRounding.AwayFromZero) );
+            return AddTicks( (long)Math.Round( milliseconds * Constants.TicksPerMillisecond, MidpointRounding.AwayFromZero ) );
         }
 
         [Pure]
@@ -313,7 +313,7 @@ namespace LfrlSoft.NET.Core.Chrono
         public Duration Divide(double divisor)
         {
             if ( divisor == 0 )
-                throw new DivideByZeroException("Attempted to divide by zero.");
+                throw new DivideByZeroException( "Attempted to divide by zero." );
 
             return FromTicks( (long)Math.Round( Ticks / divisor, MidpointRounding.AwayFromZero ) );
         }

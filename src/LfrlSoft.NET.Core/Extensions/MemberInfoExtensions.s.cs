@@ -21,7 +21,7 @@ namespace LfrlSoft.NET.Core.Extensions
         public static T? GetAttribute<T>(this MemberInfo member, bool inherit = true)
             where T : Attribute
         {
-            return (T?) member.GetAttribute( typeof( T ), inherit );
+            return (T?)member.GetAttribute( typeof( T ), inherit );
         }
 
         [Pure]
@@ -36,7 +36,7 @@ namespace LfrlSoft.NET.Core.Extensions
         public static IEnumerable<T> GetAttributeRange<T>(this MemberInfo member, bool inherit = true)
             where T : Attribute
         {
-            return member.GetAttributeRange( typeof( T ), inherit ).Select( a => (T) a );
+            return member.GetAttributeRange( typeof( T ), inherit ).Select( a => (T)a );
         }
 
         [Pure]

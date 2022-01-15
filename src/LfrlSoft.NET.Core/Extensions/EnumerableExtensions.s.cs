@@ -148,7 +148,7 @@ namespace LfrlSoft.NET.Core.Extensions
         public static IEnumerable<T?> AsNullable<T>(this IEnumerable<T> source)
             where T : struct
         {
-            return source.Select(e => (T?)e);
+            return source.Select( e => (T?)e );
         }
 
         [Pure]

@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Threading.Tasks;
-using LfrlSoft.NET.TestExtensions;
-using Xunit;
 using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlSoft.NET.Core.Chrono;
+using LfrlSoft.NET.TestExtensions;
+using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.Chrono.TimestampProvider
 {

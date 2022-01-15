@@ -36,6 +36,30 @@ namespace LfrlSoft.NET.Core.Chrono.Extensions
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static DateTime GetStartOfWeek(this DateTime dt, DayOfWeek weekStart)
+        {
+            var dayDelta = (int)dt.DayOfWeek - (int)weekStart;
+            if ( dayDelta < 0 )
+                dayDelta += Constants.DaysPerWeek;
+
+            return (dayDelta > 0 ? dt.AddDays( -dayDelta ) : dt).GetStartOfDay();
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static DateTime GetEndOfWeek(this DateTime dt, DayOfWeek weekStart)
+        {
+            var dayDelta = (int)dt.DayOfWeek - (int)weekStart;
+            if ( dayDelta < 0 )
+                dayDelta += Constants.DaysPerWeek;
+
+            dayDelta = -dayDelta + Constants.DaysPerWeek - 1;
+
+            return (dayDelta > 0 ? dt.AddDays( dayDelta ) : dt).GetEndOfDay();
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static DateTime GetStartOfMonth(this DateTime dt)
         {
             return new DateTime( dt.Year, dt.Month, 1 );

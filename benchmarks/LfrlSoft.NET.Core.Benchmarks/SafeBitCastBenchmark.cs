@@ -12,7 +12,7 @@ namespace LfrlSoft.NET.Core.Benchmarks
         public SafeBitCastBenchmark()
         {
             var rng = new Random();
-            _value = (ulong) rng.Next();
+            _value = (ulong)rng.Next();
         }
 
         [Benchmark]
@@ -52,15 +52,15 @@ namespace LfrlSoft.NET.Core.Benchmarks
                     case TypeCode.UInt16:
                     case TypeCode.UInt32:
                     case TypeCode.UInt64:
-                        return (T) ((IConvertible) value).ToType( typeof( T ), null );
+                        return (T)((IConvertible)value).ToType( typeof( T ), null );
                     case TypeCode.SByte:
-                        return (T) ((IConvertible) (sbyte) value).ToType( typeof( T ), null );
+                        return (T)((IConvertible)(sbyte)value).ToType( typeof( T ), null );
                     case TypeCode.Int16:
-                        return (T) ((IConvertible) (short) value).ToType( typeof( T ), null );
+                        return (T)((IConvertible)(short)value).ToType( typeof( T ), null );
                     case TypeCode.Int32:
-                        return (T) ((IConvertible) (int) value).ToType( typeof( T ), null );
+                        return (T)((IConvertible)(int)value).ToType( typeof( T ), null );
                     case TypeCode.Int64:
-                        return (T) ((IConvertible) (long) value).ToType( typeof( T ), null );
+                        return (T)((IConvertible)(long)value).ToType( typeof( T ), null );
                     default:
                         throw new Exception( "Unsupported type code" );
                 }
@@ -72,7 +72,7 @@ namespace LfrlSoft.NET.Core.Benchmarks
         {
             public static T Convert(ulong value)
             {
-                return (T) ((IConvertible) value).ToType( typeof( T ), null );
+                return (T)((IConvertible)value).ToType( typeof( T ), null );
             }
         }
 
@@ -89,15 +89,15 @@ namespace LfrlSoft.NET.Core.Benchmarks
                     case TypeCode.UInt16:
                     case TypeCode.UInt32:
                     case TypeCode.UInt64:
-                        return (T) System.Convert.ChangeType( value, TypeCode );
+                        return (T)System.Convert.ChangeType( value, TypeCode );
                     case TypeCode.SByte:
-                        return (T) System.Convert.ChangeType( (sbyte) value, TypeCode );
+                        return (T)System.Convert.ChangeType( (sbyte)value, TypeCode );
                     case TypeCode.Int16:
-                        return (T) System.Convert.ChangeType( (short) value, TypeCode );
+                        return (T)System.Convert.ChangeType( (short)value, TypeCode );
                     case TypeCode.Int32:
-                        return (T) System.Convert.ChangeType( (int) value, TypeCode );
+                        return (T)System.Convert.ChangeType( (int)value, TypeCode );
                     case TypeCode.Int64:
-                        return (T) System.Convert.ChangeType( (long) value, TypeCode );
+                        return (T)System.Convert.ChangeType( (long)value, TypeCode );
                     default:
                         throw new Exception( "Unsupported type code" );
                 }

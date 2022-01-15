@@ -214,7 +214,7 @@ namespace LfrlSoft.NET.Core.Functional
         [Pure]
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return ((IEnumerable<TDestination>) this).GetEnumerator();
+            return ((IEnumerable<TDestination>)this).GetEnumerator();
         }
     }
 }

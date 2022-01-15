@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlSoft.NET.Core.Chrono.Exceptions;
@@ -7,7 +8,6 @@ using LfrlSoft.NET.Core.Functional;
 using LfrlSoft.NET.TestExtensions;
 using LfrlSoft.NET.TestExtensions.Attributes;
 using Xunit;
-using AutoFixture;
 
 namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
 {

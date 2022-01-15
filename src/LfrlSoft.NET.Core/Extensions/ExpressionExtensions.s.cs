@@ -14,7 +14,7 @@ namespace LfrlSoft.NET.Core.Extensions
                 body.NodeType == ExpressionType.MemberAccess,
                 "Expression must be of the member access type." );
 
-            var memberExpr = (MemberExpression) body;
+            var memberExpr = (MemberExpression)body;
 
             Ensure.True(
                 memberExpr.Expression == source.Parameters[0],

@@ -9,7 +9,7 @@ namespace LfrlSoft.NET.Core
 {
     public readonly struct Hash : IEquatable<Hash>, IComparable<Hash>, IComparable
     {
-        public const int Offset = unchecked( (int) 2166136261 );
+        public const int Offset = unchecked( (int)2166136261 );
         public const int Prime = 16777619;
 
         public static readonly Hash Null = new Hash( 0 );

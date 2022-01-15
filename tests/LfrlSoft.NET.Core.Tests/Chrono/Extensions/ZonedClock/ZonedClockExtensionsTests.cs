@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlSoft.NET.Core.Chrono;
@@ -8,7 +9,6 @@ using LfrlSoft.NET.Core.Tests.Chrono.ZonedClock;
 using LfrlSoft.NET.TestExtensions;
 using NSubstitute;
 using Xunit;
-using AutoFixture;
 
 namespace LfrlSoft.NET.Core.Tests.Chrono.Extensions.ZonedClock
 {

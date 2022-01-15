@@ -15,7 +15,7 @@ namespace LfrlSoft.NET.Core.Benchmarks.CL
             var benchmarkProperties = FindBenchmarkProperties();
 
             var types = benchmarkProperties
-                .Where( x => ((bool) x.Property.GetValue( options )!) == true )
+                .Where( x => ((bool)x.Property.GetValue( options )!) == true )
                 .Select( x => x.BenchmarkType )
                 .ToList();
 
@@ -37,7 +37,7 @@ namespace LfrlSoft.NET.Core.Benchmarks.CL
 
         private static CommandLineBenchmarkAttribute? GetBenchmarkAttribute(PropertyInfo property)
         {
-            return (CommandLineBenchmarkAttribute?) Attribute.GetCustomAttribute( property, typeof( CommandLineBenchmarkAttribute ) );
+            return (CommandLineBenchmarkAttribute?)Attribute.GetCustomAttribute( property, typeof( CommandLineBenchmarkAttribute ) );
         }
     }
 }
