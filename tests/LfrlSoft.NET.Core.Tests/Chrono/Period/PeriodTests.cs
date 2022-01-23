@@ -1086,8 +1086,8 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Period
         }
 
         [Theory]
-        [MethodData( nameof( PeriodTestsData.GetNegateWithUnitsData ) )]
-        public void Negate_WithUnits_ShouldReturnCorrectResult(
+        [MethodData( nameof( PeriodTestsData.GetSkipData ) )]
+        public void Skip_ShouldReturnCorrectResult(
             (int Years, int Months, int Weeks, int Days) date,
             (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks) time,
             PeriodUnits units,
@@ -1105,7 +1105,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Period
                 time.Milliseconds,
                 time.Ticks );
 
-            var result = sut.Negate( units );
+            var result = sut.Skip( units );
 
             using ( new AssertionScope() )
             {
@@ -1122,8 +1122,8 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Period
         }
 
         [Theory]
-        [MethodData( nameof( PeriodTestsData.GetClearData ) )]
-        public void Clear_ShouldReturnCorrectResult(
+        [MethodData( nameof( PeriodTestsData.GetTakeData ) )]
+        public void Take_ShouldReturnCorrectResult(
             (int Years, int Months, int Weeks, int Days) date,
             (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks) time,
             PeriodUnits units,
@@ -1141,7 +1141,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Period
                 time.Milliseconds,
                 time.Ticks );
 
-            var result = sut.Clear( units );
+            var result = sut.Take( units );
 
             using ( new AssertionScope() )
             {

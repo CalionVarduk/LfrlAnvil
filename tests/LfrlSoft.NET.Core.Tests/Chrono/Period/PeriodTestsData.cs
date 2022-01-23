@@ -284,39 +284,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Period
                 PeriodUnits,
                 (int Years, int Months, int Weeks, int Days),
                 (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks)>
-            GetNegateWithUnitsData(IFixture fixture)
-        {
-            var date = (1, 2, 3, 4);
-            var time = (5, 6, 7, 8, 9);
-
-            return new TheoryData<
-                (int, int, int, int), (int, int, int, int, int),
-                PeriodUnits,
-                (int, int, int, int), (int, int, int, int, int)>
-            {
-                { date, time, PeriodUnits.None, date, time },
-                { date, time, PeriodUnits.All, (-1, -2, -3, -4), (-5, -6, -7, -8, -9) },
-                { date, time, PeriodUnits.Date, (-1, -2, -3, -4), time },
-                { date, time, PeriodUnits.Time, date, (-5, -6, -7, -8, -9) },
-                { date, time, PeriodUnits.Ticks, date, (5, 6, 7, 8, -9) },
-                { date, time, PeriodUnits.Milliseconds, date, (5, 6, 7, -8, 9) },
-                { date, time, PeriodUnits.Seconds, date, (5, 6, -7, 8, 9) },
-                { date, time, PeriodUnits.Minutes, date, (5, -6, 7, 8, 9) },
-                { date, time, PeriodUnits.Hours, date, (-5, 6, 7, 8, 9) },
-                { date, time, PeriodUnits.Days, (1, 2, 3, -4), time },
-                { date, time, PeriodUnits.Weeks, (1, 2, -3, 4), time },
-                { date, time, PeriodUnits.Months, (1, -2, 3, 4), time },
-                { date, time, PeriodUnits.Years, (-1, 2, 3, 4), time }
-            };
-        }
-
-        public static TheoryData<
-                (int Years, int Months, int Weeks, int Days),
-                (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks),
-                PeriodUnits,
-                (int Years, int Months, int Weeks, int Days),
-                (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks)>
-            GetClearData(IFixture fixture)
+            GetSkipData(IFixture fixture)
         {
             var date = (1, 2, 3, 4);
             var time = (5, 6, 7, 8, 9);
@@ -339,6 +307,38 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Period
                 { date, time, PeriodUnits.Weeks, (1, 2, 0, 4), time },
                 { date, time, PeriodUnits.Months, (1, 0, 3, 4), time },
                 { date, time, PeriodUnits.Years, (0, 2, 3, 4), time }
+            };
+        }
+
+        public static TheoryData<
+                (int Years, int Months, int Weeks, int Days),
+                (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks),
+                PeriodUnits,
+                (int Years, int Months, int Weeks, int Days),
+                (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks)>
+            GetTakeData(IFixture fixture)
+        {
+            var date = (1, 2, 3, 4);
+            var time = (5, 6, 7, 8, 9);
+
+            return new TheoryData<
+                (int, int, int, int), (int, int, int, int, int),
+                PeriodUnits,
+                (int, int, int, int), (int, int, int, int, int)>
+            {
+                { date, time, PeriodUnits.None, (0, 0, 0, 0), (0, 0, 0, 0, 0) },
+                { date, time, PeriodUnits.All, date, time },
+                { date, time, PeriodUnits.Date, date, (0, 0, 0, 0, 0) },
+                { date, time, PeriodUnits.Time, (0, 0, 0, 0), time },
+                { date, time, PeriodUnits.Ticks, (0, 0, 0, 0), (0, 0, 0, 0, 9) },
+                { date, time, PeriodUnits.Milliseconds, (0, 0, 0, 0), (0, 0, 0, 8, 0) },
+                { date, time, PeriodUnits.Seconds, (0, 0, 0, 0), (0, 0, 7, 0, 0) },
+                { date, time, PeriodUnits.Minutes, (0, 0, 0, 0), (0, 6, 0, 0, 0) },
+                { date, time, PeriodUnits.Hours, (0, 0, 0, 0), (5, 0, 0, 0, 0) },
+                { date, time, PeriodUnits.Days, (0, 0, 0, 4), (0, 0, 0, 0, 0) },
+                { date, time, PeriodUnits.Weeks, (0, 0, 3, 0), (0, 0, 0, 0, 0) },
+                { date, time, PeriodUnits.Months, (0, 2, 0, 0), (0, 0, 0, 0, 0) },
+                { date, time, PeriodUnits.Years, (1, 0, 0, 0), (0, 0, 0, 0, 0) }
             };
         }
 

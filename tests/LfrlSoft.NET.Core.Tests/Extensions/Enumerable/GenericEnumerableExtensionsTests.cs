@@ -472,7 +472,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
 
             var result = sut.VisitMany( n => n.Children ).Select( n => n.Value );
 
-            result.Should().BeSequentiallyEqualTo( expected );
+            result.Should().BeSequentiallyEqualTo( expected.Select(x => (T?)x) );
         }
 
         [Fact]
@@ -600,7 +600,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
 
             var result = sut.DistinctBy( c => c.Value ).Select( c => c.Value );
 
-            result.Should().BeSequentiallyEqualTo( expected );
+            result.Should().BeSequentiallyEqualTo( expected.Select(x => (T?)x) );
         }
 
         [Fact]

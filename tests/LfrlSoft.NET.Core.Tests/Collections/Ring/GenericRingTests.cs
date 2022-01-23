@@ -241,7 +241,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Ring
                 items[(0 + readIndex).EuclidModulo( 3 )],
                 items[(1 + readIndex).EuclidModulo( 3 )],
                 items[(2 + readIndex).EuclidModulo( 3 )]
-            }.AsEnumerable();
+            }.Select(x => (T?)x);
 
             var sut = new Ring<T>( items );
             var result = sut.Read( readIndex );
@@ -261,7 +261,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Ring
                 items[(1 + writeIndex) % 3],
                 items[(2 + writeIndex) % 3],
                 items[(0 + writeIndex) % 3]
-            }.AsEnumerable();
+            }.Select(x => (T?)x);
 
             var sut = new Ring<T>( items ) { WriteIndex = writeIndex };
 

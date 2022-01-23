@@ -122,7 +122,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
 
             var result = sut.AsNullable();
 
-            result.Select( r => r.Value ).Should().BeSequentiallyEqualTo( sut );
+            result.Select( r => r!.Value ).Should().BeSequentiallyEqualTo( sut );
         }
 
         [Fact]

@@ -15,5 +15,6 @@ namespace LfrlSoft.NET.Core.Chrono
         public const int MinutesPerHour = 60;
         public const int HoursPerDay = 24;
         public const int DaysPerWeek = 7;
+        public const int MonthsPerYear = 12;
     }
 }

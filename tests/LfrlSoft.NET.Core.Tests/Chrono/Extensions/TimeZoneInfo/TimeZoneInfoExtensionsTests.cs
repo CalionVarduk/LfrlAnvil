@@ -126,12 +126,15 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Extensions.TimeZoneInfo
             result.Should().Be( expected );
         }
 
-        private System.TimeZoneInfo.AdjustmentRule CreateAdjustmentRule(System.DateTime start, System.DateTime end)
+        private static System.TimeZoneInfo.AdjustmentRule CreateAdjustmentRule(
+            System.DateTime start,
+            System.DateTime end,
+            double daylightDeltaInHours = 1)
         {
             return System.TimeZoneInfo.AdjustmentRule.CreateAdjustmentRule(
                 dateStart: start,
                 dateEnd: end,
-                daylightDelta: TimeSpan.FromHours( 1 ),
+                daylightDelta: TimeSpan.FromHours( daylightDeltaInHours ),
                 daylightTransitionStart: System.TimeZoneInfo.TransitionTime.CreateFixedDateRule(
                     timeOfDay: new System.DateTime( 1, 1, 1, 12, 0, 0 ),
                     month: 2,

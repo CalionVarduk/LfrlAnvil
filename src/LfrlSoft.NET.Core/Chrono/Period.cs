@@ -553,6 +553,7 @@ namespace LfrlSoft.NET.Core.Chrono
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Period Negate()
         {
             return new Period(
@@ -568,22 +569,7 @@ namespace LfrlSoft.NET.Core.Chrono
         }
 
         [Pure]
-        public Period Negate(PeriodUnits units)
-        {
-            return new Period(
-                (units & PeriodUnits.Years) != 0 ? -Years : Years,
-                (units & PeriodUnits.Months) != 0 ? -Months : Months,
-                (units & PeriodUnits.Weeks) != 0 ? -Weeks : Weeks,
-                (units & PeriodUnits.Days) != 0 ? -Days : Days,
-                (units & PeriodUnits.Hours) != 0 ? -Hours : Hours,
-                (units & PeriodUnits.Minutes) != 0 ? -Minutes : Minutes,
-                (units & PeriodUnits.Seconds) != 0 ? -Seconds : Seconds,
-                (units & PeriodUnits.Milliseconds) != 0 ? -Milliseconds : Milliseconds,
-                (units & PeriodUnits.Ticks) != 0 ? -Ticks : Ticks );
-        }
-
-        [Pure]
-        public Period Clear(PeriodUnits units)
+        public Period Skip(PeriodUnits units)
         {
             return new Period(
                 (units & PeriodUnits.Years) != 0 ? 0 : Years,
@@ -595,6 +581,21 @@ namespace LfrlSoft.NET.Core.Chrono
                 (units & PeriodUnits.Seconds) != 0 ? 0 : Seconds,
                 (units & PeriodUnits.Milliseconds) != 0 ? 0 : Milliseconds,
                 (units & PeriodUnits.Ticks) != 0 ? 0 : Ticks );
+        }
+
+        [Pure]
+        public Period Take(PeriodUnits units)
+        {
+            return new Period(
+                (units & PeriodUnits.Years) != 0 ? Years : 0,
+                (units & PeriodUnits.Months) != 0 ? Months : 0,
+                (units & PeriodUnits.Weeks) != 0 ? Weeks : 0,
+                (units & PeriodUnits.Days) != 0 ? Days : 0,
+                (units & PeriodUnits.Hours) != 0 ? Hours : 0,
+                (units & PeriodUnits.Minutes) != 0 ? Minutes : 0,
+                (units & PeriodUnits.Seconds) != 0 ? Seconds : 0,
+                (units & PeriodUnits.Milliseconds) != 0 ? Milliseconds : 0,
+                (units & PeriodUnits.Ticks) != 0 ? Ticks : 0 );
         }
 
         [Pure]

@@ -15,7 +15,7 @@ namespace LfrlSoft.NET.TestExtensions.FluentAssertions
 
         public static AndConstraint<GenericCollectionAssertions<T>> BeSequentiallyEqualTo<T>(
             this GenericCollectionAssertions<T> source,
-            IEnumerable<T?>? expected,
+            IEnumerable<T>? expected,
             string because = "",
             params object[] becauseArgs)
         {
