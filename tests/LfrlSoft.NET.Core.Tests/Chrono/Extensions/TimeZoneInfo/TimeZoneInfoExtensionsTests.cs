@@ -51,7 +51,12 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Extensions.TimeZoneInfo
                 $"{timeZoneOffset}",
                 timeZoneOffset,
                 ruleRanges
-                    .Select( r => CreateAdjustmentRule( r.Start, r.End ) )
+                    .Select(
+                        r => TimeZoneInfoExtensionsTestsData.CreateAdjustmentRule(
+                            r.Start,
+                            r.End,
+                            new System.DateTime( 1, 2, 1, 12, 0, 0 ),
+                            new System.DateTime( 1, 11, 1, 12, 0, 0 ) ) )
                     .ToArray() );
 
             var result = sut.GetActiveAdjustmentRule( dateTimeToTest );
@@ -72,7 +77,12 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Extensions.TimeZoneInfo
                 $"{timeZoneOffset}",
                 timeZoneOffset,
                 ruleRanges
-                    .Select( r => CreateAdjustmentRule( r.Start, r.End ) )
+                    .Select(
+                        r => TimeZoneInfoExtensionsTestsData.CreateAdjustmentRule(
+                            r.Start,
+                            r.End,
+                            new System.DateTime( 1, 2, 1, 12, 0, 0 ),
+                            new System.DateTime( 1, 11, 1, 12, 0, 0 ) ) )
                     .ToArray() );
 
             var result = sut.GetActiveAdjustmentRule( dateTimeToTest );
@@ -97,7 +107,12 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Extensions.TimeZoneInfo
                 $"{timeZoneOffset}",
                 timeZoneOffset,
                 ruleRanges
-                    .Select( r => CreateAdjustmentRule( r.Start, r.End ) )
+                    .Select(
+                        r => TimeZoneInfoExtensionsTestsData.CreateAdjustmentRule(
+                            r.Start,
+                            r.End,
+                            new System.DateTime( 1, 2, 1, 12, 0, 0 ),
+                            new System.DateTime( 1, 11, 1, 12, 0, 0 ) ) )
                     .ToArray() );
 
             var result = sut.GetActiveAdjustmentRuleIndex( dateTimeToTest );
@@ -118,7 +133,12 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Extensions.TimeZoneInfo
                 $"{timeZoneOffset}",
                 timeZoneOffset,
                 ruleRanges
-                    .Select( r => CreateAdjustmentRule( r.Start, r.End ) )
+                    .Select(
+                        r => TimeZoneInfoExtensionsTestsData.CreateAdjustmentRule(
+                            r.Start,
+                            r.End,
+                            new System.DateTime( 1, 2, 1, 12, 0, 0 ),
+                            new System.DateTime( 1, 11, 1, 12, 0, 0 ) ) )
                     .ToArray() );
 
             var result = sut.GetActiveAdjustmentRuleIndex( dateTimeToTest );
@@ -126,23 +146,44 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Extensions.TimeZoneInfo
             result.Should().Be( expected );
         }
 
-        private static System.TimeZoneInfo.AdjustmentRule CreateAdjustmentRule(
-            System.DateTime start,
-            System.DateTime end,
-            double daylightDeltaInHours = 1)
+        [Theory]
+        [MethodData( nameof( TimeZoneInfoExtensionsTestsData.GetGetContainingInvalidityRangeData ) )]
+        private void GetContainingInvalidityRange_ShouldReturnCorrectResult(
+            System.TimeZoneInfo timeZone,
+            System.DateTime dateTime,
+            (System.DateTime Start, System.DateTime End)? expected)
         {
-            return System.TimeZoneInfo.AdjustmentRule.CreateAdjustmentRule(
-                dateStart: start,
-                dateEnd: end,
-                daylightDelta: TimeSpan.FromHours( daylightDeltaInHours ),
-                daylightTransitionStart: System.TimeZoneInfo.TransitionTime.CreateFixedDateRule(
-                    timeOfDay: new System.DateTime( 1, 1, 1, 12, 0, 0 ),
-                    month: 2,
-                    day: 1 ),
-                daylightTransitionEnd: System.TimeZoneInfo.TransitionTime.CreateFixedDateRule(
-                    timeOfDay: new System.DateTime( 1, 1, 1, 12, 0, 0 ),
-                    month: 11,
-                    day: 1 ) );
+            var expectedBounds = expected is null
+                ? (Bounds<System.DateTime>?)null
+                : Core.Bounds.Create( expected.Value.Start, expected.Value.End );
+
+            var result = timeZone.GetContainingInvalidityRange( dateTime );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().Be( expectedBounds );
+                timeZone.IsInvalidTime( dateTime ).Should().Be( expected is not null );
+            }
+        }
+
+        [Theory]
+        [MethodData( nameof( TimeZoneInfoExtensionsTestsData.GetGetContainingAmbiguityRangeData ) )]
+        private void GetContainingAmbiguityRange_ShouldReturnCorrectResult(
+            System.TimeZoneInfo timeZone,
+            System.DateTime dateTime,
+            (System.DateTime Start, System.DateTime End)? expected)
+        {
+            var expectedBounds = expected is null
+                ? (Bounds<System.DateTime>?)null
+                : Core.Bounds.Create( expected.Value.Start, expected.Value.End );
+
+            var result = timeZone.GetContainingAmbiguityRange( dateTime );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().Be( expectedBounds );
+                timeZone.IsAmbiguousTime( dateTime ).Should().Be( expected is not null );
+            }
         }
     }
 }
