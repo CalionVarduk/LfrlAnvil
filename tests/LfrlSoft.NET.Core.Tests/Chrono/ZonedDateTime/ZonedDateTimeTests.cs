@@ -3,7 +3,9 @@ using System.Linq;
 using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
+using LfrlSoft.NET.Core.Chrono;
 using LfrlSoft.NET.Core.Chrono.Exceptions;
+using LfrlSoft.NET.Core.Chrono.Extensions;
 using LfrlSoft.NET.Core.Functional;
 using LfrlSoft.NET.TestExtensions;
 using LfrlSoft.NET.TestExtensions.Attributes;
@@ -14,6 +16,17 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
     [TestClass( typeof( ZonedDateTimeTestsData ) )]
     public class ZonedDateTimeTests : TestsBase
     {
+        private static void AssertValueDateCorrectness(Core.Chrono.ZonedDateTime result, DateTime expected, DateTimeKind expectedKind)
+        {
+            result.Value.Should().Be( expected );
+            result.Value.Kind.Should().Be( expectedKind );
+            result.Year.Should().Be( expected.Year );
+            result.Month.Should().Be( expected.Month );
+            result.DayOfMonth.Should().Be( expected.Day );
+            result.DayOfYear.Should().Be( expected.DayOfYear );
+            result.DayOfWeek.Should().Be( expected.DayOfWeek.ToIso() );
+        }
+
         [Fact]
         public void Default_ShouldReturnCorrectResult()
         {
@@ -22,8 +35,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             using ( new AssertionScope() )
             {
                 result.Timestamp.Should().Be( Core.Chrono.Timestamp.Zero );
-                result.Value.Should().Be( result.Timestamp.UtcValue );
-                result.Value.Kind.Should().Be( DateTimeKind.Utc );
+                AssertValueDateCorrectness( result, result.Timestamp.UtcValue, DateTimeKind.Utc );
                 result.TimeZone.Should().Be( TimeZoneInfo.Utc );
                 result.UtcOffset.Should().Be( Core.Chrono.Duration.Zero );
                 result.TimeOfDay.Should().Be( Core.Chrono.TimeOfDay.Start );
@@ -44,8 +56,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             using ( new AssertionScope() )
             {
                 sut.Timestamp.Should().Be( timestamp );
-                sut.Value.Should().Be( timestamp.UtcValue );
-                sut.Value.Kind.Should().Be( DateTimeKind.Utc );
+                AssertValueDateCorrectness( sut, timestamp.UtcValue, DateTimeKind.Utc );
                 sut.TimeZone.Should().Be( TimeZoneInfo.Utc );
                 sut.UtcOffset.Should().Be( Core.Chrono.Duration.Zero );
                 sut.TimeOfDay.Should().Be( new Core.Chrono.TimeOfDay( timestamp.UtcValue.TimeOfDay ) );
@@ -65,8 +76,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             using ( new AssertionScope() )
             {
                 sut.Timestamp.Should().Be( new Core.Chrono.Timestamp( dateTime ) );
-                sut.Value.Should().Be( dateTime );
-                sut.Value.Kind.Should().Be( DateTimeKind.Utc );
+                AssertValueDateCorrectness( sut, dateTime, DateTimeKind.Utc );
                 sut.TimeZone.Should().Be( TimeZoneInfo.Utc );
                 sut.UtcOffset.Should().Be( Core.Chrono.Duration.Zero );
                 sut.TimeOfDay.Should().Be( new Core.Chrono.TimeOfDay( dateTime.TimeOfDay ) );
@@ -86,8 +96,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             using ( new AssertionScope() )
             {
                 sut.Timestamp.Should().Be( new Core.Chrono.Timestamp( TimeZoneInfo.ConvertTimeToUtc( dateTime, TimeZoneInfo.Local ) ) );
-                sut.Value.Should().Be( dateTime );
-                sut.Value.Kind.Should().Be( DateTimeKind.Local );
+                AssertValueDateCorrectness( sut, dateTime, DateTimeKind.Local );
                 sut.TimeZone.Should().Be( TimeZoneInfo.Local );
                 sut.UtcOffset.Should().Be( new Core.Chrono.Duration( TimeZoneInfo.Local.GetUtcOffset( sut.Timestamp.UtcValue ) ) );
                 sut.TimeOfDay.Should().Be( new Core.Chrono.TimeOfDay( dateTime.TimeOfDay ) );
@@ -107,8 +116,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             using ( new AssertionScope() )
             {
                 sut.Timestamp.Should().Be( new Core.Chrono.Timestamp( dateTime ) );
-                sut.Value.Should().Be( dateTime );
-                sut.Value.Kind.Should().Be( DateTimeKind.Utc );
+                AssertValueDateCorrectness( sut, dateTime, DateTimeKind.Utc );
                 sut.TimeZone.Should().Be( TimeZoneInfo.Utc );
                 sut.UtcOffset.Should().Be( Core.Chrono.Duration.Zero );
                 sut.TimeOfDay.Should().Be( new Core.Chrono.TimeOfDay( dateTime.TimeOfDay ) );
@@ -128,8 +136,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             using ( new AssertionScope() )
             {
                 sut.Timestamp.Should().Be( new Core.Chrono.Timestamp( TimeZoneInfo.ConvertTimeToUtc( dateTime, TimeZoneInfo.Local ) ) );
-                sut.Value.Should().Be( dateTime );
-                sut.Value.Kind.Should().Be( DateTimeKind.Local );
+                AssertValueDateCorrectness( sut, dateTime, DateTimeKind.Local );
                 sut.TimeZone.Should().Be( TimeZoneInfo.Local );
                 sut.UtcOffset.Should().Be( new Core.Chrono.Duration( TimeZoneInfo.Local.GetUtcOffset( sut.Timestamp.UtcValue ) ) );
                 sut.TimeOfDay.Should().Be( new Core.Chrono.TimeOfDay( dateTime.TimeOfDay ) );
@@ -151,8 +158,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             using ( new AssertionScope() )
             {
                 sut.Timestamp.Should().Be( new Core.Chrono.Timestamp( dateTime.Add( -timeZone.BaseUtcOffset ) ) );
-                sut.Value.Should().Be( dateTime );
-                sut.Value.Kind.Should().Be( DateTimeKind.Unspecified );
+                AssertValueDateCorrectness( sut, dateTime, DateTimeKind.Unspecified );
                 sut.TimeZone.Should().Be( timeZone );
                 sut.UtcOffset.Should().Be( new Core.Chrono.Duration( timeZone.BaseUtcOffset ) );
                 sut.TimeOfDay.Should().Be( new Core.Chrono.TimeOfDay( dateTime.TimeOfDay ) );
@@ -174,8 +180,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             using ( new AssertionScope() )
             {
                 sut.Timestamp.Should().Be( new Core.Chrono.Timestamp( dateTime.Add( -timeZone.BaseUtcOffset ) ) );
-                sut.Value.Should().Be( dateTime );
-                sut.Value.Kind.Should().Be( DateTimeKind.Unspecified );
+                AssertValueDateCorrectness( sut, dateTime, DateTimeKind.Unspecified );
                 sut.TimeZone.Should().Be( timeZone );
                 sut.UtcOffset.Should().Be( new Core.Chrono.Duration( timeZone.BaseUtcOffset ) );
                 sut.TimeOfDay.Should().Be( new Core.Chrono.TimeOfDay( dateTime.TimeOfDay ) );
@@ -197,8 +202,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             using ( new AssertionScope() )
             {
                 sut.Timestamp.Should().Be( new Core.Chrono.Timestamp( dateTime.Add( -timeZone.BaseUtcOffset ).AddHours( -1 ) ) );
-                sut.Value.Should().Be( dateTime );
-                sut.Value.Kind.Should().Be( DateTimeKind.Unspecified );
+                AssertValueDateCorrectness( sut, dateTime, DateTimeKind.Unspecified );
                 sut.TimeZone.Should().Be( timeZone );
                 sut.UtcOffset.Should().Be( new Core.Chrono.Duration( timeZone.BaseUtcOffset ).AddHours( 1 ) );
                 sut.TimeOfDay.Should().Be( new Core.Chrono.TimeOfDay( dateTime.TimeOfDay ) );
@@ -240,8 +244,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             using ( new AssertionScope() )
             {
                 sut.Timestamp.Should().Be( new Core.Chrono.Timestamp( dateTime.Add( -expectedUtcOffset ) ) );
-                sut.Value.Should().Be( dateTime );
-                sut.Value.Kind.Should().Be( DateTimeKind.Unspecified );
+                AssertValueDateCorrectness( sut, dateTime, DateTimeKind.Unspecified );
                 sut.TimeZone.Should().Be( timeZone );
                 sut.UtcOffset.Should().Be( new Core.Chrono.Duration( expectedUtcOffset ) );
                 sut.TimeOfDay.Should().Be( new Core.Chrono.TimeOfDay( dateTime.TimeOfDay ) );
@@ -263,8 +266,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             using ( new AssertionScope() )
             {
                 sut.Timestamp.Should().Be( new Core.Chrono.Timestamp( dateTime.Add( -timeZone.BaseUtcOffset ) ) );
-                sut.Value.Should().Be( dateTime );
-                sut.Value.Kind.Should().Be( DateTimeKind.Unspecified );
+                AssertValueDateCorrectness( sut, dateTime, DateTimeKind.Unspecified );
                 sut.TimeZone.Should().Be( timeZone );
                 sut.UtcOffset.Should().Be( new Core.Chrono.Duration( timeZone.BaseUtcOffset ) );
                 sut.TimeOfDay.Should().Be( new Core.Chrono.TimeOfDay( dateTime.TimeOfDay ) );
@@ -290,8 +292,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             using ( new AssertionScope() )
             {
                 sut.Timestamp.Should().Be( new Core.Chrono.Timestamp( dateTime.Add( -expectedUtcOffset ) ) );
-                sut.Value.Should().Be( dateTime );
-                sut.Value.Kind.Should().Be( DateTimeKind.Unspecified );
+                AssertValueDateCorrectness( sut, dateTime, DateTimeKind.Unspecified );
                 sut.TimeZone.Should().Be( timeZone );
                 sut.UtcOffset.Should().Be( new Core.Chrono.Duration( expectedUtcOffset ) );
                 sut.TimeOfDay.Should().Be( new Core.Chrono.TimeOfDay( dateTime.TimeOfDay ) );
@@ -310,28 +311,19 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             var timeZone = ZonedDateTimeTestsData.GetTimeZone( $"{timeZoneOffset}", timeZoneOffset );
             var expected = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
 
-            var result = Core.Chrono.ZonedDateTime.TryCreate( dateTime, timeZone, out var zonedDateTime );
+            var result = Core.Chrono.ZonedDateTime.TryCreate( dateTime, timeZone );
 
-            using ( new AssertionScope() )
-            {
-                zonedDateTime.Should().Be( expected );
-                result.Should().BeTrue();
-            }
+            result.Should().Be( expected );
         }
 
         [Theory]
         [MethodData( nameof( ZonedDateTimeTestsData.GetCreateShouldThrowInvalidZonedDateTimeExceptionData ) )]
-        public void TryCreate_ShouldReturnFalse_WhenDateTimeIsInvalidInTheProvidedTimeZone(
+        public void TryCreate_ShouldReturnNull_WhenDateTimeIsInvalidInTheProvidedTimeZone(
             DateTime dateTime,
             TimeZoneInfo timeZone)
         {
-            var result = Core.Chrono.ZonedDateTime.TryCreate( dateTime, timeZone, out var zonedDateTime );
-
-            using ( new AssertionScope() )
-            {
-                zonedDateTime.Should().Be( default );
-                result.Should().BeFalse();
-            }
+            var result = Core.Chrono.ZonedDateTime.TryCreate( dateTime, timeZone );
+            result.Should().BeNull();
         }
 
         [Theory]
@@ -394,8 +386,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             using ( new AssertionScope() )
             {
                 result.Timestamp.Should().Be( sut.Timestamp );
-                result.Value.Should().Be( expectedValue );
-                result.Value.Kind.Should().Be( DateTimeKind.Utc );
+                AssertValueDateCorrectness( result, expectedValue, DateTimeKind.Utc );
                 result.TimeZone.Should().Be( TimeZoneInfo.Utc );
                 result.UtcOffset.Should().Be( Core.Chrono.Duration.Zero );
                 result.TimeOfDay.Should().Be( new Core.Chrono.TimeOfDay( expectedValue.TimeOfDay ) );
@@ -420,8 +411,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             using ( new AssertionScope() )
             {
                 result.Timestamp.Should().Be( sut.Timestamp );
-                result.Value.Should().Be( expectedValue );
-                result.Value.Kind.Should().Be( DateTimeKind.Local );
+                AssertValueDateCorrectness( result, expectedValue, DateTimeKind.Local );
                 result.TimeZone.Should().Be( TimeZoneInfo.Local );
                 result.UtcOffset.Should().Be( new Core.Chrono.Duration( TimeZoneInfo.Local.GetUtcOffset( sut.Timestamp.UtcValue ) ) );
                 result.TimeOfDay.Should().Be( new Core.Chrono.TimeOfDay( expectedValue.TimeOfDay ) );
@@ -447,8 +437,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             using ( new AssertionScope() )
             {
                 result.Timestamp.Should().Be( sut.Timestamp );
-                result.Value.Should().Be( expectedValue );
-                result.Value.Kind.Should().Be( DateTimeKind.Unspecified );
+                AssertValueDateCorrectness( result, expectedValue, DateTimeKind.Unspecified );
                 result.TimeZone.Should().Be( targetTimeZone );
                 result.UtcOffset.Should().Be( new Core.Chrono.Duration( targetTimeZone.BaseUtcOffset ) );
                 result.TimeOfDay.Should().Be( new Core.Chrono.TimeOfDay( expectedValue.TimeOfDay ) );
@@ -474,8 +463,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             using ( new AssertionScope() )
             {
                 result.Timestamp.Should().Be( sut.Timestamp );
-                result.Value.Should().Be( expectedValue );
-                result.Value.Kind.Should().Be( DateTimeKind.Unspecified );
+                AssertValueDateCorrectness( result, expectedValue, DateTimeKind.Unspecified );
                 result.TimeZone.Should().Be( targetTimeZone );
                 result.UtcOffset.Should().Be( new Core.Chrono.Duration( targetTimeZone.BaseUtcOffset ) );
                 result.TimeOfDay.Should().Be( new Core.Chrono.TimeOfDay( expectedValue.TimeOfDay ) );
@@ -501,8 +489,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             using ( new AssertionScope() )
             {
                 result.Timestamp.Should().Be( sut.Timestamp );
-                result.Value.Should().Be( expectedValue );
-                result.Value.Kind.Should().Be( DateTimeKind.Unspecified );
+                AssertValueDateCorrectness( result, expectedValue, DateTimeKind.Unspecified );
                 result.TimeZone.Should().Be( targetTimeZone );
                 result.UtcOffset.Should().Be( new Core.Chrono.Duration( targetTimeZone.BaseUtcOffset ).AddHours( 1 ) );
                 result.TimeOfDay.Should().Be( new Core.Chrono.TimeOfDay( expectedValue.TimeOfDay ) );
@@ -532,8 +519,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             using ( new AssertionScope() )
             {
                 result.Timestamp.Should().Be( sut.Timestamp );
-                result.Value.Should().Be( expectedValue );
-                result.Value.Kind.Should().Be( DateTimeKind.Unspecified );
+                AssertValueDateCorrectness( result, expectedValue, DateTimeKind.Unspecified );
                 result.TimeZone.Should().Be( targetTimeZone );
                 result.UtcOffset.Should().Be( new Core.Chrono.Duration( expectedUtcOffset ) );
                 result.TimeOfDay.Should().Be( new Core.Chrono.TimeOfDay( expectedValue.TimeOfDay ) );
@@ -559,8 +545,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             using ( new AssertionScope() )
             {
                 result.Timestamp.Should().Be( sut.Timestamp );
-                result.Value.Should().Be( expectedValue );
-                result.Value.Kind.Should().Be( DateTimeKind.Unspecified );
+                AssertValueDateCorrectness( result, expectedValue, DateTimeKind.Unspecified );
                 result.TimeZone.Should().Be( targetTimeZone );
                 result.UtcOffset.Should().Be( new Core.Chrono.Duration( targetTimeZone.BaseUtcOffset ) );
                 result.TimeOfDay.Should().Be( new Core.Chrono.TimeOfDay( expectedValue.TimeOfDay ) );
@@ -590,8 +575,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             using ( new AssertionScope() )
             {
                 result.Timestamp.Should().Be( sut.Timestamp );
-                result.Value.Should().Be( expectedValue );
-                result.Value.Kind.Should().Be( DateTimeKind.Unspecified );
+                AssertValueDateCorrectness( result, expectedValue, DateTimeKind.Unspecified );
                 result.TimeZone.Should().Be( targetTimeZone );
                 result.UtcOffset.Should().Be( new Core.Chrono.Duration( expectedUtcOffset ) );
                 result.TimeOfDay.Should().Be( new Core.Chrono.TimeOfDay( expectedValue.TimeOfDay ) );
@@ -616,8 +600,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             using ( new AssertionScope() )
             {
                 result.Timestamp.Should().Be( sut.Timestamp );
-                result.Value.Should().Be( expectedValue );
-                result.Value.Kind.Should().Be( DateTimeKind.Utc );
+                AssertValueDateCorrectness( result, expectedValue, DateTimeKind.Utc );
                 result.TimeZone.Should().Be( TimeZoneInfo.Utc );
                 result.UtcOffset.Should().Be( Core.Chrono.Duration.Zero );
                 result.TimeOfDay.Should().Be( new Core.Chrono.TimeOfDay( expectedValue.TimeOfDay ) );
@@ -642,8 +625,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             using ( new AssertionScope() )
             {
                 result.Timestamp.Should().Be( sut.Timestamp );
-                result.Value.Should().Be( expectedValue );
-                result.Value.Kind.Should().Be( DateTimeKind.Local );
+                AssertValueDateCorrectness( result, expectedValue, DateTimeKind.Local );
                 result.TimeZone.Should().Be( TimeZoneInfo.Local );
                 result.UtcOffset.Should().Be( new Core.Chrono.Duration( TimeZoneInfo.Local.GetUtcOffset( sut.Timestamp.UtcValue ) ) );
                 result.TimeOfDay.Should().Be( new Core.Chrono.TimeOfDay( expectedValue.TimeOfDay ) );
@@ -670,8 +652,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             using ( new AssertionScope() )
             {
                 result.Timestamp.Should().Be( sut.Timestamp.Add( durationToAdd ) );
-                result.Value.Should().Be( expectedValue );
-                result.Value.Kind.Should().Be( sut.Value.Kind );
+                AssertValueDateCorrectness( result, expectedValue, sut.Value.Kind );
                 result.TimeZone.Should().Be( sut.TimeZone );
                 result.UtcOffset.Should().Be( sut.UtcOffset );
                 result.TimeOfDay.Should().Be( new Core.Chrono.TimeOfDay( expectedValue.TimeOfDay ) );
@@ -702,8 +683,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             using ( new AssertionScope() )
             {
                 result.Timestamp.Should().Be( sut.Timestamp.Add( durationToAdd ) );
-                result.Value.Should().Be( expectedValue );
-                result.Value.Kind.Should().Be( sut.Value.Kind );
+                AssertValueDateCorrectness( result, expectedValue, sut.Value.Kind );
                 result.TimeZone.Should().Be( sut.TimeZone );
                 result.UtcOffset.Should().Be( expectedUtcOffset );
                 result.TimeOfDay.Should().Be( new Core.Chrono.TimeOfDay( expectedValue.TimeOfDay ) );
@@ -735,8 +715,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             using ( new AssertionScope() )
             {
                 result.Timestamp.Should().Be( sut.Timestamp.Add( durationToAdd ) );
-                result.Value.Should().Be( expectedValue );
-                result.Value.Kind.Should().Be( sut.Value.Kind );
+                AssertValueDateCorrectness( result, expectedValue, sut.Value.Kind );
                 result.TimeZone.Should().Be( sut.TimeZone );
                 result.UtcOffset.Should().Be( expectedUtcOffset );
                 result.TimeOfDay.Should().Be( new Core.Chrono.TimeOfDay( expectedValue.TimeOfDay ) );
@@ -747,8 +726,108 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             }
         }
 
+        [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetAddWithPeriodData ) )]
+        public void Add_WithPeriod_ShouldReturnCorrectResult(
+            DateTime dateTime,
+            TimeZoneInfo timeZone,
+            Core.Chrono.Period period,
+            DateTime expectedValue)
+        {
+            var sut = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
+            var expected = Core.Chrono.ZonedDateTime.Create( expectedValue, timeZone );
+
+            var result = sut.Add( period );
+
+            result.Should().BeEquivalentTo( expected );
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetAddWithPeriodAndAmbiguityData ) )]
+        public void Add_WithPeriodAndAmbiguity_ShouldReturnCorrectResult(
+            DateTime dateTime,
+            TimeZoneInfo timeZone,
+            bool forceInDaylightSavingTime,
+            Core.Chrono.Period period,
+            DateTime expected)
+        {
+            var sut = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
+            if ( forceInDaylightSavingTime )
+                sut = sut.GetOppositeAmbiguousDateTime() ?? sut;
+
+            var expectedResult = Core.Chrono.ZonedDateTime.Create( expected, timeZone );
+            if ( forceInDaylightSavingTime )
+                expectedResult = expectedResult.GetOppositeAmbiguousDateTime() ?? expectedResult;
+
+            var result = sut.Add( period );
+
+            result.Should().BeEquivalentTo( expectedResult );
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetAddWithPeriodThrowData ) )]
+        public void Add_WithPeriod_ShouldThrowInvalidZonedDateTimeException_WhenTimeIsInvalid(
+            DateTime dateTime,
+            TimeZoneInfo timeZone,
+            Core.Chrono.Period period)
+        {
+            var sut = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
+            var action = Lambda.Of( () => sut.Add( period ) );
+            action.Should().ThrowExactly<InvalidZonedDateTimeException>();
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetAddWithPeriodData ) )]
+        public void TryAdd_WithPeriod_ShouldReturnCorrectResult(
+            DateTime dateTime,
+            TimeZoneInfo timeZone,
+            Core.Chrono.Period period,
+            DateTime expectedValue)
+        {
+            var sut = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
+            var expected = Core.Chrono.ZonedDateTime.Create( expectedValue, timeZone );
+
+            var result = sut.TryAdd( period );
+
+            result.Should().BeEquivalentTo( expected );
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetAddWithPeriodAndAmbiguityData ) )]
+        public void TryAdd_WithPeriodAndAmbiguity_ShouldReturnCorrectResult(
+            DateTime dateTime,
+            TimeZoneInfo timeZone,
+            bool forceInDaylightSavingTime,
+            Core.Chrono.Period period,
+            DateTime expected)
+        {
+            var sut = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
+            if ( forceInDaylightSavingTime )
+                sut = sut.GetOppositeAmbiguousDateTime() ?? sut;
+
+            var expectedResult = Core.Chrono.ZonedDateTime.Create( expected, timeZone );
+            if ( forceInDaylightSavingTime )
+                expectedResult = expectedResult.GetOppositeAmbiguousDateTime() ?? expectedResult;
+
+            var result = sut.TryAdd( period );
+
+            result.Should().BeEquivalentTo( expectedResult );
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetAddWithPeriodThrowData ) )]
+        public void TryAdd_WithPeriod_ShouldReturnNull_WhenTimeIsInvalid(
+            DateTime dateTime,
+            TimeZoneInfo timeZone,
+            Core.Chrono.Period period)
+        {
+            var sut = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
+            var result = sut.TryAdd( period );
+            result.Should().BeNull();
+        }
+
         [Fact]
-        public void Subtract_ShouldReturnCorrectResult()
+        public void Subtract_WithDuration_ShouldReturnCorrectResult()
         {
             var dateTimeTicks = Math.Abs( Fixture.Create<int>() );
             var value = new DateTime( DateTime.UnixEpoch.Ticks + dateTimeTicks );
@@ -761,6 +840,60 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             var expected = sut.Add( -durationToSubtract );
 
             var result = sut.Subtract( durationToSubtract );
+
+            result.Should().BeEquivalentTo( expected );
+        }
+
+        [Fact]
+        public void Subtract_WithPeriod_ShouldReturnCorrectResult()
+        {
+            var dateTimeTicks = Math.Abs( Fixture.Create<int>() );
+            var value = new DateTime( DateTime.UnixEpoch.Ticks + dateTimeTicks );
+
+            var timeZoneOffset = Fixture.CreatePositiveInt32() % 12;
+            var timeZone = ZonedDateTimeTestsData.GetTimeZone( $"{timeZoneOffset}", timeZoneOffset );
+            var periodToSubtract = new Core.Chrono.Period(
+                years: Fixture.Create<sbyte>(),
+                months: Fixture.Create<sbyte>(),
+                weeks: Fixture.Create<short>(),
+                days: Fixture.Create<short>(),
+                hours: Fixture.Create<short>(),
+                minutes: Fixture.Create<short>(),
+                seconds: Fixture.Create<short>(),
+                milliseconds: Fixture.Create<short>(),
+                ticks: Fixture.Create<short>() );
+
+            var sut = Core.Chrono.ZonedDateTime.Create( value, timeZone );
+            var expected = sut.Add( -periodToSubtract );
+
+            var result = sut.Subtract( periodToSubtract );
+
+            result.Should().BeEquivalentTo( expected );
+        }
+
+        [Fact]
+        public void TrySubtract_WithPeriod_ShouldReturnCorrectResult()
+        {
+            var dateTimeTicks = Math.Abs( Fixture.Create<int>() );
+            var value = new DateTime( DateTime.UnixEpoch.Ticks + dateTimeTicks );
+
+            var timeZoneOffset = Fixture.CreatePositiveInt32() % 12;
+            var timeZone = ZonedDateTimeTestsData.GetTimeZone( $"{timeZoneOffset}", timeZoneOffset );
+            var periodToSubtract = new Core.Chrono.Period(
+                years: Fixture.Create<sbyte>(),
+                months: Fixture.Create<sbyte>(),
+                weeks: Fixture.Create<short>(),
+                days: Fixture.Create<short>(),
+                hours: Fixture.Create<short>(),
+                minutes: Fixture.Create<short>(),
+                seconds: Fixture.Create<short>(),
+                milliseconds: Fixture.Create<short>(),
+                ticks: Fixture.Create<short>() );
+
+            var sut = Core.Chrono.ZonedDateTime.Create( value, timeZone );
+            var expected = sut.TryAdd( -periodToSubtract );
+
+            var result = sut.TrySubtract( periodToSubtract );
 
             result.Should().BeEquivalentTo( expected );
         }
@@ -786,6 +919,275 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
         }
 
         [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetSetYearData ) )]
+        public void SetYear_ShouldReturnCorrectResult(DateTime dateTime, TimeZoneInfo timeZone, int newYear, DateTime expected)
+        {
+            var sut = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
+            var expectedResult = Core.Chrono.ZonedDateTime.Create( expected, timeZone );
+
+            var result = sut.SetYear( newYear );
+
+            result.Should().BeEquivalentTo( expectedResult );
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetSetYearWithAmbiguityData ) )]
+        public void SetYear_WithAmbiguity_ShouldReturnCorrectResult(
+            DateTime dateTime,
+            TimeZoneInfo timeZone,
+            bool forceInDaylightSavingTime,
+            int newYear,
+            DateTime expected)
+        {
+            var sut = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
+            if ( forceInDaylightSavingTime )
+                sut = sut.GetOppositeAmbiguousDateTime() ?? sut;
+
+            var expectedResult = Core.Chrono.ZonedDateTime.Create( expected, timeZone );
+            if ( forceInDaylightSavingTime )
+                expectedResult = expectedResult.GetOppositeAmbiguousDateTime() ?? expectedResult;
+
+            var result = sut.SetYear( newYear );
+
+            result.Should().BeEquivalentTo( expectedResult );
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetSetYearThrowData ) )]
+        public void SetYear_ShouldThrowArgumentOutOfRangeException_WhenYearIsInvalid(DateTime dateTime, TimeZoneInfo timeZone, int newYear)
+        {
+            var sut = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
+            var action = Lambda.Of( () => sut.SetYear( newYear ) );
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetSetMonthData ) )]
+        public void SetMonth_ShouldReturnCorrectResult(DateTime dateTime, TimeZoneInfo timeZone, IsoMonthOfYear newMonth, DateTime expected)
+        {
+            var sut = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
+            var expectedResult = Core.Chrono.ZonedDateTime.Create( expected, timeZone );
+
+            var result = sut.SetMonth( newMonth );
+
+            result.Should().BeEquivalentTo( expectedResult );
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetSetMonthWithAmbiguityData ) )]
+        public void SetMonth_WithAmbiguity_ShouldReturnCorrectResult(
+            DateTime dateTime,
+            TimeZoneInfo timeZone,
+            bool forceInDaylightSavingTime,
+            IsoMonthOfYear newMonth,
+            DateTime expected)
+        {
+            var sut = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
+            if ( forceInDaylightSavingTime )
+                sut = sut.GetOppositeAmbiguousDateTime() ?? sut;
+
+            var expectedResult = Core.Chrono.ZonedDateTime.Create( expected, timeZone );
+            if ( forceInDaylightSavingTime )
+                expectedResult = expectedResult.GetOppositeAmbiguousDateTime() ?? expectedResult;
+
+            var result = sut.SetMonth( newMonth );
+
+            result.Should().BeEquivalentTo( expectedResult );
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetSetDayOfMonthData ) )]
+        public void SetDayOfMonth_ShouldReturnCorrectResult(DateTime dateTime, TimeZoneInfo timeZone, int newDay, DateTime expected)
+        {
+            var sut = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
+            var expectedResult = Core.Chrono.ZonedDateTime.Create( expected, timeZone );
+
+            var result = sut.SetDayOfMonth( newDay );
+
+            result.Should().BeEquivalentTo( expectedResult );
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetSetDayOfMonthWithAmbiguityData ) )]
+        public void SetDayOfMonth_WithAmbiguity_ShouldReturnCorrectResult(
+            DateTime dateTime,
+            TimeZoneInfo timeZone,
+            bool forceInDaylightSavingTime,
+            int newDay,
+            DateTime expected)
+        {
+            var sut = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
+            if ( forceInDaylightSavingTime )
+                sut = sut.GetOppositeAmbiguousDateTime() ?? sut;
+
+            var expectedResult = Core.Chrono.ZonedDateTime.Create( expected, timeZone );
+            if ( forceInDaylightSavingTime )
+                expectedResult = expectedResult.GetOppositeAmbiguousDateTime() ?? expectedResult;
+
+            var result = sut.SetDayOfMonth( newDay );
+
+            result.Should().BeEquivalentTo( expectedResult );
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetSetDayOfMonthThrowData ) )]
+        public void SetDayOfMonth_ShouldThrowArgumentOutOfRangeException_WhenDayIsInvalid(
+            DateTime dateTime,
+            TimeZoneInfo timeZone,
+            int newDay)
+        {
+            var sut = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
+            var action = Lambda.Of( () => sut.SetDayOfMonth( newDay ) );
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetSetDayOfYearData ) )]
+        public void SetDayOfYear_ShouldReturnCorrectResult(DateTime dateTime, TimeZoneInfo timeZone, int newDay, DateTime expected)
+        {
+            var sut = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
+            var expectedResult = Core.Chrono.ZonedDateTime.Create( expected, timeZone );
+
+            var result = sut.SetDayOfYear( newDay );
+
+            result.Should().BeEquivalentTo( expectedResult );
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetSetDayOfYearWithAmbiguityData ) )]
+        public void SetDayOfYear_WithAmbiguity_ShouldReturnCorrectResult(
+            DateTime dateTime,
+            TimeZoneInfo timeZone,
+            bool forceInDaylightSavingTime,
+            int newDay,
+            DateTime expected)
+        {
+            var sut = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
+            if ( forceInDaylightSavingTime )
+                sut = sut.GetOppositeAmbiguousDateTime() ?? sut;
+
+            var expectedResult = Core.Chrono.ZonedDateTime.Create( expected, timeZone );
+            if ( forceInDaylightSavingTime )
+                expectedResult = expectedResult.GetOppositeAmbiguousDateTime() ?? expectedResult;
+
+            var result = sut.SetDayOfYear( newDay );
+
+            result.Should().BeEquivalentTo( expectedResult );
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetSetDayOfYearThrowData ) )]
+        public void SetDayOfYear_ShouldThrowArgumentOutOfRangeException_WhenDayIsInvalid(
+            DateTime dateTime,
+            TimeZoneInfo timeZone,
+            int newDay)
+        {
+            var sut = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
+            var action = Lambda.Of( () => sut.SetDayOfYear( newDay ) );
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetSetTimeOfDayData ) )]
+        public void SetTimeOfDay_ShouldReturnCorrectResult(
+            DateTime dateTime,
+            TimeZoneInfo timeZone,
+            Core.Chrono.TimeOfDay newTime,
+            DateTime expected)
+        {
+            var sut = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
+            var expectedResult = Core.Chrono.ZonedDateTime.Create( expected, timeZone );
+
+            var result = sut.SetTimeOfDay( newTime );
+
+            result.Should().BeEquivalentTo( expectedResult );
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetSetTimeOfDayWithAmbiguityData ) )]
+        public void SetTimeOfDay_WithAmbiguity_ShouldReturnCorrectResult(
+            DateTime dateTime,
+            TimeZoneInfo timeZone,
+            bool forceInDaylightSavingTime,
+            Core.Chrono.TimeOfDay newTime,
+            DateTime expected)
+        {
+            var sut = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
+            if ( forceInDaylightSavingTime )
+                sut = sut.GetOppositeAmbiguousDateTime() ?? sut;
+
+            var expectedResult = Core.Chrono.ZonedDateTime.Create( expected, timeZone );
+            if ( forceInDaylightSavingTime )
+                expectedResult = expectedResult.GetOppositeAmbiguousDateTime() ?? expectedResult;
+
+            var result = sut.SetTimeOfDay( newTime );
+
+            result.Should().BeEquivalentTo( expectedResult );
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetSetTimeOfDayThrowData ) )]
+        public void SetTimeOfDay_ShouldThrowInvalidZonedDateTimeException_WhenTimeIsInvalid(
+            DateTime dateTime,
+            TimeZoneInfo timeZone,
+            Core.Chrono.TimeOfDay newTime)
+        {
+            var sut = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
+            var action = Lambda.Of( () => sut.SetTimeOfDay( newTime ) );
+            action.Should().ThrowExactly<InvalidZonedDateTimeException>();
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetSetTimeOfDayData ) )]
+        public void TrySetTimeOfDay_ShouldReturnCorrectResult(
+            DateTime dateTime,
+            TimeZoneInfo timeZone,
+            Core.Chrono.TimeOfDay newTime,
+            DateTime expected)
+        {
+            var sut = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
+            var expectedResult = Core.Chrono.ZonedDateTime.Create( expected, timeZone );
+
+            var result = sut.TrySetTimeOfDay( newTime );
+
+            result.Should().BeEquivalentTo( expectedResult );
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetSetTimeOfDayWithAmbiguityData ) )]
+        public void TrySetTimeOfDay_WithAmbiguity_ShouldReturnCorrectResult(
+            DateTime dateTime,
+            TimeZoneInfo timeZone,
+            bool forceInDaylightSavingTime,
+            Core.Chrono.TimeOfDay newTime,
+            DateTime expected)
+        {
+            var sut = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
+            if ( forceInDaylightSavingTime )
+                sut = sut.GetOppositeAmbiguousDateTime() ?? sut;
+
+            var expectedResult = Core.Chrono.ZonedDateTime.Create( expected, timeZone );
+            if ( forceInDaylightSavingTime )
+                expectedResult = expectedResult.GetOppositeAmbiguousDateTime() ?? expectedResult;
+
+            var result = sut.TrySetTimeOfDay( newTime );
+
+            result.Should().BeEquivalentTo( expectedResult );
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetSetTimeOfDayThrowData ) )]
+        public void TrySetTimeOfDay_ShouldReturnNull_WhenTimeIsInvalid(
+            DateTime dateTime,
+            TimeZoneInfo timeZone,
+            Core.Chrono.TimeOfDay newTime)
+        {
+            var sut = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
+            var result = sut.TrySetTimeOfDay( newTime );
+            result.Should().BeNull();
+        }
+
+        [Theory]
         [MethodData( nameof( ZonedDateTimeTestsData.GetGetOppositeAmbiguousDateTimeWithUnambiguousData ) )]
         public void GetOppositeAmbiguousDateTime_WithUnambiguousDateTime_ShouldReturnCorrectResult(
             DateTime dateTime,
@@ -793,7 +1195,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
         {
             var sut = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
             var result = sut.GetOppositeAmbiguousDateTime();
-            result.Should().Be( sut );
+            result.Should().BeNull();
         }
 
         [Theory]
@@ -814,16 +1216,19 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
 
             using ( new AssertionScope() )
             {
-                result.Timestamp.Should().Be( new Core.Chrono.Timestamp( expectedUtcDateTime ) );
-                result.Value.Should().Be( sut.Value );
-                result.Value.Kind.Should().Be( sut.Value.Kind );
-                result.TimeZone.Should().Be( sut.TimeZone );
-                result.UtcOffset.Should().Be( new Core.Chrono.Duration( expectedUtcOffset ) );
-                result.TimeOfDay.Should().Be( sut.TimeOfDay );
-                result.IsLocal.Should().Be( sut.IsLocal );
-                result.IsUtc.Should().Be( sut.IsUtc );
-                result.IsInDaylightSavingTime.Should().Be( ! sut.IsInDaylightSavingTime );
-                result.IsAmbiguous.Should().BeTrue();
+                result.Should().NotBeNull();
+                if ( result is null )
+                    return;
+
+                result.Value.Timestamp.Should().Be( new Core.Chrono.Timestamp( expectedUtcDateTime ) );
+                AssertValueDateCorrectness( result.Value, sut.Value, sut.Value.Kind );
+                result.Value.TimeZone.Should().Be( sut.TimeZone );
+                result.Value.UtcOffset.Should().Be( new Core.Chrono.Duration( expectedUtcOffset ) );
+                result.Value.TimeOfDay.Should().Be( sut.TimeOfDay );
+                result.Value.IsLocal.Should().Be( sut.IsLocal );
+                result.Value.IsUtc.Should().Be( sut.IsUtc );
+                result.Value.IsInDaylightSavingTime.Should().Be( ! sut.IsInDaylightSavingTime );
+                result.Value.IsAmbiguous.Should().BeTrue();
             }
         }
 
@@ -863,12 +1268,39 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
 
             var timeZoneOffset = Fixture.CreatePositiveInt32() % 12;
             var timeZone = ZonedDateTimeTestsData.GetTimeZone( $"{timeZoneOffset}", timeZoneOffset );
-            var durationToSubtract = new Core.Chrono.Duration( Fixture.Create<int>() );
+            var durationToAdd = new Core.Chrono.Duration( Fixture.Create<int>() );
 
             var sut = Core.Chrono.ZonedDateTime.Create( value, timeZone );
-            var expected = sut.Add( durationToSubtract );
+            var expected = sut.Add( durationToAdd );
 
-            var result = sut + durationToSubtract;
+            var result = sut + durationToAdd;
+
+            result.Should().BeEquivalentTo( expected );
+        }
+
+        [Fact]
+        public void AddOperator_WithPeriod_ShouldReturnCorrectResult()
+        {
+            var dateTimeTicks = Math.Abs( Fixture.Create<int>() );
+            var value = new DateTime( DateTime.UnixEpoch.Ticks + dateTimeTicks );
+
+            var timeZoneOffset = Fixture.CreatePositiveInt32() % 12;
+            var timeZone = ZonedDateTimeTestsData.GetTimeZone( $"{timeZoneOffset}", timeZoneOffset );
+            var periodToAdd = new Core.Chrono.Period(
+                years: Fixture.Create<sbyte>(),
+                months: Fixture.Create<sbyte>(),
+                weeks: Fixture.Create<short>(),
+                days: Fixture.Create<short>(),
+                hours: Fixture.Create<short>(),
+                minutes: Fixture.Create<short>(),
+                seconds: Fixture.Create<short>(),
+                milliseconds: Fixture.Create<short>(),
+                ticks: Fixture.Create<short>() );
+
+            var sut = Core.Chrono.ZonedDateTime.Create( value, timeZone );
+            var expected = sut.Add( periodToAdd );
+
+            var result = sut + periodToAdd;
 
             result.Should().BeEquivalentTo( expected );
         }
@@ -887,6 +1319,33 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             var expected = sut.Add( -durationToSubtract );
 
             var result = sut - durationToSubtract;
+
+            result.Should().BeEquivalentTo( expected );
+        }
+
+        [Fact]
+        public void SubtractOperator_WithPeriod_ShouldReturnCorrectResult()
+        {
+            var dateTimeTicks = Math.Abs( Fixture.Create<int>() );
+            var value = new DateTime( DateTime.UnixEpoch.Ticks + dateTimeTicks );
+
+            var timeZoneOffset = Fixture.CreatePositiveInt32() % 12;
+            var timeZone = ZonedDateTimeTestsData.GetTimeZone( $"{timeZoneOffset}", timeZoneOffset );
+            var periodToSubtract = new Core.Chrono.Period(
+                years: Fixture.Create<sbyte>(),
+                months: Fixture.Create<sbyte>(),
+                weeks: Fixture.Create<short>(),
+                days: Fixture.Create<short>(),
+                hours: Fixture.Create<short>(),
+                minutes: Fixture.Create<short>(),
+                seconds: Fixture.Create<short>(),
+                milliseconds: Fixture.Create<short>(),
+                ticks: Fixture.Create<short>() );
+
+            var sut = Core.Chrono.ZonedDateTime.Create( value, timeZone );
+            var expected = sut.Add( -periodToSubtract );
+
+            var result = sut - periodToSubtract;
 
             result.Should().BeEquivalentTo( expected );
         }
