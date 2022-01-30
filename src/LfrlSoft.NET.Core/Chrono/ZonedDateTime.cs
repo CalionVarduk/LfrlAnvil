@@ -220,10 +220,201 @@ namespace LfrlSoft.NET.Core.Chrono
         }
 
         [Pure]
-        public Period GetUnbalancedPeriodOffset(ZonedDateTime start, PeriodUnits units)
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private static (DateTime Date, Duration TimeOfDayOffset) SplitDateAndTime(DateTime value)
         {
-            // TODO (LF): resulting Period can be unbalanced
-            throw new NotImplementedException();
+            return (value.Date, new Duration( value.TimeOfDay ));
+        }
+
+        // TODO (LF): first, write a bunch of unit test cases, since this is a working algorithm (probably, make sure it is)
+        // then, optimize it & refactor it
+        // optimization can probably be done by no longer modifying endDate (with the exception for Years/Months)
+        // everything else can probably be calculated from a simple difference in ticks, properly trimmed to relevant time units
+        // days can be treated simply as 24 hours
+        // this should shave of a bunch of redundant DateTime struct validation for AddX methods
+        // refactoring: do after optimization, SplitDateAndTime might no longer be necessary
+        // it probably might be useful to create separate methods for YearsAndMonths + WeeksAndDays + TimeUnits
+        // actually, it might be wise to perform refactoring only once GetPeriodOffset is properly implemented and tested
+        // since a bunch of code might be somewhat reusable
+        [Pure]
+        public Period GetGreedyPeriodOffset(ZonedDateTime start, PeriodUnits units)
+        {
+            var (endDate, endTimeOfDayOffset) = SplitDateAndTime( Value );
+            var (startDate, startTimeOfDayOffset) = SplitDateAndTime( start.Value );
+            var result = Period.Empty;
+
+            // TODO (LF): refactor (Years & Months section)
+            if ( (units & PeriodUnits.Years) != 0 )
+            {
+                var yearOffset = endDate.Year - startDate.Year;
+
+                if ( (units & PeriodUnits.Months) != 0 )
+                {
+                    var monthOffset = endDate.Month - startDate.Month;
+                    var fullMonthOffset = yearOffset * Constants.MonthsPerYear + monthOffset;
+
+                    if ( fullMonthOffset != 0 )
+                    {
+                        endDate = endDate.AddMonths( -fullMonthOffset );
+                        result = result.AddYears( yearOffset ).AddMonths( monthOffset );
+                    }
+                }
+                else
+                {
+                    if ( yearOffset != 0 )
+                    {
+                        endDate = endDate.AddMonths( -yearOffset * Constants.MonthsPerYear );
+                        result = result.AddYears( yearOffset );
+                    }
+                }
+            }
+            else if ( (units & PeriodUnits.Months) != 0 )
+            {
+                var yearOffset = endDate.Year - startDate.Year;
+                var monthOffset = endDate.Month - startDate.Month;
+
+                if ( yearOffset > 0 )
+                {
+                    if ( monthOffset < 0 )
+                    {
+                        yearOffset -= 1;
+                        monthOffset += Constants.MonthsPerYear;
+                    }
+                }
+                else if ( yearOffset < 0 )
+                {
+                    if ( monthOffset > 0 )
+                    {
+                        yearOffset += 1;
+                        monthOffset -= Constants.MonthsPerYear;
+                    }
+                }
+
+                var fullMonthOffset = yearOffset * Constants.MonthsPerYear + monthOffset;
+                if ( fullMonthOffset != 0 )
+                {
+                    endDate = endDate.AddMonths( -fullMonthOffset );
+                    result = result.AddMonths( fullMonthOffset );
+                }
+            }
+
+            // TODO (LF): refactor (Weeks & Days section)
+            if ( (units & PeriodUnits.Weeks) != 0 )
+            {
+                var fullDayOffset = (endDate - startDate).Days;
+                var weekOffset = fullDayOffset / Constants.DaysPerWeek;
+
+                if ( (units & PeriodUnits.Days) != 0 )
+                {
+                    var dayOffset = fullDayOffset - weekOffset * Constants.DaysPerWeek;
+                    if ( fullDayOffset != 0 )
+                    {
+                        endDate = endDate.AddDays( -fullDayOffset );
+                        result = result.AddWeeks( weekOffset ).AddDays( dayOffset );
+                    }
+                }
+                else
+                {
+                    if ( weekOffset != 0 )
+                    {
+                        endDate = endDate.AddDays( -weekOffset * Constants.DaysPerWeek );
+                        result = result.AddWeeks( weekOffset );
+                    }
+                }
+            }
+            else if ( (units & PeriodUnits.Days) != 0 )
+            {
+                var dayOffset = (endDate - startDate).Days;
+                if ( dayOffset != 0 )
+                {
+                    endDate = endDate.AddDays( -dayOffset );
+                    result = result.AddDays( dayOffset );
+                }
+            }
+
+            var endDateHourOffsetTicks = endTimeOfDayOffset.FullHours * Constants.TicksPerHour;
+            endDate = endDate.AddTicks( endDateHourOffsetTicks );
+            endTimeOfDayOffset = endTimeOfDayOffset.SubtractTicks( endDateHourOffsetTicks );
+
+            var startDateHourOffsetTicks = startTimeOfDayOffset.FullHours * Constants.TicksPerHour;
+            startDate = startDate.AddTicks( startDateHourOffsetTicks );
+            startTimeOfDayOffset = startTimeOfDayOffset.SubtractTicks( startDateHourOffsetTicks );
+
+            if ( (units & PeriodUnits.Hours) != 0 )
+            {
+                var hourOffset = (int)(endDate - startDate).TotalHours;
+                if ( hourOffset != 0 )
+                {
+                    endDate = endDate.AddHours( -hourOffset );
+                    result = result.AddHours( hourOffset );
+                }
+            }
+
+            var endDateMinuteOffsetTicks = endTimeOfDayOffset.FullMinutes * Constants.TicksPerMinute;
+            endDate = endDate.AddTicks( endDateMinuteOffsetTicks );
+            endTimeOfDayOffset = endTimeOfDayOffset.SubtractTicks( endDateMinuteOffsetTicks );
+
+            var startDateMinuteOffsetTicks = startTimeOfDayOffset.FullMinutes * Constants.TicksPerMinute;
+            startDate = startDate.AddTicks( startDateMinuteOffsetTicks );
+            startTimeOfDayOffset = startTimeOfDayOffset.SubtractTicks( startDateMinuteOffsetTicks );
+
+            if ( (units & PeriodUnits.Minutes) != 0 )
+            {
+                var minuteOffset = (long)(endDate - startDate).TotalMinutes;
+                if ( minuteOffset != 0 )
+                {
+                    endDate = endDate.AddMinutes( -minuteOffset );
+                    result = result.AddMinutes( minuteOffset );
+                }
+            }
+
+            var endDateSecondOffsetTicks = endTimeOfDayOffset.FullSeconds * Constants.TicksPerSecond;
+            endDate = endDate.AddTicks( endDateSecondOffsetTicks );
+            endTimeOfDayOffset = endTimeOfDayOffset.SubtractTicks( endDateSecondOffsetTicks );
+
+            var startDateSecondOffsetTicks = startTimeOfDayOffset.FullSeconds * Constants.TicksPerSecond;
+            startDate = startDate.AddTicks( startDateSecondOffsetTicks );
+            startTimeOfDayOffset = startTimeOfDayOffset.SubtractTicks( startDateSecondOffsetTicks );
+
+            if ( (units & PeriodUnits.Seconds) != 0 )
+            {
+                var secondOffset = (long)(endDate - startDate).TotalSeconds;
+                if ( secondOffset != 0 )
+                {
+                    endDate = endDate.AddSeconds( -secondOffset );
+                    result = result.AddSeconds( secondOffset );
+                }
+            }
+
+            var endDateMillisecondOffsetTicks = endTimeOfDayOffset.FullMilliseconds * Constants.TicksPerMillisecond;
+            endDate = endDate.AddTicks( endDateMillisecondOffsetTicks );
+            endTimeOfDayOffset = endTimeOfDayOffset.SubtractTicks( endDateMillisecondOffsetTicks );
+
+            var startDateMillisecondOffsetTicks = startTimeOfDayOffset.FullMilliseconds * Constants.TicksPerMillisecond;
+            startDate = startDate.AddTicks( startDateMillisecondOffsetTicks );
+            startTimeOfDayOffset = startTimeOfDayOffset.SubtractTicks( startDateMillisecondOffsetTicks );
+
+            if ( (units & PeriodUnits.Milliseconds) != 0 )
+            {
+                var millisecondOffset = (long)(endDate - startDate).TotalMilliseconds;
+                if ( millisecondOffset != 0 )
+                {
+                    endDate = endDate.AddMilliseconds( -millisecondOffset );
+                    result = result.AddMilliseconds( millisecondOffset );
+                }
+            }
+
+            endDate = endDate.AddTicks( endTimeOfDayOffset.Ticks );
+            startDate = startDate.AddTicks( startTimeOfDayOffset.Ticks );
+
+            if ( (units & PeriodUnits.Ticks) != 0 )
+            {
+                var tickOffset = (endDate - startDate).Ticks;
+                if ( tickOffset != 0 )
+                    result = result.AddTicks( tickOffset );
+            }
+
+            return result;
         }
 
         [Pure]

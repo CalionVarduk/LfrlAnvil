@@ -14,10 +14,10 @@ namespace LfrlSoft.NET.Core.Chrono
             : this( years, months, weeks, days, 0, 0, 0, 0, 0 ) { }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public Period(int hours, int minutes, int seconds, int milliseconds, int ticks)
+        public Period(int hours, long minutes, long seconds, long milliseconds, long ticks)
             : this( 0, 0, 0, 0, hours, minutes, seconds, milliseconds, ticks ) { }
 
-        public Period(int years, int months, int weeks, int days, int hours, int minutes, int seconds, int milliseconds, int ticks)
+        public Period(int years, int months, int weeks, int days, int hours, long minutes, long seconds, long milliseconds, long ticks)
         {
             Years = years;
             Months = months;
@@ -40,17 +40,17 @@ namespace LfrlSoft.NET.Core.Chrono
                 timeSpan.Minutes,
                 timeSpan.Seconds,
                 timeSpan.Milliseconds,
-                (int)(timeSpan.Ticks % Constants.TicksPerMillisecond) ) { }
+                timeSpan.Ticks % Constants.TicksPerMillisecond ) { }
 
         public int Years { get; }
         public int Months { get; }
         public int Weeks { get; }
         public int Days { get; }
         public int Hours { get; }
-        public int Minutes { get; }
-        public int Seconds { get; }
-        public int Milliseconds { get; }
-        public int Ticks { get; }
+        public long Minutes { get; }
+        public long Seconds { get; }
+        public long Milliseconds { get; }
+        public long Ticks { get; }
 
         public PeriodUnits ActiveUnits =>
             (Years != 0 ? PeriodUnits.Years : PeriodUnits.None) |
@@ -63,51 +63,30 @@ namespace LfrlSoft.NET.Core.Chrono
             (Milliseconds != 0 ? PeriodUnits.Milliseconds : PeriodUnits.None) |
             (Ticks != 0 ? PeriodUnits.Ticks : PeriodUnits.None);
 
-        public bool IsBalanced
-        {
-            get
-            {
-                var positiveUnitCount = 0;
-                var negativeUnitCount = 0;
-
-                UpdateBalanceCount( Years, ref positiveUnitCount, ref negativeUnitCount );
-                UpdateBalanceCount( Months, ref positiveUnitCount, ref negativeUnitCount );
-                UpdateBalanceCount( Weeks, ref positiveUnitCount, ref negativeUnitCount );
-                UpdateBalanceCount( Days, ref positiveUnitCount, ref negativeUnitCount );
-                UpdateBalanceCount( Hours, ref positiveUnitCount, ref negativeUnitCount );
-                UpdateBalanceCount( Minutes, ref positiveUnitCount, ref negativeUnitCount );
-                UpdateBalanceCount( Seconds, ref positiveUnitCount, ref negativeUnitCount );
-                UpdateBalanceCount( Milliseconds, ref positiveUnitCount, ref negativeUnitCount );
-                UpdateBalanceCount( Ticks, ref positiveUnitCount, ref negativeUnitCount );
-
-                return positiveUnitCount == 0 || negativeUnitCount == 0;
-            }
-        }
-
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static Period FromTicks(int ticks)
+        public static Period FromTicks(long ticks)
         {
             return new Period( 0, 0, 0, 0, ticks );
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static Period FromMilliseconds(int milliseconds)
+        public static Period FromMilliseconds(long milliseconds)
         {
             return new Period( 0, 0, 0, milliseconds, 0 );
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static Period FromSeconds(int seconds)
+        public static Period FromSeconds(long seconds)
         {
             return new Period( 0, 0, seconds, 0, 0 );
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static Period FromMinutes(int minutes)
+        public static Period FromMinutes(long minutes)
         {
             return new Period( 0, minutes, 0, 0, 0 );
         }
@@ -222,28 +201,28 @@ namespace LfrlSoft.NET.Core.Chrono
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public Period AddTicks(int ticks)
+        public Period AddTicks(long ticks)
         {
             return SetTicks( Ticks + ticks );
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public Period AddMilliseconds(int milliseconds)
+        public Period AddMilliseconds(long milliseconds)
         {
             return SetMilliseconds( Milliseconds + milliseconds );
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public Period AddSeconds(int seconds)
+        public Period AddSeconds(long seconds)
         {
             return SetSeconds( Seconds + seconds );
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public Period AddMinutes(int minutes)
+        public Period AddMinutes(long minutes)
         {
             return SetMinutes( Minutes + minutes );
         }
@@ -300,28 +279,28 @@ namespace LfrlSoft.NET.Core.Chrono
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public Period SubtractTicks(int ticks)
+        public Period SubtractTicks(long ticks)
         {
             return SetTicks( Ticks - ticks );
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public Period SubtractMilliseconds(int milliseconds)
+        public Period SubtractMilliseconds(long milliseconds)
         {
             return SetMilliseconds( Milliseconds - milliseconds );
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public Period SubtractSeconds(int seconds)
+        public Period SubtractSeconds(long seconds)
         {
             return SetSeconds( Seconds - seconds );
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public Period SubtractMinutes(int minutes)
+        public Period SubtractMinutes(long minutes)
         {
             return SetMinutes( Minutes - minutes );
         }
@@ -394,7 +373,7 @@ namespace LfrlSoft.NET.Core.Chrono
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public Period SetTime(int hours, int minutes, int seconds, int milliseconds, int ticks)
+        public Period SetTime(int hours, long minutes, long seconds, long milliseconds, long ticks)
         {
             return new Period(
                 Years,
@@ -410,7 +389,7 @@ namespace LfrlSoft.NET.Core.Chrono
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public Period SetTicks(int ticks)
+        public Period SetTicks(long ticks)
         {
             return new Period(
                 Years,
@@ -426,7 +405,7 @@ namespace LfrlSoft.NET.Core.Chrono
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public Period SetMilliseconds(int milliseconds)
+        public Period SetMilliseconds(long milliseconds)
         {
             return new Period(
                 Years,
@@ -442,7 +421,7 @@ namespace LfrlSoft.NET.Core.Chrono
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public Period SetSeconds(int seconds)
+        public Period SetSeconds(long seconds)
         {
             return new Period(
                 Years,
@@ -458,7 +437,7 @@ namespace LfrlSoft.NET.Core.Chrono
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public Period SetMinutes(int minutes)
+        public Period SetMinutes(long minutes)
         {
             return new Period(
                 Years,
@@ -631,18 +610,6 @@ namespace LfrlSoft.NET.Core.Chrono
         public static bool operator !=(Period a, Period b)
         {
             return ! a.Equals( b );
-        }
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private static void UpdateBalanceCount(int value, ref int positiveUnitCount, ref int negativeUnitCount)
-        {
-            if ( value == 0 )
-                return;
-
-            if ( value < 0 )
-                ++negativeUnitCount;
-            else
-                ++positiveUnitCount;
         }
     }
 }

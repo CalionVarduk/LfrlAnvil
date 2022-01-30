@@ -1293,6 +1293,219 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             };
         }
 
+        public static TheoryData<DateTime, TimeZoneInfo, DateTime, PeriodUnits, Core.Chrono.Period> GetGetGreedyPeriodOffsetData(
+            IFixture fixture)
+        {
+            var timeZone = GetTimeZone( "1", 1 );
+
+            return new TheoryData<DateTime, TimeZoneInfo, DateTime, PeriodUnits, Core.Chrono.Period>
+            {
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    timeZone,
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    PeriodUnits.All,
+                    Core.Chrono.Period.Empty
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    timeZone,
+                    new DateTime( 2020, 6, 1, 7, 24, 33, 492 ).AddTicks( 5992 ),
+                    PeriodUnits.All,
+                    new Core.Chrono.Period( 1, 2, 3, 4, 5, 6, 7, 8, 9 )
+                },
+                {
+                    new DateTime( 2020, 6, 1, 7, 24, 33, 492 ).AddTicks( 5992 ),
+                    timeZone,
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    PeriodUnits.All,
+                    new Core.Chrono.Period( -1, -2, -3, -4, -5, -6, -7, -8, -9 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    timeZone,
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.All,
+                    new Core.Chrono.Period( 1, -2, 0, 6, -3, 1, -10, 50, -100 )
+                },
+                {
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    timeZone,
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    PeriodUnits.All,
+                    new Core.Chrono.Period( -1, 2, 0, -6, 3, -1, 10, -50, 100 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    timeZone,
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Years,
+                    Core.Chrono.Period.FromYears( 1 )
+                },
+                {
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    timeZone,
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    PeriodUnits.Years,
+                    Core.Chrono.Period.FromYears( -1 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    timeZone,
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Months,
+                    Core.Chrono.Period.FromMonths( 10 )
+                },
+                {
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    timeZone,
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    PeriodUnits.Months,
+                    Core.Chrono.Period.FromMonths( -10 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    timeZone,
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Weeks,
+                    Core.Chrono.Period.FromWeeks( 44 )
+                },
+                {
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    timeZone,
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    PeriodUnits.Weeks,
+                    Core.Chrono.Period.FromWeeks( -44 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    timeZone,
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Days,
+                    Core.Chrono.Period.FromDays( 310 )
+                },
+                {
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    timeZone,
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    PeriodUnits.Days,
+                    Core.Chrono.Period.FromDays( -310 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    timeZone,
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Hours,
+                    Core.Chrono.Period.FromHours( 7437 )
+                },
+                {
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    timeZone,
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    PeriodUnits.Hours,
+                    Core.Chrono.Period.FromHours( -7437 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    timeZone,
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Minutes,
+                    Core.Chrono.Period.FromMinutes( 446221 )
+                },
+                {
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    timeZone,
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    PeriodUnits.Minutes,
+                    Core.Chrono.Period.FromMinutes( -446221 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    timeZone,
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Seconds,
+                    Core.Chrono.Period.FromSeconds( 26773250 )
+                },
+                {
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    timeZone,
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    PeriodUnits.Seconds,
+                    Core.Chrono.Period.FromSeconds( -26773250 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    timeZone,
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Milliseconds,
+                    Core.Chrono.Period.FromMilliseconds( 26773250050 )
+                },
+                {
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    timeZone,
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    PeriodUnits.Milliseconds,
+                    Core.Chrono.Period.FromMilliseconds( -26773250050 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    timeZone,
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Ticks,
+                    Core.Chrono.Period.FromTicks( 267732500499900 )
+                },
+                {
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    timeZone,
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    PeriodUnits.Ticks,
+                    Core.Chrono.Period.FromTicks( -267732500499900 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    timeZone,
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Date,
+                    new Core.Chrono.Period( 1, -2, 0, 6 )
+                },
+                {
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    timeZone,
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    PeriodUnits.Date,
+                    new Core.Chrono.Period( -1, 2, 0, -6 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    timeZone,
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Time,
+                    new Core.Chrono.Period( 7437, 1, -10, 50, -100 )
+                },
+                {
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    timeZone,
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    PeriodUnits.Time,
+                    new Core.Chrono.Period( -7437, -1, 10, -50, 100 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    timeZone,
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Seconds | PeriodUnits.Ticks,
+                    Core.Chrono.Period.FromMonths( 10 ).AddDays( 6 ).SubtractSeconds( 10750 ).AddTicks( 499900 )
+                },
+                {
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    timeZone,
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Seconds | PeriodUnits.Ticks,
+                    Core.Chrono.Period.FromMonths( -10 ).SubtractDays( 6 ).AddSeconds( 10750 ).SubtractTicks( 499900 )
+                }
+            };
+        }
+
         public static TheoryData<DateTime, TimeZoneInfo, int, DateTime> GetSetYearData(IFixture fixture)
         {
             var simpleTimeZone = GetTimeZone( "1", 1 );

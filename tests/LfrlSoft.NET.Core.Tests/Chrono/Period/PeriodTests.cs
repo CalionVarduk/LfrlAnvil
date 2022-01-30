@@ -28,7 +28,6 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Period
                 sut.Seconds.Should().Be( 0 );
                 sut.Milliseconds.Should().Be( 0 );
                 sut.Ticks.Should().Be( 0 );
-                sut.IsBalanced.Should().BeTrue();
                 sut.ActiveUnits.Should().Be( PeriodUnits.None );
             }
         }
@@ -49,7 +48,6 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Period
                 sut.Seconds.Should().Be( 0 );
                 sut.Milliseconds.Should().Be( 0 );
                 sut.Ticks.Should().Be( 0 );
-                sut.IsBalanced.Should().BeTrue();
                 sut.ActiveUnits.Should().Be( PeriodUnits.None );
             }
         }
@@ -61,7 +59,6 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Period
             int months,
             int weeks,
             int days,
-            bool isBalanced,
             PeriodUnits expectedUnits)
         {
             var sut = new Core.Chrono.Period( years, months, weeks, days );
@@ -77,7 +74,6 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Period
                 sut.Seconds.Should().Be( 0 );
                 sut.Milliseconds.Should().Be( 0 );
                 sut.Ticks.Should().Be( 0 );
-                sut.IsBalanced.Should().Be( isBalanced );
                 sut.ActiveUnits.Should().Be( expectedUnits );
             }
         }
@@ -90,7 +86,6 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Period
             int seconds,
             int milliseconds,
             int ticks,
-            bool isBalanced,
             PeriodUnits expectedUnits)
         {
             var sut = new Core.Chrono.Period( hours, minutes, seconds, milliseconds, ticks );
@@ -106,7 +101,6 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Period
                 sut.Seconds.Should().Be( seconds );
                 sut.Milliseconds.Should().Be( milliseconds );
                 sut.Ticks.Should().Be( ticks );
-                sut.IsBalanced.Should().Be( isBalanced );
                 sut.ActiveUnits.Should().Be( expectedUnits );
             }
         }
@@ -116,7 +110,6 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Period
         public void Ctor_Full_ShouldReturnCorrectResult(
             (int Years, int Months, int Weeks, int Days) date,
             (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks) time,
-            bool isBalanced,
             PeriodUnits expectedUnits)
         {
             var sut = new Core.Chrono.Period(
@@ -141,7 +134,6 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Period
                 sut.Seconds.Should().Be( time.Seconds );
                 sut.Milliseconds.Should().Be( time.Milliseconds );
                 sut.Ticks.Should().Be( time.Ticks );
-                sut.IsBalanced.Should().Be( isBalanced );
                 sut.ActiveUnits.Should().Be( expectedUnits );
             }
         }
@@ -171,7 +163,6 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Period
                 sut.Seconds.Should().Be( expectedSeconds );
                 sut.Milliseconds.Should().Be( expectedMilliseconds );
                 sut.Ticks.Should().Be( expectedTicks );
-                sut.IsBalanced.Should().BeTrue();
                 sut.ActiveUnits.Should().Be( expectedUnits );
             }
         }
@@ -193,7 +184,6 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Period
                 sut.Seconds.Should().Be( 0 );
                 sut.Milliseconds.Should().Be( 0 );
                 sut.Ticks.Should().Be( value );
-                sut.IsBalanced.Should().BeTrue();
                 sut.ActiveUnits.Should().Be( PeriodUnits.Ticks );
             }
         }
@@ -215,7 +205,6 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Period
                 sut.Seconds.Should().Be( 0 );
                 sut.Milliseconds.Should().Be( value );
                 sut.Ticks.Should().Be( 0 );
-                sut.IsBalanced.Should().BeTrue();
                 sut.ActiveUnits.Should().Be( PeriodUnits.Milliseconds );
             }
         }
@@ -237,7 +226,6 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Period
                 sut.Seconds.Should().Be( value );
                 sut.Milliseconds.Should().Be( 0 );
                 sut.Ticks.Should().Be( 0 );
-                sut.IsBalanced.Should().BeTrue();
                 sut.ActiveUnits.Should().Be( PeriodUnits.Seconds );
             }
         }
@@ -259,7 +247,6 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Period
                 sut.Seconds.Should().Be( 0 );
                 sut.Milliseconds.Should().Be( 0 );
                 sut.Ticks.Should().Be( 0 );
-                sut.IsBalanced.Should().BeTrue();
                 sut.ActiveUnits.Should().Be( PeriodUnits.Minutes );
             }
         }
@@ -281,7 +268,6 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Period
                 sut.Seconds.Should().Be( 0 );
                 sut.Milliseconds.Should().Be( 0 );
                 sut.Ticks.Should().Be( 0 );
-                sut.IsBalanced.Should().BeTrue();
                 sut.ActiveUnits.Should().Be( PeriodUnits.Hours );
             }
         }
@@ -303,7 +289,6 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Period
                 sut.Seconds.Should().Be( 0 );
                 sut.Milliseconds.Should().Be( 0 );
                 sut.Ticks.Should().Be( 0 );
-                sut.IsBalanced.Should().BeTrue();
                 sut.ActiveUnits.Should().Be( PeriodUnits.Days );
             }
         }
@@ -325,7 +310,6 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Period
                 sut.Seconds.Should().Be( 0 );
                 sut.Milliseconds.Should().Be( 0 );
                 sut.Ticks.Should().Be( 0 );
-                sut.IsBalanced.Should().BeTrue();
                 sut.ActiveUnits.Should().Be( PeriodUnits.Weeks );
             }
         }
@@ -347,7 +331,6 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Period
                 sut.Seconds.Should().Be( 0 );
                 sut.Milliseconds.Should().Be( 0 );
                 sut.Ticks.Should().Be( 0 );
-                sut.IsBalanced.Should().BeTrue();
                 sut.ActiveUnits.Should().Be( PeriodUnits.Months );
             }
         }
@@ -369,7 +352,6 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Period
                 sut.Seconds.Should().Be( 0 );
                 sut.Milliseconds.Should().Be( 0 );
                 sut.Ticks.Should().Be( 0 );
-                sut.IsBalanced.Should().BeTrue();
                 sut.ActiveUnits.Should().Be( PeriodUnits.Years );
             }
         }

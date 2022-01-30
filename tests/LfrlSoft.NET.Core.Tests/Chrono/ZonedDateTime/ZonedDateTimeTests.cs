@@ -918,6 +918,25 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             result.Should().Be( expected );
         }
 
+        // TODO (LF): GetPeriodOffset tests
+
+        [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetGetGreedyPeriodOffsetData ) )]
+        public void GetGreedyPeriodOffset_ShouldReturnCorrectResult(
+            DateTime dateTime,
+            TimeZoneInfo timeZone,
+            DateTime otherDateTime,
+            PeriodUnits units,
+            Core.Chrono.Period expected)
+        {
+            var sut = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
+            var start = Core.Chrono.ZonedDateTime.Create( otherDateTime, timeZone );
+
+            var result = sut.GetGreedyPeriodOffset( start, units );
+
+            result.Should().BeEquivalentTo( expected );
+        }
+
         [Theory]
         [MethodData( nameof( ZonedDateTimeTestsData.GetSetYearData ) )]
         public void SetYear_ShouldReturnCorrectResult(DateTime dateTime, TimeZoneInfo timeZone, int newYear, DateTime expected)

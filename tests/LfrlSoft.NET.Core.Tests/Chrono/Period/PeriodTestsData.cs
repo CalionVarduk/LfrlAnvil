@@ -9,93 +9,92 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Period
 {
     public class PeriodTestsData
     {
-        public static TheoryData<int, int, int, int, bool, PeriodUnits> GetCtorWithDateData(IFixture fixture)
+        public static TheoryData<int, int, int, int, PeriodUnits> GetCtorWithDateData(IFixture fixture)
         {
-            return new TheoryData<int, int, int, int, bool, PeriodUnits>
+            return new TheoryData<int, int, int, int, PeriodUnits>
             {
-                { 1, 0, 0, 0, true, PeriodUnits.Years },
-                { 0, 1, 0, 0, true, PeriodUnits.Months },
-                { 0, 0, 1, 0, true, PeriodUnits.Weeks },
-                { 0, 0, 0, 1, true, PeriodUnits.Days },
-                { 1, 2, 3, 4, true, PeriodUnits.Date },
-                { -1, 0, 0, 0, true, PeriodUnits.Years },
-                { 0, -1, 0, 0, true, PeriodUnits.Months },
-                { 0, 0, -1, 0, true, PeriodUnits.Weeks },
-                { 0, 0, 0, -1, true, PeriodUnits.Days },
-                { -1, -2, -3, -4, true, PeriodUnits.Date },
-                { -1, 2, 3, 4, false, PeriodUnits.Date },
-                { 1, -2, 3, 4, false, PeriodUnits.Date },
-                { 1, 2, -3, 4, false, PeriodUnits.Date },
-                { 1, 2, 3, -4, false, PeriodUnits.Date },
-                { 1, -2, -3, -4, false, PeriodUnits.Date },
-                { -1, 2, -3, -4, false, PeriodUnits.Date },
-                { -1, -2, 3, -4, false, PeriodUnits.Date },
-                { -1, -2, -3, 4, false, PeriodUnits.Date }
+                { 1, 0, 0, 0, PeriodUnits.Years },
+                { 0, 1, 0, 0, PeriodUnits.Months },
+                { 0, 0, 1, 0, PeriodUnits.Weeks },
+                { 0, 0, 0, 1, PeriodUnits.Days },
+                { 1, 2, 3, 4, PeriodUnits.Date },
+                { -1, 0, 0, 0, PeriodUnits.Years },
+                { 0, -1, 0, 0, PeriodUnits.Months },
+                { 0, 0, -1, 0, PeriodUnits.Weeks },
+                { 0, 0, 0, -1, PeriodUnits.Days },
+                { -1, -2, -3, -4, PeriodUnits.Date },
+                { -1, 2, 3, 4, PeriodUnits.Date },
+                { 1, -2, 3, 4, PeriodUnits.Date },
+                { 1, 2, -3, 4, PeriodUnits.Date },
+                { 1, 2, 3, -4, PeriodUnits.Date },
+                { 1, -2, -3, -4, PeriodUnits.Date },
+                { -1, 2, -3, -4, PeriodUnits.Date },
+                { -1, -2, 3, -4, PeriodUnits.Date },
+                { -1, -2, -3, 4, PeriodUnits.Date }
             };
         }
 
-        public static TheoryData<int, int, int, int, int, bool, PeriodUnits> GetCtorWithTimeData(IFixture fixture)
+        public static TheoryData<int, int, int, int, int, PeriodUnits> GetCtorWithTimeData(IFixture fixture)
         {
-            return new TheoryData<int, int, int, int, int, bool, PeriodUnits>
+            return new TheoryData<int, int, int, int, int, PeriodUnits>
             {
-                { 1, 0, 0, 0, 0, true, PeriodUnits.Hours },
-                { 0, 1, 0, 0, 0, true, PeriodUnits.Minutes },
-                { 0, 0, 1, 0, 0, true, PeriodUnits.Seconds },
-                { 0, 0, 0, 1, 0, true, PeriodUnits.Milliseconds },
-                { 0, 0, 0, 0, 1, true, PeriodUnits.Ticks },
-                { 1, 2, 3, 4, 5, true, PeriodUnits.Time },
-                { -1, 0, 0, 0, 0, true, PeriodUnits.Hours },
-                { 0, -1, 0, 0, 0, true, PeriodUnits.Minutes },
-                { 0, 0, -1, 0, 0, true, PeriodUnits.Seconds },
-                { 0, 0, 0, -1, 0, true, PeriodUnits.Milliseconds },
-                { 0, 0, 0, 0, -1, true, PeriodUnits.Ticks },
-                { -1, -2, -3, -4, -5, true, PeriodUnits.Time },
-                { -1, 2, 3, 4, 5, false, PeriodUnits.Time },
-                { 1, -2, 3, 4, 5, false, PeriodUnits.Time },
-                { 1, 2, -3, 4, 5, false, PeriodUnits.Time },
-                { 1, 2, 3, -4, 5, false, PeriodUnits.Time },
-                { 1, 2, 3, 4, -5, false, PeriodUnits.Time },
-                { 1, -2, -3, -4, -5, false, PeriodUnits.Time },
-                { -1, 2, -3, -4, -5, false, PeriodUnits.Time },
-                { -1, -2, 3, -4, -5, false, PeriodUnits.Time },
-                { -1, -2, -3, 4, -5, false, PeriodUnits.Time },
-                { -1, -2, -3, -4, 5, false, PeriodUnits.Time }
+                { 1, 0, 0, 0, 0, PeriodUnits.Hours },
+                { 0, 1, 0, 0, 0, PeriodUnits.Minutes },
+                { 0, 0, 1, 0, 0, PeriodUnits.Seconds },
+                { 0, 0, 0, 1, 0, PeriodUnits.Milliseconds },
+                { 0, 0, 0, 0, 1, PeriodUnits.Ticks },
+                { 1, 2, 3, 4, 5, PeriodUnits.Time },
+                { -1, 0, 0, 0, 0, PeriodUnits.Hours },
+                { 0, -1, 0, 0, 0, PeriodUnits.Minutes },
+                { 0, 0, -1, 0, 0, PeriodUnits.Seconds },
+                { 0, 0, 0, -1, 0, PeriodUnits.Milliseconds },
+                { 0, 0, 0, 0, -1, PeriodUnits.Ticks },
+                { -1, -2, -3, -4, -5, PeriodUnits.Time },
+                { -1, 2, 3, 4, 5, PeriodUnits.Time },
+                { 1, -2, 3, 4, 5, PeriodUnits.Time },
+                { 1, 2, -3, 4, 5, PeriodUnits.Time },
+                { 1, 2, 3, -4, 5, PeriodUnits.Time },
+                { 1, 2, 3, 4, -5, PeriodUnits.Time },
+                { 1, -2, -3, -4, -5, PeriodUnits.Time },
+                { -1, 2, -3, -4, -5, PeriodUnits.Time },
+                { -1, -2, 3, -4, -5, PeriodUnits.Time },
+                { -1, -2, -3, 4, -5, PeriodUnits.Time },
+                { -1, -2, -3, -4, 5, PeriodUnits.Time }
             };
         }
 
         public static TheoryData<
                 (int Years, int Months, int Weeks, int Days),
                 (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks),
-                bool,
                 PeriodUnits>
             GetCtorWithFullData(IFixture fixture)
         {
-            return new TheoryData<(int, int, int, int), (int, int, int, int, int), bool, PeriodUnits>
+            return new TheoryData<(int, int, int, int), (int, int, int, int, int), PeriodUnits>
             {
-                { (1, 0, 0, 0), (0, 0, 0, 0, 0), true, PeriodUnits.Years },
-                { (0, 1, 0, 0), (0, 0, 0, 0, 0), true, PeriodUnits.Months },
-                { (0, 0, 1, 0), (0, 0, 0, 0, 0), true, PeriodUnits.Weeks },
-                { (0, 0, 0, 1), (0, 0, 0, 0, 0), true, PeriodUnits.Days },
-                { (0, 0, 0, 0), (1, 0, 0, 0, 0), true, PeriodUnits.Hours },
-                { (0, 0, 0, 0), (0, 1, 0, 0, 0), true, PeriodUnits.Minutes },
-                { (0, 0, 0, 0), (0, 0, 1, 0, 0), true, PeriodUnits.Seconds },
-                { (0, 0, 0, 0), (0, 0, 0, 1, 0), true, PeriodUnits.Milliseconds },
-                { (0, 0, 0, 0), (0, 0, 0, 0, 1), true, PeriodUnits.Ticks },
-                { (1, 2, 3, 4), (0, 0, 0, 0, 0), true, PeriodUnits.Date },
-                { (0, 0, 0, 0), (1, 2, 3, 4, 5), true, PeriodUnits.Time },
-                { (1, 2, 3, 4), (5, 6, 7, 8, 9), true, PeriodUnits.All },
-                { (-1, -2, -3, -4), (0, 0, 0, 0, 0), true, PeriodUnits.Date },
-                { (0, 0, 0, 0), (-1, -2, -3, -4, -5), true, PeriodUnits.Time },
-                { (-1, -2, -3, -4), (-5, -6, -7, -8, -9), true, PeriodUnits.All },
-                { (-1, 2, 3, 4), (5, 6, 7, 8, 9), false, PeriodUnits.All },
-                { (-1, 2, -3, -4), (-5, -6, -7, -8, -9), false, PeriodUnits.All },
-                { (1, 2, -3, 4), (5, 6, 7, 8, 9), false, PeriodUnits.All },
-                { (-1, -2, -3, 4), (-5, -6, -7, -8, -9), false, PeriodUnits.All },
-                { (1, 2, 3, 4), (-5, 6, 7, 8, 9), false, PeriodUnits.All },
-                { (-1, -2, -3, -4), (-5, 6, -7, -8, -9), false, PeriodUnits.All },
-                { (1, 2, 3, 4), (5, 6, -7, 8, 9), false, PeriodUnits.All },
-                { (-1, -2, -3, -4), (-5, -6, -7, 8, -9), false, PeriodUnits.All },
-                { (1, 2, 3, 4), (5, 6, 7, 8, -9), false, PeriodUnits.All }
+                { (1, 0, 0, 0), (0, 0, 0, 0, 0), PeriodUnits.Years },
+                { (0, 1, 0, 0), (0, 0, 0, 0, 0), PeriodUnits.Months },
+                { (0, 0, 1, 0), (0, 0, 0, 0, 0), PeriodUnits.Weeks },
+                { (0, 0, 0, 1), (0, 0, 0, 0, 0), PeriodUnits.Days },
+                { (0, 0, 0, 0), (1, 0, 0, 0, 0), PeriodUnits.Hours },
+                { (0, 0, 0, 0), (0, 1, 0, 0, 0), PeriodUnits.Minutes },
+                { (0, 0, 0, 0), (0, 0, 1, 0, 0), PeriodUnits.Seconds },
+                { (0, 0, 0, 0), (0, 0, 0, 1, 0), PeriodUnits.Milliseconds },
+                { (0, 0, 0, 0), (0, 0, 0, 0, 1), PeriodUnits.Ticks },
+                { (1, 2, 3, 4), (0, 0, 0, 0, 0), PeriodUnits.Date },
+                { (0, 0, 0, 0), (1, 2, 3, 4, 5), PeriodUnits.Time },
+                { (1, 2, 3, 4), (5, 6, 7, 8, 9), PeriodUnits.All },
+                { (-1, -2, -3, -4), (0, 0, 0, 0, 0), PeriodUnits.Date },
+                { (0, 0, 0, 0), (-1, -2, -3, -4, -5), PeriodUnits.Time },
+                { (-1, -2, -3, -4), (-5, -6, -7, -8, -9), PeriodUnits.All },
+                { (-1, 2, 3, 4), (5, 6, 7, 8, 9), PeriodUnits.All },
+                { (-1, 2, -3, -4), (-5, -6, -7, -8, -9), PeriodUnits.All },
+                { (1, 2, -3, 4), (5, 6, 7, 8, 9), PeriodUnits.All },
+                { (-1, -2, -3, 4), (-5, -6, -7, -8, -9), PeriodUnits.All },
+                { (1, 2, 3, 4), (-5, 6, 7, 8, 9), PeriodUnits.All },
+                { (-1, -2, -3, -4), (-5, 6, -7, -8, -9), PeriodUnits.All },
+                { (1, 2, 3, 4), (5, 6, -7, 8, 9), PeriodUnits.All },
+                { (-1, -2, -3, -4), (-5, -6, -7, 8, -9), PeriodUnits.All },
+                { (1, 2, 3, 4), (5, 6, 7, 8, -9), PeriodUnits.All }
             };
         }
 
