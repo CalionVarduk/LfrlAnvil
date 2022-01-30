@@ -219,13 +219,6 @@ namespace LfrlSoft.NET.Core.Chrono
             throw new NotImplementedException();
         }
 
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private static (DateTime Date, Duration TimeOfDayOffset) SplitDateAndTime(DateTime value)
-        {
-            return (value.Date, new Duration( value.TimeOfDay ));
-        }
-
         // TODO (LF): first, write a bunch of unit test cases, since this is a working algorithm (probably, make sure it is)
         // then, optimize it & refactor it
         // optimization can probably be done by no longer modifying endDate (with the exception for Years/Months)
@@ -239,23 +232,23 @@ namespace LfrlSoft.NET.Core.Chrono
         [Pure]
         public Period GetGreedyPeriodOffset(ZonedDateTime start, PeriodUnits units)
         {
-            var (endDate, endTimeOfDayOffset) = SplitDateAndTime( Value );
-            var (startDate, startTimeOfDayOffset) = SplitDateAndTime( start.Value );
+            var endValue = Value;
+            var startValue = start.Value;
             var result = Period.Empty;
 
             // TODO (LF): refactor (Years & Months section)
             if ( (units & PeriodUnits.Years) != 0 )
             {
-                var yearOffset = endDate.Year - startDate.Year;
+                var yearOffset = endValue.Year - startValue.Year;
 
                 if ( (units & PeriodUnits.Months) != 0 )
                 {
-                    var monthOffset = endDate.Month - startDate.Month;
+                    var monthOffset = endValue.Month - startValue.Month;
                     var fullMonthOffset = yearOffset * Constants.MonthsPerYear + monthOffset;
 
                     if ( fullMonthOffset != 0 )
                     {
-                        endDate = endDate.AddMonths( -fullMonthOffset );
+                        endValue = endValue.AddMonths( -fullMonthOffset );
                         result = result.AddYears( yearOffset ).AddMonths( monthOffset );
                     }
                 }
@@ -263,15 +256,15 @@ namespace LfrlSoft.NET.Core.Chrono
                 {
                     if ( yearOffset != 0 )
                     {
-                        endDate = endDate.AddMonths( -yearOffset * Constants.MonthsPerYear );
+                        endValue = endValue.AddMonths( -yearOffset * Constants.MonthsPerYear );
                         result = result.AddYears( yearOffset );
                     }
                 }
             }
             else if ( (units & PeriodUnits.Months) != 0 )
             {
-                var yearOffset = endDate.Year - startDate.Year;
-                var monthOffset = endDate.Month - startDate.Month;
+                var yearOffset = endValue.Year - startValue.Year;
+                var monthOffset = endValue.Month - startValue.Month;
 
                 if ( yearOffset > 0 )
                 {
@@ -293,15 +286,19 @@ namespace LfrlSoft.NET.Core.Chrono
                 var fullMonthOffset = yearOffset * Constants.MonthsPerYear + monthOffset;
                 if ( fullMonthOffset != 0 )
                 {
-                    endDate = endDate.AddMonths( -fullMonthOffset );
+                    endValue = endValue.AddMonths( -fullMonthOffset );
                     result = result.AddMonths( fullMonthOffset );
                 }
             }
 
+            var endOffset = new Duration( endValue.Date.Ticks );
+            var startOffset = new Duration( startValue.Date.Ticks );
+
             // TODO (LF): refactor (Weeks & Days section)
             if ( (units & PeriodUnits.Weeks) != 0 )
             {
-                var fullDayOffset = (endDate - startDate).Days;
+                var fullDayOffsetDuration = endOffset - startOffset;
+                var fullDayOffset = (int)(fullDayOffsetDuration.Ticks / Constants.TicksPerDay);
                 var weekOffset = fullDayOffset / Constants.DaysPerWeek;
 
                 if ( (units & PeriodUnits.Days) != 0 )
@@ -309,7 +306,7 @@ namespace LfrlSoft.NET.Core.Chrono
                     var dayOffset = fullDayOffset - weekOffset * Constants.DaysPerWeek;
                     if ( fullDayOffset != 0 )
                     {
-                        endDate = endDate.AddDays( -fullDayOffset );
+                        endOffset = endOffset.Subtract( fullDayOffsetDuration );
                         result = result.AddWeeks( weekOffset ).AddDays( dayOffset );
                     }
                 }
@@ -317,99 +314,107 @@ namespace LfrlSoft.NET.Core.Chrono
                 {
                     if ( weekOffset != 0 )
                     {
-                        endDate = endDate.AddDays( -weekOffset * Constants.DaysPerWeek );
+                        endOffset = endOffset.SubtractTicks( -weekOffset * Constants.DaysPerWeek * Constants.TicksPerDay );
                         result = result.AddWeeks( weekOffset );
                     }
                 }
             }
             else if ( (units & PeriodUnits.Days) != 0 )
             {
-                var dayOffset = (endDate - startDate).Days;
+                var dayOffsetDuration = endOffset - startOffset;
+                var dayOffset = (int)(dayOffsetDuration.Ticks / Constants.TicksPerDay);
                 if ( dayOffset != 0 )
                 {
-                    endDate = endDate.AddDays( -dayOffset );
+                    endOffset = endOffset.Subtract( dayOffsetDuration );
                     result = result.AddDays( dayOffset );
                 }
             }
 
-            var endDateHourOffsetTicks = endTimeOfDayOffset.FullHours * Constants.TicksPerHour;
-            endDate = endDate.AddTicks( endDateHourOffsetTicks );
-            endTimeOfDayOffset = endTimeOfDayOffset.SubtractTicks( endDateHourOffsetTicks );
+            var remainingEndTimeOfDayOffset = new Duration( endValue.TimeOfDay );
+            var remainingStartTimeOfDayOffset = new Duration( startValue.TimeOfDay );
 
-            var startDateHourOffsetTicks = startTimeOfDayOffset.FullHours * Constants.TicksPerHour;
-            startDate = startDate.AddTicks( startDateHourOffsetTicks );
-            startTimeOfDayOffset = startTimeOfDayOffset.SubtractTicks( startDateHourOffsetTicks );
+            var endTimeUnitOffset = remainingEndTimeOfDayOffset.TrimToHour();
+            endOffset = endOffset.Add( endTimeUnitOffset );
+            remainingEndTimeOfDayOffset = remainingEndTimeOfDayOffset.Subtract( endTimeUnitOffset );
+
+            var startTimeUnitOffset = remainingStartTimeOfDayOffset.TrimToHour();
+            startOffset = startOffset.Add( startTimeUnitOffset );
+            remainingStartTimeOfDayOffset = remainingStartTimeOfDayOffset.Subtract( startTimeUnitOffset );
 
             if ( (units & PeriodUnits.Hours) != 0 )
             {
-                var hourOffset = (int)(endDate - startDate).TotalHours;
+                var hourOffsetDuration = endOffset - startOffset;
+                var hourOffset = (int)hourOffsetDuration.FullHours;
                 if ( hourOffset != 0 )
                 {
-                    endDate = endDate.AddHours( -hourOffset );
+                    endOffset = endOffset.Subtract( hourOffsetDuration );
                     result = result.AddHours( hourOffset );
                 }
             }
 
-            var endDateMinuteOffsetTicks = endTimeOfDayOffset.FullMinutes * Constants.TicksPerMinute;
-            endDate = endDate.AddTicks( endDateMinuteOffsetTicks );
-            endTimeOfDayOffset = endTimeOfDayOffset.SubtractTicks( endDateMinuteOffsetTicks );
+            endTimeUnitOffset = remainingEndTimeOfDayOffset.TrimToMinute();
+            endOffset = endOffset.Add( endTimeUnitOffset );
+            remainingEndTimeOfDayOffset = remainingEndTimeOfDayOffset.Subtract( endTimeUnitOffset );
 
-            var startDateMinuteOffsetTicks = startTimeOfDayOffset.FullMinutes * Constants.TicksPerMinute;
-            startDate = startDate.AddTicks( startDateMinuteOffsetTicks );
-            startTimeOfDayOffset = startTimeOfDayOffset.SubtractTicks( startDateMinuteOffsetTicks );
+            startTimeUnitOffset = remainingStartTimeOfDayOffset.TrimToMinute();
+            startOffset = startOffset.Add( startTimeUnitOffset );
+            remainingStartTimeOfDayOffset = remainingStartTimeOfDayOffset.Subtract( startTimeUnitOffset );
 
             if ( (units & PeriodUnits.Minutes) != 0 )
             {
-                var minuteOffset = (long)(endDate - startDate).TotalMinutes;
+                var minuteOffsetDuration = endOffset - startOffset;
+                var minuteOffset = minuteOffsetDuration.FullMinutes;
                 if ( minuteOffset != 0 )
                 {
-                    endDate = endDate.AddMinutes( -minuteOffset );
+                    endOffset = endOffset.Subtract( minuteOffsetDuration );
                     result = result.AddMinutes( minuteOffset );
                 }
             }
 
-            var endDateSecondOffsetTicks = endTimeOfDayOffset.FullSeconds * Constants.TicksPerSecond;
-            endDate = endDate.AddTicks( endDateSecondOffsetTicks );
-            endTimeOfDayOffset = endTimeOfDayOffset.SubtractTicks( endDateSecondOffsetTicks );
+            endTimeUnitOffset = remainingEndTimeOfDayOffset.TrimToSecond();
+            endOffset = endOffset.Add( endTimeUnitOffset );
+            remainingEndTimeOfDayOffset = remainingEndTimeOfDayOffset.Subtract( endTimeUnitOffset );
 
-            var startDateSecondOffsetTicks = startTimeOfDayOffset.FullSeconds * Constants.TicksPerSecond;
-            startDate = startDate.AddTicks( startDateSecondOffsetTicks );
-            startTimeOfDayOffset = startTimeOfDayOffset.SubtractTicks( startDateSecondOffsetTicks );
+            startTimeUnitOffset = remainingStartTimeOfDayOffset.TrimToSecond();
+            startOffset = startOffset.Add( startTimeUnitOffset );
+            remainingStartTimeOfDayOffset = remainingStartTimeOfDayOffset.Subtract( startTimeUnitOffset );
 
             if ( (units & PeriodUnits.Seconds) != 0 )
             {
-                var secondOffset = (long)(endDate - startDate).TotalSeconds;
+                var secondOffsetDuration = endOffset - startOffset;
+                var secondOffset = secondOffsetDuration.FullSeconds;
                 if ( secondOffset != 0 )
                 {
-                    endDate = endDate.AddSeconds( -secondOffset );
+                    endOffset = endOffset.Subtract( secondOffsetDuration );
                     result = result.AddSeconds( secondOffset );
                 }
             }
 
-            var endDateMillisecondOffsetTicks = endTimeOfDayOffset.FullMilliseconds * Constants.TicksPerMillisecond;
-            endDate = endDate.AddTicks( endDateMillisecondOffsetTicks );
-            endTimeOfDayOffset = endTimeOfDayOffset.SubtractTicks( endDateMillisecondOffsetTicks );
+            endTimeUnitOffset = remainingEndTimeOfDayOffset.TrimToMillisecond();
+            endOffset = endOffset.Add( endTimeUnitOffset );
+            remainingEndTimeOfDayOffset = remainingEndTimeOfDayOffset.Subtract( endTimeUnitOffset );
 
-            var startDateMillisecondOffsetTicks = startTimeOfDayOffset.FullMilliseconds * Constants.TicksPerMillisecond;
-            startDate = startDate.AddTicks( startDateMillisecondOffsetTicks );
-            startTimeOfDayOffset = startTimeOfDayOffset.SubtractTicks( startDateMillisecondOffsetTicks );
+            startTimeUnitOffset = remainingStartTimeOfDayOffset.TrimToMillisecond();
+            startOffset = startOffset.Add( startTimeUnitOffset );
+            remainingStartTimeOfDayOffset = remainingStartTimeOfDayOffset.Subtract( startTimeUnitOffset );
 
             if ( (units & PeriodUnits.Milliseconds) != 0 )
             {
-                var millisecondOffset = (long)(endDate - startDate).TotalMilliseconds;
+                var millisecondOffsetDuration = endOffset - startOffset;
+                var millisecondOffset = millisecondOffsetDuration.FullMilliseconds;
                 if ( millisecondOffset != 0 )
                 {
-                    endDate = endDate.AddMilliseconds( -millisecondOffset );
+                    endOffset = endOffset.Subtract( millisecondOffsetDuration );
                     result = result.AddMilliseconds( millisecondOffset );
                 }
             }
 
-            endDate = endDate.AddTicks( endTimeOfDayOffset.Ticks );
-            startDate = startDate.AddTicks( startTimeOfDayOffset.Ticks );
+            endOffset = endOffset.Add( remainingEndTimeOfDayOffset );
+            startOffset = startOffset.Add( remainingStartTimeOfDayOffset );
 
             if ( (units & PeriodUnits.Ticks) != 0 )
             {
-                var tickOffset = (endDate - startDate).Ticks;
+                var tickOffset = (endOffset - startOffset).Ticks;
                 if ( tickOffset != 0 )
                     result = result.AddTicks( tickOffset );
             }
