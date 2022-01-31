@@ -918,7 +918,39 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             result.Should().Be( expected );
         }
 
-        // TODO (LF): GetPeriodOffset tests
+        [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetGetPeriodOffsetData ) )]
+        public void GetPeriodOffset_ShouldReturnCorrectResult(
+            DateTime dateTime,
+            TimeZoneInfo timeZone,
+            DateTime otherDateTime,
+            PeriodUnits units,
+            Core.Chrono.Period expected)
+        {
+            var sut = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
+            var start = Core.Chrono.ZonedDateTime.Create( otherDateTime, timeZone );
+
+            var result = sut.GetPeriodOffset( start, units );
+
+            result.Should().BeEquivalentTo( expected );
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetGetPeriodOffsetData ) )]
+        public void GetPeriodOffset_WithStartGreaterThanCaller_ShouldReturnCorrectResult(
+            DateTime otherDateTime,
+            TimeZoneInfo timeZone,
+            DateTime dateTime,
+            PeriodUnits units,
+            Core.Chrono.Period expected)
+        {
+            var sut = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
+            var start = Core.Chrono.ZonedDateTime.Create( otherDateTime, timeZone );
+
+            var result = sut.GetPeriodOffset( start, units );
+
+            result.Should().BeEquivalentTo( -expected );
+        }
 
         [Theory]
         [MethodData( nameof( ZonedDateTimeTestsData.GetGetGreedyPeriodOffsetData ) )]
@@ -935,6 +967,23 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             var result = sut.GetGreedyPeriodOffset( start, units );
 
             result.Should().BeEquivalentTo( expected );
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedDateTimeTestsData.GetGetGreedyPeriodOffsetData ) )]
+        public void GetGreedyPeriodOffset_WithStartGreaterThanCaller_ShouldReturnCorrectResult(
+            DateTime otherDateTime,
+            TimeZoneInfo timeZone,
+            DateTime dateTime,
+            PeriodUnits units,
+            Core.Chrono.Period expected)
+        {
+            var sut = Core.Chrono.ZonedDateTime.Create( dateTime, timeZone );
+            var start = Core.Chrono.ZonedDateTime.Create( otherDateTime, timeZone );
+
+            var result = sut.GetGreedyPeriodOffset( start, units );
+
+            result.Should().BeEquivalentTo( -expected );
         }
 
         [Theory]

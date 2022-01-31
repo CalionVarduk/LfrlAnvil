@@ -3,6 +3,7 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlSoft.NET.Core.Chrono.Exceptions;
 using LfrlSoft.NET.Core.Chrono.Extensions;
+using LfrlSoft.NET.Core.Chrono.Internal;
 
 namespace LfrlSoft.NET.Core.Chrono
 {
@@ -215,211 +216,23 @@ namespace LfrlSoft.NET.Core.Chrono
         [Pure]
         public Period GetPeriodOffset(ZonedDateTime start, PeriodUnits units)
         {
-            // TODO (LF): resulting Period must be balanced
-            throw new NotImplementedException();
+            var endValue = Value;
+            var startValue = start.Value;
+
+            return endValue < startValue
+                ? ZoneDateTimePeriodOffsetCalculator.GetPeriodOffset( endValue, startValue, units ).Negate()
+                : ZoneDateTimePeriodOffsetCalculator.GetPeriodOffset( startValue, endValue, units );
         }
 
-        // TODO (LF): first, write a bunch of unit test cases, since this is a working algorithm (probably, make sure it is)
-        // then, optimize it & refactor it
-        // optimization can probably be done by no longer modifying endDate (with the exception for Years/Months)
-        // everything else can probably be calculated from a simple difference in ticks, properly trimmed to relevant time units
-        // days can be treated simply as 24 hours
-        // this should shave of a bunch of redundant DateTime struct validation for AddX methods
-        // refactoring: do after optimization, SplitDateAndTime might no longer be necessary
-        // it probably might be useful to create separate methods for YearsAndMonths + WeeksAndDays + TimeUnits
-        // actually, it might be wise to perform refactoring only once GetPeriodOffset is properly implemented and tested
-        // since a bunch of code might be somewhat reusable
         [Pure]
         public Period GetGreedyPeriodOffset(ZonedDateTime start, PeriodUnits units)
         {
             var endValue = Value;
             var startValue = start.Value;
-            var result = Period.Empty;
 
-            // TODO (LF): refactor (Years & Months section)
-            if ( (units & PeriodUnits.Years) != 0 )
-            {
-                var yearOffset = endValue.Year - startValue.Year;
-
-                if ( (units & PeriodUnits.Months) != 0 )
-                {
-                    var monthOffset = endValue.Month - startValue.Month;
-                    var fullMonthOffset = yearOffset * Constants.MonthsPerYear + monthOffset;
-
-                    if ( fullMonthOffset != 0 )
-                    {
-                        endValue = endValue.AddMonths( -fullMonthOffset );
-                        result = result.AddYears( yearOffset ).AddMonths( monthOffset );
-                    }
-                }
-                else
-                {
-                    if ( yearOffset != 0 )
-                    {
-                        endValue = endValue.AddMonths( -yearOffset * Constants.MonthsPerYear );
-                        result = result.AddYears( yearOffset );
-                    }
-                }
-            }
-            else if ( (units & PeriodUnits.Months) != 0 )
-            {
-                var yearOffset = endValue.Year - startValue.Year;
-                var monthOffset = endValue.Month - startValue.Month;
-
-                if ( yearOffset > 0 )
-                {
-                    if ( monthOffset < 0 )
-                    {
-                        yearOffset -= 1;
-                        monthOffset += Constants.MonthsPerYear;
-                    }
-                }
-                else if ( yearOffset < 0 )
-                {
-                    if ( monthOffset > 0 )
-                    {
-                        yearOffset += 1;
-                        monthOffset -= Constants.MonthsPerYear;
-                    }
-                }
-
-                var fullMonthOffset = yearOffset * Constants.MonthsPerYear + monthOffset;
-                if ( fullMonthOffset != 0 )
-                {
-                    endValue = endValue.AddMonths( -fullMonthOffset );
-                    result = result.AddMonths( fullMonthOffset );
-                }
-            }
-
-            var endOffset = new Duration( endValue.Date.Ticks );
-            var startOffset = new Duration( startValue.Date.Ticks );
-
-            // TODO (LF): refactor (Weeks & Days section)
-            if ( (units & PeriodUnits.Weeks) != 0 )
-            {
-                var fullDayOffsetDuration = endOffset - startOffset;
-                var fullDayOffset = (int)(fullDayOffsetDuration.Ticks / Constants.TicksPerDay);
-                var weekOffset = fullDayOffset / Constants.DaysPerWeek;
-
-                if ( (units & PeriodUnits.Days) != 0 )
-                {
-                    var dayOffset = fullDayOffset - weekOffset * Constants.DaysPerWeek;
-                    if ( fullDayOffset != 0 )
-                    {
-                        endOffset = endOffset.Subtract( fullDayOffsetDuration );
-                        result = result.AddWeeks( weekOffset ).AddDays( dayOffset );
-                    }
-                }
-                else
-                {
-                    if ( weekOffset != 0 )
-                    {
-                        endOffset = endOffset.SubtractTicks( -weekOffset * Constants.DaysPerWeek * Constants.TicksPerDay );
-                        result = result.AddWeeks( weekOffset );
-                    }
-                }
-            }
-            else if ( (units & PeriodUnits.Days) != 0 )
-            {
-                var dayOffsetDuration = endOffset - startOffset;
-                var dayOffset = (int)(dayOffsetDuration.Ticks / Constants.TicksPerDay);
-                if ( dayOffset != 0 )
-                {
-                    endOffset = endOffset.Subtract( dayOffsetDuration );
-                    result = result.AddDays( dayOffset );
-                }
-            }
-
-            var remainingEndTimeOfDayOffset = new Duration( endValue.TimeOfDay );
-            var remainingStartTimeOfDayOffset = new Duration( startValue.TimeOfDay );
-
-            var endTimeUnitOffset = remainingEndTimeOfDayOffset.TrimToHour();
-            endOffset = endOffset.Add( endTimeUnitOffset );
-            remainingEndTimeOfDayOffset = remainingEndTimeOfDayOffset.Subtract( endTimeUnitOffset );
-
-            var startTimeUnitOffset = remainingStartTimeOfDayOffset.TrimToHour();
-            startOffset = startOffset.Add( startTimeUnitOffset );
-            remainingStartTimeOfDayOffset = remainingStartTimeOfDayOffset.Subtract( startTimeUnitOffset );
-
-            if ( (units & PeriodUnits.Hours) != 0 )
-            {
-                var hourOffsetDuration = endOffset - startOffset;
-                var hourOffset = (int)hourOffsetDuration.FullHours;
-                if ( hourOffset != 0 )
-                {
-                    endOffset = endOffset.Subtract( hourOffsetDuration );
-                    result = result.AddHours( hourOffset );
-                }
-            }
-
-            endTimeUnitOffset = remainingEndTimeOfDayOffset.TrimToMinute();
-            endOffset = endOffset.Add( endTimeUnitOffset );
-            remainingEndTimeOfDayOffset = remainingEndTimeOfDayOffset.Subtract( endTimeUnitOffset );
-
-            startTimeUnitOffset = remainingStartTimeOfDayOffset.TrimToMinute();
-            startOffset = startOffset.Add( startTimeUnitOffset );
-            remainingStartTimeOfDayOffset = remainingStartTimeOfDayOffset.Subtract( startTimeUnitOffset );
-
-            if ( (units & PeriodUnits.Minutes) != 0 )
-            {
-                var minuteOffsetDuration = endOffset - startOffset;
-                var minuteOffset = minuteOffsetDuration.FullMinutes;
-                if ( minuteOffset != 0 )
-                {
-                    endOffset = endOffset.Subtract( minuteOffsetDuration );
-                    result = result.AddMinutes( minuteOffset );
-                }
-            }
-
-            endTimeUnitOffset = remainingEndTimeOfDayOffset.TrimToSecond();
-            endOffset = endOffset.Add( endTimeUnitOffset );
-            remainingEndTimeOfDayOffset = remainingEndTimeOfDayOffset.Subtract( endTimeUnitOffset );
-
-            startTimeUnitOffset = remainingStartTimeOfDayOffset.TrimToSecond();
-            startOffset = startOffset.Add( startTimeUnitOffset );
-            remainingStartTimeOfDayOffset = remainingStartTimeOfDayOffset.Subtract( startTimeUnitOffset );
-
-            if ( (units & PeriodUnits.Seconds) != 0 )
-            {
-                var secondOffsetDuration = endOffset - startOffset;
-                var secondOffset = secondOffsetDuration.FullSeconds;
-                if ( secondOffset != 0 )
-                {
-                    endOffset = endOffset.Subtract( secondOffsetDuration );
-                    result = result.AddSeconds( secondOffset );
-                }
-            }
-
-            endTimeUnitOffset = remainingEndTimeOfDayOffset.TrimToMillisecond();
-            endOffset = endOffset.Add( endTimeUnitOffset );
-            remainingEndTimeOfDayOffset = remainingEndTimeOfDayOffset.Subtract( endTimeUnitOffset );
-
-            startTimeUnitOffset = remainingStartTimeOfDayOffset.TrimToMillisecond();
-            startOffset = startOffset.Add( startTimeUnitOffset );
-            remainingStartTimeOfDayOffset = remainingStartTimeOfDayOffset.Subtract( startTimeUnitOffset );
-
-            if ( (units & PeriodUnits.Milliseconds) != 0 )
-            {
-                var millisecondOffsetDuration = endOffset - startOffset;
-                var millisecondOffset = millisecondOffsetDuration.FullMilliseconds;
-                if ( millisecondOffset != 0 )
-                {
-                    endOffset = endOffset.Subtract( millisecondOffsetDuration );
-                    result = result.AddMilliseconds( millisecondOffset );
-                }
-            }
-
-            endOffset = endOffset.Add( remainingEndTimeOfDayOffset );
-            startOffset = startOffset.Add( remainingStartTimeOfDayOffset );
-
-            if ( (units & PeriodUnits.Ticks) != 0 )
-            {
-                var tickOffset = (endOffset - startOffset).Ticks;
-                if ( tickOffset != 0 )
-                    result = result.AddTicks( tickOffset );
-            }
-
-            return result;
+            return endValue < startValue
+                ? ZoneDateTimePeriodOffsetCalculator.GetGreedyPeriodOffset( endValue, startValue, units ).Negate()
+                : ZoneDateTimePeriodOffsetCalculator.GetGreedyPeriodOffset( startValue, endValue, units );
         }
 
         [Pure]
@@ -430,21 +243,17 @@ namespace LfrlSoft.NET.Core.Chrono
             var daysInMonth = DateTime.DaysInMonth( year, value.Month );
 
             var dateTime = DateTime.SpecifyKind(
-                new DateTime(
-                        year,
-                        value.Month,
-                        Math.Min( value.Day, daysInMonth ) )
-                    .Add( value.TimeOfDay ),
+                new DateTime( year, value.Month, Math.Min( value.Day, daysInMonth ) ).Add( value.TimeOfDay ),
                 value.Kind );
 
             var invalidity = timeZone.GetContainingInvalidityRange( dateTime );
             if ( invalidity is not null )
             {
-                dateTime = DateTime.SpecifyKind( invalidity.Value.Min.AddTicks( -1 ), value.Kind );
+                dateTime = invalidity.Value.Min.AddTicks( -1 );
                 if ( dateTime.Year != year )
-                    dateTime = DateTime.SpecifyKind( invalidity.Value.Max.AddTicks( 1 ), value.Kind );
+                    dateTime = invalidity.Value.Max.AddTicks( 1 );
 
-                return CreateImpl( dateTime, timeZone );
+                return CreateImpl( DateTime.SpecifyKind( dateTime, value.Kind ), timeZone );
             }
 
             var result = CreateImpl( dateTime, timeZone );
@@ -460,21 +269,17 @@ namespace LfrlSoft.NET.Core.Chrono
             var daysInMonth = DateTime.DaysInMonth( value.Year, (int)month );
 
             var dateTime = DateTime.SpecifyKind(
-                new DateTime(
-                        value.Year,
-                        (int)month,
-                        Math.Min( value.Day, daysInMonth ) )
-                    .Add( value.TimeOfDay ),
+                new DateTime( value.Year, (int)month, Math.Min( value.Day, daysInMonth ) ).Add( value.TimeOfDay ),
                 value.Kind );
 
             var invalidity = timeZone.GetContainingInvalidityRange( dateTime );
             if ( invalidity is not null )
             {
-                dateTime = DateTime.SpecifyKind( invalidity.Value.Min.AddTicks( -1 ), value.Kind );
+                dateTime = invalidity.Value.Min.AddTicks( -1 );
                 if ( dateTime.Month != (int)month )
-                    dateTime = DateTime.SpecifyKind( invalidity.Value.Max.AddTicks( 1 ), value.Kind );
+                    dateTime = invalidity.Value.Max.AddTicks( 1 );
 
-                return CreateImpl( dateTime, timeZone );
+                return CreateImpl( DateTime.SpecifyKind( dateTime, value.Kind ), timeZone );
             }
 
             var result = CreateImpl( dateTime, timeZone );
@@ -489,21 +294,17 @@ namespace LfrlSoft.NET.Core.Chrono
             var timeZone = TimeZone;
 
             var dateTime = DateTime.SpecifyKind(
-                new DateTime(
-                        value.Year,
-                        value.Month,
-                        day )
-                    .Add( value.TimeOfDay ),
+                new DateTime( value.Year, value.Month, day ).Add( value.TimeOfDay ),
                 value.Kind );
 
             var invalidity = timeZone.GetContainingInvalidityRange( dateTime );
             if ( invalidity is not null )
             {
-                dateTime = DateTime.SpecifyKind( invalidity.Value.Min.AddTicks( -1 ), value.Kind );
+                dateTime = invalidity.Value.Min.AddTicks( -1 );
                 if ( dateTime.Day != day )
-                    dateTime = DateTime.SpecifyKind( invalidity.Value.Max.AddTicks( 1 ), value.Kind );
+                    dateTime = invalidity.Value.Max.AddTicks( 1 );
 
-                return CreateImpl( dateTime, timeZone );
+                return CreateImpl( DateTime.SpecifyKind( dateTime, value.Kind ), timeZone );
             }
 
             var result = CreateImpl( dateTime, timeZone );
@@ -528,11 +329,11 @@ namespace LfrlSoft.NET.Core.Chrono
             var invalidity = timeZone.GetContainingInvalidityRange( dateTime );
             if ( invalidity is not null )
             {
-                dateTime = DateTime.SpecifyKind( invalidity.Value.Min.AddTicks( -1 ), value.Kind );
+                dateTime = invalidity.Value.Min.AddTicks( -1 );
                 if ( dateTime.DayOfYear != day )
-                    dateTime = DateTime.SpecifyKind( invalidity.Value.Max.AddTicks( 1 ), value.Kind );
+                    dateTime = invalidity.Value.Max.AddTicks( 1 );
 
-                return CreateImpl( dateTime, timeZone );
+                return CreateImpl( DateTime.SpecifyKind( dateTime, value.Kind ), timeZone );
             }
 
             var result = CreateImpl( dateTime, timeZone );
@@ -703,7 +504,7 @@ namespace LfrlSoft.NET.Core.Chrono
                 value.Milliseconds * Constants.TicksPerMillisecond +
                 value.Ticks;
 
-            var result = DateTime.SpecifyKind( start, DateTimeKind.Unspecified )
+            var result = start
                 .AddMonths( normalizedMonths )
                 .AddTicks( normalizedTicks );
 
