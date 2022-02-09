@@ -376,7 +376,9 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Duration
                 { 0, "0 second(s)" },
                 { 18046875, "1.8046875 second(s)" },
                 { -50123515625, "-5012.3515625 second(s)" },
-                { 2020000000, "202 second(s)" }
+                { 2020000000, "202 second(s)" },
+                { 1, "0.0000001 second(s)" },
+                { -1, "-0.0000001 second(s)" }
             };
         }
 

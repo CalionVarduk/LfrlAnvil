@@ -118,7 +118,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [Pure]
         public override string ToString()
         {
-            return $"{TotalSeconds.ToString( CultureInfo.InvariantCulture )} second(s)";
+            return $"{((decimal)TotalSeconds).ToString( CultureInfo.InvariantCulture )} second(s)";
         }
 
         [Pure]

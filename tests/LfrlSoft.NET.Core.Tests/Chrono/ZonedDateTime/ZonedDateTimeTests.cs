@@ -16,17 +16,6 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
     [TestClass( typeof( ZonedDateTimeTestsData ) )]
     public class ZonedDateTimeTests : TestsBase
     {
-        private static void AssertValueDateCorrectness(Core.Chrono.ZonedDateTime result, DateTime expected, DateTimeKind expectedKind)
-        {
-            result.Value.Should().Be( expected );
-            result.Value.Kind.Should().Be( expectedKind );
-            result.Year.Should().Be( expected.Year );
-            result.Month.Should().Be( expected.Month );
-            result.DayOfMonth.Should().Be( expected.Day );
-            result.DayOfYear.Should().Be( expected.DayOfYear );
-            result.DayOfWeek.Should().Be( expected.DayOfWeek.ToIso() );
-        }
-
         [Fact]
         public void Default_ShouldReturnCorrectResult()
         {
@@ -1518,6 +1507,17 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.ZonedDateTime
             var result = a >= b;
 
             result.Should().Be( expected );
+        }
+
+        private static void AssertValueDateCorrectness(Core.Chrono.ZonedDateTime result, DateTime expected, DateTimeKind expectedKind)
+        {
+            result.Value.Should().Be( expected );
+            result.Value.Kind.Should().Be( expectedKind );
+            result.Year.Should().Be( expected.Year );
+            result.Month.Should().Be( expected.Month );
+            result.DayOfMonth.Should().Be( expected.Day );
+            result.DayOfYear.Should().Be( expected.DayOfYear );
+            result.DayOfWeek.Should().Be( expected.DayOfWeek.ToIso() );
         }
     }
 }

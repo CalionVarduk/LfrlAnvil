@@ -54,7 +54,7 @@ namespace LfrlSoft.NET.Core.Chrono
             if ( timeZone.IsInvalidTime( dateTime ) )
                 return null;
 
-            var result = CreateImpl( dateTime, timeZone );
+            var result = CreateUnsafe( dateTime, timeZone );
             return result;
         }
 
@@ -111,7 +111,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [Pure]
         public bool Equals(ZonedDateTime other)
         {
-            return Timestamp.Equals( other.Timestamp ) && TimeZone.Id.Equals( other.TimeZone.Id );
+            return Timestamp.Equals( other.Timestamp ) && string.Equals( TimeZone.Id, other.TimeZone.Id, StringComparison.Ordinal );
         }
 
         [Pure]
@@ -135,6 +135,9 @@ namespace LfrlSoft.NET.Core.Chrono
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public ZonedDateTime ToTimeZone(TimeZoneInfo targetTimeZone)
         {
+            if ( ReferenceEquals( TimeZone, targetTimeZone ) )
+                return this;
+
             var dateTime = TimeZoneInfo.ConvertTimeFromUtc( Timestamp.UtcValue, targetTimeZone );
             return new ZonedDateTime( Timestamp, dateTime, targetTimeZone );
         }
@@ -165,7 +168,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [Pure]
         public ZonedDateTime Add(Period value)
         {
-            var dateTime = AddPeriod( Value, value );
+            var dateTime = Value.Add( value );
 
             var result = Create( dateTime, TimeZone );
             result = CorrelatePotentialAmbiguityWithDaylightSavingTime( result );
@@ -175,7 +178,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [Pure]
         public ZonedDateTime? TryAdd(Period value)
         {
-            var dateTime = AddPeriod( Value, value );
+            var dateTime = Value.Add( value );
 
             var result = TryCreate( dateTime, TimeZone );
             if ( result is null )
@@ -220,8 +223,8 @@ namespace LfrlSoft.NET.Core.Chrono
             var startValue = start.Value;
 
             return endValue < startValue
-                ? ZoneDateTimePeriodOffsetCalculator.GetPeriodOffset( endValue, startValue, units ).Negate()
-                : ZoneDateTimePeriodOffsetCalculator.GetPeriodOffset( startValue, endValue, units );
+                ? ZonedDateTimePeriodOffsetCalculator.GetPeriodOffset( endValue, startValue, units ).Negate()
+                : ZonedDateTimePeriodOffsetCalculator.GetPeriodOffset( startValue, endValue, units );
         }
 
         [Pure]
@@ -231,8 +234,8 @@ namespace LfrlSoft.NET.Core.Chrono
             var startValue = start.Value;
 
             return endValue < startValue
-                ? ZoneDateTimePeriodOffsetCalculator.GetGreedyPeriodOffset( endValue, startValue, units ).Negate()
-                : ZoneDateTimePeriodOffsetCalculator.GetGreedyPeriodOffset( startValue, endValue, units );
+                ? ZonedDateTimePeriodOffsetCalculator.GetGreedyPeriodOffset( endValue, startValue, units ).Negate()
+                : ZonedDateTimePeriodOffsetCalculator.GetGreedyPeriodOffset( startValue, endValue, units );
         }
 
         [Pure]
@@ -240,11 +243,7 @@ namespace LfrlSoft.NET.Core.Chrono
         {
             var value = Value;
             var timeZone = TimeZone;
-            var daysInMonth = DateTime.DaysInMonth( year, value.Month );
-
-            var dateTime = DateTime.SpecifyKind(
-                new DateTime( year, value.Month, Math.Min( value.Day, daysInMonth ) ).Add( value.TimeOfDay ),
-                value.Kind );
+            var dateTime = value.SetYear( year );
 
             var invalidity = timeZone.GetContainingInvalidityRange( dateTime );
             if ( invalidity is not null )
@@ -253,10 +252,10 @@ namespace LfrlSoft.NET.Core.Chrono
                 if ( dateTime.Year != year )
                     dateTime = invalidity.Value.Max.AddTicks( 1 );
 
-                return CreateImpl( DateTime.SpecifyKind( dateTime, value.Kind ), timeZone );
+                return CreateUnsafe( DateTime.SpecifyKind( dateTime, value.Kind ), timeZone );
             }
 
-            var result = CreateImpl( dateTime, timeZone );
+            var result = CreateUnsafe( dateTime, timeZone );
             result = CorrelatePotentialAmbiguityWithDaylightSavingTime( result );
             return result;
         }
@@ -266,11 +265,7 @@ namespace LfrlSoft.NET.Core.Chrono
         {
             var value = Value;
             var timeZone = TimeZone;
-            var daysInMonth = DateTime.DaysInMonth( value.Year, (int)month );
-
-            var dateTime = DateTime.SpecifyKind(
-                new DateTime( value.Year, (int)month, Math.Min( value.Day, daysInMonth ) ).Add( value.TimeOfDay ),
-                value.Kind );
+            var dateTime = value.SetMonth( month );
 
             var invalidity = timeZone.GetContainingInvalidityRange( dateTime );
             if ( invalidity is not null )
@@ -279,10 +274,10 @@ namespace LfrlSoft.NET.Core.Chrono
                 if ( dateTime.Month != (int)month )
                     dateTime = invalidity.Value.Max.AddTicks( 1 );
 
-                return CreateImpl( DateTime.SpecifyKind( dateTime, value.Kind ), timeZone );
+                return CreateUnsafe( DateTime.SpecifyKind( dateTime, value.Kind ), timeZone );
             }
 
-            var result = CreateImpl( dateTime, timeZone );
+            var result = CreateUnsafe( dateTime, timeZone );
             result = CorrelatePotentialAmbiguityWithDaylightSavingTime( result );
             return result;
         }
@@ -292,10 +287,7 @@ namespace LfrlSoft.NET.Core.Chrono
         {
             var value = Value;
             var timeZone = TimeZone;
-
-            var dateTime = DateTime.SpecifyKind(
-                new DateTime( value.Year, value.Month, day ).Add( value.TimeOfDay ),
-                value.Kind );
+            var dateTime = value.SetDayOfMonth( day );
 
             var invalidity = timeZone.GetContainingInvalidityRange( dateTime );
             if ( invalidity is not null )
@@ -304,10 +296,10 @@ namespace LfrlSoft.NET.Core.Chrono
                 if ( dateTime.Day != day )
                     dateTime = invalidity.Value.Max.AddTicks( 1 );
 
-                return CreateImpl( DateTime.SpecifyKind( dateTime, value.Kind ), timeZone );
+                return CreateUnsafe( DateTime.SpecifyKind( dateTime, value.Kind ), timeZone );
             }
 
-            var result = CreateImpl( dateTime, timeZone );
+            var result = CreateUnsafe( dateTime, timeZone );
             result = CorrelatePotentialAmbiguityWithDaylightSavingTime( result );
             return result;
         }
@@ -317,14 +309,7 @@ namespace LfrlSoft.NET.Core.Chrono
         {
             var value = Value;
             var timeZone = TimeZone;
-            var maxDay = DateTime.IsLeapYear( value.Year ) ? Constants.DaysInLeapYear : Constants.DaysInYear;
-
-            var dateTime = DateTime.SpecifyKind(
-                (day < 1 ? new DateTime( value.Year, 1, day ) :
-                    day > maxDay ? new DateTime( value.Year, 12, day - maxDay + Constants.DaysInDecember ) :
-                    value.GetStartOfYear().AddDays( day - 1 ))
-                .Add( value.TimeOfDay ),
-                value.Kind );
+            var dateTime = value.SetDayOfYear( day );
 
             var invalidity = timeZone.GetContainingInvalidityRange( dateTime );
             if ( invalidity is not null )
@@ -333,10 +318,10 @@ namespace LfrlSoft.NET.Core.Chrono
                 if ( dateTime.DayOfYear != day )
                     dateTime = invalidity.Value.Max.AddTicks( 1 );
 
-                return CreateImpl( DateTime.SpecifyKind( dateTime, value.Kind ), timeZone );
+                return CreateUnsafe( DateTime.SpecifyKind( dateTime, value.Kind ), timeZone );
             }
 
-            var result = CreateImpl( dateTime, timeZone );
+            var result = CreateUnsafe( dateTime, timeZone );
             result = CorrelatePotentialAmbiguityWithDaylightSavingTime( result );
             return result;
         }
@@ -344,10 +329,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [Pure]
         public ZonedDateTime SetTimeOfDay(TimeOfDay timeOfDay)
         {
-            var dateTime = Value
-                .GetStartOfDay()
-                .Add( (TimeSpan)timeOfDay );
-
+            var dateTime = Value.SetTimeOfDay( timeOfDay );
             var result = Create( dateTime, TimeZone );
             result = CorrelatePotentialAmbiguityWithDaylightSavingTime( result );
             return result;
@@ -356,10 +338,7 @@ namespace LfrlSoft.NET.Core.Chrono
         [Pure]
         public ZonedDateTime? TrySetTimeOfDay(TimeOfDay timeOfDay)
         {
-            var dateTime = Value
-                .GetStartOfDay()
-                .Add( (TimeSpan)timeOfDay );
-
+            var dateTime = Value.SetTimeOfDay( timeOfDay );
             var result = TryCreate( dateTime, TimeZone );
             if ( result is null )
                 return null;
@@ -470,19 +449,7 @@ namespace LfrlSoft.NET.Core.Chrono
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private ZonedDateTime CorrelatePotentialAmbiguityWithDaylightSavingTime(
-            ZonedDateTime target)
-        {
-            var ambiguousResult = target.GetOppositeAmbiguousDateTime();
-            if ( ambiguousResult is null )
-                return target;
-
-            return IsInDaylightSavingTime ? ambiguousResult.Value : target;
-        }
-
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private static ZonedDateTime CreateImpl(DateTime dateTime, TimeZoneInfo timeZone)
+        internal static ZonedDateTime CreateUnsafe(DateTime dateTime, TimeZoneInfo timeZone)
         {
             var utcDateTime = TimeZoneInfo.ConvertTimeToUtc( dateTime, timeZone );
             var timestamp = new Timestamp( utcDateTime );
@@ -491,24 +458,14 @@ namespace LfrlSoft.NET.Core.Chrono
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private static DateTime AddPeriod(DateTime start, Period value)
+        private ZonedDateTime CorrelatePotentialAmbiguityWithDaylightSavingTime(
+            ZonedDateTime target)
         {
-            var normalizedMonths = value.Years * Constants.MonthsPerYear + value.Months;
+            var ambiguousResult = target.GetOppositeAmbiguousDateTime();
+            if ( ambiguousResult is null )
+                return target;
 
-            var normalizedTicks =
-                value.Weeks * Constants.DaysPerWeek * Constants.TicksPerDay +
-                value.Days * Constants.TicksPerDay +
-                value.Hours * Constants.TicksPerHour +
-                value.Minutes * Constants.TicksPerMinute +
-                value.Seconds * Constants.TicksPerSecond +
-                value.Milliseconds * Constants.TicksPerMillisecond +
-                value.Ticks;
-
-            var result = start
-                .AddMonths( normalizedMonths )
-                .AddTicks( normalizedTicks );
-
-            return result;
+            return IsInDaylightSavingTime ? ambiguousResult.Value : target;
         }
     }
 }

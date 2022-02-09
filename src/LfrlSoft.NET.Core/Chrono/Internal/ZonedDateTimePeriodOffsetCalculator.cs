@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlSoft.NET.Core.Chrono.Internal
 {
-    internal static class ZoneDateTimePeriodOffsetCalculator
+    internal static class ZonedDateTimePeriodOffsetCalculator
     {
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
