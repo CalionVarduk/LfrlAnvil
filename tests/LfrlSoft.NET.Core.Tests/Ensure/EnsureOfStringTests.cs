@@ -13,10 +13,10 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
         }
 
         [Fact]
-        public void IsEmpty_ShouldThrow_WhenStringIsNotEmpty()
+        public void IsEmpty_ShouldThrowArgumentException_WhenStringIsNotEmpty()
         {
             var param = Fixture.CreateNotDefault<string>();
-            ShouldThrow( () => Core.Ensure.IsEmpty( param ) );
+            ShouldThrowArgumentException( () => Core.Ensure.IsEmpty( param ) );
         }
 
         [Fact]
@@ -27,10 +27,10 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
         }
 
         [Fact]
-        public void IsNotEmpty_ShouldThrow_WhenStringIsEmpty()
+        public void IsNotEmpty_ShouldThrowArgumentException_WhenStringIsEmpty()
         {
             var param = string.Empty;
-            ShouldThrow( () => Core.Ensure.IsNotEmpty( param ) );
+            ShouldThrowArgumentException( () => Core.Ensure.IsNotEmpty( param ) );
         }
 
         [Fact]
@@ -48,10 +48,10 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
         }
 
         [Fact]
-        public void IsNullOrEmpty_ShouldThrow_WhenStringIsNotEmpty()
+        public void IsNullOrEmpty_ShouldThrowArgumentException_WhenStringIsNotEmpty()
         {
             var param = Fixture.CreateNotDefault<string>();
-            ShouldThrow( () => Core.Ensure.IsNullOrEmpty( param ) );
+            ShouldThrowArgumentException( () => Core.Ensure.IsNullOrEmpty( param ) );
         }
 
         [Fact]
@@ -62,17 +62,17 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
         }
 
         [Fact]
-        public void IsNotNullOrEmpty_ShouldThrow_WhenStringIsNull()
+        public void IsNotNullOrEmpty_ShouldThrowArgumentException_WhenStringIsNull()
         {
             var param = Fixture.CreateDefault<string>();
-            ShouldThrow( () => Core.Ensure.IsNotNullOrEmpty( param ) );
+            ShouldThrowArgumentException( () => Core.Ensure.IsNotNullOrEmpty( param ) );
         }
 
         [Fact]
-        public void IsNotNullOrEmpty_ShouldThrow_WhenStringIsEmpty()
+        public void IsNotNullOrEmpty_ShouldThrowArgumentException_WhenStringIsEmpty()
         {
             var param = string.Empty;
-            ShouldThrow( () => Core.Ensure.IsNotNullOrEmpty( param ) );
+            ShouldThrowArgumentException( () => Core.Ensure.IsNotNullOrEmpty( param ) );
         }
 
         [Fact]
@@ -83,24 +83,24 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
         }
 
         [Fact]
-        public void IsNotNullOrWhiteSpace_ShouldThrow_WhenStringIsNull()
+        public void IsNotNullOrWhiteSpace_ShouldThrowArgumentException_WhenStringIsNull()
         {
             var param = Fixture.CreateDefault<string>();
-            ShouldThrow( () => Core.Ensure.IsNotNullOrWhiteSpace( param ) );
+            ShouldThrowArgumentException( () => Core.Ensure.IsNotNullOrWhiteSpace( param ) );
         }
 
         [Fact]
-        public void IsNotNullOrWhiteSpace_ShouldThrow_WhenStringIsEmpty()
+        public void IsNotNullOrWhiteSpace_ShouldThrowArgumentException_WhenStringIsEmpty()
         {
             var param = string.Empty;
-            ShouldThrow( () => Core.Ensure.IsNotNullOrWhiteSpace( param ) );
+            ShouldThrowArgumentException( () => Core.Ensure.IsNotNullOrWhiteSpace( param ) );
         }
 
         [Fact]
-        public void IsNotNullOrWhiteSpace_ShouldThrow_WhenStringIsWhiteSpaceOnly()
+        public void IsNotNullOrWhiteSpace_ShouldThrowArgumentException_WhenStringIsWhiteSpaceOnly()
         {
             var param = " \t\n\r";
-            ShouldThrow( () => Core.Ensure.IsNotNullOrWhiteSpace( param ) );
+            ShouldThrowArgumentException( () => Core.Ensure.IsNotNullOrWhiteSpace( param ) );
         }
     }
 }

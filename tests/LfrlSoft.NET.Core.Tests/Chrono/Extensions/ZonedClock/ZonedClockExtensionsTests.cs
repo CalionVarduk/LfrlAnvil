@@ -15,7 +15,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Extensions.ZonedClock
     public class ZonedClockExtensionsTests : ZonedClockTestsBase
     {
         [Fact]
-        public void Create_ShouldReturnCorrectResult()
+        public void Create_ShouldBeAnAliasForZonedDateTimeCreate()
         {
             var dateTime = Fixture.Create<System.DateTime>();
             var timeZone = CreateTimeZone();
@@ -23,6 +23,19 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Extensions.ZonedClock
             var sut = GetMockedClock( timeZone );
 
             var result = sut.Create( dateTime );
+
+            result.Should().BeEquivalentTo( expected );
+        }
+
+        [Fact]
+        public void TryCreate_ShouldBeAnAliasForZonedDateTimeTryCreate()
+        {
+            var dateTime = Fixture.Create<System.DateTime>();
+            var timeZone = CreateTimeZone();
+            var expected = Core.Chrono.ZonedDateTime.TryCreate( dateTime, timeZone );
+            var sut = GetMockedClock( timeZone );
+
+            var result = sut.TryCreate( dateTime );
 
             result.Should().BeEquivalentTo( expected );
         }

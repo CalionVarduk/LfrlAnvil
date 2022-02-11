@@ -15,9 +15,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Collection
         public void IsNullOrEmpty_ShouldReturnTrueWhenSourceIsNull()
         {
             IReadOnlyCollection<T>? sut = null;
-
             var result = sut.IsNullOrEmpty();
-
             result.Should().BeTrue();
         }
 
@@ -25,9 +23,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Collection
         public void IsNullOrEmpty_ShouldReturnTrueWhenSourceHasNoElements()
         {
             var sut = Array.Empty<T>();
-
             var result = sut.IsNullOrEmpty();
-
             result.Should().BeTrue();
         }
 
@@ -37,9 +33,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Collection
         public void IsNullOrEmpty_ShouldReturnFalseWhenSourceHasSomeElements(int count)
         {
             var sut = Fixture.CreateMany<T>( count ).ToList();
-
             var result = sut.IsNullOrEmpty();
-
             result.Should().BeFalse();
         }
 
@@ -47,9 +41,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Collection
         public void IsEmpty_ShouldReturnTrueWhenSourceHasNoElements()
         {
             var sut = Array.Empty<T>();
-
             var result = sut.IsEmpty();
-
             result.Should().BeTrue();
         }
 
@@ -59,9 +51,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Collection
         public void IsEmpty_ShouldReturnFalseWhenSourceHasSomeElements(int count)
         {
             var sut = Fixture.CreateMany<T>( count ).ToList();
-
             var result = sut.IsEmpty();
-
             result.Should().BeFalse();
         }
 
@@ -82,9 +72,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Collection
         public void ContainsAtLeast_ShouldReturnCorrectResult(int sourceCount, int minCount, bool expected)
         {
             var sut = Fixture.CreateMany<T>( sourceCount ).ToList();
-
             var result = sut.ContainsAtLeast( minCount );
-
             result.Should().Be( expected );
         }
 
@@ -105,9 +93,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Collection
         public void ContainsAtMost_ShouldReturnCorrectResult(int sourceCount, int maxCount, bool expected)
         {
             var sut = Fixture.CreateMany<T>( sourceCount ).ToList();
-
             var result = sut.ContainsAtMost( maxCount );
-
             result.Should().Be( expected );
         }
 
@@ -142,9 +128,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Collection
         public void ContainsBetween_ShouldReturnCorrectResultWhenMinCountIsZero(int count, int maxCount, bool expected)
         {
             var sut = Fixture.CreateMany<T>( count ).ToList();
-
             var result = sut.ContainsBetween( 0, maxCount );
-
             result.Should().Be( expected );
         }
 
@@ -182,9 +166,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Collection
         public void ContainsBetween_ShouldReturnFalseWhenSourceCountIsLessThanMinCount(int count, int minCount)
         {
             var sut = Fixture.CreateMany<T>( count ).ToList();
-
             var result = sut.ContainsBetween( minCount, minCount + 1 );
-
             result.Should().BeFalse();
         }
 
@@ -197,9 +179,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Collection
         public void ContainsBetween_ShouldReturnFalseWhenSourceCountIsGreaterThanMaxCount(int count, int maxCount)
         {
             var sut = Fixture.CreateMany<T>( count ).ToList();
-
             var result = sut.ContainsBetween( maxCount - 1, maxCount );
-
             result.Should().BeFalse();
         }
 
@@ -219,9 +199,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Collection
         public void ContainsBetween_ShouldReturnTrueWhenSourceCountIsBetweenMinAndMaxCount(int sourceCount, int minCount, int maxCount)
         {
             var sut = Fixture.CreateMany<T>( sourceCount ).ToList();
-
             var result = sut.ContainsBetween( minCount, maxCount );
-
             result.Should().BeTrue();
         }
 
@@ -251,9 +229,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Collection
         public void ContainsExactly_ShouldReturnCorrectResultWhenCountIsNotNegative(int sourceCount, int count, bool expected)
         {
             var sut = Fixture.CreateMany<T>( sourceCount ).ToList();
-
             var result = sut.ContainsExactly( count );
-
             result.Should().Be( expected );
         }
     }

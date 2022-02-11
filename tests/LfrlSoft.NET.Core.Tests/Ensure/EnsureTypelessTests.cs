@@ -11,9 +11,9 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
         }
 
         [Fact]
-        public void True_ShouldThrow_WhenConditionIsFalse()
+        public void True_ShouldThrowArgumentException_WhenConditionIsFalse()
         {
-            ShouldThrow( () => Core.Ensure.True( false ) );
+            ShouldThrowArgumentException( () => Core.Ensure.True( false ) );
         }
 
         [Fact]
@@ -23,9 +23,9 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
         }
 
         [Fact]
-        public void True_ShouldThrow_WhenConditionIsFalse_WithDelegate()
+        public void True_ShouldThrowArgumentException_WhenConditionIsFalse_WithDelegate()
         {
-            ShouldThrow( () => Core.Ensure.True( false, () => string.Empty ) );
+            ShouldThrowArgumentException( () => Core.Ensure.True( false, () => string.Empty ) );
         }
 
         [Fact]
@@ -35,9 +35,9 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
         }
 
         [Fact]
-        public void False_ShouldThrow_WhenConditionIsTrue()
+        public void False_ShouldThrowArgumentException_WhenConditionIsTrue()
         {
-            ShouldThrow( () => Core.Ensure.False( true ) );
+            ShouldThrowArgumentException( () => Core.Ensure.False( true ) );
         }
 
         [Fact]
@@ -47,9 +47,9 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
         }
 
         [Fact]
-        public void False_ShouldThrow_WhenConditionIsTrue_WithDelegate()
+        public void False_ShouldThrowArgumentException_WhenConditionIsTrue_WithDelegate()
         {
-            ShouldThrow( () => Core.Ensure.False( true, () => string.Empty ) );
+            ShouldThrowArgumentException( () => Core.Ensure.False( true, () => string.Empty ) );
         }
     }
 }

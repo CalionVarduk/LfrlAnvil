@@ -12,9 +12,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Object
         public void ToNullable_ShouldReturnCorrectResult()
         {
             var value = Fixture.Create<T>();
-
             var result = value.ToNullable();
-
             result.Should().BeEquivalentTo( value );
         }
     }

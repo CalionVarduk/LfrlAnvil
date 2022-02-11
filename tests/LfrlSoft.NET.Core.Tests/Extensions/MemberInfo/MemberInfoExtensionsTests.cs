@@ -3,6 +3,7 @@ using System.Linq;
 using System.Reflection;
 using FluentAssertions;
 using LfrlSoft.NET.Core.Extensions;
+using LfrlSoft.NET.Core.Functional;
 using LfrlSoft.NET.TestExtensions;
 using Xunit;
 
@@ -11,7 +12,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
     public class MemberInfoExtensionsTests : TestsBase
     {
         [Fact]
-        public void GetAttribute_ShouldReturnCorrectResultWhenAttributeExistsAndIsUnique()
+        public void GetAttribute_ShouldReturnCorrectResult_WhenAttributeExistsAndIsUnique()
         {
             var sut = typeof( BaseClass );
             var result = sut.GetAttribute<TestUniqueAttribute>();
@@ -19,19 +20,15 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         }
 
         [Fact]
-        public void GetAttribute_ShouldThrowWhenAttributeIsDuplicated()
+        public void GetAttribute_ShouldThrowAmbiguousMatchException_WhenAttributeIsDuplicated()
         {
             var sut = typeof( BaseClass );
-            System.Action action = () =>
-            {
-                var _ = sut.GetAttribute<TestMultiAttribute>();
-            };
-
-            action.Should().Throw<AmbiguousMatchException>();
+            var action = Lambda.Of( () => sut.GetAttribute<TestMultiAttribute>() );
+            action.Should().ThrowExactly<AmbiguousMatchException>();
         }
 
         [Fact]
-        public void GetAttribute_ShouldReturnNullWhenAttributeDoesntExists()
+        public void GetAttribute_ShouldReturnNull_WhenAttributeDoesntExists()
         {
             var sut = typeof( BaseClass );
             var result = sut.GetAttribute<TestUnusedAttribute>();
@@ -41,7 +38,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         [Theory]
         [InlineData( true )]
         [InlineData( false )]
-        public void GetAttribute_ShouldReturnCorrectResultWhenAttributeExistsAndIsUnique_ForDerivedClass(bool inherit)
+        public void GetAttribute_ShouldReturnCorrectResult_WhenAttributeExistsAndIsUnique_ForDerivedClass(bool inherit)
         {
             var sut = typeof( DerivedClass );
             var result = sut.GetAttribute<TestUniqueAttribute>( inherit );
@@ -49,7 +46,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         }
 
         [Fact]
-        public void GetAttribute_ShouldReturnCorrectResultWhenAttributeIsInherited_ForDerivedClassWithInheritance()
+        public void GetAttribute_ShouldReturnCorrectResult_WhenAttributeIsInherited_ForDerivedClassWithInheritance()
         {
             var sut = typeof( DerivedClass );
             var result = sut.GetAttribute<TestBaseOnlyAttribute>( inherit: true );
@@ -57,7 +54,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         }
 
         [Fact]
-        public void GetAttribute_ShouldReturnNullWhenAttributeIsInherited_ForDerivedClassWithoutInheritance()
+        public void GetAttribute_ShouldReturnNull_WhenAttributeIsInherited_ForDerivedClassWithoutInheritance()
         {
             var sut = typeof( DerivedClass );
             var result = sut.GetAttribute<TestBaseOnlyAttribute>( inherit: false );
@@ -65,7 +62,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         }
 
         [Fact]
-        public void GetAttributeRange_ShouldReturnCorrectResultWhenAttributeExistsAndIsUnique()
+        public void GetAttributeRange_ShouldReturnCorrectResult_WhenAttributeExistsAndIsUnique()
         {
             var sut = typeof( BaseClass );
             var expected = new[] { new TestUniqueAttribute( 0 ) }.AsEnumerable();
@@ -74,7 +71,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         }
 
         [Fact]
-        public void GetAttributeRange_ShouldReturnCorrectResultWhenAttributeExistsAndIsDuplicable()
+        public void GetAttributeRange_ShouldReturnCorrectResult_WhenAttributeExistsAndIsDuplicable()
         {
             var sut = typeof( BaseClass );
             var expected = new[] { new TestMultiAttribute( 1 ), new TestMultiAttribute( 2 ) }.AsEnumerable();
@@ -83,7 +80,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         }
 
         [Fact]
-        public void GetAttributeRange_ShouldReturnEmptyWhenAttributeDoesntExists()
+        public void GetAttributeRange_ShouldReturnEmpty_WhenAttributeDoesntExists()
         {
             var sut = typeof( BaseClass );
             var result = sut.GetAttributeRange<TestUnusedAttribute>();
@@ -93,7 +90,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         [Theory]
         [InlineData( true )]
         [InlineData( false )]
-        public void GetAttributeRange_ShouldReturnCorrectResultWhenAttributeExistsAndIsUnique_ForDerivedClass(bool inherit)
+        public void GetAttributeRange_ShouldReturnCorrectResult_WhenAttributeExistsAndIsUnique_ForDerivedClass(bool inherit)
         {
             var sut = typeof( DerivedClass );
             var expected = new[] { new TestUniqueAttribute( 4 ) }.AsEnumerable();
@@ -102,7 +99,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         }
 
         [Fact]
-        public void GetAttributeRange_ShouldReturnCorrectResultWhenAttributeIsInherited_ForDerivedClassWithInheritance()
+        public void GetAttributeRange_ShouldReturnCorrectResult_WhenAttributeIsInherited_ForDerivedClassWithInheritance()
         {
             var sut = typeof( DerivedClass );
             var expected = new[] { new TestBaseOnlyAttribute( 3 ) }.AsEnumerable();
@@ -111,7 +108,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         }
 
         [Fact]
-        public void GetAttributeRange_ShouldReturnEmptyWhenAttributeIsInherited_ForDerivedClassWithoutInheritance()
+        public void GetAttributeRange_ShouldReturnEmpty_WhenAttributeIsInherited_ForDerivedClassWithoutInheritance()
         {
             var sut = typeof( DerivedClass );
             var result = sut.GetAttributeRange<TestBaseOnlyAttribute>( inherit: false );
@@ -119,7 +116,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         }
 
         [Fact]
-        public void GetAttributeRange_ShouldReturnCorrectResultWhenAttributeIsDuplicated_ForDerivedClassWithInheritance()
+        public void GetAttributeRange_ShouldReturnCorrectResult_WhenAttributeIsDuplicated_ForDerivedClassWithInheritance()
         {
             var sut = typeof( DerivedClass );
             var expected = new[]
@@ -136,7 +133,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         }
 
         [Fact]
-        public void GetAttributeRange_ShouldReturnCorrectResultWhenAttributeIsDuplicated_ForDerivedClassWithoutInheritance()
+        public void GetAttributeRange_ShouldReturnCorrectResult_WhenAttributeIsDuplicated_ForDerivedClassWithoutInheritance()
         {
             var sut = typeof( DerivedClass );
             var expected = new[] { new TestMultiAttribute( 5 ), new TestMultiAttribute( 6 ) }.AsEnumerable();
@@ -145,7 +142,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         }
 
         [Fact]
-        public void HasAttribute_ShouldReturnTrueWhenAttributeExists()
+        public void HasAttribute_ShouldReturnTrue_WhenAttributeExists()
         {
             var sut = typeof( BaseClass );
             var result = sut.HasAttribute<TestMultiAttribute>();
@@ -153,7 +150,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         }
 
         [Fact]
-        public void HasAttribute_ShouldReturnFalseWhenAttributeDoesntExist()
+        public void HasAttribute_ShouldReturnFalse_WhenAttributeDoesntExist()
         {
             var sut = typeof( BaseClass );
             var result = sut.HasAttribute<TestUnusedAttribute>();
@@ -161,7 +158,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         }
 
         [Fact]
-        public void HasAttribute_ShouldReturnTrueWhenAttributeExistsOnBaseType_ForDerivedClassWithInheritance()
+        public void HasAttribute_ShouldReturnTrue_WhenAttributeExistsOnBaseType_ForDerivedClassWithInheritance()
         {
             var sut = typeof( DerivedClass );
             var result = sut.HasAttribute<TestBaseOnlyAttribute>( inherit: true );
@@ -169,7 +166,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         }
 
         [Fact]
-        public void HasAttribute_ShouldReturnFalseWhenAttributeExistsOnBaseType_ForDerivedClassWithoutInheritance()
+        public void HasAttribute_ShouldReturnFalse_WhenAttributeExistsOnBaseType_ForDerivedClassWithoutInheritance()
         {
             var sut = typeof( DerivedClass );
             var result = sut.HasAttribute<TestBaseOnlyAttribute>( inherit: false );
@@ -177,7 +174,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         }
 
         [Fact]
-        public void TryAsEvent_ShouldReturnEventInfoWhenMemberIsEvent()
+        public void TryAsEvent_ShouldReturnEventInfo_WhenMemberIsEvent()
         {
             var member = typeof( DerivedClass ).GetMember( nameof( DerivedClass.TestEvent ) )[0];
             var result = member.TryAsEvent();
@@ -185,7 +182,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         }
 
         [Fact]
-        public void TryAsEvent_ShouldReturnNullWhenMemberIsNull()
+        public void TryAsEvent_ShouldReturnNull_WhenMemberIsNull()
         {
             System.Reflection.MemberInfo? member = null;
             var result = member!.TryAsEvent();
@@ -198,7 +195,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         [InlineData( nameof( DerivedClass.TestMethod ) )]
         [InlineData( nameof( DerivedClass.TestType ) )]
         [InlineData( ".ctor" )]
-        public void TryAsEvent_ShouldReturnNullWhenMemberIsNotEvent(string memberName)
+        public void TryAsEvent_ShouldReturnNull_WhenMemberIsNotEvent(string memberName)
         {
             var member = typeof( DerivedClass ).GetMember( memberName )[0];
             var result = member.TryAsEvent();
@@ -206,7 +203,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         }
 
         [Fact]
-        public void TryAsField_ShouldReturnFieldInfoWhenMemberIsField()
+        public void TryAsField_ShouldReturnFieldInfo_WhenMemberIsField()
         {
             var member = typeof( DerivedClass ).GetMember( nameof( DerivedClass.TestField ) )[0];
             var result = member.TryAsField();
@@ -214,7 +211,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         }
 
         [Fact]
-        public void TryAsField_ShouldReturnNullWhenMemberIsNull()
+        public void TryAsField_ShouldReturnNull_WhenMemberIsNull()
         {
             System.Reflection.MemberInfo? member = null;
             var result = member!.TryAsField();
@@ -227,7 +224,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         [InlineData( nameof( DerivedClass.TestMethod ) )]
         [InlineData( nameof( DerivedClass.TestType ) )]
         [InlineData( ".ctor" )]
-        public void TryAsField_ShouldReturnNullWhenMemberIsNotField(string memberName)
+        public void TryAsField_ShouldReturnNull_WhenMemberIsNotField(string memberName)
         {
             var member = typeof( DerivedClass ).GetMember( memberName )[0];
             var result = member.TryAsField();
@@ -235,7 +232,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         }
 
         [Fact]
-        public void TryAsProperty_ShouldReturnPropertyInfoWhenMemberIsProperty()
+        public void TryAsProperty_ShouldReturnPropertyInfo_WhenMemberIsProperty()
         {
             var member = typeof( DerivedClass ).GetMember( nameof( DerivedClass.TestProperty ) )[0];
             var result = member.TryAsProperty();
@@ -243,7 +240,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         }
 
         [Fact]
-        public void TryAsProperty_ShouldReturnNullWhenMemberIsNull()
+        public void TryAsProperty_ShouldReturnNull_WhenMemberIsNull()
         {
             System.Reflection.MemberInfo? member = null;
             var result = member!.TryAsProperty();
@@ -256,7 +253,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         [InlineData( nameof( DerivedClass.TestMethod ) )]
         [InlineData( nameof( DerivedClass.TestType ) )]
         [InlineData( ".ctor" )]
-        public void TryAsProperty_ShouldReturnNullWhenMemberIsNotProperty(string memberName)
+        public void TryAsProperty_ShouldReturnNull_WhenMemberIsNotProperty(string memberName)
         {
             var member = typeof( DerivedClass ).GetMember( memberName )[0];
             var result = member.TryAsProperty();
@@ -264,7 +261,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         }
 
         [Fact]
-        public void TryAsType_ShouldReturnTypeWhenMemberIsType()
+        public void TryAsType_ShouldReturnType_WhenMemberIsType()
         {
             var member = typeof( DerivedClass ).GetMember( nameof( DerivedClass.TestType ) )[0];
             var result = member.TryAsType();
@@ -272,7 +269,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         }
 
         [Fact]
-        public void TryAsType_ShouldReturnNullWhenMemberIsNull()
+        public void TryAsType_ShouldReturnNull_WhenMemberIsNull()
         {
             System.Reflection.MemberInfo? member = null;
             var result = member!.TryAsType();
@@ -285,7 +282,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         [InlineData( nameof( DerivedClass.TestMethod ) )]
         [InlineData( nameof( DerivedClass.TestProperty ) )]
         [InlineData( ".ctor" )]
-        public void TryAsType_ShouldReturnNullWhenMemberIsNotType(string memberName)
+        public void TryAsType_ShouldReturnNull_WhenMemberIsNotType(string memberName)
         {
             var member = typeof( DerivedClass ).GetMember( memberName )[0];
             var result = member.TryAsType();
@@ -293,7 +290,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         }
 
         [Fact]
-        public void TryAsConstructor_ShouldReturnConstructorInfoWhenMemberIsConstructor()
+        public void TryAsConstructor_ShouldReturnConstructorInfo_WhenMemberIsConstructor()
         {
             var member = typeof( DerivedClass ).GetMember( ".ctor" )[0];
             var result = member.TryAsConstructor();
@@ -301,7 +298,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         }
 
         [Fact]
-        public void TryAsConstructor_ShouldReturnNullWhenMemberIsNull()
+        public void TryAsConstructor_ShouldReturnNull_WhenMemberIsNull()
         {
             System.Reflection.MemberInfo? member = null;
             var result = member!.TryAsConstructor();
@@ -314,7 +311,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         [InlineData( nameof( DerivedClass.TestMethod ) )]
         [InlineData( nameof( DerivedClass.TestProperty ) )]
         [InlineData( nameof( DerivedClass.TestType ) )]
-        public void TryAsConstructor_ShouldReturnNullWhenMemberIsNotConstructor(string memberName)
+        public void TryAsConstructor_ShouldReturnNull_WhenMemberIsNotConstructor(string memberName)
         {
             var member = typeof( DerivedClass ).GetMember( memberName )[0];
             var result = member.TryAsConstructor();
@@ -322,7 +319,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         }
 
         [Fact]
-        public void TryAsMethod_ShouldReturnMethodInfoWhenMemberIsMethod()
+        public void TryAsMethod_ShouldReturnMethodInfo_WhenMemberIsMethod()
         {
             var member = typeof( DerivedClass ).GetMember( nameof( DerivedClass.TestMethod ) )[0];
             var result = member.TryAsMethod();
@@ -330,7 +327,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         }
 
         [Fact]
-        public void TryAsMethod_ShouldReturnNullWhenMemberIsNull()
+        public void TryAsMethod_ShouldReturnNull_WhenMemberIsNull()
         {
             System.Reflection.MemberInfo? member = null;
             var result = member!.TryAsMethod();
@@ -343,7 +340,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.MemberInfo
         [InlineData( nameof( DerivedClass.TestProperty ) )]
         [InlineData( nameof( DerivedClass.TestType ) )]
         [InlineData( ".ctor" )]
-        public void TryAsMethod_ShouldReturnNullWhenMemberIsNotMethod(string memberName)
+        public void TryAsMethod_ShouldReturnNull_WhenMemberIsNotMethod(string memberName)
         {
             var member = typeof( DerivedClass ).GetMember( memberName )[0];
             var result = member.TryAsMethod();

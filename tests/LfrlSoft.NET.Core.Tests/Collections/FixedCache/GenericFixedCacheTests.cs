@@ -5,6 +5,7 @@ using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlSoft.NET.Core.Collections;
+using LfrlSoft.NET.Core.Functional;
 using LfrlSoft.NET.TestExtensions;
 using LfrlSoft.NET.TestExtensions.FluentAssertions;
 using Xunit;
@@ -55,14 +56,10 @@ namespace LfrlSoft.NET.Core.Tests.Collections.FixedCache
         [Theory]
         [InlineData( 0 )]
         [InlineData( -1 )]
-        public void Ctor_ShouldThrow_WhenCapacityIsLessThanOne(int capacity)
+        public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenCapacityIsLessThanOne(int capacity)
         {
-            Action action = () =>
-            {
-                var _ = new FixedCache<TKey, TValue>( capacity );
-            };
-
-            action.Should().Throw<ArgumentOutOfRangeException>();
+            var action = Lambda.Of( () => new FixedCache<TKey, TValue>( capacity ) );
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Fact]

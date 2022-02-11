@@ -12,10 +12,9 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.List
     {
         [Theory]
         [GenericMethodData( nameof( GenericListExtensionsTestsData<T>.CreateSwapItemsTestData ) )]
-        public void SwapItems_ShouldDoNothing_WhenIndexesAreEqual(IList<T> source, int index1, int index2, IReadOnlyList<T> expected)
+        public void SwapItems_ShouldSwapTwoItemsCorrectly(IList<T> source, int index1, int index2, IReadOnlyList<T> expected)
         {
             source.SwapItems( index1, index2 );
-
             source.Should().BeEquivalentTo( expected );
         }
     }

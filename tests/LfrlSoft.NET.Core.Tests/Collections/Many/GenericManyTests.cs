@@ -3,6 +3,7 @@ using System.Linq;
 using AutoFixture;
 using FluentAssertions;
 using LfrlSoft.NET.Core.Collections;
+using LfrlSoft.NET.Core.Functional;
 using LfrlSoft.NET.TestExtensions;
 using LfrlSoft.NET.TestExtensions.FluentAssertions;
 using Xunit;
@@ -15,9 +16,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Many
         public void Create_ShouldCreateCorrectMany()
         {
             var values = Fixture.CreateMany<T>().ToArray();
-
             var sut = Core.Collections.Many.Create( values );
-
             sut.Should().BeSequentiallyEqualTo( values );
         }
 
@@ -25,9 +24,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Many
         public void Ctor_ShouldCreateWithCorrectValues()
         {
             var values = Fixture.CreateMany<T>().ToArray();
-
             var sut = new Many<T>( values );
-
             sut.Should().BeSequentiallyEqualTo( values );
         }
 
@@ -39,9 +36,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Many
         public void Count_ShouldReturnCorrectResult(int count)
         {
             var values = Fixture.CreateMany<T>( count ).ToArray();
-
             var sut = new Many<T>( values );
-
             sut.Count.Should().Be( count );
         }
 
@@ -63,17 +58,14 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Many
         [InlineData( -1 )]
         [InlineData( 3 )]
         [InlineData( 4 )]
-        public void GetIndexer_ShouldThrowWhenIndexIsOutOfRange(int index)
+        public void GetIndexer_ShouldThrowIndexOutOfRangeException_WhenIndexIsOutOfRange(int index)
         {
             var values = Fixture.CreateMany<T>( 3 ).ToArray();
             var sut = new Many<T>( values );
 
-            Action action = () =>
-            {
-                var _ = sut[index];
-            };
+            var action = Lambda.Of( () => sut[index] );
 
-            action.Should().Throw<IndexOutOfRangeException>();
+            action.Should().ThrowExactly<IndexOutOfRangeException>();
         }
     }
 }

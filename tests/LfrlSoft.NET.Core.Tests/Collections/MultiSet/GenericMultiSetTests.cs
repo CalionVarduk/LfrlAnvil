@@ -5,6 +5,7 @@ using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlSoft.NET.Core.Collections;
+using LfrlSoft.NET.Core.Functional;
 using LfrlSoft.NET.TestExtensions;
 using Xunit;
 
@@ -29,9 +30,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.MultiSet
         public void Ctor_ShouldCreateWithExplicitComparer()
         {
             var comparer = EqualityComparerFactory<T>.Create( (a, b) => a!.Equals( b ) );
-
             var sut = new MultiSet<T>( comparer );
-
             sut.Comparer.Should().Be( comparer );
         }
 
@@ -104,18 +103,18 @@ namespace LfrlSoft.NET.Core.Tests.Collections.MultiSet
         }
 
         [Fact]
-        public void Add_ShouldThrowWhenItemMultiplicityIsTooLarge()
+        public void Add_ShouldThrowOverflowException_WhenItemMultiplicityIsTooLarge()
         {
             var item = Fixture.Create<T>();
 
             var sut = new MultiSet<T>();
             sut.AddMany( item, int.MaxValue );
 
-            Action action = () => sut.Add( item );
+            var action = Lambda.Of( () => sut.Add( item ) );
 
             using ( new AssertionScope() )
             {
-                action.Should().Throw<OverflowException>();
+                action.Should().ThrowExactly<OverflowException>();
                 sut.Count.Should().Be( 1 );
                 sut.FullCount.Should().Be( int.MaxValue );
             }
@@ -204,28 +203,28 @@ namespace LfrlSoft.NET.Core.Tests.Collections.MultiSet
         [Theory]
         [InlineData( 0 )]
         [InlineData( -1 )]
-        public void AddMany_ShouldThrowWhenCountIsLessThanOne(int count)
+        public void AddMany_ShouldThrowArgumentOutOfRangeException_WhenCountIsLessThanOne(int count)
         {
             var item = Fixture.Create<T>();
 
             var sut = new MultiSet<T>();
 
-            Action action = () => sut.AddMany( item, count );
+            var action = Lambda.Of( () => sut.AddMany( item, count ) );
 
-            action.Should().Throw<ArgumentOutOfRangeException>();
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Fact]
-        public void AddMany_ShouldThrowWhenItemMultiplicityIsTooLarge()
+        public void AddMany_ShouldThrowOverflowException_WhenItemMultiplicityIsTooLarge()
         {
             var item = Fixture.Create<T>();
 
             var sut = new MultiSet<T>();
             sut.AddMany( item, int.MaxValue );
 
-            Action action = () => sut.AddMany( item, 1 );
+            var action = Lambda.Of( () => sut.AddMany( item, 1 ) );
 
-            action.Should().Throw<OverflowException>();
+            action.Should().ThrowExactly<OverflowException>();
         }
 
         [Fact]
@@ -332,15 +331,15 @@ namespace LfrlSoft.NET.Core.Tests.Collections.MultiSet
         [Theory]
         [InlineData( 0 )]
         [InlineData( -1 )]
-        public void RemoveMany_ShouldThrowWhenCountIsLessThanOne(int count)
+        public void RemoveMany_ShouldThrowArgumentOutOfRangeException_WhenCountIsLessThanOne(int count)
         {
             var item = Fixture.Create<T>();
 
             var sut = new MultiSet<T>();
 
-            Action action = () => sut.RemoveMany( item, count );
+            var action = Lambda.Of( () => sut.RemoveMany( item, count ) );
 
-            action.Should().Throw<ArgumentOutOfRangeException>();
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Theory]

@@ -5,6 +5,7 @@ using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlSoft.NET.Core.Collections;
+using LfrlSoft.NET.Core.Functional;
 using LfrlSoft.NET.TestExtensions;
 using Xunit;
 
@@ -122,18 +123,18 @@ namespace LfrlSoft.NET.Core.Tests.Collections.TwoWayDictionary
         }
 
         [Fact]
-        public void Add_ShouldThrow_WhenFirstAlreadyExists()
+        public void Add_ShouldThrowArgumentException_WhenFirstAlreadyExists()
         {
             var first = Fixture.Create<T1>();
             var (oldSecond, newSecond) = Fixture.CreateDistinctCollection<T2>( 2 );
 
             var sut = new TwoWayDictionary<T1, T2> { { first, oldSecond } };
 
-            Action action = () => sut.Add( first, newSecond );
+            var action = Lambda.Of( () => sut.Add( first, newSecond ) );
 
             using ( new AssertionScope() )
             {
-                action.Should().Throw<ArgumentException>();
+                action.Should().ThrowExactly<ArgumentException>();
                 sut.Count.Should().Be( 1 );
                 sut.Forward[first].Should().Be( oldSecond );
                 sut.Reverse[oldSecond].Should().Be( first );
@@ -141,18 +142,18 @@ namespace LfrlSoft.NET.Core.Tests.Collections.TwoWayDictionary
         }
 
         [Fact]
-        public void Add_ShouldThrow_WhenSecondAlreadyExists()
+        public void Add_ShouldThrowArgumentException_WhenSecondAlreadyExists()
         {
             var (oldFirst, newFirst) = Fixture.CreateDistinctCollection<T1>( 2 );
             var second = Fixture.Create<T2>();
 
             var sut = new TwoWayDictionary<T1, T2> { { oldFirst, second } };
 
-            Action action = () => sut.Add( newFirst, second );
+            var action = Lambda.Of( () => sut.Add( newFirst, second ) );
 
             using ( new AssertionScope() )
             {
-                action.Should().Throw<ArgumentException>();
+                action.Should().ThrowExactly<ArgumentException>();
                 sut.Count.Should().Be( 1 );
                 sut.Forward[oldFirst].Should().Be( second );
                 sut.Reverse[second].Should().Be( oldFirst );
@@ -254,18 +255,18 @@ namespace LfrlSoft.NET.Core.Tests.Collections.TwoWayDictionary
         }
 
         [Fact]
-        public void UpdateForward_ShouldThrow_WhenSecondAlreadyExists()
+        public void UpdateForward_ShouldThrowArgumentException_WhenSecondAlreadyExists()
         {
             var (first1, first2) = Fixture.CreateDistinctCollection<T1>( 2 );
             var second = Fixture.Create<T2>();
 
             var sut = new TwoWayDictionary<T1, T2> { { first1, second } };
 
-            Action action = () => sut.UpdateForward( first2, second );
+            var action = Lambda.Of( () => sut.UpdateForward( first2, second ) );
 
             using ( new AssertionScope() )
             {
-                action.Should().Throw<ArgumentException>();
+                action.Should().ThrowExactly<ArgumentException>();
                 sut.Count.Should().Be( 1 );
                 sut.Forward[first1].Should().Be( second );
                 sut.Reverse[second].Should().Be( first1 );
@@ -273,18 +274,18 @@ namespace LfrlSoft.NET.Core.Tests.Collections.TwoWayDictionary
         }
 
         [Fact]
-        public void UpdateForward_ShouldThrow_WhenFirstDoesntExist()
+        public void UpdateForward_ShouldThrowKeyNotFoundException_WhenFirstDoesntExist()
         {
             var first = Fixture.Create<T1>();
             var second = Fixture.Create<T2>();
 
             var sut = new TwoWayDictionary<T1, T2>();
 
-            Action action = () => sut.UpdateForward( first, second );
+            var action = Lambda.Of( () => sut.UpdateForward( first, second ) );
 
             using ( new AssertionScope() )
             {
-                action.Should().Throw<KeyNotFoundException>();
+                action.Should().ThrowExactly<KeyNotFoundException>();
                 sut.Count.Should().Be( 0 );
             }
         }
@@ -365,18 +366,18 @@ namespace LfrlSoft.NET.Core.Tests.Collections.TwoWayDictionary
         }
 
         [Fact]
-        public void UpdateReverse_ShouldThrow_WhenFirstAlreadyExists()
+        public void UpdateReverse_ShouldThrowArgumentException_WhenFirstAlreadyExists()
         {
             var first = Fixture.Create<T1>();
             var (second1, second2) = Fixture.CreateDistinctCollection<T2>( 2 );
 
             var sut = new TwoWayDictionary<T1, T2> { { first, second1 } };
 
-            Action action = () => sut.UpdateReverse( second2, first );
+            var action = Lambda.Of( () => sut.UpdateReverse( second2, first ) );
 
             using ( new AssertionScope() )
             {
-                action.Should().Throw<ArgumentException>();
+                action.Should().ThrowExactly<ArgumentException>();
                 sut.Count.Should().Be( 1 );
                 sut.Forward[first].Should().Be( second1 );
                 sut.Reverse[second1].Should().Be( first );
@@ -384,18 +385,18 @@ namespace LfrlSoft.NET.Core.Tests.Collections.TwoWayDictionary
         }
 
         [Fact]
-        public void UpdateReverse_ShouldThrow_WhenSecondDoesntExist()
+        public void UpdateReverse_ShouldThrowKeyNotFoundException_WhenSecondDoesntExist()
         {
             var first = Fixture.Create<T1>();
             var second = Fixture.Create<T2>();
 
             var sut = new TwoWayDictionary<T1, T2>();
 
-            Action action = () => sut.UpdateReverse( second, first );
+            var action = Lambda.Of( () => sut.UpdateReverse( second, first ) );
 
             using ( new AssertionScope() )
             {
-                action.Should().Throw<KeyNotFoundException>();
+                action.Should().ThrowExactly<KeyNotFoundException>();
                 sut.Count.Should().Be( 0 );
             }
         }

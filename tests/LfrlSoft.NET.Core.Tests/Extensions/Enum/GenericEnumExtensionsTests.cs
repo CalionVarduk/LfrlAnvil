@@ -13,9 +13,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enum
         public void ToBitmask_ShouldReturnCorrectResult()
         {
             var value = Fixture.Create<T>();
-
             var result = value.ToBitmask();
-
             result.Value.Should().Be( value );
         }
     }

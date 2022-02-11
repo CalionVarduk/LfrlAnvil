@@ -13,9 +13,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
         public void Ctor_ShouldCreateWithCorrectValue()
         {
             var value = Fixture.Create<T1>();
-
             var sut = new PartialEither<T1>( value );
-
             sut.Value.Should().Be( value );
         }
 

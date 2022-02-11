@@ -29,17 +29,14 @@ namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
         }
 
         [Fact]
-        public void GetResult_ShouldThrow()
+        public void GetResult_ShouldThrowInvalidCastException()
         {
             var value = Fixture.Create<TSource>();
             var sut = (TypeCast<TSource, TDestination>)value;
 
-            Action action = () =>
-            {
-                var _ = sut.GetResult();
-            };
+            var action = Core.Functional.Lambda.Of( () => sut.GetResult() );
 
-            action.Should().Throw<InvalidCastException>();
+            action.Should().ThrowExactly<InvalidCastException>();
         }
 
         [Fact]
@@ -260,17 +257,14 @@ namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
         }
 
         [Fact]
-        public void TDestinationConversionOperator_ShouldThrow()
+        public void TDestinationConversionOperator_ShouldThrowInvalidCastException()
         {
             var value = Fixture.Create<TSource>();
             var sut = (TypeCast<TSource, TDestination>)value;
 
-            Action action = () =>
-            {
-                var _ = (TDestination)sut;
-            };
+            var action = Core.Functional.Lambda.Of( () => (TDestination)sut );
 
-            action.Should().Throw<InvalidCastException>();
+            action.Should().ThrowExactly<InvalidCastException>();
         }
 
         [Theory]
@@ -314,9 +308,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
         public void IEnumerableGetEnumerator_ShouldReturnEmptyEnumerator()
         {
             var value = Fixture.Create<TSource>();
-
             var sut = (TypeCast<TSource, TDestination>)value;
-
             sut.Should().BeEmpty();
         }
     }

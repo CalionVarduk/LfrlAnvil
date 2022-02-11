@@ -12,7 +12,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Comparer
         where T : IComparable<T>
     {
         [Fact]
-        public void Invert_ShouldReturnCorrectResult()
+        public void Invert_ShouldReturnComparerThatReturnsNegatedBaseComparisonResult()
         {
             var (lo, hi) = Fixture.CreateDistinctSortedCollection<T>( 2 );
             var sut = Comparer<T>.Default;

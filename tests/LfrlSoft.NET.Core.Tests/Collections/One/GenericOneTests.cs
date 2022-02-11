@@ -2,6 +2,7 @@
 using AutoFixture;
 using FluentAssertions;
 using LfrlSoft.NET.Core.Collections;
+using LfrlSoft.NET.Core.Functional;
 using LfrlSoft.NET.TestExtensions;
 using Xunit;
 
@@ -13,9 +14,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.One
         public void Create_ShouldCreateCorrectOne()
         {
             var value = Fixture.Create<T>();
-
             var sut = Core.Collections.One.Create( value );
-
             sut.Value.Should().Be( value );
         }
 
@@ -23,9 +22,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.One
         public void Ctor_ShouldCreateWithCorrectValue()
         {
             var value = Fixture.Create<T>();
-
             var sut = new One<T>( value );
-
             sut.Value.Should().Be( value );
         }
 
@@ -33,9 +30,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.One
         public void Count_ShouldReturnOne()
         {
             var value = Fixture.Create<T>();
-
             var sut = new One<T>( value );
-
             sut.Count.Should().Be( 1 );
         }
 
@@ -54,17 +49,14 @@ namespace LfrlSoft.NET.Core.Tests.Collections.One
         [InlineData( -1 )]
         [InlineData( 1 )]
         [InlineData( 2 )]
-        public void GetIndexer_ShouldThrowWhenIndexIsNotEqualToZero(int index)
+        public void GetIndexer_ShouldThrowArgumentException_WhenIndexIsNotEqualToZero(int index)
         {
             var value = Fixture.Create<T>();
             var sut = new One<T>( value );
 
-            Action action = () =>
-            {
-                var _ = sut[index];
-            };
+            var action = Lambda.Of( () => sut[index] );
 
-            action.Should().Throw<ArgumentException>();
+            action.Should().ThrowExactly<ArgumentException>();
         }
 
         [Fact]
@@ -72,7 +64,6 @@ namespace LfrlSoft.NET.Core.Tests.Collections.One
         {
             var value = Fixture.Create<T>();
             var sut = new One<T>( value );
-
             sut.Should().BeEquivalentTo( new[] { value } );
         }
     }

@@ -5,6 +5,7 @@ using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlSoft.NET.Core.Collections;
+using LfrlSoft.NET.Core.Functional;
 using LfrlSoft.NET.TestExtensions;
 using LfrlSoft.NET.TestExtensions.FluentAssertions;
 using Xunit;
@@ -155,16 +156,11 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Heap
         }
 
         [Fact]
-        public void Peek_ShouldThrow_WhenHeapIsEmpty()
+        public void Peek_ShouldThrowArgumentOutOfRangeException_WhenHeapIsEmpty()
         {
             var sut = new Heap<T>();
-
-            Action action = () =>
-            {
-                var _ = sut.Peek();
-            };
-
-            action.Should().Throw<ArgumentOutOfRangeException>();
+            var action = Lambda.Of( () => sut.Peek() );
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Fact]
@@ -217,16 +213,11 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Heap
         }
 
         [Fact]
-        public void Extract_ShouldThrow_WhenHeapIsEmpty()
+        public void Extract_ShouldThrowArgumentOutOfRangeException_WhenHeapIsEmpty()
         {
             var sut = new Heap<T>();
-
-            Action action = () =>
-            {
-                var _ = sut.Extract();
-            };
-
-            action.Should().Throw<ArgumentOutOfRangeException>();
+            var action = Lambda.Of( () => sut.Extract() );
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Fact]
@@ -281,13 +272,11 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Heap
         }
 
         [Fact]
-        public void Pop_ShouldThrow_WhenHeapIsEmpty()
+        public void Pop_ShouldThrowArgumentOutOfRangeException_WhenHeapIsEmpty()
         {
             var sut = new Heap<T>();
-
-            Action action = () => sut.Pop();
-
-            action.Should().Throw<ArgumentOutOfRangeException>();
+            var action = Lambda.Of( () => sut.Pop() );
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Fact]
@@ -336,17 +325,14 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Heap
         }
 
         [Fact]
-        public void Replace_ShouldThrow_WhenHeapIsEmpty()
+        public void Replace_ShouldThrowArgumentOutOfRangeException_WhenHeapIsEmpty()
         {
             var item = Fixture.Create<T>();
             var sut = new Heap<T>();
 
-            Action action = () =>
-            {
-                var _ = sut.Replace( item );
-            };
+            var action = Lambda.Of( () => sut.Replace( item ) );
 
-            action.Should().Throw<ArgumentOutOfRangeException>();
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Fact]
@@ -420,18 +406,15 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Heap
         [Theory]
         [InlineData( -1 )]
         [InlineData( 3 )]
-        public void IndexerGet_ShouldThrow_WhenIndexIsOutOfBounds(int index)
+        public void IndexerGet_ShouldThrowArgumentOutOfRangeException_WhenIndexIsOutOfBounds(int index)
         {
             var items = Fixture.CreateMany<T>( 3 );
 
             var sut = new Heap<T>( items );
 
-            Action action = () =>
-            {
-                var _ = sut[index];
-            };
+            var action = Lambda.Of( () => sut[index] );
 
-            action.Should().Throw<ArgumentOutOfRangeException>();
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Theory]

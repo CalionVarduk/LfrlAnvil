@@ -11,7 +11,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Bounds
         where T : IComparable<T>
     {
         [Fact]
-        public void AsEnumerable_ShouldReturnCorrectResult()
+        public void AsEnumerable_ShouldReturnResultWithMinAndMax()
         {
             var (min, max) = Fixture.CreateDistinctSortedCollection<T>( 2 );
             var sut = Core.Bounds.Create( min, max );

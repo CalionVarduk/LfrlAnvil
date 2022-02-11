@@ -365,6 +365,13 @@ namespace LfrlSoft.NET.Core.Chrono
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public ZonedDay GetDay()
+        {
+            return ZonedDay.Create( this );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static explicit operator DateTime(ZonedDateTime source)
         {
             return source.Value;

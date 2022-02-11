@@ -8,10 +8,10 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
         where T : struct, IEquatable<T>, IComparable<T>
     {
         [Fact]
-        public void IsNull_ShouldThrow()
+        public void IsNull_ShouldThrowArgumentException()
         {
             var param = Fixture.Create<T>();
-            ShouldThrow( () => Core.Ensure.IsNull( param, EqualityComparer ) );
+            ShouldThrowArgumentException( () => Core.Ensure.IsNull( param, EqualityComparer ) );
         }
 
         [Fact]
@@ -29,17 +29,17 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
         }
 
         [Fact]
-        public void IsNotOfType_ShouldThrow_WhenTypesMatch()
+        public void IsNotOfType_ShouldThrowArgumentException_WhenTypesMatch()
         {
             var param = Fixture.Create<T>();
-            ShouldThrow( () => Core.Ensure.IsNotOfType<T>( param ) );
+            ShouldThrowArgumentException( () => Core.Ensure.IsNotOfType<T>( param ) );
         }
 
         [Fact]
-        public void ContainsNull_ShouldThrow()
+        public void ContainsNull_ShouldThrowArgumentException()
         {
             var param = Fixture.CreateMany<T>();
-            ShouldThrow( () => Core.Ensure.ContainsNull( param, EqualityComparer ) );
+            ShouldThrowArgumentException( () => Core.Ensure.ContainsNull( param, EqualityComparer ) );
         }
 
         [Fact]

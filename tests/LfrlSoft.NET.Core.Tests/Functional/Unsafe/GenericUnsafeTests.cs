@@ -117,17 +117,14 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         }
 
         [Fact]
-        public void GetValue_ShouldThrow_WhenHasError()
+        public void GetValue_ShouldThrowArgumentNullException_WhenHasError()
         {
             var error = new Exception();
             IUnsafe sut = (Unsafe<T>)error;
 
-            Action action = () =>
-            {
-                var _ = sut.GetValue();
-            };
+            var action = Core.Functional.Lambda.Of( () => sut.GetValue() );
 
-            action.Should().Throw<ArgumentNullException>();
+            action.Should().ThrowExactly<ArgumentNullException>();
         }
 
         [Fact]
@@ -164,17 +161,14 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         }
 
         [Fact]
-        public void GetError_ShouldThrow_WhenHasValue()
+        public void GetError_ShouldThrowArgumentNullException_WhenHasValue()
         {
             var value = Fixture.Create<T>();
             IUnsafe sut = (Unsafe<T>)value;
 
-            Action action = () =>
-            {
-                var _ = sut.GetError();
-            };
+            var action = Core.Functional.Lambda.Of( () => sut.GetError() );
 
-            action.Should().Throw<ArgumentNullException>();
+            action.Should().ThrowExactly<ArgumentNullException>();
         }
 
         [Fact]
@@ -664,17 +658,14 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         }
 
         [Fact]
-        public void TConversionOperator_ShouldThrow_WhenHasError()
+        public void TConversionOperator_ShouldThrowArgumentNullException_WhenHasError()
         {
             var error = new Exception();
             var sut = (Unsafe<T>)error;
 
-            Action action = () =>
-            {
-                var _ = (T)sut;
-            };
+            var action = Core.Functional.Lambda.Of( () => (T)sut );
 
-            action.Should().Throw<ArgumentNullException>();
+            action.Should().ThrowExactly<ArgumentNullException>();
         }
 
         [Fact]
@@ -689,17 +680,14 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         }
 
         [Fact]
-        public void ExceptionConversionOperator_ShouldThrow_WhenHasValue()
+        public void ExceptionConversionOperator_ShouldThrowArgumentNullException_WhenHasValue()
         {
             var value = Fixture.Create<T>();
             var sut = (Unsafe<T>)value;
 
-            Action action = () =>
-            {
-                var _ = (Exception)sut;
-            };
+            var action = Core.Functional.Lambda.Of( () => (Exception)sut );
 
-            action.Should().Throw<ArgumentNullException>();
+            action.Should().ThrowExactly<ArgumentNullException>();
         }
 
         [Theory]
@@ -756,9 +744,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         public void IEnumerableGetEnumerator_ShouldReturnEnumeratorWithOneItem_WhenHasValue()
         {
             var value = Fixture.CreateNotDefault<T>();
-
             var sut = (Unsafe<T>)value;
-
             sut.Should().BeSequentiallyEqualTo( value );
         }
 
@@ -766,9 +752,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Unsafe
         public void IEnumerableGetEnumerator_ShouldReturnEmptyEnumerator_WhenHasError()
         {
             var error = new Exception();
-
             var sut = (Unsafe<T>)error;
-
             sut.Should().BeEmpty();
         }
     }

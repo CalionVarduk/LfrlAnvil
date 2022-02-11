@@ -14,9 +14,7 @@ namespace LfrlSoft.NET.Core.Tests.Hash
         public void Ctor_ShouldCreateWithCorrectValue()
         {
             var value = Fixture.Create<int>();
-
             var sut = new Core.Hash( value );
-
             sut.Value.Should().Be( value );
         }
 

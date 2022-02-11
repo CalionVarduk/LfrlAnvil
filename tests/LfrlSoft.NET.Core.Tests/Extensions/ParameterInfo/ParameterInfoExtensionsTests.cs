@@ -3,6 +3,7 @@ using System.Linq;
 using System.Reflection;
 using FluentAssertions;
 using LfrlSoft.NET.Core.Extensions;
+using LfrlSoft.NET.Core.Functional;
 using LfrlSoft.NET.TestExtensions;
 using Xunit;
 
@@ -11,7 +12,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.ParameterInfo
     public class ParameterInfoExtensionsTests : TestsBase
     {
         [Fact]
-        public void GetAttribute_ShouldReturnCorrectResultWhenAttributeExistsAndIsUnique()
+        public void GetAttribute_ShouldReturnCorrectResult_WhenAttributeExistsAndIsUnique()
         {
             var sut = GetBaseParameter();
             var result = sut.GetAttribute<TestUniqueAttribute>();
@@ -19,19 +20,15 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.ParameterInfo
         }
 
         [Fact]
-        public void GetAttribute_ShouldThrowWhenAttributeIsDuplicated()
+        public void GetAttribute_ShouldThrowAmbiguousMatchException_WhenAttributeIsDuplicated()
         {
             var sut = GetBaseParameter();
-            System.Action action = () =>
-            {
-                var _ = sut.GetAttribute<TestMultiAttribute>();
-            };
-
-            action.Should().Throw<AmbiguousMatchException>();
+            var action = Lambda.Of( () => sut.GetAttribute<TestMultiAttribute>() );
+            action.Should().ThrowExactly<AmbiguousMatchException>();
         }
 
         [Fact]
-        public void GetAttribute_ShouldReturnNullWhenAttributeDoesntExists()
+        public void GetAttribute_ShouldReturnNull_WhenAttributeDoesntExists()
         {
             var sut = GetBaseParameter();
             var result = sut.GetAttribute<TestUnusedAttribute>();
@@ -41,7 +38,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.ParameterInfo
         [Theory]
         [InlineData( true )]
         [InlineData( false )]
-        public void GetAttribute_ShouldReturnCorrectResultWhenAttributeExistsAndIsUnique_ForDerivedClass(bool inherit)
+        public void GetAttribute_ShouldReturnCorrectResult_WhenAttributeExistsAndIsUnique_ForDerivedClass(bool inherit)
         {
             var sut = GetDerivedParameter();
             var result = sut.GetAttribute<TestUniqueAttribute>( inherit );
@@ -49,7 +46,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.ParameterInfo
         }
 
         [Fact]
-        public void GetAttribute_ShouldReturnCorrectResultWhenAttributeIsInherited_ForDerivedClassWithInheritance()
+        public void GetAttribute_ShouldReturnCorrectResult_WhenAttributeIsInherited_ForDerivedClassWithInheritance()
         {
             var sut = GetDerivedParameter();
             var result = sut.GetAttribute<TestBaseOnlyAttribute>( inherit: true );
@@ -57,7 +54,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.ParameterInfo
         }
 
         [Fact]
-        public void GetAttribute_ShouldReturnNullWhenAttributeIsInherited_ForDerivedClassWithoutInheritance()
+        public void GetAttribute_ShouldReturnNull_WhenAttributeIsInherited_ForDerivedClassWithoutInheritance()
         {
             var sut = GetDerivedParameter();
             var result = sut.GetAttribute<TestBaseOnlyAttribute>( inherit: false );
@@ -65,7 +62,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.ParameterInfo
         }
 
         [Fact]
-        public void GetAttributeRange_ShouldReturnCorrectResultWhenAttributeExistsAndIsUnique()
+        public void GetAttributeRange_ShouldReturnCorrectResult_WhenAttributeExistsAndIsUnique()
         {
             var sut = GetBaseParameter();
             var expected = new[] { new TestUniqueAttribute( 0 ) }.AsEnumerable();
@@ -74,7 +71,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.ParameterInfo
         }
 
         [Fact]
-        public void GetAttributeRange_ShouldReturnCorrectResultWhenAttributeExistsAndIsDuplicable()
+        public void GetAttributeRange_ShouldReturnCorrectResult_WhenAttributeExistsAndIsDuplicable()
         {
             var sut = GetBaseParameter();
             var expected = new[] { new TestMultiAttribute( 1 ), new TestMultiAttribute( 2 ) }.AsEnumerable();
@@ -83,7 +80,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.ParameterInfo
         }
 
         [Fact]
-        public void GetAttributeRange_ShouldReturnEmptyWhenAttributeDoesntExists()
+        public void GetAttributeRange_ShouldReturnEmpty_WhenAttributeDoesntExists()
         {
             var sut = GetBaseParameter();
             var result = sut.GetAttributeRange<TestUnusedAttribute>();
@@ -93,7 +90,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.ParameterInfo
         [Theory]
         [InlineData( true )]
         [InlineData( false )]
-        public void GetAttributeRange_ShouldReturnCorrectResultWhenAttributeExistsAndIsUnique_ForDerivedClass(bool inherit)
+        public void GetAttributeRange_ShouldReturnCorrectResult_WhenAttributeExistsAndIsUnique_ForDerivedClass(bool inherit)
         {
             var sut = GetDerivedParameter();
             var expected = new[] { new TestUniqueAttribute( 4 ) }.AsEnumerable();
@@ -102,7 +99,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.ParameterInfo
         }
 
         [Fact]
-        public void GetAttributeRange_ShouldReturnCorrectResultWhenAttributeIsInherited_ForDerivedClassWithInheritance()
+        public void GetAttributeRange_ShouldReturnCorrectResult_WhenAttributeIsInherited_ForDerivedClassWithInheritance()
         {
             var sut = GetDerivedParameter();
             var expected = new[] { new TestBaseOnlyAttribute( 3 ) }.AsEnumerable();
@@ -111,7 +108,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.ParameterInfo
         }
 
         [Fact]
-        public void GetAttributeRange_ShouldReturnEmptyWhenAttributeIsInherited_ForDerivedClassWithoutInheritance()
+        public void GetAttributeRange_ShouldReturnEmpty_WhenAttributeIsInherited_ForDerivedClassWithoutInheritance()
         {
             var sut = GetDerivedParameter();
             var result = sut.GetAttributeRange<TestBaseOnlyAttribute>( inherit: false );
@@ -119,7 +116,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.ParameterInfo
         }
 
         [Fact]
-        public void GetAttributeRange_ShouldReturnCorrectResultWhenAttributeIsDuplicated_ForDerivedClassWithInheritance()
+        public void GetAttributeRange_ShouldReturnCorrectResult_WhenAttributeIsDuplicated_ForDerivedClassWithInheritance()
         {
             var sut = GetDerivedParameter();
             var expected = new[]
@@ -136,7 +133,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.ParameterInfo
         }
 
         [Fact]
-        public void GetAttributeRange_ShouldReturnCorrectResultWhenAttributeIsDuplicated_ForDerivedClassWithoutInheritance()
+        public void GetAttributeRange_ShouldReturnCorrectResult_WhenAttributeIsDuplicated_ForDerivedClassWithoutInheritance()
         {
             var sut = GetDerivedParameter();
             var expected = new[] { new TestMultiAttribute( 5 ), new TestMultiAttribute( 6 ) }.AsEnumerable();
@@ -145,7 +142,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.ParameterInfo
         }
 
         [Fact]
-        public void HasAttribute_ShouldReturnTrueWhenAttributeExists()
+        public void HasAttribute_ShouldReturnTrue_WhenAttributeExists()
         {
             var sut = GetBaseParameter();
             var result = sut.HasAttribute<TestMultiAttribute>();
@@ -153,7 +150,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.ParameterInfo
         }
 
         [Fact]
-        public void HasAttribute_ShouldReturnFalseWhenAttributeDoesntExist()
+        public void HasAttribute_ShouldReturnFalse_WhenAttributeDoesntExist()
         {
             var sut = GetBaseParameter();
             var result = sut.HasAttribute<TestUnusedAttribute>();
@@ -161,7 +158,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.ParameterInfo
         }
 
         [Fact]
-        public void HasAttribute_ShouldReturnTrueWhenAttributeExistsOnBaseType_ForDerivedClassWithInheritance()
+        public void HasAttribute_ShouldReturnTrue_WhenAttributeExistsOnBaseType_ForDerivedClassWithInheritance()
         {
             var sut = GetDerivedParameter();
             var result = sut.HasAttribute<TestBaseOnlyAttribute>( inherit: true );
@@ -169,7 +166,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.ParameterInfo
         }
 
         [Fact]
-        public void HasAttribute_ShouldReturnFalseWhenAttributeExistsOnBaseType_ForDerivedClassWithoutInheritance()
+        public void HasAttribute_ShouldReturnFalse_WhenAttributeExistsOnBaseType_ForDerivedClassWithoutInheritance()
         {
             var sut = GetDerivedParameter();
             var result = sut.HasAttribute<TestBaseOnlyAttribute>( inherit: false );

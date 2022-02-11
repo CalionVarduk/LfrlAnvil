@@ -44,7 +44,7 @@ namespace LfrlSoft.NET.Core.Tests.Pair
         }
 
         [Fact]
-        public void GetHashCode_ShouldReturnCorrectResult()
+        public void GetHashCode_ShouldReturnMixOfFirstAndSecond()
         {
             var first = Fixture.Create<T1>();
             var second = Fixture.Create<T2>();
@@ -58,7 +58,7 @@ namespace LfrlSoft.NET.Core.Tests.Pair
         }
 
         [Fact]
-        public void SetFirst_ShouldReturnCorrectResult()
+        public void SetFirst_ShouldReturnWithNewFirstAndOldSecond()
         {
             var first = Fixture.Create<T1>();
             var second = Fixture.Create<T2>();
@@ -78,7 +78,7 @@ namespace LfrlSoft.NET.Core.Tests.Pair
         }
 
         [Fact]
-        public void SetSecond_ShouldReturnCorrectResult()
+        public void SetSecond_ShouldReturnWithOldFirstAndNewSecond()
         {
             var first = Fixture.Create<T1>();
             var second = Fixture.Create<T2>();

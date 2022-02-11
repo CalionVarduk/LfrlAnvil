@@ -14,28 +14,28 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Duration
     public class DurationTests : TestsBase
     {
         [Fact]
-        public void Zero_ShouldReturnCorrectResult()
+        public void Zero_ShouldReturnResultWithZeroTicks()
         {
             var sut = Core.Chrono.Duration.Zero;
             sut.Ticks.Should().Be( 0 );
         }
 
         [Fact]
-        public void MinValue_ShouldReturnCorrectResult()
+        public void MinValue_ShouldReturnResultWithMinLongTicks()
         {
             var sut = Core.Chrono.Duration.MinValue;
             sut.Ticks.Should().Be( long.MinValue );
         }
 
         [Fact]
-        public void MaxValue_ShouldReturnCorrectResult()
+        public void MaxValue_ShouldReturnResultWithMaxLongTicks()
         {
             var sut = Core.Chrono.Duration.MaxValue;
             sut.Ticks.Should().Be( long.MaxValue );
         }
 
         [Fact]
-        public void Default_ShouldReturnCorrectResult()
+        public void Default_ShouldReturnResultWithZeroTicks()
         {
             var sut = default( Core.Chrono.Duration );
             sut.Ticks.Should().Be( 0 );
@@ -563,11 +563,11 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Duration
 
         [Theory]
         [MethodData( nameof( DurationTestsData.GetSetTicksInMillisecondThrowData ) )]
-        public void SetTicksInMillisecond_ShouldThrow_WhenValueIsInvalid(long ticks, int value)
+        public void SetTicksInMillisecond_ShouldThrowArgumentOutOfRangeException_WhenValueIsInvalid(long ticks, int value)
         {
             var sut = new Core.Chrono.Duration( ticks );
             var action = Lambda.Of( () => sut.SetTicksInMillisecond( value ) );
-            action.Should().Throw<ArgumentOutOfRangeException>();
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Theory]
@@ -586,11 +586,11 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Duration
 
         [Theory]
         [MethodData( nameof( DurationTestsData.GetSetMillisecondsInSecondThrowData ) )]
-        public void SetMillisecondsInSecond_ShouldThrow_WhenValueIsInvalid(long ticks, int value)
+        public void SetMillisecondsInSecond_ShouldThrowArgumentOutOfRangeException_WhenValueIsInvalid(long ticks, int value)
         {
             var sut = new Core.Chrono.Duration( ticks );
             var action = Lambda.Of( () => sut.SetMillisecondsInSecond( value ) );
-            action.Should().Throw<ArgumentOutOfRangeException>();
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Theory]
@@ -609,11 +609,11 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Duration
 
         [Theory]
         [MethodData( nameof( DurationTestsData.GetSetSecondsInMinuteThrowData ) )]
-        public void SetSecondsInMinute_ShouldThrow_WhenValueIsInvalid(long ticks, int value)
+        public void SetSecondsInMinute_ShouldThrowArgumentOutOfRangeException_WhenValueIsInvalid(long ticks, int value)
         {
             var sut = new Core.Chrono.Duration( ticks );
             var action = Lambda.Of( () => sut.SetSecondsInMinute( value ) );
-            action.Should().Throw<ArgumentOutOfRangeException>();
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Theory]
@@ -632,11 +632,11 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Duration
 
         [Theory]
         [MethodData( nameof( DurationTestsData.GetSetMinutesInHourThrowData ) )]
-        public void SetMinutesInHour_ShouldThrow_WhenValueIsInvalid(long ticks, int value)
+        public void SetMinutesInHour_ShouldThrowArgumentOutOfRangeException_WhenValueIsInvalid(long ticks, int value)
         {
             var sut = new Core.Chrono.Duration( ticks );
             var action = Lambda.Of( () => sut.SetMinutesInHour( value ) );
-            action.Should().Throw<ArgumentOutOfRangeException>();
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Theory]
@@ -655,11 +655,11 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Duration
 
         [Theory]
         [MethodData( nameof( DurationTestsData.GetSetHoursThrowData ) )]
-        public void SetHours_ShouldThrow_WhenValueIsInvalid(long ticks, int value)
+        public void SetHours_ShouldThrowArgumentOutOfRangeException_WhenValueIsInvalid(long ticks, int value)
         {
             var sut = new Core.Chrono.Duration( ticks );
             var action = Lambda.Of( () => sut.SetHours( value ) );
-            action.Should().Throw<ArgumentOutOfRangeException>();
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Theory]
@@ -678,7 +678,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Duration
 
         [Theory]
         [MethodData( nameof( DurationTestsData.GetTicksData ) )]
-        public void TimeSpanConversionOperator_ShouldReturnCorrectResult(long ticks)
+        public void TimeSpanConversionOperator_ShouldReturnTimeSpanWithCorrectTicks(long ticks)
         {
             var sut = new Core.Chrono.Duration( ticks );
             var result = (TimeSpan)sut;

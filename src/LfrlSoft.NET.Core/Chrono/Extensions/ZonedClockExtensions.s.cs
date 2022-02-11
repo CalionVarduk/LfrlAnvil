@@ -15,6 +15,13 @@ namespace LfrlSoft.NET.Core.Chrono.Extensions
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static ZonedDateTime? TryCreate(this IZonedClock clock, DateTime dateTime)
+        {
+            return ZonedDateTime.TryCreate( dateTime, clock.TimeZone );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static bool IsInPast(this IZonedClock clock, ZonedDateTime dateTime)
         {
             return dateTime.Timestamp < clock.GetNow().Timestamp;

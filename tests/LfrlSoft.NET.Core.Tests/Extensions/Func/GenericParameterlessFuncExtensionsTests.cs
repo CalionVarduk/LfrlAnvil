@@ -46,7 +46,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Func
         }
 
         [Fact]
-        public void TryInvoke_ShouldReturnCorrectResult_WhenDelegateDoesntThrow()
+        public void TryInvoke_ShouldReturnResultWithCorrectValue_WhenDelegateDoesntThrow()
         {
             var value = Fixture.Create<TReturnValue>();
             Func<TReturnValue> action = () => value;
@@ -61,7 +61,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Func
         }
 
         [Fact]
-        public void Try_ShouldReturnCorrectResult_WhenDelegateThrows()
+        public void Try_ShouldReturnResultWithError_WhenDelegateThrows()
         {
             var error = new Exception();
             Func<TReturnValue> action = () => throw error;

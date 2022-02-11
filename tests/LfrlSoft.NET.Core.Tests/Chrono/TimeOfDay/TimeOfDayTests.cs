@@ -13,7 +13,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.TimeOfDay
     public class TimeOfDayTests : TestsBase
     {
         [Fact]
-        public void Start_ShouldReturnCorrectResult()
+        public void Start_ShouldReturnMidnight()
         {
             var result = Core.Chrono.TimeOfDay.Start;
 
@@ -28,7 +28,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.TimeOfDay
         }
 
         [Fact]
-        public void Mid_ShouldReturnCorrectResult()
+        public void Mid_ShouldReturnNoon()
         {
             var result = Core.Chrono.TimeOfDay.Mid;
 
@@ -43,7 +43,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.TimeOfDay
         }
 
         [Fact]
-        public void End_ShouldReturnCorrectResult()
+        public void End_ShouldReturnOneTickBeforeMidnight()
         {
             var result = Core.Chrono.TimeOfDay.End;
 
@@ -58,7 +58,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.TimeOfDay
         }
 
         [Fact]
-        public void Default_ShouldReturnCorrectResult()
+        public void Default_ShouldReturnMidnight()
         {
             var sut = default( Core.Chrono.TimeOfDay );
 
@@ -162,10 +162,14 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.TimeOfDay
 
         [Theory]
         [MethodData( nameof( TimeOfDayTestsData.GetCtorWithMsPrecisionThrowData ) )]
-        public void Ctor_WithMsPrecision_ShouldThrow_WhenParamsAreInvalid(int hour, int minute, int second, int ms)
+        public void Ctor_WithMsPrecision_ShouldThrowArgumentOutOfRangeException_WhenParamsAreInvalid(
+            int hour,
+            int minute,
+            int second,
+            int ms)
         {
             var action = Lambda.Of( () => new Core.Chrono.TimeOfDay( hour, minute, second, ms ) );
-            action.Should().Throw<ArgumentOutOfRangeException>();
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Theory]
@@ -186,10 +190,15 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.TimeOfDay
 
         [Theory]
         [MethodData( nameof( TimeOfDayTestsData.GetCtorWithTickPrecisionThrowData ) )]
-        public void Ctor_WithTickPrecision_ShouldThrow_WhenParamsAreInvalid(int hour, int minute, int second, int ms, int tick)
+        public void Ctor_WithTickPrecision_ShouldThrowArgumentOutOfRangeException_WhenParamsAreInvalid(
+            int hour,
+            int minute,
+            int second,
+            int ms,
+            int tick)
         {
             var action = Lambda.Of( () => new Core.Chrono.TimeOfDay( hour, minute, second, ms, tick ) );
-            action.Should().Throw<ArgumentOutOfRangeException>();
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Theory]
@@ -211,11 +220,11 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.TimeOfDay
 
         [Theory]
         [MethodData( nameof( TimeOfDayTestsData.GetCtorWithTimeSpanThrowData ) )]
-        public void Ctor_WithTimeSpan_ShouldThrow_WhenParamsAreInvalid(long ticks)
+        public void Ctor_WithTimeSpan_ShouldThrowArgumentOutOfRangeException_WhenParamsAreInvalid(long ticks)
         {
             var timeSpan = TimeSpan.FromTicks( ticks );
             var action = Lambda.Of( () => new Core.Chrono.TimeOfDay( timeSpan ) );
-            action.Should().Throw<ArgumentOutOfRangeException>();
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Theory]
@@ -223,9 +232,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.TimeOfDay
         public void ToString_ShouldReturnCorrectResult(long ticks, string expected)
         {
             var sut = new Core.Chrono.TimeOfDay( TimeSpan.FromTicks( ticks ) );
-
             var result = sut.ToString();
-
             result.Should().Be( expected );
         }
 
@@ -234,9 +241,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.TimeOfDay
         public void GetHashCode_ShouldReturnCorrectResult(long ticks)
         {
             var sut = new Core.Chrono.TimeOfDay( TimeSpan.FromTicks( ticks ) );
-
             var result = sut.GetHashCode();
-
             result.Should().Be( ticks.GetHashCode() );
         }
 
@@ -268,9 +273,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.TimeOfDay
         public void Invert_ShouldDoNothing_ForMidnight()
         {
             var sut = Core.Chrono.TimeOfDay.Start;
-
             var result = sut.Invert();
-
             result.Should().Be( sut );
         }
 
@@ -300,7 +303,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.TimeOfDay
 
         [Theory]
         [MethodData( nameof( TimeOfDayTestsData.GetTrimToMillisecondData ) )]
-        public void TrimToMillisecond_ShouldReturnCorrectResult(long ticks, long expectedTicks)
+        public void TrimToMillisecond_ShouldResetTicksToZero(long ticks, long expectedTicks)
         {
             var sut = new Core.Chrono.TimeOfDay( TimeSpan.FromTicks( ticks ) );
             var expected = new Core.Chrono.TimeOfDay( TimeSpan.FromTicks( expectedTicks ) );
@@ -312,7 +315,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.TimeOfDay
 
         [Theory]
         [MethodData( nameof( TimeOfDayTestsData.GetTrimToSecondData ) )]
-        public void TrimToSecond_ShouldReturnCorrectResult(long ticks, long expectedTicks)
+        public void TrimToSecond_ShouldResetMillisecondsAndTicksToZero(long ticks, long expectedTicks)
         {
             var sut = new Core.Chrono.TimeOfDay( TimeSpan.FromTicks( ticks ) );
             var expected = new Core.Chrono.TimeOfDay( TimeSpan.FromTicks( expectedTicks ) );
@@ -324,7 +327,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.TimeOfDay
 
         [Theory]
         [MethodData( nameof( TimeOfDayTestsData.GetTrimToMinuteData ) )]
-        public void TrimToMinute_ShouldReturnCorrectResult(long ticks, long expectedTicks)
+        public void TrimToMinute_ShouldResetSecondsAndMillisecondsAndTicksToZero(long ticks, long expectedTicks)
         {
             var sut = new Core.Chrono.TimeOfDay( TimeSpan.FromTicks( ticks ) );
             var expected = new Core.Chrono.TimeOfDay( TimeSpan.FromTicks( expectedTicks ) );
@@ -336,7 +339,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.TimeOfDay
 
         [Theory]
         [MethodData( nameof( TimeOfDayTestsData.GetTrimToHourData ) )]
-        public void TrimToHour_ShouldReturnCorrectResult(long ticks, long expectedTicks)
+        public void TrimToHour_ShouldResetMinutesAndSecondsAndMillisecondsAndTicksToZero(long ticks, long expectedTicks)
         {
             var sut = new Core.Chrono.TimeOfDay( TimeSpan.FromTicks( ticks ) );
             var expected = new Core.Chrono.TimeOfDay( TimeSpan.FromTicks( expectedTicks ) );
@@ -348,11 +351,11 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.TimeOfDay
 
         [Theory]
         [MethodData( nameof( TimeOfDayTestsData.GetSetTickThrowData ) )]
-        public void SetTick_ShouldThrow_WhenValueIsInvalid(int value)
+        public void SetTick_ShouldThrowArgumentOutOfRangeException_WhenValueIsInvalid(int value)
         {
             var sut = Core.Chrono.TimeOfDay.Start;
             var action = Lambda.Of( () => sut.SetTick( value ) );
-            action.Should().Throw<ArgumentOutOfRangeException>();
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Theory]
@@ -373,11 +376,11 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.TimeOfDay
 
         [Theory]
         [MethodData( nameof( TimeOfDayTestsData.GetSetMillisecondThrowData ) )]
-        public void SetMillisecond_ShouldThrow_WhenValueIsInvalid(int value)
+        public void SetMillisecond_ShouldThrowArgumentOutOfRangeException_WhenValueIsInvalid(int value)
         {
             var sut = Core.Chrono.TimeOfDay.Start;
             var action = Lambda.Of( () => sut.SetMillisecond( value ) );
-            action.Should().Throw<ArgumentOutOfRangeException>();
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Theory]
@@ -398,11 +401,11 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.TimeOfDay
 
         [Theory]
         [MethodData( nameof( TimeOfDayTestsData.GetSetSecondThrowData ) )]
-        public void SetSecond_ShouldThrow_WhenValueIsInvalid(int value)
+        public void SetSecond_ShouldThrowArgumentOutOfRangeException_WhenValueIsInvalid(int value)
         {
             var sut = Core.Chrono.TimeOfDay.Start;
             var action = Lambda.Of( () => sut.SetSecond( value ) );
-            action.Should().Throw<ArgumentOutOfRangeException>();
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Theory]
@@ -423,11 +426,11 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.TimeOfDay
 
         [Theory]
         [MethodData( nameof( TimeOfDayTestsData.GetSetMinuteThrowData ) )]
-        public void SetMinute_ShouldThrow_WhenValueIsInvalid(int value)
+        public void SetMinute_ShouldThrowArgumentOutOfRangeException_WhenValueIsInvalid(int value)
         {
             var sut = Core.Chrono.TimeOfDay.Start;
             var action = Lambda.Of( () => sut.SetMinute( value ) );
-            action.Should().Throw<ArgumentOutOfRangeException>();
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Theory]
@@ -448,11 +451,11 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.TimeOfDay
 
         [Theory]
         [MethodData( nameof( TimeOfDayTestsData.GetSetHourThrowData ) )]
-        public void SetHour_ShouldThrow_WhenValueIsInvalid(int value)
+        public void SetHour_ShouldThrowArgumentOutOfRangeException_WhenValueIsInvalid(int value)
         {
             var sut = Core.Chrono.TimeOfDay.Start;
             var action = Lambda.Of( () => sut.SetHour( value ) );
-            action.Should().Throw<ArgumentOutOfRangeException>();
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Theory]
@@ -476,9 +479,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.TimeOfDay
         public void TimeSpanConversionOperator_ShouldReturnCorrectResult(long ticks)
         {
             var sut = new Core.Chrono.TimeOfDay( TimeSpan.FromTicks( ticks ) );
-
             var result = (TimeSpan)sut;
-
             result.Ticks.Should().Be( ticks );
         }
 
@@ -487,9 +488,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.TimeOfDay
         public void DurationConversionOperator_ShouldReturnCorrectResult(long ticks)
         {
             var sut = new Core.Chrono.TimeOfDay( TimeSpan.FromTicks( ticks ) );
-
             var result = (Core.Chrono.Duration)sut;
-
             result.Ticks.Should().Be( ticks );
         }
 

@@ -177,11 +177,11 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Enumerable
             };
         }
 
-        public static TheoryData<IEnumerable<Pair<T, IEnumerable<T>>>, IEnumerable<Pair<T, T>>> GetFlattenData(IFixture fixture)
+        public static TheoryData<IReadOnlyList<Pair<T, IEnumerable<T>>>, IEnumerable<Pair<T, T>>> GetFlattenData(IFixture fixture)
         {
             var (_1, _2, _3) = fixture.CreateDistinctCollection<T>( 3 );
 
-            return new TheoryData<IEnumerable<Pair<T, IEnumerable<T>>>, IEnumerable<Pair<T, T>>>
+            return new TheoryData<IReadOnlyList<Pair<T, IEnumerable<T>>>, IEnumerable<Pair<T, T>>>
             {
                 { Array.Empty<Pair<T, IEnumerable<T>>>(), Array.Empty<Pair<T, T>>() },
                 { new[] { new Pair<T, IEnumerable<T>>( _1, new[] { _2 } ) }, new[] { Core.Pair.Create( _1, _2 ) } },

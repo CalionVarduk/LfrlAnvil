@@ -21,16 +21,11 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Arithmetic
         }
 
         [Fact]
-        public void EuclidModulo_ShouldThrow_WhenDivisorIsZero_ForFloat()
+        public void EuclidModulo_ShouldThrowDivideByZeroException_WhenDivisorIsZero_ForFloat()
         {
             var dividend = Fixture.Create<float>();
-            var action = Lambda.Of(
-                () =>
-                {
-                    var _ = dividend.EuclidModulo( 0 );
-                } );
-
-            action.Should().Throw<DivideByZeroException>();
+            var action = Lambda.Of( () => dividend.EuclidModulo( 0 ) );
+            action.Should().ThrowExactly<DivideByZeroException>();
         }
 
         [Theory]
@@ -42,16 +37,11 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Arithmetic
         }
 
         [Fact]
-        public void EuclidModulo_ShouldThrow_WhenDivisorIsZero_ForDouble()
+        public void EuclidModulo_ShouldThrowDivideByZeroException_WhenDivisorIsZero_ForDouble()
         {
             var dividend = Fixture.Create<double>();
-            var action = Lambda.Of(
-                () =>
-                {
-                    var _ = dividend.EuclidModulo( 0 );
-                } );
-
-            action.Should().Throw<DivideByZeroException>();
+            var action = Lambda.Of( () => dividend.EuclidModulo( 0 ) );
+            action.Should().ThrowExactly<DivideByZeroException>();
         }
 
         [Theory]
@@ -63,16 +53,11 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Arithmetic
         }
 
         [Fact]
-        public void EuclidModulo_ShouldThrow_WhenDivisorIsZero_ForDecimal()
+        public void EuclidModulo_ShouldThrowDivideByZeroException_WhenDivisorIsZero_ForDecimal()
         {
             var dividend = Fixture.Create<decimal>();
-            var action = Lambda.Of(
-                () =>
-                {
-                    var _ = dividend.EuclidModulo( 0 );
-                } );
-
-            action.Should().Throw<DivideByZeroException>();
+            var action = Lambda.Of( () => dividend.EuclidModulo( 0 ) );
+            action.Should().ThrowExactly<DivideByZeroException>();
         }
 
         [Theory]
@@ -84,16 +69,11 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Arithmetic
         }
 
         [Fact]
-        public void EuclidModulo_ShouldThrow_WhenDivisorIsZero_ForUint64()
+        public void EuclidModulo_ShouldThrowDivideByZeroException_WhenDivisorIsZero_ForUint64()
         {
             var dividend = Fixture.Create<ulong>();
-            var action = Lambda.Of(
-                () =>
-                {
-                    var _ = dividend.EuclidModulo( 0 );
-                } );
-
-            action.Should().Throw<DivideByZeroException>();
+            var action = Lambda.Of( () => dividend.EuclidModulo( 0 ) );
+            action.Should().ThrowExactly<DivideByZeroException>();
         }
 
         [Theory]
@@ -105,16 +85,11 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Arithmetic
         }
 
         [Fact]
-        public void EuclidModulo_ShouldThrow_WhenDivisorIsZero_ForInt64()
+        public void EuclidModulo_ShouldThrowDivideByZeroException_WhenDivisorIsZero_ForInt64()
         {
             var dividend = Fixture.Create<long>();
-            var action = Lambda.Of(
-                () =>
-                {
-                    var _ = dividend.EuclidModulo( 0 );
-                } );
-
-            action.Should().Throw<DivideByZeroException>();
+            var action = Lambda.Of( () => dividend.EuclidModulo( 0 ) );
+            action.Should().ThrowExactly<DivideByZeroException>();
         }
 
         [Theory]
@@ -126,16 +101,11 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Arithmetic
         }
 
         [Fact]
-        public void EuclidModulo_ShouldThrow_WhenDivisorIsZero_ForUint32()
+        public void EuclidModulo_ShouldThrowDivideByZeroException_WhenDivisorIsZero_ForUint32()
         {
             var dividend = Fixture.Create<uint>();
-            var action = Lambda.Of(
-                () =>
-                {
-                    var _ = dividend.EuclidModulo( 0 );
-                } );
-
-            action.Should().Throw<DivideByZeroException>();
+            var action = Lambda.Of( () => dividend.EuclidModulo( 0 ) );
+            action.Should().ThrowExactly<DivideByZeroException>();
         }
 
         [Theory]
@@ -147,16 +117,11 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Arithmetic
         }
 
         [Fact]
-        public void EuclidModulo_ShouldThrow_WhenDivisorIsZero_ForInt32()
+        public void EuclidModulo_ShouldThrowDivideByZeroException_WhenDivisorIsZero_ForInt32()
         {
             var dividend = Fixture.Create<int>();
-            var action = Lambda.Of(
-                () =>
-                {
-                    var _ = dividend.EuclidModulo( 0 );
-                } );
-
-            action.Should().Throw<DivideByZeroException>();
+            var action = Lambda.Of( () => dividend.EuclidModulo( 0 ) );
+            action.Should().ThrowExactly<DivideByZeroException>();
         }
 
         [Theory]
@@ -168,16 +133,11 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Arithmetic
         }
 
         [Fact]
-        public void EuclidModulo_ShouldThrow_WhenDivisorIsZero_ForUint16()
+        public void EuclidModulo_ShouldThrowDivideByZeroException_WhenDivisorIsZero_ForUint16()
         {
             var dividend = Fixture.Create<ushort>();
-            var action = Lambda.Of(
-                () =>
-                {
-                    var _ = dividend.EuclidModulo( 0 );
-                } );
-
-            action.Should().Throw<DivideByZeroException>();
+            var action = Lambda.Of( () => dividend.EuclidModulo( 0 ) );
+            action.Should().ThrowExactly<DivideByZeroException>();
         }
 
         [Theory]
@@ -189,16 +149,11 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Arithmetic
         }
 
         [Fact]
-        public void EuclidModulo_ShouldThrow_WhenDivisorIsZero_ForInt16()
+        public void EuclidModulo_ShouldThrowDivideByZeroException_WhenDivisorIsZero_ForInt16()
         {
             var dividend = Fixture.Create<short>();
-            var action = Lambda.Of(
-                () =>
-                {
-                    var _ = dividend.EuclidModulo( 0 );
-                } );
-
-            action.Should().Throw<DivideByZeroException>();
+            var action = Lambda.Of( () => dividend.EuclidModulo( 0 ) );
+            action.Should().ThrowExactly<DivideByZeroException>();
         }
 
         [Theory]
@@ -210,16 +165,11 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Arithmetic
         }
 
         [Fact]
-        public void EuclidModulo_ShouldThrow_WhenDivisorIsZero_ForUint8()
+        public void EuclidModulo_ShouldThrowDivideByZeroException_WhenDivisorIsZero_ForUint8()
         {
             var dividend = Fixture.Create<byte>();
-            var action = Lambda.Of(
-                () =>
-                {
-                    var _ = dividend.EuclidModulo( 0 );
-                } );
-
-            action.Should().Throw<DivideByZeroException>();
+            var action = Lambda.Of( () => dividend.EuclidModulo( 0 ) );
+            action.Should().ThrowExactly<DivideByZeroException>();
         }
 
         [Theory]
@@ -231,16 +181,11 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Arithmetic
         }
 
         [Fact]
-        public void EuclidModulo_ShouldThrow_WhenDivisorIsZero_ForInt8()
+        public void EuclidModulo_ShouldThrowDivideByZeroException_WhenDivisorIsZero_ForInt8()
         {
             var dividend = Fixture.Create<sbyte>();
-            var action = Lambda.Of(
-                () =>
-                {
-                    var _ = dividend.EuclidModulo( 0 );
-                } );
-
-            action.Should().Throw<DivideByZeroException>();
+            var action = Lambda.Of( () => dividend.EuclidModulo( 0 ) );
+            action.Should().ThrowExactly<DivideByZeroException>();
         }
 
         [Theory]

@@ -101,9 +101,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Pair
         public void AsEnumerable_ShouldReturnCorrectResult_WhenNullableWithNoValues()
         {
             var sut = Core.Pair.Create( (int?)null, (int?)null );
-
             var result = sut.AsEnumerable();
-
             result.Should().BeEmpty();
         }
     }

@@ -11,15 +11,15 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
             action.Should().NotThrow();
         }
 
-        protected static void ShouldThrow(Action action)
+        protected static void ShouldThrowArgumentException(Action action)
         {
-            ShouldThrow<ArgumentException>( action );
+            ShouldThrowExactly<ArgumentException>( action );
         }
 
-        protected static void ShouldThrow<TException>(Action action)
+        protected static void ShouldThrowExactly<TException>(Action action)
             where TException : Exception
         {
-            action.Should().Throw<TException>();
+            action.Should().ThrowExactly<TException>();
         }
     }
 }

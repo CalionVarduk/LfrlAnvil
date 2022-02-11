@@ -6,13 +6,13 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
     public class BitmaskOfInt16Tests : GenericBitmaskTests<short>
     {
         [Fact]
-        public void BitCount_ShouldBeCorrect()
+        public void BitCount_ShouldBe16()
         {
             BitCount_ShouldBeCorrect_Impl( 16 );
         }
 
         [Fact]
-        public void BaseType_ShouldBeCorrect()
+        public void BaseType_ShouldBeTypeOfShort()
         {
             BaseType_ShouldBeCorrect_Impl( typeof( short ) );
         }

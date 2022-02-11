@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AutoFixture;
 using FluentAssertions;
+using LfrlSoft.NET.Core.Functional;
 using LfrlSoft.NET.TestExtensions;
 using LfrlSoft.NET.TestExtensions.Attributes;
 using LfrlSoft.NET.TestExtensions.FluentAssertions;
@@ -15,12 +16,17 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         where T : struct, IConvertible, IComparable
     {
         [Fact]
+        public void Default_ShouldReturnBitmaskWithDefaultValue()
+        {
+            var sut = default( Bitmask<T> );
+            sut.Value.Should().Be( default( T ) );
+        }
+
+        [Fact]
         public void Create_ShouldCreateCorrectBitmask()
         {
             var value = Fixture.Create<T>();
-
             var sut = Core.Bitmask.Create( value );
-
             sut.Value.Should().Be( value );
         }
 
@@ -28,7 +34,6 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         public void Empty_ShouldHaveDefaultValue()
         {
             var sut = Bitmask<T>.Empty;
-
             sut.Value.Should().Be( default( T ) );
         }
 
@@ -48,9 +53,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         public void Ctor_ShouldCreateWithCorrectValue()
         {
             var value = Fixture.Create<T>();
-
             var sut = new Bitmask<T>( value );
-
             sut.Value.Should().Be( value );
         }
 
@@ -70,7 +73,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         [Fact]
         public void Clear_ShouldReturnBitmaskWithZeroValue()
         {
-            var value = Fixture.Create<T>();
+            var value = Fixture.CreateNotDefault<T>();
             var sut = new Bitmask<T>( value );
 
             var result = sut.Clear();
@@ -103,29 +106,19 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         }
 
         [Fact]
-        public void ContainsBit_ShouldThrowWhenBitIndexIsLessThanZero()
+        public void ContainsBit_ShouldThrowArgumentOutOfRangeException_WhenBitIndexIsLessThanZero()
         {
             var sut = new Bitmask<T>();
-
-            Action action = () =>
-            {
-                var _ = sut.ContainsBit( -1 );
-            };
-
-            action.Should().Throw<ArgumentException>();
+            var action = Lambda.Of( () => sut.ContainsBit( -1 ) );
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Fact]
-        public void ContainsBit_ShouldThrowWhenBitIndexIsTooLarge()
+        public void ContainsBit_ShouldThrowArgumentOutOfRangeException_WhenBitIndexIsTooLarge()
         {
             var sut = new Bitmask<T>();
-
-            Action action = () =>
-            {
-                var _ = sut.ContainsBit( Bitmask<T>.BitCount );
-            };
-
-            action.Should().Throw<ArgumentException>();
+            var action = Lambda.Of( () => sut.ContainsBit( Bitmask<T>.BitCount ) );
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Theory]
@@ -133,9 +126,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         public void ContainsBit_ShouldReturnCorrectResult(T value, int bitIndex, bool expected)
         {
             var sut = new Bitmask<T>( value );
-
             var result = sut.ContainsBit( bitIndex );
-
             result.Should().Be( expected );
         }
 
@@ -152,29 +143,19 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         }
 
         [Fact]
-        public void SetBit_ShouldThrowWhenBitIndexIsLessThanZero()
+        public void SetBit_ShouldThrowArgumentOutOfRangeExceptionWhenBitIndexIsLessThanZero()
         {
             var sut = new Bitmask<T>();
-
-            Action action = () =>
-            {
-                var _ = sut.SetBit( -1 );
-            };
-
-            action.Should().Throw<ArgumentException>();
+            var action = Lambda.Of( () => sut.SetBit( -1 ) );
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Fact]
-        public void SetBit_ShouldThrowWhenBitIndexIsTooLarge()
+        public void SetBit_ShouldThrowArgumentOutOfRangeException_WhenBitIndexIsTooLarge()
         {
             var sut = new Bitmask<T>();
-
-            Action action = () =>
-            {
-                var _ = sut.SetBit( Bitmask<T>.BitCount );
-            };
-
-            action.Should().Throw<ArgumentException>();
+            var action = Lambda.Of( () => sut.SetBit( Bitmask<T>.BitCount ) );
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Theory]
@@ -182,9 +163,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         public void SetBit_ShouldReturnCorrectResult(T value, int bitIndex, T expected)
         {
             var sut = new Bitmask<T>( value );
-
             var result = sut.SetBit( bitIndex );
-
             result.Value.Should().Be( expected );
         }
 
@@ -201,29 +180,19 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         }
 
         [Fact]
-        public void UnsetBit_ShouldThrowWhenBitIndexIsLessThanZero()
+        public void UnsetBit_ShouldThrowArgumentOutOfRangeException_WhenBitIndexIsLessThanZero()
         {
             var sut = new Bitmask<T>();
-
-            Action action = () =>
-            {
-                var _ = sut.UnsetBit( -1 );
-            };
-
-            action.Should().Throw<ArgumentException>();
+            var action = Lambda.Of( () => sut.UnsetBit( -1 ) );
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Fact]
-        public void UnsetBit_ShouldThrowWhenBitIndexIsTooLarge()
+        public void UnsetBit_ShouldThrowArgumentOutOfRangeException_WhenBitIndexIsTooLarge()
         {
             var sut = new Bitmask<T>();
-
-            Action action = () =>
-            {
-                var _ = sut.UnsetBit( Bitmask<T>.BitCount );
-            };
-
-            action.Should().Throw<ArgumentException>();
+            var action = Lambda.Of( () => sut.UnsetBit( Bitmask<T>.BitCount ) );
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Theory]
@@ -231,9 +200,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         public void UnsetBit_ShouldReturnCorrectResult(T value, int bitIndex, T expected)
         {
             var sut = new Bitmask<T>( value );
-
             var result = sut.UnsetBit( bitIndex );
-
             result.Value.Should().Be( expected );
         }
 
@@ -266,9 +233,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         public void Negate_ShouldReturnCorrectResult(T value, T expected)
         {
             var sut = new Bitmask<T>( value );
-
             var result = sut.Negate();
-
             result.Value.Should().Be( expected );
         }
 
@@ -301,9 +266,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         public void GetEnumerator_ShouldReturnCorrectResult(T value, IEnumerable<T> expected)
         {
             var sut = new Bitmask<T>( value );
-
             var result = sut.AsEnumerable();
-
             result.Should().BeSequentiallyEqualTo( expected );
         }
 
@@ -312,9 +275,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         public void Count_ShouldReturnCorrectResult(T value, int expected)
         {
             var sut = new Bitmask<T>( value );
-
             var result = sut.Count;
-
             result.Should().Be( expected );
         }
 
@@ -333,9 +294,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         public void BitmaskConversionOperator_ShouldCreateProperBitmask()
         {
             var value = Fixture.Create<T>();
-
             var result = (Bitmask<T>)value;
-
             result.Value.Should().Be( value );
         }
 
@@ -428,9 +387,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         public void BitwiseOrOperator_WithSecondAsT_ShouldReturnCorrectResult(T value1, T value2, T expected)
         {
             var a = new Bitmask<T>( value1 );
-
             var result = a | value2;
-
             result.Value.Should().Be( expected );
         }
 
@@ -439,9 +396,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         public void BitwiseOrOperator_WithFirstAsT_ShouldReturnCorrectResult(T value1, T value2, T expected)
         {
             var b = new Bitmask<T>( value2 );
-
             var result = value1 | b;
-
             result.Value.Should().Be( expected );
         }
 
@@ -462,9 +417,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         public void BitwiseAndOperator_WithSecondAsT_ShouldReturnCorrectResult(T value1, T value2, T expected)
         {
             var a = new Bitmask<T>( value1 );
-
             var result = a & value2;
-
             result.Value.Should().Be( expected );
         }
 
@@ -473,9 +426,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         public void BitwiseAndOperator_WithFirstAsT_ShouldReturnCorrectResult(T value1, T value2, T expected)
         {
             var b = new Bitmask<T>( value2 );
-
             var result = value1 & b;
-
             result.Value.Should().Be( expected );
         }
 
@@ -496,9 +447,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         public void BitwiseXorOperator_WithSecondAsT_ShouldReturnCorrectResult(T value1, T value2, T expected)
         {
             var a = new Bitmask<T>( value1 );
-
             var result = a ^ value2;
-
             result.Value.Should().Be( expected );
         }
 
@@ -507,9 +456,7 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         public void BitwiseXorOperator_WithFirstAsT_ShouldReturnCorrectResult(T value1, T value2, T expected)
         {
             var b = new Bitmask<T>( value2 );
-
             var result = value1 ^ b;
-
             result.Value.Should().Be( expected );
         }
 
@@ -518,32 +465,26 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         public void BitwiseNegateOperator_ShouldReturnCorrectResult(T value, T expected)
         {
             var sut = new Bitmask<T>( value );
-
             var result = ~sut;
-
             result.Value.Should().Be( expected );
         }
 
         protected void BitCount_ShouldBeCorrect_Impl(int expected)
         {
             var sut = Bitmask<T>.BitCount;
-
             sut.Should().Be( expected );
         }
 
         protected void BaseType_ShouldBeCorrect_Impl(Type expected)
         {
             var sut = Bitmask<T>.BaseType;
-
             sut.Should().Be( expected );
         }
 
         protected void Sanitize_ShouldReturnCorrectResult_Impl(T value, T expected)
         {
             var sut = new Bitmask<T>( value );
-
             var result = sut.Sanitize();
-
             result.Value.Should().Be( expected );
         }
     }

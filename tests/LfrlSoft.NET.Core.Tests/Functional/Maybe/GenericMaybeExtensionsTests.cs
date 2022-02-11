@@ -19,9 +19,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
         public void Reduce_ShouldReturnCorrectResult_WhenDoesntHaveValue()
         {
             var sut = Maybe<Maybe<T>>.None;
-
             var result = sut.Reduce();
-
             result.HasValue.Should().BeFalse();
         }
 

@@ -12,7 +12,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Timestamp
     public class TimestampTests : TestsBase
     {
         [Fact]
-        public void Zero_ShouldReturnCorrectResult()
+        public void Zero_ShouldReturnStartOfUnixEpoch()
         {
             var result = Core.Chrono.Timestamp.Zero;
 
@@ -25,7 +25,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Timestamp
         }
 
         [Fact]
-        public void Default_ShouldReturnCorrectResult()
+        public void Default_ShouldReturnStartOfUnixEpoch()
         {
             var sut = default( Core.Chrono.Timestamp );
 
@@ -39,7 +39,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Timestamp
 
         [Theory]
         [MethodData( nameof( TimestampTestsData.GetTicksCtorData ) )]
-        public void Ctor_WithTicks_ShouldReturnCorrectResult(long ticks, DateTime expectedUtcValue)
+        public void Ctor_WithTicks_ShouldReturnStartOfUnixEpochOffsetByTicks(long ticks, DateTime expectedUtcValue)
         {
             var sut = new Core.Chrono.Timestamp( ticks );
 
@@ -149,7 +149,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Timestamp
 
         [Theory]
         [MethodData( nameof( TimestampTestsData.GetTicksCtorData ) )]
-        public void DateTimeConversionOperator_ShouldReturnCorrectResult(long ticks, DateTime expected)
+        public void DateTimeConversionOperator_ShouldReturnCorrectUtcDateTime(long ticks, DateTime expected)
         {
             var sut = new Core.Chrono.Timestamp( ticks );
 

@@ -11,9 +11,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Object
         public void ToMaybe_ShouldReturnCorrectResult_WhenNull()
         {
             var value = default( T );
-
             var sut = value.ToMaybe();
-
             sut.HasValue.Should().BeFalse();
         }
     }

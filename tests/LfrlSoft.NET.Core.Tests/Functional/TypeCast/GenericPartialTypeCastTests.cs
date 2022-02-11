@@ -12,9 +12,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.TypeCast
         public void Ctor_ShouldCreateWithCorrectValue()
         {
             var value = Fixture.Create<TSource>();
-
             var sut = new PartialTypeCast<TSource>( value );
-
             sut.Value.Should().Be( value );
         }
     }

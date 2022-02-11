@@ -6,13 +6,13 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
     public class BitmaskOfInt64Tests : GenericBitmaskTests<long>
     {
         [Fact]
-        public void BitCount_ShouldBeCorrect()
+        public void BitCount_ShouldBe64()
         {
             BitCount_ShouldBeCorrect_Impl( 64 );
         }
 
         [Fact]
-        public void BaseType_ShouldBeCorrect()
+        public void BaseType_ShouldBeTypeOfLong()
         {
             BaseType_ShouldBeCorrect_Impl( typeof( long ) );
         }

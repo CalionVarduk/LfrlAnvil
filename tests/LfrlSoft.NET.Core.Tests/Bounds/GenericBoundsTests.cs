@@ -2,6 +2,7 @@
 using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
+using LfrlSoft.NET.Core.Functional;
 using LfrlSoft.NET.TestExtensions;
 using LfrlSoft.NET.TestExtensions.Attributes;
 using Xunit;
@@ -61,23 +62,17 @@ namespace LfrlSoft.NET.Core.Tests.Bounds
         }
 
         [Fact]
-        public void Ctor_ShouldThrow_WhenMinIsGreaterThanMax()
+        public void Ctor_ShouldThrowArgumentException_WhenMinIsGreaterThanMax()
         {
             var (max, min) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-
-            Action action = () =>
-            {
-                var _ = new Bounds<T>( min, max );
-            };
-
-            action.Should().Throw<ArgumentException>();
+            var action = Lambda.Of( () => new Bounds<T>( min, max ) );
+            action.Should().ThrowExactly<ArgumentException>();
         }
 
         [Fact]
-        public void SetMin_ShouldReturnCorrectResult()
+        public void SetMin_ShouldReturnBoundsWithNewMinAndOldMax()
         {
             var (min, newMin, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
-
             var sut = new Bounds<T>( min, max );
 
             var result = sut.SetMin( newMin );
@@ -92,10 +87,9 @@ namespace LfrlSoft.NET.Core.Tests.Bounds
         }
 
         [Fact]
-        public void SetMax_ShouldReturnCorrectResult()
+        public void SetMax_ShouldReturnBoundsWithOldMinAndNewMax()
         {
             var (min, max, newMax) = Fixture.CreateDistinctSortedCollection<T>( 3 );
-
             var sut = new Bounds<T>( min, max );
 
             var result = sut.SetMax( newMax );
@@ -110,7 +104,7 @@ namespace LfrlSoft.NET.Core.Tests.Bounds
         }
 
         [Fact]
-        public void GetHashCode_ShouldReturnCorrectResult()
+        public void GetHashCode_ShouldReturnMixOfMinAndMax()
         {
             var (min, max) = Fixture.CreateDistinctSortedCollection<T>( 2 );
 
@@ -139,9 +133,7 @@ namespace LfrlSoft.NET.Core.Tests.Bounds
         public void Clamp_ShouldReturnCorrectResult(T min, T max, T value, T expected)
         {
             var sut = new Bounds<T>( min, max );
-
             var result = sut.Clamp( value );
-
             result.Should().Be( expected );
         }
 
@@ -150,9 +142,7 @@ namespace LfrlSoft.NET.Core.Tests.Bounds
         public void Contains_ShouldReturnCorrectResult(T min, T max, T value, bool expected)
         {
             var sut = new Bounds<T>( min, max );
-
             var result = sut.Contains( value );
-
             result.Should().Be( expected );
         }
 
@@ -161,9 +151,7 @@ namespace LfrlSoft.NET.Core.Tests.Bounds
         public void ContainsExclusively_ShouldReturnCorrectResult(T min, T max, T value, bool expected)
         {
             var sut = new Bounds<T>( min, max );
-
             var result = sut.ContainsExclusively( value );
-
             result.Should().Be( expected );
         }
 

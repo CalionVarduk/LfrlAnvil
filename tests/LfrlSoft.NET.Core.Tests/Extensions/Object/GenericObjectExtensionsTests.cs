@@ -20,9 +20,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Object
         public void ToOne_ShouldReturnCorrectResult()
         {
             var value = Fixture.Create<T>();
-
             var sut = value.ToOne();
-
             sut.Value.Should().Be( value );
         }
 
@@ -44,9 +42,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Object
         public void ToEither_ShouldReturnCorrectResult()
         {
             var value = Fixture.CreateNotDefault<T>();
-
             var sut = value.ToEither();
-
             sut.Value.Should().Be( value );
         }
 
@@ -82,9 +78,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Object
         public void TypeCast_ShouldReturnCorrectResult()
         {
             var value = Fixture.Create<T>();
-
             var sut = value.TypeCast();
-
             sut.Value.Should().Be( value );
         }
 
@@ -140,17 +134,15 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Object
         }
 
         [Fact]
-        public void Visit_ShouldReturnEmptyCollectionWhenSourceDoesntPassTheBreakPredicate()
+        public void Visit_ShouldReturnEmptyCollection_WhenSourceDoesntPassTheBreakPredicate()
         {
             VisitNode? sut = null;
-
             var result = sut.Visit( r => r.Next );
-
             result.Should().BeEmpty();
         }
 
         [Fact]
-        public void Visit_ShouldReturnCorrectResult()
+        public void Visit_ShouldReturnResultFromTopToBottom()
         {
             var values = Fixture.CreateMany<T>( 3 ).ToList();
             var expected = values.Skip( 1 );
@@ -171,7 +163,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Object
         }
 
         [Fact]
-        public void VisitMany_ShouldReturnCorrectResult()
+        public void VisitMany_ShouldReturnResultAccordingToPreOrderTraversal()
         {
             var values = Fixture.CreateMany<T>( 11 ).ToList();
             var expected = values.Skip( 1 );
@@ -226,17 +218,15 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Object
         }
 
         [Fact]
-        public void VisitWithSelf_ShouldReturnEmptyCollectionWhenSourceDoesntPassTheBreakPredicate()
+        public void VisitWithSelf_ShouldReturnEmptyCollection_WhenSourceDoesntPassTheBreakPredicate()
         {
             VisitNode? sut = null;
-
             var result = sut.VisitWithSelf( r => r.Next );
-
             result.Should().BeEmpty();
         }
 
         [Fact]
-        public void VisitWithSelf_ShouldReturnCorrectResult()
+        public void VisitWithSelf_ShouldReturnResultFromTopToBottom_IncludingTheTargetAsRoot()
         {
             var values = Fixture.CreateMany<T>( 3 ).ToList();
 
@@ -256,7 +246,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Object
         }
 
         [Fact]
-        public void VisitManyWithSelf_ShouldReturnCorrectResult()
+        public void VisitManyWithSelf_ShouldReturnResultAccordingToPreOrderTraversal_IncludingTheTargetAsRoot()
         {
             var values = Fixture.CreateMany<T>( 11 ).ToList();
 

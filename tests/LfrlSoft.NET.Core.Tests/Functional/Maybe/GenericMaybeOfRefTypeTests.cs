@@ -9,21 +9,16 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
         where T : class
     {
         [Fact]
-        public void Some_ShouldThrow_WhenParameterIsNull()
+        public void Some_ShouldThrowArgumentNullException_WhenParameterIsNull()
         {
-            Action action = () =>
-            {
-                var _ = Core.Functional.Maybe.Some<T>( null );
-            };
-
-            action.Should().Throw<ArgumentNullException>();
+            var action = Core.Functional.Lambda.Of( () =>Core.Functional.Maybe.Some<T>( null ));
+            action.Should().ThrowExactly<ArgumentNullException>();
         }
 
         [Fact]
         public void MaybeConversionOperator_FromT_ShouldReturnNone_WhenParameterIsNull()
         {
             var sut = (Maybe<T>)null;
-
             sut.HasValue.Should().BeFalse();
         }
     }

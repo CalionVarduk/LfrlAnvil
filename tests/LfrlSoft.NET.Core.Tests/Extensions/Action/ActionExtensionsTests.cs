@@ -10,17 +10,15 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Action
     public class ActionExtensionsTests : TestsBase
     {
         [Fact]
-        public void TryInvoke_ShouldReturnCorrectResult_WhenDelegateDoesntThrow()
+        public void TryInvoke_ShouldReturnResultWithoutError_WhenDelegateDoesntThrow()
         {
             System.Action action = () => { };
-
             var result = action.TryInvoke();
-
             result.IsOk.Should().BeTrue();
         }
 
         [Fact]
-        public void Try_ShouldReturnCorrectResult_WhenDelegateThrows()
+        public void Try_ShouldReturnResultWithError_WhenDelegateThrows()
         {
             var error = new Exception();
             System.Action action = () => throw error;

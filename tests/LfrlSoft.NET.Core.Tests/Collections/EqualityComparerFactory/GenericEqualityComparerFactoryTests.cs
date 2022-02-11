@@ -14,7 +14,6 @@ namespace LfrlSoft.NET.Core.Tests.Collections.EqualityComparerFactory
         public void CreateDefault_ShouldReturnDefaultComparer()
         {
             var sut = EqualityComparerFactory<T>.CreateDefault();
-
             sut.Should().Be( EqualityComparer<T>.Default );
         }
 

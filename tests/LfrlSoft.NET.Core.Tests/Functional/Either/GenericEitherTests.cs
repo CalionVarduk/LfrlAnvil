@@ -79,17 +79,14 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
         }
 
         [Fact]
-        public void GetFirst_ShouldThrow_WhenHasSecond()
+        public void GetFirst_ShouldThrowArgumentNullException_WhenHasSecond()
         {
             var value = Fixture.Create<T2>();
             var sut = (Either<T1, T2>)value;
 
-            Action action = () =>
-            {
-                var _ = sut.GetFirst();
-            };
+            var action = Core.Functional.Lambda.Of( () => sut.GetFirst() );
 
-            action.Should().Throw<ArgumentNullException>();
+            action.Should().ThrowExactly<ArgumentNullException>();
         }
 
         [Fact]
@@ -126,17 +123,14 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
         }
 
         [Fact]
-        public void GetSecond_ShouldThrow_WhenHasFirst()
+        public void GetSecond_ShouldThrowArgumentNullException_WhenHasFirst()
         {
             var value = Fixture.Create<T1>();
             var sut = (Either<T1, T2>)value;
 
-            Action action = () =>
-            {
-                var _ = sut.GetSecond();
-            };
+            var action = Core.Functional.Lambda.Of( () => sut.GetSecond() );
 
-            action.Should().Throw<ArgumentNullException>();
+            action.Should().ThrowExactly<ArgumentNullException>();
         }
 
         [Fact]
@@ -659,17 +653,14 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
         }
 
         [Fact]
-        public void T1ConversionOperator_ShouldThrow_WhenHasSecond()
+        public void T1ConversionOperator_ShouldThrowArgumentNullException_WhenHasSecond()
         {
             var value = Fixture.Create<T2>();
             var sut = (Either<T1, T2>)value;
 
-            Action action = () =>
-            {
-                var _ = (T1)sut;
-            };
+            var action = Core.Functional.Lambda.Of( () => (T1)sut );
 
-            action.Should().Throw<ArgumentNullException>();
+            action.Should().ThrowExactly<ArgumentNullException>();
         }
 
         [Fact]
@@ -684,17 +675,14 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Either
         }
 
         [Fact]
-        public void T2ConversionOperator_ShouldThrow_WhenHasFirst()
+        public void T2ConversionOperator_ShouldThrowArgumentNullException_WhenHasFirst()
         {
             var value = Fixture.Create<T1>();
             var sut = (Either<T1, T2>)value;
 
-            Action action = () =>
-            {
-                var _ = (T2)sut;
-            };
+            var action = Core.Functional.Lambda.Of( () => (T2)sut );
 
-            action.Should().Throw<ArgumentNullException>();
+            action.Should().ThrowExactly<ArgumentNullException>();
         }
 
         [Theory]

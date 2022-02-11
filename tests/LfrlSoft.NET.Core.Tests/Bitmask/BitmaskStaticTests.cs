@@ -1,5 +1,6 @@
 ﻿using System;
 using FluentAssertions;
+using LfrlSoft.NET.Core.Functional;
 using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.Bitmask
@@ -10,7 +11,6 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         public void GetUnderlyingType_ShouldReturnNull_WhenTypeIsNull()
         {
             var result = Core.Bitmask.GetUnderlyingType( null );
-
             result.Should().BeNull();
         }
 
@@ -21,7 +21,6 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         public void GetUnderlyingType_ShouldReturnNull_WhenTypeIsIncorrect(Type type)
         {
             var result = Core.Bitmask.GetUnderlyingType( type );
-
             result.Should().BeNull();
         }
 
@@ -32,7 +31,6 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         public void GetUnderlyingType_ShouldReturnCorrectType_WhenTypeIsCorrect(Type type, Type expected)
         {
             var result = Core.Bitmask.GetUnderlyingType( type );
-
             result.Should().Be( expected );
         }
 
@@ -40,54 +38,36 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
         public void GetUnderlyingType_ShouldReturnCorrectType_WhenTypeIsCorrectAndOpen()
         {
             var expected = typeof( Bitmask<> ).GetGenericArguments()[0];
-
             var result = Core.Bitmask.GetUnderlyingType( typeof( Bitmask<> ) );
-
             result.Should().Be( expected );
         }
 
         [Fact]
-        public void StaticCtor_ShouldThrowWhenAttemptingToUseEnumWithoutFlagsAttribute()
+        public void StaticCtor_ShouldThrowTypeInitializationException_WhenAttemptingToUseEnumWithoutFlagsAttribute()
         {
-            Action action = () =>
-            {
-                var _ = Bitmask<EnumWithoutFlagsAttribute>.BitCount;
-            };
-
-            action.Should().Throw<TypeInitializationException>();
+            var action = Lambda.Of( () => Bitmask<EnumWithoutFlagsAttribute>.BitCount );
+            action.Should().ThrowExactly<TypeInitializationException>();
         }
 
         [Fact]
-        public void StaticCtor_ShouldThrowWhenAttemptingToUseEnumWithoutZeroValueMember()
+        public void StaticCtor_ShouldThrowTypeInitializationException_WhenAttemptingToUseEnumWithoutZeroValueMember()
         {
-            Action action = () =>
-            {
-                var _ = Bitmask<EnumWithoutZeroValueMember>.BitCount;
-            };
-
-            action.Should().Throw<TypeInitializationException>();
+            var action = Lambda.Of( () => Bitmask<EnumWithoutZeroValueMember>.BitCount );
+            action.Should().ThrowExactly<TypeInitializationException>();
         }
 
         [Fact]
-        public void StaticCtor_ShouldThrowWhenAttemptingToUseStructThatDoesntSupportConversionToUInt64()
+        public void StaticCtor_ShouldThrowTypeInitializationException_WhenAttemptingToUseStructThatDoesntSupportConversionToUInt64()
         {
-            Action action = () =>
-            {
-                var _ = Bitmask<InvalidStructA>.BitCount;
-            };
-
-            action.Should().Throw<TypeInitializationException>();
+            var action = Lambda.Of( () => Bitmask<InvalidStructA>.BitCount );
+            action.Should().ThrowExactly<TypeInitializationException>();
         }
 
         [Fact]
-        public void StaticCtor_ShouldThrowWhenAttemptingToUseStructThatDoesntSupportConversionFromUInt64()
+        public void StaticCtor_ShouldThrowTypeInitializationException_WhenAttemptingToUseStructThatDoesntSupportConversionFromUInt64()
         {
-            Action action = () =>
-            {
-                var _ = Bitmask<InvalidStructB>.BitCount;
-            };
-
-            action.Should().Throw<TypeInitializationException>();
+            var action = Lambda.Of( () => Bitmask<InvalidStructB>.BitCount );
+            action.Should().ThrowExactly<TypeInitializationException>();
         }
     }
 

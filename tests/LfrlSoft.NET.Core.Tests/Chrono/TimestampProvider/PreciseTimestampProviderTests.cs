@@ -14,10 +14,10 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.TimestampProvider
         [InlineData( 0 )]
         [InlineData( -1 )]
         [InlineData( -2 )]
-        public void Ctor_ShouldThrow_WhenMaxIdleTimeInTicksIsLessThanOne(long value)
+        public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenMaxIdleTimeInTicksIsLessThanOne(long value)
         {
             var action = Lambda.Of( () => new PreciseTimestampProvider( value ) );
-            action.Should().Throw<ArgumentOutOfRangeException>();
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Theory]

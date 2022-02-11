@@ -7,7 +7,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Type
     public class NonGenericInterfaceTests : TypeTestsBase
     {
         [Fact]
-        public void GetImplementation_ShouldReturnCorrectResultWhenInterfaceIsDirectlyImplemented()
+        public void GetImplementation_ShouldReturnCorrectResult_WhenInterfaceIsDirectlyImplemented()
         {
             var sut = typeof( INonGenericInterface );
             var result = sut.GetImplementation<IDirect>();
@@ -15,7 +15,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Type
         }
 
         [Fact]
-        public void GetImplementation_ShouldReturnCorrectResultWhenInterfaceIsImplementedThroughOtherInterface()
+        public void GetImplementation_ShouldReturnCorrectResult_WhenInterfaceIsImplementedThroughOtherInterface()
         {
             var sut = typeof( INonGenericInterface );
             var result = sut.GetImplementation<IIndirectFromInterface>();
@@ -23,7 +23,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Type
         }
 
         [Fact]
-        public void GetImplementation_ShouldReturnNullWhenInterfaceIsNotImplemented()
+        public void GetImplementation_ShouldReturnNull_WhenInterfaceIsNotImplemented()
         {
             var sut = typeof( INonGenericInterface );
             var result = sut.GetImplementation<INotImplemented>();
@@ -31,7 +31,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Type
         }
 
         [Fact]
-        public void GetImplementation_ShouldReturnNullWhenInterfaceIsSelf()
+        public void GetImplementation_ShouldReturnNull_WhenInterfaceIsSelf()
         {
             var sut = typeof( INonGenericInterface );
             var result = sut.GetImplementation<INonGenericInterface>();
@@ -39,7 +39,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Type
         }
 
         [Fact]
-        public void Implements_ShouldReturnTrueWhenInterfaceIsDirectlyImplemented()
+        public void Implements_ShouldReturnTrue_WhenInterfaceIsDirectlyImplemented()
         {
             var sut = typeof( INonGenericInterface );
             var result = sut.Implements<IDirect>();
@@ -47,7 +47,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Type
         }
 
         [Fact]
-        public void Implements_ShouldReturnTrueWhenInterfaceIsImplementedThroughOtherInterface()
+        public void Implements_ShouldReturnTrue_WhenInterfaceIsImplementedThroughOtherInterface()
         {
             var sut = typeof( INonGenericInterface );
             var result = sut.Implements<IIndirectFromInterface>();
@@ -55,7 +55,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Type
         }
 
         [Fact]
-        public void Implements_ShouldReturnFalseWhenInterfaceIsNotImplemented()
+        public void Implements_ShouldReturnFalse_WhenInterfaceIsNotImplemented()
         {
             var sut = typeof( INonGenericInterface );
             var result = sut.Implements<INotImplemented>();
@@ -63,7 +63,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Type
         }
 
         [Fact]
-        public void Implements_ShouldReturnFalseWhenInterfaceIsSelf()
+        public void Implements_ShouldReturnFalse_WhenInterfaceIsSelf()
         {
             var sut = typeof( INonGenericInterface );
             var result = sut.Implements<INonGenericInterface>();

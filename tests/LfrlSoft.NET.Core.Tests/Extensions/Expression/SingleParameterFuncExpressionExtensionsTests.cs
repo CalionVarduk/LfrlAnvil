@@ -2,6 +2,7 @@
 using System.Linq.Expressions;
 using FluentAssertions;
 using LfrlSoft.NET.Core.Extensions;
+using LfrlSoft.NET.Core.Functional;
 using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.Extensions.Expression
@@ -12,9 +13,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Expression
         public void GetMemberName_ShouldReturnCorrectResult_WhenMemberIsField()
         {
             Expression<Func<TestClass, string?>> sut = t => t.Field;
-
             var result = sut.GetMemberName();
-
             result.Should().Be( nameof( TestClass.Field ) );
         }
 
@@ -22,62 +21,40 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.Expression
         public void GetMemberName_ShouldReturnCorrectResult_WhenMemberIsProperty()
         {
             Expression<Func<TestClass, string?>> sut = t => t.Property;
-
             var result = sut.GetMemberName();
-
             result.Should().Be( nameof( TestClass.Property ) );
         }
 
         [Fact]
-        public void GetMemberName_ShouldThrowWhenBodyIsMethodCall()
+        public void GetMemberName_ShouldThrowArgumentException_WhenBodyIsMethodCall()
         {
             Expression<Func<TestClass, string?>> sut = t => t.Method();
-
-            System.Action action = () =>
-            {
-                var _ = sut.GetMemberName();
-            };
-
-            action.Should().Throw<ArgumentException>();
+            var action = Lambda.Of( () => sut.GetMemberName() );
+            action.Should().ThrowExactly<ArgumentException>();
         }
 
         [Fact]
-        public void GetMemberName_ShouldThrowWhenBodyIsStaticMember()
+        public void GetMemberName_ShouldThrowArgumentException_WhenBodyIsStaticMember()
         {
             Expression<Func<TestClass, string?>> sut = _ => TestClass.StaticProperty;
-
-            System.Action action = () =>
-            {
-                var _ = sut.GetMemberName();
-            };
-
-            action.Should().Throw<ArgumentException>();
+            var action = Lambda.Of( () => sut.GetMemberName() );
+            action.Should().ThrowExactly<ArgumentException>();
         }
 
         [Fact]
-        public void GetMemberName_ShouldThrowWhenBodyIsStaticMemberFromDifferentType()
+        public void GetMemberName_ShouldThrowArgumentException_WhenBodyIsStaticMemberFromDifferentType()
         {
             Expression<Func<TestClass, string>> sut = _ => string.Empty;
-
-            System.Action action = () =>
-            {
-                var _ = sut.GetMemberName();
-            };
-
-            action.Should().Throw<ArgumentException>();
+            var action = Lambda.Of( () => sut.GetMemberName() );
+            action.Should().ThrowExactly<ArgumentException>();
         }
 
         [Fact]
-        public void GetMemberName_ShouldThrowWhenBodyIsAccessingMemberOfMember()
+        public void GetMemberName_ShouldThrowArgumentException_WhenBodyIsAccessingMemberOfMember()
         {
             Expression<Func<TestClass, string?>> sut = t => t.Other!.Property;
-
-            System.Action action = () =>
-            {
-                var _ = sut.GetMemberName();
-            };
-
-            action.Should().Throw<ArgumentException>();
+            var action = Lambda.Of( () => sut.GetMemberName() );
+            action.Should().ThrowExactly<ArgumentException>();
         }
     }
 

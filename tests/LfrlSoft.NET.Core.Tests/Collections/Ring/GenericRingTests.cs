@@ -7,6 +7,7 @@ using FluentAssertions.Execution;
 using LfrlSoft.NET.Core.Collections;
 using LfrlSoft.NET.Core.Collections.Internal;
 using LfrlSoft.NET.Core.Extensions;
+using LfrlSoft.NET.Core.Functional;
 using LfrlSoft.NET.Core.Internal;
 using LfrlSoft.NET.TestExtensions;
 using LfrlSoft.NET.TestExtensions.FluentAssertions;
@@ -17,27 +18,19 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Ring
     public abstract class GenericRingTests<T> : TestsBase
     {
         [Fact]
-        public void Ctor_ShouldThrowWhenNoParametersHaveBeenPassed()
+        public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenNoParametersHaveBeenPassed()
         {
-            Action action = () =>
-            {
-                var _ = new Ring<T>();
-            };
-
-            action.Should().Throw<ArgumentOutOfRangeException>();
+            var action = Lambda.Of( () => new Ring<T>() );
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Theory]
         [InlineData( 0 )]
         [InlineData( -1 )]
-        public void Ctor_ShouldThrowWhenCountIsLessThanOne(int count)
+        public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenCountIsLessThanOne(int count)
         {
-            Action action = () =>
-            {
-                var _ = new Ring<T>( count );
-            };
-
-            action.Should().Throw<ArgumentOutOfRangeException>();
+            var action = Lambda.Of( () => new Ring<T>( count ) );
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Theory]
@@ -59,9 +52,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Ring
         public void Ctor_ShouldCreateWithCorrectItems()
         {
             var items = Fixture.CreateDistinctCollection<T>( 3 );
-
             var sut = new Ring<T>( items[0], items[1], items[2] );
-
             sut.Should().BeEquivalentTo( items );
         }
 
@@ -87,30 +78,25 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Ring
         [Theory]
         [InlineData( -1 )]
         [InlineData( 3 )]
-        public void IndexerGet_ShouldThrow_WhenIndexIsOutOfBounds(int index)
+        public void IndexerGet_ShouldThrowIndexOutOfRangeException_WhenIndexIsOutOfBounds(int index)
         {
             var sut = new Ring<T>( count: 3 );
-
-            Action action = () =>
-            {
-                var _ = sut[index];
-            };
-
-            action.Should().Throw<IndexOutOfRangeException>();
+            var action = Lambda.Of( () => sut[index] );
+            action.Should().ThrowExactly<IndexOutOfRangeException>();
         }
 
         [Theory]
         [InlineData( -1 )]
         [InlineData( 3 )]
-        public void IndexerSet_ShouldThrow_WhenIndexIsOutOfBounds(int index)
+        public void IndexerSet_ShouldThrowIndexOutOfRangeException_WhenIndexIsOutOfBounds(int index)
         {
             var item = Fixture.Create<T>();
 
             var sut = new Ring<T>( count: 3 );
 
-            Action action = () => sut[index] = item;
+            var action = Lambda.Of( () => sut[index] = item );
 
-            action.Should().Throw<IndexOutOfRangeException>();
+            action.Should().ThrowExactly<IndexOutOfRangeException>();
         }
 
         [Theory]
@@ -176,9 +162,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Ring
         public void GetWriteIndex_ShouldReturnCorrectResult(int writeIndex, int offset, int expected)
         {
             var sut = new Ring<T>( count: 3 ) { WriteIndex = writeIndex };
-
             var result = sut.GetWriteIndex( offset );
-
             result.Should().Be( expected );
         }
 
@@ -241,7 +225,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Ring
                 items[(0 + readIndex).EuclidModulo( 3 )],
                 items[(1 + readIndex).EuclidModulo( 3 )],
                 items[(2 + readIndex).EuclidModulo( 3 )]
-            }.Select(x => (T?)x);
+            }.Select( x => (T?)x );
 
             var sut = new Ring<T>( items );
             var result = sut.Read( readIndex );
@@ -261,7 +245,7 @@ namespace LfrlSoft.NET.Core.Tests.Collections.Ring
                 items[(1 + writeIndex) % 3],
                 items[(2 + writeIndex) % 3],
                 items[(0 + writeIndex) % 3]
-            }.Select(x => (T?)x);
+            }.Select( x => (T?)x );
 
             var sut = new Ring<T>( items ) { WriteIndex = writeIndex };
 

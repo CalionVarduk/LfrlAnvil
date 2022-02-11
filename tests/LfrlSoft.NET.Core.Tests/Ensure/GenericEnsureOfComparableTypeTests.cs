@@ -20,10 +20,10 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
         }
 
         [Fact]
-        public void Equals_ShouldThrow_WhenParamIsNotEqualToValue()
+        public void Equals_ShouldThrowArgumentException_WhenParamIsNotEqualToValue()
         {
             var (param, value) = Fixture.CreateDistinctCollection<T>( 2 );
-            ShouldThrow( () => Core.Ensure.Equals( param, value ) );
+            ShouldThrowArgumentException( () => Core.Ensure.Equals( param, value ) );
         }
 
         [Fact]
@@ -34,10 +34,10 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
         }
 
         [Fact]
-        public void NotEquals_ShouldThrow_WhenParamIsEqualToValue()
+        public void NotEquals_ShouldThrowArgumentException_WhenParamIsEqualToValue()
         {
             var param = Fixture.CreateNotDefault<T>();
-            ShouldThrow( () => Core.Ensure.NotEquals( param, param ) );
+            ShouldThrowArgumentException( () => Core.Ensure.NotEquals( param, param ) );
         }
 
         [Fact]
@@ -48,17 +48,17 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
         }
 
         [Fact]
-        public void IsGreaterThan_ShouldThrow_WhenParamIsLessThanValue()
+        public void IsGreaterThan_ShouldThrowArgumentOutOfRangeException_WhenParamIsLessThanValue()
         {
             var (param, value) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsGreaterThan( param, value ) );
+            ShouldThrowExactly<ArgumentOutOfRangeException>( () => Core.Ensure.IsGreaterThan( param, value ) );
         }
 
         [Fact]
-        public void IsGreaterThan_ShouldThrow_WhenParamIsEqualToValue()
+        public void IsGreaterThan_ShouldThrowArgumentOutOfRangeException_WhenParamIsEqualToValue()
         {
             var param = Fixture.CreateNotDefault<T>();
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsGreaterThan( param, param ) );
+            ShouldThrowExactly<ArgumentOutOfRangeException>( () => Core.Ensure.IsGreaterThan( param, param ) );
         }
 
         [Fact]
@@ -76,10 +76,10 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
         }
 
         [Fact]
-        public void IsGreaterThanOrEqualTo_ShouldThrow_WhenParamIsLessThanValue()
+        public void IsGreaterThanOrEqualTo_ShouldThrowArgumentOutOfRangeException_WhenParamIsLessThanValue()
         {
             var (param, value) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsGreaterThanOrEqualTo( param, value ) );
+            ShouldThrowExactly<ArgumentOutOfRangeException>( () => Core.Ensure.IsGreaterThanOrEqualTo( param, value ) );
         }
 
         [Fact]
@@ -90,17 +90,17 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
         }
 
         [Fact]
-        public void IsLessThan_ShouldThrow_WhenParamIsGreaterThanValue()
+        public void IsLessThan_ShouldThrowArgumentOutOfRangeException_WhenParamIsGreaterThanValue()
         {
             var (value, param) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsLessThan( param, value ) );
+            ShouldThrowExactly<ArgumentOutOfRangeException>( () => Core.Ensure.IsLessThan( param, value ) );
         }
 
         [Fact]
-        public void IsLessThan_ShouldThrow_WhenParamIsEqualToValue()
+        public void IsLessThan_ShouldThrowArgumentOutOfRangeException_WhenParamIsEqualToValue()
         {
             var param = Fixture.CreateNotDefault<T>();
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsLessThan( param, param ) );
+            ShouldThrowExactly<ArgumentOutOfRangeException>( () => Core.Ensure.IsLessThan( param, param ) );
         }
 
         [Fact]
@@ -118,10 +118,10 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
         }
 
         [Fact]
-        public void IsLessThanOrEqualTo_ShouldThrow_WhenParamIsGreaterThanValue()
+        public void IsLessThanOrEqualTo_ShouldThrowArgumentOutOfRangeException_WhenParamIsGreaterThanValue()
         {
             var (value, param) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsLessThanOrEqualTo( param, value ) );
+            ShouldThrowExactly<ArgumentOutOfRangeException>( () => Core.Ensure.IsLessThanOrEqualTo( param, value ) );
         }
 
         [Fact]
@@ -153,25 +153,25 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
         }
 
         [Fact]
-        public void IsInRange_ShouldThrow_WhenParamIsLessThanMinValue()
+        public void IsInRange_ShouldThrowArgumentOutOfRangeException_WhenParamIsLessThanMinValue()
         {
             var (param, min, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsInRange( param, min, max ) );
+            ShouldThrowExactly<ArgumentOutOfRangeException>( () => Core.Ensure.IsInRange( param, min, max ) );
         }
 
         [Fact]
-        public void IsInRange_ShouldThrow_WhenParamIsGreaterThanMaxValue()
+        public void IsInRange_ShouldThrowArgumentOutOfRangeException_WhenParamIsGreaterThanMaxValue()
         {
             var (min, max, param) = Fixture.CreateDistinctSortedCollection<T>( 3 );
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsInRange( param, min, max ) );
+            ShouldThrowExactly<ArgumentOutOfRangeException>( () => Core.Ensure.IsInRange( param, min, max ) );
         }
 
         [Fact]
-        public void IsInRange_ShouldThrow_WhenMinIsGreaterThanMax()
+        public void IsInRange_ShouldThrowArgumentOutOfRangeException_WhenMinIsGreaterThanMax()
         {
             var param = Fixture.CreateNotDefault<T>();
             var (max, min) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsInRange( param, min, max ) );
+            ShouldThrowExactly<ArgumentOutOfRangeException>( () => Core.Ensure.IsInRange( param, min, max ) );
         }
 
         [Fact]
@@ -197,31 +197,31 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
         }
 
         [Fact]
-        public void IsNotInRange_ShouldThrow_WhenParamIsBetweenTwoDistinctValues()
+        public void IsNotInRange_ShouldThrowArgumentOutOfRangeException_WhenParamIsBetweenTwoDistinctValues()
         {
             var (min, param, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsNotInRange( param, min, max ) );
+            ShouldThrowExactly<ArgumentOutOfRangeException>( () => Core.Ensure.IsNotInRange( param, min, max ) );
         }
 
         [Fact]
-        public void IsNotInRange_ShouldThrow_WhenParamIsEqualToMinValue()
+        public void IsNotInRange_ShouldThrowArgumentOutOfRangeException_WhenParamIsEqualToMinValue()
         {
             var (param, max) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsNotInRange( param, param, max ) );
+            ShouldThrowExactly<ArgumentOutOfRangeException>( () => Core.Ensure.IsNotInRange( param, param, max ) );
         }
 
         [Fact]
-        public void IsNotInRange_ShouldThrow_WhenParamIsEqualToMaxValue()
+        public void IsNotInRange_ShouldThrowArgumentOutOfRangeException_WhenParamIsEqualToMaxValue()
         {
             var (min, param) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsNotInRange( param, min, param ) );
+            ShouldThrowExactly<ArgumentOutOfRangeException>( () => Core.Ensure.IsNotInRange( param, min, param ) );
         }
 
         [Fact]
-        public void IsNotInRange_ShouldThrow_WhenParamIsEqualToMinAndMaxValues()
+        public void IsNotInRange_ShouldThrowArgumentOutOfRangeException_WhenParamIsEqualToMinAndMaxValues()
         {
             var param = Fixture.CreateNotDefault<T>();
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsNotInRange( param, param, param ) );
+            ShouldThrowExactly<ArgumentOutOfRangeException>( () => Core.Ensure.IsNotInRange( param, param, param ) );
         }
 
         [Fact]
@@ -232,46 +232,46 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
         }
 
         [Fact]
-        public void IsInExclusiveRange_ShouldThrow_WhenParamIsEqualToMinValue()
+        public void IsInExclusiveRange_ShouldThrowArgumentOutOfRangeException_WhenParamIsEqualToMinValue()
         {
             var (param, max) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsInExclusiveRange( param, param, max ) );
+            ShouldThrowExactly<ArgumentOutOfRangeException>( () => Core.Ensure.IsInExclusiveRange( param, param, max ) );
         }
 
         [Fact]
-        public void IsInExclusiveRange_ShouldThrow_WhenParamIsEqualToMaxValue()
+        public void IsInExclusiveRange_ShouldThrowArgumentOutOfRangeException_WhenParamIsEqualToMaxValue()
         {
             var (min, param) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsInExclusiveRange( param, min, param ) );
+            ShouldThrowExactly<ArgumentOutOfRangeException>( () => Core.Ensure.IsInExclusiveRange( param, min, param ) );
         }
 
         [Fact]
-        public void IsInExclusiveRange_ShouldPass_WhenParamIsEqualToMinAndMaxValues()
+        public void IsInExclusiveRange_ShouldThrowArgumentOutOfRangeException_WhenParamIsEqualToMinAndMaxValues()
         {
             var param = Fixture.CreateNotDefault<T>();
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsInExclusiveRange( param, param, param ) );
+            ShouldThrowExactly<ArgumentOutOfRangeException>( () => Core.Ensure.IsInExclusiveRange( param, param, param ) );
         }
 
         [Fact]
-        public void IsInExclusiveRange_ShouldThrow_WhenParamIsLessThanMinValue()
+        public void IsInExclusiveRange_ShouldThrowArgumentOutOfRangeException_WhenParamIsLessThanMinValue()
         {
             var (param, min, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsInExclusiveRange( param, min, max ) );
+            ShouldThrowExactly<ArgumentOutOfRangeException>( () => Core.Ensure.IsInExclusiveRange( param, min, max ) );
         }
 
         [Fact]
-        public void IsInExclusiveRange_ShouldThrow_WhenParamIsGreaterThanMaxValue()
+        public void IsInExclusiveRange_ShouldThrowArgumentOutOfRangeException_WhenParamIsGreaterThanMaxValue()
         {
             var (min, max, param) = Fixture.CreateDistinctSortedCollection<T>( 3 );
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsInExclusiveRange( param, min, max ) );
+            ShouldThrowExactly<ArgumentOutOfRangeException>( () => Core.Ensure.IsInExclusiveRange( param, min, max ) );
         }
 
         [Fact]
-        public void IsInExclusiveRange_ShouldThrow_WhenMinIsGreaterThanMax()
+        public void IsInExclusiveRange_ShouldThrowArgumentOutOfRangeException_WhenMinIsGreaterThanMax()
         {
             var param = Fixture.CreateNotDefault<T>();
             var (max, min) = Fixture.CreateDistinctSortedCollection<T>( 2 );
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsInExclusiveRange( param, min, max ) );
+            ShouldThrowExactly<ArgumentOutOfRangeException>( () => Core.Ensure.IsInExclusiveRange( param, min, max ) );
         }
 
         [Fact]
@@ -318,10 +318,10 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
         }
 
         [Fact]
-        public void IsNotInExclusiveRange_ShouldThrow_WhenParamIsBetweenTwoDistinctValues()
+        public void IsNotInExclusiveRange_ShouldThrowArgumentOutOfRangeException_WhenParamIsBetweenTwoDistinctValues()
         {
             var (min, param, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
-            ShouldThrow<ArgumentOutOfRangeException>( () => Core.Ensure.IsNotInExclusiveRange( param, min, max ) );
+            ShouldThrowExactly<ArgumentOutOfRangeException>( () => Core.Ensure.IsNotInExclusiveRange( param, min, max ) );
         }
 
         [Fact]
@@ -333,11 +333,11 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
         }
 
         [Fact]
-        public void Contains_ShouldThrow_WhenEnumerableDoesntContainElement()
+        public void Contains_ShouldThrowArgumentException_WhenEnumerableDoesntContainElement()
         {
             var value = Fixture.Create<T>();
             var param = Fixture.CreateMany<T>().Except( new[] { value } );
-            ShouldThrow( () => Core.Ensure.Contains( param, value ) );
+            ShouldThrowArgumentException( () => Core.Ensure.Contains( param, value ) );
         }
 
         [Fact]
@@ -349,11 +349,11 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
         }
 
         [Fact]
-        public void NotContains_ShouldThrow_WhenEnumerableContainsElement()
+        public void NotContains_ShouldThrowArgumentException_WhenEnumerableContainsElement()
         {
             var value = Fixture.Create<T>();
             var param = Fixture.CreateMany<T>().Concat( new[] { value } );
-            ShouldThrow( () => Core.Ensure.NotContains( param, value ) );
+            ShouldThrowArgumentException( () => Core.Ensure.NotContains( param, value ) );
         }
 
         [Fact]
@@ -379,9 +379,9 @@ namespace LfrlSoft.NET.Core.Tests.Ensure
 
         [Theory]
         [GenericMethodData( nameof( GenericEnsureTestsData<T>.GetIsOrderedThrowData ) )]
-        public void IsOrdered_ShouldThrow_ForUnorderedCollection(IEnumerable<T> param)
+        public void IsOrdered_ShouldThrowArgumentException_ForUnorderedCollection(IEnumerable<T> param)
         {
-            ShouldThrow( () => Core.Ensure.IsOrdered( param ) );
+            ShouldThrowArgumentException( () => Core.Ensure.IsOrdered( param ) );
         }
     }
 }

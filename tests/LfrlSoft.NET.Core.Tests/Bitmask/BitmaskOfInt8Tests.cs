@@ -6,13 +6,13 @@ namespace LfrlSoft.NET.Core.Tests.Bitmask
     public class BitmaskOfInt8Tests : GenericBitmaskTests<sbyte>
     {
         [Fact]
-        public void BitCount_ShouldBeCorrect()
+        public void BitCount_ShouldBe8()
         {
             BitCount_ShouldBeCorrect_Impl( 8 );
         }
 
         [Fact]
-        public void BaseType_ShouldBeCorrect()
+        public void BaseType_ShouldBeTypeOfSbyte()
         {
             BaseType_ShouldBeCorrect_Impl( typeof( sbyte ) );
         }

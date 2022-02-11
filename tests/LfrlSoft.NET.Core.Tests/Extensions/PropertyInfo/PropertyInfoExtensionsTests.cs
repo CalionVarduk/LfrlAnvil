@@ -14,9 +14,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.PropertyInfo
         public void GetBackingField_ShouldReturnNull_WhenPropertyIsPublic_AndExplicit_AndWritable()
         {
             var sut = TestClass.GetPublicExplicitWritableInfo();
-
             var result = sut.GetBackingField();
-
             result.Should().BeNull();
         }
 
@@ -24,9 +22,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.PropertyInfo
         public void GetBackingField_ShouldReturnNull_WhenPropertyIsPublic_AndExplicit_AndWriteOnly()
         {
             var sut = TestClass.GetPublicExplicitWriteOnlyInfo();
-
             var result = sut.GetBackingField();
-
             result.Should().BeNull();
         }
 
@@ -34,9 +30,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.PropertyInfo
         public void GetBackingField_ShouldReturnNull_WhenPropertyIsPublic_AndExplicit_AndReadOnly()
         {
             var sut = TestClass.GetPublicExplicitReadOnlyInfo();
-
             var result = sut.GetBackingField();
-
             result.Should().BeNull();
         }
 
@@ -44,9 +38,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.PropertyInfo
         public void GetBackingField_ShouldReturnFieldInfo_WhenPropertyIsPublic_AndAuto_AndWritable()
         {
             var sut = TestClass.GetPublicAutoWritableInfo();
-
             var result = sut.GetBackingField();
-
             result.Should().Match<FieldInfo>( r => MatchBackingField( sut, r ) );
         }
 
@@ -54,9 +46,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.PropertyInfo
         public void GetBackingField_ShouldReturnFieldInfo_WhenPropertyIsPublic_AndAuto_AndReadOnly()
         {
             var sut = TestClass.GetPublicAutoReadOnlyInfo();
-
             var result = sut.GetBackingField();
-
             result.Should().Match<FieldInfo>( r => MatchBackingField( sut, r ) );
         }
 
@@ -64,9 +54,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.PropertyInfo
         public void GetBackingField_ShouldReturnNull_WhenPropertyIsPrivate_AndExplicit_AndWritable()
         {
             var sut = TestClass.GetPrivateExplicitWritableInfo();
-
             var result = sut.GetBackingField();
-
             result.Should().BeNull();
         }
 
@@ -74,9 +62,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.PropertyInfo
         public void GetBackingField_ShouldReturnNull_WhenPropertyIsPrivate_AndExplicit_AndWriteOnly()
         {
             var sut = TestClass.GetPrivateExplicitWriteOnlyInfo();
-
             var result = sut.GetBackingField();
-
             result.Should().BeNull();
         }
 
@@ -84,9 +70,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.PropertyInfo
         public void GetBackingField_ShouldReturnNull_WhenPropertyIsPrivate_AndExplicit_AndReadOnly()
         {
             var sut = TestClass.GetPrivateExplicitReadOnlyInfo();
-
             var result = sut.GetBackingField();
-
             result.Should().BeNull();
         }
 
@@ -94,9 +78,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.PropertyInfo
         public void GetBackingField_ShouldReturnFieldInfo_WhenPropertyIsPrivate_AndAuto_AndWritable()
         {
             var sut = TestClass.GetPrivateAutoWritableInfo();
-
             var result = sut.GetBackingField();
-
             result.Should().Match<FieldInfo>( r => MatchBackingField( sut, r ) );
         }
 
@@ -104,9 +86,7 @@ namespace LfrlSoft.NET.Core.Tests.Extensions.PropertyInfo
         public void GetBackingField_ShouldReturnFieldInfo_WhenPropertyIsPrivate_AndAuto_AndReadOnly()
         {
             var sut = TestClass.GetPrivateAutoReadOnlyInfo();
-
             var result = sut.GetBackingField();
-
             result.Should().Match<FieldInfo>( r => MatchBackingField( sut, r ) );
         }
 

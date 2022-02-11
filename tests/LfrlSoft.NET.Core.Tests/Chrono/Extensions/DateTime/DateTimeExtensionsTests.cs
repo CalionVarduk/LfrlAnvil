@@ -32,7 +32,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Extensions.DateTime
 
         [Theory]
         [MethodData( nameof( DateTimeExtensionsTestsData.GetGetStartOfDayData ) )]
-        public void GetStartOfDay_ShouldReturnCorrectResult(System.DateTime value, System.DateTime expected)
+        public void GetStartOfDay_ShouldReturnTargetWithNoTimeOfDay(System.DateTime value, System.DateTime expected)
         {
             var result = value.GetStartOfDay();
             result.Should().Be( expected );
@@ -40,7 +40,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Extensions.DateTime
 
         [Theory]
         [MethodData( nameof( DateTimeExtensionsTestsData.GetGetEndOfDayData ) )]
-        public void GetEndOfDay_ShouldReturnCorrectResult(System.DateTime value, System.DateTime expected)
+        public void GetEndOfDay_ShouldReturnTargetWithTimeOfDaySetToLastPossibleTick(System.DateTime value, System.DateTime expected)
         {
             var result = value.GetEndOfDay();
             result.Should().Be( expected );
@@ -48,7 +48,10 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Extensions.DateTime
 
         [Theory]
         [MethodData( nameof( DateTimeExtensionsTestsData.GetGetStartOfWeekData ) )]
-        public void GetStartOfWeek_ShouldReturnCorrectResult(System.DateTime value, System.DayOfWeek weekStart, System.DateTime expected)
+        public void GetStartOfWeek_ShouldReturnStartOfFirstDayInWeek(
+            System.DateTime value,
+            System.DayOfWeek weekStart,
+            System.DateTime expected)
         {
             var result = value.GetStartOfWeek( weekStart );
             result.Should().Be( expected );
@@ -56,7 +59,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Extensions.DateTime
 
         [Theory]
         [MethodData( nameof( DateTimeExtensionsTestsData.GetGetEndOfWeekData ) )]
-        public void GetEndOfWeek_ShouldReturnCorrectResult(System.DateTime value, System.DayOfWeek weekStart, System.DateTime expected)
+        public void GetEndOfWeek_ShouldReturnEndOfLastDayInWeek(System.DateTime value, System.DayOfWeek weekStart, System.DateTime expected)
         {
             var result = value.GetEndOfWeek( weekStart );
             result.Should().Be( expected );
@@ -64,7 +67,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Extensions.DateTime
 
         [Theory]
         [MethodData( nameof( DateTimeExtensionsTestsData.GetGetStartOfMonthData ) )]
-        public void GetStartOfMonth_ShouldReturnCorrectResult(System.DateTime value, System.DateTime expected)
+        public void GetStartOfMonth_ShouldReturnStartOfFirstDayInMonth(System.DateTime value, System.DateTime expected)
         {
             var result = value.GetStartOfMonth();
             result.Should().Be( expected );
@@ -72,7 +75,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Extensions.DateTime
 
         [Theory]
         [MethodData( nameof( DateTimeExtensionsTestsData.GetGetEndOfMonthData ) )]
-        public void GetEndOfMonth_ShouldReturnCorrectResult(System.DateTime value, System.DateTime expected)
+        public void GetEndOfMonth_ShouldReturnEndOfLastDayInMonth(System.DateTime value, System.DateTime expected)
         {
             var result = value.GetEndOfMonth();
             result.Should().Be( expected );
@@ -80,7 +83,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Extensions.DateTime
 
         [Theory]
         [MethodData( nameof( DateTimeExtensionsTestsData.GetGetStartOfYearData ) )]
-        public void GetStartOfYear_ShouldReturnCorrectResult(System.DateTime value, System.DateTime expected)
+        public void GetStartOfYear_ShouldReturnStartOfFirstDayInYear(System.DateTime value, System.DateTime expected)
         {
             var result = value.GetStartOfYear();
             result.Should().Be( expected );
@@ -88,7 +91,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Extensions.DateTime
 
         [Theory]
         [MethodData( nameof( DateTimeExtensionsTestsData.GetGetEndOfYearData ) )]
-        public void GetEndOfYear_ShouldReturnCorrectResult(System.DateTime value, System.DateTime expected)
+        public void GetEndOfYear_ShouldReturnEndOfLastDayInYear(System.DateTime value, System.DateTime expected)
         {
             var result = value.GetEndOfYear();
             result.Should().Be( expected );
@@ -126,7 +129,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Extensions.DateTime
 
         [Theory]
         [MethodData( nameof( DateTimeExtensionsTestsData.GetSetYearData ) )]
-        public void SetYear_ShouldReturnCorrectResult(System.DateTime value, int year, System.DateTime expected)
+        public void SetYear_ShouldReturnTargetWithChangedYear(System.DateTime value, int year, System.DateTime expected)
         {
             var result = value.SetYear( year );
             result.Should().Be( expected );
@@ -142,7 +145,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Extensions.DateTime
 
         [Theory]
         [MethodData( nameof( DateTimeExtensionsTestsData.GetSetMonthData ) )]
-        public void SetMonth_ShouldReturnCorrectResult(System.DateTime value, IsoMonthOfYear month, System.DateTime expected)
+        public void SetMonth_ShouldReturnTargetWithChangedMonth(System.DateTime value, IsoMonthOfYear month, System.DateTime expected)
         {
             var result = value.SetMonth( month );
             result.Should().Be( expected );
@@ -150,7 +153,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Extensions.DateTime
 
         [Theory]
         [MethodData( nameof( DateTimeExtensionsTestsData.GetSetDayOfMonthData ) )]
-        public void SetDayOfMonth_ShouldReturnCorrectResult(System.DateTime value, int day, System.DateTime expected)
+        public void SetDayOfMonth_ShouldReturnTargetWithChangedDayOfMonth(System.DateTime value, int day, System.DateTime expected)
         {
             var result = value.SetDayOfMonth( day );
             result.Should().Be( expected );
@@ -166,7 +169,7 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Extensions.DateTime
 
         [Theory]
         [MethodData( nameof( DateTimeExtensionsTestsData.GetSetDayOfYearData ) )]
-        public void SetDayOfYear_ShouldReturnCorrectResult(System.DateTime value, int day, System.DateTime expected)
+        public void SetDayOfYear_ShouldReturnTargetWithChangedDayOfYear(System.DateTime value, int day, System.DateTime expected)
         {
             var result = value.SetDayOfYear( day );
             result.Should().Be( expected );
@@ -182,7 +185,10 @@ namespace LfrlSoft.NET.Core.Tests.Chrono.Extensions.DateTime
 
         [Theory]
         [MethodData( nameof( DateTimeExtensionsTestsData.GetSetTimeOfDayData ) )]
-        public void SetTimeOfDay_ShouldReturnCorrectResult(System.DateTime value, Core.Chrono.TimeOfDay timeOfDay, System.DateTime expected)
+        public void SetTimeOfDay_ShouldReturnTargetWithChangedTimeOfDay(
+            System.DateTime value,
+            Core.Chrono.TimeOfDay timeOfDay,
+            System.DateTime expected)
         {
             var result = value.SetTimeOfDay( timeOfDay );
             result.Should().Be( expected );

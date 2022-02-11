@@ -80,9 +80,9 @@ namespace LfrlSoft.NET.Core.Tests.BoundsRange
         }
 
         [Fact]
-        public void Ctor_WithRange_ShouldThrow_WhenBoundsAreNotOrdered()
+        public void Ctor_WithRange_ShouldThrowArgumentException_WhenBoundsAreNotOrdered()
         {
-            Factory_WithRange_ShouldThrow_WhenBoundsAreNotOrdered( r => new BoundsRange<T>( r ) );
+            Factory_WithRange_ShouldThrowArgumentException_WhenBoundsAreNotOrdered( r => new BoundsRange<T>( r ) );
         }
 
         [Fact]
@@ -134,9 +134,9 @@ namespace LfrlSoft.NET.Core.Tests.BoundsRange
         }
 
         [Fact]
-        public void Create_WithRange_ShouldThrow_WhenBoundsAreNotOrdered()
+        public void Create_WithRange_ShouldThrowArgumentException_WhenBoundsAreNotOrdered()
         {
-            Factory_WithRange_ShouldThrow_WhenBoundsAreNotOrdered( Core.BoundsRange.Create );
+            Factory_WithRange_ShouldThrowArgumentException_WhenBoundsAreNotOrdered( Core.BoundsRange.Create );
         }
 
         [Theory]
@@ -150,7 +150,7 @@ namespace LfrlSoft.NET.Core.Tests.BoundsRange
 
         [Theory]
         [GenericMethodData( nameof( GenericBoundsRangeTestsData<T>.GetGetHashCodeData ) )]
-        public void GetHashCode_ShouldReturnCorrectResult(IEnumerable<Bounds<T>> range)
+        public void GetHashCode_ShouldReturnMixOfAllContainedBounds(IEnumerable<Bounds<T>> range)
         {
             var sut = Core.BoundsRange.Create( range );
             var expected = Core.Hash.Default.AddRange( sut.SelectMany( r => r.AsEnumerable() ) ).Value;
@@ -516,7 +516,8 @@ namespace LfrlSoft.NET.Core.Tests.BoundsRange
             }
         }
 
-        private void Factory_WithRange_ShouldThrow_WhenBoundsAreNotOrdered(Func<IEnumerable<Bounds<T>>, BoundsRange<T>> factory)
+        private void Factory_WithRange_ShouldThrowArgumentException_WhenBoundsAreNotOrdered(
+            Func<IEnumerable<Bounds<T>>, BoundsRange<T>> factory)
         {
             var (min2, max2, min1, max1) = Fixture.CreateDistinctSortedCollection<T>( 4 );
             var bounds1 = Core.Bounds.Create( min1, max1 );
@@ -525,7 +526,7 @@ namespace LfrlSoft.NET.Core.Tests.BoundsRange
 
             var action = Lambda.Of( () => factory( range ) );
 
-            action.Should().Throw<ArgumentException>();
+            action.Should().ThrowExactly<ArgumentException>();
         }
     }
 }

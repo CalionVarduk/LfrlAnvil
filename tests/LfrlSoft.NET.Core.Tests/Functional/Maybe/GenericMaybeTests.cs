@@ -98,16 +98,11 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
         }
 
         [Fact]
-        public void GetValue_ShouldThrow_WhenDoesntHaveValue()
+        public void GetValue_ShouldThrowArgumentNullException_WhenDoesntHaveValue()
         {
             var sut = Maybe<T>.None;
-
-            Action action = () =>
-            {
-                var _ = sut.GetValue();
-            };
-
-            action.Should().Throw<ArgumentNullException>();
+            var action = Core.Functional.Lambda.Of( () => sut.GetValue() );
+            action.Should().ThrowExactly<ArgumentNullException>();
         }
 
         [Fact]
@@ -125,9 +120,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
         public void GetValueOrDefault_ShouldReturnDefaultValue_WhenDoesntHaveValue()
         {
             var sut = Maybe<T>.None;
-
             var result = sut.GetValueOrDefault();
-
             result.Should().Be( default( T ) );
         }
 
@@ -492,7 +485,6 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
         public void MaybeConversionOperator_FromNil_ReturnNone()
         {
             var sut = (Maybe<T>)Core.Functional.Nil.Instance;
-
             sut.HasValue.Should().BeFalse();
         }
 
@@ -509,16 +501,11 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
         }
 
         [Fact]
-        public void TConversionOperator_ShouldThrow_WhenDoesntHaveValue()
+        public void TConversionOperator_ShouldThrowArgumentNullException_WhenDoesntHaveValue()
         {
             var sut = Maybe<T>.None;
-
-            Action action = () =>
-            {
-                var _ = (T)sut;
-            };
-
-            action.Should().Throw<ArgumentNullException>();
+            var action = Core.Functional.Lambda.Of( () => (T)sut );
+            action.Should().ThrowExactly<ArgumentNullException>();
         }
 
         [Theory]
@@ -573,9 +560,7 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
         public void IEnumerableGetEnumerator_ShouldReturnEnumeratorWithOneItem_WhenHasValue()
         {
             var value = Fixture.CreateNotDefault<T>();
-
             var sut = Core.Functional.Maybe.Some( value );
-
             sut.Should().BeSequentiallyEqualTo( value );
         }
 
@@ -583,7 +568,6 @@ namespace LfrlSoft.NET.Core.Tests.Functional.Maybe
         public void IEnumerableGetEnumerator_ShouldReturnEmptyEnumerator_WhenDoesntHaveValue()
         {
             var sut = Maybe<T>.None;
-
             sut.Should().BeEmpty();
         }
     }
