@@ -1068,6 +1068,41 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.PeriodTests
         }
 
         [Theory]
+        [MethodData( nameof( PeriodTestsData.GetAbsData ) )]
+        public void Abs_ShouldReturnCorrectResult(
+            (int Years, int Months, int Weeks, int Days) date,
+            (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks) time,
+            (int Years, int Months, int Weeks, int Days) expectedDate,
+            (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks) expectedTime)
+        {
+            var sut = new Period(
+                date.Years,
+                date.Months,
+                date.Weeks,
+                date.Days,
+                time.Hours,
+                time.Minutes,
+                time.Seconds,
+                time.Milliseconds,
+                time.Ticks );
+
+            var result = sut.Abs();
+
+            using ( new AssertionScope() )
+            {
+                result.Years.Should().Be( expectedDate.Years );
+                result.Months.Should().Be( expectedDate.Months );
+                result.Weeks.Should().Be( expectedDate.Weeks );
+                result.Days.Should().Be( expectedDate.Days );
+                result.Hours.Should().Be( expectedTime.Hours );
+                result.Minutes.Should().Be( expectedTime.Minutes );
+                result.Seconds.Should().Be( expectedTime.Seconds );
+                result.Milliseconds.Should().Be( expectedTime.Milliseconds );
+                result.Ticks.Should().Be( expectedTime.Ticks );
+            }
+        }
+
+        [Theory]
         [MethodData( nameof( PeriodTestsData.GetSkipData ) )]
         public void Skip_ShouldResetProvidedUnitsToZero(
             (int Years, int Months, int Weeks, int Days) date,

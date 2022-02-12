@@ -314,6 +314,15 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
         }
 
         [Theory]
+        [MethodData( nameof( DurationTestsData.GetAbsData ) )]
+        public void Abs_ShouldReturnCorrectResult(long ticks, long expectedTicks)
+        {
+            var sut = new Duration( ticks );
+            var result = sut.Abs();
+            result.Ticks.Should().Be( expectedTicks );
+        }
+
+        [Theory]
         [MethodData( nameof( DurationTestsData.GetAddTicksData ) )]
         public void Add_ShouldReturnCorrectResult(long ticks1, long ticks2, long expectedTicks)
         {

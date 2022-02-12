@@ -154,5 +154,21 @@ namespace LfrlSoft.NET.Core.Extensions
             foreach ( var node in nodeRangeSelector( source ).VisitMany( nodeRangeSelector ) )
                 yield return node;
         }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static T Min<T>(this T source, T other)
+            where T : IComparable<T>
+        {
+            return source.CompareTo( other ) <= 0 ? source : other;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static T Max<T>(this T source, T other)
+            where T : IComparable<T>
+        {
+            return source.CompareTo( other ) >= 0 ? source : other;
+        }
     }
 }

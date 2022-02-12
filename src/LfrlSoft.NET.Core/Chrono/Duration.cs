@@ -163,6 +163,13 @@ namespace LfrlSoft.NET.Core.Chrono
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public Duration Abs()
+        {
+            return new Duration( Math.Abs( Ticks ) );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Duration Add(Duration other)
         {
             return AddTicks( other.Ticks );

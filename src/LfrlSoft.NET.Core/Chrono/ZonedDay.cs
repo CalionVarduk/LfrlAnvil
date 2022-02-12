@@ -278,7 +278,7 @@ namespace LfrlSoft.NET.Core.Chrono
             if ( transitionStart > startValue.GetEndOfDay() )
                 return null;
 
-            var transitionEnd = transitionStart.AddTicks( Math.Abs( activeRule.DaylightDelta.Ticks ) - 1 );
+            var transitionEnd = transitionStart.Add( activeRule.DaylightDelta.Abs() ).AddTicks( -1 );
             if ( transitionEnd < startValue.GetStartOfDay() )
                 return null;
 
@@ -305,7 +305,7 @@ namespace LfrlSoft.NET.Core.Chrono
             if ( transitionEnd < startValue.GetStartOfDay() )
                 return null;
 
-            var transitionStart = transitionEnd.AddTicks( -Math.Abs( activeRule.DaylightDelta.Ticks ) + 1 );
+            var transitionStart = transitionEnd.Add( -activeRule.DaylightDelta.Abs() ).AddTicks( 1 );
             if ( transitionStart > startValue.GetEndOfDay() )
                 return null;
 
@@ -407,7 +407,7 @@ namespace LfrlSoft.NET.Core.Chrono
             var transitionTime = activeRule.GetTransitionTimeWithAmbiguity();
 
             var durationOffset = new Duration( transitionTime.TimeOfDay.TimeOfDay )
-                .SubtractTicks( Math.Abs( activeRule.DaylightDelta.Ticks ) );
+                .SubtractTicks( activeRule.DaylightDelta.Abs().Ticks );
 
             return (result.Timestamp < ambiguousResult.Value.Timestamp ? result : ambiguousResult.Value, durationOffset);
         }

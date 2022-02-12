@@ -1,11 +1,12 @@
-﻿using FluentAssertions;
+﻿using System;
+using FluentAssertions;
 using LfrlSoft.NET.Core.Extensions;
 using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.ExtensionsTests.ObjectTests
 {
-    public abstract class GenericObjectExtensionsOfRefTypeTests<T> : GenericObjectExtensionsTests<T>
-        where T : class
+    public abstract class GenericObjectExtensionsOfRefTypeTests<T> : GenericObjectExtensionsOfComparableTypeTests<T>
+        where T : class, IComparable<T>
     {
         [Fact]
         public void ToMaybe_ShouldReturnCorrectResult_WhenNull()

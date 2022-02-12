@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using AutoFixture;
+using LfrlSoft.NET.Core.Chrono.Extensions;
 
 namespace LfrlSoft.NET.Core.Tests.ChronoTests
 {
@@ -162,7 +163,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests
 
         private static string StringifyOffset(TimeSpan offset)
         {
-            var absOffset = TimeSpan.FromTicks( Math.Abs( offset.Ticks ) );
+            var absOffset = offset.Abs();
             var signText = offset < TimeSpan.Zero ? "-" : "+";
             var result = $"{signText}{absOffset.Hours:00}:{absOffset.Minutes:00}";
             return result;

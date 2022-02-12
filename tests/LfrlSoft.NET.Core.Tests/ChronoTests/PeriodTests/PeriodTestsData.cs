@@ -280,6 +280,29 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.PeriodTests
         public static TheoryData<
                 (int Years, int Months, int Weeks, int Days),
                 (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks),
+                (int Years, int Months, int Weeks, int Days),
+                (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks)>
+            GetAbsData(IFixture fixture)
+        {
+            var date = (1, 2, 3, 4);
+            var time = (5, 6, 7, 8, 9);
+            var negatedDate = (-1, -2, -3, -4);
+            var negatedTime = (-5, -6, -7, -8, -9);
+
+            return new TheoryData<
+                (int, int, int, int), (int, int, int, int, int),
+                (int, int, int, int), (int, int, int, int, int)>
+            {
+                { date, time, date, time },
+                { negatedDate, time, date, time },
+                { date, negatedTime, date, time },
+                { negatedDate, negatedTime, date, time }
+            };
+        }
+
+        public static TheoryData<
+                (int Years, int Months, int Weeks, int Days),
+                (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks),
                 PeriodUnits,
                 (int Years, int Months, int Weeks, int Days),
                 (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks)>

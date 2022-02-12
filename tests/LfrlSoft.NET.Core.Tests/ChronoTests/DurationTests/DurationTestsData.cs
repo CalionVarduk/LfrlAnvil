@@ -444,6 +444,18 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
             };
         }
 
+        public static TheoryData<long, long> GetAbsData(IFixture fixture)
+        {
+            return new TheoryData<long, long>
+            {
+                { 0, 0 },
+                { 1, 1 },
+                { -1, 1 },
+                { 10, 10 },
+                { -10, 10 }
+            };
+        }
+
         public static TheoryData<long, long, long> GetAddTicksData(IFixture fixture)
         {
             return new TheoryData<long, long, long>

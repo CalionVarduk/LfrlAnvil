@@ -548,6 +548,21 @@ namespace LfrlSoft.NET.Core.Chrono
         }
 
         [Pure]
+        public Period Abs()
+        {
+            return new Period(
+                Math.Abs( Years ),
+                Math.Abs( Months ),
+                Math.Abs( Weeks ),
+                Math.Abs( Days ),
+                Math.Abs( Hours ),
+                Math.Abs( Minutes ),
+                Math.Abs( Seconds ),
+                Math.Abs( Milliseconds ),
+                Math.Abs( Ticks ) );
+        }
+
+        [Pure]
         public Period Skip(PeriodUnits units)
         {
             return new Period(
