@@ -5,20 +5,19 @@ using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlSoft.NET.Core.Chrono;
 using LfrlSoft.NET.Core.Chrono.Extensions;
-using LfrlSoft.NET.Core.Tests.ChronoTests.ZonedClockTests;
 using LfrlSoft.NET.TestExtensions;
 using NSubstitute;
 using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.ChronoTests.ExtensionsTests.ZonedClockTests
 {
-    public class ZonedClockExtensionsTests : ZonedClockTestsBase
+    public class ZonedClockExtensionsTests : TestsBase
     {
         [Fact]
-        public void Create_ShouldBeAnAliasForZonedDateTimeCreate()
+        public void Create_ShouldBeEquivalentToZonedDateTimeCreate()
         {
             var dateTime = Fixture.Create<DateTime>();
-            var timeZone = CreateTimeZone();
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
             var expected = ZonedDateTime.Create( dateTime, timeZone );
             var sut = GetMockedClock( timeZone );
 
@@ -28,10 +27,10 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ExtensionsTests.ZonedClockTests
         }
 
         [Fact]
-        public void TryCreate_ShouldBeAnAliasForZonedDateTimeTryCreate()
+        public void TryCreate_ShouldBeEquivalentToZonedDateTimeTryCreate()
         {
             var dateTime = Fixture.Create<DateTime>();
-            var timeZone = CreateTimeZone();
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
             var expected = ZonedDateTime.TryCreate( dateTime, timeZone );
             var sut = GetMockedClock( timeZone );
 
@@ -46,7 +45,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ExtensionsTests.ZonedClockTests
         [InlineData( 100, 101, false )]
         public void IsInPast_ShouldReturnCorrectResult(long providerTicks, long ticksToTest, bool expected)
         {
-            var timeZone = CreateTimeZone();
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
             var dateTime = CreateDateTime( ticksToTest, timeZone );
             var sut = GetMockedClock( timeZone, providerTicks );
 
@@ -61,7 +60,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ExtensionsTests.ZonedClockTests
         [InlineData( 100, 101, false )]
         public void IsNow_ShouldReturnCorrectResult(long providerTicks, long ticksToTest, bool expected)
         {
-            var timeZone = CreateTimeZone();
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
             var dateTime = CreateDateTime( ticksToTest, timeZone );
             var sut = GetMockedClock( timeZone, providerTicks );
 
@@ -76,7 +75,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ExtensionsTests.ZonedClockTests
         [InlineData( 100, 101, true )]
         public void IsInFuture_ShouldReturnCorrectResult(long providerTicks, long ticksToTest, bool expected)
         {
-            var timeZone = CreateTimeZone();
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
             var dateTime = CreateDateTime( ticksToTest, timeZone );
             var sut = GetMockedClock( timeZone, providerTicks );
 
@@ -92,7 +91,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ExtensionsTests.ZonedClockTests
         public void GetDurationOffset_ShouldReturnCorrectResult(long providerTicks, long ticksToTest, long expectedTicks)
         {
             var expected = new Duration( expectedTicks );
-            var timeZone = CreateTimeZone();
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
             var dateTime = CreateDateTime( ticksToTest, timeZone );
             var sut = GetMockedClock( timeZone, providerTicks );
 
@@ -108,7 +107,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ExtensionsTests.ZonedClockTests
         public void GetDurationOffset_WithOtherClock_ShouldReturnCorrectResult(long providerTicks, long ticksToTest, long expectedTicks)
         {
             var expected = new Duration( expectedTicks );
-            var timeZone = CreateTimeZone();
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
             var other = GetMockedClock( timeZone, ticksToTest );
             var sut = GetMockedClock( timeZone, providerTicks );
 
@@ -120,7 +119,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ExtensionsTests.ZonedClockTests
         [Fact]
         public void Freeze_ShouldReturnCorrectResult()
         {
-            var timeZone = CreateTimeZone();
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
             var (first, second) = Fixture.CreateDistinctCollection<int>( count: 2 );
             var sut = GetMockedClock( timeZone, first, second );
 

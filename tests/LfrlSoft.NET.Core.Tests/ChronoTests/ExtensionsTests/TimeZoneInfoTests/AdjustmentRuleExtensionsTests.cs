@@ -54,18 +54,10 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ExtensionsTests.TimeZoneInfoTests
 
         private static TimeZoneInfo.AdjustmentRule CreateRule(int deltaInHours)
         {
-            return TimeZoneInfo.AdjustmentRule.CreateAdjustmentRule(
-                DateTime.MinValue,
-                DateTime.MaxValue,
-                TimeSpan.FromHours( deltaInHours ),
-                TimeZoneInfo.TransitionTime.CreateFixedDateRule(
-                    new DateTime( 1, 1, 1, 2, 0, 0 ),
-                    8,
-                    26 ),
-                TimeZoneInfo.TransitionTime.CreateFixedDateRule(
-                    new DateTime( 1, 1, 1, 2, 0, 0 ),
-                    10,
-                    26 ) );
+            return TimeZoneFactory.CreateInfiniteRule(
+                transitionStart: new DateTime( 1, 8, 26, 2, 0, 0 ),
+                transitionEnd: new DateTime( 1, 10, 26, 2, 0, 0 ),
+                daylightDeltaInHours: deltaInHours );
         }
     }
 }

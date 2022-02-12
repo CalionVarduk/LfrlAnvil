@@ -418,7 +418,7 @@ namespace LfrlSoft.NET.Core.Tests.ExtensionsTests.EnumerableTests
     public sealed class VisitManyNode<T>
     {
         public T? Value { get; init; }
-        public List<VisitManyNode<T>> Children { get; init; } = new List<VisitManyNode<T>>();
+        public List<VisitManyNode<T>> Children { get; init; } = new();
 
         public override string ToString()
         {

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlSoft.NET.Core.Chrono.Extensions;
@@ -33,8 +32,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ExtensionsTests.TimeZoneInfoTests
         [Fact]
         public void GetDateTimeKind_ShouldReturnCorrectResultForOtherTimeZone()
         {
-            var timeZoneOffset = Fixture.Create<int>() % 12;
-            var sut = TimeZoneInfoExtensionsTestsData.GetTimeZone( $"{timeZoneOffset}", timeZoneOffset );
+            var sut = TimeZoneFactory.CreateRandom( Fixture );
             var kind = sut.GetDateTimeKind();
             kind.Should().Be( DateTimeKind.Unspecified );
         }
@@ -45,18 +43,17 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ExtensionsTests.TimeZoneInfoTests
             DateTime dateTimeToTest,
             IEnumerable<(DateTime Start, DateTime End)> ruleRanges)
         {
-            var timeZoneOffset = Fixture.Create<int>() % 12;
+            var timeZoneOffset = TimeZoneFactory.CreateRandomOffset( Fixture, absMax: 13 );
 
-            var sut = TimeZoneInfoExtensionsTestsData.GetTimeZone(
-                $"{timeZoneOffset}",
+            var sut = TimeZoneFactory.Create(
                 timeZoneOffset,
                 ruleRanges
                     .Select(
-                        r => TimeZoneInfoExtensionsTestsData.CreateAdjustmentRule(
-                            r.Start,
-                            r.End,
-                            new DateTime( 1, 2, 1, 12, 0, 0 ),
-                            new DateTime( 1, 11, 1, 12, 0, 0 ) ) )
+                        r => TimeZoneFactory.CreateRule(
+                            start: r.Start,
+                            end: r.End,
+                            transitionStart: new DateTime( 1, 2, 1, 12, 0, 0 ),
+                            transitionEnd: new DateTime( 1, 11, 1, 12, 0, 0 ) ) )
                     .ToArray() );
 
             var result = sut.GetActiveAdjustmentRule( dateTimeToTest );
@@ -71,18 +68,17 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ExtensionsTests.TimeZoneInfoTests
             IEnumerable<(DateTime Start, DateTime End)> ruleRanges,
             (DateTime Start, DateTime End) expectedRange)
         {
-            var timeZoneOffset = Fixture.Create<int>() % 12;
+            var timeZoneOffset = TimeZoneFactory.CreateRandomOffset( Fixture, absMax: 13 );
 
-            var sut = TimeZoneInfoExtensionsTestsData.GetTimeZone(
-                $"{timeZoneOffset}",
+            var sut = TimeZoneFactory.Create(
                 timeZoneOffset,
                 ruleRanges
                     .Select(
-                        r => TimeZoneInfoExtensionsTestsData.CreateAdjustmentRule(
-                            r.Start,
-                            r.End,
-                            new DateTime( 1, 2, 1, 12, 0, 0 ),
-                            new DateTime( 1, 11, 1, 12, 0, 0 ) ) )
+                        r => TimeZoneFactory.CreateRule(
+                            start: r.Start,
+                            end: r.End,
+                            transitionStart: new DateTime( 1, 2, 1, 12, 0, 0 ),
+                            transitionEnd: new DateTime( 1, 11, 1, 12, 0, 0 ) ) )
                     .ToArray() );
 
             var result = sut.GetActiveAdjustmentRule( dateTimeToTest );
@@ -101,18 +97,17 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ExtensionsTests.TimeZoneInfoTests
             DateTime dateTimeToTest,
             IEnumerable<(DateTime Start, DateTime End)> ruleRanges)
         {
-            var timeZoneOffset = Fixture.Create<int>() % 12;
+            var timeZoneOffset = TimeZoneFactory.CreateRandomOffset( Fixture, absMax: 13 );
 
-            var sut = TimeZoneInfoExtensionsTestsData.GetTimeZone(
-                $"{timeZoneOffset}",
+            var sut = TimeZoneFactory.Create(
                 timeZoneOffset,
                 ruleRanges
                     .Select(
-                        r => TimeZoneInfoExtensionsTestsData.CreateAdjustmentRule(
-                            r.Start,
-                            r.End,
-                            new DateTime( 1, 2, 1, 12, 0, 0 ),
-                            new DateTime( 1, 11, 1, 12, 0, 0 ) ) )
+                        r => TimeZoneFactory.CreateRule(
+                            start: r.Start,
+                            end: r.End,
+                            transitionStart: new DateTime( 1, 2, 1, 12, 0, 0 ),
+                            transitionEnd: new DateTime( 1, 11, 1, 12, 0, 0 ) ) )
                     .ToArray() );
 
             var result = sut.GetActiveAdjustmentRuleIndex( dateTimeToTest );
@@ -127,18 +122,17 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ExtensionsTests.TimeZoneInfoTests
             IEnumerable<(DateTime Start, DateTime End)> ruleRanges,
             int expected)
         {
-            var timeZoneOffset = Fixture.Create<int>() % 12;
+            var timeZoneOffset = TimeZoneFactory.CreateRandomOffset( Fixture, absMax: 13 );
 
-            var sut = TimeZoneInfoExtensionsTestsData.GetTimeZone(
-                $"{timeZoneOffset}",
+            var sut = TimeZoneFactory.Create(
                 timeZoneOffset,
                 ruleRanges
                     .Select(
-                        r => TimeZoneInfoExtensionsTestsData.CreateAdjustmentRule(
-                            r.Start,
-                            r.End,
-                            new DateTime( 1, 2, 1, 12, 0, 0 ),
-                            new DateTime( 1, 11, 1, 12, 0, 0 ) ) )
+                        r => TimeZoneFactory.CreateRule(
+                            start: r.Start,
+                            end: r.End,
+                            transitionStart: new DateTime( 1, 2, 1, 12, 0, 0 ),
+                            transitionEnd: new DateTime( 1, 11, 1, 12, 0, 0 ) ) )
                     .ToArray() );
 
             var result = sut.GetActiveAdjustmentRuleIndex( dateTimeToTest );

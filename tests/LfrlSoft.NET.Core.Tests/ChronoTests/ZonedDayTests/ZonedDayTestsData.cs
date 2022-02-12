@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using AutoFixture;
 using LfrlSoft.NET.Core.Chrono;
-using LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDateTimeTests;
 using LfrlSoft.NET.TestExtensions;
 using Xunit;
 
@@ -13,8 +12,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
         public static TheoryData<DateTime, TimeZoneInfo> GetCreateData(IFixture fixture)
         {
             var date = fixture.Create<DateTime>().Date;
-            var timeZoneOffset = fixture.Create<int>() % 12;
-            var timeZone = ZonedDateTimeTestsData.GetTimeZone( $"{timeZoneOffset}", timeZoneOffset );
+            var timeZone = TimeZoneFactory.CreateRandom( fixture );
 
             return new TheoryData<DateTime, TimeZoneInfo>
             {
@@ -26,18 +24,18 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
 
         public static TheoryData<DateTime, TimeZoneInfo, Duration> GetCreateWithContainedInvalidityRangeData(IFixture fixture)
         {
-            var positiveTimeZone = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var positiveTimeZone = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 2, 0, 0 ),
-                new DateTime( 1, 10, 26, 3, 0, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 2, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 3, 0, 0 ) ) );
 
-            var negativeTimeZone = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZone = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 6, 26, 3, 0, 0 ),
-                new DateTime( 1, 8, 26, 2, 0, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 6, 26, 3, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 26, 2, 0, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
             return new TheoryData<DateTime, TimeZoneInfo, Duration>
             {
@@ -54,18 +52,18 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
 
         public static TheoryData<DateTime, TimeZoneInfo, Duration> GetCreateWithContainedAmbiguityRangeData(IFixture fixture)
         {
-            var positiveTimeZone = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var positiveTimeZone = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 6, 26, 2, 0, 0 ),
-                new DateTime( 1, 8, 26, 3, 0, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 6, 26, 2, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 26, 3, 0, 0 ) ) );
 
-            var negativeTimeZone = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZone = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 3, 0, 0 ),
-                new DateTime( 1, 10, 26, 2, 0, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 3, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 2, 0, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
             return new TheoryData<DateTime, TimeZoneInfo, Duration>
             {
@@ -83,57 +81,57 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
         public static TheoryData<DateTime, TimeZoneInfo, DateTime, Duration>
             GetCreateWithInvalidStartTimeData(IFixture fixture)
         {
-            var positiveTimeZone1 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var positiveTimeZone1 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 25, 23, 1, 0 ),
-                new DateTime( 1, 10, 26, 3, 0, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 25, 23, 1, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 3, 0, 0 ) ) );
 
-            var positiveTimeZone2 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var positiveTimeZone2 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 25, 23, 30, 0 ),
-                new DateTime( 1, 10, 26, 3, 0, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 25, 23, 30, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 3, 0, 0 ) ) );
 
-            var positiveTimeZone3 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var positiveTimeZone3 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 25, 23, 59, 0 ),
-                new DateTime( 1, 10, 26, 3, 0, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 25, 23, 59, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 3, 0, 0 ) ) );
 
-            var positiveTimeZone4 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var positiveTimeZone4 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 0, 0, 0 ),
-                new DateTime( 1, 10, 26, 3, 0, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 0, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 3, 0, 0 ) ) );
 
-            var negativeTimeZone1 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZone1 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 6, 26, 2, 0, 0 ),
-                new DateTime( 1, 8, 25, 23, 1, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 6, 26, 2, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 25, 23, 1, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
-            var negativeTimeZone2 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZone2 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 6, 26, 2, 0, 0 ),
-                new DateTime( 1, 8, 25, 23, 30, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 6, 26, 2, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 25, 23, 30, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
-            var negativeTimeZone3 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZone3 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 6, 26, 2, 0, 0 ),
-                new DateTime( 1, 8, 25, 23, 59, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 6, 26, 2, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 25, 23, 59, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
-            var negativeTimeZone4 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZone4 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 6, 26, 2, 0, 0 ),
-                new DateTime( 1, 8, 26, 0, 0, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 6, 26, 2, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 26, 0, 0, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
             return new TheoryData<DateTime, TimeZoneInfo, DateTime, Duration>
             {
@@ -191,57 +189,57 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
         public static TheoryData<DateTime, TimeZoneInfo, DateTime, Duration>
             GetCreateWithInvalidEndTimeData(IFixture fixture)
         {
-            var positiveTimeZone1 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var positiveTimeZone1 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 25, 23, 1, 0 ),
-                new DateTime( 1, 10, 26, 3, 0, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 25, 23, 1, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 3, 0, 0 ) ) );
 
-            var positiveTimeZone2 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var positiveTimeZone2 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 25, 23, 30, 0 ),
-                new DateTime( 1, 10, 26, 3, 0, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 25, 23, 30, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 3, 0, 0 ) ) );
 
-            var positiveTimeZone3 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var positiveTimeZone3 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 25, 23, 59, 0 ),
-                new DateTime( 1, 10, 26, 3, 0, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 25, 23, 59, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 3, 0, 0 ) ) );
 
-            var positiveTimeZone4 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var positiveTimeZone4 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 25, 23, 0, 0 ),
-                new DateTime( 1, 10, 26, 3, 0, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 25, 23, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 3, 0, 0 ) ) );
 
-            var negativeTimeZone1 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZone1 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 6, 26, 2, 0, 0 ),
-                new DateTime( 1, 8, 25, 23, 1, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 6, 26, 2, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 25, 23, 1, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
-            var negativeTimeZone2 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZone2 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 6, 26, 2, 0, 0 ),
-                new DateTime( 1, 8, 25, 23, 30, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 6, 26, 2, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 25, 23, 30, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
-            var negativeTimeZone3 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZone3 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 6, 26, 2, 0, 0 ),
-                new DateTime( 1, 8, 25, 23, 59, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 6, 26, 2, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 25, 23, 59, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
-            var negativeTimeZone4 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZone4 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 6, 26, 2, 0, 0 ),
-                new DateTime( 1, 8, 25, 23, 0, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 6, 26, 2, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 25, 23, 0, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
             return new TheoryData<DateTime, TimeZoneInfo, DateTime, Duration>
             {
@@ -299,57 +297,57 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
         public static TheoryData<DateTime, TimeZoneInfo, bool, Duration>
             GetCreateWithAmbiguousStartTimeData(IFixture fixture)
         {
-            var positiveTimeZone1 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var positiveTimeZone1 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 6, 26, 2, 0, 0 ),
-                new DateTime( 1, 8, 26, 0, 1, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 6, 26, 2, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 26, 0, 1, 0 ) ) );
 
-            var positiveTimeZone2 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var positiveTimeZone2 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 6, 26, 2, 0, 0 ),
-                new DateTime( 1, 8, 26, 0, 30, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 6, 26, 2, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 26, 0, 30, 0 ) ) );
 
-            var positiveTimeZone3 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var positiveTimeZone3 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 6, 26, 2, 0, 0 ),
-                new DateTime( 1, 8, 26, 0, 59, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 6, 26, 2, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 26, 0, 59, 0 ) ) );
 
-            var positiveTimeZone4 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var positiveTimeZone4 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 6, 26, 2, 0, 0 ),
-                new DateTime( 1, 8, 26, 1, 0, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 6, 26, 2, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 26, 1, 0, 0 ) ) );
 
-            var negativeTimeZone1 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZone1 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 0, 1, 0 ),
-                new DateTime( 1, 10, 26, 2, 0, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 0, 1, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 2, 0, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
-            var negativeTimeZone2 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZone2 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 0, 30, 0 ),
-                new DateTime( 1, 10, 26, 2, 0, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 0, 30, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 2, 0, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
-            var negativeTimeZone3 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZone3 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 0, 59, 0 ),
-                new DateTime( 1, 10, 26, 2, 0, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 0, 59, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 2, 0, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
-            var negativeTimeZone4 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZone4 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 1, 0, 0 ),
-                new DateTime( 1, 10, 26, 2, 0, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 1, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 2, 0, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
             return new TheoryData<DateTime, TimeZoneInfo, bool, Duration>
             {
@@ -407,57 +405,57 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
         public static TheoryData<DateTime, TimeZoneInfo, bool, Duration>
             GetCreateWithAmbiguousEndTimeData(IFixture fixture)
         {
-            var positiveTimeZone1 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var positiveTimeZone1 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 6, 26, 2, 0, 0 ),
-                new DateTime( 1, 8, 27, 0, 1, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 6, 26, 2, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 27, 0, 1, 0 ) ) );
 
-            var positiveTimeZone2 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var positiveTimeZone2 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 6, 26, 2, 0, 0 ),
-                new DateTime( 1, 8, 27, 0, 30, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 6, 26, 2, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 27, 0, 30, 0 ) ) );
 
-            var positiveTimeZone3 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var positiveTimeZone3 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 6, 26, 2, 0, 0 ),
-                new DateTime( 1, 8, 27, 0, 59, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 6, 26, 2, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 27, 0, 59, 0 ) ) );
 
-            var positiveTimeZone4 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var positiveTimeZone4 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 6, 26, 2, 0, 0 ),
-                new DateTime( 1, 8, 27, 0, 0, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 6, 26, 2, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 27, 0, 0, 0 ) ) );
 
-            var negativeTimeZone1 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZone1 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 0, 1, 0 ),
-                new DateTime( 1, 10, 26, 2, 0, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 0, 1, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 2, 0, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
-            var negativeTimeZone2 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZone2 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 0, 30, 0 ),
-                new DateTime( 1, 10, 26, 2, 0, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 0, 30, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 2, 0, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
-            var negativeTimeZone3 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZone3 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 0, 59, 0 ),
-                new DateTime( 1, 10, 26, 2, 0, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 0, 59, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 2, 0, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
-            var negativeTimeZone4 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZone4 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 0, 0, 0 ),
-                new DateTime( 1, 10, 26, 2, 0, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 0, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 2, 0, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
             return new TheoryData<DateTime, TimeZoneInfo, bool, Duration>
             {
@@ -515,44 +513,44 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
         public static TheoryData<DateTime, TimeZoneInfo, DateTime, bool, Duration>
             GetCreateWithInvalidStartTimeAndAmbiguousEndTimeData(IFixture fixture)
         {
-            var positiveTimeZone1 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var positiveTimeZone1 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 25, 23, 1, 0 ),
-                new DateTime( 1, 8, 27, 0, 1, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 25, 23, 1, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 27, 0, 1, 0 ) ) );
 
-            var positiveTimeZone2 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var positiveTimeZone2 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 25, 23, 59, 0 ),
-                new DateTime( 1, 8, 27, 0, 59, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 25, 23, 59, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 27, 0, 59, 0 ) ) );
 
-            var positiveTimeZone3 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var positiveTimeZone3 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 0, 0, 0 ),
-                new DateTime( 1, 8, 27, 0, 0, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 0, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 27, 0, 0, 0 ) ) );
 
-            var negativeTimeZone1 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZone1 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 27, 0, 1, 0 ),
-                new DateTime( 1, 8, 25, 23, 1, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 27, 0, 1, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 25, 23, 1, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
-            var negativeTimeZone2 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZone2 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 27, 0, 59, 0 ),
-                new DateTime( 1, 8, 25, 23, 59, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 27, 0, 59, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 25, 23, 59, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
-            var negativeTimeZone3 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZone3 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 27, 0, 0, 0 ),
-                new DateTime( 1, 8, 26, 0, 0, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 27, 0, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 26, 0, 0, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
             return new TheoryData<DateTime, TimeZoneInfo, DateTime, bool, Duration>
             {
@@ -604,44 +602,44 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
         public static TheoryData<DateTime, TimeZoneInfo, DateTime, bool, Duration>
             GetCreateWithAmbiguousStartTimeAndInvalidEndTimeData(IFixture fixture)
         {
-            var positiveTimeZone1 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var positiveTimeZone1 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 23, 59, 0 ),
-                new DateTime( 1, 8, 26, 0, 59, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 23, 59, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 26, 0, 59, 0 ) ) );
 
-            var positiveTimeZone2 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var positiveTimeZone2 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 23, 1, 0 ),
-                new DateTime( 1, 8, 26, 0, 1, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 23, 1, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 26, 0, 1, 0 ) ) );
 
-            var positiveTimeZone3 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var positiveTimeZone3 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 23, 0, 0 ),
-                new DateTime( 1, 8, 26, 1, 0, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 23, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 26, 1, 0, 0 ) ) );
 
-            var negativeTimeZone1 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZone1 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 0, 59, 0 ),
-                new DateTime( 1, 8, 26, 23, 59, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 0, 59, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 26, 23, 59, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
-            var negativeTimeZone2 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZone2 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 0, 1, 0 ),
-                new DateTime( 1, 8, 26, 23, 1, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 0, 1, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 26, 23, 1, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
-            var negativeTimeZone3 = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZone3 = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 1, 0, 0 ),
-                new DateTime( 1, 8, 26, 23, 0, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 1, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 26, 23, 0, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
             return new TheoryData<DateTime, TimeZoneInfo, DateTime, bool, Duration>
             {
@@ -698,73 +696,73 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
                 new DateTime( 2021, 3, 26 ),
                 new DateTime( 2021, 9, 26 ));
 
-            var tz1 = ZonedDateTimeTestsData.GetTimeZone(
-                "03.00",
+            var tz1 = TimeZoneFactory.Create(
                 3,
-                new DateTime( 1, 3, 26, 12, 0, 0 ),
-                new DateTime( 1, 9, 26, 12, 0, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 3, 26, 12, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 9, 26, 12, 0, 0 ) ) );
 
-            var tz2 = ZonedDateTimeTestsData.GetTimeZone(
-                "-05.00",
+            var tz2 = TimeZoneFactory.Create(
                 -5,
-                new DateTime( 1, 3, 26, 12, 0, 0 ),
-                new DateTime( 1, 9, 26, 12, 0, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 3, 26, 12, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 9, 26, 12, 0, 0 ) ) );
 
             return new TheoryData<DateTime, TimeZoneInfo, string>
             {
-                { dt1, tz1, "2021-02-21 +03:00 (Test Time Zone [03.00])" },
-                { dt2, tz1, "2021-08-05 +04:00 (Test Time Zone [03.00])" },
-                { dt1, tz2, "2021-02-21 -05:00 (Test Time Zone [-05.00])" },
-                { dt2, tz2, "2021-08-05 -04:00 (Test Time Zone [-05.00])" },
-                { dt3, tz1, "2021-03-26 +03:00 +04:00 (Test Time Zone [03.00])" },
-                { dt4, tz1, "2021-09-26 +04:00 +03:00 (Test Time Zone [03.00])" }
+                { dt1, tz1, $"2021-02-21 +03:00 ({tz1.Id})" },
+                { dt2, tz1, $"2021-08-05 +04:00 ({tz1.Id})" },
+                { dt1, tz2, $"2021-02-21 -05:00 ({tz2.Id})" },
+                { dt2, tz2, $"2021-08-05 -04:00 ({tz2.Id})" },
+                { dt3, tz1, $"2021-03-26 +03:00 +04:00 ({tz1.Id})" },
+                { dt4, tz1, $"2021-09-26 +04:00 +03:00 ({tz1.Id})" }
             };
         }
 
-        public static IEnumerable<object[]> GetEqualsData(IFixture fixture)
+        public static TheoryData<DateTime, TimeZoneInfo, DateTime, TimeZoneInfo, bool> GetEqualsData(IFixture fixture)
         {
             var (dt1, dt2) = (new DateTime( 2021, 8, 24 ), new DateTime( 2021, 8, 25 ));
-            var (tz1, tz2) = (ZonedDateTimeTestsData.GetTimeZone( "03.00", 3 ), ZonedDateTimeTestsData.GetTimeZone( "05.00", 5 ));
+            var (tz1, tz2) = (TimeZoneFactory.Create( 3 ), TimeZoneFactory.Create( 5 ));
 
-            return new[]
+            return new TheoryData<DateTime, TimeZoneInfo, DateTime, TimeZoneInfo, bool>
             {
-                new object[] { dt1, tz1, dt1, tz1, true },
-                new object[] { dt1, tz1, dt1, tz2, false },
-                new object[] { dt1, tz1, dt2, tz1, false },
-                new object[] { dt1, tz1, dt2, tz2, false },
-                new object[] { dt1, tz2, dt2, tz1, false }
+                { dt1, tz1, dt1, tz1, true },
+                { dt1, tz1, dt1, tz2, false },
+                { dt1, tz1, dt2, tz1, false },
+                { dt1, tz1, dt2, tz2, false },
+                { dt1, tz2, dt2, tz1, false }
             };
         }
 
-        public static IEnumerable<object[]> GetCompareToData(IFixture fixture)
+        public static TheoryData<DateTime, TimeZoneInfo, DateTime, TimeZoneInfo, int> GetCompareToData(IFixture fixture)
         {
             var (dt1, dt2) = (new DateTime( 2021, 8, 24 ), new DateTime( 2021, 8, 25 ));
             var (tz1, tz2, tz3) = (
-                ZonedDateTimeTestsData.GetTimeZone( "03.00", 3 ),
-                ZonedDateTimeTestsData.GetTimeZone( "05.00", 5 ),
-                ZonedDateTimeTestsData.GetTimeZone( "Other 03.00", 3 ));
+                TimeZoneFactory.Create( 3 ),
+                TimeZoneFactory.Create( 5 ),
+                TimeZoneFactory.Create( 3, "Other" ));
 
-            return new[]
+            return new TheoryData<DateTime, TimeZoneInfo, DateTime, TimeZoneInfo, int>
             {
-                new object[] { dt1, tz1, dt1, tz1, 0 },
-                new object[] { dt1, tz1, dt1, tz2, 1 },
-                new object[] { dt1, tz2, dt1, tz1, -1 },
-                new object[] { dt2, tz1, dt1, tz1, 1 },
-                new object[] { dt1, tz1, dt2, tz1, -1 },
-                new object[] { dt1, tz1, dt2, tz2, -1 },
-                new object[] { dt2, tz2, dt1, tz1, 1 },
-                new object[] { dt1, tz2, dt2, tz1, -1 },
-                new object[] { dt2, tz1, dt1, tz2, 1 },
-                new object[] { dt1, tz1, dt1, tz3, -1 },
-                new object[] { dt1, tz3, dt1, tz1, 1 }
+                { dt1, tz1, dt1, tz1, 0 },
+                { dt1, tz1, dt1, tz2, 1 },
+                { dt1, tz2, dt1, tz1, -1 },
+                { dt2, tz1, dt1, tz1, 1 },
+                { dt1, tz1, dt2, tz1, -1 },
+                { dt1, tz1, dt2, tz2, -1 },
+                { dt2, tz2, dt1, tz1, 1 },
+                { dt1, tz2, dt2, tz1, -1 },
+                { dt2, tz1, dt1, tz2, 1 },
+                { dt1, tz1, dt1, tz3, -1 },
+                { dt1, tz3, dt1, tz1, 1 }
             };
         }
 
         public static TheoryData<DateTime, TimeZoneInfo, DateTime, TimeZoneInfo, bool> GetContainsData(IFixture fixture)
         {
             var day = new DateTime( 2021, 8, 26 );
-            var tz1 = ZonedDateTimeTestsData.GetTimeZone( "1", 1 );
-            var tz3 = ZonedDateTimeTestsData.GetTimeZone( "3", 3 );
+            var tz1 = TimeZoneFactory.Create( 1 );
+            var tz3 = TimeZoneFactory.Create( 3 );
 
             return new TheoryData<DateTime, TimeZoneInfo, DateTime, TimeZoneInfo, bool>
             {
@@ -783,17 +781,17 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
         {
             var day = new DateTime( 2021, 8, 26 );
 
-            var startTz = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var startTz = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 6, 26, 2, 0, 0 ),
-                new DateTime( 1, 8, 26, 0, 30, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 6, 26, 2, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 26, 0, 30, 0 ) ) );
 
-            var endTz = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var endTz = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 6, 26, 2, 0, 0 ),
-                new DateTime( 1, 8, 27, 0, 30, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 6, 26, 2, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 27, 0, 30, 0 ) ) );
 
             return new TheoryData<DateTime, TimeZoneInfo, DateTime, bool, bool>
             {
@@ -815,7 +813,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
         public static TheoryData<DateTime, TimeZoneInfo, int, DateTime> GetAddDaysData(IFixture fixture)
         {
             var day = new DateTime( 2021, 8, 26 );
-            var timeZone = ZonedDateTimeTestsData.GetTimeZone( "1", 1 );
+            var timeZone = TimeZoneFactory.Create( 1 );
 
             return new TheoryData<DateTime, TimeZoneInfo, int, DateTime>
             {
@@ -830,12 +828,12 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
         public static TheoryData<DateTime, TimeZoneInfo, Period, DateTime> GetAddData(IFixture fixture)
         {
             var day = new DateTime( 2021, 8, 26 );
-            var timeZone = ZonedDateTimeTestsData.GetTimeZone( "1", 1 );
-            var timeZoneWithDaylightSaving = ZonedDateTimeTestsData.GetTimeZone(
-                "1",
+            var timeZone = TimeZoneFactory.Create( 1 );
+            var timeZoneWithDaylightSaving = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 9, 26, 2, 0, 0 ),
-                new DateTime( 1, 10, 26, 3, 0, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 9, 26, 2, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 3, 0, 0 ) ) );
 
             return new TheoryData<DateTime, TimeZoneInfo, Period, DateTime>
             {
@@ -869,7 +867,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
         {
             var day = new DateTime( 2021, 8, 26 );
             var otherDay = new DateTime( 2019, 10, 24 );
-            var timeZone = ZonedDateTimeTestsData.GetTimeZone( "1", 1 );
+            var timeZone = TimeZoneFactory.Create( 1 );
 
             return new TheoryData<DateTime, TimeZoneInfo, DateTime, TimeZoneInfo, PeriodUnits>
             {
@@ -892,7 +890,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
         {
             var day = new DateTime( 2021, 8, 26 );
             var otherDay = new DateTime( 2019, 10, 24 );
-            var timeZone = ZonedDateTimeTestsData.GetTimeZone( "1", 1 );
+            var timeZone = TimeZoneFactory.Create( 1 );
 
             return new TheoryData<DateTime, TimeZoneInfo, DateTime, TimeZoneInfo, PeriodUnits>
             {
@@ -913,14 +911,14 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
 
         public static TheoryData<DateTime, TimeZoneInfo, int, DateTime> GetSetYearData(IFixture fixture)
         {
-            var timeZone = ZonedDateTimeTestsData.GetTimeZone( "1", 1 );
-            var timeZoneWithInvalidity = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var timeZone = TimeZoneFactory.Create( 1 );
+            var timeZoneWithInvalidity = TimeZoneFactory.Create(
                 1,
-                DateTime.MinValue,
-                new DateTime( 2020, 1, 1 ),
-                new DateTime( 1, 8, 25, 23, 30, 0 ),
-                new DateTime( 1, 10, 26, 2, 0, 0 ) );
+                TimeZoneFactory.CreateRule(
+                    start: DateTime.MinValue,
+                    end: new DateTime( 2020, 1, 1 ),
+                    transitionStart: new DateTime( 1, 8, 25, 23, 30, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 2, 0, 0 ) ) );
 
             return new TheoryData<DateTime, TimeZoneInfo, int, DateTime>
             {
@@ -935,7 +933,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
 
         public static TheoryData<DateTime, TimeZoneInfo, int> GetSetYearThrowData(IFixture fixture)
         {
-            var timeZone = ZonedDateTimeTestsData.GetTimeZone( "1", 1 );
+            var timeZone = TimeZoneFactory.Create( 1 );
 
             return new TheoryData<DateTime, TimeZoneInfo, int>
             {
@@ -946,12 +944,12 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
 
         public static TheoryData<DateTime, TimeZoneInfo, IsoMonthOfYear, DateTime> GetSetMonthData(IFixture fixture)
         {
-            var timeZone = ZonedDateTimeTestsData.GetTimeZone( "1", 1 );
-            var timeZoneWithInvalidity = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var timeZone = TimeZoneFactory.Create( 1 );
+            var timeZoneWithInvalidity = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 25, 23, 30, 0 ),
-                new DateTime( 1, 10, 26, 2, 0, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 25, 23, 30, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 2, 0, 0 ) ) );
 
             return new TheoryData<DateTime, TimeZoneInfo, IsoMonthOfYear, DateTime>
             {
@@ -968,12 +966,12 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
 
         public static TheoryData<DateTime, TimeZoneInfo, int, DateTime> GetSetDayOfMonthData(IFixture fixture)
         {
-            var timeZone = ZonedDateTimeTestsData.GetTimeZone( "1", 1 );
-            var timeZoneWithInvalidity = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var timeZone = TimeZoneFactory.Create( 1 );
+            var timeZoneWithInvalidity = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 25, 23, 30, 0 ),
-                new DateTime( 1, 10, 26, 2, 0, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 25, 23, 30, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 2, 0, 0 ) ) );
 
             return new TheoryData<DateTime, TimeZoneInfo, int, DateTime>
             {
@@ -987,7 +985,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
 
         public static TheoryData<DateTime, TimeZoneInfo, int> GetSetDayOfMonthThrowData(IFixture fixture)
         {
-            var timeZone = ZonedDateTimeTestsData.GetTimeZone( "1", 1 );
+            var timeZone = TimeZoneFactory.Create( 1 );
 
             return new TheoryData<DateTime, TimeZoneInfo, int>
             {
@@ -1021,12 +1019,12 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
 
         public static TheoryData<DateTime, TimeZoneInfo, int, DateTime> GetSetDayOfYearData(IFixture fixture)
         {
-            var timeZone = ZonedDateTimeTestsData.GetTimeZone( "1", 1 );
-            var timeZoneWithInvalidity = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var timeZone = TimeZoneFactory.Create( 1 );
+            var timeZoneWithInvalidity = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 25, 23, 30, 0 ),
-                new DateTime( 1, 10, 26, 2, 0, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 25, 23, 30, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 2, 0, 0 ) ) );
 
             return new TheoryData<DateTime, TimeZoneInfo, int, DateTime>
             {
@@ -1043,7 +1041,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
 
         public static TheoryData<DateTime, TimeZoneInfo, int> GetSetDayOfYearThrowData(IFixture fixture)
         {
-            var timeZone = ZonedDateTimeTestsData.GetTimeZone( "1", 1 );
+            var timeZone = TimeZoneFactory.Create( 1 );
 
             return new TheoryData<DateTime, TimeZoneInfo, int>
             {
@@ -1056,12 +1054,12 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
         public static TheoryData<DateTime, TimeZoneInfo, TimeOfDay, DateTime> GetGetDateTimeData(IFixture fixture)
         {
             var day = new DateTime( 2021, 8, 26 );
-            var timeZone = ZonedDateTimeTestsData.GetTimeZone( "1", 1 );
-            var timeZoneWithInvalidity = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var timeZone = TimeZoneFactory.Create( 1 );
+            var timeZoneWithInvalidity = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 12, 0, 0 ),
-                new DateTime( 1, 10, 26, 12, 0, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 12, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 12, 0, 0 ) ) );
 
             return new TheoryData<DateTime, TimeZoneInfo, TimeOfDay, DateTime>
             {
@@ -1092,11 +1090,11 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
         public static TheoryData<DateTime, TimeZoneInfo, TimeOfDay> GetGetDateTimeThrowData(IFixture fixture)
         {
             var day = new DateTime( 2021, 8, 26 );
-            var timeZoneWithInvalidity = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var timeZoneWithInvalidity = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 12, 0, 0 ),
-                new DateTime( 1, 10, 26, 12, 0, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 12, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 12, 0, 0 ) ) );
 
             return new TheoryData<DateTime, TimeZoneInfo, TimeOfDay>
             {
@@ -1107,31 +1105,31 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
 
         public static TheoryData<DateTime, TimeZoneInfo, DateTime, DateTime> GetGetIntersectingInvalidityRangeData(IFixture fixture)
         {
-            var positiveTimeZoneWithInvalidity = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var positiveTimeZoneWithInvalidity = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 12, 0, 0 ),
-                new DateTime( 1, 10, 26, 12, 0, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 12, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 12, 0, 0 ) ) );
 
-            var negativeTimeZoneWithInvalidity = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZoneWithInvalidity = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 12, 0, 0 ),
-                new DateTime( 1, 10, 26, 12, 0, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 12, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 12, 0, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
-            var positiveTimeZoneWithInvalidMidnight = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var positiveTimeZoneWithInvalidMidnight = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 25, 23, 30, 0 ),
-                new DateTime( 1, 10, 26, 12, 0, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 25, 23, 30, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 12, 0, 0 ) ) );
 
-            var negativeTimeZoneWithInvalidMidnight = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZoneWithInvalidMidnight = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 12, 0, 0 ),
-                new DateTime( 1, 10, 25, 23, 30, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 12, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 25, 23, 30, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
             return new TheoryData<DateTime, TimeZoneInfo, DateTime, DateTime>
             {
@@ -1176,19 +1174,19 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
 
         public static TheoryData<DateTime, TimeZoneInfo> GetGetIntersectingInvalidityRangeNullData(IFixture fixture)
         {
-            var timeZone = ZonedDateTimeTestsData.GetTimeZone( "1", 1 );
-            var positiveTimeZoneWithInvalidity = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var timeZone = TimeZoneFactory.Create( 1 );
+            var positiveTimeZoneWithInvalidity = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 12, 0, 0 ),
-                new DateTime( 1, 10, 26, 12, 0, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 12, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 12, 0, 0 ) ) );
 
-            var negativeTimeZoneWithInvalidity = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZoneWithInvalidity = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 12, 0, 0 ),
-                new DateTime( 1, 10, 26, 12, 0, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 12, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 12, 0, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
             return new TheoryData<DateTime, TimeZoneInfo>
             {
@@ -1204,31 +1202,31 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
 
         public static TheoryData<DateTime, TimeZoneInfo, DateTime, DateTime> GetGetIntersectingAmbiguityRangeData(IFixture fixture)
         {
-            var positiveTimeZoneWithInvalidity = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var positiveTimeZoneWithInvalidity = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 12, 0, 0 ),
-                new DateTime( 1, 10, 26, 12, 0, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 12, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 12, 0, 0 ) ) );
 
-            var negativeTimeZoneWithInvalidity = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZoneWithInvalidity = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 12, 0, 0 ),
-                new DateTime( 1, 10, 26, 12, 0, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 12, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 12, 0, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
-            var positiveTimeZoneWithAmbiguousMidnight = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var positiveTimeZoneWithAmbiguousMidnight = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 12, 0, 0 ),
-                new DateTime( 1, 10, 26, 0, 30, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 12, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 0, 30, 0 ) ) );
 
-            var negativeTimeZoneWithAmbiguousMidnight = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZoneWithAmbiguousMidnight = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 0, 30, 0 ),
-                new DateTime( 1, 10, 26, 12, 0, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 0, 30, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 12, 0, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
             return new TheoryData<DateTime, TimeZoneInfo, DateTime, DateTime>
             {
@@ -1273,19 +1271,19 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
 
         public static TheoryData<DateTime, TimeZoneInfo> GetGetIntersectingAmbiguityRangeNullData(IFixture fixture)
         {
-            var timeZone = ZonedDateTimeTestsData.GetTimeZone( "1", 1 );
-            var positiveTimeZoneWithInvalidity = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (+DS)",
+            var timeZone = TimeZoneFactory.Create( 1 );
+            var positiveTimeZoneWithInvalidity = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 12, 0, 0 ),
-                new DateTime( 1, 10, 26, 12, 0, 0 ) );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 12, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 12, 0, 0 ) ) );
 
-            var negativeTimeZoneWithInvalidity = ZonedDateTimeTestsData.GetTimeZone(
-                "1 (-DS)",
+            var negativeTimeZoneWithInvalidity = TimeZoneFactory.Create(
                 1,
-                new DateTime( 1, 8, 26, 12, 0, 0 ),
-                new DateTime( 1, 10, 26, 12, 0, 0 ),
-                daylightSavingOffsetInHours: -1 );
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 26, 12, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 10, 26, 12, 0, 0 ),
+                    daylightDeltaInHours: -1 ) );
 
             return new TheoryData<DateTime, TimeZoneInfo>
             {

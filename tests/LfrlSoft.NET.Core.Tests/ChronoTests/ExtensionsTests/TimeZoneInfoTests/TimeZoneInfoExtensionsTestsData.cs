@@ -9,43 +9,6 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ExtensionsTests.TimeZoneInfoTests
 {
     public class TimeZoneInfoExtensionsTestsData
     {
-        public static TimeZoneInfo GetTimeZone(
-            string id,
-            double offsetInHours,
-            params TimeZoneInfo.AdjustmentRule[] rules)
-        {
-            var fullName = $"Test Time Zone [{id}]";
-
-            return TimeZoneInfo.CreateCustomTimeZone(
-                id: fullName,
-                baseUtcOffset: TimeSpan.FromHours( offsetInHours ),
-                displayName: fullName,
-                standardDisplayName: fullName,
-                daylightDisplayName: fullName,
-                adjustmentRules: rules );
-        }
-
-        public static TimeZoneInfo.AdjustmentRule CreateAdjustmentRule(
-            DateTime start,
-            DateTime end,
-            DateTime transitionStart,
-            DateTime transitionEnd,
-            double daylightDeltaInHours = 1)
-        {
-            return TimeZoneInfo.AdjustmentRule.CreateAdjustmentRule(
-                dateStart: start,
-                dateEnd: end,
-                daylightDelta: TimeSpan.FromHours( daylightDeltaInHours ),
-                daylightTransitionStart: TimeZoneInfo.TransitionTime.CreateFixedDateRule(
-                    timeOfDay: new DateTime( transitionStart.TimeOfDay.Ticks ),
-                    month: transitionStart.Month,
-                    day: transitionStart.Day ),
-                daylightTransitionEnd: TimeZoneInfo.TransitionTime.CreateFixedDateRule(
-                    timeOfDay: new DateTime( transitionEnd.TimeOfDay.Ticks ),
-                    month: transitionEnd.Month,
-                    day: transitionEnd.Day ) );
-        }
-
         public static TheoryData<DateTime, IEnumerable<(DateTime Start, DateTime End)>>
             GetGetActiveAdjustmentRuleWithNullResultData(
                 IFixture fixture)
@@ -107,42 +70,30 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ExtensionsTests.TimeZoneInfoTests
             GetGetContainingInvalidityRangeData(
                 IFixture fixture)
         {
-            var simpleTimeZone = GetTimeZone(
-                "1 (simple +DS)",
-                1,
-                CreateAdjustmentRule(
-                    DateTime.MinValue,
-                    DateTime.MaxValue,
-                    new DateTime( 1, 2, 1, 3, 0, 0 ),
-                    new DateTime( 1, 11, 1, 3, 0, 0 ) ) );
+            var simpleTimeZone = TimeZoneFactory.Create(
+                utcOffsetInHours: 1.0,
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 2, 1, 3, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 11, 1, 3, 0, 0 ) ) );
 
-            var reverseSimpleTimeZone = GetTimeZone(
-                "1 (simple -DS)",
-                1,
-                CreateAdjustmentRule(
-                    DateTime.MinValue,
-                    DateTime.MaxValue,
-                    new DateTime( 1, 2, 1, 3, 0, 0 ),
-                    new DateTime( 1, 11, 1, 3, 0, 0 ),
+            var reverseSimpleTimeZone = TimeZoneFactory.Create(
+                utcOffsetInHours: 1.0,
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 2, 1, 3, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 11, 1, 3, 0, 0 ),
                     daylightDeltaInHours: -1 ) );
 
-            var yearOverlapTimeZone = GetTimeZone(
-                "1 (year overlap +DS)",
-                1,
-                CreateAdjustmentRule(
-                    DateTime.MinValue,
-                    DateTime.MaxValue,
-                    new DateTime( 1, 12, 31, 23, 30, 0 ),
-                    new DateTime( 1, 2, 1, 3, 0, 0 ) ) );
+            var yearOverlapTimeZone = TimeZoneFactory.Create(
+                utcOffsetInHours: 1.0,
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 12, 31, 23, 30, 0 ),
+                    transitionEnd: new DateTime( 1, 2, 1, 3, 0, 0 ) ) );
 
-            var reverseYearOverlapTimeZone = GetTimeZone(
-                "1 (year overlap -DS)",
-                1,
-                CreateAdjustmentRule(
-                    DateTime.MinValue,
-                    DateTime.MaxValue,
-                    new DateTime( 1, 2, 1, 3, 0, 0 ),
-                    new DateTime( 1, 12, 31, 23, 30, 0 ),
+            var reverseYearOverlapTimeZone = TimeZoneFactory.Create(
+                utcOffsetInHours: 1.0,
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 2, 1, 3, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 12, 31, 23, 30, 0 ),
                     daylightDeltaInHours: -1 ) );
 
             return new TheoryData<TimeZoneInfo, DateTime, (DateTime, DateTime)?>
@@ -223,42 +174,30 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ExtensionsTests.TimeZoneInfoTests
             GetGetContainingAmbiguityRangeData(
                 IFixture fixture)
         {
-            var simpleTimeZone = GetTimeZone(
-                "1 (simple +DS)",
-                1,
-                CreateAdjustmentRule(
-                    DateTime.MinValue,
-                    DateTime.MaxValue,
-                    new DateTime( 1, 2, 1, 3, 0, 0 ),
-                    new DateTime( 1, 11, 1, 3, 0, 0 ) ) );
+            var simpleTimeZone = TimeZoneFactory.Create(
+                utcOffsetInHours: 1.0,
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 2, 1, 3, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 11, 1, 3, 0, 0 ) ) );
 
-            var reverseSimpleTimeZone = GetTimeZone(
-                "1 (simple -DS)",
-                1,
-                CreateAdjustmentRule(
-                    DateTime.MinValue,
-                    DateTime.MaxValue,
-                    new DateTime( 1, 2, 1, 3, 0, 0 ),
-                    new DateTime( 1, 11, 1, 3, 0, 0 ),
+            var reverseSimpleTimeZone = TimeZoneFactory.Create(
+                utcOffsetInHours: 1.0,
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 2, 1, 3, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 11, 1, 3, 0, 0 ),
                     daylightDeltaInHours: -1 ) );
 
-            var yearOverlapTimeZone = GetTimeZone(
-                "1 (year overlap +DS)",
-                1,
-                CreateAdjustmentRule(
-                    DateTime.MinValue,
-                    DateTime.MaxValue,
-                    new DateTime( 1, 2, 1, 3, 0, 0 ),
-                    new DateTime( 1, 1, 1, 0, 30, 0 ) ) );
+            var yearOverlapTimeZone = TimeZoneFactory.Create(
+                utcOffsetInHours: 1.0,
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 2, 1, 3, 0, 0 ),
+                    transitionEnd: new DateTime( 1, 1, 1, 0, 30, 0 ) ) );
 
-            var reverseYearOverlapTimeZone = GetTimeZone(
-                "1 (year overlap -DS)",
-                1,
-                CreateAdjustmentRule(
-                    DateTime.MinValue,
-                    DateTime.MaxValue,
-                    new DateTime( 1, 1, 1, 0, 30, 0 ),
-                    new DateTime( 1, 2, 1, 3, 0, 0 ),
+            var reverseYearOverlapTimeZone = TimeZoneFactory.Create(
+                utcOffsetInHours: 1.0,
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 1, 1, 0, 30, 0 ),
+                    transitionEnd: new DateTime( 1, 2, 1, 3, 0, 0 ),
                     daylightDeltaInHours: -1 ) );
 
             return new TheoryData<TimeZoneInfo, DateTime, (DateTime, DateTime)?>

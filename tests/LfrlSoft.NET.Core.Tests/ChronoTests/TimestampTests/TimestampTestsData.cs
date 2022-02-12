@@ -10,7 +10,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.TimestampTests
     {
         public static TheoryData<long, DateTime> GetTicksCtorData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, DateTime>
             {
                 { 0, DateTime.UnixEpoch },
                 { 1, DateTime.UnixEpoch.AddTicks( 1 ) },
@@ -22,7 +22,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.TimestampTests
 
         public static TheoryData<DateTime, long> GetUtcDateTimeCtorData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<DateTime, long>
             {
                 { DateTime.UnixEpoch, 0 },
                 { DateTime.UnixEpoch.AddTicks( 1 ), 1 },
@@ -34,7 +34,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.TimestampTests
 
         public static TheoryData<long, long, bool> GetEqualsData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, long, bool>
             {
                 { 5, 5, true },
                 { 5, -5, false }
@@ -43,7 +43,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.TimestampTests
 
         public static TheoryData<long, long, int> GetCompareToData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, long, int>
             {
                 { 5, 5, 0 },
                 { -5, 5, -1 },
@@ -53,7 +53,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.TimestampTests
 
         public static TheoryData<long, long, long> GetAddData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, long, long>
             {
                 { 0, 0, 0 },
                 { 5, 0, 5 },
@@ -67,7 +67,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.TimestampTests
 
         public static TheoryData<long, long, long> GetSubtractData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, long, long>
             {
                 { 0, 0, 0 },
                 { 5, 0, 5 },

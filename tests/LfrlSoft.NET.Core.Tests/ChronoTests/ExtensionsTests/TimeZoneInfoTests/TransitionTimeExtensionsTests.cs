@@ -13,13 +13,8 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ExtensionsTests.TimeZoneInfoTests
         [MethodData( nameof( TransitionTimeExtensionsTestsData.GetToDateTimeWithFixedTimeData ) )]
         public void ToDateTime_WithFixedTime_ShouldReturnCorrectResult(DateTime time, int year, DateTime expected)
         {
-            var sut = TimeZoneInfo.TransitionTime.CreateFixedDateRule(
-                timeOfDay: DateTime.MinValue + time.TimeOfDay,
-                month: time.Month,
-                day: time.Day );
-
+            var sut = TimeZoneFactory.CreateFixedTime( time );
             var result = sut.ToDateTime( year );
-
             result.Should().Be( expected );
         }
 
@@ -33,11 +28,10 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ExtensionsTests.TimeZoneInfoTests
             int year,
             DateTime expected)
         {
-            var sut = TimeZoneInfo.TransitionTime.CreateFloatingDateRule(
-                timeOfDay: DateTime.MinValue + timeOfDay,
-                month: month,
+            var sut = TimeZoneFactory.CreateFloatingTime(
+                monthAndTime: new DateTime( 1, month, 1 ) + timeOfDay,
                 week: week,
-                dayOfWeek: dayOfWeek );
+                day: dayOfWeek );
 
             var result = sut.ToDateTime( year );
 

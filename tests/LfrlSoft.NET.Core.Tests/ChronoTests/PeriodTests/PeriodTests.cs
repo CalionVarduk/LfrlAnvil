@@ -485,7 +485,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.PeriodTests
         }
 
         [Fact]
-        public void AddTicks_ShouldBeAnAliasForSetTicks()
+        public void AddTicks_ShouldEquivalentToSetTicksWithSum()
         {
             var sut = CreatePeriod();
             var value = Fixture.Create<int>();
@@ -497,7 +497,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.PeriodTests
         }
 
         [Fact]
-        public void AddMilliseconds_ShouldBeAnAliasForSetMilliseconds()
+        public void AddMilliseconds_ShouldBeEquivalentToSetMillisecondsWithSum()
         {
             var sut = CreatePeriod();
             var value = Fixture.Create<int>();
@@ -509,7 +509,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.PeriodTests
         }
 
         [Fact]
-        public void AddSeconds_ShouldBeAnAliasForSetSeconds()
+        public void AddSeconds_ShouldBeEquivalentToSetSecondsWithSum()
         {
             var sut = CreatePeriod();
             var value = Fixture.Create<int>();
@@ -521,7 +521,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.PeriodTests
         }
 
         [Fact]
-        public void AddMinutes_ShouldBeAnAliasForSetMinutes()
+        public void AddMinutes_ShouldBeEquivalentToSetMinutesWithSum()
         {
             var sut = CreatePeriod();
             var value = Fixture.Create<int>();
@@ -533,7 +533,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.PeriodTests
         }
 
         [Fact]
-        public void AddHours_ShouldBeAnAliasForSetHours()
+        public void AddHours_ShouldBeEquivalentToSetHoursWithSum()
         {
             var sut = CreatePeriod();
             var value = Fixture.Create<int>();
@@ -545,7 +545,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.PeriodTests
         }
 
         [Fact]
-        public void AddDays_ShouldBeAnAliasForSetDays()
+        public void AddDays_ShouldBeEquivalentToSetDaysWithSum()
         {
             var sut = CreatePeriod();
             var value = Fixture.Create<int>();
@@ -557,7 +557,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.PeriodTests
         }
 
         [Fact]
-        public void AddWeeks_ShouldBeAnAliasForSetWeeks()
+        public void AddWeeks_ShouldBeEquivalentToSetWeeksWithSum()
         {
             var sut = CreatePeriod();
             var value = Fixture.Create<int>();
@@ -569,7 +569,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.PeriodTests
         }
 
         [Fact]
-        public void AddMonths_ShouldBeAnAliasForSetMonths()
+        public void AddMonths_ShouldBeEquivalentToSetMonthsWithSum()
         {
             var sut = CreatePeriod();
             var value = Fixture.Create<int>();
@@ -581,7 +581,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.PeriodTests
         }
 
         [Fact]
-        public void AddYears_ShouldBeAnAliasForSetYears()
+        public void AddYears_ShouldBeEquivalentToSetYearsWithSum()
         {
             var sut = CreatePeriod();
             var value = Fixture.Create<int>();
@@ -641,7 +641,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.PeriodTests
         }
 
         [Fact]
-        public void SubtractTicks_ShouldBeAnAliasForSetTicks()
+        public void SubtractTicks_ShouldBeEquivalentToSetTicksWithDifference()
         {
             var sut = CreatePeriod();
             var value = Fixture.Create<int>();
@@ -653,7 +653,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.PeriodTests
         }
 
         [Fact]
-        public void SubtractMilliseconds_ShouldBeAnAliasForSetMilliseconds()
+        public void SubtractMilliseconds_ShouldBeEquivalentToSetMillisecondsWithDifference()
         {
             var sut = CreatePeriod();
             var value = Fixture.Create<int>();
@@ -665,7 +665,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.PeriodTests
         }
 
         [Fact]
-        public void SubtractSeconds_ShouldBeAnAliasForSetSeconds()
+        public void SubtractSeconds_ShouldBeEquivalentToSetSecondsWithDifference()
         {
             var sut = CreatePeriod();
             var value = Fixture.Create<int>();
@@ -677,7 +677,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.PeriodTests
         }
 
         [Fact]
-        public void SubtractMinutes_ShouldBeAnAliasForSetMinutes()
+        public void SubtractMinutes_ShouldBeEquivalentToSetMinutesWithDifference()
         {
             var sut = CreatePeriod();
             var value = Fixture.Create<int>();
@@ -689,7 +689,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.PeriodTests
         }
 
         [Fact]
-        public void SubtractHours_ShouldBeAnAliasForSetHours()
+        public void SubtractHours_ShouldBeEquivalentToSetHoursWithDifference()
         {
             var sut = CreatePeriod();
             var value = Fixture.Create<int>();
@@ -701,7 +701,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.PeriodTests
         }
 
         [Fact]
-        public void SubtractDays_ShouldBeAnAliasForSetDays()
+        public void SubtractDays_ShouldBeEquivalentToSetDaysWithDifference()
         {
             var sut = CreatePeriod();
             var value = Fixture.Create<int>();
@@ -713,7 +713,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.PeriodTests
         }
 
         [Fact]
-        public void SubtractWeeks_ShouldBeAnAliasForSetWeeks()
+        public void SubtractWeeks_ShouldBeEquivalentToSetWeeksWithDifference()
         {
             var sut = CreatePeriod();
             var value = Fixture.Create<int>();
@@ -725,7 +725,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.PeriodTests
         }
 
         [Fact]
-        public void SubtractMonths_ShouldBeAnAliasForSetMonths()
+        public void SubtractMonths_ShouldBeEquivalentToSetMonthsWithDifference()
         {
             var sut = CreatePeriod();
             var value = Fixture.Create<int>();
@@ -737,7 +737,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.PeriodTests
         }
 
         [Fact]
-        public void SubtractYears_ShouldBeAnAliasForSetYears()
+        public void SubtractYears_ShouldBeEquivalentToSetYearsWithDifference()
         {
             var sut = CreatePeriod();
             var value = Fixture.Create<int>();

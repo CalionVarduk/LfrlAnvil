@@ -4,17 +4,18 @@ using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlSoft.NET.Core.Chrono;
+using LfrlSoft.NET.TestExtensions;
 using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedClockTests
 {
-    public class FrozenZonedClockTests : ZonedClockTestsBase
+    public class FrozenZonedClockTests : TestsBase
     {
         [Fact]
         public void Ctor_ShouldReturnCorrectResult()
         {
             var value = Fixture.Create<DateTime>();
-            var timeZone = CreateTimeZone();
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
 
             var sut = new FrozenZonedClock( ZonedDateTime.Create( value, timeZone ) );
 
@@ -25,7 +26,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedClockTests
         public void GetNow_ShouldReturnCorrectResult()
         {
             var value = Fixture.Create<DateTime>();
-            var timeZone = CreateTimeZone();
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
             var expected = ZonedDateTime.Create( value, timeZone );
             var sut = new FrozenZonedClock( expected );
 

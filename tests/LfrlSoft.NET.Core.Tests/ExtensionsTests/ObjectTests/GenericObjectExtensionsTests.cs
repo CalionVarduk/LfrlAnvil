@@ -163,7 +163,7 @@ namespace LfrlSoft.NET.Core.Tests.ExtensionsTests.ObjectTests
         }
 
         [Fact]
-        public void VisitMany_ShouldReturnResultAccordingToPreOrderTraversal()
+        public void VisitMany_ShouldReturnResultAccordingToBreadthFirstTraversal()
         {
             var values = Fixture.CreateMany<T>( 11 ).ToList();
             var expected = values.Skip( 1 );
@@ -175,14 +175,14 @@ namespace LfrlSoft.NET.Core.Tests.ExtensionsTests.ObjectTests
                     Value = values[1],
                     Children = new List<VisitManyNode>
                     {
-                        new VisitManyNode { Value = values[4] },
-                        new VisitManyNode
+                        new() { Value = values[4] },
+                        new()
                         {
                             Value = values[5],
                             Children = new List<VisitManyNode>
                             {
-                                new VisitManyNode { Value = values[7] },
-                                new VisitManyNode { Value = values[8] }
+                                new() { Value = values[7] },
+                                new() { Value = values[8] }
                             }
                         }
                     }
@@ -193,13 +193,13 @@ namespace LfrlSoft.NET.Core.Tests.ExtensionsTests.ObjectTests
                     Value = values[3],
                     Children = new List<VisitManyNode>
                     {
-                        new VisitManyNode
+                        new()
                         {
                             Value = values[6],
                             Children = new List<VisitManyNode>
                             {
-                                new VisitManyNode { Value = values[9] },
-                                new VisitManyNode { Value = values[10] }
+                                new() { Value = values[9] },
+                                new() { Value = values[10] }
                             }
                         }
                     }
@@ -246,7 +246,7 @@ namespace LfrlSoft.NET.Core.Tests.ExtensionsTests.ObjectTests
         }
 
         [Fact]
-        public void VisitManyWithSelf_ShouldReturnResultAccordingToPreOrderTraversal_IncludingTheTargetAsRoot()
+        public void VisitManyWithSelf_ShouldReturnResultAccordingToBreadthFirstTraversal_IncludingTheTargetAsRoot()
         {
             var values = Fixture.CreateMany<T>( 11 ).ToList();
 
@@ -257,14 +257,14 @@ namespace LfrlSoft.NET.Core.Tests.ExtensionsTests.ObjectTests
                     Value = values[1],
                     Children = new List<VisitManyNode>
                     {
-                        new VisitManyNode { Value = values[4] },
-                        new VisitManyNode
+                        new() { Value = values[4] },
+                        new()
                         {
                             Value = values[5],
                             Children = new List<VisitManyNode>
                             {
-                                new VisitManyNode { Value = values[7] },
-                                new VisitManyNode { Value = values[8] }
+                                new() { Value = values[7] },
+                                new() { Value = values[8] }
                             }
                         }
                     }
@@ -275,13 +275,13 @@ namespace LfrlSoft.NET.Core.Tests.ExtensionsTests.ObjectTests
                     Value = values[3],
                     Children = new List<VisitManyNode>
                     {
-                        new VisitManyNode
+                        new()
                         {
                             Value = values[6],
                             Children = new List<VisitManyNode>
                             {
-                                new VisitManyNode { Value = values[9] },
-                                new VisitManyNode { Value = values[10] }
+                                new() { Value = values[9] },
+                                new() { Value = values[10] }
                             }
                         }
                     }
@@ -308,7 +308,7 @@ namespace LfrlSoft.NET.Core.Tests.ExtensionsTests.ObjectTests
         public sealed class VisitManyNode
         {
             public T? Value { get; init; }
-            public List<VisitManyNode> Children { get; init; } = new List<VisitManyNode>();
+            public List<VisitManyNode> Children { get; init; } = new();
         }
     }
 }

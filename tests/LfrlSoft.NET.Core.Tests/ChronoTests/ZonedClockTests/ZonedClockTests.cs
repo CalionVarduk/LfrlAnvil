@@ -2,11 +2,12 @@
 using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlSoft.NET.Core.Chrono;
+using LfrlSoft.NET.TestExtensions;
 using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedClockTests
 {
-    public class ZonedClockTests : ZonedClockTestsBase
+    public class ZonedClockTests : TestsBase
     {
         [Fact]
         public void Utc_ShouldReturnCorrectResult()
@@ -25,7 +26,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedClockTests
         [Fact]
         public void Ctor_ShouldReturnCorrectResult()
         {
-            var timeZone = CreateTimeZone();
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
             var sut = new ZonedClock( timeZone );
             sut.TimeZone.Should().Be( timeZone );
         }
@@ -33,7 +34,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedClockTests
         [Fact]
         public void GetNow_ShouldReturnCorrectResult()
         {
-            var timeZone = CreateTimeZone();
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
             var sut = new ZonedClock( timeZone );
 
             var expectedMinTimestamp = new Timestamp( DateTime.UtcNow );

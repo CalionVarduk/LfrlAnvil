@@ -395,7 +395,7 @@ namespace LfrlSoft.NET.Core.Tests.ExtensionsTests.EnumerableTests
         }
 
         [Fact]
-        public void VisitMany_ShouldReturnResultAccordingToPreOrderTraversal()
+        public void VisitMany_ShouldReturnResultAccordingToBreadthFirstTraversal()
         {
             var expected = Fixture.CreateMany<T>( 10 ).ToList();
 
@@ -406,14 +406,14 @@ namespace LfrlSoft.NET.Core.Tests.ExtensionsTests.EnumerableTests
                     Value = expected[0],
                     Children = new List<VisitManyNode<T>>
                     {
-                        new VisitManyNode<T> { Value = expected[3] },
-                        new VisitManyNode<T>
+                        new() { Value = expected[3] },
+                        new()
                         {
                             Value = expected[4],
                             Children = new List<VisitManyNode<T>>
                             {
-                                new VisitManyNode<T> { Value = expected[6] },
-                                new VisitManyNode<T> { Value = expected[7] }
+                                new() { Value = expected[6] },
+                                new() { Value = expected[7] }
                             }
                         }
                     }
@@ -424,13 +424,13 @@ namespace LfrlSoft.NET.Core.Tests.ExtensionsTests.EnumerableTests
                     Value = expected[2],
                     Children = new List<VisitManyNode<T>>
                     {
-                        new VisitManyNode<T>
+                        new()
                         {
                             Value = expected[5],
                             Children = new List<VisitManyNode<T>>
                             {
-                                new VisitManyNode<T> { Value = expected[8] },
-                                new VisitManyNode<T> { Value = expected[9] }
+                                new() { Value = expected[8] },
+                                new() { Value = expected[9] }
                             }
                         }
                     }

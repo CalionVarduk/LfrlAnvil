@@ -6,7 +6,6 @@ using LfrlSoft.NET.Core.Chrono;
 using LfrlSoft.NET.Core.Chrono.Exceptions;
 using LfrlSoft.NET.Core.Chrono.Extensions;
 using LfrlSoft.NET.Core.Functional;
-using LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDateTimeTests;
 using LfrlSoft.NET.TestExtensions;
 using LfrlSoft.NET.TestExtensions.Attributes;
 using Xunit;
@@ -266,11 +265,10 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
         }
 
         [Fact]
-        public void Create_WithZonedDateTime_ShouldBeAnAliasForCreateWithDateTimeAndTimeZoneInfo()
+        public void Create_WithZonedDateTime_ShouldBeEquivalentToCreateWithDateTimeAndTimeZoneInfo()
         {
             var dateTime = Fixture.Create<DateTime>();
-            var timeZoneOffset = Fixture.Create<int>() % 12;
-            var timeZone = ZonedDateTimeTestsData.GetTimeZone( $"{timeZoneOffset}", timeZoneOffset );
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
             var source = ZonedDateTime.Create( dateTime, timeZone );
             var expected = ZonedDay.Create( dateTime, timeZone );
 
@@ -345,8 +343,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
         public void GetHashCode_ShouldReturnCorrectResult()
         {
             var dateTime = Fixture.Create<DateTime>();
-            var timeZoneOffset = Fixture.Create<int>() % 12;
-            var timeZone = ZonedDateTimeTestsData.GetTimeZone( $"{timeZoneOffset}", timeZoneOffset );
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
             var sut = ZonedDay.Create( dateTime, timeZone );
             var expected = Hash.Default.Add( sut.Start.Timestamp ).Add( sut.End.Timestamp ).Add( sut.TimeZone.Id ).Value;
 
@@ -383,10 +380,8 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
         public void ToTimeZone_ShouldReturnCorrectResult()
         {
             var dateTime = Fixture.Create<DateTime>();
-            var timeZoneOffset = Fixture.Create<int>() % 12;
-            var timeZone = ZonedDateTimeTestsData.GetTimeZone( $"{timeZoneOffset}", timeZoneOffset );
-            var targetTimeZoneOffset = Fixture.Create<int>() % 12;
-            var targetTimeZone = ZonedDateTimeTestsData.GetTimeZone( $"{targetTimeZoneOffset}", targetTimeZoneOffset );
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
+            var targetTimeZone = TimeZoneFactory.CreateRandom( Fixture );
 
             var sut = ZonedDay.Create( dateTime, timeZone );
             var expected = ZonedDay.Create( dateTime, targetTimeZone );
@@ -400,8 +395,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
         public void ToUtcTimeZone_ShouldReturnCorrectResult()
         {
             var dateTime = Fixture.Create<DateTime>();
-            var timeZoneOffset = Fixture.Create<int>() % 12;
-            var timeZone = ZonedDateTimeTestsData.GetTimeZone( $"{timeZoneOffset}", timeZoneOffset );
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
 
             var sut = ZonedDay.Create( dateTime, timeZone );
             var expected = ZonedDay.Create( dateTime, TimeZoneInfo.Utc );
@@ -415,8 +409,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
         public void ToLocalTimeZone_ShouldReturnCorrectResult()
         {
             var dateTime = Fixture.Create<DateTime>();
-            var timeZoneOffset = Fixture.Create<int>() % 12;
-            var timeZone = ZonedDateTimeTestsData.GetTimeZone( $"{timeZoneOffset}", timeZoneOffset );
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
 
             var sut = ZonedDay.Create( dateTime, timeZone );
             var expected = ZonedDay.Create( dateTime, TimeZoneInfo.Local );
@@ -467,8 +460,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
         public void GetNext_ShouldReturnTheNextDay()
         {
             var dateTime = Fixture.Create<DateTime>();
-            var timeZoneOffset = Fixture.Create<int>() % 12;
-            var timeZone = ZonedDateTimeTestsData.GetTimeZone( $"{timeZoneOffset}", timeZoneOffset );
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
 
             var sut = ZonedDay.Create( dateTime, timeZone );
             var expected = sut.AddDays( 1 );
@@ -482,8 +474,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
         public void GetPrevious_ShouldReturnThePreviousDay()
         {
             var dateTime = Fixture.Create<DateTime>();
-            var timeZoneOffset = Fixture.Create<int>() % 12;
-            var timeZone = ZonedDateTimeTestsData.GetTimeZone( $"{timeZoneOffset}", timeZoneOffset );
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
 
             var sut = ZonedDay.Create( dateTime, timeZone );
             var expected = sut.AddDays( -1 );
@@ -522,12 +513,11 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
         }
 
         [Fact]
-        public void SubtractDays_ShouldBeAnAliasForAddDays()
+        public void SubtractDays_ShouldBeEquivalentToAddDaysWithNegatedDayCount()
         {
             var dayCount = Fixture.Create<sbyte>();
             var dateTime = Fixture.Create<DateTime>();
-            var timeZoneOffset = Fixture.Create<int>() % 12;
-            var timeZone = ZonedDateTimeTestsData.GetTimeZone( $"{timeZoneOffset}", timeZoneOffset );
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
 
             var sut = ZonedDay.Create( dateTime, timeZone );
             var expected = sut.AddDays( -dayCount );
@@ -538,7 +528,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
         }
 
         [Fact]
-        public void Subtract_ShouldBeAnAliasForAdd()
+        public void Subtract_ShouldBeEquivalentToAddWithNegatedPeriod()
         {
             var periodToSubtract = new Period(
                 years: Fixture.Create<sbyte>(),
@@ -552,8 +542,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
                 ticks: Fixture.Create<short>() );
 
             var dateTime = Fixture.Create<DateTime>();
-            var timeZoneOffset = Fixture.Create<int>() % 12;
-            var timeZone = ZonedDateTimeTestsData.GetTimeZone( $"{timeZoneOffset}", timeZoneOffset );
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
 
             var sut = ZonedDay.Create( dateTime, timeZone );
             var expected = sut.Add( -periodToSubtract );
@@ -790,8 +779,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
         public void ZonedDateTimeConversionOperator_ShouldReturnUnderlyingStart()
         {
             var dateTime = Fixture.Create<DateTime>();
-            var timeZoneOffset = Fixture.Create<int>() % 12;
-            var timeZone = ZonedDateTimeTestsData.GetTimeZone( $"{timeZoneOffset}", timeZoneOffset );
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
             var sut = ZonedDay.Create( dateTime, timeZone );
 
             var result = (ZonedDateTime)sut;
@@ -803,8 +791,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
         public void DateTimeConversionOperator_ShouldReturnUnderlyingStartValue()
         {
             var dateTime = Fixture.Create<DateTime>();
-            var timeZoneOffset = Fixture.Create<int>() % 12;
-            var timeZone = ZonedDateTimeTestsData.GetTimeZone( $"{timeZoneOffset}", timeZoneOffset );
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
             var sut = ZonedDay.Create( dateTime, timeZone );
 
             var result = (DateTime)sut;
@@ -813,7 +800,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
         }
 
         [Fact]
-        public void AddOperator_ShouldBeAnAliasForAdd()
+        public void AddOperator_ShouldBeEquivalentToAdd()
         {
             var periodToSubtract = new Period(
                 years: Fixture.Create<sbyte>(),
@@ -827,8 +814,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
                 ticks: Fixture.Create<short>() );
 
             var dateTime = Fixture.Create<DateTime>();
-            var timeZoneOffset = Fixture.Create<int>() % 12;
-            var timeZone = ZonedDateTimeTestsData.GetTimeZone( $"{timeZoneOffset}", timeZoneOffset );
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
 
             var sut = ZonedDay.Create( dateTime, timeZone );
             var expected = sut.Add( periodToSubtract );
@@ -839,7 +825,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
         }
 
         [Fact]
-        public void SubtractOperator_ShouldBeAnAliasForAdd()
+        public void SubtractOperator_ShouldBeEquivalentToAddWithNegatedPeriod()
         {
             var periodToSubtract = new Period(
                 years: Fixture.Create<sbyte>(),
@@ -853,8 +839,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
                 ticks: Fixture.Create<short>() );
 
             var dateTime = Fixture.Create<DateTime>();
-            var timeZoneOffset = Fixture.Create<int>() % 12;
-            var timeZone = ZonedDateTimeTestsData.GetTimeZone( $"{timeZoneOffset}", timeZoneOffset );
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
 
             var sut = ZonedDay.Create( dateTime, timeZone );
             var expected = sut.Add( -periodToSubtract );

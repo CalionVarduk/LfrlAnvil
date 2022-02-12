@@ -11,7 +11,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
     {
         public static TheoryData<long> GetTicksData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long>
             {
                 0,
                 -1000001,
@@ -21,7 +21,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<int, int, int, long> GetCtorWithSecondsPrecisionData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<int, int, int, long>
             {
                 { 3, 111, 321, 17781 },
                 { -4, 40, 1, -11999 },
@@ -31,7 +31,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<int, int, int, int, long> GetCtorWithMsPrecisionData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<int, int, int, int, long>
             {
                 { 3, 111, 321, 987, 17781987 },
                 { -4, 40, 1, 3456, -11995544 },
@@ -41,7 +41,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<int, int, int, int, int, long> GetCtorWithTicksPrecisionData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<int, int, int, int, int, long>
             {
                 { 3, 111, 321, 987, 123456, 17781987 },
                 { -4, 40, 1, 3456, 789, -11995544 },
@@ -51,7 +51,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<TimeSpan> GetCtorWithTimeSpanData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<TimeSpan>
             {
                 TimeSpan.Zero,
                 TimeSpan.MinValue,
@@ -63,7 +63,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<int, int, long> GetFullMillisecondsData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<int, int, long>
             {
                 { 300, 0, 300 },
                 { 400, 5000, 400 },
@@ -78,7 +78,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<int, int, int, long> GetFullSecondsData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<int, int, int, long>
             {
                 { 30, 0, 0, 30 },
                 { 40, 400, 5000, 40 },
@@ -93,7 +93,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<int, int, int, int, long> GetFullMinutesData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<int, int, int, int, long>
             {
                 { 30, 0, 0, 0, 30 },
                 { 50, 40, 400, 5000, 50 },
@@ -108,7 +108,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<int, int, int, int, int, long> GetFullHoursData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<int, int, int, int, int, long>
             {
                 { 30, 0, 0, 0, 0, 30 },
                 { 70, 50, 40, 400, 5000, 70 },
@@ -123,7 +123,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<int, int, int> GetTicksInMillisecondData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<int, int, int>
             {
                 { 300, 0, 0 },
                 { 400, 5000, 5000 },
@@ -138,7 +138,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<int, int, int, int> GetMillisecondsInSecondData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<int, int, int, int>
             {
                 { 30, 0, 0, 0 },
                 { 40, 400, 5000, 400 },
@@ -153,7 +153,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<int, int, int, int, int> GetSecondsInMinuteData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<int, int, int, int, int>
             {
                 { 30, 0, 0, 0, 0 },
                 { 50, 40, 400, 5000, 40 },
@@ -168,7 +168,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<int, int, int, int, int, int> GetMinutesInHourData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<int, int, int, int, int, int>
             {
                 { 30, 0, 0, 0, 0, 0 },
                 { 70, 50, 40, 400, 5000, 50 },
@@ -183,7 +183,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<int, int, double> GetTotalMillisecondsData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<int, int, double>
             {
                 { 300, 0, 300.0 },
                 { 400, 5000, 400.5 },
@@ -198,7 +198,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<int, int, int, double> GetTotalSecondsData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<int, int, int, double>
             {
                 { 30, 0, 0, 30.0 },
                 { 40, 400, 5000, 40.4005 },
@@ -213,7 +213,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<int, int, int, int, double> GetTotalMinutesData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<int, int, int, int, double>
             {
                 { 30, 0, 0, 0, 30.0 },
                 { 50, 40, 400, 5000, 50.67334166667 },
@@ -228,7 +228,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<int, int, int, int, int, double> GetTotalHoursData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<int, int, int, int, int, double>
             {
                 { 30, 0, 0, 0, 0, 30.0 },
                 { 70, 50, 40, 400, 5000, 70.84455569444 },
@@ -243,7 +243,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<double, long> GetFromMillisecondsWithDoubleData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<double, long>
             {
                 { 300.0, 3000000 },
                 { 400.5, 4005000 },
@@ -260,7 +260,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, long> GetFromMillisecondsWithLongData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, long>
             {
                 { 300, 3000000 },
                 { 400, 4000000 },
@@ -275,7 +275,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<double, long> GetFromSecondsWithDoubleData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<double, long>
             {
                 { 30.0, 300000000 },
                 { 40.5, 405000000 },
@@ -292,7 +292,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, long> GetFromSecondsWithLongData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, long>
             {
                 { 30, 300000000 },
                 { 40, 400000000 },
@@ -307,7 +307,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<double, long> GetFromMinutesWithDoubleData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<double, long>
             {
                 { 30.0, 18000000000 },
                 { 40.5, 24300000000 },
@@ -324,7 +324,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, long> GetFromMinutesWithLongData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, long>
             {
                 { 30, 18000000000 },
                 { 40, 24000000000 },
@@ -339,7 +339,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<double, long> GetFromHoursWithDoubleData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<double, long>
             {
                 { 3.0, 108000000000 },
                 { 4.5, 162000000000 },
@@ -356,7 +356,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, long> GetFromHoursWithLongData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, long>
             {
                 { 3, 108000000000 },
                 { 4, 144000000000 },
@@ -371,7 +371,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, string> GetToStringData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, string>
             {
                 { 0, "0 second(s)" },
                 { 18046875, "1.8046875 second(s)" },
@@ -384,7 +384,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, long, bool> GetEqualsData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, long, bool>
             {
                 { 0, 0, true },
                 { 0, 1, false },
@@ -402,7 +402,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, long, int> GetCompareToData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, long, int>
             {
                 { 0, 0, 0 },
                 { 0, 1, -1 },
@@ -436,7 +436,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, long> GetNegateData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, long>
             {
                 { 0, 0 },
                 { 1, -1 },
@@ -446,7 +446,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, long, long> GetAddTicksData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, long, long>
             {
                 { 0, 0, 0 },
                 { 1, 2, 3 },
@@ -458,7 +458,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, double, long> GetAddMillisecondsWithDoubleData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, double, long>
             {
                 { 0, 0.0, 0 },
                 { 1, 2.0, 20001 },
@@ -474,7 +474,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, long, long> GetAddMillisecondsWithLongData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, long, long>
             {
                 { 0, 0, 0 },
                 { 1, 2, 20001 },
@@ -486,7 +486,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, double, long> GetAddSecondsWithDoubleData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, double, long>
             {
                 { 0, 0.0, 0 },
                 { 1, 2.0, 20000001 },
@@ -502,7 +502,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, long, long> GetAddSecondsWithLongData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, long, long>
             {
                 { 0, 0, 0 },
                 { 1, 2, 20000001 },
@@ -514,7 +514,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, double, long> GetAddMinutesWithDoubleData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, double, long>
             {
                 { 0, 0.0, 0 },
                 { 1, 2.0, 1200000001 },
@@ -530,7 +530,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, long, long> GetAddMinutesWithLongData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, long, long>
             {
                 { 0, 0, 0 },
                 { 1, 2, 1200000001 },
@@ -542,7 +542,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, double, long> GetAddHoursWithDoubleData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, double, long>
             {
                 { 0, 0.0, 0 },
                 { 1, 2.0, 72000000001 },
@@ -558,7 +558,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, long, long> GetAddHoursWithLongData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, long, long>
             {
                 { 0, 0, 0 },
                 { 1, 2, 72000000001 },
@@ -570,7 +570,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, long, long> GetSubtractTicksData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, long, long>
             {
                 { 0, 0, 0 },
                 { 1, 2, -1 },
@@ -582,7 +582,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, double, long> GetSubtractMillisecondsWithDoubleData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, double, long>
             {
                 { 0, 0.0, 0 },
                 { 1, 2.0, -19999 },
@@ -598,7 +598,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, long, long> GetSubtractMillisecondsWithLongData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, long, long>
             {
                 { 0, 0, 0 },
                 { 1, 2, -19999 },
@@ -610,7 +610,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, double, long> GetSubtractSecondsWithDoubleData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, double, long>
             {
                 { 0, 0.0, 0 },
                 { 1, 2.0, -19999999 },
@@ -626,7 +626,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, long, long> GetSubtractSecondsWithLongData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, long, long>
             {
                 { 0, 0, 0 },
                 { 1, 2, -19999999 },
@@ -638,7 +638,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, double, long> GetSubtractMinutesWithDoubleData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, double, long>
             {
                 { 0, 0.0, 0 },
                 { 1, 2.0, -1199999999 },
@@ -654,7 +654,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, long, long> GetSubtractMinutesWithLongData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, long, long>
             {
                 { 0, 0, 0 },
                 { 1, 2, -1199999999 },
@@ -666,7 +666,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, double, long> GetSubtractHoursWithDoubleData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, double, long>
             {
                 { 0, 0.0, 0 },
                 { 1, 2.0, -71999999999 },
@@ -682,7 +682,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, long, long> GetSubtractHoursWithLongData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, long, long>
             {
                 { 0, 0, 0 },
                 { 1, 2, -71999999999 },
@@ -694,7 +694,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, double, long> GetMultiplyData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, double, long>
             {
                 { 0, 0.0, 0 },
                 { 1, 0.0, 0 },
@@ -714,7 +714,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, double, long> GetDivideData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, double, long>
             {
                 { 0, 1.0, 0 },
                 { 5, 1.0, 5 },
@@ -732,7 +732,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, long> GetTrimToMillisecondData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, long>
             {
                 { 0, 0 },
                 { 1, 0 },
@@ -750,7 +750,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, long> GetTrimToSecondData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, long>
             {
                 { 0, 0 },
                 { 1, 0 },
@@ -768,7 +768,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, long> GetTrimToMinuteData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, long>
             {
                 { 0, 0 },
                 { 1, 0 },
@@ -786,7 +786,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, long> GetTrimToHourData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, long>
             {
                 { 0, 0 },
                 { 1, 0 },
@@ -804,7 +804,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, int> GetSetTicksInMillisecondThrowData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, int>
             {
                 { 1, -1 },
                 { 1, -2 },
@@ -827,7 +827,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, int, long> GetSetTicksInMillisecondData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, int, long>
             {
                 { 0, 0, 0 },
                 { 0, 4567, 4567 },
@@ -847,7 +847,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, int> GetSetMillisecondsInSecondThrowData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, int>
             {
                 { 1, -1 },
                 { 1, -2 },
@@ -870,7 +870,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, int, long> GetSetMillisecondsInSecondData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, int, long>
             {
                 { 0, 0, 0 },
                 { 0, 456, 4560000 },
@@ -890,7 +890,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, int> GetSetSecondsInMinuteThrowData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, int>
             {
                 { 1, -1 },
                 { 1, -2 },
@@ -913,7 +913,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, int, long> GetSetSecondsInMinuteData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, int, long>
             {
                 { 0, 0, 0 },
                 { 0, 45, 450000000 },
@@ -933,7 +933,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, int> GetSetMinutesInHourThrowData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, int>
             {
                 { 1, -1 },
                 { 1, -2 },
@@ -956,7 +956,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, int, long> GetSetMinutesInHourData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, int, long>
             {
                 { 0, 0, 0 },
                 { 0, 45, 27000000000 },
@@ -976,7 +976,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, int> GetSetHoursThrowData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, int>
             {
                 { 1, -1 },
                 { 1, -2 },
@@ -987,7 +987,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.DurationTests
 
         public static TheoryData<long, int, long> GetSetHoursData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<long, int, long>
             {
                 { 0, 0, 0 },
                 { 0, 12, 432000000000 },

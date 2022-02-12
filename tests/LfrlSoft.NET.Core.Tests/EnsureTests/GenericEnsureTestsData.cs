@@ -9,7 +9,7 @@ namespace LfrlSoft.NET.Core.Tests.EnsureTests
     {
         public static TheoryData<int> GetContainsAtLeastPassData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<int>
             {
                 -1,
                 0,
@@ -21,7 +21,7 @@ namespace LfrlSoft.NET.Core.Tests.EnsureTests
 
         public static TheoryData<int> GetContainsAtLeastThrowData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<int>
             {
                 4,
                 5
@@ -30,7 +30,7 @@ namespace LfrlSoft.NET.Core.Tests.EnsureTests
 
         public static TheoryData<int> GetContainsAtMostPassData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<int>
             {
                 3,
                 4,
@@ -40,7 +40,7 @@ namespace LfrlSoft.NET.Core.Tests.EnsureTests
 
         public static TheoryData<int> GetContainsAtMostThrowData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<int>
             {
                 -1,
                 0,
@@ -51,7 +51,7 @@ namespace LfrlSoft.NET.Core.Tests.EnsureTests
 
         public static TheoryData<int> GetContainsExactlyThrowData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<int>
             {
                 2,
                 4
@@ -60,7 +60,7 @@ namespace LfrlSoft.NET.Core.Tests.EnsureTests
 
         public static TheoryData<int, int> GetContainsInRangePassData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<int, int>
             {
                 { 0, 3 },
                 { 1, 3 },
@@ -77,7 +77,7 @@ namespace LfrlSoft.NET.Core.Tests.EnsureTests
 
         public static TheoryData<int, int> GetContainsInRangeThrowData(IFixture fixture)
         {
-            return new()
+            return new TheoryData<int, int>
             {
                 { 0, 2 },
                 { 1, 2 },

@@ -4,11 +4,12 @@ using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlSoft.NET.Core.Chrono;
 using LfrlSoft.NET.Core.Functional;
+using LfrlSoft.NET.TestExtensions;
 using Xunit;
 
 namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedClockTests
 {
-    public class PreciseZonedClockTests : ZonedClockTestsBase
+    public class PreciseZonedClockTests : TestsBase
     {
         [Fact]
         public void Utc_ShouldReturnCorrectResult()
@@ -40,7 +41,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedClockTests
         [InlineData( -2 )]
         public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenMaxIdleTimeInTicksIsLessThanOne(long value)
         {
-            var timeZone = CreateTimeZone();
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
             var action = Lambda.Of( () => new PreciseZonedClock( timeZone, value ) );
             action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
@@ -51,7 +52,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedClockTests
         [InlineData( 12345 )]
         public void Ctor_ShouldReturnCorrectResult(long value)
         {
-            var timeZone = CreateTimeZone();
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
             var sut = new PreciseZonedClock( timeZone, value );
 
             using ( new AssertionScope() )
@@ -64,7 +65,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedClockTests
         [Fact]
         public void DefaultCtor_ShouldReturnCorrectResult()
         {
-            var timeZone = CreateTimeZone();
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
             var sut = new PreciseZonedClock( timeZone );
 
             using ( new AssertionScope() )
@@ -78,7 +79,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedClockTests
         public void GetNow_ShouldReturnCorrectResult()
         {
             var expectedMinTimestamp = new Timestamp( DateTime.UtcNow );
-            var timeZone = CreateTimeZone();
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
             var sut = new PreciseZonedClock( timeZone, Constants.TicksPerDay );
 
             var result = sut.GetNow();
@@ -94,7 +95,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedClockTests
         [Fact]
         public void GetNow_ShouldReturnCorrectResult_WhenMaxIdleTimeInTicksIsExceeded()
         {
-            var timeZone = CreateTimeZone();
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
             var sut = new PreciseZonedClock( timeZone, maxIdleTimeInTicks: 1 );
 
             Task.Delay( TimeSpan.FromMilliseconds( 1 ) ).Wait();
