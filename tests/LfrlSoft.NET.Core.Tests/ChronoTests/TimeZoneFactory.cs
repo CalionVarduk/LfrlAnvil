@@ -164,7 +164,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests
         private static string StringifyOffset(TimeSpan offset)
         {
             var absOffset = offset.Abs();
-            var signText = offset < TimeSpan.Zero ? "-" : "+";
+            var signText = offset < TimeSpan.Zero ? '-' : '+';
             var result = $"{signText}{absOffset.Hours:00}:{absOffset.Minutes:00}";
             return result;
         }

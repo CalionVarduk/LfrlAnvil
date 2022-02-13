@@ -2,6 +2,7 @@
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlSoft.NET.Core.Chrono.Extensions;
+using LfrlSoft.NET.Core.Chrono.Internal;
 
 namespace LfrlSoft.NET.Core.Chrono
 {
@@ -25,7 +26,7 @@ namespace LfrlSoft.NET.Core.Chrono
         public int DayOfYear => Start.DayOfYear;
         public IsoDayOfWeek DayOfWeek => Start.DayOfWeek;
         public TimeZoneInfo TimeZone => Start.TimeZone;
-        public Duration Duration => _duration ?? Duration.FromHours( 24 );
+        public Duration Duration => _duration ?? Duration.FromHours( Constants.HoursPerDay );
         public bool IsUtc => Start.IsUtc;
         public bool IsLocal => Start.IsLocal;
 
@@ -35,8 +36,8 @@ namespace LfrlSoft.NET.Core.Chrono
             var kind = timeZone.GetDateTimeKind();
             dateTime = DateTime.SpecifyKind( dateTime, kind );
 
-            var (start, startDurationOffset) = CreateStartDateTime( dateTime, timeZone );
-            var (end, endDurationOffset) = CreateEndDateTime( dateTime, timeZone );
+            var (start, startDurationOffset) = dateTime.GetStartOfDay().CreateIntervalStart( timeZone );
+            var (end, endDurationOffset) = dateTime.GetEndOfDay().CreateIntervalEnd( timeZone );
             var duration = end.GetDurationOffset( start ).Add( startDurationOffset ).Add( endDurationOffset ).AddTicks( 1 );
 
             return new ZonedDay( start, end, duration );
@@ -62,7 +63,7 @@ namespace LfrlSoft.NET.Core.Chrono
         {
             var start = ZonedDateTime.CreateUtc( utcDateTime.GetStartOfDay() );
             var end = ZonedDateTime.CreateUtc( utcDateTime.GetEndOfDay() );
-            return new ZonedDay( start, end, Duration.FromHours( 24 ) );
+            return new ZonedDay( start, end, Duration.FromHours( Constants.HoursPerDay ) );
         }
 
         [Pure]
@@ -75,22 +76,18 @@ namespace LfrlSoft.NET.Core.Chrono
         [Pure]
         public override string ToString()
         {
-            var value = Start.Value;
-            var startUtcOffset = Start.UtcOffset;
+            var start = Start;
+            var startUtcOffset = start.UtcOffset;
             var endUtcOffset = End.UtcOffset;
 
-            var dateText = $"{value.Year:0000}-{value.Month:00}-{value.Day:00}";
+            var dateText = TextFormatting.StringifyDate( start.Value );
+            var utcOffsetText = TextFormatting.StringifyOffset( start.UtcOffset );
 
-            var startUtcOffsetSign = startUtcOffset < Duration.Zero ? '-' : '+';
-            var utcOffsetText = $"{startUtcOffsetSign}{Math.Abs( startUtcOffset.FullHours ):00}:{startUtcOffset.MinutesInHour:00}";
+            if ( startUtcOffset == endUtcOffset )
+                return $"{dateText} {utcOffsetText} ({TimeZone.Id})";
 
-            if ( startUtcOffset != endUtcOffset )
-            {
-                var endUtcOffsetSign = endUtcOffset < Duration.Zero ? '-' : '+';
-                utcOffsetText += $" {endUtcOffsetSign}{Math.Abs( endUtcOffset.FullHours ):00}:{endUtcOffset.MinutesInHour:00}";
-            }
-
-            return $"{dateText} {utcOffsetText} ({TimeZone.Id})";
+            var endUtcOffsetText = TextFormatting.StringifyOffset( endUtcOffset );
+            return $"{dateText} {utcOffsetText} {endUtcOffsetText} ({TimeZone.Id})";
         }
 
         [Pure]
@@ -263,6 +260,13 @@ namespace LfrlSoft.NET.Core.Chrono
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public ZonedMonth GetMonth()
+        {
+            return ZonedMonth.Create( this );
+        }
+
+        [Pure]
         public Bounds<DateTime>? GetIntersectingInvalidityRange()
         {
             var start = Start;
@@ -384,57 +388,6 @@ namespace LfrlSoft.NET.Core.Chrono
         public static bool operator >=(ZonedDay a, ZonedDay b)
         {
             return a.CompareTo( b ) >= 0;
-        }
-
-        [Pure]
-        private static (ZonedDateTime DateTime, Duration DurationOffset) CreateStartDateTime(DateTime value, TimeZoneInfo timeZone)
-        {
-            value = value.GetStartOfDay();
-
-            var startInvalidity = timeZone.GetContainingInvalidityRange( value );
-            if ( startInvalidity is not null )
-            {
-                value = DateTime.SpecifyKind( startInvalidity.Value.Max.AddTicks( 1 ), value.Kind );
-                return (ZonedDateTime.CreateUnsafe( value, timeZone ), Duration.Zero);
-            }
-
-            var result = ZonedDateTime.CreateUnsafe( value, timeZone );
-            var ambiguousResult = result.GetOppositeAmbiguousDateTime();
-            if ( ambiguousResult is null )
-                return (result, Duration.Zero);
-
-            var activeRule = timeZone.GetActiveAdjustmentRule( value )!;
-            var transitionTime = activeRule.GetTransitionTimeWithAmbiguity();
-
-            var durationOffset = new Duration( transitionTime.TimeOfDay.TimeOfDay )
-                .SubtractTicks( activeRule.DaylightDelta.Abs().Ticks );
-
-            return (result.Timestamp < ambiguousResult.Value.Timestamp ? result : ambiguousResult.Value, durationOffset);
-        }
-
-        [Pure]
-        private static (ZonedDateTime DateTime, Duration DurationOffset) CreateEndDateTime(DateTime value, TimeZoneInfo timeZone)
-        {
-            value = value.GetEndOfDay();
-
-            var startInvalidity = timeZone.GetContainingInvalidityRange( value );
-            if ( startInvalidity is not null )
-            {
-                value = DateTime.SpecifyKind( startInvalidity.Value.Min.AddTicks( -1 ), value.Kind );
-                return (ZonedDateTime.CreateUnsafe( value, timeZone ), Duration.Zero);
-            }
-
-            var result = ZonedDateTime.CreateUnsafe( value, timeZone );
-            var ambiguousResult = result.GetOppositeAmbiguousDateTime();
-            if ( ambiguousResult is null )
-                return (result, Duration.Zero);
-
-            var activeRule = timeZone.GetActiveAdjustmentRule( value )!;
-            var transitionTime = activeRule.GetTransitionTimeWithAmbiguity();
-
-            var durationOffset = new Duration( -transitionTime.TimeOfDay.TimeOfDay );
-
-            return (result.Timestamp > ambiguousResult.Value.Timestamp ? result : ambiguousResult.Value, durationOffset);
         }
     }
 }

@@ -230,13 +230,13 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDateTimeTests
                 new DateTime( 2021, 8, 5, 1, 7, 3, 67 ).AddTicks( 9870 ));
 
             var tz1 = TimeZoneFactory.Create(
-                3,
+                utcOffsetInHours: 3,
                 TimeZoneFactory.CreateInfiniteRule(
                     transitionStart: new DateTime( 1, 3, 26, 12, 0, 0 ),
                     transitionEnd: new DateTime( 1, 9, 26, 12, 0, 0 ) ) );
 
             var tz2 = TimeZoneFactory.Create(
-                -5,
+                utcOffsetInHours: -5,
                 TimeZoneFactory.CreateInfiniteRule(
                     transitionStart: new DateTime( 1, 3, 26, 12, 0, 0 ),
                     transitionEnd: new DateTime( 1, 9, 26, 12, 0, 0 ) ) );
@@ -1132,7 +1132,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDateTimeTests
         public static TheoryData<DateTime, TimeZoneInfo, Period, DateTime> GetAddWithPeriodData(IFixture fixture)
         {
             var dsTimeZone = TimeZoneFactory.Create(
-                1,
+                utcOffsetInHours: 1,
                 TimeZoneFactory.CreateInfiniteRule(
                     transitionStart: new DateTime( 1, 8, 26, 12, 0, 0 ),
                     transitionEnd: new DateTime( 1, 10, 26, 12, 0, 0 ) ) );
@@ -1254,7 +1254,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDateTimeTests
             IFixture fixture)
         {
             var timeZone = TimeZoneFactory.Create(
-                1,
+                utcOffsetInHours: 1,
                 TimeZoneFactory.CreateInfiniteRule(
                     transitionStart: new DateTime( 1, 8, 26, 12, 0, 0 ),
                     transitionEnd: new DateTime( 1, 10, 26, 12, 0, 0 ) ) );
@@ -1323,7 +1323,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDateTimeTests
         public static TheoryData<DateTime, TimeZoneInfo, Period> GetAddWithPeriodThrowData(IFixture fixture)
         {
             var timeZoneWithInvalidity = TimeZoneFactory.Create(
-                1,
+                utcOffsetInHours: 1,
                 TimeZoneFactory.CreateInfiniteRule(
                     transitionStart: new DateTime( 1, 8, 26, 12, 0, 0 ),
                     transitionEnd: new DateTime( 1, 10, 26, 12, 0, 0 ) ) );
@@ -1373,13 +1373,6 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDateTimeTests
                     new DateTime( 2020, 6, 1, 7, 24, 33, 492 ).AddTicks( 5992 ),
                     PeriodUnits.All,
                     new Period( 1, 2, 3, 4, 5, 6, 7, 8, 9 )
-                },
-                {
-                    new DateTime( 2020, 6, 1, 7, 24, 33, 492 ).AddTicks( 5992 ),
-                    timeZone,
-                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                    PeriodUnits.All,
-                    new Period( -1, -2, -3, -4, -5, -6, -7, -8, -9 )
                 },
                 {
                     new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
@@ -1637,7 +1630,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDateTimeTests
             var simpleTimeZone = TimeZoneFactory.Create( 1 );
 
             var timeZoneWithInvalidity = TimeZoneFactory.Create(
-                1,
+                utcOffsetInHours: 1,
                 TimeZoneFactory.CreateRule(
                     start: DateTime.MinValue,
                     end: new DateTime( 2020, 1, 1 ),
@@ -1645,7 +1638,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDateTimeTests
                     transitionEnd: new DateTime( 1, 10, 26, 12, 0, 0 ) ) );
 
             var timeZoneWithYearOverlapInvalidity = TimeZoneFactory.Create(
-                1,
+                utcOffsetInHours: 1,
                 TimeZoneFactory.CreateRule(
                     start: DateTime.MinValue,
                     end: new DateTime( 2020, 1, 1 ),
@@ -1738,7 +1731,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDateTimeTests
         public static TheoryData<DateTime, TimeZoneInfo, bool, int, DateTime> GetSetYearWithAmbiguityData(IFixture fixture)
         {
             var timeZone = TimeZoneFactory.Create(
-                1,
+                utcOffsetInHours: 1,
                 TimeZoneFactory.CreateInfiniteRule(
                     transitionStart: new DateTime( 1, 8, 26, 12, 0, 0 ),
                     transitionEnd: new DateTime( 1, 10, 26, 12, 0, 0 ) ) );
@@ -1794,13 +1787,13 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDateTimeTests
             var simpleTimeZone = TimeZoneFactory.Create( 1 );
 
             var timeZoneWithInvalidity = TimeZoneFactory.Create(
-                1,
+                utcOffsetInHours: 1,
                 TimeZoneFactory.CreateInfiniteRule(
                     transitionStart: new DateTime( 1, 4, 26, 12, 0, 0 ),
                     transitionEnd: new DateTime( 1, 10, 26, 12, 0, 0 ) ) );
 
             var timeZoneWithMonthOverlapInvalidity = TimeZoneFactory.Create(
-                1,
+                utcOffsetInHours: 1,
                 TimeZoneFactory.CreateInfiniteRule(
                     transitionStart: new DateTime( 1, 4, 30, 23, 30, 0 ),
                     transitionEnd: new DateTime( 1, 10, 26, 12, 0, 0 ) ) );
@@ -1903,7 +1896,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDateTimeTests
         public static TheoryData<DateTime, TimeZoneInfo, bool, IsoMonthOfYear, DateTime> GetSetMonthWithAmbiguityData(IFixture fixture)
         {
             var timeZone = TimeZoneFactory.Create(
-                1,
+                utcOffsetInHours: 1,
                 TimeZoneFactory.CreateInfiniteRule(
                     transitionStart: new DateTime( 1, 8, 26, 12, 0, 0 ),
                     transitionEnd: new DateTime( 1, 10, 26, 12, 0, 0 ) ) );
@@ -1950,13 +1943,13 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDateTimeTests
             var simpleTimeZone = TimeZoneFactory.Create( 1 );
 
             var timeZoneWithInvalidity = TimeZoneFactory.Create(
-                1,
+                utcOffsetInHours: 1,
                 TimeZoneFactory.CreateInfiniteRule(
                     transitionStart: new DateTime( 1, 8, 16, 12, 0, 0 ),
                     transitionEnd: new DateTime( 1, 10, 26, 12, 0, 0 ) ) );
 
             var timeZoneWithDayOverlapInvalidity = TimeZoneFactory.Create(
-                1,
+                utcOffsetInHours: 1,
                 TimeZoneFactory.CreateInfiniteRule(
                     transitionStart: new DateTime( 1, 8, 15, 23, 30, 0 ),
                     transitionEnd: new DateTime( 1, 10, 26, 12, 0, 0 ) ) );
@@ -2053,7 +2046,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDateTimeTests
         public static TheoryData<DateTime, TimeZoneInfo, bool, int, DateTime> GetSetDayOfMonthWithAmbiguityData(IFixture fixture)
         {
             var timeZone = TimeZoneFactory.Create(
-                1,
+                utcOffsetInHours: 1,
                 TimeZoneFactory.CreateInfiniteRule(
                     transitionStart: new DateTime( 1, 8, 26, 12, 0, 0 ),
                     transitionEnd: new DateTime( 1, 10, 26, 12, 0, 0 ) ) );
@@ -2132,13 +2125,13 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDateTimeTests
             var simpleTimeZone = TimeZoneFactory.Create( 1 );
 
             var timeZoneWithInvalidity = TimeZoneFactory.Create(
-                1,
+                utcOffsetInHours: 1,
                 TimeZoneFactory.CreateInfiniteRule(
                     transitionStart: new DateTime( 1, 1, 16, 12, 0, 0 ),
                     transitionEnd: new DateTime( 1, 10, 26, 12, 0, 0 ) ) );
 
             var timeZoneWithDayOverlapInvalidity = TimeZoneFactory.Create(
-                1,
+                utcOffsetInHours: 1,
                 TimeZoneFactory.CreateInfiniteRule(
                     transitionStart: new DateTime( 1, 1, 15, 23, 30, 0 ),
                     transitionEnd: new DateTime( 1, 10, 26, 12, 0, 0 ) ) );
@@ -2271,7 +2264,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDateTimeTests
         public static TheoryData<DateTime, TimeZoneInfo, bool, int, DateTime> GetSetDayOfYearWithAmbiguityData(IFixture fixture)
         {
             var timeZone = TimeZoneFactory.Create(
-                1,
+                utcOffsetInHours: 1,
                 TimeZoneFactory.CreateInfiniteRule(
                     transitionStart: new DateTime( 1, 8, 26, 12, 0, 0 ),
                     transitionEnd: new DateTime( 1, 10, 26, 12, 0, 0 ) ) );
@@ -2328,7 +2321,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDateTimeTests
             var simpleTimeZone = TimeZoneFactory.Create( 1 );
 
             var timeZoneWithInvalidity = TimeZoneFactory.Create(
-                1,
+                utcOffsetInHours: 1,
                 TimeZoneFactory.CreateInfiniteRule(
                     transitionStart: new DateTime( 1, 8, 26, 12, 0, 0 ),
                     transitionEnd: new DateTime( 1, 10, 26, 12, 0, 0 ) ) );
@@ -2384,7 +2377,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDateTimeTests
             IFixture fixture)
         {
             var timeZone = TimeZoneFactory.Create(
-                1,
+                utcOffsetInHours: 1,
                 TimeZoneFactory.CreateInfiniteRule(
                     transitionStart: new DateTime( 1, 8, 26, 12, 0, 0 ),
                     transitionEnd: new DateTime( 1, 10, 26, 12, 0, 0 ) ) );
@@ -2453,7 +2446,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDateTimeTests
         public static TheoryData<DateTime, TimeZoneInfo, TimeOfDay> GetSetTimeOfDayThrowData(IFixture fixture)
         {
             var timeZoneWithInvalidity = TimeZoneFactory.Create(
-                1,
+                utcOffsetInHours: 1,
                 TimeZoneFactory.CreateInfiniteRule(
                     transitionStart: new DateTime( 1, 8, 26, 12, 0, 0 ),
                     transitionEnd: new DateTime( 1, 10, 26, 12, 0, 0 ) ) );

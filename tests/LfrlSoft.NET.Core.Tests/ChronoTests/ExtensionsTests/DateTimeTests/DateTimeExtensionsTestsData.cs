@@ -468,5 +468,237 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ExtensionsTests.DateTimeTests
                 }
             };
         }
+
+        public static TheoryData<DateTime, DateTime, PeriodUnits, Period> GetGetPeriodOffsetData(
+            IFixture fixture)
+        {
+            return new TheoryData<DateTime, DateTime, PeriodUnits, Period>
+            {
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    PeriodUnits.All,
+                    Period.Empty
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 6, 1, 7, 24, 33, 492 ).AddTicks( 5992 ),
+                    PeriodUnits.All,
+                    new Period( 1, 2, 3, 4, 5, 6, 7, 8, 9 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.All,
+                    new Period( 0, 10, 0, 5, 21, 0, 50, 49, 9900 )
+                },
+                {
+                    new DateTime( 2022, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 9, 28, 13, 31, 41, 501 ).AddTicks( 6002 ),
+                    PeriodUnits.All,
+                    new Period( 1, 10, 3, 6, 22, 58, 58, 998, 9999 )
+                },
+                {
+                    new DateTime( 2022, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Years,
+                    Period.FromYears( 1 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Months,
+                    Period.FromMonths( 10 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Weeks,
+                    Period.FromWeeks( 44 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Days,
+                    Period.FromDays( 309 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Hours,
+                    Period.FromHours( 7437 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Minutes,
+                    Period.FromMinutes( 446220 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Seconds,
+                    Period.FromSeconds( 26773250 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Milliseconds,
+                    Period.FromMilliseconds( 26773250049 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Ticks,
+                    Period.FromTicks( 267732500499900 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Date,
+                    new Period( 0, 10, 0, 5 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Time,
+                    new Period( 7437, 0, 50, 49, 9900 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Seconds | PeriodUnits.Ticks,
+                    Period.FromMonths( 10 ).AddDays( 5 ).AddSeconds( 75650 ).AddTicks( 499900 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2021, 6, 28, 13, 31, 42, 503 ).AddTicks( 6005 ),
+                    PeriodUnits.Months | PeriodUnits.Weeks | PeriodUnits.Hours,
+                    Period.FromMonths( 1 ).AddWeeks( 3 ).AddHours( 166 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 6, 26, 11, 31, 42, 503 ).AddTicks( 6005 ),
+                    PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Minutes,
+                    Period.FromMonths( 14 ).AddMinutes( 58 )
+                }
+            };
+        }
+
+        public static TheoryData<DateTime, DateTime, PeriodUnits, Period> GetGetGreedyPeriodOffsetData(
+            IFixture fixture)
+        {
+            return new TheoryData<DateTime, DateTime, PeriodUnits, Period>
+            {
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    PeriodUnits.All,
+                    Period.Empty
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 6, 1, 7, 24, 33, 492 ).AddTicks( 5992 ),
+                    PeriodUnits.All,
+                    new Period( 1, 2, 3, 4, 5, 6, 7, 8, 9 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.All,
+                    new Period( 1, -2, 0, 6, -3, 1, -10, 50, -100 )
+                },
+                {
+                    new DateTime( 2022, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 9, 28, 13, 31, 41, 501 ).AddTicks( 6002 ),
+                    PeriodUnits.All,
+                    new Period( 2, -1, 0, -2, -1, -1, -1, -1, -1 )
+                },
+                {
+                    new DateTime( 2022, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Years,
+                    Period.FromYears( 2 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Months,
+                    Period.FromMonths( 10 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Weeks,
+                    Period.FromWeeks( 44 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Days,
+                    Period.FromDays( 310 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Hours,
+                    Period.FromHours( 7437 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Minutes,
+                    Period.FromMinutes( 446221 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Seconds,
+                    Period.FromSeconds( 26773250 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Milliseconds,
+                    Period.FromMilliseconds( 26773250050 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Ticks,
+                    Period.FromTicks( 267732500499900 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Date,
+                    new Period( 1, -2, 0, 6 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Time,
+                    new Period( 7437, 1, -10, 50, -100 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                    PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Seconds | PeriodUnits.Ticks,
+                    Period.FromMonths( 10 ).AddDays( 6 ).SubtractSeconds( 10750 ).AddTicks( 499900 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2021, 6, 28, 13, 31, 42, 503 ).AddTicks( 6005 ),
+                    PeriodUnits.Months | PeriodUnits.Weeks | PeriodUnits.Hours,
+                    Period.FromMonths( 2 ).SubtractHours( 49 )
+                },
+                {
+                    new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
+                    new DateTime( 2020, 6, 26, 11, 31, 42, 503 ).AddTicks( 6005 ),
+                    PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Minutes,
+                    Period.FromMonths( 14 ).AddMinutes( 59 )
+                }
+            };
+        }
     }
 }

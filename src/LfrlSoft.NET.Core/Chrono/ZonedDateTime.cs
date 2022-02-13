@@ -83,17 +83,9 @@ namespace LfrlSoft.NET.Core.Chrono
         [Pure]
         public override string ToString()
         {
-            var value = Value;
-            var utcOffset = UtcOffset;
-            var ticksInSecond = value.Millisecond * Constants.TicksPerMillisecond + value.Ticks % Constants.TicksPerMillisecond;
-
-            var dateText = $"{value.Year:0000}-{value.Month:00}-{value.Day:00}";
-            var timeText = $"{value.Hour:00}:{value.Minute:00}:{value.Second:00}.{ticksInSecond:0000000}";
-
-            var utcOffsetSign = utcOffset < Duration.Zero ? '-' : '+';
-            var utcOffsetText = $"{utcOffsetSign}{Math.Abs( utcOffset.FullHours ):00}:{utcOffset.MinutesInHour:00}";
-
-            return $"{dateText} {timeText} {utcOffsetText} ({TimeZone.Id})";
+            var valueText = TextFormatting.StringifyDateTime( Value );
+            var utcOffsetText = TextFormatting.StringifyOffset( UtcOffset );
+            return $"{valueText} {utcOffsetText} ({TimeZone.Id})";
         }
 
         [Pure]
@@ -217,25 +209,17 @@ namespace LfrlSoft.NET.Core.Chrono
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Period GetPeriodOffset(ZonedDateTime start, PeriodUnits units)
         {
-            var endValue = Value;
-            var startValue = start.Value;
-
-            return endValue < startValue
-                ? ZonedDateTimePeriodOffsetCalculator.GetPeriodOffset( endValue, startValue, units ).Negate()
-                : ZonedDateTimePeriodOffsetCalculator.GetPeriodOffset( startValue, endValue, units );
+            return Value.GetPeriodOffset( start.Value, units );
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Period GetGreedyPeriodOffset(ZonedDateTime start, PeriodUnits units)
         {
-            var endValue = Value;
-            var startValue = start.Value;
-
-            return endValue < startValue
-                ? ZonedDateTimePeriodOffsetCalculator.GetGreedyPeriodOffset( endValue, startValue, units ).Negate()
-                : ZonedDateTimePeriodOffsetCalculator.GetGreedyPeriodOffset( startValue, endValue, units );
+            return Value.GetGreedyPeriodOffset( start.Value, units );
         }
 
         [Pure]
@@ -368,6 +352,13 @@ namespace LfrlSoft.NET.Core.Chrono
         public ZonedDay GetDay()
         {
             return ZonedDay.Create( this );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public ZonedMonth GetMonth()
+        {
+            return ZonedMonth.Create( this );
         }
 
         [Pure]

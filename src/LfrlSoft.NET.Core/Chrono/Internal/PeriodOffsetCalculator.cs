@@ -4,10 +4,9 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlSoft.NET.Core.Chrono.Internal
 {
-    internal static class ZonedDateTimePeriodOffsetCalculator
+    internal static class PeriodOffsetCalculator
     {
         [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal static Period GetGreedyPeriodOffset(DateTime start, DateTime end, PeriodUnits units)
         {
             var years = 0;

@@ -193,5 +193,53 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ExtensionsTests.DateTimeTests
             var result = value.SetTimeOfDay( timeOfDay );
             result.Should().Be( expected );
         }
+
+        [Theory]
+        [MethodData( nameof( DateTimeExtensionsTestsData.GetGetPeriodOffsetData ) )]
+        public void GetPeriodOffset_ShouldReturnCorrectResult(
+            DateTime end,
+            DateTime start,
+            PeriodUnits units,
+            Period expected)
+        {
+            var result = end.GetPeriodOffset( start, units );
+            result.Should().BeEquivalentTo( expected );
+        }
+
+        [Theory]
+        [MethodData( nameof( DateTimeExtensionsTestsData.GetGetPeriodOffsetData ) )]
+        public void GetPeriodOffset_WithStartGreaterThanEnd_ShouldReturnCorrectResult(
+            DateTime start,
+            DateTime end,
+            PeriodUnits units,
+            Period expected)
+        {
+            var result = end.GetPeriodOffset( start, units );
+            result.Should().BeEquivalentTo( -expected );
+        }
+
+        [Theory]
+        [MethodData( nameof( DateTimeExtensionsTestsData.GetGetGreedyPeriodOffsetData ) )]
+        public void GetGreedyPeriodOffset_ShouldReturnCorrectResult(
+            DateTime end,
+            DateTime start,
+            PeriodUnits units,
+            Period expected)
+        {
+            var result = end.GetGreedyPeriodOffset( start, units );
+            result.Should().BeEquivalentTo( expected );
+        }
+
+        [Theory]
+        [MethodData( nameof( DateTimeExtensionsTestsData.GetGetGreedyPeriodOffsetData ) )]
+        public void GetGreedyPeriodOffset_WithStartGreaterThanEnd_ShouldReturnCorrectResult(
+            DateTime start,
+            DateTime end,
+            PeriodUnits units,
+            Period expected)
+        {
+            var result = end.GetGreedyPeriodOffset( start, units );
+            result.Should().BeEquivalentTo( -expected );
+        }
     }
 }

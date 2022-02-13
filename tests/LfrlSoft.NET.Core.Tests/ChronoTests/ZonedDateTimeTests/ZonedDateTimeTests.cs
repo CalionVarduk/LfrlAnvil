@@ -1309,6 +1309,19 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDateTimeTests
         }
 
         [Fact]
+        public void GetMonth_ShouldBeEquivalentToZonedMonthCreate()
+        {
+            var dateTime = Fixture.Create<DateTime>();
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
+            var sut = ZonedDateTime.Create( dateTime, timeZone );
+            var expected = ZonedMonth.Create( dateTime, timeZone );
+
+            var result = sut.GetMonth();
+
+            result.Should().Be( expected );
+        }
+
+        [Fact]
         public void DateTimeConversionOperator_ShouldReturnUnderlyingValue()
         {
             var value = Fixture.Create<DateTime>();

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlSoft.NET.Core.Chrono.Internal;
 
 namespace LfrlSoft.NET.Core.Chrono.Extensions
 {
@@ -77,14 +78,14 @@ namespace LfrlSoft.NET.Core.Chrono.Extensions
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static DateTime GetStartOfYear(this DateTime dt)
         {
-            return new DateTime( dt.Year, 1, 1 );
+            return new DateTime( dt.Year, (int)IsoMonthOfYear.January, 1 );
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static DateTime GetEndOfYear(this DateTime dt)
         {
-            return new DateTime( dt.Year, 12, 31 ).GetEndOfDay();
+            return new DateTime( dt.Year, (int)IsoMonthOfYear.December, Constants.DaysInDecember ).GetEndOfDay();
         }
 
         [Pure]
@@ -161,6 +162,75 @@ namespace LfrlSoft.NET.Core.Chrono.Extensions
         public static DateTime SetTimeOfDay(this DateTime dt, TimeOfDay timeOfDay)
         {
             return dt.GetStartOfDay().Add( (TimeSpan)timeOfDay );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static Period GetPeriodOffset(this DateTime end, DateTime start, PeriodUnits units)
+        {
+            return end < start
+                ? PeriodOffsetCalculator.GetPeriodOffset( end, start, units ).Negate()
+                : PeriodOffsetCalculator.GetPeriodOffset( start, end, units );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static Period GetGreedyPeriodOffset(this DateTime end, DateTime start, PeriodUnits units)
+        {
+            return end < start
+                ? PeriodOffsetCalculator.GetGreedyPeriodOffset( end, start, units ).Negate()
+                : PeriodOffsetCalculator.GetGreedyPeriodOffset( start, end, units );
+        }
+
+        [Pure]
+        internal static (ZonedDateTime DateTime, Duration DurationOffset) CreateIntervalStart(
+            this DateTime minStartValue,
+            TimeZoneInfo timeZone)
+        {
+            var startInvalidity = timeZone.GetContainingInvalidityRange( minStartValue );
+            if ( startInvalidity is not null )
+            {
+                minStartValue = DateTime.SpecifyKind( startInvalidity.Value.Max.AddTicks( 1 ), minStartValue.Kind );
+                return (ZonedDateTime.CreateUnsafe( minStartValue, timeZone ), Duration.Zero);
+            }
+
+            var result = ZonedDateTime.CreateUnsafe( minStartValue, timeZone );
+            var ambiguousResult = result.GetOppositeAmbiguousDateTime();
+            if ( ambiguousResult is null )
+                return (result, Duration.Zero);
+
+            var activeRule = timeZone.GetActiveAdjustmentRule( minStartValue )!;
+            var transitionTime = activeRule.GetTransitionTimeWithAmbiguity();
+
+            var durationOffset = new Duration( transitionTime.TimeOfDay.TimeOfDay )
+                .SubtractTicks( activeRule.DaylightDelta.Abs().Ticks );
+
+            return (result.Timestamp < ambiguousResult.Value.Timestamp ? result : ambiguousResult.Value, durationOffset);
+        }
+
+        [Pure]
+        internal static (ZonedDateTime DateTime, Duration DurationOffset) CreateIntervalEnd(
+            this DateTime maxEndValue,
+            TimeZoneInfo timeZone)
+        {
+            var startInvalidity = timeZone.GetContainingInvalidityRange( maxEndValue );
+            if ( startInvalidity is not null )
+            {
+                maxEndValue = DateTime.SpecifyKind( startInvalidity.Value.Min.AddTicks( -1 ), maxEndValue.Kind );
+                return (ZonedDateTime.CreateUnsafe( maxEndValue, timeZone ), Duration.Zero);
+            }
+
+            var result = ZonedDateTime.CreateUnsafe( maxEndValue, timeZone );
+            var ambiguousResult = result.GetOppositeAmbiguousDateTime();
+            if ( ambiguousResult is null )
+                return (result, Duration.Zero);
+
+            var activeRule = timeZone.GetActiveAdjustmentRule( maxEndValue )!;
+            var transitionTime = activeRule.GetTransitionTimeWithAmbiguity();
+
+            var durationOffset = new Duration( -transitionTime.TimeOfDay.TimeOfDay );
+
+            return (result.Timestamp > ambiguousResult.Value.Timestamp ? result : ambiguousResult.Value, durationOffset);
         }
     }
 }

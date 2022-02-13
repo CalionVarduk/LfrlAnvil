@@ -731,6 +731,19 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
             result.Should().BeNull();
         }
 
+        [Fact]
+        public void GetMonth_ShouldBeEquivalentToZonedMonthCreate()
+        {
+            var dateTime = Fixture.Create<DateTime>();
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
+            var sut = ZonedDay.Create( dateTime, timeZone );
+            var expected = ZonedMonth.Create( dateTime, timeZone );
+
+            var result = sut.GetMonth();
+
+            result.Should().Be( expected );
+        }
+
         [Theory]
         [MethodData( nameof( ZonedDayTestsData.GetGetIntersectingInvalidityRangeData ) )]
         public void GetIntersectingInvalidityRange_ShouldReturnCorrectIntersectingInvalidityRange(
