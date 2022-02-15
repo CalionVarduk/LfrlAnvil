@@ -1322,6 +1322,19 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDateTimeTests
         }
 
         [Fact]
+        public void GetYear_ShouldBeEquivalentToZonedYearCreate()
+        {
+            var dateTime = Fixture.Create<DateTime>();
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
+            var sut = ZonedDateTime.Create( dateTime, timeZone );
+            var expected = ZonedYear.Create( dateTime, timeZone );
+
+            var result = sut.GetYear();
+
+            result.Should().Be( expected );
+        }
+
+        [Fact]
         public void DateTimeConversionOperator_ShouldReturnUnderlyingValue()
         {
             var value = Fixture.Create<DateTime>();

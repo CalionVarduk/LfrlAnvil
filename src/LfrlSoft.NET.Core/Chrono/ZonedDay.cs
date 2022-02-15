@@ -267,6 +267,13 @@ namespace LfrlSoft.NET.Core.Chrono
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public ZonedYear GetYear()
+        {
+            return ZonedYear.Create( this );
+        }
+
+        [Pure]
         public Bounds<DateTime>? GetIntersectingInvalidityRange()
         {
             var start = Start;

@@ -4,7 +4,6 @@ using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlSoft.NET.Core.Chrono;
-using LfrlSoft.NET.Core.Chrono.Exceptions;
 using LfrlSoft.NET.Core.Chrono.Extensions;
 using LfrlSoft.NET.Core.Functional;
 using LfrlSoft.NET.TestExtensions;
@@ -616,12 +615,12 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedMonthTests
 
         [Theory]
         [MethodData( nameof( ZonedMonthTestsData.GetAddMonthsData ) )]
-        public void AddMonths_ShouldReturnCorrectResult(DateTime month, TimeZoneInfo timeZone, int daysToAdd, DateTime expectedMonth)
+        public void AddMonths_ShouldReturnCorrectResult(DateTime month, TimeZoneInfo timeZone, int monthsToAdd, DateTime expectedMonth)
         {
             var sut = ZonedMonth.Create( month, timeZone );
             var expected = ZonedMonth.Create( expectedMonth, timeZone );
 
-            var result = sut.AddMonths( daysToAdd );
+            var result = sut.AddMonths( monthsToAdd );
 
             result.Should().BeEquivalentTo( expected );
         }
@@ -811,90 +810,17 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedMonthTests
             result.Should().BeNull();
         }
 
-        [Theory]
-        [MethodData( nameof( ZonedMonthTestsData.GetGetDateTimeData ) )]
-        public void GetDateTime_ShouldReturnCorrectDayWithAddedTimeOfDay(
-            DateTime month,
-            TimeZoneInfo timeZone,
-            int dayOfMonth,
-            TimeOfDay timeOfDay,
-            DateTime expectedValue)
+        [Fact]
+        public void GetYear_ShouldBeEquivalentToZonedYearCreate()
         {
-            var sut = ZonedMonth.Create( month, timeZone );
-            var expected = ZonedDateTime.Create( expectedValue, timeZone );
+            var dateTime = Fixture.Create<DateTime>();
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
+            var sut = ZonedMonth.Create( dateTime, timeZone );
+            var expected = ZonedYear.Create( dateTime, timeZone );
 
-            var result = sut.GetDateTime( dayOfMonth, timeOfDay );
+            var result = sut.GetYear();
 
             result.Should().Be( expected );
-        }
-
-        [Theory]
-        [MethodData( nameof( ZonedMonthTestsData.GetGetDateTimeThrowDueToTimeData ) )]
-        public void GetDateTime_ShouldThrowInvalidZonedDateTimeException_WhenTimeIsInvalid(
-            DateTime month,
-            TimeZoneInfo timeZone,
-            int dayOfMonth,
-            TimeOfDay timeOfDay)
-        {
-            var sut = ZonedMonth.Create( month, timeZone );
-            var action = Lambda.Of( () => sut.GetDateTime( dayOfMonth, timeOfDay ) );
-            action.Should().ThrowExactly<InvalidZonedDateTimeException>();
-        }
-
-        [Theory]
-        [MethodData( nameof( ZonedMonthTestsData.GetGetDateTimeThrowDueToDayData ) )]
-        public void GetDateTime_ShouldThrowArgumentOutOfRangeException_WhenDayIsInvalid(
-            DateTime month,
-            TimeZoneInfo timeZone,
-            int dayOfMonth,
-            TimeOfDay timeOfDay)
-        {
-            var sut = ZonedMonth.Create( month, timeZone );
-            var action = Lambda.Of( () => sut.GetDateTime( dayOfMonth, timeOfDay ) );
-            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
-        }
-
-        [Theory]
-        [MethodData( nameof( ZonedMonthTestsData.GetGetDateTimeData ) )]
-        public void TryGetDateTime_ShouldReturnCorrectDayWithAddedTimeOfDay(
-            DateTime month,
-            TimeZoneInfo timeZone,
-            int dayOfMonth,
-            TimeOfDay timeOfDay,
-            DateTime expectedValue)
-        {
-            var sut = ZonedMonth.Create( month, timeZone );
-            var expected = ZonedDateTime.Create( expectedValue, timeZone );
-
-            var result = sut.TryGetDateTime( dayOfMonth, timeOfDay );
-
-            result.Should().Be( expected );
-        }
-
-        [Theory]
-        [MethodData( nameof( ZonedMonthTestsData.GetGetDateTimeThrowDueToTimeData ) )]
-        public void TryGetDateTime_ShouldReturnNull_WhenTimeIsInvalid(
-            DateTime month,
-            TimeZoneInfo timeZone,
-            int dayOfMonth,
-            TimeOfDay timeOfDay)
-        {
-            var sut = ZonedMonth.Create( month, timeZone );
-            var result = sut.TryGetDateTime( dayOfMonth, timeOfDay );
-            result.Should().BeNull();
-        }
-
-        [Theory]
-        [MethodData( nameof( ZonedMonthTestsData.GetGetDateTimeThrowDueToDayData ) )]
-        public void TryGetDateTime_ShouldReturnNull_WhenDayIsInvalid(
-            DateTime month,
-            TimeZoneInfo timeZone,
-            int dayOfMonth,
-            TimeOfDay timeOfDay)
-        {
-            var sut = ZonedMonth.Create( month, timeZone );
-            var result = sut.TryGetDateTime( dayOfMonth, timeOfDay );
-            result.Should().BeNull();
         }
 
         [Theory]

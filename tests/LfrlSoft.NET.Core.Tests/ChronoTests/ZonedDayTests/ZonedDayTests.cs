@@ -744,6 +744,19 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDayTests
             result.Should().Be( expected );
         }
 
+        [Fact]
+        public void GetYear_ShouldBeEquivalentToZonedYearCreate()
+        {
+            var dateTime = Fixture.Create<DateTime>();
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
+            var sut = ZonedDay.Create( dateTime, timeZone );
+            var expected = ZonedYear.Create( dateTime, timeZone );
+
+            var result = sut.GetYear();
+
+            result.Should().Be( expected );
+        }
+
         [Theory]
         [MethodData( nameof( ZonedDayTestsData.GetGetIntersectingInvalidityRangeData ) )]
         public void GetIntersectingInvalidityRange_ShouldReturnCorrectIntersectingInvalidityRange(

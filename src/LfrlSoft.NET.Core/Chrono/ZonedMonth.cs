@@ -291,16 +291,9 @@ namespace LfrlSoft.NET.Core.Chrono
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public ZonedDateTime GetDateTime(int dayOfMonth, TimeOfDay timeOfDay)
+        public ZonedYear GetYear()
         {
-            return GetDayOfMonth( dayOfMonth ).GetDateTime( timeOfDay );
-        }
-
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public ZonedDateTime? TryGetDateTime(int dayOfMonth, TimeOfDay timeOfDay)
-        {
-            return TryGetDayOfMonth( dayOfMonth )?.TryGetDateTime( timeOfDay ) ?? null;
+            return ZonedYear.Create( this );
         }
 
         [Pure]

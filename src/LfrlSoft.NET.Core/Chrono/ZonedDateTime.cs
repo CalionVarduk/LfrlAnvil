@@ -363,6 +363,13 @@ namespace LfrlSoft.NET.Core.Chrono
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public ZonedYear GetYear()
+        {
+            return ZonedYear.Create( this );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static explicit operator DateTime(ZonedDateTime source)
         {
             return source.Value;
