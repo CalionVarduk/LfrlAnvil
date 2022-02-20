@@ -52,6 +52,22 @@ namespace LfrlAnvil.Chrono.Tests.ExtensionsTests.TimestampProviderTests
             result.Should().Be( expected );
         }
 
+        [Fact]
+        public void IsFrozen_ShouldReturnTrue_WhenProviderIsOfFrozenTimestampProviderType()
+        {
+            var sut = new FrozenTimestampProvider( default );
+            var result = sut.IsFrozen();
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public void IsFrozen_ShouldReturnFalse_WhenProviderIsNotOfFrozenTimestampProviderType()
+        {
+            var sut = new TimestampProvider();
+            var result = sut.IsFrozen();
+            result.Should().BeFalse();
+        }
+
         [Theory]
         [InlineData( 100, 90, -10 )]
         [InlineData( 100, 100, 0 )]

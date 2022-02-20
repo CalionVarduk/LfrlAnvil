@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Chrono.Internal;
 
 namespace LfrlAnvil.Chrono.Extensions
 {
@@ -42,7 +41,12 @@ namespace LfrlAnvil.Chrono.Extensions
             return dateTime.Timestamp > clock.GetNow().Timestamp;
         }
 
-        // TODO: IsFrozen
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static bool IsFrozen(this IZonedClock clock)
+        {
+            return clock is FrozenZonedClock;
+        }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]

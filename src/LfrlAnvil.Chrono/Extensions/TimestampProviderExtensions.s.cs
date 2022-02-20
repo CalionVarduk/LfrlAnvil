@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Chrono.Internal;
 
 namespace LfrlAnvil.Chrono.Extensions
 {
@@ -27,7 +26,12 @@ namespace LfrlAnvil.Chrono.Extensions
             return timestamp > provider.GetNow();
         }
 
-        // TODO: IsFrozen
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static bool IsFrozen(this ITimestampProvider provider)
+        {
+            return provider is FrozenTimestampProvider;
+        }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
