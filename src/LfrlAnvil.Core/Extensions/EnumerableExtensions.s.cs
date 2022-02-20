@@ -250,8 +250,19 @@ namespace LfrlAnvil.Extensions
             return new MemoizedEnumerable<T>( source );
         }
 
-        // TODO: IsMaterialized
-        // TODO: IsMemoized
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static bool IsMaterialized<T>(this IEnumerable<T> source)
+        {
+            return source is IReadOnlyCollection<T>;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static bool IsMemoized<T>(this IEnumerable<T> source)
+        {
+            return source is MemoizedEnumerable<T>;
+        }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -263,8 +274,7 @@ namespace LfrlAnvil.Extensions
         [Pure]
         public static bool SetEquals<T>(this IEnumerable<T> source, IEnumerable<T> other, IEqualityComparer<T> comparer)
         {
-            // TODO: optimize for ISet<T>
-            var sourceSet = source.ToHashSet( comparer );
+            var sourceSet = source as ISet<T> ?? source.ToHashSet( comparer );
             var otherSet = new HashSet<T>( comparer );
 
             foreach ( var o in other )
@@ -303,7 +313,6 @@ namespace LfrlAnvil.Extensions
         // TODO: VisitMany with stopPredicate (predicate causes the node to no longer emit its own subtrees)
         // TODO: this new VisitMany can also be applied to ObjectExtensions
 
-        // TODO: verify if MaybeNullWhen attribute is used correctly in all methods with optional out parameters
         public static bool TryAggregate<T>(this IEnumerable<T> source, Func<T, T, T> func, [MaybeNullWhen( false )] out T result)
         {
             using var enumerator = source.GetEnumerator();

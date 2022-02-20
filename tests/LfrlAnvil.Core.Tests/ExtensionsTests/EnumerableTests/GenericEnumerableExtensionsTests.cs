@@ -378,6 +378,54 @@ namespace LfrlAnvil.Tests.ExtensionsTests.EnumerableTests
             @delegate.Verify().CallCount.Should().Be( iterationCount == 0 ? 0 : sourceCount );
         }
 
+        [Fact]
+        public void IsMaterialized_ShouldReturnTrue_WhenSourceIsReadOnlyCollection()
+        {
+            var sut = Fixture.CreateMany<T>().ToList();
+            var result = sut.IsMaterialized();
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public void IsMaterialized_ShouldReturnFalse_WhenSourceIsNotReadOnlyCollection()
+        {
+            var sut = Fixture.CreateMany<T>();
+            var result = sut.IsMaterialized();
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public void IsMaterialized_ShouldReturnFalse_WhenSourceIsMemoized()
+        {
+            var sut = Fixture.CreateMany<T>().Memoize();
+            var result = sut.IsMaterialized();
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public void IsMemoized_ShouldReturnTrue_WhenSourceIsMemoized()
+        {
+            var sut = Fixture.CreateMany<T>().Memoize();
+            var result = sut.IsMemoized();
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public void IsMemoized_ShouldReturnFalse_WhenSourceIsNotMemoizedAndNotMaterialized()
+        {
+            var sut = Fixture.CreateMany<T>();
+            var result = sut.IsMemoized();
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public void IsMemoized_ShouldReturnFalse_WhenSourceIsMaterialized()
+        {
+            var sut = Fixture.CreateMany<T>().ToList();
+            var result = sut.IsMemoized();
+            result.Should().BeFalse();
+        }
+
         [Theory]
         [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetSetEqualsData ) )]
         public void SetEquals_ShouldReturnCorrectResult(IEnumerable<T> sut, IEnumerable<T> other, bool expected)

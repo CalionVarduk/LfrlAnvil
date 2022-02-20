@@ -334,7 +334,9 @@ namespace LfrlAnvil.Tests.ExtensionsTests.EnumerableTests
                 { new[] { _1, _2, _3 }, new[] { _1, _2 }, false },
                 { new[] { _1, _2, _3 }, new[] { _3, _1 }, false },
                 { new[] { _1, _2, _3 }, new[] { _2 }, false },
-                { new[] { _1, _2 }, new[] { _2, _3 }, false }
+                { new[] { _1, _2 }, new[] { _2, _3 }, false },
+                { new HashSet<T> { _1 }, new[] { _1 }, true },
+                { new HashSet<T> { _1 }, new[] { _2 }, false }
             };
         }
 
