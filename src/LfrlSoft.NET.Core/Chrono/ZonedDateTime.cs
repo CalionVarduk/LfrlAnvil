@@ -356,6 +356,13 @@ namespace LfrlSoft.NET.Core.Chrono
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public ZonedWeek GetWeek(IsoDayOfWeek weekStart = IsoDayOfWeek.Monday)
+        {
+            return ZonedWeek.Create( this, weekStart );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public ZonedMonth GetMonth()
         {
             return ZonedMonth.Create( this );

@@ -17,7 +17,7 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedYearTests
     public class ZonedYearTests : TestsBase
     {
         [Fact]
-        public void Default_ShouldReturnStartOfUnixEpochMonthInUtcTimeZone()
+        public void Default_ShouldReturnStartOfUnixEpochYearInUtcTimeZone()
         {
             var result = default( ZonedYear );
             var expectedStart = ZonedDateTime.CreateUtc( DateTime.UnixEpoch );
@@ -749,6 +749,103 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedYearTests
             var sut = ZonedYear.Create( year, timeZone );
             var result = sut.TryGetDayOfYear( dayOfYear );
             result.Should().BeNull();
+        }
+
+        [Theory]
+        [InlineData( IsoDayOfWeek.Monday )]
+        [InlineData( IsoDayOfWeek.Tuesday )]
+        [InlineData( IsoDayOfWeek.Wednesday )]
+        [InlineData( IsoDayOfWeek.Thursday )]
+        [InlineData( IsoDayOfWeek.Friday )]
+        [InlineData( IsoDayOfWeek.Saturday )]
+        [InlineData( IsoDayOfWeek.Sunday )]
+        public void GetWeekOfYear_ShouldBeEquivalentToToZonedWeekCreate(IsoDayOfWeek weekStart)
+        {
+            var dateTime = Fixture.Create<DateTime>();
+            var weekOfYear = Fixture.CreatePositiveInt32() % 50 + 1;
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
+            var sut = ZonedYear.Create( dateTime, timeZone );
+            var expected = ZonedWeek.Create( dateTime.Year, weekOfYear, timeZone, weekStart );
+
+            var result = sut.GetWeekOfYear( weekOfYear, weekStart );
+
+            result.Should().Be( expected );
+        }
+
+        [Theory]
+        [InlineData( IsoDayOfWeek.Monday )]
+        [InlineData( IsoDayOfWeek.Tuesday )]
+        [InlineData( IsoDayOfWeek.Wednesday )]
+        [InlineData( IsoDayOfWeek.Thursday )]
+        [InlineData( IsoDayOfWeek.Friday )]
+        [InlineData( IsoDayOfWeek.Saturday )]
+        [InlineData( IsoDayOfWeek.Sunday )]
+        public void TryGetWeekOfYear_ShouldBeEquivalentToToZonedWeekCreate(IsoDayOfWeek weekStart)
+        {
+            var dateTime = Fixture.Create<DateTime>();
+            var weekOfYear = Fixture.CreatePositiveInt32() % 50 + 1;
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
+            var sut = ZonedYear.Create( dateTime, timeZone );
+            var expected = ZonedWeek.Create( dateTime.Year, weekOfYear, timeZone, weekStart );
+
+            var result = sut.TryGetWeekOfYear( weekOfYear, weekStart );
+
+            result.Should().Be( expected );
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedYearTestsData.GetGetWeekCountData ) )]
+        public void GetWeekCount_ShouldReturnCorrectResult(DateTime year, TimeZoneInfo timeZone, IsoDayOfWeek weekStart, int expected)
+        {
+            var sut = ZonedYear.Create( year, timeZone );
+            var result = sut.GetWeekCount( weekStart );
+            result.Should().Be( expected );
+        }
+
+        [Theory]
+        [InlineData( 0 )]
+        [InlineData( 8 )]
+        public void GetWeekCount_ShouldThrowArgumentOutOfRangeException_WhenWeekStartIsInvalid(int weekStart)
+        {
+            var dateTime = Fixture.Create<DateTime>();
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
+            var sut = ZonedYear.Create( dateTime, timeZone );
+            var action = Lambda.Of( () => sut.GetWeekCount( (IsoDayOfWeek)weekStart ) );
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedYearTestsData.GetGetAllWeeksData ) )]
+        public void GetAllWeeks_ShouldReturnCorrectWeekCollection(
+            DateTime year,
+            TimeZoneInfo timeZone,
+            IsoDayOfWeek weekStart,
+            int expectedWeekCount)
+        {
+            var sut = ZonedYear.Create( year, timeZone );
+
+            var result = sut.GetAllWeeks( weekStart ).ToList();
+
+            using ( new AssertionScope() )
+            {
+                result.Select( w => new { w.Year, w.Start.DayOfWeek, w.TimeZone } )
+                    .Should()
+                    .AllBeEquivalentTo( new { sut.Year, DayOfWeek = weekStart, sut.TimeZone } );
+
+                result.Select( w => w.WeekOfYear ).Should().BeSequentiallyEqualTo( Enumerable.Range( 1, expectedWeekCount ) );
+            }
+        }
+
+        [Theory]
+        [InlineData( 0 )]
+        [InlineData( 8 )]
+        public void GetAllWeeks_ShouldThrowArgumentOutOfRangeException_WhenWeekStartIsInvalid(int weekStart)
+        {
+            var dateTime = Fixture.Create<DateTime>();
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
+            var sut = ZonedYear.Create( dateTime, timeZone );
+            var action = Lambda.Of( () => sut.GetAllWeeks( (IsoDayOfWeek)weekStart ) );
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Fact]

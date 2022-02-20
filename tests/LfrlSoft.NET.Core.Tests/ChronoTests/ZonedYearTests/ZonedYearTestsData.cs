@@ -489,6 +489,41 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedYearTests
             };
         }
 
+        public static TheoryData<DateTime, TimeZoneInfo, IsoDayOfWeek, int> GetGetWeekCountData(IFixture fixture)
+        {
+            var timeZone = TimeZoneFactory.CreateRandom( fixture );
+
+            return new TheoryData<DateTime, TimeZoneInfo, IsoDayOfWeek, int>
+            {
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Monday, 52 },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Tuesday, 52 },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Wednesday, 52 },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Thursday, 52 },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Friday, 52 },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Saturday, 53 },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Sunday, 52 },
+                { new DateTime( 2020, 1, 1 ), timeZone, IsoDayOfWeek.Monday, 53 },
+                { new DateTime( 2020, 1, 1 ), timeZone, IsoDayOfWeek.Tuesday, 52 },
+                { new DateTime( 2020, 1, 1 ), timeZone, IsoDayOfWeek.Wednesday, 52 },
+                { new DateTime( 2020, 1, 1 ), timeZone, IsoDayOfWeek.Thursday, 53 },
+                { new DateTime( 2020, 1, 1 ), timeZone, IsoDayOfWeek.Friday, 53 },
+                { new DateTime( 2020, 1, 1 ), timeZone, IsoDayOfWeek.Saturday, 52 },
+                { new DateTime( 2020, 1, 1 ), timeZone, IsoDayOfWeek.Sunday, 52 },
+                { new DateTime( 2019, 1, 1 ), timeZone, IsoDayOfWeek.Monday, 52 },
+                { new DateTime( 2019, 1, 1 ), timeZone, IsoDayOfWeek.Tuesday, 52 },
+                { new DateTime( 2019, 1, 1 ), timeZone, IsoDayOfWeek.Wednesday, 53 },
+                { new DateTime( 2019, 1, 1 ), timeZone, IsoDayOfWeek.Thursday, 52 },
+                { new DateTime( 2019, 1, 1 ), timeZone, IsoDayOfWeek.Friday, 52 },
+                { new DateTime( 2019, 1, 1 ), timeZone, IsoDayOfWeek.Saturday, 52 },
+                { new DateTime( 2019, 1, 1 ), timeZone, IsoDayOfWeek.Sunday, 52 }
+            };
+        }
+
+        public static TheoryData<DateTime, TimeZoneInfo, IsoDayOfWeek, int> GetGetAllWeeksData(IFixture fixture)
+        {
+            return GetGetWeekCountData( fixture );
+        }
+
         public static TheoryData<DateTime, TimeZoneInfo, int> GetGetAllDaysData(IFixture fixture)
         {
             var timeZone = TimeZoneFactory.CreateRandom( fixture );

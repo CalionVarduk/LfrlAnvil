@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Globalization;
+using LfrlSoft.NET.Core.Chrono.Extensions;
+using LfrlSoft.NET.Core.Chrono.Internal;
 
 namespace LfrlSoft.NET.Core.Chrono.Exceptions
 {
@@ -17,10 +18,19 @@ namespace LfrlSoft.NET.Core.Chrono.Exceptions
 
         private static string CreateMessage(DateTime dateTime, TimeZoneInfo timeZone)
         {
-            var dateTimeText = dateTime.ToString( CultureInfo.InvariantCulture );
+            var dateTimeText = TextFormatting.StringifyDateTime( dateTime );
             var timeZoneText = timeZone.Id;
-            // TODO (LF): add more info i.e. why is it invalid?
-            return $"{dateTimeText} is not a valid datetime in {timeZoneText} timezone.";
+
+            var invalidityRange = timeZone.GetContainingInvalidityRange( dateTime );
+            if ( invalidityRange is null )
+                return $"{dateTimeText} is not a valid datetime in {timeZoneText} timezone.";
+
+            var invalidityMinText = TextFormatting.StringifyDateTime( invalidityRange.Value.Min );
+            var invalidityMaxText = TextFormatting.StringifyDateTime( invalidityRange.Value.Max );
+            var invalidityText = $"{invalidityMinText}, {invalidityMaxText}";
+
+            return
+                $"{dateTimeText} is not a valid datetime in {timeZoneText} timezone because it falls into the [{invalidityText}] range.";
         }
     }
 }

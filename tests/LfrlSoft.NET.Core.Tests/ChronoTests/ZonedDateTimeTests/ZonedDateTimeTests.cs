@@ -1308,6 +1308,26 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedDateTimeTests
             result.Should().Be( expected );
         }
 
+        [Theory]
+        [InlineData( IsoDayOfWeek.Monday )]
+        [InlineData( IsoDayOfWeek.Tuesday )]
+        [InlineData( IsoDayOfWeek.Wednesday )]
+        [InlineData( IsoDayOfWeek.Thursday )]
+        [InlineData( IsoDayOfWeek.Friday )]
+        [InlineData( IsoDayOfWeek.Saturday )]
+        [InlineData( IsoDayOfWeek.Sunday )]
+        public void GetWeek_ShouldBeEquivalentToZonedWeekCreate(IsoDayOfWeek weekStart)
+        {
+            var dateTime = Fixture.Create<DateTime>();
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
+            var sut = ZonedDateTime.Create( dateTime, timeZone );
+            var expected = ZonedWeek.Create( dateTime, timeZone, weekStart );
+
+            var result = sut.GetWeek( weekStart );
+
+            result.Should().Be( expected );
+        }
+
         [Fact]
         public void GetMonth_ShouldBeEquivalentToZonedMonthCreate()
         {

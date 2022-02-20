@@ -371,6 +371,35 @@ namespace LfrlSoft.NET.Core.Chrono
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public ZonedWeek GetWeekOfYear(int weekOfYear, IsoDayOfWeek weekStart = IsoDayOfWeek.Monday)
+        {
+            return ZonedWeek.Create( Year, weekOfYear, TimeZone, weekStart );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public ZonedWeek? TryGetWeekOfYear(int weekOfYear, IsoDayOfWeek weekStart = IsoDayOfWeek.Monday)
+        {
+            return ZonedWeek.TryCreate( Year, weekOfYear, TimeZone, weekStart );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public int GetWeekCount(IsoDayOfWeek weekStart = IsoDayOfWeek.Monday)
+        {
+            Ensure.IsInRange( (int)weekStart, (int)IsoDayOfWeek.Monday, (int)IsoDayOfWeek.Sunday, nameof( weekStart ) );
+            return WeekCalculator.GetWeekCountInYear( Year, weekStart.ToBcl() );
+        }
+
+        [Pure]
+        public IEnumerable<ZonedWeek> GetAllWeeks(IsoDayOfWeek weekStart = IsoDayOfWeek.Monday)
+        {
+            var weekCount = GetWeekCount( weekStart );
+            return GetAllWeeksImpl( weekCount, weekStart );
+        }
+
+        [Pure]
         public IEnumerable<ZonedMonth> GetAllMonths()
         {
             var start = Start;
@@ -480,6 +509,22 @@ namespace LfrlSoft.NET.Core.Chrono
         public static bool operator >=(ZonedYear a, ZonedYear b)
         {
             return a.CompareTo( b ) >= 0;
+        }
+
+        private IEnumerable<ZonedWeek> GetAllWeeksImpl(int weekCount, IsoDayOfWeek weekStart)
+        {
+            var start = Start;
+            var timeZone = start.TimeZone;
+            var bclWeekStart = weekStart.ToBcl();
+            var startOfWeek = WeekCalculator.GetDayInFirstWeekOfYear( start.Year, bclWeekStart ).GetStartOfWeek( bclWeekStart );
+
+            yield return ZonedWeek.Create( startOfWeek, timeZone, weekStart );
+
+            for ( var week = 2; week <= weekCount; ++week )
+            {
+                startOfWeek = startOfWeek.AddTicks( Constants.TicksPerWeek );
+                yield return ZonedWeek.Create( startOfWeek, timeZone, weekStart );
+            }
         }
     }
 }

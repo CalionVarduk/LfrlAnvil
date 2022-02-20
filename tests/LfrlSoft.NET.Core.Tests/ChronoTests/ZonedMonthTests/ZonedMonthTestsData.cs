@@ -1158,6 +1158,80 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedMonthTests
             };
         }
 
+        public static TheoryData<DateTime, TimeZoneInfo, IsoDayOfWeek, int, DateTime> GetGetWeekOfMonthData(IFixture fixture)
+        {
+            var timeZone = TimeZoneFactory.CreateRandom( fixture );
+
+            return new TheoryData<DateTime, TimeZoneInfo, IsoDayOfWeek, int, DateTime>
+            {
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Monday, 1, new DateTime( 2020, 12, 28 ) },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Monday, 2, new DateTime( 2021, 1, 4 ) },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Monday, 3, new DateTime( 2021, 1, 11 ) },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Monday, 4, new DateTime( 2021, 1, 18 ) },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Monday, 5, new DateTime( 2021, 1, 25 ) },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Sunday, 1, new DateTime( 2020, 12, 27 ) },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Sunday, 2, new DateTime( 2021, 1, 3 ) },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Sunday, 3, new DateTime( 2021, 1, 10 ) },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Sunday, 4, new DateTime( 2021, 1, 17 ) },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Sunday, 5, new DateTime( 2021, 1, 24 ) },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Sunday, 6, new DateTime( 2021, 1, 31 ) },
+                { new DateTime( 2021, 2, 1 ), timeZone, IsoDayOfWeek.Monday, 1, new DateTime( 2021, 2, 1 ) },
+                { new DateTime( 2021, 2, 1 ), timeZone, IsoDayOfWeek.Monday, 2, new DateTime( 2021, 2, 8 ) },
+                { new DateTime( 2021, 2, 1 ), timeZone, IsoDayOfWeek.Monday, 3, new DateTime( 2021, 2, 15 ) },
+                { new DateTime( 2021, 2, 1 ), timeZone, IsoDayOfWeek.Monday, 4, new DateTime( 2021, 2, 22 ) },
+                { new DateTime( 2021, 12, 1 ), timeZone, IsoDayOfWeek.Wednesday, 1, new DateTime( 2021, 12, 1 ) },
+                { new DateTime( 2021, 12, 1 ), timeZone, IsoDayOfWeek.Wednesday, 2, new DateTime( 2021, 12, 8 ) },
+                { new DateTime( 2021, 12, 1 ), timeZone, IsoDayOfWeek.Wednesday, 3, new DateTime( 2021, 12, 15 ) },
+                { new DateTime( 2021, 12, 1 ), timeZone, IsoDayOfWeek.Wednesday, 4, new DateTime( 2021, 12, 22 ) },
+                { new DateTime( 2021, 12, 1 ), timeZone, IsoDayOfWeek.Wednesday, 5, new DateTime( 2021, 12, 29 ) },
+                { new DateTime( 2021, 12, 1 ), timeZone, IsoDayOfWeek.Thursday, 1, new DateTime( 2021, 11, 25 ) },
+                { new DateTime( 2021, 12, 1 ), timeZone, IsoDayOfWeek.Thursday, 2, new DateTime( 2021, 12, 2 ) },
+                { new DateTime( 2021, 12, 1 ), timeZone, IsoDayOfWeek.Thursday, 3, new DateTime( 2021, 12, 9 ) },
+                { new DateTime( 2021, 12, 1 ), timeZone, IsoDayOfWeek.Thursday, 4, new DateTime( 2021, 12, 16 ) },
+                { new DateTime( 2021, 12, 1 ), timeZone, IsoDayOfWeek.Thursday, 5, new DateTime( 2021, 12, 23 ) },
+                { new DateTime( 2021, 12, 1 ), timeZone, IsoDayOfWeek.Thursday, 6, new DateTime( 2021, 12, 30 ) }
+            };
+        }
+
+        public static TheoryData<DateTime, TimeZoneInfo, IsoDayOfWeek, int> GetGetWeekOfMonthThrowData(IFixture fixture)
+        {
+            var timeZone = TimeZoneFactory.CreateRandom( fixture );
+
+            return new TheoryData<DateTime, TimeZoneInfo, IsoDayOfWeek, int>
+            {
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Monday, -1 },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Monday, 0 },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Monday, 6 },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Tuesday, 6 },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Wednesday, 6 },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Thursday, 6 },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Friday, 6 },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Saturday, 7 },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Sunday, 7 },
+                { new DateTime( 2021, 2, 1 ), timeZone, IsoDayOfWeek.Monday, 5 },
+                { new DateTime( 2021, 2, 1 ), timeZone, IsoDayOfWeek.Sunday, 6 },
+                { new DateTime( 2021, 5, 1 ), timeZone, IsoDayOfWeek.Monday, 7 },
+                { new DateTime( 2021, 5, 1 ), timeZone, IsoDayOfWeek.Tuesday, 6 },
+                { new DateTime( 2021, 5, 1 ), timeZone, IsoDayOfWeek.Wednesday, 6 },
+                { new DateTime( 2021, 5, 1 ), timeZone, IsoDayOfWeek.Thursday, 6 },
+                { new DateTime( 2021, 5, 1 ), timeZone, IsoDayOfWeek.Friday, 6 },
+                { new DateTime( 2021, 5, 1 ), timeZone, IsoDayOfWeek.Saturday, 6 },
+                { new DateTime( 2021, 5, 1 ), timeZone, IsoDayOfWeek.Sunday, 7 },
+                { new DateTime( 2021, 8, 1 ), timeZone, IsoDayOfWeek.Monday, 7 },
+                { new DateTime( 2021, 8, 1 ), timeZone, IsoDayOfWeek.Tuesday, 7 },
+                { new DateTime( 2021, 8, 1 ), timeZone, IsoDayOfWeek.Wednesday, 6 },
+                { new DateTime( 2021, 10, 1 ), timeZone, IsoDayOfWeek.Monday, 6 },
+                { new DateTime( 2021, 10, 1 ), timeZone, IsoDayOfWeek.Sunday, 7 },
+                { new DateTime( 2021, 12, 1 ), timeZone, IsoDayOfWeek.Monday, 6 },
+                { new DateTime( 2021, 12, 1 ), timeZone, IsoDayOfWeek.Tuesday, 6 },
+                { new DateTime( 2021, 12, 1 ), timeZone, IsoDayOfWeek.Wednesday, 6 },
+                { new DateTime( 2021, 12, 1 ), timeZone, IsoDayOfWeek.Thursday, 7 },
+                { new DateTime( 2021, 12, 1 ), timeZone, IsoDayOfWeek.Friday, 7 },
+                { new DateTime( 2021, 12, 1 ), timeZone, IsoDayOfWeek.Saturday, 6 },
+                { new DateTime( 2021, 12, 1 ), timeZone, IsoDayOfWeek.Sunday, 6 }
+            };
+        }
+
         public static TheoryData<DateTime, TimeZoneInfo, int> GetGetAllDaysData(IFixture fixture)
         {
             var timeZone = TimeZoneFactory.CreateRandom( fixture );
@@ -1178,6 +1252,48 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedMonthTests
                 { new DateTime( 2021, 11, 1 ), timeZone, 30 },
                 { new DateTime( 2021, 12, 1 ), timeZone, 31 }
             };
+        }
+
+        public static TheoryData<DateTime, TimeZoneInfo, IsoDayOfWeek, int> GetGetWeekCountData(IFixture fixture)
+        {
+            var timeZone = TimeZoneFactory.CreateRandom( fixture );
+
+            return new TheoryData<DateTime, TimeZoneInfo, IsoDayOfWeek, int>
+            {
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Monday, 5 },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Tuesday, 5 },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Wednesday, 5 },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Thursday, 5 },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Friday, 5 },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Saturday, 6 },
+                { new DateTime( 2021, 1, 1 ), timeZone, IsoDayOfWeek.Sunday, 6 },
+                { new DateTime( 2021, 2, 1 ), timeZone, IsoDayOfWeek.Monday, 4 },
+                { new DateTime( 2021, 2, 1 ), timeZone, IsoDayOfWeek.Sunday, 5 },
+                { new DateTime( 2021, 5, 1 ), timeZone, IsoDayOfWeek.Monday, 6 },
+                { new DateTime( 2021, 5, 1 ), timeZone, IsoDayOfWeek.Tuesday, 5 },
+                { new DateTime( 2021, 5, 1 ), timeZone, IsoDayOfWeek.Wednesday, 5 },
+                { new DateTime( 2021, 5, 1 ), timeZone, IsoDayOfWeek.Thursday, 5 },
+                { new DateTime( 2021, 5, 1 ), timeZone, IsoDayOfWeek.Friday, 5 },
+                { new DateTime( 2021, 5, 1 ), timeZone, IsoDayOfWeek.Saturday, 5 },
+                { new DateTime( 2021, 5, 1 ), timeZone, IsoDayOfWeek.Sunday, 6 },
+                { new DateTime( 2021, 8, 1 ), timeZone, IsoDayOfWeek.Monday, 6 },
+                { new DateTime( 2021, 8, 1 ), timeZone, IsoDayOfWeek.Tuesday, 6 },
+                { new DateTime( 2021, 8, 1 ), timeZone, IsoDayOfWeek.Wednesday, 5 },
+                { new DateTime( 2021, 10, 1 ), timeZone, IsoDayOfWeek.Monday, 5 },
+                { new DateTime( 2021, 10, 1 ), timeZone, IsoDayOfWeek.Sunday, 6 },
+                { new DateTime( 2021, 12, 1 ), timeZone, IsoDayOfWeek.Monday, 5 },
+                { new DateTime( 2021, 12, 1 ), timeZone, IsoDayOfWeek.Tuesday, 5 },
+                { new DateTime( 2021, 12, 1 ), timeZone, IsoDayOfWeek.Wednesday, 5 },
+                { new DateTime( 2021, 12, 1 ), timeZone, IsoDayOfWeek.Thursday, 6 },
+                { new DateTime( 2021, 12, 1 ), timeZone, IsoDayOfWeek.Friday, 6 },
+                { new DateTime( 2021, 12, 1 ), timeZone, IsoDayOfWeek.Saturday, 5 },
+                { new DateTime( 2021, 12, 1 ), timeZone, IsoDayOfWeek.Sunday, 5 }
+            };
+        }
+
+        public static TheoryData<DateTime, TimeZoneInfo, IsoDayOfWeek, int> GetGetAllWeeksData(IFixture fixture)
+        {
+            return GetGetWeekCountData( fixture );
         }
 
         public static IEnumerable<object?[]> GetNotEqualsData(IFixture fixture)

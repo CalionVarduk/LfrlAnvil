@@ -12,6 +12,7 @@ namespace LfrlSoft.NET.Core.Chrono.Internal
         public const char DateComponentSeparator = '-';
         public const char TimeComponentSeparator = ':';
         public const char TicksInSecondSeparator = '.';
+        public const char WeekSymbol = 'W';
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -32,6 +33,13 @@ namespace LfrlSoft.NET.Core.Chrono.Internal
         public static string StringifyDayOfMonth(int day)
         {
             return day.ToString( TwoDigitFormat );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static string StringifyWeekOfYear(int week)
+        {
+            return $"{WeekSymbol}{week.ToString( TwoDigitFormat )}";
         }
 
         [Pure]
@@ -69,6 +77,22 @@ namespace LfrlSoft.NET.Core.Chrono.Internal
             var year = StringifyYear( date.Year );
             var month = StringifyMonth( date.Month );
             return $"{year}{DateComponentSeparator}{month}";
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static string StringifyYearAndWeek(int year, int week)
+        {
+            var yearText = StringifyYear( year );
+            var weekText = StringifyWeekOfYear( week );
+            return $"{yearText}{DateComponentSeparator}{weekText}";
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static string StringifyWeekStartAndEndDay(IsoDayOfWeek start, IsoDayOfWeek end)
+        {
+            return $"{start}{DateComponentSeparator}{end}";
         }
 
         [Pure]

@@ -297,6 +297,24 @@ namespace LfrlSoft.NET.Core.Chrono
         }
 
         [Pure]
+        public ZonedWeek GetWeekOfMonth(int weekOfMonth, IsoDayOfWeek weekStart = IsoDayOfWeek.Monday)
+        {
+            var weekCount = GetWeekCount( weekStart );
+            Ensure.IsInRange( weekOfMonth, 1, weekCount, nameof( weekOfMonth ) );
+            return GetWeekOfMonthUnsafe( weekOfMonth, weekStart );
+        }
+
+        [Pure]
+        public ZonedWeek? TryGetWeekOfMonth(int weekOfMonth, IsoDayOfWeek weekStart = IsoDayOfWeek.Monday)
+        {
+            var weekCount = GetWeekCount( weekStart );
+            if ( weekOfMonth <= 0 || weekOfMonth > weekCount )
+                return null;
+
+            return GetWeekOfMonthUnsafe( weekOfMonth, weekStart );
+        }
+
+        [Pure]
         public IEnumerable<ZonedDay> GetAllDays()
         {
             var dayCount = DayCount;
@@ -307,6 +325,21 @@ namespace LfrlSoft.NET.Core.Chrono
 
             for ( var day = 1; day <= dayCount; ++day )
                 yield return ZonedDay.Create( new DateTime( year, month, day ), timeZone );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public int GetWeekCount(IsoDayOfWeek weekStart = IsoDayOfWeek.Monday)
+        {
+            Ensure.IsInRange( (int)weekStart, (int)IsoDayOfWeek.Monday, (int)IsoDayOfWeek.Sunday, nameof( weekStart ) );
+            return WeekCalculator.GetWeekCountInMonth( Start.Value, End.Value, weekStart.ToBcl() );
+        }
+
+        [Pure]
+        public IEnumerable<ZonedWeek> GetAllWeeks(IsoDayOfWeek weekStart = IsoDayOfWeek.Monday)
+        {
+            var weekCount = GetWeekCount( weekStart );
+            return GetAllWeeksImpl( weekCount, weekStart );
         }
 
         [Pure]
@@ -363,6 +396,31 @@ namespace LfrlSoft.NET.Core.Chrono
         public static bool operator >=(ZonedMonth a, ZonedMonth b)
         {
             return a.CompareTo( b ) >= 0;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private ZonedWeek GetWeekOfMonthUnsafe(int weekOfMonth, IsoDayOfWeek weekStart)
+        {
+            var startOfFirstWeek = Start.Value.GetStartOfWeek( weekStart.ToBcl() );
+            var startOfTargetWeek = startOfFirstWeek.AddTicks( Constants.TicksPerWeek * (weekOfMonth - 1) );
+            return ZonedWeek.Create( startOfTargetWeek, TimeZone, weekStart );
+        }
+
+        [Pure]
+        private IEnumerable<ZonedWeek> GetAllWeeksImpl(int weekCount, IsoDayOfWeek weekStart)
+        {
+            var start = Start;
+            var timeZone = start.TimeZone;
+            var startOfWeek = start.Value.GetStartOfWeek( weekStart.ToBcl() );
+
+            yield return ZonedWeek.Create( startOfWeek, timeZone, weekStart );
+
+            for ( var week = 2; week <= weekCount; ++week )
+            {
+                startOfWeek = startOfWeek.AddTicks( Constants.TicksPerWeek );
+                yield return ZonedWeek.Create( startOfWeek, timeZone, weekStart );
+            }
         }
     }
 }

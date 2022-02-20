@@ -824,6 +824,90 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedMonthTests
         }
 
         [Theory]
+        [MethodData( nameof( ZonedMonthTestsData.GetGetWeekOfMonthData ) )]
+        public void GetWeekOfMonth_ShouldReturnCorrectResult(
+            DateTime month,
+            TimeZoneInfo timeZone,
+            IsoDayOfWeek weekStart,
+            int weekOfMonth,
+            DateTime expectedWeekStart)
+        {
+            var sut = ZonedMonth.Create( month, timeZone );
+            var expected = ZonedWeek.Create( expectedWeekStart, timeZone, weekStart );
+
+            var result = sut.GetWeekOfMonth( weekOfMonth, weekStart );
+
+            result.Should().Be( expected );
+        }
+
+        [Theory]
+        [InlineData( 0 )]
+        [InlineData( 8 )]
+        public void GetWeekOfMonth_ShouldThrowArgumentOutOfRangeException_WhenWeekStartIsInvalid(int weekStart)
+        {
+            var dateTime = Fixture.Create<DateTime>();
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
+            var sut = ZonedMonth.Create( dateTime, timeZone );
+            var action = Lambda.Of( () => sut.GetWeekOfMonth( 1, (IsoDayOfWeek)weekStart ) );
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedMonthTestsData.GetGetWeekOfMonthThrowData ) )]
+        public void GetWeekOfMonth_ShouldThrowArgumentOutOfRangeException_WhenWeekOfMonthIsInvalid(
+            DateTime month,
+            TimeZoneInfo timeZone,
+            IsoDayOfWeek weekStart,
+            int weekOfMonth)
+        {
+            var sut = ZonedMonth.Create( month, timeZone );
+            var action = Lambda.Of( () => sut.GetWeekOfMonth( weekOfMonth, weekStart ) );
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedMonthTestsData.GetGetWeekOfMonthData ) )]
+        public void TryGetWeekOfMonth_ShouldReturnCorrectResult(
+            DateTime month,
+            TimeZoneInfo timeZone,
+            IsoDayOfWeek weekStart,
+            int weekOfMonth,
+            DateTime expectedWeekStart)
+        {
+            var sut = ZonedMonth.Create( month, timeZone );
+            var expected = ZonedWeek.Create( expectedWeekStart, timeZone, weekStart );
+
+            var result = sut.TryGetWeekOfMonth( weekOfMonth, weekStart );
+
+            result.Should().Be( expected );
+        }
+
+        [Theory]
+        [InlineData( 0 )]
+        [InlineData( 8 )]
+        public void TryGetWeekOfMonth_ShouldThrowArgumentOutOfRangeException_WhenWeekStartIsInvalid(int weekStart)
+        {
+            var dateTime = Fixture.Create<DateTime>();
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
+            var sut = ZonedMonth.Create( dateTime, timeZone );
+            var action = Lambda.Of( () => sut.TryGetWeekOfMonth( 1, (IsoDayOfWeek)weekStart ) );
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedMonthTestsData.GetGetWeekOfMonthThrowData ) )]
+        public void TryGetWeekOfMonth_ShouldReturnNull_WhenWeekOfMonthIsInvalid(
+            DateTime month,
+            TimeZoneInfo timeZone,
+            IsoDayOfWeek weekStart,
+            int weekOfMonth)
+        {
+            var sut = ZonedMonth.Create( month, timeZone );
+            var result = sut.TryGetWeekOfMonth( weekOfMonth, weekStart );
+            result.Should().BeNull();
+        }
+
+        [Theory]
         [MethodData( nameof( ZonedMonthTestsData.GetGetAllDaysData ) )]
         public void GetAllDays_ShouldReturnCorrectDayCollection(DateTime month, TimeZoneInfo timeZone, int expectedDayCount)
         {
@@ -839,6 +923,64 @@ namespace LfrlSoft.NET.Core.Tests.ChronoTests.ZonedMonthTests
 
                 result.Select( d => d.DayOfMonth ).Should().BeSequentiallyEqualTo( Enumerable.Range( 1, expectedDayCount ) );
             }
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedMonthTestsData.GetGetWeekCountData ) )]
+        public void GetWeekCount_ShouldReturnCorrectResult(DateTime month, TimeZoneInfo timeZone, IsoDayOfWeek weekStart, int expected)
+        {
+            var sut = ZonedMonth.Create( month, timeZone );
+            var result = sut.GetWeekCount( weekStart );
+            result.Should().Be( expected );
+        }
+
+        [Theory]
+        [InlineData( 0 )]
+        [InlineData( 8 )]
+        public void GetWeekCount_ShouldThrowArgumentOutOfRangeException_WhenWeekStartIsInvalid(int weekStart)
+        {
+            var dateTime = Fixture.Create<DateTime>();
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
+            var sut = ZonedMonth.Create( dateTime, timeZone );
+            var action = Lambda.Of( () => sut.GetWeekCount( (IsoDayOfWeek)weekStart ) );
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        }
+
+        [Theory]
+        [MethodData( nameof( ZonedMonthTestsData.GetGetAllWeeksData ) )]
+        public void GetAllWeeks_ShouldReturnCorrectWeekCollection(
+            DateTime month,
+            TimeZoneInfo timeZone,
+            IsoDayOfWeek weekStart,
+            int expectedWeekCount)
+        {
+            var sut = ZonedMonth.Create( month, timeZone );
+
+            var result = sut.GetAllWeeks( weekStart ).ToList();
+
+            using ( new AssertionScope() )
+            {
+                result.Should().HaveCount( expectedWeekCount );
+
+                result.Select( w => new { w.Start.DayOfWeek, w.TimeZone } )
+                    .Should()
+                    .AllBeEquivalentTo( new { DayOfWeek = weekStart, sut.TimeZone } );
+
+                result.Should().OnlyContain( w => w.Start.Month == sut.Month || w.End.Month == sut.Month );
+                result.Should().BeInAscendingOrder( w => w.Start );
+            }
+        }
+
+        [Theory]
+        [InlineData( 0 )]
+        [InlineData( 8 )]
+        public void GetAllWeeks_ShouldThrowArgumentOutOfRangeException_WhenWeekStartIsInvalid(int weekStart)
+        {
+            var dateTime = Fixture.Create<DateTime>();
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
+            var sut = ZonedMonth.Create( dateTime, timeZone );
+            var action = Lambda.Of( () => sut.GetAllWeeks( (IsoDayOfWeek)weekStart ) );
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
         [Fact]

@@ -168,7 +168,7 @@ namespace LfrlSoft.NET.Core.Chrono
         public ZonedDay AddDays(int days)
         {
             var start = Start;
-            var value = start.Value.AddDays( days );
+            var value = start.Value.AddTicks( Constants.TicksPerDay * days );
             return Create( value, start.TimeZone );
         }
 
@@ -257,6 +257,13 @@ namespace LfrlSoft.NET.Core.Chrono
         public ZonedDateTime? TryGetDateTime(TimeOfDay timeOfDay)
         {
             return Start.TrySetTimeOfDay( timeOfDay );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public ZonedWeek GetWeek(IsoDayOfWeek weekStart = IsoDayOfWeek.Monday)
+        {
+            return ZonedWeek.Create( this, weekStart );
         }
 
         [Pure]
