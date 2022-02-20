@@ -367,6 +367,26 @@ namespace LfrlAnvil.Tests.BoundsRangeTests
             result.Should().BeSequentiallyEqualTo( expected );
         }
 
+        [Fact]
+        public void Normalize_ShouldReturnTarget_WhenTargetIsEmpty()
+        {
+            var sut = BoundsRange<T>.Empty;
+            var result = sut.Normalize( (a, b) => a.Equals( b ) );
+            result.Should().BeEmpty();
+        }
+
+        [Fact]
+        public void Normalize_ShouldReturnTarget_WhenTargetContainsOnlyOneItem()
+        {
+            var (min, max) = Fixture.CreateDistinctSortedCollection<T>( count: 2 );
+            var item = Bounds.Create( min, max );
+            var sut = new BoundsRange<T>( item );
+
+            var result = sut.Normalize( (a, b) => a.Equals( b ) );
+
+            result.Should().BeSequentiallyEqualTo( item );
+        }
+
         [Theory]
         [GenericMethodData( nameof( GenericBoundsRangeTestsData<T>.GetEqualsData ) )]
         public void EqualityOperator_ShouldReturnCorrectResult(IEnumerable<Bounds<T>> range1, IEnumerable<Bounds<T>> range2, bool expected)

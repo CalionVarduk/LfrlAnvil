@@ -666,6 +666,32 @@ namespace LfrlAnvil
         }
 
         [Pure]
+        public BoundsRange<T> Normalize(Func<T, T, bool> normalizePredicate)
+        {
+            var values = InternalValues;
+            if ( values.Length <= 2 )
+                return this;
+
+            var buffer = new List<T> { values[0], values[1] };
+            for ( var i = 2; i < values.Length; i += 2 )
+            {
+                var lastMax = buffer[^1];
+                var (min, max) = (values[i], values[i + 1]);
+
+                if ( normalizePredicate( lastMax, min ) )
+                {
+                    buffer[^1] = max;
+                    continue;
+                }
+
+                buffer.Add( min );
+                buffer.Add( max );
+            }
+
+            return CreateFromBuffer( buffer );
+        }
+
+        [Pure]
         public IEnumerator<Bounds<T>> GetEnumerator()
         {
             var values = InternalValues;

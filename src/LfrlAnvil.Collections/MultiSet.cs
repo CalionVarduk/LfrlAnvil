@@ -8,6 +8,7 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Collections
 {
+    // TODO: add methods for calculating Unions, Intersections etc. between 2 MultiSets
     public class MultiSet<T> : IMultiSet<T>
         where T : notnull
     {
