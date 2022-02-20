@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
+    <LangVersion>9</LangVersion>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
+    <PackageReference Include="CommandLineParser" Version="2.8.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\LfrlAnvil.Chrono\LfrlAnvil.Chrono.csproj" />
+    <ProjectReference Include="..\..\src\LfrlAnvil.Collections\LfrlAnvil.Collections.csproj" />
+    <ProjectReference Include="..\..\src\LfrlAnvil.Core\LfrlAnvil.Core.csproj" />
+    <ProjectReference Include="..\..\src\LfrlAnvil.Functional\LfrlAnvil.Functional.csproj" />
+  </ItemGroup>
+
+</Project>

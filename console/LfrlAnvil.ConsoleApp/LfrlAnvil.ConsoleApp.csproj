@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net5.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\src\LfrlAnvil.Chrono\LfrlAnvil.Chrono.csproj" />
+      <ProjectReference Include="..\..\src\LfrlAnvil.Collections\LfrlAnvil.Collections.csproj" />
+      <ProjectReference Include="..\..\src\LfrlAnvil.Core\LfrlAnvil.Core.csproj" />
+      <ProjectReference Include="..\..\src\LfrlAnvil.Functional\LfrlAnvil.Functional.csproj" />
+    </ItemGroup>
+
+</Project>
