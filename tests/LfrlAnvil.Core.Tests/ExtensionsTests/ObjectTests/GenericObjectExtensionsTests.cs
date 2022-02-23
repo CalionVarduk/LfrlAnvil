@@ -45,6 +45,19 @@ namespace LfrlAnvil.Tests.ExtensionsTests.ObjectTests
         }
 
         [Fact]
+        public void Memoize_ShouldReturnSource_WhenSourceIsAlreadyMemoized()
+        {
+            var sut = new
+            {
+                Values = Fixture.CreateMany<T>().Memoize()
+            };
+
+            var result = sut.Memoize( o => o.Values );
+
+            result.Should().BeSameAs( sut.Values );
+        }
+
+        [Fact]
         public void Visit_ShouldReturnEmptyCollection_WhenSourceDoesntPassTheBreakPredicate()
         {
             VisitNode? sut = null;
@@ -68,9 +81,9 @@ namespace LfrlAnvil.Tests.ExtensionsTests.ObjectTests
                 }
             };
 
-            var result = sut.Visit( r => r.Next ).Select( r => r.Value );
+            var result = sut.Visit( r => r.Next ).Select( r => r.Value! );
 
-            result.Should().BeEquivalentTo( expected );
+            result.Should().BeSequentiallyEqualTo( expected );
         }
 
         [Fact]
@@ -123,9 +136,82 @@ namespace LfrlAnvil.Tests.ExtensionsTests.ObjectTests
                 Children = children.ToList()
             };
 
-            var result = sut.VisitMany( n => n.Children ).Select( n => n.Value );
+            var result = sut.VisitMany( n => n.Children ).Select( n => n.Value! );
 
-            result.Should().BeEquivalentTo( expected );
+            result.Should().BeSequentiallyEqualTo( expected );
+        }
+
+        [Fact]
+        public void VisitMany_WithStopPredicate_ShouldReturnResultAccordingToBreadthFirstTraversal()
+        {
+            var values = Fixture.CreateDistinctCollection<T>( 11 ).ToList();
+            var valuesToStopAt = new HashSet<T> { values[1], values[6] };
+            var expected = new[] { values[1], values[2], values[3], values[6] };
+
+            var children = new[]
+            {
+                new VisitManyNode
+                {
+                    Value = values[1],
+                    Children = new List<VisitManyNode>
+                    {
+                        new() { Value = values[4] },
+                        new()
+                        {
+                            Value = values[5],
+                            Children = new List<VisitManyNode>
+                            {
+                                new() { Value = values[7] },
+                                new() { Value = values[8] }
+                            }
+                        }
+                    }
+                },
+                new VisitManyNode { Value = values[2] },
+                new VisitManyNode
+                {
+                    Value = values[3],
+                    Children = new List<VisitManyNode>
+                    {
+                        new()
+                        {
+                            Value = values[6],
+                            Children = new List<VisitManyNode>
+                            {
+                                new() { Value = values[9] },
+                                new() { Value = values[10] }
+                            }
+                        }
+                    }
+                }
+            };
+
+            var sut = new VisitManyNode
+            {
+                Value = values[0],
+                Children = children.ToList()
+            };
+
+            var result = sut.VisitMany( n => n.Children, n => valuesToStopAt.Contains( n.Value! ) ).Select( n => n.Value );
+
+            result.Should().BeSequentiallyEqualTo( expected );
+        }
+
+        [Fact]
+        public void VisitMany_WithStopPredicate_ShouldReturnEmpty_WhenPredicateStopsImmediately()
+        {
+            var values = Fixture.CreateDistinctCollection<T>( 4 ).ToList();
+            var children = values.Skip( 1 ).Select( v => new VisitManyNode { Value = v } );
+
+            var sut = new VisitManyNode
+            {
+                Value = values[0],
+                Children = children.ToList()
+            };
+
+            var result = sut.VisitMany( n => n.Children, n => n.Value!.Equals( sut.Value ) ).Select( n => n.Value );
+
+            result.Should().BeEmpty();
         }
 
         [Fact]
@@ -151,9 +237,9 @@ namespace LfrlAnvil.Tests.ExtensionsTests.ObjectTests
                 }
             };
 
-            var result = sut.VisitWithSelf( r => r.Next ).Select( r => r.Value );
+            var result = sut.VisitWithSelf( r => r.Next ).Select( r => r.Value! );
 
-            result.Should().BeEquivalentTo( values );
+            result.Should().BeSequentiallyEqualTo( values );
         }
 
         [Fact]
@@ -205,9 +291,82 @@ namespace LfrlAnvil.Tests.ExtensionsTests.ObjectTests
                 Children = children.ToList()
             };
 
-            var result = sut.VisitManyWithSelf( n => n.Children ).Select( n => n.Value );
+            var result = sut.VisitManyWithSelf( n => n.Children ).Select( n => n.Value! );
 
-            result.Should().BeEquivalentTo( values );
+            result.Should().BeSequentiallyEqualTo( values );
+        }
+
+        [Fact]
+        public void VisitManyWithSelf_WithStopPredicate_ShouldReturnResultAccordingToBreadthFirstTraversal()
+        {
+            var values = Fixture.CreateDistinctCollection<T>( 11 ).ToList();
+            var valuesToStopAt = new HashSet<T> { values[1], values[6] };
+            var expected = new[] { values[0], values[1], values[2], values[3], values[6] };
+
+            var children = new[]
+            {
+                new VisitManyNode
+                {
+                    Value = values[1],
+                    Children = new List<VisitManyNode>
+                    {
+                        new() { Value = values[4] },
+                        new()
+                        {
+                            Value = values[5],
+                            Children = new List<VisitManyNode>
+                            {
+                                new() { Value = values[7] },
+                                new() { Value = values[8] }
+                            }
+                        }
+                    }
+                },
+                new VisitManyNode { Value = values[2] },
+                new VisitManyNode
+                {
+                    Value = values[3],
+                    Children = new List<VisitManyNode>
+                    {
+                        new()
+                        {
+                            Value = values[6],
+                            Children = new List<VisitManyNode>
+                            {
+                                new() { Value = values[9] },
+                                new() { Value = values[10] }
+                            }
+                        }
+                    }
+                }
+            };
+
+            var sut = new VisitManyNode
+            {
+                Value = values[0],
+                Children = children.ToList()
+            };
+
+            var result = sut.VisitManyWithSelf( n => n.Children, n => valuesToStopAt.Contains( n.Value! ) ).Select( n => n.Value );
+
+            result.Should().BeSequentiallyEqualTo( expected );
+        }
+
+        [Fact]
+        public void VisitManyWithSelf_WithStopPredicate_ShouldReturnOnlySource_WhenPredicateStopsImmediately()
+        {
+            var values = Fixture.CreateDistinctCollection<T>( 4 ).ToList();
+            var children = values.Skip( 1 ).Select( v => new VisitManyNode { Value = v } );
+
+            var sut = new VisitManyNode
+            {
+                Value = values[0],
+                Children = children.ToList()
+            };
+
+            var result = sut.VisitManyWithSelf( n => n.Children, n => n.Value!.Equals( sut.Value ) ).Select( n => n.Value );
+
+            result.Should().BeSequentiallyEqualTo( sut.Value );
         }
 
         public sealed class VisitNode

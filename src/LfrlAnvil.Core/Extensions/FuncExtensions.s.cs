@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.Extensions
 {
@@ -19,7 +18,7 @@ namespace LfrlAnvil.Extensions
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static IEnumerable<T> Memoize<T>(this Func<IEnumerable<T>> source)
         {
-            return new MemoizedEnumerable<T>( source() );
+            return source().Memoize();
         }
 
         [Pure]

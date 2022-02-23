@@ -293,25 +293,40 @@ namespace LfrlAnvil.Extensions
         {
             var nodesToVisit = new Queue<T>( source );
 
-            foreach ( var n in nodesToVisit )
-                yield return n;
+            while ( nodesToVisit.Count > 0 )
+            {
+                var parent = nodesToVisit.Dequeue();
+                yield return parent;
+
+                var nodes = nodeRangeSelector( parent );
+
+                foreach ( var n in nodes )
+                    nodesToVisit.Enqueue( n );
+            }
+        }
+
+        [Pure]
+        public static IEnumerable<T> VisitMany<T>(
+            this IEnumerable<T> source,
+            Func<T, IEnumerable<T>> nodeRangeSelector,
+            Func<T, bool> stopPredicate)
+        {
+            var nodesToVisit = new Queue<T>( source );
 
             while ( nodesToVisit.Count > 0 )
             {
                 var parent = nodesToVisit.Dequeue();
+                yield return parent;
+
+                if ( stopPredicate( parent ) )
+                    continue;
+
                 var nodes = nodeRangeSelector( parent );
 
                 foreach ( var n in nodes )
-                {
-                    yield return n;
-
                     nodesToVisit.Enqueue( n );
-                }
             }
         }
-
-        // TODO: VisitMany with stopPredicate (predicate causes the node to no longer emit its own subtrees)
-        // TODO: this new VisitMany can also be applied to ObjectExtensions
 
         public static bool TryAggregate<T>(this IEnumerable<T> source, Func<T, T, T> func, [MaybeNullWhen( false )] out T result)
         {

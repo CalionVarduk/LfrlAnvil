@@ -45,6 +45,17 @@ namespace LfrlAnvil.Tests.ExtensionsTests.FuncTests
         }
 
         [Fact]
+        public void Memoize_ShouldReturnSource_WhenSourceIsAlreadyMemoized()
+        {
+            var values = Fixture.CreateMany<TReturnValue>().Memoize();
+            Func<IEnumerable<TReturnValue>> sut = () => values;
+
+            var result = sut.Memoize();
+
+            result.Should().BeSameAs( values );
+        }
+
+        [Fact]
         public void IgnoreResult_ShouldReturnCorrectResult()
         {
             var value = Fixture.Create<TReturnValue>();

@@ -499,6 +499,64 @@ namespace LfrlAnvil.Tests.ExtensionsTests.EnumerableTests
         }
 
         [Fact]
+        public void VisitMany_WithStopPredicate_ShouldReturnEmptyCollection_WhenSourceIsEmpty()
+        {
+            var sut = Enumerable.Empty<VisitManyNode<T>>();
+            var result = sut.VisitMany( n => n.Children, n => EqualityComparer.Equals( n.Value, default ) );
+            result.Should().BeEmpty();
+        }
+
+        [Fact]
+        public void VisitMany_WithStopPredicate_ShouldReturnResultAccordingToBreadthFirstTraversal()
+        {
+            var sourceOfValues = Fixture.CreateDistinctCollection<T>( 10 ).ToList();
+            var valuesToStopAt = new HashSet<T> { sourceOfValues[0], sourceOfValues[5] };
+            var expected = new[] { sourceOfValues[0], sourceOfValues[1], sourceOfValues[2], sourceOfValues[5] };
+
+            var sut = new[]
+            {
+                new VisitManyNode<T>
+                {
+                    Value = sourceOfValues[0],
+                    Children = new List<VisitManyNode<T>>
+                    {
+                        new() { Value = sourceOfValues[3] },
+                        new()
+                        {
+                            Value = sourceOfValues[4],
+                            Children = new List<VisitManyNode<T>>
+                            {
+                                new() { Value = sourceOfValues[6] },
+                                new() { Value = sourceOfValues[7] }
+                            }
+                        }
+                    }
+                },
+                new VisitManyNode<T> { Value = sourceOfValues[1] },
+                new VisitManyNode<T>
+                {
+                    Value = sourceOfValues[2],
+                    Children = new List<VisitManyNode<T>>
+                    {
+                        new()
+                        {
+                            Value = sourceOfValues[5],
+                            Children = new List<VisitManyNode<T>>
+                            {
+                                new() { Value = sourceOfValues[8] },
+                                new() { Value = sourceOfValues[9] }
+                            }
+                        }
+                    }
+                }
+            };
+
+            var result = sut.VisitMany( n => n.Children, n => valuesToStopAt.Contains( n.Value! ) ).Select( n => n.Value );
+
+            result.Should().BeSequentiallyEqualTo( expected.Select( x => (T?)x ) );
+        }
+
+        [Fact]
         public void TryAggregate_ShouldReturnFalseAndDefaultResult_WhenSourceIsEmpty()
         {
             var sut = Enumerable.Empty<T>();

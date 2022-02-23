@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.Extensions
 {
@@ -27,7 +27,7 @@ namespace LfrlAnvil.Extensions
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static IEnumerable<T2> Memoize<T1, T2>(this T1 source, Func<T1, IEnumerable<T2>> selector)
         {
-            return new MemoizedEnumerable<T2>( selector( source ) );
+            return selector( source ).Memoize();
         }
 
         [Pure]
@@ -63,6 +63,16 @@ namespace LfrlAnvil.Extensions
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEnumerable<T> VisitMany<T>(this T source, Func<T, IEnumerable<T>> nodeRangeSelector, Func<T, bool> stopPredicate)
+        {
+            if ( stopPredicate( source ) )
+                return Enumerable.Empty<T>();
+
+            return nodeRangeSelector( source ).VisitMany( nodeRangeSelector, stopPredicate );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static IEnumerable<T> VisitWithSelf<T>(this T? source, Func<T, T?> nodeSelector)
             where T : class
         {
@@ -88,12 +98,20 @@ namespace LfrlAnvil.Extensions
         }
 
         [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static IEnumerable<T> VisitManyWithSelf<T>(this T source, Func<T, IEnumerable<T>> nodeRangeSelector)
         {
-            yield return source;
+            return source.VisitMany( nodeRangeSelector ).Prepend( source );
+        }
 
-            foreach ( var node in nodeRangeSelector( source ).VisitMany( nodeRangeSelector ) )
-                yield return node;
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEnumerable<T> VisitManyWithSelf<T>(
+            this T source,
+            Func<T, IEnumerable<T>> nodeRangeSelector,
+            Func<T, bool> stopPredicate)
+        {
+            return source.VisitMany( nodeRangeSelector, stopPredicate ).Prepend( source );
         }
 
         [Pure]
