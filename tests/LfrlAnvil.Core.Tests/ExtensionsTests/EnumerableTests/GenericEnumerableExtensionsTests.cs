@@ -379,6 +379,14 @@ namespace LfrlAnvil.Tests.ExtensionsTests.EnumerableTests
         }
 
         [Fact]
+        public void Memoize_ShouldReturnSource_WhenSourceIsAlreadyMemoized()
+        {
+            var sut = Fixture.CreateMany<T>().Memoize();
+            var result = sut.Memoize();
+            result.Should().BeSameAs( sut );
+        }
+
+        [Fact]
         public void IsMaterialized_ShouldReturnTrue_WhenSourceIsReadOnlyCollection()
         {
             var sut = Fixture.CreateMany<T>().ToList();
@@ -741,6 +749,23 @@ namespace LfrlAnvil.Tests.ExtensionsTests.EnumerableTests
         {
             var result = sut.IsOrdered();
             result.Should().Be( expected );
+        }
+
+        [Fact]
+        public void Partition_ShouldReturnResultWithPassedContainingElementsThatReturnedTrueInPredicate_AndFailedContainingOtherElements()
+        {
+            var sut = Fixture.CreateDistinctSortedCollection<T>( count: 10 );
+            var pivot = sut[6];
+            var expectedPassed = sut.Take( 7 );
+            var expectedFailed = sut.Skip( 7 );
+
+            var (passed, failed) = sut.Partition( e => Comparer.Compare( e, pivot ) <= 0 );
+
+            using ( new AssertionScope() )
+            {
+                passed.Should().BeSequentiallyEqualTo( expectedPassed );
+                failed.Should().BeSequentiallyEqualTo( expectedFailed );
+            }
         }
 
         [Theory]

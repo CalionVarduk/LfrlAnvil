@@ -247,7 +247,7 @@ namespace LfrlAnvil.Extensions
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static IEnumerable<T> Memoize<T>(this IEnumerable<T> source)
         {
-            return new MemoizedEnumerable<T>( source );
+            return source is MemoizedEnumerable<T> m ? m : new MemoizedEnumerable<T>( source );
         }
 
         [Pure]
@@ -540,6 +540,21 @@ namespace LfrlAnvil.Extensions
             }
 
             return true;
+        }
+
+        [Pure]
+        public static (List<T> Passed, List<T> Failed) Partition<T>(this IEnumerable<T> source, Func<T, bool> predicate)
+        {
+            var passed = new List<T>();
+            var failed = new List<T>();
+
+            foreach ( var e in source )
+            {
+                var target = predicate( e ) ? passed : failed;
+                target.Add( e );
+            }
+
+            return (passed, failed);
         }
 
         [Pure]
