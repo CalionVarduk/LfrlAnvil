@@ -1134,6 +1134,115 @@ namespace LfrlAnvil.Chrono.Tests.ZonedWeekTests
             result.Should().BeSequentiallyEqualTo( expected );
         }
 
+        [Theory]
+        [InlineData( IsoDayOfWeek.Monday )]
+        [InlineData( IsoDayOfWeek.Tuesday )]
+        [InlineData( IsoDayOfWeek.Wednesday )]
+        [InlineData( IsoDayOfWeek.Thursday )]
+        [InlineData( IsoDayOfWeek.Friday )]
+        [InlineData( IsoDayOfWeek.Saturday )]
+        [InlineData( IsoDayOfWeek.Sunday )]
+        public void ToBounds_ShouldReturnBoundsFromStartToEnd(IsoDayOfWeek weekStart)
+        {
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
+            var dateTime = Fixture.Create<DateTime>();
+            var sut = ZonedWeek.Create( dateTime, timeZone, weekStart );
+
+            var result = sut.ToBounds();
+
+            result.Should().Be( Bounds.Create( sut.Start, sut.End ) );
+        }
+
+        [Fact]
+        public void ToCheckedBounds_ShouldReturnCorrectRangeWithOneElement_WhenStartAndEndAreUnambiguous()
+        {
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
+            var dateTime = Fixture.Create<DateTime>();
+            var sut = ZonedWeek.Create( dateTime, timeZone, dateTime.DayOfWeek.ToIso() );
+            var expected = BoundsRange.Create( Bounds.Create( sut.Start, sut.End ) );
+
+            var result = sut.ToCheckedBounds();
+
+            result.Should().BeSequentiallyEqualTo( expected );
+        }
+
+        [Fact]
+        public void ToCheckedBounds_ShouldReturnCorrectRangeWithTwoElements_WhenStartIsAmbiguous()
+        {
+            var dateTime = new DateTime( 2021, 8, 26 );
+            var timeZone = TimeZoneFactory.Create(
+                utcOffsetInHours: 1,
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 4, 26, 0, 40, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 26, 0, 40, 0 ) ) );
+
+            var sut = ZonedWeek.Create( dateTime, timeZone, dateTime.DayOfWeek.ToIso() );
+            var expected = BoundsRange.Create(
+                new[]
+                {
+                    Bounds.Create( sut.Start, sut.Start.Add( new Duration( 0, 39, 59, 999, 9999 ) ) ),
+                    Bounds.Create( sut.Start.Add( Duration.FromHours( 1 ) ), sut.End )
+                } );
+
+            var result = sut.ToCheckedBounds();
+
+            result.Should().BeSequentiallyEqualTo( expected );
+        }
+
+        [Fact]
+        public void ToCheckedBounds_ShouldReturnCorrectRangeWithTwoElements_WhenEndIsAmbiguous()
+        {
+            var dateTime = new DateTime( 2021, 8, 26 );
+            var timeZone = TimeZoneFactory.Create(
+                utcOffsetInHours: 1,
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 4, 26, 0, 40, 0 ),
+                    transitionEnd: new DateTime( 1, 9, 2, 0, 40, 0 ) ) );
+
+            var sut = ZonedWeek.Create( dateTime, timeZone, dateTime.DayOfWeek.ToIso() );
+            var expected = BoundsRange.Create(
+                new[]
+                {
+                    Bounds.Create( sut.Start, sut.End.Subtract( Duration.FromHours( 1 ) ) ),
+                    Bounds.Create( sut.End.Subtract( new Duration( 0, 19, 59, 999, 9999 ) ), sut.End )
+                } );
+
+            var result = sut.ToCheckedBounds();
+
+            result.Should().BeSequentiallyEqualTo( expected );
+        }
+
+        [Fact]
+        public void ToCheckedBounds_ShouldReturnCorrectRangeWithThreeElements_WhenStartAndEndAreAmbiguous()
+        {
+            var dateTime = new DateTime( 2021, 8, 26 );
+            var timeZone = TimeZoneFactory.Create(
+                utcOffsetInHours: 1,
+                TimeZoneFactory.CreateRule(
+                    start: DateTime.MinValue,
+                    end: new DateTime( 2021, 8, 27 ),
+                    transitionStart: new DateTime( 1, 4, 26, 0, 40, 0 ),
+                    transitionEnd: new DateTime( 1, 8, 26, 0, 40, 0 ) ),
+                TimeZoneFactory.CreateRule(
+                    start: new DateTime( 2021, 8, 28 ),
+                    end: DateTime.MaxValue,
+                    transitionStart: new DateTime( 1, 8, 29, 0, 40, 0 ),
+                    transitionEnd: new DateTime( 1, 9, 2, 0, 40, 0 ) ) );
+
+            var sut = ZonedWeek.Create( dateTime, timeZone, dateTime.DayOfWeek.ToIso() );
+            var expected = BoundsRange.Create(
+                new[]
+                {
+                    Bounds.Create( sut.Start, sut.Start.Add( new Duration( 0, 39, 59, 999, 9999 ) ) ),
+                    Bounds.Create( sut.Start.Add( Duration.FromHours( 1 ) ), sut.End.Subtract( Duration.FromHours( 1 ) ) ),
+                    Bounds.Create( sut.End.Subtract( new Duration( 0, 19, 59, 999, 9999 ) ), sut.End )
+                } );
+
+            var result = sut.ToCheckedBounds();
+
+            result.Should().BeSequentiallyEqualTo( expected );
+        }
+
         [Fact]
         public void AddOperator_ShouldBeEquivalentToAdd()
         {

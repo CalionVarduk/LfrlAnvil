@@ -885,6 +885,105 @@ namespace LfrlAnvil.Chrono.Tests.ZonedYearTests
         }
 
         [Fact]
+        public void ToBounds_ShouldReturnBoundsFromStartToEnd()
+        {
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
+            var dateTime = Fixture.Create<DateTime>();
+            var sut = ZonedYear.Create( dateTime, timeZone );
+
+            var result = sut.ToBounds();
+
+            result.Should().Be( Bounds.Create( sut.Start, sut.End ) );
+        }
+
+        [Fact]
+        public void ToCheckedBounds_ShouldReturnCorrectRangeWithOneElement_WhenStartAndEndAreUnambiguous()
+        {
+            var timeZone = TimeZoneFactory.CreateRandom( Fixture );
+            var dateTime = Fixture.Create<DateTime>();
+            var sut = ZonedYear.Create( dateTime, timeZone );
+            var expected = BoundsRange.Create( Bounds.Create( sut.Start, sut.End ) );
+
+            var result = sut.ToCheckedBounds();
+
+            result.Should().BeSequentiallyEqualTo( expected );
+        }
+
+        [Fact]
+        public void ToCheckedBounds_ShouldReturnCorrectRangeWithTwoElements_WhenStartIsAmbiguous()
+        {
+            var dateTime = new DateTime( 2021, 1, 1 );
+            var timeZone = TimeZoneFactory.Create(
+                utcOffsetInHours: 1,
+                TimeZoneFactory.CreateRule(
+                    start: DateTime.MinValue,
+                    end: new DateTime( 2021, 2, 1 ),
+                    transitionStart: new DateTime( 1, 4, 26, 0, 40, 0 ),
+                    transitionEnd: new DateTime( 1, 1, 1, 0, 40, 0 ) ) );
+
+            var sut = ZonedYear.Create( dateTime, timeZone );
+            var expected = BoundsRange.Create(
+                new[]
+                {
+                    Bounds.Create( sut.Start, sut.Start.Add( new Duration( 0, 39, 59, 999, 9999 ) ) ),
+                    Bounds.Create( sut.Start.Add( Duration.FromHours( 1 ) ), sut.End )
+                } );
+
+            var result = sut.ToCheckedBounds();
+
+            result.Should().BeSequentiallyEqualTo( expected );
+        }
+
+        [Fact]
+        public void ToCheckedBounds_ShouldReturnCorrectRangeWithTwoElements_WhenEndIsAmbiguous()
+        {
+            var dateTime = new DateTime( 2021, 1, 1 );
+            var timeZone = TimeZoneFactory.Create(
+                utcOffsetInHours: 1,
+                TimeZoneFactory.CreateRule(
+                    start: new DateTime( 2021, 2, 1 ),
+                    end: DateTime.MaxValue,
+                    transitionStart: new DateTime( 1, 4, 26, 0, 40, 0 ),
+                    transitionEnd: new DateTime( 1, 1, 1, 0, 40, 0 ) ) );
+
+            var sut = ZonedYear.Create( dateTime, timeZone );
+            var expected = BoundsRange.Create(
+                new[]
+                {
+                    Bounds.Create( sut.Start, sut.End.Subtract( Duration.FromHours( 1 ) ) ),
+                    Bounds.Create( sut.End.Subtract( new Duration( 0, 19, 59, 999, 9999 ) ), sut.End )
+                } );
+
+            var result = sut.ToCheckedBounds();
+
+            result.Should().BeSequentiallyEqualTo( expected );
+        }
+
+        [Fact]
+        public void ToCheckedBounds_ShouldReturnCorrectRangeWithThreeElements_WhenStartAndEndAreAmbiguous()
+        {
+            var dateTime = new DateTime( 2021, 1, 1 );
+            var timeZone = TimeZoneFactory.Create(
+                utcOffsetInHours: 1,
+                TimeZoneFactory.CreateInfiniteRule(
+                    transitionStart: new DateTime( 1, 8, 4, 0, 40, 0 ),
+                    transitionEnd: new DateTime( 1, 1, 1, 0, 40, 0 ) ) );
+
+            var sut = ZonedYear.Create( dateTime, timeZone );
+            var expected = BoundsRange.Create(
+                new[]
+                {
+                    Bounds.Create( sut.Start, sut.Start.Add( new Duration( 0, 39, 59, 999, 9999 ) ) ),
+                    Bounds.Create( sut.Start.Add( Duration.FromHours( 1 ) ), sut.End.Subtract( Duration.FromHours( 1 ) ) ),
+                    Bounds.Create( sut.End.Subtract( new Duration( 0, 19, 59, 999, 9999 ) ), sut.End )
+                } );
+
+            var result = sut.ToCheckedBounds();
+
+            result.Should().BeSequentiallyEqualTo( expected );
+        }
+
+        [Fact]
         public void AddOperator_ShouldBeEquivalentToAdd()
         {
             var periodToSubtract = new Period(

@@ -336,6 +336,20 @@ namespace LfrlAnvil.Chrono
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public Bounds<ZonedDateTime> ToBounds()
+        {
+            return Bounds.Create( Start, End );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public BoundsRange<ZonedDateTime> ToCheckedBounds()
+        {
+            return ZonedDateTimeBounds.CreateChecked( Start, End );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static explicit operator ZonedDateTime(ZonedDay source)
         {
             return source.Start;

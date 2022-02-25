@@ -187,10 +187,10 @@ namespace LfrlAnvil.Chrono.Extensions
             this DateTime minStartValue,
             TimeZoneInfo timeZone)
         {
-            var startInvalidity = timeZone.GetContainingInvalidityRange( minStartValue );
-            if ( startInvalidity is not null )
+            var invalidity = timeZone.GetContainingInvalidityRange( minStartValue );
+            if ( invalidity is not null )
             {
-                minStartValue = DateTime.SpecifyKind( startInvalidity.Value.Max.AddTicks( 1 ), minStartValue.Kind );
+                minStartValue = DateTime.SpecifyKind( invalidity.Value.Max.AddTicks( 1 ), minStartValue.Kind );
                 return (ZonedDateTime.CreateUnsafe( minStartValue, timeZone ), Duration.Zero);
             }
 
@@ -213,10 +213,10 @@ namespace LfrlAnvil.Chrono.Extensions
             this DateTime maxEndValue,
             TimeZoneInfo timeZone)
         {
-            var startInvalidity = timeZone.GetContainingInvalidityRange( maxEndValue );
-            if ( startInvalidity is not null )
+            var invalidity = timeZone.GetContainingInvalidityRange( maxEndValue );
+            if ( invalidity is not null )
             {
-                maxEndValue = DateTime.SpecifyKind( startInvalidity.Value.Min.AddTicks( -1 ), maxEndValue.Kind );
+                maxEndValue = DateTime.SpecifyKind( invalidity.Value.Min.AddTicks( -1 ), maxEndValue.Kind );
                 return (ZonedDateTime.CreateUnsafe( maxEndValue, timeZone ), Duration.Zero);
             }
 

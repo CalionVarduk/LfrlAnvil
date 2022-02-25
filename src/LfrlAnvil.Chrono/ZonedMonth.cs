@@ -344,6 +344,20 @@ namespace LfrlAnvil.Chrono
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public Bounds<ZonedDateTime> ToBounds()
+        {
+            return Bounds.Create( Start, End );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public BoundsRange<ZonedDateTime> ToCheckedBounds()
+        {
+            return ZonedDateTimeBounds.CreateChecked( Start, End );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static ZonedMonth operator +(ZonedMonth a, Period b)
         {
             return a.Add( b );
