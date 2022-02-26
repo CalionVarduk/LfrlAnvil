@@ -235,6 +235,24 @@ namespace LfrlAnvil.Tests.ExtensionsTests.EnumerableTests
             };
         }
 
+        public static TheoryData<IEnumerable<T>, T, T> GetMinMaxData(IFixture fixture)
+        {
+            var (_1, _2, _3) = fixture.CreateDistinctSortedCollection<T>( 3 );
+
+            return new TheoryData<IEnumerable<T>, T, T>
+            {
+                { new[] { _1 }, _1, _1 },
+                { new[] { _1, _2 }, _1, _2 },
+                { new[] { _2, _1 }, _1, _2 },
+                { new[] { _1, _1 }, _1, _1 },
+                { new[] { _1, _2, _3 }, _1, _3 },
+                { new[] { _1, _3, _2 }, _1, _3 },
+                { new[] { _3, _1, _2 }, _1, _3 },
+                { new[] { _3, _2, _1 }, _1, _3 },
+                { new[] { _1, _1, _1 }, _1, _1 }
+            };
+        }
+
         public static TheoryData<IEnumerable<T>, bool> GetContainsDuplicatesData(IFixture fixture)
         {
             var (_1, _2, _3) = fixture.CreateDistinctCollection<T>( 3 );

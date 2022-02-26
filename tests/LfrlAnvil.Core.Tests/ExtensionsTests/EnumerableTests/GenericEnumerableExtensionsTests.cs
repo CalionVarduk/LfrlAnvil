@@ -242,6 +242,49 @@ namespace LfrlAnvil.Tests.ExtensionsTests.EnumerableTests
         }
 
         [Fact]
+        public void MinMax_ShouldThrowInvalidOperationException_WhenSourceIsEmpty()
+        {
+            var sut = Enumerable.Empty<T>();
+            var action = Lambda.Of( () => sut.MinMax() );
+            action.Should().ThrowExactly<InvalidOperationException>();
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetMinMaxData ) )]
+        public void MinMax_ShouldReturnCorrectResult_WhenSourceIsNotEmpty(IEnumerable<T> sut, T expectedMin, T expectedMax)
+        {
+            var result = sut.MinMax();
+
+            using ( new AssertionScope() )
+            {
+                result.Min.Should().Be( expectedMin );
+                result.Max.Should().Be( expectedMax );
+            }
+        }
+
+        [Fact]
+        public void TryMinMax_ShouldReturnNull_WhenSourceIsEmpty()
+        {
+            var sut = Enumerable.Empty<T>();
+            var result = sut.TryMinMax();
+            result.Should().BeNull();
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetMinMaxData ) )]
+        public void TryMinMax_ShouldReturnCorrectResult_WhenSourceIsNotEmpty(IEnumerable<T> sut, T expectedMin, T expectedMax)
+        {
+            var result = sut.TryMinMax();
+
+            using ( new AssertionScope() )
+            {
+                result.Should().NotBeNull();
+                result?.Min.Should().Be( expectedMin );
+                result?.Max.Should().Be( expectedMax );
+            }
+        }
+
+        [Fact]
         public void ContainsDuplicates_ShouldReturnFalse_WhenSourceIsEmpty()
         {
             var sut = Enumerable.Empty<T>();
@@ -620,6 +663,28 @@ namespace LfrlAnvil.Tests.ExtensionsTests.EnumerableTests
         }
 
         [Fact]
+        public void MinMaxBy_ShouldThrowInvalidOperationException_WhenSourceIsEmpty()
+        {
+            var sut = Enumerable.Empty<Contained<T>>();
+            var action = Lambda.Of( () => sut.MinMaxBy( c => c.Value ) );
+            action.Should().ThrowExactly<InvalidOperationException>();
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetMinMaxData ) )]
+        public void MinMaxBy_ShouldReturnCorrectResult_WhenSourceIsNotEmpty(IEnumerable<T> values, T expectedMin, T expectedMax)
+        {
+            var sut = values.Select( v => new Contained<T> { Value = v } );
+            var result = sut.MinMaxBy( c => c.Value );
+
+            using ( new AssertionScope() )
+            {
+                result.Min.Value.Should().Be( expectedMin );
+                result.Max.Value.Should().Be( expectedMax );
+            }
+        }
+
+        [Fact]
         public void TryMaxBy_ShouldReturnFalseAndDefaultResult_WhenSourceIsEmpty()
         {
             var sut = Enumerable.Empty<Contained<T>>();
@@ -674,6 +739,29 @@ namespace LfrlAnvil.Tests.ExtensionsTests.EnumerableTests
             {
                 result.Should().BeTrue();
                 min!.Value.Should().Be( expected );
+            }
+        }
+
+        [Fact]
+        public void TryMinMaxBy_ShouldReturnNull_WhenSourceIsEmpty()
+        {
+            var sut = Enumerable.Empty<Contained<T>>();
+            var result = sut.TryMinMaxBy( c => c.Value );
+            result.Should().BeNull();
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetMinMaxData ) )]
+        public void TryMinMaxBy_ShouldReturnCorrectResult_WhenSourceIsNotEmpty(IEnumerable<T> values, T expectedMin, T expectedMax)
+        {
+            var sut = values.Select( v => new Contained<T> { Value = v } );
+            var result = sut.TryMinMaxBy( c => c.Value );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().NotBeNull();
+                result?.Min.Value.Should().Be( expectedMin );
+                result?.Max.Value.Should().Be( expectedMax );
             }
         }
 

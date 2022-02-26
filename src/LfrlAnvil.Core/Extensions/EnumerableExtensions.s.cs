@@ -192,6 +192,55 @@ namespace LfrlAnvil.Extensions
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static (T Min, T Max) MinMax<T>(this IEnumerable<T> source)
+        {
+            return source.MinMax( Comparer<T>.Default );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static (T Min, T Max) MinMax<T>(this IEnumerable<T> source, IComparer<T> comparer)
+        {
+            var result = source.TryMinMax( comparer );
+            if ( result is null )
+                throw new InvalidOperationException( "Sequence contains no elements" );
+
+            return result.Value;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static (T Min, T Max)? TryMinMax<T>(this IEnumerable<T> source)
+        {
+            return source.TryMinMax( Comparer<T>.Default );
+        }
+
+        [Pure]
+        public static (T Min, T Max)? TryMinMax<T>(this IEnumerable<T> source, IComparer<T> comparer)
+        {
+            using var enumerator = source.GetEnumerator();
+
+            if ( ! enumerator.MoveNext() )
+                return null;
+
+            var min = enumerator.Current;
+            var max = min;
+
+            while ( enumerator.MoveNext() )
+            {
+                var current = enumerator.Current;
+
+                if ( comparer.Compare( min, current ) > 0 )
+                    min = current;
+                else if ( comparer.Compare( max, current ) < 0 )
+                    max = current;
+            }
+
+            return (min, max);
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static bool ContainsDuplicates<T>(this IEnumerable<T> source)
         {
             return source.ContainsDuplicates( EqualityComparer<T>.Default );
@@ -374,6 +423,46 @@ namespace LfrlAnvil.Extensions
             return source.Aggregate( (a, b) => comparer.Compare( selector( a ), selector( b ) ) < 0 ? a : b );
         }
 
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static (T1 Min, T1 Max) MinMaxBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector)
+        {
+            return source.MinMaxBy( selector, Comparer<T2>.Default );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static (T1 Min, T1 Max) MinMaxBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector, IComparer<T2> comparer)
+        {
+            return source.MinMaxBy( selector, selector );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static (T1 Min, T1 Max) MinMaxBy<T1, T2, T3>(
+            this IEnumerable<T1> source,
+            Func<T1, T2> minSelector,
+            Func<T1, T3> maxSelector)
+        {
+            return source.MinMaxBy( minSelector, maxSelector, Comparer<T2>.Default, Comparer<T3>.Default );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static (T1 Min, T1 Max) MinMaxBy<T1, T2, T3>(
+            this IEnumerable<T1> source,
+            Func<T1, T2> minSelector,
+            Func<T1, T3> maxSelector,
+            IComparer<T2> minComparer,
+            IComparer<T3> maxComparer)
+        {
+            var result = source.TryMinMaxBy( minSelector, maxSelector, minComparer, maxComparer );
+            if ( result is null )
+                throw new InvalidOperationException( "Sequence contains no elements" );
+
+            return result.Value;
+        }
+
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static bool TryMaxBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector, [MaybeNullWhen( false )] out T1 result)
         {
@@ -404,6 +493,70 @@ namespace LfrlAnvil.Extensions
             [MaybeNullWhen( false )] out T1 result)
         {
             return source.TryAggregate( (a, b) => comparer.Compare( selector( a ), selector( b ) ) < 0 ? a : b, out result );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static (T1 Min, T1 Max)? TryMinMaxBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector)
+        {
+            return source.TryMinMaxBy( selector, Comparer<T2>.Default );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static (T1 Min, T1 Max)? TryMinMaxBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector, IComparer<T2> comparer)
+        {
+            return source.TryMinMaxBy( selector, selector );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static (T1 Min, T1 Max)? TryMinMaxBy<T1, T2, T3>(
+            this IEnumerable<T1> source,
+            Func<T1, T2> minSelector,
+            Func<T1, T3> maxSelector)
+        {
+            return source.TryMinMaxBy( minSelector, maxSelector, Comparer<T2>.Default, Comparer<T3>.Default );
+        }
+
+        [Pure]
+        public static (T1 Min, T1 Max)? TryMinMaxBy<T1, T2, T3>(
+            this IEnumerable<T1> source,
+            Func<T1, T2> minSelector,
+            Func<T1, T3> maxSelector,
+            IComparer<T2> minComparer,
+            IComparer<T3> maxComparer)
+        {
+            using var enumerator = source.GetEnumerator();
+
+            if ( ! enumerator.MoveNext() )
+                return null;
+
+            var min = enumerator.Current;
+            var max = min;
+            var minValue = minSelector( min );
+            var maxValue = maxSelector( max );
+
+            while ( enumerator.MoveNext() )
+            {
+                var current = enumerator.Current;
+                var currentMinValue = minSelector( current );
+                var currentMaxValue = maxSelector( current );
+
+                if ( minComparer.Compare( minValue, currentMinValue ) > 0 )
+                {
+                    min = current;
+                    minValue = currentMinValue;
+                }
+
+                if ( maxComparer.Compare( maxValue, currentMaxValue ) < 0 )
+                {
+                    max = current;
+                    maxValue = currentMaxValue;
+                }
+            }
+
+            return (min, max);
         }
 
         [Pure]
