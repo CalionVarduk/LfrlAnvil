@@ -619,7 +619,7 @@ namespace LfrlAnvil.Tests.ExtensionsTests.EnumerableTests
             var expected = Fixture.Create<T>();
             var sut = Fixture.CreateMany<T>().Append( expected );
 
-            var result = sut.TryAggregate( (p, c) => c, out var outResult );
+            var result = sut.TryAggregate( (_, c) => c, out var outResult );
 
             using ( new AssertionScope() )
             {

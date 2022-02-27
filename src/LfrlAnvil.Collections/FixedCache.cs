@@ -1,7 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Collections
 {
@@ -94,7 +96,7 @@ namespace LfrlAnvil.Collections
             return _map.ContainsKey( key );
         }
 
-        public bool TryGetValue(TKey key, out TValue value)
+        public bool TryGetValue(TKey key, [MaybeNullWhen( false )] out TValue value)
         {
             if ( _map.TryGetValue( key, out var node ) )
             {
@@ -137,6 +139,7 @@ namespace LfrlAnvil.Collections
             return activeNodes.Select( n => KeyValuePair.Create( n.Key, n.Value ) ).GetEnumerator();
         }
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         private void FixOrder(Node newNode)
         {
             if ( Count > Capacity )
@@ -145,6 +148,7 @@ namespace LfrlAnvil.Collections
             _order.SetNext( newNode );
         }
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         private IEnumerable<Node> GetActiveNodesInOrder()
         {
             return _order.Read( _order.WriteIndex - Count ).Take( Count )!;
@@ -154,6 +158,12 @@ namespace LfrlAnvil.Collections
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        bool IReadOnlyDictionary<TKey, TValue>.TryGetValue(TKey key, out TValue value)
+        {
+            return TryGetValue( key, out value! );
         }
     }
 }

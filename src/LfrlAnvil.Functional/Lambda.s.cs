@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Functional.Delegates;
 
 namespace LfrlAnvil.Functional
 {
@@ -11,6 +12,8 @@ namespace LfrlAnvil.Functional
 
     public static class Lambda
     {
+        public static readonly Action NoOp = () => { };
+
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static Func<TReturn> Of<TReturn>(Func<TReturn> func)
@@ -122,6 +125,34 @@ namespace LfrlAnvil.Functional
         public static Action<T1, T2, T3, T4, T5, T6, T7> Of<T1, T2, T3, T4, T5, T6, T7>(Action<T1, T2, T3, T4, T5, T6, T7> action)
         {
             return action;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static OutFunc<T1> Of<T1>(OutFunc<T1> func)
+        {
+            return func;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static OutFunc<T1, T2> Of<T1, T2>(OutFunc<T1, T2> func)
+        {
+            return func;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static OutFunc<T1, T2, T3> Of<T1, T2, T3>(OutFunc<T1, T2, T3> func)
+        {
+            return func;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static OutFunc<T1, T2, T3, T4> Of<T1, T2, T3, T4>(OutFunc<T1, T2, T3, T4> func)
+        {
+            return func;
         }
     }
 }

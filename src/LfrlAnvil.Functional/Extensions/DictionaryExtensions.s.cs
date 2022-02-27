@@ -1,0 +1,17 @@
+﻿using System.Collections.Generic;
+using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
+
+namespace LfrlAnvil.Functional.Extensions
+{
+    public static class DictionaryExtensions
+    {
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static Maybe<TValue> TryGetValue<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, TKey key)
+            where TValue : notnull
+        {
+            return dictionary.TryGetValue( key, out var result ) ? new Maybe<TValue>( result ) : Maybe<TValue>.None;
+        }
+    }
+}

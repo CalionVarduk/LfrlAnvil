@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Linq;
 using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
+using LfrlAnvil.Functional.Delegates;
 using LfrlAnvil.Functional.Extensions;
 using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
@@ -11,6 +13,7 @@ using Xunit;
 namespace LfrlAnvil.Functional.Tests.ExtensionsTests.LambdaTests
 {
     public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : TestsBase
+        where TReturn : notnull
     {
         [Fact]
         public void TryInvoke_WithAction_ShouldReturnResultWithoutError_WhenDelegateDoesntThrow()
@@ -298,6 +301,182 @@ namespace LfrlAnvil.Functional.Tests.ExtensionsTests.LambdaTests
         }
 
         [Fact]
+        public void Purify_0_ShouldReturnNone_WhenTargetReturnsFalse()
+        {
+            var func = Substitute.For<OutFunc<TReturn>>();
+            func.Invoke( out Arg.Any<TReturn>() ).Returns( _ => false );
+
+            var sut = func.Purify();
+
+            var result = sut();
+
+            using ( new AssertionScope() )
+            {
+                func.Verify().CallCount.Should().Be( 1 );
+                result.HasValue.Should().BeFalse();
+            }
+        }
+
+        [Fact]
+        public void Purify_0_ShouldReturnWithValue_WhenTargetReturnsTrue()
+        {
+            var expected = Fixture.Create<TReturn>();
+            var func = Substitute.For<OutFunc<TReturn>>();
+            func.Invoke( out Arg.Any<TReturn>() )
+                .Returns(
+                    c =>
+                    {
+                        c[0] = expected;
+                        return true;
+                    } );
+
+            var sut = func.Purify();
+
+            var result = sut();
+
+            using ( new AssertionScope() )
+            {
+                func.Verify().CallCount.Should().Be( 1 );
+                result.Value.Should().Be( expected );
+            }
+        }
+
+        [Fact]
+        public void Purify_1_ShouldReturnNone_WhenTargetReturnsFalse()
+        {
+            var a1 = Fixture.Create<T1>();
+            var func = Substitute.For<OutFunc<T1, TReturn>>();
+            func.Invoke( Arg.Any<T1>(), out Arg.Any<TReturn>() ).Returns( _ => false );
+
+            var sut = func.Purify();
+
+            var result = sut( a1 );
+
+            using ( new AssertionScope() )
+            {
+                func.Verify().CallAt( 0 ).Exists().And.Arguments.SkipLast( 1 ).Should().BeSequentiallyEqualTo( a1 );
+                result.HasValue.Should().BeFalse();
+            }
+        }
+
+        [Fact]
+        public void Purify_1_ShouldReturnWithValue_WhenTargetReturnsTrue()
+        {
+            var a1 = Fixture.Create<T1>();
+            var expected = Fixture.Create<TReturn>();
+            var func = Substitute.For<OutFunc<T1, TReturn>>();
+            func.Invoke( Arg.Any<T1>(), out Arg.Any<TReturn>() )
+                .Returns(
+                    c =>
+                    {
+                        c[1] = expected;
+                        return true;
+                    } );
+
+            var sut = func.Purify();
+
+            var result = sut( a1 );
+
+            using ( new AssertionScope() )
+            {
+                func.Verify().CallAt( 0 ).Exists().And.Arguments.SkipLast( 1 ).Should().BeSequentiallyEqualTo( a1 );
+                result.Value.Should().Be( expected );
+            }
+        }
+
+        [Fact]
+        public void Purify_2_ShouldReturnNone_WhenTargetReturnsFalse()
+        {
+            var a1 = Fixture.Create<T1>();
+            var a2 = Fixture.Create<T2>();
+            var func = Substitute.For<OutFunc<T1, T2, TReturn>>();
+            func.Invoke( Arg.Any<T1>(), Arg.Any<T2>(), out Arg.Any<TReturn>() ).Returns( _ => false );
+
+            var sut = func.Purify();
+
+            var result = sut( a1, a2 );
+
+            using ( new AssertionScope() )
+            {
+                func.Verify().CallAt( 0 ).Exists().And.Arguments.SkipLast( 1 ).Should().BeSequentiallyEqualTo( a1, a2 );
+                result.HasValue.Should().BeFalse();
+            }
+        }
+
+        [Fact]
+        public void Purify_2_ShouldReturnWithValue_WhenTargetReturnsTrue()
+        {
+            var a1 = Fixture.Create<T1>();
+            var a2 = Fixture.Create<T2>();
+            var expected = Fixture.Create<TReturn>();
+            var func = Substitute.For<OutFunc<T1, T2, TReturn>>();
+            func.Invoke( Arg.Any<T1>(), Arg.Any<T2>(), out Arg.Any<TReturn>() )
+                .Returns(
+                    c =>
+                    {
+                        c[2] = expected;
+                        return true;
+                    } );
+
+            var sut = func.Purify();
+
+            var result = sut( a1, a2 );
+
+            using ( new AssertionScope() )
+            {
+                func.Verify().CallAt( 0 ).Exists().And.Arguments.SkipLast( 1 ).Should().BeSequentiallyEqualTo( a1, a2 );
+                result.Value.Should().Be( expected );
+            }
+        }
+
+        [Fact]
+        public void Purify_3_ShouldReturnNone_WhenTargetReturnsFalse()
+        {
+            var a1 = Fixture.Create<T1>();
+            var a2 = Fixture.Create<T2>();
+            var a3 = Fixture.Create<T3>();
+            var func = Substitute.For<OutFunc<T1, T2, T3, TReturn>>();
+            func.Invoke( Arg.Any<T1>(), Arg.Any<T2>(), Arg.Any<T3>(), out Arg.Any<TReturn>() ).Returns( _ => false );
+
+            var sut = func.Purify();
+
+            var result = sut( a1, a2, a3 );
+
+            using ( new AssertionScope() )
+            {
+                func.Verify().CallAt( 0 ).Exists().And.Arguments.SkipLast( 1 ).Should().BeSequentiallyEqualTo( a1, a2, a3 );
+                result.HasValue.Should().BeFalse();
+            }
+        }
+
+        [Fact]
+        public void Purify_3_ShouldReturnWithValue_WhenTargetReturnsTrue()
+        {
+            var a1 = Fixture.Create<T1>();
+            var a2 = Fixture.Create<T2>();
+            var a3 = Fixture.Create<T3>();
+            var expected = Fixture.Create<TReturn>();
+            var func = Substitute.For<OutFunc<T1, T2, T3, TReturn>>();
+            func.Invoke( Arg.Any<T1>(), Arg.Any<T2>(), Arg.Any<T3>(), out Arg.Any<TReturn>() )
+                .Returns(
+                    c =>
+                    {
+                        c[3] = expected;
+                        return true;
+                    } );
+
+            var sut = func.Purify();
+
+            var result = sut( a1, a2, a3 );
+
+            using ( new AssertionScope() )
+            {
+                func.Verify().CallAt( 0 ).Exists().And.Arguments.SkipLast( 1 ).Should().BeSequentiallyEqualTo( a1, a2, a3 );
+                result.Value.Should().Be( expected );
+            }
+        }
+
+        [Fact]
         public void Identity_ShouldReturnCorrectResult()
         {
             var value = Fixture.Create<T1>();
@@ -432,6 +611,38 @@ namespace LfrlAnvil.Functional.Tests.ExtensionsTests.LambdaTests
         public void Of_Action7_ShouldReturnCorrectResult()
         {
             var sut = Substitute.For<Action<T1, T2, T3, T4, T5, T6, T7>>();
+            var result = Lambda.Of( sut );
+            result.Should().BeSameAs( sut );
+        }
+
+        [Fact]
+        public void Of_OutFunc0_ShouldReturnCorrectResult()
+        {
+            var sut = Substitute.For<OutFunc<TReturn>>();
+            var result = Lambda.Of( sut );
+            result.Should().BeSameAs( sut );
+        }
+
+        [Fact]
+        public void Of_OutFunc1_ShouldReturnCorrectResult()
+        {
+            var sut = Substitute.For<OutFunc<T1, TReturn>>();
+            var result = Lambda.Of( sut );
+            result.Should().BeSameAs( sut );
+        }
+
+        [Fact]
+        public void Of_OutFunc2_ShouldReturnCorrectResult()
+        {
+            var sut = Substitute.For<OutFunc<T1, T2, TReturn>>();
+            var result = Lambda.Of( sut );
+            result.Should().BeSameAs( sut );
+        }
+
+        [Fact]
+        public void Of_OutFunc3_ShouldReturnCorrectResult()
+        {
+            var sut = Substitute.For<OutFunc<T1, T2, T3, TReturn>>();
             var result = Lambda.Of( sut );
             result.Should().BeSameAs( sut );
         }
