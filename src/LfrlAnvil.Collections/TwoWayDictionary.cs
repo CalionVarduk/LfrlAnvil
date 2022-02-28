@@ -107,20 +107,18 @@ namespace LfrlAnvil.Collections
 
         public bool RemoveForward(T1 value, [MaybeNullWhen( false )] out T2 second)
         {
-            if ( ! _forward.TryGetValue( value, out second ) )
+            if ( ! _forward.Remove( value, out second ) )
                 return false;
 
-            _forward.Remove( value );
             _reverse.Remove( second );
             return true;
         }
 
         public bool RemoveReverse(T2 value, [MaybeNullWhen( false )] out T1 first)
         {
-            if ( ! _reverse.TryGetValue( value, out first ) )
+            if ( ! _reverse.Remove( value, out first ) )
                 return false;
 
-            _reverse.Remove( value );
             _forward.Remove( first );
             return true;
         }

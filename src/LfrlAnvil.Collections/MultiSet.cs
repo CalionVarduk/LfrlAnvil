@@ -1,9 +1,9 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Collections.Internal;
 using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Collections
@@ -167,20 +167,7 @@ namespace LfrlAnvil.Collections
 
         void ICollection<Pair<T, int>>.CopyTo(Pair<T, int>[] array, int arrayIndex)
         {
-            var count = Math.Min( Count, array.Length - arrayIndex );
-            var maxArrayIndex = arrayIndex + count - 1;
-
-            if ( maxArrayIndex < 0 )
-                return;
-
-            using var enumerator = GetEnumerator();
-            var index = arrayIndex;
-
-            while ( index < 0 && enumerator.MoveNext() )
-                ++index;
-
-            while ( enumerator.MoveNext() && index <= maxArrayIndex )
-                array[index++] = enumerator.Current;
+            CollectionCopying.CopyTo( this, array, arrayIndex );
         }
 
         void ICollection<Pair<T, int>>.Add(Pair<T, int> item)
