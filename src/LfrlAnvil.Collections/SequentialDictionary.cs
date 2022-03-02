@@ -44,7 +44,9 @@ namespace LfrlAnvil.Collections
 
         ICollection<TKey> IDictionary<TKey, TValue>.Keys => Keys.ToList();
         ICollection<TValue> IDictionary<TKey, TValue>.Values => Values.ToList();
-        bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => false;
+
+        bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly =>
+            ((ICollection<KeyValuePair<TKey, LinkedListNode<KeyValuePair<TKey, TValue>>>>)_map).IsReadOnly;
 
         public void Add(TKey key, TValue value)
         {

@@ -128,7 +128,7 @@ namespace LfrlAnvil.Collections.Tests.SequentialDictionaryTests
         }
 
         [Fact]
-        public void Remove_WthRemoved_ShouldReturnFalseAndDefaultRemoved_WhenDictionaryIsEmpty()
+        public void Remove_WithRemoved_ShouldReturnFalseAndDefaultRemoved_WhenDictionaryIsEmpty()
         {
             var key = Fixture.Create<TKey>();
             var sut = new SequentialDictionary<TKey, TValue>();
