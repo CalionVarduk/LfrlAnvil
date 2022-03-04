@@ -12,13 +12,13 @@ namespace LfrlAnvil.Collections.Tests.ExtensionsTests.EnumerableTests
         where T : notnull
     {
         [Fact]
-        public void ToMultiSet_ShouldReturnCorrectResult()
+        public void ToMultiHashSet_ShouldReturnCorrectResult()
         {
             var distinctItems = Fixture.CreateDistinctCollection<T>( 5 );
             var items = distinctItems.SelectMany( i => new[] { i, i, i, i } ).ToList();
             var expected = distinctItems.Select( i => Pair.Create( i, 4 ) ).ToList();
 
-            var result = items.ToMultiSet();
+            var result = items.ToMultiHashSet();
 
             result.Should().BeEquivalentTo( expected );
         }

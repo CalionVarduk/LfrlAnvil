@@ -8,15 +8,15 @@ using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions;
 using Xunit;
 
-namespace LfrlAnvil.Collections.Tests.MultiSetTests
+namespace LfrlAnvil.Collections.Tests.MultiHashSetTests
 {
-    public abstract class GenericMultiSetTests<T> : TestsBase
+    public abstract class GenericMultiHashSetTests<T> : TestsBase
         where T : notnull
     {
         [Fact]
         public void Ctor_ShouldCreateEmptySet()
         {
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
 
             using ( new AssertionScope() )
             {
@@ -29,7 +29,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         public void Ctor_ShouldCreateWithExplicitComparer()
         {
             var comparer = EqualityComparerFactory<T>.Create( (a, b) => a!.Equals( b ) );
-            var sut = new MultiSet<T>( comparer );
+            var sut = new MultiHashSet<T>( comparer );
             sut.Comparer.Should().Be( comparer );
         }
 
@@ -38,7 +38,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var item = Fixture.Create<T>();
 
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
 
             var result = sut.Add( item );
 
@@ -55,7 +55,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var (other, item) = Fixture.CreateDistinctCollection<T>( 2 );
 
-            var sut = new MultiSet<T> { other };
+            var sut = new MultiHashSet<T> { other };
 
             var result = sut.Add( item );
 
@@ -72,7 +72,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var item = Fixture.Create<T>();
 
-            var sut = new MultiSet<T> { item };
+            var sut = new MultiHashSet<T> { item };
 
             var result = sut.Add( item );
 
@@ -89,7 +89,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var (other, item) = Fixture.CreateDistinctCollection<T>( 2 );
 
-            var sut = new MultiSet<T> { other, item };
+            var sut = new MultiHashSet<T> { other, item };
 
             var result = sut.Add( item );
 
@@ -106,7 +106,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var item = Fixture.Create<T>();
 
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
             sut.AddMany( item, int.MaxValue );
 
             var action = Lambda.Of( () => sut.Add( item ) );
@@ -127,7 +127,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var item = Fixture.Create<T>();
 
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
 
             var result = sut.AddMany( item, count );
 
@@ -147,7 +147,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var (other, item) = Fixture.CreateDistinctCollection<T>( 2 );
 
-            var sut = new MultiSet<T> { other };
+            var sut = new MultiHashSet<T> { other };
 
             var result = sut.AddMany( item, count );
 
@@ -167,7 +167,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var item = Fixture.Create<T>();
 
-            var sut = new MultiSet<T> { item };
+            var sut = new MultiHashSet<T> { item };
 
             var result = sut.AddMany( item, count );
 
@@ -187,7 +187,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var (other, item) = Fixture.CreateDistinctCollection<T>( 2 );
 
-            var sut = new MultiSet<T> { other, item };
+            var sut = new MultiHashSet<T> { other, item };
 
             var result = sut.AddMany( item, count );
 
@@ -206,7 +206,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var item = Fixture.Create<T>();
 
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
 
             var action = Lambda.Of( () => sut.AddMany( item, count ) );
 
@@ -218,7 +218,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var item = Fixture.Create<T>();
 
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
             sut.AddMany( item, int.MaxValue );
 
             var action = Lambda.Of( () => sut.AddMany( item, 1 ) );
@@ -231,7 +231,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var item = Fixture.Create<T>();
 
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
 
             var result = sut.Remove( item );
 
@@ -243,7 +243,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var item = Fixture.Create<T>();
 
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
             sut.AddMany( item, 2 );
 
             var result = sut.Remove( item );
@@ -261,7 +261,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var item = Fixture.Create<T>();
 
-            var sut = new MultiSet<T> { item };
+            var sut = new MultiHashSet<T> { item };
 
             var result = sut.Remove( item );
 
@@ -278,7 +278,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var item = Fixture.Create<T>();
 
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
 
             var result = sut.RemoveMany( item, 1 );
 
@@ -293,7 +293,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var item = Fixture.Create<T>();
 
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
             sut.AddMany( item, 4 );
 
             var result = sut.RemoveMany( item, count );
@@ -314,7 +314,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var item = Fixture.Create<T>();
 
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
             sut.AddMany( item, 1 );
 
             var result = sut.RemoveMany( item, count );
@@ -334,7 +334,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var item = Fixture.Create<T>();
 
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
 
             var action = Lambda.Of( () => sut.RemoveMany( item, count ) );
 
@@ -349,7 +349,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var item = Fixture.Create<T>();
 
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
             sut.AddMany( item, count );
 
             var result = sut.RemoveAll( item );
@@ -367,7 +367,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var item = Fixture.Create<T>();
 
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
 
             var result = sut.RemoveAll( item );
 
@@ -379,7 +379,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var items = Fixture.CreateDistinctCollection<T>( 3 );
 
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
 
             foreach ( var item in items )
                 sut.Add( item );
@@ -398,7 +398,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var item = Fixture.Create<T>();
 
-            var sut = new MultiSet<T> { item };
+            var sut = new MultiHashSet<T> { item };
 
             var result = sut.Contains( item );
 
@@ -410,7 +410,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var item = Fixture.Create<T>();
 
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
 
             var result = sut.Contains( item );
 
@@ -425,7 +425,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var item = Fixture.Create<T>();
 
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
             sut.AddMany( item, count );
 
             var result = sut.GetMultiplicity( item );
@@ -438,7 +438,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var item = Fixture.Create<T>();
 
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
 
             var result = sut.GetMultiplicity( item );
 
@@ -450,7 +450,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var item = Fixture.Create<T>();
 
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
 
             var result = sut.SetMultiplicity( item, 0 );
 
@@ -469,7 +469,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var item = Fixture.Create<T>();
 
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
 
             var result = sut.SetMultiplicity( item, value );
 
@@ -490,7 +490,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var item = Fixture.Create<T>();
 
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
             sut.AddMany( item, value );
 
             var result = sut.SetMultiplicity( item, value );
@@ -515,7 +515,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var item = Fixture.Create<T>();
 
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
             sut.AddMany( item, oldMultiplicity );
 
             var result = sut.SetMultiplicity( item, newMultiplicity );
@@ -537,7 +537,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var item = Fixture.Create<T>();
 
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
             sut.AddMany( item, oldMultiplicity );
 
             var result = sut.SetMultiplicity( item, 0 );
@@ -556,7 +556,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var items = Fixture.CreateDistinctCollection<T>( 3 );
 
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
 
             for ( var i = 0; i < items.Count; ++i )
                 sut.AddMany( items[i], i + 1 );
@@ -579,7 +579,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
                 items[2]
             };
 
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
 
             for ( var i = 0; i < items.Count; ++i )
                 sut.AddMany( items[i], i + 1 );
@@ -599,7 +599,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
                 }
                 .AsEnumerable();
 
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
 
             for ( var i = 0; i < items.Count; ++i )
                 sut.AddMany( items[i], i + 1 );
@@ -612,7 +612,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var item = Fixture.Create<T>();
 
-            var sut = new MultiSet<T> { item };
+            var sut = new MultiHashSet<T> { item };
             ICollection<Pair<T, int>> collection = sut;
 
             collection.Add( Pair.Create( item, 3 ) );
@@ -629,7 +629,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var item = Fixture.Create<T>();
 
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
             sut.AddMany( item, 4 );
             ICollection<Pair<T, int>> collection = sut;
 
@@ -648,7 +648,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
         {
             var item = Fixture.Create<T>();
 
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
             ICollection<Pair<T, int>> collection = sut;
 
             var result = collection.Remove( Pair.Create( item, 1 ) );
@@ -662,7 +662,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
             var item = Fixture.Create<T>();
             var multiplicity = 3;
 
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
             sut.AddMany( item, multiplicity );
             ICollection<Pair<T, int>> collection = sut;
 
@@ -677,7 +677,7 @@ namespace LfrlAnvil.Collections.Tests.MultiSetTests
             var item = Fixture.Create<T>();
             var multiplicity = 3;
 
-            var sut = new MultiSet<T>();
+            var sut = new MultiHashSet<T>();
             sut.AddMany( item, multiplicity );
             ICollection<Pair<T, int>> collection = sut;
 

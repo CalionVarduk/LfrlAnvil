@@ -9,17 +9,17 @@ namespace LfrlAnvil.Collections.Extensions
     {
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static MultiSet<T> ToMultiSet<T>(this IEnumerable<T> source)
+        public static MultiHashSet<T> ToMultiHashSet<T>(this IEnumerable<T> source)
             where T : notnull
         {
-            return source.ToMultiSet( EqualityComparer<T>.Default );
+            return source.ToMultiHashSet( EqualityComparer<T>.Default );
         }
 
         [Pure]
-        public static MultiSet<T> ToMultiSet<T>(this IEnumerable<T> source, IEqualityComparer<T> comparer)
+        public static MultiHashSet<T> ToMultiHashSet<T>(this IEnumerable<T> source, IEqualityComparer<T> comparer)
             where T : notnull
         {
-            var result = new MultiSet<T>( comparer );
+            var result = new MultiHashSet<T>( comparer );
             foreach ( var e in source )
                 result.Add( e );
 

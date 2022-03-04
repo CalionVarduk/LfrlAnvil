@@ -323,7 +323,11 @@ namespace LfrlAnvil.Extensions
         [Pure]
         public static bool SetEquals<T>(this IEnumerable<T> source, IEnumerable<T> other, IEqualityComparer<T> comparer)
         {
-            var sourceSet = source as ISet<T> ?? source.ToHashSet( comparer );
+            var sourceSet = GetSet( source, comparer );
+
+            if ( other is HashSet<T> hashSet && hashSet.Comparer.Equals( comparer ) )
+                return SetEquals( sourceSet, hashSet );
+
             var otherSet = new HashSet<T>( comparer );
 
             foreach ( var o in other )
@@ -729,12 +733,12 @@ namespace LfrlAnvil.Extensions
         public static IEnumerable<T[]> Divide<T>(this IEnumerable<T> source, int partLength)
         {
             Ensure.IsGreaterThan( partLength, 0, nameof( partLength ) );
-            return DivideImpl( source, partLength );
+            return DivideIterator( source, partLength );
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private static IEnumerable<T[]> DivideImpl<T>(IEnumerable<T> source, int partLength)
+        private static IEnumerable<T[]> DivideIterator<T>(IEnumerable<T> source, int partLength)
         {
             using var enumerator = source.GetEnumerator();
 
@@ -764,6 +768,27 @@ namespace LfrlAnvil.Extensions
                 lastPart[i] = partBuilder[i];
 
             yield return lastPart;
+        }
+
+        [Pure]
+        private static ISet<T> GetSet<T>(IEnumerable<T> source, IEqualityComparer<T> comparer)
+        {
+            if ( source is HashSet<T> hashSet && hashSet.Comparer.Equals( comparer ) )
+                return hashSet;
+
+            return new HashSet<T>( source, comparer );
+        }
+
+        [Pure]
+        private static bool SetEquals<T>(ISet<T> set, ISet<T> other)
+        {
+            foreach ( var o in other )
+            {
+                if ( ! set.Contains( o ) )
+                    return false;
+            }
+
+            return set.Count == other.Count;
         }
     }
 }

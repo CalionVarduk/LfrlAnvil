@@ -357,6 +357,41 @@ namespace LfrlAnvil.Collections.Tests.SequentialHashSetTests
             result.Should().Be( expected );
         }
 
+        [Theory]
+        [GenericMethodData( nameof( GenericSequentialHashSetTestsData<T>.GetSetEqualsData ) )]
+        public void SetEquals_ShouldReturnCorrectResult_WhenOtherIsHashSet(IEnumerable<T> items, IEnumerable<T> other, bool expected)
+        {
+            var sut = new SequentialHashSet<T>();
+            foreach ( var item in items )
+                sut.Add( item );
+
+            var otherSet = new HashSet<T>( other, sut.Comparer );
+
+            var result = sut.SetEquals( otherSet );
+
+            result.Should().Be( expected );
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericSequentialHashSetTestsData<T>.GetSetEqualsData ) )]
+        public void SetEquals_ShouldReturnCorrectResult_WhenOtherIsSequentialHashSet(
+            IEnumerable<T> items,
+            IEnumerable<T> other,
+            bool expected)
+        {
+            var sut = new SequentialHashSet<T>();
+            foreach ( var item in items )
+                sut.Add( item );
+
+            var otherSet = new SequentialHashSet<T>( sut.Comparer );
+            foreach ( var item in other )
+                otherSet.Add( item );
+
+            var result = sut.SetEquals( otherSet );
+
+            result.Should().Be( expected );
+        }
+
         [Fact]
         public void IsSupersetOf_ShouldReturnTrue_WhenAppliedToSelf()
         {
@@ -435,6 +470,41 @@ namespace LfrlAnvil.Collections.Tests.SequentialHashSetTests
             result.Should().Be( expected );
         }
 
+        [Theory]
+        [GenericMethodData( nameof( GenericSequentialHashSetTestsData<T>.GetIsSubsetOfData ) )]
+        public void IsSubsetOf_ShouldReturnCorrectResult_WhenOtherIsHashSet(IEnumerable<T> items, IEnumerable<T> other, bool expected)
+        {
+            var sut = new SequentialHashSet<T>();
+            foreach ( var item in items )
+                sut.Add( item );
+
+            var otherSet = new HashSet<T>( other, sut.Comparer );
+
+            var result = sut.IsSubsetOf( otherSet );
+
+            result.Should().Be( expected );
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericSequentialHashSetTestsData<T>.GetIsSubsetOfData ) )]
+        public void IsSubsetOf_ShouldReturnCorrectResult_WhenOtherIsSequentialHashSet(
+            IEnumerable<T> items,
+            IEnumerable<T> other,
+            bool expected)
+        {
+            var sut = new SequentialHashSet<T>();
+            foreach ( var item in items )
+                sut.Add( item );
+
+            var otherSet = new SequentialHashSet<T>( sut.Comparer );
+            foreach ( var item in other )
+                otherSet.Add( item );
+
+            var result = sut.IsSubsetOf( otherSet );
+
+            result.Should().Be( expected );
+        }
+
         [Fact]
         public void IsProperSubsetOf_ShouldReturnFalse_WhenAppliedToSelf()
         {
@@ -457,6 +527,41 @@ namespace LfrlAnvil.Collections.Tests.SequentialHashSetTests
                 sut.Add( item );
 
             var result = sut.IsProperSubsetOf( other );
+
+            result.Should().Be( expected );
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericSequentialHashSetTestsData<T>.GetIsProperSubsetOfData ) )]
+        public void IsProperSubsetOf_ShouldReturnCorrectResult_WhenOtherIsHashSet(IEnumerable<T> items, IEnumerable<T> other, bool expected)
+        {
+            var sut = new SequentialHashSet<T>();
+            foreach ( var item in items )
+                sut.Add( item );
+
+            var otherSet = new HashSet<T>( other, sut.Comparer );
+
+            var result = sut.IsProperSubsetOf( otherSet );
+
+            result.Should().Be( expected );
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericSequentialHashSetTestsData<T>.GetIsProperSubsetOfData ) )]
+        public void IsProperSubsetOf_ShouldReturnCorrectResult_WhenOtherIsSequentialHashSet(
+            IEnumerable<T> items,
+            IEnumerable<T> other,
+            bool expected)
+        {
+            var sut = new SequentialHashSet<T>();
+            foreach ( var item in items )
+                sut.Add( item );
+
+            var otherSet = new SequentialHashSet<T>( sut.Comparer );
+            foreach ( var item in other )
+                otherSet.Add( item );
+
+            var result = sut.IsProperSubsetOf( otherSet );
 
             result.Should().Be( expected );
         }

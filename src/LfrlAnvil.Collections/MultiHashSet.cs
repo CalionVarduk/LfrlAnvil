@@ -9,15 +9,15 @@ using LfrlAnvil.Extensions;
 namespace LfrlAnvil.Collections
 {
     // TODO: add methods for calculating Unions, Intersections etc. between 2 MultiSets
-    public class MultiSet<T> : IMultiSet<T>
+    public class MultiHashSet<T> : IMultiSet<T>
         where T : notnull
     {
         private readonly Dictionary<T, Ref<int>> _map;
 
-        public MultiSet()
+        public MultiHashSet()
             : this( EqualityComparer<T>.Default ) { }
 
-        public MultiSet(IEqualityComparer<T> comparer)
+        public MultiHashSet(IEqualityComparer<T> comparer)
         {
             _map = new Dictionary<T, Ref<int>>( comparer );
             FullCount = 0;

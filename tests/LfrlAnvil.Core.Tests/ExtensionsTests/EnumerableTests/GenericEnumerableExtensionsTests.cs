@@ -485,6 +485,37 @@ namespace LfrlAnvil.Tests.ExtensionsTests.EnumerableTests
             result.Should().Be( expected );
         }
 
+        [Theory]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetSetEqualsData ) )]
+        public void SetEquals_ShouldReturnCorrectResult_WhenSourceIsHashSet(IEnumerable<T> sut, IEnumerable<T> other, bool expected)
+        {
+            sut = new HashSet<T>( sut );
+            var result = sut.SetEquals( other );
+            result.Should().Be( expected );
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetSetEqualsData ) )]
+        public void SetEquals_ShouldReturnCorrectResult_WhenOtherIsHashSet(IEnumerable<T> sut, IEnumerable<T> other, bool expected)
+        {
+            other = new HashSet<T>( other );
+            var result = sut.SetEquals( other );
+            result.Should().Be( expected );
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetSetEqualsData ) )]
+        public void SetEquals_ShouldReturnCorrectResult_WhenSourceAndOtherAreHashSet(
+            IEnumerable<T> sut,
+            IEnumerable<T> other,
+            bool expected)
+        {
+            var sutSet = new HashSet<T>( sut );
+            other = new HashSet<T>( other, sutSet.Comparer );
+            var result = sutSet.AsEnumerable().SetEquals( other );
+            result.Should().Be( expected );
+        }
+
         [Fact]
         public void VisitMany_ShouldReturnEmptyCollection_WhenSourceIsEmpty()
         {

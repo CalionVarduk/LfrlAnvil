@@ -136,6 +136,12 @@ namespace LfrlAnvil.Collections
             if ( ReferenceEquals( this, other ) )
                 return true;
 
+            if ( other is HashSet<T> hashSet && hashSet.Comparer.Equals( Comparer ) )
+                return SetEquals( this, hashSet );
+
+            if ( other is SequentialHashSet<T> seqSet && seqSet.Comparer.Equals( Comparer ) )
+                return SetEquals( this, seqSet );
+
             var otherSet = new HashSet<T>( Comparer );
 
             foreach ( var item in other )
@@ -199,6 +205,7 @@ namespace LfrlAnvil.Collections
             return _order.GetEnumerator();
         }
 
+        [Pure]
         private static ISet<T> GetOtherSet(IEnumerable<T> other, IEqualityComparer<T> comparer)
         {
             if ( other is HashSet<T> hSet && hSet.Comparer.Equals( comparer ) )
@@ -210,6 +217,7 @@ namespace LfrlAnvil.Collections
             return new HashSet<T>( other, comparer );
         }
 
+        [Pure]
         private static bool IsSupersetOf(ISet<T> set, IEnumerable<T> other)
         {
             foreach ( var item in other )
@@ -221,6 +229,7 @@ namespace LfrlAnvil.Collections
             return true;
         }
 
+        [Pure]
         private static bool IsProperSupersetOf(ISet<T> set, IEnumerable<T> other, IEqualityComparer<T> comparer)
         {
             var otherSet = new HashSet<T>( comparer );
@@ -236,6 +245,7 @@ namespace LfrlAnvil.Collections
             return set.Count > otherSet.Count;
         }
 
+        [Pure]
         private static bool IsProperSupersetOf(ISet<T> set, ISet<T> other)
         {
             foreach ( var item in other )
@@ -245,6 +255,18 @@ namespace LfrlAnvil.Collections
             }
 
             return set.Count > other.Count;
+        }
+
+        [Pure]
+        private static bool SetEquals(SequentialHashSet<T> set, ISet<T> other)
+        {
+            foreach ( var item in other )
+            {
+                if ( ! set.Contains( item ) )
+                    return false;
+            }
+
+            return set.Count == other.Count;
         }
 
         [Pure]
