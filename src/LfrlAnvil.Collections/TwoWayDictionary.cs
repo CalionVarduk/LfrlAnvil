@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using LfrlAnvil.Collections.Internal;
 
 namespace LfrlAnvil.Collections
 {
@@ -30,6 +31,8 @@ namespace LfrlAnvil.Collections
         public IReadOnlyDictionary<T2, T1> Reverse => _reverse;
         public IEqualityComparer<T1> ForwardComparer => _forward.Comparer;
         public IEqualityComparer<T2> ReverseComparer => _reverse.Comparer;
+
+        bool ICollection<Pair<T1, T2>>.IsReadOnly => ((ICollection<KeyValuePair<T1, T2>>)_forward).IsReadOnly;
 
         public bool TryAdd(T1 first, T2 second)
         {
@@ -130,6 +133,18 @@ namespace LfrlAnvil.Collections
         }
 
         [Pure]
+        public bool Contains(T1 first, T2 second)
+        {
+            return _forward.TryGetValue( first, out var existingSecond ) && _reverse.Comparer.Equals( existingSecond, second );
+        }
+
+        [Pure]
+        public bool Contains(Pair<T1, T2> item)
+        {
+            return Contains( item.First, item.Second );
+        }
+
+        [Pure]
         public IEnumerator<Pair<T1, T2>> GetEnumerator()
         {
             return _forward.Select( kv => Pair.Create( kv.Key, kv.Value ) ).GetEnumerator();
@@ -139,6 +154,26 @@ namespace LfrlAnvil.Collections
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+
+        void ICollection<Pair<T1, T2>>.Add(Pair<T1, T2> item)
+        {
+            Add( item.First, item.Second );
+        }
+
+        bool ICollection<Pair<T1, T2>>.Remove(Pair<T1, T2> item)
+        {
+            if ( ! _forward.TryGetValue( item.First, out var second ) || ! _reverse.Comparer.Equals( second, item.Second ) )
+                return false;
+
+            _forward.Remove( item.First );
+            _reverse.Remove( item.Second );
+            return true;
+        }
+
+        void ICollection<Pair<T1, T2>>.CopyTo(Pair<T1, T2>[] array, int arrayIndex)
+        {
+            CollectionCopying.CopyTo( this, array, arrayIndex );
         }
     }
 }

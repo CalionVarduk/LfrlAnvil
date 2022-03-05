@@ -564,6 +564,110 @@ namespace LfrlAnvil.Collections.Tests.TwoWayDictionaryTests
         }
 
         [Fact]
+        public void Contains_ShouldReturnTrue_WhenFirstAndSecondExistAndAreLinked()
+        {
+            var first = Fixture.Create<T1>();
+            var second = Fixture.Create<T2>();
+
+            var sut = new TwoWayDictionary<T1, T2> { { first, second } };
+
+            var result = sut.Contains( first, second );
+
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public void Contains_ShouldReturnFalse_WhenFirstExistsButIsNotLinkedWithSecond()
+        {
+            var first = Fixture.Create<T1>();
+            var (second1, second2) = Fixture.CreateDistinctCollection<T2>( 2 );
+
+            var sut = new TwoWayDictionary<T1, T2> { { first, second1 } };
+
+            var result = sut.Contains( first, second2 );
+
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public void Contains_ShouldReturnFalse_WhenSecondExistsButIsNotLinkedWithFirst()
+        {
+            var (first1, first2) = Fixture.CreateDistinctCollection<T1>( 2 );
+            var second = Fixture.Create<T2>();
+
+            var sut = new TwoWayDictionary<T1, T2> { { first1, second } };
+
+            var result = sut.Contains( first2, second );
+
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public void Contains_ShouldReturnFalse_WhenFirstAndSecondDontExist()
+        {
+            var first = Fixture.Create<T1>();
+            var second = Fixture.Create<T2>();
+
+            var sut = new TwoWayDictionary<T1, T2>();
+
+            var result = sut.Contains( first, second );
+
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public void Contains_WithPair_ShouldReturnTrue_WhenFirstAndSecondExistAndAreLinked()
+        {
+            var first = Fixture.Create<T1>();
+            var second = Fixture.Create<T2>();
+
+            var sut = new TwoWayDictionary<T1, T2> { { first, second } };
+
+            var result = sut.Contains( Pair.Create( first, second ) );
+
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public void Contains_WithPair_ShouldReturnFalse_WhenFirstExistsButIsNotLinkedWithSecond()
+        {
+            var first = Fixture.Create<T1>();
+            var (second1, second2) = Fixture.CreateDistinctCollection<T2>( 2 );
+
+            var sut = new TwoWayDictionary<T1, T2> { { first, second1 } };
+
+            var result = sut.Contains( Pair.Create( first, second2 ) );
+
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public void Contains_WithPair_ShouldReturnFalse_WhenSecondExistsButIsNotLinkedWithFirst()
+        {
+            var (first1, first2) = Fixture.CreateDistinctCollection<T1>( 2 );
+            var second = Fixture.Create<T2>();
+
+            var sut = new TwoWayDictionary<T1, T2> { { first1, second } };
+
+            var result = sut.Contains( Pair.Create( first2, second ) );
+
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public void Contains_WithPair_ShouldReturnFalse_WhenFirstAndSecondDontExist()
+        {
+            var first = Fixture.Create<T1>();
+            var second = Fixture.Create<T2>();
+
+            var sut = new TwoWayDictionary<T1, T2>();
+
+            var result = sut.Contains( Pair.Create( first, second ) );
+
+            result.Should().BeFalse();
+        }
+
+        [Fact]
         public void GetEnumerator_ShouldReturnCorrectResult()
         {
             var (first1, first2, first3) = Fixture.CreateDistinctCollection<T1>( 3 );
@@ -584,6 +688,85 @@ namespace LfrlAnvil.Collections.Tests.TwoWayDictionaryTests
             };
 
             sut.Should().BeEquivalentTo( expected );
+        }
+
+        [Fact]
+        public void ICollectionAdd_ShouldBeEquivalentToAdd()
+        {
+            var first = Fixture.Create<T1>();
+            var second = Fixture.Create<T2>();
+
+            var dictionary = new TwoWayDictionary<T1, T2>();
+            var sut = (ICollection<Pair<T1, T2>>)dictionary;
+
+            sut.Add( Pair.Create( first, second ) );
+
+            using ( new AssertionScope() )
+            {
+                dictionary.Count.Should().Be( 1 );
+                dictionary.Forward[first].Should().Be( second );
+                dictionary.Reverse[second].Should().Be( first );
+            }
+        }
+
+        [Fact]
+        public void ICollectionRemove_ShouldReturnFalseAndDoNothing_WhenFirstAndSecondDontExist()
+        {
+            var first = Fixture.Create<T1>();
+            var second = Fixture.Create<T2>();
+
+            var dictionary = new TwoWayDictionary<T1, T2>();
+            var sut = (ICollection<Pair<T1, T2>>)dictionary;
+
+            var result = sut.Remove( Pair.Create( first, second ) );
+
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public void ICollectionRemove_ShouldReturnFalseAndDoNothing_WhenFirstExistsButIsNotLinkedWithSecond()
+        {
+            var first = Fixture.Create<T1>();
+            var (second1, second2) = Fixture.CreateDistinctCollection<T2>( 2 );
+
+            var dictionary = new TwoWayDictionary<T1, T2> { { first, second1 } };
+            var sut = (ICollection<Pair<T1, T2>>)dictionary;
+
+            var result = sut.Remove( Pair.Create( first, second2 ) );
+
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public void ICollectionRemove_ShouldReturnFalseAndDoNothing_WhenSecondExistsButIsNotLinkedWithFirst()
+        {
+            var (first1, first2) = Fixture.CreateDistinctCollection<T1>( 2 );
+            var second = Fixture.Create<T2>();
+
+            var dictionary = new TwoWayDictionary<T1, T2> { { first1, second } };
+            var sut = (ICollection<Pair<T1, T2>>)dictionary;
+
+            var result = sut.Remove( Pair.Create( first2, second ) );
+
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public void ICollectionRemove_ShouldReturnTrueAndRemoveItems_WhenFirstAndSecondExistAndAreLinked()
+        {
+            var first = Fixture.Create<T1>();
+            var second = Fixture.Create<T2>();
+
+            var dictionary = new TwoWayDictionary<T1, T2> { { first, second } };
+            var sut = (ICollection<Pair<T1, T2>>)dictionary;
+
+            var result = sut.Remove( Pair.Create( first, second ) );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeTrue();
+                dictionary.Count.Should().Be( 0 );
+            }
         }
     }
 }

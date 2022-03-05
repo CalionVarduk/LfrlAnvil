@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Collections
 {
@@ -10,5 +11,8 @@ namespace LfrlAnvil.Collections
         IReadOnlyDictionary<T2, T1> Reverse { get; }
         IEqualityComparer<T1> ForwardComparer { get; }
         IEqualityComparer<T2> ReverseComparer { get; }
+
+        [Pure]
+        bool Contains(T1 first, T2 second);
     }
 }
