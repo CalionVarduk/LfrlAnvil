@@ -8,7 +8,6 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Collections
 {
-    // TODO: add methods for calculating Unions, Intersections etc. between 2 MultiSets
     public class MultiHashSet<T> : IMultiSet<T>
         where T : notnull
     {
@@ -49,6 +48,18 @@ namespace LfrlAnvil.Collections
         public bool Contains(T item)
         {
             return _map.ContainsKey( item );
+        }
+
+        [Pure]
+        public bool Contains(T item, int multiplicity)
+        {
+            return GetMultiplicity( item ) >= multiplicity;
+        }
+
+        [Pure]
+        public bool Contains(Pair<T, int> item)
+        {
+            return Contains( item.First, item.Second );
         }
 
         [Pure]
@@ -114,6 +125,213 @@ namespace LfrlAnvil.Collections
             FullCount = 0;
         }
 
+        public void ExceptWith(IEnumerable<Pair<T, int>> other)
+        {
+            if ( ReferenceEquals( this, other ) )
+            {
+                Clear();
+                return;
+            }
+
+            foreach ( var (item, count) in other )
+            {
+                if ( count <= 0 )
+                    continue;
+
+                RemoveImpl( item, count );
+            }
+        }
+
+        public void UnionWith(IEnumerable<Pair<T, int>> other)
+        {
+            if ( ReferenceEquals( this, other ) )
+                return;
+
+            foreach ( var (item, count) in other )
+            {
+                if ( count <= 0 )
+                    continue;
+
+                if ( ! _map.TryGetValue( item, out var multiplicity ) )
+                {
+                    AddNewImpl( item, count );
+                    continue;
+                }
+
+                if ( multiplicity.Value >= count )
+                    continue;
+
+                FullCount += count - multiplicity.Value;
+                multiplicity.Value = count;
+            }
+        }
+
+        public void IntersectWith(IEnumerable<Pair<T, int>> other)
+        {
+            if ( Count == 0 || ReferenceEquals( this, other ) )
+                return;
+
+            if ( other is IReadOnlyCollection<Pair<T, int>> collection && collection.Count == 0 )
+            {
+                Clear();
+                return;
+            }
+
+            var otherSet = GetOtherSet( other, Comparer );
+            var itemsToRemove = new List<T>();
+
+            foreach ( var (item, multiplicity) in _map )
+            {
+                var count = otherSet.GetMultiplicity( item );
+
+                if ( count >= multiplicity.Value )
+                    continue;
+
+                if ( count > 0 )
+                {
+                    FullCount -= multiplicity.Value - count;
+                    multiplicity.Value = count;
+                    continue;
+                }
+
+                itemsToRemove.Add( item );
+            }
+
+            foreach ( var item in itemsToRemove )
+                RemoveAll( item );
+        }
+
+        public void SymmetricExceptWith(IEnumerable<Pair<T, int>> other)
+        {
+            if ( ReferenceEquals( this, other ) )
+            {
+                Clear();
+                return;
+            }
+
+            foreach ( var (item, count) in other )
+            {
+                if ( count <= 0 )
+                    continue;
+
+                if ( ! _map.TryGetValue( item, out var multiplicity ) )
+                {
+                    AddNewImpl( item, count );
+                    continue;
+                }
+
+                var newMultiplicity = multiplicity.Value > count
+                    ? multiplicity.Value - count
+                    : count - multiplicity.Value;
+
+                if ( newMultiplicity == 0 )
+                {
+                    RemoveAllImpl( item, count );
+                    continue;
+                }
+
+                FullCount -= multiplicity.Value - newMultiplicity;
+                multiplicity.Value = newMultiplicity;
+            }
+        }
+
+        [Pure]
+        public bool Overlaps(IEnumerable<Pair<T, int>> other)
+        {
+            if ( ReferenceEquals( this, other ) )
+                return true;
+
+            foreach ( var (item, count) in other )
+            {
+                if ( count <= 0 )
+                    continue;
+
+                if ( Contains( item ) )
+                    return true;
+            }
+
+            return false;
+        }
+
+        [Pure]
+        public bool SetEquals(IEnumerable<Pair<T, int>> other)
+        {
+            if ( ReferenceEquals( this, other ) )
+                return true;
+
+            var otherSet = GetOtherSet( other, Comparer );
+
+            if ( FullCount != otherSet.FullCount )
+                return false;
+
+            foreach ( var (item, count) in otherSet )
+            {
+                if ( GetMultiplicity( item ) != count )
+                    return false;
+            }
+
+            return true;
+        }
+
+        [Pure]
+        public bool IsSupersetOf(IEnumerable<Pair<T, int>> other)
+        {
+            if ( ReferenceEquals( this, other ) )
+                return true;
+
+            var otherSet = GetOtherSet( other, Comparer );
+
+            if ( FullCount < otherSet.FullCount )
+                return false;
+
+            foreach ( var (item, count) in otherSet )
+            {
+                if ( GetMultiplicity( item ) < count )
+                    return false;
+            }
+
+            return true;
+        }
+
+        [Pure]
+        public bool IsProperSupersetOf(IEnumerable<Pair<T, int>> other)
+        {
+            if ( Count == 0 || ReferenceEquals( this, other ) )
+                return false;
+
+            var otherSet = GetOtherSet( other, Comparer );
+
+            if ( FullCount <= otherSet.FullCount )
+                return false;
+
+            var equalMultiplicityCount = 0;
+
+            foreach ( var (item, count) in otherSet )
+            {
+                var multiplicity = GetMultiplicity( item );
+
+                if ( multiplicity < count )
+                    return false;
+
+                if ( multiplicity == count )
+                    ++equalMultiplicityCount;
+            }
+
+            return equalMultiplicityCount < Count;
+        }
+
+        [Pure]
+        public bool IsSubsetOf(IEnumerable<Pair<T, int>> other)
+        {
+            return GetOtherSet( other, Comparer ).IsSupersetOf( this );
+        }
+
+        [Pure]
+        public bool IsProperSubsetOf(IEnumerable<Pair<T, int>> other)
+        {
+            return GetOtherSet( other, Comparer ).IsProperSupersetOf( this );
+        }
+
         [Pure]
         public IEnumerator<Pair<T, int>> GetEnumerator()
         {
@@ -165,6 +383,29 @@ namespace LfrlAnvil.Collections
             return multiplicity;
         }
 
+        private static IMultiSet<T> GetOtherSet(IEnumerable<Pair<T, int>> other, IEqualityComparer<T> comparer)
+        {
+            if ( other is IMultiSet<T> otherSet && otherSet.Comparer.Equals( comparer ) )
+                return otherSet;
+
+            var result = new MultiHashSet<T>( comparer );
+            foreach ( var (item, count) in other )
+            {
+                if ( count <= 0 )
+                    continue;
+
+                result.AddImpl( item, count );
+            }
+
+            return result;
+        }
+
+        bool ISet<Pair<T, int>>.Add(Pair<T, int> item)
+        {
+            AddMany( item.First, item.Second );
+            return true;
+        }
+
         void ICollection<Pair<T, int>>.CopyTo(Pair<T, int>[] array, int arrayIndex)
         {
             CollectionCopying.CopyTo( this, array, arrayIndex );
@@ -178,12 +419,6 @@ namespace LfrlAnvil.Collections
         bool ICollection<Pair<T, int>>.Remove(Pair<T, int> item)
         {
             return RemoveMany( item.First, item.Second ) != -1;
-        }
-
-        [Pure]
-        bool ICollection<Pair<T, int>>.Contains(Pair<T, int> item)
-        {
-            return GetMultiplicity( item.First ) == item.Second;
         }
 
         [Pure]

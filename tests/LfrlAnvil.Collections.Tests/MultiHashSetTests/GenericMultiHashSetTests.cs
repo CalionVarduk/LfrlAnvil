@@ -4,12 +4,15 @@ using System.Linq;
 using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions;
+using LfrlAnvil.TestExtensions.Attributes;
 using Xunit;
 
 namespace LfrlAnvil.Collections.Tests.MultiHashSetTests
 {
+    [GenericTestClass( typeof( GenericMultiHashSetTestsData<> ) )]
     public abstract class GenericMultiHashSetTests<T> : TestsBase
         where T : notnull
     {
@@ -227,7 +230,7 @@ namespace LfrlAnvil.Collections.Tests.MultiHashSetTests
         }
 
         [Fact]
-        public void Remove_ShouldReturnMinusOneWhenItemDoesntExist()
+        public void Remove_ShouldReturnMinusOne_WhenItemDoesntExist()
         {
             var item = Fixture.Create<T>();
 
@@ -257,7 +260,7 @@ namespace LfrlAnvil.Collections.Tests.MultiHashSetTests
         }
 
         [Fact]
-        public void Remove_ShouldRemoveExistingItemWhenItsMultiplicityIsEqualToOne()
+        public void Remove_ShouldRemoveExistingItem_WhenItsMultiplicityIsEqualToOne()
         {
             var item = Fixture.Create<T>();
 
@@ -274,7 +277,7 @@ namespace LfrlAnvil.Collections.Tests.MultiHashSetTests
         }
 
         [Fact]
-        public void RemoveMany_ShouldReturnMinusOneWhenItemDoesntExist()
+        public void RemoveMany_ShouldReturnMinusOne_WhenItemDoesntExist()
         {
             var item = Fixture.Create<T>();
 
@@ -310,7 +313,7 @@ namespace LfrlAnvil.Collections.Tests.MultiHashSetTests
         [InlineData( 1 )]
         [InlineData( 2 )]
         [InlineData( 3 )]
-        public void RemoveMany_ShouldRemoveExistingItemWhenItsMultiplicityIsLessThanOrEqualToRemoveCount(int count)
+        public void RemoveMany_ShouldRemoveExistingItem_WhenItsMultiplicityIsLessThanOrEqualToRemoveCount(int count)
         {
             var item = Fixture.Create<T>();
 
@@ -363,7 +366,7 @@ namespace LfrlAnvil.Collections.Tests.MultiHashSetTests
         }
 
         [Fact]
-        public void RemoveAll_ShouldReturnZeroWhenItemDoesntExist()
+        public void RemoveAll_ShouldReturnZero_WhenItemDoesntExist()
         {
             var item = Fixture.Create<T>();
 
@@ -394,7 +397,405 @@ namespace LfrlAnvil.Collections.Tests.MultiHashSetTests
         }
 
         [Fact]
-        public void Contains_ShouldReturnTrueWhenItemExists()
+        public void ExceptWith_ShouldClearSet_WhenAppliedToSelf()
+        {
+            var items = Fixture.CreateDistinctCollection<T>( 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
+            var sut = new MultiHashSet<T>();
+            foreach ( var (item, multiplicity) in items )
+                sut.AddMany( item, multiplicity );
+
+            sut.ExceptWith( sut );
+
+            sut.Should().HaveCount( 0 );
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetExceptWithData ) )]
+        public void ExceptWith_ShouldModifySetCorrectly(
+            IEnumerable<Pair<T, int>> items,
+            IEnumerable<Pair<T, int>> other,
+            IEnumerable<Pair<T, int>> expected)
+        {
+            var sut = new MultiHashSet<T>();
+            foreach ( var (item, multiplicity) in items )
+                sut.AddMany( item, multiplicity );
+
+            sut.ExceptWith( other );
+
+            sut.Should().BeEquivalentTo( expected );
+        }
+
+        [Fact]
+        public void UnionWith_ShouldDoNothing_WhenAppliedToSelf()
+        {
+            var items = Fixture.CreateDistinctCollection<T>( 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
+            var sut = new MultiHashSet<T>();
+            foreach ( var (item, multiplicity) in items )
+                sut.AddMany( item, multiplicity );
+
+            sut.UnionWith( sut );
+
+            sut.Should().BeEquivalentTo( items );
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetUnionWithData ) )]
+        public void UnionWith_ShouldModifySetCorrectly(
+            IEnumerable<Pair<T, int>> items,
+            IEnumerable<Pair<T, int>> other,
+            IEnumerable<Pair<T, int>> expected)
+        {
+            var sut = new MultiHashSet<T>();
+            foreach ( var (item, multiplicity) in items )
+                sut.AddMany( item, multiplicity );
+
+            sut.UnionWith( other );
+
+            sut.Should().BeEquivalentTo( expected );
+        }
+
+        [Fact]
+        public void IntersectWith_ShouldDoNothing_WhenAppliedToSelf()
+        {
+            var items = Fixture.CreateDistinctCollection<T>( 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
+            var sut = new MultiHashSet<T>();
+            foreach ( var (item, multiplicity) in items )
+                sut.AddMany( item, multiplicity );
+
+            sut.IntersectWith( sut );
+
+            sut.Should().BeEquivalentTo( items );
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetIntersectWithData ) )]
+        public void IntersectWith_ShouldModifySetCorrectly(
+            IEnumerable<Pair<T, int>> items,
+            IEnumerable<Pair<T, int>> other,
+            IEnumerable<Pair<T, int>> expected)
+        {
+            var sut = new MultiHashSet<T>();
+            foreach ( var (item, multiplicity) in items )
+                sut.AddMany( item, multiplicity );
+
+            sut.IntersectWith( other );
+
+            sut.Should().BeEquivalentTo( expected );
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetIntersectWithData ) )]
+        public void IntersectWith_ShouldModifySetCorrectly_WhenOtherIsMultiSet(
+            IEnumerable<Pair<T, int>> items,
+            IEnumerable<Pair<T, int>> other,
+            IEnumerable<Pair<T, int>> expected)
+        {
+            var sut = new MultiHashSet<T>();
+            foreach ( var (item, multiplicity) in items )
+                sut.AddMany( item, multiplicity );
+
+            var otherSet = new MultiHashSet<T>( sut.Comparer );
+            foreach ( var (item, multiplicity) in other.Where( x => x.Second > 0 ) )
+                otherSet.AddMany( item, multiplicity );
+
+            sut.IntersectWith( otherSet );
+
+            sut.Should().BeEquivalentTo( expected );
+        }
+
+        [Fact]
+        public void SymmetricExceptWith_ShouldClearSet_WhenAppliedToSelf()
+        {
+            var items = Fixture.CreateDistinctCollection<T>( 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
+            var sut = new MultiHashSet<T>();
+            foreach ( var (item, multiplicity) in items )
+                sut.AddMany( item, multiplicity );
+
+            sut.SymmetricExceptWith( sut );
+
+            sut.Should().HaveCount( 0 );
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetSymmetricExceptWithData ) )]
+        public void SymmetricExceptWith_ShouldModifySetCorrectly(
+            IEnumerable<Pair<T, int>> items,
+            IEnumerable<Pair<T, int>> other,
+            IEnumerable<Pair<T, int>> expected)
+        {
+            var sut = new MultiHashSet<T>();
+            foreach ( var (item, multiplicity) in items )
+                sut.AddMany( item, multiplicity );
+
+            sut.SymmetricExceptWith( other );
+
+            sut.Should().BeEquivalentTo( expected );
+        }
+
+        [Fact]
+        public void Overlaps_ShouldReturnTrue_WhenAppliedToSelf()
+        {
+            var items = Fixture.CreateDistinctCollection<T>( 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
+            var sut = new MultiHashSet<T>();
+            foreach ( var (item, multiplicity) in items )
+                sut.AddMany( item, multiplicity );
+
+            var result = sut.Overlaps( sut );
+
+            result.Should().BeTrue();
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetOverlapsData ) )]
+        public void Overlaps_ShouldReturnCorrectResult(IEnumerable<Pair<T, int>> items, IEnumerable<Pair<T, int>> other, bool expected)
+        {
+            var sut = new MultiHashSet<T>();
+            foreach ( var (item, multiplicity) in items )
+                sut.AddMany( item, multiplicity );
+
+            var result = sut.Overlaps( other );
+
+            result.Should().Be( expected );
+        }
+
+        [Fact]
+        public void SetEquals_ShouldReturnTrue_WhenAppliedToSelf()
+        {
+            var items = Fixture.CreateDistinctCollection<T>( 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
+            var sut = new MultiHashSet<T>();
+            foreach ( var (item, multiplicity) in items )
+                sut.AddMany( item, multiplicity );
+
+            var result = sut.SetEquals( sut );
+
+            result.Should().BeTrue();
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetSetEqualsData ) )]
+        public void SetEquals_ShouldReturnCorrectResult(IEnumerable<Pair<T, int>> items, IEnumerable<Pair<T, int>> other, bool expected)
+        {
+            var sut = new MultiHashSet<T>();
+            foreach ( var (item, multiplicity) in items )
+                sut.AddMany( item, multiplicity );
+
+            var result = sut.SetEquals( other );
+
+            result.Should().Be( expected );
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetSetEqualsData ) )]
+        public void SetEquals_ShouldReturnCorrectResult_WhenOtherIsMultiSet(
+            IEnumerable<Pair<T, int>> items,
+            IEnumerable<Pair<T, int>> other,
+            bool expected)
+        {
+            var sut = new MultiHashSet<T>();
+            foreach ( var (item, multiplicity) in items )
+                sut.AddMany( item, multiplicity );
+
+            var otherSet = new MultiHashSet<T>( sut.Comparer );
+            foreach ( var (item, multiplicity) in other.Where( x => x.Second > 0 ) )
+                otherSet.AddMany( item, multiplicity );
+
+            var result = sut.SetEquals( otherSet );
+
+            result.Should().Be( expected );
+        }
+
+        [Fact]
+        public void IsSupersetOf_ShouldReturnTrue_WhenAppliedToSelf()
+        {
+            var items = Fixture.CreateDistinctCollection<T>( 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
+            var sut = new MultiHashSet<T>();
+            foreach ( var (item, multiplicity) in items )
+                sut.AddMany( item, multiplicity );
+
+            var result = sut.IsSupersetOf( sut );
+
+            result.Should().BeTrue();
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetIsSupersetOfData ) )]
+        public void IsSupersetOf_ShouldReturnCorrectResult(IEnumerable<Pair<T, int>> items, IEnumerable<Pair<T, int>> other, bool expected)
+        {
+            var sut = new MultiHashSet<T>();
+            foreach ( var (item, multiplicity) in items )
+                sut.AddMany( item, multiplicity );
+
+            var result = sut.IsSupersetOf( other );
+
+            result.Should().Be( expected );
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetIsSupersetOfData ) )]
+        public void IsSupersetOf_ShouldReturnCorrectResult_WhenOtherIsMultiSet(
+            IEnumerable<Pair<T, int>> items,
+            IEnumerable<Pair<T, int>> other,
+            bool expected)
+        {
+            var sut = new MultiHashSet<T>();
+            foreach ( var (item, multiplicity) in items )
+                sut.AddMany( item, multiplicity );
+
+            var otherSet = new MultiHashSet<T>( sut.Comparer );
+            foreach ( var (item, multiplicity) in other.Where( x => x.Second > 0 ) )
+                otherSet.AddMany( item, multiplicity );
+
+            var result = sut.IsSupersetOf( otherSet );
+
+            result.Should().Be( expected );
+        }
+
+        [Fact]
+        public void IsProperSupersetOf_ShouldReturnFalse_WhenAppliedToSelf()
+        {
+            var items = Fixture.CreateDistinctCollection<T>( 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
+            var sut = new MultiHashSet<T>();
+            foreach ( var (item, multiplicity) in items )
+                sut.AddMany( item, multiplicity );
+
+            var result = sut.IsProperSupersetOf( sut );
+
+            result.Should().BeFalse();
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetIsProperSupersetOfData ) )]
+        public void IsProperSupersetOf_ShouldReturnCorrectResult(
+            IEnumerable<Pair<T, int>> items,
+            IEnumerable<Pair<T, int>> other,
+            bool expected)
+        {
+            var sut = new MultiHashSet<T>();
+            foreach ( var (item, multiplicity) in items )
+                sut.AddMany( item, multiplicity );
+
+            var result = sut.IsProperSupersetOf( other );
+
+            result.Should().Be( expected );
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetIsProperSupersetOfData ) )]
+        public void IsProperSupersetOf_ShouldReturnCorrectResult_WhenOtherIsMultiSet(
+            IEnumerable<Pair<T, int>> items,
+            IEnumerable<Pair<T, int>> other,
+            bool expected)
+        {
+            var sut = new MultiHashSet<T>();
+            foreach ( var (item, multiplicity) in items )
+                sut.AddMany( item, multiplicity );
+
+            var otherSet = new MultiHashSet<T>( sut.Comparer );
+            foreach ( var (item, multiplicity) in other.Where( x => x.Second > 0 ) )
+                otherSet.AddMany( item, multiplicity );
+
+            var result = sut.IsProperSupersetOf( otherSet );
+
+            result.Should().Be( expected );
+        }
+
+        [Fact]
+        public void IsSubsetOf_ShouldReturnTrue_WhenAppliedToSelf()
+        {
+            var items = Fixture.CreateDistinctCollection<T>( 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
+            var sut = new MultiHashSet<T>();
+            foreach ( var (item, multiplicity) in items )
+                sut.AddMany( item, multiplicity );
+
+            var result = sut.IsSubsetOf( sut );
+
+            result.Should().BeTrue();
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetIsSubsetOfData ) )]
+        public void IsSubsetOf_ShouldReturnCorrectResult(IEnumerable<Pair<T, int>> items, IEnumerable<Pair<T, int>> other, bool expected)
+        {
+            var sut = new MultiHashSet<T>();
+            foreach ( var (item, multiplicity) in items )
+                sut.AddMany( item, multiplicity );
+
+            var result = sut.IsSubsetOf( other );
+
+            result.Should().Be( expected );
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetIsSubsetOfData ) )]
+        public void IsSubsetOf_ShouldReturnCorrectResult_WhenOtherIsMultiSet(
+            IEnumerable<Pair<T, int>> items,
+            IEnumerable<Pair<T, int>> other,
+            bool expected)
+        {
+            var sut = new MultiHashSet<T>();
+            foreach ( var (item, multiplicity) in items )
+                sut.AddMany( item, multiplicity );
+
+            var otherSet = new MultiHashSet<T>( sut.Comparer );
+            foreach ( var (item, multiplicity) in other.Where( x => x.Second > 0 ) )
+                otherSet.AddMany( item, multiplicity );
+
+            var result = sut.IsSubsetOf( otherSet );
+
+            result.Should().Be( expected );
+        }
+
+        [Fact]
+        public void IsProperSubsetOf_ShouldReturnFalse_WhenAppliedToSelf()
+        {
+            var items = Fixture.CreateDistinctCollection<T>( 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
+            var sut = new MultiHashSet<T>();
+            foreach ( var (item, multiplicity) in items )
+                sut.AddMany( item, multiplicity );
+
+            var result = sut.IsProperSubsetOf( sut );
+
+            result.Should().BeFalse();
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetIsProperSubsetOfData ) )]
+        public void IsProperSubsetOf_ShouldReturnCorrectResult(
+            IEnumerable<Pair<T, int>> items,
+            IEnumerable<Pair<T, int>> other,
+            bool expected)
+        {
+            var sut = new MultiHashSet<T>();
+            foreach ( var (item, multiplicity) in items )
+                sut.AddMany( item, multiplicity );
+
+            var result = sut.IsProperSubsetOf( other );
+
+            result.Should().Be( expected );
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetIsProperSubsetOfData ) )]
+        public void IsProperSubsetOf_ShouldReturnCorrectResult_WhenOtherIsMultiSet(
+            IEnumerable<Pair<T, int>> items,
+            IEnumerable<Pair<T, int>> other,
+            bool expected)
+        {
+            var sut = new MultiHashSet<T>();
+            foreach ( var (item, multiplicity) in items )
+                sut.AddMany( item, multiplicity );
+
+            var otherSet = new MultiHashSet<T>( sut.Comparer );
+            foreach ( var (item, multiplicity) in other.Where( x => x.Second > 0 ) )
+                otherSet.AddMany( item, multiplicity );
+
+            var result = sut.IsProperSubsetOf( otherSet );
+
+            result.Should().Be( expected );
+        }
+
+        [Fact]
+        public void Contains_ShouldReturnTrue_WhenItemExists()
         {
             var item = Fixture.Create<T>();
 
@@ -406,7 +807,7 @@ namespace LfrlAnvil.Collections.Tests.MultiHashSetTests
         }
 
         [Fact]
-        public void Contains_ShouldReturnFalseWhenItemDoesntExist()
+        public void Contains_ShouldReturnFalse_WhenItemDoesntExist()
         {
             var item = Fixture.Create<T>();
 
@@ -418,10 +819,70 @@ namespace LfrlAnvil.Collections.Tests.MultiHashSetTests
         }
 
         [Theory]
+        [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetContainsData ) )]
+        public void Contains_WithItemAndMultiplicity_ShouldReturnTrue_WhenItemExistsWithCorrectMultiplicity(
+            int existingMultiplicity,
+            int checkedMultiplicity,
+            bool expected)
+        {
+            var item = Fixture.Create<T>();
+
+            var sut = new MultiHashSet<T>();
+            sut.AddMany( item, existingMultiplicity );
+
+            var result = sut.Contains( item, checkedMultiplicity );
+
+            result.Should().Be( expected );
+        }
+
+        [Fact]
+        public void Contains_WithItemAndMultiplicity_ShouldReturnFalse_WhenItemDoesntExist()
+        {
+            var item = Fixture.Create<T>();
+            var multiplicity = Fixture.Create<int>();
+
+            var sut = new MultiHashSet<T>();
+
+            var result = sut.Contains( item, multiplicity );
+
+            result.Should().BeFalse();
+        }
+
+        [Theory]
+        [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetContainsData ) )]
+        public void Contains_WithPair_ShouldReturnTrue_WhenItemExistsWithCorrectMultiplicity(
+            int existingMultiplicity,
+            int checkedMultiplicity,
+            bool expected)
+        {
+            var item = Fixture.Create<T>();
+
+            var sut = new MultiHashSet<T>();
+            sut.AddMany( item, existingMultiplicity );
+
+            var result = sut.Contains( Pair.Create( item, checkedMultiplicity ) );
+
+            result.Should().Be( expected );
+        }
+
+        [Fact]
+        public void Contains_WithPair_ShouldReturnFalse_WhenItemDoesntExist()
+        {
+            var item = Fixture.Create<T>();
+            var multiplicity = Fixture.Create<int>();
+
+            var sut = new MultiHashSet<T>();
+
+            var result = sut.Contains( Pair.Create( item, multiplicity ) );
+
+            result.Should().BeFalse();
+        }
+
+        [Theory]
         [InlineData( 1 )]
         [InlineData( 2 )]
         [InlineData( 3 )]
-        public void GetMultiplicity_ShouldReturnCorrectResultWhenItemExists(int count)
+        public void GetMultiplicity_ShouldReturnCorrectResult_WhenItemExists(int count)
         {
             var item = Fixture.Create<T>();
 
@@ -434,7 +895,7 @@ namespace LfrlAnvil.Collections.Tests.MultiHashSetTests
         }
 
         [Fact]
-        public void GetMultiplicity_ShouldReturnZeroWhenItemDoesntExist()
+        public void GetMultiplicity_ShouldReturnZero_WhenItemDoesntExist()
         {
             var item = Fixture.Create<T>();
 
@@ -607,6 +1068,42 @@ namespace LfrlAnvil.Collections.Tests.MultiHashSetTests
             sut.Should().BeEquivalentTo( expected );
         }
 
+        [Theory]
+        [InlineData( 1 )]
+        [InlineData( 2 )]
+        [InlineData( 3 )]
+        public void ISetAdd_ShouldReturnTrueAndAddItemCorrectly_WhenSecondIsGreaterThanZero(int multiplicity)
+        {
+            var item = Fixture.Create<T>();
+
+            var sut = new MultiHashSet<T> { item };
+            ISet<Pair<T, int>> set = sut;
+
+            var result = set.Add( Pair.Create( item, multiplicity ) );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeTrue();
+                sut.FullCount.Should().Be( multiplicity + 1 );
+                sut.Count.Should().Be( 1 );
+            }
+        }
+
+        [Theory]
+        [InlineData( 0 )]
+        [InlineData( -1 )]
+        public void ISetAdd_ShouldThrowArgumentOutOfRangeException_WhenSecondIsLessThanOne(int multiplicity)
+        {
+            var item = Fixture.Create<T>();
+
+            var sut = new MultiHashSet<T> { item };
+            ISet<Pair<T, int>> set = sut;
+
+            var action = Lambda.Of( () => set.Add( Pair.Create( item, multiplicity ) ) );
+
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        }
+
         [Fact]
         public void ICollectionAdd_ShouldAddItemCorrectly()
         {
@@ -652,36 +1149,6 @@ namespace LfrlAnvil.Collections.Tests.MultiHashSetTests
             ICollection<Pair<T, int>> collection = sut;
 
             var result = collection.Remove( Pair.Create( item, 1 ) );
-
-            result.Should().BeFalse();
-        }
-
-        [Fact]
-        public void ICollectionContains_ShouldReturnTrue_WhenItemExistsWithExactMultiplicity()
-        {
-            var item = Fixture.Create<T>();
-            var multiplicity = 3;
-
-            var sut = new MultiHashSet<T>();
-            sut.AddMany( item, multiplicity );
-            ICollection<Pair<T, int>> collection = sut;
-
-            var result = collection.Contains( Pair.Create( item, multiplicity ) );
-
-            result.Should().BeTrue();
-        }
-
-        [Fact]
-        public void ICollectionContains_ShouldReturnFalse_WhenItemDoesntExistWithExactMultiplicity()
-        {
-            var item = Fixture.Create<T>();
-            var multiplicity = 3;
-
-            var sut = new MultiHashSet<T>();
-            sut.AddMany( item, multiplicity );
-            ICollection<Pair<T, int>> collection = sut;
-
-            var result = collection.Contains( Pair.Create( item, multiplicity + 1 ) );
 
             result.Should().BeFalse();
         }

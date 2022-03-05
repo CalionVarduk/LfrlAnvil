@@ -4,9 +4,8 @@ using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Collections
 {
-    public interface IReadOnlyHeap<T> : IReadOnlyCollection<T>
+    public interface IReadOnlyHeap<T> : IReadOnlyList<T>
     {
-        T this[int index] { get; }
         IComparer<T> Comparer { get; }
 
         [Pure]

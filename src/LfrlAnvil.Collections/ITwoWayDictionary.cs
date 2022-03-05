@@ -2,6 +2,7 @@
 
 namespace LfrlAnvil.Collections
 {
+    // TODO: implement ICollection<Pair<T1, T2>> interface
     public interface ITwoWayDictionary<T1, T2> : IReadOnlyTwoWayDictionary<T1, T2>
         where T1 : notnull
         where T2 : notnull

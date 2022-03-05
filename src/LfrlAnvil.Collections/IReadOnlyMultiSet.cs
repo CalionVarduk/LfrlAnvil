@@ -15,6 +15,9 @@ namespace LfrlAnvil.Collections
         bool Contains(T item);
 
         [Pure]
+        bool Contains(T item, int multiplicity);
+
+        [Pure]
         int GetMultiplicity(T item);
     }
 }

@@ -2,9 +2,10 @@
 
 namespace LfrlAnvil.Collections
 {
-    public interface IMultiSet<T> : IReadOnlyMultiSet<T>, ICollection<Pair<T, int>>
+    public interface IMultiSet<T> : IReadOnlyMultiSet<T>, ISet<Pair<T, int>>
         where T : notnull
     {
+        new int Count { get; }
         int Add(T item);
         int AddMany(T item, int count);
         int Remove(T item);
