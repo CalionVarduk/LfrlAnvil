@@ -23,6 +23,8 @@ namespace LfrlAnvil.Collections.Tests.SequentialDictionaryTests
             {
                 sut.Count.Should().Be( 0 );
                 sut.Comparer.Should().Be( EqualityComparer<TKey>.Default );
+                sut.First.Should().BeNull();
+                sut.Last.Should().BeNull();
             }
         }
 
@@ -36,6 +38,8 @@ namespace LfrlAnvil.Collections.Tests.SequentialDictionaryTests
             {
                 sut.Count.Should().Be( 0 );
                 sut.Comparer.Should().Be( comparer );
+                sut.First.Should().BeNull();
+                sut.Last.Should().BeNull();
             }
         }
 
@@ -52,6 +56,8 @@ namespace LfrlAnvil.Collections.Tests.SequentialDictionaryTests
             {
                 sut.Count.Should().Be( 1 );
                 sut[key].Should().Be( value );
+                sut.First.Should().Be( KeyValuePair.Create( key, value ) );
+                sut.Last.Should().Be( KeyValuePair.Create( key, value ) );
             }
         }
 
@@ -68,6 +74,8 @@ namespace LfrlAnvil.Collections.Tests.SequentialDictionaryTests
             {
                 sut.Count.Should().Be( 2 );
                 sut[keys[1]].Should().Be( values[1] );
+                sut.First.Should().Be( KeyValuePair.Create( keys[0], values[0] ) );
+                sut.Last.Should().Be( KeyValuePair.Create( keys[1], values[1] ) );
             }
         }
 
@@ -107,6 +115,8 @@ namespace LfrlAnvil.Collections.Tests.SequentialDictionaryTests
             {
                 result.Should().BeTrue();
                 sut.Count.Should().Be( 0 );
+                sut.First.Should().BeNull();
+                sut.Last.Should().BeNull();
             }
         }
 
@@ -124,6 +134,8 @@ namespace LfrlAnvil.Collections.Tests.SequentialDictionaryTests
                 result.Should().BeTrue();
                 sut.Count.Should().Be( 1 );
                 sut.ContainsKey( keys[1] ).Should().BeTrue();
+                sut.First.Should().Be( KeyValuePair.Create( keys[1], values[1] ) );
+                sut.Last.Should().Be( KeyValuePair.Create( keys[1], values[1] ) );
             }
         }
 
@@ -156,6 +168,8 @@ namespace LfrlAnvil.Collections.Tests.SequentialDictionaryTests
                 result.Should().BeTrue();
                 sut.Count.Should().Be( 0 );
                 removed.Should().Be( value );
+                sut.First.Should().BeNull();
+                sut.Last.Should().BeNull();
             }
         }
 
@@ -174,6 +188,8 @@ namespace LfrlAnvil.Collections.Tests.SequentialDictionaryTests
                 sut.Count.Should().Be( 1 );
                 sut.ContainsKey( keys[1] ).Should().BeTrue();
                 removed.Should().Be( values[0] );
+                sut.First.Should().Be( KeyValuePair.Create( keys[1], values[1] ) );
+                sut.Last.Should().Be( KeyValuePair.Create( keys[1], values[1] ) );
             }
         }
 
@@ -243,7 +259,12 @@ namespace LfrlAnvil.Collections.Tests.SequentialDictionaryTests
 
             sut.Clear();
 
-            sut.Count.Should().Be( 0 );
+            using ( new AssertionScope() )
+            {
+                sut.Count.Should().Be( 0 );
+                sut.First.Should().BeNull();
+                sut.Last.Should().BeNull();
+            }
         }
 
         [Fact]
@@ -315,6 +336,8 @@ namespace LfrlAnvil.Collections.Tests.SequentialDictionaryTests
             {
                 sut.Count.Should().Be( 1 );
                 sut[key].Should().Be( value );
+                sut.First.Should().Be( KeyValuePair.Create( key, value ) );
+                sut.Last.Should().Be( KeyValuePair.Create( key, value ) );
             }
         }
 
@@ -331,6 +354,8 @@ namespace LfrlAnvil.Collections.Tests.SequentialDictionaryTests
             {
                 sut.Count.Should().Be( 2 );
                 sut[keys[1]].Should().Be( values[1] );
+                sut.First.Should().Be( KeyValuePair.Create( keys[0], values[0] ) );
+                sut.Last.Should().Be( KeyValuePair.Create( keys[1], values[1] ) );
             }
         }
 
@@ -347,6 +372,8 @@ namespace LfrlAnvil.Collections.Tests.SequentialDictionaryTests
             {
                 sut.Count.Should().Be( 1 );
                 sut[key].Should().Be( values[1] );
+                sut.First.Should().Be( KeyValuePair.Create( key, values[1] ) );
+                sut.Last.Should().Be( KeyValuePair.Create( key, values[1] ) );
             }
         }
 

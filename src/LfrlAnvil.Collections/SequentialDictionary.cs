@@ -41,6 +41,8 @@ namespace LfrlAnvil.Collections
         public IEnumerable<TKey> Keys => _order.Select( kv => kv.Key );
         public IEnumerable<TValue> Values => _order.Select( kv => kv.Value );
         public IEqualityComparer<TKey> Comparer => _map.Comparer;
+        public KeyValuePair<TKey, TValue>? First => _order.First?.Value;
+        public KeyValuePair<TKey, TValue>? Last => _order.Last?.Value;
 
         ICollection<TKey> IDictionary<TKey, TValue>.Keys => Keys.ToList();
         ICollection<TValue> IDictionary<TKey, TValue>.Values => Values.ToList();
