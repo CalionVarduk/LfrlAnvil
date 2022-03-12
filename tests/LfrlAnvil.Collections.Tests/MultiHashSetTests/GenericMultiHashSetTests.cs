@@ -13,9 +13,14 @@ using Xunit;
 namespace LfrlAnvil.Collections.Tests.MultiHashSetTests
 {
     [GenericTestClass( typeof( GenericMultiHashSetTestsData<> ) )]
-    public abstract class GenericMultiHashSetTests<T> : TestsBase
+    public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<Pair<T, int>>
         where T : notnull
     {
+        protected GenericMultiHashSetTests()
+        {
+            Fixture.Customize<Pair<T, int>>( c => c.FromFactory( () => Pair.Create( Fixture.Create<T>(), 1 ) ) );
+        }
+
         [Fact]
         public void Ctor_ShouldCreateEmptySet()
         {
@@ -1104,53 +1109,9 @@ namespace LfrlAnvil.Collections.Tests.MultiHashSetTests
             action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
-        [Fact]
-        public void ICollectionAdd_ShouldAddItemCorrectly()
+        protected sealed override ICollection<Pair<T, int>> CreateEmptyCollection()
         {
-            var item = Fixture.Create<T>();
-
-            var sut = new MultiHashSet<T> { item };
-            ICollection<Pair<T, int>> collection = sut;
-
-            collection.Add( Pair.Create( item, 3 ) );
-
-            using ( new AssertionScope() )
-            {
-                sut.FullCount.Should().Be( 4 );
-                sut.Count.Should().Be( 1 );
-            }
-        }
-
-        [Fact]
-        public void ICollectionRemove_ShouldRemoveItemCorrectly()
-        {
-            var item = Fixture.Create<T>();
-
-            var sut = new MultiHashSet<T>();
-            sut.AddMany( item, 4 );
-            ICollection<Pair<T, int>> collection = sut;
-
-            var result = collection.Remove( Pair.Create( item, 3 ) );
-
-            using ( new AssertionScope() )
-            {
-                result.Should().BeTrue();
-                sut.FullCount.Should().Be( 1 );
-                sut.Count.Should().Be( 1 );
-            }
-        }
-
-        [Fact]
-        public void ICollectionRemove_ShouldReturnFalse_WhenItemDoesntExist()
-        {
-            var item = Fixture.Create<T>();
-
-            var sut = new MultiHashSet<T>();
-            ICollection<Pair<T, int>> collection = sut;
-
-            var result = collection.Remove( Pair.Create( item, 1 ) );
-
-            result.Should().BeFalse();
+            return new MultiHashSet<T>();
         }
     }
 }

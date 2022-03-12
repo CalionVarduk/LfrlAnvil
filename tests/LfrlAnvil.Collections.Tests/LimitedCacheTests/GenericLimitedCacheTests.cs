@@ -11,7 +11,7 @@ using Xunit;
 
 namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
 {
-    public abstract class GenericLimitedCacheTests<TKey, TValue> : TestsBase
+    public abstract class GenericLimitedCacheTests<TKey, TValue> : GenericDictionaryTestsBase<TKey, TValue>
         where TKey : notnull
     {
         [Theory]
@@ -395,31 +395,6 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
         }
 
         [Fact]
-        public void ContainsKey_ShouldReturnTrue_WhenKeyExists()
-        {
-            var key = Fixture.Create<TKey>();
-            var value = Fixture.Create<TValue>();
-
-            var sut = new LimitedCache<TKey, TValue>( capacity: 3 ) { { key, value } };
-
-            var result = sut.ContainsKey( key );
-
-            result.Should().BeTrue();
-        }
-
-        [Fact]
-        public void ContainsKey_ShouldReturnFalse_WhenKeyDoesntExist()
-        {
-            var key = Fixture.Create<TKey>();
-
-            var sut = new LimitedCache<TKey, TValue>( capacity: 3 );
-
-            var result = sut.ContainsKey( key );
-
-            result.Should().BeFalse();
-        }
-
-        [Fact]
         public void TryGetValue_ShouldReturnTrueAndCorrectResult_WhenKeyExists()
         {
             var key = Fixture.Create<TKey>();
@@ -571,193 +546,9 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
             sut.AsEnumerable().Should().BeSequentiallyEqualTo( expected );
         }
 
-        [Fact]
-        public void IDictionaryKeys_ShouldBeEquivalentToKeys()
+        protected sealed override IDictionary<TKey, TValue> CreateEmptyDictionary()
         {
-            var keys = Fixture.CreateDistinctCollection<TKey>( 6 );
-            var values = Fixture.CreateDistinctCollection<TValue>( 6 );
-
-            var sut = new LimitedCache<TKey, TValue>( capacity: 3 );
-            foreach ( var (key, value) in keys.Zip( values ) )
-                sut.Add( key, value );
-
-            var result = ((IDictionary<TKey, TValue>)sut).Keys;
-
-            result.Should().BeSequentiallyEqualTo( keys[^3], keys[^2], keys[^1] );
-        }
-
-        [Fact]
-        public void IDictionaryValues_ShouldBeEquivalentToValues()
-        {
-            var keys = Fixture.CreateDistinctCollection<TKey>( 6 );
-            var values = Fixture.CreateDistinctCollection<TValue>( 6 );
-
-            var sut = new LimitedCache<TKey, TValue>( capacity: 3 );
-            foreach ( var (key, value) in keys.Zip( values ) )
-                sut.Add( key, value );
-
-            var result = ((IDictionary<TKey, TValue>)sut).Values;
-
-            result.Should().BeSequentiallyEqualTo( values[^3], values[^2], values[^1] );
-        }
-
-        [Fact]
-        public void IDictionaryTryGetValue_ShouldReturnTrueAndCorrectResult_WhenKeyExists()
-        {
-            var key = Fixture.Create<TKey>();
-            var value = Fixture.Create<TValue>();
-            var sut = (IDictionary<TKey, TValue>)new LimitedCache<TKey, TValue>( capacity: 3 ) { { key, value } };
-
-            var result = sut.TryGetValue( key, out var outResult );
-
-            using ( new AssertionScope() )
-            {
-                result.Should().BeTrue();
-                outResult.Should().Be( value );
-            }
-        }
-
-        [Fact]
-        public void IDictionaryTryGetValue_ShouldReturnFalseAndDefaultResult_WhenKeyDoesntExist()
-        {
-            var key = Fixture.Create<TKey>();
-            var sut = (IDictionary<TKey, TValue>)new LimitedCache<TKey, TValue>( capacity: 3 );
-
-            var result = sut.TryGetValue( key, out var outResult );
-
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                outResult.Should().Be( default( TValue ) );
-            }
-        }
-
-        [Fact]
-        public void IReadOnlyDictionaryTryGetValue_ShouldReturnTrueAndCorrectResult_WhenKeyExists()
-        {
-            var key = Fixture.Create<TKey>();
-            var value = Fixture.Create<TValue>();
-            var sut = (IReadOnlyDictionary<TKey, TValue>)new LimitedCache<TKey, TValue>( capacity: 3 ) { { key, value } };
-
-            var result = sut.TryGetValue( key, out var outResult );
-
-            using ( new AssertionScope() )
-            {
-                result.Should().BeTrue();
-                outResult.Should().Be( value );
-            }
-        }
-
-        [Fact]
-        public void IReadOnlyDictionaryTryGetValue_ShouldReturnFalseAndDefaultResult_WhenKeyDoesntExist()
-        {
-            var key = Fixture.Create<TKey>();
-            var sut = (IReadOnlyDictionary<TKey, TValue>)new LimitedCache<TKey, TValue>( capacity: 3 );
-
-            var result = sut.TryGetValue( key, out var outResult );
-
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                outResult.Should().Be( default( TValue ) );
-            }
-        }
-
-        [Fact]
-        public void ICollectionContains_ShouldReturnTrue_WhenKeyAndValueExist()
-        {
-            var key = Fixture.Create<TKey>();
-            var value = Fixture.Create<TValue>();
-            var sut = (ICollection<KeyValuePair<TKey, TValue>>)new LimitedCache<TKey, TValue>( capacity: 3 ) { { key, value } };
-
-            var result = sut.Contains( KeyValuePair.Create( key, value ) );
-
-            result.Should().BeTrue();
-        }
-
-        [Fact]
-        public void ICollectionContains_ShouldReturnFalse_WhenKeyAndValueDontExist()
-        {
-            var key = Fixture.Create<TKey>();
-            var value = Fixture.Create<TValue>();
-            var sut = (ICollection<KeyValuePair<TKey, TValue>>)new LimitedCache<TKey, TValue>( capacity: 3 );
-
-            var result = sut.Contains( KeyValuePair.Create( key, value ) );
-
-            result.Should().BeFalse();
-        }
-
-        [Fact]
-        public void ICollectionContains_ShouldReturnFalse_WhenKeyExistsButValueDoesnt()
-        {
-            var key = Fixture.Create<TKey>();
-            var values = Fixture.CreateDistinctCollection<TValue>( 2 );
-            var sut = (ICollection<KeyValuePair<TKey, TValue>>)new LimitedCache<TKey, TValue>( capacity: 3 ) { { key, values[0] } };
-
-            var result = sut.Contains( KeyValuePair.Create( key, values[1] ) );
-
-            result.Should().BeFalse();
-        }
-
-        [Fact]
-        public void ICollectionAdd_ShouldBeEquivalentToAdd()
-        {
-            var key = Fixture.Create<TKey>();
-            var value = Fixture.Create<TValue>();
-            var dictionary = new LimitedCache<TKey, TValue>( capacity: 3 );
-            var sut = (ICollection<KeyValuePair<TKey, TValue>>)dictionary;
-
-            sut.Add( KeyValuePair.Create( key, value ) );
-
-            using ( new AssertionScope() )
-            {
-                dictionary.Count.Should().Be( 1 );
-                dictionary[key].Should().Be( value );
-            }
-        }
-
-        [Fact]
-        public void ICollectionRemove_ShouldReturnFalse_WhenCacheIsEmpty()
-        {
-            var key = Fixture.Create<TKey>();
-            var value = Fixture.Create<TValue>();
-            var sut = (ICollection<KeyValuePair<TKey, TValue>>)new LimitedCache<TKey, TValue>( capacity: 3 );
-
-            var result = sut.Remove( KeyValuePair.Create( key, value ) );
-
-            result.Should().BeFalse();
-        }
-
-        [Fact]
-        public void ICollectionRemove_ShouldReturnTrueAndRemoveExistingItem_WhenKeyAndValueExist()
-        {
-            var key = Fixture.Create<TKey>();
-            var value = Fixture.Create<TValue>();
-            var sut = (ICollection<KeyValuePair<TKey, TValue>>)new LimitedCache<TKey, TValue>( capacity: 3 ) { { key, value } };
-
-            var result = sut.Remove( KeyValuePair.Create( key, value ) );
-
-            using ( new AssertionScope() )
-            {
-                result.Should().BeTrue();
-                sut.Count.Should().Be( 0 );
-            }
-        }
-
-        [Fact]
-        public void ICollectionRemove_ShouldReturnFalse_WhenKeyExistsButValueDoesnt()
-        {
-            var key = Fixture.Create<TKey>();
-            var values = Fixture.CreateDistinctCollection<TValue>( 2 );
-            var sut = (ICollection<KeyValuePair<TKey, TValue>>)new LimitedCache<TKey, TValue>( capacity: 3 ) { { key, values[0] } };
-
-            var result = sut.Remove( KeyValuePair.Create( key, values[1] ) );
-
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                sut.Count.Should().Be( 1 );
-            }
+            return new LimitedCache<TKey, TValue>( capacity: 10 );
         }
     }
 }

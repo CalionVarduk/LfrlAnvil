@@ -349,12 +349,12 @@ namespace LfrlAnvil.Extensions
             while ( nodesToVisit.Count > 0 )
             {
                 var parent = nodesToVisit.Dequeue();
-                yield return parent;
-
                 var nodes = nodeRangeSelector( parent );
 
                 foreach ( var n in nodes )
                     nodesToVisit.Enqueue( n );
+
+                yield return parent;
             }
         }
 
@@ -369,15 +369,20 @@ namespace LfrlAnvil.Extensions
             while ( nodesToVisit.Count > 0 )
             {
                 var parent = nodesToVisit.Dequeue();
-                yield return parent;
 
                 if ( stopPredicate( parent ) )
+                {
+                    yield return parent;
+
                     continue;
+                }
 
                 var nodes = nodeRangeSelector( parent );
 
                 foreach ( var n in nodes )
                     nodesToVisit.Enqueue( n );
+
+                yield return parent;
             }
         }
 

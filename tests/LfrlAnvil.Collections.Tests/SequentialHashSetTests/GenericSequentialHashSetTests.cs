@@ -11,7 +11,7 @@ using Xunit;
 namespace LfrlAnvil.Collections.Tests.SequentialHashSetTests
 {
     [GenericTestClass( typeof( GenericSequentialHashSetTestsData<> ) )]
-    public abstract class GenericSequentialHashSetTests<T> : TestsBase
+    public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsBase<T>
     {
         [Fact]
         public void Ctor_ShouldCreateEmpty()
@@ -591,20 +591,9 @@ namespace LfrlAnvil.Collections.Tests.SequentialHashSetTests
             sut.Should().BeSequentiallyEqualTo( expected );
         }
 
-        [Fact]
-        public void ICollectionAdd_ShouldBeEquivalentToAdd()
+        protected sealed override ICollection<T> CreateEmptyCollection()
         {
-            var item = Fixture.Create<T>();
-            var set = new SequentialHashSet<T>();
-            var sut = (ICollection<T>)set;
-
-            sut.Add( item );
-
-            using ( new AssertionScope() )
-            {
-                set.Count.Should().Be( 1 );
-                set.Contains( item ).Should().BeTrue();
-            }
+            return new SequentialHashSet<T>();
         }
     }
 }

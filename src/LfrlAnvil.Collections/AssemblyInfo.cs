@@ -2,5 +2,5 @@
 
 [assembly: InternalsVisibleTo( "LfrlAnvil.Collections.Tests" )]
 
-// TODO: add TreeDictionary<TKey, TValue> (represents a tree graph structure)
-// TODO: add DisjointTreeDictionary<TKey, TValue> (represents a collection of disjoint tree graphs identified by their root's key)
+// TODO: add SkipList
+// TODO: add GraphDictionary, that allows to represent a graph data structure, with node-by-key lookup & edge-by-(source-destination) lookup

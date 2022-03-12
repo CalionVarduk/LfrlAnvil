@@ -10,7 +10,7 @@ using Xunit;
 
 namespace LfrlAnvil.Collections.Tests.TwoWayDictionaryTests
 {
-    public abstract class GenericTwoWayDictionaryTests<T1, T2> : TestsBase
+    public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTestsBase<Pair<T1, T2>>
         where T1 : notnull
         where T2 : notnull
     {
@@ -691,39 +691,6 @@ namespace LfrlAnvil.Collections.Tests.TwoWayDictionaryTests
         }
 
         [Fact]
-        public void ICollectionAdd_ShouldBeEquivalentToAdd()
-        {
-            var first = Fixture.Create<T1>();
-            var second = Fixture.Create<T2>();
-
-            var dictionary = new TwoWayDictionary<T1, T2>();
-            var sut = (ICollection<Pair<T1, T2>>)dictionary;
-
-            sut.Add( Pair.Create( first, second ) );
-
-            using ( new AssertionScope() )
-            {
-                dictionary.Count.Should().Be( 1 );
-                dictionary.Forward[first].Should().Be( second );
-                dictionary.Reverse[second].Should().Be( first );
-            }
-        }
-
-        [Fact]
-        public void ICollectionRemove_ShouldReturnFalseAndDoNothing_WhenFirstAndSecondDontExist()
-        {
-            var first = Fixture.Create<T1>();
-            var second = Fixture.Create<T2>();
-
-            var dictionary = new TwoWayDictionary<T1, T2>();
-            var sut = (ICollection<Pair<T1, T2>>)dictionary;
-
-            var result = sut.Remove( Pair.Create( first, second ) );
-
-            result.Should().BeFalse();
-        }
-
-        [Fact]
         public void ICollectionRemove_ShouldReturnFalseAndDoNothing_WhenFirstExistsButIsNotLinkedWithSecond()
         {
             var first = Fixture.Create<T1>();
@@ -751,22 +718,9 @@ namespace LfrlAnvil.Collections.Tests.TwoWayDictionaryTests
             result.Should().BeFalse();
         }
 
-        [Fact]
-        public void ICollectionRemove_ShouldReturnTrueAndRemoveItems_WhenFirstAndSecondExistAndAreLinked()
+        protected sealed override ICollection<Pair<T1, T2>> CreateEmptyCollection()
         {
-            var first = Fixture.Create<T1>();
-            var second = Fixture.Create<T2>();
-
-            var dictionary = new TwoWayDictionary<T1, T2> { { first, second } };
-            var sut = (ICollection<Pair<T1, T2>>)dictionary;
-
-            var result = sut.Remove( Pair.Create( first, second ) );
-
-            using ( new AssertionScope() )
-            {
-                result.Should().BeTrue();
-                dictionary.Count.Should().Be( 0 );
-            }
+            return new TwoWayDictionary<T1, T2>();
         }
     }
 }
