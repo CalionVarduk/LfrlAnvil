@@ -25,7 +25,7 @@
 
         protected sealed override sbyte AddStep(sbyte value)
         {
-            return checked((sbyte)(value + Step));
+            return checked( (sbyte)(value + Step) );
         }
     }
 }

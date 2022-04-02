@@ -1,4 +1,6 @@
-﻿namespace LfrlAnvil.Generators
+﻿using System;
+
+namespace LfrlAnvil.Generators
 {
     public class FloatSequenceGenerator : SequenceGeneratorBase<float>
     {
@@ -34,7 +36,11 @@
 
         protected sealed override float AddStep(float value)
         {
-            return value + Step;
+            var result = value + Step;
+            if ( result.Equals( value ) )
+                throw new OverflowException();
+
+            return result;
         }
     }
 }

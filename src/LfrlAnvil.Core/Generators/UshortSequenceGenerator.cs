@@ -25,7 +25,7 @@
 
         protected sealed override ushort AddStep(ushort value)
         {
-            return checked((ushort)(value + Step));
+            return checked( (ushort)(value + Step) );
         }
     }
 }

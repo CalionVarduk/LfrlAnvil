@@ -25,7 +25,7 @@
 
         protected sealed override ulong AddStep(ulong value)
         {
-            return checked(value + Step);
+            return checked( value + Step );
         }
     }
 }

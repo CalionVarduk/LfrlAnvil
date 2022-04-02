@@ -25,7 +25,7 @@
 
         protected sealed override long AddStep(long value)
         {
-            return checked(value + Step);
+            return checked( value + Step );
         }
     }
 }

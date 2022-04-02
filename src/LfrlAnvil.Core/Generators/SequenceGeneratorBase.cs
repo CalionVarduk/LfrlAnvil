@@ -41,8 +41,7 @@ namespace LfrlAnvil.Generators
 
                 try
                 {
-                    var next = AddStep( _next.Value.Value );
-                    _next = next.CompareTo( result ) == 0 ? null : new Next(next);
+                    _next = new Next( AddStep( _next.Value.Value ) );
                 }
                 catch ( OverflowException )
                 {

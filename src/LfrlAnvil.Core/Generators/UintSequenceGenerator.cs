@@ -25,7 +25,7 @@
 
         protected sealed override uint AddStep(uint value)
         {
-            return checked(value + Step);
+            return checked( value + Step );
         }
     }
 }
