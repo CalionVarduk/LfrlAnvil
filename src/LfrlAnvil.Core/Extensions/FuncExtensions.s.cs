@@ -27,7 +27,7 @@ namespace LfrlAnvil.Extensions
         {
             return () =>
             {
-                var _ = source();
+                source();
             };
         }
     }

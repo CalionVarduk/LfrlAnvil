@@ -9,9 +9,9 @@ using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using Xunit;
 
-namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
+namespace LfrlAnvil.Collections.Tests.FiniteCacheTests
 {
-    public abstract class GenericLimitedCacheTests<TKey, TValue> : GenericDictionaryTestsBase<TKey, TValue>
+    public abstract class GenericFiniteCacheTests<TKey, TValue> : GenericDictionaryTestsBase<TKey, TValue>
         where TKey : notnull
     {
         [Theory]
@@ -20,7 +20,7 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
         [InlineData( 3 )]
         public void Ctor_ShouldCreateEmptyWithCorrectCapacity(int capacity)
         {
-            var sut = new LimitedCache<TKey, TValue>( capacity );
+            var sut = new FiniteCache<TKey, TValue>( capacity );
 
             using ( new AssertionScope() )
             {
@@ -40,7 +40,7 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
         {
             var comparer = EqualityComparerFactory<TKey>.Create( (a, b) => a!.Equals( b ) );
 
-            var sut = new LimitedCache<TKey, TValue>( capacity, comparer );
+            var sut = new FiniteCache<TKey, TValue>( capacity, comparer );
 
             using ( new AssertionScope() )
             {
@@ -57,7 +57,7 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
         [InlineData( -1 )]
         public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenCapacityIsLessThanOne(int capacity)
         {
-            var action = Lambda.Of( () => new LimitedCache<TKey, TValue>( capacity ) );
+            var action = Lambda.Of( () => new FiniteCache<TKey, TValue>( capacity ) );
             action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
@@ -67,7 +67,7 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
             var key = Fixture.Create<TKey>();
             var value = Fixture.Create<TValue>();
 
-            var sut = new LimitedCache<TKey, TValue>( capacity: 3 );
+            var sut = new FiniteCache<TKey, TValue>( capacity: 3 );
 
             sut.Add( key, value );
 
@@ -91,7 +91,7 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
             var newKey = keys[^1];
             var newValue = values[^1];
 
-            var sut = new LimitedCache<TKey, TValue>( capacity: 3 );
+            var sut = new FiniteCache<TKey, TValue>( capacity: 3 );
             foreach ( var (key, value) in keys.Zip( values ).Take( existingItemCount ) )
                 sut.Add( key, value );
 
@@ -119,7 +119,7 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
             var newKey = keys[^1];
             var newValue = values[^1];
 
-            var sut = new LimitedCache<TKey, TValue>( capacity: 3 );
+            var sut = new FiniteCache<TKey, TValue>( capacity: 3 );
             foreach ( var (key, value) in keys.Zip( values ).Take( itemCount - 1 ) )
                 sut.Add( key, value );
 
@@ -140,7 +140,7 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
         {
             var key = Fixture.Create<TKey>();
             var values = Fixture.CreateDistinctCollection<TValue>( 2 );
-            var sut = new LimitedCache<TKey, TValue>( capacity: 3 ) { { key, values[0] } };
+            var sut = new FiniteCache<TKey, TValue>( capacity: 3 ) { { key, values[0] } };
 
             var action = Lambda.Of( () => sut.Add( key, values[1] ) );
 
@@ -151,7 +151,7 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
         public void Remove_ShouldReturnFalse_WhenCacheIsEmpty()
         {
             var key = Fixture.Create<TKey>();
-            var sut = new LimitedCache<TKey, TValue>( capacity: 3 );
+            var sut = new FiniteCache<TKey, TValue>( capacity: 3 );
 
             var result = sut.Remove( key );
 
@@ -163,7 +163,7 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
         {
             var key = Fixture.Create<TKey>();
             var value = Fixture.Create<TValue>();
-            var sut = new LimitedCache<TKey, TValue>( capacity: 3 ) { { key, value } };
+            var sut = new FiniteCache<TKey, TValue>( capacity: 3 ) { { key, value } };
 
             var result = sut.Remove( key );
 
@@ -181,7 +181,7 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
         {
             var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
             var values = Fixture.CreateDistinctCollection<TValue>( 2 );
-            var sut = new LimitedCache<TKey, TValue>( capacity: 3 ) { { keys[0], values[0] }, { keys[1], values[1] } };
+            var sut = new FiniteCache<TKey, TValue>( capacity: 3 ) { { keys[0], values[0] }, { keys[1], values[1] } };
 
             var result = sut.Remove( keys[0] );
 
@@ -200,7 +200,7 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
         {
             var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
             var values = Fixture.CreateDistinctCollection<TValue>( 3 );
-            var sut = new LimitedCache<TKey, TValue>( capacity: 3 )
+            var sut = new FiniteCache<TKey, TValue>( capacity: 3 )
             {
                 { keys[0], values[0] },
                 { keys[1], values[1] },
@@ -224,7 +224,7 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
         public void Remove_WithRemoved_ShouldReturnFalseAndDefaultRemoved_WhenCacheIsEmpty()
         {
             var key = Fixture.Create<TKey>();
-            var sut = new LimitedCache<TKey, TValue>( capacity: 3 );
+            var sut = new FiniteCache<TKey, TValue>( capacity: 3 );
 
             var result = sut.Remove( key, out var removed );
 
@@ -240,7 +240,7 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
         {
             var key = Fixture.Create<TKey>();
             var value = Fixture.Create<TValue>();
-            var sut = new LimitedCache<TKey, TValue>( capacity: 3 ) { { key, value } };
+            var sut = new FiniteCache<TKey, TValue>( capacity: 3 ) { { key, value } };
 
             var result = sut.Remove( key, out var removed );
 
@@ -259,7 +259,7 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
         {
             var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
             var values = Fixture.CreateDistinctCollection<TValue>( 2 );
-            var sut = new LimitedCache<TKey, TValue>( capacity: 3 ) { { keys[0], values[0] }, { keys[1], values[1] } };
+            var sut = new FiniteCache<TKey, TValue>( capacity: 3 ) { { keys[0], values[0] }, { keys[1], values[1] } };
 
             var result = sut.Remove( keys[0], out var removed );
 
@@ -279,7 +279,7 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
         {
             var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
             var values = Fixture.CreateDistinctCollection<TValue>( 3 );
-            var sut = new LimitedCache<TKey, TValue>( capacity: 3 )
+            var sut = new FiniteCache<TKey, TValue>( capacity: 3 )
             {
                 { keys[0], values[0] },
                 { keys[1], values[1] },
@@ -306,7 +306,7 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
             var key = Fixture.Create<TKey>();
             var value = Fixture.Create<TValue>();
 
-            var sut = new LimitedCache<TKey, TValue>( capacity: 3 );
+            var sut = new FiniteCache<TKey, TValue>( capacity: 3 );
 
             sut[key] = value;
 
@@ -331,7 +331,7 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
             var newKey = keys[^1];
             var newValue = values[^1];
 
-            var sut = new LimitedCache<TKey, TValue>( capacity: 3 );
+            var sut = new FiniteCache<TKey, TValue>( capacity: 3 );
             foreach ( var (key, value) in keys.Zip( values ).Take( existingItemCount ) )
                 sut.Add( key, value );
 
@@ -359,7 +359,7 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
             var newKey = keys[^1];
             var newValue = values[^1];
 
-            var sut = new LimitedCache<TKey, TValue>( capacity: 3 );
+            var sut = new FiniteCache<TKey, TValue>( capacity: 3 );
             foreach ( var (key, value) in keys.Zip( values ).Take( itemCount - 1 ) )
                 sut.Add( key, value );
 
@@ -381,7 +381,7 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
             var key = Fixture.Create<TKey>();
             var values = Fixture.CreateDistinctCollection<TValue>( 2 );
 
-            var sut = new LimitedCache<TKey, TValue>( capacity: 3 ) { { key, values[0] } };
+            var sut = new FiniteCache<TKey, TValue>( capacity: 3 ) { { key, values[0] } };
 
             sut[key] = values[1];
 
@@ -400,7 +400,7 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
             var key = Fixture.Create<TKey>();
             var value = Fixture.Create<TValue>();
 
-            var sut = new LimitedCache<TKey, TValue>( capacity: 3 ) { { key, value } };
+            var sut = new FiniteCache<TKey, TValue>( capacity: 3 ) { { key, value } };
 
             var result = sut.TryGetValue( key, out var existingValue );
 
@@ -416,7 +416,7 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
         {
             var key = Fixture.Create<TKey>();
 
-            var sut = new LimitedCache<TKey, TValue>( capacity: 3 );
+            var sut = new FiniteCache<TKey, TValue>( capacity: 3 );
 
             var result = sut.TryGetValue( key, out var existingValue );
 
@@ -433,7 +433,7 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
             var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
             var values = Fixture.CreateDistinctCollection<TValue>( 3 );
 
-            var sut = new LimitedCache<TKey, TValue>( capacity: 3 );
+            var sut = new FiniteCache<TKey, TValue>( capacity: 3 );
             foreach ( var (key, value) in keys.Zip( values ) )
                 sut.Add( key, value );
 
@@ -453,7 +453,7 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
             var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
             var values = Fixture.CreateDistinctCollection<TValue>( 2 );
 
-            var sut = new LimitedCache<TKey, TValue>( capacity: 3 );
+            var sut = new FiniteCache<TKey, TValue>( capacity: 3 );
             foreach ( var (key, value) in keys.Zip( values ) )
                 sut.Add( key, value );
 
@@ -468,7 +468,7 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
             var keys = Fixture.CreateDistinctCollection<TKey>( 6 );
             var values = Fixture.CreateDistinctCollection<TValue>( 6 );
 
-            var sut = new LimitedCache<TKey, TValue>( capacity: 3 );
+            var sut = new FiniteCache<TKey, TValue>( capacity: 3 );
             foreach ( var (key, value) in keys.Zip( values ) )
                 sut.Add( key, value );
 
@@ -483,7 +483,7 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
             var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
             var values = Fixture.CreateDistinctCollection<TValue>( 2 );
 
-            var sut = new LimitedCache<TKey, TValue>( capacity: 3 );
+            var sut = new FiniteCache<TKey, TValue>( capacity: 3 );
             foreach ( var (key, value) in keys.Zip( values ) )
                 sut.Add( key, value );
 
@@ -498,7 +498,7 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
             var keys = Fixture.CreateDistinctCollection<TKey>( 6 );
             var values = Fixture.CreateDistinctCollection<TValue>( 6 );
 
-            var sut = new LimitedCache<TKey, TValue>( capacity: 3 );
+            var sut = new FiniteCache<TKey, TValue>( capacity: 3 );
             foreach ( var (key, value) in keys.Zip( values ) )
                 sut.Add( key, value );
 
@@ -519,7 +519,7 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
                 KeyValuePair.Create( keys[1], values[1] )
             };
 
-            var sut = new LimitedCache<TKey, TValue>( capacity: 3 );
+            var sut = new FiniteCache<TKey, TValue>( capacity: 3 );
             foreach ( var (key, value) in keys.Zip( values ) )
                 sut.Add( key, value );
 
@@ -539,7 +539,7 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
                 KeyValuePair.Create( keys[^1], values[^1] )
             };
 
-            var sut = new LimitedCache<TKey, TValue>( capacity: 3 );
+            var sut = new FiniteCache<TKey, TValue>( capacity: 3 );
             foreach ( var (key, value) in keys.Zip( values ) )
                 sut.Add( key, value );
 
@@ -548,7 +548,7 @@ namespace LfrlAnvil.Collections.Tests.LimitedCacheTests
 
         protected sealed override IDictionary<TKey, TValue> CreateEmptyDictionary()
         {
-            return new LimitedCache<TKey, TValue>( capacity: 10 );
+            return new FiniteCache<TKey, TValue>( capacity: 10 );
         }
     }
 }

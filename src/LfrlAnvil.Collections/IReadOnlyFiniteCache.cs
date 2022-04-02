@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace LfrlAnvil.Collections
 {
-    public interface IReadOnlyLimitedCache<TKey, TValue> : IReadOnlyDictionary<TKey, TValue>
+    public interface IReadOnlyFiniteCache<TKey, TValue> : IReadOnlyDictionary<TKey, TValue>
         where TKey : notnull
     {
         int Capacity { get; }

@@ -5,15 +5,15 @@ using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Collections
 {
-    public class LimitedCache<TKey, TValue> : ILimitedCache<TKey, TValue>
+    public class FiniteCache<TKey, TValue> : IFiniteCache<TKey, TValue>
         where TKey : notnull
     {
         private readonly SequentialDictionary<TKey, TValue> _map;
 
-        public LimitedCache(int capacity)
+        public FiniteCache(int capacity)
             : this( capacity, EqualityComparer<TKey>.Default ) { }
 
-        public LimitedCache(int capacity, IEqualityComparer<TKey> comparer)
+        public FiniteCache(int capacity, IEqualityComparer<TKey> comparer)
         {
             Ensure.IsGreaterThan( capacity, 0, nameof( capacity ) );
 

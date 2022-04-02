@@ -1,0 +1,88 @@
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
+
+namespace LfrlAnvil.Generators
+{
+    public abstract class SequenceGeneratorBase<T> : ISequenceGenerator<T>
+        where T : IComparable<T>
+    {
+        private Next? _next;
+
+        protected SequenceGeneratorBase(Bounds<T> bounds, T start, T step)
+        {
+            Ensure.IsInRange( start, bounds.Min, bounds.Max, nameof( start ) );
+            Bounds = bounds;
+            Step = step;
+            _next = new Next( start );
+        }
+
+        public Bounds<T> Bounds { get; }
+        public T Step { get; }
+
+        public void Reset(T start)
+        {
+            Ensure.IsInRange( start, Bounds.Min, Bounds.Max, nameof( start ) );
+            _next = new Next( start );
+        }
+
+        public T Generate()
+        {
+            if ( ! TryGenerate( out var result ) )
+                throw new InvalidOperationException( "Failed to generate next value." );
+
+            return result;
+        }
+
+        public bool TryGenerate([MaybeNullWhen( false )] out T result)
+        {
+            if ( _next is not null && Bounds.Contains( _next.Value.Value ) )
+            {
+                result = _next.Value.Value;
+
+                try
+                {
+                    var next = AddStep( _next.Value.Value );
+                    _next = next.CompareTo( result ) == 0 ? null : new Next(next);
+                }
+                catch ( OverflowException )
+                {
+                    _next = null;
+                }
+
+                return true;
+            }
+
+            result = default;
+            return false;
+        }
+
+        protected abstract T AddStep(T value);
+
+        object IGenerator.Generate()
+        {
+            return Generate();
+        }
+
+        bool IGenerator.TryGenerate(out object? result)
+        {
+            if ( TryGenerate( out var underlyingResult ) )
+            {
+                result = underlyingResult;
+                return true;
+            }
+
+            result = default;
+            return false;
+        }
+
+        private readonly struct Next
+        {
+            internal T Value { get; }
+
+            internal Next(T value)
+            {
+                Value = value;
+            }
+        }
+    }
+}
