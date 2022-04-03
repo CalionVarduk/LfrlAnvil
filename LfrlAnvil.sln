@@ -35,6 +35,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.Functional.Tests"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.Chrono.Tests", "tests\LfrlAnvil.Chrono.Tests\LfrlAnvil.Chrono.Tests.csproj", "{0D786F73-2CC8-488D-885E-601662E951BA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.Identifiers.Tests", "tests\LfrlAnvil.Identifiers.Tests\LfrlAnvil.Identifiers.Tests.csproj", "{9940E73F-D522-4386-8D0D-65B32DBC58E1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -89,6 +91,10 @@ Global
 		{0D786F73-2CC8-488D-885E-601662E951BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0D786F73-2CC8-488D-885E-601662E951BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0D786F73-2CC8-488D-885E-601662E951BA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9940E73F-D522-4386-8D0D-65B32DBC58E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9940E73F-D522-4386-8D0D-65B32DBC58E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9940E73F-D522-4386-8D0D-65B32DBC58E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9940E73F-D522-4386-8D0D-65B32DBC58E1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -106,6 +112,7 @@ Global
 		{2547E16E-2520-4FD8-8B21-A79EDC6C31D4} = {09DABFA2-E13A-419B-9EEC-11A014E1243C}
 		{1B3B5AF3-72DE-4663-AEF6-3E7507B3E932} = {09DABFA2-E13A-419B-9EEC-11A014E1243C}
 		{0D786F73-2CC8-488D-885E-601662E951BA} = {09DABFA2-E13A-419B-9EEC-11A014E1243C}
+		{9940E73F-D522-4386-8D0D-65B32DBC58E1} = {09DABFA2-E13A-419B-9EEC-11A014E1243C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3FEF45BB-2269-4080-B6FD-C782F257A901}
