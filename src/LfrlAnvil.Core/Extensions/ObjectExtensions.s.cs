@@ -25,7 +25,7 @@ namespace LfrlAnvil.Extensions
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static IEnumerable<T2> Memoize<T1, T2>(this T1 source, Func<T1, IEnumerable<T2>> selector)
+        public static IMemoizedCollection<T2> Memoize<T1, T2>(this T1 source, Func<T1, IEnumerable<T2>> selector)
         {
             return selector( source ).Memoize();
         }

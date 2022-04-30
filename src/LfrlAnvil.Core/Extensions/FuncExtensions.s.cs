@@ -16,7 +16,7 @@ namespace LfrlAnvil.Extensions
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static IEnumerable<T> Memoize<T>(this Func<IEnumerable<T>> source)
+        public static IMemoizedCollection<T> Memoize<T>(this Func<IEnumerable<T>> source)
         {
             return source().Memoize();
         }
@@ -25,10 +25,7 @@ namespace LfrlAnvil.Extensions
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static Action IgnoreResult<T>(this Func<T> source)
         {
-            return () =>
-            {
-                source();
-            };
+            return () => source();
         }
     }
 }

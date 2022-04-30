@@ -446,11 +446,20 @@ namespace LfrlAnvil.Tests.ExtensionsTests.EnumerableTests
         }
 
         [Fact]
-        public void IsMaterialized_ShouldReturnFalse_WhenSourceIsMemoized()
+        public void IsMaterialized_ShouldReturnFalse_WhenSourceIsMemoizedAndNotMaterialized()
         {
             var sut = Fixture.CreateMany<T>().Memoize();
             var result = sut.IsMaterialized();
             result.Should().BeFalse();
+        }
+
+        [Fact]
+        public void IsMaterialized_ShouldReturnTrue_WhenSourceIsMemoizedAndMaterialized()
+        {
+            var sut = Fixture.CreateMany<T>().Memoize();
+            var value = sut.Materialize();
+            var result = sut.IsMaterialized();
+            result.Should().BeTrue();
         }
 
         [Fact]

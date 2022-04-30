@@ -7,14 +7,16 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Internal
 {
-    public sealed class MemoizedEnumerable<T> : IEnumerable<T>
+    public sealed class MemoizedCollection<T> : IMemoizedCollection<T>
     {
-        public Lazy<IReadOnlyCollection<T>> Source { get; }
-
-        public MemoizedEnumerable(IEnumerable<T> source)
+        public MemoizedCollection(IEnumerable<T> source)
         {
             Source = new Lazy<IReadOnlyCollection<T>>( source.Materialize );
         }
+
+        public Lazy<IReadOnlyCollection<T>> Source { get; }
+        public int Count => Source.Value.Count;
+        public bool IsMaterialized => Source.IsValueCreated;
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]

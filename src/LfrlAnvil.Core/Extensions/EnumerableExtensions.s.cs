@@ -286,23 +286,26 @@ namespace LfrlAnvil.Extensions
         {
             return source switch
             {
+                IMemoizedCollection<T> m => m.Source.Value,
                 IReadOnlyCollection<T> c => c,
-                MemoizedEnumerable<T> m => m.Source.Value,
                 _ => source.ToList()
             };
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static IEnumerable<T> Memoize<T>(this IEnumerable<T> source)
+        public static IMemoizedCollection<T> Memoize<T>(this IEnumerable<T> source)
         {
-            return source is MemoizedEnumerable<T> m ? m : new MemoizedEnumerable<T>( source );
+            return source is IMemoizedCollection<T> m ? m : new MemoizedCollection<T>( source );
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static bool IsMaterialized<T>(this IEnumerable<T> source)
         {
+            if ( source is IMemoizedCollection<T> memoized )
+                return memoized.IsMaterialized;
+
             return source is IReadOnlyCollection<T>;
         }
 
@@ -310,7 +313,7 @@ namespace LfrlAnvil.Extensions
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static bool IsMemoized<T>(this IEnumerable<T> source)
         {
-            return source is MemoizedEnumerable<T>;
+            return source is IMemoizedCollection<T>;
         }
 
         [Pure]
