@@ -1,320 +1,240 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlAnvil.Chrono;
-using LfrlAnvil.TestExtensions;
-using NSubstitute;
-using Xunit;
-using AutoFixture;
-using FluentAssertions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Generators;
+using LfrlAnvil.TestExtensions;
+using LfrlAnvil.TestExtensions.Attributes;
+using NSubstitute;
+using Xunit;
 
 namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
 {
+    [TestClass( typeof( IdentifierGeneratorTestsData ) )]
     public class IdentifierGeneratorTests : TestsBase
     {
-        [Fact]
-        public void Ctor_WithTimestampProvider_ShouldReturnCorrectResult()
+        [Theory]
+        [MethodData( nameof( IdentifierGeneratorTestsData.GetCtorData ) )]
+        public void Ctor_ShouldReturnCorrectResult(Timestamp startTimestamp, Timestamp expectedStartTimestamp, ulong expectedLastHighValue)
         {
-            var expectedTimestamp = GetAnyTimestamp();
-            var timestamp = GetTimestampWithAnyTicks( expectedTimestamp );
-            var expectedMaxTimestamp = GetExpectedMaxTimestamp();
-            var timestampProvider = GetTimestampProviderMock( timestamp );
+            var expectedTimeEpsilon = Duration.FromMilliseconds( 1 );
+            var expectedLowValueBounds = Bounds.Create( ushort.MinValue, ushort.MaxValue );
+            var expectedMaxTimestamp = new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 1 ).SubtractTicks( 1 ) );
+
+            var timestampProvider = GetTimestampProviderMock( startTimestamp );
 
             var sut = new IdentifierGenerator( timestampProvider );
 
             using ( new AssertionScope() )
             {
-                sut.BaseTimestamp.Should().Be( expectedTimestamp );
-                sut.LastTimestamp.Should().Be( expectedTimestamp );
-                sut.StartTimestamp.Should().Be( expectedTimestamp );
+                sut.BaseTimestamp.Should().Be( Timestamp.Zero );
+                sut.LastTimestamp.Should().Be( expectedStartTimestamp );
+                sut.StartTimestamp.Should().Be( expectedStartTimestamp );
                 sut.MaxTimestamp.Should().Be( expectedMaxTimestamp );
+                sut.TimeEpsilon.Should().Be( expectedTimeEpsilon );
                 sut.LowValueExceededHandlingStrategy.Should().Be( LowValueExceededHandlingStrategy.Forbidden );
-                sut.LowValueBounds.Should().Be( Bounds.Create( ushort.MinValue, ushort.MaxValue ) );
-                sut.LastHighValue.Should().Be( 0 );
+                sut.LowValueBounds.Should().Be( expectedLowValueBounds );
+                sut.LastHighValue.Should().Be( expectedLastHighValue );
                 sut.LastLowValue.Should().Be( -1 );
             }
         }
 
         [Fact]
-        public void Ctor_WithTimestampProvider_ShouldReturnCorrectResult_WhenMaxTimestampIsLessThanMaxDateTime()
+        public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenStartTimestampIsLessThanUnixEpoch()
         {
-            var timestamp = new Timestamp( new DateTime( 1000, 1, 1 ) );
-            var expectedMaxTimestamp = GetExpectedMaxTimestamp( timestamp );
-            var timestampProvider = GetTimestampProviderMock( timestamp );
+            var startTimestamp = new Timestamp( -1 );
+            var timestampProvider = GetTimestampProviderMock( startTimestamp );
+
+            var action = Lambda.Of( () => new IdentifierGenerator( timestampProvider ) );
+
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        }
+
+        [Theory]
+        [MethodData( nameof( IdentifierGeneratorTestsData.GetCtorWithParamsData ) )]
+        public void Ctor_WithParams_ShouldReturnCorrectResult(
+            IdentifierGeneratorParams @params,
+            Timestamp startTimestamp,
+            Timestamp expectedBaseTimestamp,
+            Timestamp expectedStartTimestamp,
+            Timestamp expectedMaxTimestamp,
+            ulong expectedLastHighValue,
+            int expectedLastLowValue)
+        {
+            var timestampProvider = GetTimestampProviderMock( startTimestamp );
+
+            var sut = new IdentifierGenerator( timestampProvider, @params );
+
+            using ( new AssertionScope() )
+            {
+                sut.BaseTimestamp.Should().Be( expectedBaseTimestamp );
+                sut.LastTimestamp.Should().Be( expectedStartTimestamp );
+                sut.StartTimestamp.Should().Be( expectedStartTimestamp );
+                sut.MaxTimestamp.Should().Be( expectedMaxTimestamp );
+                sut.TimeEpsilon.Should().Be( @params.TimeEpsilon );
+                sut.LowValueExceededHandlingStrategy.Should().Be( @params.LowValueExceededHandlingStrategy );
+                sut.LowValueBounds.Should().Be( @params.LowValueBounds );
+                sut.LastHighValue.Should().Be( expectedLastHighValue );
+                sut.LastLowValue.Should().Be( expectedLastLowValue );
+            }
+        }
+
+        [Fact]
+        public void Ctor_WithParams_ShouldThrowArgumentOutOfRangeException_WhenStartTimestampIsLessThanUnixEpoch()
+        {
+            var startTimestamp = new Timestamp( -1 );
+            var timestampProvider = GetTimestampProviderMock( startTimestamp );
+
+            var action = Lambda.Of( () => new IdentifierGenerator( timestampProvider, new IdentifierGeneratorParams() ) );
+
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        }
+
+        [Fact]
+        public void Ctor_WithParams_ShouldThrowArgumentOutOfRangeException_WhenTimeEpsilonIsNegative()
+        {
+            var @params = new IdentifierGeneratorParams { TimeEpsilon = Duration.FromTicks( -1 ) };
+            var timestampProvider = GetTimestampProviderMock( Timestamp.Zero );
+
+            var action = Lambda.Of( () => new IdentifierGenerator( timestampProvider, @params ) );
+
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        }
+
+        [Fact]
+        public void Ctor_WithParams_ShouldThrowArgumentOutOfRangeException_WhenTimeEpsilonIsZero()
+        {
+            var @params = new IdentifierGeneratorParams { TimeEpsilon = Duration.Zero };
+            var timestampProvider = GetTimestampProviderMock( Timestamp.Zero );
+
+            var action = Lambda.Of( () => new IdentifierGenerator( timestampProvider, @params ) );
+
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        }
+
+        [Fact]
+        public void Ctor_WithParams_ShouldThrowArgumentOutOfRangeException_WhenTimeEpsilonIsLargerThanThreeMs()
+        {
+            var @params = new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 3 ).AddTicks( 1 ) };
+            var timestampProvider = GetTimestampProviderMock( Timestamp.Zero );
+
+            var action = Lambda.Of( () => new IdentifierGenerator( timestampProvider, @params ) );
+
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        }
+
+        [Fact]
+        public void Ctor_WithParams_ShouldThrowArgumentOutOfRangeException_WhenBaseTimestampIsLessThanUnixEpoch()
+        {
+            var @params = new IdentifierGeneratorParams { BaseTimestamp = new Timestamp( -1 ) };
+            var timestampProvider = GetTimestampProviderMock( Timestamp.Zero );
+
+            var action = Lambda.Of( () => new IdentifierGenerator( timestampProvider, @params ) );
+
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        }
+
+        [Fact]
+        public void Ctor_WithParams_ShouldThrowArgumentOutOfRangeException_WhenBaseTimestampIsGreaterThanStartTimestamp()
+        {
+            var @params = new IdentifierGeneratorParams { BaseTimestamp = new Timestamp( 1 ) };
+            var timestampProvider = GetTimestampProviderMock( Timestamp.Zero );
+
+            var action = Lambda.Of( () => new IdentifierGenerator( timestampProvider, @params ) );
+
+            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        }
+
+        [Theory]
+        [MethodData( nameof( IdentifierGeneratorTestsData.GetGenerateFirstTimeForTheCurrentHighValueData ) )]
+        public void Generate_ShouldReturnCorrectIdentifier_WhenGeneratingFirstTimeForTheCurrentHighValue(
+            IdentifierGeneratorParams @params,
+            Timestamp startTimestamp,
+            Identifier expected)
+        {
+            var timestampProvider = GetTimestampProviderMock( startTimestamp );
+
+            var sut = new IdentifierGenerator( timestampProvider, @params );
+
+            var result = sut.Generate();
+
+            result.Should().Be( expected );
+        }
+
+        [Theory]
+        [MethodData( nameof( IdentifierGeneratorTestsData.GetGenerateNextTimeForTheCurrentHighValueWithoutExceedingLowValueBoundsData ) )]
+        public void Generate_ShouldReturnCorrectIdentifier_WhenGeneratingNextTimeForTheCurrentHighValueWithoutExceedingLowValueBounds(
+            IdentifierGeneratorParams @params,
+            Timestamp startTimestamp,
+            int previousCount,
+            Identifier expected)
+        {
+            var timestampProvider = GetTimestampProviderMock( startTimestamp );
+
+            var sut = new IdentifierGenerator( timestampProvider, @params );
+            GenerateRange( sut, previousCount );
+
+            var result = sut.Generate();
+
+            result.Should().Be( expected );
+        }
+
+        [Theory]
+        [MethodData( nameof( IdentifierGeneratorTestsData.GetGenerateNextTimeForTheFutureHighValueData ) )]
+        public void Generate_ShouldReturnCorrectIdentifier_WhenGeneratingNextTimeForTheFutureHighValue(
+            Bounds<ushort> lowValueBounds,
+            Timestamp futureTimestamp,
+            Identifier expected)
+        {
+            var startTimestamp = Timestamp.Zero;
+            var timestampProvider = GetTimestampProviderMock(
+                startTimestamp,
+                startTimestamp,
+                startTimestamp,
+                startTimestamp,
+                futureTimestamp );
+
+            var sut = new IdentifierGenerator( timestampProvider, new IdentifierGeneratorParams { LowValueBounds = lowValueBounds } );
+            GenerateRange( sut, 3 );
+
+            var result = sut.Generate();
+
+            result.Should().Be( expected );
+        }
+
+        [Theory]
+        [MethodData( nameof( IdentifierGeneratorTestsData.GetGenerateNextTimeForTheCurrentHighValueAndExceedingLowValueBoundsData ) )]
+        public void
+            Generate_ShouldReturnCorrectIdentifier_WhenGeneratingNextTimeForTheCurrentHighValueAndExceedingLowValueBounds(
+                IdentifierGeneratorParams @params,
+                Timestamp startTimestamp,
+                Timestamp futureTimestamp,
+                Identifier expected)
+        {
+            var lowValueCount = @params.LowValueBounds.Max - @params.LowValueBounds.Min + 1;
+            var timestampProvider = GetTimestampProviderMock(
+                Repeat( startTimestamp, lowValueCount + 2 ).Append( futureTimestamp ).ToArray() );
+
+            var sut = new IdentifierGenerator( timestampProvider, @params );
+            GenerateRange( sut, lowValueCount );
+
+            var result = sut.Generate();
+
+            result.Should().Be( expected );
+        }
+
+        [Fact]
+        public void Generate_ShouldReturnCorrectFirstIdentifier_WhenNextHighValueIsEqualToMaxHighValue()
+        {
+            var startTimestamp = Timestamp.Zero;
+            var maxTimestamp = new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 1 ).SubtractTicks( 1 ) );
+            var expected = new Identifier( (ulong)maxTimestamp.Subtract( startTimestamp ).FullMilliseconds, 0 );
+            var timestampProvider = GetTimestampProviderMock( startTimestamp, maxTimestamp );
 
             var sut = new IdentifierGenerator( timestampProvider );
-
-            using ( new AssertionScope() )
-            {
-                sut.BaseTimestamp.Should().Be( timestamp );
-                sut.LastTimestamp.Should().Be( timestamp );
-                sut.StartTimestamp.Should().Be( timestamp );
-                sut.MaxTimestamp.Should().Be( expectedMaxTimestamp );
-                sut.LowValueExceededHandlingStrategy.Should().Be( LowValueExceededHandlingStrategy.Forbidden );
-                sut.LowValueBounds.Should().Be( Bounds.Create( ushort.MinValue, ushort.MaxValue ) );
-                sut.LastHighValue.Should().Be( 0 );
-                sut.LastLowValue.Should().Be( -1 );
-            }
-        }
-
-        [Fact]
-        public void Ctor_WithTimestampProviderAndBaseTimestamp_ShouldReturnCorrectResult_WhenStartIsEqualToBaseTimestamp()
-        {
-            var expectedBaseTimestamp = GetAnyTimestamp();
-            var baseTimestamp = GetTimestampWithAnyTicks( expectedBaseTimestamp );
-            var expectedMaxTimestamp = GetExpectedMaxTimestamp();
-            var timestampProvider = GetTimestampProviderMock( baseTimestamp );
-
-            var sut = new IdentifierGenerator( timestampProvider, baseTimestamp );
-
-            using ( new AssertionScope() )
-            {
-                sut.BaseTimestamp.Should().Be( expectedBaseTimestamp );
-                sut.LastTimestamp.Should().Be( expectedBaseTimestamp );
-                sut.StartTimestamp.Should().Be( expectedBaseTimestamp );
-                sut.MaxTimestamp.Should().Be( expectedMaxTimestamp );
-                sut.LowValueExceededHandlingStrategy.Should().Be( LowValueExceededHandlingStrategy.Forbidden );
-                sut.LowValueBounds.Should().Be( Bounds.Create( ushort.MinValue, ushort.MaxValue ) );
-                sut.LastHighValue.Should().Be( 0 );
-                sut.LastLowValue.Should().Be( -1 );
-            }
-        }
-
-        [Fact]
-        public void Ctor_WithTimestampProviderAndBaseTimestamp_ShouldReturnCorrectResult_WhenStartIsGreaterThanBaseTimestamp()
-        {
-            var expectedBaseTimestamp = GetAnyTimestamp();
-            var baseTimestamp = GetTimestampWithAnyTicks( expectedBaseTimestamp );
-            var timestampDifference = Duration.FromMilliseconds( Fixture.CreateNotDefault<uint>() );
-            var expectedTimestamp = expectedBaseTimestamp.Add( timestampDifference );
-            var timestamp = GetTimestampWithAnyTicks( expectedTimestamp );
-            var expectedMaxTimestamp = GetExpectedMaxTimestamp();
-            var timestampProvider = GetTimestampProviderMock( timestamp );
-
-            var sut = new IdentifierGenerator( timestampProvider, baseTimestamp );
-
-            using ( new AssertionScope() )
-            {
-                sut.BaseTimestamp.Should().Be( expectedBaseTimestamp );
-                sut.LastTimestamp.Should().Be( expectedTimestamp );
-                sut.StartTimestamp.Should().Be( expectedTimestamp );
-                sut.MaxTimestamp.Should().Be( expectedMaxTimestamp );
-                sut.LowValueExceededHandlingStrategy.Should().Be( LowValueExceededHandlingStrategy.Forbidden );
-                sut.LowValueBounds.Should().Be( Bounds.Create( ushort.MinValue, ushort.MaxValue ) );
-                sut.LastHighValue.Should().Be( (ulong)timestampDifference.FullMilliseconds );
-                sut.LastLowValue.Should().Be( -1 );
-            }
-        }
-
-        [Fact]
-        public void Ctor_WithTimestampProviderAndBaseTimestamp_ShouldThrowArgumentOutOfRangeException_WhenStartIsLessThanBaseTimestamp()
-        {
-            var baseTimestamp = GetAnyTimestamp();
-            var timestamp = baseTimestamp.Subtract( Duration.FromTicks( 1 ) );
-            var timestampProvider = GetTimestampProviderMock( timestamp );
-
-            var action = Lambda.Of( () => new IdentifierGenerator( timestampProvider, baseTimestamp ) );
-
-            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
-        }
-
-        [Fact]
-        public void Ctor_WithTimestampProviderAndBounds_ShouldReturnCorrectResult()
-        {
-            var expectedTimestamp = GetAnyTimestamp();
-            var timestamp = GetTimestampWithAnyTicks( expectedTimestamp );
-            var expectedMaxTimestamp = GetExpectedMaxTimestamp();
-            var lowValueBounds = GetAnyLowValueBounds();
-            var timestampProvider = GetTimestampProviderMock( timestamp );
-
-            var sut = new IdentifierGenerator( timestampProvider, lowValueBounds );
-
-            using ( new AssertionScope() )
-            {
-                sut.BaseTimestamp.Should().Be( expectedTimestamp );
-                sut.LastTimestamp.Should().Be( expectedTimestamp );
-                sut.StartTimestamp.Should().Be( expectedTimestamp );
-                sut.MaxTimestamp.Should().Be( expectedMaxTimestamp );
-                sut.LowValueExceededHandlingStrategy.Should().Be( LowValueExceededHandlingStrategy.Forbidden );
-                sut.LowValueBounds.Should().Be( lowValueBounds );
-                sut.LastHighValue.Should().Be( 0 );
-                sut.LastLowValue.Should().Be( lowValueBounds.Min - 1 );
-            }
-        }
-
-        [Fact]
-        public void Ctor_WithTimestampProviderAndBaseTimestampAndBounds_ShouldReturnCorrectResult_WhenStartIsEqualToBaseTimestamp()
-        {
-            var expectedBaseTimestamp = GetAnyTimestamp();
-            var baseTimestamp = GetTimestampWithAnyTicks( expectedBaseTimestamp );
-            var expectedMaxTimestamp = GetExpectedMaxTimestamp();
-            var lowValueBounds = GetAnyLowValueBounds();
-            var timestampProvider = GetTimestampProviderMock( baseTimestamp );
-
-            var sut = new IdentifierGenerator( timestampProvider, baseTimestamp, lowValueBounds );
-
-            using ( new AssertionScope() )
-            {
-                sut.BaseTimestamp.Should().Be( expectedBaseTimestamp );
-                sut.LastTimestamp.Should().Be( expectedBaseTimestamp );
-                sut.StartTimestamp.Should().Be( expectedBaseTimestamp );
-                sut.MaxTimestamp.Should().Be( expectedMaxTimestamp );
-                sut.LowValueExceededHandlingStrategy.Should().Be( LowValueExceededHandlingStrategy.Forbidden );
-                sut.LowValueBounds.Should().Be( lowValueBounds );
-                sut.LastHighValue.Should().Be( 0 );
-                sut.LastLowValue.Should().Be( lowValueBounds.Min - 1 );
-            }
-        }
-
-        [Fact]
-        public void Ctor_WithTimestampProviderAndBaseTimestampAndBounds_ShouldReturnCorrectResult_WhenStartIsGreaterThanBaseTimestamp()
-        {
-            var expectedBaseTimestamp = GetAnyTimestamp();
-            var baseTimestamp = GetTimestampWithAnyTicks( expectedBaseTimestamp );
-            var timestampDifference = Duration.FromMilliseconds( Fixture.CreateNotDefault<uint>() );
-            var expectedTimestamp = expectedBaseTimestamp.Add( timestampDifference );
-            var timestamp = GetTimestampWithAnyTicks( expectedTimestamp );
-            var expectedMaxTimestamp = GetExpectedMaxTimestamp();
-            var lowValueBounds = GetAnyLowValueBounds();
-            var timestampProvider = GetTimestampProviderMock( timestamp );
-
-            var sut = new IdentifierGenerator( timestampProvider, baseTimestamp, lowValueBounds );
-
-            using ( new AssertionScope() )
-            {
-                sut.BaseTimestamp.Should().Be( expectedBaseTimestamp );
-                sut.LastTimestamp.Should().Be( expectedTimestamp );
-                sut.StartTimestamp.Should().Be( expectedTimestamp );
-                sut.MaxTimestamp.Should().Be( expectedMaxTimestamp );
-                sut.LowValueExceededHandlingStrategy.Should().Be( LowValueExceededHandlingStrategy.Forbidden );
-                sut.LowValueBounds.Should().Be( lowValueBounds );
-                sut.LastHighValue.Should().Be( (ulong)timestampDifference.FullMilliseconds );
-                sut.LastLowValue.Should().Be( lowValueBounds.Min - 1 );
-            }
-        }
-
-        [Fact]
-        public void
-            Ctor_WithTimestampProviderAndBaseTimestampAndBounds_ShouldThrowArgumentOutOfRangeException_WhenStartIsLessThanBaseTimestamp()
-        {
-            var baseTimestamp = GetAnyTimestamp();
-            var timestamp = baseTimestamp.Subtract( Duration.FromTicks( 1 ) );
-            var lowValueBounds = GetAnyLowValueBounds();
-            var timestampProvider = GetTimestampProviderMock( timestamp );
-
-            var action = Lambda.Of( () => new IdentifierGenerator( timestampProvider, baseTimestamp, lowValueBounds ) );
-
-            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
-        }
-
-        [Fact]
-        public void Ctor_WithTimestampProviderAndBoundsAndStrategy_ShouldReturnCorrectResult()
-        {
-            var expectedTimestamp = GetAnyTimestamp();
-            var timestamp = GetTimestampWithAnyTicks( expectedTimestamp );
-            var expectedMaxTimestamp = GetExpectedMaxTimestamp();
-            var lowValueBounds = GetAnyLowValueBounds();
-            var strategy = Fixture.Create<LowValueExceededHandlingStrategy>();
-            var timestampProvider = GetTimestampProviderMock( timestamp );
-
-            var sut = new IdentifierGenerator( timestampProvider, lowValueBounds, strategy );
-
-            using ( new AssertionScope() )
-            {
-                sut.BaseTimestamp.Should().Be( expectedTimestamp );
-                sut.LastTimestamp.Should().Be( expectedTimestamp );
-                sut.StartTimestamp.Should().Be( expectedTimestamp );
-                sut.MaxTimestamp.Should().Be( expectedMaxTimestamp );
-                sut.LowValueExceededHandlingStrategy.Should().Be( strategy );
-                sut.LowValueBounds.Should().Be( lowValueBounds );
-                sut.LastHighValue.Should().Be( 0 );
-                sut.LastLowValue.Should().Be( lowValueBounds.Min - 1 );
-            }
-        }
-
-        [Fact]
-        public void
-            Ctor_WithTimestampProviderAndBaseTimestampAndBoundsAndStrategy_ShouldReturnCorrectResult_WhenStartIsEqualToBaseTimestamp()
-        {
-            var expectedBaseTimestamp = GetAnyTimestamp();
-            var baseTimestamp = GetTimestampWithAnyTicks( expectedBaseTimestamp );
-            var expectedMaxTimestamp = GetExpectedMaxTimestamp();
-            var lowValueBounds = GetAnyLowValueBounds();
-            var strategy = Fixture.Create<LowValueExceededHandlingStrategy>();
-            var timestampProvider = GetTimestampProviderMock( baseTimestamp );
-
-            var sut = new IdentifierGenerator( timestampProvider, baseTimestamp, lowValueBounds, strategy );
-
-            using ( new AssertionScope() )
-            {
-                sut.BaseTimestamp.Should().Be( expectedBaseTimestamp );
-                sut.LastTimestamp.Should().Be( expectedBaseTimestamp );
-                sut.StartTimestamp.Should().Be( expectedBaseTimestamp );
-                sut.MaxTimestamp.Should().Be( expectedMaxTimestamp );
-                sut.LowValueExceededHandlingStrategy.Should().Be( strategy );
-                sut.LowValueBounds.Should().Be( lowValueBounds );
-                sut.LastHighValue.Should().Be( 0 );
-                sut.LastLowValue.Should().Be( lowValueBounds.Min - 1 );
-            }
-        }
-
-        [Fact]
-        public void
-            Ctor_WithTimestampProviderAndBaseTimestampAndBoundsAndStrategy_ShouldReturnCorrectResult_WhenStartIsGreaterThanBaseTimestamp()
-        {
-            var expectedBaseTimestamp = GetAnyTimestamp();
-            var baseTimestamp = GetTimestampWithAnyTicks( expectedBaseTimestamp );
-            var timestampDifference = Duration.FromMilliseconds( Fixture.CreateNotDefault<uint>() );
-            var expectedTimestamp = expectedBaseTimestamp.Add( timestampDifference );
-            var timestamp = GetTimestampWithAnyTicks( expectedTimestamp );
-            var expectedMaxTimestamp = GetExpectedMaxTimestamp();
-            var lowValueBounds = GetAnyLowValueBounds();
-            var strategy = Fixture.Create<LowValueExceededHandlingStrategy>();
-            var timestampProvider = GetTimestampProviderMock( timestamp );
-
-            var sut = new IdentifierGenerator( timestampProvider, baseTimestamp, lowValueBounds, strategy );
-
-            using ( new AssertionScope() )
-            {
-                sut.BaseTimestamp.Should().Be( expectedBaseTimestamp );
-                sut.LastTimestamp.Should().Be( expectedTimestamp );
-                sut.StartTimestamp.Should().Be( expectedTimestamp );
-                sut.MaxTimestamp.Should().Be( expectedMaxTimestamp );
-                sut.LowValueExceededHandlingStrategy.Should().Be( strategy );
-                sut.LowValueBounds.Should().Be( lowValueBounds );
-                sut.LastHighValue.Should().Be( (ulong)timestampDifference.FullMilliseconds );
-                sut.LastLowValue.Should().Be( lowValueBounds.Min - 1 );
-            }
-        }
-
-        [Fact]
-        public void
-            Ctor_WithTimestampProviderAndBaseTimestampAndBoundsAndStrategy_ShouldThrowArgumentOutOfRangeException_WhenStartIsLessThanBaseTimestamp()
-        {
-            var baseTimestamp = GetAnyTimestamp();
-            var timestamp = baseTimestamp.Subtract( Duration.FromTicks( 1 ) );
-            var lowValueBounds = GetAnyLowValueBounds();
-            var strategy = Fixture.Create<LowValueExceededHandlingStrategy>();
-            var timestampProvider = GetTimestampProviderMock( timestamp );
-
-            var action = Lambda.Of( () => new IdentifierGenerator( timestampProvider, baseTimestamp, lowValueBounds, strategy ) );
-
-            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
-        }
-
-        [Fact]
-        public void Generate_ShouldBeEquivalentToTryGenerate_WhenIdentifierIsSafelyGenerated()
-        {
-            var timestamp = GetAnyTimestamp();
-            var lowValueBounds = GetAnyLowValueBounds();
-            var strategy = Fixture.CreateNotDefault<LowValueExceededHandlingStrategy>();
-            var timestampProvider = GetTimestampProviderMock( timestamp );
-
-            var sut = new IdentifierGenerator( timestampProvider, lowValueBounds, strategy );
-            var other = new IdentifierGenerator( timestampProvider, lowValueBounds, strategy );
-            other.TryGenerate( out var expected );
 
             var result = sut.Generate();
 
@@ -323,16 +243,18 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
 
         [Fact]
         public void
-            Generate_ShouldThrowInvalidOperationException_WhenNextMillisecondIsTheSameAndLowValueBoundsAreExceededAndStrategyIsForbidden()
+            Generate_ShouldThrowInvalidOperationException_WhenGeneratingNextTimeForTheCurrentHighValueAndExceedingLowValueBoundsAndForbiddenStrategy()
         {
-            var timestamp = GetAnyTimestamp();
-            var lowValueBounds = GetAnySingleLowValueBounds();
+            var timestamp = Timestamp.Zero;
             var timestampProvider = GetTimestampProviderMock( timestamp );
 
             var sut = new IdentifierGenerator(
                 timestampProvider,
-                lowValueBounds,
-                LowValueExceededHandlingStrategy.Forbidden );
+                new IdentifierGeneratorParams
+                {
+                    LowValueExceededHandlingStrategy = LowValueExceededHandlingStrategy.Forbidden,
+                    LowValueBounds = new Bounds<ushort>( 0, 0 )
+                } );
 
             sut.Generate();
 
@@ -342,392 +264,378 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
         }
 
         [Fact]
-        public void TryGenerate_ShouldReturnTrueAndCorrectIdentifier_WhenNextMillisecondIsDifferent()
+        public void Generate_ShouldThrowInvalidOperationException_WhenNextHighValueIsGreaterThanLastAndMaxHighValueIsExceeded()
         {
-            var baseTimestamp = GetAnyTimestamp();
-            var startTimestamp = baseTimestamp.Add( Duration.FromMilliseconds( 1 ) );
-            var expectedTimestamp = startTimestamp.Add( Duration.FromMilliseconds( 1 ) );
-            var expectedHighValue = (ulong)(expectedTimestamp - baseTimestamp).FullMilliseconds;
-            var lowValueBounds = GetAnyLowValueBounds();
-            var timestampProvider = GetTimestampProviderMock( startTimestamp, expectedTimestamp );
-
-            var sut = new IdentifierGenerator( timestampProvider, baseTimestamp, lowValueBounds );
-
-            var result = sut.TryGenerate( out var outResult );
-
-            using ( new AssertionScope() )
-            {
-                result.Should().BeTrue();
-                outResult.High.Should().Be( expectedHighValue );
-                outResult.Low.Should().Be( lowValueBounds.Min );
-            }
-        }
-
-        [Fact]
-        public void TryGenerate_ShouldReturnTrueAndCorrectFirstIdentifier_WhenNextMillisecondIsTheSame()
-        {
-            var baseTimestamp = GetAnyTimestamp();
-            var startTimestamp = baseTimestamp.Add( Duration.FromMilliseconds( 1 ) );
-            var expectedHighValue = (ulong)(startTimestamp - baseTimestamp).FullMilliseconds;
-            var lowValueBounds = GetAnyLowValueBounds();
-            var timestampProvider = GetTimestampProviderMock( startTimestamp );
-
-            var sut = new IdentifierGenerator( timestampProvider, baseTimestamp, lowValueBounds );
-
-            var result = sut.TryGenerate( out var outResult );
-
-            using ( new AssertionScope() )
-            {
-                result.Should().BeTrue();
-                outResult.High.Should().Be( expectedHighValue );
-                outResult.Low.Should().Be( lowValueBounds.Min );
-            }
-        }
-
-        [Fact]
-        public void TryGenerate_ShouldReturnTrueAndCorrectSecondIdentifier_WhenNextMillisecondIsTheSameAndLowValueBoundsAreNotExceeded()
-        {
-            var baseTimestamp = GetAnyTimestamp();
-            var startTimestamp = baseTimestamp.Add( Duration.FromMilliseconds( 1 ) );
-            var expectedHighValue = (ulong)(startTimestamp - baseTimestamp).FullMilliseconds;
-            var lowValueBounds = GetAnyLowValueBounds();
-            var timestampProvider = GetTimestampProviderMock( startTimestamp );
-
-            var sut = new IdentifierGenerator( timestampProvider, baseTimestamp, lowValueBounds );
-            sut.Generate();
-
-            var result = sut.TryGenerate( out var outResult );
-
-            using ( new AssertionScope() )
-            {
-                result.Should().BeTrue();
-                outResult.High.Should().Be( expectedHighValue );
-                outResult.Low.Should().Be( (ushort)(lowValueBounds.Min + 1) );
-            }
-        }
-
-        [Fact]
-        public void
-            TryGenerate_ShouldReturnTrueAndCorrectIdentifier_WhenNextMillisecondIsTheSameAndLowValueBoundsAreExceededAndStrategyIsAddMs()
-        {
-            var baseTimestamp = GetAnyTimestamp();
-            var startTimestamp = baseTimestamp.Add( Duration.FromMilliseconds( 1 ) );
-            var unusedTimestamp = startTimestamp.Add( Duration.FromMilliseconds( 10 ) );
-            var expectedHighValue = (ulong)(startTimestamp - baseTimestamp).FullMilliseconds + 1;
-            var lowValueBounds = GetAnySingleLowValueBounds();
-            var timestampProvider = GetTimestampProviderMock( startTimestamp, startTimestamp, startTimestamp, unusedTimestamp );
-
-            var sut = new IdentifierGenerator( timestampProvider, baseTimestamp, lowValueBounds, LowValueExceededHandlingStrategy.AddMs );
-            sut.Generate();
-
-            var result = sut.TryGenerate( out var outResult );
-
-            using ( new AssertionScope() )
-            {
-                result.Should().BeTrue();
-                outResult.High.Should().Be( expectedHighValue );
-                outResult.Low.Should().Be( lowValueBounds.Min );
-            }
-        }
-
-        [Fact]
-        public void
-            TryGenerate_ShouldReturnTrueAndCorrectIdentifier_WhenNextMillisecondIsTheSameAndLowValueBoundsAreExceededAndStrategyIsBusyWait()
-        {
-            var baseTimestamp = GetAnyTimestamp();
-            var startTimestamp = baseTimestamp.Add( Duration.FromMilliseconds( 1 ) );
-            var nextTimestamp = startTimestamp.Add( Duration.FromMilliseconds( 10 ) );
-            var expectedHighValue = (ulong)(nextTimestamp - baseTimestamp).FullMilliseconds;
-            var lowValueBounds = GetAnySingleLowValueBounds();
-            var timestampProvider = GetTimestampProviderMock( startTimestamp, startTimestamp, startTimestamp, nextTimestamp );
-
-            var sut = new IdentifierGenerator(
-                timestampProvider,
-                baseTimestamp,
-                lowValueBounds,
-                LowValueExceededHandlingStrategy.BusyWait );
-
-            sut.Generate();
-
-            var result = sut.TryGenerate( out var outResult );
-
-            using ( new AssertionScope() )
-            {
-                result.Should().BeTrue();
-                outResult.High.Should().Be( expectedHighValue );
-                outResult.Low.Should().Be( lowValueBounds.Min );
-            }
-        }
-
-        [Fact]
-        public void
-            TryGenerate_ShouldReturnTrueAndCorrectIdentifier_WhenNextMillisecondIsTheSameAndLowValueBoundsAreExceededAndStrategyIsSleep()
-        {
-            var baseTimestamp = GetAnyTimestamp();
-            var startTimestamp = baseTimestamp.Add( Duration.FromMilliseconds( 1 ) );
-            var nextTimestamp = startTimestamp.Add( Duration.FromMilliseconds( 10 ) );
-            var expectedHighValue = (ulong)(nextTimestamp - baseTimestamp).FullMilliseconds;
-            var lowValueBounds = GetAnySingleLowValueBounds();
-            var timestampProvider = GetTimestampProviderMock( startTimestamp, startTimestamp, startTimestamp, nextTimestamp );
-
-            var sut = new IdentifierGenerator( timestampProvider, baseTimestamp, lowValueBounds, LowValueExceededHandlingStrategy.Sleep );
-            sut.Generate();
-
-            var result = sut.TryGenerate( out var outResult );
-
-            using ( new AssertionScope() )
-            {
-                result.Should().BeTrue();
-                outResult.High.Should().Be( expectedHighValue );
-                outResult.Low.Should().Be( lowValueBounds.Min );
-            }
-        }
-
-        [Fact]
-        public void TryGenerate_ShouldReturnTrueAndCorrectFirstIdentifier_WhenNextMillisecondIsEqualToMaxHighValue()
-        {
-            var baseTimestamp = GetAnyTimestamp();
-            var startTimestamp = GetExpectedMaxTimestamp();
-            var expectedHighValue = (ulong)(startTimestamp - baseTimestamp).FullMilliseconds;
-            var lowValueBounds = GetAnyLowValueBounds();
-            var timestampProvider = GetTimestampProviderMock( startTimestamp );
-
-            var sut = new IdentifierGenerator( timestampProvider, baseTimestamp, lowValueBounds );
-
-            var result = sut.TryGenerate( out var outResult );
-
-            using ( new AssertionScope() )
-            {
-                result.Should().BeTrue();
-                outResult.High.Should().Be( expectedHighValue );
-                outResult.Low.Should().Be( lowValueBounds.Min );
-            }
-        }
-
-        [Fact]
-        public void TryGenerate_ShouldReturnFalse_WhenNextMillisecondIsTheSameAndLowValueBoundsAreExceededAndStrategyIsForbidden()
-        {
-            var timestamp = GetAnyTimestamp();
-            var lowValueBounds = GetAnySingleLowValueBounds();
-            var timestampProvider = GetTimestampProviderMock( timestamp );
-
-            var sut = new IdentifierGenerator(
-                timestampProvider,
-                lowValueBounds,
-                LowValueExceededHandlingStrategy.Forbidden );
-
-            sut.Generate();
-
-            var result = sut.TryGenerate( out var outResult );
-
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                outResult.Should().Be( default );
-            }
-        }
-
-        [Fact]
-        public void TryGenerate_ShouldReturnFalse_WhenHighValueIsGreaterThanLastAndMaxIsExceeded()
-        {
-            var timestamp = GetAnyTimestamp();
-            var exceededTimestamp = GetExpectedMaxTimestamp().Add( Duration.FromMilliseconds( 1 ) );
-            var timestampProvider = GetTimestampProviderMock( timestamp, exceededTimestamp );
-
-            var sut = new IdentifierGenerator( timestampProvider, timestamp );
-
-            var result = sut.TryGenerate( out var outResult );
-
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                outResult.Should().Be( default );
-            }
-        }
-
-        [Fact]
-        public void
-            TryGenerate_ShouldReturnFalse_WhenNextMillisecondIsTheSameAndLowValueBoundsAreExceededAndMaxHighValueIsExceededAndStrategyIsAddMs()
-        {
-            var timestamp = GetAnyTimestamp();
-            var maxTimestamp = GetExpectedMaxTimestamp();
-            var lowValueBounds = GetAnySingleLowValueBounds();
-            var timestampProvider = GetTimestampProviderMock( timestamp, maxTimestamp );
-
-            var sut = new IdentifierGenerator(
-                timestampProvider,
-                lowValueBounds,
-                LowValueExceededHandlingStrategy.AddMs );
-
-            sut.Generate();
-
-            var result = sut.TryGenerate( out var outResult );
-
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                outResult.Should().Be( default );
-            }
-        }
-
-        [Fact]
-        public void
-            TryGenerate_ShouldReturnFalse_WhenNextMillisecondIsTheSameAndLowValueBoundsAreExceededAndMaxHighValueIsExceededAndStrategyIsBusyWait()
-        {
-            var timestamp = GetAnyTimestamp();
-            var maxTimestamp = GetExpectedMaxTimestamp();
-            var exceededTimestamp = maxTimestamp.Add( Duration.FromMilliseconds( 1 ) );
-            var lowValueBounds = GetAnySingleLowValueBounds();
-            var timestampProvider = GetTimestampProviderMock( timestamp, maxTimestamp, maxTimestamp, exceededTimestamp );
-
-            var sut = new IdentifierGenerator(
-                timestampProvider,
-                lowValueBounds,
-                LowValueExceededHandlingStrategy.BusyWait );
-
-            sut.Generate();
-
-            var result = sut.TryGenerate( out var outResult );
-
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                outResult.Should().Be( default );
-            }
-        }
-
-        [Fact]
-        public void
-            TryGenerate_ShouldReturnFalse_WhenNextMillisecondIsTheSameAndLowValueBoundsAreExceededAndMaxHighValueIsExceededAndStrategyIsSleep()
-        {
-            var timestamp = GetAnyTimestamp();
-            var maxTimestamp = GetExpectedMaxTimestamp();
-            var exceededTimestamp = maxTimestamp.Add( Duration.FromMilliseconds( 1 ) );
-            var lowValueBounds = GetAnySingleLowValueBounds();
-            var timestampProvider = GetTimestampProviderMock( timestamp, maxTimestamp, maxTimestamp, exceededTimestamp );
-
-            var sut = new IdentifierGenerator(
-                timestampProvider,
-                lowValueBounds,
-                LowValueExceededHandlingStrategy.Sleep );
-
-            sut.Generate();
-
-            var result = sut.TryGenerate( out var outResult );
-
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                outResult.Should().Be( default );
-            }
-        }
-
-        [Fact]
-        public void GetTimestamp_ShouldReturnCorrectResult()
-        {
-            var offset = Duration.FromMilliseconds( Fixture.CreateNotDefault<uint>() );
-            var id = new Identifier( (ulong)offset.FullMilliseconds, 0 );
-            var timestamp = GetAnyTimestamp();
-            var timestampProvider = GetTimestampProviderMock( timestamp );
+            var startTimestamp = Timestamp.Zero;
+            var nextTimestamp = new Timestamp( DateTime.MaxValue ).Add( Duration.FromTicks( 1 ) );
+            var timestampProvider = GetTimestampProviderMock( startTimestamp, nextTimestamp );
 
             var sut = new IdentifierGenerator( timestampProvider );
 
-            var result = sut.GetTimestamp( id );
+            var action = Lambda.Of( () => sut.Generate() );
 
-            result.Should().Be( timestamp + offset );
+            action.Should().ThrowExactly<InvalidOperationException>();
         }
 
-        [Fact]
-        public void GeneratorState_ShouldBeUpdatedCorrectly_AfterGeneratingFirstIdentifier()
+        [Theory]
+        [MethodData( nameof( IdentifierGeneratorTestsData.GetGenerateNextTimeForTheCurrentMaxHighValueAndExceedingLowValueBoundsData ) )]
+        public void Generate_ShouldThrowInvalidOperationException_WhenGeneratingNextTimeForTheCurrentMaxHighValueAndExceedingLowValueBounds(
+            IdentifierGeneratorParams @params,
+            Timestamp maxTimestamp)
         {
-            var baseTimestamp = GetAnyTimestamp();
-            var startTimestamp = baseTimestamp.Add( Duration.FromMilliseconds( 1 ) );
-            var expectedTimestamp = startTimestamp.Add( Duration.FromMilliseconds( 10 ) );
-            var lowValueBounds = new Bounds<ushort>( 0, 1 );
-            var timestampProvider = GetTimestampProviderMock( startTimestamp, expectedTimestamp );
-            var expectedLastHighValue = (ulong)(expectedTimestamp - baseTimestamp).FullMilliseconds;
-
-            var sut = new IdentifierGenerator( timestampProvider, baseTimestamp, lowValueBounds );
-
-            sut.Generate();
-
-            using ( new AssertionScope() )
-            {
-                sut.LastLowValue.Should().Be( lowValueBounds.Min );
-                sut.LastHighValue.Should().Be( expectedLastHighValue );
-                sut.LastTimestamp.Should().Be( expectedTimestamp );
-            }
-        }
-
-        [Fact]
-        public void GeneratorState_ShouldBeUpdatedCorrectly_AfterGeneratingNextIdentifierWhichCausesLowValueOverflow()
-        {
-            var baseTimestamp = GetAnyTimestamp();
-            var startTimestamp = baseTimestamp.Add( Duration.FromMilliseconds( 1 ) );
-            var expectedTimestamp = startTimestamp.Add( Duration.FromMilliseconds( 10 ) );
-            var lowValueBounds = new Bounds<ushort>( 0, 1 );
-            var timestampProvider = GetTimestampProviderMock( startTimestamp, expectedTimestamp );
-            var expectedLastHighValue = (ulong)(expectedTimestamp - baseTimestamp).FullMilliseconds;
-
-            var sut = new IdentifierGenerator( timestampProvider, baseTimestamp, lowValueBounds );
-
-            sut.Generate();
-            sut.Generate();
-
-            using ( new AssertionScope() )
-            {
-                sut.LastLowValue.Should().Be( lowValueBounds.Max );
-                sut.LastHighValue.Should().Be( expectedLastHighValue );
-                sut.LastTimestamp.Should().Be( expectedTimestamp );
-            }
-        }
-
-        [Fact]
-        public void GeneratorState_ShouldBeUpdatedCorrectly_AfterGeneratingNextIdentifierWhichFixesLowValueOverflow()
-        {
-            var baseTimestamp = GetAnyTimestamp();
-            var startTimestamp = baseTimestamp.Add( Duration.FromMilliseconds( 1 ) );
-            var firstIntermediateTimestamp = startTimestamp.Add( Duration.FromMilliseconds( 5 ) );
-            var secondIntermediateTimestamp = startTimestamp.Add( Duration.FromMilliseconds( 7 ) );
-            var expectedTimestamp = startTimestamp.Add( Duration.FromMilliseconds( 10 ) );
-            var lowValueBounds = new Bounds<ushort>( 0, 1 );
-
+            var startTimestamp = @params.BaseTimestamp;
+            var futureTimestamp = maxTimestamp.Add( @params.TimeEpsilon );
+            var lowValueCount = @params.LowValueBounds.Max - @params.LowValueBounds.Min + 1;
             var timestampProvider = GetTimestampProviderMock(
-                startTimestamp,
-                firstIntermediateTimestamp,
-                secondIntermediateTimestamp,
-                expectedTimestamp );
+                Repeat( maxTimestamp, lowValueCount + 1 ).Prepend( startTimestamp ).Append( futureTimestamp ).ToArray() );
 
-            var expectedLastHighValue = (ulong)(expectedTimestamp - baseTimestamp).FullMilliseconds;
+            var sut = new IdentifierGenerator( timestampProvider, @params );
+            GenerateRange( sut, lowValueCount );
 
-            var sut = new IdentifierGenerator( timestampProvider, baseTimestamp, lowValueBounds );
+            var action = Lambda.Of( () => sut.Generate() );
 
-            sut.Generate();
-            sut.Generate();
-            sut.Generate();
+            action.Should().ThrowExactly<InvalidOperationException>();
+        }
+
+        [Theory]
+        [MethodData( nameof( IdentifierGeneratorTestsData.GetGenerateFirstTimeForTheCurrentHighValueData ) )]
+        public void TryGenerate_ShouldReturnTrueAndCorrectIdentifier_WhenGeneratingFirstTimeForTheCurrentHighValue(
+            IdentifierGeneratorParams @params,
+            Timestamp startTimestamp,
+            Identifier expected)
+        {
+            var timestampProvider = GetTimestampProviderMock( startTimestamp );
+
+            var sut = new IdentifierGenerator( timestampProvider, @params );
+
+            var result = sut.TryGenerate( out var outResult );
 
             using ( new AssertionScope() )
             {
-                sut.LastLowValue.Should().Be( lowValueBounds.Min );
-                sut.LastHighValue.Should().Be( expectedLastHighValue );
-                sut.LastTimestamp.Should().Be( expectedTimestamp );
+                result.Should().BeTrue();
+                outResult.Should().Be( expected );
             }
         }
 
         [Theory]
-        [InlineData( ushort.MinValue, ushort.MaxValue, 65536 )]
-        [InlineData( 0, 0, 1 )]
-        [InlineData( 10, 20, 11 )]
-        public void LowValuesLeft_ShouldReturnFullRange_WhenNothingHasBeenGeneratedYetAndQueryHappensAtTheInstantOfGeneratorConstruction(
-            ushort min,
-            ushort max,
-            int expected)
+        [MethodData( nameof( IdentifierGeneratorTestsData.GetGenerateNextTimeForTheCurrentHighValueWithoutExceedingLowValueBoundsData ) )]
+        public void
+            TryGenerate_ShouldReturnTrueAndCorrectIdentifier_WhenGeneratingNextTimeForTheCurrentHighValueWithoutExceedingLowValueBounds(
+                IdentifierGeneratorParams @params,
+                Timestamp startTimestamp,
+                int previousCount,
+                Identifier expected)
         {
-            var timestamp = GetAnyTimestamp();
-            var timestampProvider = GetTimestampProviderMock( timestamp );
-            var lowValueBounds = new Bounds<ushort>( min, max );
+            var timestampProvider = GetTimestampProviderMock( startTimestamp );
 
-            var sut = new IdentifierGenerator( timestampProvider, lowValueBounds );
+            var sut = new IdentifierGenerator( timestampProvider, @params );
+            GenerateRange( sut, previousCount );
+
+            var result = sut.TryGenerate( out var outResult );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeTrue();
+                outResult.Should().Be( expected );
+            }
+        }
+
+        [Theory]
+        [MethodData( nameof( IdentifierGeneratorTestsData.GetGenerateNextTimeForTheFutureHighValueData ) )]
+        public void TryGenerate_ShouldReturnTrueAndCorrectIdentifier_WhenGeneratingNextTimeForTheFutureHighValue(
+            Bounds<ushort> lowValueBounds,
+            Timestamp futureTimestamp,
+            Identifier expected)
+        {
+            var startTimestamp = Timestamp.Zero;
+            var timestampProvider = GetTimestampProviderMock(
+                startTimestamp,
+                startTimestamp,
+                startTimestamp,
+                startTimestamp,
+                futureTimestamp );
+
+            var sut = new IdentifierGenerator( timestampProvider, new IdentifierGeneratorParams { LowValueBounds = lowValueBounds } );
+            GenerateRange( sut, 3 );
+
+            var result = sut.TryGenerate( out var outResult );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeTrue();
+                outResult.Should().Be( expected );
+            }
+        }
+
+        [Theory]
+        [MethodData( nameof( IdentifierGeneratorTestsData.GetGenerateNextTimeForTheCurrentHighValueAndExceedingLowValueBoundsData ) )]
+        public void
+            TryGenerate_ShouldReturnTrueAndCorrectIdentifier_WhenGeneratingNextTimeForTheCurrentHighValueAndExceedingLowValueBounds(
+                IdentifierGeneratorParams @params,
+                Timestamp startTimestamp,
+                Timestamp futureTimestamp,
+                Identifier expected)
+        {
+            var lowValueCount = @params.LowValueBounds.Max - @params.LowValueBounds.Min + 1;
+            var timestampProvider = GetTimestampProviderMock(
+                Repeat( startTimestamp, lowValueCount + 2 ).Append( futureTimestamp ).ToArray() );
+
+            var sut = new IdentifierGenerator( timestampProvider, @params );
+            GenerateRange( sut, lowValueCount );
+
+            var result = sut.TryGenerate( out var outResult );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeTrue();
+                outResult.Should().Be( expected );
+            }
+        }
+
+        [Fact]
+        public void TryGenerate_ShouldReturnTrueAndCorrectFirstIdentifier_WhenNextHighValueIsEqualToMaxHighValue()
+        {
+            var startTimestamp = Timestamp.Zero;
+            var maxTimestamp = new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 1 ).SubtractTicks( 1 ) );
+            var expected = new Identifier( (ulong)maxTimestamp.Subtract( startTimestamp ).FullMilliseconds, 0 );
+            var timestampProvider = GetTimestampProviderMock( startTimestamp, maxTimestamp );
+
+            var sut = new IdentifierGenerator( timestampProvider );
+
+            var result = sut.TryGenerate( out var outResult );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeTrue();
+                outResult.Should().Be( expected );
+            }
+        }
+
+        [Fact]
+        public void
+            TryGenerate_ShouldReturnFalse_WhenGeneratingNextTimeForTheCurrentHighValueAndExceedingLowValueBoundsAndForbiddenStrategy()
+        {
+            var timestamp = Timestamp.Zero;
+            var timestampProvider = GetTimestampProviderMock( timestamp );
+
+            var sut = new IdentifierGenerator(
+                timestampProvider,
+                new IdentifierGeneratorParams
+                {
+                    LowValueExceededHandlingStrategy = LowValueExceededHandlingStrategy.Forbidden,
+                    LowValueBounds = new Bounds<ushort>( 0, 0 )
+                } );
+
+            sut.Generate();
+
+            var result = sut.TryGenerate( out var outResult );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeFalse();
+                outResult.Should().Be( default );
+            }
+        }
+
+        [Fact]
+        public void TryGenerate_ShouldReturnFalse_WhenNextHighValueIsGreaterThanLastAndMaxHighValueIsExceeded()
+        {
+            var startTimestamp = Timestamp.Zero;
+            var nextTimestamp = new Timestamp( DateTime.MaxValue ).Add( Duration.FromTicks( 1 ) );
+            var timestampProvider = GetTimestampProviderMock( startTimestamp, nextTimestamp );
+
+            var sut = new IdentifierGenerator( timestampProvider );
+
+            var result = sut.TryGenerate( out var outResult );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeFalse();
+                outResult.Should().Be( default );
+            }
+        }
+
+        [Theory]
+        [MethodData( nameof( IdentifierGeneratorTestsData.GetGenerateNextTimeForTheCurrentMaxHighValueAndExceedingLowValueBoundsData ) )]
+        public void TryGenerate_ShouldReturnFalse_WhenGeneratingNextTimeForTheCurrentMaxHighValueAndExceedingLowValueBounds(
+            IdentifierGeneratorParams @params,
+            Timestamp maxTimestamp)
+        {
+            var startTimestamp = @params.BaseTimestamp;
+            var futureTimestamp = maxTimestamp.Add( @params.TimeEpsilon );
+            var lowValueCount = @params.LowValueBounds.Max - @params.LowValueBounds.Min + 1;
+            var timestampProvider = GetTimestampProviderMock(
+                Repeat( maxTimestamp, lowValueCount + 1 ).Prepend( startTimestamp ).Append( futureTimestamp ).ToArray() );
+
+            var sut = new IdentifierGenerator( timestampProvider, @params );
+            GenerateRange( sut, lowValueCount );
+
+            var result = sut.TryGenerate( out var outResult );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeFalse();
+                outResult.Should().Be( default );
+            }
+        }
+
+        [Theory]
+        [MethodData( nameof( IdentifierGeneratorTestsData.GetGetTimestampData ) )]
+        public void GetTimestamp_ShouldReturnCorrectResult(IdentifierGeneratorParams @params, Identifier identifier, Timestamp expected)
+        {
+            var startTimestamp = @params.BaseTimestamp;
+            var timestampProvider = GetTimestampProviderMock( startTimestamp );
+
+            var sut = new IdentifierGenerator( timestampProvider, @params );
+
+            var result = sut.GetTimestamp( identifier );
+
+            result.Should().Be( expected );
+        }
+
+        [Theory]
+        [MethodData( nameof( IdentifierGeneratorTestsData.GetCalculateThroughputData ) )]
+        public void CalculateThroughput_ShouldReturnCorrectResult(IdentifierGeneratorParams @params, Duration duration, ulong expected)
+        {
+            var startTimestamp = @params.BaseTimestamp;
+            var timestampProvider = GetTimestampProviderMock( startTimestamp );
+
+            var sut = new IdentifierGenerator( timestampProvider, @params );
+
+            var result = sut.CalculateThroughput( duration );
+
+            result.Should().Be( expected );
+        }
+
+        [Fact]
+        public void GeneratorState_ShouldBeUpdatedCorrectly_WhenGeneratingFirstTimeForTheCurrentHighValue()
+        {
+            var startTimestamp = Timestamp.Zero;
+            var nextTimestamp = startTimestamp.Add( Duration.FromMilliseconds( 1 ) );
+            var timestampProvider = GetTimestampProviderMock( startTimestamp, nextTimestamp );
+
+            var sut = new IdentifierGenerator( timestampProvider );
+
+            var expected = sut.Generate();
+
+            using ( new AssertionScope() )
+            {
+                sut.LastLowValue.Should().Be( expected.Low );
+                sut.LastHighValue.Should().Be( expected.High );
+                sut.LastTimestamp.Should().Be( nextTimestamp );
+            }
+        }
+
+        [Fact]
+        public void GeneratorState_ShouldBeUpdatedCorrectly_WhenGeneratingNextTimeForTheCurrentHighValueWithoutExceedingLowValueBounds()
+        {
+            var startTimestamp = Timestamp.Zero;
+            var nextTimestamp = startTimestamp.Add( Duration.FromMilliseconds( 1 ) );
+            var timestampProvider = GetTimestampProviderMock( startTimestamp, nextTimestamp );
+
+            var sut = new IdentifierGenerator( timestampProvider );
+
+            sut.Generate();
+            var expected = sut.Generate();
+
+            using ( new AssertionScope() )
+            {
+                sut.LastLowValue.Should().Be( expected.Low );
+                sut.LastHighValue.Should().Be( expected.High );
+                sut.LastTimestamp.Should().Be( nextTimestamp );
+            }
+        }
+
+        [Fact]
+        public void GeneratorState_ShouldBeUpdatedCorrectly_WhenGeneratingNextTimeForTheFutureHighValue()
+        {
+            var startTimestamp = Timestamp.Zero;
+            var nextTimestamp = startTimestamp.Add( Duration.FromMilliseconds( 1 ) );
+            var timestampProvider = GetTimestampProviderMock(
+                startTimestamp,
+                startTimestamp,
+                startTimestamp,
+                startTimestamp,
+                nextTimestamp );
+
+            var sut = new IdentifierGenerator( timestampProvider );
+            GenerateRange( sut, 3 );
+
+            var expected = sut.Generate();
+
+            using ( new AssertionScope() )
+            {
+                sut.LastLowValue.Should().Be( expected.Low );
+                sut.LastHighValue.Should().Be( expected.High );
+                sut.LastTimestamp.Should().Be( nextTimestamp );
+            }
+        }
+
+        [Theory]
+        [MethodData(
+            nameof( IdentifierGeneratorTestsData.GetStateUpdateGenerateNextTimeForTheCurrentHighValueAndExceedingLowValueBoundsData ) )]
+        public void
+            GeneratorState_ShouldBeUpdatedCorrectly_WhenGeneratingNextTimeForTheCurrentHighValueAndExceedingLowValueBounds(
+                IdentifierGeneratorParams @params,
+                Timestamp nextTimestamp,
+                Identifier expectedId,
+                Timestamp expectedLastTimestamp)
+        {
+            var startTimestamp = @params.BaseTimestamp;
+            var lowValueCount = @params.LowValueBounds.Max - @params.LowValueBounds.Min + 1;
+            var timestampProvider = GetTimestampProviderMock(
+                Repeat( startTimestamp, lowValueCount + 2 ).Append( nextTimestamp ).ToArray() );
+
+            var sut = new IdentifierGenerator( timestampProvider, @params );
+            GenerateRange( sut, lowValueCount );
+
+            sut.Generate();
+
+            using ( new AssertionScope() )
+            {
+                sut.LastLowValue.Should().Be( expectedId.Low );
+                sut.LastHighValue.Should().Be( expectedId.High );
+                sut.LastTimestamp.Should().Be( expectedLastTimestamp );
+            }
+        }
+
+        [Fact]
+        public void GeneratorState_ShouldNotChange_WhenFailedToGenerateNextIdentifier()
+        {
+            var startTimestamp = Timestamp.Zero;
+            var nextTimestamp = startTimestamp.Add( Duration.FromMilliseconds( 1 ) );
+            var timestampProvider = GetTimestampProviderMock( startTimestamp, startTimestamp, startTimestamp, nextTimestamp );
+
+            var sut = new IdentifierGenerator(
+                timestampProvider,
+                new IdentifierGeneratorParams
+                {
+                    LowValueBounds = new Bounds<ushort>( 0, 0 ),
+                    LowValueExceededHandlingStrategy = LowValueExceededHandlingStrategy.Forbidden
+                } );
+
+            var expected = sut.Generate();
+            sut.TryGenerate( out _ );
+
+            using ( new AssertionScope() )
+            {
+                sut.LastLowValue.Should().Be( expected.Low );
+                sut.LastHighValue.Should().Be( expected.High );
+                sut.LastTimestamp.Should().Be( startTimestamp );
+            }
+        }
+
+        [Theory]
+        [MethodData( nameof( IdentifierGeneratorTestsData.GetLowValuesLeftAtTheStartOfHighValueData ) )]
+        public void
+            LowValuesLeft_ShouldReturnCorrectResult_WhenNothingHasBeenGeneratedYetAndQueryHappensAtTheInstantOfGeneratorConstruction(
+                Bounds<ushort> lowValueBounds,
+                int expected)
+        {
+            var startTimestamp = Timestamp.Zero;
+            var timestampProvider = GetTimestampProviderMock( startTimestamp );
+
+            var sut = new IdentifierGenerator( timestampProvider, new IdentifierGeneratorParams { LowValueBounds = lowValueBounds } );
 
             var result = sut.LowValuesLeft;
 
@@ -735,25 +643,17 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
         }
 
         [Theory]
-        [InlineData( ushort.MinValue, ushort.MaxValue, 1, 65535 )]
-        [InlineData( ushort.MinValue, ushort.MaxValue, 10, 65526 )]
-        [InlineData( 0, 0, 1, 0 )]
-        [InlineData( 10, 20, 1, 10 )]
-        [InlineData( 10, 20, 10, 1 )]
-        [InlineData( 10, 20, 11, 0 )]
-        public void LowValuesLeft_ShouldReturnCorrectRange_WhenQueryHappensAtTheInstantOfLastIdentifierGeneration(
-            ushort min,
-            ushort max,
+        [MethodData( nameof( IdentifierGeneratorTestsData.GetLowValuesLeftAtTheInstantOfLastIdentifierGenerationData ) )]
+        public void LowValuesLeft_ShouldReturnCorrectResult_WhenQueryHappensAtTheInstantOfLastIdentifierGeneration(
+            Bounds<ushort> lowValueBounds,
             int generatedAmount,
             int expected)
         {
-            var timestamp = GetAnyTimestamp();
-            var timestampProvider = GetTimestampProviderMock( timestamp );
-            var lowValueBounds = new Bounds<ushort>( min, max );
+            var startTimestamp = Timestamp.Zero;
+            var timestampProvider = GetTimestampProviderMock( startTimestamp );
 
-            var sut = new IdentifierGenerator( timestampProvider, lowValueBounds );
-            foreach ( var _ in Enumerable.Range( 0, generatedAmount ) )
-                sut.Generate();
+            var sut = new IdentifierGenerator( timestampProvider, new IdentifierGeneratorParams { LowValueBounds = lowValueBounds } );
+            GenerateRange( sut, generatedAmount );
 
             var result = sut.LowValuesLeft;
 
@@ -761,20 +661,16 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
         }
 
         [Theory]
-        [InlineData( ushort.MinValue, ushort.MaxValue, 65536 )]
-        [InlineData( 0, 0, 1 )]
-        [InlineData( 10, 20, 11 )]
-        public void LowValuesLeft_ShouldReturnFullRange_WhenQueryHappensInTheFuture(
-            ushort min,
-            ushort max,
+        [MethodData( nameof( IdentifierGeneratorTestsData.GetLowValuesLeftAtTheStartOfHighValueData ) )]
+        public void LowValuesLeft_ShouldReturnCorrectResult_WhenQueryHappensInTheFuture(
+            Bounds<ushort> lowValueBounds,
             int expected)
         {
-            var timestamp = GetAnyTimestamp();
-            var futureTimestamp = timestamp.Add( Duration.FromMilliseconds( 1 ) );
-            var timestampProvider = GetTimestampProviderMock( timestamp, futureTimestamp );
-            var lowValueBounds = new Bounds<ushort>( min, max );
+            var startTimestamp = Timestamp.Zero;
+            var nextTimestamp = startTimestamp.Add( Duration.FromMilliseconds( 1 ) );
+            var timestampProvider = GetTimestampProviderMock( startTimestamp, nextTimestamp );
 
-            var sut = new IdentifierGenerator( timestampProvider, lowValueBounds );
+            var sut = new IdentifierGenerator( timestampProvider, new IdentifierGeneratorParams { LowValueBounds = lowValueBounds } );
 
             var result = sut.LowValuesLeft;
 
@@ -784,8 +680,9 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
         [Fact]
         public void LowValuesLeft_ShouldReturnZero_WhenMaxHighValueHasBeenExceeded()
         {
-            var timestamp = GetAnyTimestamp();
-            var exceededTimestamp = GetExpectedMaxTimestamp().Add( Duration.FromMilliseconds( 1 ) );
+            var timestamp = Timestamp.Zero;
+            var maxTimestamp = new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 1 ).SubtractTicks( 1 ) );
+            var exceededTimestamp = maxTimestamp.Add( Duration.FromMilliseconds( 1 ) );
             var timestampProvider = GetTimestampProviderMock( timestamp, exceededTimestamp );
 
             var sut = new IdentifierGenerator( timestampProvider );
@@ -795,16 +692,16 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
             result.Should().Be( 0 );
         }
 
-        [Fact]
+        [Theory]
+        [MethodData( nameof( IdentifierGeneratorTestsData.GetHighValuesLeftAtTheInstantOfGeneratorConstructionData ) )]
         public void
-            HighValuesLeft_ShouldReturnCorrectResult_WhenNothingHasBeenGeneratedYetAndQueryHappensAtTheInstantOfGeneratorConstruction()
+            HighValuesLeft_ShouldReturnCorrectResult_WhenNothingHasBeenGeneratedYetAndQueryHappensAtTheInstantOfGeneratorConstruction(
+                IdentifierGeneratorParams @params,
+                Timestamp startTimestamp,
+                ulong expected)
         {
-            var timestamp = GetAnyTimestamp();
-            var maxTimestamp = GetExpectedMaxTimestamp();
-            var expected = (ulong)maxTimestamp.Subtract( timestamp ).FullMilliseconds + 1;
-            var timestampProvider = GetTimestampProviderMock( timestamp );
-
-            var sut = new IdentifierGenerator( timestampProvider );
+            var timestampProvider = GetTimestampProviderMock( startTimestamp );
+            var sut = new IdentifierGenerator( timestampProvider, @params );
 
             var result = sut.HighValuesLeft;
 
@@ -812,43 +709,31 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
         }
 
         [Theory]
-        [InlineData( ushort.MinValue, ushort.MaxValue, 1, 1 )]
-        [InlineData( ushort.MinValue, ushort.MaxValue, 10, 1 )]
-        [InlineData( 0, 0, 1, 0 )]
-        [InlineData( 10, 20, 1, 1 )]
-        [InlineData( 10, 20, 10, 1 )]
-        [InlineData( 10, 20, 11, 0 )]
+        [MethodData( nameof( IdentifierGeneratorTestsData.GetHighValuesLeftAtTheInstantOfLastIdentifierGenerationData ) )]
         public void HighValuesLeft_ShouldReturnCorrectResult_WhenQueryHappensAtTheInstantOfLastIdentifierGeneration(
-            ushort lowMin,
-            ushort lowMax,
+            IdentifierGeneratorParams @params,
+            Timestamp timestamp,
             int generatedAmount,
-            int expectationOffset)
+            ulong expected)
         {
-            var timestamp = GetAnyTimestamp();
-            var maxTimestamp = GetExpectedMaxTimestamp();
-            var expected = (ulong)(maxTimestamp.Subtract( timestamp ).FullMilliseconds + expectationOffset);
-            var timestampProvider = GetTimestampProviderMock( timestamp );
-            var lowValueBounds = new Bounds<ushort>( lowMin, lowMax );
-
-            var sut = new IdentifierGenerator( timestampProvider, lowValueBounds );
-            foreach ( var _ in Enumerable.Range( 0, generatedAmount ) )
-                sut.Generate();
+            var timestampProvider = GetTimestampProviderMock( @params.BaseTimestamp, timestamp );
+            var sut = new IdentifierGenerator( timestampProvider, @params );
+            GenerateRange( sut, generatedAmount );
 
             var result = sut.HighValuesLeft;
 
             result.Should().Be( expected );
         }
 
-        [Fact]
-        public void HighValuesLeft_ShouldReturnCorrectResult_WhenQueryHappensInTheFuture()
+        [Theory]
+        [MethodData( nameof( IdentifierGeneratorTestsData.GetHighValuesLeftInTheFutureData ) )]
+        public void HighValuesLeft_ShouldReturnCorrectResult_WhenQueryHappensInTheFuture(
+            IdentifierGeneratorParams @params,
+            Timestamp futureTimestamp,
+            ulong expected)
         {
-            var timestamp = GetAnyTimestamp();
-            var futureTimestamp = timestamp.Add( Duration.FromMilliseconds( 1 ) );
-            var maxTimestamp = GetExpectedMaxTimestamp();
-            var expected = (ulong)maxTimestamp.Subtract( futureTimestamp ).FullMilliseconds + 1;
-            var timestampProvider = GetTimestampProviderMock( timestamp, futureTimestamp );
-
-            var sut = new IdentifierGenerator( timestampProvider );
+            var timestampProvider = GetTimestampProviderMock( @params.BaseTimestamp, futureTimestamp );
+            var sut = new IdentifierGenerator( timestampProvider, @params );
 
             var result = sut.HighValuesLeft;
 
@@ -858,8 +743,9 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
         [Fact]
         public void HighValuesLeft_ShouldReturnZero_WhenMaxHighValueHasBeenExceeded()
         {
-            var timestamp = GetAnyTimestamp();
-            var exceededTimestamp = GetExpectedMaxTimestamp().Add( Duration.FromMilliseconds( 1 ) );
+            var timestamp = Timestamp.Zero;
+            var maxTimestamp = new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 1 ).SubtractTicks( 1 ) );
+            var exceededTimestamp = maxTimestamp.Add( Duration.FromMilliseconds( 1 ) );
             var timestampProvider = GetTimestampProviderMock( timestamp, exceededTimestamp );
 
             var sut = new IdentifierGenerator( timestampProvider );
@@ -870,22 +756,14 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
         }
 
         [Theory]
-        [InlineData( ushort.MinValue, ushort.MaxValue, 65536 )]
-        [InlineData( 0, 0, 1 )]
-        [InlineData( 10, 20, 11 )]
+        [MethodData( nameof( IdentifierGeneratorTestsData.GetValuesLeftAtTheInstantOfGeneratorConstructionData ) )]
         public void ValuesLeft_ShouldReturnCorrectResult_WhenNothingHasBeenGeneratedYetAndQueryHappensAtTheInstantOfGeneratorConstruction(
-            ushort lowMin,
-            ushort lowMax,
-            uint expectedPerHigh)
+            IdentifierGeneratorParams @params,
+            Timestamp startTimestamp,
+            ulong expected)
         {
-            var timestamp = GetAnyTimestamp();
-            var maxTimestamp = GetExpectedMaxTimestamp();
-            var expectedHigh = (ulong)maxTimestamp.Subtract( timestamp ).FullMilliseconds + 1;
-            var expected = expectedHigh * expectedPerHigh;
-            var timestampProvider = GetTimestampProviderMock( timestamp );
-            var lowValueBounds = new Bounds<ushort>( lowMin, lowMax );
-
-            var sut = new IdentifierGenerator( timestampProvider, lowValueBounds );
+            var timestampProvider = GetTimestampProviderMock( startTimestamp );
+            var sut = new IdentifierGenerator( timestampProvider, @params );
 
             var result = sut.ValuesLeft;
 
@@ -893,29 +771,16 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
         }
 
         [Theory]
-        [InlineData( ushort.MinValue, ushort.MaxValue, 1, 65536, 65535 )]
-        [InlineData( ushort.MinValue, ushort.MaxValue, 10, 65536, 65526 )]
-        [InlineData( 0, 0, 1, 1, 0 )]
-        [InlineData( 10, 20, 1, 11, 10 )]
-        [InlineData( 10, 20, 10, 11, 1 )]
-        [InlineData( 10, 20, 11, 11, 0 )]
+        [MethodData( nameof( IdentifierGeneratorTestsData.GetValuesLeftAtTheInstantOfLastIdentifierGenerationData ) )]
         public void ValuesLeft_ShouldReturnCorrectResult_WhenQueryHappensAtTheInstantOfLastIdentifierGeneration(
-            ushort lowMin,
-            ushort lowMax,
+            IdentifierGeneratorParams @params,
+            Timestamp timestamp,
             int generatedAmount,
-            uint expectedPerHigh,
-            uint expectedLow)
+            ulong expected)
         {
-            var timestamp = GetAnyTimestamp();
-            var maxTimestamp = GetExpectedMaxTimestamp();
-            var expectedHigh = (ulong)maxTimestamp.Subtract( timestamp ).FullMilliseconds;
-            var expected = expectedHigh * expectedPerHigh + expectedLow;
-            var timestampProvider = GetTimestampProviderMock( timestamp );
-            var lowValueBounds = new Bounds<ushort>( lowMin, lowMax );
-
-            var sut = new IdentifierGenerator( timestampProvider, lowValueBounds );
-            foreach ( var _ in Enumerable.Range( 0, generatedAmount ) )
-                sut.Generate();
+            var timestampProvider = GetTimestampProviderMock( @params.BaseTimestamp, timestamp );
+            var sut = new IdentifierGenerator( timestampProvider, @params );
+            GenerateRange( sut, generatedAmount );
 
             var result = sut.ValuesLeft;
 
@@ -923,23 +788,14 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
         }
 
         [Theory]
-        [InlineData( ushort.MinValue, ushort.MaxValue, 65536 )]
-        [InlineData( 0, 0, 1 )]
-        [InlineData( 10, 20, 11 )]
-        public void ValuesLeft_ShouldReturnFullRange_WhenQueryHappensInTheFuture(
-            ushort lowMin,
-            ushort lowMax,
-            uint expectedPerHigh)
+        [MethodData( nameof( IdentifierGeneratorTestsData.GetValuesLeftInTheFutureData ) )]
+        public void ValuesLeft_ShouldReturnCorrectResult_WhenQueryHappensInTheFuture(
+            IdentifierGeneratorParams @params,
+            Timestamp futureTimestamp,
+            ulong expected)
         {
-            var timestamp = GetAnyTimestamp();
-            var futureTimestamp = timestamp.Add( Duration.FromMilliseconds( 1 ) );
-            var maxTimestamp = GetExpectedMaxTimestamp();
-            var expectedHigh = (ulong)maxTimestamp.Subtract( futureTimestamp ).FullMilliseconds + 1;
-            var expected = expectedHigh * expectedPerHigh;
-            var timestampProvider = GetTimestampProviderMock( timestamp, futureTimestamp );
-            var lowValueBounds = new Bounds<ushort>( lowMin, lowMax );
-
-            var sut = new IdentifierGenerator( timestampProvider, lowValueBounds );
+            var timestampProvider = GetTimestampProviderMock( @params.BaseTimestamp, futureTimestamp );
+            var sut = new IdentifierGenerator( timestampProvider, @params );
 
             var result = sut.ValuesLeft;
 
@@ -949,8 +805,9 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
         [Fact]
         public void ValuesLeft_ShouldReturnZero_WhenMaxHighValueHasBeenExceeded()
         {
-            var timestamp = GetAnyTimestamp();
-            var exceededTimestamp = GetExpectedMaxTimestamp().Add( Duration.FromMilliseconds( 1 ) );
+            var timestamp = Timestamp.Zero;
+            var maxTimestamp = new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 1 ).SubtractTicks( 1 ) );
+            var exceededTimestamp = maxTimestamp.Add( Duration.FromMilliseconds( 1 ) );
             var timestampProvider = GetTimestampProviderMock( timestamp, exceededTimestamp );
 
             var sut = new IdentifierGenerator( timestampProvider );
@@ -963,9 +820,9 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
         [Fact]
         public void IsOutOfValues_ShouldReturnFalse_WhenMaxHighValueHasNotBeenExceeded()
         {
-            var timestamp = GetAnyTimestamp();
-            var exceededTimestamp = GetExpectedMaxTimestamp();
-            var timestampProvider = GetTimestampProviderMock( timestamp, exceededTimestamp );
+            var timestamp = Timestamp.Zero;
+            var maxTimestamp = new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 1 ).SubtractTicks( 1 ) );
+            var timestampProvider = GetTimestampProviderMock( timestamp, maxTimestamp );
 
             var sut = new IdentifierGenerator( timestampProvider );
 
@@ -977,8 +834,9 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
         [Fact]
         public void IsOutOfValues_ShouldReturnTrue_WhenMaxHighValueHasBeenExceeded()
         {
-            var timestamp = GetAnyTimestamp();
-            var exceededTimestamp = GetExpectedMaxTimestamp().Add( Duration.FromMilliseconds( 1 ) );
+            var timestamp = Timestamp.Zero;
+            var maxTimestamp = new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 1 ).SubtractTicks( 1 ) );
+            var exceededTimestamp = maxTimestamp.Add( Duration.FromMilliseconds( 1 ) );
             var timestampProvider = GetTimestampProviderMock( timestamp, exceededTimestamp );
 
             var sut = new IdentifierGenerator( timestampProvider );
@@ -991,7 +849,7 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
         [Fact]
         public void IGeneratorGenerate_ShouldBeEquivalentToGenerate()
         {
-            var timestamp = GetAnyTimestamp();
+            var timestamp = Timestamp.Zero;
             var timestampProvider = GetTimestampProviderMock( timestamp );
 
             IGenerator sut = new IdentifierGenerator( timestampProvider );
@@ -1004,9 +862,30 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
         }
 
         [Fact]
+        public void IGeneratorGenerate_ShouldThrowInvalidOperationException_WhenOutOfLowValues()
+        {
+            var timestamp = Timestamp.Zero;
+            var timestampProvider = GetTimestampProviderMock( timestamp );
+
+            IGenerator sut = new IdentifierGenerator(
+                timestampProvider,
+                new IdentifierGeneratorParams
+                {
+                    LowValueBounds = new Bounds<ushort>( 0, 0 ),
+                    LowValueExceededHandlingStrategy = LowValueExceededHandlingStrategy.Forbidden
+                } );
+
+            sut.Generate();
+
+            var action = Lambda.Of( () => sut.Generate() );
+
+            action.Should().ThrowExactly<InvalidOperationException>();
+        }
+
+        [Fact]
         public void IGeneratorTryGenerate_ShouldBeEquivalentToTryGenerate_WhenReturnedValueIsTrue()
         {
-            var timestamp = GetAnyTimestamp();
+            var timestamp = Timestamp.Zero;
             var timestampProvider = GetTimestampProviderMock( timestamp );
 
             IGenerator sut = new IdentifierGenerator( timestampProvider );
@@ -1023,16 +902,18 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
         }
 
         [Fact]
-        public void IGeneratorTryGenerate_ShouldReturnFalse_WhenNextMillisecondIsTheSameAndLowValueBoundsAreExceededAndStrategyIsForbidden()
+        public void IGeneratorTryGenerate_ShouldReturnFalse_WhenOutOfLowValues()
         {
-            var timestamp = GetAnyTimestamp();
-            var lowValueBounds = GetAnySingleLowValueBounds();
+            var timestamp = Timestamp.Zero;
             var timestampProvider = GetTimestampProviderMock( timestamp );
 
             IGenerator sut = new IdentifierGenerator(
                 timestampProvider,
-                lowValueBounds,
-                LowValueExceededHandlingStrategy.Forbidden );
+                new IdentifierGeneratorParams
+                {
+                    LowValueBounds = new Bounds<ushort>( 0, 0 ),
+                    LowValueExceededHandlingStrategy = LowValueExceededHandlingStrategy.Forbidden
+                } );
 
             sut.Generate();
 
@@ -1055,37 +936,15 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
             return mock;
         }
 
-        private Bounds<ushort> GetAnyLowValueBounds()
+        private static void GenerateRange(IdentifierGenerator sut, int count)
         {
-            var (min, max) = Fixture.CreateDistinctSortedCollection<ushort>( 2 );
-            return Bounds.Create( min, max );
+            foreach ( var _ in Enumerable.Range( 0, count ) )
+                sut.Generate();
         }
 
-        private Bounds<ushort> GetAnySingleLowValueBounds()
+        private static IEnumerable<Timestamp> Repeat(Timestamp timestamp, int count)
         {
-            var value = Fixture.Create<ushort>();
-            return Bounds.Create( value, value );
-        }
-
-        private static Timestamp GetExpectedMaxTimestamp()
-        {
-            return new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromTicks( ChronoConstants.TicksPerMillisecond - 1 ) );
-        }
-
-        private static Timestamp GetExpectedMaxTimestamp(Timestamp @base)
-        {
-            return @base.Add( Duration.FromMilliseconds( (long)Identifier.MaxHighValue ) );
-        }
-
-        private Timestamp GetAnyTimestamp()
-        {
-            return Timestamp.Zero.Add( Duration.FromMilliseconds( Fixture.Create<int>() ) );
-        }
-
-        private Timestamp GetTimestampWithAnyTicks(Timestamp @base)
-        {
-            var ticks = Fixture.Create<uint>() % ChronoConstants.TicksPerMillisecond;
-            return @base.Add( Duration.FromTicks( ticks ) );
+            return Enumerable.Range( 0, count ).Select( _ => timestamp );
         }
     }
 }

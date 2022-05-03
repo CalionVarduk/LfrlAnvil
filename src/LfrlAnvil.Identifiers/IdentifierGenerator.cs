@@ -15,87 +15,56 @@ namespace LfrlAnvil.Identifiers
         private readonly ulong _maxHighValue;
 
         public IdentifierGenerator(ITimestampProvider timestampProvider)
-            : this( timestampProvider, Bounds.Create( ushort.MinValue, ushort.MaxValue ) ) { }
+            : this( timestampProvider, new IdentifierGeneratorParams() ) { }
 
-        public IdentifierGenerator(ITimestampProvider timestampProvider, Timestamp baseTimestamp)
-            : this( timestampProvider, baseTimestamp, Bounds.Create( ushort.MinValue, ushort.MaxValue ) ) { }
-
-        public IdentifierGenerator(ITimestampProvider timestampProvider, Bounds<ushort> lowValueBounds)
-            : this( timestampProvider, lowValueBounds, default ) { }
-
-        public IdentifierGenerator(ITimestampProvider timestampProvider, Timestamp baseTimestamp, Bounds<ushort> lowValueBounds)
-            : this( timestampProvider, baseTimestamp, lowValueBounds, default ) { }
-
-        public IdentifierGenerator(
-            ITimestampProvider timestampProvider,
-            Bounds<ushort> lowValueBounds,
-            LowValueExceededHandlingStrategy lowValueExceededHandlingStrategy)
-            : this(
-                timestampProvider,
-                Duplicate( timestampProvider.GetNow() ),
-                lowValueBounds,
-                lowValueExceededHandlingStrategy ) { }
-
-        public IdentifierGenerator(
-            ITimestampProvider timestampProvider,
-            Timestamp baseTimestamp,
-            Bounds<ushort> lowValueBounds,
-            LowValueExceededHandlingStrategy lowValueExceededHandlingStrategy)
-            : this( timestampProvider, baseTimestamp, timestampProvider.GetNow(), lowValueBounds, lowValueExceededHandlingStrategy ) { }
-
-        private IdentifierGenerator(
-            ITimestampProvider timestampProvider,
-            (Timestamp Base, Timestamp Start) timestamps,
-            Bounds<ushort> lowValueBounds,
-            LowValueExceededHandlingStrategy lowValueExceededHandlingStrategy)
-            : this( timestampProvider, timestamps.Base, timestamps.Start, lowValueBounds, lowValueExceededHandlingStrategy ) { }
-
-        private IdentifierGenerator(
-            ITimestampProvider timestampProvider,
-            Timestamp baseTimestamp,
-            Timestamp startTimestamp,
-            Bounds<ushort> lowValueBounds,
-            LowValueExceededHandlingStrategy lowValueExceededHandlingStrategy)
+        public IdentifierGenerator(ITimestampProvider timestampProvider, IdentifierGeneratorParams @params)
         {
-            baseTimestamp = TrimTicks( baseTimestamp );
-            startTimestamp = TrimTicks( startTimestamp );
-            Ensure.IsLessThanOrEqualTo( baseTimestamp, startTimestamp, nameof( baseTimestamp ) );
+            var timeEpsilon = @params.TimeEpsilon;
+            Ensure.IsInRange( timeEpsilon, Duration.FromTicks( 1 ), Duration.FromMilliseconds( 3 ), nameof( timeEpsilon ) );
+
+            var startTimestamp = timestampProvider.GetNow();
+            Ensure.IsGreaterThanOrEqualTo( startTimestamp, Timestamp.Zero, nameof( startTimestamp ) );
+
+            var baseTimestamp = @params.BaseTimestamp;
+            Ensure.IsInRange( baseTimestamp, Timestamp.Zero, startTimestamp, nameof( baseTimestamp ) );
 
             _timestampProvider = timestampProvider;
-            BaseTimestamp = baseTimestamp;
-            StartTimestamp = startTimestamp;
-            LowValueBounds = lowValueBounds;
-            LowValueExceededHandlingStrategy = lowValueExceededHandlingStrategy;
+            BaseTimestamp = ConvertTimestamp( baseTimestamp, timeEpsilon );
+            StartTimestamp = ConvertTimestamp( startTimestamp, timeEpsilon );
+            TimeEpsilon = timeEpsilon;
+            LowValueBounds = @params.LowValueBounds;
+            LowValueExceededHandlingStrategy = @params.LowValueExceededHandlingStrategy;
 
-            LastLowValue = lowValueBounds.Min - 1;
-            _highValueOffset = (ulong)(startTimestamp - baseTimestamp).FullMilliseconds;
+            LastLowValue = LowValueBounds.Min - 1;
+            _highValueOffset = ConvertToHighValue( StartTimestamp.Subtract( BaseTimestamp ), timeEpsilon );
             LastHighValue = _highValueOffset;
 
-            var maxPossibleHighValueOffset = TrimTicks( new Timestamp( DateTime.MaxValue ) ).Subtract( BaseTimestamp );
-            var maxExpectedHighValueOffset = Duration.FromMilliseconds( (long)Identifier.MaxHighValue );
-            _maxHighValue = (ulong)maxExpectedHighValueOffset.Min( maxPossibleHighValueOffset ).FullMilliseconds;
+            var maxPossibleHighValueOffset = ConvertTimestamp( new Timestamp( DateTime.MaxValue ), timeEpsilon ).Subtract( BaseTimestamp );
+            var maxExpectedHighValueOffset = ConvertToDuration( Identifier.MaxHighValue - 1, timeEpsilon );
+            _maxHighValue = ConvertToHighValue( maxExpectedHighValueOffset.Min( maxPossibleHighValueOffset ), timeEpsilon );
         }
 
         public Timestamp StartTimestamp { get; }
         public Timestamp BaseTimestamp { get; }
         public Bounds<ushort> LowValueBounds { get; }
+        public Duration TimeEpsilon { get; }
+        public LowValueExceededHandlingStrategy LowValueExceededHandlingStrategy { get; }
         public ulong LastHighValue { get; private set; }
         public int LastLowValue { get; private set; }
-        public LowValueExceededHandlingStrategy LowValueExceededHandlingStrategy { get; }
 
-        public Timestamp LastTimestamp => BaseTimestamp.Add( Duration.FromMilliseconds( (long)LastHighValue ) );
-        public Timestamp MaxTimestamp => BaseTimestamp.Add( Duration.FromMilliseconds( (long)_maxHighValue ) );
+        public Timestamp LastTimestamp => BaseTimestamp.Add( ConvertToDuration( LastHighValue, TimeEpsilon ) );
+        public Timestamp MaxTimestamp => BaseTimestamp.Add( ConvertToDuration( _maxHighValue, TimeEpsilon ) );
 
         public ulong HighValuesLeft
         {
             get
             {
-                var high = GetElapsedMilliseconds();
-                if ( high > _maxHighValue )
+                var highValue = GetCurrentHighValue();
+                if ( highValue > _maxHighValue )
                     return 0;
 
-                if ( high > LastHighValue )
-                    return _maxHighValue - high + 1;
+                if ( highValue > LastHighValue )
+                    return _maxHighValue - highValue + 1;
 
                 var lowValuesLeft = LowValueBounds.Max - LastLowValue;
                 if ( lowValuesLeft > 0 )
@@ -109,11 +78,11 @@ namespace LfrlAnvil.Identifiers
         {
             get
             {
-                var high = GetElapsedMilliseconds();
-                if ( high > _maxHighValue )
+                var highValue = GetCurrentHighValue();
+                if ( highValue > _maxHighValue )
                     return 0;
 
-                if ( high > LastHighValue )
+                if ( highValue > LastHighValue )
                     return LowValueBounds.Max - LowValueBounds.Min + 1;
 
                 return LowValueBounds.Max - LastLowValue;
@@ -124,15 +93,15 @@ namespace LfrlAnvil.Identifiers
         {
             get
             {
-                var high = GetElapsedMilliseconds();
-                if ( high > _maxHighValue )
+                var highValue = GetCurrentHighValue();
+                if ( highValue > _maxHighValue )
                     return 0;
 
                 var lowValuesPerHighValue = (ulong)(LowValueBounds.Max - LowValueBounds.Min + 1);
 
-                if ( high > LastHighValue )
+                if ( highValue > LastHighValue )
                 {
-                    var highValuesLeft = _maxHighValue - high + 1;
+                    var highValuesLeft = _maxHighValue - highValue + 1;
                     return highValuesLeft * lowValuesPerHighValue;
                 }
 
@@ -155,7 +124,7 @@ namespace LfrlAnvil.Identifiers
 
         public bool TryGenerate(out Identifier id)
         {
-            var highValue = GetElapsedMilliseconds();
+            var highValue = GetCurrentHighValue();
 
             if ( highValue > LastHighValue )
             {
@@ -177,7 +146,7 @@ namespace LfrlAnvil.Identifiers
 
             highValue = LowValueExceededHandlingStrategy switch
             {
-                LowValueExceededHandlingStrategy.AddMs => LastHighValue + 1,
+                LowValueExceededHandlingStrategy.AddHighValue => LastHighValue + 1,
                 LowValueExceededHandlingStrategy.BusyWait => GetHighValueByBusyWait(),
                 LowValueExceededHandlingStrategy.Sleep => GetHighValueBySleep( highValue ),
                 _ => _maxHighValue + 1
@@ -197,13 +166,26 @@ namespace LfrlAnvil.Identifiers
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Timestamp GetTimestamp(Identifier id)
         {
-            return BaseTimestamp.Add( Duration.FromMilliseconds( (long)id.High ) );
+            var offset = ConvertToDuration( id.High, TimeEpsilon );
+            return BaseTimestamp.Add( offset );
+        }
+
+        [Pure]
+        public ulong CalculateThroughput(Duration duration)
+        {
+            duration = duration.Max( Duration.Zero );
+            var fullHighValueCount = ConvertToHighValue( duration, TimeEpsilon );
+            var fullLowValueCount = (ulong)(LowValueBounds.Max - LowValueBounds.Min + 1);
+            var lowValueRemainderRatio = (double)(duration.Ticks % TimeEpsilon.Ticks) / TimeEpsilon.Ticks;
+            var remainingLowValueCount = (ulong)Math.Truncate( lowValueRemainderRatio * fullLowValueCount );
+            return fullHighValueCount * fullLowValueCount + remainingLowValueCount;
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private ulong GetElapsedMilliseconds()
+        private ulong GetCurrentHighValue()
         {
-            return _highValueOffset + (ulong)(_timestampProvider.GetNow() - StartTimestamp).FullMilliseconds;
+            var elapsedTime = _timestampProvider.GetNow() - StartTimestamp;
+            return _highValueOffset + ConvertToHighValue( elapsedTime, TimeEpsilon );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -212,7 +194,7 @@ namespace LfrlAnvil.Identifiers
             ulong highValue;
             do
             {
-                highValue = GetElapsedMilliseconds();
+                highValue = GetCurrentHighValue();
             }
             while ( highValue <= LastHighValue );
 
@@ -224,8 +206,9 @@ namespace LfrlAnvil.Identifiers
         {
             do
             {
-                Thread.Sleep( (int)(LastHighValue - highValue) + 1 );
-                highValue = GetElapsedMilliseconds();
+                var timeout = ConvertToDuration( LastHighValue - highValue, TimeEpsilon ).Max( Duration.FromMilliseconds( 1 ) );
+                Thread.Sleep( (int)Math.Ceiling( timeout.TotalMilliseconds ) );
+                highValue = GetCurrentHighValue();
             }
             while ( highValue <= LastHighValue );
 
@@ -248,17 +231,24 @@ namespace LfrlAnvil.Identifiers
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private static (Timestamp, Timestamp) Duplicate(Timestamp timestamp)
+        private static Timestamp ConvertTimestamp(Timestamp timestamp, Duration epsilon)
         {
-            return (timestamp, timestamp);
+            var ticksToSubtract = timestamp.UnixEpochTicks % epsilon.Ticks;
+            return timestamp.Subtract( Duration.FromTicks( ticksToSubtract ) );
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private static Timestamp TrimTicks(Timestamp timestamp)
+        private static ulong ConvertToHighValue(Duration elapsedTime, Duration epsilon)
         {
-            var ticksToSubtract = timestamp.UnixEpochTicks % ChronoConstants.TicksPerMillisecond;
-            return timestamp.Subtract( Duration.FromTicks( ticksToSubtract ) );
+            return (ulong)(elapsedTime.Ticks / epsilon.Ticks);
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private static Duration ConvertToDuration(ulong highValue, Duration epsilon)
+        {
+            return Duration.FromTicks( (long)highValue * epsilon.Ticks );
         }
 
         object IGenerator.Generate()

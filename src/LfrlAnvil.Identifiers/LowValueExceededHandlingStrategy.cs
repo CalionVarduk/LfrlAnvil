@@ -3,7 +3,7 @@
     public enum LowValueExceededHandlingStrategy : byte
     {
         Forbidden = 0,
-        AddMs = 1,
+        AddHighValue = 1,
         BusyWait = 2,
         Sleep = 3
     }
