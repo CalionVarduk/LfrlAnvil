@@ -76,6 +76,80 @@ namespace LfrlAnvil.Tests.EnsureTests
         }
 
         [Fact]
+        public void RefEquals_ShouldPass_WhenParamsReferenceTheSameObject()
+        {
+            var param = Fixture.CreateNotDefault<T>();
+            ShouldPass( () => Ensure.RefEquals( param, param ) );
+        }
+
+        [Fact]
+        public void RefEquals_ShouldPass_WhenBothParamsAreNull()
+        {
+            var param = Fixture.CreateDefault<T>();
+            ShouldPass( () => Ensure.RefEquals( param, param ) );
+        }
+
+        [Fact]
+        public void RefEquals_ShouldThrowArgumentException_WhenValueIsNull()
+        {
+            var param = Fixture.CreateNotDefault<T>();
+            var value = Fixture.CreateDefault<T>();
+            ShouldThrowArgumentException( () => Ensure.RefEquals( param, value ) );
+        }
+
+        [Fact]
+        public void RefEquals_ShouldThrowArgumentException_WhenParamIsNull()
+        {
+            var param = Fixture.CreateDefault<T>();
+            var value = Fixture.CreateNotDefault<T>();
+            ShouldThrowArgumentException( () => Ensure.RefEquals( param, value ) );
+        }
+
+        [Fact]
+        public void RefEquals_ShouldThrowArgumentException_WhenParamsDontReferenceTheSameObject()
+        {
+            var (param, value) = Fixture.CreateDistinctCollection<T>( 2 );
+            ShouldThrowArgumentException( () => Ensure.RefEquals( param, value ) );
+        }
+
+        [Fact]
+        public void NotRefEquals_ShouldThrowArgumentException_WhenParamsReferenceTheSameObject()
+        {
+            var param = Fixture.CreateNotDefault<T>();
+            ShouldThrowArgumentException( () => Ensure.NotRefEquals( param, param ) );
+        }
+
+        [Fact]
+        public void NotRefEquals_ShouldThrowArgumentException_WhenBothParamsAreNull()
+        {
+            var param = Fixture.CreateDefault<T>();
+            ShouldThrowArgumentException( () => Ensure.NotRefEquals( param, param ) );
+        }
+
+        [Fact]
+        public void NotRefEquals_ShouldPass_WhenValueIsNull()
+        {
+            var param = Fixture.CreateNotDefault<T>();
+            var value = Fixture.CreateDefault<T>();
+            ShouldPass( () => Ensure.NotRefEquals( param, value ) );
+        }
+
+        [Fact]
+        public void NotRefEquals_ShouldPass_WhenParamIsNull()
+        {
+            var param = Fixture.CreateDefault<T>();
+            var value = Fixture.CreateNotDefault<T>();
+            ShouldPass( () => Ensure.NotRefEquals( param, value ) );
+        }
+
+        [Fact]
+        public void NotRefEquals_ShouldPass_WhenParamsDontReferenceTheSameObject()
+        {
+            var (param, value) = Fixture.CreateDistinctCollection<T>( 2 );
+            ShouldPass( () => Ensure.NotRefEquals( param, value ) );
+        }
+
+        [Fact]
         public void ContainsNull_ShouldPass_WhenEnumerableContainsNullElement()
         {
             var param = Fixture.CreateMany<T>().Append( Fixture.CreateDefault<T>() );

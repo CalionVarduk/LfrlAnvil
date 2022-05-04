@@ -104,28 +104,28 @@ namespace LfrlAnvil
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static void IsAssignableToType<T>(object param, string paramName = DefaultParamName)
+        public static void IsInstanceOfType<T>(object param, string paramName = DefaultParamName)
         {
-            IsAssignableToType( param, typeof( T ), paramName );
+            IsInstanceOfType( param, typeof( T ), paramName );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static void IsAssignableToType<T>(T param, Type type, string paramName = DefaultParamName)
+        public static void IsInstanceOfType<T>(T param, Type type, string paramName = DefaultParamName)
         {
-            if ( ! type.IsAssignableFrom( param!.GetType() ) )
-                throw Exceptions.NotAssignableToType( type, param.GetType(), paramName );
+            if ( ! type.IsInstanceOfType( param ) )
+                throw Exceptions.NotAssignableToType( type, param!.GetType(), paramName );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static void IsNotAssignableToType<T>(object param, string paramName = DefaultParamName)
+        public static void IsNotInstanceOfType<T>(object param, string paramName = DefaultParamName)
         {
-            IsNotAssignableToType( param, typeof( T ), paramName );
+            IsNotInstanceOfType( param, typeof( T ), paramName );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static void IsNotAssignableToType<T>(T param, Type type, string paramName = DefaultParamName)
+        public static void IsNotInstanceOfType<T>(T param, Type type, string paramName = DefaultParamName)
         {
-            if ( type.IsAssignableFrom( param!.GetType() ) )
+            if ( type.IsInstanceOfType( param ) )
                 throw Exceptions.AssignableToType( type, paramName );
         }
 
@@ -157,6 +157,22 @@ namespace LfrlAnvil
         {
             if ( comparer.Equals( param, value ) )
                 throw Exceptions.EqualTo( value, paramName );
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static void RefEquals<T>(T? param, T? value, string paramName = DefaultParamName)
+            where T : class
+        {
+            if ( ! ReferenceEquals( param, value ) )
+                throw Exceptions.NotRefEqualTo( paramName );
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static void NotRefEquals<T>(T? param, T? value, string paramName = DefaultParamName)
+            where T : class
+        {
+            if ( ReferenceEquals( param, value ) )
+                throw Exceptions.RefEqualTo( paramName );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -621,6 +637,16 @@ namespace LfrlAnvil
             public static ArgumentException EqualTo<T>(T expectedValue, string paramName)
             {
                 return new( $"expected {paramName} to not be equal to {expectedValue}", paramName );
+            }
+
+            public static ArgumentException NotRefEqualTo(string paramName)
+            {
+                return new( $"expected {paramName} to be a reference to the provided object.", paramName );
+            }
+
+            public static ArgumentException RefEqualTo(string paramName)
+            {
+                return new( $"expected {paramName} to not be a reference to the provided object.", paramName );
             }
 
             public static ArgumentOutOfRangeException NotGreaterThan<T>(T param, T expectedValue, string paramName)

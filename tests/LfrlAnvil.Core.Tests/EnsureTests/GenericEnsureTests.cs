@@ -57,45 +57,45 @@ namespace LfrlAnvil.Tests.EnsureTests
         }
 
         [Fact]
-        public void IsAssignableToType_ShouldPass_WhenParamIsAssignableToType()
+        public void IsInstanceOfType_ShouldPass_WhenParamIsInstanceOfType()
         {
             var param = Fixture.CreateNotDefault<T>()!;
-            ShouldPass( () => Ensure.IsAssignableToType<object>( param ) );
+            ShouldPass( () => Ensure.IsInstanceOfType<object>( param ) );
         }
 
         [Fact]
-        public void IsAssignableToType_ShouldPass_WhenParamIsOfExactType()
+        public void IsInstanceOfType_ShouldPass_WhenParamIsOfExactType()
         {
             var param = Fixture.CreateNotDefault<T>()!;
-            ShouldPass( () => Ensure.IsAssignableToType<T>( param ) );
+            ShouldPass( () => Ensure.IsInstanceOfType<T>( param ) );
         }
 
         [Fact]
-        public void IsAssignableToType_ShouldThrowArgumentException_WhenParamIsNotAssignableToType()
+        public void IsInstanceOfType_ShouldThrowArgumentException_WhenParamIsNotInstanceOfType()
         {
             var param = Fixture.CreateNotDefault<T>()!;
-            ShouldThrowArgumentException( () => Ensure.IsAssignableToType<IEnumerable<T>>( param ) );
+            ShouldThrowArgumentException( () => Ensure.IsInstanceOfType<IEnumerable<T>>( param ) );
         }
 
         [Fact]
-        public void IsNotAssignableToType_ShouldPass_WhenParamIsNotAssignableToType()
+        public void IsNotInstanceOfType_ShouldPass_WhenParamIsNotInstanceOfType()
         {
             var param = Fixture.CreateNotDefault<T>()!;
-            ShouldPass( () => Ensure.IsNotAssignableToType<IEnumerable<T>>( param ) );
+            ShouldPass( () => Ensure.IsNotInstanceOfType<IEnumerable<T>>( param ) );
         }
 
         [Fact]
-        public void IsNotAssignableToType_ShouldThrowArgumentException_WhenParamIsOfExactType()
+        public void IsNotInstanceOfType_ShouldThrowArgumentException_WhenParamIsOfExactType()
         {
             var param = Fixture.CreateNotDefault<T>()!;
-            ShouldThrowArgumentException( () => Ensure.IsNotAssignableToType<T>( param ) );
+            ShouldThrowArgumentException( () => Ensure.IsNotInstanceOfType<T>( param ) );
         }
 
         [Fact]
-        public void IsNotAssignableToType_ShouldThrowArgumentException_WhenParamIsAssignableToType()
+        public void IsNotInstanceOfType_ShouldThrowArgumentException_WhenParamIsInstanceOfType()
         {
             var param = Fixture.CreateNotDefault<T>()!;
-            ShouldThrowArgumentException( () => Ensure.IsNotAssignableToType<object>( param ) );
+            ShouldThrowArgumentException( () => Ensure.IsNotInstanceOfType<object>( param ) );
         }
 
         [Fact]
