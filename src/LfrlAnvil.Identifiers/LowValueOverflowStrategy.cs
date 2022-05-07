@@ -1,6 +1,6 @@
 ﻿namespace LfrlAnvil.Identifiers
 {
-    public enum LowValueExceededHandlingStrategy : byte
+    public enum LowValueOverflowStrategy : byte
     {
         Forbidden = 0,
         AddHighValue = 1,

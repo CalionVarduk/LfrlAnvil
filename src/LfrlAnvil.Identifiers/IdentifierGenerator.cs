@@ -33,7 +33,7 @@ namespace LfrlAnvil.Identifiers
             StartTimestamp = ConvertTimestamp( startTimestamp, timeEpsilon );
             TimeEpsilon = timeEpsilon;
             LowValueBounds = @params.LowValueBounds;
-            LowValueExceededHandlingStrategy = @params.LowValueExceededHandlingStrategy;
+            LowValueOverflowStrategy = @params.LowValueOverflowStrategy;
 
             LastLowValue = LowValueBounds.Min - 1;
             _highValueOffset = ConvertToHighValue( StartTimestamp.Subtract( BaseTimestamp ), timeEpsilon );
@@ -48,7 +48,7 @@ namespace LfrlAnvil.Identifiers
         public Timestamp BaseTimestamp { get; }
         public Bounds<ushort> LowValueBounds { get; }
         public Duration TimeEpsilon { get; }
-        public LowValueExceededHandlingStrategy LowValueExceededHandlingStrategy { get; }
+        public LowValueOverflowStrategy LowValueOverflowStrategy { get; }
         public ulong LastHighValue { get; private set; }
         public int LastLowValue { get; private set; }
 
@@ -144,11 +144,11 @@ namespace LfrlAnvil.Identifiers
                 return true;
             }
 
-            highValue = LowValueExceededHandlingStrategy switch
+            highValue = LowValueOverflowStrategy switch
             {
-                LowValueExceededHandlingStrategy.AddHighValue => LastHighValue + 1,
-                LowValueExceededHandlingStrategy.BusyWait => GetHighValueByBusyWait(),
-                LowValueExceededHandlingStrategy.Sleep => GetHighValueBySleep( highValue ),
+                LowValueOverflowStrategy.AddHighValue => LastHighValue + 1,
+                LowValueOverflowStrategy.BusyWait => GetHighValueByBusyWait(),
+                LowValueOverflowStrategy.Sleep => GetHighValueBySleep( highValue ),
                 _ => _maxHighValue + 1
             };
 

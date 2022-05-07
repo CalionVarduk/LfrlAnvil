@@ -35,7 +35,7 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
                 sut.StartTimestamp.Should().Be( expectedStartTimestamp );
                 sut.MaxTimestamp.Should().Be( expectedMaxTimestamp );
                 sut.TimeEpsilon.Should().Be( expectedTimeEpsilon );
-                sut.LowValueExceededHandlingStrategy.Should().Be( LowValueExceededHandlingStrategy.Forbidden );
+                sut.LowValueOverflowStrategy.Should().Be( LowValueOverflowStrategy.Forbidden );
                 sut.LowValueBounds.Should().Be( expectedLowValueBounds );
                 sut.LastHighValue.Should().Be( expectedLastHighValue );
                 sut.LastLowValue.Should().Be( -1 );
@@ -75,7 +75,7 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
                 sut.StartTimestamp.Should().Be( expectedStartTimestamp );
                 sut.MaxTimestamp.Should().Be( expectedMaxTimestamp );
                 sut.TimeEpsilon.Should().Be( @params.TimeEpsilon );
-                sut.LowValueExceededHandlingStrategy.Should().Be( @params.LowValueExceededHandlingStrategy );
+                sut.LowValueOverflowStrategy.Should().Be( @params.LowValueOverflowStrategy );
                 sut.LowValueBounds.Should().Be( @params.LowValueBounds );
                 sut.LastHighValue.Should().Be( expectedLastHighValue );
                 sut.LastLowValue.Should().Be( expectedLastLowValue );
@@ -252,7 +252,7 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
                 timestampProvider,
                 new IdentifierGeneratorParams
                 {
-                    LowValueExceededHandlingStrategy = LowValueExceededHandlingStrategy.Forbidden,
+                    LowValueOverflowStrategy = LowValueOverflowStrategy.Forbidden,
                     LowValueBounds = new Bounds<ushort>( 0, 0 )
                 } );
 
@@ -422,7 +422,7 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
                 timestampProvider,
                 new IdentifierGeneratorParams
                 {
-                    LowValueExceededHandlingStrategy = LowValueExceededHandlingStrategy.Forbidden,
+                    LowValueOverflowStrategy = LowValueOverflowStrategy.Forbidden,
                     LowValueBounds = new Bounds<ushort>( 0, 0 )
                 } );
 
@@ -611,7 +611,7 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
                 new IdentifierGeneratorParams
                 {
                     LowValueBounds = new Bounds<ushort>( 0, 0 ),
-                    LowValueExceededHandlingStrategy = LowValueExceededHandlingStrategy.Forbidden
+                    LowValueOverflowStrategy = LowValueOverflowStrategy.Forbidden
                 } );
 
             var expected = sut.Generate();
@@ -872,7 +872,7 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
                 new IdentifierGeneratorParams
                 {
                     LowValueBounds = new Bounds<ushort>( 0, 0 ),
-                    LowValueExceededHandlingStrategy = LowValueExceededHandlingStrategy.Forbidden
+                    LowValueOverflowStrategy = LowValueOverflowStrategy.Forbidden
                 } );
 
             sut.Generate();
@@ -912,7 +912,7 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
                 new IdentifierGeneratorParams
                 {
                     LowValueBounds = new Bounds<ushort>( 0, 0 ),
-                    LowValueExceededHandlingStrategy = LowValueExceededHandlingStrategy.Forbidden
+                    LowValueOverflowStrategy = LowValueOverflowStrategy.Forbidden
                 } );
 
             sut.Generate();

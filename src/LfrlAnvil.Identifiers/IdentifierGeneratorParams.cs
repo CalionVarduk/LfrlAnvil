@@ -9,7 +9,7 @@ namespace LfrlAnvil.Identifiers
         private Bounds<ushort>? _lowValueBounds;
         private Duration? _timeEpsilon;
 
-        public LowValueExceededHandlingStrategy LowValueExceededHandlingStrategy { get; set; }
+        public LowValueOverflowStrategy LowValueOverflowStrategy { get; set; }
 
         public Timestamp BaseTimestamp
         {
@@ -35,7 +35,7 @@ namespace LfrlAnvil.Identifiers
             var baseTimestampText = $"{nameof( BaseTimestamp )}={BaseTimestamp}";
             var timeEpsilonText = $"{nameof( TimeEpsilon )}={TimeEpsilon}";
             var lowValueBoundsText = $"{nameof( LowValueBounds )}={LowValueBounds}";
-            var strategyText = $"{nameof( LowValueExceededHandlingStrategy )}={LowValueExceededHandlingStrategy}";
+            var strategyText = $"{nameof( LowValueOverflowStrategy )}={LowValueOverflowStrategy}";
             return $"{{ {baseTimestampText}, {timeEpsilonText}, {lowValueBoundsText}, {strategyText} }}";
         }
     }
