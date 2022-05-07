@@ -2,9 +2,9 @@
 
 namespace LfrlAnvil.Mapping
 {
-    public class UndefinedMappingException : Exception
+    public class UndefinedTypeMappingException : Exception
     {
-        public UndefinedMappingException(Type sourceType, Type destinationType)
+        public UndefinedTypeMappingException(Type sourceType, Type destinationType)
             : base( GetMessage( sourceType, destinationType ) )
         {
             SourceType = sourceType;
@@ -18,7 +18,7 @@ namespace LfrlAnvil.Mapping
         {
             var sourceText = sourceType.FullName;
             var destinationText = destinationType.FullName;
-            return $"Mapping from {sourceText} to {destinationText} is undefined.";
+            return $"Type mapping from {sourceText} to {destinationText} is undefined.";
         }
     }
 }

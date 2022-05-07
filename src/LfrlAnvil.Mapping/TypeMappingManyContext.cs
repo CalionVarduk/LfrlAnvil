@@ -5,9 +5,9 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Mapping
 {
-    public readonly struct MappingManyContext<TSource>
+    public readonly struct TypeMappingManyContext<TSource>
     {
-        internal MappingManyContext(ITypeMapper typeMapper, IEnumerable<TSource> source)
+        internal TypeMappingManyContext(ITypeMapper typeMapper, IEnumerable<TSource> source)
         {
             TypeMapper = typeMapper;
             Source = source;

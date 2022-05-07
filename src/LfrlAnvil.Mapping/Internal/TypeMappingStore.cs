@@ -4,9 +4,9 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Mapping.Internal
 {
-    public readonly struct MappingStore
+    public readonly struct TypeMappingStore
     {
-        private MappingStore(Delegate fastDelegate, Delegate slowDelegate)
+        private TypeMappingStore(Delegate fastDelegate, Delegate slowDelegate)
         {
             FastDelegate = fastDelegate;
             SlowDelegate = slowDelegate;
@@ -38,10 +38,10 @@ namespace LfrlAnvil.Mapping.Internal
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal static MappingStore Create<TSource, TDestination>(Func<TSource, ITypeMapper, TDestination> mapping)
+        internal static TypeMappingStore Create<TSource, TDestination>(Func<TSource, ITypeMapper, TDestination> mapping)
         {
             Func<object, ITypeMapper, TDestination> slowMapping = (source, provider) => mapping( (TSource)source, provider );
-            return new MappingStore( mapping, slowMapping );
+            return new TypeMappingStore( mapping, slowMapping );
         }
     }
 }

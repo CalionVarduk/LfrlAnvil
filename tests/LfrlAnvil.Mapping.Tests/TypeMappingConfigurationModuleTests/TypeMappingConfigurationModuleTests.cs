@@ -7,14 +7,14 @@ using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using Xunit;
 
-namespace LfrlAnvil.Mapping.Tests.MappingConfigurationModuleTests
+namespace LfrlAnvil.Mapping.Tests.TypeMappingConfigurationModuleTests
 {
-    public class MappingConfigurationModuleTests : TestsBase
+    public class TypeMappingConfigurationModuleTests : TestsBase
     {
         [Fact]
         public void Ctor_ShouldReturnEmptyModule()
         {
-            var sut = new MappingConfigurationModule();
+            var sut = new TypeMappingConfigurationModule();
 
             using ( new AssertionScope() )
             {
@@ -30,7 +30,7 @@ namespace LfrlAnvil.Mapping.Tests.MappingConfigurationModuleTests
             var configuration = TypeMappingConfiguration.Create( (string _, ITypeMapper _) => default( int ) );
             var expectedStores = configuration.GetMappingStores();
 
-            var sut = new MappingConfigurationModule();
+            var sut = new TypeMappingConfigurationModule();
 
             var result = sut.Configure( configuration );
 
@@ -49,7 +49,7 @@ namespace LfrlAnvil.Mapping.Tests.MappingConfigurationModuleTests
             var secondConfiguration = TypeMappingConfiguration.Create( (int _, ITypeMapper _) => default( Guid ) );
             var expectedStores = firstConfiguration.GetMappingStores().Concat( secondConfiguration.GetMappingStores() );
 
-            var sut = new MappingConfigurationModule();
+            var sut = new TypeMappingConfigurationModule();
             sut.Configure( firstConfiguration );
 
             var result = sut.Configure( secondConfiguration );
@@ -66,10 +66,10 @@ namespace LfrlAnvil.Mapping.Tests.MappingConfigurationModuleTests
         public void Configure_ShouldAddNewModuleCorrectly_WhenModuleIsEmpty()
         {
             var configuration = TypeMappingConfiguration.Create( (string _, ITypeMapper _) => default( int ) );
-            var module = new MappingConfigurationModule().Configure( configuration );
+            var module = new TypeMappingConfigurationModule().Configure( configuration );
             var expectedStores = module.GetMappingStores();
 
-            var sut = new MappingConfigurationModule();
+            var sut = new TypeMappingConfigurationModule();
 
             var result = sut.Configure( module );
 
@@ -87,11 +87,11 @@ namespace LfrlAnvil.Mapping.Tests.MappingConfigurationModuleTests
         {
             var firstConfiguration = TypeMappingConfiguration.Create( (string _, ITypeMapper _) => default( int ) );
             var secondConfiguration = TypeMappingConfiguration.Create( (int _, ITypeMapper _) => default( Guid ) );
-            var firstModule = new MappingConfigurationModule().Configure( firstConfiguration );
-            var secondModule = new MappingConfigurationModule().Configure( secondConfiguration );
+            var firstModule = new TypeMappingConfigurationModule().Configure( firstConfiguration );
+            var secondModule = new TypeMappingConfigurationModule().Configure( secondConfiguration );
             var expectedStores = firstModule.GetMappingStores().Concat( secondModule.GetMappingStores() );
 
-            var sut = new MappingConfigurationModule();
+            var sut = new TypeMappingConfigurationModule();
             sut.Configure( firstModule );
 
             var result = sut.Configure( secondModule );
@@ -108,7 +108,7 @@ namespace LfrlAnvil.Mapping.Tests.MappingConfigurationModuleTests
         [Fact]
         public void Configure_ShouldThrowArgumentException_WhenAddingSelf()
         {
-            var sut = new MappingConfigurationModule();
+            var sut = new TypeMappingConfigurationModule();
             var action = Lambda.Of( () => sut.Configure( sut ) );
             action.Should().ThrowExactly<ArgumentException>();
         }
@@ -116,8 +116,8 @@ namespace LfrlAnvil.Mapping.Tests.MappingConfigurationModuleTests
         [Fact]
         public void Configure_ShouldThrowArgumentException_WhenAddingModuleWithParent()
         {
-            var other = new MappingConfigurationModule();
-            var sut = new MappingConfigurationModule();
+            var other = new TypeMappingConfigurationModule();
+            var sut = new TypeMappingConfigurationModule();
             sut.Configure( other );
 
             var action = Lambda.Of( () => sut.Configure( other ) );
@@ -128,8 +128,8 @@ namespace LfrlAnvil.Mapping.Tests.MappingConfigurationModuleTests
         [Fact]
         public void Configure_ShouldThrowArgumentException_WhenItLeadsToCyclicReference()
         {
-            var other = new MappingConfigurationModule();
-            var sut = new MappingConfigurationModule();
+            var other = new TypeMappingConfigurationModule();
+            var sut = new TypeMappingConfigurationModule();
             other.Configure( sut );
 
             var action = Lambda.Of( () => sut.Configure( other ) );
@@ -140,9 +140,9 @@ namespace LfrlAnvil.Mapping.Tests.MappingConfigurationModuleTests
         [Fact]
         public void Configure_ShouldThrowArgumentException_WhenItLeadsToIndirectCyclicReference()
         {
-            var root = new MappingConfigurationModule();
-            var other = new MappingConfigurationModule();
-            var sut = new MappingConfigurationModule();
+            var root = new TypeMappingConfigurationModule();
+            var other = new TypeMappingConfigurationModule();
+            var sut = new TypeMappingConfigurationModule();
             root.Configure( other );
             other.Configure( sut );
 

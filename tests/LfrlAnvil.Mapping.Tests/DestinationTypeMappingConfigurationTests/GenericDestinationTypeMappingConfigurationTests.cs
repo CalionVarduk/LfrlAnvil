@@ -28,7 +28,7 @@ namespace LfrlAnvil.Mapping.Tests.DestinationTypeMappingConfigurationTests
         [Fact]
         public void Configure_ShouldAddNewMapping_WhenConfigurationIsEmpty()
         {
-            var expectedKey = new MappingKey( typeof( TSource1 ), typeof( TDestination ) );
+            var expectedKey = new TypeMappingKey( typeof( TSource1 ), typeof( TDestination ) );
             var mapping = Lambda.Of( (TSource1 _, ITypeMapper _) => default( TDestination )! );
 
             var sut = new DestinationTypeMappingConfiguration<TDestination>();
@@ -46,8 +46,8 @@ namespace LfrlAnvil.Mapping.Tests.DestinationTypeMappingConfigurationTests
         [Fact]
         public void Configure_ShouldAddNewMapping_WhenConfigurationIsNotEmpty()
         {
-            var expectedFirstKey = new MappingKey( typeof( TSource1 ), typeof( TDestination ) );
-            var expectedSecondKey = new MappingKey( typeof( TSource2 ), typeof( TDestination ) );
+            var expectedFirstKey = new TypeMappingKey( typeof( TSource1 ), typeof( TDestination ) );
+            var expectedSecondKey = new TypeMappingKey( typeof( TSource2 ), typeof( TDestination ) );
             var firstMapping = Lambda.Of( (TSource1 _, ITypeMapper _) => default( TDestination )! );
             var secondMapping = Lambda.Of( (TSource2 _, ITypeMapper _) => default( TDestination )! );
 
@@ -70,7 +70,7 @@ namespace LfrlAnvil.Mapping.Tests.DestinationTypeMappingConfigurationTests
         [Fact]
         public void Configure_ShouldReplaceMappingForExistingDestinationType()
         {
-            var expectedKey = new MappingKey( typeof( TSource1 ), typeof( TDestination ) );
+            var expectedKey = new TypeMappingKey( typeof( TSource1 ), typeof( TDestination ) );
             var firstMapping = Lambda.Of( (TSource1 _, ITypeMapper _) => default( TDestination )! );
             var secondMapping = Lambda.Of( (TSource1 _, ITypeMapper _) => default( TDestination )! );
 

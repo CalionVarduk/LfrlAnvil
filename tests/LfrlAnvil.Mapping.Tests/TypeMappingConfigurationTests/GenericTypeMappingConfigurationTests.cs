@@ -11,61 +11,22 @@ using Xunit;
 
 namespace LfrlAnvil.Mapping.Tests.TypeMappingConfigurationTests
 {
-    public abstract class GenericTypeMappingConfigurationTests<TSource, TDestination> : TestsBase
+    public abstract class GenericTypeMappingConfigurationTests<T1, T2, T3> : TestsBase
     {
         [Fact]
-        public void Create_ShouldReturnConfigurationWithSingleStore()
+        public void Ctor_ShouldCreateEmptyConfiguration()
         {
-            var expectedKey = new MappingKey( typeof( TSource ), typeof( TDestination ) );
-            var mapping = Lambda.Of( (TSource _, ITypeMapper _) => default( TDestination )! );
-
-            var sut = TypeMappingConfiguration.Create( mapping );
-            var mappingStores = sut.GetMappingStores().Select( kv => KeyValuePair.Create( kv.Key, kv.Value.FastDelegate ) );
-
-            using ( new AssertionScope() )
-            {
-                sut.SourceType.Should().Be( typeof( TSource ) );
-                sut.DestinationType.Should().Be( typeof( TDestination ) );
-                mappingStores.Should().BeSequentiallyEqualTo( KeyValuePair.Create( expectedKey, (Delegate)mapping ) );
-            }
+            var sut = new TypeMappingConfiguration();
+            sut.GetMappingStores().Should().BeEmpty();
         }
 
         [Fact]
-        public void Ctor_ShouldReturnEmptyConfiguration()
+        public void Configure_ShouldAddNewMapping_WhenConfigurationIsEmpty()
         {
-            var sut = new TypeMappingConfiguration<TSource, TDestination>();
+            var expectedKey = new TypeMappingKey( typeof( T1 ), typeof( T2 ) );
+            var mapping = Lambda.Of( (T1 _, ITypeMapper _) => default( T2 )! );
 
-            using ( new AssertionScope() )
-            {
-                sut.SourceType.Should().Be( typeof( TSource ) );
-                sut.DestinationType.Should().Be( typeof( TDestination ) );
-                sut.GetMappingStores().Should().BeEmpty();
-            }
-        }
-
-        [Fact]
-        public void Ctor_WithMappingDelegate_ShouldReturnConfigurationWithSingleStore()
-        {
-            var expectedKey = new MappingKey( typeof( TSource ), typeof( TDestination ) );
-            var mapping = Lambda.Of( (TSource _, ITypeMapper _) => default( TDestination )! );
-
-            var sut = new TypeMappingConfiguration<TSource, TDestination>( mapping );
-            var mappingStores = sut.GetMappingStores().Select( kv => KeyValuePair.Create( kv.Key, kv.Value.FastDelegate ) );
-
-            using ( new AssertionScope() )
-            {
-                sut.SourceType.Should().Be( typeof( TSource ) );
-                sut.DestinationType.Should().Be( typeof( TDestination ) );
-                mappingStores.Should().BeSequentiallyEqualTo( KeyValuePair.Create( expectedKey, (Delegate)mapping ) );
-            }
-        }
-
-        [Fact]
-        public void Configure_ShouldUpdateConfigurationCorrectly_WhenConfigurationIsEmpty()
-        {
-            var expectedKey = new MappingKey( typeof( TSource ), typeof( TDestination ) );
-            var mapping = Lambda.Of( (TSource _, ITypeMapper _) => default( TDestination )! );
-            var sut = new TypeMappingConfiguration<TSource, TDestination>();
+            var sut = new TypeMappingConfiguration();
 
             var result = sut.Configure( mapping );
             var mappingStores = sut.GetMappingStores().Select( kv => KeyValuePair.Create( kv.Key, kv.Value.FastDelegate ) );
@@ -78,20 +39,70 @@ namespace LfrlAnvil.Mapping.Tests.TypeMappingConfigurationTests
         }
 
         [Fact]
-        public void Configure_ShouldUpdateConfigurationCorrectly_WhenConfigurationIsNotEmpty()
+        public void Configure_ShouldAddNewMapping_WhenConfigurationIsNotEmpty()
         {
-            var expectedKey = new MappingKey( typeof( TSource ), typeof( TDestination ) );
-            var oldMapping = Lambda.Of( (TSource _, ITypeMapper _) => default( TDestination )! );
-            var mapping = Lambda.Of( (TSource _, ITypeMapper _) => default( TDestination )! );
-            var sut = new TypeMappingConfiguration<TSource, TDestination>( oldMapping );
+            var expectedFirstKey = new TypeMappingKey( typeof( T1 ), typeof( T2 ) );
+            var expectedSecondKey = new TypeMappingKey( typeof( T1 ), typeof( T3 ) );
+            var firstMapping = Lambda.Of( (T1 _, ITypeMapper _) => default( T2 )! );
+            var secondMapping = Lambda.Of( (T1 _, ITypeMapper _) => default( T3 )! );
 
-            var result = sut.Configure( mapping );
+            var sut = new TypeMappingConfiguration();
+            sut.Configure( firstMapping );
+
+            var result = sut.Configure( secondMapping );
             var mappingStores = sut.GetMappingStores().Select( kv => KeyValuePair.Create( kv.Key, kv.Value.FastDelegate ) );
 
             using ( new AssertionScope() )
             {
                 result.Should().BeSameAs( sut );
-                mappingStores.Should().BeSequentiallyEqualTo( KeyValuePair.Create( expectedKey, (Delegate)mapping ) );
+                mappingStores.Should()
+                    .BeSequentiallyEqualTo(
+                        KeyValuePair.Create( expectedFirstKey, (Delegate)firstMapping ),
+                        KeyValuePair.Create( expectedSecondKey, (Delegate)secondMapping ) );
+            }
+        }
+
+        [Fact]
+        public void Configure_ShouldReplaceMappingForExistingTypes()
+        {
+            var expectedKey = new TypeMappingKey( typeof( T1 ), typeof( T2 ) );
+            var firstMapping = Lambda.Of( (T1 _, ITypeMapper _) => default( T2 )! );
+            var secondMapping = Lambda.Of( (T1 _, ITypeMapper _) => default( T2 )! );
+
+            var sut = new TypeMappingConfiguration();
+            sut.Configure( firstMapping );
+
+            var result = sut.Configure( secondMapping );
+            var mappingStores = sut.GetMappingStores().Select( kv => KeyValuePair.Create( kv.Key, kv.Value.FastDelegate ) );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeSameAs( sut );
+                mappingStores.Should().BeSequentiallyEqualTo( KeyValuePair.Create( expectedKey, (Delegate)secondMapping ) );
+            }
+        }
+
+        [Fact]
+        public void Configure_ShouldAddReverseMappingCorrectly()
+        {
+            var expectedFirstKey = new TypeMappingKey( typeof( T1 ), typeof( T2 ) );
+            var expectedSecondKey = new TypeMappingKey( typeof( T2 ), typeof( T1 ) );
+            var firstMapping = Lambda.Of( (T1 _, ITypeMapper _) => default( T2 )! );
+            var secondMapping = Lambda.Of( (T2 _, ITypeMapper _) => default( T1 )! );
+
+            var sut = new TypeMappingConfiguration();
+            sut.Configure( firstMapping );
+
+            var result = sut.Configure( secondMapping );
+            var mappingStores = sut.GetMappingStores().Select( kv => KeyValuePair.Create( kv.Key, kv.Value.FastDelegate ) );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeSameAs( sut );
+                mappingStores.Should()
+                    .BeSequentiallyEqualTo(
+                        KeyValuePair.Create( expectedFirstKey, (Delegate)firstMapping ),
+                        KeyValuePair.Create( expectedSecondKey, (Delegate)secondMapping ) );
             }
         }
     }

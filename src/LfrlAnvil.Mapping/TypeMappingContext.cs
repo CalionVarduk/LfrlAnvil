@@ -4,9 +4,9 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Mapping
 {
-    public readonly struct MappingContext<TSource>
+    public readonly struct TypeMappingContext<TSource>
     {
-        internal MappingContext(ITypeMapper typeMapper, TSource source)
+        internal TypeMappingContext(ITypeMapper typeMapper, TSource source)
         {
             TypeMapper = typeMapper;
             Source = source;

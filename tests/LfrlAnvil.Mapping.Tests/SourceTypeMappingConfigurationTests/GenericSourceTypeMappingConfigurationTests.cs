@@ -28,7 +28,7 @@ namespace LfrlAnvil.Mapping.Tests.SourceTypeMappingConfigurationTests
         [Fact]
         public void Configure_ShouldAddNewMapping_WhenConfigurationIsEmpty()
         {
-            var expectedKey = new MappingKey( typeof( TSource ), typeof( TDestination1 ) );
+            var expectedKey = new TypeMappingKey( typeof( TSource ), typeof( TDestination1 ) );
             var mapping = Lambda.Of( (TSource _, ITypeMapper _) => default( TDestination1 )! );
 
             var sut = new SourceTypeMappingConfiguration<TSource>();
@@ -46,8 +46,8 @@ namespace LfrlAnvil.Mapping.Tests.SourceTypeMappingConfigurationTests
         [Fact]
         public void Configure_ShouldAddNewMapping_WhenConfigurationIsNotEmpty()
         {
-            var expectedFirstKey = new MappingKey( typeof( TSource ), typeof( TDestination1 ) );
-            var expectedSecondKey = new MappingKey( typeof( TSource ), typeof( TDestination2 ) );
+            var expectedFirstKey = new TypeMappingKey( typeof( TSource ), typeof( TDestination1 ) );
+            var expectedSecondKey = new TypeMappingKey( typeof( TSource ), typeof( TDestination2 ) );
             var firstMapping = Lambda.Of( (TSource _, ITypeMapper _) => default( TDestination1 )! );
             var secondMapping = Lambda.Of( (TSource _, ITypeMapper _) => default( TDestination2 )! );
 
@@ -70,7 +70,7 @@ namespace LfrlAnvil.Mapping.Tests.SourceTypeMappingConfigurationTests
         [Fact]
         public void Configure_ShouldReplaceMappingForExistingSourceType()
         {
-            var expectedKey = new MappingKey( typeof( TSource ), typeof( TDestination1 ) );
+            var expectedKey = new TypeMappingKey( typeof( TSource ), typeof( TDestination1 ) );
             var firstMapping = Lambda.Of( (TSource _, ITypeMapper _) => default( TDestination1 )! );
             var secondMapping = Lambda.Of( (TSource _, ITypeMapper _) => default( TDestination1 )! );
 

@@ -15,7 +15,7 @@ namespace LfrlAnvil.Mapping
         TDestination Map<TDestination>(object source);
 
         [Pure]
-        MappingContext<TSource> Map<TSource>(TSource source);
+        TypeMappingContext<TSource> Map<TSource>(TSource source);
 
         [Pure]
         object Map(Type destinationType, object source);
@@ -27,10 +27,10 @@ namespace LfrlAnvil.Mapping
         IEnumerable<TDestination> MapMany<TSource, TDestination>(params TSource[] source);
 
         [Pure]
-        MappingManyContext<TSource> MapMany<TSource>(IEnumerable<TSource> source);
+        TypeMappingManyContext<TSource> MapMany<TSource>(IEnumerable<TSource> source);
 
         [Pure]
-        MappingManyContext<TSource> MapMany<TSource>(params TSource[] source);
+        TypeMappingManyContext<TSource> MapMany<TSource>(params TSource[] source);
 
         bool TryMap<TSource, TDestination>(TSource source, [MaybeNullWhen( false )] out TDestination result);
         bool TryMap<TDestination>(object source, [MaybeNullWhen( false )] out TDestination result);
@@ -56,7 +56,7 @@ namespace LfrlAnvil.Mapping
         bool IsConfiguredAsDestinationType(Type type);
 
         [Pure]
-        IEnumerable<MappingKey> GetConfiguredMappings();
+        IEnumerable<TypeMappingKey> GetConfiguredMappings();
 
         [Pure]
         IEnumerable<Type> GetConfiguredSourceTypes<TDestination>();

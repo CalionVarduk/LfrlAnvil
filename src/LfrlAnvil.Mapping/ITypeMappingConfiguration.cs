@@ -4,9 +4,9 @@ using LfrlAnvil.Mapping.Internal;
 
 namespace LfrlAnvil.Mapping
 {
-    public interface IMappingConfiguration
+    public interface ITypeMappingConfiguration
     {
         [Pure]
-        IEnumerable<KeyValuePair<MappingKey, MappingStore>> GetMappingStores();
+        IEnumerable<KeyValuePair<TypeMappingKey, TypeMappingStore>> GetMappingStores();
     }
 }

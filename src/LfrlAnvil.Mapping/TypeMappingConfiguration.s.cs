@@ -4,14 +4,14 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Mapping
 {
-    public static class TypeMappingConfiguration
+    public partial class TypeMappingConfiguration
     {
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static TypeMappingConfiguration<TSource, TDestination> Create<TSource, TDestination>(
+        public static SingleTypeMappingConfiguration<TSource, TDestination> Create<TSource, TDestination>(
             Func<TSource, ITypeMapper, TDestination> mapping)
         {
-            return new TypeMappingConfiguration<TSource, TDestination>( mapping );
+            return new SingleTypeMappingConfiguration<TSource, TDestination>( mapping );
         }
     }
 }

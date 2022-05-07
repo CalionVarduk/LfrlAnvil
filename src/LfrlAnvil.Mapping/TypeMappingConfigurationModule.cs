@@ -7,21 +7,21 @@ using LfrlAnvil.Mapping.Internal;
 
 namespace LfrlAnvil.Mapping
 {
-    public class MappingConfigurationModule : IMappingConfiguration
+    public class TypeMappingConfigurationModule : ITypeMappingConfiguration
     {
-        private readonly List<IMappingConfiguration> _configurations;
+        private readonly List<ITypeMappingConfiguration> _configurations;
 
-        public MappingConfigurationModule()
+        public TypeMappingConfigurationModule()
         {
-            _configurations = new List<IMappingConfiguration>();
+            _configurations = new List<ITypeMappingConfiguration>();
             Parent = null;
         }
 
-        public MappingConfigurationModule? Parent { get; private set; }
+        public TypeMappingConfigurationModule? Parent { get; private set; }
 
-        public MappingConfigurationModule Configure(IMappingConfiguration configuration)
+        public TypeMappingConfigurationModule Configure(ITypeMappingConfiguration configuration)
         {
-            if ( configuration is MappingConfigurationModule module )
+            if ( configuration is TypeMappingConfigurationModule module )
             {
                 Ensure.NotRefEquals( module, this, nameof( module ) );
                 Ensure.IsNull( module.Parent, nameof( module ) + "." + nameof( module.Parent ) );
@@ -34,18 +34,18 @@ namespace LfrlAnvil.Mapping
         }
 
         [Pure]
-        public IEnumerable<KeyValuePair<MappingKey, MappingStore>> GetMappingStores()
+        public IEnumerable<KeyValuePair<TypeMappingKey, TypeMappingStore>> GetMappingStores()
         {
             return _configurations.SelectMany( c => c.GetMappingStores() );
         }
 
         [Pure]
-        public IEnumerable<MappingConfigurationModule> GetSubmodules()
+        public IEnumerable<TypeMappingConfigurationModule> GetSubmodules()
         {
-            return _configurations.OfType<MappingConfigurationModule>();
+            return _configurations.OfType<TypeMappingConfigurationModule>();
         }
 
-        private void EnsureLackOfCyclicModuleReference(MappingConfigurationModule moduleToAdd)
+        private void EnsureLackOfCyclicModuleReference(TypeMappingConfigurationModule moduleToAdd)
         {
             var submoduleTree = moduleToAdd.VisitMany( m => m.GetSubmodules() );
             if ( submoduleTree.Any( m => m == this ) )

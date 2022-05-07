@@ -15,7 +15,7 @@ namespace LfrlAnvil.Mapping.Tests.TypeMapperTests
         [Fact]
         public void Ctor_ShouldReturnCorrectResult_WhenConfigurationsIsEmpty()
         {
-            var sut = new TypeMapper( Enumerable.Empty<IMappingConfiguration>() );
+            var sut = new TypeMapper( Enumerable.Empty<ITypeMappingConfiguration>() );
             sut.GetConfiguredMappings().Should().BeEmpty();
         }
 
@@ -23,7 +23,7 @@ namespace LfrlAnvil.Mapping.Tests.TypeMapperTests
         public void Ctor_ShouldReturnCorrectResult_WhenConfigurationContainsOneElement()
         {
             var configuration = TypeMappingConfiguration.Create<string, int>( (_, _) => default );
-            var expectedKey = new MappingKey( configuration.SourceType, configuration.DestinationType );
+            var expectedKey = new TypeMappingKey( configuration.SourceType, configuration.DestinationType );
             var sut = new TypeMapper( new[] { configuration } );
 
             sut.GetConfiguredMappings().Should().BeEquivalentTo( new[] { expectedKey } );
@@ -43,14 +43,14 @@ namespace LfrlAnvil.Mapping.Tests.TypeMapperTests
 
             var expectedKeys = new[]
             {
-                new MappingKey( configuration1.SourceType, configuration1.DestinationType ),
-                new MappingKey( configuration2.SourceType, typeof( string ) ),
-                new MappingKey( configuration2.SourceType, typeof( Guid ) ),
-                new MappingKey( typeof( string ), configuration3.DestinationType ),
-                new MappingKey( typeof( decimal ), configuration3.DestinationType )
+                new TypeMappingKey( configuration1.SourceType, configuration1.DestinationType ),
+                new TypeMappingKey( configuration2.SourceType, typeof( string ) ),
+                new TypeMappingKey( configuration2.SourceType, typeof( Guid ) ),
+                new TypeMappingKey( typeof( string ), configuration3.DestinationType ),
+                new TypeMappingKey( typeof( decimal ), configuration3.DestinationType )
             };
 
-            var sut = new TypeMapper( new IMappingConfiguration[] { configuration1, configuration2, configuration3 } );
+            var sut = new TypeMapper( new ITypeMappingConfiguration[] { configuration1, configuration2, configuration3 } );
 
             sut.GetConfiguredMappings().Should().BeEquivalentTo( expectedKeys );
         }
@@ -64,11 +64,11 @@ namespace LfrlAnvil.Mapping.Tests.TypeMapperTests
 
             var expectedKeys = new[]
             {
-                new MappingKey( configuration2.SourceType, configuration2.DestinationType ),
-                new MappingKey( configuration3.SourceType, configuration3.DestinationType )
+                new TypeMappingKey( configuration2.SourceType, configuration2.DestinationType ),
+                new TypeMappingKey( configuration3.SourceType, configuration3.DestinationType )
             };
 
-            var sut = new TypeMapper( new IMappingConfiguration[] { configuration1, configuration2, configuration3 } );
+            var sut = new TypeMapper( new ITypeMappingConfiguration[] { configuration1, configuration2, configuration3 } );
 
             sut.GetConfiguredMappings().Should().BeEquivalentTo( expectedKeys );
         }
@@ -97,15 +97,15 @@ namespace LfrlAnvil.Mapping.Tests.TypeMapperTests
         }
 
         [Fact]
-        public void Map_WithGenericSourceAndDestinationTypes_ShouldThrowUndefinedMappingException_WhenTypeMappingDoesNotExist()
+        public void Map_WithGenericSourceAndDestinationTypes_ShouldThrowUndefinedTypeMappingException_WhenTypeMappingDoesNotExist()
         {
-            var sut = new TypeMapper( Enumerable.Empty<IMappingConfiguration>() );
+            var sut = new TypeMapper( Enumerable.Empty<ITypeMappingConfiguration>() );
 
             var action = Lambda.Of( () => sut.Map<int, string>( 1234 ) );
 
             using ( new AssertionScope() )
             {
-                var exception = action.Should().ThrowExactly<UndefinedMappingException>().And;
+                var exception = action.Should().ThrowExactly<UndefinedTypeMappingException>().And;
                 exception?.SourceType.Should().Be( typeof( int ) );
                 exception?.DestinationType.Should().Be( typeof( string ) );
             }
@@ -129,7 +129,7 @@ namespace LfrlAnvil.Mapping.Tests.TypeMapperTests
         [Fact]
         public void TryMap_WithGenericSourceAndDestinationTypes_ShouldReturnFalse_WhenTypeMappingDoesNotExist()
         {
-            var sut = new TypeMapper( Enumerable.Empty<IMappingConfiguration>() );
+            var sut = new TypeMapper( Enumerable.Empty<ITypeMappingConfiguration>() );
 
             var result = sut.TryMap<int, string>( 1234, out var outResult );
 
@@ -152,15 +152,15 @@ namespace LfrlAnvil.Mapping.Tests.TypeMapperTests
         }
 
         [Fact]
-        public void Map_WithGenericDestinationType_ShouldThrowUndefinedMappingException_WhenTypeMappingDoesNotExist()
+        public void Map_WithGenericDestinationType_ShouldThrowUndefinedTypeMappingException_WhenTypeMappingDoesNotExist()
         {
-            var sut = new TypeMapper( Enumerable.Empty<IMappingConfiguration>() );
+            var sut = new TypeMapper( Enumerable.Empty<ITypeMappingConfiguration>() );
 
             var action = Lambda.Of( () => sut.Map<string>( 1234 ) );
 
             using ( new AssertionScope() )
             {
-                var exception = action.Should().ThrowExactly<UndefinedMappingException>().And;
+                var exception = action.Should().ThrowExactly<UndefinedTypeMappingException>().And;
                 exception?.SourceType.Should().Be( typeof( int ) );
                 exception?.DestinationType.Should().Be( typeof( string ) );
             }
@@ -184,7 +184,7 @@ namespace LfrlAnvil.Mapping.Tests.TypeMapperTests
         [Fact]
         public void TryMap_WithGenericDestinationType_ShouldReturnFalse_WhenTypeMappingDoesNotExist()
         {
-            var sut = new TypeMapper( Enumerable.Empty<IMappingConfiguration>() );
+            var sut = new TypeMapper( Enumerable.Empty<ITypeMappingConfiguration>() );
 
             var result = sut.TryMap<string>( 1234, out var outResult );
 
@@ -222,15 +222,15 @@ namespace LfrlAnvil.Mapping.Tests.TypeMapperTests
         }
 
         [Fact]
-        public void Map_WithGenericSourceType_FollowedByTo_ShouldThrowUndefinedMappingException_WhenTypeMappingDoesNotExist()
+        public void Map_WithGenericSourceType_FollowedByTo_ShouldThrowUndefinedTypeMappingException_WhenTypeMappingDoesNotExist()
         {
-            var sut = new TypeMapper( Enumerable.Empty<IMappingConfiguration>() );
+            var sut = new TypeMapper( Enumerable.Empty<ITypeMappingConfiguration>() );
 
             var action = Lambda.Of( () => sut.Map( 1234 ).To<string>() );
 
             using ( new AssertionScope() )
             {
-                var exception = action.Should().ThrowExactly<UndefinedMappingException>().And;
+                var exception = action.Should().ThrowExactly<UndefinedTypeMappingException>().And;
                 exception?.SourceType.Should().Be( typeof( int ) );
                 exception?.DestinationType.Should().Be( typeof( string ) );
             }
@@ -254,7 +254,7 @@ namespace LfrlAnvil.Mapping.Tests.TypeMapperTests
         [Fact]
         public void Map_WithGenericSourceType_FollowedByTryTo_ShouldReturnFalse_WhenTypeMappingDoesNotExist()
         {
-            var sut = new TypeMapper( Enumerable.Empty<IMappingConfiguration>() );
+            var sut = new TypeMapper( Enumerable.Empty<ITypeMappingConfiguration>() );
 
             var result = sut.Map( 1234 ).TryTo<string>( out var outResult );
 
@@ -277,15 +277,15 @@ namespace LfrlAnvil.Mapping.Tests.TypeMapperTests
         }
 
         [Fact]
-        public void Map_NonGeneric_ShouldThrowUndefinedMappingException_WhenTypeMappingDoesNotExist()
+        public void Map_NonGeneric_ShouldThrowUndefinedTypeMappingException_WhenTypeMappingDoesNotExist()
         {
-            var sut = new TypeMapper( Enumerable.Empty<IMappingConfiguration>() );
+            var sut = new TypeMapper( Enumerable.Empty<ITypeMappingConfiguration>() );
 
             var action = Lambda.Of( () => sut.Map( typeof( string ), 1234 ) );
 
             using ( new AssertionScope() )
             {
-                var exception = action.Should().ThrowExactly<UndefinedMappingException>().And;
+                var exception = action.Should().ThrowExactly<UndefinedTypeMappingException>().And;
                 exception?.SourceType.Should().Be( typeof( int ) );
                 exception?.DestinationType.Should().Be( typeof( string ) );
             }
@@ -309,7 +309,7 @@ namespace LfrlAnvil.Mapping.Tests.TypeMapperTests
         [Fact]
         public void TryMap_NonGeneric_ShouldReturnFalse_WhenTypeMappingDoesNotExist()
         {
-            var sut = new TypeMapper( Enumerable.Empty<IMappingConfiguration>() );
+            var sut = new TypeMapper( Enumerable.Empty<ITypeMappingConfiguration>() );
 
             var result = sut.TryMap( typeof( string ), 1234, out var outResult );
 
@@ -334,16 +334,16 @@ namespace LfrlAnvil.Mapping.Tests.TypeMapperTests
         }
 
         [Fact]
-        public void MapMany_WithGenericSourceAndDestinationTypes_ShouldThrowUndefinedMappingException_WhenTypeMappingDoesNotExist()
+        public void MapMany_WithGenericSourceAndDestinationTypes_ShouldThrowUndefinedTypeMappingException_WhenTypeMappingDoesNotExist()
         {
-            var sut = new TypeMapper( Enumerable.Empty<IMappingConfiguration>() );
+            var sut = new TypeMapper( Enumerable.Empty<ITypeMappingConfiguration>() );
             var source = new[] { 1234, 5678, 9012 };
 
             var action = Lambda.Of( () => sut.MapMany<int, string>( source ) );
 
             using ( new AssertionScope() )
             {
-                var exception = action.Should().ThrowExactly<UndefinedMappingException>().And;
+                var exception = action.Should().ThrowExactly<UndefinedTypeMappingException>().And;
                 exception?.SourceType.Should().Be( typeof( int ) );
                 exception?.DestinationType.Should().Be( typeof( string ) );
             }
@@ -369,7 +369,7 @@ namespace LfrlAnvil.Mapping.Tests.TypeMapperTests
         [Fact]
         public void TryMapMany_WithGenericSourceAndDestinationTypes_ShouldReturnFalse_WhenTypeMappingDoesNotExist()
         {
-            var sut = new TypeMapper( Enumerable.Empty<IMappingConfiguration>() );
+            var sut = new TypeMapper( Enumerable.Empty<ITypeMappingConfiguration>() );
             var source = new[] { 1234, 5678, 9012 };
 
             var result = sut.TryMapMany<int, string>( source, out var outResult );
@@ -411,16 +411,16 @@ namespace LfrlAnvil.Mapping.Tests.TypeMapperTests
         }
 
         [Fact]
-        public void MapMany_WithGenericSourceType_FollowedByTo_ShouldThrowUndefinedMappingException_WhenTypeMappingDoesNotExist()
+        public void MapMany_WithGenericSourceType_FollowedByTo_ShouldThrowUndefinedTypeMappingException_WhenTypeMappingDoesNotExist()
         {
-            var sut = new TypeMapper( Enumerable.Empty<IMappingConfiguration>() );
+            var sut = new TypeMapper( Enumerable.Empty<ITypeMappingConfiguration>() );
             var source = new[] { 1234, 5678, 9012 };
 
             var action = Lambda.Of( () => sut.MapMany( source ).To<string>() );
 
             using ( new AssertionScope() )
             {
-                var exception = action.Should().ThrowExactly<UndefinedMappingException>().And;
+                var exception = action.Should().ThrowExactly<UndefinedTypeMappingException>().And;
                 exception?.SourceType.Should().Be( typeof( int ) );
                 exception?.DestinationType.Should().Be( typeof( string ) );
             }
@@ -446,7 +446,7 @@ namespace LfrlAnvil.Mapping.Tests.TypeMapperTests
         [Fact]
         public void MapMany_WithGenericSourceType_FollowedByTryTo_ShouldReturnFalse_WhenTypeMappingDoesNotExist()
         {
-            var sut = new TypeMapper( Enumerable.Empty<IMappingConfiguration>() );
+            var sut = new TypeMapper( Enumerable.Empty<ITypeMappingConfiguration>() );
             var source = new[] { 1234, 5678, 9012 };
 
             var result = sut.MapMany( source ).TryTo<string>( out var outResult );
@@ -472,7 +472,7 @@ namespace LfrlAnvil.Mapping.Tests.TypeMapperTests
         [Fact]
         public void IsConfigured_ShouldReturnFalse_WhenTypeMappingDoesNotExist()
         {
-            var sut = new TypeMapper( Enumerable.Empty<IMappingConfiguration>() );
+            var sut = new TypeMapper( Enumerable.Empty<ITypeMappingConfiguration>() );
             var result = sut.IsConfigured<int, string>();
             result.Should().BeFalse();
         }
@@ -526,7 +526,7 @@ namespace LfrlAnvil.Mapping.Tests.TypeMapperTests
         {
             var configuration1 = TypeMappingConfiguration.Create<int, string>( (s, _) => s.ToString() );
             var configuration2 = TypeMappingConfiguration.Create<Guid, string>( (s, _) => s.ToString() );
-            var sut = new TypeMapper( new IMappingConfiguration[] { configuration1, configuration2 } );
+            var sut = new TypeMapper( new ITypeMappingConfiguration[] { configuration1, configuration2 } );
             var expected = new[] { typeof( int ), typeof( Guid ) }.AsEnumerable();
 
             var result = sut.GetConfiguredSourceTypes<string>();
@@ -539,7 +539,7 @@ namespace LfrlAnvil.Mapping.Tests.TypeMapperTests
         {
             var configuration1 = TypeMappingConfiguration.Create<int, string>( (s, _) => s.ToString() );
             var configuration2 = TypeMappingConfiguration.Create<int, double>( (s, _) => s );
-            var sut = new TypeMapper( new IMappingConfiguration[] { configuration1, configuration2 } );
+            var sut = new TypeMapper( new ITypeMappingConfiguration[] { configuration1, configuration2 } );
             var expected = new[] { typeof( string ), typeof( double ) }.AsEnumerable();
 
             var result = sut.GetConfiguredDestinationTypes<int>();
@@ -553,7 +553,7 @@ namespace LfrlAnvil.Mapping.Tests.TypeMapperTests
             var configuration1 = TypeMappingConfiguration.Create<int, string>( (s, _) => s.ToString() );
             var configuration2 = TypeMappingConfiguration.Create<int, double>( (s, _) => s );
             var configuration3 = TypeMappingConfiguration.Create<Guid, string>( (s, _) => s.ToString() );
-            var sut = new TypeMapper( new IMappingConfiguration[] { configuration1, configuration2, configuration3 } );
+            var sut = new TypeMapper( new ITypeMappingConfiguration[] { configuration1, configuration2, configuration3 } );
             var expected = new[] { typeof( int ), typeof( Guid ) }.AsEnumerable();
 
             var result = sut.GetConfiguredSourceTypes();
@@ -567,7 +567,7 @@ namespace LfrlAnvil.Mapping.Tests.TypeMapperTests
             var configuration1 = TypeMappingConfiguration.Create<int, string>( (s, _) => s.ToString() );
             var configuration2 = TypeMappingConfiguration.Create<int, double>( (s, _) => s );
             var configuration3 = TypeMappingConfiguration.Create<Guid, string>( (s, _) => s.ToString() );
-            var sut = new TypeMapper( new IMappingConfiguration[] { configuration1, configuration2, configuration3 } );
+            var sut = new TypeMapper( new ITypeMappingConfiguration[] { configuration1, configuration2, configuration3 } );
             var expected = new[] { typeof( string ), typeof( double ) }.AsEnumerable();
 
             var result = sut.GetConfiguredDestinationTypes();

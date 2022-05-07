@@ -5,12 +5,12 @@ namespace LfrlAnvil.Mapping
 {
     public interface ITypeMapperBuilder
     {
-        ITypeMapperBuilder Configure(IMappingConfiguration configuration);
-        ITypeMapperBuilder Configure(params IMappingConfiguration[] configurations);
-        ITypeMapperBuilder Configure(IEnumerable<IMappingConfiguration> configurations);
+        ITypeMapperBuilder Configure(ITypeMappingConfiguration configuration);
+        ITypeMapperBuilder Configure(params ITypeMappingConfiguration[] configurations);
+        ITypeMapperBuilder Configure(IEnumerable<ITypeMappingConfiguration> configurations);
 
         [Pure]
-        IEnumerable<IMappingConfiguration> GetConfigurations();
+        IEnumerable<ITypeMappingConfiguration> GetConfigurations();
 
         [Pure]
         ITypeMapper Build();

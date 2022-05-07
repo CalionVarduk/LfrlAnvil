@@ -5,34 +5,26 @@ using LfrlAnvil.Mapping.Internal;
 
 namespace LfrlAnvil.Mapping
 {
-    public class TypeMappingConfiguration<TSource, TDestination> : IMappingConfiguration
+    public partial class TypeMappingConfiguration : ITypeMappingConfiguration
     {
-        private MappingStore? _store;
+        private readonly Dictionary<TypeMappingKey, TypeMappingStore> _stores;
 
         public TypeMappingConfiguration()
         {
-            _store = null;
+            _stores = new Dictionary<TypeMappingKey, TypeMappingStore>();
         }
 
-        public TypeMappingConfiguration(Func<TSource, ITypeMapper, TDestination> mapping)
+        public TypeMappingConfiguration Configure<TSource, TDestination>(Func<TSource, ITypeMapper, TDestination> mapping)
         {
-            _store = MappingStore.Create( mapping );
-        }
-
-        public Type SourceType => typeof( TSource );
-        public Type DestinationType => typeof( TDestination );
-
-        public TypeMappingConfiguration<TSource, TDestination> Configure(Func<TSource, ITypeMapper, TDestination> mapping)
-        {
-            _store = MappingStore.Create( mapping );
+            var key = new TypeMappingKey( typeof( TSource ), typeof( TDestination ) );
+            _stores[key] = TypeMappingStore.Create( mapping );
             return this;
         }
 
         [Pure]
-        public IEnumerable<KeyValuePair<MappingKey, MappingStore>> GetMappingStores()
+        public IEnumerable<KeyValuePair<TypeMappingKey, TypeMappingStore>> GetMappingStores()
         {
-            if ( _store is not null )
-                yield return KeyValuePair.Create( new MappingKey( SourceType, DestinationType ), _store.Value );
+            return _stores;
         }
     }
 }

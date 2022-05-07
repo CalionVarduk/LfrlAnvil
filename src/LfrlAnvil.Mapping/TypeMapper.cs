@@ -10,11 +10,11 @@ namespace LfrlAnvil.Mapping
 {
     public sealed class TypeMapper : ITypeMapper
     {
-        private readonly Dictionary<MappingKey, MappingStore> _stores;
+        private readonly Dictionary<TypeMappingKey, TypeMappingStore> _stores;
 
-        internal TypeMapper(IEnumerable<IMappingConfiguration> configurations)
+        internal TypeMapper(IEnumerable<ITypeMappingConfiguration> configurations)
         {
-            _stores = new Dictionary<MappingKey, MappingStore>();
+            _stores = new Dictionary<TypeMappingKey, TypeMappingStore>();
             var stores = configurations.SelectMany( c => c.GetMappingStores() );
             foreach ( var (key, value) in stores )
                 _stores[key] = value;
@@ -40,9 +40,9 @@ namespace LfrlAnvil.Mapping
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public MappingContext<TSource> Map<TSource>(TSource source)
+        public TypeMappingContext<TSource> Map<TSource>(TSource source)
         {
-            return new MappingContext<TSource>( this, source );
+            return new TypeMappingContext<TSource>( this, source );
         }
 
         [Pure]
@@ -72,21 +72,21 @@ namespace LfrlAnvil.Mapping
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public MappingManyContext<TSource> MapMany<TSource>(IEnumerable<TSource> source)
+        public TypeMappingManyContext<TSource> MapMany<TSource>(IEnumerable<TSource> source)
         {
-            return new MappingManyContext<TSource>( this, source );
+            return new TypeMappingManyContext<TSource>( this, source );
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public MappingManyContext<TSource> MapMany<TSource>(params TSource[] source)
+        public TypeMappingManyContext<TSource> MapMany<TSource>(params TSource[] source)
         {
             return MapMany( source.AsEnumerable() );
         }
 
         public bool TryMap<TSource, TDestination>(TSource source, [MaybeNullWhen( false )] out TDestination result)
         {
-            var key = new MappingKey( typeof( TSource ), typeof( TDestination ) );
+            var key = new TypeMappingKey( typeof( TSource ), typeof( TDestination ) );
             if ( ! _stores.TryGetValue( key, out var store ) )
             {
                 result = default;
@@ -100,7 +100,7 @@ namespace LfrlAnvil.Mapping
 
         public bool TryMap<TDestination>(object source, [MaybeNullWhen( false )] out TDestination result)
         {
-            var key = new MappingKey( source.GetType(), typeof( TDestination ) );
+            var key = new TypeMappingKey( source.GetType(), typeof( TDestination ) );
             if ( ! _stores.TryGetValue( key, out var store ) )
             {
                 result = default;
@@ -114,7 +114,7 @@ namespace LfrlAnvil.Mapping
 
         public bool TryMap(Type destinationType, object source, [MaybeNullWhen( false )] out object result)
         {
-            var key = new MappingKey( source.GetType(), destinationType );
+            var key = new TypeMappingKey( source.GetType(), destinationType );
             if ( ! _stores.TryGetValue( key, out var store ) )
             {
                 result = default;
@@ -130,7 +130,7 @@ namespace LfrlAnvil.Mapping
             IEnumerable<TSource> source,
             [MaybeNullWhen( false )] out IEnumerable<TDestination> result)
         {
-            var key = new MappingKey( typeof( TSource ), typeof( TDestination ) );
+            var key = new TypeMappingKey( typeof( TSource ), typeof( TDestination ) );
             if ( ! _stores.TryGetValue( key, out var store ) )
             {
                 result = default;
@@ -151,7 +151,7 @@ namespace LfrlAnvil.Mapping
         [Pure]
         public bool IsConfigured(Type sourceType, Type destinationType)
         {
-            return _stores.ContainsKey( new MappingKey( sourceType, destinationType ) );
+            return _stores.ContainsKey( new TypeMappingKey( sourceType, destinationType ) );
         }
 
         [Pure]
@@ -179,7 +179,7 @@ namespace LfrlAnvil.Mapping
         }
 
         [Pure]
-        public IEnumerable<MappingKey> GetConfiguredMappings()
+        public IEnumerable<TypeMappingKey> GetConfiguredMappings()
         {
             return _stores.Keys;
         }
@@ -226,23 +226,23 @@ namespace LfrlAnvil.Mapping
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private static UndefinedMappingException UndefinedMappingException<TSource, TDestination>()
+        private static UndefinedTypeMappingException UndefinedMappingException<TSource, TDestination>()
         {
             return UndefinedMappingException( typeof( TSource ), typeof( TDestination ) );
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private static UndefinedMappingException UndefinedMappingException<TDestination>(Type sourceType)
+        private static UndefinedTypeMappingException UndefinedMappingException<TDestination>(Type sourceType)
         {
             return UndefinedMappingException( sourceType, typeof( TDestination ) );
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private static UndefinedMappingException UndefinedMappingException(Type sourceType, Type destinationType)
+        private static UndefinedTypeMappingException UndefinedMappingException(Type sourceType, Type destinationType)
         {
-            return new UndefinedMappingException( sourceType, destinationType );
+            return new UndefinedTypeMappingException( sourceType, destinationType );
         }
     }
 }

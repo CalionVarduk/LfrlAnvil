@@ -2,9 +2,9 @@
 
 namespace LfrlAnvil.Mapping.Internal
 {
-    public readonly struct MappingKey : IEquatable<MappingKey>
+    public readonly struct TypeMappingKey : IEquatable<TypeMappingKey>
     {
-        public MappingKey(Type sourceType, Type destinationType)
+        public TypeMappingKey(Type sourceType, Type destinationType)
         {
             SourceType = sourceType;
             DestinationType = destinationType;
@@ -15,7 +15,7 @@ namespace LfrlAnvil.Mapping.Internal
 
         public override string ToString()
         {
-            return $"{nameof( MappingKey )}({SourceType?.FullName} => {DestinationType?.FullName})";
+            return $"{nameof( TypeMappingKey )}({SourceType?.FullName} => {DestinationType?.FullName})";
         }
 
         public override int GetHashCode()
@@ -25,20 +25,20 @@ namespace LfrlAnvil.Mapping.Internal
 
         public override bool Equals(object obj)
         {
-            return obj is MappingKey k && Equals( k );
+            return obj is TypeMappingKey k && Equals( k );
         }
 
-        public bool Equals(MappingKey other)
+        public bool Equals(TypeMappingKey other)
         {
             return SourceType == other.SourceType && DestinationType == other.DestinationType;
         }
 
-        public static bool operator ==(MappingKey a, MappingKey b)
+        public static bool operator ==(TypeMappingKey a, TypeMappingKey b)
         {
             return a.Equals( b );
         }
 
-        public static bool operator !=(MappingKey a, MappingKey b)
+        public static bool operator !=(TypeMappingKey a, TypeMappingKey b)
         {
             return ! a.Equals( b );
         }
