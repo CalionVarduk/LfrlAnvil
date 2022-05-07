@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Mapping
 {
@@ -14,6 +16,8 @@ namespace LfrlAnvil.Mapping
         public Type SourceType { get; }
         public Type DestinationType { get; }
 
+        [Pure]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static string GetMessage(Type sourceType, Type destinationType)
         {
             var sourceText = sourceType.FullName;
