@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
+using LfrlAnvil.Mapping.Internal;
 
 namespace LfrlAnvil.Mapping
 {
@@ -53,6 +54,9 @@ namespace LfrlAnvil.Mapping
 
         [Pure]
         bool IsConfiguredAsDestinationType(Type type);
+
+        [Pure]
+        IEnumerable<MappingKey> GetConfiguredMappings();
 
         [Pure]
         IEnumerable<Type> GetConfiguredSourceTypes<TDestination>();
