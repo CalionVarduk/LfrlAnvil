@@ -4,7 +4,7 @@ namespace LfrlAnvil.Requests.Tests
 {
     public sealed class TestRequestClass : IRequest<TestRequestClass, int> { }
 
-    public sealed class InvalidTestRequestClass : IRequest<InvalidTestRequestClass, int>, IRequest<TestRequestClass, int> { }
+    public sealed class InvalidTestRequestClass : IRequest<TestRequestClass, int> { }
 
     public sealed class TestAsyncTaskRequestClass : IAsyncTaskRequest<TestAsyncTaskRequestClass, int>
     {

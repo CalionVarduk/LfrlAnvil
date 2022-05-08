@@ -48,16 +48,10 @@ namespace LfrlAnvil.Requests.Tests.RequestDispatcherTests
         [Fact]
         public void Dispatch_ForRequestClass_ShouldThrowInvalidRequestTypeException_WhenRequestTypeIsInvalid()
         {
-            var request = new InvalidTestRequestClass();
-            var expectedResult = Fixture.Create<int>();
-            var handler = Substitute.For<IRequestHandler<InvalidTestRequestClass, int>>();
-            handler.Handle( request ).Returns( _ => expectedResult );
-
             var factory = Substitute.For<IRequestHandlerFactory>();
-            factory.TryCreate<InvalidTestRequestClass, int>().Returns( _ => handler );
             var sut = new RequestDispatcher( factory );
 
-            var action = Lambda.Of( () => sut.Dispatch<TestRequestClass, int>( new InvalidTestRequestClass() ) );
+            var action = Lambda.Of( () => sut.Dispatch( new InvalidTestRequestClass() ) );
 
             using ( new AssertionScope() )
             {
@@ -142,16 +136,10 @@ namespace LfrlAnvil.Requests.Tests.RequestDispatcherTests
         [Fact]
         public void TryDispatch_ForRequestClass_ShouldThrowInvalidRequestTypeException_WhenRequestTypeIsInvalid()
         {
-            var request = new InvalidTestRequestClass();
-            var expectedResult = Fixture.Create<int>();
-            var handler = Substitute.For<IRequestHandler<InvalidTestRequestClass, int>>();
-            handler.Handle( request ).Returns( _ => expectedResult );
-
             var factory = Substitute.For<IRequestHandlerFactory>();
-            factory.TryCreate<InvalidTestRequestClass, int>().Returns( _ => handler );
             var sut = new RequestDispatcher( factory );
 
-            var action = Lambda.Of( () => sut.TryDispatch<TestRequestClass, int>( new InvalidTestRequestClass(), out _ ) );
+            var action = Lambda.Of( () => sut.TryDispatch( new InvalidTestRequestClass(), out _ ) );
 
             using ( new AssertionScope() )
             {
