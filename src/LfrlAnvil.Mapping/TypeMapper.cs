@@ -24,7 +24,7 @@ namespace LfrlAnvil.Mapping
         public TDestination Map<TSource, TDestination>(TSource source)
         {
             if ( ! TryMap<TSource, TDestination>( source, out var result ) )
-                throw UndefinedMappingException<TSource, TDestination>();
+                throw UndefinedTypeMappingException<TSource, TDestination>();
 
             return result;
         }
@@ -33,7 +33,7 @@ namespace LfrlAnvil.Mapping
         public TDestination Map<TDestination>(object source)
         {
             if ( ! TryMap<TDestination>( source, out var result ) )
-                throw UndefinedMappingException<TDestination>( source.GetType() );
+                throw UndefinedTypeMappingException<TDestination>( source.GetType() );
 
             return result;
         }
@@ -49,7 +49,7 @@ namespace LfrlAnvil.Mapping
         public object Map(Type destinationType, object source)
         {
             if ( ! TryMap( destinationType, source, out var result ) )
-                throw UndefinedMappingException( source.GetType(), destinationType );
+                throw UndefinedTypeMappingException( source.GetType(), destinationType );
 
             return result;
         }
@@ -58,7 +58,7 @@ namespace LfrlAnvil.Mapping
         public IEnumerable<TDestination> MapMany<TSource, TDestination>(IEnumerable<TSource> source)
         {
             if ( ! TryMapMany<TSource, TDestination>( source, out var result ) )
-                throw UndefinedMappingException<TSource, TDestination>();
+                throw UndefinedTypeMappingException<TSource, TDestination>();
 
             return result;
         }
@@ -226,21 +226,21 @@ namespace LfrlAnvil.Mapping
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private static UndefinedTypeMappingException UndefinedMappingException<TSource, TDestination>()
+        private static UndefinedTypeMappingException UndefinedTypeMappingException<TSource, TDestination>()
         {
-            return UndefinedMappingException( typeof( TSource ), typeof( TDestination ) );
+            return UndefinedTypeMappingException( typeof( TSource ), typeof( TDestination ) );
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private static UndefinedTypeMappingException UndefinedMappingException<TDestination>(Type sourceType)
+        private static UndefinedTypeMappingException UndefinedTypeMappingException<TDestination>(Type sourceType)
         {
-            return UndefinedMappingException( sourceType, typeof( TDestination ) );
+            return UndefinedTypeMappingException( sourceType, typeof( TDestination ) );
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private static UndefinedTypeMappingException UndefinedMappingException(Type sourceType, Type destinationType)
+        private static UndefinedTypeMappingException UndefinedTypeMappingException(Type sourceType, Type destinationType)
         {
             return new UndefinedTypeMappingException( sourceType, destinationType );
         }

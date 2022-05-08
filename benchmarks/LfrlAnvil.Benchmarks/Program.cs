@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using BenchmarkDotNet.Running;
 using CommandLine;
 using LfrlAnvil.Benchmarks.CL;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Benchmarks
 {
@@ -20,10 +20,9 @@ namespace LfrlAnvil.Benchmarks
 
         private static void RunBenchmarks(CommandLineBenchmarkOptions options)
         {
-            var benchmarkLocator = new BenchmarkLocator();
-            var types = benchmarkLocator.LocateTypes( options );
+            var types = BenchmarkLocator.LocateTypes( options ).Materialize();
 
-            if ( ! types.Any() )
+            if ( types.Count == 0 )
                 Console.WriteLine( "No benchmark option has been provided." );
 
             foreach ( var t in types )

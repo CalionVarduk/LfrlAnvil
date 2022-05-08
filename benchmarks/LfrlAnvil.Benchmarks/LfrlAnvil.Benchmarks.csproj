@@ -25,6 +25,7 @@
     <ProjectReference Include="..\..\src\LfrlAnvil.Collections\LfrlAnvil.Collections.csproj" />
     <ProjectReference Include="..\..\src\LfrlAnvil.Core\LfrlAnvil.Core.csproj" />
     <ProjectReference Include="..\..\src\LfrlAnvil.Functional\LfrlAnvil.Functional.csproj" />
+    <ProjectReference Include="..\..\src\LfrlAnvil.Requests\LfrlAnvil.Requests.csproj" />
   </ItemGroup>
 
 </Project>

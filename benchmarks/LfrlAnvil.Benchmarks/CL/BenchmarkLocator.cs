@@ -5,9 +5,9 @@ using System.Reflection;
 
 namespace LfrlAnvil.Benchmarks.CL
 {
-    public class BenchmarkLocator
+    public static class BenchmarkLocator
     {
-        public IEnumerable<Type> LocateTypes(CommandLineBenchmarkOptions? options)
+        public static IEnumerable<Type> LocateTypes(CommandLineBenchmarkOptions? options)
         {
             if ( options is null )
                 return Enumerable.Empty<Type>();
@@ -15,7 +15,7 @@ namespace LfrlAnvil.Benchmarks.CL
             var benchmarkProperties = FindBenchmarkProperties();
 
             var types = benchmarkProperties
-                .Where( x => ((bool)x.Property.GetValue( options )!) == true )
+                .Where( x => (bool)x.Property.GetValue( options )! )
                 .Select( x => x.BenchmarkType )
                 .ToList();
 
@@ -29,7 +29,7 @@ namespace LfrlAnvil.Benchmarks.CL
                 .Where( p => p.PropertyType == typeof( bool ) )
                 .Select( p => (Property: p, Attribute: GetBenchmarkAttribute( p )) )
                 .Where( x => x.Attribute is not null )
-                .Select( x => (Property: x.Property, BenchmarkType: x.Attribute!.BenchmarkType) )
+                .Select( x => (x.Property, x.Attribute!.BenchmarkType) )
                 .ToList();
 
             return result;

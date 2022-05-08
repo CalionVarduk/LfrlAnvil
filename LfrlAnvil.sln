@@ -41,9 +41,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.Mapping", "src\Lf
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.Mapping.Tests", "tests\LfrlAnvil.Mapping.Tests\LfrlAnvil.Mapping.Tests.csproj", "{72B43CB5-44B4-46E6-92DE-59948E2F8DC7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.Process", "src\LfrlAnvil.Process\LfrlAnvil.Process.csproj", "{81B0C9AC-4939-4429-9995-FA015DBFC378}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.Requests", "src\LfrlAnvil.Requests\LfrlAnvil.Requests.csproj", "{81B0C9AC-4939-4429-9995-FA015DBFC378}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.Process.Tests", "tests\LfrlAnvil.Process.Tests\LfrlAnvil.Process.Tests.csproj", "{A01A8E49-712C-46D9-9230-CBFE7483DD18}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.Requests.Tests", "tests\LfrlAnvil.Requests.Tests\LfrlAnvil.Requests.Tests.csproj", "{A01A8E49-712C-46D9-9230-CBFE7483DD18}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

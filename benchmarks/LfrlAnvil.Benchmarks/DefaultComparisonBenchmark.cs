@@ -34,6 +34,7 @@ namespace LfrlAnvil.Benchmarks
         [Benchmark]
         public bool DefaultComparison_String_IsNull()
         {
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             return _valueString is null;
         }
 

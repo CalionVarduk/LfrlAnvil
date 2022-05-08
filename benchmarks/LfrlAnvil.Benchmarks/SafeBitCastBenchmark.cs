@@ -107,19 +107,18 @@ namespace LfrlAnvil.Benchmarks
         private struct ExprConvertTest<T>
             where T : struct, IConvertible
         {
-            public static readonly TypeCode TypeCode = default( T ).GetTypeCode();
-            public static readonly Func<ulong, T> _converter;
+            public static readonly Func<ulong, T> Converter;
 
             static ExprConvertTest()
             {
                 var parameter = Expression.Parameter( typeof( ulong ), "value" );
                 var convertTo = Expression.Convert( parameter, typeof( T ) );
-                _converter = Expression.Lambda<Func<ulong, T>>( convertTo, parameter ).Compile();
+                Converter = Expression.Lambda<Func<ulong, T>>( convertTo, parameter ).Compile();
             }
 
             public static T Convert(ulong value)
             {
-                return _converter( value );
+                return Converter( value );
             }
         }
     }
