@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
-using LfrlAnvil.Extensions;
+using LfrlAnvil.Mapping.Exceptions;
 using LfrlAnvil.Mapping.Internal;
 
 namespace LfrlAnvil.Mapping
@@ -23,9 +22,15 @@ namespace LfrlAnvil.Mapping
         {
             if ( configuration is TypeMappingConfigurationModule module )
             {
-                Ensure.NotRefEquals( module, this, nameof( module ) );
-                Ensure.IsNull( module.Parent, nameof( module ) + "." + nameof( module.Parent ) );
-                EnsureLackOfCyclicModuleReference( module );
+                if ( ReferenceEquals( module, this ) )
+                    throw ReferenceToSelfException( nameof( configuration ) );
+
+                if ( module.Parent is not null )
+                    throw SubmoduleAlreadyOwnedException( nameof( configuration ) );
+
+                if ( CyclicReferenceDetected( module ) )
+                    throw CyclicReferenceException( nameof( configuration ) );
+
                 module.Parent = this;
             }
 
@@ -45,17 +50,44 @@ namespace LfrlAnvil.Mapping
             return _configurations.OfType<TypeMappingConfigurationModule>();
         }
 
-        private void EnsureLackOfCyclicModuleReference(TypeMappingConfigurationModule moduleToAdd)
+        [Pure]
+        private bool CyclicReferenceDetected(TypeMappingConfigurationModule module)
         {
-            var submoduleTree = moduleToAdd.VisitMany( m => m.GetSubmodules() );
-            if ( submoduleTree.Any( m => m == this ) )
-                throw CyclicModuleReferenceException();
+            var stack = new Stack<TypeMappingConfigurationModule>( module.GetSubmodules() );
+            while ( stack.TryPop( out var submodule ) )
+            {
+                if ( ReferenceEquals( submodule, this ) )
+                    return true;
+
+                foreach ( var s in submodule.GetSubmodules() )
+                    stack.Push( s );
+            }
+
+            return false;
         }
 
         [Pure]
-        private static ArgumentException CyclicModuleReferenceException()
+        private static InvalidTypeMappingSubmoduleConfigurationException ReferenceToSelfException(string paramName)
         {
-            return new ArgumentException( "Failed to configure mapping submodule due to a cyclic reference." );
+            return new InvalidTypeMappingSubmoduleConfigurationException(
+                Resources.InvalidTypeMappingSubmoduleConfigurationReferenceToSelf,
+                paramName );
+        }
+
+        [Pure]
+        private static InvalidTypeMappingSubmoduleConfigurationException SubmoduleAlreadyOwnedException(string paramName)
+        {
+            return new InvalidTypeMappingSubmoduleConfigurationException(
+                Resources.InvalidTypeMappingSubmoduleConfigurationSubmoduleAlreadyOwned,
+                paramName );
+        }
+
+        [Pure]
+        private static InvalidTypeMappingSubmoduleConfigurationException CyclicReferenceException(string paramName)
+        {
+            return new InvalidTypeMappingSubmoduleConfigurationException(
+                Resources.InvalidTypeMappingSubmoduleConfigurationCyclicReference,
+                paramName );
         }
     }
 }

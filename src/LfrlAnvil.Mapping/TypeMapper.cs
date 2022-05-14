@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Mapping.Exceptions;
 using LfrlAnvil.Mapping.Internal;
 
 namespace LfrlAnvil.Mapping

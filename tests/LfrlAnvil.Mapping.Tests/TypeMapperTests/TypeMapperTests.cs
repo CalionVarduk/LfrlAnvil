@@ -3,6 +3,7 @@ using System.Linq;
 using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlAnvil.Functional;
+using LfrlAnvil.Mapping.Exceptions;
 using LfrlAnvil.Mapping.Internal;
 using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;

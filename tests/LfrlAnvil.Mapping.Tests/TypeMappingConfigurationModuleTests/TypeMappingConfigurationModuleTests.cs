@@ -3,6 +3,7 @@ using System.Linq;
 using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlAnvil.Functional;
+using LfrlAnvil.Mapping.Exceptions;
 using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using Xunit;
@@ -106,15 +107,15 @@ namespace LfrlAnvil.Mapping.Tests.TypeMappingConfigurationModuleTests
         }
 
         [Fact]
-        public void Configure_ShouldThrowArgumentException_WhenAddingSelf()
+        public void Configure_ShouldThrowInvalidTypeMappingSubmoduleConfigurationException_WhenAddingSelf()
         {
             var sut = new TypeMappingConfigurationModule();
             var action = Lambda.Of( () => sut.Configure( sut ) );
-            action.Should().ThrowExactly<ArgumentException>();
+            action.Should().ThrowExactly<InvalidTypeMappingSubmoduleConfigurationException>();
         }
 
         [Fact]
-        public void Configure_ShouldThrowArgumentException_WhenAddingModuleWithParent()
+        public void Configure_ShouldThrowInvalidTypeMappingSubmoduleConfigurationException_WhenAddingModuleWithParent()
         {
             var other = new TypeMappingConfigurationModule();
             var sut = new TypeMappingConfigurationModule();
@@ -122,11 +123,11 @@ namespace LfrlAnvil.Mapping.Tests.TypeMappingConfigurationModuleTests
 
             var action = Lambda.Of( () => sut.Configure( other ) );
 
-            action.Should().ThrowExactly<ArgumentException>();
+            action.Should().ThrowExactly<InvalidTypeMappingSubmoduleConfigurationException>();
         }
 
         [Fact]
-        public void Configure_ShouldThrowArgumentException_WhenItLeadsToCyclicReference()
+        public void Configure_ShouldThrowInvalidTypeMappingSubmoduleConfigurationException_WhenItLeadsToCyclicReference()
         {
             var other = new TypeMappingConfigurationModule();
             var sut = new TypeMappingConfigurationModule();
@@ -134,11 +135,11 @@ namespace LfrlAnvil.Mapping.Tests.TypeMappingConfigurationModuleTests
 
             var action = Lambda.Of( () => sut.Configure( other ) );
 
-            action.Should().ThrowExactly<ArgumentException>();
+            action.Should().ThrowExactly<InvalidTypeMappingSubmoduleConfigurationException>();
         }
 
         [Fact]
-        public void Configure_ShouldThrowArgumentException_WhenItLeadsToIndirectCyclicReference()
+        public void Configure_ShouldThrowInvalidTypeMappingSubmoduleConfigurationException_WhenItLeadsToIndirectCyclicReference()
         {
             var root = new TypeMappingConfigurationModule();
             var other = new TypeMappingConfigurationModule();
@@ -148,7 +149,7 @@ namespace LfrlAnvil.Mapping.Tests.TypeMappingConfigurationModuleTests
 
             var action = Lambda.Of( () => sut.Configure( root ) );
 
-            action.Should().ThrowExactly<ArgumentException>();
+            action.Should().ThrowExactly<InvalidTypeMappingSubmoduleConfigurationException>();
         }
     }
 }
