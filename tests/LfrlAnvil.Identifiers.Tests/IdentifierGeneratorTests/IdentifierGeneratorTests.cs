@@ -6,6 +6,7 @@ using FluentAssertions.Execution;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Generators;
+using LfrlAnvil.Identifiers.Exceptions;
 using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.Attributes;
 using NSubstitute;
@@ -243,7 +244,7 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
 
         [Fact]
         public void
-            Generate_ShouldThrowInvalidOperationException_WhenGeneratingNextTimeForTheCurrentHighValueAndExceedingLowValueBoundsAndForbiddenStrategy()
+            Generate_ShouldThrowIdentifierGenerationException_WhenGeneratingNextTimeForTheCurrentHighValueAndExceedingLowValueBoundsAndForbiddenStrategy()
         {
             var timestamp = Timestamp.Zero;
             var timestampProvider = GetTimestampProviderMock( timestamp );
@@ -260,11 +261,11 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
 
             var action = Lambda.Of( () => sut.Generate() );
 
-            action.Should().ThrowExactly<InvalidOperationException>();
+            action.Should().ThrowExactly<IdentifierGenerationException>();
         }
 
         [Fact]
-        public void Generate_ShouldThrowInvalidOperationException_WhenNextHighValueIsGreaterThanLastAndMaxHighValueIsExceeded()
+        public void Generate_ShouldThrowIdentifierGenerationException_WhenNextHighValueIsGreaterThanLastAndMaxHighValueIsExceeded()
         {
             var startTimestamp = Timestamp.Zero;
             var nextTimestamp = new Timestamp( DateTime.MaxValue ).Add( Duration.FromTicks( 1 ) );
@@ -274,14 +275,15 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
 
             var action = Lambda.Of( () => sut.Generate() );
 
-            action.Should().ThrowExactly<InvalidOperationException>();
+            action.Should().ThrowExactly<IdentifierGenerationException>();
         }
 
         [Theory]
         [MethodData( nameof( IdentifierGeneratorTestsData.GetGenerateNextTimeForTheCurrentMaxHighValueAndExceedingLowValueBoundsData ) )]
-        public void Generate_ShouldThrowInvalidOperationException_WhenGeneratingNextTimeForTheCurrentMaxHighValueAndExceedingLowValueBounds(
-            IdentifierGeneratorParams @params,
-            Timestamp maxTimestamp)
+        public void
+            Generate_ShouldThrowIdentifierGenerationException_WhenGeneratingNextTimeForTheCurrentMaxHighValueAndExceedingLowValueBounds(
+                IdentifierGeneratorParams @params,
+                Timestamp maxTimestamp)
         {
             var startTimestamp = @params.BaseTimestamp;
             var futureTimestamp = maxTimestamp.Add( @params.TimeEpsilon );
@@ -294,7 +296,7 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
 
             var action = Lambda.Of( () => sut.Generate() );
 
-            action.Should().ThrowExactly<InvalidOperationException>();
+            action.Should().ThrowExactly<IdentifierGenerationException>();
         }
 
         [Theory]
@@ -862,7 +864,7 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
         }
 
         [Fact]
-        public void IGeneratorGenerate_ShouldThrowInvalidOperationException_WhenOutOfLowValues()
+        public void IGeneratorGenerate_ShouldThrowIdentifierGenerationException_WhenOutOfLowValues()
         {
             var timestamp = Timestamp.Zero;
             var timestampProvider = GetTimestampProviderMock( timestamp );
@@ -879,7 +881,7 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
 
             var action = Lambda.Of( () => sut.Generate() );
 
-            action.Should().ThrowExactly<InvalidOperationException>();
+            action.Should().ThrowExactly<IdentifierGenerationException>();
         }
 
         [Fact]

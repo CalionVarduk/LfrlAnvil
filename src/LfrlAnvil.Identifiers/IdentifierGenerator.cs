@@ -5,6 +5,7 @@ using System.Threading;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Generators;
+using LfrlAnvil.Identifiers.Exceptions;
 
 namespace LfrlAnvil.Identifiers
 {
@@ -117,7 +118,7 @@ namespace LfrlAnvil.Identifiers
         public Identifier Generate()
         {
             if ( ! TryGenerate( out var id ) )
-                throw new InvalidOperationException( "failed to generate a new identifier" );
+                throw new IdentifierGenerationException();
 
             return id;
         }
