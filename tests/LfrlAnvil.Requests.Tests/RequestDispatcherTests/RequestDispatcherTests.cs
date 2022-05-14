@@ -3,6 +3,7 @@ using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlAnvil.Functional;
+using LfrlAnvil.Requests.Exceptions;
 using LfrlAnvil.TestExtensions;
 using NSubstitute;
 using Xunit;
