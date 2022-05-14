@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using FluentAssertions;
 using FluentAssertions.Execution;
+using LfrlAnvil.Functional.Exceptions;
 using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.Attributes;
 using LfrlAnvil.TestExtensions.FluentAssertions;
@@ -97,11 +98,11 @@ namespace LfrlAnvil.Functional.Tests.MaybeTests
         }
 
         [Fact]
-        public void GetValue_ShouldThrowArgumentNullException_WhenDoesntHaveValue()
+        public void GetValue_ShouldThrowValueAccessException_WhenDoesntHaveValue()
         {
             var sut = Maybe<T>.None;
             var action = Lambda.Of( () => sut.GetValue() );
-            action.Should().ThrowExactly<ArgumentNullException>();
+            action.Should().ThrowExactly<ValueAccessException>();
         }
 
         [Fact]
@@ -500,11 +501,11 @@ namespace LfrlAnvil.Functional.Tests.MaybeTests
         }
 
         [Fact]
-        public void TConversionOperator_ShouldThrowArgumentNullException_WhenDoesntHaveValue()
+        public void TConversionOperator_ShouldThrowValueAccessException_WhenDoesntHaveValue()
         {
             var sut = Maybe<T>.None;
             var action = Lambda.Of( () => (T)sut );
-            action.Should().ThrowExactly<ArgumentNullException>();
+            action.Should().ThrowExactly<ValueAccessException>();
         }
 
         [Theory]

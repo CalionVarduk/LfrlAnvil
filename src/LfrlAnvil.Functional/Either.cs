@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Functional.Exceptions;
 using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.Functional
@@ -65,9 +66,7 @@ namespace LfrlAnvil.Functional
             if ( HasFirst )
                 return First!;
 
-            throw new ArgumentNullException(
-                nameof( First ),
-                $"{typeof( Either<T1, T2> ).FullName} instance doesn't contain the {nameof( First )} value" );
+            throw new ValueAccessException( Resources.MissingFirstEitherValue<T1, T2>(), nameof( First ) );
         }
 
         [Pure]
@@ -84,9 +83,7 @@ namespace LfrlAnvil.Functional
             if ( HasSecond )
                 return Second!;
 
-            throw new ArgumentNullException(
-                nameof( Second ),
-                $"{typeof( Either<T1, T2> ).FullName} instance doesn't contain the {nameof( Second )} value" );
+            throw new ValueAccessException( Resources.MissingSecondEitherValue<T1, T2>(), nameof( Second ) );
         }
 
         [Pure]

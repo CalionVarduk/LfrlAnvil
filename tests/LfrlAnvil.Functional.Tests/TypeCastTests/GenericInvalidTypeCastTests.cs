@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
+using LfrlAnvil.Functional.Exceptions;
 using LfrlAnvil.TestExtensions.Attributes;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
@@ -28,14 +29,14 @@ namespace LfrlAnvil.Functional.Tests.TypeCastTests
         }
 
         [Fact]
-        public void GetResult_ShouldThrowInvalidCastException()
+        public void GetResult_ShouldThrowValueAccessException()
         {
             var value = Fixture.Create<TSource>();
             var sut = (TypeCast<TSource, TDestination>)value;
 
             var action = Lambda.Of( () => sut.GetResult() );
 
-            action.Should().ThrowExactly<InvalidCastException>();
+            action.Should().ThrowExactly<ValueAccessException>();
         }
 
         [Fact]
@@ -256,14 +257,14 @@ namespace LfrlAnvil.Functional.Tests.TypeCastTests
         }
 
         [Fact]
-        public void TDestinationConversionOperator_ShouldThrowInvalidCastException()
+        public void TDestinationConversionOperator_ShouldThrowValueAccessException()
         {
             var value = Fixture.Create<TSource>();
             var sut = (TypeCast<TSource, TDestination>)value;
 
             var action = Lambda.Of( () => (TDestination)sut );
 
-            action.Should().ThrowExactly<InvalidCastException>();
+            action.Should().ThrowExactly<ValueAccessException>();
         }
 
         [Theory]

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Functional.Exceptions;
 using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.Functional
@@ -59,7 +60,7 @@ namespace LfrlAnvil.Functional
             if ( HasValue )
                 return Value!;
 
-            throw new ArgumentNullException( nameof( Value ), $"{typeof( Maybe<T> ).FullName} instance doesn't contain a value" );
+            throw new ValueAccessException( Resources.MissingMaybeValue<T>(), nameof( Value ) );
         }
 
         [Pure]

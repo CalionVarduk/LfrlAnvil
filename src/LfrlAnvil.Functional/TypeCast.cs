@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Functional.Exceptions;
 using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.Functional
@@ -71,8 +72,7 @@ namespace LfrlAnvil.Functional
             if ( IsValid )
                 return Result!;
 
-            throw new InvalidCastException(
-                $"{typeof( TypeCast<TSource, TDestination> ).FullName} instance doesn't contain a valid result" );
+            throw new ValueAccessException( Resources.MissingTypeCastResult<TSource, TDestination>(), nameof( Result ) );
         }
 
         [Pure]

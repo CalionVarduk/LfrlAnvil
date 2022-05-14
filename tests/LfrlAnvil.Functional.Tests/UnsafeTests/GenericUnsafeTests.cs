@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
+using LfrlAnvil.Functional.Exceptions;
 using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.Attributes;
 using LfrlAnvil.TestExtensions.FluentAssertions;
@@ -116,14 +117,14 @@ namespace LfrlAnvil.Functional.Tests.UnsafeTests
         }
 
         [Fact]
-        public void GetValue_ShouldThrowArgumentNullException_WhenHasError()
+        public void GetValue_ShouldThrowValueAccessException_WhenHasError()
         {
             var error = new Exception();
             IUnsafe sut = (Unsafe<T>)error;
 
             var action = Lambda.Of( () => sut.GetValue() );
 
-            action.Should().ThrowExactly<ArgumentNullException>();
+            action.Should().ThrowExactly<ValueAccessException>();
         }
 
         [Fact]
@@ -160,14 +161,14 @@ namespace LfrlAnvil.Functional.Tests.UnsafeTests
         }
 
         [Fact]
-        public void GetError_ShouldThrowArgumentNullException_WhenHasValue()
+        public void GetError_ShouldThrowValueAccessException_WhenHasValue()
         {
             var value = Fixture.Create<T>();
             IUnsafe sut = (Unsafe<T>)value;
 
             var action = Lambda.Of( () => sut.GetError() );
 
-            action.Should().ThrowExactly<ArgumentNullException>();
+            action.Should().ThrowExactly<ValueAccessException>();
         }
 
         [Fact]
@@ -657,14 +658,14 @@ namespace LfrlAnvil.Functional.Tests.UnsafeTests
         }
 
         [Fact]
-        public void TConversionOperator_ShouldThrowArgumentNullException_WhenHasError()
+        public void TConversionOperator_ShouldThrowValueAccessException_WhenHasError()
         {
             var error = new Exception();
             var sut = (Unsafe<T>)error;
 
             var action = Lambda.Of( () => (T)sut );
 
-            action.Should().ThrowExactly<ArgumentNullException>();
+            action.Should().ThrowExactly<ValueAccessException>();
         }
 
         [Fact]
@@ -679,14 +680,14 @@ namespace LfrlAnvil.Functional.Tests.UnsafeTests
         }
 
         [Fact]
-        public void ExceptionConversionOperator_ShouldThrowArgumentNullException_WhenHasValue()
+        public void ExceptionConversionOperator_ShouldThrowValueAccessException_WhenHasValue()
         {
             var value = Fixture.Create<T>();
             var sut = (Unsafe<T>)value;
 
             var action = Lambda.Of( () => (Exception)sut );
 
-            action.Should().ThrowExactly<ArgumentNullException>();
+            action.Should().ThrowExactly<ValueAccessException>();
         }
 
         [Theory]

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Functional.Exceptions;
 using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.Functional
@@ -67,9 +68,7 @@ namespace LfrlAnvil.Functional
             if ( IsOk )
                 return Value!;
 
-            throw new ArgumentNullException(
-                nameof( Value ),
-                $"{typeof( Unsafe<T> ).FullName} instance doesn't contain a value" );
+            throw new ValueAccessException( Resources.MissingUnsafeValue<T>(), nameof( Value ) );
         }
 
         [Pure]
@@ -86,9 +85,7 @@ namespace LfrlAnvil.Functional
             if ( HasError )
                 return Error!;
 
-            throw new ArgumentNullException(
-                nameof( Error ),
-                $"{typeof( Unsafe<T> ).FullName} instance doesn't contain an error" );
+            throw new ValueAccessException( Resources.MissingUnsafeError<T>(), nameof( Error ) );
         }
 
         [Pure]

@@ -2,6 +2,7 @@
 using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
+using LfrlAnvil.Functional.Exceptions;
 using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.Attributes;
 using LfrlAnvil.TestExtensions.FluentAssertions;
@@ -78,14 +79,14 @@ namespace LfrlAnvil.Functional.Tests.EitherTests
         }
 
         [Fact]
-        public void GetFirst_ShouldThrowArgumentNullException_WhenHasSecond()
+        public void GetFirst_ShouldThrowValueAccessException_WhenHasSecond()
         {
             var value = Fixture.Create<T2>();
             var sut = (Either<T1, T2>)value;
 
             var action = Lambda.Of( () => sut.GetFirst() );
 
-            action.Should().ThrowExactly<ArgumentNullException>();
+            action.Should().ThrowExactly<ValueAccessException>();
         }
 
         [Fact]
@@ -122,14 +123,14 @@ namespace LfrlAnvil.Functional.Tests.EitherTests
         }
 
         [Fact]
-        public void GetSecond_ShouldThrowArgumentNullException_WhenHasFirst()
+        public void GetSecond_ShouldThrowValueAccessException_WhenHasFirst()
         {
             var value = Fixture.Create<T1>();
             var sut = (Either<T1, T2>)value;
 
             var action = Lambda.Of( () => sut.GetSecond() );
 
-            action.Should().ThrowExactly<ArgumentNullException>();
+            action.Should().ThrowExactly<ValueAccessException>();
         }
 
         [Fact]
@@ -652,14 +653,14 @@ namespace LfrlAnvil.Functional.Tests.EitherTests
         }
 
         [Fact]
-        public void T1ConversionOperator_ShouldThrowArgumentNullException_WhenHasSecond()
+        public void T1ConversionOperator_ShouldThrowValueAccessException_WhenHasSecond()
         {
             var value = Fixture.Create<T2>();
             var sut = (Either<T1, T2>)value;
 
             var action = Lambda.Of( () => (T1)sut );
 
-            action.Should().ThrowExactly<ArgumentNullException>();
+            action.Should().ThrowExactly<ValueAccessException>();
         }
 
         [Fact]
@@ -674,14 +675,14 @@ namespace LfrlAnvil.Functional.Tests.EitherTests
         }
 
         [Fact]
-        public void T2ConversionOperator_ShouldThrowArgumentNullException_WhenHasFirst()
+        public void T2ConversionOperator_ShouldThrowValueAccessException_WhenHasFirst()
         {
             var value = Fixture.Create<T1>();
             var sut = (Either<T1, T2>)value;
 
             var action = Lambda.Of( () => (T2)sut );
 
-            action.Should().ThrowExactly<ArgumentNullException>();
+            action.Should().ThrowExactly<ValueAccessException>();
         }
 
         [Theory]
