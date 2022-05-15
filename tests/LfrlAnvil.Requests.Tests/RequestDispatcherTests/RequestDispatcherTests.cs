@@ -5,6 +5,7 @@ using FluentAssertions.Execution;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Requests.Exceptions;
 using LfrlAnvil.TestExtensions;
+using LfrlAnvil.TestExtensions.FluentAssertions;
 using NSubstitute;
 using Xunit;
 
@@ -39,11 +40,7 @@ namespace LfrlAnvil.Requests.Tests.RequestDispatcherTests
 
             var action = Lambda.Of( () => sut.Dispatch( new TestRequestClass() ) );
 
-            using ( new AssertionScope() )
-            {
-                var exception = action.Should().ThrowExactly<MissingRequestHandlerException>().And;
-                exception.RequestType.Should().Be( typeof( TestRequestClass ) );
-            }
+            action.Should().ThrowExactly<MissingRequestHandlerException>().AndMatch( e => e.RequestType == typeof( TestRequestClass ) );
         }
 
         [Fact]
@@ -54,12 +51,9 @@ namespace LfrlAnvil.Requests.Tests.RequestDispatcherTests
 
             var action = Lambda.Of( () => sut.Dispatch( new InvalidTestRequestClass() ) );
 
-            using ( new AssertionScope() )
-            {
-                var exception = action.Should().ThrowExactly<InvalidRequestTypeException>().And;
-                exception.RequestType.Should().Be( typeof( InvalidTestRequestClass ) );
-                exception.ExpectedType.Should().Be( typeof( TestRequestClass ) );
-            }
+            action.Should()
+                .ThrowExactly<InvalidRequestTypeException>()
+                .AndMatch( e => e.RequestType == typeof( InvalidTestRequestClass ) && e.ExpectedType == typeof( TestRequestClass ) );
         }
 
         [Fact]
@@ -88,12 +82,7 @@ namespace LfrlAnvil.Requests.Tests.RequestDispatcherTests
             var sut = new RequestDispatcher( factory );
 
             var action = Lambda.Of( () => sut.Dispatch<TestRequestStruct, int>( new TestRequestStruct() ) );
-
-            using ( new AssertionScope() )
-            {
-                var exception = action.Should().ThrowExactly<MissingRequestHandlerException>().And;
-                exception.RequestType.Should().Be( typeof( TestRequestStruct ) );
-            }
+            action.Should().ThrowExactly<MissingRequestHandlerException>().AndMatch( e => e.RequestType == typeof( TestRequestStruct ) );
         }
 
         [Fact]
@@ -142,12 +131,9 @@ namespace LfrlAnvil.Requests.Tests.RequestDispatcherTests
 
             var action = Lambda.Of( () => sut.TryDispatch( new InvalidTestRequestClass(), out _ ) );
 
-            using ( new AssertionScope() )
-            {
-                var exception = action.Should().ThrowExactly<InvalidRequestTypeException>().And;
-                exception.RequestType.Should().Be( typeof( InvalidTestRequestClass ) );
-                exception.ExpectedType.Should().Be( typeof( TestRequestClass ) );
-            }
+            action.Should()
+                .ThrowExactly<InvalidRequestTypeException>()
+                .AndMatch( e => e.RequestType == typeof( InvalidTestRequestClass ) && e.ExpectedType == typeof( TestRequestClass ) );
         }
 
         [Fact]

@@ -699,8 +699,12 @@ namespace LfrlAnvil.Chrono.Tests.ZonedDayTests
             TimeOfDay timeOfDay)
         {
             var sut = ZonedDay.Create( day, timeZone );
+
             var action = Lambda.Of( () => sut.GetDateTime( timeOfDay ) );
-            action.Should().ThrowExactly<InvalidZonedDateTimeException>();
+
+            action.Should()
+                .ThrowExactly<InvalidZonedDateTimeException>()
+                .AndMatch( e => e.DateTime == day + (TimeSpan)timeOfDay && ReferenceEquals( e.TimeZone, timeZone ) );
         }
 
         [Theory]

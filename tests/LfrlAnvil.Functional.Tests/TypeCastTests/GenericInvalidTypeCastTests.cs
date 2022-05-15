@@ -36,7 +36,9 @@ namespace LfrlAnvil.Functional.Tests.TypeCastTests
 
             var action = Lambda.Of( () => sut.GetResult() );
 
-            action.Should().ThrowExactly<ValueAccessException>();
+            action.Should()
+                .ThrowExactly<ValueAccessException>()
+                .AndMatch( e => e.MemberName == nameof( TypeCast<TSource, TDestination>.Result ) );
         }
 
         [Fact]
@@ -264,7 +266,9 @@ namespace LfrlAnvil.Functional.Tests.TypeCastTests
 
             var action = Lambda.Of( () => (TDestination)sut );
 
-            action.Should().ThrowExactly<ValueAccessException>();
+            action.Should()
+                .ThrowExactly<ValueAccessException>()
+                .AndMatch( e => e.MemberName == nameof( TypeCast<TSource, TDestination>.Result ) );
         }
 
         [Theory]

@@ -124,7 +124,7 @@ namespace LfrlAnvil.Functional.Tests.UnsafeTests
 
             var action = Lambda.Of( () => sut.GetValue() );
 
-            action.Should().ThrowExactly<ValueAccessException>();
+            action.Should().ThrowExactly<ValueAccessException>().AndMatch( e => e.MemberName == nameof( Unsafe<T>.Value ) );
         }
 
         [Fact]
@@ -168,7 +168,7 @@ namespace LfrlAnvil.Functional.Tests.UnsafeTests
 
             var action = Lambda.Of( () => sut.GetError() );
 
-            action.Should().ThrowExactly<ValueAccessException>();
+            action.Should().ThrowExactly<ValueAccessException>().AndMatch( e => e.MemberName == nameof( Unsafe<T>.Error ) );
         }
 
         [Fact]
@@ -665,7 +665,7 @@ namespace LfrlAnvil.Functional.Tests.UnsafeTests
 
             var action = Lambda.Of( () => (T)sut );
 
-            action.Should().ThrowExactly<ValueAccessException>();
+            action.Should().ThrowExactly<ValueAccessException>().AndMatch( e => e.MemberName == nameof( Unsafe<T>.Value ) );
         }
 
         [Fact]
@@ -687,7 +687,7 @@ namespace LfrlAnvil.Functional.Tests.UnsafeTests
 
             var action = Lambda.Of( () => (Exception)sut );
 
-            action.Should().ThrowExactly<ValueAccessException>();
+            action.Should().ThrowExactly<ValueAccessException>().AndMatch( e => e.MemberName == nameof( Unsafe<T>.Error ) );
         }
 
         [Theory]

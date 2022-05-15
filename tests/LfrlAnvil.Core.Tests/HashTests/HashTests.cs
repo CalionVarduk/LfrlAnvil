@@ -23,10 +23,11 @@ namespace LfrlAnvil.Tests.HashTests
         {
             var value = Fixture.CreateDefault<string>();
             var sut = Hash.Default;
+            var expected = HashCode.Combine( sut.Value, value );
 
             var result = sut.Add( value );
 
-            result.Value.Should().Be( 84696351 );
+            result.Value.Should().Be( expected );
         }
 
         [Fact]
@@ -34,10 +35,11 @@ namespace LfrlAnvil.Tests.HashTests
         {
             var value = 1234567890;
             var sut = Hash.Default;
+            var expected = HashCode.Combine( sut.Value, value );
 
             var result = sut.Add( value );
 
-            result.Value.Should().Be( -919047883 );
+            result.Value.Should().Be( expected );
         }
 
         [Fact]
@@ -45,10 +47,11 @@ namespace LfrlAnvil.Tests.HashTests
         {
             var range = new[] { 1234567890, 987654321, 1010101010 };
             var sut = Hash.Default;
+            var expected = HashCode.Combine( HashCode.Combine( HashCode.Combine( sut.Value, range[0] ), range[1] ), range[2] );
 
             var result = sut.AddRange( range );
 
-            result.Value.Should().Be( 104542330 );
+            result.Value.Should().Be( expected );
         }
 
         [Fact]

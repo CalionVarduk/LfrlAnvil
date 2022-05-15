@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
@@ -8,6 +7,7 @@ using LfrlAnvil.Chrono.Extensions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.Attributes;
+using LfrlAnvil.TestExtensions.FluentAssertions;
 using Xunit;
 
 namespace LfrlAnvil.Chrono.Tests.ZonedDateTimeTests
@@ -209,12 +209,9 @@ namespace LfrlAnvil.Chrono.Tests.ZonedDateTimeTests
         {
             var action = Lambda.Of( () => ZonedDateTime.Create( dateTime, timeZone ) );
 
-            using ( new AssertionScope() )
-            {
-                var exception = action.Should().ThrowExactly<InvalidZonedDateTimeException>().Subject.FirstOrDefault();
-                exception?.DateTime.Should().Be( dateTime );
-                exception?.TimeZone.Should().Be( timeZone );
-            }
+            action.Should()
+                .ThrowExactly<InvalidZonedDateTimeException>()
+                .AndMatch( e => e.DateTime == dateTime && ReferenceEquals( e.TimeZone, timeZone ) );
         }
 
         [Theory]
@@ -759,8 +756,12 @@ namespace LfrlAnvil.Chrono.Tests.ZonedDateTimeTests
             Period period)
         {
             var sut = ZonedDateTime.Create( dateTime, timeZone );
+
             var action = Lambda.Of( () => sut.Add( period ) );
-            action.Should().ThrowExactly<InvalidZonedDateTimeException>();
+
+            action.Should()
+                .ThrowExactly<InvalidZonedDateTimeException>()
+                .AndMatch( e => e.DateTime == dateTime.Add( period ) && ReferenceEquals( e.TimeZone, timeZone ) );
         }
 
         [Theory]
@@ -1195,8 +1196,12 @@ namespace LfrlAnvil.Chrono.Tests.ZonedDateTimeTests
             TimeOfDay newTime)
         {
             var sut = ZonedDateTime.Create( dateTime, timeZone );
+
             var action = Lambda.Of( () => sut.SetTimeOfDay( newTime ) );
-            action.Should().ThrowExactly<InvalidZonedDateTimeException>();
+
+            action.Should()
+                .ThrowExactly<InvalidZonedDateTimeException>()
+                .AndMatch( e => e.DateTime == dateTime.Date + (TimeSpan)newTime && ReferenceEquals( e.TimeZone, timeZone ) );
         }
 
         [Theory]

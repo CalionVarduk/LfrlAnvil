@@ -11,14 +11,14 @@ namespace LfrlAnvil.Collections
     public class MultiHashSet<T> : IMultiSet<T>
         where T : notnull
     {
-        private readonly Dictionary<T, Ref<int>> _map;
+        private readonly Dictionary<T, int> _map;
 
         public MultiHashSet()
             : this( EqualityComparer<T>.Default ) { }
 
         public MultiHashSet(IEqualityComparer<T> comparer)
         {
-            _map = new Dictionary<T, Ref<int>>( comparer );
+            _map = new Dictionary<T, int>( comparer );
             FullCount = 0;
         }
 
@@ -65,7 +65,7 @@ namespace LfrlAnvil.Collections
         [Pure]
         public int GetMultiplicity(T item)
         {
-            return _map.TryGetValue( item, out var multiplicity ) ? multiplicity.Value : 0;
+            return _map.GetValueOrDefault( item );
         }
 
         public int SetMultiplicity(T item, int value)
@@ -75,12 +75,11 @@ namespace LfrlAnvil.Collections
             if ( _map.TryGetValue( item, out var multiplicity ) )
             {
                 if ( value == 0 )
-                    return RemoveAllImpl( item, multiplicity.Value );
+                    return RemoveAllImpl( item, multiplicity );
 
-                var oldMultiplicity = multiplicity.Value;
-                FullCount += value - oldMultiplicity;
-                multiplicity.Value = value;
-                return oldMultiplicity;
+                FullCount += value - multiplicity;
+                _map[item] = value;
+                return multiplicity;
             }
 
             if ( value > 0 )
@@ -116,7 +115,7 @@ namespace LfrlAnvil.Collections
             if ( ! _map.TryGetValue( item, out var multiplicity ) )
                 return 0;
 
-            return RemoveAllImpl( item, multiplicity.Value );
+            return RemoveAllImpl( item, multiplicity );
         }
 
         public void Clear()
@@ -158,11 +157,11 @@ namespace LfrlAnvil.Collections
                     continue;
                 }
 
-                if ( multiplicity.Value >= count )
+                if ( multiplicity >= count )
                     continue;
 
-                FullCount += count - multiplicity.Value;
-                multiplicity.Value = count;
+                FullCount += count - multiplicity;
+                _map[item] = count;
             }
         }
 
@@ -178,27 +177,29 @@ namespace LfrlAnvil.Collections
             }
 
             var otherSet = GetOtherSet( other, Comparer );
-            var itemsToRemove = new List<T>();
+            var itemsToUpdate = new List<(T Item, int OldMultiplicity, int NewMultiplicity)>();
 
             foreach ( var (item, multiplicity) in _map )
             {
                 var count = otherSet.GetMultiplicity( item );
 
-                if ( count >= multiplicity.Value )
+                if ( count >= multiplicity )
                     continue;
 
-                if ( count > 0 )
+                itemsToUpdate.Add( (item, multiplicity, count) );
+            }
+
+            foreach ( var (item, oldMultiplicity, newMultiplicity) in itemsToUpdate )
+            {
+                if ( newMultiplicity > 0 )
                 {
-                    FullCount -= multiplicity.Value - count;
-                    multiplicity.Value = count;
+                    FullCount -= oldMultiplicity - newMultiplicity;
+                    _map[item] = newMultiplicity;
                     continue;
                 }
 
-                itemsToRemove.Add( item );
-            }
-
-            foreach ( var item in itemsToRemove )
                 RemoveAll( item );
+            }
         }
 
         public void SymmetricExceptWith(IEnumerable<Pair<T, int>> other)
@@ -220,9 +221,9 @@ namespace LfrlAnvil.Collections
                     continue;
                 }
 
-                var newMultiplicity = multiplicity.Value > count
-                    ? multiplicity.Value - count
-                    : count - multiplicity.Value;
+                var newMultiplicity = multiplicity > count
+                    ? multiplicity - count
+                    : count - multiplicity;
 
                 if ( newMultiplicity == 0 )
                 {
@@ -230,8 +231,8 @@ namespace LfrlAnvil.Collections
                     continue;
                 }
 
-                FullCount -= multiplicity.Value - newMultiplicity;
-                multiplicity.Value = newMultiplicity;
+                FullCount -= multiplicity - newMultiplicity;
+                _map[item] = newMultiplicity;
             }
         }
 
@@ -335,7 +336,7 @@ namespace LfrlAnvil.Collections
         [Pure]
         public IEnumerator<Pair<T, int>> GetEnumerator()
         {
-            return _map.Select( v => Pair.Create( v.Key, v.Value.Value ) ).GetEnumerator();
+            return _map.Select( v => Pair.Create( v.Key, v.Value ) ).GetEnumerator();
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -344,9 +345,10 @@ namespace LfrlAnvil.Collections
             if ( ! _map.TryGetValue( item, out var multiplicity ) )
                 return AddNewImpl( item, count );
 
-            multiplicity.Value = checked( multiplicity.Value + count );
+            multiplicity = checked( multiplicity + count );
+            _map[item] = multiplicity;
             FullCount += count;
-            return multiplicity.Value;
+            return multiplicity;
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -363,14 +365,15 @@ namespace LfrlAnvil.Collections
             if ( ! _map.TryGetValue( item, out var multiplicity ) )
                 return -1;
 
-            if ( multiplicity.Value > count )
+            if ( multiplicity > count )
             {
+                var newMultiplicity = multiplicity - count;
                 FullCount -= count;
-                multiplicity.Value -= count;
-                return multiplicity.Value;
+                _map[item] = newMultiplicity;
+                return newMultiplicity;
             }
 
-            FullCount -= multiplicity.Value;
+            FullCount -= multiplicity;
             _map.Remove( item );
             return 0;
         }

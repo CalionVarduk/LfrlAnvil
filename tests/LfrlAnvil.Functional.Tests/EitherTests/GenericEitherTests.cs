@@ -86,7 +86,7 @@ namespace LfrlAnvil.Functional.Tests.EitherTests
 
             var action = Lambda.Of( () => sut.GetFirst() );
 
-            action.Should().ThrowExactly<ValueAccessException>();
+            action.Should().ThrowExactly<ValueAccessException>().AndMatch( e => e.MemberName == nameof( Either<T1, T2>.First ) );
         }
 
         [Fact]
@@ -130,7 +130,7 @@ namespace LfrlAnvil.Functional.Tests.EitherTests
 
             var action = Lambda.Of( () => sut.GetSecond() );
 
-            action.Should().ThrowExactly<ValueAccessException>();
+            action.Should().ThrowExactly<ValueAccessException>().AndMatch( e => e.MemberName == nameof( Either<T1, T2>.Second ) );
         }
 
         [Fact]
@@ -660,7 +660,7 @@ namespace LfrlAnvil.Functional.Tests.EitherTests
 
             var action = Lambda.Of( () => (T1)sut );
 
-            action.Should().ThrowExactly<ValueAccessException>();
+            action.Should().ThrowExactly<ValueAccessException>().AndMatch( e => e.MemberName == nameof( Either<T1, T2>.First ) );
         }
 
         [Fact]
@@ -682,7 +682,7 @@ namespace LfrlAnvil.Functional.Tests.EitherTests
 
             var action = Lambda.Of( () => (T2)sut );
 
-            action.Should().ThrowExactly<ValueAccessException>();
+            action.Should().ThrowExactly<ValueAccessException>().AndMatch( e => e.MemberName == nameof( Either<T1, T2>.Second ) );
         }
 
         [Theory]

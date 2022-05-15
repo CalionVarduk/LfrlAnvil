@@ -104,12 +104,9 @@ namespace LfrlAnvil.Mapping.Tests.TypeMapperTests
 
             var action = Lambda.Of( () => sut.Map<int, string>( 1234 ) );
 
-            using ( new AssertionScope() )
-            {
-                var exception = action.Should().ThrowExactly<UndefinedTypeMappingException>().And;
-                exception?.SourceType.Should().Be( typeof( int ) );
-                exception?.DestinationType.Should().Be( typeof( string ) );
-            }
+            action.Should()
+                .ThrowExactly<UndefinedTypeMappingException>()
+                .AndMatch( e => e.SourceType == typeof( int ) && e.DestinationType == typeof( string ) );
         }
 
         [Fact]
@@ -159,12 +156,9 @@ namespace LfrlAnvil.Mapping.Tests.TypeMapperTests
 
             var action = Lambda.Of( () => sut.Map<string>( 1234 ) );
 
-            using ( new AssertionScope() )
-            {
-                var exception = action.Should().ThrowExactly<UndefinedTypeMappingException>().And;
-                exception?.SourceType.Should().Be( typeof( int ) );
-                exception?.DestinationType.Should().Be( typeof( string ) );
-            }
+            action.Should()
+                .ThrowExactly<UndefinedTypeMappingException>()
+                .AndMatch( e => e.SourceType == typeof( int ) && e.DestinationType == typeof( string ) );
         }
 
         [Fact]
@@ -229,12 +223,9 @@ namespace LfrlAnvil.Mapping.Tests.TypeMapperTests
 
             var action = Lambda.Of( () => sut.Map( 1234 ).To<string>() );
 
-            using ( new AssertionScope() )
-            {
-                var exception = action.Should().ThrowExactly<UndefinedTypeMappingException>().And;
-                exception?.SourceType.Should().Be( typeof( int ) );
-                exception?.DestinationType.Should().Be( typeof( string ) );
-            }
+            action.Should()
+                .ThrowExactly<UndefinedTypeMappingException>()
+                .AndMatch( e => e.SourceType == typeof( int ) && e.DestinationType == typeof( string ) );
         }
 
         [Fact]
@@ -284,12 +275,9 @@ namespace LfrlAnvil.Mapping.Tests.TypeMapperTests
 
             var action = Lambda.Of( () => sut.Map( typeof( string ), 1234 ) );
 
-            using ( new AssertionScope() )
-            {
-                var exception = action.Should().ThrowExactly<UndefinedTypeMappingException>().And;
-                exception?.SourceType.Should().Be( typeof( int ) );
-                exception?.DestinationType.Should().Be( typeof( string ) );
-            }
+            action.Should()
+                .ThrowExactly<UndefinedTypeMappingException>()
+                .AndMatch( e => e.SourceType == typeof( int ) && e.DestinationType == typeof( string ) );
         }
 
         [Fact]
@@ -342,12 +330,9 @@ namespace LfrlAnvil.Mapping.Tests.TypeMapperTests
 
             var action = Lambda.Of( () => sut.MapMany<int, string>( source ) );
 
-            using ( new AssertionScope() )
-            {
-                var exception = action.Should().ThrowExactly<UndefinedTypeMappingException>().And;
-                exception?.SourceType.Should().Be( typeof( int ) );
-                exception?.DestinationType.Should().Be( typeof( string ) );
-            }
+            action.Should()
+                .ThrowExactly<UndefinedTypeMappingException>()
+                .AndMatch( e => e.SourceType == typeof( int ) && e.DestinationType == typeof( string ) );
         }
 
         [Fact]
@@ -419,12 +404,9 @@ namespace LfrlAnvil.Mapping.Tests.TypeMapperTests
 
             var action = Lambda.Of( () => sut.MapMany( source ).To<string>() );
 
-            using ( new AssertionScope() )
-            {
-                var exception = action.Should().ThrowExactly<UndefinedTypeMappingException>().And;
-                exception?.SourceType.Should().Be( typeof( int ) );
-                exception?.DestinationType.Should().Be( typeof( string ) );
-            }
+            action.Should()
+                .ThrowExactly<UndefinedTypeMappingException>()
+                .AndMatch( e => e.SourceType == typeof( int ) && e.DestinationType == typeof( string ) );
         }
 
         [Fact]

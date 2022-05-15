@@ -102,7 +102,7 @@ namespace LfrlAnvil.Functional.Tests.MaybeTests
         {
             var sut = Maybe<T>.None;
             var action = Lambda.Of( () => sut.GetValue() );
-            action.Should().ThrowExactly<ValueAccessException>();
+            action.Should().ThrowExactly<ValueAccessException>().AndMatch( e => e.MemberName == nameof( Maybe<T>.Value ) );
         }
 
         [Fact]
@@ -505,7 +505,7 @@ namespace LfrlAnvil.Functional.Tests.MaybeTests
         {
             var sut = Maybe<T>.None;
             var action = Lambda.Of( () => (T)sut );
-            action.Should().ThrowExactly<ValueAccessException>();
+            action.Should().ThrowExactly<ValueAccessException>().AndMatch( e => e.MemberName == nameof( Maybe<T>.Value ) );
         }
 
         [Theory]

@@ -1,19 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Internal;
 
 namespace LfrlAnvil
 {
     public readonly struct Hash : IEquatable<Hash>, IComparable<Hash>, IComparable
     {
-        public const int Offset = unchecked( (int)2166136261 );
-        public const int Prime = 16777619;
-
-        public static readonly Hash Null = new Hash( 0 );
-        public static readonly Hash Default = new Hash( Offset );
+        public static readonly Hash Default = new Hash( HashCode.Combine( 0 ) );
 
         public readonly int Value;
 
@@ -65,9 +59,7 @@ namespace LfrlAnvil
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Hash Add<T>(T? obj)
         {
-            return Generic<T>.IsNull( obj )
-                ? new Hash( unchecked( (Value ^ Null.Value) * Prime ) )
-                : new Hash( unchecked( (Value ^ obj!.GetHashCode()) * Prime ) );
+            return new Hash( HashCode.Combine( Value, obj ) );
         }
 
         [Pure]
@@ -85,7 +77,11 @@ namespace LfrlAnvil
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public Hash AddRange<T>(params T?[] range)
         {
-            return AddRange( range.AsEnumerable() );
+            var result = new Hash( Value );
+            foreach ( var obj in range )
+                result = result.Add( obj );
+
+            return result;
         }
 
         [Pure]
