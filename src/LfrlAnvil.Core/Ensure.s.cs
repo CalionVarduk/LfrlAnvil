@@ -55,9 +55,8 @@ namespace LfrlAnvil
                 throw Exceptions.Null( paramName );
         }
 
-#pragma warning disable 8777
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static void IsNotNull<T>([NotNull] T? param, IEqualityComparer<T> comparer, string paramName = DefaultParamName)
+        public static void IsNotNull<T>(T? param, IEqualityComparer<T> comparer, string paramName = DefaultParamName)
         {
             if ( ! Generic<T>.IsReferenceType && ! Generic<T>.IsNullableType )
                 return;
@@ -65,7 +64,6 @@ namespace LfrlAnvil
             if ( comparer.Equals( param!, default! ) )
                 throw Exceptions.Null( paramName );
         }
-#pragma warning restore 8777
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static void IsDefault<T>(T? param, string paramName = DefaultParamName)
@@ -74,14 +72,12 @@ namespace LfrlAnvil
                 throw Exceptions.NotDefault( param, paramName );
         }
 
-#pragma warning disable 8777
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static void IsNotDefault<T>([NotNull] T? param, string paramName = DefaultParamName)
         {
             if ( Generic<T>.IsDefault( param ) )
                 throw Exceptions.Default( paramName );
         }
-#pragma warning restore 8777
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static void IsOfType<T>(object param, string paramName = DefaultParamName)

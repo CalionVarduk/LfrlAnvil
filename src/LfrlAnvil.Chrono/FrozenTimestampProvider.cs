@@ -1,9 +1,10 @@
 ﻿using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Chrono.Internal;
 
 namespace LfrlAnvil.Chrono
 {
-    public sealed class FrozenTimestampProvider : ITimestampProvider
+    public sealed class FrozenTimestampProvider : TimestampProviderBase
     {
         private readonly Timestamp _now;
 
@@ -14,7 +15,7 @@ namespace LfrlAnvil.Chrono
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public Timestamp GetNow()
+        public override Timestamp GetNow()
         {
             return _now;
         }

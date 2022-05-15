@@ -1,24 +1,22 @@
-﻿using System;
-using System.Diagnostics.Contracts;
+﻿using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Chrono.Internal;
 
 namespace LfrlAnvil.Chrono
 {
-    public sealed class FrozenZonedClock : IZonedClock
+    public sealed class FrozenZonedClock : ZonedClockBase
     {
         private readonly ZonedDateTime _now;
 
         public FrozenZonedClock(ZonedDateTime now)
+            : base( now.TimeZone )
         {
             _now = now;
-            TimeZone = now.TimeZone;
         }
-
-        public TimeZoneInfo TimeZone { get; }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public ZonedDateTime GetNow()
+        public override ZonedDateTime GetNow()
         {
             return _now;
         }

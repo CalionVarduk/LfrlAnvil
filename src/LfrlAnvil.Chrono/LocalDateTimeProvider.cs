@@ -5,13 +5,16 @@ using LfrlAnvil.Chrono.Internal;
 
 namespace LfrlAnvil.Chrono
 {
-    public sealed class TimestampProvider : TimestampProviderBase
+    public sealed class LocalDateTimeProvider : DateTimeProviderBase
     {
+        public LocalDateTimeProvider()
+            : base( DateTimeKind.Local ) { }
+
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public override Timestamp GetNow()
+        public override DateTime GetNow()
         {
-            return new Timestamp( DateTime.UtcNow );
+            return DateTime.Now;
         }
     }
 }

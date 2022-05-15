@@ -4,15 +4,16 @@ using LfrlAnvil.Chrono.Internal;
 
 namespace LfrlAnvil.Chrono
 {
-    public sealed class PreciseTimestampProvider : TimestampProviderBase
+    public sealed class PreciseLocalDateTimeProvider : DateTimeProviderBase
     {
-        private long _utcStartTicks = DateTime.UtcNow.Ticks - DateTime.UnixEpoch.Ticks;
+        private DateTime _start = DateTime.Now;
         private double _startTimestamp = Stopwatch.GetTimestamp();
 
-        public PreciseTimestampProvider()
+        public PreciseLocalDateTimeProvider()
             : this( ChronoConstants.TicksPerSecond ) { }
 
-        public PreciseTimestampProvider(long maxIdleTimeInTicks)
+        public PreciseLocalDateTimeProvider(long maxIdleTimeInTicks)
+            : base( DateTimeKind.Local )
         {
             Ensure.IsGreaterThan( maxIdleTimeInTicks, 0, nameof( maxIdleTimeInTicks ) );
             MaxIdleTimeInTicks = maxIdleTimeInTicks;
@@ -20,17 +21,17 @@ namespace LfrlAnvil.Chrono
 
         public double MaxIdleTimeInTicks { get; }
 
-        public override Timestamp GetNow()
+        public override DateTime GetNow()
         {
             var endTimestamp = Stopwatch.GetTimestamp();
             var idleTimeInTicks = (endTimestamp - _startTimestamp) / Stopwatch.Frequency * TimeSpan.TicksPerSecond;
 
             if ( idleTimeInTicks < MaxIdleTimeInTicks )
-                return new Timestamp( _utcStartTicks + (long)idleTimeInTicks );
+                return _start.AddTicks( (long)idleTimeInTicks );
 
             _startTimestamp = Stopwatch.GetTimestamp();
-            _utcStartTicks = DateTime.UtcNow.Ticks - DateTime.UnixEpoch.Ticks;
-            return new Timestamp( _utcStartTicks );
+            _start = DateTime.Now;
+            return _start;
         }
     }
 }

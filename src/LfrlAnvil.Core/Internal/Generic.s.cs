@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
@@ -13,7 +14,7 @@ namespace LfrlAnvil.Internal
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static bool IsNull(T? obj)
+        public static bool IsNull([NotNullWhen( false )] T? obj)
         {
             if ( IsReferenceType )
                 return ReferenceEquals( obj, null );
@@ -23,14 +24,14 @@ namespace LfrlAnvil.Internal
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static bool IsNotNull(T? obj)
+        public static bool IsNotNull([NotNullWhen( true )] T? obj)
         {
             return ! IsNull( obj );
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static bool IsDefault(T? obj)
+        public static bool IsDefault([NotNullWhen( false )] T? obj)
         {
             if ( IsReferenceType )
                 return ReferenceEquals( obj, null );
@@ -40,7 +41,7 @@ namespace LfrlAnvil.Internal
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static bool IsNotDefault(T? obj)
+        public static bool IsNotDefault([NotNullWhen( true )] T? obj)
         {
             return ! IsDefault( obj );
         }
@@ -63,14 +64,14 @@ namespace LfrlAnvil.Internal
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static string ToString(T? obj)
         {
-            return IsNull( obj ) ? string.Empty : obj!.ToString();
+            return IsNull( obj ) ? string.Empty : obj.ToString();
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static int CreateHashCode(T? obj)
         {
-            return IsNull( obj ) ? 0 : obj!.GetHashCode();
+            return IsNull( obj ) ? 0 : obj.GetHashCode();
         }
     }
 }
