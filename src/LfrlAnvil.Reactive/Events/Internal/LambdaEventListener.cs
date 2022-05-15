@@ -1,0 +1,26 @@
+﻿using System;
+
+namespace LfrlAnvil.Reactive.Events.Internal
+{
+    internal sealed class LambdaEventListener<TEvent> : EventListener<TEvent>
+    {
+        private readonly Action<TEvent> _react;
+        private readonly Action? _dispose;
+
+        internal LambdaEventListener(Action<TEvent> react, Action? dispose)
+        {
+            _react = react;
+            _dispose = dispose;
+        }
+
+        public override void React(TEvent @event)
+        {
+            _react( @event );
+        }
+
+        public override void OnDispose()
+        {
+            _dispose?.Invoke();
+        }
+    }
+}

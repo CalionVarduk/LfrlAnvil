@@ -45,6 +45,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.Requests", "src\L
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.Requests.Tests", "tests\LfrlAnvil.Requests.Tests\LfrlAnvil.Requests.Tests.csproj", "{A01A8E49-712C-46D9-9230-CBFE7483DD18}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.Reactive", "src\LfrlAnvil.Reactive\LfrlAnvil.Reactive.csproj", "{02A40600-B6B6-4BE4-86A1-9A3D64EB992E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.Reactive.Tests", "tests\LfrlAnvil.Reactive.Tests\LfrlAnvil.Reactive.Tests.csproj", "{D71A30B3-E7ED-463C-A8D5-E99398D7CA19}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -119,6 +123,14 @@ Global
 		{A01A8E49-712C-46D9-9230-CBFE7483DD18}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A01A8E49-712C-46D9-9230-CBFE7483DD18}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A01A8E49-712C-46D9-9230-CBFE7483DD18}.Release|Any CPU.Build.0 = Release|Any CPU
+		{02A40600-B6B6-4BE4-86A1-9A3D64EB992E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{02A40600-B6B6-4BE4-86A1-9A3D64EB992E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{02A40600-B6B6-4BE4-86A1-9A3D64EB992E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{02A40600-B6B6-4BE4-86A1-9A3D64EB992E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D71A30B3-E7ED-463C-A8D5-E99398D7CA19}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D71A30B3-E7ED-463C-A8D5-E99398D7CA19}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D71A30B3-E7ED-463C-A8D5-E99398D7CA19}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D71A30B3-E7ED-463C-A8D5-E99398D7CA19}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -141,6 +153,8 @@ Global
 		{72B43CB5-44B4-46E6-92DE-59948E2F8DC7} = {09DABFA2-E13A-419B-9EEC-11A014E1243C}
 		{81B0C9AC-4939-4429-9995-FA015DBFC378} = {DA5FF8FC-7936-4469-94B0-34EF8455EE5D}
 		{A01A8E49-712C-46D9-9230-CBFE7483DD18} = {09DABFA2-E13A-419B-9EEC-11A014E1243C}
+		{02A40600-B6B6-4BE4-86A1-9A3D64EB992E} = {DA5FF8FC-7936-4469-94B0-34EF8455EE5D}
+		{D71A30B3-E7ED-463C-A8D5-E99398D7CA19} = {09DABFA2-E13A-419B-9EEC-11A014E1243C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3FEF45BB-2269-4080-B6FD-C782F257A901}
