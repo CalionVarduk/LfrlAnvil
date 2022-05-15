@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using LfrlAnvil.Exceptions;
 
 namespace LfrlAnvil.Generators
 {
@@ -28,7 +29,7 @@ namespace LfrlAnvil.Generators
         public T Generate()
         {
             if ( ! TryGenerate( out var result ) )
-                throw new InvalidOperationException( "Failed to generate next value." );
+                throw new ValueGenerationException();
 
             return result;
         }

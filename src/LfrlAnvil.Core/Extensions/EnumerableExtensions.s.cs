@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Exceptions;
 using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.Extensions
@@ -203,7 +204,7 @@ namespace LfrlAnvil.Extensions
         {
             var result = source.TryMinMax( comparer );
             if ( result is null )
-                throw new InvalidOperationException( "Sequence contains no elements" );
+                throw new InvalidOperationException( ExceptionResources.SequenceContainsNoElements );
 
             return result.Value;
         }
@@ -470,7 +471,7 @@ namespace LfrlAnvil.Extensions
         {
             var result = source.TryMinMaxBy( minSelector, maxSelector, minComparer, maxComparer );
             if ( result is null )
-                throw new InvalidOperationException( "Sequence contains no elements" );
+                throw new InvalidOperationException( ExceptionResources.SequenceContainsNoElements );
 
             return result.Value;
         }

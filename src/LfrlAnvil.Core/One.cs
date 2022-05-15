@@ -1,6 +1,8 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using LfrlAnvil.Exceptions;
 
 namespace LfrlAnvil
 {
@@ -18,7 +20,9 @@ namespace LfrlAnvil
         {
             get
             {
-                Ensure.Equals( index, 0, nameof( index ) );
+                if ( index != 0 )
+                    throw new IndexOutOfRangeException( ExceptionResources.ExpectedIndexToBeZero );
+
                 return Value;
             }
         }

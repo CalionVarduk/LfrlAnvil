@@ -2,6 +2,7 @@
 using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Exceptions;
 
 namespace LfrlAnvil.Chrono
 {
@@ -320,7 +321,7 @@ namespace LfrlAnvil.Chrono
         public Duration Divide(double divisor)
         {
             if ( divisor == 0 )
-                throw new DivideByZeroException( "Attempted to divide by zero." );
+                throw new DivideByZeroException( ExceptionResources.DividedByZero );
 
             return FromTicks( (long)Math.Round( Ticks / divisor, MidpointRounding.AwayFromZero ) );
         }

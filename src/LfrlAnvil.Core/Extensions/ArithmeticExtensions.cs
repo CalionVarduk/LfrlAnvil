@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Exceptions;
 
 namespace LfrlAnvil.Extensions
 {
@@ -11,7 +12,7 @@ namespace LfrlAnvil.Extensions
         public static float EuclidModulo(this float a, float b)
         {
             if ( b == 0 )
-                throw new DivideByZeroException( "Attempted to divide by zero." );
+                throw new DivideByZeroException( ExceptionResources.DividedByZero );
 
             var r = a % b;
             return r < 0 ? r + b : r;
@@ -22,7 +23,7 @@ namespace LfrlAnvil.Extensions
         public static double EuclidModulo(this double a, double b)
         {
             if ( b == 0 )
-                throw new DivideByZeroException( "Attempted to divide by zero." );
+                throw new DivideByZeroException( ExceptionResources.DividedByZero );
 
             var r = a % b;
             return r < 0 ? r + b : r;

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Exceptions;
 
 namespace LfrlAnvil
 {
@@ -10,7 +11,7 @@ namespace LfrlAnvil
         public Bounds(T min, T max)
         {
             if ( min.CompareTo( max ) > 0 )
-                throw new ArgumentException( $"{nameof( Min )} ({min}) cannot be greater than {nameof( Max )} ({max})" );
+                throw new ArgumentException( ExceptionResources.MinCannotBeGreaterThanMax( min, max, nameof( Min ), nameof( Max ) ) );
 
             Min = min;
             Max = max;

@@ -2,6 +2,7 @@
 using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
+using LfrlAnvil.Exceptions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Generators;
 using LfrlAnvil.TestExtensions;
@@ -334,7 +335,7 @@ namespace LfrlAnvil.Tests.GeneratorsTests
         }
 
         [Fact]
-        public void Generate_ShouldThrowInvalidOperationException_WhenNextValueIsGreaterThanMax()
+        public void Generate_ShouldThrowValueGenerationException_WhenNextValueIsGreaterThanMax()
         {
             var (min, max) = Fixture.CreateDistinctSortedCollection<T>( 2 );
             var step = GetDefaultStep();
@@ -343,11 +344,11 @@ namespace LfrlAnvil.Tests.GeneratorsTests
 
             var action = Lambda.Of( () => sut.Generate() );
 
-            action.Should().ThrowExactly<InvalidOperationException>();
+            action.Should().ThrowExactly<ValueGenerationException>();
         }
 
         [Fact]
-        public void Generate_ShouldThrowInvalidOperationException_WhenNextValueCausesArithmeticOverflow()
+        public void Generate_ShouldThrowValueGenerationException_WhenNextValueCausesArithmeticOverflow()
         {
             var sut = Create();
             sut.Reset( sut.Bounds.Max );
@@ -355,7 +356,7 @@ namespace LfrlAnvil.Tests.GeneratorsTests
 
             var action = Lambda.Of( () => sut.Generate() );
 
-            action.Should().ThrowExactly<InvalidOperationException>();
+            action.Should().ThrowExactly<ValueGenerationException>();
         }
 
         [Fact]

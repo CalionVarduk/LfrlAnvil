@@ -6,6 +6,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using LfrlAnvil.Exceptions;
 using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil
@@ -376,11 +377,11 @@ namespace LfrlAnvil
                 return;
 
             if ( ! typeof( T ).HasAttribute<FlagsAttribute>() )
-                throw new InvalidOperationException( $"Enum type {typeof( T ).FullName} doesn't have the Flags attribute" );
+                throw new BitmaskTypeInitializationException( typeof( T ), ExceptionResources.MissingEnumFlagsAttribute<T>() );
 
             var values = Enum.GetValues( typeof( T ) ).Cast<object>();
             if ( ! values.Any( v => v.Equals( FromLongValue( 0 ) ) ) )
-                throw new InvalidOperationException( $"Enum type {typeof( T ).FullName} doesn't have the 0-value member" );
+                throw new BitmaskTypeInitializationException( typeof( T ), ExceptionResources.MissingEnumZeroValueMember<T>() );
         }
 
         private static Expression<Func<T, ulong>> BuildToLongValueExpr()
@@ -402,7 +403,10 @@ namespace LfrlAnvil
             }
             catch ( Exception exc )
             {
-                throw new InvalidOperationException( $"Failed to create ToLongValue converter for type {typeof( T ).FullName}", exc );
+                throw new BitmaskTypeInitializationException(
+                    typeof( T ),
+                    ExceptionResources.FailedToCreateConverter<T>( nameof( ToLongValue ) ),
+                    exc );
             }
         }
 
@@ -425,7 +429,10 @@ namespace LfrlAnvil
             }
             catch ( Exception exc )
             {
-                throw new InvalidOperationException( $"Failed to create FromLongValue converter for type {typeof( T ).FullName}", exc );
+                throw new BitmaskTypeInitializationException(
+                    typeof( T ),
+                    ExceptionResources.FailedToCreateConverter<T>( nameof( FromLongValue ) ),
+                    exc );
             }
         }
     }

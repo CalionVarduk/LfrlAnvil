@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Exceptions;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Internal;
 
@@ -38,7 +40,7 @@ namespace LfrlAnvil
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static void IsNotNull<T>(T? param, string paramName = DefaultParamName)
+        public static void IsNotNull<T>([NotNull] T? param, string paramName = DefaultParamName)
             where T : class
         {
             if ( param is null )
@@ -46,15 +48,16 @@ namespace LfrlAnvil
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static void IsNotNull<T>(T? param, string paramName = DefaultParamName)
+        public static void IsNotNull<T>([NotNull] T? param, string paramName = DefaultParamName)
             where T : struct
         {
             if ( ! param.HasValue )
                 throw Exceptions.Null( paramName );
         }
 
+#pragma warning disable 8777
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static void IsNotNull<T>(T? param, IEqualityComparer<T> comparer, string paramName = DefaultParamName)
+        public static void IsNotNull<T>([NotNull] T? param, IEqualityComparer<T> comparer, string paramName = DefaultParamName)
         {
             if ( ! Generic<T>.IsReferenceType && ! Generic<T>.IsNullableType )
                 return;
@@ -62,6 +65,7 @@ namespace LfrlAnvil
             if ( comparer.Equals( param!, default! ) )
                 throw Exceptions.Null( paramName );
         }
+#pragma warning restore 8777
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static void IsDefault<T>(T? param, string paramName = DefaultParamName)
@@ -70,12 +74,14 @@ namespace LfrlAnvil
                 throw Exceptions.NotDefault( param, paramName );
         }
 
+#pragma warning disable 8777
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static void IsNotDefault<T>(T? param, string paramName = DefaultParamName)
+        public static void IsNotDefault<T>([NotNull] T? param, string paramName = DefaultParamName)
         {
             if ( Generic<T>.IsDefault( param ) )
                 throw Exceptions.Default( paramName );
         }
+#pragma warning restore 8777
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static void IsOfType<T>(object param, string paramName = DefaultParamName)
@@ -113,7 +119,7 @@ namespace LfrlAnvil
         public static void IsInstanceOfType<T>(T param, Type type, string paramName = DefaultParamName)
         {
             if ( ! type.IsInstanceOfType( param ) )
-                throw Exceptions.NotAssignableToType( type, param!.GetType(), paramName );
+                throw Exceptions.NotInstanceOfType( type, param!.GetType(), paramName );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -126,7 +132,7 @@ namespace LfrlAnvil
         public static void IsNotInstanceOfType<T>(T param, Type type, string paramName = DefaultParamName)
         {
             if ( type.IsInstanceOfType( param ) )
-                throw Exceptions.AssignableToType( type, paramName );
+                throw Exceptions.InstanceOfType( type, paramName );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -160,7 +166,7 @@ namespace LfrlAnvil
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static void RefEquals<T>(T? param, T? value, string paramName = DefaultParamName)
+        public static void RefEquals<T>([NotNullIfNotNull( "value" )] T? param, T? value, string paramName = DefaultParamName)
             where T : class
         {
             if ( ! ReferenceEquals( param, value ) )
@@ -359,28 +365,28 @@ namespace LfrlAnvil
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static void IsNotNullOrEmpty<T>(IEnumerable<T>? param, string paramName = DefaultParamName)
+        public static void IsNotNullOrEmpty<T>([NotNull] IEnumerable<T>? param, string paramName = DefaultParamName)
         {
             if ( param?.Any() != true )
                 throw Exceptions.NullOrEmpty( paramName );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static void IsNotNullOrEmpty<T>(IReadOnlyCollection<T>? param, string paramName = DefaultParamName)
+        public static void IsNotNullOrEmpty<T>([NotNull] IReadOnlyCollection<T>? param, string paramName = DefaultParamName)
         {
-            if ( (param?.Count ?? 0) == 0 )
+            if ( param is null || param.Count == 0 )
                 throw Exceptions.NullOrEmpty( paramName );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static void IsNotNullOrEmpty(string? param, string paramName = DefaultParamName)
+        public static void IsNotNullOrEmpty([NotNull] string? param, string paramName = DefaultParamName)
         {
-            if ( (param?.Length ?? 0) == 0 )
+            if ( string.IsNullOrEmpty( param ) )
                 throw Exceptions.NullOrEmpty( paramName );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static void IsNotNullOrWhiteSpace(string? param, string paramName = DefaultParamName)
+        public static void IsNotNullOrWhiteSpace([NotNull] string? param, string paramName = DefaultParamName)
         {
             if ( string.IsNullOrWhiteSpace( param ) )
                 throw Exceptions.NullOrWhiteSpace( paramName );
@@ -587,210 +593,212 @@ namespace LfrlAnvil
         {
             public static ArgumentException NotNull<T>(T param, string paramName)
             {
-                return new( $"expected {paramName} to be null but found {param}", paramName );
+                return new ArgumentException( ExceptionResources.ExpectedNotNull( param, paramName ), paramName );
             }
 
             public static ArgumentNullException Null(string paramName)
             {
-                return new( paramName );
+                return new ArgumentNullException( paramName );
             }
 
             public static ArgumentException NotDefault<T>(T param, string paramName)
             {
-                return new( $"expected {paramName} to be default but found {param}", paramName );
+                return new ArgumentException( ExceptionResources.ExpectedDefault( param, paramName ), paramName );
             }
 
             public static ArgumentException Default(string paramName)
             {
-                return new( $"expected {paramName} to not be default", paramName );
+                return new ArgumentException( ExceptionResources.ExpectedNotDefault( paramName ), paramName );
             }
 
             public static ArgumentException NotOfType(Type type, Type actualType, string paramName)
             {
-                return new(
-                    $"expected {paramName} to be of type {type.FullName} but found {actualType.FullName}",
-                    paramName );
+                return new ArgumentException( ExceptionResources.ExpectedOfType( type, actualType, paramName ), paramName );
             }
 
             public static ArgumentException OfType(Type type, string paramName)
             {
-                return new( $"expected {paramName} to not be of type {type.FullName}", paramName );
+                return new ArgumentException( ExceptionResources.ExpectedNotOfType( type, paramName ), paramName );
             }
 
-            public static ArgumentException NotAssignableToType(Type type, Type actualType, string paramName)
+            public static ArgumentException NotInstanceOfType(Type type, Type actualType, string paramName)
             {
-                return new(
-                    $"expected {paramName} to be assignable to type {type.FullName} but found {actualType.FullName}",
-                    paramName );
+                return new ArgumentException( ExceptionResources.ExpectedInstanceOfType( type, actualType, paramName ), paramName );
             }
 
-            public static ArgumentException AssignableToType(Type type, string paramName)
+            public static ArgumentException InstanceOfType(Type type, string paramName)
             {
-                return new( $"expected {paramName} to not be assignable to type {type.FullName}", paramName );
+                return new ArgumentException( ExceptionResources.ExpectedNotInstanceOfType( type, paramName ), paramName );
             }
 
             public static ArgumentException NotEqualTo<T>(T param, T expectedValue, string paramName)
             {
-                return new( $"expected {paramName} to be equal to {expectedValue} but found {param}", paramName );
+                return new ArgumentException( ExceptionResources.ExpectedEqualTo( param, expectedValue, paramName ), paramName );
             }
 
             public static ArgumentException EqualTo<T>(T expectedValue, string paramName)
             {
-                return new( $"expected {paramName} to not be equal to {expectedValue}", paramName );
+                return new ArgumentException( ExceptionResources.ExpectedNotEqualTo( expectedValue, paramName ), paramName );
             }
 
             public static ArgumentException NotRefEqualTo(string paramName)
             {
-                return new( $"expected {paramName} to be a reference to the provided object.", paramName );
+                return new ArgumentException( ExceptionResources.ExpectedRefEqualTo( paramName ), paramName );
             }
 
             public static ArgumentException RefEqualTo(string paramName)
             {
-                return new( $"expected {paramName} to not be a reference to the provided object.", paramName );
+                return new ArgumentException( ExceptionResources.ExpectedNotRefEqualTo( paramName ), paramName );
             }
 
             public static ArgumentOutOfRangeException NotGreaterThan<T>(T param, T expectedValue, string paramName)
             {
-                return new( paramName, $"expected {paramName} to be greater than {expectedValue} but found {param}" );
+                return new ArgumentOutOfRangeException(
+                    paramName,
+                    ExceptionResources.ExpectedGreaterThan( param, expectedValue, paramName ) );
             }
 
             public static ArgumentOutOfRangeException NotGreaterThanOrEqual<T>(T param, T expectedValue, string paramName)
             {
-                return new(
+                return new ArgumentOutOfRangeException(
                     paramName,
-                    $"expected {paramName} to be greater than or equal to {expectedValue} but found {param}" );
+                    ExceptionResources.ExpectedGreaterThanOrEqualTo( param, expectedValue, paramName ) );
             }
 
             public static ArgumentOutOfRangeException NotLessThan<T>(T param, T expectedValue, string paramName)
             {
-                return new( paramName, $"expected {paramName} to be less than {expectedValue} but found {param}" );
+                return new ArgumentOutOfRangeException( paramName, ExceptionResources.ExpectedLessThan( param, expectedValue, paramName ) );
             }
 
             public static ArgumentOutOfRangeException NotLessThanOrEqual<T>(T param, T expectedValue, string paramName)
             {
-                return new(
+                return new ArgumentOutOfRangeException(
                     paramName,
-                    $"expected {paramName} to be less than or equal to {expectedValue} but found {param}" );
+                    ExceptionResources.ExpectedLessThanOrEqualTo( param, expectedValue, paramName ) );
             }
 
             public static ArgumentOutOfRangeException InRange<T>(T param, T min, T max, string paramName)
             {
-                return new( paramName, $"expected {paramName} to not be in range [{min}, {max}] but found {param}" );
+                return new ArgumentOutOfRangeException( paramName, ExceptionResources.ExpectedNotInRange( param, min, max, paramName ) );
             }
 
             public static ArgumentOutOfRangeException NotInRange<T>(T param, T min, T max, string paramName)
             {
-                return new( paramName, $"expected {paramName} to be in range [{min}, {max}] but found {param}" );
+                return new ArgumentOutOfRangeException( paramName, ExceptionResources.ExpectedInRange( param, min, max, paramName ) );
             }
 
             public static ArgumentOutOfRangeException InExclusiveRange<T>(T param, T min, T max, string paramName)
             {
-                return new( paramName, $"expected {paramName} to not be in range ({min}, {max}) but found {param}" );
+                return new ArgumentOutOfRangeException(
+                    paramName,
+                    ExceptionResources.ExpectedNotInExclusiveRange( param, min, max, paramName ) );
             }
 
             public static ArgumentOutOfRangeException NotInExclusiveRange<T>(T param, T min, T max, string paramName)
             {
-                return new( paramName, $"expected {paramName} to be in range ({min}, {max}) but found {param}" );
+                return new ArgumentOutOfRangeException(
+                    paramName,
+                    ExceptionResources.ExpectedInExclusiveRange( param, min, max, paramName ) );
             }
 
             public static ArgumentException NotEmpty(string paramName)
             {
-                return new( $"expected {paramName} to be empty", paramName );
+                return new ArgumentException( ExceptionResources.ExpectedEmpty( paramName ), paramName );
             }
 
             public static ArgumentException NotEmpty(string param, string paramName)
             {
-                return new( $"expected {paramName} to be empty but found {param}", paramName );
+                return new ArgumentException( ExceptionResources.ExpectedEmpty( param, paramName ), paramName );
             }
 
             public static ArgumentException Empty(string paramName)
             {
-                return new( $"expected {paramName} to not be empty", paramName );
+                return new ArgumentException( ExceptionResources.ExpectedNotEmpty( paramName ), paramName );
             }
 
             public static ArgumentException NotNullOrEmpty(string paramName)
             {
-                return new( $"expected {paramName} to be null or empty", paramName );
+                return new ArgumentException( ExceptionResources.ExpectedNullOrEmpty( paramName ), paramName );
             }
 
             public static ArgumentException NotNullOrEmpty(string param, string paramName)
             {
-                return new( $"expected {paramName} to be null or empty but found {param}", paramName );
+                return new ArgumentException( ExceptionResources.ExpectedNullOrEmpty( param, paramName ), paramName );
             }
 
             public static ArgumentException NullOrEmpty(string paramName)
             {
-                return new( $"expected {paramName} to not be null or empty", paramName );
+                return new ArgumentException( ExceptionResources.ExpectedNotNullOrEmpty( paramName ), paramName );
             }
 
             public static ArgumentException NullOrWhiteSpace(string paramName)
             {
-                return new( $"expected {paramName} to not be null or white space", paramName );
+                return new ArgumentException( ExceptionResources.ExpectedNotNullOrWhiteSpace( paramName ), paramName );
             }
 
             public static ArgumentException NotContainsNull(string paramName)
             {
-                return new( $"expected {paramName} to contain null", paramName );
+                return new ArgumentException( ExceptionResources.ExpectedToContainNull( paramName ), paramName );
             }
 
             public static ArgumentException ContainsNull(string paramName)
             {
-                return new( $"expected {paramName} to not contain null", paramName );
+                return new ArgumentException( ExceptionResources.ExpectedToNotContainNull( paramName ), paramName );
             }
 
             public static ArgumentException NotContainsAtLeast(int count, string paramName)
             {
-                return new( $"expected {paramName} to contain at least {count} items", paramName );
+                return new ArgumentException( ExceptionResources.ExpectedToContainAtLeast( count, paramName ), paramName );
             }
 
             public static ArgumentException NotContainsAtMost(int count, string paramName)
             {
-                return new( $"expected {paramName} to contain at most {count} items", paramName );
+                return new ArgumentException( ExceptionResources.ExpectedToContainAtMost( count, paramName ), paramName );
             }
 
             public static ArgumentException NotContainsInRange(int minCount, int maxCount, string paramName)
             {
-                return new( $"expected {paramName} item count to be in range [{minCount}, {maxCount}]", paramName );
+                return new ArgumentException( ExceptionResources.ExpectedToContainInRange( minCount, maxCount, paramName ), paramName );
             }
 
             public static ArgumentException NotContainsExactly(int count, string paramName)
             {
-                return new( $"expected {paramName} to contain exactly {count} items", paramName );
+                return new ArgumentException( ExceptionResources.ExpectedToContainExactly( count, paramName ), paramName );
             }
 
             public static ArgumentException NotContains<T>(T value, string paramName)
             {
-                return new( $"expected {paramName} to contain {value}", paramName );
+                return new ArgumentException( ExceptionResources.ExpectedToContain( value, paramName ), paramName );
             }
 
             public static ArgumentException Contains<T>(T value, string paramName)
             {
-                return new( $"expected {paramName} to not contain {value}", paramName );
+                return new ArgumentException( ExceptionResources.ExpectedToNotContain( value, paramName ), paramName );
             }
 
             public static ArgumentException NotAny(string? description, string paramName)
             {
-                return new( description ?? $"expected any {paramName} element to pass the predicate", paramName );
+                return new ArgumentException( description ?? ExceptionResources.ExpectedAnyToPassThePredicate( paramName ), paramName );
             }
 
             public static ArgumentException NotAll(string? description, string paramName)
             {
-                return new( description ?? $"expected all {paramName} elements to pass the predicate", paramName );
+                return new ArgumentException( description ?? ExceptionResources.ExpectedAllToPassThePredicate( paramName ), paramName );
             }
 
             public static ArgumentException NotOrdered(string paramName)
             {
-                return new( $"expected {paramName} to be ordered", paramName );
+                return new ArgumentException( ExceptionResources.ExpectedOrdered( paramName ), paramName );
             }
 
             public static ArgumentException False(string? description)
             {
-                return new( description ?? "expected condition to be true" );
+                return new ArgumentException( description ?? ExceptionResources.ExpectedConditionToBeTrue );
             }
 
             public static ArgumentException True(string? description)
             {
-                return new( description ?? "expected condition to be false" );
+                return new ArgumentException( description ?? ExceptionResources.ExpectedConditionToBeFalse );
             }
         }
     }

@@ -48,14 +48,14 @@ namespace LfrlAnvil.Tests.OneTests
         [InlineData( -1 )]
         [InlineData( 1 )]
         [InlineData( 2 )]
-        public void GetIndexer_ShouldThrowArgumentException_WhenIndexIsNotEqualToZero(int index)
+        public void GetIndexer_ShouldThrowIndexOutOfRangeException_WhenIndexIsNotEqualToZero(int index)
         {
             var value = Fixture.Create<T>();
             var sut = new One<T>( value );
 
             var action = Lambda.Of( () => sut[index] );
 
-            action.Should().ThrowExactly<ArgumentException>();
+            action.Should().ThrowExactly<IndexOutOfRangeException>();
         }
 
         [Fact]
