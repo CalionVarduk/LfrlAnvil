@@ -86,13 +86,14 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratedEventSourceTests
         public void Listen_ShouldReturnDisposedSubscriber_WhenDecoratorDisposesItBeforeRegistration()
         {
             var listener = Substitute.For<IEventListener<TNextEvent>>();
+            var rootListener = Substitute.For<IEventListener<TRootEvent>>();
             var decorator = Substitute.For<IEventListenerDecorator<TRootEvent, TNextEvent>>();
             decorator.Decorate( listener, Arg.Any<IEventSubscriber>() )
                 .Returns(
                     c =>
                     {
                         c.ArgAt<IEventSubscriber>( 1 ).Dispose();
-                        return Substitute.For<IEventListener<TRootEvent>>();
+                        return rootListener;
                     } );
 
             var sut = new EventSource<TRootEvent>();
@@ -104,6 +105,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratedEventSourceTests
             {
                 subscriber.IsDisposed.Should().BeTrue();
                 sut.Subscribers.Should().BeEmpty();
+                rootListener.Received().OnDispose( DisposalSource.Subscriber );
             }
         }
 

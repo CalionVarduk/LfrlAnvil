@@ -9,9 +9,9 @@
 
         protected IEventListener<TNextEvent> Next { get; }
 
-        public override void OnDispose()
+        public override void OnDispose(DisposalSource source)
         {
-            Next.OnDispose();
+            Next.OnDispose( source );
         }
     }
 }

@@ -20,7 +20,8 @@
 
             _source.RemoveSubscriber( this );
             MarkAsDisposed();
-            // _listener.OnDispose(); TODO: should this happen?
+
+            Listener.OnDispose( DisposalSource.Subscriber );
         }
 
         internal void MarkAsDisposed()

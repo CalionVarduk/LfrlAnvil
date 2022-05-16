@@ -16,7 +16,7 @@ namespace LfrlAnvil.Reactive.Events
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static IEventListener<TEvent> Create<TEvent>(Action<TEvent> react, Action onDispose)
+        public static IEventListener<TEvent> Create<TEvent>(Action<TEvent> react, Action<DisposalSource> onDispose)
         {
             return new LambdaEventListener<TEvent>( react, onDispose );
         }

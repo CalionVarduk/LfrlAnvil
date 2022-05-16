@@ -67,7 +67,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventSourceTests
 
             sut.Listen( listener );
 
-            listener.Received().OnDispose();
+            listener.Received().OnDispose( DisposalSource.EventSource );
         }
 
         [Fact]
@@ -102,15 +102,29 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventSourceTests
         }
 
         [Fact]
-        public void EventSubscriberDispose_ShouldDoNothing_WhenSubscriberIsAlreadyDisposed()
+        public void EventSubscriberDispose_ShouldCallListenerOnDispose()
         {
+            var listener = Substitute.For<IEventListener<TEvent>>();
             var sut = new EventSource<TEvent>();
-            var subscriber = sut.Listen( EventListener<TEvent>.Empty );
+            var subscriber = sut.Listen( listener );
+
             subscriber.Dispose();
 
-            var action = Lambda.Of( () => subscriber.Dispose() );
+            listener.Received().OnDispose( DisposalSource.Subscriber );
+        }
 
-            action.Should().NotThrow();
+        [Fact]
+        public void EventSubscriberDispose_ShouldDoNothing_WhenSubscriberIsAlreadyDisposed()
+        {
+            var listener = Substitute.For<IEventListener<TEvent>>();
+            var sut = new EventSource<TEvent>();
+            var subscriber = sut.Listen( listener );
+            subscriber.Dispose();
+            listener.ClearReceivedCalls();
+
+            subscriber.Dispose();
+
+            listener.DidNotReceive().OnDispose( Arg.Any<DisposalSource>() );
         }
 
         [Fact]
@@ -195,24 +209,25 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventSourceTests
 
             using ( new AssertionScope() )
             {
-                listener1.Received().OnDispose();
-                listener2.Received().OnDispose();
+                listener1.Received().OnDispose( DisposalSource.EventSource );
+                listener2.Received().OnDispose( DisposalSource.EventSource );
             }
         }
 
         [Fact]
-        public void Dispose_ShouldCallOnlyFirstListenerOnDispose_WhenFirstListenerOnDisposeDisposedNextListener()
+        public void Dispose_ShouldCallOnlyFirstListenerOnDisposeWithEventSource_WhenFirstListenerOnDisposeDisposedNextListener()
         {
             var sut = new EventSource<TEvent>();
             IEventSubscriber? subscriber2 = null;
-            var listener1 = EventListener.Create<TEvent>( _ => { }, () => subscriber2?.Dispose() );
+            var listener1 = EventListener.Create<TEvent>( _ => { }, _ => subscriber2?.Dispose() );
             var listener2 = Substitute.For<IEventListener<TEvent>>();
             sut.Listen( listener1 );
             subscriber2 = sut.Listen( listener2 );
 
             sut.Dispose();
 
-            listener2.DidNotReceive().OnDispose();
+            listener2.DidNotReceive().OnDispose( DisposalSource.EventSource );
+            listener2.Received().OnDispose( DisposalSource.Subscriber );
         }
 
         [Fact]

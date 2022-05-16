@@ -38,8 +38,8 @@ namespace LfrlAnvil.Reactive.Events
                     if ( subscriber.IsDisposed )
                         continue;
 
-                    subscriber.Listener.OnDispose();
                     subscriber.MarkAsDisposed();
+                    subscriber.Listener.OnDispose( DisposalSource.EventSource );
                 }
             }
             finally
@@ -112,15 +112,20 @@ namespace LfrlAnvil.Reactive.Events
         internal IEventSubscriber Listen(IEventListener<TEvent> listener, EventSubscriber<TEvent> subscriber)
         {
             subscriber.Listener = listener;
-            return subscriber.IsDisposed ? subscriber : ListenInternal( listener, subscriber );
+
+            if ( ! subscriber.IsDisposed )
+                return ListenInternal( listener, subscriber );
+
+            subscriber.Listener.OnDispose( DisposalSource.Subscriber );
+            return subscriber;
         }
 
         private IEventSubscriber ListenInternal(IEventListener<TEvent> listener, EventSubscriber<TEvent> subscriber)
         {
             if ( IsDisposed )
             {
-                subscriber.Listener.OnDispose();
                 subscriber.MarkAsDisposed();
+                subscriber.Listener.OnDispose( DisposalSource.EventSource );
                 return subscriber;
             }
 

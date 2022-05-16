@@ -25,16 +25,18 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventListenerTests
             react.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( @event );
         }
 
-        [Fact]
-        public void Create_ShouldReturnListenerWithCorrectOnDisposeSetup()
+        [Theory]
+        [InlineData( DisposalSource.EventSource )]
+        [InlineData( DisposalSource.Subscriber )]
+        public void Create_ShouldReturnListenerWithCorrectOnDisposeSetup(DisposalSource source)
         {
             var react = Substitute.For<Action<TEvent>>();
-            var onDispose = Substitute.For<Action>();
+            var onDispose = Substitute.For<Action<DisposalSource>>();
             var sut = EventListener.Create( react, onDispose );
 
-            sut.OnDispose();
+            sut.OnDispose( source );
 
-            onDispose.Verify().CallAt( 0 ).Exists();
+            onDispose.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( source );
         }
 
         [Fact]

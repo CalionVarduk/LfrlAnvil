@@ -7,7 +7,7 @@ namespace LfrlAnvil.Reactive.Events
         public static readonly IEventListener<TEvent> Empty = EventListener.Create<TEvent>( _ => { } );
 
         public abstract void React(TEvent @event);
-        public abstract void OnDispose();
+        public abstract void OnDispose(DisposalSource source);
 
         void IEventListener.React(object? @event)
         {
