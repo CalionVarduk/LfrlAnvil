@@ -1,69 +1,17 @@
-﻿using System;
-using System.Buffers;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Reactive.Events.Internal;
-using LfrlAnvil.Reactive.Exceptions;
 
 namespace LfrlAnvil.Reactive.Events
 {
-    public class EventSource<TEvent> : IEventSource<TEvent>
+    public abstract class EventSource<TEvent> : IEventSource<TEvent>
     {
-        private readonly List<EventSubscriber<TEvent>> _subscribers;
+        public abstract bool IsDisposed { get; }
+        public abstract IReadOnlyCollection<IEventSubscriber> Subscribers { get; }
+        public bool HasSubscribers => Subscribers.Count > 0;
 
-        public EventSource()
-        {
-            _subscribers = new List<EventSubscriber<TEvent>>();
-        }
-
-        public bool IsDisposed { get; private set; }
-        public bool HasSubscribers => _subscribers.Count > 0;
-        public IReadOnlyCollection<IEventSubscriber> Subscribers => _subscribers;
-
-        public void Dispose()
-        {
-            if ( IsDisposed )
-                return;
-
-            var subscriberCount = _subscribers.Count;
-            var subscribers = ArrayPool<EventSubscriber<TEvent>>.Shared.Rent( subscriberCount );
-            _subscribers.CopyTo( subscribers );
-            _subscribers.Clear();
-
-            try
-            {
-                for ( var i = 0; i < subscriberCount; ++i )
-                {
-                    var subscriber = subscribers[i];
-                    if ( subscriber.IsDisposed )
-                        continue;
-
-                    subscriber.MarkAsDisposed();
-                    subscriber.Listener.OnDispose( DisposalSource.EventSource );
-                }
-            }
-            finally
-            {
-                ArrayPool<EventSubscriber<TEvent>>.Shared.Return( subscribers, clearArray: true );
-            }
-
-            OnDispose();
-            IsDisposed = true;
-        }
-
-        public IEventSubscriber Listen(IEventListener<TEvent> listener)
-        {
-            var subscriber = new EventSubscriber<TEvent>( this, listener );
-            return ListenInternal( listener, subscriber );
-        }
-
-        public void Publish(TEvent @event)
-        {
-            if ( IsDisposed )
-                throw new ObjectDisposedException( Resources.DisposedEventSource );
-
-            OnPublish( @event );
-        }
+        public abstract void Dispose();
+        public abstract IEventSubscriber Listen(IEventListener<TEvent> listener);
 
         [Pure]
         public IEventStream<TNextEvent> Decorate<TNextEvent>(IEventListenerDecorator<TEvent, TNextEvent> decorator)
@@ -71,77 +19,15 @@ namespace LfrlAnvil.Reactive.Events
             return new DecoratedEventSource<TEvent, TNextEvent>( this, decorator );
         }
 
-        protected virtual void OnSubscriberAdded(IEventSubscriber subscriber, IEventListener<TEvent> listener) { }
-
-        protected virtual void OnPublish(TEvent @event)
-        {
-            var subscriberCount = _subscribers.Count;
-            var subscribers = ArrayPool<EventSubscriber<TEvent>>.Shared.Rent( subscriberCount );
-            _subscribers.CopyTo( subscribers );
-
-            try
-            {
-                for ( var i = 0; i < subscriberCount; ++i )
-                {
-                    var subscriber = subscribers[i];
-                    if ( subscriber.IsDisposed )
-                        continue;
-
-                    subscriber.Listener.React( @event );
-                }
-            }
-            finally
-            {
-                ArrayPool<EventSubscriber<TEvent>>.Shared.Return( subscribers, clearArray: true );
-            }
-        }
-
-        protected virtual void OnDispose() { }
-
-        internal void RemoveSubscriber(EventSubscriber<TEvent> subscriber)
-        {
-            _subscribers.Remove( subscriber );
-        }
-
         [Pure]
-        internal EventSubscriber<TEvent> CreateSubscriber()
-        {
-            return new EventSubscriber<TEvent>( this, EventListener<TEvent>.Empty );
-        }
+        internal abstract EventSubscriber<TEvent> CreateSubscriber();
 
-        internal IEventSubscriber Listen(IEventListener<TEvent> listener, EventSubscriber<TEvent> subscriber)
-        {
-            subscriber.Listener = listener;
-
-            if ( ! subscriber.IsDisposed )
-                return ListenInternal( listener, subscriber );
-
-            subscriber.Listener.OnDispose( DisposalSource.Subscriber );
-            return subscriber;
-        }
-
-        private IEventSubscriber ListenInternal(IEventListener<TEvent> listener, EventSubscriber<TEvent> subscriber)
-        {
-            if ( IsDisposed )
-            {
-                subscriber.MarkAsDisposed();
-                subscriber.Listener.OnDispose( DisposalSource.EventSource );
-                return subscriber;
-            }
-
-            _subscribers.Add( subscriber );
-            OnSubscriberAdded( subscriber, listener );
-            return subscriber;
-        }
+        internal abstract void RemoveSubscriber(IEventSubscriber subscriber);
+        internal abstract IEventSubscriber Listen(IEventListener<TEvent> listener, EventSubscriber<TEvent> subscriber);
 
         IEventSubscriber IEventStream.Listen(IEventListener listener)
         {
             return Listen( Argument.CastTo<IEventListener<TEvent>>( listener, nameof( listener ) ) );
-        }
-
-        void IEventSource.Publish(object? @event)
-        {
-            Publish( Argument.CastTo<TEvent>( @event, nameof( @event ) ) );
         }
     }
 }

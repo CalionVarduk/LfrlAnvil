@@ -18,7 +18,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
         [Fact]
         public void Decorate_ShouldNotDisposeTheSubscriber_WhenTargetDoesNotPublishEventImmediately()
         {
-            var target = new EventSource<string>();
+            var target = new EventPublisher<string>();
             var next = Substitute.For<IEventListener<int>>();
             var subscriber = Substitute.For<IEventSubscriber>();
             var sut = new EventListenerTakeUntilDecorator<int, string>( target );
@@ -35,7 +35,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
         [Fact]
         public void Decorate_ShouldDisposeTheSubscriber_WhenTargetPublishesEventImmediately()
         {
-            var target = new HistoryEventSource<string>( capacity: 1 );
+            var target = new HistoryEventPublisher<string>( capacity: 1 );
             target.Publish( Fixture.Create<string>() );
 
             var next = Substitute.For<IEventListener<int>>();
@@ -50,7 +50,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
         [Fact]
         public void Decorate_ShouldDisposeTheSubscriber_WhenTargetIsAlreadyDisposed()
         {
-            var target = new EventSource<string>();
+            var target = new EventPublisher<string>();
             target.Dispose();
 
             var next = Substitute.For<IEventListener<int>>();
@@ -65,7 +65,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
         [Fact]
         public void Decorate_ShouldDisposeTheSubscriber_WhenTargetPublishesAnyEvent()
         {
-            var target = new EventSource<string>();
+            var target = new EventPublisher<string>();
             var next = Substitute.For<IEventListener<int>>();
             var subscriber = Substitute.For<IEventSubscriber>();
             var sut = new EventListenerTakeUntilDecorator<int, string>( target );
@@ -79,7 +79,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
         [Fact]
         public void Decorate_ShouldDisposeTheSubscriber_WhenTargetDisposes()
         {
-            var target = new EventSource<string>();
+            var target = new EventPublisher<string>();
             var next = Substitute.For<IEventListener<int>>();
             var subscriber = Substitute.For<IEventSubscriber>();
             var sut = new EventListenerTakeUntilDecorator<int, string>( target );
@@ -96,7 +96,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
             var sourceEvents = new[] { 0, 1, 15 };
             var actualEvents = new List<int>();
 
-            var target = new EventSource<string>();
+            var target = new EventPublisher<string>();
             var next = EventListener.Create<int>( actualEvents.Add );
             var subscriber = Substitute.For<IEventSubscriber>();
             var sut = new EventListenerTakeUntilDecorator<int, string>( target );
@@ -113,7 +113,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
         [InlineData( DisposalSource.Subscriber )]
         public void Decorate_ShouldCreateListenerWhoseOnDisposeCallsNextOnDispose(DisposalSource source)
         {
-            var target = new EventSource<string>();
+            var target = new EventPublisher<string>();
             var next = Substitute.For<IEventListener<int>>();
             var subscriber = Substitute.For<IEventSubscriber>();
             var sut = new EventListenerTakeUntilDecorator<int, string>( target );
@@ -129,7 +129,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
         [InlineData( DisposalSource.Subscriber )]
         public void Decorate_ShouldCreateListenerWhoseOnDisposeDisposesTheTargetSubscriber(DisposalSource source)
         {
-            var target = new EventSource<string>();
+            var target = new EventPublisher<string>();
             var next = Substitute.For<IEventListener<int>>();
             var subscriber = Substitute.For<IEventSubscriber>();
             var sut = new EventListenerTakeUntilDecorator<int, string>( target );
@@ -146,9 +146,9 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
             var sourceEvents = new[] { 0, 1, 15 };
             var actualEvents = new List<int>();
 
-            var target = new EventSource<string>();
+            var target = new EventPublisher<string>();
             var next = EventListener.Create<int>( actualEvents.Add );
-            var sut = new EventSource<int>();
+            var sut = new EventPublisher<int>();
             var decorated = sut.TakeUntil( target );
             decorated.Listen( next );
 
@@ -165,9 +165,9 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
             var expectedEvents = new[] { 0, 1 };
             var actualEvents = new List<int>();
 
-            var target = new EventSource<string>();
+            var target = new EventPublisher<string>();
             var next = EventListener.Create<int>( actualEvents.Add );
-            var sut = new EventSource<int>();
+            var sut = new EventPublisher<int>();
             var decorated = sut.TakeUntil( target );
             decorated.Listen( next );
 
@@ -190,11 +190,11 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
         [Fact]
         public void TakeUntilExtension_ShouldCreateEventStreamThatDisposes_WhenTargetPublishesEventImmediately()
         {
-            var target = new HistoryEventSource<string>( capacity: 1 );
+            var target = new HistoryEventPublisher<string>( capacity: 1 );
             target.Publish( Fixture.Create<string>() );
 
             var next = Substitute.For<IEventListener<int>>();
-            var sut = new EventSource<int>();
+            var sut = new EventPublisher<int>();
             var decorated = sut.TakeUntil( target );
             decorated.Listen( next );
 

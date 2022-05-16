@@ -65,7 +65,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
             var actualEvents = new List<WithIndex<int>>();
 
             var next = EventListener.Create<WithIndex<int>>( actualEvents.Add );
-            var sut = new EventSource<int>();
+            var sut = new EventPublisher<int>();
             var decorated = sut.WithIndex();
             decorated.Listen( next );
 

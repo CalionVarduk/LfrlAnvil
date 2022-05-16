@@ -10,9 +10,9 @@ using LfrlAnvil.TestExtensions.FluentAssertions;
 using NSubstitute;
 using Xunit;
 
-namespace LfrlAnvil.Reactive.Tests.EventsTests.HistoryEventSourceTests
+namespace LfrlAnvil.Reactive.Tests.EventsTests.HistoryEventPublisherTests
 {
-    public abstract class GenericHistoryEventSourceTests<TEvent> : TestsBase
+    public abstract class GenericHistoryEventPublisherTests<TEvent> : TestsBase
     {
         [Theory]
         [InlineData( 1 )]
@@ -20,7 +20,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.HistoryEventSourceTests
         [InlineData( 10 )]
         public void Ctor_ShouldCreateWithEmptyHistoryAndCorrectCapacity(int capacity)
         {
-            var sut = new HistoryEventSource<TEvent>( capacity );
+            var sut = new HistoryEventPublisher<TEvent>( capacity );
 
             using ( new AssertionScope() )
             {
@@ -35,7 +35,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.HistoryEventSourceTests
         [InlineData( 0 )]
         public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenCapacityIsLessThanOne(int capacity)
         {
-            var action = Lambda.Of( () => new HistoryEventSource<TEvent>( capacity ) );
+            var action = Lambda.Of( () => new HistoryEventPublisher<TEvent>( capacity ) );
             action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
 
@@ -43,7 +43,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.HistoryEventSourceTests
         public void Publish_ShouldAddFirstEventToHistory()
         {
             var @event = Fixture.Create<TEvent>();
-            var sut = new HistoryEventSource<TEvent>( capacity: 10 );
+            var sut = new HistoryEventPublisher<TEvent>( capacity: 10 );
 
             sut.Publish( @event );
 
@@ -54,7 +54,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.HistoryEventSourceTests
         public void Publish_ShouldAddNextEventAsLastEntryToHistory()
         {
             var events = Fixture.CreateDistinctCollection<TEvent>( count: 3 );
-            var sut = new HistoryEventSource<TEvent>( capacity: 10 );
+            var sut = new HistoryEventPublisher<TEvent>( capacity: 10 );
 
             foreach ( var @event in events )
                 sut.Publish( @event );
@@ -66,7 +66,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.HistoryEventSourceTests
         public void Publish_ShouldAddNextEventAsLastEntryToHistoryAndRemoveFirstEntry_WhenCapacityIsExceeded()
         {
             var events = Fixture.CreateDistinctCollection<TEvent>( count: 3 );
-            var sut = new HistoryEventSource<TEvent>( capacity: 2 );
+            var sut = new HistoryEventPublisher<TEvent>( capacity: 2 );
 
             foreach ( var @event in events )
                 sut.Publish( @event );
@@ -79,7 +79,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.HistoryEventSourceTests
         {
             var @event = Fixture.Create<TEvent>();
             var listener = Substitute.For<IEventListener<TEvent>>();
-            var sut = new HistoryEventSource<TEvent>( capacity: 10 );
+            var sut = new HistoryEventPublisher<TEvent>( capacity: 10 );
             sut.Listen( listener );
 
             sut.Publish( @event );
@@ -92,7 +92,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.HistoryEventSourceTests
         {
             var events = Fixture.CreateDistinctCollection<TEvent>( count: 2 );
             var listener = Substitute.For<IEventListener<TEvent>>();
-            var sut = new HistoryEventSource<TEvent>( capacity: 10 );
+            var sut = new HistoryEventPublisher<TEvent>( capacity: 10 );
             foreach ( var @event in events )
                 sut.Publish( @event );
 
@@ -106,7 +106,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.HistoryEventSourceTests
         public void Listen_ShouldCallImmediatelyListenerReactOnlyForTheFirstHistoryEntry_WhenFirstListenerReactDisposedTheSubscriber()
         {
             var events = Fixture.CreateDistinctCollection<TEvent>( count: 2 );
-            var sut = new HistoryEventSource<TEvent>( capacity: 10 );
+            var sut = new HistoryEventPublisher<TEvent>( capacity: 10 );
             var listener = Substitute.For<IEventListener<TEvent>>();
             listener.When( l => l.React( events[0] ) ).Do( _ => sut.Subscribers.First().Dispose() );
             foreach ( var @event in events )
@@ -126,7 +126,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.HistoryEventSourceTests
         public void ClearHistory_ShouldRemoveAllHistoryEntries()
         {
             var @event = Fixture.Create<TEvent>();
-            var sut = new HistoryEventSource<TEvent>( capacity: 10 );
+            var sut = new HistoryEventPublisher<TEvent>( capacity: 10 );
             sut.Publish( @event );
 
             sut.ClearHistory();
@@ -138,7 +138,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.HistoryEventSourceTests
         public void Dispose_ShouldClearHistory()
         {
             var events = Fixture.CreateDistinctCollection<TEvent>( count: 3 );
-            var sut = new HistoryEventSource<TEvent>( capacity: 10 );
+            var sut = new HistoryEventPublisher<TEvent>( capacity: 10 );
             foreach ( var @event in events )
                 sut.Publish( @event );
 

@@ -4,11 +4,11 @@ using LfrlAnvil.Reactive.Exceptions;
 
 namespace LfrlAnvil.Reactive.Events
 {
-    public class HistoryEventSource<TEvent> : EventSource<TEvent>
+    public class HistoryEventPublisher<TEvent> : EventPublisher<TEvent>
     {
         private readonly LinkedList<TEvent> _history;
 
-        public HistoryEventSource(int capacity)
+        public HistoryEventPublisher(int capacity)
         {
             if ( capacity <= 0 )
                 throw new ArgumentOutOfRangeException( nameof( capacity ), Resources.InvalidCapacity( capacity ) );

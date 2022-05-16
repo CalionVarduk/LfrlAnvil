@@ -17,7 +17,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratedEventSourceTests
         {
             var listener = Substitute.For<IEventListener<TRootEvent>>();
             var decorator = Substitute.For<IEventListenerDecorator<TRootEvent, TNextEvent>>();
-            var sut = new EventSource<TRootEvent>();
+            var sut = new EventPublisher<TRootEvent>();
             var subscriber = sut.Listen( listener );
 
             var result = sut.Decorate( decorator );
@@ -34,7 +34,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratedEventSourceTests
         public void RootEventSourceDecorate_ShouldReturnNewDisposedEventStream_WhenDisposed()
         {
             var decorator = Substitute.For<IEventListenerDecorator<TRootEvent, TNextEvent>>();
-            var sut = new EventSource<TRootEvent>();
+            var sut = new EventPublisher<TRootEvent>();
             sut.Dispose();
 
             var result = sut.Decorate( decorator );
@@ -54,7 +54,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratedEventSourceTests
             var decorator = Substitute.For<IEventListenerDecorator<TRootEvent, TNextEvent>>();
             decorator.Decorate( listener, Arg.Any<IEventSubscriber>() ).Returns( _ => Substitute.For<IEventListener<TRootEvent>>() );
 
-            var sut = new EventSource<TRootEvent>();
+            var sut = new EventPublisher<TRootEvent>();
             var result = sut.Decorate( decorator );
 
             var subscriber = result.Listen( listener );
@@ -69,7 +69,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratedEventSourceTests
             var decorator = Substitute.For<IEventListenerDecorator<TRootEvent, TNextEvent>>();
             decorator.Decorate( listener, Arg.Any<IEventSubscriber>() ).Returns( _ => Substitute.For<IEventListener<TRootEvent>>() );
 
-            var sut = new EventSource<TRootEvent>();
+            var sut = new EventPublisher<TRootEvent>();
             var result = sut.Decorate( decorator );
             sut.Dispose();
 
@@ -96,7 +96,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratedEventSourceTests
                         return rootListener;
                     } );
 
-            var sut = new EventSource<TRootEvent>();
+            var sut = new EventPublisher<TRootEvent>();
             var result = sut.Decorate( decorator );
 
             var subscriber = result.Listen( listener );
@@ -115,7 +115,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratedEventSourceTests
             var listener = Substitute.For<IEventListener<TRootEvent>>();
             var decorator = Substitute.For<IEventListenerDecorator<TRootEvent, TNextEvent>>();
             var nestedDecorator = Substitute.For<IEventListenerDecorator<TNextEvent, TLastEvent>>();
-            var sut = new EventSource<TRootEvent>();
+            var sut = new EventPublisher<TRootEvent>();
             var subscriber = sut.Listen( listener );
 
             var result = sut.Decorate( decorator ).Decorate( nestedDecorator );
@@ -133,7 +133,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratedEventSourceTests
         {
             var decorator = Substitute.For<IEventListenerDecorator<TRootEvent, TNextEvent>>();
             var nestedDecorator = Substitute.For<IEventListenerDecorator<TNextEvent, TLastEvent>>();
-            var sut = new EventSource<TRootEvent>();
+            var sut = new EventPublisher<TRootEvent>();
             sut.Dispose();
 
             var result = sut.Decorate( decorator ).Decorate( nestedDecorator );
@@ -157,7 +157,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratedEventSourceTests
             var nestedDecorator = Substitute.For<IEventListenerDecorator<TNextEvent, TLastEvent>>();
             nestedDecorator.Decorate( listener, Arg.Any<IEventSubscriber>() ).Returns( _ => Substitute.For<IEventListener<TNextEvent>>() );
 
-            var sut = new EventSource<TRootEvent>();
+            var sut = new EventPublisher<TRootEvent>();
             var result = sut.Decorate( decorator ).Decorate( nestedDecorator );
 
             var subscriber = result.Listen( listener );
@@ -176,7 +176,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratedEventSourceTests
             var nestedDecorator = Substitute.For<IEventListenerDecorator<TNextEvent, TLastEvent>>();
             nestedDecorator.Decorate( listener, Arg.Any<IEventSubscriber>() ).Returns( _ => Substitute.For<IEventListener<TNextEvent>>() );
 
-            var sut = new EventSource<TRootEvent>();
+            var sut = new EventPublisher<TRootEvent>();
             var result = sut.Decorate( decorator ).Decorate( nestedDecorator );
             sut.Dispose();
 
@@ -206,7 +206,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratedEventSourceTests
                         return Substitute.For<IEventListener<TNextEvent>>();
                     } );
 
-            var sut = new EventSource<TRootEvent>();
+            var sut = new EventPublisher<TRootEvent>();
             var result = sut.Decorate( decorator ).Decorate( nestedDecorator );
 
             var subscriber = result.Listen( listener );
@@ -225,7 +225,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratedEventSourceTests
             var decorator = Substitute.For<IEventListenerDecorator<TRootEvent, TNextEvent>>();
             var nestedDecorator = Substitute.For<IEventListenerDecorator<TNextEvent, TLastEvent>>();
             var deeplyNestedDecorator = Substitute.For<IEventListenerDecorator<TLastEvent, TRootEvent>>();
-            var sut = new EventSource<TRootEvent>();
+            var sut = new EventPublisher<TRootEvent>();
             var subscriber = sut.Listen( listener );
 
             var result = sut.Decorate( decorator ).Decorate( nestedDecorator ).Decorate( deeplyNestedDecorator );
@@ -244,7 +244,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratedEventSourceTests
             var decorator = Substitute.For<IEventListenerDecorator<TRootEvent, TNextEvent>>();
             var nestedDecorator = Substitute.For<IEventListenerDecorator<TNextEvent, TLastEvent>>();
             var deeplyNestedDecorator = Substitute.For<IEventListenerDecorator<TLastEvent, TRootEvent>>();
-            var sut = new EventSource<TRootEvent>();
+            var sut = new EventPublisher<TRootEvent>();
             sut.Dispose();
 
             var result = sut.Decorate( decorator ).Decorate( nestedDecorator ).Decorate( deeplyNestedDecorator );
@@ -264,7 +264,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratedEventSourceTests
             var decorator = Substitute.For<IEventListenerDecorator<TRootEvent, TNextEvent>>();
             decorator.Decorate( listener, Arg.Any<IEventSubscriber>() ).Returns( _ => Substitute.For<IEventListener<TRootEvent>>() );
 
-            var source = new EventSource<TRootEvent>();
+            var source = new EventPublisher<TRootEvent>();
             IEventStream sut = source.Decorate( decorator );
 
             var subscriber = sut.Listen( EventListener<TNextEvent>.Empty );
@@ -277,7 +277,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratedEventSourceTests
         {
             var listener = EventListener<TLastEvent>.Empty;
             var decorator = Substitute.For<IEventListenerDecorator<TRootEvent, TNextEvent>>();
-            IEventStream sut = new EventSource<TRootEvent>().Decorate( decorator );
+            IEventStream sut = new EventPublisher<TRootEvent>().Decorate( decorator );
 
             var action = Lambda.Of( () => sut.Listen( listener ) );
 

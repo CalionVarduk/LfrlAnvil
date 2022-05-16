@@ -11,14 +11,14 @@ using LfrlAnvil.TestExtensions.FluentAssertions;
 using NSubstitute;
 using Xunit;
 
-namespace LfrlAnvil.Reactive.Tests.EventsTests.EventSourceTests
+namespace LfrlAnvil.Reactive.Tests.EventsTests.EventPublisherTests
 {
-    public abstract class GenericEventSourceTests<TEvent> : TestsBase
+    public abstract class GenericEventPublisherTests<TEvent> : TestsBase
     {
         [Fact]
         public void Ctor_ShouldCreateEventSourceInDefaultState()
         {
-            var sut = new EventSource<TEvent>();
+            var sut = new EventPublisher<TEvent>();
 
             using ( new AssertionScope() )
             {
@@ -31,7 +31,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventSourceTests
         [Fact]
         public void Listen_ShouldAddNewSubscriber_WhenNotDisposed()
         {
-            var sut = new EventSource<TEvent>();
+            var sut = new EventPublisher<TEvent>();
 
             var subscriber = sut.Listen( EventListener<TEvent>.Empty );
 
@@ -45,7 +45,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventSourceTests
         [Fact]
         public void Listen_ShouldReturnDisposedSubscriber_WhenDisposed()
         {
-            var sut = new EventSource<TEvent>();
+            var sut = new EventPublisher<TEvent>();
             sut.Dispose();
 
             var subscriber = sut.Listen( EventListener<TEvent>.Empty );
@@ -62,7 +62,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventSourceTests
         public void Listen_ShouldCallListenerOnDispose_WhenDisposed()
         {
             var listener = Substitute.For<IEventListener<TEvent>>();
-            var sut = new EventSource<TEvent>();
+            var sut = new EventPublisher<TEvent>();
             sut.Dispose();
 
             sut.Listen( listener );
@@ -73,7 +73,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventSourceTests
         [Fact]
         public void Listen_ShouldAddAnotherSubscriber_WhenAlreadyContainsOne()
         {
-            var sut = new EventSource<TEvent>();
+            var sut = new EventPublisher<TEvent>();
             var subscriber1 = sut.Listen( EventListener<TEvent>.Empty );
 
             var subscriber2 = sut.Listen( EventListener<TEvent>.Empty );
@@ -88,7 +88,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventSourceTests
         [Fact]
         public void EventSubscriberDispose_ShouldRemoveSubscriber()
         {
-            var sut = new EventSource<TEvent>();
+            var sut = new EventPublisher<TEvent>();
             var subscriber = sut.Listen( EventListener<TEvent>.Empty );
 
             subscriber.Dispose();
@@ -105,7 +105,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventSourceTests
         public void EventSubscriberDispose_ShouldCallListenerOnDispose()
         {
             var listener = Substitute.For<IEventListener<TEvent>>();
-            var sut = new EventSource<TEvent>();
+            var sut = new EventPublisher<TEvent>();
             var subscriber = sut.Listen( listener );
 
             subscriber.Dispose();
@@ -117,7 +117,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventSourceTests
         public void EventSubscriberDispose_ShouldDoNothing_WhenSubscriberIsAlreadyDisposed()
         {
             var listener = Substitute.For<IEventListener<TEvent>>();
-            var sut = new EventSource<TEvent>();
+            var sut = new EventPublisher<TEvent>();
             var subscriber = sut.Listen( listener );
             subscriber.Dispose();
             listener.ClearReceivedCalls();
@@ -133,7 +133,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventSourceTests
             var @event = Fixture.Create<TEvent>();
             var listener1 = Substitute.For<IEventListener<TEvent>>();
             var listener2 = Substitute.For<IEventListener<TEvent>>();
-            var sut = new EventSource<TEvent>();
+            var sut = new EventPublisher<TEvent>();
             sut.Listen( listener1 );
             sut.Listen( listener2 );
 
@@ -150,7 +150,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventSourceTests
         public void Publish_ShouldCallOnlyFirstListenerReact_WhenFirstListenerReactDisposedNextListener()
         {
             var @event = Fixture.Create<TEvent>();
-            var sut = new EventSource<TEvent>();
+            var sut = new EventPublisher<TEvent>();
             var listener1 = EventListener.Create<TEvent>( _ => sut.Subscribers.Last().Dispose() );
             var listener2 = Substitute.For<IEventListener<TEvent>>();
             var subscriber1 = sut.Listen( listener1 );
@@ -170,7 +170,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventSourceTests
         public void Publish_ShouldThrowObjectDisposedException_WhenDisposed()
         {
             var @event = Fixture.Create<TEvent>();
-            var sut = new EventSource<TEvent>();
+            var sut = new EventPublisher<TEvent>();
             sut.Dispose();
 
             var action = Lambda.Of( () => sut.Publish( @event ) );
@@ -181,7 +181,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventSourceTests
         [Fact]
         public void Dispose_ShouldDisposeAllSubscribers()
         {
-            var sut = new EventSource<TEvent>();
+            var sut = new EventPublisher<TEvent>();
             var subscriber1 = sut.Listen( EventListener<TEvent>.Empty );
             var subscriber2 = sut.Listen( EventListener<TEvent>.Empty );
 
@@ -201,7 +201,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventSourceTests
         {
             var listener1 = Substitute.For<IEventListener<TEvent>>();
             var listener2 = Substitute.For<IEventListener<TEvent>>();
-            var sut = new EventSource<TEvent>();
+            var sut = new EventPublisher<TEvent>();
             sut.Listen( listener1 );
             sut.Listen( listener2 );
 
@@ -217,7 +217,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventSourceTests
         [Fact]
         public void Dispose_ShouldCallOnlyFirstListenerOnDisposeWithEventSource_WhenFirstListenerOnDisposeDisposedNextListener()
         {
-            var sut = new EventSource<TEvent>();
+            var sut = new EventPublisher<TEvent>();
             IEventSubscriber? subscriber2 = null;
             var listener1 = EventListener.Create<TEvent>( _ => { }, _ => subscriber2?.Dispose() );
             var listener2 = Substitute.For<IEventListener<TEvent>>();
@@ -233,7 +233,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventSourceTests
         [Fact]
         public void Dispose_ShouldDoNothing_WhenAlreadyDisposed()
         {
-            var sut = new EventSource<TEvent>();
+            var sut = new EventPublisher<TEvent>();
             sut.Dispose();
 
             var action = Lambda.Of( () => sut.Dispose() );
@@ -244,7 +244,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventSourceTests
         [Fact]
         public void IEventStreamListen_ShouldBeEquivalentToGenericListen_WhenListenerIsOfCorrectType()
         {
-            var source = new EventSource<TEvent>();
+            var source = new EventPublisher<TEvent>();
             IEventStream sut = source;
 
             var subscriber = sut.Listen( EventListener<TEvent>.Empty );
@@ -260,7 +260,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventSourceTests
         public void IEventStreamListen_ShouldThrowInvalidArgumentTypeException_WhenListenerIsNotOfCorrectType()
         {
             var listener = EventListener<Invalid>.Empty;
-            IEventStream sut = new EventSource<TEvent>();
+            IEventStream sut = new EventPublisher<TEvent>();
 
             var action = Lambda.Of( () => sut.Listen( listener ) );
 
@@ -270,13 +270,13 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventSourceTests
         }
 
         [Fact]
-        public void IEventSourcePublish_ShouldBeEquivalentToGenericPublish_WhenEventIsOfCorrectType()
+        public void IEventPublisherPublish_ShouldBeEquivalentToGenericPublish_WhenEventIsOfCorrectType()
         {
             var @event = Fixture.Create<TEvent>();
             var listener = Substitute.For<IEventListener<TEvent>>();
-            var source = new EventSource<TEvent>();
+            var source = new EventPublisher<TEvent>();
             source.Listen( listener );
-            IEventSource sut = source;
+            IEventPublisher sut = source;
 
             sut.Publish( @event );
 
@@ -284,10 +284,10 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventSourceTests
         }
 
         [Fact]
-        public void IEventSourcePublish_ShouldThrowInvalidArgumentTypeException_WhenEventIsNotOfCorrectType()
+        public void IEventPublisherPublish_ShouldThrowInvalidArgumentTypeException_WhenEventIsNotOfCorrectType()
         {
             var @event = Fixture.Create<Invalid>();
-            IEventSource sut = new EventSource<TEvent>();
+            IEventPublisher sut = new EventPublisher<TEvent>();
 
             var action = Lambda.Of( () => sut.Publish( @event ) );
 

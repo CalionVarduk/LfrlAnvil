@@ -7,12 +7,7 @@ namespace LfrlAnvil.Reactive.Events
     {
         bool HasSubscribers { get; }
         IReadOnlyCollection<IEventSubscriber> Subscribers { get; }
-
-        void Publish(object? @event);
     }
 
-    public interface IEventSource<TEvent> : IEventStream<TEvent>, IEventSource
-    {
-        void Publish(TEvent @event);
-    }
+    public interface IEventSource<out TEvent> : IEventStream<TEvent>, IEventSource { }
 }
