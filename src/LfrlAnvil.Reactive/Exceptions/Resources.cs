@@ -23,5 +23,12 @@ namespace LfrlAnvil.Reactive.Exceptions
         {
             return $"Expected capacity greater than 0 but found {capacity}.";
         }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static string MustBeGreaterThanZero(string paramName)
+        {
+            return $"{paramName} must be greater than 0.";
+        }
     }
 }

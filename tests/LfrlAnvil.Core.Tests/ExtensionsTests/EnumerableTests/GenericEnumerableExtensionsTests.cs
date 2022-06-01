@@ -188,6 +188,15 @@ namespace LfrlAnvil.Tests.ExtensionsTests.EnumerableTests
         }
 
         [Fact]
+        public void Flatten_WithoutParameters_ShouldReturnCorrectResult()
+        {
+            var expected = Fixture.CreateDistinctCollection<T>( count: 9 );
+            var sut = new[] { expected.Take( 3 ), expected.Skip( 3 ).Take( 3 ), expected.Skip( 6 ) };
+            var result = sut.Flatten();
+            result.Should().BeSequentiallyEqualTo( expected );
+        }
+
+        [Fact]
         public void TryMin_ShouldReturnFalseAndDefaultResult_WhenSourceIsEmpty()
         {
             var sut = Enumerable.Empty<T>();

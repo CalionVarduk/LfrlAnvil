@@ -167,6 +167,13 @@ namespace LfrlAnvil.Extensions
             return source.SelectMany( p => selector( p ).Select( c => resultMapper( p, c ) ) );
         }
 
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEnumerable<T> Flatten<T>(this IEnumerable<IEnumerable<T>> source)
+        {
+            return source.SelectMany( x => x );
+        }
+
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static bool TryMin<T>(this IEnumerable<T> source, [MaybeNullWhen( false )] out T result)
         {

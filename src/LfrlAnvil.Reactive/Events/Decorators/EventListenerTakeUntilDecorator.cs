@@ -1,4 +1,6 @@
-﻿namespace LfrlAnvil.Reactive.Events.Decorators
+﻿using System.Runtime.CompilerServices;
+
+namespace LfrlAnvil.Reactive.Events.Decorators
 {
     public sealed class EventListenerTakeUntilDecorator<TEvent, TTargetEvent> : IEventListenerDecorator<TEvent, TEvent>
     {
@@ -23,10 +25,8 @@
                 : base( next )
             {
                 _subscriber = subscriber;
-                _targetSubscriber = target.Listen(
-                    Events.EventListener.Create<TTargetEvent>(
-                        _ => _subscriber.Dispose(),
-                        _ => _subscriber.Dispose() ) );
+                var targetListener = new TargetEventListener( this );
+                _targetSubscriber = target.Listen( targetListener );
             }
 
             public override void React(TEvent @event)
@@ -38,6 +38,33 @@
             {
                 _targetSubscriber.Dispose();
                 base.OnDispose( source );
+            }
+
+            [MethodImpl( MethodImplOptions.AggressiveInlining )]
+            internal void OnTargetEvent()
+            {
+                _subscriber.Dispose();
+            }
+        }
+
+        private sealed class TargetEventListener : EventListener<TTargetEvent>
+        {
+            private EventListener? _sourceListener;
+
+            internal TargetEventListener(EventListener sourceListener)
+            {
+                _sourceListener = sourceListener;
+            }
+
+            public override void React(TTargetEvent _)
+            {
+                _sourceListener!.OnTargetEvent();
+            }
+
+            public override void OnDispose(DisposalSource _)
+            {
+                _sourceListener!.OnTargetEvent();
+                _sourceListener = null;
             }
         }
     }

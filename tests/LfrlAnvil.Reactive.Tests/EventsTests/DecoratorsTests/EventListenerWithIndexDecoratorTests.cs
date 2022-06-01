@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using FluentAssertions;
 using LfrlAnvil.Reactive.Events;
+using LfrlAnvil.Reactive.Events.Composites;
 using LfrlAnvil.Reactive.Events.Decorators;
 using LfrlAnvil.Reactive.Events.Extensions;
 using LfrlAnvil.TestExtensions;
@@ -27,8 +28,20 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
         [Fact]
         public void Decorate_ShouldCreateListenerWhoseReactAttachesAnIndex()
         {
-            var sourceEvents = new[] { 3, 7, 15 };
-            var expectedEvents = new[] { new WithIndex<int>( 3, 0 ), new WithIndex<int>( 7, 1 ), new WithIndex<int>( 15, 2 ) };
+            var sourceEvents = new[] { 1, 2, 3, 5, 7, 11, 13, 17, 19, 23 };
+            var expectedEvents = new[]
+            {
+                new WithIndex<int>( 1, 0 ),
+                new WithIndex<int>( 2, 1 ),
+                new WithIndex<int>( 3, 2 ),
+                new WithIndex<int>( 5, 3 ),
+                new WithIndex<int>( 7, 4 ),
+                new WithIndex<int>( 11, 5 ),
+                new WithIndex<int>( 13, 6 ),
+                new WithIndex<int>( 17, 7 ),
+                new WithIndex<int>( 19, 8 ),
+                new WithIndex<int>( 23, 9 )
+            };
             var actualEvents = new List<WithIndex<int>>();
 
             var next = EventListener.Create<WithIndex<int>>( actualEvents.Add );
@@ -60,8 +73,20 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
         [Fact]
         public void WithIndexExtension_ShouldCreateEventStreamThatAttachesAndIndex()
         {
-            var sourceEvents = new[] { 3, 7, 15 };
-            var expectedEvents = new[] { new WithIndex<int>( 3, 0 ), new WithIndex<int>( 7, 1 ), new WithIndex<int>( 15, 2 ) };
+            var sourceEvents = new[] { 1, 2, 3, 5, 7, 11, 13, 17, 19, 23 };
+            var expectedEvents = new[]
+            {
+                new WithIndex<int>( 1, 0 ),
+                new WithIndex<int>( 2, 1 ),
+                new WithIndex<int>( 3, 2 ),
+                new WithIndex<int>( 5, 3 ),
+                new WithIndex<int>( 7, 4 ),
+                new WithIndex<int>( 11, 5 ),
+                new WithIndex<int>( 13, 6 ),
+                new WithIndex<int>( 17, 7 ),
+                new WithIndex<int>( 19, 8 ),
+                new WithIndex<int>( 23, 9 )
+            };
             var actualEvents = new List<WithIndex<int>>();
 
             var next = EventListener.Create<WithIndex<int>>( actualEvents.Add );

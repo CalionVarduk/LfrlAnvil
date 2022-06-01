@@ -63,7 +63,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
         }
 
         [Fact]
-        public void Decorate_ShouldDisposeTheSubscriber_WhenTargetPublishesAnyEvent()
+        public void Decorate_ShouldCreateListenerThatDisposesTheSubscriber_WhenTargetPublishesAnyEvent()
         {
             var target = new EventPublisher<string>();
             var next = Substitute.For<IEventListener<int>>();
@@ -77,7 +77,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
         }
 
         [Fact]
-        public void Decorate_ShouldDisposeTheSubscriber_WhenTargetDisposes()
+        public void Decorate_ShouldCreateListenerThatDisposesTheSubscriber_WhenTargetDisposes()
         {
             var target = new EventPublisher<string>();
             var next = Substitute.For<IEventListener<int>>();
@@ -93,7 +93,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
         [Fact]
         public void Decorate_ShouldCreateListenerWhoseReactForwardsEvents()
         {
-            var sourceEvents = new[] { 0, 1, 15 };
+            var sourceEvents = new[] { 1, 2, 3, 5, 7, 11, 13, 17, 19, 23 };
             var actualEvents = new List<int>();
 
             var target = new EventPublisher<string>();
@@ -141,28 +141,10 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
         }
 
         [Fact]
-        public void TakeUntilExtension_ShouldCreateEventStreamThatForwardsEvents()
-        {
-            var sourceEvents = new[] { 0, 1, 15 };
-            var actualEvents = new List<int>();
-
-            var target = new EventPublisher<string>();
-            var next = EventListener.Create<int>( actualEvents.Add );
-            var sut = new EventPublisher<int>();
-            var decorated = sut.TakeUntil( target );
-            decorated.Listen( next );
-
-            foreach ( var e in sourceEvents )
-                sut.Publish( e );
-
-            actualEvents.Should().BeSequentiallyEqualTo( sourceEvents );
-        }
-
-        [Fact]
         public void TakeUntilExtension_ShouldCreateEventStreamThatForwardsEvents_UntilTargetPublishesAnyEvent()
         {
-            var sourceEvents = new[] { 0, 1, 15 };
-            var expectedEvents = new[] { 0, 1 };
+            var sourceEvents = new[] { 1, 2, 3, 5, 7, 11, 13, 17, 19, 23 };
+            var expectedEvents = new[] { 1, 2, 3, 5, 7, 11 };
             var actualEvents = new List<int>();
 
             var target = new EventPublisher<string>();
@@ -171,12 +153,12 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
             var decorated = sut.TakeUntil( target );
             decorated.Listen( next );
 
-            foreach ( var e in sourceEvents.Take( 2 ) )
+            foreach ( var e in sourceEvents.Take( expectedEvents.Length ) )
                 sut.Publish( e );
 
             target.Publish( Fixture.Create<string>() );
 
-            foreach ( var e in sourceEvents.Skip( 2 ) )
+            foreach ( var e in sourceEvents.Skip( expectedEvents.Length ) )
                 sut.Publish( e );
 
             using ( new AssertionScope() )
@@ -188,20 +170,21 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
         }
 
         [Fact]
-        public void TakeUntilExtension_ShouldCreateEventStreamThatDisposes_WhenTargetPublishesEventImmediately()
+        public void TakeUntilExtension_ShouldDisposeSubscribers_WhenTargetIsSourceAndSourcePublishedAnyEvent()
         {
-            var target = new HistoryEventPublisher<string>( capacity: 1 );
-            target.Publish( Fixture.Create<string>() );
-
+            var @event = Fixture.CreateNotDefault<int>();
             var next = Substitute.For<IEventListener<int>>();
             var sut = new EventPublisher<int>();
-            var decorated = sut.TakeUntil( target );
+            var decorated = sut.TakeUntil( sut );
             decorated.Listen( next );
+
+            sut.Publish( @event );
 
             using ( new AssertionScope() )
             {
+                next.DidNotReceive().React( Arg.Any<int>() );
+                next.Received().OnDispose( DisposalSource.Subscriber );
                 sut.HasSubscribers.Should().BeFalse();
-                target.HasSubscribers.Should().BeFalse();
             }
         }
     }

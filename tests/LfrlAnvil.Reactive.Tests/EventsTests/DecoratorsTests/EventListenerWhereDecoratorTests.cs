@@ -28,13 +28,13 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
         [Fact]
         public void Decorate_ShouldCreateListenerWhoseReactMapsFiltersEverySourceEvent()
         {
-            var sourceEvents = new[] { 0, 1, 2, 15 };
-            var expectedEvents = new[] { 1, 15 };
+            var sourceEvents = new[] { 1, 2, 3, 5, 7, 11, 13, 17, 19, 23 };
+            var expectedEvents = new[] { 3, 7, 13, 17, 23 };
             var actualEvents = new List<int>();
 
             var next = EventListener.Create<int>( actualEvents.Add );
             var subscriber = Substitute.For<IEventSubscriber>();
-            var sut = new EventListenerWhereDecorator<int>( x => x.IsOdd() );
+            var sut = new EventListenerWhereDecorator<int>( x => x % 10 == 3 || x % 10 == 7 );
             var listener = sut.Decorate( next, subscriber );
 
             foreach ( var e in sourceEvents )
@@ -61,13 +61,13 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
         [Fact]
         public void WhereExtension_ShouldCreateEventStreamThatFiltersEverySourceEvent()
         {
-            var sourceEvents = new[] { 0, 1, 2, 15 };
-            var expectedEvents = new[] { 1, 15 };
+            var sourceEvents = new[] { 1, 2, 3, 5, 7, 11, 13, 17, 19, 23 };
+            var expectedEvents = new[] { 3, 7, 13, 17, 23 };
             var actualEvents = new List<int>();
 
             var next = EventListener.Create<int>( actualEvents.Add );
             var sut = new EventPublisher<int>();
-            var decorated = sut.Where( x => x.IsOdd() );
+            var decorated = sut.Where( x => x % 10 == 3 || x % 10 == 7 );
             decorated.Listen( next );
 
             foreach ( var e in sourceEvents )

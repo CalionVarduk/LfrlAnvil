@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics.Contracts;
 
-namespace LfrlAnvil.Reactive.Events.Decorators
+namespace LfrlAnvil.Reactive.Events.Composites
 {
     public readonly struct WithIndex<TEvent>
     {

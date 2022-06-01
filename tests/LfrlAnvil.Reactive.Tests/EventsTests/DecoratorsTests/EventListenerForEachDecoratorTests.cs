@@ -28,7 +28,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
         [Fact]
         public void Decorate_ShouldCreateListenerWhoseReactCallsActionForEachSourceEvent()
         {
-            var sourceEvents = new[] { 0, 1, 15 };
+            var sourceEvents = new[] { 1, 2, 3, 5, 7, 11, 13, 17, 19, 23 };
             var calledEvents = new List<int>();
             var actualEvents = new List<int>();
 
@@ -65,7 +65,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
         [Fact]
         public void ForEachExtension_ShouldCreateEventStreamThatCallsActionForEachSourceEvent()
         {
-            var sourceEvents = new[] { 0, 1, 15 };
+            var sourceEvents = new[] { 1, 2, 3, 5, 7, 11, 13, 17, 19, 23 };
             var calledEvents = new List<int>();
             var actualEvents = new List<int>();
 

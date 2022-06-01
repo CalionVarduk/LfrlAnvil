@@ -27,8 +27,8 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
         [Fact]
         public void Decorate_ShouldCreateListenerWhoseReactMapsEverySourceEventIntoNextEvent()
         {
-            var sourceEvents = new[] { 0, 1, 15 };
-            var expectedEvents = new[] { "0", "1", "15" };
+            var sourceEvents = new[] { 1, 2, 3, 5, 7, 11, 13, 17, 19, 23 };
+            var expectedEvents = new[] { "1", "2", "3", "5", "7", "11", "13", "17", "19", "23" };
             var actualEvents = new List<string>();
 
             var next = EventListener.Create<string>( actualEvents.Add );
@@ -60,8 +60,8 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
         [Fact]
         public void SelectExtension_ShouldCreateEventStreamThatMapsEverySourceEventIntoNextEvent()
         {
-            var sourceEvents = new[] { 0, 1, 15 };
-            var expectedEvents = new[] { "0", "1", "15" };
+            var sourceEvents = new[] { 1, 2, 3, 5, 7, 11, 13, 17, 19, 23 };
+            var expectedEvents = new[] { "1", "2", "3", "5", "7", "11", "13", "17", "19", "23" };
             var actualEvents = new List<string>();
 
             var next = EventListener.Create<string>( actualEvents.Add );

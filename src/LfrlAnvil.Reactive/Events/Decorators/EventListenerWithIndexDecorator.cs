@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.Contracts;
+using LfrlAnvil.Reactive.Events.Composites;
 
 namespace LfrlAnvil.Reactive.Events.Decorators
 {
