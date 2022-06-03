@@ -1,6 +1,7 @@
 ﻿using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Threading;
 using LfrlAnvil.Reactive.Events.Internal;
 
 namespace LfrlAnvil.Reactive.Events
@@ -8,23 +9,23 @@ namespace LfrlAnvil.Reactive.Events
     public abstract class EventSource<TEvent> : IEventSource<TEvent>
     {
         private readonly List<EventSubscriber<TEvent>> _subscribers;
+        private int _state;
 
         protected EventSource()
         {
-            IsDisposed = false;
+            _state = 0;
             _subscribers = new List<EventSubscriber<TEvent>>( capacity: 1 );
         }
 
-        public bool IsDisposed { get; private set; }
+        public bool IsDisposed => _state == 1;
         public IReadOnlyCollection<IEventSubscriber> Subscribers => _subscribers;
         public bool HasSubscribers => _subscribers.Count > 0;
 
         public void Dispose()
         {
-            if ( IsDisposed )
+            if ( Interlocked.Exchange( ref _state, 1 ) == 1 )
                 return;
 
-            IsDisposed = true;
             var subscriberCount = _subscribers.Count;
             var subscribers = ArrayPool<EventSubscriber<TEvent>>.Shared.Rent( subscriberCount );
             _subscribers.CopyTo( subscribers );

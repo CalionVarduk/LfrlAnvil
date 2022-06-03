@@ -21,7 +21,7 @@ namespace LfrlAnvil.Reactive.Events.Decorators
         private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
         {
             private readonly IEventSubscriber _subscriber;
-            private LazyEventSubscriber? _targetSubscriber;
+            private LazyDisposable<IEventSubscriber>? _targetSubscriber;
             private TargetEventListener? _targetListener;
             private IEventStream<TTargetEvent>? _target;
 
@@ -45,10 +45,10 @@ namespace LfrlAnvil.Reactive.Events.Decorators
                     return;
                 }
 
-                _targetSubscriber = new LazyEventSubscriber();
+                _targetSubscriber = new LazyDisposable<IEventSubscriber>();
                 _targetListener = new TargetEventListener( this, @event );
                 var actualTargetSubscriber = _target!.Listen( _targetListener );
-                _targetSubscriber?.Initialize( actualTargetSubscriber );
+                _targetSubscriber?.Assign( actualTargetSubscriber );
             }
 
             public override void OnDispose(DisposalSource source)

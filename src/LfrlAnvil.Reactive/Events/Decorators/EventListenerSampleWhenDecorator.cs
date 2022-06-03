@@ -71,12 +71,12 @@ namespace LfrlAnvil.Reactive.Events.Decorators
             public override void React(TTargetEvent _)
             {
                 _sourceListener!.OnTargetEvent( _sample );
-                _sample.Clear();
+                _sample = Optional<TEvent>.Empty;
             }
 
             public override void OnDispose(DisposalSource _)
             {
-                _sample.Clear();
+                _sample  =Optional<TEvent>.Empty;
                 _sourceListener!.DisposeSubscriber();
                 _sourceListener = null;
             }

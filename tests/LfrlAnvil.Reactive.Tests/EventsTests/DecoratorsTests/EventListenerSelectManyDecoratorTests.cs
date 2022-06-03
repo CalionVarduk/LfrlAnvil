@@ -78,5 +78,54 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
         }
+
+        [Fact]
+        public void FlattenExtension_ShouldCreateEventStreamThatMapsEverySourceEventIntoPairsOfSourceAndNextEvents()
+        {
+            var sourceEvents = new[] { 1, 2, 3, 5, 7 };
+            var expectedEvents = new[]
+            {
+                Pair.Create( 1, "1" ),
+                Pair.Create( 1, "2" ),
+                Pair.Create( 2, "2" ),
+                Pair.Create( 2, "4" ),
+                Pair.Create( 3, "3" ),
+                Pair.Create( 3, "6" ),
+                Pair.Create( 5, "5" ),
+                Pair.Create( 5, "10" ),
+                Pair.Create( 7, "7" ),
+                Pair.Create( 7, "14" )
+            };
+
+            var actualEvents = new List<Pair<int, string>>();
+
+            var next = EventListener.Create<Pair<int, string>>( actualEvents.Add );
+            var sut = new EventPublisher<int>();
+            var decorated = sut.Flatten( x => new[] { x.ToString(), (x * 2).ToString() } );
+            decorated.Listen( next );
+
+            foreach ( var e in sourceEvents )
+                sut.Publish( e );
+
+            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
+        }
+
+        [Fact]
+        public void FlattenExtension_WithoutParameters_ShouldCreateEventStreamThatReducesSourceEventCollection()
+        {
+            var sourceEvents = new[] { new[] { 1, 2, 3 }, new[] { 5, 7, 11, 13, 17 }, new[] { 19, 23 } };
+            var expectedEvents = new[] { 1, 2, 3, 5, 7, 11, 13, 17, 19, 23 };
+            var actualEvents = new List<int>();
+
+            var next = EventListener.Create<int>( actualEvents.Add );
+            var sut = new EventPublisher<int[]>();
+            var decorated = sut.Flatten();
+            decorated.Listen( next );
+
+            foreach ( var e in sourceEvents )
+                sut.Publish( e );
+
+            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
+        }
     }
 }

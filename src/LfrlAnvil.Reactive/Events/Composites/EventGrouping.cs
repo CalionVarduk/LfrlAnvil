@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Reactive.Events.Composites
 {
@@ -15,6 +16,7 @@ namespace LfrlAnvil.Reactive.Events.Composites
         public TEvent Event { get; }
         public ReadOnlyMemory<TEvent> AllEvents { get; }
 
+        [Pure]
         public override string ToString()
         {
             return $"[{Key}]: {Event} (Count = {AllEvents.Length})";

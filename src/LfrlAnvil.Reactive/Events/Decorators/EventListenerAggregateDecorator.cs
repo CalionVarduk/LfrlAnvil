@@ -42,17 +42,16 @@ namespace LfrlAnvil.Reactive.Events.Decorators
 
             public override void React(TEvent @event)
             {
-                if ( _result.HasValue )
-                    _result.Event = _func( _result.Event!, @event );
-                else
-                    _result = new Optional<TEvent>( @event );
+                _result = _result.HasValue
+                    ? new Optional<TEvent>( _func( _result.Event!, @event ) )
+                    : new Optional<TEvent>( @event );
 
                 Next.React( _result.Event! );
             }
 
             public override void OnDispose(DisposalSource source)
             {
-                _result.Clear();
+                _result = Optional<TEvent>.Empty;
                 base.OnDispose( source );
             }
         }

@@ -48,7 +48,7 @@ namespace LfrlAnvil.Reactive.Events.Decorators
 
             public override void OnDispose(DisposalSource source)
             {
-                _lastKey.Clear();
+                _lastKey = Optional<TKey>.Empty;
                 base.OnDispose( source );
             }
         }

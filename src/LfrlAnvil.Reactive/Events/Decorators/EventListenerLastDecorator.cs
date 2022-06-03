@@ -27,7 +27,7 @@ namespace LfrlAnvil.Reactive.Events.Decorators
             public override void OnDispose(DisposalSource source)
             {
                 _value.TryForward( Next );
-                _value.Clear();
+                _value = Optional<TEvent>.Empty;
 
                 base.OnDispose( source );
             }

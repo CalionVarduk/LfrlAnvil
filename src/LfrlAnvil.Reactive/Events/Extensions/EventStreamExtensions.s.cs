@@ -1,9 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
+using LfrlAnvil.Internal;
 using LfrlAnvil.Reactive.Events.Composites;
 using LfrlAnvil.Reactive.Events.Decorators;
+using LfrlAnvil.Reactive.Events.Internal;
 
 namespace LfrlAnvil.Reactive.Events.Extensions
 {
@@ -15,6 +20,32 @@ namespace LfrlAnvil.Reactive.Events.Extensions
         {
             var decorator = new EventListenerWhereDecorator<TEvent>( predicate );
             return source.Decorate( decorator );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEventStream<TEvent> WhereNotNull<TEvent>(this IEventStream<TEvent?> source)
+            where TEvent : class
+        {
+            return source.Where( e => e is not null )!;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEventStream<TEvent> WhereNotNull<TEvent>(this IEventStream<TEvent?> source)
+            where TEvent : struct
+        {
+            return source.Where( e => e.HasValue ).Select( e => e!.Value );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEventStream<TEvent> WhereNotNull<TEvent>(this IEventStream<TEvent?> source, IEqualityComparer<TEvent> comparer)
+        {
+            if ( ! Generic<TEvent>.IsReferenceType && ! Generic<TEvent>.IsNullableType )
+                return source!;
+
+            return source.Where( e => ! comparer.Equals( e!, default! ) )!;
         }
 
         [Pure]
@@ -35,6 +66,32 @@ namespace LfrlAnvil.Reactive.Events.Extensions
         {
             var decorator = new EventListenerSelectManyDecorator<TSourceEvent, TNextEvent>( selector );
             return source.Decorate( decorator );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEventStream<Pair<TSourceEvent, TInnerEvent>> Flatten<TSourceEvent, TInnerEvent>(
+            this IEventStream<TSourceEvent> source,
+            Func<TSourceEvent, IEnumerable<TInnerEvent>> selector)
+        {
+            return source.Flatten( selector, Pair.Create );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEventStream<TNextEvent> Flatten<TSourceEvent, TInnerEvent, TNextEvent>(
+            this IEventStream<TSourceEvent> source,
+            Func<TSourceEvent, IEnumerable<TInnerEvent>> selector,
+            Func<TSourceEvent, TInnerEvent, TNextEvent> resultMapper)
+        {
+            return source.SelectMany( p => selector( p ).Select( c => resultMapper( p, c ) ) );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEventStream<TEvent> Flatten<TEvent>(this IEventStream<IEnumerable<TEvent>> source)
+        {
+            return source.SelectMany( x => x );
         }
 
         [Pure]
@@ -401,6 +458,34 @@ namespace LfrlAnvil.Reactive.Events.Extensions
         {
             var decorator = new EventListenerThrottleUntilDecorator<TEvent, TTargetEvent>( target );
             return source.Decorate( decorator );
+        }
+
+        public static Task<TEvent?> ToTask<TEvent>(this IEventStream<TEvent> source, CancellationToken cancellationToken)
+        {
+            var completionSource = new TaskCompletionSource<TEvent?>();
+            if ( cancellationToken.IsCancellationRequested )
+            {
+                completionSource.SetCanceled();
+                return completionSource.Task;
+            }
+
+            var cancellationTokenRegistration = new LazyDisposable<CancellationTokenRegistration>();
+            var listener = new TaskCompletionEventListener<TEvent>( completionSource, cancellationTokenRegistration );
+            var subscriber = source.Listen( listener );
+
+            if ( ! subscriber.IsDisposed )
+            {
+                var actualCancellationTokenRegistration = cancellationToken.Register(
+                    () =>
+                    {
+                        listener.MarkAsCancelled();
+                        subscriber.Dispose();
+                    } );
+
+                cancellationTokenRegistration.Assign( actualCancellationTokenRegistration );
+            }
+
+            return completionSource.Task;
         }
     }
 }

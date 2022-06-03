@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 using LfrlAnvil.Reactive.Events.Composites;
 using LfrlAnvil.Reactive.Events.Internal;
 
@@ -73,6 +75,24 @@ namespace LfrlAnvil.Reactive.Events
         public static IEventSource<ReadOnlyMemory<TEvent>> Combine<TEvent>(params IEventStream<TEvent>[] streams)
         {
             return Combine( streams.AsEnumerable() );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEventSource<FromTask<TEvent>> FromTask<TEvent>(
+            Func<CancellationToken, Task<TEvent>> taskFactory,
+            TaskEventSourceContextCapture contextCapture = TaskEventSourceContextCapture.None)
+        {
+            return new TaskEventSource<TEvent>( taskFactory, contextCapture );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEventSource<FromTask<TEvent>> FromTask<TEvent>(
+            Func<CancellationToken, Task<TEvent>> taskFactory,
+            TaskScheduler callbackScheduler)
+        {
+            return new TaskEventSource<TEvent>( taskFactory, callbackScheduler );
         }
     }
 }

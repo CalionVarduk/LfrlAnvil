@@ -1,4 +1,6 @@
-﻿namespace LfrlAnvil.Reactive.Events.Composites
+﻿using System.Diagnostics.Contracts;
+
+namespace LfrlAnvil.Reactive.Events.Composites
 {
     public readonly struct WithSender<TEvent>
     {
@@ -11,6 +13,7 @@
         public object? Sender { get; }
         public TEvent Event { get; }
 
+        [Pure]
         public override string ToString()
         {
             return $"{Sender} => {Event}";

@@ -18,15 +18,15 @@ namespace LfrlAnvil.Reactive.Events.Decorators
 
         private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
         {
-            private readonly LazyEventSubscriber _targetSubscriber;
+            private readonly LazyDisposable<IEventSubscriber> _targetSubscriber;
 
             internal EventListener(IEventListener<TEvent> next, IEventStream<TTargetEvent> target)
                 : base( next )
             {
-                _targetSubscriber = new LazyEventSubscriber();
+                _targetSubscriber = new LazyDisposable<IEventSubscriber>();
                 var targetListener = new TargetEventListener( this );
                 var actualTargetSubscriber = target.Listen( targetListener );
-                _targetSubscriber.Initialize( actualTargetSubscriber );
+                _targetSubscriber.Assign( actualTargetSubscriber );
             }
 
             public override void React(TEvent @event)

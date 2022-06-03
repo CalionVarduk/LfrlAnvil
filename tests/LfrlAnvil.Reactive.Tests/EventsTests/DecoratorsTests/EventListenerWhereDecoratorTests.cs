@@ -75,5 +75,85 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
         }
+
+        [Fact]
+        public void WhereNotNullExtension_ForRefType_ShouldCreateEventStreamThatIgnoresNullSourceEvents()
+        {
+            var sourceEvents = new[] { null, "1", null, "2", null, "3", null, "5", null, "7", null };
+            var expectedEvents = new[] { "1", "2", "3", "5", "7" };
+            var actualEvents = new List<string>();
+
+            var next = EventListener.Create<string>( actualEvents.Add );
+            var sut = new EventPublisher<string?>();
+            var decorated = sut.WhereNotNull();
+            decorated.Listen( next );
+
+            foreach ( var e in sourceEvents )
+                sut.Publish( e );
+
+            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
+        }
+
+        [Fact]
+        public void WhereNotNullExtension_ForStructType_ShouldCreateEventStreamThatIgnoresNullSourceEvents()
+        {
+            var sourceEvents = new int?[] { null, 1, null, 2, null, 3, null, 5, null, 7, null };
+            var expectedEvents = new[] { 1, 2, 3, 5, 7 };
+            var actualEvents = new List<int>();
+
+            var next = EventListener.Create<int>( actualEvents.Add );
+            var sut = new EventPublisher<int?>();
+            var decorated = sut.WhereNotNull();
+            decorated.Listen( next );
+
+            foreach ( var e in sourceEvents )
+                sut.Publish( e );
+
+            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
+        }
+
+        [Fact]
+        public void WhereNotNullExtension_WithExplicitComparer_ForRefType_ShouldCreateEventStreamThatIgnoresNullSourceEvents()
+        {
+            var sourceEvents = new[] { null, "1", null, "2", null, "3", null, "5", null, "7", null };
+            var expectedEvents = new[] { "1", "2", "3", "5", "7" };
+            var actualEvents = new List<string>();
+
+            var next = EventListener.Create<string>( actualEvents.Add );
+            var sut = new EventPublisher<string?>();
+            var decorated = sut.WhereNotNull( EqualityComparer<string>.Default );
+            decorated.Listen( next );
+
+            foreach ( var e in sourceEvents )
+                sut.Publish( e );
+
+            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
+        }
+
+        [Fact]
+        public void WhereNotNullExtension_WithExplicitComparer_ForNullableStructType_ShouldCreateEventStreamThatIgnoresNullSourceEvents()
+        {
+            var sourceEvents = new int?[] { null, 1, null, 2, null, 3, null, 5, null, 7, null };
+            var expectedEvents = new int?[] { 1, 2, 3, 5, 7 };
+            var actualEvents = new List<int?>();
+
+            var next = EventListener.Create<int?>( actualEvents.Add );
+            var sut = new EventPublisher<int?>();
+            var decorated = sut.WhereNotNull( EqualityComparer<int?>.Default );
+            decorated.Listen( next );
+
+            foreach ( var e in sourceEvents )
+                sut.Publish( e );
+
+            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
+        }
+
+        [Fact]
+        public void WhereNotNullExtension_WithExplicitComparer_ForStructType_ShouldReturnSource()
+        {
+            var sut = new EventPublisher<int>();
+            var decorated = sut.WhereNotNull( EqualityComparer<int>.Default );
+            decorated.Should().BeSameAs( sut );
+        }
     }
 }

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using LfrlAnvil.Reactive.Exceptions;
+﻿using System.Collections.Generic;
 
 namespace LfrlAnvil.Reactive.Events
 {
@@ -10,9 +8,7 @@ namespace LfrlAnvil.Reactive.Events
 
         public HistoryEventPublisher(int capacity)
         {
-            if ( capacity <= 0 )
-                throw new ArgumentOutOfRangeException( nameof( capacity ), Resources.InvalidCapacity( capacity ) );
-
+            Ensure.IsGreaterThan( capacity, 0, nameof( capacity ) );
             Capacity = capacity;
             _history = new Queue<TEvent>();
         }

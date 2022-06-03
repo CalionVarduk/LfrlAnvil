@@ -4,7 +4,7 @@
 
 // TODO:
 // Add more decorators:
-// UseTaskScheduler<T>(scheduler) - name may change, basically allows to react on specific thread
+// ContinueWith
 //
 // Add static EventSource class with creation methods:
 // Merge<T>(IEnumerable<IEventStream<T>>,int concurrent)
@@ -28,3 +28,4 @@
 // Throttle<T>(Duration)
 // Audit<T>(Duration)
 // Unsafe<T>()
+// Maybe<T>() - every React is converted to Some<T>

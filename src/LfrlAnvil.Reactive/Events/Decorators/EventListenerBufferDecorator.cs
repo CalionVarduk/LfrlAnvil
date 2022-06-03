@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
-using LfrlAnvil.Reactive.Exceptions;
 
 namespace LfrlAnvil.Reactive.Events.Decorators
 {
@@ -10,9 +9,7 @@ namespace LfrlAnvil.Reactive.Events.Decorators
 
         public EventListenerBufferDecorator(int bufferLength)
         {
-            if ( bufferLength < 1 )
-                throw new ArgumentOutOfRangeException( nameof( bufferLength ), Resources.MustBeGreaterThanZero( nameof( bufferLength ) ) );
-
+            Ensure.IsGreaterThan( bufferLength, 0, nameof( bufferLength ) );
             _bufferLength = bufferLength;
         }
 

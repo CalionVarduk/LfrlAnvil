@@ -13,6 +13,7 @@ namespace LfrlAnvil.Exceptions
 
         internal const string FailedToGenerateNextValue = "Failed to generate next value.";
         internal const string ExpectedIndexToBeZero = "Expected index to be equal to 0.";
+        internal const string LazyDisposableCannotAssign = "Lazy disposable cannot assign an inner disposable.";
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]

@@ -2,7 +2,7 @@
 
 namespace LfrlAnvil.Reactive.Events.Composites
 {
-    internal struct Optional<TEvent>
+    internal readonly struct Optional<TEvent>
     {
         internal static readonly Optional<TEvent> Empty = new Optional<TEvent>();
 
@@ -12,15 +12,8 @@ namespace LfrlAnvil.Reactive.Events.Composites
             HasValue = true;
         }
 
-        internal TEvent? Event;
-        internal bool HasValue;
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal void Clear()
-        {
-            Event = default;
-            HasValue = false;
-        }
+        internal readonly TEvent? Event;
+        internal readonly bool HasValue;
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void TryForward(IEventListener<TEvent> listener)
