@@ -3,9 +3,6 @@
 [assembly: InternalsVisibleTo( "LfrlAnvil.Reactive.Tests" )]
 
 // TODO:
-// Add more decorators:
-// ContinueWith
-//
 // Add static EventSource class with creation methods:
 // Merge<T>(IEnumerable<IEventStream<T>>,int concurrent)
 // Concat<T>(IEnumerable<IEventStream<T>>)

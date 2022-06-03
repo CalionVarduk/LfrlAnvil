@@ -8,6 +8,9 @@ namespace LfrlAnvil.Reactive.Events
 {
     public abstract class EventSource<TEvent> : IEventSource<TEvent>
     {
+        private static IEventSource<TEvent>? _disposed;
+        public static IEventSource<TEvent> Disposed => _disposed ??= CreateDisposed();
+
         private readonly List<EventSubscriber<TEvent>> _subscribers;
         private int _state;
 
@@ -132,6 +135,13 @@ namespace LfrlAnvil.Reactive.Events
             _subscribers.Add( subscriber );
             OnSubscriberAdded( subscriber, subscriber.Listener );
             return subscriber;
+        }
+
+        private static IEventSource<TEvent> CreateDisposed()
+        {
+            var result = new EventPublisher<TEvent>();
+            result.Dispose();
+            return result;
         }
 
         IEventSubscriber IEventStream.Listen(IEventListener listener)

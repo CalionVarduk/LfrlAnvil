@@ -460,6 +460,16 @@ namespace LfrlAnvil.Reactive.Events.Extensions
             return source.Decorate( decorator );
         }
 
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEventStream<TNextEvent> ContinueWith<TEvent, TNextEvent>(
+            this IEventStream<TEvent> source,
+            Func<TEvent, IEventStream<TNextEvent>> continuationFactory)
+        {
+            var decorator = new EventListenerContinueWithDecorator<TEvent, TNextEvent>( continuationFactory );
+            return source.Decorate( decorator );
+        }
+
         public static Task<TEvent?> ToTask<TEvent>(this IEventStream<TEvent> source, CancellationToken cancellationToken)
         {
             var completionSource = new TaskCompletionSource<TEvent?>();
