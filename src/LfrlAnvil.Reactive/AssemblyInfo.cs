@@ -3,7 +3,7 @@
 [assembly: InternalsVisibleTo( "LfrlAnvil.Reactive.Tests" )]
 
 // TODO://
-// Add higher-order stream decorators: Switch, Exhaust
+// Add higher-order stream decorators: Exhaust
 //
 // external extensions:
 // creation:
