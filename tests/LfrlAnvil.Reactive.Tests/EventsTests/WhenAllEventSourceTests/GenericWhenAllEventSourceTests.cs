@@ -5,6 +5,7 @@ using LfrlAnvil.Reactive.Events;
 using LfrlAnvil.Reactive.Events.Internal;
 using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using NSubstitute;
 using Xunit;
 
 namespace LfrlAnvil.Reactive.Tests.EventsTests.WhenAllEventSourceTests
@@ -22,8 +23,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.WhenAllEventSourceTests
         [Fact]
         public void Listen_ShouldEmitEmptyResultAndDisposeSubscriberImmediately_WhenInnerStreamsAreEmpty()
         {
-            TEvent?[]? result = null;
-            var listener = EventListener.Create<ReadOnlyMemory<TEvent?>>( e => result = e.ToArray() );
+            var listener = Substitute.For<IEventListener<ReadOnlyMemory<TEvent?>>>();
             var sut = new WhenAllEventSource<TEvent>( Array.Empty<IEventStream<TEvent>>() );
 
             var subscriber = sut.Listen( listener );
@@ -31,7 +31,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.WhenAllEventSourceTests
             using ( new AssertionScope() )
             {
                 subscriber.IsDisposed.Should().BeTrue();
-                result.Should().BeEmpty();
+                listener.DidNotReceive().React( Arg.Any<ReadOnlyMemory<TEvent?>>() );
             }
         }
 
@@ -39,8 +39,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.WhenAllEventSourceTests
         public void Listen_ShouldReturnDisposedSubscriber_WhenEventSourceIsDisposed()
         {
             var inner = new EventPublisher<TEvent>();
-            TEvent?[]? result = null;
-            var listener = EventListener.Create<ReadOnlyMemory<TEvent?>>( e => result = e.ToArray() );
+            var listener = Substitute.For<IEventListener<ReadOnlyMemory<TEvent?>>>();
             var sut = new WhenAllEventSource<TEvent>( new[] { inner } );
             sut.Dispose();
 
@@ -49,7 +48,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.WhenAllEventSourceTests
             using ( new AssertionScope() )
             {
                 subscriber.IsDisposed.Should().BeTrue();
-                result.Should().BeNull();
+                listener.DidNotReceive().React( Arg.Any<ReadOnlyMemory<TEvent?>>() );
             }
         }
 
@@ -86,8 +85,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.WhenAllEventSourceTests
             var secondStream = new EventPublisher<TEvent>();
             var thirdStream = new EventPublisher<TEvent>();
 
-            TEvent?[]? result = null;
-            var listener = EventListener.Create<ReadOnlyMemory<TEvent?>>( e => result = e.ToArray() );
+            var listener = Substitute.For<IEventListener<ReadOnlyMemory<TEvent?>>>();
             var sut = new WhenAllEventSource<TEvent>( new[] { firstStream, secondStream, thirdStream } );
             var subscriber = sut.Listen( listener );
 
@@ -99,7 +97,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.WhenAllEventSourceTests
                 secondStream.HasSubscribers.Should().BeTrue();
                 sut.HasSubscribers.Should().BeTrue();
                 subscriber.IsDisposed.Should().BeFalse();
-                result.Should().BeNull();
+                listener.DidNotReceive().React( Arg.Any<ReadOnlyMemory<TEvent?>>() );
             }
         }
 
