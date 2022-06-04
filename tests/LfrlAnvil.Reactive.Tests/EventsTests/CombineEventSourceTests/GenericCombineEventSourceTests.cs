@@ -33,7 +33,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.CombineEventSourceTests
             using ( new AssertionScope() )
             {
                 subscriber.IsDisposed.Should().BeTrue();
-                listener.DidNotReceive().React( Arg.Any<ReadOnlyMemory<TEvent>>() );
+                listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<ReadOnlyMemory<TEvent>>() ) );
             }
         }
 
@@ -50,7 +50,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.CombineEventSourceTests
             using ( new AssertionScope() )
             {
                 subscriber.IsDisposed.Should().BeTrue();
-                listener.DidNotReceive().React( Arg.Any<ReadOnlyMemory<TEvent>>() );
+                listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<ReadOnlyMemory<TEvent>>() ) );
             }
         }
 
@@ -74,7 +74,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.CombineEventSourceTests
                 secondStream.HasSubscribers.Should().BeFalse();
                 thirdStream.HasSubscribers.Should().BeFalse();
                 subscriber.IsDisposed.Should().BeTrue();
-                listener.DidNotReceive().React( Arg.Any<ReadOnlyMemory<TEvent>>() );
+                listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<ReadOnlyMemory<TEvent>>() ) );
             }
         }
 
@@ -96,7 +96,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.CombineEventSourceTests
                 thirdStream.HasSubscribers.Should().BeTrue();
                 sut.HasSubscribers.Should().BeTrue();
                 subscriber.IsDisposed.Should().BeFalse();
-                listener.DidNotReceive().React( Arg.Any<ReadOnlyMemory<TEvent>>() );
+                listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<ReadOnlyMemory<TEvent>>() ) );
             }
         }
 
@@ -128,7 +128,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.CombineEventSourceTests
                 thirdStream.HasSubscribers.Should().BeTrue();
                 sut.HasSubscribers.Should().BeTrue();
                 subscriber.IsDisposed.Should().BeFalse();
-                listener.DidNotReceive().React( Arg.Any<ReadOnlyMemory<TEvent>>() );
+                listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<ReadOnlyMemory<TEvent>>() ) );
             }
         }
 
@@ -152,7 +152,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.CombineEventSourceTests
                 thirdStream.HasSubscribers.Should().BeFalse();
                 sut.HasSubscribers.Should().BeFalse();
                 subscriber.IsDisposed.Should().BeTrue();
-                listener.DidNotReceive().React( Arg.Any<ReadOnlyMemory<TEvent>>() );
+                listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<ReadOnlyMemory<TEvent>>() ) );
             }
         }
 
@@ -187,7 +187,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.CombineEventSourceTests
                 thirdStream.HasSubscribers.Should().BeFalse();
                 sut.HasSubscribers.Should().BeFalse();
                 subscriber.IsDisposed.Should().BeTrue();
-                listener.DidNotReceive().React( Arg.Any<ReadOnlyMemory<TEvent>>() );
+                listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<ReadOnlyMemory<TEvent>>() ) );
             }
         }
 

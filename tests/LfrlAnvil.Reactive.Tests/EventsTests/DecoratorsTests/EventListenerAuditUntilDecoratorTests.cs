@@ -26,7 +26,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             using ( new AssertionScope() )
             {
-                subscriber.DidNotReceive().Dispose();
+                subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
                 target.HasSubscribers.Should().BeFalse();
             }
         }
@@ -45,7 +45,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             using ( new AssertionScope() )
             {
-                subscriber.Received().Dispose();
+                subscriber.VerifyCalls().Received( x => x.Dispose() );
                 target.HasSubscribers.Should().BeFalse();
             }
         }
@@ -63,8 +63,8 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             using ( new AssertionScope() )
             {
-                next.DidNotReceive().React( Arg.Any<int>() );
-                subscriber.DidNotReceive().Dispose();
+                next.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<int>() ) );
+                subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
             }
         }
 
@@ -81,8 +81,8 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             using ( new AssertionScope() )
             {
-                next.DidNotReceive().React( Arg.Any<int>() );
-                subscriber.DidNotReceive().Dispose();
+                next.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<int>() ) );
+                subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
                 target.Subscribers.Should().HaveCount( 1 );
             }
         }
@@ -102,8 +102,8 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             using ( new AssertionScope() )
             {
-                next.Received().React( sourceEvent );
-                subscriber.DidNotReceive().Dispose();
+                next.VerifyCalls().Received( x => x.React( sourceEvent ) );
+                subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
                 target.HasSubscribers.Should().BeFalse();
             }
         }
@@ -125,8 +125,8 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             using ( new AssertionScope() )
             {
-                next.Received().React( sourceEvent );
-                subscriber.DidNotReceive().Dispose();
+                next.VerifyCalls().Received( x => x.React( sourceEvent ) );
+                subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
                 target.HasSubscribers.Should().BeFalse();
             }
         }
@@ -185,8 +185,8 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             using ( new AssertionScope() )
             {
-                next.DidNotReceive().React( sourceEvent );
-                subscriber.Received().Dispose();
+                next.VerifyCalls().DidNotReceive( x => x.React( sourceEvent ) );
+                subscriber.VerifyCalls().Received( x => x.Dispose() );
                 target.HasSubscribers.Should().BeFalse();
             }
         }
@@ -206,8 +206,8 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             using ( new AssertionScope() )
             {
-                next.DidNotReceive().React( sourceEvent );
-                subscriber.Received().Dispose();
+                next.VerifyCalls().DidNotReceive( x => x.React( sourceEvent ) );
+                subscriber.VerifyCalls().Received( x => x.Dispose() );
                 target.HasSubscribers.Should().BeFalse();
             }
         }
@@ -225,7 +225,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             listener.OnDispose( source );
 
-            next.Received().OnDispose( source );
+            next.VerifyCalls().Received( x => x.OnDispose( source ) );
         }
 
         [Theory]

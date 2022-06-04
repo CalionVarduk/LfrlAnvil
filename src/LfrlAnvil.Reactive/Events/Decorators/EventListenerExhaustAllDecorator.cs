@@ -2,7 +2,7 @@
 
 namespace LfrlAnvil.Reactive.Events.Decorators
 {
-    public sealed class EventListenerSwitchAllDecorator<TEvent> : IEventListenerDecorator<IEventStream<TEvent>, TEvent>
+    public sealed class EventListenerExhaustAllDecorator<TEvent> : IEventListenerDecorator<IEventStream<TEvent>, TEvent>
     {
         public IEventListener<IEventStream<TEvent>> Decorate(IEventListener<TEvent> listener, IEventSubscriber _)
         {
@@ -12,32 +12,28 @@ namespace LfrlAnvil.Reactive.Events.Decorators
         private sealed class EventListener : DecoratedEventListener<IEventStream<TEvent>, TEvent>
         {
             private IEventSubscriber? _activeInnerSubscriber;
-            private IEventStream<TEvent>? _nextStream;
 
             internal EventListener(IEventListener<TEvent> next)
                 : base( next )
             {
                 _activeInnerSubscriber = null;
-                _nextStream = null;
             }
 
             public override void React(IEventStream<TEvent> @event)
             {
-                if ( _activeInnerSubscriber is null )
-                {
-                    StartListeningToNextInnerStream( @event );
+                if ( _activeInnerSubscriber is not null )
                     return;
-                }
 
-                _nextStream = @event;
-                _activeInnerSubscriber.Dispose();
+                var activeInnerListener = new InnerEventListener( this );
+                _activeInnerSubscriber = @event.Listen( activeInnerListener );
+
+                if ( activeInnerListener.IsMarkedAsDisposed() )
+                    _activeInnerSubscriber = null;
             }
 
             public override void OnDispose(DisposalSource source)
             {
-                _nextStream = null;
                 _activeInnerSubscriber?.Dispose();
-
                 base.OnDispose( source );
             }
 
@@ -51,22 +47,6 @@ namespace LfrlAnvil.Reactive.Events.Decorators
             internal void OnInnerDisposed()
             {
                 _activeInnerSubscriber = null;
-
-                if ( _nextStream is null )
-                    return;
-
-                var nextStream = _nextStream;
-                _nextStream = null;
-                StartListeningToNextInnerStream( nextStream );
-            }
-
-            private void StartListeningToNextInnerStream(IEventStream<TEvent> stream)
-            {
-                var activeInnerListener = new InnerEventListener( this );
-                _activeInnerSubscriber = stream.Listen( activeInnerListener );
-
-                if ( activeInnerListener.IsMarkedAsDisposed() )
-                    _activeInnerSubscriber = null;
             }
         }
 

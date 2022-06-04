@@ -1,5 +1,6 @@
 ﻿using LfrlAnvil.Reactive.Events;
 using LfrlAnvil.TestExtensions;
+using LfrlAnvil.TestExtensions.FluentAssertions;
 using NSubstitute;
 using Xunit;
 
@@ -17,7 +18,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratedEventListenerTests
 
             sut.OnDispose( source );
 
-            next.Received().OnDispose( source );
+            next.VerifyCalls().Received( x => x.OnDispose( source ) );
         }
     }
 }

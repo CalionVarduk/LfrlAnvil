@@ -23,7 +23,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             var _ = sut.Decorate( next, subscriber );
 
-            subscriber.DidNotReceive().Dispose();
+            subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
         }
 
         [Fact]
@@ -37,7 +37,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             listener.React( sourceEvent );
 
-            next.DidNotReceive().React( Arg.Any<int>() );
+            next.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<int>() ) );
         }
 
         [Fact]
@@ -53,7 +53,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             listener.React( sourceEvent );
 
-            subscriber.DidNotReceive().Dispose();
+            subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
         }
 
         [Theory]
@@ -87,7 +87,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
             foreach ( var e in sourceEvents )
                 listener.React( e );
 
-            next.DidNotReceive().React( Arg.Any<int>() );
+            next.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<int>() ) );
         }
 
         [Fact]
@@ -102,7 +102,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
             foreach ( var e in sourceEvents )
                 listener.React( e );
 
-            subscriber.Received().Dispose();
+            subscriber.VerifyCalls().Received( x => x.Dispose() );
         }
 
         [Theory]
@@ -117,7 +117,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             listener.OnDispose( source );
 
-            next.Received().OnDispose( source );
+            next.VerifyCalls().Received( x => x.OnDispose( source ) );
         }
 
         [Fact]

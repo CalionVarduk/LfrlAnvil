@@ -7,6 +7,7 @@ using LfrlAnvil.Reactive.Events;
 using LfrlAnvil.Reactive.Events.Composites;
 using LfrlAnvil.Reactive.Events.Internal;
 using LfrlAnvil.TestExtensions;
+using LfrlAnvil.TestExtensions.FluentAssertions;
 using NSubstitute;
 using Xunit;
 
@@ -33,7 +34,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.WhenAnyEventSourceTests
             using ( new AssertionScope() )
             {
                 subscriber.IsDisposed.Should().BeTrue();
-                listener.DidNotReceive().React( Arg.Any<WithIndex<TEvent>>() );
+                listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<WithIndex<TEvent>>() ) );
             }
         }
 
@@ -50,7 +51,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.WhenAnyEventSourceTests
             using ( new AssertionScope() )
             {
                 subscriber.IsDisposed.Should().BeTrue();
-                listener.DidNotReceive().React( Arg.Any<WithIndex<TEvent>>() );
+                listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<WithIndex<TEvent>>() ) );
             }
         }
 
@@ -72,7 +73,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.WhenAnyEventSourceTests
                 thirdStream.HasSubscribers.Should().BeTrue();
                 sut.HasSubscribers.Should().BeTrue();
                 subscriber.IsDisposed.Should().BeFalse();
-                listener.DidNotReceive().React( Arg.Any<WithIndex<TEvent>>() );
+                listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<WithIndex<TEvent>>() ) );
             }
         }
 
@@ -96,7 +97,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.WhenAnyEventSourceTests
                 secondStream.HasSubscribers.Should().BeFalse();
                 thirdStream.HasSubscribers.Should().BeFalse();
                 subscriber.IsDisposed.Should().BeTrue();
-                listener.DidNotReceive().React( Arg.Any<WithIndex<TEvent>>() );
+                listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<WithIndex<TEvent>>() ) );
             }
         }
 
@@ -119,7 +120,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.WhenAnyEventSourceTests
                 secondStream.HasSubscribers.Should().BeTrue();
                 sut.HasSubscribers.Should().BeTrue();
                 subscriber.IsDisposed.Should().BeFalse();
-                listener.DidNotReceive().React( Arg.Any<WithIndex<TEvent>>() );
+                listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<WithIndex<TEvent>>() ) );
             }
         }
 
@@ -142,7 +143,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.WhenAnyEventSourceTests
             {
                 sut.HasSubscribers.Should().BeFalse();
                 subscriber.IsDisposed.Should().BeTrue();
-                listener.DidNotReceive().React( Arg.Any<WithIndex<TEvent>>() );
+                listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<WithIndex<TEvent>>() ) );
             }
         }
 

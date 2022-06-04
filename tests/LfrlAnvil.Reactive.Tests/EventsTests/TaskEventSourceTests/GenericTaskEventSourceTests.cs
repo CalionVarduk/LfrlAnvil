@@ -9,6 +9,7 @@ using LfrlAnvil.Reactive.Events;
 using LfrlAnvil.Reactive.Events.Composites;
 using LfrlAnvil.Reactive.Events.Internal;
 using LfrlAnvil.TestExtensions;
+using LfrlAnvil.TestExtensions.FluentAssertions;
 using NSubstitute;
 using Xunit;
 
@@ -56,7 +57,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.TaskEventSourceTests
             using ( new AssertionScope() )
             {
                 subscriber.IsDisposed.Should().BeTrue();
-                listener.DidNotReceive().React( Arg.Any<FromTask<TEvent>>() );
+                listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<FromTask<TEvent>>() ) );
             }
         }
 
@@ -78,7 +79,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.TaskEventSourceTests
             {
                 sut.HasSubscribers.Should().BeTrue();
                 subscriber.IsDisposed.Should().BeFalse();
-                listener.DidNotReceive().React( Arg.Any<FromTask<TEvent>>() );
+                listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<FromTask<TEvent>>() ) );
             }
         }
 
@@ -100,7 +101,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.TaskEventSourceTests
             {
                 sut.HasSubscribers.Should().BeTrue();
                 subscriber.IsDisposed.Should().BeFalse();
-                listener.DidNotReceive().React( Arg.Any<FromTask<TEvent>>() );
+                listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<FromTask<TEvent>>() ) );
             }
         }
 
@@ -284,7 +285,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.TaskEventSourceTests
             using ( new AssertionScope() )
             {
                 subscriber.IsDisposed.Should().BeFalse();
-                listener.DidNotReceive().React( Arg.Any<FromTask<TEvent>>() );
+                listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<FromTask<TEvent>>() ) );
                 task.Status.Should().NotBe( TaskStatus.Created );
             }
         }

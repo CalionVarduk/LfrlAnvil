@@ -66,7 +66,7 @@ namespace LfrlAnvil.Reactive.Events.Internal
                 }
             }
 
-            public override void React(WithIndex<TEvent> _) {}
+            public override void React(WithIndex<TEvent> _) { }
 
             public override void OnDispose(DisposalSource source)
             {

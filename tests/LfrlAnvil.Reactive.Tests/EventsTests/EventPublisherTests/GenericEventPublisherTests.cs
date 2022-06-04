@@ -67,7 +67,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventPublisherTests
 
             sut.Listen( listener );
 
-            listener.Received().OnDispose( DisposalSource.EventSource );
+            listener.VerifyCalls().Received( x => x.OnDispose( DisposalSource.EventSource ) );
         }
 
         [Fact]
@@ -110,7 +110,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventPublisherTests
 
             subscriber.Dispose();
 
-            listener.Received().OnDispose( DisposalSource.Subscriber );
+            listener.VerifyCalls().Received( x => x.OnDispose( DisposalSource.Subscriber ) );
         }
 
         [Fact]
@@ -124,7 +124,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventPublisherTests
 
             subscriber.Dispose();
 
-            listener.DidNotReceive().OnDispose( Arg.Any<DisposalSource>() );
+            listener.VerifyCalls().DidNotReceive( x => x.OnDispose( Arg.Any<DisposalSource>() ) );
         }
 
         [Fact]
@@ -141,8 +141,8 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventPublisherTests
 
             using ( new AssertionScope() )
             {
-                listener1.Received().React( @event );
-                listener2.Received().React( @event );
+                listener1.VerifyCalls().Received( x => x.React( @event ) );
+                listener2.VerifyCalls().Received( x => x.React( @event ) );
             }
         }
 
@@ -162,7 +162,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventPublisherTests
             {
                 sut.Subscribers.Should().BeSequentiallyEqualTo( subscriber1 );
                 subscriber2.IsDisposed.Should().BeTrue();
-                listener2.DidNotReceive().React( @event );
+                listener2.VerifyCalls().DidNotReceive( x => x.React( @event ) );
             }
         }
 
@@ -209,8 +209,8 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventPublisherTests
 
             using ( new AssertionScope() )
             {
-                listener1.Received().OnDispose( DisposalSource.EventSource );
-                listener2.Received().OnDispose( DisposalSource.EventSource );
+                listener1.VerifyCalls().Received( x => x.OnDispose( DisposalSource.EventSource ) );
+                listener2.VerifyCalls().Received( x => x.OnDispose( DisposalSource.EventSource ) );
             }
         }
 
@@ -226,8 +226,8 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventPublisherTests
 
             sut.Dispose();
 
-            listener2.DidNotReceive().OnDispose( DisposalSource.EventSource );
-            listener2.Received().OnDispose( DisposalSource.Subscriber );
+            listener2.VerifyCalls().DidNotReceive( x => x.OnDispose( DisposalSource.EventSource ) );
+            listener2.VerifyCalls().Received( x => x.OnDispose( DisposalSource.Subscriber ) );
         }
 
         [Fact]
@@ -280,7 +280,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventPublisherTests
 
             sut.Publish( @event );
 
-            listener.Received().React( @event );
+            listener.VerifyCalls().Received( x => x.React( @event ) );
         }
 
         [Fact]

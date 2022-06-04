@@ -49,7 +49,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.WhenAllEventSourceTests
             using ( new AssertionScope() )
             {
                 subscriber.IsDisposed.Should().BeTrue();
-                listener.DidNotReceive().React( Arg.Any<ReadOnlyMemory<TEvent?>>() );
+                listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<ReadOnlyMemory<TEvent?>>() ) );
             }
         }
 
@@ -98,7 +98,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.WhenAllEventSourceTests
                 secondStream.HasSubscribers.Should().BeTrue();
                 sut.HasSubscribers.Should().BeTrue();
                 subscriber.IsDisposed.Should().BeFalse();
-                listener.DidNotReceive().React( Arg.Any<ReadOnlyMemory<TEvent?>>() );
+                listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<ReadOnlyMemory<TEvent?>>() ) );
             }
         }
 

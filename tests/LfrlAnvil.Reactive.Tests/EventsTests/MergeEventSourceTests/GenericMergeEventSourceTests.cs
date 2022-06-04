@@ -46,7 +46,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.MergeEventSourceTests
             using ( new AssertionScope() )
             {
                 subscriber.IsDisposed.Should().BeTrue();
-                listener.DidNotReceive().React( Arg.Any<TEvent>() );
+                listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<TEvent>() ) );
             }
         }
 
@@ -63,7 +63,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.MergeEventSourceTests
             using ( new AssertionScope() )
             {
                 subscriber.IsDisposed.Should().BeTrue();
-                listener.DidNotReceive().React( Arg.Any<TEvent>() );
+                listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<TEvent>() ) );
             }
         }
 
@@ -90,7 +90,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.MergeEventSourceTests
                 secondStream.HasSubscribers.Should().BeFalse();
                 thirdStream.HasSubscribers.Should().BeFalse();
                 subscriber.IsDisposed.Should().BeTrue();
-                listener.DidNotReceive().React( Arg.Any<TEvent>() );
+                listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<TEvent>() ) );
             }
         }
 
@@ -112,7 +112,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.MergeEventSourceTests
                 thirdStream.HasSubscribers.Should().BeFalse();
                 sut.HasSubscribers.Should().BeTrue();
                 subscriber.IsDisposed.Should().BeFalse();
-                listener.DidNotReceive().React( Arg.Any<TEvent>() );
+                listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<TEvent>() ) );
             }
         }
 
@@ -135,7 +135,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.MergeEventSourceTests
                 thirdStream.HasSubscribers.Should().BeFalse();
                 sut.HasSubscribers.Should().BeTrue();
                 subscriber.IsDisposed.Should().BeFalse();
-                listener.DidNotReceive().React( Arg.Any<TEvent>() );
+                listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<TEvent>() ) );
             }
         }
 
@@ -157,7 +157,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.MergeEventSourceTests
                 thirdStream.HasSubscribers.Should().BeTrue();
                 sut.HasSubscribers.Should().BeTrue();
                 subscriber.IsDisposed.Should().BeFalse();
-                listener.DidNotReceive().React( Arg.Any<TEvent>() );
+                listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<TEvent>() ) );
             }
         }
 

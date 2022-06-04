@@ -4,6 +4,7 @@ using FluentAssertions.Execution;
 using LfrlAnvil.Exceptions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions;
+using LfrlAnvil.TestExtensions.FluentAssertions;
 using NSubstitute;
 using Xunit;
 
@@ -37,7 +38,7 @@ namespace LfrlAnvil.Tests.LazyDisposableTests
                 sut.Inner.Should().BeSameAs( inner );
                 sut.IsDisposed.Should().BeFalse();
                 sut.CanAssign.Should().BeFalse();
-                inner.DidNotReceive().Dispose();
+                inner.VerifyCalls().DidNotReceive( x => x.Dispose() );
             }
         }
 
@@ -55,7 +56,7 @@ namespace LfrlAnvil.Tests.LazyDisposableTests
                 sut.Inner.Should().BeSameAs( inner );
                 sut.IsDisposed.Should().BeTrue();
                 sut.CanAssign.Should().BeFalse();
-                inner.Received().Dispose();
+                inner.VerifyCalls().Received( x => x.Dispose() );
             }
         }
 
@@ -91,7 +92,7 @@ namespace LfrlAnvil.Tests.LazyDisposableTests
             using ( new AssertionScope() )
             {
                 sut.IsDisposed.Should().BeTrue();
-                inner.Received().Dispose();
+                inner.VerifyCalls().Received( x => x.Dispose() );
             }
         }
 
@@ -108,7 +109,7 @@ namespace LfrlAnvil.Tests.LazyDisposableTests
             using ( new AssertionScope() )
             {
                 sut.IsDisposed.Should().BeTrue();
-                inner.Received( 1 ).Dispose();
+                inner.VerifyCalls().Received( x => x.Dispose(), count: 1 );
             }
         }
     }

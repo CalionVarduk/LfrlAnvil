@@ -74,7 +74,7 @@ namespace LfrlAnvil.Reactive.Events.Decorators
                     StartListeningToNextInnerStream( stream );
             }
 
-            internal void StartListeningToNextInnerStream(IEventStream<TEvent> stream)
+            private void StartListeningToNextInnerStream(IEventStream<TEvent> stream)
             {
                 var innerSubscriberNode = _innerSubscribers.AddLast( (IEventSubscriber?)null );
                 var innerListener = new InnerEventListener( this, innerSubscriberNode );

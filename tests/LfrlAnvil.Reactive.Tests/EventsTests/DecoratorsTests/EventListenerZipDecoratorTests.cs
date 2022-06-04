@@ -25,7 +25,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             using ( new AssertionScope() )
             {
-                subscriber.DidNotReceive().Dispose();
+                subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
                 target.HasSubscribers.Should().BeTrue();
             }
         }
@@ -44,7 +44,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             using ( new AssertionScope() )
             {
-                subscriber.Received().Dispose();
+                subscriber.VerifyCalls().Received( x => x.Dispose() );
                 target.HasSubscribers.Should().BeFalse();
             }
         }
@@ -190,7 +190,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             listener.OnDispose( source );
 
-            next.Received().OnDispose( source );
+            next.VerifyCalls().Received( x => x.OnDispose( source ) );
         }
 
         [Theory]

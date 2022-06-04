@@ -12,14 +12,14 @@ using Xunit;
 
 namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 {
-    public class EventListenerSwitchAllDecoratorTests : TestsBase
+    public class EventListenerExhaustAllDecoratorTests : TestsBase
     {
         [Fact]
         public void Decorate_ShouldNotDisposeTheSubscriber()
         {
             var next = Substitute.For<IEventListener<int>>();
             var subscriber = Substitute.For<IEventSubscriber>();
-            var sut = new EventListenerSwitchAllDecorator<int>();
+            var sut = new EventListenerExhaustAllDecorator<int>();
 
             var _ = sut.Decorate( next, subscriber );
 
@@ -32,7 +32,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
             var inner = new EventPublisher<int>();
             var next = Substitute.For<IEventListener<int>>();
             var subscriber = Substitute.For<IEventSubscriber>();
-            var sut = new EventListenerSwitchAllDecorator<int>();
+            var sut = new EventListenerExhaustAllDecorator<int>();
             var listener = sut.Decorate( next, subscriber );
 
             listener.React( inner );
@@ -48,7 +48,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             var next = Substitute.For<IEventListener<int>>();
             var subscriber = Substitute.For<IEventSubscriber>();
-            var sut = new EventListenerSwitchAllDecorator<int>();
+            var sut = new EventListenerExhaustAllDecorator<int>();
             var listener = sut.Decorate( next, subscriber );
 
             listener.React( inner );
@@ -65,7 +65,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
             var inner = new EventPublisher<int>();
             var next = EventListener.Create<int>( actualEvents.Add );
             var subscriber = Substitute.For<IEventSubscriber>();
-            var sut = new EventListenerSwitchAllDecorator<int>();
+            var sut = new EventListenerExhaustAllDecorator<int>();
             var listener = sut.Decorate( next, subscriber );
 
             listener.React( inner );
@@ -94,7 +94,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             var next = EventListener.Create<int>( actualEvents.Add );
             var subscriber = Substitute.For<IEventSubscriber>();
-            var sut = new EventListenerSwitchAllDecorator<int>();
+            var sut = new EventListenerExhaustAllDecorator<int>();
             var listener = sut.Decorate( next, subscriber );
 
             listener.React( firstInner );
@@ -118,13 +118,12 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
         }
 
         [Fact]
-        public void
-            Decorate_ShouldCreateListenerThatStopsForwardingActiveStreamEvents_WhenActiveStreamDoesNotDisposeBeforeNextStreamSubscriberIsCreated()
+        public void Decorate_ShouldCreateListenerThatIgnoresNextInnerStreams_WhenActiveStreamDoesNotDisposeBeforeNextStreamIsCreated()
         {
             var firstStreamValues = new[] { 1, 2 };
             var secondStreamValues = new[] { 3, 5 };
             var thirdStreamValues = new[] { 7, 11 };
-            var expectedEvents = firstStreamValues.Take( 1 ).Concat( secondStreamValues.Take( 1 ) ).Concat( thirdStreamValues );
+            var expectedEvents = firstStreamValues.Concat( thirdStreamValues );
             var actualEvents = new List<int>();
 
             var firstInner = new EventPublisher<int>();
@@ -133,16 +132,19 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             var next = EventListener.Create<int>( actualEvents.Add );
             var subscriber = Substitute.For<IEventSubscriber>();
-            var sut = new EventListenerSwitchAllDecorator<int>();
+            var sut = new EventListenerExhaustAllDecorator<int>();
             var listener = sut.Decorate( next, subscriber );
 
             listener.React( firstInner );
             firstInner.Publish( firstStreamValues[0] );
             listener.React( secondInner );
             firstInner.Publish( firstStreamValues[1] );
+            firstInner.Dispose();
+
             secondInner.Publish( secondStreamValues[0] );
             listener.React( thirdInner );
             secondInner.Publish( secondStreamValues[1] );
+            secondInner.Dispose();
 
             foreach ( var e in thirdStreamValues )
                 thirdInner.Publish( e );
@@ -164,7 +166,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
             var inner = new EventPublisher<int>();
             var next = Substitute.For<IEventListener<int>>();
             var subscriber = Substitute.For<IEventSubscriber>();
-            var sut = new EventListenerSwitchAllDecorator<int>();
+            var sut = new EventListenerExhaustAllDecorator<int>();
             var listener = sut.Decorate( next, subscriber );
 
             listener.React( inner );
@@ -180,7 +182,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
         {
             var next = Substitute.For<IEventListener<int>>();
             var subscriber = Substitute.For<IEventSubscriber>();
-            var sut = new EventListenerSwitchAllDecorator<int>();
+            var sut = new EventListenerExhaustAllDecorator<int>();
             var listener = sut.Decorate( next, subscriber );
 
             listener.OnDispose( source );
@@ -190,12 +192,12 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
         [Fact]
         public void
-            SwitchAllExtension_ShouldCreateEventStreamThatStopsForwardingActiveStreamEvents_WhenActiveStreamDoesNotDisposeBeforeNextStreamSubscriberIsCreated()
+            ExhaustAllExtension_ShouldCreateEventStreamThatIgnoresNextInnerStreams_WhenActiveStreamDoesNotDisposeBeforeNextStreamIsCreated()
         {
             var firstStreamValues = new[] { 1, 2 };
             var secondStreamValues = new[] { 3, 5 };
             var thirdStreamValues = new[] { 7, 11 };
-            var expectedEvents = firstStreamValues.Take( 1 ).Concat( secondStreamValues.Take( 1 ) ).Concat( thirdStreamValues );
+            var expectedEvents = firstStreamValues.Concat( thirdStreamValues );
             var actualEvents = new List<int>();
 
             var firstInner = new EventPublisher<int>();
@@ -204,16 +206,19 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             var next = EventListener.Create<int>( actualEvents.Add );
             var sut = new EventPublisher<IEventStream<int>>();
-            var decorated = sut.SwitchAll();
+            var decorated = sut.ExhaustAll();
             var subscriber = decorated.Listen( next );
 
             sut.Publish( firstInner );
             firstInner.Publish( firstStreamValues[0] );
             sut.Publish( secondInner );
             firstInner.Publish( firstStreamValues[1] );
+            firstInner.Dispose();
+
             secondInner.Publish( secondStreamValues[0] );
             sut.Publish( thirdInner );
             secondInner.Publish( secondStreamValues[1] );
+            secondInner.Dispose();
 
             foreach ( var e in thirdStreamValues )
                 thirdInner.Publish( e );

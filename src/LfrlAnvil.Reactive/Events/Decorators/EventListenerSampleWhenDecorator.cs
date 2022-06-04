@@ -76,7 +76,7 @@ namespace LfrlAnvil.Reactive.Events.Decorators
 
             public override void OnDispose(DisposalSource _)
             {
-                _sample  =Optional<TEvent>.Empty;
+                _sample = Optional<TEvent>.Empty;
                 _sourceListener!.DisposeSubscriber();
                 _sourceListener = null;
             }

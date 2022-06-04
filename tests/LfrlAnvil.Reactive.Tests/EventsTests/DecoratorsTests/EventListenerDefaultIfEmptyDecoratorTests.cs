@@ -23,7 +23,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             var _ = sut.Decorate( next, subscriber );
 
-            subscriber.DidNotReceive().Dispose();
+            subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
         }
 
         [Fact]
@@ -60,7 +60,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
             listener.React( sourceEvent );
             listener.OnDispose( source );
 
-            next.DidNotReceive().React( value );
+            next.VerifyCalls().DidNotReceive( x => x.React( value ) );
         }
 
         [Theory]
@@ -76,7 +76,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             listener.OnDispose( source );
 
-            next.Received().React( value );
+            next.VerifyCalls().Received( x => x.React( value ) );
         }
 
         [Theory]
@@ -92,7 +92,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             listener.OnDispose( source );
 
-            next.Received().OnDispose( source );
+            next.VerifyCalls().Received( x => x.OnDispose( source ) );
         }
 
         [Fact]

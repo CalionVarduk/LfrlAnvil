@@ -27,7 +27,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             using ( new AssertionScope() )
             {
-                subscriber.DidNotReceive().Dispose();
+                subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
                 target.HasSubscribers.Should().BeTrue();
             }
         }
@@ -44,7 +44,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             var _ = sut.Decorate( next, subscriber );
 
-            subscriber.Received().Dispose();
+            subscriber.VerifyCalls().Received( x => x.Dispose() );
         }
 
         [Fact]
@@ -59,7 +59,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             var _ = sut.Decorate( next, subscriber );
 
-            subscriber.Received().Dispose();
+            subscriber.VerifyCalls().Received( x => x.Dispose() );
         }
 
         [Fact]
@@ -73,7 +73,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             target.Publish( Fixture.Create<string>() );
 
-            subscriber.Received().Dispose();
+            subscriber.VerifyCalls().Received( x => x.Dispose() );
         }
 
         [Fact]
@@ -87,7 +87,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             target.Dispose();
 
-            subscriber.Received().Dispose();
+            subscriber.VerifyCalls().Received( x => x.Dispose() );
         }
 
         [Fact]
@@ -121,7 +121,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             listener.OnDispose( source );
 
-            next.Received().OnDispose( source );
+            next.VerifyCalls().Received( x => x.OnDispose( source ) );
         }
 
         [Theory]
@@ -182,8 +182,8 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             using ( new AssertionScope() )
             {
-                next.DidNotReceive().React( Arg.Any<int>() );
-                next.Received().OnDispose( DisposalSource.Subscriber );
+                next.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<int>() ) );
+                next.VerifyCalls().Received( x => x.OnDispose( DisposalSource.Subscriber ) );
                 sut.HasSubscribers.Should().BeFalse();
             }
         }

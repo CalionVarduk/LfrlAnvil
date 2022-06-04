@@ -24,7 +24,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             var _ = sut.Decorate( next, subscriber );
 
-            subscriber.DidNotReceive().Dispose();
+            subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
         }
 
         [Theory]
@@ -54,7 +54,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
             using ( new AssertionScope() )
             {
                 actualEvents.Should().HaveCount( expectedEvents.Length );
-                for(var i = 0; i < actualEvents.Count; ++i)
+                for ( var i = 0; i < actualEvents.Count; ++i )
                     actualEvents[i].Should().BeSequentiallyEqualTo( expectedEvents[i] );
             }
         }
@@ -71,7 +71,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             listener.OnDispose( source );
 
-            next.Received().OnDispose( source );
+            next.VerifyCalls().Received( x => x.OnDispose( source ) );
         }
 
         [Theory]
@@ -115,7 +115,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
             using ( new AssertionScope() )
             {
                 actualEvents.Should().HaveCount( expectedEvents.Length );
-                for(var i = 0; i < actualEvents.Count; ++i)
+                for ( var i = 0; i < actualEvents.Count; ++i )
                     actualEvents[i].Should().BeSequentiallyEqualTo( expectedEvents[i] );
             }
         }

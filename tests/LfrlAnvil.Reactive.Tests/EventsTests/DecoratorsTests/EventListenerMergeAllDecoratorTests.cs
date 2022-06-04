@@ -37,7 +37,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             var _ = sut.Decorate( next, subscriber );
 
-            subscriber.DidNotReceive().Dispose();
+            subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
         }
 
         [Theory]
@@ -60,7 +60,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
             {
                 innerStreams.Take( maxConcurrency ).Should().OnlyContain( s => s.HasSubscribers );
                 innerStreams.Skip( maxConcurrency ).Should().BeEmptyOrOnlyContain( s => ! s.HasSubscribers );
-                next.DidNotReceive().React( Arg.Any<int>() );
+                next.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<int>() ) );
             }
         }
 
@@ -293,7 +293,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
             using ( new AssertionScope() )
             {
                 innerStreams.Should().OnlyContain( s => ! s.HasSubscribers );
-                subscriber.DidNotReceive().Dispose();
+                subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
             }
         }
 
@@ -363,7 +363,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
             using ( new AssertionScope() )
             {
                 innerStreams.Should().OnlyContain( s => ! s.HasSubscribers );
-                subscriber.DidNotReceive().Dispose();
+                subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
             }
         }
 
@@ -404,7 +404,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             listener.OnDispose( source );
 
-            next.Received().OnDispose( source );
+            next.VerifyCalls().Received( x => x.OnDispose( source ) );
         }
 
         [Fact]

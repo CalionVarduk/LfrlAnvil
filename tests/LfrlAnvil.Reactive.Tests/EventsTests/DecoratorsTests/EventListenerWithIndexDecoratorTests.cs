@@ -22,7 +22,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             var _ = sut.Decorate( next, subscriber );
 
-            subscriber.DidNotReceive().Dispose();
+            subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
         }
 
         [Fact]
@@ -42,6 +42,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
                 new WithIndex<int>( 19, 8 ),
                 new WithIndex<int>( 23, 9 )
             };
+
             var actualEvents = new List<WithIndex<int>>();
 
             var next = EventListener.Create<WithIndex<int>>( actualEvents.Add );
@@ -67,7 +68,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
 
             listener.OnDispose( source );
 
-            next.Received().OnDispose( source );
+            next.VerifyCalls().Received( x => x.OnDispose( source ) );
         }
 
         [Fact]
@@ -87,6 +88,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratorsTests
                 new WithIndex<int>( 19, 8 ),
                 new WithIndex<int>( 23, 9 )
             };
+
             var actualEvents = new List<WithIndex<int>>();
 
             var next = EventListener.Create<WithIndex<int>>( actualEvents.Add );

@@ -105,7 +105,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.DecoratedEventSourceTests
             {
                 subscriber.IsDisposed.Should().BeTrue();
                 sut.Subscribers.Should().BeEmpty();
-                rootListener.Received().OnDispose( DisposalSource.Subscriber );
+                rootListener.VerifyCalls().Received( x => x.OnDispose( DisposalSource.Subscriber ) );
             }
         }
 

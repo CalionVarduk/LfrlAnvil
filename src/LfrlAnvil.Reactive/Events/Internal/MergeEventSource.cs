@@ -95,7 +95,7 @@ namespace LfrlAnvil.Reactive.Events.Internal
                 StartListeningToNextInnerStream();
             }
 
-            internal void StartListeningToNextInnerStream()
+            private void StartListeningToNextInnerStream()
             {
                 var stream = _streams[_nextStreamIndex++];
 

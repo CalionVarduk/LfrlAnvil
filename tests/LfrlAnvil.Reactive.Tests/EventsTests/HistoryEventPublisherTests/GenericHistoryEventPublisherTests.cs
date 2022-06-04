@@ -84,7 +84,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.HistoryEventPublisherTests
 
             sut.Publish( @event );
 
-            listener.Received().React( @event );
+            listener.VerifyCalls().Received( x => x.React( @event ) );
         }
 
         [Fact]
@@ -98,8 +98,8 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.HistoryEventPublisherTests
 
             sut.Listen( listener );
 
-            listener.Received().React( events[0] );
-            listener.Received().React( events[1] );
+            listener.VerifyCalls().Received( x => x.React( events[0] ) );
+            listener.VerifyCalls().Received( x => x.React( events[1] ) );
         }
 
         [Fact]
@@ -117,8 +117,8 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.HistoryEventPublisherTests
             using ( new AssertionScope() )
             {
                 subscriber.IsDisposed.Should().BeTrue();
-                listener.Received().React( events[0] );
-                listener.DidNotReceive().React( events[1] );
+                listener.VerifyCalls().Received( x => x.React( events[0] ) );
+                listener.VerifyCalls().DidNotReceive( x => x.React( events[1] ) );
             }
         }
 

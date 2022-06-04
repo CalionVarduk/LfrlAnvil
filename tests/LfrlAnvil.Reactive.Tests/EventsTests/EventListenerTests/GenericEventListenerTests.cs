@@ -48,7 +48,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.EventListenerTests
 
             sut.React( @event );
 
-            listener.Received().React( @event );
+            listener.VerifyCalls().Received( x => x.React( @event ) );
         }
 
         [Fact]
