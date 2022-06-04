@@ -23,7 +23,8 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.WhenAllEventSourceTests
         [Fact]
         public void Listen_ShouldEmitEmptyResultAndDisposeSubscriberImmediately_WhenInnerStreamsAreEmpty()
         {
-            var listener = Substitute.For<IEventListener<ReadOnlyMemory<TEvent?>>>();
+            TEvent?[]? result = null;
+            var listener = EventListener.Create<ReadOnlyMemory<TEvent?>>( e => result = e.ToArray() );
             var sut = new WhenAllEventSource<TEvent>( Array.Empty<IEventStream<TEvent>>() );
 
             var subscriber = sut.Listen( listener );
@@ -31,7 +32,7 @@ namespace LfrlAnvil.Reactive.Tests.EventsTests.WhenAllEventSourceTests
             using ( new AssertionScope() )
             {
                 subscriber.IsDisposed.Should().BeTrue();
-                listener.DidNotReceive().React( Arg.Any<ReadOnlyMemory<TEvent?>>() );
+                result.Should().BeEmpty();
             }
         }
 

@@ -422,6 +422,36 @@ namespace LfrlAnvil.Reactive.Events.Extensions
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEventStream<TEvent> Prepend<TEvent>(this IEventStream<TEvent> source, IEnumerable<TEvent> values)
+        {
+            var decorator = new EventListenerPrependDecorator<TEvent>( values );
+            return source.Decorate( decorator );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEventStream<TEvent> Prepend<TEvent>(this IEventStream<TEvent> source, params TEvent[] values)
+        {
+            return source.Prepend( values.AsEnumerable() );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEventStream<TEvent> Append<TEvent>(this IEventStream<TEvent> source, IEnumerable<TEvent> values)
+        {
+            var decorator = new EventListenerAppendDecorator<TEvent>( values );
+            return source.Decorate( decorator );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEventStream<TEvent> Append<TEvent>(this IEventStream<TEvent> source, params TEvent[] values)
+        {
+            return source.Append( values.AsEnumerable() );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static IEventStream<TEvent> AuditUntil<TEvent, TTargetEvent>(
             this IEventStream<TEvent> source,
             IEventStream<TTargetEvent> target)
