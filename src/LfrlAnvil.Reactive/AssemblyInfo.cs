@@ -2,12 +2,8 @@
 
 [assembly: InternalsVisibleTo( "LfrlAnvil.Reactive.Tests" )]
 
-// TODO:
-// Add static EventSource class with creation methods:
-// Merge<T>(IEnumerable<IEventStream<T>>,int concurrent)
-// Concat<T>(IEnumerable<IEventStream<T>>)
-// Switch<T>(IEnumerable<IEventStream<T>>)
-// Exhaust<T>(IEnumerable<IEventStream<T>>)
+// TODO://
+// Add higher-order stream decorators: Switch, Exhaust
 //
 // external extensions:
 // creation:

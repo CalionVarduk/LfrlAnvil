@@ -500,6 +500,23 @@ namespace LfrlAnvil.Reactive.Events.Extensions
             return source.Decorate( decorator );
         }
 
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEventStream<TEvent> MergeAll<TEvent>(
+            this IEventStream<IEventStream<TEvent>> source,
+            int maxConcurrency = int.MaxValue)
+        {
+            var decorator = new EventListenerMergeAllDecorator<TEvent>( maxConcurrency );
+            return source.Decorate( decorator );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEventStream<TEvent> ConcatAll<TEvent>(this IEventStream<IEventStream<TEvent>> source)
+        {
+            return source.MergeAll( maxConcurrency: 1 );
+        }
+
         public static Task<TEvent?> ToTask<TEvent>(this IEventStream<TEvent> source, CancellationToken cancellationToken)
         {
             var completionSource = new TaskCompletionSource<TEvent?>();

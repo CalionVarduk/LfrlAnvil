@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
 using FluentAssertions;
 using FluentAssertions.Collections;
 
@@ -20,6 +23,18 @@ namespace LfrlAnvil.TestExtensions.FluentAssertions
             params object[] becauseArgs)
         {
             return source.ContainInOrder( expected, because, becauseArgs ).And.HaveSameCount( expected, because, becauseArgs );
+        }
+
+        public static AndConstraint<GenericCollectionAssertions<T>> BeEmptyOrOnlyContain<T>(
+            this SelfReferencingCollectionAssertions<T, GenericCollectionAssertions<T>> source,
+            Expression<Func<T, bool>> predicate,
+            string because = "",
+            params object[] becauseArgs)
+        {
+            if ( source.Subject is null || source.Subject.Any() )
+                return source.OnlyContain( predicate, because, becauseArgs );
+
+            return source.BeEmpty( because, becauseArgs );
         }
     }
 }
