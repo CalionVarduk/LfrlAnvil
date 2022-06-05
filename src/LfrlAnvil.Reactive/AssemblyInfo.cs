@@ -2,9 +2,7 @@
 
 [assembly: InternalsVisibleTo( "LfrlAnvil.Reactive.Tests" )]
 
-// TODO://
-// Add higher-order stream decorators: Exhaust
-//
+// TODO:
 // external extensions:
 // creation:
 // Timer<T>(Duration,int count=max) - with start/stop/reset methods
