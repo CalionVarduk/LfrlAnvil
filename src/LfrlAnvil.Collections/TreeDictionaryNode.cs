@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Collections
@@ -26,6 +27,12 @@ namespace LfrlAnvil.Collections
         IReadOnlyList<ITreeDictionaryNode<TKey, TValue>> ITreeDictionaryNode<TKey, TValue>.Children => _children;
         ITreeNode<TValue>? ITreeNode<TValue>.Parent => Parent;
         IReadOnlyList<ITreeNode<TValue>> ITreeNode<TValue>.Children => _children;
+
+        [Pure]
+        public override string ToString()
+        {
+            return $"{Key} => {Value}";
+        }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void SetTree(TreeDictionary<TKey, TValue> tree)

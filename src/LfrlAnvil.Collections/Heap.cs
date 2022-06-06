@@ -83,7 +83,7 @@ namespace LfrlAnvil.Collections
         public void Pop()
         {
             _items[0] = _items[^1];
-            _items.RemoveAt( _items.Count - 1 );
+            _items.RemoveLast();
             FixDown( 0 );
         }
 
@@ -127,12 +127,6 @@ namespace LfrlAnvil.Collections
             return _items.GetEnumerator();
         }
 
-        [Pure]
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         private void FixUp(int i)
         {
@@ -166,6 +160,12 @@ namespace LfrlAnvil.Collections
                 i = m;
                 l = Heap.GetLeftChildIndex( i );
             }
+        }
+
+        [Pure]
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
     }
 }
