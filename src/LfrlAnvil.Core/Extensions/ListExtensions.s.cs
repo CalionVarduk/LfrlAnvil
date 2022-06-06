@@ -10,5 +10,11 @@ namespace LfrlAnvil.Extensions
         {
             (list[index2], list[index1]) = (list[index1], list[index2]);
         }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static void RemoveLast<T>(this IList<T> list)
+        {
+            list.RemoveAt( list.Count - 1 );
+        }
     }
 }
