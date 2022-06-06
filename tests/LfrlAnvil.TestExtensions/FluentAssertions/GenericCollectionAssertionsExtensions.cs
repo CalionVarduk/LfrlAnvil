@@ -11,14 +11,14 @@ namespace LfrlAnvil.TestExtensions.FluentAssertions
     {
         public static AndConstraint<GenericCollectionAssertions<T>> BeSequentiallyEqualTo<T>(
             this GenericCollectionAssertions<T> source,
-            params T?[] expected)
+            params T[] expected)
         {
             return source.HaveSameCount( expected ).And.ContainInOrder( expected );
         }
 
         public static AndConstraint<GenericCollectionAssertions<T>> BeSequentiallyEqualTo<T>(
             this GenericCollectionAssertions<T> source,
-            IEnumerable<T>? expected,
+            IEnumerable<T> expected,
             string because = "",
             params object[] becauseArgs)
         {

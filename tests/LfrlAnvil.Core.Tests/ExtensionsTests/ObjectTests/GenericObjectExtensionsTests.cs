@@ -146,7 +146,7 @@ namespace LfrlAnvil.Tests.ExtensionsTests.ObjectTests
         {
             var values = Fixture.CreateDistinctCollection<T>( 11 ).ToList();
             var valuesToStopAt = new HashSet<T> { values[1], values[6] };
-            var expected = new[] { values[1], values[2], values[3], values[6] };
+            T?[] expected = { values[1], values[2], values[3], values[6] };
 
             var children = new[]
             {
@@ -301,7 +301,7 @@ namespace LfrlAnvil.Tests.ExtensionsTests.ObjectTests
         {
             var values = Fixture.CreateDistinctCollection<T>( 11 ).ToList();
             var valuesToStopAt = new HashSet<T> { values[1], values[6] };
-            var expected = new[] { values[0], values[1], values[2], values[3], values[6] };
+            T?[] expected = { values[0], values[1], values[2], values[3], values[6] };
 
             var children = new[]
             {
