@@ -55,6 +55,35 @@ namespace LfrlAnvil.Reactive.Queues
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public EnqueuedEvent<TEvent, TPoint, TPointDelta> WithDequeuePoint(TPoint dequeuePoint)
+        {
+            return new EnqueuedEvent<TEvent, TPoint, TPointDelta>( Event, dequeuePoint, Delta, Repetitions );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public EnqueuedEvent<TEvent, TPoint, TPointDelta> WithDelta(TPointDelta delta)
+        {
+            return new EnqueuedEvent<TEvent, TPoint, TPointDelta>( Event, DequeuePoint, delta, Repetitions );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public EnqueuedEvent<TEvent, TPoint, TPointDelta> WithRepetitions(int repetitions)
+        {
+            Ensure.IsGreaterThan( repetitions, 0, nameof( repetitions ) );
+            return new EnqueuedEvent<TEvent, TPoint, TPointDelta>( Event, DequeuePoint, Delta, repetitions );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public EnqueuedEvent<TEvent, TPoint, TPointDelta> AsInfinite()
+        {
+            return new EnqueuedEvent<TEvent, TPoint, TPointDelta>( Event, DequeuePoint, Delta, 0 );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal EnqueuedEvent<TEvent, TPoint, TPointDelta> Repeat(TPoint dequeuePoint)
         {
             return IsInfinite

@@ -5,7 +5,6 @@ using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlAnvil.Functional;
-using LfrlAnvil.Reactive.Queues.Exceptions;
 using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using Xunit;
@@ -380,70 +379,23 @@ namespace LfrlAnvil.Reactive.Queues.Tests.EventQueueTests
         }
 
         [Fact]
-        public void TryDequeue_ShouldReturnFalse_WhenQueueIsEmpty()
+        public void Dequeue_ShouldReturnNull_WhenQueueIsEmpty()
         {
             var sut = new MockEventQueue( Fixture.Create<long>() );
-
-            var result = sut.TryDequeue( out var outResult );
-
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                outResult.Should().Be( default( TEvent ) );
-            }
+            var result = sut.Dequeue();
+            result.Should().BeNull();
         }
 
         [Fact]
-        public void TryDequeue_ShouldReturnFalse_WhenNextEventPointIsLargerThanCurrentQueuePoint()
+        public void Dequeue_ShouldReturnNull_WhenNextEventPointIsLargerThanCurrentQueuePoint()
         {
             var (queueStartPoint, eventDequeuePoint) = Fixture.CreateDistinctSortedCollection<long>( count: 2 );
             var sut = new MockEventQueue( queueStartPoint );
             sut.EnqueueAt( Fixture.Create<TEvent>(), eventDequeuePoint );
 
-            var result = sut.TryDequeue( out var outResult );
+            var result = sut.Dequeue();
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                outResult.Should().Be( default( TEvent ) );
-            }
-        }
-
-        [Fact]
-        public void TryDequeue_ShouldReturnTrue_WhenNextEventPointIsLessThanOrEqualToCurrentQueuePoint()
-        {
-            var @event = Fixture.Create<TEvent>();
-            var (eventDequeuePoint, queueStartPoint) = Fixture.CreateDistinctSortedCollection<long>( count: 2 );
-            var sut = new MockEventQueue( queueStartPoint );
-            sut.EnqueueAt( @event, eventDequeuePoint );
-
-            var result = sut.TryDequeue( out var outResult );
-
-            using ( new AssertionScope() )
-            {
-                result.Should().BeTrue();
-                outResult.Should().Be( @event );
-            }
-        }
-
-        [Fact]
-        public void Dequeue_ShouldThrowEventDequeueException_WhenQueueIsEmpty()
-        {
-            var sut = new MockEventQueue( Fixture.Create<long>() );
-            var action = Lambda.Of( () => sut.Dequeue() );
-            action.Should().ThrowExactly<EventDequeueException>();
-        }
-
-        [Fact]
-        public void Dequeue_ShouldThrowEventDequeueException_WhenNextEventPointIsLargerThanCurrentQueuePoint()
-        {
-            var (queueStartPoint, eventDequeuePoint) = Fixture.CreateDistinctSortedCollection<long>( count: 2 );
-            var sut = new MockEventQueue( queueStartPoint );
-            sut.EnqueueAt( Fixture.Create<TEvent>(), eventDequeuePoint );
-
-            var action = Lambda.Of( () => sut.Dequeue() );
-
-            action.Should().ThrowExactly<EventDequeueException>();
+            result.Should().BeNull();
         }
 
         [Fact]
@@ -458,7 +410,17 @@ namespace LfrlAnvil.Reactive.Queues.Tests.EventQueueTests
 
             using ( new AssertionScope() )
             {
-                result.Should().Be( @event );
+                result.Should()
+                    .BeEquivalentTo(
+                        new
+                        {
+                            Event = @event,
+                            DequeuePoint = eventDequeuePoint,
+                            Delta = default( int ),
+                            Repetitions = 1,
+                            IsInfinite = false
+                        } );
+
                 sut.Count.Should().Be( 0 );
             }
         }
@@ -476,7 +438,17 @@ namespace LfrlAnvil.Reactive.Queues.Tests.EventQueueTests
 
             using ( new AssertionScope() )
             {
-                result.Should().Be( @event );
+                result.Should()
+                    .BeEquivalentTo(
+                        new
+                        {
+                            Event = @event,
+                            DequeuePoint = eventDequeuePoint,
+                            Delta = delta,
+                            Repetitions = 1,
+                            IsInfinite = false
+                        } );
+
                 sut.Count.Should().Be( 0 );
             }
         }
@@ -497,7 +469,17 @@ namespace LfrlAnvil.Reactive.Queues.Tests.EventQueueTests
 
             using ( new AssertionScope() )
             {
-                result.Should().Be( @event );
+                result.Should()
+                    .BeEquivalentTo(
+                        new
+                        {
+                            Event = @event,
+                            DequeuePoint = eventDequeuePoint,
+                            Delta = delta,
+                            Repetitions = repetitions,
+                            IsInfinite = false
+                        } );
+
                 sut.Should()
                     .BeEquivalentTo(
                         new
@@ -525,7 +507,17 @@ namespace LfrlAnvil.Reactive.Queues.Tests.EventQueueTests
 
             using ( new AssertionScope() )
             {
-                result.Should().Be( @event );
+                result.Should()
+                    .BeEquivalentTo(
+                        new
+                        {
+                            Event = @event,
+                            DequeuePoint = eventDequeuePoint,
+                            Delta = delta,
+                            Repetitions = 0,
+                            IsInfinite = true
+                        } );
+
                 sut.Should()
                     .BeEquivalentTo(
                         new
@@ -555,8 +547,12 @@ namespace LfrlAnvil.Reactive.Queues.Tests.EventQueueTests
             foreach ( var (@event, dequeuePoint) in eventsWithDequeuePoints )
                 sut.EnqueueAt( @event, dequeuePoint );
 
-            while ( sut.TryDequeue( out var @event ) )
-                result.Add( @event );
+            var dequeuedEvent = sut.Dequeue();
+            while ( dequeuedEvent is not null )
+            {
+                result.Add( dequeuedEvent.Value.Event );
+                dequeuedEvent = sut.Dequeue();
+            }
 
             result.Should().BeSequentiallyEqualTo( expectedResult );
         }

@@ -1,10 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Collections;
-using LfrlAnvil.Reactive.Queues.Exceptions;
 using LfrlAnvil.Reactive.Queues.Internal;
 
 namespace LfrlAnvil.Reactive.Queues
@@ -30,21 +28,10 @@ namespace LfrlAnvil.Reactive.Queues
         public IComparer<TPoint> Comparer { get; }
         public int Count => _events.Count;
 
-        public TEvent Dequeue()
-        {
-            if ( ! TryDequeue( out var result ) )
-                throw new EventDequeueException();
-
-            return result;
-        }
-
-        public bool TryDequeue([MaybeNullWhen( false )] out TEvent result)
+        public EnqueuedEvent<TEvent, TPoint, TPointDelta>? Dequeue()
         {
             if ( ! _events.TryPeek( out var next ) || Comparer.Compare( CurrentPoint, next.DequeuePoint ) < 0 )
-            {
-                result = default;
-                return false;
-            }
+                return null;
 
             var repeat = TryCreateEnqueuedEventRepeat( next );
 
@@ -53,8 +40,7 @@ namespace LfrlAnvil.Reactive.Queues
             else
                 _events.Pop();
 
-            result = next.Event;
-            return true;
+            return next;
         }
 
         [Pure]
@@ -139,7 +125,7 @@ namespace LfrlAnvil.Reactive.Queues
         }
 
         [Pure]
-        protected abstract TPoint AddDelta(TPoint point, TPointDelta delta);
+        protected abstract TPoint AddDelta(TPoint point, TPointDelta? delta);
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -148,7 +134,7 @@ namespace LfrlAnvil.Reactive.Queues
             if ( source.Repetitions == 1 )
                 return null;
 
-            var dequeuePoint = AddDelta( source.DequeuePoint, source.Delta! );
+            var dequeuePoint = AddDelta( source.DequeuePoint, source.Delta );
             return source.Repeat( dequeuePoint );
         }
 

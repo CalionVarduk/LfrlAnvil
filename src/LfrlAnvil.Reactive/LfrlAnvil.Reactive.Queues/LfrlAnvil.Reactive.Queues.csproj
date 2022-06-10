@@ -15,7 +15,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\LfrlAnvil.Reactive.Core\LfrlAnvil.Reactive.Core.csproj" />
         <ProjectReference Include="..\..\LfrlAnvil.Collections\LfrlAnvil.Collections.csproj" />
     </ItemGroup>
 
