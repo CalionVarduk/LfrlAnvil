@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Collections;
+using LfrlAnvil.Reactive.Queues.Composites;
 using LfrlAnvil.Reactive.Queues.Internal;
 
 namespace LfrlAnvil.Reactive.Queues

@@ -1,4 +1,6 @@
-﻿namespace LfrlAnvil.Reactive.Queues
+﻿using LfrlAnvil.Reactive.Queues.Composites;
+
+namespace LfrlAnvil.Reactive.Queues
 {
     public interface IEventQueue<TEvent, TPoint, TPointDelta> : IReadOnlyEventQueue<TEvent, TPoint, TPointDelta>
     {

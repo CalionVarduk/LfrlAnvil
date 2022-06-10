@@ -209,7 +209,7 @@ namespace LfrlAnvil.Reactive.Exchanges
         public IEventPublisher<TEvent> RegisterPublisher<TEvent>(IEventPublisher<TEvent> publisher)
         {
             if ( IsDisposed )
-                throw new ObjectDisposedException( Resources.DisposedEventExchange );
+                throw new ObjectDisposedException( ExceptionResources.DisposedEventExchange );
 
             if ( ! _publishers.TryAdd( typeof( TEvent ), publisher ) )
                 throw new EventPublisherAlreadyExistsException( typeof( TEvent ) );

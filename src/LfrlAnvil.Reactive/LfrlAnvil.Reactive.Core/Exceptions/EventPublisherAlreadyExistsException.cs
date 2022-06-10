@@ -5,7 +5,7 @@ namespace LfrlAnvil.Reactive.Exceptions
     public class EventPublisherAlreadyExistsException : ArgumentException
     {
         public EventPublisherAlreadyExistsException(Type eventType)
-            : base( Resources.EventPublisherAlreadyExists( eventType ) )
+            : base( ExceptionResources.EventPublisherAlreadyExists( eventType ) )
         {
             EventType = eventType;
         }

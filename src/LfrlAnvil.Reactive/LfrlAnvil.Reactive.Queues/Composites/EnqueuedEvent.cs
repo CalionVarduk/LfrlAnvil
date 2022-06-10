@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
-namespace LfrlAnvil.Reactive.Queues
+namespace LfrlAnvil.Reactive.Queues.Composites
 {
     public readonly struct EnqueuedEvent<TEvent, TPoint, TPointDelta>
     {

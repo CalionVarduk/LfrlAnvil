@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using LfrlAnvil.Reactive.Queues.Composites;
 
 namespace LfrlAnvil.Reactive.Queues.Internal
 {

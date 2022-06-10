@@ -5,6 +5,6 @@ namespace LfrlAnvil.Reactive.Exceptions
     public class InvalidEventPublisherDisposalException : InvalidOperationException
     {
         public InvalidEventPublisherDisposalException()
-            : base( Resources.InvalidEventPublisherDisposal ) { }
+            : base( ExceptionResources.InvalidEventPublisherDisposal ) { }
     }
 }

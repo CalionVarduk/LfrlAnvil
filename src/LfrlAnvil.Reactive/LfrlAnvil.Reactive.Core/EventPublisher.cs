@@ -9,7 +9,7 @@ namespace LfrlAnvil.Reactive
         public void Publish(TEvent @event)
         {
             if ( IsDisposed )
-                throw new ObjectDisposedException( Resources.DisposedEventSource );
+                throw new ObjectDisposedException( ExceptionResources.DisposedEventSource );
 
             OnPublish( @event );
         }
