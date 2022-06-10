@@ -1588,12 +1588,12 @@ namespace LfrlAnvil.Reactive.Queues.Tests.ReorderableEventQueueTests
                 return point - delta;
             }
 
-            protected override int AddDelta(int a, int b)
+            protected override int Add(int a, int b)
             {
                 return a + b;
             }
 
-            protected override int SubtractDelta(int a, int b)
+            protected override int Subtract(int a, int b)
             {
                 return a - b;
             }

@@ -183,7 +183,7 @@ namespace LfrlAnvil.Reactive.Queues
             if ( ! _events.TryGetValue( @event, out var data ) )
                 return null;
 
-            var result = data.WithDelta( AddDelta( data.Delta, delta ) );
+            var result = data.WithDelta( Add( data.Delta, delta ) );
             _events.Replace( @event, result );
             return result;
         }
@@ -193,7 +193,7 @@ namespace LfrlAnvil.Reactive.Queues
             if ( ! _events.TryGetValue( @event, out var data ) )
                 return null;
 
-            var result = data.WithDelta( SubtractDelta( data.Delta, delta ) );
+            var result = data.WithDelta( Subtract( data.Delta, delta ) );
             _events.Replace( @event, result );
             return result;
         }
@@ -258,10 +258,10 @@ namespace LfrlAnvil.Reactive.Queues
         protected abstract TPoint SubtractDelta(TPoint point, TPointDelta? delta);
 
         [Pure]
-        protected abstract TPointDelta AddDelta(TPointDelta? a, TPointDelta b);
+        protected abstract TPointDelta Add(TPointDelta? a, TPointDelta b);
 
         [Pure]
-        protected abstract TPointDelta SubtractDelta(TPointDelta? a, TPointDelta b);
+        protected abstract TPointDelta Subtract(TPointDelta? a, TPointDelta b);
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]

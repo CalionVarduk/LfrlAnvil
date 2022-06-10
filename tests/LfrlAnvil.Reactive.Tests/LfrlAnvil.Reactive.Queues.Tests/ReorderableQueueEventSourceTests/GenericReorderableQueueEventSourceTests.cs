@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlAnvil.Functional;
@@ -7,7 +8,6 @@ using LfrlAnvil.Reactive.Queues.Composites;
 using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using Xunit;
-using AutoFixture;
 
 namespace LfrlAnvil.Reactive.Queues.Tests.ReorderableQueueEventSourceTests
 {
@@ -102,12 +102,12 @@ namespace LfrlAnvil.Reactive.Queues.Tests.ReorderableQueueEventSourceTests
                 return point - delta;
             }
 
-            protected override int AddDelta(int a, int b)
+            protected override int Add(int a, int b)
             {
                 return a + b;
             }
 
-            protected override int SubtractDelta(int a, int b)
+            protected override int Subtract(int a, int b)
             {
                 return a - b;
             }
