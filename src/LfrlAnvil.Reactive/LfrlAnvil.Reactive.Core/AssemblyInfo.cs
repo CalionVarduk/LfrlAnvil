@@ -12,8 +12,6 @@
 //
 // decorators:
 // Delay<T>(Duration)
-// WithTimestamp<T>() - attaches a timestamp to the event
-// WithInterval<T>() - attaches both a timestamp & a difference between the previous & the current event's timestamps
 // Debounce<T>(Duration)
 // Sample<T>(Duration)
 // Throttle<T>(Duration)
