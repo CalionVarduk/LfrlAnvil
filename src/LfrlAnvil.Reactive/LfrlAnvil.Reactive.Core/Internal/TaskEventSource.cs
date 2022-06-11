@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using LfrlAnvil.Async;
 using LfrlAnvil.Reactive.Composites;
 
 namespace LfrlAnvil.Reactive.Internal
@@ -8,41 +9,14 @@ namespace LfrlAnvil.Reactive.Internal
     internal sealed class TaskEventSource<TEvent> : EventSource<FromTask<TEvent>>
     {
         private readonly Func<CancellationToken, Task<TEvent>> _taskFactory;
-        private readonly TaskScheduler? _callbackScheduler;
-        private readonly bool _captureListenerContext;
+        private readonly TaskSchedulerCapture _schedulerCapture;
 
         internal TaskEventSource(
             Func<CancellationToken, Task<TEvent>> taskFactory,
-            TaskScheduler callbackScheduler)
+            TaskSchedulerCapture schedulerCapture)
         {
             _taskFactory = taskFactory;
-            _callbackScheduler = callbackScheduler;
-            _captureListenerContext = false;
-        }
-
-        internal TaskEventSource(
-            Func<CancellationToken, Task<TEvent>> taskFactory,
-            TaskEventSourceContextCapture contextCapture)
-        {
-            _taskFactory = taskFactory;
-
-            switch ( contextCapture )
-            {
-                case TaskEventSourceContextCapture.Current:
-                    _callbackScheduler = CapturedTaskScheduler.GetCurrent();
-                    _captureListenerContext = false;
-                    break;
-
-                case TaskEventSourceContextCapture.FromListener:
-                    _callbackScheduler = null;
-                    _captureListenerContext = true;
-                    break;
-
-                default:
-                    _callbackScheduler = null;
-                    _captureListenerContext = false;
-                    break;
-            }
+            _schedulerCapture = schedulerCapture;
         }
 
         protected override IEventListener<FromTask<TEvent>> OverrideListener(
@@ -52,7 +26,7 @@ namespace LfrlAnvil.Reactive.Internal
             if ( IsDisposed )
                 return listener;
 
-            var callbackScheduler = _captureListenerContext ? CapturedTaskScheduler.GetCurrent() : _callbackScheduler;
+            var callbackScheduler = _schedulerCapture.TryGetScheduler();
             return new EventListener( listener, subscriber, _taskFactory, callbackScheduler );
         }
 

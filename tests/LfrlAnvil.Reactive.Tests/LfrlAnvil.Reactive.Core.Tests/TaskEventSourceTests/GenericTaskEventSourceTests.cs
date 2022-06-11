@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
+using LfrlAnvil.Async;
 using LfrlAnvil.Reactive.Composites;
 using LfrlAnvil.Reactive.Internal;
 using LfrlAnvil.TestExtensions;
@@ -19,24 +20,24 @@ namespace LfrlAnvil.Reactive.Tests.TaskEventSourceTests
         private readonly SynchronousTaskScheduler _scheduler = new SynchronousTaskScheduler();
 
         [Fact]
-        public void Ctor_WithCallbackScheduler_ShouldCreateEventSourceWithoutSubscriptions()
+        public void Ctor_WithCapturedTaskScheduler_ShouldCreateEventSourceWithoutSubscriptions()
         {
             var sut = new TaskEventSource<TEvent>(
                 _ => Task.FromResult( Fixture.Create<TEvent>() ),
-                _scheduler );
+                new TaskSchedulerCapture( _scheduler ) );
 
             sut.HasSubscribers.Should().BeFalse();
         }
 
         [Theory]
-        [InlineData( TaskEventSourceContextCapture.None )]
-        [InlineData( TaskEventSourceContextCapture.Current )]
-        [InlineData( TaskEventSourceContextCapture.FromListener )]
-        public void Ctor_WithContextCapture_ShouldCreateEventSourceWithoutSubscriptions(TaskEventSourceContextCapture contextCapture)
+        [InlineData( TaskSchedulerCaptureStrategy.None )]
+        [InlineData( TaskSchedulerCaptureStrategy.Current )]
+        [InlineData( TaskSchedulerCaptureStrategy.Lazy )]
+        public void Ctor_WithTaskSchedulerCaptureStrategy_ShouldCreateEventSourceWithoutSubscriptions(TaskSchedulerCaptureStrategy strategy)
         {
             var sut = new TaskEventSource<TEvent>(
                 _ => Task.FromResult( Fixture.Create<TEvent>() ),
-                contextCapture );
+                new TaskSchedulerCapture( strategy ) );
 
             sut.HasSubscribers.Should().BeFalse();
         }
@@ -47,7 +48,7 @@ namespace LfrlAnvil.Reactive.Tests.TaskEventSourceTests
             var listener = Substitute.For<IEventListener<FromTask<TEvent>>>();
             var sut = new TaskEventSource<TEvent>(
                 _ => Task.FromResult( Fixture.Create<TEvent>() ),
-                _scheduler );
+                new TaskSchedulerCapture( _scheduler ) );
 
             sut.Dispose();
 
@@ -70,7 +71,7 @@ namespace LfrlAnvil.Reactive.Tests.TaskEventSourceTests
                     await Task.Delay( 100, ct );
                     return Fixture.Create<TEvent>();
                 },
-                _scheduler );
+                new TaskSchedulerCapture( _scheduler ) );
 
             var subscriber = sut.Listen( listener );
 
@@ -83,7 +84,7 @@ namespace LfrlAnvil.Reactive.Tests.TaskEventSourceTests
         }
 
         [Fact]
-        public void Listen_WithCallbackCaptureFromListener_ShouldCreateActiveSubscriberThatDoesNothing_UntilTaskCompletes()
+        public void Listen_WithLazyTaskSchedulerCaptureStrategy_ShouldCreateActiveSubscriberThatDoesNothing_UntilTaskCompletes()
         {
             var listener = Substitute.For<IEventListener<FromTask<TEvent>>>();
             var sut = new TaskEventSource<TEvent>(
@@ -92,7 +93,7 @@ namespace LfrlAnvil.Reactive.Tests.TaskEventSourceTests
                     await Task.Delay( 100, ct );
                     return Fixture.Create<TEvent>();
                 },
-                TaskEventSourceContextCapture.FromListener );
+                new TaskSchedulerCapture( TaskSchedulerCaptureStrategy.Lazy ) );
 
             var subscriber = sut.Listen( listener );
 
@@ -119,7 +120,7 @@ namespace LfrlAnvil.Reactive.Tests.TaskEventSourceTests
                         return value;
                     },
                     ct ),
-                _scheduler );
+                new TaskSchedulerCapture( _scheduler ) );
 
             var subscriber = sut.Listen( listener );
 
@@ -160,7 +161,7 @@ namespace LfrlAnvil.Reactive.Tests.TaskEventSourceTests
                         throw exception;
                     },
                     ct ),
-                _scheduler );
+                new TaskSchedulerCapture( _scheduler ) );
 
             var subscriber = sut.Listen( listener );
 
@@ -198,7 +199,7 @@ namespace LfrlAnvil.Reactive.Tests.TaskEventSourceTests
                     await Task.Delay( 100, ct );
                     return Fixture.Create<TEvent>();
                 },
-                _scheduler );
+                new TaskSchedulerCapture( _scheduler ) );
 
             var subscriber = sut.Listen( listener );
             subscriber.Dispose();
@@ -237,7 +238,7 @@ namespace LfrlAnvil.Reactive.Tests.TaskEventSourceTests
                     await Task.Delay( 100, ct );
                     return Fixture.Create<TEvent>();
                 },
-                _scheduler );
+                new TaskSchedulerCapture( _scheduler ) );
 
             var subscriber = sut.Listen( listener );
             sut.Dispose();
@@ -277,7 +278,7 @@ namespace LfrlAnvil.Reactive.Tests.TaskEventSourceTests
             var listener = Substitute.For<IEventListener<FromTask<TEvent>>>();
             var sut = new TaskEventSource<TEvent>(
                 _ => task,
-                _scheduler );
+                new TaskSchedulerCapture( _scheduler ) );
 
             var subscriber = sut.Listen( listener );
 
@@ -302,7 +303,7 @@ namespace LfrlAnvil.Reactive.Tests.TaskEventSourceTests
                     await Task.Delay( 1, ct );
                     return value;
                 },
-                TaskEventSourceContextCapture.None );
+                new TaskSchedulerCapture( TaskSchedulerCaptureStrategy.None ) );
 
             var subscriber = sut.Listen( listener );
             await Task.Delay( 100 );
@@ -332,17 +333,17 @@ namespace LfrlAnvil.Reactive.Tests.TaskEventSourceTests
         [Fact]
         public void FromTask_WithCallbackScheduler_ShouldCreateEventSourceWithoutSubscriptions()
         {
-            var sut = EventSource.FromTask( _ => Task.FromResult( Fixture.Create<TEvent>() ), _scheduler );
+            var sut = EventSource.FromTask( _ => Task.FromResult( Fixture.Create<TEvent>() ), new TaskSchedulerCapture( _scheduler ) );
             sut.HasSubscribers.Should().BeFalse();
         }
 
         [Theory]
-        [InlineData( TaskEventSourceContextCapture.None )]
-        [InlineData( TaskEventSourceContextCapture.Current )]
-        [InlineData( TaskEventSourceContextCapture.FromListener )]
-        public void FromTask_WithContextCapture_ShouldCreateEventSourceWithoutSubscriptions(TaskEventSourceContextCapture contextCapture)
+        [InlineData( TaskSchedulerCaptureStrategy.None )]
+        [InlineData( TaskSchedulerCaptureStrategy.Current )]
+        [InlineData( TaskSchedulerCaptureStrategy.Lazy )]
+        public void FromTask_WithContextCapture_ShouldCreateEventSourceWithoutSubscriptions(TaskSchedulerCaptureStrategy strategy)
         {
-            var sut = EventSource.FromTask( _ => Task.FromResult( Fixture.Create<TEvent>() ), contextCapture );
+            var sut = EventSource.FromTask( _ => Task.FromResult( Fixture.Create<TEvent>() ), new TaskSchedulerCapture( strategy ) );
             sut.HasSubscribers.Should().BeFalse();
         }
     }

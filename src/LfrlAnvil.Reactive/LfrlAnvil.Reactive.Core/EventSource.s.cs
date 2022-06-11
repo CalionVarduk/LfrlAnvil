@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using LfrlAnvil.Async;
 using LfrlAnvil.Reactive.Composites;
 using LfrlAnvil.Reactive.Internal;
 
@@ -109,18 +110,9 @@ namespace LfrlAnvil.Reactive
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static IEventSource<FromTask<TEvent>> FromTask<TEvent>(
             Func<CancellationToken, Task<TEvent>> taskFactory,
-            TaskEventSourceContextCapture contextCapture = TaskEventSourceContextCapture.None)
+            TaskSchedulerCapture schedulerCapture = default)
         {
-            return new TaskEventSource<TEvent>( taskFactory, contextCapture );
-        }
-
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static IEventSource<FromTask<TEvent>> FromTask<TEvent>(
-            Func<CancellationToken, Task<TEvent>> taskFactory,
-            TaskScheduler callbackScheduler)
-        {
-            return new TaskEventSource<TEvent>( taskFactory, callbackScheduler );
+            return new TaskEventSource<TEvent>( taskFactory, schedulerCapture );
         }
     }
 }
