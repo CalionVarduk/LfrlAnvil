@@ -1,15 +1,16 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 
 namespace LfrlAnvil.Reactive.Internal
 {
     internal sealed class EventSubscriber<TEvent> : IEventSubscriber
     {
-        private EventSource<TEvent>? _source;
+        private Action<EventSubscriber<TEvent>>? _disposer;
         private int _state;
 
-        internal EventSubscriber(EventSource<TEvent> source, IEventListener<TEvent> listener)
+        internal EventSubscriber(Action<EventSubscriber<TEvent>> disposer, IEventListener<TEvent> listener)
         {
-            _source = source;
+            _disposer = disposer;
             Listener = listener;
             _state = 0;
         }
@@ -22,8 +23,8 @@ namespace LfrlAnvil.Reactive.Internal
             if ( Interlocked.Exchange( ref _state, 1 ) == 1 )
                 return;
 
-            _source!.RemoveSubscriber( this );
-            _source = null;
+            _disposer!( this );
+            _disposer = null;
 
             Listener.OnDispose( DisposalSource.Subscriber );
         }
@@ -31,7 +32,7 @@ namespace LfrlAnvil.Reactive.Internal
         internal void MarkAsDisposed()
         {
             Interlocked.Exchange( ref _state, 1 );
-            _source = null;
+            _disposer = null;
         }
     }
 }

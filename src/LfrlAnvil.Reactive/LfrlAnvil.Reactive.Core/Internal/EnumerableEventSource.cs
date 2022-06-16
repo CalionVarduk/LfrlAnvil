@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace LfrlAnvil.Reactive
+namespace LfrlAnvil.Reactive.Internal
 {
     public sealed class EnumerableEventSource<TEvent> : EventSource<TEvent>
     {
         private readonly TEvent[] _values;
 
-        public EnumerableEventSource(IEnumerable<TEvent> values)
+        internal EnumerableEventSource(IEnumerable<TEvent> values)
         {
             _values = values.ToArray();
         }

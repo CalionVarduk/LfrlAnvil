@@ -1,14 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using AutoFixture;
 using FluentAssertions;
 using LfrlAnvil.Async;
-using LfrlAnvil.Extensions;
-using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using NSubstitute;
 using Xunit;
 
 namespace LfrlAnvil.Tests.AsyncTests.ConcurrentReadOnlyCollectionTests
@@ -42,14 +41,24 @@ namespace LfrlAnvil.Tests.AsyncTests.ConcurrentReadOnlyCollectionTests
         }
 
         [Fact]
-        public async Task Count_ShouldBlockThread_WhenLockIsAlreadyAcquired()
+        public void Count_ShouldAcquireLock()
         {
             var sync = new object();
-            var sut = new ConcurrentReadOnlyCollection<int>( Array.Empty<int>(), sync );
+            var hasLock = false;
 
-            var action = Lambda.Of( () => sut.Count ).IgnoreResult();
+            var collection = Substitute.For<IReadOnlyCollection<int>>();
+            collection.Count.Returns(
+                _ =>
+                {
+                    hasLock = Monitor.IsEntered( sync );
+                    return Fixture.Create<int>();
+                } );
 
-            await action.Should().AcquireLock( sync );
+            var sut = new ConcurrentReadOnlyCollection<int>( collection, sync );
+
+            var _ = sut.Count;
+
+            hasLock.Should().BeTrue();
         }
 
         [Fact]

@@ -6,7 +6,7 @@ using LfrlAnvil.Reactive.Decorators;
 
 namespace LfrlAnvil.Reactive.Internal
 {
-    internal sealed class WhenAllEventSource<TEvent> : EventSource<ReadOnlyMemory<TEvent?>>
+    public sealed class WhenAllEventSource<TEvent> : EventSource<ReadOnlyMemory<TEvent?>>
     {
         private readonly IEventStream<TEvent>[] _streams;
 
@@ -66,7 +66,10 @@ namespace LfrlAnvil.Reactive.Internal
                 }
             }
 
-            public override void React(ReadOnlyMemory<TEvent?> _) { }
+            public override void React(ReadOnlyMemory<TEvent?> @event)
+            {
+                Next.React( _result.AsMemory() );
+            }
 
             public override void OnDispose(DisposalSource source)
             {
@@ -75,7 +78,7 @@ namespace LfrlAnvil.Reactive.Internal
 
                 Array.Clear( _innerSubscribers, 0, _innerSubscribers.Length );
 
-                Next.React( _result.AsMemory() );
+                React( _result.AsMemory() );
                 Array.Clear( _result, 0, _result.Length );
 
                 base.OnDispose( source );

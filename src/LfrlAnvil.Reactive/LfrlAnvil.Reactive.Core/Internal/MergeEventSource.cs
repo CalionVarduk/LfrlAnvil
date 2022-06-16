@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Reactive.Internal
 {
-    internal sealed class MergeEventSource<TEvent> : EventSource<TEvent>
+    public sealed class MergeEventSource<TEvent> : EventSource<TEvent>
     {
         private readonly IEventStream<TEvent>[] _streams;
         private readonly int _maxConcurrency;
@@ -57,7 +57,10 @@ namespace LfrlAnvil.Reactive.Internal
                     StartListeningToNextInnerStream();
             }
 
-            public override void React(TEvent @event) { }
+            public override void React(TEvent @event)
+            {
+                Next.React( @event );
+            }
 
             public override void OnDispose(DisposalSource source)
             {
@@ -74,7 +77,7 @@ namespace LfrlAnvil.Reactive.Internal
             [MethodImpl( MethodImplOptions.AggressiveInlining )]
             internal void OnInnerEvent(TEvent @event)
             {
-                Next.React( @event );
+                React( @event );
             }
 
             internal void OnInnerDisposed(LinkedListNode<IEventSubscriber?> node)

@@ -6,7 +6,7 @@ using LfrlAnvil.Reactive.Composites;
 
 namespace LfrlAnvil.Reactive.Internal
 {
-    internal sealed class TaskEventSource<TEvent> : EventSource<FromTask<TEvent>>
+    public sealed class TaskEventSource<TEvent> : EventSource<FromTask<TEvent>>
     {
         private readonly Func<CancellationToken, Task<TEvent>> _taskFactory;
         private readonly TaskSchedulerCapture _schedulerCapture;
@@ -54,7 +54,10 @@ namespace LfrlAnvil.Reactive.Internal
                     task.Start( TaskScheduler.Default );
             }
 
-            public override void React(FromTask<TEvent> _) { }
+            public override void React(FromTask<TEvent> @event)
+            {
+                Next.React( @event );
+            }
 
             public override void OnDispose(DisposalSource source)
             {
@@ -77,7 +80,7 @@ namespace LfrlAnvil.Reactive.Internal
             private void ContinuationCallback(Task<TEvent> completedTask)
             {
                 var nextEvent = new FromTask<TEvent>( completedTask );
-                Next.React( nextEvent );
+                React( nextEvent );
                 _subscriber.Dispose();
                 Next.OnDispose( _disposalSource );
             }

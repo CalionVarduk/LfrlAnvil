@@ -2,7 +2,7 @@
 
 namespace LfrlAnvil.Reactive
 {
-    public class HistoryEventPublisher<TEvent> : EventPublisher<TEvent>
+    public class HistoryEventPublisher<TEvent> : EventPublisher<TEvent>, IHistoryEventPublisher<TEvent>
     {
         private readonly Queue<TEvent> _history;
 

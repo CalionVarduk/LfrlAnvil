@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Reactive.Internal
 {
-    internal sealed class CombineEventSource<TEvent> : EventSource<ReadOnlyMemory<TEvent>>
+    public sealed class CombineEventSource<TEvent> : EventSource<ReadOnlyMemory<TEvent>>
     {
         private readonly IEventStream<TEvent>[] _streams;
 
@@ -68,7 +68,10 @@ namespace LfrlAnvil.Reactive.Internal
                 }
             }
 
-            public override void React(ReadOnlyMemory<TEvent> _) { }
+            public override void React(ReadOnlyMemory<TEvent> @event)
+            {
+                Next.React( _buffer.AsMemory()! );
+            }
 
             public override void OnDispose(DisposalSource source)
             {
@@ -91,7 +94,7 @@ namespace LfrlAnvil.Reactive.Internal
                         return;
                 }
 
-                Next.React( _buffer.AsMemory()! );
+                React( _buffer.AsMemory()! );
             }
 
             [MethodImpl( MethodImplOptions.AggressiveInlining )]

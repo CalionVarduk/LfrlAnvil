@@ -7,7 +7,7 @@ using LfrlAnvil.Reactive.Decorators;
 
 namespace LfrlAnvil.Reactive.Internal
 {
-    internal sealed class WhenAnyEventSource<TEvent> : EventSource<WithIndex<TEvent>>
+    public sealed class WhenAnyEventSource<TEvent> : EventSource<WithIndex<TEvent>>
     {
         private readonly IEventStream<TEvent>[] _streams;
 
@@ -66,7 +66,10 @@ namespace LfrlAnvil.Reactive.Internal
                 }
             }
 
-            public override void React(WithIndex<TEvent> _) { }
+            public override void React(WithIndex<TEvent> @event)
+            {
+                Next.React( @event );
+            }
 
             public override void OnDispose(DisposalSource source)
             {
@@ -81,7 +84,7 @@ namespace LfrlAnvil.Reactive.Internal
             internal void OnInnerEvent(int index, TEvent @event)
             {
                 var nextEvent = new WithIndex<TEvent>( @event, index );
-                Next.React( nextEvent );
+                React( nextEvent );
                 _subscriber.Dispose();
             }
 

@@ -56,7 +56,7 @@ namespace LfrlAnvil.Reactive
 
         public IEventSubscriber Listen(IEventListener<TEvent> listener)
         {
-            var subscriber = new EventSubscriber<TEvent>( this, listener );
+            var subscriber = new EventSubscriber<TEvent>( RemoveSubscriber, listener );
             return ListenInternal( subscriber );
         }
 
@@ -106,7 +106,7 @@ namespace LfrlAnvil.Reactive
         [Pure]
         internal EventSubscriber<TEvent> CreateSubscriber()
         {
-            return new EventSubscriber<TEvent>( this, EventListener<TEvent>.Empty );
+            return new EventSubscriber<TEvent>( RemoveSubscriber, EventListener<TEvent>.Empty );
         }
 
         internal IEventSubscriber Listen(IEventListener<TEvent> listener, EventSubscriber<TEvent> subscriber)
@@ -115,7 +115,7 @@ namespace LfrlAnvil.Reactive
             return ListenInternal( subscriber );
         }
 
-        private IEventSubscriber ListenInternal(EventSubscriber<TEvent> subscriber)
+        internal IEventSubscriber ListenInternal(EventSubscriber<TEvent> subscriber)
         {
             subscriber.Listener = OverrideListener( subscriber, subscriber.Listener );
 

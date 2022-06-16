@@ -3,6 +3,7 @@ using System.Linq;
 using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
+using LfrlAnvil.Reactive.Internal;
 using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using NSubstitute;

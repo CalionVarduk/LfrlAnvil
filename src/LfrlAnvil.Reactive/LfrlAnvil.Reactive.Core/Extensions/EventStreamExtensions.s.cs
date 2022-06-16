@@ -452,6 +452,43 @@ namespace LfrlAnvil.Reactive.Extensions
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEventStream<TEvent> Lock<TEvent>(this IEventStream<TEvent> source)
+        {
+            var decorator = new EventListenerLockDecorator<TEvent>( null );
+            return source.Decorate( decorator );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEventStream<TEvent> Lock<TEvent>(this IEventStream<TEvent> source, object sync)
+        {
+            var decorator = new EventListenerLockDecorator<TEvent>( sync );
+            return source.Decorate( decorator );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static TResult ShareLockWith<TEvent, TTargetEvent, TResult>(
+            this IEventStream<TEvent> source,
+            IEventStream<TTargetEvent> target,
+            Func<IEventStream<TEvent>, IEventStream<TTargetEvent>, TResult> resultSelector)
+        {
+            return source.ShareLockWith( target, resultSelector, new object() );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static TResult ShareLockWith<TEvent, TTargetEvent, TResult>(
+            this IEventStream<TEvent> source,
+            IEventStream<TTargetEvent> target,
+            Func<IEventStream<TEvent>, IEventStream<TTargetEvent>, TResult> resultSelector,
+            object sync)
+        {
+            return resultSelector( source.Lock( sync ), target.Lock( sync ) );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static IEventStream<TEvent> AuditUntil<TEvent, TTargetEvent>(
             this IEventStream<TEvent> source,
             IEventStream<TTargetEvent> target)
@@ -531,6 +568,38 @@ namespace LfrlAnvil.Reactive.Extensions
         {
             var decorator = new EventListenerExhaustAllDecorator<TEvent>();
             return source.Decorate( decorator );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEventStream<IEventStream<TEvent>> LockAll<TEvent>(this IEventStream<IEventStream<TEvent>> source)
+        {
+            var decorator = new EventListenerLockAllDecorator<TEvent>( null );
+            return source.Decorate( decorator );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEventStream<IEventStream<TEvent>> LockAll<TEvent>(this IEventStream<IEventStream<TEvent>> source, object sync)
+        {
+            var decorator = new EventListenerLockAllDecorator<TEvent>( sync );
+            return source.Decorate( decorator );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEventStream<IEventStream<TEvent>> ShareLockWithAll<TEvent>(this IEventStream<IEventStream<TEvent>> source)
+        {
+            return source.ShareLockWithAll( new object() );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEventStream<IEventStream<TEvent>> ShareLockWithAll<TEvent>(
+            this IEventStream<IEventStream<TEvent>> source,
+            object sync)
+        {
+            return source.Lock( sync ).LockAll( sync );
         }
 
         public static Task<TEvent?> ToTask<TEvent>(this IEventStream<TEvent> source, CancellationToken cancellationToken)
