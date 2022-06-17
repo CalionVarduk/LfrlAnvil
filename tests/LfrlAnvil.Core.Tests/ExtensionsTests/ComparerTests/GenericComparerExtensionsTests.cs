@@ -21,8 +21,8 @@ namespace LfrlAnvil.Tests.ExtensionsTests.ComparerTests
 
             using ( new AssertionScope() )
             {
-                result.Compare( lo, hi ).Should().BeGreaterThan( 0 );
-                result.Compare( hi, lo ).Should().BeLessThan( 0 );
+                result.Compare( lo, hi ).Should().Be( 1 );
+                result.Compare( hi, lo ).Should().Be( -1 );
                 result.Compare( lo, lo ).Should().Be( 0 );
             }
         }

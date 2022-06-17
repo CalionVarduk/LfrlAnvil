@@ -1,8 +1,7 @@
 {
   "profiles": {
     "LfrlSoft.NET.Common.Benchmarks": {
-      "commandName": "Project",
-      "commandLineArgs": "--struct-equality"
+      "commandName": "Project"
     }
   }
 }

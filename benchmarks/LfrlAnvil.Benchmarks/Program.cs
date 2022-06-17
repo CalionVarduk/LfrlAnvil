@@ -9,6 +9,11 @@ namespace LfrlAnvil.Benchmarks
 {
     internal class Program
     {
+        private static void ModifyBenchmarksToRun(CommandLineBenchmarkOptions options)
+        {
+            options.StructEquality = true;
+        }
+
         private static void Main(string[] args)
         {
             Parser.Default.ParseArguments<CommandLineBenchmarkOptions>( args )
@@ -20,6 +25,8 @@ namespace LfrlAnvil.Benchmarks
 
         private static void RunBenchmarks(CommandLineBenchmarkOptions options)
         {
+            ModifyBenchmarksToRun( options );
+
             var types = BenchmarkLocator.LocateTypes( options ).Materialize();
 
             if ( types.Count == 0 )

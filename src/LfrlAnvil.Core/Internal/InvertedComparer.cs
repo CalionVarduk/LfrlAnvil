@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
@@ -17,7 +18,8 @@ namespace LfrlAnvil.Internal
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public int Compare(T x, T y)
         {
-            return -BaseComparer.Compare( x, y );
+            var result = BaseComparer.Compare( x, y );
+            return -Math.Sign( result );
         }
     }
 }
