@@ -7,6 +7,7 @@ using LfrlAnvil.Reactive.Chrono.Decorators;
 using LfrlAnvil.Reactive.Chrono.Extensions;
 using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using LfrlAnvil.TestExtensions.NSubstitute;
 using NSubstitute;
 using Xunit;
 
@@ -49,7 +50,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.DecoratorsTests
             var actualEvents = new List<WithInterval<int>>();
 
             var timestampProvider = Substitute.For<ITimestampProvider>();
-            timestampProvider.GetNow().Returns( timestamps[0], timestamps.Skip( 1 ).ToArray() );
+            timestampProvider.GetNow().Returns( timestamps );
             var next = EventListener.Create<WithInterval<int>>( actualEvents.Add );
             var subscriber = Substitute.For<IEventSubscriber>();
             var sut = new EventListenerWithIntervalDecorator<int>( timestampProvider );
@@ -78,7 +79,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.DecoratorsTests
         }
 
         [Fact]
-        public void WithIndexExtension_ShouldCreateEventStreamThatAttachesAndIndex()
+        public void WithIntervalExtension_ShouldCreateEventStreamThatAttachesAndIndex()
         {
             var sourceEvents = new[] { 1, 2, 3, 5, 7, 11, 13, 17, 19, 23 };
             var timestamps = sourceEvents.Select( e => new Timestamp( e * 2 ) ).ToList();
@@ -99,7 +100,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.DecoratorsTests
             var actualEvents = new List<WithInterval<int>>();
 
             var timestampProvider = Substitute.For<ITimestampProvider>();
-            timestampProvider.GetNow().Returns( timestamps[0], timestamps.Skip( 1 ).ToArray() );
+            timestampProvider.GetNow().Returns( timestamps );
             var next = EventListener.Create<WithInterval<int>>( actualEvents.Add );
             var sut = new EventPublisher<int>();
             var decorated = sut.WithInterval( timestampProvider );

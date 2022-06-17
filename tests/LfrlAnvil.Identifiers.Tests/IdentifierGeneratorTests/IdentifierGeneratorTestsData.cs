@@ -63,7 +63,7 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
                     {
                         BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 2 ).Ticks ),
                         LowValueBounds = new Bounds<ushort>( 123, 4567 ),
-                        LowValueOverflowStrategy = LowValueOverflowStrategy.BusyWait
+                        LowValueOverflowStrategy = LowValueOverflowStrategy.SpinWait
                     },
                     new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
                     new Timestamp( Duration.FromMilliseconds( 2 ).Ticks ),
@@ -615,7 +615,7 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
                     new IdentifierGeneratorParams
                     {
                         LowValueBounds = new Bounds<ushort>( 0, 0 ),
-                        LowValueOverflowStrategy = LowValueOverflowStrategy.BusyWait
+                        LowValueOverflowStrategy = LowValueOverflowStrategy.SpinWait
                     },
                     Timestamp.Zero,
                     new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
@@ -625,7 +625,7 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
                     new IdentifierGeneratorParams
                     {
                         LowValueBounds = new Bounds<ushort>( 10, 20 ),
-                        LowValueOverflowStrategy = LowValueOverflowStrategy.BusyWait
+                        LowValueOverflowStrategy = LowValueOverflowStrategy.SpinWait
                     },
                     new Timestamp( Duration.FromMilliseconds( 1 ).Ticks ),
                     new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
@@ -636,7 +636,7 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
                     {
                         TimeEpsilon = Duration.FromMilliseconds( 2 ),
                         LowValueBounds = new Bounds<ushort>( 0, 0 ),
-                        LowValueOverflowStrategy = LowValueOverflowStrategy.BusyWait
+                        LowValueOverflowStrategy = LowValueOverflowStrategy.SpinWait
                     },
                     Timestamp.Zero,
                     new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ),
@@ -647,7 +647,7 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
                     {
                         TimeEpsilon = Duration.FromMilliseconds( 2 ),
                         LowValueBounds = new Bounds<ushort>( 10, 20 ),
-                        LowValueOverflowStrategy = LowValueOverflowStrategy.BusyWait
+                        LowValueOverflowStrategy = LowValueOverflowStrategy.SpinWait
                     },
                     new Timestamp( Duration.FromMilliseconds( 2 ).Ticks ),
                     new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ),
@@ -658,7 +658,7 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
                     {
                         TimeEpsilon = Duration.FromMilliseconds( 0.5 ),
                         LowValueBounds = new Bounds<ushort>( 0, 0 ),
-                        LowValueOverflowStrategy = LowValueOverflowStrategy.BusyWait
+                        LowValueOverflowStrategy = LowValueOverflowStrategy.SpinWait
                     },
                     Timestamp.Zero,
                     new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ),
@@ -669,7 +669,7 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
                     {
                         TimeEpsilon = Duration.FromMilliseconds( 0.5 ),
                         LowValueBounds = new Bounds<ushort>( 10, 20 ),
-                        LowValueOverflowStrategy = LowValueOverflowStrategy.BusyWait
+                        LowValueOverflowStrategy = LowValueOverflowStrategy.SpinWait
                     },
                     new Timestamp( Duration.FromMilliseconds( 0.5 ).Ticks ),
                     new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ),
@@ -805,7 +805,7 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
                     new IdentifierGeneratorParams
                     {
                         LowValueBounds = new Bounds<ushort>( 0, 0 ),
-                        LowValueOverflowStrategy = LowValueOverflowStrategy.BusyWait
+                        LowValueOverflowStrategy = LowValueOverflowStrategy.SpinWait
                     },
                     new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 1 ).SubtractTicks( 1 ) )
                 },
@@ -813,7 +813,7 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
                     new IdentifierGeneratorParams
                     {
                         LowValueBounds = new Bounds<ushort>( 10, 20 ),
-                        LowValueOverflowStrategy = LowValueOverflowStrategy.BusyWait
+                        LowValueOverflowStrategy = LowValueOverflowStrategy.SpinWait
                     },
                     new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 1 ).SubtractTicks( 1 ) )
                 },
@@ -822,7 +822,7 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
                     {
                         TimeEpsilon = Duration.FromMilliseconds( 2 ),
                         LowValueBounds = new Bounds<ushort>( 0, 0 ),
-                        LowValueOverflowStrategy = LowValueOverflowStrategy.BusyWait
+                        LowValueOverflowStrategy = LowValueOverflowStrategy.SpinWait
                     },
                     new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 1 ).SubtractTicks( 1 ) )
                 },
@@ -831,7 +831,7 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
                     {
                         TimeEpsilon = Duration.FromMilliseconds( 2 ),
                         LowValueBounds = new Bounds<ushort>( 10, 20 ),
-                        LowValueOverflowStrategy = LowValueOverflowStrategy.BusyWait
+                        LowValueOverflowStrategy = LowValueOverflowStrategy.SpinWait
                     },
                     new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 1 ).SubtractTicks( 1 ) )
                 },
@@ -840,7 +840,7 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
                     {
                         TimeEpsilon = Duration.FromMilliseconds( 0.5 ),
                         LowValueBounds = new Bounds<ushort>( 0, 0 ),
-                        LowValueOverflowStrategy = LowValueOverflowStrategy.BusyWait
+                        LowValueOverflowStrategy = LowValueOverflowStrategy.SpinWait
                     },
                     Timestamp.Zero.Add(
                         Duration.FromTicks( (long)((Identifier.MaxHighValue - 1) * (ChronoConstants.TicksPerMillisecond / 2)) ) )
@@ -850,7 +850,7 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
                     {
                         TimeEpsilon = Duration.FromMilliseconds( 0.5 ),
                         LowValueBounds = new Bounds<ushort>( 10, 20 ),
-                        LowValueOverflowStrategy = LowValueOverflowStrategy.BusyWait
+                        LowValueOverflowStrategy = LowValueOverflowStrategy.SpinWait
                     },
                     Timestamp.Zero.Add(
                         Duration.FromTicks( (long)((Identifier.MaxHighValue - 1) * (ChronoConstants.TicksPerMillisecond / 2)) ) )
@@ -1220,7 +1220,7 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
                 {
                     new IdentifierGeneratorParams
                     {
-                        LowValueOverflowStrategy = LowValueOverflowStrategy.BusyWait,
+                        LowValueOverflowStrategy = LowValueOverflowStrategy.SpinWait,
                         LowValueBounds = new Bounds<ushort>( 0, 3 )
                     },
                     new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),

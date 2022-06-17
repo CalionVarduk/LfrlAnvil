@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Async;
+using LfrlAnvil.Reactive.Exceptions;
 
 namespace LfrlAnvil.Reactive.Internal
 {
@@ -44,6 +46,12 @@ namespace LfrlAnvil.Reactive.Internal
                 var subscriber = new EventSubscriber<TEvent>( RemoveSubscriber, listener );
                 return Base.ListenInternal( subscriber );
             }
+        }
+
+        protected void EnsureNotDisposed()
+        {
+            if ( IsDisposed )
+                throw new ObjectDisposedException( Resources.DisposedEventSource );
         }
 
         [Pure]

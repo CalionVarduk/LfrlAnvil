@@ -1,7 +1,9 @@
-﻿using System.Buffers;
+﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Threading;
+using LfrlAnvil.Reactive.Exceptions;
 using LfrlAnvil.Reactive.Internal;
 
 namespace LfrlAnvil.Reactive
@@ -97,6 +99,12 @@ namespace LfrlAnvil.Reactive
         }
 
         protected virtual void OnDispose() { }
+
+        protected void EnsureNotDisposed()
+        {
+            if ( IsDisposed )
+                throw new ObjectDisposedException( Resources.DisposedEventSource );
+        }
 
         internal void RemoveSubscriber(EventSubscriber<TEvent> subscriber)
         {

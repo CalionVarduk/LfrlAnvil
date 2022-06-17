@@ -4,9 +4,9 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Reactive.Exceptions
 {
-    public static class ExceptionResources
+    internal static class Resources
     {
-        public const string DisposedEventSource = "Event source is disposed.";
+        internal const string DisposedEventSource = "Event source is disposed.";
         internal const string DisposedEventExchange = "Event exchange is disposed.";
 
         internal const string InvalidEventPublisherDisposal =

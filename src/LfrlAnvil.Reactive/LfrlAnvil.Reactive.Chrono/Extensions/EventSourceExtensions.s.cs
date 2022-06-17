@@ -27,5 +27,13 @@ namespace LfrlAnvil.Reactive.Chrono.Extensions
             var decorator = new EventListenerWithIntervalDecorator<TEvent>( timestampProvider );
             return source.Decorate( decorator );
         }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEventStream<WithZonedDateTime<TEvent>> WithZonedDateTime<TEvent>(this IEventStream<TEvent> source, IZonedClock clock)
+        {
+            var decorator = new EventListenerWithZonedDateTimeDecorator<TEvent>( clock );
+            return source.Decorate( decorator );
+        }
     }
 }

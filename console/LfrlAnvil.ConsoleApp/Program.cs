@@ -1,28 +1,66 @@
-﻿using System.Linq;
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Extensions;
+using LfrlAnvil.Reactive;
+using LfrlAnvil.Reactive.Chrono;
+using LfrlAnvil.Reactive.Chrono.Composites;
+using LfrlAnvil.Reactive.Extensions;
 
 namespace LfrlAnvil.ConsoleApp
 {
     public class Program
     {
-        private static void Main(string[] args)
+        private static async Task Main(string[] args)
         {
-            var normalGen = new TimestampProvider();
-            var preciseGen = new PreciseTimestampProvider( ChronoConstants.TicksPerWeek );
+            var interval = Duration.FromMilliseconds( 1000 / 60.0 );
+            var simDuration = Duration.FromSeconds( 15 );
 
-            //Task.Delay( TimeSpan.FromSeconds( 10 ) ).Wait();
+            var timestampProvider = new PreciseTimestampProvider();
+            var timer = new ChronoTimer( timestampProvider, interval, Duration.FromMilliseconds( 1 ), long.MaxValue );
+            await RunTimer( timer, () => timer.StartAsync(), simDuration, "Chrono" );
+        }
 
-            var genCount = 100;
+        private static async Task RunTimer(IEventSource<WithInterval<long>> timer, Action starter, Duration duration, string name)
+        {
+            Console.WriteLine( $"===== TIMER '{name}' STARTED (for {duration}) (TID: {Thread.CurrentThread.ManagedThreadId})" );
+            Console.WriteLine();
 
-            var result = new (Timestamp Normal, Timestamp Precise)[genCount];
+            var count = 0;
+            long last = -1;
+            var minInterval = Duration.MaxValue;
+            var maxInterval = Duration.MinValue;
+            var intervalSum = Duration.Zero;
 
-            for ( var i = 0; i < genCount; ++i )
-            {
-                result[i] = (normalGen.GetNow(), preciseGen.GetNow());
-            }
+            timer.Lock()
+                .Listen(
+                    EventListener.Create<WithInterval<long>>(
+                        e =>
+                        {
+                            ++count;
+                            last = e.Event;
+                            intervalSum += e.Interval;
+                            minInterval = minInterval.Min( e.Interval );
+                            maxInterval = maxInterval.Max( e.Interval );
 
-            var uniqueNormal = result.Select( r => r.Normal ).ToHashSet();
-            var uniquePrecise = result.Select( r => r.Precise ).ToHashSet();
+                            Console.WriteLine(
+                                $"[{e.Timestamp.UtcValue:HH:mm:ss.fffffff} ({e.Interval})] {e.Event} (TID: {Thread.CurrentThread.ManagedThreadId})" );
+                        },
+                        d => { Console.WriteLine( $"Disposed: {d} (TID: {Thread.CurrentThread.ManagedThreadId})" ); } ) );
+
+            starter();
+
+            await Task.Delay( (int)duration.FullMilliseconds );
+
+            timer.Dispose();
+
+            Console.WriteLine( $"[INTERVALS] Min: {minInterval}, Max: {maxInterval}, Avg: {intervalSum / count}" );
+            Console.WriteLine( $"[CAUGHT EVENTS] {count} out of {last + 1} (skipped {last - count + 1}) ({count / (last + 1.0):P})" );
+
+            Console.WriteLine();
+            Console.WriteLine( $"===== TIMER '{name}' FINISHED (TID: {Thread.CurrentThread.ManagedThreadId})" );
+            Console.WriteLine();
         }
     }
 }

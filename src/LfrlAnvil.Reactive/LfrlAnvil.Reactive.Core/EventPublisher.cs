@@ -1,6 +1,4 @@
-﻿using System;
-using LfrlAnvil.Reactive.Exceptions;
-using LfrlAnvil.Reactive.Internal;
+﻿using LfrlAnvil.Reactive.Internal;
 
 namespace LfrlAnvil.Reactive
 {
@@ -8,9 +6,7 @@ namespace LfrlAnvil.Reactive
     {
         public void Publish(TEvent @event)
         {
-            if ( IsDisposed )
-                throw new ObjectDisposedException( ExceptionResources.DisposedEventSource );
-
+            EnsureNotDisposed();
             OnPublish( @event );
         }
 

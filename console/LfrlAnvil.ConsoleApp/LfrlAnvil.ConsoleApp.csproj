@@ -10,6 +10,7 @@
       <ProjectReference Include="..\..\src\LfrlAnvil.Collections\LfrlAnvil.Collections.csproj" />
       <ProjectReference Include="..\..\src\LfrlAnvil.Core\LfrlAnvil.Core.csproj" />
       <ProjectReference Include="..\..\src\LfrlAnvil.Functional\LfrlAnvil.Functional.csproj" />
+      <ProjectReference Include="..\..\src\LfrlAnvil.Reactive\LfrlAnvil.Reactive.Chrono\LfrlAnvil.Reactive.Chrono.csproj" />
     </ItemGroup>
 
 </Project>

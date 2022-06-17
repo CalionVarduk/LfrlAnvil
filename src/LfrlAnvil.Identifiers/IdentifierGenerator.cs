@@ -148,7 +148,7 @@ namespace LfrlAnvil.Identifiers
             highValue = LowValueOverflowStrategy switch
             {
                 LowValueOverflowStrategy.AddHighValue => LastHighValue + 1,
-                LowValueOverflowStrategy.BusyWait => GetHighValueByBusyWait(),
+                LowValueOverflowStrategy.SpinWait => GetHighValueBySpinWait(),
                 LowValueOverflowStrategy.Sleep => GetHighValueBySleep( highValue ),
                 _ => _maxHighValue + 1
             };
@@ -190,14 +190,14 @@ namespace LfrlAnvil.Identifiers
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private ulong GetHighValueByBusyWait()
+        private ulong GetHighValueBySpinWait()
         {
-            ulong highValue;
-            do
+            var highValue = GetCurrentHighValue();
+            while ( highValue <= LastHighValue )
             {
+                Thread.SpinWait( 1 );
                 highValue = GetCurrentHighValue();
             }
-            while ( highValue <= LastHighValue );
 
             return highValue;
         }

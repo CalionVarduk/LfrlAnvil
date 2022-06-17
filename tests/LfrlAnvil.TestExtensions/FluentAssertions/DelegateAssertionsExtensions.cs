@@ -20,20 +20,15 @@ namespace LfrlAnvil.TestExtensions.FluentAssertions
 
             var lockReset = new ManualResetEventSlim( false );
             var actionReset = new ManualResetEventSlim( false );
-            var testCompletion = new TaskCompletionSource<int>();
 
-#pragma warning disable CS4014
-            Task.Run(
+            var task = Task.Run(
                 () =>
                 {
                     actionReset.Wait();
                     lockReset.Set();
                     source.Subject();
                     actionEnd();
-
-                    testCompletion.SetResult( 0 );
                 } );
-#pragma warning restore CS4014
 
             lock ( sync )
             {
@@ -43,7 +38,7 @@ namespace LfrlAnvil.TestExtensions.FluentAssertions
                 lockEnd();
             }
 
-            await testCompletion.Task;
+            await task;
 
             Verify.CallOrder(
                 () =>

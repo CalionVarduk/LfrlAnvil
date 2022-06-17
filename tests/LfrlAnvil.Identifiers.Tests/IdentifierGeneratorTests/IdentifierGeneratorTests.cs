@@ -9,6 +9,7 @@ using LfrlAnvil.Generators;
 using LfrlAnvil.Identifiers.Exceptions;
 using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.Attributes;
+using LfrlAnvil.TestExtensions.NSubstitute;
 using NSubstitute;
 using Xunit;
 
@@ -934,7 +935,7 @@ namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests
             if ( returnValues.Length == 0 )
                 return mock;
 
-            mock.GetNow().Returns( returnValues[0], returnValues.Skip( 1 ).ToArray() );
+            mock.GetNow().Returns( returnValues );
             return mock;
         }
 

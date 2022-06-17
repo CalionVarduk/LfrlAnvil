@@ -5,7 +5,7 @@ namespace LfrlAnvil.Reactive.Exceptions
     public class EventPublisherNotFoundException : ArgumentException
     {
         public EventPublisherNotFoundException(Type eventType)
-            : base( ExceptionResources.EventPublisherNotFound( eventType ) )
+            : base( Resources.EventPublisherNotFound( eventType ) )
         {
             EventType = eventType;
         }

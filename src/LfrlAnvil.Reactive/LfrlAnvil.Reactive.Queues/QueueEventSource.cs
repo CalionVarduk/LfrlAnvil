@@ -1,6 +1,4 @@
-﻿using System;
-using LfrlAnvil.Reactive.Exceptions;
-using LfrlAnvil.Reactive.Queues.Composites;
+﻿using LfrlAnvil.Reactive.Queues.Composites;
 
 namespace LfrlAnvil.Reactive.Queues
 {
@@ -17,9 +15,7 @@ namespace LfrlAnvil.Reactive.Queues
 
         public void Move(TPointDelta delta)
         {
-            if ( IsDisposed )
-                throw new ObjectDisposedException( ExceptionResources.DisposedEventSource );
-
+            EnsureNotDisposed();
             _queue.Move( delta );
 
             var @event = _queue.Dequeue();
