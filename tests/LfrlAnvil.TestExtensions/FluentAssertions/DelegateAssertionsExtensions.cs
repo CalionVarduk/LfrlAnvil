@@ -8,12 +8,12 @@ namespace LfrlAnvil.TestExtensions.FluentAssertions
 {
     public static class DelegateAssertionsExtensions
     {
-        public static Task AcquireLock(this DelegateAssertions<Action> source, object sync)
+        public static Task AcquireLockOn(this DelegateAssertions<Action> source, object sync)
         {
-            return source.AcquireLock( sync, TimeSpan.FromMilliseconds( 15 ) );
+            return source.AcquireLockOn( sync, TimeSpan.FromMilliseconds( 15 ) );
         }
 
-        public static async Task AcquireLock(this DelegateAssertions<Action> source, object sync, TimeSpan lockTimeout)
+        public static async Task AcquireLockOn(this DelegateAssertions<Action> source, object sync, TimeSpan lockTimeout)
         {
             var lockEnd = Substitute.For<Action>();
             var actionEnd = Substitute.For<Action>();

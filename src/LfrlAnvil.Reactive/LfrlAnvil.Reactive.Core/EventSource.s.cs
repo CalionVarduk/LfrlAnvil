@@ -37,6 +37,15 @@ namespace LfrlAnvil.Reactive
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static ConcurrentEventHandlerSource<TEvent> ConcurrentFromEvent<TEvent>(
+            Action<EventHandler<TEvent>> setup,
+            Action<EventHandler<TEvent>> teardown)
+        {
+            return new ConcurrentEventHandlerSource<TEvent>( setup, teardown );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static WhenAllEventSource<TEvent> WhenAll<TEvent>(IEnumerable<IEventStream<TEvent>> streams)
         {
             return new WhenAllEventSource<TEvent>( streams );

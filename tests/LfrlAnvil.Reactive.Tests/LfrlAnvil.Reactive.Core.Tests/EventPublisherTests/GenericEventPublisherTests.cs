@@ -258,7 +258,7 @@ namespace LfrlAnvil.Reactive.Tests.EventPublisherTests
         [Fact]
         public void IEventStreamListen_ShouldThrowInvalidArgumentTypeException_WhenListenerIsNotOfCorrectType()
         {
-            var listener = EventListener<Invalid>.Empty;
+            var listener = EventListener<TEvent[]>.Empty;
             IEventStream sut = new EventPublisher<TEvent>();
 
             var action = Lambda.Of( () => sut.Listen( listener ) );
@@ -285,7 +285,7 @@ namespace LfrlAnvil.Reactive.Tests.EventPublisherTests
         [Fact]
         public void IEventPublisherPublish_ShouldThrowInvalidArgumentTypeException_WhenEventIsNotOfCorrectType()
         {
-            var @event = Fixture.Create<Invalid>();
+            var @event = Fixture.Create<TEvent[]>();
             IEventPublisher sut = new EventPublisher<TEvent>();
 
             var action = Lambda.Of( () => sut.Publish( @event ) );
@@ -293,11 +293,6 @@ namespace LfrlAnvil.Reactive.Tests.EventPublisherTests
             action.Should()
                 .ThrowExactly<InvalidArgumentTypeException>()
                 .AndMatch( e => e.Argument == @event && e.ExpectedType == typeof( TEvent ) );
-        }
-
-        private sealed class Invalid
-        {
-            public TEvent? Event { get; set; }
         }
     }
 }

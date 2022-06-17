@@ -602,6 +602,27 @@ namespace LfrlAnvil.Reactive.Extensions
             return source.Lock( sync ).LockAll( sync );
         }
 
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEventSource<TEvent> ToConcurrent<TEvent>(this EventSource<TEvent> source)
+        {
+            return new ConcurrentEventSource<TEvent, EventSource<TEvent>>( source );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEventPublisher<TEvent> ToConcurrent<TEvent>(this EventPublisher<TEvent> source)
+        {
+            return new ConcurrentEventPublisher<TEvent, EventPublisher<TEvent>>( source );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IHistoryEventPublisher<TEvent> ToConcurrent<TEvent>(this HistoryEventPublisher<TEvent> source)
+        {
+            return new ConcurrentHistoryEventPublisher<TEvent, HistoryEventPublisher<TEvent>>( source );
+        }
+
         public static Task<TEvent?> ToTask<TEvent>(this IEventStream<TEvent> source, CancellationToken cancellationToken)
         {
             var completionSource = new TaskCompletionSource<TEvent?>();
