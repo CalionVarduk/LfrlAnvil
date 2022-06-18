@@ -604,6 +604,14 @@ namespace LfrlAnvil.Reactive.Extensions
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEventStream<TEvent> UseSynchronizationContext<TEvent>(this IEventStream<TEvent> source)
+        {
+            var decorator = new EventListenerUseSynchronizationContextDecorator<TEvent>();
+            return source.Decorate( decorator );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static IEventSource<TEvent> ToConcurrent<TEvent>(this EventSource<TEvent> source)
         {
             return new ConcurrentEventSource<TEvent, EventSource<TEvent>>( source );

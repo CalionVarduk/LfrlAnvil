@@ -8,6 +8,7 @@ namespace LfrlAnvil.Reactive.Exceptions
     {
         internal const string DisposedEventSource = "Event source is disposed.";
         internal const string DisposedEventExchange = "Event exchange is disposed.";
+        internal const string CurrentSynchronizationContextCannotBeNull = "Current synchronization context cannot be null.";
 
         internal const string InvalidEventPublisherDisposal =
             "Disposal subscriber of a publisher owned by an event exchange cannot be manually disposed.";
