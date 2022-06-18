@@ -18,7 +18,7 @@ namespace LfrlAnvil.ConsoleApp
             var simDuration = Duration.FromSeconds( 15 );
 
             var timestampProvider = new PreciseTimestampProvider();
-            var timer = new ChronoTimer( timestampProvider, interval, Duration.FromMilliseconds( 1 ), long.MaxValue );
+            var timer = new ReactiveTimer( timestampProvider, interval, Duration.FromMilliseconds( 1 ), long.MaxValue );
             await RunTimer( timer, () => timer.StartAsync(), simDuration, "Chrono" );
         }
 

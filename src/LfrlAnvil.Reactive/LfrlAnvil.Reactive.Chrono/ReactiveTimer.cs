@@ -8,29 +8,32 @@ using LfrlAnvil.Reactive.Internal;
 
 namespace LfrlAnvil.Reactive.Chrono
 {
-    public sealed class ChronoTimer : ConcurrentEventSource<WithInterval<long>, EventPublisher<WithInterval<long>>>
+    public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, EventPublisher<WithInterval<long>>>
     {
         public static readonly Duration DefaultSpinWaitDurationHint = Duration.FromMilliseconds( 1 );
+        private const byte StoppedState = 0;
+        private const byte RunningState = 1;
+        private const byte StoppingState = 2;
 
         private readonly ITimestampProvider _timestampProvider;
         private readonly ManualResetEventSlim _reset;
         private readonly Duration _spinWaitDurationHint;
         private readonly long _expectedLastIndex;
         private Timestamp _prevStartTimestamp;
-        private Timestamp _prevEndTimestamp;
         private Timestamp _expectedNextTimestamp;
         private long _prevIndex;
+        private byte _state;
 
-        public ChronoTimer(ITimestampProvider timestampProvider, Duration interval)
+        public ReactiveTimer(ITimestampProvider timestampProvider, Duration interval)
             : this( timestampProvider, interval, long.MaxValue ) { }
 
-        public ChronoTimer(ITimestampProvider timestampProvider, Duration interval, long count)
+        public ReactiveTimer(ITimestampProvider timestampProvider, Duration interval, long count)
             : this( timestampProvider, interval, DefaultSpinWaitDurationHint, count ) { }
 
-        public ChronoTimer(ITimestampProvider timestampProvider, Duration interval, Duration spinWaitDurationHint)
+        public ReactiveTimer(ITimestampProvider timestampProvider, Duration interval, Duration spinWaitDurationHint)
             : this( timestampProvider, interval, spinWaitDurationHint, long.MaxValue ) { }
 
-        public ChronoTimer(ITimestampProvider timestampProvider, Duration interval, Duration spinWaitDurationHint, long count)
+        public ReactiveTimer(ITimestampProvider timestampProvider, Duration interval, Duration spinWaitDurationHint, long count)
             : base( new EventPublisher<WithInterval<long>>() )
         {
             Ensure.IsGreaterThan( count, 0, nameof( count ) );
@@ -39,33 +42,33 @@ namespace LfrlAnvil.Reactive.Chrono
 
             Interval = interval;
             Count = count;
-            IsRunning = false;
+            _state = StoppedState;
 
             _timestampProvider = timestampProvider;
             _reset = new ManualResetEventSlim( false );
             _expectedLastIndex = Count - 1;
             _spinWaitDurationHint = spinWaitDurationHint;
             _prevStartTimestamp = Timestamp.Zero;
-            _prevEndTimestamp = Timestamp.Zero;
             _expectedNextTimestamp = Timestamp.Zero;
             _prevIndex = -1;
         }
 
         public Duration Interval { get; }
         public long Count { get; }
-        public bool IsRunning { get; private set; }
+        public bool IsRunning => _state == RunningState;
+        public bool CanBeStarted => _state == StoppedState && ! Base.IsDisposed && _prevIndex != _expectedLastIndex;
 
-        public void Start()
+        public bool Start()
         {
             EnsureNotDisposed();
-            StartInternal( Interval );
+            return StartInternal( Interval ) is not null;
         }
 
-        public void Start(Duration delay)
+        public bool Start(Duration delay)
         {
             EnsureNotDisposed();
             Ensure.IsInRange( delay, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ), nameof( delay ) );
-            StartInternal( delay );
+            return StartInternal( delay ) is not null;
         }
 
         public Task? StartAsync()
@@ -97,17 +100,18 @@ namespace LfrlAnvil.Reactive.Chrono
             return StartInternal( delay, taskFactory );
         }
 
-        public void Stop()
+        public bool Stop()
         {
             EnsureNotDisposed();
 
             lock ( Sync )
             {
                 if ( ! IsRunning )
-                    return;
+                    return false;
 
-                IsRunning = false;
+                _state = StoppingState;
                 _reset.Set();
+                return true;
             }
         }
 
@@ -118,7 +122,9 @@ namespace LfrlAnvil.Reactive.Chrono
                 if ( Base.IsDisposed )
                     return;
 
-                IsRunning = false;
+                if ( IsRunning )
+                    _state = StoppingState;
+
                 _reset.Set();
                 _reset.Dispose();
                 Base.Dispose();
@@ -129,13 +135,12 @@ namespace LfrlAnvil.Reactive.Chrono
         {
             lock ( Sync )
             {
-                if ( IsRunning || _prevIndex == _expectedLastIndex )
+                if ( _state != StoppedState || _prevIndex == _expectedLastIndex )
                     return null;
 
-                IsRunning = true;
+                _state = RunningState;
                 _prevStartTimestamp = _timestampProvider.GetNow();
-                _prevEndTimestamp = _prevStartTimestamp;
-                _expectedNextTimestamp = _prevEndTimestamp + delay;
+                _expectedNextTimestamp = _prevStartTimestamp + delay;
                 _reset.Reset();
             }
 
@@ -143,29 +148,39 @@ namespace LfrlAnvil.Reactive.Chrono
                 return taskFactory.StartNew( RunBlockingTimer );
 
             RunBlockingTimer();
-            return null;
+            return Task.CompletedTask;
         }
 
         private void RunBlockingTimer()
         {
-            while ( true )
+            Duration initialDelay;
+
+            lock ( Sync )
             {
-                Duration initialDelay;
-
-                lock ( Sync )
+                if ( ! IsRunning )
                 {
-                    if ( ! IsRunning )
-                        break;
-
-                    initialDelay = Duration.Zero.Max( _expectedNextTimestamp - _prevEndTimestamp - _spinWaitDurationHint );
+                    _state = StoppedState;
+                    return;
                 }
 
-                _reset.Wait( (TimeSpan)initialDelay );
+                initialDelay = Duration.Zero.Max( _expectedNextTimestamp - _prevStartTimestamp - _spinWaitDurationHint );
+            }
+
+            while ( true )
+            {
+                try
+                {
+                    _reset.Wait( (TimeSpan)initialDelay );
+                }
+                catch ( ObjectDisposedException ) { }
 
                 lock ( Sync )
                 {
                     if ( ! IsRunning )
+                    {
+                        _state = StoppedState;
                         break;
+                    }
 
                     var timestamp = _timestampProvider.GetNow();
                     while ( timestamp < _expectedNextTimestamp )
@@ -191,12 +206,20 @@ namespace LfrlAnvil.Reactive.Chrono
                         break;
                     }
 
-                    _prevEndTimestamp = _timestampProvider.GetNow();
-                    var actualOffsetFromExpectedTimestamp = _prevEndTimestamp - _expectedNextTimestamp;
+                    var endTimestamp = _timestampProvider.GetNow();
+                    var actualOffsetFromExpectedTimestamp = endTimestamp - _expectedNextTimestamp;
                     var actualSkippedEventCount = actualOffsetFromExpectedTimestamp.Ticks / Interval.Ticks;
                     _expectedNextTimestamp += new Duration( Interval.Ticks * (actualSkippedEventCount + 1) );
                     _prevIndex = Math.Min( eventIndex + (actualSkippedEventCount - skippedEventCount), _expectedLastIndex );
+
+                    if ( ! IsRunning )
+                    {
+                        _state = StoppedState;
+                        break;
+                    }
+
                     _reset.Reset();
+                    initialDelay = Duration.Zero.Max( _expectedNextTimestamp - endTimestamp - _spinWaitDurationHint );
                 }
             }
         }

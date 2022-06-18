@@ -14,22 +14,23 @@ using LfrlAnvil.TestExtensions.NSubstitute;
 using NSubstitute;
 using Xunit;
 
-namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
+namespace LfrlAnvil.Reactive.Chrono.Tests.ReactiveTimerTests
 {
-    public class ChronoTimerTests : TestsBase
+    public class ReactiveTimerTests : TestsBase
     {
         [Fact]
         public void Ctor_WithTimestampProviderAndInterval_ShouldCreateCorrectTimer()
         {
             var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
             var timestampProvider = Substitute.For<ITimestampProvider>();
-            var sut = new ChronoTimer( timestampProvider, interval );
+            var sut = new ReactiveTimer( timestampProvider, interval );
 
             using ( new AssertionScope() )
             {
                 sut.Interval.Should().Be( interval );
                 sut.Count.Should().Be( long.MaxValue );
                 sut.IsRunning.Should().BeFalse();
+                sut.CanBeStarted.Should().BeTrue();
                 sut.IsDisposed.Should().BeFalse();
                 sut.Subscribers.Should().BeEmpty();
                 sut.HasSubscribers.Should().BeFalse();
@@ -44,7 +45,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var interval = Duration.FromTicks( ticks );
             var timestampProvider = Substitute.For<ITimestampProvider>();
 
-            var action = Lambda.Of( () => new ChronoTimer( timestampProvider, interval ) );
+            var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval ) );
 
             action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
@@ -57,7 +58,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var interval = Duration.FromMilliseconds( ms );
             var timestampProvider = Substitute.For<ITimestampProvider>();
 
-            var action = Lambda.Of( () => new ChronoTimer( timestampProvider, interval ) );
+            var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval ) );
 
             action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
@@ -68,13 +69,14 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
             var count = Fixture.CreatePositiveInt32();
             var timestampProvider = Substitute.For<ITimestampProvider>();
-            var sut = new ChronoTimer( timestampProvider, interval, count );
+            var sut = new ReactiveTimer( timestampProvider, interval, count );
 
             using ( new AssertionScope() )
             {
                 sut.Interval.Should().Be( interval );
                 sut.Count.Should().Be( count );
                 sut.IsRunning.Should().BeFalse();
+                sut.CanBeStarted.Should().BeTrue();
                 sut.IsDisposed.Should().BeFalse();
                 sut.Subscribers.Should().BeEmpty();
                 sut.HasSubscribers.Should().BeFalse();
@@ -91,7 +93,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var count = Fixture.CreatePositiveInt32();
             var timestampProvider = Substitute.For<ITimestampProvider>();
 
-            var action = Lambda.Of( () => new ChronoTimer( timestampProvider, interval, count ) );
+            var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval, count ) );
 
             action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
@@ -105,7 +107,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var count = Fixture.CreatePositiveInt32();
             var timestampProvider = Substitute.For<ITimestampProvider>();
 
-            var action = Lambda.Of( () => new ChronoTimer( timestampProvider, interval, count ) );
+            var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval, count ) );
 
             action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
@@ -118,7 +120,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
             var timestampProvider = Substitute.For<ITimestampProvider>();
 
-            var action = Lambda.Of( () => new ChronoTimer( timestampProvider, interval, count ) );
+            var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval, count ) );
 
             action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
@@ -129,13 +131,14 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
             var spinWaitDurationHint = Duration.FromTicks( Fixture.Create<uint>() );
             var timestampProvider = Substitute.For<ITimestampProvider>();
-            var sut = new ChronoTimer( timestampProvider, interval, spinWaitDurationHint );
+            var sut = new ReactiveTimer( timestampProvider, interval, spinWaitDurationHint );
 
             using ( new AssertionScope() )
             {
                 sut.Interval.Should().Be( interval );
                 sut.Count.Should().Be( long.MaxValue );
                 sut.IsRunning.Should().BeFalse();
+                sut.CanBeStarted.Should().BeTrue();
                 sut.IsDisposed.Should().BeFalse();
                 sut.Subscribers.Should().BeEmpty();
                 sut.HasSubscribers.Should().BeFalse();
@@ -153,7 +156,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var spinWaitDurationHint = Duration.FromTicks( Fixture.Create<uint>() );
             var timestampProvider = Substitute.For<ITimestampProvider>();
 
-            var action = Lambda.Of( () => new ChronoTimer( timestampProvider, interval, spinWaitDurationHint ) );
+            var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval, spinWaitDurationHint ) );
 
             action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
@@ -169,7 +172,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var spinWaitDurationHint = Duration.FromTicks( Fixture.Create<uint>() );
             var timestampProvider = Substitute.For<ITimestampProvider>();
 
-            var action = Lambda.Of( () => new ChronoTimer( timestampProvider, interval, spinWaitDurationHint ) );
+            var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval, spinWaitDurationHint ) );
 
             action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
@@ -182,7 +185,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var spinWaitDurationHint = Duration.FromTicks( -1 );
             var timestampProvider = Substitute.For<ITimestampProvider>();
 
-            var action = Lambda.Of( () => new ChronoTimer( timestampProvider, interval, spinWaitDurationHint ) );
+            var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval, spinWaitDurationHint ) );
 
             action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
@@ -194,13 +197,14 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var spinWaitDurationHint = Duration.FromTicks( Fixture.Create<uint>() );
             var count = Fixture.CreatePositiveInt32();
             var timestampProvider = Substitute.For<ITimestampProvider>();
-            var sut = new ChronoTimer( timestampProvider, interval, spinWaitDurationHint, count );
+            var sut = new ReactiveTimer( timestampProvider, interval, spinWaitDurationHint, count );
 
             using ( new AssertionScope() )
             {
                 sut.Interval.Should().Be( interval );
                 sut.Count.Should().Be( count );
                 sut.IsRunning.Should().BeFalse();
+                sut.CanBeStarted.Should().BeTrue();
                 sut.IsDisposed.Should().BeFalse();
                 sut.Subscribers.Should().BeEmpty();
                 sut.HasSubscribers.Should().BeFalse();
@@ -217,7 +221,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var count = Fixture.CreatePositiveInt32();
             var timestampProvider = Substitute.For<ITimestampProvider>();
 
-            var action = Lambda.Of( () => new ChronoTimer( timestampProvider, interval, spinWaitDurationHint, count ) );
+            var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval, spinWaitDurationHint, count ) );
 
             action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
@@ -232,7 +236,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var count = Fixture.CreatePositiveInt32();
             var timestampProvider = Substitute.For<ITimestampProvider>();
 
-            var action = Lambda.Of( () => new ChronoTimer( timestampProvider, interval, spinWaitDurationHint, count ) );
+            var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval, spinWaitDurationHint, count ) );
 
             action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
@@ -245,7 +249,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var count = Fixture.CreatePositiveInt32();
             var timestampProvider = Substitute.For<ITimestampProvider>();
 
-            var action = Lambda.Of( () => new ChronoTimer( timestampProvider, interval, spinWaitDurationHint, count ) );
+            var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval, spinWaitDurationHint, count ) );
 
             action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
@@ -259,7 +263,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var spinWaitDurationHint = Duration.FromTicks( Fixture.Create<uint>() );
             var timestampProvider = Substitute.For<ITimestampProvider>();
 
-            var action = Lambda.Of( () => new ChronoTimer( timestampProvider, interval, spinWaitDurationHint, count ) );
+            var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval, spinWaitDurationHint, count ) );
 
             action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
@@ -277,16 +281,41 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var timestampProvider = Substitute.For<ITimestampProvider>();
             timestampProvider.GetNow().Returns( timestamps );
 
-            var sut = new ChronoTimer( timestampProvider, interval, count: 1 );
+            var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
             sut.Listen( listener );
 
-            sut.Start();
+            var result = sut.Start();
 
             using ( new AssertionScope() )
             {
+                result.Should().BeTrue();
                 sut.IsRunning.Should().BeFalse();
+                sut.CanBeStarted.Should().BeFalse();
                 sut.IsDisposed.Should().BeTrue();
                 actualEvents.Should().BeSequentiallyEqualTo( expectedEvent );
+            }
+        }
+
+        [Fact]
+        public async Task Start_ShouldReturnFalse_WhenTimerIsAlreadyRunning()
+        {
+            var interval = Duration.FromMilliseconds( 15 );
+            var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + interval };
+            var timestampProvider = Substitute.For<ITimestampProvider>();
+            timestampProvider.GetNow().Returns( timestamps );
+            var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
+
+            var task = sut.StartAsync()!;
+            var isRunning = sut.IsRunning;
+            var canBeStarted = sut.CanBeStarted;
+            var result = sut.Start();
+            await task;
+
+            using ( new AssertionScope() )
+            {
+                isRunning.Should().BeTrue();
+                canBeStarted.Should().BeFalse();
+                result.Should().BeFalse();
             }
         }
 
@@ -295,7 +324,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
         {
             var timestampProvider = Substitute.For<ITimestampProvider>();
             var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
-            var sut = new ChronoTimer( timestampProvider, interval );
+            var sut = new ReactiveTimer( timestampProvider, interval );
             sut.Dispose();
 
             var action = Lambda.Of( () => sut.Start() );
@@ -317,16 +346,42 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var timestampProvider = Substitute.For<ITimestampProvider>();
             timestampProvider.GetNow().Returns( timestamps );
 
-            var sut = new ChronoTimer( timestampProvider, interval, count: 1 );
+            var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
             sut.Listen( listener );
 
-            sut.Start( delay );
+            var result = sut.Start( delay );
 
             using ( new AssertionScope() )
             {
+                result.Should().BeTrue();
                 sut.IsRunning.Should().BeFalse();
+                sut.CanBeStarted.Should().BeFalse();
                 sut.IsDisposed.Should().BeTrue();
                 actualEvents.Should().BeSequentiallyEqualTo( expectedEvent );
+            }
+        }
+
+        [Fact]
+        public async Task Start_WithDelay_ShouldReturnFalse_WhenTimerIsAlreadyRunning()
+        {
+            var interval = Duration.FromTicks( 1 );
+            var delay = Duration.FromMilliseconds( 15 );
+            var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + interval };
+            var timestampProvider = Substitute.For<ITimestampProvider>();
+            timestampProvider.GetNow().Returns( timestamps );
+            var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
+
+            var task = sut.StartAsync()!;
+            var isRunning = sut.IsRunning;
+            var canBeStarted = sut.CanBeStarted;
+            var result = sut.Start( delay );
+            await task;
+
+            using ( new AssertionScope() )
+            {
+                isRunning.Should().BeTrue();
+                canBeStarted.Should().BeFalse();
+                result.Should().BeFalse();
             }
         }
 
@@ -338,7 +393,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var timestampProvider = Substitute.For<ITimestampProvider>();
             var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
             var delay = Duration.FromTicks( ticks );
-            var sut = new ChronoTimer( timestampProvider, interval );
+            var sut = new ReactiveTimer( timestampProvider, interval );
 
             var action = Lambda.Of( () => sut.Start( delay ) );
 
@@ -353,7 +408,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var timestampProvider = Substitute.For<ITimestampProvider>();
             var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
             var delay = Duration.FromMilliseconds( ms );
-            var sut = new ChronoTimer( timestampProvider, interval );
+            var sut = new ReactiveTimer( timestampProvider, interval );
 
             var action = Lambda.Of( () => sut.Start( delay ) );
 
@@ -366,7 +421,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var timestampProvider = Substitute.For<ITimestampProvider>();
             var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
             var delay = Duration.FromTicks( Fixture.CreatePositiveInt32() );
-            var sut = new ChronoTimer( timestampProvider, interval );
+            var sut = new ReactiveTimer( timestampProvider, interval );
             sut.Dispose();
 
             var action = Lambda.Of( () => sut.Start( delay ) );
@@ -387,7 +442,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var timestampProvider = Substitute.For<ITimestampProvider>();
             timestampProvider.GetNow().Returns( timestamps );
 
-            var sut = new ChronoTimer( timestampProvider, interval, count: 1 );
+            var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
             sut.Listen( listener );
 
             var task = sut.StartAsync()!;
@@ -398,6 +453,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             {
                 isRunning.Should().BeTrue();
                 sut.IsRunning.Should().BeFalse();
+                sut.CanBeStarted.Should().BeFalse();
                 sut.IsDisposed.Should().BeTrue();
                 actualEvents.Should().BeSequentiallyEqualTo( expectedEvent );
             }
@@ -410,13 +466,20 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + interval };
             var timestampProvider = Substitute.For<ITimestampProvider>();
             timestampProvider.GetNow().Returns( timestamps );
-            var sut = new ChronoTimer( timestampProvider, interval, count: 1 );
+            var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
 
             var task = sut.StartAsync()!;
+            var isRunning = sut.IsRunning;
+            var canBeStarted = sut.CanBeStarted;
             var result = sut.StartAsync();
             await task;
 
-            result.Should().BeNull();
+            using ( new AssertionScope() )
+            {
+                isRunning.Should().BeTrue();
+                canBeStarted.Should().BeFalse();
+                result.Should().BeNull();
+            }
         }
 
         [Fact]
@@ -424,7 +487,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
         {
             var timestampProvider = Substitute.For<ITimestampProvider>();
             var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
-            var sut = new ChronoTimer( timestampProvider, interval );
+            var sut = new ReactiveTimer( timestampProvider, interval );
             sut.Dispose();
 
             var action = Lambda.Of( () => sut.StartAsync() );
@@ -446,7 +509,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var timestampProvider = Substitute.For<ITimestampProvider>();
             timestampProvider.GetNow().Returns( timestamps );
 
-            var sut = new ChronoTimer( timestampProvider, interval, count: 1 );
+            var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
             sut.Listen( listener );
 
             var task = sut.StartAsync( delay )!;
@@ -457,6 +520,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             {
                 isRunning.Should().BeTrue();
                 sut.IsRunning.Should().BeFalse();
+                sut.CanBeStarted.Should().BeFalse();
                 sut.IsDisposed.Should().BeTrue();
                 actualEvents.Should().BeSequentiallyEqualTo( expectedEvent );
             }
@@ -470,13 +534,20 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + delay };
             var timestampProvider = Substitute.For<ITimestampProvider>();
             timestampProvider.GetNow().Returns( timestamps );
-            var sut = new ChronoTimer( timestampProvider, interval, count: 1 );
+            var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
 
             var task = sut.StartAsync()!;
+            var isRunning = sut.IsRunning;
+            var canBeStarted = sut.CanBeStarted;
             var result = sut.StartAsync( delay );
             await task;
 
-            result.Should().BeNull();
+            using ( new AssertionScope() )
+            {
+                isRunning.Should().BeTrue();
+                canBeStarted.Should().BeFalse();
+                result.Should().BeNull();
+            }
         }
 
         [Theory]
@@ -487,7 +558,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var timestampProvider = Substitute.For<ITimestampProvider>();
             var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
             var delay = Duration.FromTicks( ticks );
-            var sut = new ChronoTimer( timestampProvider, interval );
+            var sut = new ReactiveTimer( timestampProvider, interval );
 
             var action = Lambda.Of( () => sut.StartAsync( delay ) );
 
@@ -502,7 +573,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var timestampProvider = Substitute.For<ITimestampProvider>();
             var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
             var delay = Duration.FromMilliseconds( ms );
-            var sut = new ChronoTimer( timestampProvider, interval );
+            var sut = new ReactiveTimer( timestampProvider, interval );
 
             var action = Lambda.Of( () => sut.StartAsync( delay ) );
 
@@ -515,7 +586,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var timestampProvider = Substitute.For<ITimestampProvider>();
             var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
             var delay = Duration.FromTicks( Fixture.CreatePositiveInt32() );
-            var sut = new ChronoTimer( timestampProvider, interval );
+            var sut = new ReactiveTimer( timestampProvider, interval );
             sut.Dispose();
 
             var action = Lambda.Of( () => sut.StartAsync( delay ) );
@@ -537,7 +608,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var timestampProvider = Substitute.For<ITimestampProvider>();
             timestampProvider.GetNow().Returns( timestamps );
 
-            var sut = new ChronoTimer( timestampProvider, interval, count: 1 );
+            var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
             sut.Listen( listener );
 
             await sut.StartAsync( scheduler )!;
@@ -545,6 +616,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             using ( new AssertionScope() )
             {
                 sut.IsRunning.Should().BeFalse();
+                sut.CanBeStarted.Should().BeFalse();
                 sut.IsDisposed.Should().BeTrue();
                 actualEvents.Should().BeSequentiallyEqualTo( expectedEvent );
             }
@@ -558,13 +630,20 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + interval };
             var timestampProvider = Substitute.For<ITimestampProvider>();
             timestampProvider.GetNow().Returns( timestamps );
-            var sut = new ChronoTimer( timestampProvider, interval, count: 1 );
+            var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
 
             var task = sut.StartAsync()!;
+            var isRunning = sut.IsRunning;
+            var canBeStarted = sut.CanBeStarted;
             var result = sut.StartAsync( scheduler );
             await task;
 
-            result.Should().BeNull();
+            using ( new AssertionScope() )
+            {
+                isRunning.Should().BeTrue();
+                canBeStarted.Should().BeFalse();
+                result.Should().BeNull();
+            }
         }
 
         [Fact]
@@ -573,7 +652,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var scheduler = new SynchronousTaskScheduler();
             var timestampProvider = Substitute.For<ITimestampProvider>();
             var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
-            var sut = new ChronoTimer( timestampProvider, interval );
+            var sut = new ReactiveTimer( timestampProvider, interval );
             sut.Dispose();
 
             var action = Lambda.Of( () => sut.StartAsync( scheduler ) );
@@ -596,7 +675,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var timestampProvider = Substitute.For<ITimestampProvider>();
             timestampProvider.GetNow().Returns( timestamps );
 
-            var sut = new ChronoTimer( timestampProvider, interval, count: 1 );
+            var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
             sut.Listen( listener );
 
             await sut.StartAsync( scheduler, delay )!;
@@ -604,6 +683,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             using ( new AssertionScope() )
             {
                 sut.IsRunning.Should().BeFalse();
+                sut.CanBeStarted.Should().BeFalse();
                 sut.IsDisposed.Should().BeTrue();
                 actualEvents.Should().BeSequentiallyEqualTo( expectedEvent );
             }
@@ -618,13 +698,20 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + delay };
             var timestampProvider = Substitute.For<ITimestampProvider>();
             timestampProvider.GetNow().Returns( timestamps );
-            var sut = new ChronoTimer( timestampProvider, interval, count: 1 );
+            var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
 
             var task = sut.StartAsync()!;
+            var isRunning = sut.IsRunning;
+            var canBeStarted = sut.CanBeStarted;
             var result = sut.StartAsync( scheduler, delay );
             await task;
 
-            result.Should().BeNull();
+            using ( new AssertionScope() )
+            {
+                isRunning.Should().BeTrue();
+                canBeStarted.Should().BeFalse();
+                result.Should().BeNull();
+            }
         }
 
         [Theory]
@@ -636,7 +723,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var timestampProvider = Substitute.For<ITimestampProvider>();
             var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
             var delay = Duration.FromTicks( ticks );
-            var sut = new ChronoTimer( timestampProvider, interval );
+            var sut = new ReactiveTimer( timestampProvider, interval );
 
             var action = Lambda.Of( () => sut.StartAsync( scheduler, delay ) );
 
@@ -652,7 +739,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var timestampProvider = Substitute.For<ITimestampProvider>();
             var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
             var delay = Duration.FromMilliseconds( ms );
-            var sut = new ChronoTimer( timestampProvider, interval );
+            var sut = new ReactiveTimer( timestampProvider, interval );
 
             var action = Lambda.Of( () => sut.StartAsync( scheduler, delay ) );
 
@@ -666,7 +753,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var timestampProvider = Substitute.For<ITimestampProvider>();
             var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
             var delay = Duration.FromTicks( Fixture.CreatePositiveInt32() );
-            var sut = new ChronoTimer( timestampProvider, interval );
+            var sut = new ReactiveTimer( timestampProvider, interval );
             sut.Dispose();
 
             var action = Lambda.Of( () => sut.StartAsync( scheduler, delay ) );
@@ -696,7 +783,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var timestampProvider = Substitute.For<ITimestampProvider>();
             timestampProvider.GetNow().Returns( timestamps );
 
-            var sut = new ChronoTimer( timestampProvider, interval, count: eventTimestamps.Count );
+            var sut = new ReactiveTimer( timestampProvider, interval, count: eventTimestamps.Count );
             sut.Listen( listener );
 
             sut.Start();
@@ -704,6 +791,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             using ( new AssertionScope() )
             {
                 sut.IsRunning.Should().BeFalse();
+                sut.CanBeStarted.Should().BeFalse();
                 sut.IsDisposed.Should().BeTrue();
                 actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
             }
@@ -733,7 +821,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var timestampProvider = Substitute.For<ITimestampProvider>();
             timestampProvider.GetNow().Returns( timestamps );
 
-            var sut = new ChronoTimer( timestampProvider, interval, count: 4 );
+            var sut = new ReactiveTimer( timestampProvider, interval, count: 4 );
             sut.Listen( listener );
 
             sut.Start();
@@ -741,6 +829,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             using ( new AssertionScope() )
             {
                 sut.IsRunning.Should().BeFalse();
+                sut.CanBeStarted.Should().BeFalse();
                 sut.IsDisposed.Should().BeTrue();
                 actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
             }
@@ -770,7 +859,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var timestampProvider = Substitute.For<ITimestampProvider>();
             timestampProvider.GetNow().Returns( timestamps );
 
-            var sut = new ChronoTimer( timestampProvider, interval, count: 4 );
+            var sut = new ReactiveTimer( timestampProvider, interval, count: 4 );
             sut.Listen( listener );
 
             sut.Start();
@@ -778,6 +867,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             using ( new AssertionScope() )
             {
                 sut.IsRunning.Should().BeFalse();
+                sut.CanBeStarted.Should().BeFalse();
                 sut.IsDisposed.Should().BeTrue();
                 actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
             }
@@ -813,7 +903,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var timestampProvider = Substitute.For<ITimestampProvider>();
             timestampProvider.GetNow().Returns( timestamps );
 
-            var sut = new ChronoTimer( timestampProvider, interval, count: 6 );
+            var sut = new ReactiveTimer( timestampProvider, interval, count: 6 );
             sut.Listen( listener );
 
             sut.Start();
@@ -821,6 +911,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             using ( new AssertionScope() )
             {
                 sut.IsRunning.Should().BeFalse();
+                sut.CanBeStarted.Should().BeFalse();
                 sut.IsDisposed.Should().BeTrue();
                 actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
             }
@@ -856,7 +947,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var timestampProvider = Substitute.For<ITimestampProvider>();
             timestampProvider.GetNow().Returns( timestamps );
 
-            var sut = new ChronoTimer( timestampProvider, interval, count: 6 );
+            var sut = new ReactiveTimer( timestampProvider, interval, count: 6 );
             sut.Listen( listener );
 
             sut.Start();
@@ -864,6 +955,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             using ( new AssertionScope() )
             {
                 sut.IsRunning.Should().BeFalse();
+                sut.CanBeStarted.Should().BeFalse();
                 sut.IsDisposed.Should().BeTrue();
                 actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
             }
@@ -903,7 +995,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var timestampProvider = Substitute.For<ITimestampProvider>();
             timestampProvider.GetNow().Returns( timestamps );
 
-            var sut = new ChronoTimer( timestampProvider, interval, count: 5 );
+            var sut = new ReactiveTimer( timestampProvider, interval, count: 5 );
             sut.Listen( listener );
 
             sut.Start();
@@ -911,6 +1003,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             using ( new AssertionScope() )
             {
                 sut.IsRunning.Should().BeFalse();
+                sut.CanBeStarted.Should().BeFalse();
                 sut.IsDisposed.Should().BeTrue();
                 actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
             }
@@ -935,7 +1028,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var timestampProvider = Substitute.For<ITimestampProvider>();
             timestampProvider.GetNow().Returns( timestamps );
 
-            var sut = new ChronoTimer( timestampProvider, interval, count: 1 );
+            var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
             sut.Listen( listener );
 
             sut.Start();
@@ -943,6 +1036,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             using ( new AssertionScope() )
             {
                 sut.IsRunning.Should().BeFalse();
+                sut.CanBeStarted.Should().BeFalse();
                 sut.IsDisposed.Should().BeTrue();
                 actualEvents.Should().BeSequentiallyEqualTo( expectedEvent );
             }
@@ -978,7 +1072,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var timestampProvider = Substitute.For<ITimestampProvider>();
             timestampProvider.GetNow().Returns( timestamps );
 
-            var sut = new ChronoTimer( timestampProvider, interval, count: 4 );
+            var sut = new ReactiveTimer( timestampProvider, interval, count: 4 );
             var listener = EventListener.Create<WithInterval<long>>(
                 e =>
                 {
@@ -995,6 +1089,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             using ( new AssertionScope() )
             {
                 sut.IsRunning.Should().BeFalse();
+                sut.CanBeStarted.Should().BeFalse();
                 sut.IsDisposed.Should().BeTrue();
                 actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
             }
@@ -1005,7 +1100,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
         {
             var timestampProvider = Substitute.For<ITimestampProvider>();
             var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
-            var sut = new ChronoTimer( timestampProvider, interval );
+            var sut = new ReactiveTimer( timestampProvider, interval );
 
             sut.Dispose();
 
@@ -1017,7 +1112,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
         {
             var timestampProvider = Substitute.For<ITimestampProvider>();
             var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
-            var sut = new ChronoTimer( timestampProvider, interval );
+            var sut = new ReactiveTimer( timestampProvider, interval );
             sut.Dispose();
 
             sut.Dispose();
@@ -1032,15 +1127,17 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             timestampProvider.GetNow().Returns( Timestamp.Zero );
             var interval = Duration.FromMilliseconds( 15 );
             var listener = Substitute.For<IEventListener<WithInterval<long>>>();
-            var sut = new ChronoTimer( timestampProvider, interval );
+            var sut = new ReactiveTimer( timestampProvider, interval );
             sut.Listen( listener );
             var task = sut.StartAsync()!;
 
             sut.Dispose();
+            var canBeStarted = sut.CanBeStarted;
             await task;
 
             using ( new AssertionScope() )
             {
+                canBeStarted.Should().BeFalse();
                 sut.IsRunning.Should().BeFalse();
                 listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<WithInterval<long>>() ) );
             }
@@ -1053,19 +1150,23 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             timestampProvider.GetNow().Returns( Timestamp.Zero );
             var interval = Duration.FromMilliseconds( 100 );
             var listener = Substitute.For<IEventListener<WithInterval<long>>>();
-            var sut = new ChronoTimer( timestampProvider, interval );
+            var sut = new ReactiveTimer( timestampProvider, interval );
             sut.Listen( listener );
             var task = sut.StartAsync()!;
 
             await Task.Delay( 1 );
-            sut.Stop();
+            var result = sut.Stop();
             var isRunning = sut.IsRunning;
+            var canBeStarted = sut.CanBeStarted;
             await task;
 
             using ( new AssertionScope() )
             {
+                result.Should().BeTrue();
                 isRunning.Should().BeFalse();
+                canBeStarted.Should().BeFalse();
                 sut.IsRunning.Should().BeFalse();
+                sut.CanBeStarted.Should().BeTrue();
                 sut.IsDisposed.Should().BeFalse();
                 listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<WithInterval<long>>() ) );
             }
@@ -1088,7 +1189,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
             var expectedEvent = new WithInterval<long>( 0, Timestamp.Zero + interval, interval );
             var actualEvents = new List<WithInterval<long>>();
 
-            var sut = new ChronoTimer( timestampProvider, interval );
+            var sut = new ReactiveTimer( timestampProvider, interval );
 
             var listener = EventListener.Create<WithInterval<long>>(
                 e =>
@@ -1113,11 +1214,15 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
         {
             var timestampProvider = Substitute.For<ITimestampProvider>();
             var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
-            var sut = new ChronoTimer( timestampProvider, interval );
+            var sut = new ReactiveTimer( timestampProvider, interval );
 
-            sut.Stop();
+            var result = sut.Stop();
 
-            sut.IsRunning.Should().BeFalse();
+            using ( new AssertionScope() )
+            {
+                result.Should().BeFalse();
+                sut.IsRunning.Should().BeFalse();
+            }
         }
 
         [Fact]
@@ -1125,7 +1230,7 @@ namespace LfrlAnvil.Reactive.Chrono.Tests.ChronoTimerTests
         {
             var timestampProvider = Substitute.For<ITimestampProvider>();
             var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
-            var sut = new ChronoTimer( timestampProvider, interval );
+            var sut = new ReactiveTimer( timestampProvider, interval );
             sut.Dispose();
 
             var action = Lambda.Of( () => sut.Stop() );
