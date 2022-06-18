@@ -612,6 +612,15 @@ namespace LfrlAnvil.Reactive.Extensions
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public static IEventStream<TEvent> Catch<TEvent, TException>(this IEventStream<TEvent> source, Action<TException> onError)
+            where TException : Exception
+        {
+            var decorator = new EventListenerCatchDecorator<TEvent, TException>( onError );
+            return source.Decorate( decorator );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static IEventSource<TEvent> ToConcurrent<TEvent>(this EventSource<TEvent> source)
         {
             return new ConcurrentEventSource<TEvent, EventSource<TEvent>>( source );
