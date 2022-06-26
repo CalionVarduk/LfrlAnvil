@@ -1,12 +1,11 @@
-﻿namespace LfrlAnvil.Mathematical.Expressions.Internal
+﻿namespace LfrlAnvil.Mathematical.Expressions.Internal;
+
+public interface ITokenizerConfiguration
 {
-    public interface ITokenizerConfiguration
-    {
-        char DecimalPoint { get; }
-        char IntegerDigitSeparator { get; }
-        string ScientificNotationExponents { get; }
-        bool AllowScientificNotation { get; }
-        bool AllowNonIntegerValues { get; }
-        char StringDelimiter { get; }
-    }
+    char DecimalPoint { get; }
+    char IntegerDigitSeparator { get; }
+    string ScientificNotationExponents { get; }
+    bool AllowScientificNotation { get; }
+    bool AllowNonIntegerValues { get; }
+    char StringDelimiter { get; }
 }

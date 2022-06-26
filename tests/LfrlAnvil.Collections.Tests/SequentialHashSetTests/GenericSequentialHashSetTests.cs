@@ -12,6 +12,7 @@ namespace LfrlAnvil.Collections.Tests.SequentialHashSetTests;
 
 [GenericTestClass( typeof( GenericSequentialHashSetTestsData<> ) )]
 public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsBase<T>
+    where T : notnull
 {
     [Fact]
     public void Ctor_ShouldCreateEmpty()

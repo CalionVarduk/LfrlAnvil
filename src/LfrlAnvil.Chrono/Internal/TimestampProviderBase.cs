@@ -1,34 +1,33 @@
 ﻿using System.Diagnostics.Contracts;
 using LfrlAnvil.Generators;
 
-namespace LfrlAnvil.Chrono.Internal
+namespace LfrlAnvil.Chrono.Internal;
+
+public abstract class TimestampProviderBase : ITimestampProvider
 {
-    public abstract class TimestampProviderBase : ITimestampProvider
+    public abstract Timestamp GetNow();
+
+    [Pure]
+    Timestamp IGenerator<Timestamp>.Generate()
     {
-        public abstract Timestamp GetNow();
+        return GetNow();
+    }
 
-        [Pure]
-        Timestamp IGenerator<Timestamp>.Generate()
-        {
-            return GetNow();
-        }
+    bool IGenerator<Timestamp>.TryGenerate(out Timestamp result)
+    {
+        result = GetNow();
+        return true;
+    }
 
-        bool IGenerator<Timestamp>.TryGenerate(out Timestamp result)
-        {
-            result = GetNow();
-            return true;
-        }
+    [Pure]
+    object IGenerator.Generate()
+    {
+        return GetNow();
+    }
 
-        [Pure]
-        object IGenerator.Generate()
-        {
-            return GetNow();
-        }
-
-        bool IGenerator.TryGenerate(out object result)
-        {
-            result = GetNow();
-            return true;
-        }
+    bool IGenerator.TryGenerate(out object result)
+    {
+        result = GetNow();
+        return true;
     }
 }

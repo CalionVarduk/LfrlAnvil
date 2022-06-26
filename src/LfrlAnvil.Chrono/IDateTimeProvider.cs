@@ -1,11 +1,10 @@
 ﻿using System;
 using LfrlAnvil.Generators;
 
-namespace LfrlAnvil.Chrono
+namespace LfrlAnvil.Chrono;
+
+public interface IDateTimeProvider : IGenerator<DateTime>
 {
-    public interface IDateTimeProvider : IGenerator<DateTime>
-    {
-        DateTimeKind Kind { get; }
-        DateTime GetNow();
-    }
+    DateTimeKind Kind { get; }
+    DateTime GetNow();
 }

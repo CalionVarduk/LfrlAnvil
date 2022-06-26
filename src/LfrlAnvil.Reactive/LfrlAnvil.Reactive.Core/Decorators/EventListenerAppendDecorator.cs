@@ -1,46 +1,45 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace LfrlAnvil.Reactive.Decorators
+namespace LfrlAnvil.Reactive.Decorators;
+
+public sealed class EventListenerAppendDecorator<TEvent> : IEventListenerDecorator<TEvent, TEvent>
 {
-    public sealed class EventListenerAppendDecorator<TEvent> : IEventListenerDecorator<TEvent, TEvent>
+    private readonly TEvent[] _values;
+
+    public EventListenerAppendDecorator(IEnumerable<TEvent> values)
     {
-        private readonly TEvent[] _values;
+        _values = values.ToArray();
+    }
 
-        public EventListenerAppendDecorator(IEnumerable<TEvent> values)
+    public IEventListener<TEvent> Decorate(IEventListener<TEvent> listener, IEventSubscriber subscriber)
+    {
+        return _values.Length == 0 ? listener : new EventListener( listener, _values );
+    }
+
+    private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
+    {
+        private TEvent[]? _values;
+
+        internal EventListener(IEventListener<TEvent> next, TEvent[] values)
+            : base( next )
         {
-            _values = values.ToArray();
+            _values = values;
         }
 
-        public IEventListener<TEvent> Decorate(IEventListener<TEvent> listener, IEventSubscriber subscriber)
+        public override void React(TEvent @event)
         {
-            return _values.Length == 0 ? listener : new EventListener( listener, _values );
+            Next.React( @event );
         }
 
-        private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
+        public override void OnDispose(DisposalSource source)
         {
-            private TEvent[]? _values;
+            foreach ( var value in _values! )
+                Next.React( value );
 
-            internal EventListener(IEventListener<TEvent> next, TEvent[] values)
-                : base( next )
-            {
-                _values = values;
-            }
+            _values = null;
 
-            public override void React(TEvent @event)
-            {
-                Next.React( @event );
-            }
-
-            public override void OnDispose(DisposalSource source)
-            {
-                foreach ( var value in _values! )
-                    Next.React( value );
-
-                _values = null;
-
-                base.OnDispose( source );
-            }
+            base.OnDispose( source );
         }
     }
 }

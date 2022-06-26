@@ -1,23 +1,22 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 
-namespace LfrlAnvil.Functional
+namespace LfrlAnvil.Functional;
+
+public interface IUnsafe
 {
-    public interface IUnsafe
-    {
-        bool HasError { get; }
-        bool IsOk { get; }
+    bool HasError { get; }
+    bool IsOk { get; }
 
-        [Pure]
-        object GetValue();
+    [Pure]
+    object GetValue();
 
-        [Pure]
-        object? GetValueOrDefault();
+    [Pure]
+    object? GetValueOrDefault();
 
-        [Pure]
-        Exception GetError();
+    [Pure]
+    Exception GetError();
 
-        [Pure]
-        Exception? GetErrorOrDefault();
-    }
+    [Pure]
+    Exception? GetErrorOrDefault();
 }

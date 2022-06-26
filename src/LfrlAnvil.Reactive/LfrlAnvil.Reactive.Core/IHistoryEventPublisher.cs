@@ -1,11 +1,10 @@
 ﻿using System.Collections.Generic;
 
-namespace LfrlAnvil.Reactive
+namespace LfrlAnvil.Reactive;
+
+public interface IHistoryEventPublisher<TEvent> : IEventPublisher<TEvent>
 {
-    public interface IHistoryEventPublisher<TEvent> : IEventPublisher<TEvent>
-    {
-        int Capacity { get; }
-        IReadOnlyCollection<TEvent> History { get; }
-        void ClearHistory();
-    }
+    int Capacity { get; }
+    IReadOnlyCollection<TEvent> History { get; }
+    void ClearHistory();
 }

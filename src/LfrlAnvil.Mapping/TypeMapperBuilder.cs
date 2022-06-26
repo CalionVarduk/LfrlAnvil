@@ -2,44 +2,43 @@
 using System.Diagnostics.Contracts;
 using System.Linq;
 
-namespace LfrlAnvil.Mapping
+namespace LfrlAnvil.Mapping;
+
+public class TypeMapperBuilder : ITypeMapperBuilder
 {
-    public class TypeMapperBuilder : ITypeMapperBuilder
+    private readonly List<ITypeMappingConfiguration> _configurations;
+
+    public TypeMapperBuilder()
     {
-        private readonly List<ITypeMappingConfiguration> _configurations;
+        _configurations = new List<ITypeMappingConfiguration>();
+    }
 
-        public TypeMapperBuilder()
-        {
-            _configurations = new List<ITypeMappingConfiguration>();
-        }
+    public ITypeMapperBuilder Configure(ITypeMappingConfiguration configuration)
+    {
+        _configurations.Add( configuration );
+        return this;
+    }
 
-        public ITypeMapperBuilder Configure(ITypeMappingConfiguration configuration)
-        {
-            _configurations.Add( configuration );
-            return this;
-        }
+    public ITypeMapperBuilder Configure(params ITypeMappingConfiguration[] configurations)
+    {
+        return Configure( configurations.AsEnumerable() );
+    }
 
-        public ITypeMapperBuilder Configure(params ITypeMappingConfiguration[] configurations)
-        {
-            return Configure( configurations.AsEnumerable() );
-        }
+    public ITypeMapperBuilder Configure(IEnumerable<ITypeMappingConfiguration> configurations)
+    {
+        _configurations.AddRange( configurations );
+        return this;
+    }
 
-        public ITypeMapperBuilder Configure(IEnumerable<ITypeMappingConfiguration> configurations)
-        {
-            _configurations.AddRange( configurations );
-            return this;
-        }
+    [Pure]
+    public IEnumerable<ITypeMappingConfiguration> GetConfigurations()
+    {
+        return _configurations;
+    }
 
-        [Pure]
-        public IEnumerable<ITypeMappingConfiguration> GetConfigurations()
-        {
-            return _configurations;
-        }
-
-        [Pure]
-        public ITypeMapper Build()
-        {
-            return new TypeMapper( _configurations );
-        }
+    [Pure]
+    public ITypeMapper Build()
+    {
+        return new TypeMapper( _configurations );
     }
 }

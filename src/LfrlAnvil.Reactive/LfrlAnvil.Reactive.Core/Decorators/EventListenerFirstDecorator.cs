@@ -1,27 +1,26 @@
-﻿namespace LfrlAnvil.Reactive.Decorators
+﻿namespace LfrlAnvil.Reactive.Decorators;
+
+public class EventListenerFirstDecorator<TEvent> : IEventListenerDecorator<TEvent, TEvent>
 {
-    public class EventListenerFirstDecorator<TEvent> : IEventListenerDecorator<TEvent, TEvent>
+    public IEventListener<TEvent> Decorate(IEventListener<TEvent> listener, IEventSubscriber subscriber)
     {
-        public IEventListener<TEvent> Decorate(IEventListener<TEvent> listener, IEventSubscriber subscriber)
+        return new EventListener( listener, subscriber );
+    }
+
+    private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
+    {
+        private readonly IEventSubscriber _subscriber;
+
+        internal EventListener(IEventListener<TEvent> next, IEventSubscriber subscriber)
+            : base( next )
         {
-            return new EventListener( listener, subscriber );
+            _subscriber = subscriber;
         }
 
-        private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
+        public override void React(TEvent @event)
         {
-            private readonly IEventSubscriber _subscriber;
-
-            internal EventListener(IEventListener<TEvent> next, IEventSubscriber subscriber)
-                : base( next )
-            {
-                _subscriber = subscriber;
-            }
-
-            public override void React(TEvent @event)
-            {
-                Next.React( @event );
-                _subscriber.Dispose();
-            }
+            Next.React( @event );
+            _subscriber.Dispose();
         }
     }
 }

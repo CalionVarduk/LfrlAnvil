@@ -2,21 +2,20 @@
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Reactive.Queues.Composites;
 
-namespace LfrlAnvil.Reactive.Queues.Internal
+namespace LfrlAnvil.Reactive.Queues.Internal;
+
+internal sealed class EnqueuedEventComparer<TEvent, TPoint, TPointDelta> : IComparer<EnqueuedEvent<TEvent, TPoint, TPointDelta>>
 {
-    internal sealed class EnqueuedEventComparer<TEvent, TPoint, TPointDelta> : IComparer<EnqueuedEvent<TEvent, TPoint, TPointDelta>>
+    private readonly IComparer<TPoint> _pointComparer;
+
+    internal EnqueuedEventComparer(IComparer<TPoint> pointComparer)
     {
-        private readonly IComparer<TPoint> _pointComparer;
+        _pointComparer = pointComparer;
+    }
 
-        internal EnqueuedEventComparer(IComparer<TPoint> pointComparer)
-        {
-            _pointComparer = pointComparer;
-        }
-
-        [Pure]
-        public int Compare(EnqueuedEvent<TEvent, TPoint, TPointDelta> a, EnqueuedEvent<TEvent, TPoint, TPointDelta> b)
-        {
-            return _pointComparer.Compare( a.DequeuePoint, b.DequeuePoint );
-        }
+    [Pure]
+    public int Compare(EnqueuedEvent<TEvent, TPoint, TPointDelta> a, EnqueuedEvent<TEvent, TPoint, TPointDelta> b)
+    {
+        return _pointComparer.Compare( a.DequeuePoint, b.DequeuePoint );
     }
 }

@@ -7,213 +7,212 @@ using System.Runtime.CompilerServices;
 using LfrlAnvil.Functional.Exceptions;
 using LfrlAnvil.Internal;
 
-namespace LfrlAnvil.Functional
+namespace LfrlAnvil.Functional;
+
+public readonly struct TypeCast<TSource, TDestination> : ITypeCast<TDestination>, IEquatable<TypeCast<TSource, TDestination>>
 {
-    public readonly struct TypeCast<TSource, TDestination> : ITypeCast<TDestination>, IEquatable<TypeCast<TSource, TDestination>>
+    public static readonly TypeCast<TSource, TDestination> Empty = new TypeCast<TSource, TDestination>();
+
+    internal readonly TDestination? Result;
+
+    internal TypeCast(TSource source)
     {
-        public static readonly TypeCast<TSource, TDestination> Empty = new TypeCast<TSource, TDestination>();
-
-        internal readonly TDestination? Result;
-
-        internal TypeCast(TSource source)
+        Source = source;
+        if ( source is TDestination d )
         {
-            Source = source;
-            if ( source is TDestination d )
-            {
-                Result = d;
-                IsValid = true;
-            }
-            else
-            {
-                Result = default;
-                IsValid = false;
-            }
+            Result = d;
+            IsValid = true;
         }
-
-        public TSource Source { get; }
-        public bool IsValid { get; }
-        public bool IsInvalid => ! IsValid;
-        object? ITypeCast<TDestination>.Source => Source;
-        int IReadOnlyCollection<TDestination>.Count => IsValid ? 1 : 0;
-
-        [Pure]
-        public override string ToString()
+        else
         {
-            return IsValid
-                ? $"{nameof( TypeCast )}<{typeof( TSource ).FullName} -> {typeof( TDestination ).FullName}>({Result})"
-                : $"Invalid{nameof( TypeCast )}<{typeof( TSource ).FullName} -> {typeof( TDestination ).FullName}>({Generic<TSource>.ToString( Source )})";
+            Result = default;
+            IsValid = false;
         }
+    }
 
-        [Pure]
-        public override int GetHashCode()
-        {
-            return Hash.Default.Add( Source ).Value;
-        }
+    public TSource Source { get; }
+    public bool IsValid { get; }
+    public bool IsInvalid => ! IsValid;
+    object? ITypeCast<TDestination>.Source => Source;
+    int IReadOnlyCollection<TDestination>.Count => IsValid ? 1 : 0;
 
-        [Pure]
-        public override bool Equals(object obj)
-        {
-            return obj is TypeCast<TSource, TDestination> c && Equals( c );
-        }
+    [Pure]
+    public override string ToString()
+    {
+        return IsValid
+            ? $"{nameof( TypeCast )}<{typeof( TSource ).FullName} -> {typeof( TDestination ).FullName}>({Result})"
+            : $"Invalid{nameof( TypeCast )}<{typeof( TSource ).FullName} -> {typeof( TDestination ).FullName}>({Generic<TSource>.ToString( Source )})";
+    }
 
-        [Pure]
-        public bool Equals(TypeCast<TSource, TDestination> other)
-        {
-            if ( IsValid )
-                return other.IsValid && Result!.Equals( other.Result );
+    [Pure]
+    public override int GetHashCode()
+    {
+        return Hash.Default.Add( Source ).Value;
+    }
 
-            return ! other.IsValid && Equality.Create( Source, other.Source ).Result;
-        }
+    [Pure]
+    public override bool Equals(object? obj)
+    {
+        return obj is TypeCast<TSource, TDestination> c && Equals( c );
+    }
 
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public TDestination GetResult()
-        {
-            if ( IsValid )
-                return Result!;
+    [Pure]
+    public bool Equals(TypeCast<TSource, TDestination> other)
+    {
+        if ( IsValid )
+            return other.IsValid && Result!.Equals( other.Result );
 
-            throw new ValueAccessException( Resources.MissingTypeCastResult<TSource, TDestination>(), nameof( Result ) );
-        }
+        return ! other.IsValid && Equality.Create( Source, other.Source ).Result;
+    }
 
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public TDestination? GetResultOrDefault()
-        {
-            return Result;
-        }
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public TDestination GetResult()
+    {
+        if ( IsValid )
+            return Result!;
 
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public TypeCast<TDestination, T> Bind<T>(Func<TDestination, TypeCast<TDestination, T>> valid)
-        {
-            return IsValid ? valid( Result! ) : TypeCast<TDestination, T>.Empty;
-        }
+        throw new ValueAccessException( Resources.MissingTypeCastResult<TSource, TDestination>(), nameof( Result ) );
+    }
 
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public TypeCast<TDestination, T> Bind<T>(
-            Func<TDestination, TypeCast<TDestination, T>> valid,
-            Func<TSource, TypeCast<TDestination, T>> invalid)
-        {
-            return Match( valid, invalid );
-        }
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public TDestination? GetResultOrDefault()
+    {
+        return Result;
+    }
 
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public T Match<T>(Func<TDestination, T> valid, Func<TSource, T> invalid)
-        {
-            return IsValid ? valid( Result! ) : invalid( Source );
-        }
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public TypeCast<TDestination, T> Bind<T>(Func<TDestination, TypeCast<TDestination, T>> valid)
+    {
+        return IsValid ? valid( Result! ) : TypeCast<TDestination, T>.Empty;
+    }
 
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public Nil Match(Action<TDestination> valid, Action<TSource> invalid)
-        {
-            if ( IsValid )
-                valid( Result! );
-            else
-                invalid( Source );
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public TypeCast<TDestination, T> Bind<T>(
+        Func<TDestination, TypeCast<TDestination, T>> valid,
+        Func<TSource, TypeCast<TDestination, T>> invalid)
+    {
+        return Match( valid, invalid );
+    }
 
-            return Nil.Instance;
-        }
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public T Match<T>(Func<TDestination, T> valid, Func<TSource, T> invalid)
+    {
+        return IsValid ? valid( Result! ) : invalid( Source );
+    }
 
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public Maybe<T> IfValid<T>(Func<TDestination, T?> valid)
-            where T : notnull
-        {
-            return IsValid ? valid( Result! ) : Maybe<T>.None;
-        }
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public Nil Match(Action<TDestination> valid, Action<TSource> invalid)
+    {
+        if ( IsValid )
+            valid( Result! );
+        else
+            invalid( Source );
 
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public Nil IfValid(Action<TDestination> valid)
-        {
-            if ( IsValid )
-                valid( Result! );
+        return Nil.Instance;
+    }
 
-            return Nil.Instance;
-        }
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public Maybe<T> IfValid<T>(Func<TDestination, T?> valid)
+        where T : notnull
+    {
+        return IsValid ? valid( Result! ) : Maybe<T>.None;
+    }
 
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public T? IfValidOrDefault<T>(Func<TDestination, T> valid)
-        {
-            return IsValid ? valid( Result! ) : default;
-        }
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public Nil IfValid(Action<TDestination> valid)
+    {
+        if ( IsValid )
+            valid( Result! );
 
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public Maybe<T> IfInvalid<T>(Func<TSource, T?> invalid)
-            where T : notnull
-        {
-            return IsValid ? Maybe<T>.None : invalid( Source );
-        }
+        return Nil.Instance;
+    }
 
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public Nil IfInvalid(Action<TSource> invalid)
-        {
-            if ( ! IsValid )
-                invalid( Source );
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public T? IfValidOrDefault<T>(Func<TDestination, T> valid)
+    {
+        return IsValid ? valid( Result! ) : default;
+    }
 
-            return Nil.Instance;
-        }
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public Maybe<T> IfInvalid<T>(Func<TSource, T?> invalid)
+        where T : notnull
+    {
+        return IsValid ? Maybe<T>.None : invalid( Source );
+    }
 
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public T? IfInvalidOrDefault<T>(Func<TSource, T> invalid)
-        {
-            return IsValid ? default : invalid( Source );
-        }
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public Nil IfInvalid(Action<TSource> invalid)
+    {
+        if ( ! IsValid )
+            invalid( Source );
 
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static implicit operator TypeCast<TSource, TDestination>(TSource value)
-        {
-            return new TypeCast<TSource, TDestination>( value );
-        }
+        return Nil.Instance;
+    }
 
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static implicit operator TypeCast<TSource, TDestination>(PartialTypeCast<TSource> value)
-        {
-            return new TypeCast<TSource, TDestination>( value.Value );
-        }
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public T? IfInvalidOrDefault<T>(Func<TSource, T> invalid)
+    {
+        return IsValid ? default : invalid( Source );
+    }
 
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static implicit operator TypeCast<TSource, TDestination>(Nil value)
-        {
-            return Empty;
-        }
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static implicit operator TypeCast<TSource, TDestination>(TSource value)
+    {
+        return new TypeCast<TSource, TDestination>( value );
+    }
 
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static explicit operator TDestination(TypeCast<TSource, TDestination> value)
-        {
-            return value.GetResult();
-        }
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static implicit operator TypeCast<TSource, TDestination>(PartialTypeCast<TSource> value)
+    {
+        return new TypeCast<TSource, TDestination>( value.Value );
+    }
 
-        [Pure]
-        public static bool operator ==(TypeCast<TSource, TDestination> a, TypeCast<TSource, TDestination> b)
-        {
-            return a.Equals( b );
-        }
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static implicit operator TypeCast<TSource, TDestination>(Nil value)
+    {
+        return Empty;
+    }
 
-        [Pure]
-        public static bool operator !=(TypeCast<TSource, TDestination> a, TypeCast<TSource, TDestination> b)
-        {
-            return ! a.Equals( b );
-        }
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static explicit operator TDestination(TypeCast<TSource, TDestination> value)
+    {
+        return value.GetResult();
+    }
 
-        [Pure]
-        IEnumerator<TDestination> IEnumerable<TDestination>.GetEnumerator()
-        {
-            return (IsValid ? One.Create( Result! ) : Enumerable.Empty<TDestination>()).GetEnumerator();
-        }
+    [Pure]
+    public static bool operator ==(TypeCast<TSource, TDestination> a, TypeCast<TSource, TDestination> b)
+    {
+        return a.Equals( b );
+    }
 
-        [Pure]
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return ((IEnumerable<TDestination>)this).GetEnumerator();
-        }
+    [Pure]
+    public static bool operator !=(TypeCast<TSource, TDestination> a, TypeCast<TSource, TDestination> b)
+    {
+        return ! a.Equals( b );
+    }
+
+    [Pure]
+    IEnumerator<TDestination> IEnumerable<TDestination>.GetEnumerator()
+    {
+        return (IsValid ? One.Create( Result! ) : Enumerable.Empty<TDestination>()).GetEnumerator();
+    }
+
+    [Pure]
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return ((IEnumerable<TDestination>)this).GetEnumerator();
     }
 }

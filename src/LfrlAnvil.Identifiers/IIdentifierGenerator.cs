@@ -2,13 +2,12 @@
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Generators;
 
-namespace LfrlAnvil.Identifiers
-{
-    public interface IIdentifierGenerator : IGenerator<Identifier>
-    {
-        Timestamp BaseTimestamp { get; }
+namespace LfrlAnvil.Identifiers;
 
-        [Pure]
-        Timestamp GetTimestamp(Identifier id);
-    }
+public interface IIdentifierGenerator : IGenerator<Identifier>
+{
+    Timestamp BaseTimestamp { get; }
+
+    [Pure]
+    Timestamp GetTimestamp(Identifier id);
 }

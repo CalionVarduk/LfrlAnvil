@@ -1,9 +1,8 @@
 ﻿using LfrlAnvil.Generators;
 
-namespace LfrlAnvil.Chrono
+namespace LfrlAnvil.Chrono;
+
+public interface ITimestampProvider : IGenerator<Timestamp>
 {
-    public interface ITimestampProvider : IGenerator<Timestamp>
-    {
-        Timestamp GetNow();
-    }
+    Timestamp GetNow();
 }

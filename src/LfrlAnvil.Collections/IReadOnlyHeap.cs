@@ -2,15 +2,14 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 
-namespace LfrlAnvil.Collections
+namespace LfrlAnvil.Collections;
+
+public interface IReadOnlyHeap<T> : IReadOnlyList<T>
 {
-    public interface IReadOnlyHeap<T> : IReadOnlyList<T>
-    {
-        IComparer<T> Comparer { get; }
+    IComparer<T> Comparer { get; }
 
-        [Pure]
-        T Peek();
+    [Pure]
+    T Peek();
 
-        bool TryPeek([MaybeNullWhen( false )] out T result);
-    }
+    bool TryPeek([MaybeNullWhen( false )] out T result);
 }

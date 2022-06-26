@@ -1,8 +1,7 @@
-﻿namespace LfrlAnvil.Requests
+﻿namespace LfrlAnvil.Requests;
+
+public interface IRequestHandler<in TRequest, out TResult>
+    where TRequest : IRequest<TRequest, TResult>
 {
-    public interface IRequestHandler<in TRequest, out TResult>
-        where TRequest : IRequest<TRequest, TResult>
-    {
-        TResult Handle(TRequest request);
-    }
+    TResult Handle(TRequest request);
 }

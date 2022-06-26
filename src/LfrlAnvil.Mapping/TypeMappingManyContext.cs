@@ -3,30 +3,29 @@ using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
-namespace LfrlAnvil.Mapping
+namespace LfrlAnvil.Mapping;
+
+public readonly struct TypeMappingManyContext<TSource>
 {
-    public readonly struct TypeMappingManyContext<TSource>
+    internal TypeMappingManyContext(ITypeMapper typeMapper, IEnumerable<TSource> source)
     {
-        internal TypeMappingManyContext(ITypeMapper typeMapper, IEnumerable<TSource> source)
-        {
-            TypeMapper = typeMapper;
-            Source = source;
-        }
+        TypeMapper = typeMapper;
+        Source = source;
+    }
 
-        public ITypeMapper TypeMapper { get; }
-        public IEnumerable<TSource> Source { get; }
+    public ITypeMapper TypeMapper { get; }
+    public IEnumerable<TSource> Source { get; }
 
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public IEnumerable<TDestination> To<TDestination>()
-        {
-            return TypeMapper.MapMany<TSource, TDestination>( Source );
-        }
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public IEnumerable<TDestination> To<TDestination>()
+    {
+        return TypeMapper.MapMany<TSource, TDestination>( Source );
+    }
 
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public bool TryTo<TDestination>([MaybeNullWhen( false )] out IEnumerable<TDestination> result)
-        {
-            return TypeMapper.TryMapMany( Source, out result );
-        }
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public bool TryTo<TDestination>([MaybeNullWhen( false )] out IEnumerable<TDestination> result)
+    {
+        return TypeMapper.TryMapMany( Source, out result );
     }
 }

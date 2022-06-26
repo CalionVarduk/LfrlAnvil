@@ -1,19 +1,18 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 
-namespace LfrlAnvil.Collections
+namespace LfrlAnvil.Collections;
+
+public interface IReadOnlyRing<out T> : IReadOnlyList<T?>
 {
-    public interface IReadOnlyRing<out T> : IReadOnlyList<T?>
-    {
-        int WriteIndex { get; }
+    int WriteIndex { get; }
 
-        [Pure]
-        int GetWrappedIndex(int index);
+    [Pure]
+    int GetWrappedIndex(int index);
 
-        [Pure]
-        int GetWriteIndex(int offset);
+    [Pure]
+    int GetWriteIndex(int offset);
 
-        [Pure]
-        IEnumerable<T?> Read(int readIndex);
-    }
+    [Pure]
+    IEnumerable<T?> Read(int readIndex);
 }

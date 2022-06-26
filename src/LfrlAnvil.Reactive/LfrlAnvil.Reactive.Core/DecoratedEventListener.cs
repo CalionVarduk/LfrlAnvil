@@ -1,17 +1,16 @@
-﻿namespace LfrlAnvil.Reactive
+﻿namespace LfrlAnvil.Reactive;
+
+public abstract class DecoratedEventListener<TSourceEvent, TNextEvent> : EventListener<TSourceEvent>
 {
-    public abstract class DecoratedEventListener<TSourceEvent, TNextEvent> : EventListener<TSourceEvent>
+    protected DecoratedEventListener(IEventListener<TNextEvent> next)
     {
-        protected DecoratedEventListener(IEventListener<TNextEvent> next)
-        {
-            Next = next;
-        }
+        Next = next;
+    }
 
-        protected IEventListener<TNextEvent> Next { get; }
+    protected IEventListener<TNextEvent> Next { get; }
 
-        public override void OnDispose(DisposalSource source)
-        {
-            Next.OnDispose( source );
-        }
+    public override void OnDispose(DisposalSource source)
+    {
+        Next.OnDispose( source );
     }
 }

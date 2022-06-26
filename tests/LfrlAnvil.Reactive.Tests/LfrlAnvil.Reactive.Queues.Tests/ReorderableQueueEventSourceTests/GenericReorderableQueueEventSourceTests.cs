@@ -12,6 +12,7 @@ using Xunit;
 namespace LfrlAnvil.Reactive.Queues.Tests.ReorderableQueueEventSourceTests;
 
 public abstract class GenericReorderableQueueEventSourceTests<TEvent> : TestsBase
+    where TEvent : notnull
 {
     [Fact]
     public void Ctor_ShouldCreateWithCorrectQueue()

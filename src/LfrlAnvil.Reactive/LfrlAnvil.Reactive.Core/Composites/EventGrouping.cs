@@ -1,25 +1,24 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 
-namespace LfrlAnvil.Reactive.Composites
+namespace LfrlAnvil.Reactive.Composites;
+
+public readonly struct EventGrouping<TKey, TEvent>
 {
-    public readonly struct EventGrouping<TKey, TEvent>
+    public EventGrouping(TKey key, TEvent @event, ReadOnlyMemory<TEvent> allEvents)
     {
-        public EventGrouping(TKey key, TEvent @event, ReadOnlyMemory<TEvent> allEvents)
-        {
-            Key = key;
-            Event = @event;
-            AllEvents = allEvents;
-        }
+        Key = key;
+        Event = @event;
+        AllEvents = allEvents;
+    }
 
-        public TKey Key { get; }
-        public TEvent Event { get; }
-        public ReadOnlyMemory<TEvent> AllEvents { get; }
+    public TKey Key { get; }
+    public TEvent Event { get; }
+    public ReadOnlyMemory<TEvent> AllEvents { get; }
 
-        [Pure]
-        public override string ToString()
-        {
-            return $"[{Key}]: {Event} (Count = {AllEvents.Length})";
-        }
+    [Pure]
+    public override string ToString()
+    {
+        return $"[{Key}]: {Event} (Count = {AllEvents.Length})";
     }
 }

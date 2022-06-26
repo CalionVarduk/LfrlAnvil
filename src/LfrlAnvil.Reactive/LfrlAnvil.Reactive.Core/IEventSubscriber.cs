@@ -1,9 +1,8 @@
 ﻿using System;
 
-namespace LfrlAnvil.Reactive
+namespace LfrlAnvil.Reactive;
+
+public interface IEventSubscriber : IDisposable
 {
-    public interface IEventSubscriber : IDisposable
-    {
-        bool IsDisposed { get; }
-    }
+    bool IsDisposed { get; }
 }

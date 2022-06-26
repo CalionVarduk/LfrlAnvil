@@ -6,428 +6,427 @@ using System.Runtime.CompilerServices;
 using LfrlAnvil.Collections.Internal;
 using LfrlAnvil.Extensions;
 
-namespace LfrlAnvil.Collections
+namespace LfrlAnvil.Collections;
+
+public class MultiHashSet<T> : IMultiSet<T>
+    where T : notnull
 {
-    public class MultiHashSet<T> : IMultiSet<T>
-        where T : notnull
+    private readonly Dictionary<T, int> _map;
+
+    public MultiHashSet()
+        : this( EqualityComparer<T>.Default ) { }
+
+    public MultiHashSet(IEqualityComparer<T> comparer)
     {
-        private readonly Dictionary<T, int> _map;
+        _map = new Dictionary<T, int>( comparer );
+        FullCount = 0;
+    }
 
-        public MultiHashSet()
-            : this( EqualityComparer<T>.Default ) { }
+    public long FullCount { get; private set; }
+    public int Count => _map.Count;
+    public IEqualityComparer<T> Comparer => _map.Comparer;
+    public IEnumerable<T> DistinctItems => _map.Keys;
 
-        public MultiHashSet(IEqualityComparer<T> comparer)
+    public IEnumerable<T> Items
+    {
+        get
         {
-            _map = new Dictionary<T, int>( comparer );
-            FullCount = 0;
-        }
+            using var enumerator = GetEnumerator();
 
-        public long FullCount { get; private set; }
-        public int Count => _map.Count;
-        public IEqualityComparer<T> Comparer => _map.Comparer;
-        public IEnumerable<T> DistinctItems => _map.Keys;
-
-        public IEnumerable<T> Items
-        {
-            get
+            while ( enumerator.MoveNext() )
             {
-                using var enumerator = GetEnumerator();
-
-                while ( enumerator.MoveNext() )
-                {
-                    var (item, multiplicity) = enumerator.Current;
-                    for ( var i = 0; i < multiplicity; ++i )
-                        yield return item;
-                }
+                var (item, multiplicity) = enumerator.Current;
+                for ( var i = 0; i < multiplicity; ++i )
+                    yield return item;
             }
         }
+    }
 
-        bool ICollection<Pair<T, int>>.IsReadOnly => false;
+    bool ICollection<Pair<T, int>>.IsReadOnly => false;
 
-        [Pure]
-        public bool Contains(T item)
+    [Pure]
+    public bool Contains(T item)
+    {
+        return _map.ContainsKey( item );
+    }
+
+    [Pure]
+    public bool Contains(T item, int multiplicity)
+    {
+        return GetMultiplicity( item ) >= multiplicity;
+    }
+
+    [Pure]
+    public bool Contains(Pair<T, int> item)
+    {
+        return Contains( item.First, item.Second );
+    }
+
+    [Pure]
+    public int GetMultiplicity(T item)
+    {
+        return _map.GetValueOrDefault( item );
+    }
+
+    public int SetMultiplicity(T item, int value)
+    {
+        Ensure.IsGreaterThanOrEqualTo( value, 0, nameof( value ) );
+
+        if ( _map.TryGetValue( item, out var multiplicity ) )
         {
-            return _map.ContainsKey( item );
+            if ( value == 0 )
+                return RemoveAllImpl( item, multiplicity );
+
+            FullCount += value - multiplicity;
+            _map[item] = value;
+            return multiplicity;
         }
 
-        [Pure]
-        public bool Contains(T item, int multiplicity)
-        {
-            return GetMultiplicity( item ) >= multiplicity;
-        }
+        if ( value > 0 )
+            AddNewImpl( item, value );
 
-        [Pure]
-        public bool Contains(Pair<T, int> item)
-        {
-            return Contains( item.First, item.Second );
-        }
+        return 0;
+    }
 
-        [Pure]
-        public int GetMultiplicity(T item)
-        {
-            return _map.GetValueOrDefault( item );
-        }
+    public int Add(T item)
+    {
+        return AddImpl( item, 1 );
+    }
 
-        public int SetMultiplicity(T item, int value)
-        {
-            Ensure.IsGreaterThanOrEqualTo( value, 0, nameof( value ) );
+    public int AddMany(T item, int count)
+    {
+        Ensure.IsGreaterThan( count, 0, nameof( count ) );
+        return AddImpl( item, count );
+    }
 
-            if ( _map.TryGetValue( item, out var multiplicity ) )
-            {
-                if ( value == 0 )
-                    return RemoveAllImpl( item, multiplicity );
+    public int Remove(T item)
+    {
+        return RemoveImpl( item, 1 );
+    }
 
-                FullCount += value - multiplicity;
-                _map[item] = value;
-                return multiplicity;
-            }
+    public int RemoveMany(T item, int count)
+    {
+        Ensure.IsGreaterThan( count, 0, nameof( count ) );
+        return RemoveImpl( item, count );
+    }
 
-            if ( value > 0 )
-                AddNewImpl( item, value );
-
+    public int RemoveAll(T item)
+    {
+        if ( ! _map.TryGetValue( item, out var multiplicity ) )
             return 0;
+
+        return RemoveAllImpl( item, multiplicity );
+    }
+
+    public void Clear()
+    {
+        _map.Clear();
+        FullCount = 0;
+    }
+
+    public void ExceptWith(IEnumerable<Pair<T, int>> other)
+    {
+        if ( ReferenceEquals( this, other ) )
+        {
+            Clear();
+            return;
         }
 
-        public int Add(T item)
+        foreach ( var (item, count) in other )
         {
-            return AddImpl( item, 1 );
-        }
+            if ( count <= 0 )
+                continue;
 
-        public int AddMany(T item, int count)
-        {
-            Ensure.IsGreaterThan( count, 0, nameof( count ) );
-            return AddImpl( item, count );
+            RemoveImpl( item, count );
         }
+    }
 
-        public int Remove(T item)
-        {
-            return RemoveImpl( item, 1 );
-        }
+    public void UnionWith(IEnumerable<Pair<T, int>> other)
+    {
+        if ( ReferenceEquals( this, other ) )
+            return;
 
-        public int RemoveMany(T item, int count)
+        foreach ( var (item, count) in other )
         {
-            Ensure.IsGreaterThan( count, 0, nameof( count ) );
-            return RemoveImpl( item, count );
-        }
+            if ( count <= 0 )
+                continue;
 
-        public int RemoveAll(T item)
-        {
             if ( ! _map.TryGetValue( item, out var multiplicity ) )
-                return 0;
+            {
+                AddNewImpl( item, count );
+                continue;
+            }
 
-            return RemoveAllImpl( item, multiplicity );
+            if ( multiplicity >= count )
+                continue;
+
+            FullCount += count - multiplicity;
+            _map[item] = count;
+        }
+    }
+
+    public void IntersectWith(IEnumerable<Pair<T, int>> other)
+    {
+        if ( Count == 0 || ReferenceEquals( this, other ) )
+            return;
+
+        if ( other is IReadOnlyCollection<Pair<T, int>> collection && collection.Count == 0 )
+        {
+            Clear();
+            return;
         }
 
-        public void Clear()
+        var otherSet = GetOtherSet( other, Comparer );
+        var itemsToUpdate = new List<(T Item, int OldMultiplicity, int NewMultiplicity)>();
+
+        foreach ( var (item, multiplicity) in _map )
         {
-            _map.Clear();
-            FullCount = 0;
+            var count = otherSet.GetMultiplicity( item );
+
+            if ( count >= multiplicity )
+                continue;
+
+            itemsToUpdate.Add( (item, multiplicity, count) );
         }
 
-        public void ExceptWith(IEnumerable<Pair<T, int>> other)
+        foreach ( var (item, oldMultiplicity, newMultiplicity) in itemsToUpdate )
         {
-            if ( ReferenceEquals( this, other ) )
+            if ( newMultiplicity > 0 )
             {
-                Clear();
-                return;
-            }
-
-            foreach ( var (item, count) in other )
-            {
-                if ( count <= 0 )
-                    continue;
-
-                RemoveImpl( item, count );
-            }
-        }
-
-        public void UnionWith(IEnumerable<Pair<T, int>> other)
-        {
-            if ( ReferenceEquals( this, other ) )
-                return;
-
-            foreach ( var (item, count) in other )
-            {
-                if ( count <= 0 )
-                    continue;
-
-                if ( ! _map.TryGetValue( item, out var multiplicity ) )
-                {
-                    AddNewImpl( item, count );
-                    continue;
-                }
-
-                if ( multiplicity >= count )
-                    continue;
-
-                FullCount += count - multiplicity;
-                _map[item] = count;
-            }
-        }
-
-        public void IntersectWith(IEnumerable<Pair<T, int>> other)
-        {
-            if ( Count == 0 || ReferenceEquals( this, other ) )
-                return;
-
-            if ( other is IReadOnlyCollection<Pair<T, int>> collection && collection.Count == 0 )
-            {
-                Clear();
-                return;
-            }
-
-            var otherSet = GetOtherSet( other, Comparer );
-            var itemsToUpdate = new List<(T Item, int OldMultiplicity, int NewMultiplicity)>();
-
-            foreach ( var (item, multiplicity) in _map )
-            {
-                var count = otherSet.GetMultiplicity( item );
-
-                if ( count >= multiplicity )
-                    continue;
-
-                itemsToUpdate.Add( (item, multiplicity, count) );
-            }
-
-            foreach ( var (item, oldMultiplicity, newMultiplicity) in itemsToUpdate )
-            {
-                if ( newMultiplicity > 0 )
-                {
-                    FullCount -= oldMultiplicity - newMultiplicity;
-                    _map[item] = newMultiplicity;
-                    continue;
-                }
-
-                RemoveAll( item );
-            }
-        }
-
-        public void SymmetricExceptWith(IEnumerable<Pair<T, int>> other)
-        {
-            if ( ReferenceEquals( this, other ) )
-            {
-                Clear();
-                return;
-            }
-
-            foreach ( var (item, count) in other )
-            {
-                if ( count <= 0 )
-                    continue;
-
-                if ( ! _map.TryGetValue( item, out var multiplicity ) )
-                {
-                    AddNewImpl( item, count );
-                    continue;
-                }
-
-                var newMultiplicity = multiplicity > count
-                    ? multiplicity - count
-                    : count - multiplicity;
-
-                if ( newMultiplicity == 0 )
-                {
-                    RemoveAllImpl( item, count );
-                    continue;
-                }
-
-                FullCount -= multiplicity - newMultiplicity;
+                FullCount -= oldMultiplicity - newMultiplicity;
                 _map[item] = newMultiplicity;
+                continue;
             }
+
+            RemoveAll( item );
+        }
+    }
+
+    public void SymmetricExceptWith(IEnumerable<Pair<T, int>> other)
+    {
+        if ( ReferenceEquals( this, other ) )
+        {
+            Clear();
+            return;
         }
 
-        [Pure]
-        public bool Overlaps(IEnumerable<Pair<T, int>> other)
+        foreach ( var (item, count) in other )
         {
-            if ( ReferenceEquals( this, other ) )
-                return true;
+            if ( count <= 0 )
+                continue;
 
-            foreach ( var (item, count) in other )
+            if ( ! _map.TryGetValue( item, out var multiplicity ) )
             {
-                if ( count <= 0 )
-                    continue;
-
-                if ( Contains( item ) )
-                    return true;
+                AddNewImpl( item, count );
+                continue;
             }
 
+            var newMultiplicity = multiplicity > count
+                ? multiplicity - count
+                : count - multiplicity;
+
+            if ( newMultiplicity == 0 )
+            {
+                RemoveAllImpl( item, count );
+                continue;
+            }
+
+            FullCount -= multiplicity - newMultiplicity;
+            _map[item] = newMultiplicity;
+        }
+    }
+
+    [Pure]
+    public bool Overlaps(IEnumerable<Pair<T, int>> other)
+    {
+        if ( ReferenceEquals( this, other ) )
+            return true;
+
+        foreach ( var (item, count) in other )
+        {
+            if ( count <= 0 )
+                continue;
+
+            if ( Contains( item ) )
+                return true;
+        }
+
+        return false;
+    }
+
+    [Pure]
+    public bool SetEquals(IEnumerable<Pair<T, int>> other)
+    {
+        if ( ReferenceEquals( this, other ) )
+            return true;
+
+        var otherSet = GetOtherSet( other, Comparer );
+
+        if ( FullCount != otherSet.FullCount )
             return false;
+
+        foreach ( var (item, count) in otherSet )
+        {
+            if ( GetMultiplicity( item ) != count )
+                return false;
         }
 
-        [Pure]
-        public bool SetEquals(IEnumerable<Pair<T, int>> other)
-        {
-            if ( ReferenceEquals( this, other ) )
-                return true;
+        return true;
+    }
 
-            var otherSet = GetOtherSet( other, Comparer );
-
-            if ( FullCount != otherSet.FullCount )
-                return false;
-
-            foreach ( var (item, count) in otherSet )
-            {
-                if ( GetMultiplicity( item ) != count )
-                    return false;
-            }
-
+    [Pure]
+    public bool IsSupersetOf(IEnumerable<Pair<T, int>> other)
+    {
+        if ( ReferenceEquals( this, other ) )
             return true;
+
+        var otherSet = GetOtherSet( other, Comparer );
+
+        if ( FullCount < otherSet.FullCount )
+            return false;
+
+        foreach ( var (item, count) in otherSet )
+        {
+            if ( GetMultiplicity( item ) < count )
+                return false;
         }
 
-        [Pure]
-        public bool IsSupersetOf(IEnumerable<Pair<T, int>> other)
+        return true;
+    }
+
+    [Pure]
+    public bool IsProperSupersetOf(IEnumerable<Pair<T, int>> other)
+    {
+        if ( Count == 0 || ReferenceEquals( this, other ) )
+            return false;
+
+        var otherSet = GetOtherSet( other, Comparer );
+
+        if ( FullCount <= otherSet.FullCount )
+            return false;
+
+        var equalMultiplicityCount = 0;
+
+        foreach ( var (item, count) in otherSet )
         {
-            if ( ReferenceEquals( this, other ) )
-                return true;
+            var multiplicity = GetMultiplicity( item );
 
-            var otherSet = GetOtherSet( other, Comparer );
-
-            if ( FullCount < otherSet.FullCount )
+            if ( multiplicity < count )
                 return false;
 
-            foreach ( var (item, count) in otherSet )
-            {
-                if ( GetMultiplicity( item ) < count )
-                    return false;
-            }
-
-            return true;
+            if ( multiplicity == count )
+                ++equalMultiplicityCount;
         }
 
-        [Pure]
-        public bool IsProperSupersetOf(IEnumerable<Pair<T, int>> other)
+        return equalMultiplicityCount < Count;
+    }
+
+    [Pure]
+    public bool IsSubsetOf(IEnumerable<Pair<T, int>> other)
+    {
+        return GetOtherSet( other, Comparer ).IsSupersetOf( this );
+    }
+
+    [Pure]
+    public bool IsProperSubsetOf(IEnumerable<Pair<T, int>> other)
+    {
+        return GetOtherSet( other, Comparer ).IsProperSupersetOf( this );
+    }
+
+    [Pure]
+    public IEnumerator<Pair<T, int>> GetEnumerator()
+    {
+        return _map.Select( v => Pair.Create( v.Key, v.Value ) ).GetEnumerator();
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private int AddImpl(T item, int count)
+    {
+        if ( ! _map.TryGetValue( item, out var multiplicity ) )
+            return AddNewImpl( item, count );
+
+        multiplicity = checked( multiplicity + count );
+        _map[item] = multiplicity;
+        FullCount += count;
+        return multiplicity;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private int AddNewImpl(T item, int count)
+    {
+        FullCount += count;
+        _map.Add( item, Ref.Create( count ) );
+        return count;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private int RemoveImpl(T item, int count)
+    {
+        if ( ! _map.TryGetValue( item, out var multiplicity ) )
+            return -1;
+
+        if ( multiplicity > count )
         {
-            if ( Count == 0 || ReferenceEquals( this, other ) )
-                return false;
-
-            var otherSet = GetOtherSet( other, Comparer );
-
-            if ( FullCount <= otherSet.FullCount )
-                return false;
-
-            var equalMultiplicityCount = 0;
-
-            foreach ( var (item, count) in otherSet )
-            {
-                var multiplicity = GetMultiplicity( item );
-
-                if ( multiplicity < count )
-                    return false;
-
-                if ( multiplicity == count )
-                    ++equalMultiplicityCount;
-            }
-
-            return equalMultiplicityCount < Count;
+            var newMultiplicity = multiplicity - count;
+            FullCount -= count;
+            _map[item] = newMultiplicity;
+            return newMultiplicity;
         }
 
-        [Pure]
-        public bool IsSubsetOf(IEnumerable<Pair<T, int>> other)
+        FullCount -= multiplicity;
+        _map.Remove( item );
+        return 0;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private int RemoveAllImpl(T item, int multiplicity)
+    {
+        FullCount -= multiplicity;
+        _map.Remove( item );
+        return multiplicity;
+    }
+
+    private static IMultiSet<T> GetOtherSet(IEnumerable<Pair<T, int>> other, IEqualityComparer<T> comparer)
+    {
+        if ( other is IMultiSet<T> otherSet && otherSet.Comparer.Equals( comparer ) )
+            return otherSet;
+
+        var result = new MultiHashSet<T>( comparer );
+        foreach ( var (item, count) in other )
         {
-            return GetOtherSet( other, Comparer ).IsSupersetOf( this );
+            if ( count <= 0 )
+                continue;
+
+            result.AddImpl( item, count );
         }
 
-        [Pure]
-        public bool IsProperSubsetOf(IEnumerable<Pair<T, int>> other)
-        {
-            return GetOtherSet( other, Comparer ).IsProperSupersetOf( this );
-        }
+        return result;
+    }
 
-        [Pure]
-        public IEnumerator<Pair<T, int>> GetEnumerator()
-        {
-            return _map.Select( v => Pair.Create( v.Key, v.Value ) ).GetEnumerator();
-        }
+    bool ISet<Pair<T, int>>.Add(Pair<T, int> item)
+    {
+        AddMany( item.First, item.Second );
+        return true;
+    }
 
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private int AddImpl(T item, int count)
-        {
-            if ( ! _map.TryGetValue( item, out var multiplicity ) )
-                return AddNewImpl( item, count );
+    void ICollection<Pair<T, int>>.CopyTo(Pair<T, int>[] array, int arrayIndex)
+    {
+        CollectionCopying.CopyTo( this, array, arrayIndex );
+    }
 
-            multiplicity = checked( multiplicity + count );
-            _map[item] = multiplicity;
-            FullCount += count;
-            return multiplicity;
-        }
+    void ICollection<Pair<T, int>>.Add(Pair<T, int> item)
+    {
+        AddMany( item.First, item.Second );
+    }
 
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private int AddNewImpl(T item, int count)
-        {
-            FullCount += count;
-            _map.Add( item, Ref.Create( count ) );
-            return count;
-        }
+    bool ICollection<Pair<T, int>>.Remove(Pair<T, int> item)
+    {
+        return RemoveMany( item.First, item.Second ) != -1;
+    }
 
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private int RemoveImpl(T item, int count)
-        {
-            if ( ! _map.TryGetValue( item, out var multiplicity ) )
-                return -1;
-
-            if ( multiplicity > count )
-            {
-                var newMultiplicity = multiplicity - count;
-                FullCount -= count;
-                _map[item] = newMultiplicity;
-                return newMultiplicity;
-            }
-
-            FullCount -= multiplicity;
-            _map.Remove( item );
-            return 0;
-        }
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private int RemoveAllImpl(T item, int multiplicity)
-        {
-            FullCount -= multiplicity;
-            _map.Remove( item );
-            return multiplicity;
-        }
-
-        private static IMultiSet<T> GetOtherSet(IEnumerable<Pair<T, int>> other, IEqualityComparer<T> comparer)
-        {
-            if ( other is IMultiSet<T> otherSet && otherSet.Comparer.Equals( comparer ) )
-                return otherSet;
-
-            var result = new MultiHashSet<T>( comparer );
-            foreach ( var (item, count) in other )
-            {
-                if ( count <= 0 )
-                    continue;
-
-                result.AddImpl( item, count );
-            }
-
-            return result;
-        }
-
-        bool ISet<Pair<T, int>>.Add(Pair<T, int> item)
-        {
-            AddMany( item.First, item.Second );
-            return true;
-        }
-
-        void ICollection<Pair<T, int>>.CopyTo(Pair<T, int>[] array, int arrayIndex)
-        {
-            CollectionCopying.CopyTo( this, array, arrayIndex );
-        }
-
-        void ICollection<Pair<T, int>>.Add(Pair<T, int> item)
-        {
-            AddMany( item.First, item.Second );
-        }
-
-        bool ICollection<Pair<T, int>>.Remove(Pair<T, int> item)
-        {
-            return RemoveMany( item.First, item.Second ) != -1;
-        }
-
-        [Pure]
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+    [Pure]
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
     }
 }

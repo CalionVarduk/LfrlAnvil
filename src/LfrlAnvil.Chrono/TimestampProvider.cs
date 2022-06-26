@@ -3,15 +3,14 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Chrono.Internal;
 
-namespace LfrlAnvil.Chrono
+namespace LfrlAnvil.Chrono;
+
+public sealed class TimestampProvider : TimestampProviderBase
 {
-    public sealed class TimestampProvider : TimestampProviderBase
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public override Timestamp GetNow()
     {
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public override Timestamp GetNow()
-        {
-            return new Timestamp( DateTime.UtcNow );
-        }
+        return new Timestamp( DateTime.UtcNow );
     }
 }

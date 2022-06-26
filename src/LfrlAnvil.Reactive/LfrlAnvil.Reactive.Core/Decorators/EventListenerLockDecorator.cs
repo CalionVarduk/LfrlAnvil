@@ -1,55 +1,54 @@
 ﻿using System.Diagnostics.Contracts;
 
-namespace LfrlAnvil.Reactive.Decorators
+namespace LfrlAnvil.Reactive.Decorators;
+
+public sealed class EventListenerLockDecorator<TEvent> : IEventListenerDecorator<TEvent, TEvent>
 {
-    public sealed class EventListenerLockDecorator<TEvent> : IEventListenerDecorator<TEvent, TEvent>
+    private readonly object? _sync;
+
+    public EventListenerLockDecorator(object? sync)
     {
-        private readonly object? _sync;
+        _sync = sync;
+    }
 
-        public EventListenerLockDecorator(object? sync)
+    [Pure]
+    public IEventListener<TEvent> Decorate(IEventListener<TEvent> listener, IEventSubscriber _)
+    {
+        return new EventListener( listener, _sync );
+    }
+
+    private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
+    {
+        private readonly object _sync;
+        private bool _disposed;
+
+        internal EventListener(IEventListener<TEvent> next, object? sync)
+            : base( next )
         {
-            _sync = sync;
+            _sync = sync ?? new object();
+            _disposed = false;
         }
 
-        [Pure]
-        public IEventListener<TEvent> Decorate(IEventListener<TEvent> listener, IEventSubscriber _)
+        public override void React(TEvent @event)
         {
-            return new EventListener( listener, _sync );
+            lock ( _sync )
+            {
+                if ( _disposed )
+                    return;
+
+                Next.React( @event );
+            }
         }
 
-        private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
+        public override void OnDispose(DisposalSource source)
         {
-            private readonly object _sync;
-            private bool _disposed;
-
-            internal EventListener(IEventListener<TEvent> next, object? sync)
-                : base( next )
+            lock ( _sync )
             {
-                _sync = sync ?? new object();
-                _disposed = false;
-            }
+                if ( _disposed )
+                    return;
 
-            public override void React(TEvent @event)
-            {
-                lock ( _sync )
-                {
-                    if ( _disposed )
-                        return;
-
-                    Next.React( @event );
-                }
-            }
-
-            public override void OnDispose(DisposalSource source)
-            {
-                lock ( _sync )
-                {
-                    if ( _disposed )
-                        return;
-
-                    _disposed = true;
-                    base.OnDispose( source );
-                }
+                _disposed = true;
+                base.OnDispose( source );
             }
         }
     }

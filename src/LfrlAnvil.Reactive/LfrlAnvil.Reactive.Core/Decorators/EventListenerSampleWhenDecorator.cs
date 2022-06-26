@@ -2,90 +2,89 @@
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Reactive.Composites;
 
-namespace LfrlAnvil.Reactive.Decorators
+namespace LfrlAnvil.Reactive.Decorators;
+
+public sealed class EventListenerSampleWhenDecorator<TEvent, TTargetEvent> : IEventListenerDecorator<TEvent, TEvent>
 {
-    public sealed class EventListenerSampleWhenDecorator<TEvent, TTargetEvent> : IEventListenerDecorator<TEvent, TEvent>
+    private readonly IEventStream<TTargetEvent> _target;
+
+    public EventListenerSampleWhenDecorator(IEventStream<TTargetEvent> target)
     {
-        private readonly IEventStream<TTargetEvent> _target;
+        _target = target;
+    }
 
-        public EventListenerSampleWhenDecorator(IEventStream<TTargetEvent> target)
+    [Pure]
+    public IEventListener<TEvent> Decorate(IEventListener<TEvent> listener, IEventSubscriber subscriber)
+    {
+        return new EventListener( listener, subscriber, _target );
+    }
+
+    private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
+    {
+        private readonly IEventSubscriber _subscriber;
+        private readonly IEventSubscriber _targetSubscriber;
+        private readonly TargetEventListener _targetListener;
+
+        internal EventListener(IEventListener<TEvent> next, IEventSubscriber subscriber, IEventStream<TTargetEvent> target)
+            : base( next )
         {
-            _target = target;
+            _subscriber = subscriber;
+            _targetListener = new TargetEventListener( this );
+            _targetSubscriber = target.Listen( _targetListener );
         }
 
-        [Pure]
-        public IEventListener<TEvent> Decorate(IEventListener<TEvent> listener, IEventSubscriber subscriber)
+        public override void React(TEvent @event)
         {
-            return new EventListener( listener, subscriber, _target );
+            _targetListener.UpdateSample( @event );
         }
 
-        private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
+        public override void OnDispose(DisposalSource source)
         {
-            private readonly IEventSubscriber _subscriber;
-            private readonly IEventSubscriber _targetSubscriber;
-            private readonly TargetEventListener _targetListener;
-
-            internal EventListener(IEventListener<TEvent> next, IEventSubscriber subscriber, IEventStream<TTargetEvent> target)
-                : base( next )
-            {
-                _subscriber = subscriber;
-                _targetListener = new TargetEventListener( this );
-                _targetSubscriber = target.Listen( _targetListener );
-            }
-
-            public override void React(TEvent @event)
-            {
-                _targetListener.UpdateSample( @event );
-            }
-
-            public override void OnDispose(DisposalSource source)
-            {
-                _targetSubscriber.Dispose();
-                base.OnDispose( source );
-            }
-
-            [MethodImpl( MethodImplOptions.AggressiveInlining )]
-            internal void OnTargetEvent(Optional<TEvent> sample)
-            {
-                sample.TryForward( Next );
-            }
-
-            [MethodImpl( MethodImplOptions.AggressiveInlining )]
-            internal void DisposeSubscriber()
-            {
-                _subscriber.Dispose();
-            }
+            _targetSubscriber.Dispose();
+            base.OnDispose( source );
         }
 
-        private sealed class TargetEventListener : EventListener<TTargetEvent>
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal void OnTargetEvent(Optional<TEvent> sample)
         {
-            private Optional<TEvent> _sample;
-            private EventListener? _sourceListener;
+            sample.TryForward( Next );
+        }
 
-            internal TargetEventListener(EventListener sourceListener)
-            {
-                _sample = Optional<TEvent>.Empty;
-                _sourceListener = sourceListener;
-            }
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal void DisposeSubscriber()
+        {
+            _subscriber.Dispose();
+        }
+    }
 
-            public override void React(TTargetEvent _)
-            {
-                _sourceListener!.OnTargetEvent( _sample );
-                _sample = Optional<TEvent>.Empty;
-            }
+    private sealed class TargetEventListener : EventListener<TTargetEvent>
+    {
+        private Optional<TEvent> _sample;
+        private EventListener? _sourceListener;
 
-            public override void OnDispose(DisposalSource _)
-            {
-                _sample = Optional<TEvent>.Empty;
-                _sourceListener!.DisposeSubscriber();
-                _sourceListener = null;
-            }
+        internal TargetEventListener(EventListener sourceListener)
+        {
+            _sample = Optional<TEvent>.Empty;
+            _sourceListener = sourceListener;
+        }
 
-            [MethodImpl( MethodImplOptions.AggressiveInlining )]
-            internal void UpdateSample(TEvent @event)
-            {
-                _sample = new Optional<TEvent>( @event );
-            }
+        public override void React(TTargetEvent _)
+        {
+            _sourceListener!.OnTargetEvent( _sample );
+            _sample = Optional<TEvent>.Empty;
+        }
+
+        public override void OnDispose(DisposalSource _)
+        {
+            _sample = Optional<TEvent>.Empty;
+            _sourceListener!.DisposeSubscriber();
+            _sourceListener = null;
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal void UpdateSample(TEvent @event)
+        {
+            _sample = new Optional<TEvent>( @event );
         }
     }
 }

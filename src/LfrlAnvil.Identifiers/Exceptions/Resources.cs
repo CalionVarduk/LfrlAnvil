@@ -1,7 +1,6 @@
-﻿namespace LfrlAnvil.Identifiers.Exceptions
+﻿namespace LfrlAnvil.Identifiers.Exceptions;
+
+internal static class Resources
 {
-    internal static class Resources
-    {
-        internal const string IdentifierGenerationFailure = "Failed to generate a new identifier.";
-    }
+    internal const string IdentifierGenerationFailure = "Failed to generate a new identifier.";
 }

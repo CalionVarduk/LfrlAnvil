@@ -1,7 +1,6 @@
-﻿namespace LfrlAnvil.Mathematical.Expressions.Tokens
+﻿namespace LfrlAnvil.Mathematical.Expressions.Tokens;
+
+public interface IMathExpressionToken
 {
-    public interface IMathExpressionToken
-    {
-        string Symbol { get; }
-    }
+    string Symbol { get; }
 }

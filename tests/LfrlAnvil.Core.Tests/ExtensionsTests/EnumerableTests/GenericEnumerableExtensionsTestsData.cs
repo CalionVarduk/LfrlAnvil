@@ -358,25 +358,6 @@ namespace LfrlAnvil.Tests.ExtensionsTests.EnumerableTests
             };
         }
 
-        public static TheoryData<IEnumerable<T>, IEnumerable<T>> GetDistinctData(IFixture fixture)
-        {
-            var (_1, _2, _3) = fixture.CreateDistinctSortedCollection<T>( 3 );
-
-            return new TheoryData<IEnumerable<T>, IEnumerable<T>>
-            {
-                { new[] { _1 }, new[] { _1 } },
-                { new[] { _1, _2 }, new[] { _1, _2 } },
-                { new[] { _2, _1 }, new[] { _2, _1 } },
-                { new[] { _1, _1 }, new[] { _1 } },
-                { new[] { _1, _2, _3 }, new[] { _1, _2, _3 } },
-                { new[] { _1, _3, _2 }, new[] { _1, _3, _2 } },
-                { new[] { _3, _1, _2 }, new[] { _3, _1, _2 } },
-                { new[] { _3, _2, _1 }, new[] { _3, _2, _1 } },
-                { new[] { _1, _1, _1 }, new[] { _1 } },
-                { new[] { _1, _1, _3, _3, _2, _2 }, new[] { _1, _3, _2 } }
-            };
-        }
-
         public static TheoryData<IEnumerable<T>, bool> GetIsOrderedData(IFixture fixture)
         {
             var (_1, _2, _3) = fixture.CreateDistinctSortedCollection<T>( 3 );
@@ -394,43 +375,6 @@ namespace LfrlAnvil.Tests.ExtensionsTests.EnumerableTests
                 { new[] { _3, _2, _1 }, false },
                 { new[] { _1, _3, _2 }, false },
                 { new[] { _2, _1, _3 }, false }
-            };
-        }
-
-        public static TheoryData<int> GetDivideForDivisibleSourceCountData(IFixture fixture)
-        {
-            return new TheoryData<int>
-            {
-                1,
-                2,
-                3,
-                4,
-                6,
-                12
-            };
-        }
-
-        public static TheoryData<int, int> GetDivideForNonDivisibleSourceCountData(IFixture fixture)
-        {
-            return new TheoryData<int, int>
-            {
-                { 5, 2 },
-                { 7, 5 },
-                { 8, 4 },
-                { 9, 3 },
-                { 10, 2 },
-                { 11, 1 },
-                { 13, 12 },
-                { 24, 12 }
-            };
-        }
-
-        public static TheoryData<int> GetDivideThrowData(IFixture fixture)
-        {
-            return new TheoryData<int>
-            {
-                0,
-                -1
             };
         }
     }

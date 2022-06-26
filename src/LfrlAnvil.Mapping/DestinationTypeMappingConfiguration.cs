@@ -4,29 +4,28 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using LfrlAnvil.Mapping.Internal;
 
-namespace LfrlAnvil.Mapping
+namespace LfrlAnvil.Mapping;
+
+public class DestinationTypeMappingConfiguration<TDestination> : ITypeMappingConfiguration
 {
-    public class DestinationTypeMappingConfiguration<TDestination> : ITypeMappingConfiguration
+    private readonly Dictionary<Type, TypeMappingStore> _stores;
+
+    public DestinationTypeMappingConfiguration()
     {
-        private readonly Dictionary<Type, TypeMappingStore> _stores;
+        _stores = new Dictionary<Type, TypeMappingStore>();
+    }
 
-        public DestinationTypeMappingConfiguration()
-        {
-            _stores = new Dictionary<Type, TypeMappingStore>();
-        }
+    public Type DestinationType => typeof( TDestination );
 
-        public Type DestinationType => typeof( TDestination );
+    public DestinationTypeMappingConfiguration<TDestination> Configure<TSource>(Func<TSource, ITypeMapper, TDestination> mapping)
+    {
+        _stores[typeof( TSource )] = TypeMappingStore.Create( mapping );
+        return this;
+    }
 
-        public DestinationTypeMappingConfiguration<TDestination> Configure<TSource>(Func<TSource, ITypeMapper, TDestination> mapping)
-        {
-            _stores[typeof( TSource )] = TypeMappingStore.Create( mapping );
-            return this;
-        }
-
-        [Pure]
-        public IEnumerable<KeyValuePair<TypeMappingKey, TypeMappingStore>> GetMappingStores()
-        {
-            return _stores.Select( kv => KeyValuePair.Create( new TypeMappingKey( kv.Key, DestinationType ), kv.Value ) );
-        }
+    [Pure]
+    public IEnumerable<KeyValuePair<TypeMappingKey, TypeMappingStore>> GetMappingStores()
+    {
+        return _stores.Select( kv => KeyValuePair.Create( new TypeMappingKey( kv.Key, DestinationType ), kv.Value ) );
     }
 }

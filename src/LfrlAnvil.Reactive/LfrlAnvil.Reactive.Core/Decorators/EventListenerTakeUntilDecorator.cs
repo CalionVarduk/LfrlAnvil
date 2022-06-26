@@ -1,71 +1,70 @@
 ﻿using System.Runtime.CompilerServices;
 
-namespace LfrlAnvil.Reactive.Decorators
+namespace LfrlAnvil.Reactive.Decorators;
+
+public sealed class EventListenerTakeUntilDecorator<TEvent, TTargetEvent> : IEventListenerDecorator<TEvent, TEvent>
 {
-    public sealed class EventListenerTakeUntilDecorator<TEvent, TTargetEvent> : IEventListenerDecorator<TEvent, TEvent>
+    private readonly IEventStream<TTargetEvent> _target;
+
+    public EventListenerTakeUntilDecorator(IEventStream<TTargetEvent> target)
     {
-        private readonly IEventStream<TTargetEvent> _target;
+        _target = target;
+    }
 
-        public EventListenerTakeUntilDecorator(IEventStream<TTargetEvent> target)
+    public IEventListener<TEvent> Decorate(IEventListener<TEvent> listener, IEventSubscriber subscriber)
+    {
+        return new EventListener( listener, subscriber, _target );
+    }
+
+    private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
+    {
+        private readonly IEventSubscriber _subscriber;
+        private readonly IEventSubscriber _targetSubscriber;
+
+        internal EventListener(IEventListener<TEvent> next, IEventSubscriber subscriber, IEventStream<TTargetEvent> target)
+            : base( next )
         {
-            _target = target;
+            _subscriber = subscriber;
+            var targetListener = new TargetEventListener( this );
+            _targetSubscriber = target.Listen( targetListener );
         }
 
-        public IEventListener<TEvent> Decorate(IEventListener<TEvent> listener, IEventSubscriber subscriber)
+        public override void React(TEvent @event)
         {
-            return new EventListener( listener, subscriber, _target );
+            Next.React( @event );
         }
 
-        private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
+        public override void OnDispose(DisposalSource source)
         {
-            private readonly IEventSubscriber _subscriber;
-            private readonly IEventSubscriber _targetSubscriber;
-
-            internal EventListener(IEventListener<TEvent> next, IEventSubscriber subscriber, IEventStream<TTargetEvent> target)
-                : base( next )
-            {
-                _subscriber = subscriber;
-                var targetListener = new TargetEventListener( this );
-                _targetSubscriber = target.Listen( targetListener );
-            }
-
-            public override void React(TEvent @event)
-            {
-                Next.React( @event );
-            }
-
-            public override void OnDispose(DisposalSource source)
-            {
-                _targetSubscriber.Dispose();
-                base.OnDispose( source );
-            }
-
-            [MethodImpl( MethodImplOptions.AggressiveInlining )]
-            internal void OnTargetEvent()
-            {
-                _subscriber.Dispose();
-            }
+            _targetSubscriber.Dispose();
+            base.OnDispose( source );
         }
 
-        private sealed class TargetEventListener : EventListener<TTargetEvent>
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal void OnTargetEvent()
         {
-            private EventListener? _sourceListener;
+            _subscriber.Dispose();
+        }
+    }
 
-            internal TargetEventListener(EventListener sourceListener)
-            {
-                _sourceListener = sourceListener;
-            }
+    private sealed class TargetEventListener : EventListener<TTargetEvent>
+    {
+        private EventListener? _sourceListener;
 
-            public override void React(TTargetEvent _)
-            {
-                _sourceListener!.OnTargetEvent();
-            }
+        internal TargetEventListener(EventListener sourceListener)
+        {
+            _sourceListener = sourceListener;
+        }
 
-            public override void OnDispose(DisposalSource _)
-            {
-                _sourceListener!.OnTargetEvent();
-                _sourceListener = null;
-            }
+        public override void React(TTargetEvent _)
+        {
+            _sourceListener!.OnTargetEvent();
+        }
+
+        public override void OnDispose(DisposalSource _)
+        {
+            _sourceListener!.OnTargetEvent();
+            _sourceListener = null;
         }
     }
 }

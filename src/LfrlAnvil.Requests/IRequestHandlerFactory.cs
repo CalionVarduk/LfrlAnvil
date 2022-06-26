@@ -1,8 +1,7 @@
-﻿namespace LfrlAnvil.Requests
+﻿namespace LfrlAnvil.Requests;
+
+public interface IRequestHandlerFactory
 {
-    public interface IRequestHandlerFactory
-    {
-        IRequestHandler<TRequest, TResult>? TryCreate<TRequest, TResult>()
-            where TRequest : IRequest<TRequest, TResult>;
-    }
+    IRequestHandler<TRequest, TResult>? TryCreate<TRequest, TResult>()
+        where TRequest : IRequest<TRequest, TResult>;
 }

@@ -1,25 +1,24 @@
 ﻿using System.Runtime.CompilerServices;
 
-namespace LfrlAnvil.Reactive.Composites
+namespace LfrlAnvil.Reactive.Composites;
+
+internal readonly struct Optional<TEvent>
 {
-    internal readonly struct Optional<TEvent>
+    internal static readonly Optional<TEvent> Empty = new Optional<TEvent>();
+
+    internal Optional(TEvent @event)
     {
-        internal static readonly Optional<TEvent> Empty = new Optional<TEvent>();
+        Event = @event;
+        HasValue = true;
+    }
 
-        internal Optional(TEvent @event)
-        {
-            Event = @event;
-            HasValue = true;
-        }
+    internal readonly TEvent? Event;
+    internal readonly bool HasValue;
 
-        internal readonly TEvent? Event;
-        internal readonly bool HasValue;
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal void TryForward(IEventListener<TEvent> listener)
-        {
-            if ( HasValue )
-                listener.React( Event! );
-        }
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void TryForward(IEventListener<TEvent> listener)
+    {
+        if ( HasValue )
+            listener.React( Event! );
     }
 }

@@ -1,8 +1,7 @@
-﻿namespace LfrlAnvil.Reactive
+﻿namespace LfrlAnvil.Reactive;
+
+public enum DisposalSource : byte
 {
-    public enum DisposalSource : byte
-    {
-        EventSource = 0,
-        Subscriber = 1
-    }
+    EventSource = 0,
+    Subscriber = 1
 }

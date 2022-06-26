@@ -2,56 +2,55 @@
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Reactive.Composites;
 
-namespace LfrlAnvil.Reactive.Decorators
+namespace LfrlAnvil.Reactive.Decorators;
+
+public sealed class EventListenerContinueWithDecorator<TEvent, TNextEvent> : IEventListenerDecorator<TEvent, TNextEvent>
 {
-    public sealed class EventListenerContinueWithDecorator<TEvent, TNextEvent> : IEventListenerDecorator<TEvent, TNextEvent>
+    private readonly Func<TEvent, IEventStream<TNextEvent>> _continuationFactory;
+
+    public EventListenerContinueWithDecorator(Func<TEvent, IEventStream<TNextEvent>> continuationFactory)
+    {
+        _continuationFactory = continuationFactory;
+    }
+
+    [Pure]
+    public IEventListener<TEvent> Decorate(IEventListener<TNextEvent> listener, IEventSubscriber _)
+    {
+        return new EventListener( listener, _continuationFactory );
+    }
+
+    private sealed class EventListener : DecoratedEventListener<TEvent, TNextEvent>
     {
         private readonly Func<TEvent, IEventStream<TNextEvent>> _continuationFactory;
+        private Optional<TEvent> _argument;
 
-        public EventListenerContinueWithDecorator(Func<TEvent, IEventStream<TNextEvent>> continuationFactory)
+        internal EventListener(
+            IEventListener<TNextEvent> next,
+            Func<TEvent, IEventStream<TNextEvent>> continuationFactory)
+            : base( next )
         {
             _continuationFactory = continuationFactory;
+            _argument = Optional<TEvent>.Empty;
         }
 
-        [Pure]
-        public IEventListener<TEvent> Decorate(IEventListener<TNextEvent> listener, IEventSubscriber _)
+        public override void React(TEvent @event)
         {
-            return new EventListener( listener, _continuationFactory );
+            _argument = new Optional<TEvent>( @event );
         }
 
-        private sealed class EventListener : DecoratedEventListener<TEvent, TNextEvent>
+        public override void OnDispose(DisposalSource source)
         {
-            private readonly Func<TEvent, IEventStream<TNextEvent>> _continuationFactory;
-            private Optional<TEvent> _argument;
+            var argument = _argument;
+            _argument = Optional<TEvent>.Empty;
 
-            internal EventListener(
-                IEventListener<TNextEvent> next,
-                Func<TEvent, IEventStream<TNextEvent>> continuationFactory)
-                : base( next )
+            if ( ! argument.HasValue )
             {
-                _continuationFactory = continuationFactory;
-                _argument = Optional<TEvent>.Empty;
+                base.OnDispose( source );
+                return;
             }
 
-            public override void React(TEvent @event)
-            {
-                _argument = new Optional<TEvent>( @event );
-            }
-
-            public override void OnDispose(DisposalSource source)
-            {
-                var argument = _argument;
-                _argument = Optional<TEvent>.Empty;
-
-                if ( ! argument.HasValue )
-                {
-                    base.OnDispose( source );
-                    return;
-                }
-
-                var continuationStream = _continuationFactory( argument.Event! );
-                continuationStream.Listen( Next );
-            }
+            var continuationStream = _continuationFactory( argument.Event! );
+            continuationStream.Listen( Next );
         }
     }
 }

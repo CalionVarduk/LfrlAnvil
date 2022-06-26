@@ -2,50 +2,49 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace LfrlAnvil.Reactive.Internal
+namespace LfrlAnvil.Reactive.Internal;
+
+internal sealed class TaskCompletionEventListener<TEvent> : EventListener<TEvent>
 {
-    internal sealed class TaskCompletionEventListener<TEvent> : EventListener<TEvent>
+    private readonly TaskCompletionSource<TEvent?> _completionSource;
+    private readonly LazyDisposable<CancellationTokenRegistration> _cancellationTokenRegistration;
+    private TEvent? _value;
+    private bool _cancelled;
+
+    internal TaskCompletionEventListener(
+        TaskCompletionSource<TEvent?> completionSource,
+        LazyDisposable<CancellationTokenRegistration> cancellationTokenRegistration)
     {
-        private readonly TaskCompletionSource<TEvent?> _completionSource;
-        private readonly LazyDisposable<CancellationTokenRegistration> _cancellationTokenRegistration;
-        private TEvent? _value;
-        private bool _cancelled;
+        _completionSource = completionSource;
+        _cancellationTokenRegistration = cancellationTokenRegistration;
+        _value = default;
+        _cancelled = false;
+    }
 
-        internal TaskCompletionEventListener(
-            TaskCompletionSource<TEvent?> completionSource,
-            LazyDisposable<CancellationTokenRegistration> cancellationTokenRegistration)
+    public override void React(TEvent @event)
+    {
+        _value = @event;
+    }
+
+    public override void OnDispose(DisposalSource source)
+    {
+        _cancellationTokenRegistration.Dispose();
+
+        var lastValue = _value;
+        _value = default;
+
+        if ( _cancelled )
         {
-            _completionSource = completionSource;
-            _cancellationTokenRegistration = cancellationTokenRegistration;
-            _value = default;
-            _cancelled = false;
+            _completionSource.SetCanceled();
+            return;
         }
 
-        public override void React(TEvent @event)
-        {
-            _value = @event;
-        }
+        _completionSource.SetResult( lastValue );
+    }
 
-        public override void OnDispose(DisposalSource source)
-        {
-            _cancellationTokenRegistration.Dispose();
-
-            var lastValue = _value;
-            _value = default;
-
-            if ( _cancelled )
-            {
-                _completionSource.SetCanceled();
-                return;
-            }
-
-            _completionSource.SetResult( lastValue );
-        }
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal void MarkAsCancelled()
-        {
-            _cancelled = true;
-        }
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void MarkAsCancelled()
+    {
+        _cancelled = true;
     }
 }

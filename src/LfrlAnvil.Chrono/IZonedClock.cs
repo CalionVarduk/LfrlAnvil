@@ -1,11 +1,10 @@
 ﻿using System;
 using LfrlAnvil.Generators;
 
-namespace LfrlAnvil.Chrono
+namespace LfrlAnvil.Chrono;
+
+public interface IZonedClock : IGenerator<ZonedDateTime>
 {
-    public interface IZonedClock : IGenerator<ZonedDateTime>
-    {
-        TimeZoneInfo TimeZone { get; }
-        ZonedDateTime GetNow();
-    }
+    TimeZoneInfo TimeZone { get; }
+    ZonedDateTime GetNow();
 }

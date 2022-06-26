@@ -2,15 +2,14 @@
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
-namespace LfrlAnvil.Chrono.Extensions
+namespace LfrlAnvil.Chrono.Extensions;
+
+public static class TimeSpanExtensions
 {
-    public static class TimeSpanExtensions
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static TimeSpan Abs(this TimeSpan ts)
     {
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static TimeSpan Abs(this TimeSpan ts)
-        {
-            return TimeSpan.FromTicks( Math.Abs( ts.Ticks ) );
-        }
+        return TimeSpan.FromTicks( Math.Abs( ts.Ticks ) );
     }
 }

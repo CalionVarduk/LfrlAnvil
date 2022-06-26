@@ -2,15 +2,14 @@
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
-namespace LfrlAnvil.Chrono.Extensions
+namespace LfrlAnvil.Chrono.Extensions;
+
+public static class IsoDayOfWeekExtensions
 {
-    public static class IsoDayOfWeekExtensions
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static DayOfWeek ToBcl(this IsoDayOfWeek dayOfWeek)
     {
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static DayOfWeek ToBcl(this IsoDayOfWeek dayOfWeek)
-        {
-            return (DayOfWeek)((int)dayOfWeek % 7);
-        }
+        return (DayOfWeek)((int)dayOfWeek % 7);
     }
 }

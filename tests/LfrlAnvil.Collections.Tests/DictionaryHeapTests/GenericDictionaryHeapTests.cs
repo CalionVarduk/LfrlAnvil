@@ -12,6 +12,7 @@ using Xunit;
 namespace LfrlAnvil.Collections.Tests.DictionaryHeapTests;
 
 public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
+    where TKey : notnull
 {
     [Fact]
     public void Ctor_ShouldCreateEmptyHeap()

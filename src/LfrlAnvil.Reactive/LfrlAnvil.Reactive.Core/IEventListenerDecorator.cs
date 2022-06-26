@@ -1,7 +1,6 @@
-﻿namespace LfrlAnvil.Reactive
+﻿namespace LfrlAnvil.Reactive;
+
+public interface IEventListenerDecorator<in TSourceEvent, out TNextEvent>
 {
-    public interface IEventListenerDecorator<in TSourceEvent, out TNextEvent>
-    {
-        IEventListener<TSourceEvent> Decorate(IEventListener<TNextEvent> listener, IEventSubscriber subscriber);
-    }
+    IEventListener<TSourceEvent> Decorate(IEventListener<TNextEvent> listener, IEventSubscriber subscriber);
 }

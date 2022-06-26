@@ -1,38 +1,37 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 
-namespace LfrlAnvil.Reactive.Decorators
+namespace LfrlAnvil.Reactive.Decorators;
+
+public sealed class EventListenerForEachDecorator<TEvent> : IEventListenerDecorator<TEvent, TEvent>
 {
-    public sealed class EventListenerForEachDecorator<TEvent> : IEventListenerDecorator<TEvent, TEvent>
+    private readonly Action<TEvent> _action;
+
+    public EventListenerForEachDecorator(Action<TEvent> action)
+    {
+        _action = action;
+    }
+
+    [Pure]
+    public IEventListener<TEvent> Decorate(IEventListener<TEvent> listener, IEventSubscriber _)
+    {
+        return new EventListener( listener, _action );
+    }
+
+    private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
     {
         private readonly Action<TEvent> _action;
 
-        public EventListenerForEachDecorator(Action<TEvent> action)
+        internal EventListener(IEventListener<TEvent> next, Action<TEvent> action)
+            : base( next )
         {
             _action = action;
         }
 
-        [Pure]
-        public IEventListener<TEvent> Decorate(IEventListener<TEvent> listener, IEventSubscriber _)
+        public override void React(TEvent @event)
         {
-            return new EventListener( listener, _action );
-        }
-
-        private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
-        {
-            private readonly Action<TEvent> _action;
-
-            internal EventListener(IEventListener<TEvent> next, Action<TEvent> action)
-                : base( next )
-            {
-                _action = action;
-            }
-
-            public override void React(TEvent @event)
-            {
-                _action( @event );
-                Next.React( @event );
-            }
+            _action( @event );
+            Next.React( @event );
         }
     }
 }

@@ -1,22 +1,21 @@
-﻿namespace LfrlAnvil.Reactive.Internal
+﻿namespace LfrlAnvil.Reactive.Internal;
+
+public class ConcurrentEventPublisher<TEvent, TPublisher> : ConcurrentEventSource<TEvent, TPublisher>, IEventPublisher<TEvent>
+    where TPublisher : EventPublisher<TEvent>
 {
-    public class ConcurrentEventPublisher<TEvent, TPublisher> : ConcurrentEventSource<TEvent, TPublisher>, IEventPublisher<TEvent>
-        where TPublisher : EventPublisher<TEvent>
+    protected internal ConcurrentEventPublisher(TPublisher @base)
+        : base( @base ) { }
+
+    public void Publish(TEvent @event)
     {
-        protected internal ConcurrentEventPublisher(TPublisher @base)
-            : base( @base ) { }
-
-        public void Publish(TEvent @event)
+        lock ( Sync )
         {
-            lock ( Sync )
-            {
-                Base.Publish( @event );
-            }
+            Base.Publish( @event );
         }
+    }
 
-        void IEventPublisher.Publish(object? @event)
-        {
-            Publish( Argument.CastTo<TEvent>( @event, nameof( @event ) ) );
-        }
+    void IEventPublisher.Publish(object? @event)
+    {
+        Publish( Argument.CastTo<TEvent>( @event, nameof( @event ) ) );
     }
 }

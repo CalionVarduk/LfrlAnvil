@@ -1,11 +1,10 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 
-namespace LfrlAnvil.Requests
+namespace LfrlAnvil.Requests;
+
+public interface IAsyncValueTaskRequest<TRequest, TResult> : IRequest<TRequest, ValueTask<TResult>>
+    where TRequest : IRequest<TRequest, ValueTask<TResult>>
 {
-    public interface IAsyncValueTaskRequest<TRequest, TResult> : IRequest<TRequest, ValueTask<TResult>>
-        where TRequest : IRequest<TRequest, ValueTask<TResult>>
-    {
-        CancellationToken CancellationToken { get; }
-    }
+    CancellationToken CancellationToken { get; }
 }

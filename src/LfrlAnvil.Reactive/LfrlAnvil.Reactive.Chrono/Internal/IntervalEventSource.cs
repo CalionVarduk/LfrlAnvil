@@ -2,104 +2,103 @@
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Reactive.Chrono.Composites;
 
-namespace LfrlAnvil.Reactive.Chrono.Internal
+namespace LfrlAnvil.Reactive.Chrono.Internal;
+
+public sealed class IntervalEventSource : EventSource<WithInterval<long>>
 {
-    public sealed class IntervalEventSource : EventSource<WithInterval<long>>
+    private readonly ITimestampProvider _timestampProvider;
+    private readonly Duration _interval;
+    private readonly TaskScheduler? _scheduler;
+    private readonly Duration _spinWaitDurationHint;
+    private readonly long _count;
+
+    internal IntervalEventSource(
+        ITimestampProvider timestampProvider,
+        Duration interval,
+        TaskScheduler? scheduler,
+        Duration spinWaitDurationHint,
+        long count)
     {
-        private readonly ITimestampProvider _timestampProvider;
-        private readonly Duration _interval;
-        private readonly TaskScheduler? _scheduler;
-        private readonly Duration _spinWaitDurationHint;
-        private readonly long _count;
+        Ensure.IsGreaterThan( count, 0, nameof( count ) );
+        Ensure.IsInRange( interval, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ), nameof( interval ) );
+        Ensure.IsGreaterThanOrEqualTo( spinWaitDurationHint, Duration.Zero, nameof( spinWaitDurationHint ) );
 
-        internal IntervalEventSource(
-            ITimestampProvider timestampProvider,
-            Duration interval,
-            TaskScheduler? scheduler,
-            Duration spinWaitDurationHint,
-            long count)
-        {
-            Ensure.IsGreaterThan( count, 0, nameof( count ) );
-            Ensure.IsInRange( interval, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ), nameof( interval ) );
-            Ensure.IsGreaterThanOrEqualTo( spinWaitDurationHint, Duration.Zero, nameof( spinWaitDurationHint ) );
+        _timestampProvider = timestampProvider;
+        _interval = interval;
+        _scheduler = scheduler;
+        _spinWaitDurationHint = spinWaitDurationHint;
+        _count = count;
+    }
 
-            _timestampProvider = timestampProvider;
-            _interval = interval;
-            _scheduler = scheduler;
-            _spinWaitDurationHint = spinWaitDurationHint;
-            _count = count;
-        }
+    protected override IEventListener<WithInterval<long>> OverrideListener(
+        IEventSubscriber subscriber,
+        IEventListener<WithInterval<long>> listener)
+    {
+        if ( IsDisposed )
+            return listener;
 
-        protected override IEventListener<WithInterval<long>> OverrideListener(
+        var timer = new ReactiveTimer( _timestampProvider, _interval, _spinWaitDurationHint, _count );
+        return new EventListener( listener, subscriber, timer, _scheduler );
+    }
+
+    private sealed class EventListener : DecoratedEventListener<WithInterval<long>, WithInterval<long>>
+    {
+        private ReactiveTimer? _timer;
+
+        internal EventListener(
+            IEventListener<WithInterval<long>> next,
             IEventSubscriber subscriber,
-            IEventListener<WithInterval<long>> listener)
+            ReactiveTimer timer,
+            TaskScheduler? scheduler)
+            : base( next )
         {
-            if ( IsDisposed )
-                return listener;
+            _timer = timer;
+            var timerListener = new TimerListener( this, subscriber );
+            _timer.Listen( timerListener );
 
-            var timer = new ReactiveTimer( _timestampProvider, _interval, _spinWaitDurationHint, _count );
-            return new EventListener( listener, subscriber, timer, _scheduler );
+            if ( scheduler is null )
+            {
+                _timer.StartAsync();
+                return;
+            }
+
+            _timer.StartAsync( scheduler );
         }
 
-        private sealed class EventListener : DecoratedEventListener<WithInterval<long>, WithInterval<long>>
+        public override void React(WithInterval<long> @event)
         {
-            private ReactiveTimer? _timer;
-
-            internal EventListener(
-                IEventListener<WithInterval<long>> next,
-                IEventSubscriber subscriber,
-                ReactiveTimer timer,
-                TaskScheduler? scheduler)
-                : base( next )
-            {
-                _timer = timer;
-                var timerListener = new TimerListener( this, subscriber );
-                _timer.Listen( timerListener );
-
-                if ( scheduler is null )
-                {
-                    _timer.StartAsync();
-                    return;
-                }
-
-                _timer.StartAsync( scheduler );
-            }
-
-            public override void React(WithInterval<long> @event)
-            {
-                Next.React( @event );
-            }
-
-            public override void OnDispose(DisposalSource source)
-            {
-                _timer!.Dispose();
-                _timer = null;
-                base.OnDispose( source );
-            }
+            Next.React( @event );
         }
 
-        private sealed class TimerListener : EventListener<WithInterval<long>>
+        public override void OnDispose(DisposalSource source)
         {
-            private EventListener? _mainListener;
-            private IEventSubscriber? _mainSubscriber;
+            _timer!.Dispose();
+            _timer = null;
+            base.OnDispose( source );
+        }
+    }
 
-            internal TimerListener(EventListener mainListener, IEventSubscriber mainSubscriber)
-            {
-                _mainListener = mainListener;
-                _mainSubscriber = mainSubscriber;
-            }
+    private sealed class TimerListener : EventListener<WithInterval<long>>
+    {
+        private EventListener? _mainListener;
+        private IEventSubscriber? _mainSubscriber;
 
-            public override void React(WithInterval<long> @event)
-            {
-                _mainListener!.React( @event );
-            }
+        internal TimerListener(EventListener mainListener, IEventSubscriber mainSubscriber)
+        {
+            _mainListener = mainListener;
+            _mainSubscriber = mainSubscriber;
+        }
 
-            public override void OnDispose(DisposalSource _)
-            {
-                _mainSubscriber!.Dispose();
-                _mainSubscriber = null;
-                _mainListener = null;
-            }
+        public override void React(WithInterval<long> @event)
+        {
+            _mainListener!.React( @event );
+        }
+
+        public override void OnDispose(DisposalSource _)
+        {
+            _mainSubscriber!.Dispose();
+            _mainSubscriber = null;
+            _mainListener = null;
         }
     }
 }

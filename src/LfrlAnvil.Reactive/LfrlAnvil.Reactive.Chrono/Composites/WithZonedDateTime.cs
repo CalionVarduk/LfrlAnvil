@@ -1,23 +1,22 @@
 ﻿using System.Diagnostics.Contracts;
 using LfrlAnvil.Chrono;
 
-namespace LfrlAnvil.Reactive.Chrono.Composites
+namespace LfrlAnvil.Reactive.Chrono.Composites;
+
+public readonly struct WithZonedDateTime<TEvent>
 {
-    public readonly struct WithZonedDateTime<TEvent>
+    public WithZonedDateTime(TEvent @event, ZonedDateTime dateTime)
     {
-        public WithZonedDateTime(TEvent @event, ZonedDateTime dateTime)
-        {
-            Event = @event;
-            DateTime = dateTime;
-        }
+        Event = @event;
+        DateTime = dateTime;
+    }
 
-        public TEvent Event { get; }
-        public ZonedDateTime DateTime { get; }
+    public TEvent Event { get; }
+    public ZonedDateTime DateTime { get; }
 
-        [Pure]
-        public override string ToString()
-        {
-            return $"[{DateTime}] {Event}";
-        }
+    [Pure]
+    public override string ToString()
+    {
+        return $"[{DateTime}] {Event}";
     }
 }

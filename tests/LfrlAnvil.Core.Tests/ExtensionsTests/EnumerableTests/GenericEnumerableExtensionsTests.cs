@@ -678,40 +678,6 @@ namespace LfrlAnvil.Tests.ExtensionsTests.EnumerableTests
         }
 
         [Fact]
-        public void MaxBy_ShouldThrowInvalidOperationException_WhenSourceIsEmpty()
-        {
-            var sut = Enumerable.Empty<Contained<T>>();
-            var action = Lambda.Of( () => sut.MaxBy( c => c.Value ) );
-            action.Should().ThrowExactly<InvalidOperationException>();
-        }
-
-        [Theory]
-        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetMaxData ) )]
-        public void MaxBy_ShouldReturnCorrectResult_WhenSourceIsNotEmpty(IEnumerable<T> values, T expected)
-        {
-            var sut = values.Select( v => new Contained<T> { Value = v } );
-            var result = sut.MaxBy( c => c.Value );
-            result.Value.Should().Be( expected );
-        }
-
-        [Fact]
-        public void MinBy_ShouldThrowInvalidOperationException_WhenSourceIsEmpty()
-        {
-            var sut = Enumerable.Empty<Contained<T>>();
-            var action = Lambda.Of( () => sut.MinBy( c => c.Value ) );
-            action.Should().ThrowExactly<InvalidOperationException>();
-        }
-
-        [Theory]
-        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetMinData ) )]
-        public void MinBy_ShouldReturnCorrectResult_WhenSourceIsNotEmpty(IEnumerable<T> values, T expected)
-        {
-            var sut = values.Select( v => new Contained<T> { Value = v } );
-            var result = sut.MinBy( c => c.Value );
-            result.Value.Should().Be( expected );
-        }
-
-        [Fact]
         public void MinMaxBy_ShouldThrowInvalidOperationException_WhenSourceIsEmpty()
         {
             var sut = Enumerable.Empty<Contained<T>>();
@@ -812,15 +778,6 @@ namespace LfrlAnvil.Tests.ExtensionsTests.EnumerableTests
                 result?.Min.Value.Should().Be( expectedMin );
                 result?.Max.Value.Should().Be( expectedMax );
             }
-        }
-
-        [Theory]
-        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetDistinctData ) )]
-        public void DistinctBy_ShouldReturnCorrectResult(IEnumerable<T> values, IEnumerable<T> expected)
-        {
-            var sut = values.Select( v => new Contained<T> { Value = v } );
-            var result = sut.DistinctBy( c => c.Value ).Select( c => c.Value );
-            result.Should().BeSequentiallyEqualTo( expected.Select( x => (T?)x ) );
         }
 
         [Fact]
@@ -961,59 +918,6 @@ namespace LfrlAnvil.Tests.ExtensionsTests.EnumerableTests
                 passed.Should().BeSequentiallyEqualTo( expectedPassed );
                 failed.Should().BeSequentiallyEqualTo( expectedFailed );
             }
-        }
-
-        [Theory]
-        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetDivideForDivisibleSourceCountData ) )]
-        public void Divide_ShouldReturnCorrectResult_WhenSourceCountIsDivisibleByPartLength(int partLength)
-        {
-            var sut = Fixture.CreateMany<T>( 12 ).ToList();
-            var expectedCount = 12 / partLength;
-
-            var result = sut.Divide( partLength ).ToList();
-
-            using ( new AssertionScope() )
-            {
-                result.Count.Should().Be( expectedCount );
-                for ( var i = 0; i < expectedCount; ++i )
-                    result[i].Should().BeSequentiallyEqualTo( sut.Skip( i * partLength ).Take( partLength ) );
-            }
-        }
-
-        [Theory]
-        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetDivideForNonDivisibleSourceCountData ) )]
-        public void Divide_ShouldReturnCorrectResult_WhenSourceCountIsNotDivisibleByPartLength(int partLength, int expectedLastPartLength)
-        {
-            var sut = Fixture.CreateMany<T>( 12 ).ToList();
-            var expectedFullCount = 12 / partLength;
-
-            var result = sut.Divide( partLength ).ToList();
-
-            using ( new AssertionScope() )
-            {
-                result.Count.Should().Be( expectedFullCount + 1 );
-                for ( var i = 0; i < expectedFullCount; ++i )
-                    result[i].Should().BeSequentiallyEqualTo( sut.Skip( i * partLength ).Take( partLength ) );
-
-                result[^1].Should().BeSequentiallyEqualTo( sut.TakeLast( expectedLastPartLength ) );
-            }
-        }
-
-        [Fact]
-        public void Divide_ShouldReturnEmptyResult_WhenSourceIsEmpty()
-        {
-            var sut = Enumerable.Empty<T>();
-            var result = sut.Divide( 1 );
-            result.Should().BeEmpty();
-        }
-
-        [Theory]
-        [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetDivideThrowData ) )]
-        public void Divide_ShouldThrowArgumentOutOfRangeException_WhenPartLengthIsLessThanOne(int partLength)
-        {
-            var sut = Fixture.CreateMany<T>();
-            var action = Lambda.Of( () => sut.Divide( partLength ) );
-            action.Should().ThrowExactly<ArgumentOutOfRangeException>();
         }
     }
 }

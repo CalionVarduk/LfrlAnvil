@@ -3,23 +3,22 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Chrono.Internal;
 
-namespace LfrlAnvil.Chrono
+namespace LfrlAnvil.Chrono;
+
+public sealed class FrozenDateTimeProvider : DateTimeProviderBase
 {
-    public sealed class FrozenDateTimeProvider : DateTimeProviderBase
+    private readonly DateTime _now;
+
+    public FrozenDateTimeProvider(DateTime now)
+        : base( now.Kind )
     {
-        private readonly DateTime _now;
+        _now = now;
+    }
 
-        public FrozenDateTimeProvider(DateTime now)
-            : base( now.Kind )
-        {
-            _now = now;
-        }
-
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public override DateTime GetNow()
-        {
-            return _now;
-        }
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public override DateTime GetNow()
+    {
+        return _now;
     }
 }

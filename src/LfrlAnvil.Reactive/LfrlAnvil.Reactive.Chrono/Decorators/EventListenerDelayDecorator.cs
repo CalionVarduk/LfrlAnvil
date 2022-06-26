@@ -4,88 +4,87 @@ using LfrlAnvil.Chrono;
 using LfrlAnvil.Reactive.Chrono.Composites;
 using LfrlAnvil.Reactive.Chrono.Internal;
 
-namespace LfrlAnvil.Reactive.Chrono.Decorators
+namespace LfrlAnvil.Reactive.Chrono.Decorators;
+
+public sealed class EventListenerDelayDecorator<TEvent> : IEventListenerDecorator<TEvent, WithInterval<TEvent>>
 {
-    public sealed class EventListenerDelayDecorator<TEvent> : IEventListenerDecorator<TEvent, WithInterval<TEvent>>
+    private readonly ITimestampProvider _timestampProvider;
+    private readonly Duration _delay;
+    private readonly TaskScheduler? _scheduler;
+    private readonly Duration _spinWaitDurationHint;
+
+    public EventListenerDelayDecorator(
+        ITimestampProvider timestampProvider,
+        Duration delay,
+        TaskScheduler? scheduler,
+        Duration spinWaitDurationHint)
     {
-        private readonly ITimestampProvider _timestampProvider;
-        private readonly Duration _delay;
-        private readonly TaskScheduler? _scheduler;
-        private readonly Duration _spinWaitDurationHint;
+        Ensure.IsInRange( delay, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ), nameof( delay ) );
+        Ensure.IsGreaterThanOrEqualTo( spinWaitDurationHint, Duration.Zero, nameof( spinWaitDurationHint ) );
 
-        public EventListenerDelayDecorator(
-            ITimestampProvider timestampProvider,
-            Duration delay,
-            TaskScheduler? scheduler,
-            Duration spinWaitDurationHint)
+        _timestampProvider = timestampProvider;
+        _delay = delay;
+        _scheduler = scheduler;
+        _spinWaitDurationHint = spinWaitDurationHint;
+    }
+
+    public IEventListener<TEvent> Decorate(IEventListener<WithInterval<TEvent>> listener, IEventSubscriber subscriber)
+    {
+        var timeout = new IntervalEventSource( _timestampProvider, _delay, _scheduler, _spinWaitDurationHint, count: 1 );
+        return new EventListener( listener, timeout );
+    }
+
+    private sealed class EventListener : DecoratedEventListener<TEvent, WithInterval<TEvent>>
+    {
+        private IntervalEventSource? _timeout;
+
+        internal EventListener(IEventListener<WithInterval<TEvent>> next, IntervalEventSource timeout)
+            : base( next )
         {
-            Ensure.IsInRange( delay, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ), nameof( delay ) );
-            Ensure.IsGreaterThanOrEqualTo( spinWaitDurationHint, Duration.Zero, nameof( spinWaitDurationHint ) );
-
-            _timestampProvider = timestampProvider;
-            _delay = delay;
-            _scheduler = scheduler;
-            _spinWaitDurationHint = spinWaitDurationHint;
+            _timeout = timeout;
         }
 
-        public IEventListener<TEvent> Decorate(IEventListener<WithInterval<TEvent>> listener, IEventSubscriber subscriber)
+        public override void React(TEvent @event)
         {
-            var timeout = new IntervalEventSource( _timestampProvider, _delay, _scheduler, _spinWaitDurationHint, count: 1 );
-            return new EventListener( listener, timeout );
+            var timerListener = new TimerListener( this, @event );
+            _timeout!.Listen( timerListener );
         }
 
-        private sealed class EventListener : DecoratedEventListener<TEvent, WithInterval<TEvent>>
+        public override void OnDispose(DisposalSource source)
         {
-            private IntervalEventSource? _timeout;
-
-            internal EventListener(IEventListener<WithInterval<TEvent>> next, IntervalEventSource timeout)
-                : base( next )
-            {
-                _timeout = timeout;
-            }
-
-            public override void React(TEvent @event)
-            {
-                var timerListener = new TimerListener( this, @event );
-                _timeout!.Listen( timerListener );
-            }
-
-            public override void OnDispose(DisposalSource source)
-            {
-                _timeout!.Dispose();
-                _timeout = null;
-                base.OnDispose( source );
-            }
-
-            [MethodImpl( MethodImplOptions.AggressiveInlining )]
-            internal void OnTimerReact(TEvent @event, WithInterval<long> timerEvent)
-            {
-                var nextEvent = new WithInterval<TEvent>( @event, timerEvent.Timestamp, timerEvent.Interval );
-                Next.React( nextEvent );
-            }
+            _timeout!.Dispose();
+            _timeout = null;
+            base.OnDispose( source );
         }
 
-        private sealed class TimerListener : EventListener<WithInterval<long>>
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal void OnTimerReact(TEvent @event, WithInterval<long> timerEvent)
         {
-            private EventListener? _mainListener;
-            private TEvent? _event;
+            var nextEvent = new WithInterval<TEvent>( @event, timerEvent.Timestamp, timerEvent.Interval );
+            Next.React( nextEvent );
+        }
+    }
 
-            internal TimerListener(EventListener mainListener, TEvent @event)
-            {
-                _mainListener = mainListener;
-                _event = @event;
-            }
+    private sealed class TimerListener : EventListener<WithInterval<long>>
+    {
+        private EventListener? _mainListener;
+        private TEvent? _event;
 
-            public override void React(WithInterval<long> @event)
-            {
-                _mainListener!.OnTimerReact( _event!, @event );
-            }
+        internal TimerListener(EventListener mainListener, TEvent @event)
+        {
+            _mainListener = mainListener;
+            _event = @event;
+        }
 
-            public override void OnDispose(DisposalSource source)
-            {
-                _mainListener = null;
-                _event = default;
-            }
+        public override void React(WithInterval<long> @event)
+        {
+            _mainListener!.OnTimerReact( _event!, @event );
+        }
+
+        public override void OnDispose(DisposalSource source)
+        {
+            _mainListener = null;
+            _event = default;
         }
     }
 }

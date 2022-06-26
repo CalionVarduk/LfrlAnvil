@@ -4,90 +4,89 @@ using System.Linq;
 using LfrlAnvil.Mapping.Exceptions;
 using LfrlAnvil.Mapping.Internal;
 
-namespace LfrlAnvil.Mapping
+namespace LfrlAnvil.Mapping;
+
+public class TypeMappingConfigurationModule : ITypeMappingConfiguration
 {
-    public class TypeMappingConfigurationModule : ITypeMappingConfiguration
+    private readonly List<ITypeMappingConfiguration> _configurations;
+
+    public TypeMappingConfigurationModule()
     {
-        private readonly List<ITypeMappingConfiguration> _configurations;
+        _configurations = new List<ITypeMappingConfiguration>();
+        Parent = null;
+    }
 
-        public TypeMappingConfigurationModule()
+    public TypeMappingConfigurationModule? Parent { get; private set; }
+
+    public TypeMappingConfigurationModule Configure(ITypeMappingConfiguration configuration)
+    {
+        if ( configuration is TypeMappingConfigurationModule module )
         {
-            _configurations = new List<ITypeMappingConfiguration>();
-            Parent = null;
+            if ( ReferenceEquals( module, this ) )
+                throw ReferenceToSelfException( nameof( configuration ) );
+
+            if ( module.Parent is not null )
+                throw SubmoduleAlreadyOwnedException( nameof( configuration ) );
+
+            if ( CyclicReferenceDetected( module ) )
+                throw CyclicReferenceException( nameof( configuration ) );
+
+            module.Parent = this;
         }
 
-        public TypeMappingConfigurationModule? Parent { get; private set; }
+        _configurations.Add( configuration );
+        return this;
+    }
 
-        public TypeMappingConfigurationModule Configure(ITypeMappingConfiguration configuration)
+    [Pure]
+    public IEnumerable<KeyValuePair<TypeMappingKey, TypeMappingStore>> GetMappingStores()
+    {
+        return _configurations.SelectMany( c => c.GetMappingStores() );
+    }
+
+    [Pure]
+    public IEnumerable<TypeMappingConfigurationModule> GetSubmodules()
+    {
+        return _configurations.OfType<TypeMappingConfigurationModule>();
+    }
+
+    [Pure]
+    private bool CyclicReferenceDetected(TypeMappingConfigurationModule module)
+    {
+        var stack = new Stack<TypeMappingConfigurationModule>( module.GetSubmodules() );
+        while ( stack.TryPop( out var submodule ) )
         {
-            if ( configuration is TypeMappingConfigurationModule module )
-            {
-                if ( ReferenceEquals( module, this ) )
-                    throw ReferenceToSelfException( nameof( configuration ) );
+            if ( ReferenceEquals( submodule, this ) )
+                return true;
 
-                if ( module.Parent is not null )
-                    throw SubmoduleAlreadyOwnedException( nameof( configuration ) );
-
-                if ( CyclicReferenceDetected( module ) )
-                    throw CyclicReferenceException( nameof( configuration ) );
-
-                module.Parent = this;
-            }
-
-            _configurations.Add( configuration );
-            return this;
+            foreach ( var s in submodule.GetSubmodules() )
+                stack.Push( s );
         }
 
-        [Pure]
-        public IEnumerable<KeyValuePair<TypeMappingKey, TypeMappingStore>> GetMappingStores()
-        {
-            return _configurations.SelectMany( c => c.GetMappingStores() );
-        }
+        return false;
+    }
 
-        [Pure]
-        public IEnumerable<TypeMappingConfigurationModule> GetSubmodules()
-        {
-            return _configurations.OfType<TypeMappingConfigurationModule>();
-        }
+    [Pure]
+    private static InvalidTypeMappingSubmoduleConfigurationException ReferenceToSelfException(string paramName)
+    {
+        return new InvalidTypeMappingSubmoduleConfigurationException(
+            Resources.InvalidTypeMappingSubmoduleConfigurationReferenceToSelf,
+            paramName );
+    }
 
-        [Pure]
-        private bool CyclicReferenceDetected(TypeMappingConfigurationModule module)
-        {
-            var stack = new Stack<TypeMappingConfigurationModule>( module.GetSubmodules() );
-            while ( stack.TryPop( out var submodule ) )
-            {
-                if ( ReferenceEquals( submodule, this ) )
-                    return true;
+    [Pure]
+    private static InvalidTypeMappingSubmoduleConfigurationException SubmoduleAlreadyOwnedException(string paramName)
+    {
+        return new InvalidTypeMappingSubmoduleConfigurationException(
+            Resources.InvalidTypeMappingSubmoduleConfigurationSubmoduleAlreadyOwned,
+            paramName );
+    }
 
-                foreach ( var s in submodule.GetSubmodules() )
-                    stack.Push( s );
-            }
-
-            return false;
-        }
-
-        [Pure]
-        private static InvalidTypeMappingSubmoduleConfigurationException ReferenceToSelfException(string paramName)
-        {
-            return new InvalidTypeMappingSubmoduleConfigurationException(
-                Resources.InvalidTypeMappingSubmoduleConfigurationReferenceToSelf,
-                paramName );
-        }
-
-        [Pure]
-        private static InvalidTypeMappingSubmoduleConfigurationException SubmoduleAlreadyOwnedException(string paramName)
-        {
-            return new InvalidTypeMappingSubmoduleConfigurationException(
-                Resources.InvalidTypeMappingSubmoduleConfigurationSubmoduleAlreadyOwned,
-                paramName );
-        }
-
-        [Pure]
-        private static InvalidTypeMappingSubmoduleConfigurationException CyclicReferenceException(string paramName)
-        {
-            return new InvalidTypeMappingSubmoduleConfigurationException(
-                Resources.InvalidTypeMappingSubmoduleConfigurationCyclicReference,
-                paramName );
-        }
+    [Pure]
+    private static InvalidTypeMappingSubmoduleConfigurationException CyclicReferenceException(string paramName)
+    {
+        return new InvalidTypeMappingSubmoduleConfigurationException(
+            Resources.InvalidTypeMappingSubmoduleConfigurationCyclicReference,
+            paramName );
     }
 }

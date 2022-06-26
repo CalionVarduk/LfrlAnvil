@@ -2,46 +2,45 @@
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
-namespace LfrlAnvil.Mapping.Internal
+namespace LfrlAnvil.Mapping.Internal;
+
+public readonly struct TypeMappingStore
 {
-    public readonly struct TypeMappingStore
+    private TypeMappingStore(Delegate fastDelegate, Delegate slowDelegate)
     {
-        private TypeMappingStore(Delegate fastDelegate, Delegate slowDelegate)
-        {
-            FastDelegate = fastDelegate;
-            SlowDelegate = slowDelegate;
-        }
+        FastDelegate = fastDelegate;
+        SlowDelegate = slowDelegate;
+    }
 
-        public Delegate FastDelegate { get; }
-        public Delegate SlowDelegate { get; }
+    public Delegate FastDelegate { get; }
+    public Delegate SlowDelegate { get; }
 
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public Func<TSource, ITypeMapper, TDestination> GetDelegate<TSource, TDestination>()
-        {
-            return (Func<TSource, ITypeMapper, TDestination>)FastDelegate;
-        }
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public Func<TSource, ITypeMapper, TDestination> GetDelegate<TSource, TDestination>()
+    {
+        return (Func<TSource, ITypeMapper, TDestination>)FastDelegate;
+    }
 
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public Func<object, ITypeMapper, TDestination> GetDelegate<TDestination>()
-        {
-            return (Func<object, ITypeMapper, TDestination>)SlowDelegate;
-        }
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public Func<object, ITypeMapper, TDestination> GetDelegate<TDestination>()
+    {
+        return (Func<object, ITypeMapper, TDestination>)SlowDelegate;
+    }
 
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public Func<object, ITypeMapper, object> GetDelegate()
-        {
-            return (Func<object, ITypeMapper, object>)SlowDelegate;
-        }
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public Func<object, ITypeMapper, object> GetDelegate()
+    {
+        return (Func<object, ITypeMapper, object>)SlowDelegate;
+    }
 
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal static TypeMappingStore Create<TSource, TDestination>(Func<TSource, ITypeMapper, TDestination> mapping)
-        {
-            Func<object, ITypeMapper, TDestination> slowMapping = (source, provider) => mapping( (TSource)source, provider );
-            return new TypeMappingStore( mapping, slowMapping );
-        }
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static TypeMappingStore Create<TSource, TDestination>(Func<TSource, ITypeMapper, TDestination> mapping)
+    {
+        Func<object, ITypeMapper, TDestination> slowMapping = (source, provider) => mapping( (TSource)source, provider );
+        return new TypeMappingStore( mapping, slowMapping );
     }
 }

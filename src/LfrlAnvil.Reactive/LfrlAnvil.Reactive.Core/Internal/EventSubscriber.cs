@@ -1,38 +1,37 @@
 ﻿using System;
 using System.Threading;
 
-namespace LfrlAnvil.Reactive.Internal
+namespace LfrlAnvil.Reactive.Internal;
+
+internal sealed class EventSubscriber<TEvent> : IEventSubscriber
 {
-    internal sealed class EventSubscriber<TEvent> : IEventSubscriber
+    private Action<EventSubscriber<TEvent>>? _disposer;
+    private int _state;
+
+    internal EventSubscriber(Action<EventSubscriber<TEvent>> disposer, IEventListener<TEvent> listener)
     {
-        private Action<EventSubscriber<TEvent>>? _disposer;
-        private int _state;
+        _disposer = disposer;
+        Listener = listener;
+        _state = 0;
+    }
 
-        internal EventSubscriber(Action<EventSubscriber<TEvent>> disposer, IEventListener<TEvent> listener)
-        {
-            _disposer = disposer;
-            Listener = listener;
-            _state = 0;
-        }
+    internal IEventListener<TEvent> Listener { get; set; }
+    public bool IsDisposed => _state == 1;
 
-        internal IEventListener<TEvent> Listener { get; set; }
-        public bool IsDisposed => _state == 1;
+    public void Dispose()
+    {
+        if ( Interlocked.Exchange( ref _state, 1 ) == 1 )
+            return;
 
-        public void Dispose()
-        {
-            if ( Interlocked.Exchange( ref _state, 1 ) == 1 )
-                return;
+        _disposer!( this );
+        _disposer = null;
 
-            _disposer!( this );
-            _disposer = null;
+        Listener.OnDispose( DisposalSource.Subscriber );
+    }
 
-            Listener.OnDispose( DisposalSource.Subscriber );
-        }
-
-        internal void MarkAsDisposed()
-        {
-            Interlocked.Exchange( ref _state, 1 );
-            _disposer = null;
-        }
+    internal void MarkAsDisposed()
+    {
+        Interlocked.Exchange( ref _state, 1 );
+        _disposer = null;
     }
 }

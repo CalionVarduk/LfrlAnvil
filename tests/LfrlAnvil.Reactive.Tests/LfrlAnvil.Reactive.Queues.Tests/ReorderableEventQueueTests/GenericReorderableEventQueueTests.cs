@@ -12,6 +12,7 @@ using Xunit;
 namespace LfrlAnvil.Reactive.Queues.Tests.ReorderableEventQueueTests;
 
 public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
+    where TEvent : notnull
 {
     [Theory]
     [InlineData( -1 )]

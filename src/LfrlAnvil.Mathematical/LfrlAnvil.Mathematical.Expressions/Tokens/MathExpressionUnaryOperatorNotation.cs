@@ -1,8 +1,7 @@
-﻿namespace LfrlAnvil.Mathematical.Expressions.Tokens
+﻿namespace LfrlAnvil.Mathematical.Expressions.Tokens;
+
+public enum MathExpressionUnaryOperatorNotation : byte
 {
-    public enum MathExpressionUnaryOperatorNotation : byte
-    {
-        Prefix = 0,
-        Postfix = 1
-    }
+    Prefix = 0,
+    Postfix = 1
 }

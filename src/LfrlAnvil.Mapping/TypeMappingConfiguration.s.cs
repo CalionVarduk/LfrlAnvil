@@ -2,16 +2,15 @@
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
-namespace LfrlAnvil.Mapping
+namespace LfrlAnvil.Mapping;
+
+public partial class TypeMappingConfiguration
 {
-    public partial class TypeMappingConfiguration
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SingleTypeMappingConfiguration<TSource, TDestination> Create<TSource, TDestination>(
+        Func<TSource, ITypeMapper, TDestination> mapping)
     {
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static SingleTypeMappingConfiguration<TSource, TDestination> Create<TSource, TDestination>(
-            Func<TSource, ITypeMapper, TDestination> mapping)
-        {
-            return new SingleTypeMappingConfiguration<TSource, TDestination>( mapping );
-        }
+        return new SingleTypeMappingConfiguration<TSource, TDestination>( mapping );
     }
 }

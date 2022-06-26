@@ -2,11 +2,10 @@
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Mapping.Internal;
 
-namespace LfrlAnvil.Mapping
+namespace LfrlAnvil.Mapping;
+
+public interface ITypeMappingConfiguration
 {
-    public interface ITypeMappingConfiguration
-    {
-        [Pure]
-        IEnumerable<KeyValuePair<TypeMappingKey, TypeMappingStore>> GetMappingStores();
-    }
+    [Pure]
+    IEnumerable<KeyValuePair<TypeMappingKey, TypeMappingStore>> GetMappingStores();
 }

@@ -3,88 +3,87 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Reactive.Internal;
 
-namespace LfrlAnvil.Reactive.Decorators
+namespace LfrlAnvil.Reactive.Decorators;
+
+public sealed class EventListenerBufferUntilDecorator<TEvent, TTargetEvent> : IEventListenerDecorator<TEvent, ReadOnlyMemory<TEvent>>
 {
-    public sealed class EventListenerBufferUntilDecorator<TEvent, TTargetEvent> : IEventListenerDecorator<TEvent, ReadOnlyMemory<TEvent>>
+    private readonly IEventStream<TTargetEvent> _target;
+
+    public EventListenerBufferUntilDecorator(IEventStream<TTargetEvent> target)
     {
-        private readonly IEventStream<TTargetEvent> _target;
+        _target = target;
+    }
 
-        public EventListenerBufferUntilDecorator(IEventStream<TTargetEvent> target)
+    [Pure]
+    public IEventListener<TEvent> Decorate(IEventListener<ReadOnlyMemory<TEvent>> listener, IEventSubscriber subscriber)
+    {
+        return new EventListener( listener, subscriber, _target );
+    }
+
+    private sealed class EventListener : DecoratedEventListener<TEvent, ReadOnlyMemory<TEvent>>
+    {
+        private readonly IEventSubscriber _targetSubscriber;
+        private readonly IEventSubscriber _subscriber;
+        private readonly GrowingBuffer<TEvent> _buffer;
+
+        internal EventListener(
+            IEventListener<ReadOnlyMemory<TEvent>> next,
+            IEventSubscriber subscriber,
+            IEventStream<TTargetEvent> target)
+            : base( next )
         {
-            _target = target;
+            _subscriber = subscriber;
+            _buffer = new GrowingBuffer<TEvent>();
+            var targetListener = new TargetEventListener( this );
+            _targetSubscriber = target.Listen( targetListener );
         }
 
-        [Pure]
-        public IEventListener<TEvent> Decorate(IEventListener<ReadOnlyMemory<TEvent>> listener, IEventSubscriber subscriber)
+        public override void React(TEvent @event)
         {
-            return new EventListener( listener, subscriber, _target );
+            _buffer.Add( @event );
         }
 
-        private sealed class EventListener : DecoratedEventListener<TEvent, ReadOnlyMemory<TEvent>>
+        public override void OnDispose(DisposalSource source)
         {
-            private readonly IEventSubscriber _targetSubscriber;
-            private readonly IEventSubscriber _subscriber;
-            private readonly GrowingBuffer<TEvent> _buffer;
+            _targetSubscriber.Dispose();
+            _buffer.Clear();
 
-            internal EventListener(
-                IEventListener<ReadOnlyMemory<TEvent>> next,
-                IEventSubscriber subscriber,
-                IEventStream<TTargetEvent> target)
-                : base( next )
-            {
-                _subscriber = subscriber;
-                _buffer = new GrowingBuffer<TEvent>();
-                var targetListener = new TargetEventListener( this );
-                _targetSubscriber = target.Listen( targetListener );
-            }
-
-            public override void React(TEvent @event)
-            {
-                _buffer.Add( @event );
-            }
-
-            public override void OnDispose(DisposalSource source)
-            {
-                _targetSubscriber.Dispose();
-                _buffer.Clear();
-
-                base.OnDispose( source );
-            }
-
-            [MethodImpl( MethodImplOptions.AggressiveInlining )]
-            internal void OnTargetEvent()
-            {
-                Next.React( _buffer.AsMemory() );
-                _buffer.RemoveAll();
-            }
-
-            [MethodImpl( MethodImplOptions.AggressiveInlining )]
-            internal void DisposeSubscriber()
-            {
-                _subscriber.Dispose();
-            }
+            base.OnDispose( source );
         }
 
-        private sealed class TargetEventListener : EventListener<TTargetEvent>
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal void OnTargetEvent()
         {
-            private EventListener? _sourceListener;
+            Next.React( _buffer.AsMemory() );
+            _buffer.RemoveAll();
+        }
 
-            internal TargetEventListener(EventListener sourceListener)
-            {
-                _sourceListener = sourceListener;
-            }
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal void DisposeSubscriber()
+        {
+            _subscriber.Dispose();
+        }
+    }
 
-            public override void React(TTargetEvent _)
-            {
-                _sourceListener!.OnTargetEvent();
-            }
+    private sealed class TargetEventListener : EventListener<TTargetEvent>
+    {
+        private EventListener? _sourceListener;
 
-            public override void OnDispose(DisposalSource _)
-            {
-                _sourceListener!.OnTargetEvent();
-                _sourceListener!.DisposeSubscriber();
-                _sourceListener = null;
-            }
+        internal TargetEventListener(EventListener sourceListener)
+        {
+            _sourceListener = sourceListener;
+        }
+
+        public override void React(TTargetEvent _)
+        {
+            _sourceListener!.OnTargetEvent();
+        }
+
+        public override void OnDispose(DisposalSource _)
+        {
+            _sourceListener!.OnTargetEvent();
+            _sourceListener!.DisposeSubscriber();
+            _sourceListener = null;
         }
     }
 }

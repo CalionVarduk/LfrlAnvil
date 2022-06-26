@@ -3,36 +3,35 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Mapping.Internal;
 
-namespace LfrlAnvil.Mapping
+namespace LfrlAnvil.Mapping;
+
+public class SingleTypeMappingConfiguration<TSource, TDestination> : ITypeMappingConfiguration
 {
-    public class SingleTypeMappingConfiguration<TSource, TDestination> : ITypeMappingConfiguration
+    private TypeMappingStore? _store;
+
+    public SingleTypeMappingConfiguration()
     {
-        private TypeMappingStore? _store;
+        _store = null;
+    }
 
-        public SingleTypeMappingConfiguration()
-        {
-            _store = null;
-        }
+    public SingleTypeMappingConfiguration(Func<TSource, ITypeMapper, TDestination> mapping)
+    {
+        _store = TypeMappingStore.Create( mapping );
+    }
 
-        public SingleTypeMappingConfiguration(Func<TSource, ITypeMapper, TDestination> mapping)
-        {
-            _store = TypeMappingStore.Create( mapping );
-        }
+    public Type SourceType => typeof( TSource );
+    public Type DestinationType => typeof( TDestination );
 
-        public Type SourceType => typeof( TSource );
-        public Type DestinationType => typeof( TDestination );
+    public SingleTypeMappingConfiguration<TSource, TDestination> Configure(Func<TSource, ITypeMapper, TDestination> mapping)
+    {
+        _store = TypeMappingStore.Create( mapping );
+        return this;
+    }
 
-        public SingleTypeMappingConfiguration<TSource, TDestination> Configure(Func<TSource, ITypeMapper, TDestination> mapping)
-        {
-            _store = TypeMappingStore.Create( mapping );
-            return this;
-        }
-
-        [Pure]
-        public IEnumerable<KeyValuePair<TypeMappingKey, TypeMappingStore>> GetMappingStores()
-        {
-            if ( _store is not null )
-                yield return KeyValuePair.Create( new TypeMappingKey( SourceType, DestinationType ), _store.Value );
-        }
+    [Pure]
+    public IEnumerable<KeyValuePair<TypeMappingKey, TypeMappingStore>> GetMappingStores()
+    {
+        if ( _store is not null )
+            yield return KeyValuePair.Create( new TypeMappingKey( SourceType, DestinationType ), _store.Value );
     }
 }
