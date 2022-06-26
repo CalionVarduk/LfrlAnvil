@@ -44,12 +44,6 @@ public class ZonedYearTestsData
                 transitionStart: new DateTime( 1, 12, 31, 23, 59, 0 ),
                 transitionEnd: new DateTime( 1, 10, 26, 3, 0, 0 ) ) );
 
-        var positiveTimeZone4 = TimeZoneFactory.Create(
-            utcOffsetInHours: 1,
-            TimeZoneFactory.CreateInfiniteRule(
-                transitionStart: new DateTime( 1, 1, 1, 0, 0, 0 ),
-                transitionEnd: new DateTime( 1, 10, 26, 3, 0, 0 ) ) );
-
         var negativeTimeZone1 = TimeZoneFactory.Create(
             utcOffsetInHours: 1,
             TimeZoneFactory.CreateInfiniteRule(
@@ -69,13 +63,6 @@ public class ZonedYearTestsData
             TimeZoneFactory.CreateInfiniteRule(
                 transitionStart: new DateTime( 1, 4, 26, 2, 0, 0 ),
                 transitionEnd: new DateTime( 1, 12, 31, 23, 59, 0 ),
-                daylightDeltaInHours: -1 ) );
-
-        var negativeTimeZone4 = TimeZoneFactory.Create(
-            utcOffsetInHours: 1,
-            TimeZoneFactory.CreateInfiniteRule(
-                transitionStart: new DateTime( 1, 4, 26, 2, 0, 0 ),
-                transitionEnd: new DateTime( 1, 1, 1, 0, 0, 0 ),
                 daylightDeltaInHours: -1 ) );
 
         return new TheoryData<DateTime, TimeZoneInfo, DateTime, DateTime, bool>
@@ -102,13 +89,6 @@ public class ZonedYearTestsData
                 false
             },
             {
-                new DateTime( 2020, 1, 1 ),
-                positiveTimeZone4,
-                new DateTime( 2020, 1, 1, 1, 0, 0 ),
-                new DateTime( 2020, 12, 31, 23, 59, 59, 999 ).AddTicks( 9999 ),
-                true
-            },
-            {
                 new DateTime( 2021, 1, 1 ),
                 negativeTimeZone1,
                 new DateTime( 2021, 1, 1, 0, 1, 0 ),
@@ -128,13 +108,6 @@ public class ZonedYearTestsData
                 new DateTime( 2021, 1, 1, 0, 59, 0 ),
                 new DateTime( 2021, 12, 31, 23, 58, 59, 999 ).AddTicks( 9999 ),
                 false
-            },
-            {
-                new DateTime( 2020, 1, 1 ),
-                negativeTimeZone4,
-                new DateTime( 2020, 1, 1, 1, 0, 0 ),
-                new DateTime( 2020, 12, 31, 23, 59, 59, 999 ).AddTicks( 9999 ),
-                true
             }
         };
     }
