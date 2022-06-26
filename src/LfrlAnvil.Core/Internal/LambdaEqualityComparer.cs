@@ -24,7 +24,7 @@ namespace LfrlAnvil.Internal
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public bool Equals(T x, T y)
+        public bool Equals(T? x, T? y)
         {
             return _equals( x, y );
         }

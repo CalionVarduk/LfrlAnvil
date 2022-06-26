@@ -417,34 +417,6 @@ namespace LfrlAnvil.Extensions
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static T1 MaxBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector)
-        {
-            return source.MaxBy( selector, Comparer<T2>.Default );
-        }
-
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static T1 MaxBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector, IComparer<T2> comparer)
-        {
-            return source.Aggregate( (a, b) => comparer.Compare( selector( a ), selector( b ) ) > 0 ? a : b );
-        }
-
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static T1 MinBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector)
-        {
-            return source.MinBy( selector, Comparer<T2>.Default );
-        }
-
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static T1 MinBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector, IComparer<T2> comparer)
-        {
-            return source.Aggregate( (a, b) => comparer.Compare( selector( a ), selector( b ) ) < 0 ? a : b );
-        }
-
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static (T1 Min, T1 Max) MinMaxBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector)
         {
             return source.MinMaxBy( selector, Comparer<T2>.Default );
@@ -577,25 +549,6 @@ namespace LfrlAnvil.Extensions
             }
 
             return (min, max);
-        }
-
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static IEnumerable<T1> DistinctBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector)
-        {
-            return source.DistinctBy( selector, EqualityComparer<T2>.Default );
-        }
-
-        [Pure]
-        public static IEnumerable<T1> DistinctBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector, IEqualityComparer<T2> comparer)
-        {
-            var set = new HashSet<T2>( comparer );
-
-            foreach ( var e in source )
-            {
-                if ( set.Add( selector( e ) ) )
-                    yield return e;
-            }
         }
 
         [Pure]
@@ -746,48 +699,7 @@ namespace LfrlAnvil.Extensions
         }
 
         [Pure]
-        public static IEnumerable<T[]> Divide<T>(this IEnumerable<T> source, int partLength)
-        {
-            Ensure.IsGreaterThan( partLength, 0, nameof( partLength ) );
-            return DivideIterator( source, partLength );
-        }
-
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private static IEnumerable<T[]> DivideIterator<T>(IEnumerable<T> source, int partLength)
-        {
-            using var enumerator = source.GetEnumerator();
-
-            var partIndex = 0;
-            var partBuilder = new T[partLength];
-
-            while ( enumerator.MoveNext() )
-            {
-                partBuilder[partIndex++] = enumerator.Current;
-                if ( partIndex < partLength )
-                    continue;
-
-                partIndex = 0;
-
-                var part = new T[partLength];
-                for ( var i = 0; i < part.Length; ++i )
-                    part[i] = partBuilder[i];
-
-                yield return part;
-            }
-
-            if ( partIndex == 0 )
-                yield break;
-
-            var lastPart = new T[partIndex];
-            for ( var i = 0; i < lastPart.Length; ++i )
-                lastPart[i] = partBuilder[i];
-
-            yield return lastPart;
-        }
-
-        [Pure]
-        private static ISet<T> GetSet<T>(IEnumerable<T> source, IEqualityComparer<T> comparer)
+        private static IReadOnlySet<T> GetSet<T>(IEnumerable<T> source, IEqualityComparer<T> comparer)
         {
             if ( source is HashSet<T> hashSet && hashSet.Comparer.Equals( comparer ) )
                 return hashSet;
@@ -796,7 +708,7 @@ namespace LfrlAnvil.Extensions
         }
 
         [Pure]
-        private static bool SetEquals<T>(ISet<T> set, ISet<T> other)
+        private static bool SetEquals<T>(IReadOnlySet<T> set, IReadOnlySet<T> other)
         {
             foreach ( var o in other )
             {

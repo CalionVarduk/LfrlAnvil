@@ -43,7 +43,7 @@ namespace LfrlAnvil
         }
 
         [Pure]
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is Bounds<T> b && Equals( b );
         }

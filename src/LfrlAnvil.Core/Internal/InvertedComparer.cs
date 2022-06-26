@@ -16,7 +16,7 @@ namespace LfrlAnvil.Internal
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public int Compare(T x, T y)
+        public int Compare(T? x, T? y)
         {
             var result = BaseComparer.Compare( x, y );
             return -Math.Sign( result );

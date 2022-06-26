@@ -64,7 +64,7 @@ namespace LfrlAnvil.Internal
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static string ToString(T? obj)
         {
-            return IsNull( obj ) ? string.Empty : obj.ToString();
+            return IsNull( obj ) ? string.Empty : obj.ToString()!;
         }
 
         [Pure]

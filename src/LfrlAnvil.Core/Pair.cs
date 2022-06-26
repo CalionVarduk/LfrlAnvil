@@ -32,7 +32,7 @@ namespace LfrlAnvil
         }
 
         [Pure]
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is Pair<T1, T2> p && Equals( p );
         }

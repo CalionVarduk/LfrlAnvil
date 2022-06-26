@@ -60,7 +60,7 @@ namespace LfrlAnvil
         }
 
         [Pure]
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is Bitmask<T> b && Equals( b );
         }
@@ -80,7 +80,7 @@ namespace LfrlAnvil
         }
 
         [Pure]
-        public int CompareTo(object obj)
+        public int CompareTo(object? obj)
         {
             return obj is Bitmask<T> b ? CompareTo( b ) : 1;
         }

@@ -8,14 +8,14 @@ namespace LfrlAnvil.Async
 {
     public class DedicatedThreadSynchronizationContext : SynchronizationContext, IDisposable
     {
-        private readonly BlockingCollection<Pair<SendOrPostCallback, object>> _queue;
+        private readonly BlockingCollection<Pair<SendOrPostCallback, object?>> _queue;
         private readonly Thread _thread;
         private CultureInfo? _threadCulture;
         private CultureInfo? _threadUICulture;
 
         public DedicatedThreadSynchronizationContext(ThreadParams @params = default)
         {
-            _queue = new BlockingCollection<Pair<SendOrPostCallback, object>>();
+            _queue = new BlockingCollection<Pair<SendOrPostCallback, object?>>();
             _threadCulture = @params.Culture;
             _threadUICulture = @params.UICulture;
             ThreadPriority = @params.Priority ?? ThreadPriority.Normal;
@@ -48,21 +48,21 @@ namespace LfrlAnvil.Async
             _thread.Join();
         }
 
-        public sealed override void Post(SendOrPostCallback d, object state)
+        public sealed override void Post(SendOrPostCallback d, object? state)
         {
             _queue.Add( Pair.Create( d, state ) );
         }
 
-        public sealed override void Send(SendOrPostCallback d, object state)
+        public sealed override void Send(SendOrPostCallback d, object? state)
         {
             using var reset = new ManualResetEventSlim( false );
             Post( SendCallback, new SendCallbackState( d, state, reset ) );
             reset.Wait();
         }
 
-        private static void OnThreadStart(object threadState)
+        private static void OnThreadStart(object? threadState)
         {
-            var context = (DedicatedThreadSynchronizationContext)threadState;
+            var context = (DedicatedThreadSynchronizationContext)threadState!;
             SetSynchronizationContext( context );
 
             if ( context._threadCulture is not null )
@@ -89,9 +89,9 @@ namespace LfrlAnvil.Async
                 callback( state );
         }
 
-        private static void SendCallback(object state)
+        private static void SendCallback(object? state)
         {
-            var @params = (SendCallbackState)state;
+            var @params = (SendCallbackState)state!;
             try
             {
                 @params.Callback( @params.CallbackState );
@@ -105,10 +105,10 @@ namespace LfrlAnvil.Async
         private sealed class SendCallbackState
         {
             internal readonly SendOrPostCallback Callback;
-            internal readonly object CallbackState;
+            internal readonly object? CallbackState;
             internal readonly ManualResetEventSlim Reset;
 
-            internal SendCallbackState(SendOrPostCallback callback, object callbackState, ManualResetEventSlim reset)
+            internal SendCallbackState(SendOrPostCallback callback, object? callbackState, ManualResetEventSlim reset)
             {
                 Callback = callback;
                 CallbackState = callbackState;
