@@ -1,23 +1,22 @@
 ﻿using System;
 using System.Threading;
 
-namespace LfrlAnvil.Async
+namespace LfrlAnvil.Async;
+
+public sealed class SynchronizationContextSwitch : IDisposable
 {
-    public sealed class SynchronizationContextSwitch : IDisposable
+    public SynchronizationContextSwitch(SynchronizationContext? context)
     {
-        public SynchronizationContextSwitch(SynchronizationContext? context)
-        {
-            PreviousContext = SynchronizationContext.Current;
-            Context = context;
-            SynchronizationContext.SetSynchronizationContext( Context );
-        }
+        PreviousContext = SynchronizationContext.Current;
+        Context = context;
+        SynchronizationContext.SetSynchronizationContext( Context );
+    }
 
-        public SynchronizationContext? PreviousContext { get; }
-        public SynchronizationContext? Context { get; }
+    public SynchronizationContext? PreviousContext { get; }
+    public SynchronizationContext? Context { get; }
 
-        public void Dispose()
-        {
-            SynchronizationContext.SetSynchronizationContext( PreviousContext );
-        }
+    public void Dispose()
+    {
+        SynchronizationContext.SetSynchronizationContext( PreviousContext );
     }
 }

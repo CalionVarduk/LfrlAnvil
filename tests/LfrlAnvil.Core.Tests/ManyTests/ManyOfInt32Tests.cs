@@ -1,4 +1,3 @@
-﻿namespace LfrlAnvil.Tests.ManyTests
-{
-    public class ManyOfInt32Tests : GenericManyTests<int> { }
-}
+﻿namespace LfrlAnvil.Tests.ManyTests;
+
+public class ManyOfInt32Tests : GenericManyTests<int> { }

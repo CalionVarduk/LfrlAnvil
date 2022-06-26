@@ -1,70 +1,69 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 
-namespace LfrlAnvil.Async
+namespace LfrlAnvil.Async;
+
+public sealed class ConcurrentReadOnlyCollection<T> : IReadOnlyCollection<T>
 {
-    public sealed class ConcurrentReadOnlyCollection<T> : IReadOnlyCollection<T>
+    private readonly IReadOnlyCollection<T> _collection;
+    private readonly object _sync;
+
+    public ConcurrentReadOnlyCollection(IReadOnlyCollection<T> collection, object sync)
     {
-        private readonly IReadOnlyCollection<T> _collection;
-        private readonly object _sync;
+        _collection = collection;
+        _sync = sync;
+    }
 
-        public ConcurrentReadOnlyCollection(IReadOnlyCollection<T> collection, object sync)
+    public int Count
+    {
+        get
         {
-            _collection = collection;
-            _sync = sync;
-        }
-
-        public int Count
-        {
-            get
+            lock ( _sync )
             {
-                lock ( _sync )
-                {
-                    return _collection.Count;
-                }
+                return _collection.Count;
             }
         }
+    }
 
-        public IEnumerator<T> GetEnumerator()
+    public IEnumerator<T> GetEnumerator()
+    {
+        var @lock = new DisposableLock( _sync );
+        return new Enumerator( _collection.GetEnumerator(), @lock );
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
+
+    private sealed class Enumerator : IEnumerator<T>
+    {
+        private readonly IEnumerator<T> _enumerator;
+        private DisposableLock _lock;
+
+        internal Enumerator(IEnumerator<T> enumerator, DisposableLock @lock)
         {
-            var @lock = new DisposableLock( _sync );
-            return new Enumerator( _collection.GetEnumerator(), @lock );
+            _enumerator = enumerator;
+            _lock = @lock;
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
+        public T Current => _enumerator.Current;
+        object? IEnumerator.Current => Current;
+
+        public bool MoveNext()
         {
-            return GetEnumerator();
+            return _enumerator.MoveNext();
         }
 
-        private sealed class Enumerator : IEnumerator<T>
+        public void Reset()
         {
-            private readonly IEnumerator<T> _enumerator;
-            private DisposableLock _lock;
+            _enumerator.Reset();
+        }
 
-            internal Enumerator(IEnumerator<T> enumerator, DisposableLock @lock)
-            {
-                _enumerator = enumerator;
-                _lock = @lock;
-            }
-
-            public T Current => _enumerator.Current;
-            object? IEnumerator.Current => Current;
-
-            public bool MoveNext()
-            {
-                return _enumerator.MoveNext();
-            }
-
-            public void Reset()
-            {
-                _enumerator.Reset();
-            }
-
-            public void Dispose()
-            {
-                _enumerator.Dispose();
-                _lock.Dispose();
-            }
+        public void Dispose()
+        {
+            _enumerator.Dispose();
+            _lock.Dispose();
         }
     }
 }

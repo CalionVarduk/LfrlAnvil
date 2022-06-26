@@ -3,17 +3,16 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
-namespace LfrlAnvil.Extensions
+namespace LfrlAnvil.Extensions;
+
+public static class BoundsExtensions
 {
-    public static class BoundsExtensions
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static IEnumerable<T> AsEnumerable<T>(this Bounds<T> source)
+        where T : IComparable<T>
     {
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static IEnumerable<T> AsEnumerable<T>(this Bounds<T> source)
-            where T : IComparable<T>
-        {
-            yield return source.Min;
-            yield return source.Max;
-        }
+        yield return source.Min;
+        yield return source.Max;
     }
 }

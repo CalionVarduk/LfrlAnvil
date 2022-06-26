@@ -2,28 +2,27 @@
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-namespace LfrlAnvil.Async
+namespace LfrlAnvil.Async;
+
+public struct DisposableLock : IDisposable
 {
-    public struct DisposableLock : IDisposable
+    private readonly object _sync;
+    private bool _isTaken;
+
+    public DisposableLock(object sync)
     {
-        private readonly object _sync;
-        private bool _isTaken;
+        _sync = sync;
+        _isTaken = false;
+        Monitor.Enter( _sync, ref _isTaken );
+    }
 
-        public DisposableLock(object sync)
-        {
-            _sync = sync;
-            _isTaken = false;
-            Monitor.Enter( _sync, ref _isTaken );
-        }
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public void Dispose()
+    {
+        if ( ! _isTaken )
+            return;
 
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public void Dispose()
-        {
-            if ( ! _isTaken )
-                return;
-
-            Monitor.Exit( _sync );
-            _isTaken = false;
-        }
+        Monitor.Exit( _sync );
+        _isTaken = false;
     }
 }

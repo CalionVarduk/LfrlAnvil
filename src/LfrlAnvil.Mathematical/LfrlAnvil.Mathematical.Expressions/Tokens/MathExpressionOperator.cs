@@ -9,7 +9,7 @@ public abstract class MathExpressionOperator : IMathExpressionToken
     {
         Symbol = symbol; // TODO: validate (depends on math expression builder configuration)
     }
-        
+
     public string Symbol { get; }
 
     // TODO: specializations for specific input types, that can override the default generic behavior

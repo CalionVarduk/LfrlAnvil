@@ -1,10 +1,9 @@
 ﻿using System;
 
-namespace LfrlAnvil.Generators
+namespace LfrlAnvil.Generators;
+
+public interface IBoundGenerator<T> : IGenerator<T>
+    where T : IComparable<T>
 {
-    public interface IBoundGenerator<T> : IGenerator<T>
-        where T : IComparable<T>
-    {
-        Bounds<T> Bounds { get; }
-    }
+    Bounds<T> Bounds { get; }
 }

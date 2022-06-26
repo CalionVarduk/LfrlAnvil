@@ -2,24 +2,23 @@
 using FluentAssertions;
 using Xunit;
 
-namespace LfrlAnvil.Tests.EqualityComparerFactoryTests
+namespace LfrlAnvil.Tests.EqualityComparerFactoryTests;
+
+public abstract class GenericEqualityComparerFactoryOfRefTypeTests<T> : GenericEqualityComparerFactoryTests<T?>
+    where T : class
 {
-    public abstract class GenericEqualityComparerFactoryOfRefTypeTests<T> : GenericEqualityComparerFactoryTests<T?>
-        where T : class
+    [Fact]
+    public void Create_ShouldCreateComparerWithCorrectDefaultGetHashCodeImplementation_ForNullObject()
     {
-        [Fact]
-        public void Create_ShouldCreateComparerWithCorrectDefaultGetHashCodeImplementation_ForNullObject()
-        {
-            T? obj = null;
+        T? obj = null;
 
-            var defaultComparer = EqualityComparer<T?>.Default;
+        var defaultComparer = EqualityComparer<T?>.Default;
 
-            var sut = EqualityComparerFactory<T?>.Create(
-                (a, b) => defaultComparer.Equals( a, b ) );
+        var sut = EqualityComparerFactory<T?>.Create(
+            (a, b) => defaultComparer.Equals( a, b ) );
 
-            var result = sut.GetHashCode( obj! );
+        var result = sut.GetHashCode( obj! );
 
-            result.Should().Be( 0 );
-        }
+        result.Should().Be( 0 );
     }
 }

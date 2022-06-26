@@ -1,4 +1,3 @@
-﻿namespace LfrlAnvil.Tests.EqualityComparerFactoryTests
-{
-    public class EqualityComparerFactoryOfStringTests : GenericEqualityComparerFactoryOfRefTypeTests<string> { }
-}
+﻿namespace LfrlAnvil.Tests.EqualityComparerFactoryTests;
+
+public class EqualityComparerFactoryOfStringTests : GenericEqualityComparerFactoryOfRefTypeTests<string> { }

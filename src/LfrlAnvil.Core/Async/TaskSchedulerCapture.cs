@@ -2,59 +2,58 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace LfrlAnvil.Async
+namespace LfrlAnvil.Async;
+
+public readonly struct TaskSchedulerCapture
 {
-    public readonly struct TaskSchedulerCapture
+    private readonly TaskScheduler? _scheduler;
+    private readonly bool _lazyCapture;
+
+    public TaskSchedulerCapture(TaskScheduler scheduler)
     {
-        private readonly TaskScheduler? _scheduler;
-        private readonly bool _lazyCapture;
+        _scheduler = scheduler;
+        _lazyCapture = false;
+    }
 
-        public TaskSchedulerCapture(TaskScheduler scheduler)
+    public TaskSchedulerCapture(TaskSchedulerCaptureStrategy strategy)
+    {
+        switch ( strategy )
         {
-            _scheduler = scheduler;
-            _lazyCapture = false;
+            case TaskSchedulerCaptureStrategy.Current:
+                _scheduler = GetCurrentScheduler();
+                _lazyCapture = false;
+                break;
+
+            case TaskSchedulerCaptureStrategy.Lazy:
+                _scheduler = null;
+                _lazyCapture = true;
+                break;
+
+            default:
+                _scheduler = null;
+                _lazyCapture = false;
+                break;
         }
+    }
 
-        public TaskSchedulerCapture(TaskSchedulerCaptureStrategy strategy)
-        {
-            switch ( strategy )
-            {
-                case TaskSchedulerCaptureStrategy.Current:
-                    _scheduler = GetCurrentScheduler();
-                    _lazyCapture = false;
-                    break;
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static TaskScheduler GetCurrentScheduler()
+    {
+        return SynchronizationContext.Current is not null
+            ? TaskScheduler.FromCurrentSynchronizationContext()
+            : TaskScheduler.Current;
+    }
 
-                case TaskSchedulerCaptureStrategy.Lazy:
-                    _scheduler = null;
-                    _lazyCapture = true;
-                    break;
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static TaskScheduler FromSynchronizationContext(SynchronizationContext context)
+    {
+        using var contextSwitch = new SynchronizationContextSwitch( context );
+        return TaskScheduler.FromCurrentSynchronizationContext();
+    }
 
-                default:
-                    _scheduler = null;
-                    _lazyCapture = false;
-                    break;
-            }
-        }
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static TaskScheduler GetCurrentScheduler()
-        {
-            return SynchronizationContext.Current is not null
-                ? TaskScheduler.FromCurrentSynchronizationContext()
-                : TaskScheduler.Current;
-        }
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static TaskScheduler FromSynchronizationContext(SynchronizationContext context)
-        {
-            using var contextSwitch = new SynchronizationContextSwitch( context );
-            return TaskScheduler.FromCurrentSynchronizationContext();
-        }
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public TaskScheduler? TryGetScheduler()
-        {
-            return _lazyCapture ? GetCurrentScheduler() : _scheduler;
-        }
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public TaskScheduler? TryGetScheduler()
+    {
+        return _lazyCapture ? GetCurrentScheduler() : _scheduler;
     }
 }

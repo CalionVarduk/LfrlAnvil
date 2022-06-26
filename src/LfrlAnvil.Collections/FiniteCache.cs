@@ -95,12 +95,12 @@ public class FiniteCache<TKey, TValue> : IFiniteCache<TKey, TValue>
         return GetEnumerator();
     }
 
-    bool IDictionary<TKey, TValue>.TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value)
+    bool IDictionary<TKey, TValue>.TryGetValue(TKey key, [MaybeNullWhen( false )] out TValue value)
     {
         return ((IDictionary<TKey, TValue>)_map).TryGetValue( key, out value );
     }
 
-    bool IReadOnlyDictionary<TKey, TValue>.TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value)
+    bool IReadOnlyDictionary<TKey, TValue>.TryGetValue(TKey key, [MaybeNullWhen( false )] out TValue value)
     {
         return ((IReadOnlyDictionary<TKey, TValue>)_map).TryGetValue( key, out value );
     }

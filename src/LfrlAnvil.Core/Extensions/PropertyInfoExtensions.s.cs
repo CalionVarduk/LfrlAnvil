@@ -1,19 +1,18 @@
 ﻿using System.Diagnostics.Contracts;
 using System.Reflection;
 
-namespace LfrlAnvil.Extensions
+namespace LfrlAnvil.Extensions;
+
+public static class PropertyInfoExtensions
 {
-    public static class PropertyInfoExtensions
+    [Pure]
+    public static FieldInfo? GetBackingField(this PropertyInfo source)
     {
-        [Pure]
-        public static FieldInfo? GetBackingField(this PropertyInfo source)
-        {
-            var backingFieldName = $"<{source.Name}>k__BackingField";
+        var backingFieldName = $"<{source.Name}>k__BackingField";
 
-            var result = source.DeclaringType?
-                .GetField( backingFieldName, BindingFlags.Instance | BindingFlags.NonPublic );
+        var result = source.DeclaringType?
+            .GetField( backingFieldName, BindingFlags.Instance | BindingFlags.NonPublic );
 
-            return result;
-        }
+        return result;
     }
 }

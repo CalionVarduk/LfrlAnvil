@@ -1,8 +1,7 @@
-﻿namespace LfrlAnvil
+﻿namespace LfrlAnvil;
+
+public enum AddOrUpdateResult : byte
 {
-    public enum AddOrUpdateResult : byte
-    {
-        Added = 0,
-        Updated = 1
-    }
+    Added = 0,
+    Updated = 1
 }

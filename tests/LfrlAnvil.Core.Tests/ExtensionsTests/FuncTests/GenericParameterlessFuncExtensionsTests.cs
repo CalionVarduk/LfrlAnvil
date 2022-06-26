@@ -10,61 +10,60 @@ using LfrlAnvil.TestExtensions.NSubstitute;
 using NSubstitute;
 using Xunit;
 
-namespace LfrlAnvil.Tests.ExtensionsTests.FuncTests
+namespace LfrlAnvil.Tests.ExtensionsTests.FuncTests;
+
+public abstract class GenericParameterlessFuncExtensionsTests<TReturnValue> : TestsBase
 {
-    public abstract class GenericParameterlessFuncExtensionsTests<TReturnValue> : TestsBase
+    [Fact]
+    public void ToLazy_ShouldReturnCorrectResult()
     {
-        [Fact]
-        public void ToLazy_ShouldReturnCorrectResult()
-        {
-            var value = Fixture.Create<TReturnValue>();
-            Func<TReturnValue> sut = () => value;
+        var value = Fixture.Create<TReturnValue>();
+        Func<TReturnValue> sut = () => value;
 
-            var result = sut.ToLazy();
+        var result = sut.ToLazy();
 
-            result.Value.Should().Be( value );
-        }
+        result.Value.Should().Be( value );
+    }
 
-        [Fact]
-        public void Memoize_ShouldMaterializeSourceAfterFirstEnumeration()
-        {
-            var iterationCount = 5;
-            var sourceCount = 3;
-            var @delegate = Substitute.For<Func<int, TReturnValue>>().WithAnyArgs( _ => Fixture.Create<TReturnValue>() );
+    [Fact]
+    public void Memoize_ShouldMaterializeSourceAfterFirstEnumeration()
+    {
+        var iterationCount = 5;
+        var sourceCount = 3;
+        var @delegate = Substitute.For<Func<int, TReturnValue>>().WithAnyArgs( _ => Fixture.Create<TReturnValue>() );
 
-            Func<IEnumerable<TReturnValue>> sut = () =>
-                Enumerable.Range( 0, sourceCount ).Select( @delegate );
+        Func<IEnumerable<TReturnValue>> sut = () =>
+            Enumerable.Range( 0, sourceCount ).Select( @delegate );
 
-            var result = sut.Memoize();
+        var result = sut.Memoize();
 
-            var materialized = new List<IEnumerable<TReturnValue>>();
-            for ( var i = 0; i < iterationCount; ++i )
-                materialized.Add( result.ToList() );
+        var materialized = new List<IEnumerable<TReturnValue>>();
+        for ( var i = 0; i < iterationCount; ++i )
+            materialized.Add( result.ToList() );
 
-            @delegate.Verify().CallCount.Should().Be( sourceCount );
-        }
+        @delegate.Verify().CallCount.Should().Be( sourceCount );
+    }
 
-        [Fact]
-        public void Memoize_ShouldReturnSource_WhenSourceIsAlreadyMemoized()
-        {
-            var values = Fixture.CreateMany<TReturnValue>().Memoize();
-            Func<IEnumerable<TReturnValue>> sut = () => values;
+    [Fact]
+    public void Memoize_ShouldReturnSource_WhenSourceIsAlreadyMemoized()
+    {
+        var values = Fixture.CreateMany<TReturnValue>().Memoize();
+        Func<IEnumerable<TReturnValue>> sut = () => values;
 
-            var result = sut.Memoize();
+        var result = sut.Memoize();
 
-            result.Should().BeSameAs( values );
-        }
+        result.Should().BeSameAs( values );
+    }
 
-        [Fact]
-        public void IgnoreResult_ShouldReturnCorrectResult()
-        {
-            var value = Fixture.Create<TReturnValue>();
-            var sut = Substitute.For<Func<TReturnValue>>().WithAnyArgs( _ => value );
+    [Fact]
+    public void IgnoreResult_ShouldReturnCorrectResult()
+    {
+        var value = Fixture.Create<TReturnValue>();
+        var sut = Substitute.For<Func<TReturnValue>>().WithAnyArgs( _ => value );
 
-            var result = sut.IgnoreResult();
-            result();
+        var result = sut.IgnoreResult();
+        result();
 
-            sut.Verify().CallCount.Should().Be( 1 );
-        }
+        sut.Verify().CallCount.Should().Be( 1 );
     }
 }

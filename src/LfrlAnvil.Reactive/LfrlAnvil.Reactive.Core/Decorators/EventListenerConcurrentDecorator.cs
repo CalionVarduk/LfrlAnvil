@@ -2,11 +2,11 @@
 
 namespace LfrlAnvil.Reactive.Decorators;
 
-public sealed class EventListenerLockDecorator<TEvent> : IEventListenerDecorator<TEvent, TEvent>
+public sealed class EventListenerConcurrentDecorator<TEvent> : IEventListenerDecorator<TEvent, TEvent>
 {
     private readonly object? _sync;
 
-    public EventListenerLockDecorator(object? sync)
+    public EventListenerConcurrentDecorator(object? sync)
     {
         _sync = sync;
     }

@@ -454,39 +454,39 @@ public static class EventStreamExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static IEventStream<TEvent> Lock<TEvent>(this IEventStream<TEvent> source)
+    public static IEventStream<TEvent> Concurrent<TEvent>(this IEventStream<TEvent> source)
     {
-        var decorator = new EventListenerLockDecorator<TEvent>( null );
+        var decorator = new EventListenerConcurrentDecorator<TEvent>( null );
         return source.Decorate( decorator );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static IEventStream<TEvent> Lock<TEvent>(this IEventStream<TEvent> source, object sync)
+    public static IEventStream<TEvent> Concurrent<TEvent>(this IEventStream<TEvent> source, object sync)
     {
-        var decorator = new EventListenerLockDecorator<TEvent>( sync );
+        var decorator = new EventListenerConcurrentDecorator<TEvent>( sync );
         return source.Decorate( decorator );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static TResult ShareLockWith<TEvent, TTargetEvent, TResult>(
+    public static TResult ShareConcurrencyWith<TEvent, TTargetEvent, TResult>(
         this IEventStream<TEvent> source,
         IEventStream<TTargetEvent> target,
         Func<IEventStream<TEvent>, IEventStream<TTargetEvent>, TResult> resultSelector)
     {
-        return source.ShareLockWith( target, resultSelector, new object() );
+        return source.ShareConcurrencyWith( target, resultSelector, new object() );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static TResult ShareLockWith<TEvent, TTargetEvent, TResult>(
+    public static TResult ShareConcurrencyWith<TEvent, TTargetEvent, TResult>(
         this IEventStream<TEvent> source,
         IEventStream<TTargetEvent> target,
         Func<IEventStream<TEvent>, IEventStream<TTargetEvent>, TResult> resultSelector,
         object sync)
     {
-        return resultSelector( source.Lock( sync ), target.Lock( sync ) );
+        return resultSelector( source.Concurrent( sync ), target.Concurrent( sync ) );
     }
 
     [Pure]
@@ -574,34 +574,34 @@ public static class EventStreamExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static IEventStream<IEventStream<TEvent>> LockAll<TEvent>(this IEventStream<IEventStream<TEvent>> source)
+    public static IEventStream<IEventStream<TEvent>> ConcurrentAll<TEvent>(this IEventStream<IEventStream<TEvent>> source)
     {
-        var decorator = new EventListenerLockAllDecorator<TEvent>( null );
+        var decorator = new EventListenerConcurrentAllDecorator<TEvent>( null );
         return source.Decorate( decorator );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static IEventStream<IEventStream<TEvent>> LockAll<TEvent>(this IEventStream<IEventStream<TEvent>> source, object sync)
+    public static IEventStream<IEventStream<TEvent>> ConcurrentAll<TEvent>(this IEventStream<IEventStream<TEvent>> source, object sync)
     {
-        var decorator = new EventListenerLockAllDecorator<TEvent>( sync );
+        var decorator = new EventListenerConcurrentAllDecorator<TEvent>( sync );
         return source.Decorate( decorator );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static IEventStream<IEventStream<TEvent>> ShareLockWithAll<TEvent>(this IEventStream<IEventStream<TEvent>> source)
+    public static IEventStream<IEventStream<TEvent>> ShareConcurrencyWithAll<TEvent>(this IEventStream<IEventStream<TEvent>> source)
     {
-        return source.ShareLockWithAll( new object() );
+        return source.ShareConcurrencyWithAll( new object() );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static IEventStream<IEventStream<TEvent>> ShareLockWithAll<TEvent>(
+    public static IEventStream<IEventStream<TEvent>> ShareConcurrencyWithAll<TEvent>(
         this IEventStream<IEventStream<TEvent>> source,
         object sync)
     {
-        return source.Lock( sync ).LockAll( sync );
+        return source.Concurrent( sync ).ConcurrentAll( sync );
     }
 
     [Pure]
@@ -647,7 +647,7 @@ public static class EventStreamExtensions
         var completionSource = new TaskCompletionSource<TEvent?>();
         if ( cancellationToken.IsCancellationRequested )
         {
-            completionSource.SetCanceled();
+            completionSource.SetCanceled( cancellationToken );
             return completionSource.Task;
         }
 

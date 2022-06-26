@@ -4,17 +4,16 @@ using FluentAssertions;
 using LfrlAnvil.Extensions;
 using Xunit;
 
-namespace LfrlAnvil.Tests.ExtensionsTests.ObjectTests
+namespace LfrlAnvil.Tests.ExtensionsTests.ObjectTests;
+
+public abstract class GenericObjectExtensionsOfStructTypeTests<T> : GenericObjectExtensionsOfComparableTypeTests<T>
+    where T : struct, IComparable<T>
 {
-    public abstract class GenericObjectExtensionsOfStructTypeTests<T> : GenericObjectExtensionsOfComparableTypeTests<T>
-        where T : struct, IComparable<T>
+    [Fact]
+    public void ToNullable_ShouldReturnCorrectResult()
     {
-        [Fact]
-        public void ToNullable_ShouldReturnCorrectResult()
-        {
-            var value = Fixture.Create<T>();
-            var result = value.ToNullable();
-            result.Should().BeEquivalentTo( value );
-        }
+        var value = Fixture.Create<T>();
+        var result = value.ToNullable();
+        result.Should().BeEquivalentTo( value );
     }
 }

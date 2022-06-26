@@ -3,11 +3,11 @@ using LfrlAnvil.Reactive.Extensions;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
-public sealed class EventListenerLockAllDecorator<TEvent> : IEventListenerDecorator<IEventStream<TEvent>, IEventStream<TEvent>>
+public sealed class EventListenerConcurrentAllDecorator<TEvent> : IEventListenerDecorator<IEventStream<TEvent>, IEventStream<TEvent>>
 {
     private readonly object? _sync;
 
-    public EventListenerLockAllDecorator(object? sync)
+    public EventListenerConcurrentAllDecorator(object? sync)
     {
         _sync = sync;
     }
@@ -30,7 +30,7 @@ public sealed class EventListenerLockAllDecorator<TEvent> : IEventListenerDecora
 
         public override void React(IEventStream<TEvent> @event)
         {
-            Next.React( @event.Lock( _sync ) );
+            Next.React( @event.Concurrent( _sync ) );
         }
     }
 }

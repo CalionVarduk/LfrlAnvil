@@ -1,4 +1,3 @@
-﻿namespace LfrlAnvil.Tests.ExtensionsTests.ComparerTests
-{
-    public class ComparerExtensionsOfStringTests : GenericComparerExtensionsTests<string> { }
-}
+﻿namespace LfrlAnvil.Tests.ExtensionsTests.ComparerTests;
+
+public class ComparerExtensionsOfStringTests : GenericComparerExtensionsTests<string> { }

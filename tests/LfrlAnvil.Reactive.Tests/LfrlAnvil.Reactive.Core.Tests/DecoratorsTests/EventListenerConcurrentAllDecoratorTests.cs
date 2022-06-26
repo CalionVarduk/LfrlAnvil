@@ -13,14 +13,14 @@ using Xunit;
 
 namespace LfrlAnvil.Reactive.Tests.DecoratorsTests;
 
-public class EventListenerLockAllDecoratorTests : TestsBase
+public class EventListenerConcurrentAllDecoratorTests : TestsBase
 {
     [Fact]
     public void Decorate_ShouldNotDisposeTheSubscriber()
     {
         var next = Substitute.For<IEventListener<IEventStream<int>>>();
         var subscriber = Substitute.For<IEventSubscriber>();
-        var sut = new EventListenerLockAllDecorator<int>( null );
+        var sut = new EventListenerConcurrentAllDecorator<int>( null );
 
         var _ = sut.Decorate( next, subscriber );
 
@@ -50,7 +50,7 @@ public class EventListenerLockAllDecoratorTests : TestsBase
         var actualEvents = new List<IEventStream<int>>();
         var next = EventListener.Create<IEventStream<int>>( actualEvents.Add );
         var subscriber = Substitute.For<IEventSubscriber>();
-        var sut = new EventListenerLockAllDecorator<int>( null );
+        var sut = new EventListenerConcurrentAllDecorator<int>( null );
         var listener = sut.Decorate( next, subscriber );
 
         foreach ( var e in sourceEvents )
@@ -63,7 +63,7 @@ public class EventListenerLockAllDecoratorTests : TestsBase
             foreach ( var e in sourceEvents )
             {
                 var decorator = e.ReceivedCalls().First().GetArguments().First();
-                decorator.Should().BeOfType<EventListenerLockDecorator<int>>();
+                decorator.Should().BeOfType<EventListenerConcurrentDecorator<int>>();
             }
         }
     }
@@ -81,7 +81,7 @@ public class EventListenerLockAllDecoratorTests : TestsBase
 
         var next = EventListener.Create<IEventStream<int>>( e => e.Listen( innerNext ) );
         var subscriber = Substitute.For<IEventSubscriber>();
-        var sut = new EventListenerLockAllDecorator<int>( sync );
+        var sut = new EventListenerConcurrentAllDecorator<int>( sync );
         var listener = sut.Decorate( next, subscriber );
 
         listener.React( inner );
@@ -97,7 +97,7 @@ public class EventListenerLockAllDecoratorTests : TestsBase
     {
         var next = Substitute.For<IEventListener<IEventStream<int>>>();
         var subscriber = Substitute.For<IEventSubscriber>();
-        var sut = new EventListenerLockAllDecorator<int>( null );
+        var sut = new EventListenerConcurrentAllDecorator<int>( null );
         var listener = sut.Decorate( next, subscriber );
 
         listener.OnDispose( source );
@@ -106,7 +106,7 @@ public class EventListenerLockAllDecoratorTests : TestsBase
     }
 
     [Fact]
-    public void LockAllExtension_ShouldCreateEventStreamThatAppliesLockDecoratorWithTheSameSyncObjectToEvents()
+    public void ConcurrentAllExtension_ShouldCreateEventStreamThatAppliesLockDecoratorWithTheSameSyncObjectToEvents()
     {
         var inner = Substitute.For<IEventStream<int>>();
         var expectedInner = Substitute.For<IEventStream<int>>();
@@ -115,7 +115,7 @@ public class EventListenerLockAllDecoratorTests : TestsBase
         var actualEvents = new List<IEventStream<int>>();
         var next = EventListener.Create<IEventStream<int>>( actualEvents.Add );
         var sut = new EventPublisher<IEventStream<int>>();
-        var decorated = sut.LockAll();
+        var decorated = sut.ConcurrentAll();
         decorated.Listen( next );
 
         sut.Publish( inner );
@@ -124,12 +124,12 @@ public class EventListenerLockAllDecoratorTests : TestsBase
         {
             actualEvents.Should().BeSequentiallyEqualTo( expectedInner );
             var decorator = inner.ReceivedCalls().First().GetArguments().First();
-            decorator.Should().BeOfType<EventListenerLockDecorator<int>>();
+            decorator.Should().BeOfType<EventListenerConcurrentDecorator<int>>();
         }
     }
 
     [Fact]
-    public void LockAllExtension_WithExplicitSyncObject_ShouldCreateEventStreamThatAppliesLockDecoratorWithTheSameSyncObjectToEvents()
+    public void ConcurrentAllExtension_WithExplicitSyncObject_ShouldCreateEventStreamThatAppliesLockDecoratorWithTheSameSyncObjectToEvents()
     {
         var sync = new object();
         var inner = Substitute.For<IEventStream<int>>();
@@ -139,7 +139,7 @@ public class EventListenerLockAllDecoratorTests : TestsBase
         var actualEvents = new List<IEventStream<int>>();
         var next = EventListener.Create<IEventStream<int>>( actualEvents.Add );
         var sut = new EventPublisher<IEventStream<int>>();
-        var decorated = sut.LockAll( sync );
+        var decorated = sut.ConcurrentAll( sync );
         decorated.Listen( next );
 
         sut.Publish( inner );
@@ -148,12 +148,12 @@ public class EventListenerLockAllDecoratorTests : TestsBase
         {
             actualEvents.Should().BeSequentiallyEqualTo( expectedInner );
             var decorator = inner.ReceivedCalls().First().GetArguments().First();
-            decorator.Should().BeOfType<EventListenerLockDecorator<int>>();
+            decorator.Should().BeOfType<EventListenerConcurrentDecorator<int>>();
         }
     }
 
     [Fact]
-    public void ShareLockWithAllExtension_ShouldApplyLockToOuterStreamAndAllInnerStreams()
+    public void ShareConcurrencyWithAllExtension_ShouldApplyLockToOuterStreamAndAllInnerStreams()
     {
         var expectedSecondDecorateResult = Substitute.For<IEventStream<IEventStream<int>>>();
 
@@ -165,17 +165,17 @@ public class EventListenerLockAllDecoratorTests : TestsBase
         sut.Decorate( Arg.Any<IEventListenerDecorator<IEventStream<int>, IEventStream<int>>>() )
             .Returns( expectedFirstDecorateResult );
 
-        var result = sut.ShareLockWithAll();
+        var result = sut.ShareConcurrencyWithAll();
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( expectedSecondDecorateResult );
 
             var sutDecorator = sut.ReceivedCalls().First().GetArguments().First();
-            sutDecorator.Should().BeOfType<EventListenerLockDecorator<IEventStream<int>>>();
+            sutDecorator.Should().BeOfType<EventListenerConcurrentDecorator<IEventStream<int>>>();
 
             var nextDecorator = expectedFirstDecorateResult.ReceivedCalls().First().GetArguments().First();
-            nextDecorator.Should().BeOfType<EventListenerLockAllDecorator<int>>();
+            nextDecorator.Should().BeOfType<EventListenerConcurrentAllDecorator<int>>();
         }
     }
 }

@@ -3,30 +3,29 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 
-namespace LfrlAnvil
+namespace LfrlAnvil;
+
+public sealed class Many<T> : IReadOnlyList<T>
 {
-    public sealed class Many<T> : IReadOnlyList<T>
+    private readonly T[] _values;
+
+    public Many(params T[] values)
     {
-        private readonly T[] _values;
+        _values = values;
+    }
 
-        public Many(params T[] values)
-        {
-            _values = values;
-        }
+    public int Count => _values.Length;
+    public T this[int index] => _values[index];
 
-        public int Count => _values.Length;
-        public T this[int index] => _values[index];
+    [Pure]
+    public IEnumerator<T> GetEnumerator()
+    {
+        return _values.AsEnumerable().GetEnumerator();
+    }
 
-        [Pure]
-        public IEnumerator<T> GetEnumerator()
-        {
-            return _values.AsEnumerable().GetEnumerator();
-        }
-
-        [Pure]
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+    [Pure]
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
     }
 }

@@ -1,4 +1,3 @@
-﻿namespace LfrlAnvil.Tests.ExtensionsTests.CollectionTests
-{
-    public class CollectionExtensionsOfInt32Tests : GenericCollectionExtensionsTests<int> { }
-}
+﻿namespace LfrlAnvil.Tests.ExtensionsTests.CollectionTests;
+
+public class CollectionExtensionsOfInt32Tests : GenericCollectionExtensionsTests<int> { }

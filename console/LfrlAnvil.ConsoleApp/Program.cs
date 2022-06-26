@@ -28,7 +28,7 @@ async Task RunTimer(IEventSource<WithInterval<long>> timer, Action starter, Dura
     var maxInterval = Duration.MinValue;
     var intervalSum = Duration.Zero;
 
-    timer.Lock()
+    timer.Concurrent()
         .Listen(
             EventListener.Create<WithInterval<long>>(
                 e =>

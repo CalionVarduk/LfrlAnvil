@@ -1,44 +1,43 @@
 ﻿using LfrlAnvil.TestExtensions;
 
-namespace LfrlAnvil.Tests.ExtensionsTests.TypeTests
+namespace LfrlAnvil.Tests.ExtensionsTests.TypeTests;
+
+public abstract class TypeTestsBase : TestsBase
 {
-    public abstract class TypeTestsBase : TestsBase
+    public interface INotImplemented { }
+
+    public interface IIndirectFromType { }
+
+    public interface IIndirectFromInterface { }
+
+    public interface IDirect : IIndirectFromInterface { }
+
+    public interface IBaseGeneric<out T> : IIndirectFromInterface
     {
-        public interface INotImplemented { }
+        T Value { get; }
+    }
 
-        public interface IIndirectFromType { }
+    public interface INonGenericInterface : IDirect { }
 
-        public interface IIndirectFromInterface { }
+    public interface IGenericInterface<out T> : IDirect, IBaseGeneric<T> { }
 
-        public interface IDirect : IIndirectFromInterface { }
+    public interface IMultiGenericClosedInterface : IBaseGeneric<int>, IBaseGeneric<string> { }
 
-        public interface IBaseGeneric<out T> : IIndirectFromInterface
-        {
-            T Value { get; }
-        }
+    public class NotExtended { }
 
-        public interface INonGenericInterface : IDirect { }
+    public class BaseClass : IIndirectFromType { }
 
-        public interface IGenericInterface<out T> : IDirect, IBaseGeneric<T> { }
+    public class BaseGenericClass<T> : BaseClass, IBaseGeneric<T?>
+    {
+        T? IBaseGeneric<T?>.Value => default;
+    }
 
-        public interface IMultiGenericClosedInterface : IBaseGeneric<int>, IBaseGeneric<string> { }
+    public class NonGenericClass : BaseClass, IDirect { }
 
-        public class NotExtended { }
+    public class GenericClass<T> : BaseGenericClass<T>, IDirect { }
 
-        public class BaseClass : IIndirectFromType { }
-
-        public class BaseGenericClass<T> : BaseClass, IBaseGeneric<T?>
-        {
-            T? IBaseGeneric<T?>.Value => default;
-        }
-
-        public class NonGenericClass : BaseClass, IDirect { }
-
-        public class GenericClass<T> : BaseGenericClass<T>, IDirect { }
-
-        public class MultiGenericClass<T1, T2> : BaseGenericClass<T1>, IBaseGeneric<T2?>
-        {
-            T2? IBaseGeneric<T2?>.Value => default;
-        }
+    public class MultiGenericClass<T1, T2> : BaseGenericClass<T1>, IBaseGeneric<T2?>
+    {
+        T2? IBaseGeneric<T2?>.Value => default;
     }
 }

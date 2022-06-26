@@ -1,10 +1,9 @@
 ﻿using System;
 
-namespace LfrlAnvil.Exceptions
+namespace LfrlAnvil.Exceptions;
+
+public class LazyDisposableAssignmentException : InvalidOperationException
 {
-    public class LazyDisposableAssignmentException : InvalidOperationException
-    {
-        public LazyDisposableAssignmentException()
-            : base( ExceptionResources.LazyDisposableCannotAssign ) { }
-    }
+    public LazyDisposableAssignmentException()
+        : base( ExceptionResources.LazyDisposableCannotAssign ) { }
 }

@@ -1,4 +1,3 @@
-﻿namespace LfrlAnvil.Tests.ExtensionsTests.BoundsTests
-{
-    public class GenericBoundsExtensionsOfInt32Tests : GenericBoundsExtensionsTests<int> { }
-}
+﻿namespace LfrlAnvil.Tests.ExtensionsTests.BoundsTests;
+
+public class GenericBoundsExtensionsOfInt32Tests : GenericBoundsExtensionsTests<int> { }

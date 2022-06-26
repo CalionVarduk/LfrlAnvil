@@ -1,10 +1,9 @@
 ﻿using System;
 
-namespace LfrlAnvil.Generators
+namespace LfrlAnvil.Generators;
+
+public interface ISequenceGenerator<T> : IBoundGenerator<T>
+    where T : IComparable<T>
 {
-    public interface ISequenceGenerator<T> : IBoundGenerator<T>
-        where T : IComparable<T>
-    {
-        T Step { get; }
-    }
+    T Step { get; }
 }

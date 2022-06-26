@@ -13,14 +13,14 @@ using Xunit;
 
 namespace LfrlAnvil.Reactive.Tests.DecoratorsTests;
 
-public class EventListenerLockDecoratorTests : TestsBase
+public class EventListenerConcurrentDecoratorTests : TestsBase
 {
     [Fact]
     public void Decorate_ShouldNotDisposeTheSubscriber()
     {
         var next = Substitute.For<IEventListener<int>>();
         var subscriber = Substitute.For<IEventSubscriber>();
-        var sut = new EventListenerLockDecorator<int>( null );
+        var sut = new EventListenerConcurrentDecorator<int>( null );
 
         var _ = sut.Decorate( next, subscriber );
 
@@ -35,7 +35,7 @@ public class EventListenerLockDecoratorTests : TestsBase
 
         var next = EventListener.Create<int>( actualEvents.Add );
         var subscriber = Substitute.For<IEventSubscriber>();
-        var sut = new EventListenerLockDecorator<int>( null );
+        var sut = new EventListenerConcurrentDecorator<int>( null );
         var listener = sut.Decorate( next, subscriber );
 
         foreach ( var e in sourceEvents )
@@ -51,7 +51,7 @@ public class EventListenerLockDecoratorTests : TestsBase
     {
         var next = Substitute.For<IEventListener<int>>();
         var subscriber = Substitute.For<IEventSubscriber>();
-        var sut = new EventListenerLockDecorator<int>( null );
+        var sut = new EventListenerConcurrentDecorator<int>( null );
         var listener = sut.Decorate( next, subscriber );
 
         listener.OnDispose( source );
@@ -67,7 +67,7 @@ public class EventListenerLockDecoratorTests : TestsBase
     {
         var next = Substitute.For<IEventListener<int>>();
         var subscriber = Substitute.For<IEventSubscriber>();
-        var sut = new EventListenerLockDecorator<int>( null );
+        var sut = new EventListenerConcurrentDecorator<int>( null );
         var listener = sut.Decorate( next, subscriber );
 
         listener.OnDispose( source );
@@ -87,7 +87,7 @@ public class EventListenerLockDecoratorTests : TestsBase
             .Do( _ => { hasLock = Monitor.IsEntered( sync ); } );
 
         var subscriber = Substitute.For<IEventSubscriber>();
-        var sut = new EventListenerLockDecorator<int>( sync );
+        var sut = new EventListenerConcurrentDecorator<int>( sync );
         var listener = sut.Decorate( next, subscriber );
 
         listener.React( Fixture.Create<int>() );
@@ -108,7 +108,7 @@ public class EventListenerLockDecoratorTests : TestsBase
             .Do( _ => { hasLock = Monitor.IsEntered( sync ); } );
 
         var subscriber = Substitute.For<IEventSubscriber>();
-        var sut = new EventListenerLockDecorator<int>( sync );
+        var sut = new EventListenerConcurrentDecorator<int>( sync );
         var listener = sut.Decorate( next, subscriber );
 
         listener.OnDispose( source );
@@ -123,7 +123,7 @@ public class EventListenerLockDecoratorTests : TestsBase
     {
         var next = Substitute.For<IEventListener<int>>();
         var subscriber = Substitute.For<IEventSubscriber>();
-        var sut = new EventListenerLockDecorator<int>( null );
+        var sut = new EventListenerConcurrentDecorator<int>( null );
         var listener = sut.Decorate( next, subscriber );
 
         listener.OnDispose( source );
@@ -132,14 +132,14 @@ public class EventListenerLockDecoratorTests : TestsBase
     }
 
     [Fact]
-    public void LockExtension_ShouldCreateEventStreamThatForwardsEventsAndEmitsValues()
+    public void ConcurrentExtension_ShouldCreateEventStreamThatForwardsEventsAndEmitsValues()
     {
         var sourceEvents = new[] { 1, 2, 3, 5, 7, 11, 13, 17, 19, 23 };
         var actualEvents = new List<int>();
 
         var next = EventListener.Create<int>( actualEvents.Add );
         var sut = new EventPublisher<int>();
-        var decorated = sut.Lock();
+        var decorated = sut.Concurrent();
         decorated.Listen( next );
 
         foreach ( var e in sourceEvents )
@@ -149,7 +149,7 @@ public class EventListenerLockDecoratorTests : TestsBase
     }
 
     [Fact]
-    public void LockExtension_WithExplicitSyncObject_ShouldCreateEventStreamThatForwardsEventsAndEmitsValues()
+    public void ConcurrentExtension_WithExplicitSyncObject_ShouldCreateEventStreamThatForwardsEventsAndEmitsValues()
     {
         var sync = new object();
         var sourceEvents = new[] { 1, 2, 3, 5, 7, 11, 13, 17, 19, 23 };
@@ -157,7 +157,7 @@ public class EventListenerLockDecoratorTests : TestsBase
 
         var next = EventListener.Create<int>( actualEvents.Add );
         var sut = new EventPublisher<int>();
-        var decorated = sut.Lock( sync );
+        var decorated = sut.Concurrent( sync );
         decorated.Listen( next );
 
         foreach ( var e in sourceEvents )
@@ -167,7 +167,7 @@ public class EventListenerLockDecoratorTests : TestsBase
     }
 
     [Fact]
-    public void ShareLockWithExtension_ShouldApplyLockToBothStreams()
+    public void ShareConcurrencyWithExtension_ShouldApplyLockToBothStreams()
     {
         var expectedSutDecorateResult = Substitute.For<IEventStream<int>>();
         var expectedOtherDecorateResult = Substitute.For<IEventStream<string>>();
@@ -176,7 +176,7 @@ public class EventListenerLockDecoratorTests : TestsBase
         var other = Substitute.For<IEventStream<string>>();
         other.Decorate( Arg.Any<IEventListenerDecorator<string, string>>() ).Returns( expectedOtherDecorateResult );
 
-        var (sutDecorateResult, otherDecorateResult) = sut.ShareLockWith( other, (a, b) => (a, b) );
+        var (sutDecorateResult, otherDecorateResult) = sut.ShareConcurrencyWith( other, (a, b) => (a, b) );
 
         using ( new AssertionScope() )
         {
@@ -184,10 +184,10 @@ public class EventListenerLockDecoratorTests : TestsBase
             otherDecorateResult.Should().BeSameAs( expectedOtherDecorateResult );
 
             var sutDecorator = sut.ReceivedCalls().First().GetArguments().First();
-            sutDecorator.Should().BeOfType<EventListenerLockDecorator<int>>();
+            sutDecorator.Should().BeOfType<EventListenerConcurrentDecorator<int>>();
 
             var otherDecorator = other.ReceivedCalls().First().GetArguments().First();
-            otherDecorator.Should().BeOfType<EventListenerLockDecorator<string>>();
+            otherDecorator.Should().BeOfType<EventListenerConcurrentDecorator<string>>();
         }
     }
 }

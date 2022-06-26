@@ -4,29 +4,28 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Internal;
 
-namespace LfrlAnvil
+namespace LfrlAnvil;
+
+public static class EqualityComparerFactory<T>
 {
-    public static class EqualityComparerFactory<T>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static IEqualityComparer<T> CreateDefault()
     {
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static IEqualityComparer<T> CreateDefault()
-        {
-            return EqualityComparer<T>.Default;
-        }
+        return EqualityComparer<T>.Default;
+    }
 
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static IEqualityComparer<T> Create(Func<T?, T?, bool> equalityComparer)
-        {
-            return new LambdaEqualityComparer<T>( equalityComparer );
-        }
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static IEqualityComparer<T> Create(Func<T?, T?, bool> equalityComparer)
+    {
+        return new LambdaEqualityComparer<T>( equalityComparer );
+    }
 
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static IEqualityComparer<T> Create(Func<T?, T?, bool> equalityComparer, Func<T, int> hashCodeCalculator)
-        {
-            return new LambdaEqualityComparer<T>( equalityComparer, hashCodeCalculator );
-        }
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static IEqualityComparer<T> Create(Func<T?, T?, bool> equalityComparer, Func<T, int> hashCodeCalculator)
+    {
+        return new LambdaEqualityComparer<T>( equalityComparer, hashCodeCalculator );
     }
 }

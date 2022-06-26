@@ -1,10 +1,9 @@
 ﻿using System;
 
-namespace LfrlAnvil.Exceptions
+namespace LfrlAnvil.Exceptions;
+
+public class ValueGenerationException : InvalidOperationException
 {
-    public class ValueGenerationException : InvalidOperationException
-    {
-        public ValueGenerationException()
-            : base( ExceptionResources.FailedToGenerateNextValue ) { }
-    }
+    public ValueGenerationException()
+        : base( ExceptionResources.FailedToGenerateNextValue ) { }
 }

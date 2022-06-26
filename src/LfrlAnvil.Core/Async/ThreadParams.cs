@@ -1,13 +1,12 @@
 ﻿using System.Globalization;
 using System.Threading;
 
-namespace LfrlAnvil.Async
+namespace LfrlAnvil.Async;
+
+public struct ThreadParams
 {
-    public struct ThreadParams
-    {
-        public CultureInfo? Culture;
-        public CultureInfo? UICulture;
-        public string? Name;
-        public ThreadPriority? Priority;
-    }
+    public CultureInfo? Culture;
+    public CultureInfo? UICulture;
+    public string? Name;
+    public ThreadPriority? Priority;
 }

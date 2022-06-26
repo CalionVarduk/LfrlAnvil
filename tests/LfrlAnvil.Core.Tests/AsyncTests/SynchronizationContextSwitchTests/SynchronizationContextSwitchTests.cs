@@ -5,40 +5,39 @@ using LfrlAnvil.Async;
 using LfrlAnvil.TestExtensions;
 using Xunit;
 
-namespace LfrlAnvil.Tests.AsyncTests.SynchronizationContextSwitchTests
+namespace LfrlAnvil.Tests.AsyncTests.SynchronizationContextSwitchTests;
+
+public class SynchronizationContextSwitchTests : TestsBase
 {
-    public class SynchronizationContextSwitchTests : TestsBase
+    [Fact]
+    public void Ctor_ShouldOverrideCurrentContextWithProvidedContext()
     {
-        [Fact]
-        public void Ctor_ShouldOverrideCurrentContextWithProvidedContext()
-        {
-            var previousContext = SynchronizationContext.Current;
-            var context = new SynchronizationContext();
-            var sut = new SynchronizationContextSwitch( context );
+        var previousContext = SynchronizationContext.Current;
+        var context = new SynchronizationContext();
+        var sut = new SynchronizationContextSwitch( context );
 
-            using ( new AssertionScope() )
-            {
-                sut.PreviousContext.Should().BeSameAs( previousContext );
-                sut.Context.Should().BeSameAs( context );
-                SynchronizationContext.Current.Should().BeSameAs( context );
-            }
+        using ( new AssertionScope() )
+        {
+            sut.PreviousContext.Should().BeSameAs( previousContext );
+            sut.Context.Should().BeSameAs( context );
+            SynchronizationContext.Current.Should().BeSameAs( context );
         }
+    }
 
-        [Fact]
-        public void Dispose_ShouldRevertContextSwitch()
+    [Fact]
+    public void Dispose_ShouldRevertContextSwitch()
+    {
+        var previousContext = SynchronizationContext.Current;
+        var context = new SynchronizationContext();
+        var sut = new SynchronizationContextSwitch( context );
+
+        sut.Dispose();
+
+        using ( new AssertionScope() )
         {
-            var previousContext = SynchronizationContext.Current;
-            var context = new SynchronizationContext();
-            var sut = new SynchronizationContextSwitch( context );
-
-            sut.Dispose();
-
-            using ( new AssertionScope() )
-            {
-                sut.PreviousContext.Should().BeSameAs( previousContext );
-                sut.Context.Should().BeSameAs( context );
-                SynchronizationContext.Current.Should().BeSameAs( previousContext );
-            }
+            sut.PreviousContext.Should().BeSameAs( previousContext );
+            sut.Context.Should().BeSameAs( context );
+            SynchronizationContext.Current.Should().BeSameAs( previousContext );
         }
     }
 }

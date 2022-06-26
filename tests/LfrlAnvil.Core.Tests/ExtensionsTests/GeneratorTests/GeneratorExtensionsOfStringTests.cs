@@ -1,4 +1,3 @@
-﻿namespace LfrlAnvil.Tests.ExtensionsTests.GeneratorTests
-{
-    public class GeneratorExtensionsOfStringTests : GenericGeneratorExtensionsTests<string> { }
-}
+﻿namespace LfrlAnvil.Tests.ExtensionsTests.GeneratorTests;
+
+public class GeneratorExtensionsOfStringTests : GenericGeneratorExtensionsTests<string> { }

@@ -1,4 +1,3 @@
-﻿namespace LfrlAnvil.Tests.EqualityTests
-{
-    public class EqualityOfInt32Tests : GenericEqualityTests<int> { }
-}
+﻿namespace LfrlAnvil.Tests.EqualityTests;
+
+public class EqualityOfInt32Tests : GenericEqualityTests<int> { }
