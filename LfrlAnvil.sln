@@ -61,6 +61,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.Reactive.Chrono",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.Reactive.Chrono.Tests", "tests\LfrlAnvil.Reactive.Tests\LfrlAnvil.Reactive.Chrono.Tests\LfrlAnvil.Reactive.Chrono.Tests.csproj", "{0C142DB0-7907-42D9-A4E0-8847C1AD6871}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "LfrlAnvil.Mathematical", "LfrlAnvil.Mathematical", "{00A3D6BB-0C0F-43FA-B532-B56D3FE7399C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.Mathematical.Expressions", "src\LfrlAnvil.Mathematical\LfrlAnvil.Mathematical.Expressions\LfrlAnvil.Mathematical.Expressions.csproj", "{C8A696A9-FE61-4B58-BC72-397807FE0121}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "LfrlAnvil.Mathematical.Tests", "LfrlAnvil.Mathematical.Tests", "{1F9FD778-E970-48A3-AF1B-7817C4113E7A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.Mathematical.Expressions.Tests", "tests\LfrlAnvil.Mathematical.Tests\LfrlAnvil.Mathematical.Expressions.Tests\LfrlAnvil.Mathematical.Expressions.Tests.csproj", "{059D8E0F-1012-4105-9151-0A17D89FF8FD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -159,6 +167,14 @@ Global
 		{0C142DB0-7907-42D9-A4E0-8847C1AD6871}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0C142DB0-7907-42D9-A4E0-8847C1AD6871}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0C142DB0-7907-42D9-A4E0-8847C1AD6871}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C8A696A9-FE61-4B58-BC72-397807FE0121}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8A696A9-FE61-4B58-BC72-397807FE0121}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8A696A9-FE61-4B58-BC72-397807FE0121}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8A696A9-FE61-4B58-BC72-397807FE0121}.Release|Any CPU.Build.0 = Release|Any CPU
+		{059D8E0F-1012-4105-9151-0A17D89FF8FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{059D8E0F-1012-4105-9151-0A17D89FF8FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{059D8E0F-1012-4105-9151-0A17D89FF8FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{059D8E0F-1012-4105-9151-0A17D89FF8FD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -189,6 +205,10 @@ Global
 		{82806DCE-E69F-4914-A677-29CEBF64020B} = {A7FCB7E4-087D-45D3-B505-7EB5FEC97AB6}
 		{827D9C50-258C-4E77-8EA8-7D9343B89F6F} = {EB63C054-F72C-4A32-8035-34336AB3832F}
 		{0C142DB0-7907-42D9-A4E0-8847C1AD6871} = {A7FCB7E4-087D-45D3-B505-7EB5FEC97AB6}
+		{00A3D6BB-0C0F-43FA-B532-B56D3FE7399C} = {DA5FF8FC-7936-4469-94B0-34EF8455EE5D}
+		{C8A696A9-FE61-4B58-BC72-397807FE0121} = {00A3D6BB-0C0F-43FA-B532-B56D3FE7399C}
+		{1F9FD778-E970-48A3-AF1B-7817C4113E7A} = {09DABFA2-E13A-419B-9EEC-11A014E1243C}
+		{059D8E0F-1012-4105-9151-0A17D89FF8FD} = {1F9FD778-E970-48A3-AF1B-7817C4113E7A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3FEF45BB-2269-4080-B6FD-C782F257A901}
