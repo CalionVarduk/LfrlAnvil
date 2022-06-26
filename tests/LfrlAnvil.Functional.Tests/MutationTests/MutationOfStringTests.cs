@@ -1,4 +1,3 @@
-﻿namespace LfrlAnvil.Functional.Tests.MutationTests
-{
-    public class MutationOfStringTests : GenericMutationTests<string> { }
-}
+﻿namespace LfrlAnvil.Functional.Tests.MutationTests;
+
+public class MutationOfStringTests : GenericMutationTests<string> { }

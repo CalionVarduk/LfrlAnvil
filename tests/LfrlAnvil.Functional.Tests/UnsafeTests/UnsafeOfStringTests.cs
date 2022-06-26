@@ -1,4 +1,3 @@
-﻿namespace LfrlAnvil.Functional.Tests.UnsafeTests
-{
-    public class UnsafeOfStringTests : GenericUnsafeTests<string> { }
-}
+﻿namespace LfrlAnvil.Functional.Tests.UnsafeTests;
+
+public class UnsafeOfStringTests : GenericUnsafeTests<string> { }

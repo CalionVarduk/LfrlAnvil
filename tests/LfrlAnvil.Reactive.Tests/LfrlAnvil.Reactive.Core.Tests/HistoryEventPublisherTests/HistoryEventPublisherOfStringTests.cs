@@ -1,4 +1,3 @@
-﻿namespace LfrlAnvil.Reactive.Tests.HistoryEventPublisherTests
-{
-    public class HistoryEventPublisherOfStringTests : GenericHistoryEventPublisherTests<string> { }
-}
+﻿namespace LfrlAnvil.Reactive.Tests.HistoryEventPublisherTests;
+
+public class HistoryEventPublisherOfStringTests : GenericHistoryEventPublisherTests<string> { }

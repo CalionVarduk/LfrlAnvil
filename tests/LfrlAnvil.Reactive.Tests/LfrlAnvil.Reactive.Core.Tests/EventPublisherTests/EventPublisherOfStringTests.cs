@@ -1,4 +1,3 @@
-﻿namespace LfrlAnvil.Reactive.Tests.EventPublisherTests
-{
-    public class EventPublisherOfStringTests : GenericEventPublisherTests<string> { }
-}
+﻿namespace LfrlAnvil.Reactive.Tests.EventPublisherTests;
+
+public class EventPublisherOfStringTests : GenericEventPublisherTests<string> { }

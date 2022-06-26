@@ -12,113 +12,112 @@ using LfrlAnvil.TestExtensions.FluentAssertions;
 using NSubstitute;
 using Xunit;
 
-namespace LfrlAnvil.Reactive.Tests.DecoratorsTests
+namespace LfrlAnvil.Reactive.Tests.DecoratorsTests;
+
+public class EventListenerUseSynchronizationContextDecoratorTests : TestsBase
 {
-    public class EventListenerUseSynchronizationContextDecoratorTests : TestsBase
+    [Fact]
+    public void Ctor_ShouldThrowInvalidOperationException_WhenCurrentSynchronizationContextIsNull()
     {
-        [Fact]
-        public void Ctor_ShouldThrowInvalidOperationException_WhenCurrentSynchronizationContextIsNull()
+        using var @switch = new SynchronizationContextSwitch( null );
+        var action = Lambda.Of( () => new EventListenerUseSynchronizationContextDecorator<int>() );
+        action.Should().ThrowExactly<InvalidOperationException>();
+    }
+
+    [Fact]
+    public void Decorate_ShouldNotDisposeTheSubscriber()
+    {
+        var next = Substitute.For<IEventListener<int>>();
+        var subscriber = Substitute.For<IEventSubscriber>();
+        var sut = new EventListenerUseSynchronizationContextDecorator<int>();
+
+        var _ = sut.Decorate( next, subscriber );
+
+        subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
+    }
+
+    [Fact]
+    public void Decorate_ShouldCreateListenerThatForwardsEventsToTheMemorizedSynchronizationContext()
+    {
+        var context = Substitute.ForPartsOf<SynchronizationContext>();
+        context.When( x => x.Post( Arg.Any<SendOrPostCallback>(), Arg.Any<object?>() ) )
+            .Do( c => c.ArgAt<SendOrPostCallback>( 0 )( c.ArgAt<object?>( 1 ) ) );
+
+        var sourceEvent = Fixture.Create<int>();
+        var next = Substitute.For<IEventListener<int>>();
+        var subscriber = Substitute.For<IEventSubscriber>();
+
+        EventListenerUseSynchronizationContextDecorator<int> sut;
+        using ( new SynchronizationContextSwitch( context ) )
         {
-            using var @switch = new SynchronizationContextSwitch( null );
-            var action = Lambda.Of( () => new EventListenerUseSynchronizationContextDecorator<int>() );
-            action.Should().ThrowExactly<InvalidOperationException>();
+            sut = new EventListenerUseSynchronizationContextDecorator<int>();
         }
 
-        [Fact]
-        public void Decorate_ShouldNotDisposeTheSubscriber()
+        var listener = sut.Decorate( next, subscriber );
+
+        listener.React( sourceEvent );
+
+        using ( new AssertionScope() )
         {
-            var next = Substitute.For<IEventListener<int>>();
-            var subscriber = Substitute.For<IEventSubscriber>();
-            var sut = new EventListenerUseSynchronizationContextDecorator<int>();
+            context.VerifyCalls().Received( x => x.Post( Arg.Any<SendOrPostCallback>(), null ), count: 1 );
+            next.VerifyCalls().Received( x => x.React( sourceEvent ) );
+        }
+    }
 
-            var _ = sut.Decorate( next, subscriber );
+    [Theory]
+    [InlineData( DisposalSource.EventSource )]
+    [InlineData( DisposalSource.Subscriber )]
+    public void Decorate_ShouldCreateListenerWhoseOnDisposeCallsNextOnDispose(DisposalSource source)
+    {
+        var context = Substitute.ForPartsOf<SynchronizationContext>();
+        context.When( x => x.Post( Arg.Any<SendOrPostCallback>(), Arg.Any<object?>() ) )
+            .Do( c => c.ArgAt<SendOrPostCallback>( 0 )( c.ArgAt<object?>( 1 ) ) );
 
-            subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
+        var next = Substitute.For<IEventListener<int>>();
+        var subscriber = Substitute.For<IEventSubscriber>();
+
+        EventListenerUseSynchronizationContextDecorator<int> sut;
+        using ( new SynchronizationContextSwitch( context ) )
+        {
+            sut = new EventListenerUseSynchronizationContextDecorator<int>();
         }
 
-        [Fact]
-        public void Decorate_ShouldCreateListenerThatForwardsEventsToTheMemorizedSynchronizationContext()
+        var listener = sut.Decorate( next, subscriber );
+
+        listener.OnDispose( source );
+
+        using ( new AssertionScope() )
         {
-            var context = Substitute.ForPartsOf<SynchronizationContext>();
-            context.When( x => x.Post( Arg.Any<SendOrPostCallback>(), Arg.Any<object?>() ) )
-                .Do( c => c.ArgAt<SendOrPostCallback>( 0 )( c.ArgAt<object?>( 1 ) ) );
+            context.VerifyCalls().Received( x => x.Post( Arg.Any<SendOrPostCallback>(), null ), count: 1 );
+            next.VerifyCalls().Received( x => x.OnDispose( source ) );
+        }
+    }
 
-            var sourceEvent = Fixture.Create<int>();
-            var next = Substitute.For<IEventListener<int>>();
-            var subscriber = Substitute.For<IEventSubscriber>();
+    [Fact]
+    public void UseSynchronizationContextExtension_ShouldCreateEventStreamThatForwardsEventsToTheMemorizedSynchronizationContext()
+    {
+        var context = Substitute.ForPartsOf<SynchronizationContext>();
+        context.When( x => x.Post( Arg.Any<SendOrPostCallback>(), Arg.Any<object?>() ) )
+            .Do( c => c.ArgAt<SendOrPostCallback>( 0 )( c.ArgAt<object?>( 1 ) ) );
 
-            EventListenerUseSynchronizationContextDecorator<int> sut;
-            using ( new SynchronizationContextSwitch( context ) )
-            {
-                sut = new EventListenerUseSynchronizationContextDecorator<int>();
-            }
+        var sourceEvent = Fixture.Create<int>();
+        var next = Substitute.For<IEventListener<int>>();
 
-            var listener = sut.Decorate( next, subscriber );
-
-            listener.React( sourceEvent );
-
-            using ( new AssertionScope() )
-            {
-                context.VerifyCalls().Received( x => x.Post( Arg.Any<SendOrPostCallback>(), null ), count: 1 );
-                next.VerifyCalls().Received( x => x.React( sourceEvent ) );
-            }
+        var sut = new EventPublisher<int>();
+        IEventStream<int> decorated;
+        using ( new SynchronizationContextSwitch( context ) )
+        {
+            decorated = sut.UseSynchronizationContext();
         }
 
-        [Theory]
-        [InlineData( DisposalSource.EventSource )]
-        [InlineData( DisposalSource.Subscriber )]
-        public void Decorate_ShouldCreateListenerWhoseOnDisposeCallsNextOnDispose(DisposalSource source)
+        decorated.Listen( next );
+
+        sut.Publish( sourceEvent );
+
+        using ( new AssertionScope() )
         {
-            var context = Substitute.ForPartsOf<SynchronizationContext>();
-            context.When( x => x.Post( Arg.Any<SendOrPostCallback>(), Arg.Any<object?>() ) )
-                .Do( c => c.ArgAt<SendOrPostCallback>( 0 )( c.ArgAt<object?>( 1 ) ) );
-
-            var next = Substitute.For<IEventListener<int>>();
-            var subscriber = Substitute.For<IEventSubscriber>();
-
-            EventListenerUseSynchronizationContextDecorator<int> sut;
-            using ( new SynchronizationContextSwitch( context ) )
-            {
-                sut = new EventListenerUseSynchronizationContextDecorator<int>();
-            }
-
-            var listener = sut.Decorate( next, subscriber );
-
-            listener.OnDispose( source );
-
-            using ( new AssertionScope() )
-            {
-                context.VerifyCalls().Received( x => x.Post( Arg.Any<SendOrPostCallback>(), null ), count: 1 );
-                next.VerifyCalls().Received( x => x.OnDispose( source ) );
-            }
-        }
-
-        [Fact]
-        public void UseSynchronizationContextExtension_ShouldCreateEventStreamThatForwardsEventsToTheMemorizedSynchronizationContext()
-        {
-            var context = Substitute.ForPartsOf<SynchronizationContext>();
-            context.When( x => x.Post( Arg.Any<SendOrPostCallback>(), Arg.Any<object?>() ) )
-                .Do( c => c.ArgAt<SendOrPostCallback>( 0 )( c.ArgAt<object?>( 1 ) ) );
-
-            var sourceEvent = Fixture.Create<int>();
-            var next = Substitute.For<IEventListener<int>>();
-
-            var sut = new EventPublisher<int>();
-            IEventStream<int> decorated;
-            using ( new SynchronizationContextSwitch( context ) )
-            {
-                decorated = sut.UseSynchronizationContext();
-            }
-
-            decorated.Listen( next );
-
-            sut.Publish( sourceEvent );
-
-            using ( new AssertionScope() )
-            {
-                context.VerifyCalls().Received( x => x.Post( Arg.Any<SendOrPostCallback>(), null ), count: 1 );
-                next.VerifyCalls().Received( x => x.React( sourceEvent ) );
-            }
+            context.VerifyCalls().Received( x => x.Post( Arg.Any<SendOrPostCallback>(), null ), count: 1 );
+            next.VerifyCalls().Received( x => x.React( sourceEvent ) );
         }
     }
 }

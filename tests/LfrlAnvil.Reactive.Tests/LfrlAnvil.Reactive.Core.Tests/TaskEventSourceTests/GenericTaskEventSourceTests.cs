@@ -13,338 +13,337 @@ using LfrlAnvil.TestExtensions.FluentAssertions;
 using NSubstitute;
 using Xunit;
 
-namespace LfrlAnvil.Reactive.Tests.TaskEventSourceTests
+namespace LfrlAnvil.Reactive.Tests.TaskEventSourceTests;
+
+public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
 {
-    public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
+    private readonly SynchronousTaskScheduler _scheduler = new SynchronousTaskScheduler();
+
+    [Fact]
+    public void Ctor_WithCapturedTaskScheduler_ShouldCreateEventSourceWithoutSubscriptions()
     {
-        private readonly SynchronousTaskScheduler _scheduler = new SynchronousTaskScheduler();
+        var sut = new TaskEventSource<TEvent>(
+            _ => Task.FromResult( Fixture.Create<TEvent>() ),
+            new TaskSchedulerCapture( _scheduler ) );
 
-        [Fact]
-        public void Ctor_WithCapturedTaskScheduler_ShouldCreateEventSourceWithoutSubscriptions()
+        sut.HasSubscribers.Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData( TaskSchedulerCaptureStrategy.None )]
+    [InlineData( TaskSchedulerCaptureStrategy.Current )]
+    [InlineData( TaskSchedulerCaptureStrategy.Lazy )]
+    public void Ctor_WithTaskSchedulerCaptureStrategy_ShouldCreateEventSourceWithoutSubscriptions(TaskSchedulerCaptureStrategy strategy)
+    {
+        var sut = new TaskEventSource<TEvent>(
+            _ => Task.FromResult( Fixture.Create<TEvent>() ),
+            new TaskSchedulerCapture( strategy ) );
+
+        sut.HasSubscribers.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Listen_ShouldReturnDisposedSubscriber_WhenEventSourceIsDisposed()
+    {
+        var listener = Substitute.For<IEventListener<FromTask<TEvent>>>();
+        var sut = new TaskEventSource<TEvent>(
+            _ => Task.FromResult( Fixture.Create<TEvent>() ),
+            new TaskSchedulerCapture( _scheduler ) );
+
+        sut.Dispose();
+
+        var subscriber = sut.Listen( listener );
+
+        using ( new AssertionScope() )
         {
-            var sut = new TaskEventSource<TEvent>(
-                _ => Task.FromResult( Fixture.Create<TEvent>() ),
-                new TaskSchedulerCapture( _scheduler ) );
-
-            sut.HasSubscribers.Should().BeFalse();
+            subscriber.IsDisposed.Should().BeTrue();
+            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<FromTask<TEvent>>() ) );
         }
+    }
 
-        [Theory]
-        [InlineData( TaskSchedulerCaptureStrategy.None )]
-        [InlineData( TaskSchedulerCaptureStrategy.Current )]
-        [InlineData( TaskSchedulerCaptureStrategy.Lazy )]
-        public void Ctor_WithTaskSchedulerCaptureStrategy_ShouldCreateEventSourceWithoutSubscriptions(TaskSchedulerCaptureStrategy strategy)
-        {
-            var sut = new TaskEventSource<TEvent>(
-                _ => Task.FromResult( Fixture.Create<TEvent>() ),
-                new TaskSchedulerCapture( strategy ) );
-
-            sut.HasSubscribers.Should().BeFalse();
-        }
-
-        [Fact]
-        public void Listen_ShouldReturnDisposedSubscriber_WhenEventSourceIsDisposed()
-        {
-            var listener = Substitute.For<IEventListener<FromTask<TEvent>>>();
-            var sut = new TaskEventSource<TEvent>(
-                _ => Task.FromResult( Fixture.Create<TEvent>() ),
-                new TaskSchedulerCapture( _scheduler ) );
-
-            sut.Dispose();
-
-            var subscriber = sut.Listen( listener );
-
-            using ( new AssertionScope() )
+    [Fact]
+    public void Listen_ShouldCreateActiveSubscriberThatDoesNothing_UntilTaskCompletes()
+    {
+        var listener = Substitute.For<IEventListener<FromTask<TEvent>>>();
+        var sut = new TaskEventSource<TEvent>(
+            async ct =>
             {
-                subscriber.IsDisposed.Should().BeTrue();
-                listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<FromTask<TEvent>>() ) );
-            }
-        }
+                await Task.Delay( 100, ct );
+                return Fixture.Create<TEvent>();
+            },
+            new TaskSchedulerCapture( _scheduler ) );
 
-        [Fact]
-        public void Listen_ShouldCreateActiveSubscriberThatDoesNothing_UntilTaskCompletes()
+        var subscriber = sut.Listen( listener );
+
+        using ( new AssertionScope() )
         {
-            var listener = Substitute.For<IEventListener<FromTask<TEvent>>>();
-            var sut = new TaskEventSource<TEvent>(
-                async ct =>
-                {
-                    await Task.Delay( 100, ct );
-                    return Fixture.Create<TEvent>();
-                },
-                new TaskSchedulerCapture( _scheduler ) );
+            sut.HasSubscribers.Should().BeTrue();
+            subscriber.IsDisposed.Should().BeFalse();
+            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<FromTask<TEvent>>() ) );
+        }
+    }
 
-            var subscriber = sut.Listen( listener );
-
-            using ( new AssertionScope() )
+    [Fact]
+    public void Listen_WithLazyTaskSchedulerCaptureStrategy_ShouldCreateActiveSubscriberThatDoesNothing_UntilTaskCompletes()
+    {
+        var listener = Substitute.For<IEventListener<FromTask<TEvent>>>();
+        var sut = new TaskEventSource<TEvent>(
+            async ct =>
             {
-                sut.HasSubscribers.Should().BeTrue();
-                subscriber.IsDisposed.Should().BeFalse();
-                listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<FromTask<TEvent>>() ) );
-            }
-        }
+                await Task.Delay( 100, ct );
+                return Fixture.Create<TEvent>();
+            },
+            new TaskSchedulerCapture( TaskSchedulerCaptureStrategy.Lazy ) );
 
-        [Fact]
-        public void Listen_WithLazyTaskSchedulerCaptureStrategy_ShouldCreateActiveSubscriberThatDoesNothing_UntilTaskCompletes()
+        var subscriber = sut.Listen( listener );
+
+        using ( new AssertionScope() )
         {
-            var listener = Substitute.For<IEventListener<FromTask<TEvent>>>();
-            var sut = new TaskEventSource<TEvent>(
-                async ct =>
-                {
-                    await Task.Delay( 100, ct );
-                    return Fixture.Create<TEvent>();
-                },
-                new TaskSchedulerCapture( TaskSchedulerCaptureStrategy.Lazy ) );
-
-            var subscriber = sut.Listen( listener );
-
-            using ( new AssertionScope() )
-            {
-                sut.HasSubscribers.Should().BeTrue();
-                subscriber.IsDisposed.Should().BeFalse();
-                listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<FromTask<TEvent>>() ) );
-            }
+            sut.HasSubscribers.Should().BeTrue();
+            subscriber.IsDisposed.Should().BeFalse();
+            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<FromTask<TEvent>>() ) );
         }
+    }
 
-        [Fact]
-        public void Listen_ShouldCreateActiveSubscriberThatEmitsResultOnceAndThenDisposes_WhenTaskRanToCompletion()
-        {
-            var value = Fixture.Create<TEvent>();
-            var actualValues = new List<FromTask<TEvent>>();
+    [Fact]
+    public void Listen_ShouldCreateActiveSubscriberThatEmitsResultOnceAndThenDisposes_WhenTaskRanToCompletion()
+    {
+        var value = Fixture.Create<TEvent>();
+        var actualValues = new List<FromTask<TEvent>>();
 
-            var listener = EventListener.Create<FromTask<TEvent>>( actualValues.Add );
-            var sut = new TaskEventSource<TEvent>(
-                ct => new TaskFactory<TEvent>( _scheduler ).StartNew(
-                    () =>
-                    {
-                        Task.Delay( 1, ct ).Wait( ct );
-                        return value;
-                    },
-                    ct ),
-                new TaskSchedulerCapture( _scheduler ) );
-
-            var subscriber = sut.Listen( listener );
-
-            using ( new AssertionScope() )
-            {
-                sut.HasSubscribers.Should().BeFalse();
-                subscriber.IsDisposed.Should().BeTrue();
-
-                actualValues.Should()
-                    .HaveCount( 1 )
-                    .And.Subject.First()
-                    .Should()
-                    .BeEquivalentTo(
-                        new
-                        {
-                            Status = TaskStatus.RanToCompletion,
-                            Result = value,
-                            Exception = (AggregateException?)null,
-                            IsCanceled = false,
-                            IsFaulted = false,
-                            IsCompletedSuccessfully = true
-                        } );
-            }
-        }
-
-        [Fact]
-        public void Listen_ShouldCreateActiveSubscriberThatEmitsResultOnceAndThenDisposes_WhenTaskFaulted()
-        {
-            var exception = new Exception();
-            var actualValues = new List<FromTask<TEvent>>();
-
-            var listener = EventListener.Create<FromTask<TEvent>>( actualValues.Add );
-            var sut = new TaskEventSource<TEvent>(
-                ct => new TaskFactory<TEvent>( _scheduler ).StartNew(
-                    () =>
-                    {
-                        Task.Delay( 1, ct ).Wait( ct );
-                        throw exception;
-                    },
-                    ct ),
-                new TaskSchedulerCapture( _scheduler ) );
-
-            var subscriber = sut.Listen( listener );
-
-            using ( new AssertionScope() )
-            {
-                sut.HasSubscribers.Should().BeFalse();
-                subscriber.IsDisposed.Should().BeTrue();
-
-                actualValues.Should()
-                    .HaveCount( 1 )
-                    .And.Subject.First()
-                    .Should()
-                    .BeEquivalentTo(
-                        new
-                        {
-                            Status = TaskStatus.Faulted,
-                            Result = default( TEvent ),
-                            Exception = new AggregateException( exception ),
-                            IsCanceled = false,
-                            IsFaulted = true,
-                            IsCompletedSuccessfully = false
-                        } );
-            }
-        }
-
-        [Fact]
-        public void Listen_ShouldCreateActiveSubscriberThatEmitsResultOnceAndThenDisposes_WhenTaskCancelledDueToSubscriberDispose()
-        {
-            var actualValues = new List<FromTask<TEvent>>();
-
-            var listener = EventListener.Create<FromTask<TEvent>>( actualValues.Add );
-            var sut = new TaskEventSource<TEvent>(
-                async ct =>
-                {
-                    await Task.Delay( 100, ct );
-                    return Fixture.Create<TEvent>();
-                },
-                new TaskSchedulerCapture( _scheduler ) );
-
-            var subscriber = sut.Listen( listener );
-            subscriber.Dispose();
-
-            using ( new AssertionScope() )
-            {
-                sut.HasSubscribers.Should().BeFalse();
-                subscriber.IsDisposed.Should().BeTrue();
-
-                actualValues.Should()
-                    .HaveCount( 1 )
-                    .And.Subject.First()
-                    .Should()
-                    .BeEquivalentTo(
-                        new
-                        {
-                            Status = TaskStatus.Canceled,
-                            Result = default( TEvent ),
-                            Exception = (AggregateException?)null,
-                            IsCanceled = true,
-                            IsFaulted = false,
-                            IsCompletedSuccessfully = false
-                        } );
-            }
-        }
-
-        [Fact]
-        public void Listen_ShouldCreateActiveSubscriberThatEmitsResultOnceAndThenDisposes_WhenTaskCancelledDueToEventSourceDispose()
-        {
-            var actualValues = new List<FromTask<TEvent>>();
-
-            var listener = EventListener.Create<FromTask<TEvent>>( actualValues.Add );
-            var sut = new TaskEventSource<TEvent>(
-                async ct =>
-                {
-                    await Task.Delay( 100, ct );
-                    return Fixture.Create<TEvent>();
-                },
-                new TaskSchedulerCapture( _scheduler ) );
-
-            var subscriber = sut.Listen( listener );
-            sut.Dispose();
-
-            using ( new AssertionScope() )
-            {
-                sut.HasSubscribers.Should().BeFalse();
-                subscriber.IsDisposed.Should().BeTrue();
-
-                actualValues.Should()
-                    .HaveCount( 1 )
-                    .And.Subject.First()
-                    .Should()
-                    .BeEquivalentTo(
-                        new
-                        {
-                            Status = TaskStatus.Canceled,
-                            Result = default( TEvent ),
-                            Exception = (AggregateException?)null,
-                            IsCanceled = true,
-                            IsFaulted = false,
-                            IsCompletedSuccessfully = false
-                        } );
-            }
-        }
-
-        [Fact]
-        public void Listen_ShouldCreateActiveSubscriberThatAutomaticallyStartsTaskInCreatedStatusOnDefaultScheduler()
-        {
-            var task = new Task<TEvent>(
+        var listener = EventListener.Create<FromTask<TEvent>>( actualValues.Add );
+        var sut = new TaskEventSource<TEvent>(
+            ct => new TaskFactory<TEvent>( _scheduler ).StartNew(
                 () =>
                 {
-                    Task.Delay( 100 ).Wait();
-                    return Fixture.Create<TEvent>();
-                } );
-
-            var listener = Substitute.For<IEventListener<FromTask<TEvent>>>();
-            var sut = new TaskEventSource<TEvent>(
-                _ => task,
-                new TaskSchedulerCapture( _scheduler ) );
-
-            var subscriber = sut.Listen( listener );
-
-            using ( new AssertionScope() )
-            {
-                subscriber.IsDisposed.Should().BeFalse();
-                listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<FromTask<TEvent>>() ) );
-                task.Status.Should().NotBe( TaskStatus.Created );
-            }
-        }
-
-        [Fact]
-        public async Task Listen_ShouldCreateActiveSubscriberThatEmitsResultOnceAndThenDisposes_WhenTaskIsTrulyAsyncWithDefaultSchedulers()
-        {
-            var value = Fixture.Create<TEvent>();
-            var actualValues = new List<FromTask<TEvent>>();
-
-            var listener = EventListener.Create<FromTask<TEvent>>( actualValues.Add );
-            var sut = new TaskEventSource<TEvent>(
-                async ct =>
-                {
-                    await Task.Delay( 1, ct );
+                    Task.Delay( 1, ct ).Wait( ct );
                     return value;
                 },
-                new TaskSchedulerCapture( TaskSchedulerCaptureStrategy.None ) );
+                ct ),
+            new TaskSchedulerCapture( _scheduler ) );
 
-            var subscriber = sut.Listen( listener );
-            await Task.Delay( 100 );
+        var subscriber = sut.Listen( listener );
 
-            using ( new AssertionScope() )
+        using ( new AssertionScope() )
+        {
+            sut.HasSubscribers.Should().BeFalse();
+            subscriber.IsDisposed.Should().BeTrue();
+
+            actualValues.Should()
+                .HaveCount( 1 )
+                .And.Subject.First()
+                .Should()
+                .BeEquivalentTo(
+                    new
+                    {
+                        Status = TaskStatus.RanToCompletion,
+                        Result = value,
+                        Exception = (AggregateException?)null,
+                        IsCanceled = false,
+                        IsFaulted = false,
+                        IsCompletedSuccessfully = true
+                    } );
+        }
+    }
+
+    [Fact]
+    public void Listen_ShouldCreateActiveSubscriberThatEmitsResultOnceAndThenDisposes_WhenTaskFaulted()
+    {
+        var exception = new Exception();
+        var actualValues = new List<FromTask<TEvent>>();
+
+        var listener = EventListener.Create<FromTask<TEvent>>( actualValues.Add );
+        var sut = new TaskEventSource<TEvent>(
+            ct => new TaskFactory<TEvent>( _scheduler ).StartNew(
+                () =>
+                {
+                    Task.Delay( 1, ct ).Wait( ct );
+                    throw exception;
+                },
+                ct ),
+            new TaskSchedulerCapture( _scheduler ) );
+
+        var subscriber = sut.Listen( listener );
+
+        using ( new AssertionScope() )
+        {
+            sut.HasSubscribers.Should().BeFalse();
+            subscriber.IsDisposed.Should().BeTrue();
+
+            actualValues.Should()
+                .HaveCount( 1 )
+                .And.Subject.First()
+                .Should()
+                .BeEquivalentTo(
+                    new
+                    {
+                        Status = TaskStatus.Faulted,
+                        Result = default( TEvent ),
+                        Exception = new AggregateException( exception ),
+                        IsCanceled = false,
+                        IsFaulted = true,
+                        IsCompletedSuccessfully = false
+                    } );
+        }
+    }
+
+    [Fact]
+    public void Listen_ShouldCreateActiveSubscriberThatEmitsResultOnceAndThenDisposes_WhenTaskCancelledDueToSubscriberDispose()
+    {
+        var actualValues = new List<FromTask<TEvent>>();
+
+        var listener = EventListener.Create<FromTask<TEvent>>( actualValues.Add );
+        var sut = new TaskEventSource<TEvent>(
+            async ct =>
             {
-                sut.HasSubscribers.Should().BeFalse();
-                subscriber.IsDisposed.Should().BeTrue();
+                await Task.Delay( 100, ct );
+                return Fixture.Create<TEvent>();
+            },
+            new TaskSchedulerCapture( _scheduler ) );
 
-                actualValues.Should()
-                    .HaveCount( 1 )
-                    .And.Subject.First()
-                    .Should()
-                    .BeEquivalentTo(
-                        new
-                        {
-                            Status = TaskStatus.RanToCompletion,
-                            Result = value,
-                            Exception = (AggregateException?)null,
-                            IsCanceled = false,
-                            IsFaulted = false,
-                            IsCompletedSuccessfully = true
-                        } );
-            }
-        }
+        var subscriber = sut.Listen( listener );
+        subscriber.Dispose();
 
-        [Fact]
-        public void FromTask_WithCallbackScheduler_ShouldCreateEventSourceWithoutSubscriptions()
+        using ( new AssertionScope() )
         {
-            var sut = EventSource.FromTask( _ => Task.FromResult( Fixture.Create<TEvent>() ), new TaskSchedulerCapture( _scheduler ) );
             sut.HasSubscribers.Should().BeFalse();
-        }
+            subscriber.IsDisposed.Should().BeTrue();
 
-        [Theory]
-        [InlineData( TaskSchedulerCaptureStrategy.None )]
-        [InlineData( TaskSchedulerCaptureStrategy.Current )]
-        [InlineData( TaskSchedulerCaptureStrategy.Lazy )]
-        public void FromTask_WithContextCapture_ShouldCreateEventSourceWithoutSubscriptions(TaskSchedulerCaptureStrategy strategy)
-        {
-            var sut = EventSource.FromTask( _ => Task.FromResult( Fixture.Create<TEvent>() ), new TaskSchedulerCapture( strategy ) );
-            sut.HasSubscribers.Should().BeFalse();
+            actualValues.Should()
+                .HaveCount( 1 )
+                .And.Subject.First()
+                .Should()
+                .BeEquivalentTo(
+                    new
+                    {
+                        Status = TaskStatus.Canceled,
+                        Result = default( TEvent ),
+                        Exception = (AggregateException?)null,
+                        IsCanceled = true,
+                        IsFaulted = false,
+                        IsCompletedSuccessfully = false
+                    } );
         }
+    }
+
+    [Fact]
+    public void Listen_ShouldCreateActiveSubscriberThatEmitsResultOnceAndThenDisposes_WhenTaskCancelledDueToEventSourceDispose()
+    {
+        var actualValues = new List<FromTask<TEvent>>();
+
+        var listener = EventListener.Create<FromTask<TEvent>>( actualValues.Add );
+        var sut = new TaskEventSource<TEvent>(
+            async ct =>
+            {
+                await Task.Delay( 100, ct );
+                return Fixture.Create<TEvent>();
+            },
+            new TaskSchedulerCapture( _scheduler ) );
+
+        var subscriber = sut.Listen( listener );
+        sut.Dispose();
+
+        using ( new AssertionScope() )
+        {
+            sut.HasSubscribers.Should().BeFalse();
+            subscriber.IsDisposed.Should().BeTrue();
+
+            actualValues.Should()
+                .HaveCount( 1 )
+                .And.Subject.First()
+                .Should()
+                .BeEquivalentTo(
+                    new
+                    {
+                        Status = TaskStatus.Canceled,
+                        Result = default( TEvent ),
+                        Exception = (AggregateException?)null,
+                        IsCanceled = true,
+                        IsFaulted = false,
+                        IsCompletedSuccessfully = false
+                    } );
+        }
+    }
+
+    [Fact]
+    public void Listen_ShouldCreateActiveSubscriberThatAutomaticallyStartsTaskInCreatedStatusOnDefaultScheduler()
+    {
+        var task = new Task<TEvent>(
+            () =>
+            {
+                Task.Delay( 100 ).Wait();
+                return Fixture.Create<TEvent>();
+            } );
+
+        var listener = Substitute.For<IEventListener<FromTask<TEvent>>>();
+        var sut = new TaskEventSource<TEvent>(
+            _ => task,
+            new TaskSchedulerCapture( _scheduler ) );
+
+        var subscriber = sut.Listen( listener );
+
+        using ( new AssertionScope() )
+        {
+            subscriber.IsDisposed.Should().BeFalse();
+            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<FromTask<TEvent>>() ) );
+            task.Status.Should().NotBe( TaskStatus.Created );
+        }
+    }
+
+    [Fact]
+    public async Task Listen_ShouldCreateActiveSubscriberThatEmitsResultOnceAndThenDisposes_WhenTaskIsTrulyAsyncWithDefaultSchedulers()
+    {
+        var value = Fixture.Create<TEvent>();
+        var actualValues = new List<FromTask<TEvent>>();
+
+        var listener = EventListener.Create<FromTask<TEvent>>( actualValues.Add );
+        var sut = new TaskEventSource<TEvent>(
+            async ct =>
+            {
+                await Task.Delay( 1, ct );
+                return value;
+            },
+            new TaskSchedulerCapture( TaskSchedulerCaptureStrategy.None ) );
+
+        var subscriber = sut.Listen( listener );
+        await Task.Delay( 100 );
+
+        using ( new AssertionScope() )
+        {
+            sut.HasSubscribers.Should().BeFalse();
+            subscriber.IsDisposed.Should().BeTrue();
+
+            actualValues.Should()
+                .HaveCount( 1 )
+                .And.Subject.First()
+                .Should()
+                .BeEquivalentTo(
+                    new
+                    {
+                        Status = TaskStatus.RanToCompletion,
+                        Result = value,
+                        Exception = (AggregateException?)null,
+                        IsCanceled = false,
+                        IsFaulted = false,
+                        IsCompletedSuccessfully = true
+                    } );
+        }
+    }
+
+    [Fact]
+    public void FromTask_WithCallbackScheduler_ShouldCreateEventSourceWithoutSubscriptions()
+    {
+        var sut = EventSource.FromTask( _ => Task.FromResult( Fixture.Create<TEvent>() ), new TaskSchedulerCapture( _scheduler ) );
+        sut.HasSubscribers.Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData( TaskSchedulerCaptureStrategy.None )]
+    [InlineData( TaskSchedulerCaptureStrategy.Current )]
+    [InlineData( TaskSchedulerCaptureStrategy.Lazy )]
+    public void FromTask_WithContextCapture_ShouldCreateEventSourceWithoutSubscriptions(TaskSchedulerCaptureStrategy strategy)
+    {
+        var sut = EventSource.FromTask( _ => Task.FromResult( Fixture.Create<TEvent>() ), new TaskSchedulerCapture( strategy ) );
+        sut.HasSubscribers.Should().BeFalse();
     }
 }

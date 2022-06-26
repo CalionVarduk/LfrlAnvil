@@ -2,20 +2,19 @@
 using LfrlAnvil.Functional.Extensions;
 using Xunit;
 
-namespace LfrlAnvil.Functional.Tests.ExtensionsTests.UnsafeTests
+namespace LfrlAnvil.Functional.Tests.ExtensionsTests.UnsafeTests;
+
+public abstract class GenericUnsafeExtensionsOfRefTypeTests<T> : GenericUnsafeExtensionsTests<T>
+    where T : class
 {
-    public abstract class GenericUnsafeExtensionsOfRefTypeTests<T> : GenericUnsafeExtensionsTests<T>
-        where T : class
+    [Fact]
+    public void ToMaybe_ShouldReturnWithoutValue_WhenHasNullValue()
     {
-        [Fact]
-        public void ToMaybe_ShouldReturnWithoutValue_WhenHasNullValue()
-        {
-            var value = default( T );
-            var sut = (Unsafe<T>)value!;
+        var value = default( T );
+        var sut = (Unsafe<T>)value!;
 
-            var result = sut.ToMaybe();
+        var result = sut.ToMaybe();
 
-            result.HasValue.Should().BeFalse();
-        }
+        result.HasValue.Should().BeFalse();
     }
 }

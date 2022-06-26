@@ -7,71 +7,70 @@ using LfrlAnvil.TestExtensions.FluentAssertions;
 using NSubstitute;
 using Xunit;
 
-namespace LfrlAnvil.Reactive.Tests.DecoratorsTests
+namespace LfrlAnvil.Reactive.Tests.DecoratorsTests;
+
+public class EventListenerSkipWhileDecoratorTests : TestsBase
 {
-    public class EventListenerSkipWhileDecoratorTests : TestsBase
+    [Fact]
+    public void Decorate_ShouldNotDisposeTheSubscriber()
     {
-        [Fact]
-        public void Decorate_ShouldNotDisposeTheSubscriber()
-        {
-            var next = Substitute.For<IEventListener<int>>();
-            var subscriber = Substitute.For<IEventSubscriber>();
-            var sut = new EventListenerSkipWhileDecorator<int>( e => e < 10 );
+        var next = Substitute.For<IEventListener<int>>();
+        var subscriber = Substitute.For<IEventSubscriber>();
+        var sut = new EventListenerSkipWhileDecorator<int>( e => e < 10 );
 
-            var _ = sut.Decorate( next, subscriber );
+        var _ = sut.Decorate( next, subscriber );
 
-            subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
-        }
+        subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
+    }
 
-        [Fact]
-        public void Decorate_ShouldCreateListenerWhoseReactIgnoresAllEventsUntilPredicateFails()
-        {
-            var sourceEvents = new[] { 1, 2, 3, 5, 7, 11, 13, 17, 19, 23 };
-            var expectedEvents = new[] { 11, 13, 17, 19, 23 };
-            var actualEvents = new List<int>();
+    [Fact]
+    public void Decorate_ShouldCreateListenerWhoseReactIgnoresAllEventsUntilPredicateFails()
+    {
+        var sourceEvents = new[] { 1, 2, 3, 5, 7, 11, 13, 17, 19, 23 };
+        var expectedEvents = new[] { 11, 13, 17, 19, 23 };
+        var actualEvents = new List<int>();
 
-            var next = EventListener.Create<int>( actualEvents.Add );
-            var subscriber = Substitute.For<IEventSubscriber>();
-            var sut = new EventListenerSkipWhileDecorator<int>( e => e != 11 );
-            var listener = sut.Decorate( next, subscriber );
+        var next = EventListener.Create<int>( actualEvents.Add );
+        var subscriber = Substitute.For<IEventSubscriber>();
+        var sut = new EventListenerSkipWhileDecorator<int>( e => e != 11 );
+        var listener = sut.Decorate( next, subscriber );
 
-            foreach ( var e in sourceEvents )
-                listener.React( e );
+        foreach ( var e in sourceEvents )
+            listener.React( e );
 
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
-        }
+        actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
+    }
 
-        [Theory]
-        [InlineData( DisposalSource.EventSource )]
-        [InlineData( DisposalSource.Subscriber )]
-        public void Decorate_ShouldCreateListenerWhoseOnDisposeCallsNextOnDispose(DisposalSource source)
-        {
-            var next = Substitute.For<IEventListener<int>>();
-            var subscriber = Substitute.For<IEventSubscriber>();
-            var sut = new EventListenerSkipWhileDecorator<int>( e => e < 10 );
-            var listener = sut.Decorate( next, subscriber );
+    [Theory]
+    [InlineData( DisposalSource.EventSource )]
+    [InlineData( DisposalSource.Subscriber )]
+    public void Decorate_ShouldCreateListenerWhoseOnDisposeCallsNextOnDispose(DisposalSource source)
+    {
+        var next = Substitute.For<IEventListener<int>>();
+        var subscriber = Substitute.For<IEventSubscriber>();
+        var sut = new EventListenerSkipWhileDecorator<int>( e => e < 10 );
+        var listener = sut.Decorate( next, subscriber );
 
-            listener.OnDispose( source );
+        listener.OnDispose( source );
 
-            next.VerifyCalls().Received( x => x.OnDispose( source ) );
-        }
+        next.VerifyCalls().Received( x => x.OnDispose( source ) );
+    }
 
-        [Fact]
-        public void SkipWhileExtension_ShouldCreateEventStreamThatIgnoresAllEventsUntilPredicateFails()
-        {
-            var sourceEvents = new[] { 1, 2, 3, 5, 7, 11, 13, 17, 19, 23 };
-            var expectedEvents = new[] { 11, 13, 17, 19, 23 };
-            var actualEvents = new List<int>();
+    [Fact]
+    public void SkipWhileExtension_ShouldCreateEventStreamThatIgnoresAllEventsUntilPredicateFails()
+    {
+        var sourceEvents = new[] { 1, 2, 3, 5, 7, 11, 13, 17, 19, 23 };
+        var expectedEvents = new[] { 11, 13, 17, 19, 23 };
+        var actualEvents = new List<int>();
 
-            var next = EventListener.Create<int>( actualEvents.Add );
-            var sut = new EventPublisher<int>();
-            var decorated = sut.SkipWhile( e => e != 11 );
-            decorated.Listen( next );
+        var next = EventListener.Create<int>( actualEvents.Add );
+        var sut = new EventPublisher<int>();
+        var decorated = sut.SkipWhile( e => e != 11 );
+        decorated.Listen( next );
 
-            foreach ( var e in sourceEvents )
-                sut.Publish( e );
+        foreach ( var e in sourceEvents )
+            sut.Publish( e );
 
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
-        }
+        actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
     }
 }

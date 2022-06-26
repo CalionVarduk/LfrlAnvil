@@ -2,15 +2,14 @@
 using LfrlAnvil.TestExtensions;
 using Xunit;
 
-namespace LfrlAnvil.Reactive.Tests.EventSourceTests
+namespace LfrlAnvil.Reactive.Tests.EventSourceTests;
+
+public class StaticEventSourceTests : TestsBase
 {
-    public class StaticEventSourceTests : TestsBase
+    [Fact]
+    public void Disposed_ShouldReturnDisposedSource()
     {
-        [Fact]
-        public void Disposed_ShouldReturnDisposedSource()
-        {
-            var sut = EventSource<int>.Disposed;
-            sut.IsDisposed.Should().BeTrue();
-        }
+        var sut = EventSource<int>.Disposed;
+        sut.IsDisposed.Should().BeTrue();
     }
 }

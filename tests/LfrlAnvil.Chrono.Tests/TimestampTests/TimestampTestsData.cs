@@ -4,104 +4,103 @@ using AutoFixture;
 using LfrlAnvil.TestExtensions;
 using Xunit;
 
-namespace LfrlAnvil.Chrono.Tests.TimestampTests
+namespace LfrlAnvil.Chrono.Tests.TimestampTests;
+
+public class TimestampTestsData
 {
-    public class TimestampTestsData
+    public static TheoryData<long, DateTime> GetTicksCtorData(IFixture fixture)
     {
-        public static TheoryData<long, DateTime> GetTicksCtorData(IFixture fixture)
+        return new TheoryData<long, DateTime>
         {
-            return new TheoryData<long, DateTime>
-            {
-                { 0, DateTime.UnixEpoch },
-                { 1, DateTime.UnixEpoch.AddTicks( 1 ) },
-                { -1, DateTime.UnixEpoch.AddTicks( -1 ) },
-                { 6121840050006, DateTime.UnixEpoch.AddTicks( 6121840050006 ) },
-                { -6121840050006, DateTime.UnixEpoch.AddTicks( -6121840050006 ) }
-            };
-        }
+            { 0, DateTime.UnixEpoch },
+            { 1, DateTime.UnixEpoch.AddTicks( 1 ) },
+            { -1, DateTime.UnixEpoch.AddTicks( -1 ) },
+            { 6121840050006, DateTime.UnixEpoch.AddTicks( 6121840050006 ) },
+            { -6121840050006, DateTime.UnixEpoch.AddTicks( -6121840050006 ) }
+        };
+    }
 
-        public static TheoryData<DateTime, long> GetUtcDateTimeCtorData(IFixture fixture)
+    public static TheoryData<DateTime, long> GetUtcDateTimeCtorData(IFixture fixture)
+    {
+        return new TheoryData<DateTime, long>
         {
-            return new TheoryData<DateTime, long>
-            {
-                { DateTime.UnixEpoch, 0 },
-                { DateTime.UnixEpoch.AddTicks( 1 ), 1 },
-                { DateTime.UnixEpoch.AddTicks( -1 ), -1 },
-                { DateTime.UnixEpoch.AddTicks( 6121840050006 ), 6121840050006 },
-                { DateTime.UnixEpoch.AddTicks( -6121840050006 ), -6121840050006 }
-            };
-        }
+            { DateTime.UnixEpoch, 0 },
+            { DateTime.UnixEpoch.AddTicks( 1 ), 1 },
+            { DateTime.UnixEpoch.AddTicks( -1 ), -1 },
+            { DateTime.UnixEpoch.AddTicks( 6121840050006 ), 6121840050006 },
+            { DateTime.UnixEpoch.AddTicks( -6121840050006 ), -6121840050006 }
+        };
+    }
 
-        public static TheoryData<long, long, bool> GetEqualsData(IFixture fixture)
+    public static TheoryData<long, long, bool> GetEqualsData(IFixture fixture)
+    {
+        return new TheoryData<long, long, bool>
         {
-            return new TheoryData<long, long, bool>
-            {
-                { 5, 5, true },
-                { 5, -5, false }
-            };
-        }
+            { 5, 5, true },
+            { 5, -5, false }
+        };
+    }
 
-        public static TheoryData<long, long, int> GetCompareToData(IFixture fixture)
+    public static TheoryData<long, long, int> GetCompareToData(IFixture fixture)
+    {
+        return new TheoryData<long, long, int>
         {
-            return new TheoryData<long, long, int>
-            {
-                { 5, 5, 0 },
-                { -5, 5, -1 },
-                { 5, -5, 1 }
-            };
-        }
+            { 5, 5, 0 },
+            { -5, 5, -1 },
+            { 5, -5, 1 }
+        };
+    }
 
-        public static TheoryData<long, long, long> GetAddData(IFixture fixture)
+    public static TheoryData<long, long, long> GetAddData(IFixture fixture)
+    {
+        return new TheoryData<long, long, long>
         {
-            return new TheoryData<long, long, long>
-            {
-                { 0, 0, 0 },
-                { 5, 0, 5 },
-                { 5, 3, 8 },
-                { 5, -3, 2 },
-                { -5, 0, -5 },
-                { -5, 3, -2 },
-                { -5, -3, -8 }
-            };
-        }
+            { 0, 0, 0 },
+            { 5, 0, 5 },
+            { 5, 3, 8 },
+            { 5, -3, 2 },
+            { -5, 0, -5 },
+            { -5, 3, -2 },
+            { -5, -3, -8 }
+        };
+    }
 
-        public static TheoryData<long, long, long> GetSubtractData(IFixture fixture)
+    public static TheoryData<long, long, long> GetSubtractData(IFixture fixture)
+    {
+        return new TheoryData<long, long, long>
         {
-            return new TheoryData<long, long, long>
-            {
-                { 0, 0, 0 },
-                { 5, 0, 5 },
-                { 5, 3, 2 },
-                { 5, -3, 8 },
-                { -5, 0, -5 },
-                { -5, 3, -8 },
-                { -5, -3, -2 }
-            };
-        }
+            { 0, 0, 0 },
+            { 5, 0, 5 },
+            { 5, 3, 2 },
+            { 5, -3, 8 },
+            { -5, 0, -5 },
+            { -5, 3, -8 },
+            { -5, -3, -2 }
+        };
+    }
 
-        public static IEnumerable<object?[]> GetNotEqualsData(IFixture fixture)
-        {
-            return GetEqualsData( fixture ).ConvertResult( (bool r) => ! r );
-        }
+    public static IEnumerable<object?[]> GetNotEqualsData(IFixture fixture)
+    {
+        return GetEqualsData( fixture ).ConvertResult( (bool r) => ! r );
+    }
 
-        public static IEnumerable<object?[]> GetGreaterThanComparisonData(IFixture fixture)
-        {
-            return GetCompareToData( fixture ).ConvertResult( (int r) => r > 0 );
-        }
+    public static IEnumerable<object?[]> GetGreaterThanComparisonData(IFixture fixture)
+    {
+        return GetCompareToData( fixture ).ConvertResult( (int r) => r > 0 );
+    }
 
-        public static IEnumerable<object?[]> GetGreaterThanOrEqualToComparisonData(IFixture fixture)
-        {
-            return GetCompareToData( fixture ).ConvertResult( (int r) => r >= 0 );
-        }
+    public static IEnumerable<object?[]> GetGreaterThanOrEqualToComparisonData(IFixture fixture)
+    {
+        return GetCompareToData( fixture ).ConvertResult( (int r) => r >= 0 );
+    }
 
-        public static IEnumerable<object?[]> GetLessThanComparisonData(IFixture fixture)
-        {
-            return GetCompareToData( fixture ).ConvertResult( (int r) => r < 0 );
-        }
+    public static IEnumerable<object?[]> GetLessThanComparisonData(IFixture fixture)
+    {
+        return GetCompareToData( fixture ).ConvertResult( (int r) => r < 0 );
+    }
 
-        public static IEnumerable<object?[]> GetLessThanOrEqualToComparisonData(IFixture fixture)
-        {
-            return GetCompareToData( fixture ).ConvertResult( (int r) => r <= 0 );
-        }
+    public static IEnumerable<object?[]> GetLessThanOrEqualToComparisonData(IFixture fixture)
+    {
+        return GetCompareToData( fixture ).ConvertResult( (int r) => r <= 0 );
     }
 }

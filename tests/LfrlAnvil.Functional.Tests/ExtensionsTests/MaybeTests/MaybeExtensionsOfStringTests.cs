@@ -1,4 +1,3 @@
-﻿namespace LfrlAnvil.Functional.Tests.ExtensionsTests.MaybeTests
-{
-    public class MaybeExtensionsOfStringTests : GenericMaybeExtensionsTests<string> { }
-}
+﻿namespace LfrlAnvil.Functional.Tests.ExtensionsTests.MaybeTests;
+
+public class MaybeExtensionsOfStringTests : GenericMaybeExtensionsTests<string> { }

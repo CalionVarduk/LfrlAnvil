@@ -218,8 +218,8 @@ namespace LfrlAnvil.Reactive.Chrono
                         break;
                     }
 
-                    _reset.Reset();
                     initialDelay = Duration.Zero.Max( _expectedNextTimestamp - endTimestamp - _spinWaitDurationHint );
+                    _reset.Reset();
                 }
             }
         }

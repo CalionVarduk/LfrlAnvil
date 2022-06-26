@@ -2,20 +2,19 @@
 using LfrlAnvil.Functional.Extensions;
 using Xunit;
 
-namespace LfrlAnvil.Functional.Tests.ExtensionsTests.EitherTests
+namespace LfrlAnvil.Functional.Tests.ExtensionsTests.EitherTests;
+
+public abstract class GenericEitherExtensionsOfRefTypeTests<T1, T2> : GenericEitherExtensionsTests<T1, T2>
+    where T1 : class
 {
-    public abstract class GenericEitherExtensionsOfRefTypeTests<T1, T2> : GenericEitherExtensionsTests<T1, T2>
-        where T1 : class
+    [Fact]
+    public void ToMaybe_ShouldReturnWithoutValue_WhenHasNullFirst()
     {
-        [Fact]
-        public void ToMaybe_ShouldReturnWithoutValue_WhenHasNullFirst()
-        {
-            var value = default( T1 );
-            var sut = (Either<T1, T2>)value!;
+        var value = default( T1 );
+        var sut = (Either<T1, T2>)value!;
 
-            var result = sut.ToMaybe();
+        var result = sut.ToMaybe();
 
-            result.HasValue.Should().BeFalse();
-        }
+        result.HasValue.Should().BeFalse();
     }
 }

@@ -4,26 +4,25 @@ using LfrlAnvil.Functional.Extensions;
 using LfrlAnvil.TestExtensions;
 using Xunit;
 
-namespace LfrlAnvil.Functional.Tests.ExtensionsTests.TypeCastTests
+namespace LfrlAnvil.Functional.Tests.ExtensionsTests.TypeCastTests;
+
+public abstract class GenericValidTypeCastExtensionsTests<TSource, TDestination> : TestsBase
+    where TSource : TDestination
+    where TDestination : notnull
 {
-    public abstract class GenericValidTypeCastExtensionsTests<TSource, TDestination> : TestsBase
-        where TSource : TDestination
-        where TDestination : notnull
+    [Fact]
+    public void ToMaybe_ShouldReturnWithValue_WhenIsValid()
     {
-        [Fact]
-        public void ToMaybe_ShouldReturnWithValue_WhenIsValid()
+        var value = Fixture.CreateNotDefault<TSource>();
+
+        var sut = (TypeCast<TSource, TDestination>)value;
+
+        var result = sut.ToMaybe();
+
+        using ( new AssertionScope() )
         {
-            var value = Fixture.CreateNotDefault<TSource>();
-
-            var sut = (TypeCast<TSource, TDestination>)value;
-
-            var result = sut.ToMaybe();
-
-            using ( new AssertionScope() )
-            {
-                result.HasValue.Should().BeTrue();
-                result.Value.Should().Be( value );
-            }
+            result.HasValue.Should().BeTrue();
+            result.Value.Should().Be( value );
         }
     }
 }

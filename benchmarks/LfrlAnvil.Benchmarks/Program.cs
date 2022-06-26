@@ -5,41 +5,34 @@ using CommandLine;
 using LfrlAnvil.Benchmarks.CL;
 using LfrlAnvil.Extensions;
 
-namespace LfrlAnvil.Benchmarks
+void ModifyBenchmarksToRun(CommandLineBenchmarkOptions options)
 {
-    internal class Program
-    {
-        private static void ModifyBenchmarksToRun(CommandLineBenchmarkOptions options)
-        {
-            options.StructEquality = true;
-        }
+    options.StructEquality = true;
+}
 
-        private static void Main(string[] args)
-        {
-            Parser.Default.ParseArguments<CommandLineBenchmarkOptions>( args )
-                .WithParsed( RunBenchmarks )
-                .WithNotParsed( ShowErrors );
+{
+    Parser.Default.ParseArguments<CommandLineBenchmarkOptions>( args )
+        .WithParsed( RunBenchmarks )
+        .WithNotParsed( ShowErrors );
 
-            Console.ReadKey( true );
-        }
+    Console.ReadKey( true );
+}
 
-        private static void RunBenchmarks(CommandLineBenchmarkOptions options)
-        {
-            ModifyBenchmarksToRun( options );
+void RunBenchmarks(CommandLineBenchmarkOptions options)
+{
+    ModifyBenchmarksToRun( options );
 
-            var types = BenchmarkLocator.LocateTypes( options ).Materialize();
+    var types = BenchmarkLocator.LocateTypes( options ).Materialize();
 
-            if ( types.Count == 0 )
-                Console.WriteLine( "No benchmark option has been provided." );
+    if ( types.Count == 0 )
+        Console.WriteLine( "No benchmark option has been provided." );
 
-            foreach ( var t in types )
-                BenchmarkRunner.Run( t );
-        }
+    foreach ( var t in types )
+        BenchmarkRunner.Run( t );
+}
 
-        private static void ShowErrors(IEnumerable<Error> errors)
-        {
-            var error = string.Join( Environment.NewLine, errors );
-            Console.WriteLine( error );
-        }
-    }
+void ShowErrors(IEnumerable<Error> errors)
+{
+    var error = string.Join( Environment.NewLine, errors );
+    Console.WriteLine( error );
 }

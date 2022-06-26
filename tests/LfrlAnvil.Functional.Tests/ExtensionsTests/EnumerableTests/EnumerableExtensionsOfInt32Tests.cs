@@ -1,4 +1,3 @@
-﻿namespace LfrlAnvil.Functional.Tests.ExtensionsTests.EnumerableTests
-{
-    public class EnumerableExtensionsOfInt32Tests : GenericEnumerableExtensionsTests<int> { }
-}
+﻿namespace LfrlAnvil.Functional.Tests.ExtensionsTests.EnumerableTests;
+
+public class EnumerableExtensionsOfInt32Tests : GenericEnumerableExtensionsTests<int> { }

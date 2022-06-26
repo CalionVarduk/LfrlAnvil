@@ -1,4 +1,3 @@
-﻿namespace LfrlAnvil.Collections.Tests.ExtensionsTests.EnumerableTests
-{
-    public class EnumerableExtensionsOfStringTests : GenericEnumerableExtensionsOfNotNullTypeTests<string> { }
-}
+﻿namespace LfrlAnvil.Collections.Tests.ExtensionsTests.EnumerableTests;
+
+public class EnumerableExtensionsOfStringTests : GenericEnumerableExtensionsOfNotNullTypeTests<string> { }

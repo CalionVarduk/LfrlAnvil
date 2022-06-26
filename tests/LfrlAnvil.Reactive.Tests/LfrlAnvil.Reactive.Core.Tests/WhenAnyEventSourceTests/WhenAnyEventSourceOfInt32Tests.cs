@@ -1,4 +1,3 @@
-﻿namespace LfrlAnvil.Reactive.Tests.WhenAnyEventSourceTests
-{
-    public class WhenAnyEventSourceOfInt32Tests : GenericWhenAnyEventSourceTests<int> { }
-}
+﻿namespace LfrlAnvil.Reactive.Tests.WhenAnyEventSourceTests;
+
+public class WhenAnyEventSourceOfInt32Tests : GenericWhenAnyEventSourceTests<int> { }

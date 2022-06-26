@@ -1,4 +1,3 @@
-﻿namespace LfrlAnvil.Collections.Tests.InternalTests
-{
-    public class CollectionCopyingOfStringTests : GenericCollectionCopyingTests<string> { }
-}
+﻿namespace LfrlAnvil.Collections.Tests.InternalTests;
+
+public class CollectionCopyingOfStringTests : GenericCollectionCopyingTests<string> { }

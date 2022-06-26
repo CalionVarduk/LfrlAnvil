@@ -4,21 +4,20 @@ using LfrlAnvil.Functional.Extensions;
 using LfrlAnvil.TestExtensions;
 using Xunit;
 
-namespace LfrlAnvil.Functional.Tests.ExtensionsTests.TypeCastTests
+namespace LfrlAnvil.Functional.Tests.ExtensionsTests.TypeCastTests;
+
+public abstract class GenericInvalidTypeCastExtensionsTests<TSource, TDestination> : TestsBase
+    where TDestination : notnull
 {
-    public abstract class GenericInvalidTypeCastExtensionsTests<TSource, TDestination> : TestsBase
-        where TDestination : notnull
+    [Fact]
+    public void ToMaybe_ShouldReturnWithoutValue_WhenIsInvalid()
     {
-        [Fact]
-        public void ToMaybe_ShouldReturnWithoutValue_WhenIsInvalid()
-        {
-            var value = Fixture.Create<TSource>();
+        var value = Fixture.Create<TSource>();
 
-            var sut = (TypeCast<TSource, TDestination>)value;
+        var sut = (TypeCast<TSource, TDestination>)value;
 
-            var result = sut.ToMaybe();
+        var result = sut.ToMaybe();
 
-            result.HasValue.Should().BeFalse();
-        }
+        result.HasValue.Should().BeFalse();
     }
 }

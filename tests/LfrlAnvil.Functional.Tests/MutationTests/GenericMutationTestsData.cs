@@ -3,26 +3,25 @@ using AutoFixture;
 using LfrlAnvil.TestExtensions;
 using Xunit;
 
-namespace LfrlAnvil.Functional.Tests.MutationTests
+namespace LfrlAnvil.Functional.Tests.MutationTests;
+
+public class GenericMutationTestsData<T>
 {
-    public class GenericMutationTestsData<T>
+    public static TheoryData<T, T, T, T, bool> CreateEqualsTestData(IFixture fixture)
     {
-        public static TheoryData<T, T, T, T, bool> CreateEqualsTestData(IFixture fixture)
-        {
-            var (old1, old2, new1, new2) = fixture.CreateDistinctCollection<T>( 4 );
+        var (old1, old2, new1, new2) = fixture.CreateDistinctCollection<T>( 4 );
 
-            return new TheoryData<T, T, T, T, bool>
-            {
-                { old1, new1, old1, new1, true },
-                { old1, new1, old1, new2, false },
-                { old1, new1, old2, new1, false },
-                { old1, new1, old2, new2, false }
-            };
-        }
-
-        public static IEnumerable<object?[]> CreateNotEqualsTestData(IFixture fixture)
+        return new TheoryData<T, T, T, T, bool>
         {
-            return CreateEqualsTestData( fixture ).ConvertResult( (bool r) => ! r );
-        }
+            { old1, new1, old1, new1, true },
+            { old1, new1, old1, new2, false },
+            { old1, new1, old2, new1, false },
+            { old1, new1, old2, new2, false }
+        };
+    }
+
+    public static IEnumerable<object?[]> CreateNotEqualsTestData(IFixture fixture)
+    {
+        return CreateEqualsTestData( fixture ).ConvertResult( (bool r) => ! r );
     }
 }

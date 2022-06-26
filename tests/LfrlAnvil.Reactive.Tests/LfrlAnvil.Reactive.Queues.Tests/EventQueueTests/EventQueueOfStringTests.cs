@@ -1,4 +1,3 @@
-﻿namespace LfrlAnvil.Reactive.Queues.Tests.EventQueueTests
-{
-    public class EventQueueOfStringTests : GenericEventQueueTests<string> { }
-}
+﻿namespace LfrlAnvil.Reactive.Queues.Tests.EventQueueTests;
+
+public class EventQueueOfStringTests : GenericEventQueueTests<string> { }
