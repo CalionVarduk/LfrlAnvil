@@ -8,6 +8,14 @@ public static class MaybeExtensions
 {
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static Either<T, Nil> ToEither<T>(this Maybe<T> source)
+        where T : notnull
+    {
+        return source.HasValue ? new Either<T, Nil>( source.Value! ) : new Either<T, Nil>( Nil.Instance );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Maybe<T> Reduce<T>(this Maybe<Maybe<T>> source)
         where T : notnull
     {

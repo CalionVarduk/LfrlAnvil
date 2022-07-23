@@ -15,6 +15,29 @@ public abstract class GenericMaybeExtensionsTests<T> : TestsBase
     where T : notnull
 {
     [Fact]
+    public void ToEither_ShouldReturnCorrectResult_WhenHasValue()
+    {
+        var value = Fixture.Create<T>();
+        var sut = Maybe.Some( value );
+
+        var result = sut.ToEither();
+
+        using ( new AssertionScope() )
+        {
+            result.HasFirst.Should().BeTrue();
+            result.First.Should().Be( value );
+        }
+    }
+
+    [Fact]
+    public void ToEither_ShouldReturnCorrectResult_WhenDoesntHaveValue()
+    {
+        Maybe<T> sut = Maybe.None;
+        var result = sut.ToEither();
+        result.HasFirst.Should().BeFalse();
+    }
+
+    [Fact]
     public void Reduce_ShouldReturnCorrectResult_WhenDoesntHaveValue()
     {
         var sut = Maybe<Maybe<T>>.None;
@@ -127,7 +150,7 @@ public abstract class GenericMaybeExtensionsTests<T> : TestsBase
     }
 
     [Fact]
-    public void MatchWith_ShouldCallNoneDelegate_WhenOnlyBothDontHaveValue()
+    public void MatchWith_ShouldCallNoneDelegate_WhenBothDontHaveValue()
     {
         var returnedValue = Fixture.Create<T>();
 
