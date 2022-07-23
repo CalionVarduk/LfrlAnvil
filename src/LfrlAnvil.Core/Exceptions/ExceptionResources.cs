@@ -14,6 +14,10 @@ public static class ExceptionResources
     internal const string FailedToGenerateNextValue = "Failed to generate next value.";
     internal const string ExpectedIndexToBeZero = "Expected index to be equal to 0.";
     internal const string LazyDisposableCannotAssign = "Lazy disposable cannot assign an inner disposable.";
+    internal const string ChainHasAlreadyBeenExtended = "Chain has already been extended.";
+
+    internal const string ChainCannotBeExtendedBecauseItIsAttachedToAnotherChain =
+        "Chain cannot be extended because it is attached to another chain.";
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -62,6 +66,13 @@ public static class ExceptionResources
     public static string ExpectedNotInstanceOfType(Type type, string paramName)
     {
         return $"Expected {paramName} to not be an instance of type {type.FullName}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string ExpectedDefinedEnum<T>(T value, Type enumType, string paramName)
+    {
+        return $"Expected {paramName} to be defined in {enumType.FullName} enum type but found {value}.";
     }
 
     [Pure]

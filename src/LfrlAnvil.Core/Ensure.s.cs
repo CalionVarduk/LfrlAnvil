@@ -132,6 +132,14 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static void IsDefined<T>(T param, string paramName = DefaultParamName)
+        where T : struct, Enum
+    {
+        if ( ! Enum.IsDefined( param ) )
+            throw Exceptions.EnumNotDefined( param, typeof( T ), paramName );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static void Equals<T>(T param, T value, string paramName = DefaultParamName)
         where T : IEquatable<T>
     {
@@ -625,6 +633,11 @@ public static class Ensure
         public static ArgumentException InstanceOfType(Type type, string paramName)
         {
             return new ArgumentException( ExceptionResources.ExpectedNotInstanceOfType( type, paramName ), paramName );
+        }
+
+        public static ArgumentException EnumNotDefined<T>(T param, Type enumType, string paramName)
+        {
+            return new ArgumentException( ExceptionResources.ExpectedDefinedEnum( param, enumType, paramName ), paramName );
         }
 
         public static ArgumentException NotEqualTo<T>(T param, T expectedValue, string paramName)
