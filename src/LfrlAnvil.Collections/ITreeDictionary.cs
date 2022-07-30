@@ -8,6 +8,8 @@ public interface ITreeDictionary<TKey, TValue> : IReadOnlyTreeDictionary<TKey, T
     where TKey : notnull
 {
     new int Count { get; }
+    new IEnumerable<TKey> Keys { get; }
+    new IEnumerable<TValue> Values { get; }
     new TValue this[TKey key] { get; set; }
     ITreeDictionaryNode<TKey, TValue> SetRoot(TKey key, TValue value);
     void SetRoot(ITreeDictionaryNode<TKey, TValue> node);

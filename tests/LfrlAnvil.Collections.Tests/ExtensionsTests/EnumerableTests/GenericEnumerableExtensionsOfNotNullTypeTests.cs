@@ -24,6 +24,67 @@ public abstract class GenericEnumerableExtensionsOfNotNullTypeTests<T> : TestsBa
     }
 
     [Fact]
+    public void ToMultiDictionary_WithKeySelector_ShouldReturnCorrectResult()
+    {
+        var items = Fixture.CreateDistinctCollection<T>( 5 ).Select( i => new Value<T>( i ) ).ToList();
+        items = items.Concat( items ).ToList();
+        var expected = items.Select( i => KeyValuePair.Create( i.Val, i ) );
+
+        var result = items.ToMultiDictionary( i => i.Val );
+
+        result.AsEnumerable()
+            .SelectMany( kv => kv.Value.Select( v => KeyValuePair.Create( kv.Key, v ) ) )
+            .Should()
+            .BeEquivalentTo( expected );
+    }
+
+    [Fact]
+    public void ToMultiDictionary_WithKeyAndValueSelectors_ShouldReturnCorrectResult()
+    {
+        var items = Fixture.CreateDistinctCollection<T>( 5 ).Select( i => new Value<T>( i ) ).ToList();
+        items = items.Concat( items ).ToList();
+        var expected = items.Select( i => KeyValuePair.Create( i.Val, i ) );
+
+        var result = items.ToMultiDictionary( i => i.Val, i => i );
+
+        result.AsEnumerable()
+            .SelectMany( kv => kv.Value.Select( v => KeyValuePair.Create( kv.Key, v ) ) )
+            .Should()
+            .BeEquivalentTo( expected );
+    }
+
+    [Fact]
+    public void ToMultiDictionary_FromKeyValuePairs_ShouldReturnCorrectResult()
+    {
+        var items = Fixture.CreateDistinctCollection<T>( 5 ).Select( i => new Value<T>( i ) ).ToList();
+        items = items.Concat( items ).ToList();
+        var expected = items.Select( i => KeyValuePair.Create( i.Val, i ) ).ToList();
+
+        var result = expected.ToMultiDictionary();
+
+        result.AsEnumerable()
+            .SelectMany( kv => kv.Value.Select( v => KeyValuePair.Create( kv.Key, v ) ) )
+            .Should()
+            .BeEquivalentTo( expected );
+    }
+
+    [Fact]
+    public void ToMultiDictionary_FromGroupings_ShouldReturnCorrectResult()
+    {
+        var items = Fixture.CreateDistinctCollection<T>( 5 ).Select( i => new Value<T>( i ) ).ToList();
+        items = items.Concat( items ).ToList();
+        var expected = items.Select( i => KeyValuePair.Create( i.Val, i ) ).ToList();
+        var groupings = items.ToLookup( i => i.Val );
+
+        var result = groupings.ToMultiDictionary();
+
+        result.AsEnumerable()
+            .SelectMany( kv => kv.Value.Select( v => KeyValuePair.Create( kv.Key, v ) ) )
+            .Should()
+            .BeEquivalentTo( expected );
+    }
+
+    [Fact]
     public void ToSequentialHashSet_ShouldReturnCorrectResult()
     {
         var items = Fixture.CreateDistinctCollection<T>( 5 );

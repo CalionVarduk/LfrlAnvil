@@ -61,7 +61,7 @@ public static class Ensure
         if ( ! Generic<T>.IsReferenceType && ! Generic<T>.IsNullableType )
             return;
 
-        if ( comparer.Equals( param!, default! ) )
+        if ( comparer.Equals( param, default ) )
             throw Exceptions.Null( paramName );
     }
 
@@ -82,26 +82,28 @@ public static class Ensure
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static void IsOfType<T>(object param, string paramName = DefaultParamName)
     {
-        IsOfType( typeof( T ), param, paramName );
+        IsOfType( param, typeof( T ), paramName );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsOfType<T>(Type type, T param, string paramName = DefaultParamName)
+    public static void IsOfType<T>(T param, Type type, string paramName = DefaultParamName)
+        where T : notnull
     {
-        if ( type != param!.GetType() )
+        if ( type != param.GetType() )
             throw Exceptions.NotOfType( type, param.GetType(), paramName );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static void IsNotOfType<T>(object param, string paramName = DefaultParamName)
     {
-        IsNotOfType( typeof( T ), param, paramName );
+        IsNotOfType( param, typeof( T ), paramName );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsNotOfType<T>(Type type, T param, string paramName = DefaultParamName)
+    public static void IsNotOfType<T>(T param, Type type, string paramName = DefaultParamName)
+        where T : notnull
     {
-        if ( type == param!.GetType() )
+        if ( type == param.GetType() )
             throw Exceptions.OfType( type, paramName );
     }
 
@@ -113,9 +115,10 @@ public static class Ensure
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static void IsInstanceOfType<T>(T param, Type type, string paramName = DefaultParamName)
+        where T : notnull
     {
         if ( ! type.IsInstanceOfType( param ) )
-            throw Exceptions.NotInstanceOfType( type, param!.GetType(), paramName );
+            throw Exceptions.NotInstanceOfType( type, param.GetType(), paramName );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -126,6 +129,7 @@ public static class Ensure
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static void IsNotInstanceOfType<T>(T param, Type type, string paramName = DefaultParamName)
+        where T : notnull
     {
         if ( type.IsInstanceOfType( param ) )
             throw Exceptions.InstanceOfType( type, paramName );
