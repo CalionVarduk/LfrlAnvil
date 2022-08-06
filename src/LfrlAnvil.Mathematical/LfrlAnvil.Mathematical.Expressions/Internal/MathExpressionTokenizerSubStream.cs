@@ -13,7 +13,7 @@ internal struct MathExpressionTokenizerSubStream
     private IntermediateToken? _bufferedToken;
     private State _state;
 
-    internal MathExpressionTokenizerSubStream(string input, int index, MathExpressionTokenReader.Params @params)
+    internal MathExpressionTokenizerSubStream(string input, int index, MathExpressionFactoryInternalConfiguration configuration)
     {
         Debug.Assert( index < input.Length, "index < input.Length" );
 
@@ -27,10 +27,10 @@ internal struct MathExpressionTokenizerSubStream
             if ( char.IsWhiteSpace( c ) )
                 break;
 
-            if ( c is TokenConstants.OpenParenthesis or
-                    TokenConstants.CloseParenthesis or
+            if ( c is TokenConstants.OpenedParenthesis or
+                    TokenConstants.ClosedParenthesis or
                     TokenConstants.InlineFunctionSeparator ||
-                c == @params.StringDelimiter )
+                c == configuration.StringDelimiter )
                 break;
 
             ++index;
@@ -47,27 +47,27 @@ internal struct MathExpressionTokenizerSubStream
     public bool IsFinished => _state == State.Finished;
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal IntermediateToken ReadNext(MathExpressionTokenReader.Params @params)
+    internal IntermediateToken ReadNext(MathExpressionFactoryInternalConfiguration configuration)
     {
         Debug.Assert( _state != State.Finished, "state is not Finished" );
 
         var result = _state switch
         {
-            State.ReadingNonSymbols => HandleReadingNonSymbolsState( @params ),
-            State.StartReadingSymbols => HandleStartReadingSymbolsState( @params ),
-            State.SearchingForTokenSymbols => HandleSearchingForTokenSymbolsState( @params ),
+            State.ReadingNonSymbols => HandleReadingNonSymbolsState( configuration ),
+            State.StartReadingSymbols => HandleStartReadingSymbolsState( configuration ),
+            State.SearchingForTokenSymbols => HandleSearchingForTokenSymbolsState( configuration ),
             State.StoringBufferedToken => HandleStoringBufferedTokenState(),
-            _ => HandleStartedState( @params )
+            _ => HandleStartedState( configuration )
         };
 
         return result;
     }
 
-    private IntermediateToken HandleStartedState(MathExpressionTokenReader.Params @params)
+    private IntermediateToken HandleStartedState(MathExpressionFactoryInternalConfiguration configuration)
     {
         Debug.Assert( _state == State.Started, "state is Started" );
 
-        var result = MathExpressionTokenReader.TryReadTokenGroup( _remaining, @params );
+        var result = MathExpressionTokenReader.TryReadConstructs( _remaining, configuration );
         if ( result is not null )
         {
             Finish();
@@ -75,10 +75,10 @@ internal struct MathExpressionTokenizerSubStream
         }
 
         _state = State.ReadingNonSymbols;
-        return HandleReadingNonSymbolsState( @params );
+        return HandleReadingNonSymbolsState( configuration );
     }
 
-    private IntermediateToken HandleReadingNonSymbolsState(MathExpressionTokenReader.Params @params)
+    private IntermediateToken HandleReadingNonSymbolsState(MathExpressionFactoryInternalConfiguration configuration)
     {
         Debug.Assert( _state == State.ReadingNonSymbols, "state is ReadingNonSymbols" );
         Debug.Assert( _bufferedToken is null, "bufferedToken is null" );
@@ -92,23 +92,23 @@ internal struct MathExpressionTokenizerSubStream
 
         if ( char.IsDigit( c ) )
         {
-            var number = MathExpressionTokenReader.ReadNumber( input, index, @params );
+            var number = MathExpressionTokenReader.ReadNumber( input, index, configuration );
             _remaining = _remaining.Slice( number.Symbol.Length );
             SetStateOrFinish( State.ReadingNonSymbols );
             return number;
         }
 
-        if ( TokenConstants.IsValidSymbol( c ) )
+        if ( TokenConstants.InterpretAsSymbol( c ) )
         {
             _state = State.StartReadingSymbols;
-            return HandleStartReadingSymbolsState( @params );
+            return HandleStartReadingSymbolsState( configuration );
         }
 
         ++index;
         while ( index < _endIndex )
         {
             c = input[index];
-            if ( TokenConstants.IsValidSymbol( c ) )
+            if ( TokenConstants.InterpretAsSymbol( c ) )
                 break;
 
             ++index;
@@ -125,7 +125,7 @@ internal struct MathExpressionTokenizerSubStream
 
         if ( slice.Length != _length )
         {
-            var tokenGroup = MathExpressionTokenReader.TryReadTokenGroup( slice, @params );
+            var tokenGroup = MathExpressionTokenReader.TryReadConstructs( slice, configuration );
             if ( tokenGroup is not null )
                 return tokenGroup.Value;
         }
@@ -133,7 +133,7 @@ internal struct MathExpressionTokenizerSubStream
         return IntermediateToken.CreateArgument( slice );
     }
 
-    private IntermediateToken HandleStartReadingSymbolsState(MathExpressionTokenReader.Params @params)
+    private IntermediateToken HandleStartReadingSymbolsState(MathExpressionFactoryInternalConfiguration configuration)
     {
         Debug.Assert( _state == State.StartReadingSymbols, "state is StartReadingSymbols" );
         Debug.Assert( _bufferedToken is null, "bufferedToken is null" );
@@ -142,14 +142,14 @@ internal struct MathExpressionTokenizerSubStream
         var index = _remaining.StartIndex + 1;
 
         Debug.Assert( _remaining.StartIndex < _endIndex, "startIndex < endIndex" );
-        Debug.Assert( TokenConstants.IsValidSymbol( _remaining[0] ), "remaining[0] is a valid symbol" );
+        Debug.Assert( TokenConstants.InterpretAsSymbol( _remaining[0] ), "remaining[0] is a valid symbol" );
         Debug.Assert( _remainingSymbols.Length == 0, "remainingSymbols is empty" );
         Debug.Assert( _skippedSymbols.Length == 0, "skippedSymbols is empty" );
 
         while ( index < _endIndex )
         {
             var c = input[index];
-            if ( ! TokenConstants.IsValidSymbol( c ) )
+            if ( ! TokenConstants.InterpretAsSymbol( c ) )
                 break;
 
             ++index;
@@ -159,17 +159,17 @@ internal struct MathExpressionTokenizerSubStream
         _remainingSymbols = _remaining.Slice( 0, readCount );
         _remaining = _remaining.Slice( readCount );
         _state = State.SearchingForTokenSymbols;
-        return HandleSearchingForTokenSymbolsState( @params );
+        return HandleSearchingForTokenSymbolsState( configuration );
     }
 
-    private IntermediateToken HandleSearchingForTokenSymbolsState(MathExpressionTokenReader.Params @params)
+    private IntermediateToken HandleSearchingForTokenSymbolsState(MathExpressionFactoryInternalConfiguration configuration)
     {
         Debug.Assert( _state == State.SearchingForTokenSymbols, "state is SearchingForTokenSymbols" );
         Debug.Assert( _remainingSymbols.Length > 0, "remainingSymbols is not empty" );
         Debug.Assert( _skippedSymbols.Length == 0, "skippedSymbols is empty" );
         Debug.Assert( _bufferedToken is null, "bufferedToken is null" );
 
-        var token = ScanForTokenWithinRemainingSymbols( @params );
+        var token = ScanForTokenWithinRemainingSymbols( configuration );
         if ( token is not null )
         {
             if ( _remainingSymbols.Length == 0 )
@@ -182,13 +182,13 @@ internal struct MathExpressionTokenizerSubStream
         _remainingSymbols = _remainingSymbols.Slice( 1 );
 
         if ( _remainingSymbols.Length != 0 )
-            return HandleSearchingForTokenSymbolsWithSkippedState( @params );
+            return HandleSearchingForTokenSymbolsWithSkippedState( configuration );
 
         SetStateOrFinish( State.ReadingNonSymbols );
         return ReadSkippedSymbols();
     }
 
-    private IntermediateToken HandleSearchingForTokenSymbolsWithSkippedState(MathExpressionTokenReader.Params @params)
+    private IntermediateToken HandleSearchingForTokenSymbolsWithSkippedState(MathExpressionFactoryInternalConfiguration configuration)
     {
         Debug.Assert( _state == State.SearchingForTokenSymbols, "state is SearchingForTokenSymbols" );
         Debug.Assert( _skippedSymbols.Length > 0, "skippedSymbols is not empty" );
@@ -196,7 +196,7 @@ internal struct MathExpressionTokenizerSubStream
 
         do
         {
-            _bufferedToken = ScanForTokenWithinRemainingSymbols( @params );
+            _bufferedToken = ScanForTokenWithinRemainingSymbols( configuration );
             if ( _bufferedToken is not null )
             {
                 _state = State.StoringBufferedToken;
@@ -229,7 +229,7 @@ internal struct MathExpressionTokenizerSubStream
         return result;
     }
 
-    private IntermediateToken? ScanForTokenWithinRemainingSymbols(MathExpressionTokenReader.Params @params)
+    private IntermediateToken? ScanForTokenWithinRemainingSymbols(MathExpressionFactoryInternalConfiguration configuration)
     {
         Debug.Assert( _state is State.SearchingForTokenSymbols, "state is SearchingForTokenSymbols" );
         Debug.Assert( _remainingSymbols.Length > 0, "remainingSymbols is not empty" );
@@ -237,12 +237,12 @@ internal struct MathExpressionTokenizerSubStream
         for ( var length = _remainingSymbols.Length; length > 0; --length )
         {
             var slice = _remainingSymbols.Slice( 0, length );
-            var tokenGroup = MathExpressionTokenReader.TryReadTokenGroup( slice, @params );
-            if ( tokenGroup is null )
+            var constructs = MathExpressionTokenReader.TryReadConstructs( slice, configuration );
+            if ( constructs is null )
                 continue;
 
             _remainingSymbols = _remainingSymbols.Slice( length );
-            return tokenGroup.Value;
+            return constructs.Value;
         }
 
         var first = _remainingSymbols[0];

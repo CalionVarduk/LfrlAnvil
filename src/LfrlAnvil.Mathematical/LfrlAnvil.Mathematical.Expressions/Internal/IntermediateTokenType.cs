@@ -6,9 +6,9 @@ internal enum IntermediateTokenType : byte
     NumberConstant = 1,
     StringConstant = 2,
     BooleanConstant = 3,
-    TokenSet = 4,
-    OpenParenthesis = 5,
-    CloseParenthesis = 6,
+    Constructs = 4,
+    OpenedParenthesis = 5,
+    ClosedParenthesis = 6,
     InlineFunctionSeparator = 7,
     FunctionParameterSeparator = 8,
     MemberAccess = 9

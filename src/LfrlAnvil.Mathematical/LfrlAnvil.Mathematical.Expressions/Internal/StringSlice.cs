@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace LfrlAnvil.Mathematical.Expressions.Internal;
 
@@ -86,6 +87,29 @@ internal readonly struct StringSlice : IEquatable<StringSlice>, IEquatable<char>
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal StringSlice Expand(int count)
+    {
+        var startIndex = Math.Max( StartIndex - count, 0 );
+        var endIndex = Math.Min( EndIndex + count, Source.Length );
+        return new StringSlice( Source, startIndex, endIndex - startIndex );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal ReadOnlyMemory<char> AsMemory()
+    {
+        return Source.AsMemory( StartIndex, Length );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal ReadOnlySpan<char> AsSpan()
+    {
+        return Source.AsSpan( StartIndex, Length );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static StringSlice Create(string source)
     {
         return Create( source, 0, source.Length );
@@ -96,5 +120,14 @@ internal readonly struct StringSlice : IEquatable<StringSlice>, IEquatable<char>
     internal static StringSlice Create(string source, int startIndex, int length)
     {
         return new StringSlice( source, startIndex, length );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static StringSlice Create(ReadOnlyMemory<char> source)
+    {
+        return MemoryMarshal.TryGetString( source, out var text, out var startIndex, out var length )
+            ? Create( text, startIndex, length )
+            : Create( source.ToString() );
     }
 }

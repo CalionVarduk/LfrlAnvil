@@ -16,8 +16,8 @@ public class MathExpressionTokenizerTests : TestsBase
     [Fact]
     public void ReadNextToken_ShouldReturnEmptyCollection_WhenInputIsEmpty()
     {
-        var @params = new MathExpressionTokenReader.Params( GetTokenSets(), GetDefaultConfiguration() );
-        var sut = new MathExpressionTokenizer( string.Empty, @params );
+        var configuration = new MathExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
+        var sut = new MathExpressionTokenizer( string.Empty, configuration );
 
         var result = new List<IntermediateToken>();
         while ( sut.ReadNextToken( out var token ) )
@@ -30,8 +30,8 @@ public class MathExpressionTokenizerTests : TestsBase
     [MethodData( nameof( MathExpressionTokenizerTestsData.GetWhiteSpaceInputData ) )]
     public void ReadNextToken_ShouldReturnEmptyCollection_WhenInputConsistsOfOnlyWhiteSpaces(string input)
     {
-        var @params = new MathExpressionTokenReader.Params( GetTokenSets(), GetDefaultConfiguration() );
-        var sut = new MathExpressionTokenizer( input, @params );
+        var configuration = new MathExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
+        var sut = new MathExpressionTokenizer( input, configuration );
 
         var result = new List<IntermediateToken>();
         while ( sut.ReadNextToken( out var token ) )
@@ -44,9 +44,9 @@ public class MathExpressionTokenizerTests : TestsBase
     public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleOpenParenthesis()
     {
         var input = "(";
-        var expected = IntermediateToken.CreateOpenParenthesis( StringSlice.Create( input ) );
-        var @params = new MathExpressionTokenReader.Params( GetTokenSets(), GetDefaultConfiguration() );
-        var sut = new MathExpressionTokenizer( input, @params );
+        var expected = IntermediateToken.CreateOpenedParenthesis( StringSlice.Create( input ) );
+        var configuration = new MathExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
+        var sut = new MathExpressionTokenizer( input, configuration );
 
         var result = new List<IntermediateToken>();
         while ( sut.ReadNextToken( out var token ) )
@@ -59,9 +59,9 @@ public class MathExpressionTokenizerTests : TestsBase
     public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleCloseParenthesis()
     {
         var input = ")";
-        var expected = IntermediateToken.CreateCloseParenthesis( StringSlice.Create( input ) );
-        var @params = new MathExpressionTokenReader.Params( GetTokenSets(), GetDefaultConfiguration() );
-        var sut = new MathExpressionTokenizer( input, @params );
+        var expected = IntermediateToken.CreateClosedParenthesis( StringSlice.Create( input ) );
+        var configuration = new MathExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
+        var sut = new MathExpressionTokenizer( input, configuration );
 
         var result = new List<IntermediateToken>();
         while ( sut.ReadNextToken( out var token ) )
@@ -75,8 +75,8 @@ public class MathExpressionTokenizerTests : TestsBase
     {
         var input = ",";
         var expected = IntermediateToken.CreateFunctionParameterSeparator( StringSlice.Create( input ) );
-        var @params = new MathExpressionTokenReader.Params( GetTokenSets(), GetDefaultConfiguration() );
-        var sut = new MathExpressionTokenizer( input, @params );
+        var configuration = new MathExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
+        var sut = new MathExpressionTokenizer( input, configuration );
 
         var result = new List<IntermediateToken>();
         while ( sut.ReadNextToken( out var token ) )
@@ -90,8 +90,8 @@ public class MathExpressionTokenizerTests : TestsBase
     {
         var input = ";";
         var expected = IntermediateToken.CreateInlineFunctionSeparator( StringSlice.Create( input ) );
-        var @params = new MathExpressionTokenReader.Params( GetTokenSets(), GetDefaultConfiguration() );
-        var sut = new MathExpressionTokenizer( input, @params );
+        var configuration = new MathExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
+        var sut = new MathExpressionTokenizer( input, configuration );
 
         var result = new List<IntermediateToken>();
         while ( sut.ReadNextToken( out var token ) )
@@ -105,8 +105,8 @@ public class MathExpressionTokenizerTests : TestsBase
     {
         var input = ".";
         var expected = IntermediateToken.CreateMemberAccess( StringSlice.Create( input ) );
-        var @params = new MathExpressionTokenReader.Params( GetTokenSets(), GetDefaultConfiguration() );
-        var sut = new MathExpressionTokenizer( input, @params );
+        var configuration = new MathExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
+        var sut = new MathExpressionTokenizer( input, configuration );
 
         var result = new List<IntermediateToken>();
         while ( sut.ReadNextToken( out var token ) )
@@ -120,8 +120,8 @@ public class MathExpressionTokenizerTests : TestsBase
     public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleStringValue(string input)
     {
         var expected = IntermediateToken.CreateStringConstant( StringSlice.Create( input ) );
-        var @params = new MathExpressionTokenReader.Params( GetTokenSets(), GetDefaultConfiguration() );
-        var sut = new MathExpressionTokenizer( input, @params );
+        var configuration = new MathExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
+        var sut = new MathExpressionTokenizer( input, configuration );
 
         var result = new List<IntermediateToken>();
         while ( sut.ReadNextToken( out var token ) )
@@ -135,8 +135,8 @@ public class MathExpressionTokenizerTests : TestsBase
     public void ReadNextToken_ShouldReturnCorrectFirstToken_WhenInputStartsWithStringValue(string input, string expected)
     {
         var expectedToken = IntermediateToken.CreateStringConstant( StringSlice.Create( expected ) );
-        var @params = new MathExpressionTokenReader.Params( GetTokenSets(), GetDefaultConfiguration() );
-        var sut = new MathExpressionTokenizer( input, @params );
+        var configuration = new MathExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
+        var sut = new MathExpressionTokenizer( input, configuration );
 
         sut.ReadNextToken( out var token );
 
@@ -148,8 +148,8 @@ public class MathExpressionTokenizerTests : TestsBase
     public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleNumberValue(string input)
     {
         var expected = IntermediateToken.CreateNumberConstant( StringSlice.Create( input ) );
-        var @params = new MathExpressionTokenReader.Params( GetTokenSets(), GetDefaultConfiguration() );
-        var sut = new MathExpressionTokenizer( input, @params );
+        var configuration = new MathExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
+        var sut = new MathExpressionTokenizer( input, configuration );
 
         var result = new List<IntermediateToken>();
         while ( sut.ReadNextToken( out var token ) )
@@ -163,8 +163,8 @@ public class MathExpressionTokenizerTests : TestsBase
     public void ReadNextToken_ShouldStopAndReturnCorrectFirstToken_WhenInputStartsWithNumberValue(string input, string expected)
     {
         var expectedToken = IntermediateToken.CreateNumberConstant( StringSlice.Create( expected ) );
-        var @params = new MathExpressionTokenReader.Params( GetTokenSets(), GetDefaultConfiguration() );
-        var sut = new MathExpressionTokenizer( input, @params );
+        var configuration = new MathExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
+        var sut = new MathExpressionTokenizer( input, configuration );
 
         sut.ReadNextToken( out var token );
 
@@ -176,8 +176,11 @@ public class MathExpressionTokenizerTests : TestsBase
     {
         var input = "1234.567";
         var expected = IntermediateToken.CreateNumberConstant( StringSlice.Create( "1234" ) );
-        var @params = new MathExpressionTokenReader.Params( GetTokenSets(), GetDefaultConfiguration( allowNonIntegerValues: false ) );
-        var sut = new MathExpressionTokenizer( input, @params );
+        var configuration = new MathExpressionFactoryInternalConfiguration(
+            GetConstructs(),
+            GetDefaultConfiguration( allowNonIntegerNumbers: false ) );
+
+        var sut = new MathExpressionTokenizer( input, configuration );
 
         sut.ReadNextToken( out var token );
 
@@ -189,8 +192,11 @@ public class MathExpressionTokenizerTests : TestsBase
     {
         var input = "1234.567E890";
         var expected = IntermediateToken.CreateNumberConstant( StringSlice.Create( "1234.567" ) );
-        var @params = new MathExpressionTokenReader.Params( GetTokenSets(), GetDefaultConfiguration( allowScientificNotation: false ) );
-        var sut = new MathExpressionTokenizer( input, @params );
+        var configuration = new MathExpressionFactoryInternalConfiguration(
+            GetConstructs(),
+            GetDefaultConfiguration( allowScientificNotation: false ) );
+
+        var sut = new MathExpressionTokenizer( input, configuration );
 
         sut.ReadNextToken( out var token );
 
@@ -202,8 +208,8 @@ public class MathExpressionTokenizerTests : TestsBase
     public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleBooleanValue(string input)
     {
         var expected = IntermediateToken.CreateBooleanConstant( StringSlice.Create( input ) );
-        var @params = new MathExpressionTokenReader.Params( GetTokenSets(), GetDefaultConfiguration() );
-        var sut = new MathExpressionTokenizer( input, @params );
+        var configuration = new MathExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
+        var sut = new MathExpressionTokenizer( input, configuration );
 
         var result = new List<IntermediateToken>();
         while ( sut.ReadNextToken( out var token ) )
@@ -217,8 +223,8 @@ public class MathExpressionTokenizerTests : TestsBase
     public void ReadNextToken_ShouldStopAndReturnCorrectFirstToken_WhenInputStartsWithBooleanValue(string input, string expected)
     {
         var expectedToken = IntermediateToken.CreateBooleanConstant( StringSlice.Create( expected ) );
-        var @params = new MathExpressionTokenReader.Params( GetTokenSets(), GetDefaultConfiguration() );
-        var sut = new MathExpressionTokenizer( input, @params );
+        var configuration = new MathExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
+        var sut = new MathExpressionTokenizer( input, configuration );
 
         sut.ReadNextToken( out var token );
 
@@ -230,8 +236,8 @@ public class MathExpressionTokenizerTests : TestsBase
     public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleArgument(string input)
     {
         var expected = IntermediateToken.CreateArgument( StringSlice.Create( input ) );
-        var @params = new MathExpressionTokenReader.Params( GetTokenSets(), GetDefaultConfiguration() );
-        var sut = new MathExpressionTokenizer( input, @params );
+        var configuration = new MathExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
+        var sut = new MathExpressionTokenizer( input, configuration );
 
         var result = new List<IntermediateToken>();
         while ( sut.ReadNextToken( out var token ) )
@@ -245,8 +251,8 @@ public class MathExpressionTokenizerTests : TestsBase
     public void ReadNextToken_ShouldStopAndReturnCorrectFirstToken_WhenInputStartsWithArgument(string input, string expected)
     {
         var expectedToken = IntermediateToken.CreateArgument( StringSlice.Create( expected ) );
-        var @params = new MathExpressionTokenReader.Params( GetTokenSets(), GetDefaultConfiguration() );
-        var sut = new MathExpressionTokenizer( input, @params );
+        var configuration = new MathExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
+        var sut = new MathExpressionTokenizer( input, configuration );
 
         sut.ReadNextToken( out var token );
 
@@ -260,10 +266,10 @@ public class MathExpressionTokenizerTests : TestsBase
         IEnumerable<string> tokenSymbols,
         IEnumerable<MathExpressionTokenizerTestsData.Token> expected)
     {
-        var tokenSets = GetTokenSets( tokenSymbols.ToArray() );
+        var tokenSets = GetConstructs( tokenSymbols.ToArray() );
         var expectedTokens = expected.Select( t => t.GetToken( tokenSets ) );
-        var @params = new MathExpressionTokenReader.Params( tokenSets, GetDefaultConfiguration() );
-        var sut = new MathExpressionTokenizer( input, @params );
+        var configuration = new MathExpressionFactoryInternalConfiguration( tokenSets, GetDefaultConfiguration() );
+        var sut = new MathExpressionTokenizer( input, configuration );
 
         var result = new List<IntermediateToken>();
         while ( sut.ReadNextToken( out var token ) )
@@ -272,24 +278,31 @@ public class MathExpressionTokenizerTests : TestsBase
         result.Should().BeSequentiallyEqualTo( expectedTokens );
     }
 
-    private static ITokenizerConfiguration GetDefaultConfiguration(bool allowScientificNotation = true, bool allowNonIntegerValues = true)
+    private static IMathExpressionFactoryConfiguration GetDefaultConfiguration(
+        bool allowScientificNotation = true,
+        bool allowNonIntegerNumbers = true)
     {
-        var result = Substitute.For<ITokenizerConfiguration>();
+        var result = Substitute.For<IMathExpressionFactoryConfiguration>();
         result.DecimalPoint.Returns( '.' );
         result.IntegerDigitSeparator.Returns( '_' );
         result.ScientificNotationExponents.Returns( "eE" );
         result.AllowScientificNotation.Returns( allowScientificNotation );
-        result.AllowNonIntegerValues.Returns( allowNonIntegerValues );
+        result.AllowNonIntegerNumbers.Returns( allowNonIntegerNumbers );
         result.StringDelimiter.Returns( '\'' );
+        result.ConvertResultToOutputTypeAutomatically.Returns( true );
         return result;
     }
 
-    private static IReadOnlyDictionary<StringSlice, MathExpressionTokenSet> GetTokenSets(params string[] symbols)
+    private static IReadOnlyDictionary<StringSlice, MathExpressionConstructTokenDefinition> GetConstructs(params string[] symbols)
     {
-        var result = new Dictionary<StringSlice, MathExpressionTokenSet>();
+        var result = new Dictionary<StringSlice, MathExpressionConstructTokenDefinition>();
         foreach ( var s in symbols )
         {
-            var set = new MathExpressionTokenSet( null, null, null );
+            var set = MathExpressionConstructTokenDefinition.CreateOperator(
+                MathExpressionBinaryOperatorCollection.Empty,
+                MathExpressionUnaryOperatorCollection.Empty,
+                MathExpressionUnaryOperatorCollection.Empty );
+
             result.Add( StringSlice.Create( s ), set );
         }
 

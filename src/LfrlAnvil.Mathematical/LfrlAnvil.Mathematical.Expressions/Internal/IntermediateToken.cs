@@ -6,16 +6,16 @@ namespace LfrlAnvil.Mathematical.Expressions.Internal;
 
 internal readonly struct IntermediateToken
 {
-    private IntermediateToken(IntermediateTokenType type, StringSlice symbol, MathExpressionTokenSet? tokenSet = null)
+    private IntermediateToken(IntermediateTokenType type, StringSlice symbol, MathExpressionConstructTokenDefinition? constructs = null)
     {
         Type = type;
         Symbol = symbol;
-        TokenSet = tokenSet;
+        Constructs = constructs;
     }
 
     public IntermediateTokenType Type { get; }
     public StringSlice Symbol { get; }
-    public MathExpressionTokenSet? TokenSet { get; }
+    public MathExpressionConstructTokenDefinition? Constructs { get; }
 
     [Pure]
     public override string ToString()
@@ -25,18 +25,18 @@ internal readonly struct IntermediateToken
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static IntermediateToken CreateOpenParenthesis(StringSlice symbol)
+    internal static IntermediateToken CreateOpenedParenthesis(StringSlice symbol)
     {
-        Debug.Assert( symbol.Equals( TokenConstants.OpenParenthesis ), "symbol is OpenParenthesis" );
-        return new IntermediateToken( IntermediateTokenType.OpenParenthesis, symbol );
+        Debug.Assert( symbol.Equals( TokenConstants.OpenedParenthesis ), "symbol is OpenedParenthesis" );
+        return new IntermediateToken( IntermediateTokenType.OpenedParenthesis, symbol );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static IntermediateToken CreateCloseParenthesis(StringSlice symbol)
+    internal static IntermediateToken CreateClosedParenthesis(StringSlice symbol)
     {
-        Debug.Assert( symbol.Equals( TokenConstants.CloseParenthesis ), "symbol is CloseParenthesis" );
-        return new IntermediateToken( IntermediateTokenType.CloseParenthesis, symbol );
+        Debug.Assert( symbol.Equals( TokenConstants.ClosedParenthesis ), "symbol is ClosedParenthesis" );
+        return new IntermediateToken( IntermediateTokenType.ClosedParenthesis, symbol );
     }
 
     [Pure]
@@ -92,10 +92,10 @@ internal readonly struct IntermediateToken
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static IntermediateToken CreateTokenSet(StringSlice symbol, MathExpressionTokenSet tokens)
+    internal static IntermediateToken CreateConstructs(StringSlice symbol, MathExpressionConstructTokenDefinition constructs)
     {
         Debug.Assert( symbol.Length > 0, "symbol.Length > 0" );
-        return new IntermediateToken( IntermediateTokenType.TokenSet, symbol, tokens );
+        return new IntermediateToken( IntermediateTokenType.Constructs, symbol, constructs );
     }
 
     [Pure]

@@ -166,7 +166,7 @@ public class MathExpressionTokenizerTestsData
                 new[] { "x+y" },
                 new[]
                 {
-                    new Token( IntermediateTokenType.TokenSet, "x+y" )
+                    new Token( IntermediateTokenType.Constructs, "x+y" )
                 }
             },
             {
@@ -184,7 +184,7 @@ public class MathExpressionTokenizerTestsData
                 new[]
                 {
                     new Token( IntermediateTokenType.Argument, "foo" ),
-                    new Token( IntermediateTokenType.TokenSet, "+" )
+                    new Token( IntermediateTokenType.Constructs, "+" )
                 }
             },
             {
@@ -193,9 +193,9 @@ public class MathExpressionTokenizerTestsData
                 new[]
                 {
                     new Token( IntermediateTokenType.NumberConstant, "1" ),
-                    new Token( IntermediateTokenType.TokenSet, "+" ),
+                    new Token( IntermediateTokenType.Constructs, "+" ),
                     new Token( IntermediateTokenType.NumberConstant, "2" ),
-                    new Token( IntermediateTokenType.TokenSet, "-" ),
+                    new Token( IntermediateTokenType.Constructs, "-" ),
                     new Token( IntermediateTokenType.NumberConstant, "3" )
                 }
             },
@@ -205,7 +205,7 @@ public class MathExpressionTokenizerTestsData
                 new[]
                 {
                     new Token( IntermediateTokenType.Argument, "a" ),
-                    new Token( IntermediateTokenType.TokenSet, "==" ),
+                    new Token( IntermediateTokenType.Constructs, "==" ),
                     new Token( IntermediateTokenType.Argument, "=" ),
                     new Token( IntermediateTokenType.Argument, "b" )
                 }
@@ -216,8 +216,8 @@ public class MathExpressionTokenizerTestsData
                 new[]
                 {
                     new Token( IntermediateTokenType.Argument, "a" ),
-                    new Token( IntermediateTokenType.TokenSet, "==" ),
-                    new Token( IntermediateTokenType.TokenSet, "=" ),
+                    new Token( IntermediateTokenType.Constructs, "==" ),
+                    new Token( IntermediateTokenType.Constructs, "=" ),
                     new Token( IntermediateTokenType.Argument, "b" )
                 }
             },
@@ -227,7 +227,7 @@ public class MathExpressionTokenizerTestsData
                 new[]
                 {
                     new Token( IntermediateTokenType.Argument, "a" ),
-                    new Token( IntermediateTokenType.TokenSet, "===" ),
+                    new Token( IntermediateTokenType.Constructs, "===" ),
                     new Token( IntermediateTokenType.Argument, "b" )
                 }
             },
@@ -248,7 +248,7 @@ public class MathExpressionTokenizerTestsData
                 {
                     new Token( IntermediateTokenType.Argument, "a" ),
                     new Token( IntermediateTokenType.Argument, "+" ),
-                    new Token( IntermediateTokenType.TokenSet, "==" ),
+                    new Token( IntermediateTokenType.Constructs, "==" ),
                     new Token( IntermediateTokenType.Argument, "b" )
                 }
             },
@@ -259,7 +259,7 @@ public class MathExpressionTokenizerTestsData
                 {
                     new Token( IntermediateTokenType.Argument, "a" ),
                     new Token( IntermediateTokenType.Argument, "-+" ),
-                    new Token( IntermediateTokenType.TokenSet, "==" ),
+                    new Token( IntermediateTokenType.Constructs, "==" ),
                     new Token( IntermediateTokenType.Argument, "=" ),
                     new Token( IntermediateTokenType.Argument, "b" )
                 }
@@ -269,7 +269,7 @@ public class MathExpressionTokenizerTestsData
                 new[] { "a" },
                 new[]
                 {
-                    new Token( IntermediateTokenType.TokenSet, "a" ),
+                    new Token( IntermediateTokenType.Constructs, "a" ),
                     new Token( IntermediateTokenType.Argument, "+" ),
                     new Token( IntermediateTokenType.Argument, "b" )
                 }
@@ -279,8 +279,8 @@ public class MathExpressionTokenizerTestsData
                 new[] { "a", "+" },
                 new[]
                 {
-                    new Token( IntermediateTokenType.TokenSet, "a" ),
-                    new Token( IntermediateTokenType.TokenSet, "+" ),
+                    new Token( IntermediateTokenType.Constructs, "a" ),
+                    new Token( IntermediateTokenType.Constructs, "+" ),
                     new Token( IntermediateTokenType.Argument, "b" )
                 }
             },
@@ -311,7 +311,7 @@ public class MathExpressionTokenizerTestsData
                 new[]
                 {
                     new Token( IntermediateTokenType.Argument, "a" ),
-                    new Token( IntermediateTokenType.TokenSet, ".." ),
+                    new Token( IntermediateTokenType.Constructs, ".." ),
                     new Token( IntermediateTokenType.Argument, "b" )
                 }
             },
@@ -322,7 +322,7 @@ public class MathExpressionTokenizerTestsData
                 {
                     new Token( IntermediateTokenType.Argument, "a" ),
                     new Token( IntermediateTokenType.MemberAccess, "." ),
-                    new Token( IntermediateTokenType.TokenSet, "+" ),
+                    new Token( IntermediateTokenType.Constructs, "+" ),
                     new Token( IntermediateTokenType.Argument, "b" )
                 }
             },
@@ -332,7 +332,7 @@ public class MathExpressionTokenizerTestsData
                 new[]
                 {
                     new Token( IntermediateTokenType.Argument, "a" ),
-                    new Token( IntermediateTokenType.TokenSet, "+" ),
+                    new Token( IntermediateTokenType.Constructs, "+" ),
                     new Token( IntermediateTokenType.MemberAccess, "." ),
                     new Token( IntermediateTokenType.Argument, "b" )
                 }
@@ -364,7 +364,7 @@ public class MathExpressionTokenizerTestsData
                 new[]
                 {
                     new Token( IntermediateTokenType.Argument, "a" ),
-                    new Token( IntermediateTokenType.TokenSet, ",," ),
+                    new Token( IntermediateTokenType.Constructs, ",," ),
                     new Token( IntermediateTokenType.Argument, "b" )
                 }
             },
@@ -375,7 +375,7 @@ public class MathExpressionTokenizerTestsData
                 {
                     new Token( IntermediateTokenType.Argument, "a" ),
                     new Token( IntermediateTokenType.FunctionParameterSeparator, "," ),
-                    new Token( IntermediateTokenType.TokenSet, "+" ),
+                    new Token( IntermediateTokenType.Constructs, "+" ),
                     new Token( IntermediateTokenType.Argument, "b" )
                 }
             },
@@ -385,7 +385,7 @@ public class MathExpressionTokenizerTestsData
                 new[]
                 {
                     new Token( IntermediateTokenType.Argument, "a" ),
-                    new Token( IntermediateTokenType.TokenSet, "+" ),
+                    new Token( IntermediateTokenType.Constructs, "+" ),
                     new Token( IntermediateTokenType.FunctionParameterSeparator, "," ),
                     new Token( IntermediateTokenType.Argument, "b" )
                 }
@@ -396,7 +396,7 @@ public class MathExpressionTokenizerTestsData
                 new[]
                 {
                     new Token( IntermediateTokenType.Argument, "Tuue" ),
-                    new Token( IntermediateTokenType.TokenSet, "|" ),
+                    new Token( IntermediateTokenType.Constructs, "|" ),
                     new Token( IntermediateTokenType.Argument, "FuLSe" )
                 }
             },
@@ -406,7 +406,7 @@ public class MathExpressionTokenizerTestsData
                 new[]
                 {
                     new Token( IntermediateTokenType.Argument, "_a_" ),
-                    new Token( IntermediateTokenType.TokenSet, "+" ),
+                    new Token( IntermediateTokenType.Constructs, "+" ),
                     new Token( IntermediateTokenType.Argument, "_b_" )
                 }
             },
@@ -416,7 +416,7 @@ public class MathExpressionTokenizerTestsData
                 new[]
                 {
                     new Token( IntermediateTokenType.Argument, "_0" ),
-                    new Token( IntermediateTokenType.TokenSet, "+" ),
+                    new Token( IntermediateTokenType.Constructs, "+" ),
                     new Token( IntermediateTokenType.Argument, "_1" )
                 }
             },
@@ -427,7 +427,7 @@ public class MathExpressionTokenizerTestsData
                 {
                     new Token( IntermediateTokenType.NumberConstant, "1" ),
                     new Token( IntermediateTokenType.Argument, "_" ),
-                    new Token( IntermediateTokenType.TokenSet, "+" ),
+                    new Token( IntermediateTokenType.Constructs, "+" ),
                     new Token( IntermediateTokenType.NumberConstant, "2" ),
                     new Token( IntermediateTokenType.Argument, "_" )
                 }
@@ -439,7 +439,7 @@ public class MathExpressionTokenizerTestsData
                 {
                     new Token( IntermediateTokenType.NumberConstant, "1" ),
                     new Token( IntermediateTokenType.Argument, "_" ),
-                    new Token( IntermediateTokenType.TokenSet, "+" ),
+                    new Token( IntermediateTokenType.Constructs, "+" ),
                     new Token( IntermediateTokenType.NumberConstant, "2_" )
                 }
             },
@@ -449,7 +449,7 @@ public class MathExpressionTokenizerTestsData
                 new[]
                 {
                     new Token( IntermediateTokenType.Argument, "x" ),
-                    new Token( IntermediateTokenType.TokenSet, "+" ),
+                    new Token( IntermediateTokenType.Constructs, "+" ),
                     new Token( IntermediateTokenType.NumberConstant, "1.2" ),
                     new Token( IntermediateTokenType.MemberAccess, "." ),
                     new Token( IntermediateTokenType.NumberConstant, "3" )
@@ -461,17 +461,17 @@ public class MathExpressionTokenizerTestsData
                 new[]
                 {
                     new Token( IntermediateTokenType.Argument, "x" ),
-                    new Token( IntermediateTokenType.TokenSet, "-" ),
+                    new Token( IntermediateTokenType.Constructs, "-" ),
                     new Token( IntermediateTokenType.Argument, "_y" ),
-                    new Token( IntermediateTokenType.TokenSet, "+" ),
-                    new Token( IntermediateTokenType.TokenSet, "-" ),
+                    new Token( IntermediateTokenType.Constructs, "+" ),
+                    new Token( IntermediateTokenType.Constructs, "-" ),
                     new Token( IntermediateTokenType.Argument, "z" ),
-                    new Token( IntermediateTokenType.TokenSet, "*" ),
-                    new Token( IntermediateTokenType.OpenParenthesis, "(" ),
+                    new Token( IntermediateTokenType.Constructs, "*" ),
+                    new Token( IntermediateTokenType.OpenedParenthesis, "(" ),
                     new Token( IntermediateTokenType.Argument, "v" ),
-                    new Token( IntermediateTokenType.TokenSet, "mod" ),
+                    new Token( IntermediateTokenType.Constructs, "mod" ),
                     new Token( IntermediateTokenType.Argument, "w" ),
-                    new Token( IntermediateTokenType.CloseParenthesis, ")" )
+                    new Token( IntermediateTokenType.ClosedParenthesis, ")" )
                 }
             },
             {
@@ -480,46 +480,46 @@ public class MathExpressionTokenizerTestsData
                 new[]
                 {
                     new Token( IntermediateTokenType.Argument, "a" ),
-                    new Token( IntermediateTokenType.TokenSet, "+" ),
+                    new Token( IntermediateTokenType.Constructs, "+" ),
                     new Token( IntermediateTokenType.Argument, "b" ),
-                    new Token( IntermediateTokenType.TokenSet, "*" ),
+                    new Token( IntermediateTokenType.Constructs, "*" ),
                     new Token( IntermediateTokenType.Argument, "c" ),
-                    new Token( IntermediateTokenType.TokenSet, "/" ),
+                    new Token( IntermediateTokenType.Constructs, "/" ),
                     new Token( IntermediateTokenType.Argument, "d" ),
-                    new Token( IntermediateTokenType.TokenSet, "mod" ),
+                    new Token( IntermediateTokenType.Constructs, "mod" ),
                     new Token( IntermediateTokenType.Argument, "e" ),
                     new Token( IntermediateTokenType.MemberAccess, "." ),
                     new Token( IntermediateTokenType.Argument, "calc" ),
-                    new Token( IntermediateTokenType.OpenParenthesis, "(" ),
-                    new Token( IntermediateTokenType.CloseParenthesis, ")" ),
-                    new Token( IntermediateTokenType.TokenSet, "++" ),
-                    new Token( IntermediateTokenType.OpenParenthesis, "(" ),
+                    new Token( IntermediateTokenType.OpenedParenthesis, "(" ),
+                    new Token( IntermediateTokenType.ClosedParenthesis, ")" ),
+                    new Token( IntermediateTokenType.Constructs, "++" ),
+                    new Token( IntermediateTokenType.OpenedParenthesis, "(" ),
                     new Token( IntermediateTokenType.Argument, "f" ),
-                    new Token( IntermediateTokenType.TokenSet, "-" ),
+                    new Token( IntermediateTokenType.Constructs, "-" ),
                     new Token( IntermediateTokenType.Argument, "g" ),
-                    new Token( IntermediateTokenType.TokenSet, "--" ),
+                    new Token( IntermediateTokenType.Constructs, "--" ),
                     new Token( IntermediateTokenType.Argument, "h" ),
-                    new Token( IntermediateTokenType.TokenSet, "*" ),
-                    new Token( IntermediateTokenType.TokenSet, "func" ),
-                    new Token( IntermediateTokenType.OpenParenthesis, "(" ),
-                    new Token( IntermediateTokenType.TokenSet, "+mixed" ),
+                    new Token( IntermediateTokenType.Constructs, "*" ),
+                    new Token( IntermediateTokenType.Constructs, "func" ),
+                    new Token( IntermediateTokenType.OpenedParenthesis, "(" ),
+                    new Token( IntermediateTokenType.Constructs, "+mixed" ),
                     new Token( IntermediateTokenType.Argument, "i" ),
-                    new Token( IntermediateTokenType.TokenSet, "/" ),
+                    new Token( IntermediateTokenType.Constructs, "/" ),
                     new Token( IntermediateTokenType.Argument, "j" ),
                     new Token( IntermediateTokenType.FunctionParameterSeparator, "," ),
                     new Token( IntermediateTokenType.Argument, "f" ),
                     new Token( IntermediateTokenType.FunctionParameterSeparator, "," ),
                     new Token( IntermediateTokenType.Argument, "g" ),
-                    new Token( IntermediateTokenType.TokenSet, "*" ),
+                    new Token( IntermediateTokenType.Constructs, "*" ),
                     new Token( IntermediateTokenType.Argument, "h" ),
-                    new Token( IntermediateTokenType.CloseParenthesis, ")" ),
-                    new Token( IntermediateTokenType.TokenSet, "/" ),
-                    new Token( IntermediateTokenType.OpenParenthesis, "(" ),
+                    new Token( IntermediateTokenType.ClosedParenthesis, ")" ),
+                    new Token( IntermediateTokenType.Constructs, "/" ),
+                    new Token( IntermediateTokenType.OpenedParenthesis, "(" ),
                     new Token( IntermediateTokenType.NumberConstant, "1_234.567" ),
-                    new Token( IntermediateTokenType.TokenSet, "-" ),
+                    new Token( IntermediateTokenType.Constructs, "-" ),
                     new Token( IntermediateTokenType.StringConstant, "'foo'" ),
-                    new Token( IntermediateTokenType.CloseParenthesis, ")" ),
-                    new Token( IntermediateTokenType.CloseParenthesis, ")" )
+                    new Token( IntermediateTokenType.ClosedParenthesis, ")" ),
+                    new Token( IntermediateTokenType.ClosedParenthesis, ")" )
                 }
             }
         };
@@ -534,8 +534,8 @@ public class MathExpressionTokenizerTestsData
             var s = StringSlice.Create( symbol );
             _token = type switch
             {
-                IntermediateTokenType.OpenParenthesis => IntermediateToken.CreateOpenParenthesis( s ),
-                IntermediateTokenType.CloseParenthesis => IntermediateToken.CreateCloseParenthesis( s ),
+                IntermediateTokenType.OpenedParenthesis => IntermediateToken.CreateOpenedParenthesis( s ),
+                IntermediateTokenType.ClosedParenthesis => IntermediateToken.CreateClosedParenthesis( s ),
                 IntermediateTokenType.FunctionParameterSeparator => IntermediateToken.CreateFunctionParameterSeparator( s ),
                 IntermediateTokenType.InlineFunctionSeparator => IntermediateToken.CreateInlineFunctionSeparator( s ),
                 IntermediateTokenType.MemberAccess => IntermediateToken.CreateMemberAccess( s ),
@@ -543,14 +543,19 @@ public class MathExpressionTokenizerTestsData
                 IntermediateTokenType.NumberConstant => IntermediateToken.CreateNumberConstant( s ),
                 IntermediateTokenType.BooleanConstant => IntermediateToken.CreateBooleanConstant( s ),
                 IntermediateTokenType.Argument => IntermediateToken.CreateArgument( s ),
-                _ => IntermediateToken.CreateTokenSet( s, new MathExpressionTokenSet( null, null, null ) )
+                _ => IntermediateToken.CreateConstructs(
+                    s,
+                    MathExpressionConstructTokenDefinition.CreateOperator(
+                        MathExpressionBinaryOperatorCollection.Empty,
+                        MathExpressionUnaryOperatorCollection.Empty,
+                        MathExpressionUnaryOperatorCollection.Empty ) )
             };
         }
 
-        internal IntermediateToken GetToken(IReadOnlyDictionary<StringSlice, MathExpressionTokenSet> tokenSets)
+        internal IntermediateToken GetToken(IReadOnlyDictionary<StringSlice, MathExpressionConstructTokenDefinition> constructs)
         {
-            return _token.Type == IntermediateTokenType.TokenSet
-                ? IntermediateToken.CreateTokenSet( _token.Symbol, tokenSets[_token.Symbol] )
+            return _token.Type == IntermediateTokenType.Constructs
+                ? IntermediateToken.CreateConstructs( _token.Symbol, constructs[_token.Symbol] )
                 : _token;
         }
 

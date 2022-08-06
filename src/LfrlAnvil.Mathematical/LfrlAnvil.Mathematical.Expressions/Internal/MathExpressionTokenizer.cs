@@ -3,47 +3,17 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Mathematical.Expressions.Internal;
 
-// TODO:
-// symbol token validation:
-// open parenthesis must be unique
-// close parenthesis must be unique
-// inline function delimiter must be unique
-// function parameter delimiter & (number integer digit separator | number decimal point) can be the same
-// member access & (number integer digit separator | number decimal point) can be the same
-// string delimiter must be unique
-// string delimiter escape doesn't have to be unique (must be different from string delimiter though)
-// number integer digit separator & (function parameter delimiter | member access) can be the same
-// number decimal point & (function parameter delimiter | member access) can be the same
-// number scientific notification exponents must be unique (string itself can contain duplicates, that will be internally trimmed)
-// number scientific notation positive exponent operator must be unique
-// number scientific notation negative exponent operator must be unique
-// none of the tokens can be digits
-// none of the tokens can be a '_' symbol
-// none of the tokens can be a white space symbol
-//
-// operator tokens must:
-// not contain open parenthesis
-// not contain close parenthesis
-// not contain inline function delimiter
-// not contain function parameter delimiter
-// not contain member access
-// not contain string delimiter
-// not contain white spaces
-// not start with a digit
-// not be equal to '_' symbol
 internal struct MathExpressionTokenizer
 {
     private readonly string _input;
-    private readonly MathExpressionTokenReader.Params _params;
+    private readonly MathExpressionFactoryInternalConfiguration _configuration;
     private MathExpressionTokenizerSubStream _subStream;
     private int _index;
 
-    internal MathExpressionTokenizer(
-        string input,
-        MathExpressionTokenReader.Params @params)
+    internal MathExpressionTokenizer(string input, MathExpressionFactoryInternalConfiguration configuration)
     {
         _input = input;
-        _params = @params;
+        _configuration = configuration;
         _subStream = default;
         _index = 0;
         SkipWhiteSpaces();
@@ -91,10 +61,10 @@ internal struct MathExpressionTokenizer
 
         switch ( c )
         {
-            case TokenConstants.OpenParenthesis:
-                return MathExpressionTokenReader.ReadOpenParenthesis( _input, _index );
-            case TokenConstants.CloseParenthesis:
-                return MathExpressionTokenReader.ReadCloseParenthesis( _input, _index );
+            case TokenConstants.OpenedParenthesis:
+                return MathExpressionTokenReader.ReadOpenedParenthesis( _input, _index );
+            case TokenConstants.ClosedParenthesis:
+                return MathExpressionTokenReader.ReadClosedParenthesis( _input, _index );
             case TokenConstants.FunctionParameterSeparator:
                 return MathExpressionTokenReader.ReadFunctionParameterSeparator( _input, _index );
             case TokenConstants.InlineFunctionSeparator:
@@ -104,12 +74,12 @@ internal struct MathExpressionTokenizer
         }
 
         if ( char.IsDigit( c ) )
-            return MathExpressionTokenReader.ReadNumber( _input, _index, _params );
+            return MathExpressionTokenReader.ReadNumber( _input, _index, _configuration );
 
-        if ( c == _params.StringDelimiter )
-            return MathExpressionTokenReader.ReadString( _input, _index, _params );
+        if ( c == _configuration.StringDelimiter )
+            return MathExpressionTokenReader.ReadString( _input, _index, _configuration );
 
-        _subStream = new MathExpressionTokenizerSubStream( _input, _index, _params );
+        _subStream = new MathExpressionTokenizerSubStream( _input, _index, _configuration );
         return ReadNextTokenFromSubStream();
     }
 
@@ -117,7 +87,7 @@ internal struct MathExpressionTokenizer
     {
         Debug.Assert( ! _subStream.IsFinished, "subStream is not Finished" );
 
-        var result = _subStream.ReadNext( _params );
+        var result = _subStream.ReadNext( _configuration );
         return result;
     }
 }
