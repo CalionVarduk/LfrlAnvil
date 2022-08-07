@@ -21,6 +21,132 @@ public static class ExceptionResources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string AssumedNotNull<T>(T value, string paramName)
+    {
+        return $"Assumed {paramName} to be null but found {value}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string AssumedDefinedEnum<T>(T value, Type enumType, string paramName)
+    {
+        return $"Assumed {paramName} to be defined in {enumType.FullName} enum type but found {value}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string AssumedEqualTo<T>(T value, T expectedValue, string paramName)
+    {
+        return $"Assumed {paramName} to be equal to {expectedValue} but found {value}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string AssumedNotEqualTo<T>(T value, string paramName)
+    {
+        return $"Assumed {paramName} to not be equal to {value}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string AssumedGreaterThan<T>(T value, T expectedValue, string paramName)
+    {
+        return $"Assumed {paramName} to be greater than {expectedValue} but found {value}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string AssumedGreaterThanOrEqualTo<T>(T value, T expectedValue, string paramName)
+    {
+        return $"Assumed {paramName} to be greater than or equal to {expectedValue} but found {value}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string AssumedLessThan<T>(T value, T expectedValue, string paramName)
+    {
+        return $"Assumed {paramName} to be less than {expectedValue} but found {value}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string AssumedLessThanOrEqualTo<T>(T value, T expectedValue, string paramName)
+    {
+        return $"Assumed {paramName} to be less than or equal to {expectedValue} but found {value}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string AssumedInRange<T>(T value, T min, T max, string paramName)
+    {
+        return $"Assumed {paramName} to be in [{min}, {max}] range but found {value}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string AssumedNotInRange<T>(T value, T min, T max, string paramName)
+    {
+        return $"Assumed {paramName} to not be in [{min}, {max}] range but found {value}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string AssumedInExclusiveRange<T>(T value, T min, T max, string paramName)
+    {
+        return $"Assumed {paramName} to be in ({min}, {max}) range but found {value}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string AssumedNotInExclusiveRange<T>(T value, T min, T max, string paramName)
+    {
+        return $"Assumed {paramName} to not be in ({min}, {max}) range but found {value}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string AssumedEmpty(string paramName)
+    {
+        return $"Assumed {paramName} to be empty.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string AssumedNotEmpty(string paramName)
+    {
+        return $"Assumed {paramName} to not be empty.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string AssumedToContainAtLeast(int count, string paramName)
+    {
+        return $"Assumed {paramName} to contain at least {count} elements.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string AssumedToContainAtMost(int count, string paramName)
+    {
+        return $"Assumed {paramName} to contain at most {count} elements.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string AssumedToContainInRange(int minCount, int maxCount, string paramName)
+    {
+        return $"Assumed {paramName} element count to be in [{minCount}, {maxCount}] range.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string AssumedToContainExactly(int count, string paramName)
+    {
+        return $"Assumed {paramName} to contain exactly {count} elements.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string ExpectedNotNull<T>(T value, string paramName)
     {
         return $"Expected {paramName} to be null but found {value}.";

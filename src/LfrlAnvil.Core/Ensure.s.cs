@@ -144,7 +144,7 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void Equals<T>(T param, T value, string paramName = DefaultParamName)
+    public static void Equals<T>(T param, T? value, string paramName = DefaultParamName)
         where T : IEquatable<T>
     {
         if ( ! param.Equals( value ) )
@@ -152,14 +152,14 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void Equals<T>(T param, T value, IEqualityComparer<T> comparer, string paramName = DefaultParamName)
+    public static void Equals<T>(T param, T? value, IEqualityComparer<T> comparer, string paramName = DefaultParamName)
     {
         if ( ! comparer.Equals( param, value ) )
             throw Exceptions.NotEqualTo( param, value, paramName );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void NotEquals<T>(T param, T value, string paramName = DefaultParamName)
+    public static void NotEquals<T>(T param, T? value, string paramName = DefaultParamName)
         where T : IEquatable<T>
     {
         if ( param.Equals( value ) )
@@ -167,7 +167,7 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void NotEquals<T>(T param, T value, IEqualityComparer<T> comparer, string paramName = DefaultParamName)
+    public static void NotEquals<T>(T param, T? value, IEqualityComparer<T> comparer, string paramName = DefaultParamName)
     {
         if ( comparer.Equals( param, value ) )
             throw Exceptions.EqualTo( value, paramName );
@@ -190,7 +190,7 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsGreaterThan<T>(T param, T value, string paramName = DefaultParamName)
+    public static void IsGreaterThan<T>(T param, T? value, string paramName = DefaultParamName)
         where T : IComparable<T>
     {
         if ( param.CompareTo( value ) <= 0 )
@@ -198,14 +198,14 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsGreaterThan<T>(T param, T value, IComparer<T> comparer, string paramName = DefaultParamName)
+    public static void IsGreaterThan<T>(T param, T? value, IComparer<T> comparer, string paramName = DefaultParamName)
     {
         if ( comparer.Compare( param, value ) <= 0 )
             throw Exceptions.NotGreaterThan( param, value, paramName );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsGreaterThanOrEqualTo<T>(T param, T value, string paramName = DefaultParamName)
+    public static void IsGreaterThanOrEqualTo<T>(T param, T? value, string paramName = DefaultParamName)
         where T : IComparable<T>
     {
         if ( param.CompareTo( value ) < 0 )
@@ -213,14 +213,14 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsGreaterThanOrEqualTo<T>(T param, T value, IComparer<T> comparer, string paramName = DefaultParamName)
+    public static void IsGreaterThanOrEqualTo<T>(T param, T? value, IComparer<T> comparer, string paramName = DefaultParamName)
     {
         if ( comparer.Compare( param, value ) < 0 )
             throw Exceptions.NotGreaterThanOrEqual( param, value, paramName );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsLessThan<T>(T param, T value, string paramName = DefaultParamName)
+    public static void IsLessThan<T>(T param, T? value, string paramName = DefaultParamName)
         where T : IComparable<T>
     {
         if ( param.CompareTo( value ) >= 0 )
@@ -228,14 +228,14 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsLessThan<T>(T param, T value, IComparer<T> comparer, string paramName = DefaultParamName)
+    public static void IsLessThan<T>(T param, T? value, IComparer<T> comparer, string paramName = DefaultParamName)
     {
         if ( comparer.Compare( param, value ) >= 0 )
             throw Exceptions.NotLessThan( param, value, paramName );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsLessThanOrEqualTo<T>(T param, T value, string paramName = DefaultParamName)
+    public static void IsLessThanOrEqualTo<T>(T param, T? value, string paramName = DefaultParamName)
         where T : IComparable<T>
     {
         if ( param.CompareTo( value ) > 0 )
@@ -243,7 +243,7 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsLessThanOrEqualTo<T>(T param, T value, IComparer<T> comparer, string paramName = DefaultParamName)
+    public static void IsLessThanOrEqualTo<T>(T param, T? value, IComparer<T> comparer, string paramName = DefaultParamName)
     {
         if ( comparer.Compare( param, value ) > 0 )
             throw Exceptions.NotLessThanOrEqual( param, value, paramName );
