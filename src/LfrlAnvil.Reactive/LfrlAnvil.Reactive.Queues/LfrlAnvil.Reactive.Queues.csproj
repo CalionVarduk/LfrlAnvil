@@ -1,19 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
-        <LangVersion>10</LangVersion>
-        <Nullable>enable</Nullable>
+        <PackageTags>LfrlAnvil Reactive Queues</PackageTags>
     </PropertyGroup>
-
-    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-        <PlatformTarget>x64</PlatformTarget>
-    </PropertyGroup>
-
-    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-        <PlatformTarget>x64</PlatformTarget>
-    </PropertyGroup>
-
+    
     <ItemGroup>
         <ProjectReference Include="..\..\LfrlAnvil.Collections\LfrlAnvil.Collections.csproj" />
         <ProjectReference Include="..\LfrlAnvil.Reactive.Core\LfrlAnvil.Reactive.Core.csproj" />

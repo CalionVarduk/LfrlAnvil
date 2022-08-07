@@ -30,6 +30,17 @@
 // if not, then its type will be 'System.Object' (make it configurable)
 // if all array values are const, then array is also made into const
 //
+// type system:
+// factory builder could have methods for registering types
+// method would accept a CLR System.Type ref & custom type name e.g. 'int'
+// it would also allow to override the default prefix type converter symbol for that type
+// by default it would be equal to '[' + type_name + ']' e.g. '[int]'
+// it would also allow to specify postfix type converter symbol (by default, some types have a default value, some don't use postfix at all)
+// this system could be used to specify 'anonymous' delegate parameter types explicitly
+// e.g. (int a) -> BODY instead of (a) -> BODY, where 'a' type would be inferred, but could also lead to unresolvable ambiguity
+// e.g. when function Foo has two overloads, both accept one parameter
+// first overload accepts parameter type (int a) -> ..., second accepts parameter type (double a) -> ...
+//
 // other ideas:
 // Int128, Int256, UInt128, UInt256 structs
 // FixedDecimal struct

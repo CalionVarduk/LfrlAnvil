@@ -1,18 +1,17 @@
 ﻿using System;
 
-namespace LfrlAnvil.TestExtensions.Attributes
+namespace LfrlAnvil.TestExtensions.Attributes;
+
+[AttributeUsage( AttributeTargets.Class, Inherited = false )]
+public class TestClassAttribute : Attribute
 {
-    [AttributeUsage( AttributeTargets.Class, Inherited = false )]
-    public class TestClassAttribute : Attribute
+    public TestClassAttribute(Type? dataClass)
     {
-        public TestClassAttribute(Type? dataClass)
-        {
-            if ( dataClass?.IsGenericTypeDefinition != false )
-                throw new ArgumentException( "Data class cannot be an open generic type." );
+        if ( dataClass?.IsGenericTypeDefinition != false )
+            throw new ArgumentException( "Data class cannot be an open generic type." );
 
-            DataClass = dataClass;
-        }
-
-        public Type DataClass { get; }
+        DataClass = dataClass;
     }
+
+    public Type DataClass { get; }
 }
