@@ -244,6 +244,12 @@ public partial class ParsedExpressionFactoryTests
         }
     }
 
+    private sealed class ZeroConstant : ParsedExpressionConstant<string>
+    {
+        internal ZeroConstant()
+            : base( "ZERO" ) { }
+    }
+
     private sealed class FailingNumberParser : IParsedExpressionNumberParser
     {
         public bool TryParse(ReadOnlySpan<char> text, [MaybeNullWhen( false )] out object result)

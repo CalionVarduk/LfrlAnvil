@@ -80,6 +80,18 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     }
 
     [Pure]
+    public bool IsConstantSymbol(string symbol)
+    {
+        return IsConstantSymbol( StringSlice.Create( symbol ) );
+    }
+
+    [Pure]
+    public bool IsConstantSymbol(ReadOnlyMemory<char> symbol)
+    {
+        return IsConstantSymbol( StringSlice.Create( symbol ) );
+    }
+
+    [Pure]
     public int? GetBinaryOperatorPrecedence(string symbol)
     {
         return GetBinaryOperatorPrecedence( StringSlice.Create( symbol ) );
@@ -215,6 +227,12 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     private bool IsFunctionSymbol(StringSlice symbol)
     {
         return _configuration.Constructs.GetValueOrDefault( symbol )?.Type == ConstructTokenType.Function;
+    }
+
+    [Pure]
+    private bool IsConstantSymbol(StringSlice symbol)
+    {
+        return _configuration.Constructs.GetValueOrDefault( symbol )?.Type == ConstructTokenType.Constant;
     }
 
     [Pure]

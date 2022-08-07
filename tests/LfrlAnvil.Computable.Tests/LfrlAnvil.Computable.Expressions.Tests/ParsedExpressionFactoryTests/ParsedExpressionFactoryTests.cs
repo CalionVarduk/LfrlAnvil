@@ -66,6 +66,21 @@ public partial class ParsedExpressionFactoryTests : TestsBase
         }
     }
 
+    [Fact]
+    public void Create_ShouldThrowMathExpressionCreationException_WhenUnexpectedExceptionIsThrown()
+    {
+        var input = "a";
+        var exception = new Exception();
+        var builder = new ParsedExpressionFactoryBuilder().SetNumberParserProvider( _ => throw exception );
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<decimal, decimal>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.Error ) );
+    }
+
     [Theory]
     [InlineData( "'foobar'" )]
     [InlineData( "( 'foobar' )" )]
@@ -138,6 +153,22 @@ public partial class ParsedExpressionFactoryTests : TestsBase
         }
     }
 
+    [Theory]
+    [InlineData( "Zero" )]
+    [InlineData( "( Zero )" )]
+    [InlineData( "( ( ( Zero ) ) )" )]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenExpressionConsistsOfOnlyCustomConstant(string input)
+    {
+        var builder = new ParsedExpressionFactoryBuilder().AddConstant( "Zero", new ZeroConstant() );
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+
+        result.Should().Be( "ZERO" );
+    }
+
     [Fact]
     public void Build_ShouldThrowMathExpressionCreationException_WhenStringConstantIsTheLastTokenAndDoesNotHaveClosingDelimiter()
     {
@@ -184,7 +215,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     [MethodData( nameof( ParsedExpressionFactoryTestsData.GetOperandFollowedByOperandData ) )]
     public void Create_ShouldThrowMathExpressionCreationException_WhenOperandIsFollowedByOperand(string input)
     {
-        var builder = new ParsedExpressionFactoryBuilder();
+        var builder = new ParsedExpressionFactoryBuilder().AddConstant( "Zero", new ZeroConstant() );
         var sut = builder.Build();
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
@@ -199,6 +230,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     public void Create_ShouldThrowMathExpressionCreationException_WhenOperandIsFollowedByPrefixUnaryOperator(string input)
     {
         var builder = new ParsedExpressionFactoryBuilder()
+            .AddConstant( "Zero", new ZeroConstant() )
             .AddPrefixUnaryOperator( "-", new MockPrefixUnaryOperator() )
             .SetPrefixUnaryConstructPrecedence( "-", 1 );
 
@@ -216,6 +248,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     public void Create_ShouldThrowMathExpressionCreationException_WhenOperandIsFollowedByPrefixTypeConverter(string input)
     {
         var builder = new ParsedExpressionFactoryBuilder()
+            .AddConstant( "Zero", new ZeroConstant() )
             .AddPrefixTypeConverter( "[string]", new MockPrefixTypeConverter() )
             .SetPrefixUnaryConstructPrecedence( "[string]", 1 );
 
@@ -228,26 +261,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
             .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.PostfixUnaryOrBinaryConstructDoesNotExist ) );
     }
 
-    [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenUnexpectedExceptionIsThrown()
-    {
-        var input = "a";
-        var exception = new Exception();
-        var builder = new ParsedExpressionFactoryBuilder().SetNumberParserProvider( _ => throw exception );
-        var sut = builder.Build();
-
-        var action = Lambda.Of( () => sut.Create<decimal, decimal>( input ) );
-
-        action.Should()
-            .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.Error ) );
-    }
-
     [Theory]
     [MethodData( nameof( ParsedExpressionFactoryTestsData.GetOperandFollowedByOpenParenthesisData ) )]
     public void Create_ShouldThrowMathExpressionCreationException_WhenOperandIsFollowedByOpenedParenthesis(string input)
     {
-        var builder = new ParsedExpressionFactoryBuilder();
+        var builder = new ParsedExpressionFactoryBuilder().AddConstant( "Zero", new ZeroConstant() );
         var sut = builder.Build();
 
         var action = Lambda.Of( () => sut.Create<decimal, decimal>( input ) );
@@ -367,6 +385,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
         string input)
     {
         var builder = new ParsedExpressionFactoryBuilder()
+            .AddConstant( "Zero", new ZeroConstant() )
             .AddBinaryOperator( "+", new MockBinaryOperator() )
             .AddPrefixUnaryOperator( "-", new MockPrefixUnaryOperator() )
             .AddPrefixTypeConverter( "[string]", new MockPrefixTypeConverter() )
@@ -1092,6 +1111,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
         string expected)
     {
         var builder = new ParsedExpressionFactoryBuilder()
+            .AddConstant( "Zero", new ZeroConstant() )
             .AddBinaryOperator( "+", new MockBinaryOperator() )
             .AddPrefixUnaryOperator( "-", new MockPrefixUnaryOperator() )
             .AddPrefixTypeConverter( "[string]", new MockPrefixTypeConverter() )
@@ -1151,6 +1171,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
         string expected)
     {
         var builder = new ParsedExpressionFactoryBuilder()
+            .AddConstant( "Zero", new ZeroConstant() )
             .AddBinaryOperator( "/", new MockBinaryOperator( "Div" ) )
             .AddPrefixUnaryOperator( "^", new MockPrefixUnaryOperator( "Caret" ) )
             .AddPostfixUnaryOperator( "!", new MockPostfixUnaryOperator( "Excl" ) )

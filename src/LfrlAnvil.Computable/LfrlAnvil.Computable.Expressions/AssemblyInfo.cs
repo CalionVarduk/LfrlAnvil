@@ -3,10 +3,8 @@
 [assembly: InternalsVisibleTo( "LfrlAnvil.Computable.Expressions.Tests" )]
 
 // TODO:
-// Add constant constructs
-// Add factory builder extensions for registering constructs in bulk
 // Add function constructs
-// Add member access support (include implicit null check, basically treat it as ?. operator)
+// Add member access support (include implicit null check, basically treat it as ?. operator, support only fields and properties, for now)
 // Add branching function constructs (start with if-else, then add switch, maybe also throw?)
 // Add inline function support (defining named function in the same input, that can be used e.g. as branching function's argument)
 // ^ this would go very well together with the thing below

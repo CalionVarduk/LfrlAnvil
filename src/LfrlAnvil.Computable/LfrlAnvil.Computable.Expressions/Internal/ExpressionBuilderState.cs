@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
@@ -299,7 +298,7 @@ internal sealed class ExpressionBuilderState
     private Chain<ParsedExpressionBuilderError> HandleConstructs(IntermediateToken token)
     {
         AssumeTokenType( token, IntermediateTokenType.Constructs );
-        AssumeNotNullTokenConstructs( token.Constructs );
+        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
 
         if ( token.Constructs.Type == ConstructTokenType.Function )
         {
@@ -307,17 +306,11 @@ internal sealed class ExpressionBuilderState
             if ( errors.Count > 0 )
                 return errors;
 
-            throw new NotSupportedException( "Function constructs aren't supported yet." );
+            throw new NotImplementedException( "Function constructs aren't supported yet." );
         }
 
         if ( token.Constructs.Type == ConstructTokenType.Constant )
-        {
-            var errors = HandleAmbiguousConstructAsBinaryOperator();
-            if ( errors.Count > 0 )
-                return errors;
-
-            throw new NotSupportedException( "Constant constructs aren't supported yet." );
-        }
+            return HandleConstant( token );
 
         if ( Expects( Expectation.AmbiguousPrefixConstructResolution ) )
         {
@@ -378,9 +371,25 @@ internal sealed class ExpressionBuilderState
         if ( Expects( Expectation.PrefixUnaryConstruct ) )
             return PushPrefixUnaryConstruct( token );
 
-        // TODO: add custom constant construct handling
-
         return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedConstruct( token ) );
+    }
+
+    private Chain<ParsedExpressionBuilderError> HandleConstant(IntermediateToken token)
+    {
+        AssumeTokenType( token, IntermediateTokenType.Constructs );
+        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
+        Assume.IsNotNull( token.Constructs.Constant, nameof( token.Constructs.Constant ) );
+
+        var errors = HandleAmbiguousConstructAsBinaryOperator();
+
+        if ( ! Expects( Expectation.Operand ) )
+            errors = errors.Extend( ParsedExpressionBuilderError.CreateUnexpectedOperand( token ) );
+
+        if ( errors.Count > 0 )
+            return errors;
+
+        PushOperand( token.Constructs.Constant.Expression );
+        return Chain<ParsedExpressionBuilderError>.Empty;
     }
 
     private Chain<ParsedExpressionBuilderError> HandleOpenedParenthesis(IntermediateToken token)
@@ -418,7 +427,7 @@ internal sealed class ExpressionBuilderState
         while ( data.Expectation != Expectation.OpenedParenthesis )
         {
             AssumeExpectation( data.Expectation, Expectation.BinaryOperator | Expectation.PrefixUnaryConstruct );
-            AssumeNotNullTokenConstructs( data.Token.Constructs );
+            Assume.IsNotNull( data.Token.Constructs, nameof( data.Token.Constructs ) );
 
             _tokenStack.Pop();
 
@@ -466,7 +475,7 @@ internal sealed class ExpressionBuilderState
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Chain<ParsedExpressionBuilderError> ProcessPrefixUnaryConstruct(IntermediateToken token)
     {
-        AssumeNotNullTokenConstructs( token.Constructs );
+        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
 
         return token.Constructs.Type == ConstructTokenType.Operator
             ? ProcessPrefixUnaryOperator( token )
@@ -477,7 +486,7 @@ internal sealed class ExpressionBuilderState
     private Chain<ParsedExpressionBuilderError> ProcessPrefixUnaryOperator(IntermediateToken token)
     {
         Assume.IsNotEmpty( _operandStack, nameof( _operandStack ) );
-        AssumeNotNullTokenConstructs( token.Constructs );
+        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
 
         var argumentType = _operandStack[0].Type;
         var @operator = token.Constructs.PrefixUnaryOperators.FindConstruct( argumentType );
@@ -491,7 +500,7 @@ internal sealed class ExpressionBuilderState
     private Chain<ParsedExpressionBuilderError> ProcessPrefixTypeConverter(IntermediateToken token)
     {
         Assume.IsNotEmpty( _operandStack, nameof( _operandStack ) );
-        AssumeNotNullTokenConstructs( token.Constructs );
+        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
 
         var sourceType = _operandStack[0].Type;
         var converter = token.Constructs.PrefixTypeConverters.FindConstruct( sourceType );
@@ -504,7 +513,7 @@ internal sealed class ExpressionBuilderState
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Chain<ParsedExpressionBuilderError> ProcessPostfixUnaryConstruct(IntermediateToken token)
     {
-        AssumeNotNullTokenConstructs( token.Constructs );
+        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
 
         return token.Constructs.Type == ConstructTokenType.Operator
             ? ProcessPostfixUnaryOperator( token )
@@ -515,7 +524,7 @@ internal sealed class ExpressionBuilderState
     private Chain<ParsedExpressionBuilderError> ProcessPostfixUnaryOperator(IntermediateToken token)
     {
         Assume.IsNotEmpty( _operandStack, nameof( _operandStack ) );
-        AssumeNotNullTokenConstructs( token.Constructs );
+        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
 
         var argumentType = _operandStack[0].Type;
         var @operator = token.Constructs.PostfixUnaryOperators.FindConstruct( argumentType );
@@ -529,7 +538,7 @@ internal sealed class ExpressionBuilderState
     private Chain<ParsedExpressionBuilderError> ProcessPostfixTypeConverter(IntermediateToken token)
     {
         Assume.IsNotEmpty( _operandStack, nameof( _operandStack ) );
-        AssumeNotNullTokenConstructs( token.Constructs );
+        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
 
         var sourceType = _operandStack[0].Type;
         var converter = token.Constructs.PostfixTypeConverters.FindConstruct( sourceType );
@@ -555,7 +564,7 @@ internal sealed class ExpressionBuilderState
     private Chain<ParsedExpressionBuilderError> ProcessBinaryOperator(IntermediateToken token)
     {
         Assume.ContainsAtLeast( _operandStack, 2, nameof( _operandStack ) );
-        AssumeNotNullTokenConstructs( token.Constructs );
+        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
 
         var rightArgumentType = _operandStack[0].Type;
         var leftArgumentType = _operandStack[1].Type;
@@ -619,7 +628,7 @@ internal sealed class ExpressionBuilderState
     {
         AssumeTokenType( token, IntermediateTokenType.Constructs );
         AssumeStateExpectation( Expectation.BinaryOperator );
-        AssumeNotNullTokenConstructs( token.Constructs );
+        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
 
         var errors = HandleAmbiguousConstructAsPostfixUnaryOperator();
         if ( errors.Count > 0 )
@@ -643,7 +652,7 @@ internal sealed class ExpressionBuilderState
 
         while ( _tokenStack.TryPeek( out var data ) && data.Expectation == Expectation.BinaryOperator )
         {
-            AssumeNotNullTokenConstructs( data.Token.Constructs );
+            Assume.IsNotNull( data.Token.Constructs, nameof( data.Token.Constructs ) );
 
             var binaryOperatorsOnStack = data.Token.Constructs.BinaryOperators;
             if ( binaryOperators.Precedence < binaryOperatorsOnStack.Precedence )
@@ -666,7 +675,7 @@ internal sealed class ExpressionBuilderState
     {
         AssumeTokenType( token, IntermediateTokenType.Constructs );
         AssumeStateExpectation( Expectation.PrefixUnaryConstruct );
-        AssumeNotNullTokenConstructs( token.Constructs );
+        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
 
         var errors = HandleAmbiguousConstructAsBinaryOperator();
 
@@ -691,7 +700,7 @@ internal sealed class ExpressionBuilderState
     {
         AssumeTokenType( token, IntermediateTokenType.Constructs );
         AssumeStateExpectation( Expectation.PostfixUnaryConstruct );
-        AssumeNotNullTokenConstructs( token.Constructs );
+        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
 
         var isEmpty = token.Constructs.Type == ConstructTokenType.Operator
             ? token.Constructs.PostfixUnaryOperators.IsEmpty
@@ -705,7 +714,7 @@ internal sealed class ExpressionBuilderState
             var prefixData = _tokenStack.Pop();
 
             AssumeExpectation( prefixData.Expectation, Expectation.PrefixUnaryConstruct );
-            AssumeNotNullTokenConstructs( prefixData.Token.Constructs );
+            Assume.IsNotNull( prefixData.Token.Constructs, nameof( prefixData.Token.Constructs ) );
 
             var prefixPrecedence = prefixData.Token.Constructs.Type == ConstructTokenType.Operator
                 ? prefixData.Token.Constructs.PrefixUnaryOperators.Precedence
@@ -847,12 +856,6 @@ internal sealed class ExpressionBuilderState
     private static void AssumeTokenType(IntermediateToken token, IntermediateTokenType expected)
     {
         Assume.Equals( token.Type, expected, nameof( token ) + '.' + nameof( token.Type ) );
-    }
-
-    [Conditional( "DEBUG" )]
-    private static void AssumeNotNullTokenConstructs([NotNull] ConstructTokenDefinition? constructs)
-    {
-        Assume.IsNotNull( constructs, nameof( constructs ) );
     }
 
     [Flags]

@@ -222,6 +222,20 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ConstantGroupContainsMoreThanOneConstant(StringSlice symbol)
+    {
+        return $"Expected constant group with '{symbol}' symbol to contain only one constant.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ConstantGroupContainsConstructsOfOtherType(StringSlice symbol)
+    {
+        return $"Expected constant group with '{symbol}' symbol to be comprised of only constants but found other construct types.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string InvalidExpressionArgumentCount(int actual, int expected, string paramName)
     {
         return $"Expected '{paramName}' to contain {expected} elements but found {actual}.";
