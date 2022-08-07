@@ -2,15 +2,15 @@
 using System.Linq.Expressions;
 using FluentAssertions;
 using FluentAssertions.Execution;
-using LfrlAnvil.Functional;
 using LfrlAnvil.Computable.Expressions.Constructs;
+using LfrlAnvil.Functional;
 
 namespace LfrlAnvil.Computable.Expressions.Tests.ConstructsTests;
 
 public abstract class BinaryOperatorsTestsBase : ConstructsTestsBase
 {
     protected static void Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<TLeftArg, TRightArg, TResult>(
-        MathExpressionBinaryOperator sut,
+        ParsedExpressionBinaryOperator sut,
         ExpressionType expectedNodeType,
         Action<Expression, Expression, Expression> nodeAssertion)
     {
@@ -34,7 +34,7 @@ public abstract class BinaryOperatorsTestsBase : ConstructsTestsBase
     }
 
     protected static void Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant<TLeftArg, TRightArg, TResult>(
-        MathExpressionBinaryOperator sut,
+        ParsedExpressionBinaryOperator sut,
         ExpressionType expectedNodeType,
         TLeftArg leftValue,
         TRightArg rightValue,
@@ -60,7 +60,7 @@ public abstract class BinaryOperatorsTestsBase : ConstructsTestsBase
     }
 
     protected static void Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<TLeftArg, TRightArg, TResult>(
-        MathExpressionBinaryOperator sut,
+        ParsedExpressionBinaryOperator sut,
         ExpressionType expectedNodeType,
         TLeftArg leftValue,
         Action<Expression, Expression, Expression> nodeAssertion)
@@ -85,7 +85,7 @@ public abstract class BinaryOperatorsTestsBase : ConstructsTestsBase
     }
 
     protected static void Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<TLeftArg, TRightArg, TResult>(
-        MathExpressionBinaryOperator sut,
+        ParsedExpressionBinaryOperator sut,
         ExpressionType expectedNodeType,
         TRightArg rightValue,
         Action<Expression, Expression, Expression> nodeAssertion)
@@ -110,7 +110,7 @@ public abstract class BinaryOperatorsTestsBase : ConstructsTestsBase
     }
 
     protected static void Process_ShouldThrowException_WhenOperatorDoesNotExist<TLeftArg, TRightArg, TException>(
-        MathExpressionBinaryOperator sut)
+        ParsedExpressionBinaryOperator sut)
         where TException : Exception
     {
         var left = CreateVariableOperand<TLeftArg>( "left" );
@@ -123,7 +123,7 @@ public abstract class BinaryOperatorsTestsBase : ConstructsTestsBase
     }
 
     protected static void Process_ShouldThrowException_WhenAttemptingToResolveRightConstantValue<TLeftArg, TRightArg, TException>(
-        MathExpressionBinaryOperator sut,
+        ParsedExpressionBinaryOperator sut,
         TRightArg rightValue)
         where TException : Exception
     {

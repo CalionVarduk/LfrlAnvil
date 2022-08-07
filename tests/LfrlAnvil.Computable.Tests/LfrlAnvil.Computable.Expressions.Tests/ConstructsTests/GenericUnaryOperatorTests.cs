@@ -12,7 +12,7 @@ public class GenericUnaryOperatorTests : UnaryOperatorsTestsBase
     public void NegateOperatorProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<int, int>(
-            sut: new MathExpressionNegateOperator(),
+            sut: new ParsedExpressionNegateOperator(),
             expectedNodeType: ExpressionType.Negate,
             DefaultNodeAssertion );
     }
@@ -21,7 +21,7 @@ public class GenericUnaryOperatorTests : UnaryOperatorsTestsBase
     public void NegateOperatorProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<int, int>(
-            sut: new MathExpressionNegateOperator(),
+            sut: new ParsedExpressionNegateOperator(),
             expectedNodeType: ExpressionType.Negate,
             operandValue: Fixture.Create<int>(),
             DefaultNodeAssertion );
@@ -31,14 +31,14 @@ public class GenericUnaryOperatorTests : UnaryOperatorsTestsBase
     public void NegateOperatorProcess_ShouldThrowInvalidOperationException_WhenOperatorDoesNotExist()
     {
         Process_ShouldThrowException_WhenOperatorDoesNotExist<string, InvalidOperationException>(
-            sut: new MathExpressionNegateOperator() );
+            sut: new ParsedExpressionNegateOperator() );
     }
 
     [Fact]
     public void BitwiseNotOperatorProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<int, int>(
-            sut: new MathExpressionBitwiseNotOperator(),
+            sut: new ParsedExpressionBitwiseNotOperator(),
             expectedNodeType: ExpressionType.Not,
             DefaultNodeAssertion );
     }
@@ -47,7 +47,7 @@ public class GenericUnaryOperatorTests : UnaryOperatorsTestsBase
     public void BitwiseNotOperatorProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<int, int>(
-            sut: new MathExpressionBitwiseNotOperator(),
+            sut: new ParsedExpressionBitwiseNotOperator(),
             expectedNodeType: ExpressionType.Not,
             operandValue: Fixture.Create<int>(),
             DefaultNodeAssertion );
@@ -57,6 +57,6 @@ public class GenericUnaryOperatorTests : UnaryOperatorsTestsBase
     public void BitwiseNotOperatorProcess_ShouldThrowInvalidOperationException_WhenOperatorDoesNotExist()
     {
         Process_ShouldThrowException_WhenOperatorDoesNotExist<string, InvalidOperationException>(
-            sut: new MathExpressionBitwiseNotOperator() );
+            sut: new ParsedExpressionBitwiseNotOperator() );
     }
 }

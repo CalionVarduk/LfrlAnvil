@@ -11,7 +11,7 @@ public class DecimalUnaryOperatorTests : UnaryOperatorsTestsBase
     public void NegateOperatorProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<decimal, decimal>(
-            sut: new MathExpressionNegateDecimalOperator(),
+            sut: new ParsedExpressionNegateDecimalOperator(),
             expectedNodeType: ExpressionType.Negate,
             DefaultNodeAssertion );
     }
@@ -20,7 +20,7 @@ public class DecimalUnaryOperatorTests : UnaryOperatorsTestsBase
     public void NegateOperatorProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<decimal, decimal>(
-            sut: new MathExpressionNegateDecimalOperator(),
+            sut: new ParsedExpressionNegateDecimalOperator(),
             expectedNodeType: ExpressionType.Constant,
             operandValue: 123,
             (_, result) =>

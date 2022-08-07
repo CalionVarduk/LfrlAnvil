@@ -12,7 +12,7 @@ public class BigIntUnaryOperatorTests : UnaryOperatorsTestsBase
     public void NegateOperatorProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<BigInteger, BigInteger>(
-            sut: new MathExpressionNegateBigIntOperator(),
+            sut: new ParsedExpressionNegateBigIntOperator(),
             expectedNodeType: ExpressionType.Negate,
             DefaultNodeAssertion );
     }
@@ -21,7 +21,7 @@ public class BigIntUnaryOperatorTests : UnaryOperatorsTestsBase
     public void NegateOperatorProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<BigInteger, BigInteger>(
-            sut: new MathExpressionNegateBigIntOperator(),
+            sut: new ParsedExpressionNegateBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             operandValue: 123,
             (_, result) =>
@@ -38,7 +38,7 @@ public class BigIntUnaryOperatorTests : UnaryOperatorsTestsBase
     public void BitwiseNotOperatorProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<BigInteger, BigInteger>(
-            sut: new MathExpressionBitwiseNotBigIntOperator(),
+            sut: new ParsedExpressionBitwiseNotBigIntOperator(),
             expectedNodeType: ExpressionType.Not,
             DefaultNodeAssertion );
     }
@@ -47,7 +47,7 @@ public class BigIntUnaryOperatorTests : UnaryOperatorsTestsBase
     public void BitwiseNotOperatorProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<BigInteger, BigInteger>(
-            sut: new MathExpressionBitwiseNotBigIntOperator(),
+            sut: new ParsedExpressionBitwiseNotBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             operandValue: 123,
             (_, result) =>

@@ -2,15 +2,15 @@
 using System.Linq.Expressions;
 using FluentAssertions;
 using FluentAssertions.Execution;
-using LfrlAnvil.Functional;
 using LfrlAnvil.Computable.Expressions.Constructs;
+using LfrlAnvil.Functional;
 
 namespace LfrlAnvil.Computable.Expressions.Tests.ConstructsTests;
 
 public abstract class UnaryOperatorsTestsBase : ConstructsTestsBase
 {
     protected static void Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<TArg, TResult>(
-        MathExpressionUnaryOperator sut,
+        ParsedExpressionUnaryOperator sut,
         ExpressionType expectedNodeType,
         Action<Expression, Expression> nodeAssertion)
     {
@@ -33,7 +33,7 @@ public abstract class UnaryOperatorsTestsBase : ConstructsTestsBase
     }
 
     protected static void Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<TArg, TResult>(
-        MathExpressionUnaryOperator sut,
+        ParsedExpressionUnaryOperator sut,
         ExpressionType expectedNodeType,
         TArg operandValue,
         Action<Expression, Expression> nodeAssertion)
@@ -56,7 +56,7 @@ public abstract class UnaryOperatorsTestsBase : ConstructsTestsBase
         }
     }
 
-    protected static void Process_ShouldThrowException_WhenOperatorDoesNotExist<TArg, TException>(MathExpressionUnaryOperator sut)
+    protected static void Process_ShouldThrowException_WhenOperatorDoesNotExist<TArg, TException>(ParsedExpressionUnaryOperator sut)
         where TException : Exception
     {
         var operand = CreateVariableOperand<TArg>( "value" );

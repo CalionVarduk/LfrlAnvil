@@ -3,8 +3,8 @@ using System.Globalization;
 using System.Linq.Expressions;
 using System.Numerics;
 using FluentAssertions;
-using LfrlAnvil.Functional;
 using LfrlAnvil.Computable.Expressions.Constructs.String;
+using LfrlAnvil.Functional;
 using Xunit;
 
 namespace LfrlAnvil.Computable.Expressions.Tests.ConstructsTests.StringTests;
@@ -15,7 +15,7 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
     public static void TypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<string, int, string>(
-            sut: new MathExpressionToStringTypeConverter(),
+            sut: new ParsedExpressionToStringTypeConverter(),
             (operand, result) =>
             {
                 result.Should().BeAssignableTo<MethodCallExpression>();
@@ -33,7 +33,7 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
     public static void TypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstantAndNotNull()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<string, int, string>(
-            sut: new MathExpressionToStringTypeConverter(),
+            sut: new ParsedExpressionToStringTypeConverter(),
             operandValue: 123,
             (_, result) =>
             {
@@ -49,7 +49,7 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
     [Fact]
     public static void TypeConverterProcess_ShouldThrowArgumentNullException_WhenOperandIsConstantAndNull()
     {
-        var sut = new MathExpressionToStringTypeConverter();
+        var sut = new ParsedExpressionToStringTypeConverter();
         var operand = CreateConstantOperand( (object?)null );
         var stack = CreateStack( operand );
 
@@ -64,7 +64,7 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
         var formatProvider = CultureInfo.InvariantCulture;
 
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<string, decimal, string>(
-            sut: new MathExpressionDecimalToStringTypeConverter( formatProvider ),
+            sut: new ParsedExpressionDecimalToStringTypeConverter( formatProvider ),
             (operand, result) =>
             {
                 result.Should().BeAssignableTo<MethodCallExpression>();
@@ -90,7 +90,7 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
     public static void FromDecimalTypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstantAndNotNull()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<string, decimal, string>(
-            sut: new MathExpressionDecimalToStringTypeConverter( CultureInfo.InvariantCulture ),
+            sut: new ParsedExpressionDecimalToStringTypeConverter( CultureInfo.InvariantCulture ),
             operandValue: 123,
             (_, result) =>
             {
@@ -109,7 +109,7 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
         var formatProvider = CultureInfo.InvariantCulture;
 
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<string, double, string>(
-            sut: new MathExpressionDoubleToStringTypeConverter( formatProvider ),
+            sut: new ParsedExpressionDoubleToStringTypeConverter( formatProvider ),
             (operand, result) =>
             {
                 result.Should().BeAssignableTo<MethodCallExpression>();
@@ -135,7 +135,7 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
     public static void FromDoubleTypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstantAndNotNull()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<string, double, string>(
-            sut: new MathExpressionDoubleToStringTypeConverter( CultureInfo.InvariantCulture ),
+            sut: new ParsedExpressionDoubleToStringTypeConverter( CultureInfo.InvariantCulture ),
             operandValue: 123,
             (_, result) =>
             {
@@ -154,7 +154,7 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
         var formatProvider = CultureInfo.InvariantCulture;
 
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<string, float, string>(
-            sut: new MathExpressionFloatToStringTypeConverter( formatProvider ),
+            sut: new ParsedExpressionFloatToStringTypeConverter( formatProvider ),
             (operand, result) =>
             {
                 result.Should().BeAssignableTo<MethodCallExpression>();
@@ -180,7 +180,7 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
     public static void FromFloatTypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstantAndNotNull()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<string, float, string>(
-            sut: new MathExpressionFloatToStringTypeConverter( CultureInfo.InvariantCulture ),
+            sut: new ParsedExpressionFloatToStringTypeConverter( CultureInfo.InvariantCulture ),
             operandValue: 123,
             (_, result) =>
             {
@@ -199,7 +199,7 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
         var formatProvider = CultureInfo.InvariantCulture;
 
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<string, BigInteger, string>(
-            sut: new MathExpressionBigIntToStringTypeConverter( formatProvider ),
+            sut: new ParsedExpressionBigIntToStringTypeConverter( formatProvider ),
             (operand, result) =>
             {
                 result.Should().BeAssignableTo<MethodCallExpression>();
@@ -225,7 +225,7 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
     public static void FromBigIntegerTypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstantAndNotNull()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<string, BigInteger, string>(
-            sut: new MathExpressionBigIntToStringTypeConverter( CultureInfo.InvariantCulture ),
+            sut: new ParsedExpressionBigIntToStringTypeConverter( CultureInfo.InvariantCulture ),
             operandValue: 123,
             (_, result) =>
             {
@@ -244,7 +244,7 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
         var formatProvider = CultureInfo.InvariantCulture;
 
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<string, long, string>(
-            sut: new MathExpressionInt64ToStringTypeConverter( formatProvider ),
+            sut: new ParsedExpressionInt64ToStringTypeConverter( formatProvider ),
             (operand, result) =>
             {
                 result.Should().BeAssignableTo<MethodCallExpression>();
@@ -270,7 +270,7 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
     public static void FromInt64TypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstantAndNotNull()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<string, long, string>(
-            sut: new MathExpressionInt64ToStringTypeConverter( CultureInfo.InvariantCulture ),
+            sut: new ParsedExpressionInt64ToStringTypeConverter( CultureInfo.InvariantCulture ),
             operandValue: 123,
             (_, result) =>
             {
@@ -289,7 +289,7 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
         var formatProvider = CultureInfo.InvariantCulture;
 
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<string, int, string>(
-            sut: new MathExpressionInt32ToStringTypeConverter( formatProvider ),
+            sut: new ParsedExpressionInt32ToStringTypeConverter( formatProvider ),
             (operand, result) =>
             {
                 result.Should().BeAssignableTo<MethodCallExpression>();
@@ -315,7 +315,7 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
     public static void FromInt32TypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstantAndNotNull()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<string, int, string>(
-            sut: new MathExpressionInt32ToStringTypeConverter( CultureInfo.InvariantCulture ),
+            sut: new ParsedExpressionInt32ToStringTypeConverter( CultureInfo.InvariantCulture ),
             operandValue: 123,
             (_, result) =>
             {
@@ -334,7 +334,7 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
         var formatProvider = CultureInfo.InvariantCulture;
 
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<string, bool, string>(
-            sut: new MathExpressionBooleanToStringTypeConverter( formatProvider ),
+            sut: new ParsedExpressionBooleanToStringTypeConverter( formatProvider ),
             (operand, result) =>
             {
                 result.Should().BeAssignableTo<MethodCallExpression>();
@@ -360,7 +360,7 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
     public static void FromBooleanTypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstantAndNotNull()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<string, bool, string>(
-            sut: new MathExpressionBooleanToStringTypeConverter( CultureInfo.InvariantCulture ),
+            sut: new ParsedExpressionBooleanToStringTypeConverter( CultureInfo.InvariantCulture ),
             operandValue: true,
             (_, result) =>
             {

@@ -6,9 +6,9 @@ namespace LfrlAnvil.Computable.Expressions.Tests.ConstructsTests;
 
 public abstract class ConstructsTestsBase : TestsBase
 {
-    protected static MathExpressionOperandStack CreateStack(params Expression[] operands)
+    protected static ParsedExpressionOperandStack CreateStack(params Expression[] operands)
     {
-        var stack = new MathExpressionOperandStack();
+        var stack = new ParsedExpressionOperandStack();
         foreach ( var o in operands )
             stack.Push( o );
 

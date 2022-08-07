@@ -1,0 +1,855 @@
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
+using LfrlAnvil.Computable.Expressions.Constructs;
+using LfrlAnvil.Computable.Expressions.Constructs.BigInt;
+using LfrlAnvil.Computable.Expressions.Constructs.Boolean;
+using LfrlAnvil.Computable.Expressions.Constructs.Decimal;
+using LfrlAnvil.Computable.Expressions.Constructs.Double;
+using LfrlAnvil.Computable.Expressions.Constructs.Float;
+using LfrlAnvil.Computable.Expressions.Constructs.Int32;
+using LfrlAnvil.Computable.Expressions.Constructs.Int64;
+using LfrlAnvil.Computable.Expressions.Constructs.String;
+using LfrlAnvil.Extensions;
+
+namespace LfrlAnvil.Computable.Expressions.Extensions;
+
+public static class ParsedExpressionFactoryBuilderExtensions
+{
+    public static ParsedExpressionFactoryBuilder AddGenericArithmeticOperators(this ParsedExpressionFactoryBuilder builder)
+    {
+        return builder
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.AddSymbol, new ParsedExpressionAddOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.SubtractSymbol, new ParsedExpressionSubtractOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.MultiplySymbol, new ParsedExpressionMultiplyOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.DivideSymbol, new ParsedExpressionDivideOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.ModuloSymbol, new ParsedExpressionModuloOperator() )
+            .AddPrefixUnaryOperator( ParsedExpressionConstructDefaults.NegateSymbol, new ParsedExpressionNegateOperator() )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.AddSymbol,
+                ParsedExpressionConstructDefaults.AddPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.SubtractSymbol,
+                ParsedExpressionConstructDefaults.SubtractPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.MultiplySymbol,
+                ParsedExpressionConstructDefaults.MultiplyPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.DivideSymbol,
+                ParsedExpressionConstructDefaults.DividePrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.ModuloSymbol,
+                ParsedExpressionConstructDefaults.ModuloPrecedence )
+            .SetPrefixUnaryConstructPrecedence(
+                ParsedExpressionConstructDefaults.NegateSymbol,
+                ParsedExpressionConstructDefaults.NegatePrecedence );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddGenericBitwiseOperators(this ParsedExpressionFactoryBuilder builder)
+    {
+        return builder
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.BitwiseAndSymbol, new ParsedExpressionBitwiseAndOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.BitwiseOrSymbol, new ParsedExpressionBitwiseOrOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.BitwiseXorSymbol, new ParsedExpressionBitwiseXorOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.BitwiseLeftShiftSymbol, new ParsedExpressionBitwiseLeftShiftOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.BitwiseRightShiftSymbol, new ParsedExpressionBitwiseRightShiftOperator() )
+            .AddPrefixUnaryOperator( ParsedExpressionConstructDefaults.BitwiseNotSymbol, new ParsedExpressionBitwiseNotOperator() )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.BitwiseAndSymbol,
+                ParsedExpressionConstructDefaults.BitwiseAndPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.BitwiseOrSymbol,
+                ParsedExpressionConstructDefaults.BitwiseOrPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.BitwiseXorSymbol,
+                ParsedExpressionConstructDefaults.BitwiseXorPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.BitwiseLeftShiftSymbol,
+                ParsedExpressionConstructDefaults.BitwiseLeftShiftPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.BitwiseRightShiftSymbol,
+                ParsedExpressionConstructDefaults.BitwiseRightShiftPrecedence )
+            .SetPrefixUnaryConstructPrecedence(
+                ParsedExpressionConstructDefaults.BitwiseNotSymbol,
+                ParsedExpressionConstructDefaults.BitwiseNotPrecedence );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddGenericLogicalOperators(this ParsedExpressionFactoryBuilder builder)
+    {
+        return builder
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.CoalesceSymbol, new ParsedExpressionCoalesceOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.EqualToSymbol, new ParsedExpressionEqualToOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.NotEqualToSymbol, new ParsedExpressionNotEqualToOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.GreaterThanSymbol, new ParsedExpressionGreaterThanOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.LessThanSymbol, new ParsedExpressionLessThanOperator() )
+            .AddBinaryOperator(
+                ParsedExpressionConstructDefaults.GreaterThanOrEqualToSymbol,
+                new ParsedExpressionGreaterThanOrEqualToOperator() )
+            .AddBinaryOperator(
+                ParsedExpressionConstructDefaults.LessThanOrEqualToSymbol,
+                new ParsedExpressionLessThanOrEqualToOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.CompareSymbol, new ParsedExpressionCompareOperator() )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.CoalesceSymbol,
+                ParsedExpressionConstructDefaults.CoalescePrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.EqualToSymbol,
+                ParsedExpressionConstructDefaults.EqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.NotEqualToSymbol,
+                ParsedExpressionConstructDefaults.NotEqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.GreaterThanSymbol,
+                ParsedExpressionConstructDefaults.GreaterThanPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.LessThanSymbol,
+                ParsedExpressionConstructDefaults.LessThanPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.GreaterThanOrEqualToSymbol,
+                ParsedExpressionConstructDefaults.GreaterThanOrEqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.LessThanOrEqualToSymbol,
+                ParsedExpressionConstructDefaults.LessThanOrEqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.CompareSymbol,
+                ParsedExpressionConstructDefaults.ComparePrecedence );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddBooleanBitwiseOperators(this ParsedExpressionFactoryBuilder builder)
+    {
+        return builder
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.BitwiseAndSymbol, new ParsedExpressionBitwiseAndBooleanOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.BitwiseOrSymbol, new ParsedExpressionBitwiseOrBooleanOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.BitwiseXorSymbol, new ParsedExpressionBitwiseXorBooleanOperator() )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.BitwiseAndSymbol,
+                ParsedExpressionConstructDefaults.BitwiseAndPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.BitwiseOrSymbol,
+                ParsedExpressionConstructDefaults.BitwiseOrPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.BitwiseXorSymbol,
+                ParsedExpressionConstructDefaults.BitwiseXorPrecedence );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddBooleanLogicalOperators(this ParsedExpressionFactoryBuilder builder)
+    {
+        return builder
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.EqualToSymbol, new ParsedExpressionEqualToBooleanOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.NotEqualToSymbol, new ParsedExpressionNotEqualToBooleanOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.CompareSymbol, new ParsedExpressionCompareBooleanOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.AndSymbol, new ParsedExpressionAndOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.OrSymbol, new ParsedExpressionOrOperator() )
+            .AddPrefixUnaryOperator( ParsedExpressionConstructDefaults.NotSymbol, new ParsedExpressionNotOperator() )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.EqualToSymbol,
+                ParsedExpressionConstructDefaults.EqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.NotEqualToSymbol,
+                ParsedExpressionConstructDefaults.NotEqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.CompareSymbol,
+                ParsedExpressionConstructDefaults.ComparePrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.AndSymbol,
+                ParsedExpressionConstructDefaults.AndPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.OrSymbol,
+                ParsedExpressionConstructDefaults.OrPrecedence )
+            .SetPrefixUnaryConstructPrecedence(
+                ParsedExpressionConstructDefaults.NotSymbol,
+                ParsedExpressionConstructDefaults.NotPrecedence );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddToBooleanTypeConversion(
+        this ParsedExpressionFactoryBuilder builder,
+        IEnumerable<ParsedExpressionTypeConverter> specializedConverters,
+        string symbol = "[boolean]",
+        string? postfixSymbol = null)
+    {
+        return AddTypeConverters( builder, new ParsedExpressionTypeConverter<bool>(), specializedConverters, symbol, postfixSymbol );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddToBooleanTypeConversion(
+        this ParsedExpressionFactoryBuilder builder,
+        string symbol = "[boolean]",
+        string? postfixSymbol = null,
+        params ParsedExpressionTypeConverter[] specializedConverters)
+    {
+        return builder.AddToBooleanTypeConversion( specializedConverters.AsEnumerable(), symbol, postfixSymbol );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddDecimalArithmeticOperators(this ParsedExpressionFactoryBuilder builder)
+    {
+        return builder
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.AddSymbol, new ParsedExpressionAddDecimalOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.SubtractSymbol, new ParsedExpressionSubtractDecimalOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.MultiplySymbol, new ParsedExpressionMultiplyDecimalOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.DivideSymbol, new ParsedExpressionDivideDecimalOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.ModuloSymbol, new ParsedExpressionModuloDecimalOperator() )
+            .AddPrefixUnaryOperator( ParsedExpressionConstructDefaults.NegateSymbol, new ParsedExpressionNegateDecimalOperator() )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.AddSymbol,
+                ParsedExpressionConstructDefaults.AddPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.SubtractSymbol,
+                ParsedExpressionConstructDefaults.SubtractPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.MultiplySymbol,
+                ParsedExpressionConstructDefaults.MultiplyPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.DivideSymbol,
+                ParsedExpressionConstructDefaults.DividePrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.ModuloSymbol,
+                ParsedExpressionConstructDefaults.ModuloPrecedence )
+            .SetPrefixUnaryConstructPrecedence(
+                ParsedExpressionConstructDefaults.NegateSymbol,
+                ParsedExpressionConstructDefaults.NegatePrecedence );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddDecimalLogicalOperators(this ParsedExpressionFactoryBuilder builder)
+    {
+        return builder
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.EqualToSymbol, new ParsedExpressionEqualToDecimalOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.NotEqualToSymbol, new ParsedExpressionNotEqualToDecimalOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.GreaterThanSymbol, new ParsedExpressionGreaterThanDecimalOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.LessThanSymbol, new ParsedExpressionLessThanDecimalOperator() )
+            .AddBinaryOperator(
+                ParsedExpressionConstructDefaults.GreaterThanOrEqualToSymbol,
+                new ParsedExpressionGreaterThanOrEqualToDecimalOperator() )
+            .AddBinaryOperator(
+                ParsedExpressionConstructDefaults.LessThanOrEqualToSymbol,
+                new ParsedExpressionLessThanOrEqualToDecimalOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.CompareSymbol, new ParsedExpressionCompareDecimalOperator() )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.EqualToSymbol,
+                ParsedExpressionConstructDefaults.EqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.NotEqualToSymbol,
+                ParsedExpressionConstructDefaults.NotEqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.GreaterThanSymbol,
+                ParsedExpressionConstructDefaults.GreaterThanPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.LessThanSymbol,
+                ParsedExpressionConstructDefaults.LessThanPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.GreaterThanOrEqualToSymbol,
+                ParsedExpressionConstructDefaults.GreaterThanOrEqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.LessThanOrEqualToSymbol,
+                ParsedExpressionConstructDefaults.LessThanOrEqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.CompareSymbol,
+                ParsedExpressionConstructDefaults.ComparePrecedence );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddToDecimalTypeConversion(
+        this ParsedExpressionFactoryBuilder builder,
+        IEnumerable<ParsedExpressionTypeConverter> specializedConverters,
+        string symbol = "[decimal]",
+        string? postfixSymbol = "M")
+    {
+        return AddTypeConverters( builder, new ParsedExpressionTypeConverter<decimal>(), specializedConverters, symbol, postfixSymbol );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddToDecimalTypeConversion(
+        this ParsedExpressionFactoryBuilder builder,
+        string symbol = "[decimal]",
+        string? postfixSymbol = "M",
+        params ParsedExpressionTypeConverter[] specializedConverters)
+    {
+        return builder.AddToDecimalTypeConversion( specializedConverters.AsEnumerable(), symbol, postfixSymbol );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddDoubleArithmeticOperators(this ParsedExpressionFactoryBuilder builder)
+    {
+        return builder
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.AddSymbol, new ParsedExpressionAddDoubleOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.SubtractSymbol, new ParsedExpressionSubtractDoubleOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.MultiplySymbol, new ParsedExpressionMultiplyDoubleOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.DivideSymbol, new ParsedExpressionDivideDoubleOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.ModuloSymbol, new ParsedExpressionModuloDoubleOperator() )
+            .AddPrefixUnaryOperator( ParsedExpressionConstructDefaults.NegateSymbol, new ParsedExpressionNegateDoubleOperator() )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.AddSymbol,
+                ParsedExpressionConstructDefaults.AddPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.SubtractSymbol,
+                ParsedExpressionConstructDefaults.SubtractPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.MultiplySymbol,
+                ParsedExpressionConstructDefaults.MultiplyPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.DivideSymbol,
+                ParsedExpressionConstructDefaults.DividePrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.ModuloSymbol,
+                ParsedExpressionConstructDefaults.ModuloPrecedence )
+            .SetPrefixUnaryConstructPrecedence(
+                ParsedExpressionConstructDefaults.NegateSymbol,
+                ParsedExpressionConstructDefaults.NegatePrecedence );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddDoubleLogicalOperators(this ParsedExpressionFactoryBuilder builder)
+    {
+        return builder
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.EqualToSymbol, new ParsedExpressionEqualToDoubleOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.NotEqualToSymbol, new ParsedExpressionNotEqualToDoubleOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.GreaterThanSymbol, new ParsedExpressionGreaterThanDoubleOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.LessThanSymbol, new ParsedExpressionLessThanDoubleOperator() )
+            .AddBinaryOperator(
+                ParsedExpressionConstructDefaults.GreaterThanOrEqualToSymbol,
+                new ParsedExpressionGreaterThanOrEqualToDoubleOperator() )
+            .AddBinaryOperator(
+                ParsedExpressionConstructDefaults.LessThanOrEqualToSymbol,
+                new ParsedExpressionLessThanOrEqualToDoubleOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.CompareSymbol, new ParsedExpressionCompareDoubleOperator() )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.EqualToSymbol,
+                ParsedExpressionConstructDefaults.EqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.NotEqualToSymbol,
+                ParsedExpressionConstructDefaults.NotEqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.GreaterThanSymbol,
+                ParsedExpressionConstructDefaults.GreaterThanPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.LessThanSymbol,
+                ParsedExpressionConstructDefaults.LessThanPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.GreaterThanOrEqualToSymbol,
+                ParsedExpressionConstructDefaults.GreaterThanOrEqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.LessThanOrEqualToSymbol,
+                ParsedExpressionConstructDefaults.LessThanOrEqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.CompareSymbol,
+                ParsedExpressionConstructDefaults.ComparePrecedence );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddToDoubleTypeConversion(
+        this ParsedExpressionFactoryBuilder builder,
+        IEnumerable<ParsedExpressionTypeConverter> specializedConverters,
+        string symbol = "[double]",
+        string? postfixSymbol = null)
+    {
+        return AddTypeConverters( builder, new ParsedExpressionTypeConverter<double>(), specializedConverters, symbol, postfixSymbol );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddToDoubleTypeConversion(
+        this ParsedExpressionFactoryBuilder builder,
+        string symbol = "[double]",
+        string? postfixSymbol = null,
+        params ParsedExpressionTypeConverter[] specializedConverters)
+    {
+        return builder.AddToDoubleTypeConversion( specializedConverters.AsEnumerable(), symbol, postfixSymbol );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddFloatArithmeticOperators(this ParsedExpressionFactoryBuilder builder)
+    {
+        return builder
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.AddSymbol, new ParsedExpressionAddFloatOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.SubtractSymbol, new ParsedExpressionSubtractFloatOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.MultiplySymbol, new ParsedExpressionMultiplyFloatOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.DivideSymbol, new ParsedExpressionDivideFloatOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.ModuloSymbol, new ParsedExpressionModuloFloatOperator() )
+            .AddPrefixUnaryOperator( ParsedExpressionConstructDefaults.NegateSymbol, new ParsedExpressionNegateFloatOperator() )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.AddSymbol,
+                ParsedExpressionConstructDefaults.AddPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.SubtractSymbol,
+                ParsedExpressionConstructDefaults.SubtractPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.MultiplySymbol,
+                ParsedExpressionConstructDefaults.MultiplyPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.DivideSymbol,
+                ParsedExpressionConstructDefaults.DividePrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.ModuloSymbol,
+                ParsedExpressionConstructDefaults.ModuloPrecedence )
+            .SetPrefixUnaryConstructPrecedence(
+                ParsedExpressionConstructDefaults.NegateSymbol,
+                ParsedExpressionConstructDefaults.NegatePrecedence );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddFloatLogicalOperators(this ParsedExpressionFactoryBuilder builder)
+    {
+        return builder
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.EqualToSymbol, new ParsedExpressionEqualToFloatOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.NotEqualToSymbol, new ParsedExpressionNotEqualToFloatOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.GreaterThanSymbol, new ParsedExpressionGreaterThanFloatOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.LessThanSymbol, new ParsedExpressionLessThanFloatOperator() )
+            .AddBinaryOperator(
+                ParsedExpressionConstructDefaults.GreaterThanOrEqualToSymbol,
+                new ParsedExpressionGreaterThanOrEqualToFloatOperator() )
+            .AddBinaryOperator(
+                ParsedExpressionConstructDefaults.LessThanOrEqualToSymbol,
+                new ParsedExpressionLessThanOrEqualToFloatOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.CompareSymbol, new ParsedExpressionCompareFloatOperator() )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.EqualToSymbol,
+                ParsedExpressionConstructDefaults.EqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.NotEqualToSymbol,
+                ParsedExpressionConstructDefaults.NotEqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.GreaterThanSymbol,
+                ParsedExpressionConstructDefaults.GreaterThanPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.LessThanSymbol,
+                ParsedExpressionConstructDefaults.LessThanPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.GreaterThanOrEqualToSymbol,
+                ParsedExpressionConstructDefaults.GreaterThanOrEqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.LessThanOrEqualToSymbol,
+                ParsedExpressionConstructDefaults.LessThanOrEqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.CompareSymbol,
+                ParsedExpressionConstructDefaults.ComparePrecedence );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddToFloatTypeConversion(
+        this ParsedExpressionFactoryBuilder builder,
+        IEnumerable<ParsedExpressionTypeConverter> specializedConverters,
+        string symbol = "[float]",
+        string? postfixSymbol = "F")
+    {
+        return AddTypeConverters( builder, new ParsedExpressionTypeConverter<float>(), specializedConverters, symbol, postfixSymbol );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddToFloatTypeConversion(
+        this ParsedExpressionFactoryBuilder builder,
+        string symbol = "[float]",
+        string? postfixSymbol = "F",
+        params ParsedExpressionTypeConverter[] specializedConverters)
+    {
+        return builder.AddToFloatTypeConversion( specializedConverters.AsEnumerable(), symbol, postfixSymbol );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddInt32ArithmeticOperators(this ParsedExpressionFactoryBuilder builder)
+    {
+        return builder
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.AddSymbol, new ParsedExpressionAddInt32Operator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.SubtractSymbol, new ParsedExpressionSubtractInt32Operator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.MultiplySymbol, new ParsedExpressionMultiplyInt32Operator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.DivideSymbol, new ParsedExpressionDivideInt32Operator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.ModuloSymbol, new ParsedExpressionModuloInt32Operator() )
+            .AddPrefixUnaryOperator( ParsedExpressionConstructDefaults.NegateSymbol, new ParsedExpressionNegateInt32Operator() )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.AddSymbol,
+                ParsedExpressionConstructDefaults.AddPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.SubtractSymbol,
+                ParsedExpressionConstructDefaults.SubtractPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.MultiplySymbol,
+                ParsedExpressionConstructDefaults.MultiplyPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.DivideSymbol,
+                ParsedExpressionConstructDefaults.DividePrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.ModuloSymbol,
+                ParsedExpressionConstructDefaults.ModuloPrecedence )
+            .SetPrefixUnaryConstructPrecedence(
+                ParsedExpressionConstructDefaults.NegateSymbol,
+                ParsedExpressionConstructDefaults.NegatePrecedence );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddInt32BitwiseOperators(this ParsedExpressionFactoryBuilder builder)
+    {
+        return builder
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.BitwiseAndSymbol, new ParsedExpressionBitwiseAndInt32Operator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.BitwiseOrSymbol, new ParsedExpressionBitwiseOrInt32Operator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.BitwiseXorSymbol, new ParsedExpressionBitwiseXorInt32Operator() )
+            .AddBinaryOperator(
+                ParsedExpressionConstructDefaults.BitwiseLeftShiftSymbol,
+                new ParsedExpressionBitwiseLeftShiftInt32Operator() )
+            .AddBinaryOperator(
+                ParsedExpressionConstructDefaults.BitwiseRightShiftSymbol,
+                new ParsedExpressionBitwiseRightShiftInt32Operator() )
+            .AddPrefixUnaryOperator( ParsedExpressionConstructDefaults.BitwiseNotSymbol, new ParsedExpressionBitwiseNotInt32Operator() )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.BitwiseAndSymbol,
+                ParsedExpressionConstructDefaults.BitwiseAndPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.BitwiseOrSymbol,
+                ParsedExpressionConstructDefaults.BitwiseOrPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.BitwiseXorSymbol,
+                ParsedExpressionConstructDefaults.BitwiseXorPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.BitwiseLeftShiftSymbol,
+                ParsedExpressionConstructDefaults.BitwiseLeftShiftPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.BitwiseRightShiftSymbol,
+                ParsedExpressionConstructDefaults.BitwiseRightShiftPrecedence )
+            .SetPrefixUnaryConstructPrecedence(
+                ParsedExpressionConstructDefaults.BitwiseNotSymbol,
+                ParsedExpressionConstructDefaults.BitwiseNotPrecedence );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddInt32LogicalOperators(this ParsedExpressionFactoryBuilder builder)
+    {
+        return builder
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.EqualToSymbol, new ParsedExpressionEqualToInt32Operator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.NotEqualToSymbol, new ParsedExpressionNotEqualToInt32Operator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.GreaterThanSymbol, new ParsedExpressionGreaterThanInt32Operator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.LessThanSymbol, new ParsedExpressionLessThanInt32Operator() )
+            .AddBinaryOperator(
+                ParsedExpressionConstructDefaults.GreaterThanOrEqualToSymbol,
+                new ParsedExpressionGreaterThanOrEqualToInt32Operator() )
+            .AddBinaryOperator(
+                ParsedExpressionConstructDefaults.LessThanOrEqualToSymbol,
+                new ParsedExpressionLessThanOrEqualToInt32Operator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.CompareSymbol, new ParsedExpressionCompareInt32Operator() )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.EqualToSymbol,
+                ParsedExpressionConstructDefaults.EqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.NotEqualToSymbol,
+                ParsedExpressionConstructDefaults.NotEqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.GreaterThanSymbol,
+                ParsedExpressionConstructDefaults.GreaterThanPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.LessThanSymbol,
+                ParsedExpressionConstructDefaults.LessThanPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.GreaterThanOrEqualToSymbol,
+                ParsedExpressionConstructDefaults.GreaterThanOrEqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.LessThanOrEqualToSymbol,
+                ParsedExpressionConstructDefaults.LessThanOrEqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.CompareSymbol,
+                ParsedExpressionConstructDefaults.ComparePrecedence );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddToInt32TypeConversion(
+        this ParsedExpressionFactoryBuilder builder,
+        IEnumerable<ParsedExpressionTypeConverter> specializedConverters,
+        string symbol = "[int32]",
+        string? postfixSymbol = null)
+    {
+        return AddTypeConverters( builder, new ParsedExpressionTypeConverter<int>(), specializedConverters, symbol, postfixSymbol );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddToInt32TypeConversion(
+        this ParsedExpressionFactoryBuilder builder,
+        string symbol = "[int32]",
+        string? postfixSymbol = null,
+        params ParsedExpressionTypeConverter[] specializedConverters)
+    {
+        return builder.AddToInt32TypeConversion( specializedConverters.AsEnumerable(), symbol, postfixSymbol );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddInt64ArithmeticOperators(this ParsedExpressionFactoryBuilder builder)
+    {
+        return builder
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.AddSymbol, new ParsedExpressionAddInt64Operator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.SubtractSymbol, new ParsedExpressionSubtractInt64Operator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.MultiplySymbol, new ParsedExpressionMultiplyInt64Operator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.DivideSymbol, new ParsedExpressionDivideInt64Operator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.ModuloSymbol, new ParsedExpressionModuloInt64Operator() )
+            .AddPrefixUnaryOperator( ParsedExpressionConstructDefaults.NegateSymbol, new ParsedExpressionNegateInt64Operator() )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.AddSymbol,
+                ParsedExpressionConstructDefaults.AddPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.SubtractSymbol,
+                ParsedExpressionConstructDefaults.SubtractPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.MultiplySymbol,
+                ParsedExpressionConstructDefaults.MultiplyPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.DivideSymbol,
+                ParsedExpressionConstructDefaults.DividePrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.ModuloSymbol,
+                ParsedExpressionConstructDefaults.ModuloPrecedence )
+            .SetPrefixUnaryConstructPrecedence(
+                ParsedExpressionConstructDefaults.NegateSymbol,
+                ParsedExpressionConstructDefaults.NegatePrecedence );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddInt64BitwiseOperators(this ParsedExpressionFactoryBuilder builder)
+    {
+        return builder
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.BitwiseAndSymbol, new ParsedExpressionBitwiseAndInt64Operator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.BitwiseOrSymbol, new ParsedExpressionBitwiseOrInt64Operator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.BitwiseXorSymbol, new ParsedExpressionBitwiseXorInt64Operator() )
+            .AddBinaryOperator(
+                ParsedExpressionConstructDefaults.BitwiseLeftShiftSymbol,
+                new ParsedExpressionBitwiseLeftShiftInt64Operator() )
+            .AddBinaryOperator(
+                ParsedExpressionConstructDefaults.BitwiseRightShiftSymbol,
+                new ParsedExpressionBitwiseRightShiftInt64Operator() )
+            .AddPrefixUnaryOperator( ParsedExpressionConstructDefaults.BitwiseNotSymbol, new ParsedExpressionBitwiseNotInt64Operator() )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.BitwiseAndSymbol,
+                ParsedExpressionConstructDefaults.BitwiseAndPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.BitwiseOrSymbol,
+                ParsedExpressionConstructDefaults.BitwiseOrPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.BitwiseXorSymbol,
+                ParsedExpressionConstructDefaults.BitwiseXorPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.BitwiseLeftShiftSymbol,
+                ParsedExpressionConstructDefaults.BitwiseLeftShiftPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.BitwiseRightShiftSymbol,
+                ParsedExpressionConstructDefaults.BitwiseRightShiftPrecedence )
+            .SetPrefixUnaryConstructPrecedence(
+                ParsedExpressionConstructDefaults.BitwiseNotSymbol,
+                ParsedExpressionConstructDefaults.BitwiseNotPrecedence );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddInt64LogicalOperators(this ParsedExpressionFactoryBuilder builder)
+    {
+        return builder
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.EqualToSymbol, new ParsedExpressionEqualToInt64Operator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.NotEqualToSymbol, new ParsedExpressionNotEqualToInt64Operator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.GreaterThanSymbol, new ParsedExpressionGreaterThanInt64Operator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.LessThanSymbol, new ParsedExpressionLessThanInt64Operator() )
+            .AddBinaryOperator(
+                ParsedExpressionConstructDefaults.GreaterThanOrEqualToSymbol,
+                new ParsedExpressionGreaterThanOrEqualToInt64Operator() )
+            .AddBinaryOperator(
+                ParsedExpressionConstructDefaults.LessThanOrEqualToSymbol,
+                new ParsedExpressionLessThanOrEqualToInt64Operator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.CompareSymbol, new ParsedExpressionCompareInt64Operator() )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.EqualToSymbol,
+                ParsedExpressionConstructDefaults.EqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.NotEqualToSymbol,
+                ParsedExpressionConstructDefaults.NotEqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.GreaterThanSymbol,
+                ParsedExpressionConstructDefaults.GreaterThanPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.LessThanSymbol,
+                ParsedExpressionConstructDefaults.LessThanPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.GreaterThanOrEqualToSymbol,
+                ParsedExpressionConstructDefaults.GreaterThanOrEqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.LessThanOrEqualToSymbol,
+                ParsedExpressionConstructDefaults.LessThanOrEqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.CompareSymbol,
+                ParsedExpressionConstructDefaults.ComparePrecedence );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddToInt64TypeConversion(
+        this ParsedExpressionFactoryBuilder builder,
+        IEnumerable<ParsedExpressionTypeConverter> specializedConverters,
+        string symbol = "[int64]",
+        string? postfixSymbol = "L")
+    {
+        return AddTypeConverters( builder, new ParsedExpressionTypeConverter<long>(), specializedConverters, symbol, postfixSymbol );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddToInt64TypeConversion(
+        this ParsedExpressionFactoryBuilder builder,
+        string symbol = "[int64]",
+        string? postfixSymbol = "L",
+        params ParsedExpressionTypeConverter[] specializedConverters)
+    {
+        return builder.AddToInt64TypeConversion( specializedConverters.AsEnumerable(), symbol, postfixSymbol );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddBigIntArithmeticOperators(this ParsedExpressionFactoryBuilder builder)
+    {
+        return builder
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.AddSymbol, new ParsedExpressionAddBigIntOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.SubtractSymbol, new ParsedExpressionSubtractBigIntOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.MultiplySymbol, new ParsedExpressionMultiplyBigIntOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.DivideSymbol, new ParsedExpressionDivideBigIntOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.ModuloSymbol, new ParsedExpressionModuloBigIntOperator() )
+            .AddPrefixUnaryOperator( ParsedExpressionConstructDefaults.NegateSymbol, new ParsedExpressionNegateBigIntOperator() )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.AddSymbol,
+                ParsedExpressionConstructDefaults.AddPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.SubtractSymbol,
+                ParsedExpressionConstructDefaults.SubtractPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.MultiplySymbol,
+                ParsedExpressionConstructDefaults.MultiplyPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.DivideSymbol,
+                ParsedExpressionConstructDefaults.DividePrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.ModuloSymbol,
+                ParsedExpressionConstructDefaults.ModuloPrecedence )
+            .SetPrefixUnaryConstructPrecedence(
+                ParsedExpressionConstructDefaults.NegateSymbol,
+                ParsedExpressionConstructDefaults.NegatePrecedence );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddBigIntBitwiseOperators(this ParsedExpressionFactoryBuilder builder)
+    {
+        return builder
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.BitwiseAndSymbol, new ParsedExpressionBitwiseAndBigIntOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.BitwiseOrSymbol, new ParsedExpressionBitwiseOrBigIntOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.BitwiseXorSymbol, new ParsedExpressionBitwiseXorBigIntOperator() )
+            .AddBinaryOperator(
+                ParsedExpressionConstructDefaults.BitwiseLeftShiftSymbol,
+                new ParsedExpressionBitwiseLeftShiftBigIntOperator() )
+            .AddBinaryOperator(
+                ParsedExpressionConstructDefaults.BitwiseRightShiftSymbol,
+                new ParsedExpressionBitwiseRightShiftBigIntOperator() )
+            .AddPrefixUnaryOperator( ParsedExpressionConstructDefaults.BitwiseNotSymbol, new ParsedExpressionBitwiseNotBigIntOperator() )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.BitwiseAndSymbol,
+                ParsedExpressionConstructDefaults.BitwiseAndPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.BitwiseOrSymbol,
+                ParsedExpressionConstructDefaults.BitwiseOrPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.BitwiseXorSymbol,
+                ParsedExpressionConstructDefaults.BitwiseXorPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.BitwiseLeftShiftSymbol,
+                ParsedExpressionConstructDefaults.BitwiseLeftShiftPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.BitwiseRightShiftSymbol,
+                ParsedExpressionConstructDefaults.BitwiseRightShiftPrecedence )
+            .SetPrefixUnaryConstructPrecedence(
+                ParsedExpressionConstructDefaults.BitwiseNotSymbol,
+                ParsedExpressionConstructDefaults.BitwiseNotPrecedence );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddBigIntLogicalOperators(this ParsedExpressionFactoryBuilder builder)
+    {
+        return builder
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.EqualToSymbol, new ParsedExpressionEqualToBigIntOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.NotEqualToSymbol, new ParsedExpressionNotEqualToBigIntOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.GreaterThanSymbol, new ParsedExpressionGreaterThanBigIntOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.LessThanSymbol, new ParsedExpressionLessThanBigIntOperator() )
+            .AddBinaryOperator(
+                ParsedExpressionConstructDefaults.GreaterThanOrEqualToSymbol,
+                new ParsedExpressionGreaterThanOrEqualToBigIntOperator() )
+            .AddBinaryOperator(
+                ParsedExpressionConstructDefaults.LessThanOrEqualToSymbol,
+                new ParsedExpressionLessThanOrEqualToBigIntOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.CompareSymbol, new ParsedExpressionCompareBigIntOperator() )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.EqualToSymbol,
+                ParsedExpressionConstructDefaults.EqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.NotEqualToSymbol,
+                ParsedExpressionConstructDefaults.NotEqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.GreaterThanSymbol,
+                ParsedExpressionConstructDefaults.GreaterThanPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.LessThanSymbol,
+                ParsedExpressionConstructDefaults.LessThanPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.GreaterThanOrEqualToSymbol,
+                ParsedExpressionConstructDefaults.GreaterThanOrEqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.LessThanOrEqualToSymbol,
+                ParsedExpressionConstructDefaults.LessThanOrEqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.CompareSymbol,
+                ParsedExpressionConstructDefaults.ComparePrecedence );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddToBigIntTypeConversion(
+        this ParsedExpressionFactoryBuilder builder,
+        IEnumerable<ParsedExpressionTypeConverter> specializedConverters,
+        string symbol = "[bigint]",
+        string? postfixSymbol = null)
+    {
+        return AddTypeConverters( builder, new ParsedExpressionTypeConverter<BigInteger>(), specializedConverters, symbol, postfixSymbol );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddToBigIntTypeConversion(
+        this ParsedExpressionFactoryBuilder builder,
+        string symbol = "[bigint]",
+        string? postfixSymbol = null,
+        params ParsedExpressionTypeConverter[] specializedConverters)
+    {
+        return builder.AddToBigIntTypeConversion( specializedConverters.AsEnumerable(), symbol, postfixSymbol );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddStringArithmeticOperators(this ParsedExpressionFactoryBuilder builder)
+    {
+        return builder
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.AddSymbol, new ParsedExpressionAddStringOperator() )
+            .SetBinaryOperatorPrecedence( ParsedExpressionConstructDefaults.AddSymbol, ParsedExpressionConstructDefaults.AddPrecedence );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddStringLogicalOperators(this ParsedExpressionFactoryBuilder builder)
+    {
+        return builder
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.EqualToSymbol, new ParsedExpressionEqualToStringOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.NotEqualToSymbol, new ParsedExpressionNotEqualToStringOperator() )
+            .AddBinaryOperator( ParsedExpressionConstructDefaults.CompareSymbol, new ParsedExpressionCompareStringOperator() )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.EqualToSymbol,
+                ParsedExpressionConstructDefaults.EqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.NotEqualToSymbol,
+                ParsedExpressionConstructDefaults.NotEqualToPrecedence )
+            .SetBinaryOperatorPrecedence(
+                ParsedExpressionConstructDefaults.CompareSymbol,
+                ParsedExpressionConstructDefaults.ComparePrecedence );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddToStringTypeConversion(
+        this ParsedExpressionFactoryBuilder builder,
+        IEnumerable<ParsedExpressionTypeConverter> specializedConverters,
+        string symbol = "[string]",
+        string? postfixSymbol = null)
+    {
+        return AddTypeConverters( builder, new ParsedExpressionToStringTypeConverter(), specializedConverters, symbol, postfixSymbol );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddToStringTypeConversion(
+        this ParsedExpressionFactoryBuilder builder,
+        string symbol = "[string]",
+        string? postfixSymbol = null,
+        params ParsedExpressionTypeConverter[] specializedConverters)
+    {
+        return builder.AddToStringTypeConversion( specializedConverters.AsEnumerable(), symbol, postfixSymbol );
+    }
+
+    private static ParsedExpressionFactoryBuilder AddTypeConverters(
+        ParsedExpressionFactoryBuilder builder,
+        ParsedExpressionTypeConverter genericConverter,
+        IEnumerable<ParsedExpressionTypeConverter> specializedConverters,
+        string symbol,
+        string? postfixSymbol)
+    {
+        var specialized = specializedConverters.Materialize();
+
+        builder
+            .AddPrefixTypeConverter( symbol, genericConverter )
+            .SetPrefixUnaryConstructPrecedence( symbol, ParsedExpressionConstructDefaults.TypeConverterPrecedence );
+
+        foreach ( var specializedConverter in specialized )
+            builder.AddPrefixTypeConverter( symbol, specializedConverter );
+
+        if ( postfixSymbol is not null )
+        {
+            builder
+                .AddPostfixTypeConverter( postfixSymbol, genericConverter )
+                .SetPostfixUnaryConstructPrecedence( postfixSymbol, ParsedExpressionConstructDefaults.TypeConverterPrecedence );
+
+            foreach ( var specializedConverter in specialized )
+                builder.AddPostfixTypeConverter( postfixSymbol, specializedConverter );
+        }
+
+        return builder;
+    }
+}

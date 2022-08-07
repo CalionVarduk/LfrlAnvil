@@ -14,7 +14,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void AndOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<bool, bool, bool>(
-            sut: new MathExpressionAndOperator(),
+            sut: new ParsedExpressionAndOperator(),
             expectedNodeType: ExpressionType.AndAlso,
             DefaultNodeAssertion );
     }
@@ -30,7 +30,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
         bool expected)
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant<bool, bool, bool>(
-            sut: new MathExpressionAndOperator(),
+            sut: new ParsedExpressionAndOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
@@ -48,7 +48,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void AndOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstantAndTrue()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<bool, bool, bool>(
-            sut: new MathExpressionAndOperator(),
+            sut: new ParsedExpressionAndOperator(),
             expectedNodeType: ExpressionType.Parameter,
             leftValue: true,
             (_, right, result) => result.Should().BeSameAs( right ) );
@@ -58,7 +58,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void AndOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstantAndFalse()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<bool, bool, bool>(
-            sut: new MathExpressionAndOperator(),
+            sut: new ParsedExpressionAndOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: false,
             (_, _, result) =>
@@ -75,7 +75,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void AndOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstantAndTrue()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<bool, bool, bool>(
-            sut: new MathExpressionAndOperator(),
+            sut: new ParsedExpressionAndOperator(),
             expectedNodeType: ExpressionType.Parameter,
             rightValue: true,
             (left, _, result) => result.Should().BeSameAs( left ) );
@@ -85,7 +85,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void AndOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstantAndFalse()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<bool, bool, bool>(
-            sut: new MathExpressionAndOperator(),
+            sut: new ParsedExpressionAndOperator(),
             expectedNodeType: ExpressionType.Constant,
             rightValue: false,
             (_, _, result) =>
@@ -102,7 +102,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void OrOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<bool, bool, bool>(
-            sut: new MathExpressionOrOperator(),
+            sut: new ParsedExpressionOrOperator(),
             expectedNodeType: ExpressionType.OrElse,
             DefaultNodeAssertion );
     }
@@ -118,7 +118,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
         bool expected)
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant<bool, bool, bool>(
-            sut: new MathExpressionOrOperator(),
+            sut: new ParsedExpressionOrOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
@@ -136,7 +136,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void OrOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstantAndTrue()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<bool, bool, bool>(
-            sut: new MathExpressionOrOperator(),
+            sut: new ParsedExpressionOrOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: true,
             (_, _, result) =>
@@ -153,7 +153,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void OrOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstantAndFalse()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<bool, bool, bool>(
-            sut: new MathExpressionOrOperator(),
+            sut: new ParsedExpressionOrOperator(),
             expectedNodeType: ExpressionType.Parameter,
             leftValue: false,
             (_, right, result) => result.Should().BeSameAs( right ) );
@@ -163,7 +163,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void OrOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstantAndTrue()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<bool, bool, bool>(
-            sut: new MathExpressionOrOperator(),
+            sut: new ParsedExpressionOrOperator(),
             expectedNodeType: ExpressionType.Constant,
             rightValue: true,
             (_, _, result) =>
@@ -180,7 +180,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void OrOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstantAndFalse()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<bool, bool, bool>(
-            sut: new MathExpressionOrOperator(),
+            sut: new ParsedExpressionOrOperator(),
             expectedNodeType: ExpressionType.Parameter,
             rightValue: false,
             (left, _, result) => result.Should().BeSameAs( left ) );
@@ -190,7 +190,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseAndOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<bool, bool, bool>(
-            sut: new MathExpressionBitwiseAndBooleanOperator(),
+            sut: new ParsedExpressionBitwiseAndBooleanOperator(),
             expectedNodeType: ExpressionType.And,
             DefaultNodeAssertion );
     }
@@ -206,7 +206,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
         bool expected)
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant<bool, bool, bool>(
-            sut: new MathExpressionBitwiseAndBooleanOperator(),
+            sut: new ParsedExpressionBitwiseAndBooleanOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
@@ -224,7 +224,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseAndOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstantAndTrue()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<bool, bool, bool>(
-            sut: new MathExpressionBitwiseAndBooleanOperator(),
+            sut: new ParsedExpressionBitwiseAndBooleanOperator(),
             expectedNodeType: ExpressionType.Parameter,
             leftValue: true,
             (_, right, result) => result.Should().BeSameAs( right ) );
@@ -234,7 +234,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseAndOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstantAndFalse()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<bool, bool, bool>(
-            sut: new MathExpressionBitwiseAndBooleanOperator(),
+            sut: new ParsedExpressionBitwiseAndBooleanOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: false,
             (_, _, result) =>
@@ -251,7 +251,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseAndOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstantAndTrue()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<bool, bool, bool>(
-            sut: new MathExpressionBitwiseAndBooleanOperator(),
+            sut: new ParsedExpressionBitwiseAndBooleanOperator(),
             expectedNodeType: ExpressionType.Parameter,
             rightValue: true,
             (left, _, result) => result.Should().BeSameAs( left ) );
@@ -261,7 +261,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseAndOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstantAndFalse()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<bool, bool, bool>(
-            sut: new MathExpressionBitwiseAndBooleanOperator(),
+            sut: new ParsedExpressionBitwiseAndBooleanOperator(),
             expectedNodeType: ExpressionType.Constant,
             rightValue: false,
             (_, _, result) =>
@@ -278,7 +278,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseOrOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<bool, bool, bool>(
-            sut: new MathExpressionBitwiseOrBooleanOperator(),
+            sut: new ParsedExpressionBitwiseOrBooleanOperator(),
             expectedNodeType: ExpressionType.Or,
             DefaultNodeAssertion );
     }
@@ -294,7 +294,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
         bool expected)
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant<bool, bool, bool>(
-            sut: new MathExpressionBitwiseOrBooleanOperator(),
+            sut: new ParsedExpressionBitwiseOrBooleanOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
@@ -312,7 +312,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseOrOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstantAndTrue()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<bool, bool, bool>(
-            sut: new MathExpressionBitwiseOrBooleanOperator(),
+            sut: new ParsedExpressionBitwiseOrBooleanOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: true,
             (_, _, result) =>
@@ -329,7 +329,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseOrOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstantAndFalse()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<bool, bool, bool>(
-            sut: new MathExpressionBitwiseOrBooleanOperator(),
+            sut: new ParsedExpressionBitwiseOrBooleanOperator(),
             expectedNodeType: ExpressionType.Parameter,
             leftValue: false,
             (_, right, result) => result.Should().BeSameAs( right ) );
@@ -339,7 +339,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseOrOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstantAndTrue()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<bool, bool, bool>(
-            sut: new MathExpressionBitwiseOrBooleanOperator(),
+            sut: new ParsedExpressionBitwiseOrBooleanOperator(),
             expectedNodeType: ExpressionType.Constant,
             rightValue: true,
             (_, _, result) =>
@@ -356,7 +356,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseOrOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstantAndFalse()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<bool, bool, bool>(
-            sut: new MathExpressionBitwiseOrBooleanOperator(),
+            sut: new ParsedExpressionBitwiseOrBooleanOperator(),
             expectedNodeType: ExpressionType.Parameter,
             rightValue: false,
             (left, _, result) => result.Should().BeSameAs( left ) );
@@ -366,7 +366,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseXorOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<bool, bool, bool>(
-            sut: new MathExpressionBitwiseXorBooleanOperator(),
+            sut: new ParsedExpressionBitwiseXorBooleanOperator(),
             expectedNodeType: ExpressionType.ExclusiveOr,
             DefaultNodeAssertion );
     }
@@ -382,7 +382,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
         bool expected)
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant<bool, bool, bool>(
-            sut: new MathExpressionBitwiseXorBooleanOperator(),
+            sut: new ParsedExpressionBitwiseXorBooleanOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
@@ -400,7 +400,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseXorOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<bool, bool, bool>(
-            sut: new MathExpressionBitwiseXorBooleanOperator(),
+            sut: new ParsedExpressionBitwiseXorBooleanOperator(),
             expectedNodeType: ExpressionType.ExclusiveOr,
             leftValue: Fixture.Create<bool>(),
             DefaultNodeAssertion );
@@ -410,7 +410,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseXorOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<bool, bool, bool>(
-            sut: new MathExpressionBitwiseXorBooleanOperator(),
+            sut: new ParsedExpressionBitwiseXorBooleanOperator(),
             expectedNodeType: ExpressionType.ExclusiveOr,
             rightValue: Fixture.Create<bool>(),
             DefaultNodeAssertion );
@@ -420,7 +420,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void EqualToOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<bool, bool, bool>(
-            sut: new MathExpressionEqualToBooleanOperator(),
+            sut: new ParsedExpressionEqualToBooleanOperator(),
             expectedNodeType: ExpressionType.Equal,
             DefaultNodeAssertion );
     }
@@ -435,7 +435,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
         bool expected)
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant<bool, bool, bool>(
-            sut: new MathExpressionEqualToBooleanOperator(),
+            sut: new ParsedExpressionEqualToBooleanOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
@@ -453,7 +453,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void EqualToOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<bool, bool, bool>(
-            sut: new MathExpressionEqualToBooleanOperator(),
+            sut: new ParsedExpressionEqualToBooleanOperator(),
             expectedNodeType: ExpressionType.Equal,
             leftValue: Fixture.Create<bool>(),
             DefaultNodeAssertion );
@@ -463,7 +463,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void EqualToOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<bool, bool, bool>(
-            sut: new MathExpressionEqualToBooleanOperator(),
+            sut: new ParsedExpressionEqualToBooleanOperator(),
             expectedNodeType: ExpressionType.Equal,
             rightValue: Fixture.Create<bool>(),
             DefaultNodeAssertion );
@@ -473,7 +473,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void NotEqualToOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<bool, bool, bool>(
-            sut: new MathExpressionNotEqualToBooleanOperator(),
+            sut: new ParsedExpressionNotEqualToBooleanOperator(),
             expectedNodeType: ExpressionType.NotEqual,
             DefaultNodeAssertion );
     }
@@ -488,7 +488,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
         bool expected)
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant<bool, bool, bool>(
-            sut: new MathExpressionNotEqualToBooleanOperator(),
+            sut: new ParsedExpressionNotEqualToBooleanOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
@@ -506,7 +506,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void NotEqualToOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<bool, bool, bool>(
-            sut: new MathExpressionNotEqualToBooleanOperator(),
+            sut: new ParsedExpressionNotEqualToBooleanOperator(),
             expectedNodeType: ExpressionType.NotEqual,
             leftValue: Fixture.Create<bool>(),
             DefaultNodeAssertion );
@@ -516,7 +516,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void NotEqualToOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<bool, bool, bool>(
-            sut: new MathExpressionNotEqualToBooleanOperator(),
+            sut: new ParsedExpressionNotEqualToBooleanOperator(),
             expectedNodeType: ExpressionType.NotEqual,
             rightValue: Fixture.Create<bool>(),
             DefaultNodeAssertion );
@@ -526,7 +526,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void CompareOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<bool, bool, int>(
-            sut: new MathExpressionCompareBooleanOperator(),
+            sut: new ParsedExpressionCompareBooleanOperator(),
             expectedNodeType: ExpressionType.Call,
             (left, right, result) =>
             {
@@ -551,7 +551,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
         int expected)
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant<bool, bool, int>(
-            sut: new MathExpressionCompareBooleanOperator(),
+            sut: new ParsedExpressionCompareBooleanOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
@@ -569,7 +569,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void CompareOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<bool, bool, int>(
-            sut: new MathExpressionCompareBooleanOperator(),
+            sut: new ParsedExpressionCompareBooleanOperator(),
             expectedNodeType: ExpressionType.Call,
             leftValue: Fixture.Create<bool>(),
             (left, right, result) =>
@@ -588,7 +588,7 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
     public void CompareOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<bool, bool, int>(
-            sut: new MathExpressionCompareBooleanOperator(),
+            sut: new ParsedExpressionCompareBooleanOperator(),
             expectedNodeType: ExpressionType.Call,
             rightValue: Fixture.Create<bool>(),
             (left, right, result) =>

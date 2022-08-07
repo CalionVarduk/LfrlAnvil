@@ -11,7 +11,7 @@ public class Int64UnaryOperatorTests : UnaryOperatorsTestsBase
     public void NegateOperatorProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<long, long>(
-            sut: new MathExpressionNegateInt64Operator(),
+            sut: new ParsedExpressionNegateInt64Operator(),
             expectedNodeType: ExpressionType.Negate,
             DefaultNodeAssertion );
     }
@@ -20,7 +20,7 @@ public class Int64UnaryOperatorTests : UnaryOperatorsTestsBase
     public void NegateOperatorProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<long, long>(
-            sut: new MathExpressionNegateInt64Operator(),
+            sut: new ParsedExpressionNegateInt64Operator(),
             expectedNodeType: ExpressionType.Constant,
             operandValue: 123,
             (_, result) =>
@@ -37,7 +37,7 @@ public class Int64UnaryOperatorTests : UnaryOperatorsTestsBase
     public void BitwiseNotOperatorProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<long, long>(
-            sut: new MathExpressionBitwiseNotInt64Operator(),
+            sut: new ParsedExpressionBitwiseNotInt64Operator(),
             expectedNodeType: ExpressionType.Not,
             DefaultNodeAssertion );
     }
@@ -46,7 +46,7 @@ public class Int64UnaryOperatorTests : UnaryOperatorsTestsBase
     public void BitwiseNotOperatorProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<long, long>(
-            sut: new MathExpressionBitwiseNotInt64Operator(),
+            sut: new ParsedExpressionBitwiseNotInt64Operator(),
             expectedNodeType: ExpressionType.Constant,
             operandValue: 123,
             (_, result) =>

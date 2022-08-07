@@ -16,7 +16,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void AddOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionAddBigIntOperator(),
+            sut: new ParsedExpressionAddBigIntOperator(),
             expectedNodeType: ExpressionType.Add,
             DefaultNodeAssertion );
     }
@@ -25,7 +25,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void AddOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionAddBigIntOperator(),
+            sut: new ParsedExpressionAddBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: 123,
             rightValue: 456,
@@ -43,7 +43,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void AddOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstantAndNotEqualToZero()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionAddBigIntOperator(),
+            sut: new ParsedExpressionAddBigIntOperator(),
             expectedNodeType: ExpressionType.Add,
             leftValue: Fixture.CreateNotDefault<BigInteger>(),
             DefaultNodeAssertion );
@@ -53,7 +53,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void AddOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstantAndEqualToZero()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionAddBigIntOperator(),
+            sut: new ParsedExpressionAddBigIntOperator(),
             expectedNodeType: ExpressionType.Parameter,
             leftValue: 0,
             (_, right, result) => result.Should().BeSameAs( right ) );
@@ -63,7 +63,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void AddOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstantAndNotEqualToZero()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionAddBigIntOperator(),
+            sut: new ParsedExpressionAddBigIntOperator(),
             expectedNodeType: ExpressionType.Add,
             rightValue: Fixture.CreateNotDefault<BigInteger>(),
             DefaultNodeAssertion );
@@ -73,7 +73,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void AddOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstantAndEqualToZero()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionAddBigIntOperator(),
+            sut: new ParsedExpressionAddBigIntOperator(),
             expectedNodeType: ExpressionType.Parameter,
             rightValue: 0,
             (left, _, result) => result.Should().BeSameAs( left ) );
@@ -83,7 +83,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void SubtractOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionSubtractBigIntOperator(),
+            sut: new ParsedExpressionSubtractBigIntOperator(),
             expectedNodeType: ExpressionType.Subtract,
             DefaultNodeAssertion );
     }
@@ -92,7 +92,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void SubtractOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionSubtractBigIntOperator(),
+            sut: new ParsedExpressionSubtractBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: 123,
             rightValue: 456,
@@ -110,7 +110,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void SubtractOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstantAndNotEqualToZero()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionSubtractBigIntOperator(),
+            sut: new ParsedExpressionSubtractBigIntOperator(),
             expectedNodeType: ExpressionType.Subtract,
             leftValue: Fixture.CreateNotDefault<BigInteger>(),
             DefaultNodeAssertion );
@@ -120,7 +120,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void SubtractOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstantAndEqualToZero()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionSubtractBigIntOperator(),
+            sut: new ParsedExpressionSubtractBigIntOperator(),
             expectedNodeType: ExpressionType.Negate,
             leftValue: 0,
             (_, right, result) =>
@@ -137,7 +137,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void SubtractOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstantAndNotEqualToZero()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionSubtractBigIntOperator(),
+            sut: new ParsedExpressionSubtractBigIntOperator(),
             expectedNodeType: ExpressionType.Subtract,
             rightValue: Fixture.CreateNotDefault<BigInteger>(),
             DefaultNodeAssertion );
@@ -147,7 +147,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void SubtractOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstantAndEqualToZero()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionSubtractBigIntOperator(),
+            sut: new ParsedExpressionSubtractBigIntOperator(),
             expectedNodeType: ExpressionType.Parameter,
             rightValue: 0,
             (left, _, result) => result.Should().BeSameAs( left ) );
@@ -157,7 +157,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void MultiplyOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionMultiplyBigIntOperator(),
+            sut: new ParsedExpressionMultiplyBigIntOperator(),
             expectedNodeType: ExpressionType.Multiply,
             DefaultNodeAssertion );
     }
@@ -166,7 +166,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void MultiplyOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionMultiplyBigIntOperator(),
+            sut: new ParsedExpressionMultiplyBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: 123,
             rightValue: 456,
@@ -184,7 +184,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void MultiplyOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstantAndNotEqualToZeroOrOneOrMinusOne()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionMultiplyBigIntOperator(),
+            sut: new ParsedExpressionMultiplyBigIntOperator(),
             expectedNodeType: ExpressionType.Multiply,
             leftValue: 123,
             DefaultNodeAssertion );
@@ -194,7 +194,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void MultiplyOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstantAndEqualToZero()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionMultiplyBigIntOperator(),
+            sut: new ParsedExpressionMultiplyBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: 0,
             (_, _, result) =>
@@ -211,7 +211,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void MultiplyOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstantAndEqualToOne()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionMultiplyBigIntOperator(),
+            sut: new ParsedExpressionMultiplyBigIntOperator(),
             expectedNodeType: ExpressionType.Parameter,
             leftValue: 1,
             (_, right, result) => result.Should().BeSameAs( right ) );
@@ -221,7 +221,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void MultiplyOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstantAndEqualToMinusOne()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionMultiplyBigIntOperator(),
+            sut: new ParsedExpressionMultiplyBigIntOperator(),
             expectedNodeType: ExpressionType.Negate,
             leftValue: -1,
             (_, right, result) =>
@@ -238,7 +238,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void AddOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstantAndNotEqualToZeroOrOneOrMinusOne()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionMultiplyBigIntOperator(),
+            sut: new ParsedExpressionMultiplyBigIntOperator(),
             expectedNodeType: ExpressionType.Multiply,
             rightValue: 123,
             DefaultNodeAssertion );
@@ -248,7 +248,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void MultiplyOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstantAndEqualToZero()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionMultiplyBigIntOperator(),
+            sut: new ParsedExpressionMultiplyBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             rightValue: 0,
             (_, _, result) =>
@@ -265,7 +265,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void MultiplyOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstantAndEqualToOne()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionMultiplyBigIntOperator(),
+            sut: new ParsedExpressionMultiplyBigIntOperator(),
             expectedNodeType: ExpressionType.Parameter,
             rightValue: 1,
             (left, _, result) => result.Should().BeSameAs( left ) );
@@ -275,7 +275,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void MultiplyOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstantAndEqualToMinusOne()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionMultiplyBigIntOperator(),
+            sut: new ParsedExpressionMultiplyBigIntOperator(),
             expectedNodeType: ExpressionType.Negate,
             rightValue: -1,
             (left, _, result) =>
@@ -292,7 +292,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void DivideOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionDivideBigIntOperator(),
+            sut: new ParsedExpressionDivideBigIntOperator(),
             expectedNodeType: ExpressionType.Divide,
             DefaultNodeAssertion );
     }
@@ -301,7 +301,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void DivideOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionDivideBigIntOperator(),
+            sut: new ParsedExpressionDivideBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: 1236,
             rightValue: 4,
@@ -319,7 +319,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void DivideOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionDivideBigIntOperator(),
+            sut: new ParsedExpressionDivideBigIntOperator(),
             expectedNodeType: ExpressionType.Divide,
             leftValue: Fixture.Create<BigInteger>(),
             DefaultNodeAssertion );
@@ -329,7 +329,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void DivideOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstantAndNotEqualToZeroOrOneOrMinusOne()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionDivideBigIntOperator(),
+            sut: new ParsedExpressionDivideBigIntOperator(),
             expectedNodeType: ExpressionType.Divide,
             rightValue: 123,
             DefaultNodeAssertion );
@@ -339,7 +339,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void DivideOperatorProcess_ShouldThrowDivideByZeroException_WhenRightOperandIsConstantAndEqualToZero()
     {
         Process_ShouldThrowException_WhenAttemptingToResolveRightConstantValue<BigInteger, BigInteger, DivideByZeroException>(
-            sut: new MathExpressionDivideBigIntOperator(),
+            sut: new ParsedExpressionDivideBigIntOperator(),
             rightValue: 0 );
     }
 
@@ -347,7 +347,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void DivideOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstantAndEqualToOne()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionDivideBigIntOperator(),
+            sut: new ParsedExpressionDivideBigIntOperator(),
             expectedNodeType: ExpressionType.Parameter,
             rightValue: 1,
             (left, _, result) => result.Should().BeSameAs( left ) );
@@ -357,7 +357,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void DivideOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstantAndEqualToMinusOne()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionDivideBigIntOperator(),
+            sut: new ParsedExpressionDivideBigIntOperator(),
             expectedNodeType: ExpressionType.Negate,
             rightValue: -1,
             (left, _, result) =>
@@ -374,7 +374,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void ModuloOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionModuloBigIntOperator(),
+            sut: new ParsedExpressionModuloBigIntOperator(),
             expectedNodeType: ExpressionType.Modulo,
             DefaultNodeAssertion );
     }
@@ -383,7 +383,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void ModuloOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionModuloBigIntOperator(),
+            sut: new ParsedExpressionModuloBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: 456,
             rightValue: 123,
@@ -401,7 +401,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void ModuloOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionModuloBigIntOperator(),
+            sut: new ParsedExpressionModuloBigIntOperator(),
             expectedNodeType: ExpressionType.Modulo,
             leftValue: Fixture.Create<BigInteger>(),
             DefaultNodeAssertion );
@@ -411,7 +411,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void ModuloOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstantAndNotEqualToZeroOrOneOrMinusOne()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionModuloBigIntOperator(),
+            sut: new ParsedExpressionModuloBigIntOperator(),
             expectedNodeType: ExpressionType.Modulo,
             rightValue: 123,
             DefaultNodeAssertion );
@@ -421,7 +421,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void ModuloOperatorProcess_ShouldThrowDivideByZeroException_WhenRightOperandIsConstantAndEqualToZero()
     {
         Process_ShouldThrowException_WhenAttemptingToResolveRightConstantValue<BigInteger, BigInteger, DivideByZeroException>(
-            sut: new MathExpressionModuloBigIntOperator(),
+            sut: new ParsedExpressionModuloBigIntOperator(),
             rightValue: 0 );
     }
 
@@ -432,7 +432,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
         BigInteger right)
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionModuloBigIntOperator(),
+            sut: new ParsedExpressionModuloBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             rightValue: right,
             (_, _, result) =>
@@ -449,7 +449,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseAndOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionBitwiseAndBigIntOperator(),
+            sut: new ParsedExpressionBitwiseAndBigIntOperator(),
             expectedNodeType: ExpressionType.And,
             DefaultNodeAssertion );
     }
@@ -458,7 +458,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseAndOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionBitwiseAndBigIntOperator(),
+            sut: new ParsedExpressionBitwiseAndBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: 123,
             rightValue: 456,
@@ -476,7 +476,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseAndOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstantAndNotEqualToZero()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionBitwiseAndBigIntOperator(),
+            sut: new ParsedExpressionBitwiseAndBigIntOperator(),
             expectedNodeType: ExpressionType.And,
             leftValue: Fixture.CreateNotDefault<BigInteger>(),
             DefaultNodeAssertion );
@@ -486,7 +486,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseAndOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstantAndEqualToZero()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionBitwiseAndBigIntOperator(),
+            sut: new ParsedExpressionBitwiseAndBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: 0,
             (_, _, result) =>
@@ -503,7 +503,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseAndOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstantAndNotEqualToZero()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionBitwiseAndBigIntOperator(),
+            sut: new ParsedExpressionBitwiseAndBigIntOperator(),
             expectedNodeType: ExpressionType.And,
             rightValue: Fixture.CreateNotDefault<BigInteger>(),
             DefaultNodeAssertion );
@@ -513,7 +513,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseAndOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstantAndEqualToZero()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionBitwiseAndBigIntOperator(),
+            sut: new ParsedExpressionBitwiseAndBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             rightValue: 0,
             (_, _, result) =>
@@ -530,7 +530,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseOrOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionBitwiseOrBigIntOperator(),
+            sut: new ParsedExpressionBitwiseOrBigIntOperator(),
             expectedNodeType: ExpressionType.Or,
             DefaultNodeAssertion );
     }
@@ -539,7 +539,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseOrOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionBitwiseOrBigIntOperator(),
+            sut: new ParsedExpressionBitwiseOrBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: 123,
             rightValue: 456,
@@ -557,7 +557,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseOrOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstantAndNotEqualToZero()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionBitwiseOrBigIntOperator(),
+            sut: new ParsedExpressionBitwiseOrBigIntOperator(),
             expectedNodeType: ExpressionType.Or,
             leftValue: Fixture.CreateNotDefault<BigInteger>(),
             DefaultNodeAssertion );
@@ -567,7 +567,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseOrOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstantAndEqualToZero()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionBitwiseOrBigIntOperator(),
+            sut: new ParsedExpressionBitwiseOrBigIntOperator(),
             expectedNodeType: ExpressionType.Parameter,
             leftValue: 0,
             (_, right, result) => result.Should().BeSameAs( right ) );
@@ -577,7 +577,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseOrOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstantAndNotEqualToZero()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionBitwiseOrBigIntOperator(),
+            sut: new ParsedExpressionBitwiseOrBigIntOperator(),
             expectedNodeType: ExpressionType.Or,
             rightValue: Fixture.CreateNotDefault<BigInteger>(),
             DefaultNodeAssertion );
@@ -587,7 +587,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseOrOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstantAndEqualToZero()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionBitwiseOrBigIntOperator(),
+            sut: new ParsedExpressionBitwiseOrBigIntOperator(),
             expectedNodeType: ExpressionType.Parameter,
             rightValue: 0,
             (left, _, result) => result.Should().BeSameAs( left ) );
@@ -597,7 +597,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseXorOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionBitwiseXorBigIntOperator(),
+            sut: new ParsedExpressionBitwiseXorBigIntOperator(),
             expectedNodeType: ExpressionType.ExclusiveOr,
             DefaultNodeAssertion );
     }
@@ -606,7 +606,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseXorOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionBitwiseXorBigIntOperator(),
+            sut: new ParsedExpressionBitwiseXorBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: 123,
             rightValue: 456,
@@ -624,7 +624,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseXorOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstantAndNotEqualToZero()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionBitwiseXorBigIntOperator(),
+            sut: new ParsedExpressionBitwiseXorBigIntOperator(),
             expectedNodeType: ExpressionType.ExclusiveOr,
             leftValue: Fixture.CreateNotDefault<BigInteger>(),
             DefaultNodeAssertion );
@@ -634,7 +634,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseXorOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstantAndEqualToZero()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionBitwiseXorBigIntOperator(),
+            sut: new ParsedExpressionBitwiseXorBigIntOperator(),
             expectedNodeType: ExpressionType.Parameter,
             leftValue: 0,
             (_, right, result) => result.Should().BeSameAs( right ) );
@@ -644,7 +644,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseXorOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstantAndNotEqualToZero()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionBitwiseXorBigIntOperator(),
+            sut: new ParsedExpressionBitwiseXorBigIntOperator(),
             expectedNodeType: ExpressionType.ExclusiveOr,
             rightValue: Fixture.CreateNotDefault<BigInteger>(),
             DefaultNodeAssertion );
@@ -654,7 +654,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseXorOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstantAndEqualToZero()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, BigInteger, BigInteger>(
-            sut: new MathExpressionBitwiseXorBigIntOperator(),
+            sut: new ParsedExpressionBitwiseXorBigIntOperator(),
             expectedNodeType: ExpressionType.Parameter,
             rightValue: 0,
             (left, _, result) => result.Should().BeSameAs( left ) );
@@ -664,7 +664,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseLeftShiftOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<BigInteger, int, BigInteger>(
-            sut: new MathExpressionBitwiseLeftShiftBigIntOperator(),
+            sut: new ParsedExpressionBitwiseLeftShiftBigIntOperator(),
             expectedNodeType: ExpressionType.LeftShift,
             DefaultNodeAssertion );
     }
@@ -673,7 +673,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseLeftShiftOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant<BigInteger, int, BigInteger>(
-            sut: new MathExpressionBitwiseLeftShiftBigIntOperator(),
+            sut: new ParsedExpressionBitwiseLeftShiftBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: 456,
             rightValue: 12,
@@ -691,7 +691,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseLeftShiftOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstantAndNotEqualToZero()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<BigInteger, int, BigInteger>(
-            sut: new MathExpressionBitwiseLeftShiftBigIntOperator(),
+            sut: new ParsedExpressionBitwiseLeftShiftBigIntOperator(),
             expectedNodeType: ExpressionType.LeftShift,
             leftValue: Fixture.CreateNotDefault<BigInteger>(),
             DefaultNodeAssertion );
@@ -701,7 +701,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseLeftShiftOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstantAndEqualToZero()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<BigInteger, int, BigInteger>(
-            sut: new MathExpressionBitwiseLeftShiftBigIntOperator(),
+            sut: new ParsedExpressionBitwiseLeftShiftBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: 0,
             (_, _, result) =>
@@ -725,7 +725,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
         int shift)
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, int, BigInteger>(
-            sut: new MathExpressionBitwiseLeftShiftBigIntOperator(),
+            sut: new ParsedExpressionBitwiseLeftShiftBigIntOperator(),
             expectedNodeType: ExpressionType.LeftShift,
             rightValue: shift,
             DefaultNodeAssertion );
@@ -735,7 +735,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseLeftShiftOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstantAndEqualToZero()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, int, BigInteger>(
-            sut: new MathExpressionBitwiseLeftShiftBigIntOperator(),
+            sut: new ParsedExpressionBitwiseLeftShiftBigIntOperator(),
             expectedNodeType: ExpressionType.Parameter,
             rightValue: 0,
             (left, _, result) => result.Should().BeSameAs( left ) );
@@ -745,7 +745,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseRightShiftOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<BigInteger, int, BigInteger>(
-            sut: new MathExpressionBitwiseRightShiftBigIntOperator(),
+            sut: new ParsedExpressionBitwiseRightShiftBigIntOperator(),
             expectedNodeType: ExpressionType.RightShift,
             DefaultNodeAssertion );
     }
@@ -754,7 +754,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseRightShiftOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant<BigInteger, int, BigInteger>(
-            sut: new MathExpressionBitwiseRightShiftBigIntOperator(),
+            sut: new ParsedExpressionBitwiseRightShiftBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: 1867776,
             rightValue: 12,
@@ -772,7 +772,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseRightShiftOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstantAndNotEqualToZero()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<BigInteger, int, BigInteger>(
-            sut: new MathExpressionBitwiseRightShiftBigIntOperator(),
+            sut: new ParsedExpressionBitwiseRightShiftBigIntOperator(),
             expectedNodeType: ExpressionType.RightShift,
             leftValue: Fixture.CreateNotDefault<BigInteger>(),
             DefaultNodeAssertion );
@@ -782,7 +782,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseRightShiftOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstantAndEqualToZero()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<BigInteger, int, BigInteger>(
-            sut: new MathExpressionBitwiseRightShiftBigIntOperator(),
+            sut: new ParsedExpressionBitwiseRightShiftBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: 0,
             (_, _, result) =>
@@ -806,7 +806,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
         int shift)
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, int, BigInteger>(
-            sut: new MathExpressionBitwiseRightShiftBigIntOperator(),
+            sut: new ParsedExpressionBitwiseRightShiftBigIntOperator(),
             expectedNodeType: ExpressionType.RightShift,
             rightValue: shift,
             DefaultNodeAssertion );
@@ -816,7 +816,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void BitwiseRightShiftOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstantAndEqualToZero()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, int, BigInteger>(
-            sut: new MathExpressionBitwiseRightShiftBigIntOperator(),
+            sut: new ParsedExpressionBitwiseRightShiftBigIntOperator(),
             expectedNodeType: ExpressionType.Parameter,
             rightValue: 0,
             (left, _, result) => result.Should().BeSameAs( left ) );
@@ -826,7 +826,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void EqualToOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<BigInteger, BigInteger, bool>(
-            sut: new MathExpressionEqualToBigIntOperator(),
+            sut: new ParsedExpressionEqualToBigIntOperator(),
             expectedNodeType: ExpressionType.Equal,
             DefaultNodeAssertion );
     }
@@ -840,7 +840,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
         bool expected)
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant<BigInteger, BigInteger, bool>(
-            sut: new MathExpressionEqualToBigIntOperator(),
+            sut: new ParsedExpressionEqualToBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
@@ -858,7 +858,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void EqualToOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<BigInteger, BigInteger, bool>(
-            sut: new MathExpressionEqualToBigIntOperator(),
+            sut: new ParsedExpressionEqualToBigIntOperator(),
             expectedNodeType: ExpressionType.Equal,
             leftValue: Fixture.Create<BigInteger>(),
             DefaultNodeAssertion );
@@ -868,7 +868,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void EqualToOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, BigInteger, bool>(
-            sut: new MathExpressionEqualToBigIntOperator(),
+            sut: new ParsedExpressionEqualToBigIntOperator(),
             expectedNodeType: ExpressionType.Equal,
             rightValue: Fixture.Create<BigInteger>(),
             DefaultNodeAssertion );
@@ -878,7 +878,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void NotEqualToOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<BigInteger, BigInteger, bool>(
-            sut: new MathExpressionNotEqualToBigIntOperator(),
+            sut: new ParsedExpressionNotEqualToBigIntOperator(),
             expectedNodeType: ExpressionType.NotEqual,
             DefaultNodeAssertion );
     }
@@ -892,7 +892,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
         bool expected)
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant<BigInteger, BigInteger, bool>(
-            sut: new MathExpressionNotEqualToBigIntOperator(),
+            sut: new ParsedExpressionNotEqualToBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
@@ -910,7 +910,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void NotEqualToOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<BigInteger, BigInteger, bool>(
-            sut: new MathExpressionNotEqualToBigIntOperator(),
+            sut: new ParsedExpressionNotEqualToBigIntOperator(),
             expectedNodeType: ExpressionType.NotEqual,
             leftValue: Fixture.Create<BigInteger>(),
             DefaultNodeAssertion );
@@ -920,7 +920,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void NotEqualToOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, BigInteger, bool>(
-            sut: new MathExpressionNotEqualToBigIntOperator(),
+            sut: new ParsedExpressionNotEqualToBigIntOperator(),
             expectedNodeType: ExpressionType.NotEqual,
             rightValue: Fixture.Create<BigInteger>(),
             DefaultNodeAssertion );
@@ -930,7 +930,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void GreaterThanOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<BigInteger, BigInteger, bool>(
-            sut: new MathExpressionGreaterThanBigIntOperator(),
+            sut: new ParsedExpressionGreaterThanBigIntOperator(),
             expectedNodeType: ExpressionType.GreaterThan,
             DefaultNodeAssertion );
     }
@@ -945,7 +945,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
         bool expected)
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant<BigInteger, BigInteger, bool>(
-            sut: new MathExpressionGreaterThanBigIntOperator(),
+            sut: new ParsedExpressionGreaterThanBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
@@ -963,7 +963,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void GreaterThanOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<BigInteger, BigInteger, bool>(
-            sut: new MathExpressionGreaterThanBigIntOperator(),
+            sut: new ParsedExpressionGreaterThanBigIntOperator(),
             expectedNodeType: ExpressionType.GreaterThan,
             leftValue: Fixture.Create<BigInteger>(),
             DefaultNodeAssertion );
@@ -973,7 +973,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void GreaterThanOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, BigInteger, bool>(
-            sut: new MathExpressionGreaterThanBigIntOperator(),
+            sut: new ParsedExpressionGreaterThanBigIntOperator(),
             expectedNodeType: ExpressionType.GreaterThan,
             rightValue: Fixture.Create<BigInteger>(),
             DefaultNodeAssertion );
@@ -983,7 +983,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void LessThanOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<BigInteger, BigInteger, bool>(
-            sut: new MathExpressionLessThanBigIntOperator(),
+            sut: new ParsedExpressionLessThanBigIntOperator(),
             expectedNodeType: ExpressionType.LessThan,
             DefaultNodeAssertion );
     }
@@ -998,7 +998,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
         bool expected)
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant<BigInteger, BigInteger, bool>(
-            sut: new MathExpressionLessThanBigIntOperator(),
+            sut: new ParsedExpressionLessThanBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
@@ -1016,7 +1016,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void LessThanOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<BigInteger, BigInteger, bool>(
-            sut: new MathExpressionLessThanBigIntOperator(),
+            sut: new ParsedExpressionLessThanBigIntOperator(),
             expectedNodeType: ExpressionType.LessThan,
             leftValue: Fixture.Create<BigInteger>(),
             DefaultNodeAssertion );
@@ -1026,7 +1026,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void LessThanOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, BigInteger, bool>(
-            sut: new MathExpressionLessThanBigIntOperator(),
+            sut: new ParsedExpressionLessThanBigIntOperator(),
             expectedNodeType: ExpressionType.LessThan,
             rightValue: Fixture.Create<BigInteger>(),
             DefaultNodeAssertion );
@@ -1036,7 +1036,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void GreaterThanOrEqualToOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<BigInteger, BigInteger, bool>(
-            sut: new MathExpressionGreaterThanOrEqualToBigIntOperator(),
+            sut: new ParsedExpressionGreaterThanOrEqualToBigIntOperator(),
             expectedNodeType: ExpressionType.GreaterThanOrEqual,
             DefaultNodeAssertion );
     }
@@ -1051,7 +1051,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
         bool expected)
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant<BigInteger, BigInteger, bool>(
-            sut: new MathExpressionGreaterThanOrEqualToBigIntOperator(),
+            sut: new ParsedExpressionGreaterThanOrEqualToBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
@@ -1069,7 +1069,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void GreaterThanOrEqualToOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<BigInteger, BigInteger, bool>(
-            sut: new MathExpressionGreaterThanOrEqualToBigIntOperator(),
+            sut: new ParsedExpressionGreaterThanOrEqualToBigIntOperator(),
             expectedNodeType: ExpressionType.GreaterThanOrEqual,
             leftValue: Fixture.Create<BigInteger>(),
             DefaultNodeAssertion );
@@ -1079,7 +1079,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void GreaterThanOrEqualToOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, BigInteger, bool>(
-            sut: new MathExpressionGreaterThanOrEqualToBigIntOperator(),
+            sut: new ParsedExpressionGreaterThanOrEqualToBigIntOperator(),
             expectedNodeType: ExpressionType.GreaterThanOrEqual,
             rightValue: Fixture.Create<BigInteger>(),
             DefaultNodeAssertion );
@@ -1089,7 +1089,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void LessThanOrEqualToOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<BigInteger, BigInteger, bool>(
-            sut: new MathExpressionLessThanOrEqualToBigIntOperator(),
+            sut: new ParsedExpressionLessThanOrEqualToBigIntOperator(),
             expectedNodeType: ExpressionType.LessThanOrEqual,
             DefaultNodeAssertion );
     }
@@ -1104,7 +1104,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
         bool expected)
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant<BigInteger, BigInteger, bool>(
-            sut: new MathExpressionLessThanOrEqualToBigIntOperator(),
+            sut: new ParsedExpressionLessThanOrEqualToBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
@@ -1122,7 +1122,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void LessThanOrEqualToOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<BigInteger, BigInteger, bool>(
-            sut: new MathExpressionLessThanOrEqualToBigIntOperator(),
+            sut: new ParsedExpressionLessThanOrEqualToBigIntOperator(),
             expectedNodeType: ExpressionType.LessThanOrEqual,
             leftValue: Fixture.Create<BigInteger>(),
             DefaultNodeAssertion );
@@ -1132,7 +1132,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void LessThanOrEqualToOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, BigInteger, bool>(
-            sut: new MathExpressionLessThanOrEqualToBigIntOperator(),
+            sut: new ParsedExpressionLessThanOrEqualToBigIntOperator(),
             expectedNodeType: ExpressionType.LessThanOrEqual,
             rightValue: Fixture.Create<BigInteger>(),
             DefaultNodeAssertion );
@@ -1142,7 +1142,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void CompareOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<BigInteger, BigInteger, int>(
-            sut: new MathExpressionCompareBigIntOperator(),
+            sut: new ParsedExpressionCompareBigIntOperator(),
             expectedNodeType: ExpressionType.Call,
             (left, right, result) =>
             {
@@ -1166,7 +1166,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
         int expected)
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant<BigInteger, BigInteger, int>(
-            sut: new MathExpressionCompareBigIntOperator(),
+            sut: new ParsedExpressionCompareBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
@@ -1184,7 +1184,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void CompareOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<BigInteger, BigInteger, int>(
-            sut: new MathExpressionCompareBigIntOperator(),
+            sut: new ParsedExpressionCompareBigIntOperator(),
             expectedNodeType: ExpressionType.Call,
             leftValue: Fixture.Create<BigInteger>(),
             (left, right, result) =>
@@ -1203,7 +1203,7 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
     public void CompareOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant()
     {
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<BigInteger, BigInteger, int>(
-            sut: new MathExpressionCompareBigIntOperator(),
+            sut: new ParsedExpressionCompareBigIntOperator(),
             expectedNodeType: ExpressionType.Call,
             rightValue: Fixture.Create<BigInteger>(),
             (left, right, result) =>

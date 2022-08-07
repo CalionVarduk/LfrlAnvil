@@ -3,7 +3,6 @@
 [assembly: InternalsVisibleTo( "LfrlAnvil.Computable.Expressions.Tests" )]
 
 // TODO:
-// Rename directory/namespace to LfrlAnvil.Computable
 // Standardize Debug.Assert usage (I'm on the fence about creating a static Assume class, similar to Ensure...)
 // Add constant constructs
 // Add factory builder extensions for registering constructs in bulk

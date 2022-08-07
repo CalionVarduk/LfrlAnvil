@@ -6,7 +6,7 @@ namespace LfrlAnvil.Computable.Expressions.Internal;
 
 internal readonly struct IntermediateToken
 {
-    private IntermediateToken(IntermediateTokenType type, StringSlice symbol, MathExpressionConstructTokenDefinition? constructs = null)
+    private IntermediateToken(IntermediateTokenType type, StringSlice symbol, ConstructTokenDefinition? constructs = null)
     {
         Type = type;
         Symbol = symbol;
@@ -15,7 +15,7 @@ internal readonly struct IntermediateToken
 
     public IntermediateTokenType Type { get; }
     public StringSlice Symbol { get; }
-    public MathExpressionConstructTokenDefinition? Constructs { get; }
+    public ConstructTokenDefinition? Constructs { get; }
 
     [Pure]
     public override string ToString()
@@ -92,7 +92,7 @@ internal readonly struct IntermediateToken
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static IntermediateToken CreateConstructs(StringSlice symbol, MathExpressionConstructTokenDefinition constructs)
+    internal static IntermediateToken CreateConstructs(StringSlice symbol, ConstructTokenDefinition constructs)
     {
         Debug.Assert( symbol.Length > 0, "symbol.Length > 0" );
         return new IntermediateToken( IntermediateTokenType.Constructs, symbol, constructs );

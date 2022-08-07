@@ -11,7 +11,7 @@ public class BooleanUnaryOperatorTests : UnaryOperatorsTestsBase
     public void NotOperatorProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<bool, bool>(
-            sut: new MathExpressionNotOperator(),
+            sut: new ParsedExpressionNotOperator(),
             expectedNodeType: ExpressionType.Not,
             DefaultNodeAssertion );
     }
@@ -22,7 +22,7 @@ public class BooleanUnaryOperatorTests : UnaryOperatorsTestsBase
     public void NotOperatorProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant(bool operand, bool expected)
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<bool, bool>(
-            sut: new MathExpressionNotOperator(),
+            sut: new ParsedExpressionNotOperator(),
             expectedNodeType: ExpressionType.Constant,
             operandValue: operand,
             (_, result) =>

@@ -24,8 +24,8 @@ internal static class Resources
     internal static string DecimalPointAndIntegerDigitSeparatorMustBeDifferent()
     {
         return ConfigurationSymbolsMustBeDifferent(
-            nameof( IMathExpressionFactoryConfiguration.DecimalPoint ),
-            nameof( IMathExpressionFactoryConfiguration.IntegerDigitSeparator ) );
+            nameof( IParsedExpressionFactoryConfiguration.DecimalPoint ),
+            nameof( IParsedExpressionFactoryConfiguration.IntegerDigitSeparator ) );
     }
 
     [Pure]
@@ -33,8 +33,8 @@ internal static class Resources
     internal static string DecimalPointAndStringDelimiterMustBeDifferent()
     {
         return ConfigurationSymbolsMustBeDifferent(
-            nameof( IMathExpressionFactoryConfiguration.DecimalPoint ),
-            nameof( IMathExpressionFactoryConfiguration.StringDelimiter ) );
+            nameof( IParsedExpressionFactoryConfiguration.DecimalPoint ),
+            nameof( IParsedExpressionFactoryConfiguration.StringDelimiter ) );
     }
 
     [Pure]
@@ -42,8 +42,8 @@ internal static class Resources
     internal static string DecimalPointAndScientificNotationExponentsMustBeDifferent()
     {
         return ConfigurationSymbolsMustBeDifferent(
-            nameof( IMathExpressionFactoryConfiguration.DecimalPoint ),
-            nameof( IMathExpressionFactoryConfiguration.ScientificNotationExponents ) );
+            nameof( IParsedExpressionFactoryConfiguration.DecimalPoint ),
+            nameof( IParsedExpressionFactoryConfiguration.ScientificNotationExponents ) );
     }
 
     [Pure]
@@ -51,8 +51,8 @@ internal static class Resources
     internal static string IntegerDigitSeparatorAndStringDelimiterMustBeDifferent()
     {
         return ConfigurationSymbolsMustBeDifferent(
-            nameof( IMathExpressionFactoryConfiguration.IntegerDigitSeparator ),
-            nameof( IMathExpressionFactoryConfiguration.StringDelimiter ) );
+            nameof( IParsedExpressionFactoryConfiguration.IntegerDigitSeparator ),
+            nameof( IParsedExpressionFactoryConfiguration.StringDelimiter ) );
     }
 
     [Pure]
@@ -60,8 +60,8 @@ internal static class Resources
     internal static string IntegerDigitSeparatorAndScientificNotationExponentsMustBeDifferent()
     {
         return ConfigurationSymbolsMustBeDifferent(
-            nameof( IMathExpressionFactoryConfiguration.IntegerDigitSeparator ),
-            nameof( IMathExpressionFactoryConfiguration.ScientificNotationExponents ) );
+            nameof( IParsedExpressionFactoryConfiguration.IntegerDigitSeparator ),
+            nameof( IParsedExpressionFactoryConfiguration.ScientificNotationExponents ) );
     }
 
     [Pure]
@@ -69,43 +69,43 @@ internal static class Resources
     internal static string StringDelimiterAndScientificNotationExponentsMustBeDifferent()
     {
         return ConfigurationSymbolsMustBeDifferent(
-            nameof( IMathExpressionFactoryConfiguration.StringDelimiter ),
-            nameof( IMathExpressionFactoryConfiguration.ScientificNotationExponents ) );
+            nameof( IParsedExpressionFactoryConfiguration.StringDelimiter ),
+            nameof( IParsedExpressionFactoryConfiguration.ScientificNotationExponents ) );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string InvalidDecimalPointSymbol(char symbol)
     {
-        return InvalidConfigurationSymbol( symbol, nameof( IMathExpressionFactoryConfiguration.DecimalPoint ) );
+        return InvalidConfigurationSymbol( symbol, nameof( IParsedExpressionFactoryConfiguration.DecimalPoint ) );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string InvalidIntegerDigitSeparatorSymbol(char symbol)
     {
-        return InvalidConfigurationSymbol( symbol, nameof( IMathExpressionFactoryConfiguration.IntegerDigitSeparator ) );
+        return InvalidConfigurationSymbol( symbol, nameof( IParsedExpressionFactoryConfiguration.IntegerDigitSeparator ) );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string InvalidStringDelimiterSymbol(char symbol)
     {
-        return InvalidConfigurationSymbol( symbol, nameof( IMathExpressionFactoryConfiguration.StringDelimiter ) );
+        return InvalidConfigurationSymbol( symbol, nameof( IParsedExpressionFactoryConfiguration.StringDelimiter ) );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string InvalidScientificNotationExponentsSymbol(char symbol)
     {
-        return InvalidConfigurationSymbol( symbol, nameof( IMathExpressionFactoryConfiguration.ScientificNotationExponents ) );
+        return InvalidConfigurationSymbol( symbol, nameof( IParsedExpressionFactoryConfiguration.ScientificNotationExponents ) );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string AtLeastOneScientificNotationExponentSymbolMustBeDefined()
     {
-        return $"At least one {nameof( IMathExpressionFactoryConfiguration.ScientificNotationExponents )} symbol must be defined.";
+        return $"At least one {nameof( IParsedExpressionFactoryConfiguration.ScientificNotationExponents )} symbol must be defined.";
     }
 
     [Pure]
@@ -117,7 +117,7 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FoundDuplicateTypedBinaryOperator(StringSlice symbol, MathExpressionTypedBinaryOperator @operator)
+    internal static string FoundDuplicateTypedBinaryOperator(StringSlice symbol, ParsedExpressionTypedBinaryOperator @operator)
     {
         return
             $"Found duplicate binary operator for symbol '{symbol}' (left argument type: {@operator.LeftArgumentType.FullName}, right argument type: {@operator.RightArgumentType.FullName}).";
@@ -141,26 +141,26 @@ internal static class Resources
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string FoundDuplicateTypedUnaryOperator(
         StringSlice symbol,
-        MathExpressionTypedUnaryOperator @operator,
-        MathExpressionFactoryBuilder.ConstructType type)
+        ParsedExpressionTypedUnaryOperator @operator,
+        ParsedExpressionFactoryBuilder.ConstructType type)
     {
-        var typeText = type == MathExpressionFactoryBuilder.ConstructType.PrefixUnaryConstruct ? "prefix" : "postfix";
+        var typeText = type == ParsedExpressionFactoryBuilder.ConstructType.PrefixUnaryConstruct ? "prefix" : "postfix";
         return $"Found duplicate {typeText} unary operator for symbol '{symbol}' (argument type: {@operator.ArgumentType.FullName}).";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FoundDuplicateGenericUnaryOperator(StringSlice symbol, MathExpressionFactoryBuilder.ConstructType type)
+    internal static string FoundDuplicateGenericUnaryOperator(StringSlice symbol, ParsedExpressionFactoryBuilder.ConstructType type)
     {
-        var typeText = type == MathExpressionFactoryBuilder.ConstructType.PrefixUnaryConstruct ? "prefix" : "postfix";
+        var typeText = type == ParsedExpressionFactoryBuilder.ConstructType.PrefixUnaryConstruct ? "prefix" : "postfix";
         return $"Found duplicate generic {typeText} unary operator for symbol '{symbol}'.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string UndefinedUnaryOperatorPrecedence(StringSlice symbol, MathExpressionFactoryBuilder.ConstructType type)
+    internal static string UndefinedUnaryOperatorPrecedence(StringSlice symbol, ParsedExpressionFactoryBuilder.ConstructType type)
     {
-        var typeText = type == MathExpressionFactoryBuilder.ConstructType.PrefixUnaryConstruct ? "Prefix" : "Postfix";
+        var typeText = type == ParsedExpressionFactoryBuilder.ConstructType.PrefixUnaryConstruct ? "Prefix" : "Postfix";
         return $"{typeText} unary operator precedence for symbol '{symbol}' is undefined.";
     }
 
@@ -175,26 +175,26 @@ internal static class Resources
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string FoundDuplicateTypedTypeConverter(
         StringSlice symbol,
-        MathExpressionTypeConverter converter,
-        MathExpressionFactoryBuilder.ConstructType type)
+        ParsedExpressionTypeConverter converter,
+        ParsedExpressionFactoryBuilder.ConstructType type)
     {
-        var typeText = type == MathExpressionFactoryBuilder.ConstructType.PrefixUnaryConstruct ? "prefix" : "postfix";
+        var typeText = type == ParsedExpressionFactoryBuilder.ConstructType.PrefixUnaryConstruct ? "prefix" : "postfix";
         return $"Found duplicate {typeText} type converter for symbol '{symbol}' (source type: {converter.SourceType!.FullName}).";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FoundDuplicateGenericTypeConverter(StringSlice symbol, MathExpressionFactoryBuilder.ConstructType type)
+    internal static string FoundDuplicateGenericTypeConverter(StringSlice symbol, ParsedExpressionFactoryBuilder.ConstructType type)
     {
-        var typeText = type == MathExpressionFactoryBuilder.ConstructType.PrefixUnaryConstruct ? "prefix" : "postfix";
+        var typeText = type == ParsedExpressionFactoryBuilder.ConstructType.PrefixUnaryConstruct ? "prefix" : "postfix";
         return $"Found duplicate generic {typeText} type converter for symbol '{symbol}'.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string UndefinedTypeConverterPrecedence(StringSlice symbol, MathExpressionFactoryBuilder.ConstructType type)
+    internal static string UndefinedTypeConverterPrecedence(StringSlice symbol, ParsedExpressionFactoryBuilder.ConstructType type)
     {
-        var typeText = type == MathExpressionFactoryBuilder.ConstructType.PrefixUnaryConstruct ? "Prefix" : "Postfix";
+        var typeText = type == ParsedExpressionFactoryBuilder.ConstructType.PrefixUnaryConstruct ? "Prefix" : "Postfix";
         return $"{typeText} type converter precedence for symbol '{symbol}' is undefined.";
     }
 
@@ -203,9 +203,9 @@ internal static class Resources
     internal static string NotAllTypeConvertersHaveTheSameTargetType(
         StringSlice symbol,
         Type targetType,
-        MathExpressionFactoryBuilder.ConstructType type)
+        ParsedExpressionFactoryBuilder.ConstructType type)
     {
-        var typeText = type == MathExpressionFactoryBuilder.ConstructType.PrefixUnaryConstruct ? "prefix" : "postfix";
+        var typeText = type == ParsedExpressionFactoryBuilder.ConstructType.PrefixUnaryConstruct ? "prefix" : "postfix";
         return $"Not all {typeText} type converters for symbol '{symbol}' have the same {targetType.FullName} target type.";
     }
 
@@ -236,7 +236,7 @@ internal static class Resources
     }
 
     [Pure]
-    internal static string FailedExpressionCreation(string input, Chain<MathExpressionBuilderError> errors)
+    internal static string FailedExpressionCreation(string input, Chain<ParsedExpressionBuilderError> errors)
     {
         var headerText = $"Failed to create an expression:{Environment.NewLine}{input}{Environment.NewLine}{Environment.NewLine}";
         var errorsHeaderText = $"Encountered {errors.Count} error(s):{Environment.NewLine}";

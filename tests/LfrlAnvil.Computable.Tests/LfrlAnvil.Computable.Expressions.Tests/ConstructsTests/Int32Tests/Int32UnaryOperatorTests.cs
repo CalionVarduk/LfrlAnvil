@@ -11,7 +11,7 @@ public class Int32UnaryOperatorTests : UnaryOperatorsTestsBase
     public void NegateOperatorProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<int, int>(
-            sut: new MathExpressionNegateInt32Operator(),
+            sut: new ParsedExpressionNegateInt32Operator(),
             expectedNodeType: ExpressionType.Negate,
             DefaultNodeAssertion );
     }
@@ -20,7 +20,7 @@ public class Int32UnaryOperatorTests : UnaryOperatorsTestsBase
     public void NegateOperatorProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<int, int>(
-            sut: new MathExpressionNegateInt32Operator(),
+            sut: new ParsedExpressionNegateInt32Operator(),
             expectedNodeType: ExpressionType.Constant,
             operandValue: 123,
             (_, result) =>
@@ -37,7 +37,7 @@ public class Int32UnaryOperatorTests : UnaryOperatorsTestsBase
     public void BitwiseNotOperatorProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<int, int>(
-            sut: new MathExpressionBitwiseNotInt32Operator(),
+            sut: new ParsedExpressionBitwiseNotInt32Operator(),
             expectedNodeType: ExpressionType.Not,
             DefaultNodeAssertion );
     }
@@ -46,7 +46,7 @@ public class Int32UnaryOperatorTests : UnaryOperatorsTestsBase
     public void BitwiseNotOperatorProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<int, int>(
-            sut: new MathExpressionBitwiseNotInt32Operator(),
+            sut: new ParsedExpressionBitwiseNotInt32Operator(),
             expectedNodeType: ExpressionType.Constant,
             operandValue: 123,
             (_, result) =>

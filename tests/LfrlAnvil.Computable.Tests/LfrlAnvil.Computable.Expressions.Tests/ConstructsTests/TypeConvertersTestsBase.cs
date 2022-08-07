@@ -2,8 +2,8 @@
 using System.Linq.Expressions;
 using FluentAssertions;
 using FluentAssertions.Execution;
-using LfrlAnvil.Functional;
 using LfrlAnvil.Computable.Expressions.Constructs;
+using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Computable.Expressions.Tests.ConstructsTests;
@@ -11,7 +11,7 @@ namespace LfrlAnvil.Computable.Expressions.Tests.ConstructsTests;
 public abstract class TypeConvertersTestsBase : ConstructsTestsBase
 {
     protected static void Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<TTarget, TSourceArg, TResult>(
-        MathExpressionTypeConverter<TTarget> sut,
+        ParsedExpressionTypeConverter<TTarget> sut,
         Action<Expression, Expression> nodeAssertion,
         ExpressionType expectedNodeType = ExpressionType.Convert)
     {
@@ -34,7 +34,7 @@ public abstract class TypeConvertersTestsBase : ConstructsTestsBase
     }
 
     protected static void Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<TTarget, TSourceArg, TResult>(
-        MathExpressionTypeConverter<TTarget> sut,
+        ParsedExpressionTypeConverter<TTarget> sut,
         TSourceArg operandValue,
         Action<Expression, Expression> nodeAssertion,
         ExpressionType expectedNodeType = ExpressionType.Convert)
@@ -58,7 +58,7 @@ public abstract class TypeConvertersTestsBase : ConstructsTestsBase
     }
 
     protected static void Process_ShouldThrowException_WhenConversionDoesNotExist<TTarget, TSourceArg, TException>(
-        MathExpressionTypeConverter<TTarget> sut,
+        ParsedExpressionTypeConverter<TTarget> sut,
         Func<TException, bool>? matcher = null)
         where TException : Exception
     {

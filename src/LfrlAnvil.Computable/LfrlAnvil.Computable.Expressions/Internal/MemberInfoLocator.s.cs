@@ -17,7 +17,7 @@ internal static class MemberInfoLocator
 
         if ( result is null || result.GetParameters()[0].ParameterType != parameterType || result.ReturnType != typeof( int ) )
         {
-            throw new MathExpressionConstructException(
+            throw new ParsedExpressionConstructException(
                 Resources.ConstructFailedToFindCompareToMethod( targetType, parameterType, constructType ),
                 constructType );
         }

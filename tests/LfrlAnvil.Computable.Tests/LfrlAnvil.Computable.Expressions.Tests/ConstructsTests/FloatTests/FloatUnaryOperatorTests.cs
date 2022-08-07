@@ -11,7 +11,7 @@ public class FloatUnaryOperatorTests : UnaryOperatorsTestsBase
     public void NegateOperatorProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<float, float>(
-            sut: new MathExpressionNegateFloatOperator(),
+            sut: new ParsedExpressionNegateFloatOperator(),
             expectedNodeType: ExpressionType.Negate,
             DefaultNodeAssertion );
     }
@@ -20,7 +20,7 @@ public class FloatUnaryOperatorTests : UnaryOperatorsTestsBase
     public void NegateOperatorProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<float, float>(
-            sut: new MathExpressionNegateFloatOperator(),
+            sut: new ParsedExpressionNegateFloatOperator(),
             expectedNodeType: ExpressionType.Constant,
             operandValue: 123,
             (_, result) =>
