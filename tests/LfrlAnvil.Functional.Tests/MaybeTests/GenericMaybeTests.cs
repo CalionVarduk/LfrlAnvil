@@ -125,6 +125,28 @@ public abstract class GenericMaybeTests<T> : TestsBase
     }
 
     [Fact]
+    public void GetValueOrDefault_WithValue_ShouldReturnUnderlyingValue_WhenHasValue()
+    {
+        var value = Fixture.CreateNotDefault<T>();
+        var sut = Maybe.Some( value );
+
+        var result = sut.GetValueOrDefault( Fixture.CreateNotDefault<T>() );
+
+        result.Should().Be( value );
+    }
+
+    [Fact]
+    public void GetValueOrDefault_WithValue_ShouldReturnDefaultValue_WhenDoesntHaveValue()
+    {
+        var defaultValue = Fixture.CreateNotDefault<T>();
+        var sut = Maybe<T>.None;
+
+        var result = sut.GetValueOrDefault( defaultValue );
+
+        result.Should().Be( defaultValue );
+    }
+
+    [Fact]
     public void Bind_ShouldCallSomeDelegate_WhenHasValue()
     {
         var value = Fixture.CreateNotDefault<T>();
@@ -377,6 +399,41 @@ public abstract class GenericMaybeTests<T> : TestsBase
     }
 
     [Fact]
+    public void IfSomeOrDefault_WithValue_ShouldCallSomeDelegate_WhenHasValue()
+    {
+        var value = Fixture.CreateNotDefault<T>();
+        var returnedValue = Fixture.CreateNotDefault<T>();
+        var someDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( _ => returnedValue );
+
+        var sut = Maybe.Some( value );
+
+        var result = sut.IfSomeOrDefault( someDelegate, Fixture.CreateNotDefault<T>() );
+
+        using ( new AssertionScope() )
+        {
+            someDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
+            result.Should().Be( returnedValue );
+        }
+    }
+
+    [Fact]
+    public void IfSomeOrDefault_WithValue_ShouldReturnDefault_WhenDoesntHaveValue()
+    {
+        var defaultValue = Fixture.CreateNotDefault<T>();
+        var someDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( i => i.ArgAt<T>( 0 ) );
+
+        var sut = Maybe<T>.None;
+
+        var result = sut.IfSomeOrDefault( someDelegate, defaultValue );
+
+        using ( new AssertionScope() )
+        {
+            someDelegate.Verify().CallCount.Should().Be( 0 );
+            result.Should().Be( defaultValue );
+        }
+    }
+
+    [Fact]
     public void IfNone_ShouldCallNoneDelegate_WhenDoesntHaveValue()
     {
         var returnedValue = Fixture.CreateNotDefault<T>();
@@ -464,6 +521,39 @@ public abstract class GenericMaybeTests<T> : TestsBase
         {
             noneDelegate.Verify().CallCount.Should().Be( 0 );
             result.Should().Be( default( T ) );
+        }
+    }
+
+    [Fact]
+    public void IfNoneOrDefault_WithValue_ShouldCallNoneDelegate_WhenDoesntHaveValue()
+    {
+        var returnedValue = Fixture.CreateNotDefault<T>();
+        var noneDelegate = Substitute.For<Func<T>>().WithAnyArgs( _ => returnedValue );
+        var sut = Maybe<T>.None;
+
+        var result = sut.IfNoneOrDefault( noneDelegate, Fixture.CreateNotDefault<T>() );
+
+        using ( new AssertionScope() )
+        {
+            noneDelegate.Verify().CallCount.Should().Be( 1 );
+            result.Should().Be( returnedValue );
+        }
+    }
+
+    [Fact]
+    public void IfNoneOrDefault_WithValue_ShouldReturnDefault_WhenHasValue()
+    {
+        var defaultValue = Fixture.CreateNotDefault<T>();
+        var value = Fixture.CreateNotDefault<T>();
+        var noneDelegate = Substitute.For<Func<T>>().WithAnyArgs( _ => value );
+        var sut = Maybe.Some( value );
+
+        var result = sut.IfNoneOrDefault( noneDelegate, defaultValue );
+
+        using ( new AssertionScope() )
+        {
+            noneDelegate.Verify().CallCount.Should().Be( 0 );
+            result.Should().Be( defaultValue );
         }
     }
 

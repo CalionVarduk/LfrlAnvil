@@ -80,6 +80,13 @@ public readonly struct Unsafe<T> : IUnsafe, IEquatable<Unsafe<T>>, IReadOnlyColl
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public T GetValueOrDefault(T defaultValue)
+    {
+        return IsOk ? Value! : defaultValue;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Exception GetError()
     {
         if ( HasError )
@@ -153,6 +160,13 @@ public readonly struct Unsafe<T> : IUnsafe, IEquatable<Unsafe<T>>, IReadOnlyColl
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public T2 IfOkOrDefault<T2>(Func<T, T2> ok, T2 defaultValue)
+    {
+        return IsOk ? ok( Value! ) : defaultValue;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Maybe<T2> IfError<T2>(Func<Exception, T2?> error)
         where T2 : notnull
     {
@@ -173,6 +187,13 @@ public readonly struct Unsafe<T> : IUnsafe, IEquatable<Unsafe<T>>, IReadOnlyColl
     public T2? IfErrorOrDefault<T2>(Func<Exception, T2> error)
     {
         return HasError ? error( Error! ) : default;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public T2 IfErrorOrDefault<T2>(Func<Exception, T2> error, T2 defaultValue)
+    {
+        return HasError ? error( Error! ) : defaultValue;
     }
 
     [Pure]

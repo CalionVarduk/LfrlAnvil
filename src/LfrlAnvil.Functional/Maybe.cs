@@ -72,6 +72,13 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IReadOnlyCollection<T>
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public T GetValueOrDefault(T defaultValue)
+    {
+        return HasValue ? Value! : defaultValue;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Maybe<T2> Bind<T2>(Func<T, Maybe<T2>> some)
         where T2 : notnull
     {
@@ -130,6 +137,13 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IReadOnlyCollection<T>
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public T2 IfSomeOrDefault<T2>(Func<T, T2> some, T2 defaultValue)
+    {
+        return HasValue ? some( Value! ) : defaultValue;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Maybe<T2> IfNone<T2>(Func<T2?> none)
         where T2 : notnull
     {
@@ -150,6 +164,13 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IReadOnlyCollection<T>
     public T2? IfNoneOrDefault<T2>(Func<T2> none)
     {
         return HasValue ? default : none();
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public T2 IfNoneOrDefault<T2>(Func<T2> none, T2 defaultValue)
+    {
+        return HasValue ? defaultValue : none();
     }
 
     [Pure]

@@ -4,6 +4,7 @@ using AutoFixture;
 using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlAnvil.Functional.Exceptions;
+using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.Attributes;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
@@ -50,6 +51,18 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
         var result = sut.GetResultOrDefault();
 
         result.Should().Be( default( TDestination ) );
+    }
+
+    [Fact]
+    public void GetResultOrDefault_WithValue_ShouldReturnDefault()
+    {
+        var defaultValue = Fixture.CreateNotDefault<TDestination>();
+        var value = Fixture.Create<TSource>();
+        var sut = (TypeCast<TSource, TDestination>)value;
+
+        var result = sut.GetResultOrDefault( defaultValue );
+
+        result.Should().Be( defaultValue );
     }
 
     [Fact]
@@ -177,6 +190,24 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
     }
 
     [Fact]
+    public void IfValidOrDefault_WithValue_ShouldReturnDefault()
+    {
+        var defaultValue = Fixture.CreateNotDefault<TDestination>();
+        var value = Fixture.Create<TSource>();
+        var validDelegate = Substitute.For<Func<TDestination, TDestination>>().WithAnyArgs( _ => default! );
+
+        var sut = (TypeCast<TSource, TDestination>)value;
+
+        var result = sut.IfValidOrDefault( validDelegate, defaultValue );
+
+        using ( new AssertionScope() )
+        {
+            validDelegate.Verify().CallCount.Should().Be( 0 );
+            result.Should().Be( defaultValue );
+        }
+    }
+
+    [Fact]
     public void IfInvalid_ShouldCallInvalidDelegate()
     {
         var value = Fixture.Create<TSource>();
@@ -217,6 +248,24 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
         var sut = (TypeCast<TSource, TDestination>)value;
 
         var result = sut.IfInvalidOrDefault( invalidDelegate );
+
+        using ( new AssertionScope() )
+        {
+            invalidDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
+            result.Should().Be( returnedValue );
+        }
+    }
+
+    [Fact]
+    public void IfInvalidOrDefault_WithValue_ShouldReturnCorrectResult()
+    {
+        var value = Fixture.Create<TSource>();
+        var returnedValue = Fixture.Create<TDestination>();
+        var invalidDelegate = Substitute.For<Func<TSource, TDestination>>().WithAnyArgs( _ => returnedValue );
+
+        var sut = (TypeCast<TSource, TDestination>)value;
+
+        var result = sut.IfInvalidOrDefault( invalidDelegate, Fixture.CreateNotDefault<TDestination>() );
 
         using ( new AssertionScope() )
         {

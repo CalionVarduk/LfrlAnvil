@@ -435,6 +435,42 @@ public abstract class GenericMutationTests<T> : TestsBase
     }
 
     [Fact]
+    public void IfChangedOrDefault_WithValue_ShouldCallChangedDelegate_WhenValueHasChanged()
+    {
+        var (oldValue, value) = Fixture.CreateDistinctCollection<T>( 2 );
+        var returnedValue = Fixture.Create<T>();
+        var changedDelegate = Substitute.For<Func<(T, T), T>>().WithAnyArgs( _ => returnedValue );
+
+        var sut = new Mutation<T>( oldValue, value );
+
+        var result = sut.IfChangedOrDefault( changedDelegate, Fixture.CreateNotDefault<T>() );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().Be( returnedValue );
+            changedDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( (oldValue, value) );
+        }
+    }
+
+    [Fact]
+    public void IfChangedOrDefault_WithValue_ShouldReturnDefault_WhenValueHasNotChanged()
+    {
+        var defaultValue = Fixture.CreateNotDefault<T>();
+        var value = Fixture.Create<T>();
+        var changedDelegate = Substitute.For<Func<(T, T), T>>().WithAnyArgs( i => i.ArgAt<(T, T)>( 0 ).Item1 );
+
+        var sut = new Mutation<T>( value, value );
+
+        var result = sut.IfChangedOrDefault( changedDelegate, defaultValue );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().Be( defaultValue );
+            changedDelegate.Verify().CallCount.Should().Be( 0 );
+        }
+    }
+
+    [Fact]
     public void IfUnchanged_ShouldCallUnchangedDelegate_WhenValueHasNotChanged()
     {
         var value = Fixture.Create<T>();
@@ -526,6 +562,42 @@ public abstract class GenericMutationTests<T> : TestsBase
         using ( new AssertionScope() )
         {
             result.Should().Be( default( T ) );
+            unchangedDelegate.Verify().CallCount.Should().Be( 0 );
+        }
+    }
+
+    [Fact]
+    public void IfUnchangedOrDefault_WithValue_ShouldCallUnchangedDelegate_WhenValueHasNotChanged()
+    {
+        var value = Fixture.Create<T>();
+        var returnedValue = Fixture.Create<T>();
+        var unchangedDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( _ => returnedValue );
+
+        var sut = new Mutation<T>( value, value );
+
+        var result = sut.IfUnchangedOrDefault( unchangedDelegate, Fixture.CreateNotDefault<T>() );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().Be( returnedValue );
+            unchangedDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
+        }
+    }
+
+    [Fact]
+    public void IfUnchangedOrDefault_WithValue_ShouldReturnDefault_WhenValueHasChanged()
+    {
+        var defaultValue = Fixture.CreateNotDefault<T>();
+        var (oldValue, value) = Fixture.CreateDistinctCollection<T>( 2 );
+        var unchangedDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( i => i.ArgAt<T>( 0 ) );
+
+        var sut = new Mutation<T>( oldValue, value );
+
+        var result = sut.IfUnchangedOrDefault( unchangedDelegate, defaultValue );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().Be( defaultValue );
             unchangedDelegate.Verify().CallCount.Should().Be( 0 );
         }
     }

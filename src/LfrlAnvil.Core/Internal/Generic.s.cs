@@ -36,7 +36,7 @@ public static class Generic<T>
         if ( IsReferenceType )
             return ReferenceEquals( obj, null );
 
-        return EqualityComparer<T>.Default.Equals( obj!, default! );
+        return EqualityComparer<T>.Default.Equals( obj, default );
     }
 
     [Pure]
@@ -50,7 +50,7 @@ public static class Generic<T>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool AreEqual(T? a, T? b)
     {
-        return EqualityComparer<T>.Default.Equals( a!, b! );
+        return EqualityComparer<T>.Default.Equals( a, b );
     }
 
     [Pure]

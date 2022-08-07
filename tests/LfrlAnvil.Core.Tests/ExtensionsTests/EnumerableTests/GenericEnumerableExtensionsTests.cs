@@ -781,6 +781,32 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Fact]
+    public void TryMinMaxBy_WithDifferentSelectors_ShouldReturnNull_WhenSourceIsEmpty()
+    {
+        var sut = Enumerable.Empty<Contained<T>>();
+        var result = sut.TryMinMaxBy( c => c.Value, c => c.Value );
+        result.Should().BeNull();
+    }
+
+    [Theory]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetMinMaxData ) )]
+    public void TryMinMaxBy_WithDifferentSelectors_ShouldReturnCorrectResult_WhenSourceIsNotEmpty(
+        IEnumerable<T> values,
+        T expectedMin,
+        T expectedMax)
+    {
+        var sut = values.Select( v => new Contained<T> { Value = v } );
+        var result = sut.TryMinMaxBy( c => c.Value, c => c.Value );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().NotBeNull();
+            result?.Min.Value.Should().Be( expectedMin );
+            result?.Max.Value.Should().Be( expectedMax );
+        }
+    }
+
+    [Fact]
     public void LeftJoin_ShouldReturnCorrectResult()
     {
         var values = Fixture.CreateDistinctCollection<T>( 5 );

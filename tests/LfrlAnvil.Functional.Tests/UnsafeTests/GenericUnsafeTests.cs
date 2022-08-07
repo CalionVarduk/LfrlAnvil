@@ -150,6 +150,29 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     }
 
     [Fact]
+    public void GetValueOrDefault_WithValue_ShouldReturnCorrectResult_WhenHasValue()
+    {
+        var value = Fixture.CreateNotDefault<T>();
+        var sut = (Unsafe<T>)value;
+
+        var result = sut.GetValueOrDefault( Fixture.CreateNotDefault<T>() );
+
+        result.Should().Be( value );
+    }
+
+    [Fact]
+    public void GetValueOrDefault_WithValue_ShouldReturnDefaultValue_WhenHasError()
+    {
+        var defaultValue = Fixture.CreateNotDefault<T>();
+        var error = new Exception();
+        var sut = (Unsafe<T>)error;
+
+        var result = sut.GetValueOrDefault( defaultValue );
+
+        result.Should().Be( defaultValue );
+    }
+
+    [Fact]
     public void GetError_ShouldReturnCorrectResult_WhenHasError()
     {
         var error = new Exception();
@@ -445,6 +468,42 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     }
 
     [Fact]
+    public void IfOkOrDefault_WithValue_ShouldCallOkDelegate_WhenHasValue()
+    {
+        var value = Fixture.Create<T>();
+        var returnedValue = Fixture.Create<T>();
+        var okDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( _ => returnedValue );
+
+        var sut = (Unsafe<T>)value;
+
+        var result = sut.IfOkOrDefault( okDelegate, Fixture.CreateNotDefault<T>() );
+
+        using ( new AssertionScope() )
+        {
+            okDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
+            result.Should().Be( returnedValue );
+        }
+    }
+
+    [Fact]
+    public void IfOkOrDefault_WithValue_ShouldReturnDefault_WhenHasError()
+    {
+        var defaultValue = Fixture.CreateNotDefault<T>();
+        var error = new Exception();
+        var okDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( i => i.ArgAt<T>( 0 ) );
+
+        var sut = (Unsafe<T>)error;
+
+        var result = sut.IfOkOrDefault( okDelegate, defaultValue );
+
+        using ( new AssertionScope() )
+        {
+            okDelegate.Verify().CallCount.Should().Be( 0 );
+            result.Should().Be( defaultValue );
+        }
+    }
+
+    [Fact]
     public void IfError_ShouldCallErrorDelegate_WhenHasError()
     {
         var error = new Exception();
@@ -537,6 +596,42 @@ public abstract class GenericUnsafeTests<T> : TestsBase
         {
             errorDelegate.Verify().CallCount.Should().Be( 0 );
             result.Should().Be( default( T ) );
+        }
+    }
+
+    [Fact]
+    public void IfErrorOrDefault_WithValue_ShouldCallErrorDelegate_WhenHasError()
+    {
+        var error = new Exception();
+        var returnedValue = Fixture.Create<T>();
+        var errorDelegate = Substitute.For<Func<Exception, T>>().WithAnyArgs( _ => returnedValue );
+
+        var sut = (Unsafe<T>)error;
+
+        var result = sut.IfErrorOrDefault( errorDelegate, Fixture.CreateNotDefault<T>() );
+
+        using ( new AssertionScope() )
+        {
+            errorDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( error );
+            result.Should().Be( returnedValue );
+        }
+    }
+
+    [Fact]
+    public void IfErrorOrDefault_WithValue_ShouldReturnDefault_WhenHasValue()
+    {
+        var defaultValue = Fixture.CreateNotDefault<T>();
+        var value = Fixture.Create<T>();
+        var errorDelegate = Substitute.For<Func<Exception, T>>().WithAnyArgs( _ => value );
+
+        var sut = (Unsafe<T>)value;
+
+        var result = sut.IfErrorOrDefault( errorDelegate, defaultValue );
+
+        using ( new AssertionScope() )
+        {
+            errorDelegate.Verify().CallCount.Should().Be( 0 );
+            result.Should().Be( defaultValue );
         }
     }
 

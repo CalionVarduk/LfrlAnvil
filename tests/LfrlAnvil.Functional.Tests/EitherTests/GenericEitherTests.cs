@@ -112,6 +112,29 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     }
 
     [Fact]
+    public void GetFirstOrDefault_WithValue_ShouldReturnCorrectResult_WhenHasFirst()
+    {
+        var value = Fixture.CreateNotDefault<T1>();
+        var sut = (Either<T1, T2>)value;
+
+        var result = sut.GetFirstOrDefault( Fixture.CreateNotDefault<T1>() );
+
+        result.Should().Be( value );
+    }
+
+    [Fact]
+    public void GetFirstOrDefault_WithValue_ShouldReturnDefaultValue_WhenHasSecond()
+    {
+        var defaultValue = Fixture.CreateNotDefault<T1>();
+        var value = Fixture.Create<T2>();
+        var sut = (Either<T1, T2>)value;
+
+        var result = sut.GetFirstOrDefault( defaultValue );
+
+        result.Should().Be( defaultValue );
+    }
+
+    [Fact]
     public void GetSecond_ShouldReturnCorrectResult_WhenHasSecond()
     {
         var value = Fixture.Create<T2>();
@@ -153,6 +176,29 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         var result = sut.GetSecondOrDefault();
 
         result.Should().Be( default( T2 ) );
+    }
+
+    [Fact]
+    public void GetSecondOrDefault_WithValue_ShouldReturnCorrectResult_WhenHasSecond()
+    {
+        var value = Fixture.CreateNotDefault<T2>();
+        var sut = (Either<T1, T2>)value;
+
+        var result = sut.GetSecondOrDefault( Fixture.CreateNotDefault<T2>() );
+
+        result.Should().Be( value );
+    }
+
+    [Fact]
+    public void GetSecondOrDefault_WithValue_ShouldReturnDefaultValue_WhenHasFirst()
+    {
+        var defaultValue = Fixture.CreateNotDefault<T2>();
+        var value = Fixture.Create<T1>();
+        var sut = (Either<T1, T2>)value;
+
+        var result = sut.GetSecondOrDefault( defaultValue );
+
+        result.Should().Be( defaultValue );
     }
 
     [Fact]
@@ -474,6 +520,42 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     }
 
     [Fact]
+    public void IfFirstOrDefault_WithValue_ShouldCallFirstDelegate_WhenHasFirst()
+    {
+        var value = Fixture.Create<T1>();
+        var returnedValue = Fixture.Create<T1>();
+        var firstDelegate = Substitute.For<Func<T1, T1>>().WithAnyArgs( _ => returnedValue );
+
+        var sut = (Either<T1, T2>)value;
+
+        var result = sut.IfFirstOrDefault( firstDelegate, Fixture.CreateNotDefault<T1>() );
+
+        using ( new AssertionScope() )
+        {
+            firstDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
+            result.Should().Be( returnedValue );
+        }
+    }
+
+    [Fact]
+    public void IfFirstOrDefault_WithValue_ShouldReturnDefault_WhenHasSecond()
+    {
+        var defaultValue = Fixture.CreateNotDefault<T1>();
+        var value = Fixture.Create<T2>();
+        var firstDelegate = Substitute.For<Func<T1, T1>>().WithAnyArgs( i => i.ArgAt<T1>( 0 ) );
+
+        var sut = (Either<T1, T2>)value;
+
+        var result = sut.IfFirstOrDefault( firstDelegate, defaultValue );
+
+        using ( new AssertionScope() )
+        {
+            firstDelegate.Verify().CallCount.Should().Be( 0 );
+            result.Should().Be( defaultValue );
+        }
+    }
+
+    [Fact]
     public void IfSecond_ShouldCallSecondDelegate_WhenHasSecond()
     {
         var value = Fixture.Create<T2>();
@@ -566,6 +648,42 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         {
             secondDelegate.Verify().CallCount.Should().Be( 0 );
             result.Should().Be( default( T2 ) );
+        }
+    }
+
+    [Fact]
+    public void IfSecondOrDefault_WithValue_ShouldCallSecondDelegate_WhenHasSecond()
+    {
+        var value = Fixture.Create<T2>();
+        var returnedValue = Fixture.Create<T2>();
+        var secondDelegate = Substitute.For<Func<T2, T2>>().WithAnyArgs( _ => returnedValue );
+
+        var sut = (Either<T1, T2>)value;
+
+        var result = sut.IfSecondOrDefault( secondDelegate, Fixture.CreateNotDefault<T2>() );
+
+        using ( new AssertionScope() )
+        {
+            secondDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
+            result.Should().Be( returnedValue );
+        }
+    }
+
+    [Fact]
+    public void IfSecondOrDefault_WithValue_ShouldReturnDefault_WhenHasFirst()
+    {
+        var defaultValue = Fixture.CreateNotDefault<T2>();
+        var value = Fixture.Create<T1>();
+        var secondDelegate = Substitute.For<Func<T2, T2>>().WithAnyArgs( i => i.ArgAt<T2>( 0 ) );
+
+        var sut = (Either<T1, T2>)value;
+
+        var result = sut.IfSecondOrDefault( secondDelegate, defaultValue );
+
+        using ( new AssertionScope() )
+        {
+            secondDelegate.Verify().CallCount.Should().Be( 0 );
+            result.Should().Be( defaultValue );
         }
     }
 

@@ -130,6 +130,13 @@ public readonly struct Mutation<T> : IEquatable<Mutation<T>>
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public T2 IfChangedOrDefault<T2>(Func<(T OldValue, T Value), T2> changed, T2 defaultValue)
+    {
+        return HasChanged ? changed( (OldValue, Value) ) : defaultValue;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Maybe<T2> IfUnchanged<T2>(Func<T, T2?> unchanged)
         where T2 : notnull
     {
@@ -150,6 +157,13 @@ public readonly struct Mutation<T> : IEquatable<Mutation<T>>
     public T2? IfUnchangedOrDefault<T2>(Func<T, T2> unchanged)
     {
         return HasChanged ? default : unchanged( Value );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public T2 IfUnchangedOrDefault<T2>(Func<T, T2> unchanged, T2 defaultValue)
+    {
+        return HasChanged ? defaultValue : unchanged( Value );
     }
 
     [Pure]

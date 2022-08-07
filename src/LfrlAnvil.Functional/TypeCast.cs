@@ -84,6 +84,13 @@ public readonly struct TypeCast<TSource, TDestination> : ITypeCast<TDestination>
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public TDestination GetResultOrDefault(TDestination defaultValue)
+    {
+        return IsValid ? Result! : defaultValue;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public TypeCast<TDestination, T> Bind<T>(Func<TDestination, TypeCast<TDestination, T>> valid)
     {
         return IsValid ? valid( Result! ) : TypeCast<TDestination, T>.Empty;
@@ -142,6 +149,13 @@ public readonly struct TypeCast<TSource, TDestination> : ITypeCast<TDestination>
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public T IfValidOrDefault<T>(Func<TDestination, T> valid, T defaultValue)
+    {
+        return IsValid ? valid( Result! ) : defaultValue;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Maybe<T> IfInvalid<T>(Func<TSource, T?> invalid)
         where T : notnull
     {
@@ -162,6 +176,13 @@ public readonly struct TypeCast<TSource, TDestination> : ITypeCast<TDestination>
     public T? IfInvalidOrDefault<T>(Func<TSource, T> invalid)
     {
         return IsValid ? default : invalid( Source );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public T IfInvalidOrDefault<T>(Func<TSource, T> invalid, T defaultValue)
+    {
+        return IsValid ? defaultValue : invalid( Source );
     }
 
     [Pure]

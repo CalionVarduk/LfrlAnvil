@@ -304,7 +304,7 @@ public static class EnumerableExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IMemoizedCollection<T> Memoize<T>(this IEnumerable<T> source)
     {
-        return source is IMemoizedCollection<T> m ? m : new MemoizedCollection<T>( source );
+        return source as IMemoizedCollection<T> ?? new MemoizedCollection<T>( source );
     }
 
     [Pure]
@@ -498,7 +498,7 @@ public static class EnumerableExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static (T1 Min, T1 Max)? TryMinMaxBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector, IComparer<T2> comparer)
     {
-        return source.TryMinMaxBy( selector, selector );
+        return source.TryMinMaxBy( selector, selector, comparer, comparer );
     }
 
     [Pure]
