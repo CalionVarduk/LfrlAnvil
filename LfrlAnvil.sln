@@ -61,13 +61,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.Reactive.Chrono",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.Reactive.Chrono.Tests", "tests\LfrlAnvil.Reactive.Tests\LfrlAnvil.Reactive.Chrono.Tests\LfrlAnvil.Reactive.Chrono.Tests.csproj", "{0C142DB0-7907-42D9-A4E0-8847C1AD6871}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "LfrlAnvil.Mathematical", "LfrlAnvil.Mathematical", "{00A3D6BB-0C0F-43FA-B532-B56D3FE7399C}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "LfrlAnvil.Computable", "LfrlAnvil.Computable", "{00A3D6BB-0C0F-43FA-B532-B56D3FE7399C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.Mathematical.Expressions", "src\LfrlAnvil.Mathematical\LfrlAnvil.Mathematical.Expressions\LfrlAnvil.Mathematical.Expressions.csproj", "{C8A696A9-FE61-4B58-BC72-397807FE0121}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.Computable.Expressions", "src\LfrlAnvil.Computable\LfrlAnvil.Computable.Expressions\LfrlAnvil.Computable.Expressions.csproj", "{C8A696A9-FE61-4B58-BC72-397807FE0121}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "LfrlAnvil.Mathematical.Tests", "LfrlAnvil.Mathematical.Tests", "{1F9FD778-E970-48A3-AF1B-7817C4113E7A}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "LfrlAnvil.Computable.Tests", "LfrlAnvil.Computable.Tests", "{1F9FD778-E970-48A3-AF1B-7817C4113E7A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.Mathematical.Expressions.Tests", "tests\LfrlAnvil.Mathematical.Tests\LfrlAnvil.Mathematical.Expressions.Tests\LfrlAnvil.Mathematical.Expressions.Tests.csproj", "{059D8E0F-1012-4105-9151-0A17D89FF8FD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.Computable.Expressions.Tests", "tests\LfrlAnvil.Computable.Tests\LfrlAnvil.Computable.Expressions.Tests\LfrlAnvil.Computable.Expressions.Tests.csproj", "{059D8E0F-1012-4105-9151-0A17D89FF8FD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

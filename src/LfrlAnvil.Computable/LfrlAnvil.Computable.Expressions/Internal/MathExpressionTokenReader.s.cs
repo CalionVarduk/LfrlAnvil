@@ -1,0 +1,261 @@
+﻿using System.Diagnostics;
+using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
+
+namespace LfrlAnvil.Computable.Expressions.Internal;
+
+internal static class MathExpressionTokenReader
+{
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static IntermediateToken ReadOpenedParenthesis(string input, int index)
+    {
+        Debug.Assert( index < input.Length, "index < input.Length" );
+        var result = IntermediateToken.CreateOpenedParenthesis( StringSlice.Create( input, index, length: 1 ) );
+        return result;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static IntermediateToken ReadClosedParenthesis(string input, int index)
+    {
+        Debug.Assert( index < input.Length, "index < input.Length" );
+        var result = IntermediateToken.CreateClosedParenthesis( StringSlice.Create( input, index, length: 1 ) );
+        return result;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static IntermediateToken ReadFunctionParameterSeparator(string input, int index)
+    {
+        Debug.Assert( index < input.Length, "index < input.Length" );
+        var result = IntermediateToken.CreateFunctionParameterSeparator( StringSlice.Create( input, index, length: 1 ) );
+        return result;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static IntermediateToken ReadInlineFunctionSeparator(string input, int index)
+    {
+        Debug.Assert( index < input.Length, "index < input.Length" );
+        var result = IntermediateToken.CreateInlineFunctionSeparator( StringSlice.Create( input, index, length: 1 ) );
+        return result;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static IntermediateToken ReadMemberAccess(string input, int index)
+    {
+        Debug.Assert( index < input.Length, "index < input.Length" );
+        var result = IntermediateToken.CreateMemberAccess( StringSlice.Create( input, index, length: 1 ) );
+        return result;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static IntermediateToken ReadString(string input, int index, MathExpressionFactoryInternalConfiguration configuration)
+    {
+        Debug.Assert( index < input.Length, "index < input.Length" );
+        Debug.Assert( input[index] == configuration.StringDelimiter, "input[index] is StringDelimiter" );
+
+        var startIndex = index++;
+        var isPrevCharacterDelimiter = false;
+
+        while ( index < input.Length )
+        {
+            var c = input[index];
+
+            if ( c == configuration.StringDelimiter )
+            {
+                isPrevCharacterDelimiter = ! isPrevCharacterDelimiter;
+                ++index;
+                continue;
+            }
+
+            if ( isPrevCharacterDelimiter )
+                break;
+
+            ++index;
+        }
+
+        var result = IntermediateToken.CreateStringConstant(
+            StringSlice.Create( input, startIndex, length: index - startIndex ) );
+
+        return result;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static IntermediateToken? TryReadBoolean(StringSlice input)
+    {
+        if ( TokenConstants.IsBooleanTrue( input ) || TokenConstants.IsBooleanFalse( input ) )
+            return IntermediateToken.CreateBooleanConstant( input );
+
+        return null;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static IntermediateToken? TryReadConstructs(StringSlice input, MathExpressionFactoryInternalConfiguration configuration)
+    {
+        if ( configuration.Constructs.TryGetValue( input, out var constructs ) )
+            return IntermediateToken.CreateConstructs( input, constructs );
+
+        return null;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static IntermediateToken ReadNumber(string input, int index, MathExpressionFactoryInternalConfiguration configuration)
+    {
+        Debug.Assert( index < input.Length, "index < input.Length" );
+        Debug.Assert( char.IsDigit( input[index] ), "input[index] is a digit" );
+
+        var startIndex = index++;
+        var state = NumberReadingState.BeforeDecimalPoint;
+
+        while ( index < input.Length )
+        {
+            var c = input[index];
+            var @continue = state switch
+            {
+                NumberReadingState.AfterDecimalPoint =>
+                    HandleAfterDecimalPointNumberReadingState( c, input, configuration, ref index, ref state ),
+                NumberReadingState.AfterScientificNotationSymbol =>
+                    HandleAfterScientificNotationSymbolNumberReadingState( c, ref index, ref state ),
+                NumberReadingState.AfterScientificNotationOperator =>
+                    HandlerAfterScientificNotationOperatorNumberReadingState( c, input, ref index ),
+                _ => HandleBeforeDecimalPointNumberReadingState( c, input, configuration, ref index, ref state )
+            };
+
+            if ( ! @continue )
+                break;
+
+            ++index;
+        }
+
+        var result = IntermediateToken.CreateNumberConstant(
+            StringSlice.Create( input, startIndex, length: index - startIndex ) );
+
+        return result;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static bool HandleBeforeDecimalPointNumberReadingState(
+        char c,
+        string input,
+        MathExpressionFactoryInternalConfiguration configuration,
+        ref int index,
+        ref NumberReadingState state)
+    {
+        Debug.Assert( state == NumberReadingState.BeforeDecimalPoint, "state is BeforeDecimalPoint" );
+
+        if ( char.IsDigit( c ) )
+            return true;
+
+        var prev = input[index - 1];
+        if ( prev == configuration.IntegerDigitSeparator )
+        {
+            --index;
+            return false;
+        }
+
+        if ( c == configuration.IntegerDigitSeparator )
+            return true;
+
+        if ( c == configuration.DecimalPoint )
+        {
+            if ( ! configuration.AllowNonIntegerNumbers )
+                return false;
+
+            state = NumberReadingState.AfterDecimalPoint;
+            return true;
+        }
+
+        if ( configuration.AllowScientificNotation && configuration.ScientificNotationExponents.Contains( c ) )
+        {
+            state = NumberReadingState.AfterScientificNotationSymbol;
+            return true;
+        }
+
+        return false;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static bool HandleAfterDecimalPointNumberReadingState(
+        char c,
+        string input,
+        MathExpressionFactoryInternalConfiguration configuration,
+        ref int index,
+        ref NumberReadingState state)
+    {
+        Debug.Assert( state == NumberReadingState.AfterDecimalPoint, "state is AfterDecimalPoint" );
+
+        if ( char.IsDigit( c ) )
+            return true;
+
+        var prev = input[index - 1];
+        if ( prev == configuration.DecimalPoint )
+        {
+            --index;
+            return false;
+        }
+
+        if ( configuration.AllowScientificNotation && configuration.ScientificNotationExponents.Contains( c ) )
+        {
+            state = NumberReadingState.AfterScientificNotationSymbol;
+            return true;
+        }
+
+        return false;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static bool HandleAfterScientificNotationSymbolNumberReadingState(char c, ref int index, ref NumberReadingState state)
+    {
+        Debug.Assert( state == NumberReadingState.AfterScientificNotationSymbol, "state is AfterScientificNotationSymbol" );
+
+        if ( c is TokenConstants.ScientificNotationPositiveExponentOperator
+                or TokenConstants.ScientificNotationNegativeExponentOperator ||
+            char.IsDigit( c ) )
+        {
+            state = NumberReadingState.AfterScientificNotationOperator;
+            return true;
+        }
+
+        --index;
+        return false;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static bool HandlerAfterScientificNotationOperatorNumberReadingState(char c, string input, ref int index)
+    {
+        if ( char.IsDigit( c ) )
+            return true;
+
+        if ( c is TokenConstants.ScientificNotationPositiveExponentOperator
+            or TokenConstants.ScientificNotationNegativeExponentOperator )
+        {
+            index -= 2;
+            return false;
+        }
+
+        var prev = input[index - 1];
+        if ( prev is TokenConstants.ScientificNotationPositiveExponentOperator
+            or TokenConstants.ScientificNotationNegativeExponentOperator )
+        {
+            index -= 2;
+            return false;
+        }
+
+        return false;
+    }
+
+    private enum NumberReadingState : byte
+    {
+        BeforeDecimalPoint = 0,
+        AfterDecimalPoint = 1,
+        AfterScientificNotationSymbol = 2,
+        AfterScientificNotationOperator = 3
+    }
+}
