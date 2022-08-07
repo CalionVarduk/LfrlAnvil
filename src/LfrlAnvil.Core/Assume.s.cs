@@ -11,17 +11,31 @@ namespace LfrlAnvil;
 public static class Assume
 {
     [Conditional( "DEBUG" )]
+    public static void IsNull<T>(T? param, string paramName)
+        where T : class
+    {
+        Debug.Assert( param is null, ExceptionResources.AssumedNull( param, paramName ) );
+    }
+
+    [Conditional( "DEBUG" )]
+    public static void IsNull<T>(T? param, string paramName)
+        where T : struct
+    {
+        Debug.Assert( param is null, ExceptionResources.AssumedNull( param, paramName ) );
+    }
+
+    [Conditional( "DEBUG" )]
     public static void IsNotNull<T>([NotNull] T? param, string paramName)
         where T : class
     {
-        Debug.Assert( param is not null, ExceptionResources.AssumedNotNull( param, paramName ) );
+        Debug.Assert( param is not null, ExceptionResources.AssumedNotNull( paramName ) );
     }
 
     [Conditional( "DEBUG" )]
     public static void IsNotNull<T>([NotNull] T? param, string paramName)
         where T : struct
     {
-        Debug.Assert( param is not null, ExceptionResources.AssumedNotNull( param, paramName ) );
+        Debug.Assert( param is not null, ExceptionResources.AssumedNotNull( paramName ) );
     }
 
     [Conditional( "DEBUG" )]
@@ -33,79 +47,75 @@ public static class Assume
 
     [Conditional( "DEBUG" )]
     public static void Equals<T>(T param, T? value, string paramName)
-        where T : IEquatable<T>
+        where T : notnull
     {
         Debug.Assert( param.Equals( value ), ExceptionResources.AssumedEqualTo( param, value, paramName ) );
     }
 
     [Conditional( "DEBUG" )]
     public static void NotEquals<T>(T param, T? value, string paramName)
-        where T : IEquatable<T>
+        where T : notnull
     {
         Debug.Assert( ! param.Equals( value ), ExceptionResources.AssumedNotEqualTo( param, paramName ) );
     }
 
     [Conditional( "DEBUG" )]
     public static void IsGreaterThan<T>(T param, T? value, string paramName)
-        where T : IComparable<T>
     {
-        Debug.Assert( param.CompareTo( value ) > 0, ExceptionResources.AssumedGreaterThan( param, value, paramName ) );
+        Debug.Assert( Comparer<T>.Default.Compare( param, value ) > 0, ExceptionResources.AssumedGreaterThan( param, value, paramName ) );
     }
 
     [Conditional( "DEBUG" )]
     public static void IsGreaterThanOrEqualTo<T>(T param, T? value, string paramName)
-        where T : IComparable<T>
     {
-        Debug.Assert( param.CompareTo( value ) >= 0, ExceptionResources.AssumedGreaterThanOrEqualTo( param, value, paramName ) );
+        Debug.Assert(
+            Comparer<T>.Default.Compare( param, value ) >= 0,
+            ExceptionResources.AssumedGreaterThanOrEqualTo( param, value, paramName ) );
     }
 
     [Conditional( "DEBUG" )]
     public static void IsLessThan<T>(T param, T? value, string paramName)
-        where T : IComparable<T>
     {
-        Debug.Assert( param.CompareTo( value ) < 0, ExceptionResources.AssumedLessThan( param, value, paramName ) );
+        Debug.Assert( Comparer<T>.Default.Compare( param, value ) < 0, ExceptionResources.AssumedLessThan( param, value, paramName ) );
     }
 
     [Conditional( "DEBUG" )]
     public static void IsLessThanOrEqualTo<T>(T param, T? value, string paramName)
-        where T : IComparable<T>
     {
-        Debug.Assert( param.CompareTo( value ) <= 0, ExceptionResources.AssumedLessThanOrEqualTo( param, value, paramName ) );
+        Debug.Assert(
+            Comparer<T>.Default.Compare( param, value ) <= 0,
+            ExceptionResources.AssumedLessThanOrEqualTo( param, value, paramName ) );
     }
 
     [Conditional( "DEBUG" )]
     public static void IsInRange<T>(T param, T min, T max, string paramName)
-        where T : IComparable<T>
     {
         Debug.Assert(
-            param.CompareTo( min ) >= 0 && param.CompareTo( max ) <= 0,
+            Comparer<T>.Default.Compare( param, min ) >= 0 && Comparer<T>.Default.Compare( param, max ) <= 0,
             ExceptionResources.AssumedInRange( param, min, max, paramName ) );
     }
 
     [Conditional( "DEBUG" )]
     public static void IsNotInRange<T>(T param, T min, T max, string paramName)
-        where T : IComparable<T>
     {
         Debug.Assert(
-            param.CompareTo( min ) < 0 || param.CompareTo( max ) > 0,
+            Comparer<T>.Default.Compare( param, min ) < 0 || Comparer<T>.Default.Compare( param, max ) > 0,
             ExceptionResources.AssumedNotInRange( param, min, max, paramName ) );
     }
 
     [Conditional( "DEBUG" )]
     public static void IsInExclusiveRange<T>(T param, T min, T max, string paramName)
-        where T : IComparable<T>
     {
         Debug.Assert(
-            param.CompareTo( min ) > 0 && param.CompareTo( max ) < 0,
+            Comparer<T>.Default.Compare( param, min ) > 0 && Comparer<T>.Default.Compare( param, max ) < 0,
             ExceptionResources.AssumedInExclusiveRange( param, min, max, paramName ) );
     }
 
     [Conditional( "DEBUG" )]
     public static void IsNotInExclusiveRange<T>(T param, T min, T max, string paramName)
-        where T : IComparable<T>
     {
         Debug.Assert(
-            param.CompareTo( min ) <= 0 || param.CompareTo( max ) >= 0,
+            Comparer<T>.Default.Compare( param, min ) <= 0 || Comparer<T>.Default.Compare( param, max ) >= 0,
             ExceptionResources.AssumedNotInExclusiveRange( param, min, max, paramName ) );
     }
 

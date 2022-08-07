@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Diagnostics.Contracts;
+﻿using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
@@ -10,7 +9,7 @@ internal static class ExpressionTokenReader
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken ReadOpenedParenthesis(string input, int index)
     {
-        Debug.Assert( index < input.Length, "index < input.Length" );
+        Assume.IsLessThan( index, input.Length, nameof( index ) );
         var result = IntermediateToken.CreateOpenedParenthesis( StringSlice.Create( input, index, length: 1 ) );
         return result;
     }
@@ -19,7 +18,7 @@ internal static class ExpressionTokenReader
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken ReadClosedParenthesis(string input, int index)
     {
-        Debug.Assert( index < input.Length, "index < input.Length" );
+        Assume.IsLessThan( index, input.Length, nameof( index ) );
         var result = IntermediateToken.CreateClosedParenthesis( StringSlice.Create( input, index, length: 1 ) );
         return result;
     }
@@ -28,7 +27,7 @@ internal static class ExpressionTokenReader
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken ReadFunctionParameterSeparator(string input, int index)
     {
-        Debug.Assert( index < input.Length, "index < input.Length" );
+        Assume.IsLessThan( index, input.Length, nameof( index ) );
         var result = IntermediateToken.CreateFunctionParameterSeparator( StringSlice.Create( input, index, length: 1 ) );
         return result;
     }
@@ -37,7 +36,7 @@ internal static class ExpressionTokenReader
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken ReadInlineFunctionSeparator(string input, int index)
     {
-        Debug.Assert( index < input.Length, "index < input.Length" );
+        Assume.IsLessThan( index, input.Length, nameof( index ) );
         var result = IntermediateToken.CreateInlineFunctionSeparator( StringSlice.Create( input, index, length: 1 ) );
         return result;
     }
@@ -46,7 +45,7 @@ internal static class ExpressionTokenReader
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken ReadMemberAccess(string input, int index)
     {
-        Debug.Assert( index < input.Length, "index < input.Length" );
+        Assume.IsLessThan( index, input.Length, nameof( index ) );
         var result = IntermediateToken.CreateMemberAccess( StringSlice.Create( input, index, length: 1 ) );
         return result;
     }
@@ -55,8 +54,8 @@ internal static class ExpressionTokenReader
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken ReadString(string input, int index, ParsedExpressionFactoryInternalConfiguration configuration)
     {
-        Debug.Assert( index < input.Length, "index < input.Length" );
-        Debug.Assert( input[index] == configuration.StringDelimiter, "input[index] is StringDelimiter" );
+        Assume.IsLessThan( index, input.Length, nameof( index ) );
+        Assume.Equals( input[index], configuration.StringDelimiter, nameof( input ) + '[' + nameof( index ) + ']' );
 
         var startIndex = index++;
         var isPrevCharacterDelimiter = false;
@@ -108,8 +107,8 @@ internal static class ExpressionTokenReader
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken ReadNumber(string input, int index, ParsedExpressionFactoryInternalConfiguration configuration)
     {
-        Debug.Assert( index < input.Length, "index < input.Length" );
-        Debug.Assert( char.IsDigit( input[index] ), "input[index] is a digit" );
+        Assume.IsLessThan( index, input.Length, nameof( index ) );
+        Assume.True( char.IsDigit( input[index] ), "Assumed input[index] to be a digit." );
 
         var startIndex = index++;
         var state = NumberReadingState.BeforeDecimalPoint;
@@ -148,7 +147,7 @@ internal static class ExpressionTokenReader
         ref int index,
         ref NumberReadingState state)
     {
-        Debug.Assert( state == NumberReadingState.BeforeDecimalPoint, "state is BeforeDecimalPoint" );
+        Assume.Equals( state, NumberReadingState.BeforeDecimalPoint, nameof( state ) );
 
         if ( char.IsDigit( c ) )
             return true;
@@ -189,7 +188,7 @@ internal static class ExpressionTokenReader
         ref int index,
         ref NumberReadingState state)
     {
-        Debug.Assert( state == NumberReadingState.AfterDecimalPoint, "state is AfterDecimalPoint" );
+        Assume.Equals( state, NumberReadingState.AfterDecimalPoint, nameof( state ) );
 
         if ( char.IsDigit( c ) )
             return true;
@@ -213,7 +212,7 @@ internal static class ExpressionTokenReader
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static bool HandleAfterScientificNotationSymbolNumberReadingState(char c, ref int index, ref NumberReadingState state)
     {
-        Debug.Assert( state == NumberReadingState.AfterScientificNotationSymbol, "state is AfterScientificNotationSymbol" );
+        Assume.Equals( state, NumberReadingState.AfterScientificNotationSymbol, nameof( state ) );
 
         if ( c is TokenConstants.ScientificNotationPositiveExponentOperator
                 or TokenConstants.ScientificNotationNegativeExponentOperator ||

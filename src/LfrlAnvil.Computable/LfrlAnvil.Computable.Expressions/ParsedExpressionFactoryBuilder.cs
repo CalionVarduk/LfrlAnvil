@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using LfrlAnvil.Computable.Expressions.Constructs;
@@ -323,7 +322,7 @@ public sealed class ParsedExpressionFactoryBuilder
         ConstructType type,
         ref Chain<string> errorMessages)
     {
-        Debug.Assert( type != ConstructType.BinaryOperator, "Type should not be BinaryOperator." );
+        Assume.NotEquals( type, ConstructType.BinaryOperator, nameof( type ) );
 
         if ( buffer.Count == 0 )
             return UnaryOperatorCollection.Empty;
@@ -420,7 +419,7 @@ public sealed class ParsedExpressionFactoryBuilder
         ConstructType type,
         ref Chain<string> errorMessages)
     {
-        Debug.Assert( type != ConstructType.BinaryOperator, "Type should not be BinaryOperator." );
+        Assume.NotEquals( type, ConstructType.BinaryOperator, nameof( type ) );
 
         if ( buffer.Count == 0 )
             return TypeConverterCollection.Empty;

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
@@ -283,7 +282,7 @@ public sealed class ParsedExpression<TArg, TResult> : IParsedExpression<TArg, TR
 
         public override Expression Visit(Expression? node)
         {
-            Debug.Assert( node is not null, "node is not null" );
+            Assume.IsNotNull( node, nameof( node ) );
 
             if ( node.NodeType != ExpressionType.ArrayIndex )
                 return base.Visit( node );

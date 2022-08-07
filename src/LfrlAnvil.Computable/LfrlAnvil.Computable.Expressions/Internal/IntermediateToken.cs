@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Diagnostics.Contracts;
+﻿using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
@@ -27,7 +26,7 @@ internal readonly struct IntermediateToken
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateOpenedParenthesis(StringSlice symbol)
     {
-        Debug.Assert( symbol.Equals( TokenConstants.OpenedParenthesis ), "symbol is OpenedParenthesis" );
+        Assume.True( symbol.Equals( TokenConstants.OpenedParenthesis ), "Assumed symbol to be OpenedParenthesis." );
         return new IntermediateToken( IntermediateTokenType.OpenedParenthesis, symbol );
     }
 
@@ -35,7 +34,7 @@ internal readonly struct IntermediateToken
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateClosedParenthesis(StringSlice symbol)
     {
-        Debug.Assert( symbol.Equals( TokenConstants.ClosedParenthesis ), "symbol is ClosedParenthesis" );
+        Assume.True( symbol.Equals( TokenConstants.ClosedParenthesis ), "Assumed symbol to be ClosedParenthesis." );
         return new IntermediateToken( IntermediateTokenType.ClosedParenthesis, symbol );
     }
 
@@ -43,7 +42,7 @@ internal readonly struct IntermediateToken
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateInlineFunctionSeparator(StringSlice symbol)
     {
-        Debug.Assert( symbol.Equals( TokenConstants.InlineFunctionSeparator ), "symbol is InlineFunctionSeparator" );
+        Assume.True( symbol.Equals( TokenConstants.InlineFunctionSeparator ), "Assumed symbol to be InlineFunctionSeparator." );
         return new IntermediateToken( IntermediateTokenType.InlineFunctionSeparator, symbol );
     }
 
@@ -51,7 +50,7 @@ internal readonly struct IntermediateToken
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateFunctionParameterSeparator(StringSlice symbol)
     {
-        Debug.Assert( symbol.Equals( TokenConstants.FunctionParameterSeparator ), "symbol is FunctionParameterSeparator" );
+        Assume.True( symbol.Equals( TokenConstants.FunctionParameterSeparator ), "Assumed symbol to be FunctionParameterSeparator." );
         return new IntermediateToken( IntermediateTokenType.FunctionParameterSeparator, symbol );
     }
 
@@ -59,7 +58,7 @@ internal readonly struct IntermediateToken
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateMemberAccess(StringSlice symbol)
     {
-        Debug.Assert( symbol.Equals( TokenConstants.MemberAccess ), "symbol is MemberAccess" );
+        Assume.True( symbol.Equals( TokenConstants.MemberAccess ), "Assumed symbol to be MemberAccess." );
         return new IntermediateToken( IntermediateTokenType.MemberAccess, symbol );
     }
 
@@ -67,7 +66,7 @@ internal readonly struct IntermediateToken
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateStringConstant(StringSlice symbol)
     {
-        Debug.Assert( symbol.Length > 0, "symbol.Length > 0" );
+        Assume.IsNotEmpty( symbol, nameof( symbol ) );
         return new IntermediateToken( IntermediateTokenType.StringConstant, symbol );
     }
 
@@ -75,9 +74,9 @@ internal readonly struct IntermediateToken
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateNumberConstant(StringSlice symbol)
     {
-        Debug.Assert( symbol.Length > 0, "symbol.Length > 0" );
+        Assume.IsNotEmpty( symbol, nameof( symbol ) );
         var firstChar = symbol[0];
-        Debug.Assert( char.IsDigit( firstChar ), "first symbol character is a digit" );
+        Assume.True( char.IsDigit( firstChar ), "Assumed first symbol character to be a digit." );
 
         return new IntermediateToken( IntermediateTokenType.NumberConstant, symbol );
     }
@@ -86,7 +85,10 @@ internal readonly struct IntermediateToken
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateBooleanConstant(StringSlice symbol)
     {
-        Debug.Assert( TokenConstants.IsBooleanTrue( symbol ) || TokenConstants.IsBooleanFalse( symbol ), "symbol is boolean constant" );
+        Assume.True(
+            TokenConstants.IsBooleanTrue( symbol ) || TokenConstants.IsBooleanFalse( symbol ),
+            "Assumed symbol to be a boolean constant." );
+
         return new IntermediateToken( IntermediateTokenType.BooleanConstant, symbol );
     }
 
@@ -94,7 +96,7 @@ internal readonly struct IntermediateToken
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateConstructs(StringSlice symbol, ConstructTokenDefinition constructs)
     {
-        Debug.Assert( symbol.Length > 0, "symbol.Length > 0" );
+        Assume.IsNotEmpty( symbol, nameof( symbol ) );
         return new IntermediateToken( IntermediateTokenType.Constructs, symbol, constructs );
     }
 
@@ -102,7 +104,7 @@ internal readonly struct IntermediateToken
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateArgument(StringSlice symbol)
     {
-        Debug.Assert( symbol.Length > 0, "symbol.Length > 0" );
+        Assume.IsNotEmpty( symbol, nameof( symbol ) );
         return new IntermediateToken( IntermediateTokenType.Argument, symbol );
     }
 }

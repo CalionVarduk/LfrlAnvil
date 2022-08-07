@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Diagnostics.Contracts;
+﻿using System.Diagnostics.Contracts;
 using LfrlAnvil.Computable.Expressions.Errors;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
@@ -19,7 +18,7 @@ internal readonly struct UnsafeBuilderResult<T>
     [Pure]
     internal UnsafeBuilderResult<TOther> CastErrorsTo<TOther>()
     {
-        Debug.Assert( ! IsOk, "Result doesn't contain any errors." );
+        Assume.False( IsOk, "Assumed result to contain errors." );
         return UnsafeBuilderResult<TOther>.CreateErrors( Errors );
     }
 
@@ -38,7 +37,7 @@ internal readonly struct UnsafeBuilderResult<T>
     [Pure]
     internal static UnsafeBuilderResult<T> CreateErrors(Chain<ParsedExpressionBuilderError> errors)
     {
-        Debug.Assert( errors.Count > 0, "Errors chain cannot be empty." );
+        Assume.IsNotEmpty( errors, nameof( errors ) );
         return new UnsafeBuilderResult<T>( default, errors );
     }
 }

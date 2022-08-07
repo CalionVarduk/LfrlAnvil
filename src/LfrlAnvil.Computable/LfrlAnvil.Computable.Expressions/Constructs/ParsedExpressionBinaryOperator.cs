@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Computable.Expressions.Internal;
@@ -11,7 +10,7 @@ public abstract class ParsedExpressionBinaryOperator : IParsedExpressionConstruc
 {
     public void Process(ParsedExpressionOperandStack operandStack)
     {
-        Debug.Assert( operandStack.Count > 1, "operand stack must have at least 2 elements" );
+        Assume.ContainsAtLeast( operandStack, 2, nameof( operandStack ) );
 
         var rightOperand = operandStack.Pop();
         var leftOperand = operandStack.Pop();

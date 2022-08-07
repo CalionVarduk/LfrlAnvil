@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Computable.Expressions.Internal;
@@ -11,7 +10,7 @@ public abstract class ParsedExpressionUnaryOperator : IParsedExpressionConstruct
 {
     public void Process(ParsedExpressionOperandStack operandStack)
     {
-        Debug.Assert( operandStack.Count > 0, "operand stack cannot be empty" );
+        Assume.IsNotEmpty( operandStack, nameof( operandStack ) );
 
         var operand = operandStack.Pop();
         var result = CreateResult( operand );

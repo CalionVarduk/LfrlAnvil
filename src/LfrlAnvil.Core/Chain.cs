@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Exceptions;
 
@@ -52,7 +51,7 @@ public readonly struct Chain<T> : IReadOnlyCollection<T>
     }
 
     public int Count { get; }
-    public bool IsExtendable => _head is null || (!_head.HasPrev && _tail!.Next is null);
+    public bool IsExtendable => _head is null || (! _head.HasPrev && _tail!.Next is null);
     public bool IsAttached => _head is not null && _head.HasPrev;
 
     [Pure]
@@ -64,7 +63,7 @@ public readonly struct Chain<T> : IReadOnlyCollection<T>
             return new Chain<T>( headNode, headNode, count: 1 );
         }
 
-        Debug.Assert( _tail is not null, "Tail should not be null." );
+        Assume.IsNotNull( _tail, nameof( _tail ) );
 
         if ( _tail.Next is not null )
             throw new InvalidOperationException( ExceptionResources.ChainHasAlreadyBeenExtended );
@@ -95,7 +94,7 @@ public readonly struct Chain<T> : IReadOnlyCollection<T>
         }
         else
         {
-            Debug.Assert( _tail is not null, "Tail should not be null." );
+            Assume.IsNotNull( _tail, nameof( _tail ) );
 
             if ( _tail.Next is not null )
                 throw new InvalidOperationException( ExceptionResources.ChainHasAlreadyBeenExtended );
@@ -129,8 +128,8 @@ public readonly struct Chain<T> : IReadOnlyCollection<T>
         if ( other._head is null )
             return this;
 
-        Debug.Assert( _tail is not null, "Tail should not be null." );
-        Debug.Assert( other._tail is not null, "Other tail should not be null." );
+        Assume.IsNotNull( _tail, nameof( _tail ) );
+        Assume.IsNotNull( other._tail, nameof( other ) + '.' + nameof( _tail ) );
 
         if ( _tail.Next is not null )
             throw new InvalidOperationException( ExceptionResources.ChainHasAlreadyBeenExtended );

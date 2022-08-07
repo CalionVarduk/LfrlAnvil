@@ -13,6 +13,42 @@ public class AssumeTests : TestsBase
 {
     [Fact]
     [Conditional( "DEBUG" )]
+    public void IsNull_ForRefType_ShouldPass_WhenParamIsNull()
+    {
+        string? param = null;
+        var action = Lambda.Of( () => Assume.IsNull( param, nameof( param ) ) );
+        action.Should().NotThrow();
+    }
+
+    [Fact]
+    [Conditional( "DEBUG" )]
+    public void IsNull_ForRefType_ShouldFail_WhenParamIsNotNull()
+    {
+        var param = Fixture.Create<string>();
+        var action = Lambda.Of( () => Assume.IsNull( param, nameof( param ) ) );
+        action.Should().Throw<Exception>();
+    }
+
+    [Fact]
+    [Conditional( "DEBUG" )]
+    public void IsNull_ForNullableStructType_ShouldPass_WhenParamIsNull()
+    {
+        int? param = null;
+        var action = Lambda.Of( () => Assume.IsNull( param, nameof( param ) ) );
+        action.Should().NotThrow();
+    }
+
+    [Fact]
+    [Conditional( "DEBUG" )]
+    public void IsNull_ForNullableStructType_ShouldFail_WhenParamIsNotNull()
+    {
+        var param = Fixture.CreateNullable<int>();
+        var action = Lambda.Of( () => Assume.IsNull( param, nameof( param ) ) );
+        action.Should().Throw<Exception>();
+    }
+
+    [Fact]
+    [Conditional( "DEBUG" )]
     public void IsNotNull_ForRefType_ShouldPass_WhenParamIsNotNull()
     {
         var param = Fixture.Create<string>();

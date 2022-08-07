@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
@@ -22,7 +21,7 @@ public class ParsedExpressionTypeConverter : IParsedExpressionConstruct
 
     public void Process(ParsedExpressionOperandStack operandStack)
     {
-        Debug.Assert( operandStack.Count > 0, "operand stack cannot be empty" );
+        Assume.IsNotEmpty( operandStack, nameof( operandStack ) );
 
         var operand = operandStack.Pop();
         var result = CreateResult( operand );

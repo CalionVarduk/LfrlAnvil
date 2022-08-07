@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
 
@@ -15,7 +14,7 @@ internal struct ExpressionTokenizerSubStream
 
     internal ExpressionTokenizerSubStream(string input, int index, ParsedExpressionFactoryInternalConfiguration configuration)
     {
-        Debug.Assert( index < input.Length, "index < input.Length" );
+        Assume.IsLessThan( index, input.Length, nameof( index ) );
 
         var startIndex = index++;
         _state = State.Started;
@@ -49,7 +48,7 @@ internal struct ExpressionTokenizerSubStream
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal IntermediateToken ReadNext(ParsedExpressionFactoryInternalConfiguration configuration)
     {
-        Debug.Assert( _state != State.Finished, "state is not Finished" );
+        Assume.NotEquals( _state, State.Finished, nameof( _state ) );
 
         var result = _state switch
         {
@@ -65,7 +64,7 @@ internal struct ExpressionTokenizerSubStream
 
     private IntermediateToken HandleStartedState(ParsedExpressionFactoryInternalConfiguration configuration)
     {
-        Debug.Assert( _state == State.Started, "state is Started" );
+        Assume.Equals( _state, State.Started, nameof( _state ) );
 
         var result = ExpressionTokenReader.TryReadConstructs( _remaining, configuration );
         if ( result is not null )
@@ -80,13 +79,13 @@ internal struct ExpressionTokenizerSubStream
 
     private IntermediateToken HandleReadingNonSymbolsState(ParsedExpressionFactoryInternalConfiguration configuration)
     {
-        Debug.Assert( _state == State.ReadingNonSymbols, "state is ReadingNonSymbols" );
-        Debug.Assert( _bufferedToken is null, "bufferedToken is null" );
+        Assume.Equals( _state, State.ReadingNonSymbols, nameof( _state ) );
+        Assume.IsNull( _bufferedToken, nameof( _bufferedToken ) );
 
         var input = _remaining.Source;
         var index = _remaining.StartIndex;
 
-        Debug.Assert( index < _endIndex, "index < endIndex" );
+        Assume.IsLessThan( index, _endIndex, nameof( index ) );
 
         var c = input[index];
 
@@ -135,16 +134,16 @@ internal struct ExpressionTokenizerSubStream
 
     private IntermediateToken HandleStartReadingSymbolsState(ParsedExpressionFactoryInternalConfiguration configuration)
     {
-        Debug.Assert( _state == State.StartReadingSymbols, "state is StartReadingSymbols" );
-        Debug.Assert( _bufferedToken is null, "bufferedToken is null" );
+        Assume.Equals( _state, State.StartReadingSymbols, nameof( _state ) );
+        Assume.IsNull( _bufferedToken, nameof( _bufferedToken ) );
 
         var input = _remaining.Source;
         var index = _remaining.StartIndex + 1;
 
-        Debug.Assert( _remaining.StartIndex < _endIndex, "startIndex < endIndex" );
-        Debug.Assert( TokenConstants.InterpretAsSymbol( _remaining[0] ), "remaining[0] is a valid symbol" );
-        Debug.Assert( _remainingSymbols.Length == 0, "remainingSymbols is empty" );
-        Debug.Assert( _skippedSymbols.Length == 0, "skippedSymbols is empty" );
+        Assume.IsLessThan( _remaining.StartIndex, _endIndex, nameof( _remaining.StartIndex ) );
+        Assume.True( TokenConstants.InterpretAsSymbol( _remaining[0] ), "Assumed first remaining character to be a valid symbol." );
+        Assume.IsEmpty( _remainingSymbols, nameof( _remainingSymbols ) );
+        Assume.IsEmpty( _skippedSymbols, nameof( _skippedSymbols ) );
 
         while ( index < _endIndex )
         {
@@ -164,10 +163,10 @@ internal struct ExpressionTokenizerSubStream
 
     private IntermediateToken HandleSearchingForTokenSymbolsState(ParsedExpressionFactoryInternalConfiguration configuration)
     {
-        Debug.Assert( _state == State.SearchingForTokenSymbols, "state is SearchingForTokenSymbols" );
-        Debug.Assert( _remainingSymbols.Length > 0, "remainingSymbols is not empty" );
-        Debug.Assert( _skippedSymbols.Length == 0, "skippedSymbols is empty" );
-        Debug.Assert( _bufferedToken is null, "bufferedToken is null" );
+        Assume.Equals( _state, State.SearchingForTokenSymbols, nameof( _state ) );
+        Assume.IsNotEmpty( _remainingSymbols, nameof( _remainingSymbols ) );
+        Assume.IsEmpty( _skippedSymbols, nameof( _skippedSymbols ) );
+        Assume.IsNull( _bufferedToken, nameof( _bufferedToken ) );
 
         var token = ScanForTokenWithinRemainingSymbols( configuration );
         if ( token is not null )
@@ -190,9 +189,9 @@ internal struct ExpressionTokenizerSubStream
 
     private IntermediateToken HandleSearchingForTokenSymbolsWithSkippedState(ParsedExpressionFactoryInternalConfiguration configuration)
     {
-        Debug.Assert( _state == State.SearchingForTokenSymbols, "state is SearchingForTokenSymbols" );
-        Debug.Assert( _skippedSymbols.Length > 0, "skippedSymbols is not empty" );
-        Debug.Assert( _bufferedToken is null, "bufferedToken is null" );
+        Assume.Equals( _state, State.SearchingForTokenSymbols, nameof( _state ) );
+        Assume.IsNotEmpty( _skippedSymbols, nameof( _skippedSymbols ) );
+        Assume.IsNull( _bufferedToken, nameof( _bufferedToken ) );
 
         do
         {
@@ -214,9 +213,9 @@ internal struct ExpressionTokenizerSubStream
 
     private IntermediateToken HandleStoringBufferedTokenState()
     {
-        Debug.Assert( _state == State.StoringBufferedToken, "state is StoringBufferedToken" );
-        Debug.Assert( _skippedSymbols.Length == 0, "skippedSymbols is empty" );
-        Debug.Assert( _bufferedToken is not null, "bufferedToken is not null" );
+        Assume.Equals( _state, State.StoringBufferedToken, nameof( _state ) );
+        Assume.IsEmpty( _skippedSymbols, nameof( _skippedSymbols ) );
+        Assume.IsNotNull( _bufferedToken, nameof( _bufferedToken ) );
 
         var result = _bufferedToken.Value;
         _bufferedToken = null;
@@ -231,8 +230,8 @@ internal struct ExpressionTokenizerSubStream
 
     private IntermediateToken? ScanForTokenWithinRemainingSymbols(ParsedExpressionFactoryInternalConfiguration configuration)
     {
-        Debug.Assert( _state is State.SearchingForTokenSymbols, "state is SearchingForTokenSymbols" );
-        Debug.Assert( _remainingSymbols.Length > 0, "remainingSymbols is not empty" );
+        Assume.Equals( _state, State.SearchingForTokenSymbols, nameof( _state ) );
+        Assume.IsNotEmpty( _remainingSymbols, nameof( _remainingSymbols ) );
 
         for ( var length = _remainingSymbols.Length; length > 0; --length )
         {
@@ -269,7 +268,7 @@ internal struct ExpressionTokenizerSubStream
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private IntermediateToken ReadSkippedSymbols()
     {
-        Debug.Assert( _skippedSymbols.Length > 0, "skippedSymbols is not empty" );
+        Assume.IsNotEmpty( _skippedSymbols, nameof( _skippedSymbols ) );
 
         var slice = _skippedSymbols;
         _skippedSymbols = _skippedSymbols.Slice( 0, 0 );

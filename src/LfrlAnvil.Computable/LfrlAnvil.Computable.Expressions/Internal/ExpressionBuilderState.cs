@@ -150,7 +150,7 @@ internal sealed class ExpressionBuilderState
 
     private UnsafeBuilderResult<Expression> ConvertResultToOutputType(Expression rawBody, Type outputType)
     {
-        AssumeEmptyOperandStack();
+        Assume.IsEmpty( _operandStack, nameof( _operandStack ) );
 
         if ( rawBody.Type == outputType )
             return UnsafeBuilderResult<Expression>.CreateOk( rawBody );
@@ -412,7 +412,7 @@ internal sealed class ExpressionBuilderState
         if ( ! Expects( Expectation.ClosedParenthesis ) )
             return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedClosedParenthesis( token ) );
 
-        AssumeTokenStackMinCount( 1 );
+        Assume.IsNotEmpty( _tokenStack, nameof( _tokenStack ) );
         var data = _tokenStack.Peek();
 
         while ( data.Expectation != Expectation.OpenedParenthesis )
@@ -429,7 +429,7 @@ internal sealed class ExpressionBuilderState
             if ( errors.Count > 0 )
                 return errors;
 
-            AssumeTokenStackMinCount( 1 );
+            Assume.IsNotEmpty( _tokenStack, nameof( _tokenStack ) );
             data = _tokenStack.Peek();
         }
 
@@ -476,7 +476,7 @@ internal sealed class ExpressionBuilderState
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Chain<ParsedExpressionBuilderError> ProcessPrefixUnaryOperator(IntermediateToken token)
     {
-        AssumeOperandStackMinCount( 1 );
+        Assume.IsNotEmpty( _operandStack, nameof( _operandStack ) );
         AssumeNotNullTokenConstructs( token.Constructs );
 
         var argumentType = _operandStack[0].Type;
@@ -490,7 +490,7 @@ internal sealed class ExpressionBuilderState
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Chain<ParsedExpressionBuilderError> ProcessPrefixTypeConverter(IntermediateToken token)
     {
-        AssumeOperandStackMinCount( 1 );
+        Assume.IsNotEmpty( _operandStack, nameof( _operandStack ) );
         AssumeNotNullTokenConstructs( token.Constructs );
 
         var sourceType = _operandStack[0].Type;
@@ -514,7 +514,7 @@ internal sealed class ExpressionBuilderState
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Chain<ParsedExpressionBuilderError> ProcessPostfixUnaryOperator(IntermediateToken token)
     {
-        AssumeOperandStackMinCount( 1 );
+        Assume.IsNotEmpty( _operandStack, nameof( _operandStack ) );
         AssumeNotNullTokenConstructs( token.Constructs );
 
         var argumentType = _operandStack[0].Type;
@@ -528,7 +528,7 @@ internal sealed class ExpressionBuilderState
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Chain<ParsedExpressionBuilderError> ProcessPostfixTypeConverter(IntermediateToken token)
     {
-        AssumeOperandStackMinCount( 1 );
+        Assume.IsNotEmpty( _operandStack, nameof( _operandStack ) );
         AssumeNotNullTokenConstructs( token.Constructs );
 
         var sourceType = _operandStack[0].Type;
@@ -554,7 +554,7 @@ internal sealed class ExpressionBuilderState
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Chain<ParsedExpressionBuilderError> ProcessBinaryOperator(IntermediateToken token)
     {
-        AssumeOperandStackMinCount( 2 );
+        Assume.ContainsAtLeast( _operandStack, 2, nameof( _operandStack ) );
         AssumeNotNullTokenConstructs( token.Constructs );
 
         var rightArgumentType = _operandStack[0].Type;
@@ -578,7 +578,7 @@ internal sealed class ExpressionBuilderState
         IParsedExpressionConstruct construct,
         int expectedOperandCount)
     {
-        AssumeOperandStackMinCount( expectedOperandCount );
+        Assume.ContainsAtLeast( _operandStack, expectedOperandCount, nameof( _operandStack ) );
         var operandCount = _operandStack.Count;
 
         try
@@ -600,7 +600,7 @@ internal sealed class ExpressionBuilderState
 
     private Chain<ParsedExpressionBuilderError> ProcessOutputTypeConverter(ParsedExpressionTypeConverter converter, Expression rawBody)
     {
-        AssumeEmptyOperandStack();
+        Assume.IsEmpty( _operandStack, nameof( _operandStack ) );
         _operandStack.Push( rawBody );
 
         try
@@ -627,7 +627,7 @@ internal sealed class ExpressionBuilderState
 
         if ( Expects( Expectation.PrefixUnaryConstructResolution ) )
         {
-            AssumeTokenStackMinCount( 1 );
+            Assume.IsNotEmpty( _tokenStack, nameof( _tokenStack ) );
             var data = _tokenStack.Pop();
 
             AssumeExpectation( data.Expectation, Expectation.PrefixUnaryConstruct );
@@ -697,11 +697,11 @@ internal sealed class ExpressionBuilderState
             ? token.Constructs.PostfixUnaryOperators.IsEmpty
             : token.Constructs.PostfixTypeConverters.IsEmpty;
 
-        Debug.Assert( ! isEmpty, "Postfix unary construct collection should not be empty." );
+        Assume.False( isEmpty, "Assumed postfix unary constructs collection to not be empty." );
 
         if ( Expects( Expectation.PrefixUnaryConstructResolution ) )
         {
-            AssumeTokenStackMinCount( 1 );
+            Assume.IsNotEmpty( _tokenStack, nameof( _tokenStack ) );
             var prefixData = _tokenStack.Pop();
 
             AssumeExpectation( prefixData.Expectation, Expectation.PrefixUnaryConstruct );
@@ -770,7 +770,7 @@ internal sealed class ExpressionBuilderState
         if ( ! Expects( Expectation.AmbiguousPostfixConstructResolution ) )
             return Chain<ParsedExpressionBuilderError>.Empty;
 
-        AssumeTokenStackMinCount( 1 );
+        Assume.IsNotEmpty( _tokenStack, nameof( _tokenStack ) );
         var data = _tokenStack.Pop();
 
         if ( Expects( Expectation.AmbiguousPrefixConstructResolution ) )
@@ -788,7 +788,7 @@ internal sealed class ExpressionBuilderState
         if ( ! Expects( Expectation.AmbiguousPostfixConstructResolution ) )
             return Chain<ParsedExpressionBuilderError>.Empty;
 
-        AssumeTokenStackMinCount( 1 );
+        Assume.IsNotEmpty( _tokenStack, nameof( _tokenStack ) );
         var data = _tokenStack.Pop();
 
         AssumeExpectation( data.Expectation, Expectation.BinaryOperator );
@@ -826,53 +826,33 @@ internal sealed class ExpressionBuilderState
     }
 
     [Conditional( "DEBUG" )]
-    private void AssumeTokenStackMinCount(int expected)
-    {
-        Debug.Assert( _tokenStack.Count >= expected, $"Expected at least {expected} tokens on the stack but found {_tokenStack.Count}." );
-    }
-
-    [Conditional( "DEBUG" )]
-    private void AssumeOperandStackMinCount(int expected)
-    {
-        Debug.Assert(
-            _operandStack.Count >= expected,
-            $"Expected at least {expected} operands on the stack but found {_operandStack.Count}." );
-    }
-
-    [Conditional( "DEBUG" )]
-    private void AssumeEmptyOperandStack()
-    {
-        Debug.Assert( _operandStack.Count == 0, "Expected operand stack to be empty." );
-    }
-
-    [Conditional( "DEBUG" )]
     private void AssumeStateExpectation(Expectation expectation)
     {
-        Debug.Assert( Expects( expectation ), $"State doesn't expect {expectation} but {_expectation}." );
+        Assume.NotEquals( _expectation & expectation, Expectation.None, nameof( _expectation ) );
     }
 
     [Conditional( "DEBUG" )]
     private static void AssumeExpectation(Expectation expectation, Expectation expected)
     {
-        Debug.Assert( (expectation & expected) != Expectation.None, $"Expected at least one of {expected} but found {expectation}." );
+        Assume.NotEquals( expectation & expected, Expectation.None, nameof( expectation ) );
     }
 
     [Conditional( "DEBUG" )]
     private static void AssumeAllExpectations(Expectation expectation, Expectation expected)
     {
-        Debug.Assert( (expectation & expected) == expected, $"Expected all {expected} but found {expectation}." );
+        Assume.Equals( expectation & expected, expected, nameof( expectation ) );
     }
 
     [Conditional( "DEBUG" )]
     private static void AssumeTokenType(IntermediateToken token, IntermediateTokenType expected)
     {
-        Debug.Assert( token.Type == expected, $"Expected token type {expected} but found {token.Type}." );
+        Assume.Equals( token.Type, expected, nameof( token ) + '.' + nameof( token.Type ) );
     }
 
     [Conditional( "DEBUG" )]
     private static void AssumeNotNullTokenConstructs([NotNull] ConstructTokenDefinition? constructs)
     {
-        Debug.Assert( constructs is not null, "Expected token constructs to not be null." );
+        Assume.IsNotNull( constructs, nameof( constructs ) );
     }
 
     [Flags]

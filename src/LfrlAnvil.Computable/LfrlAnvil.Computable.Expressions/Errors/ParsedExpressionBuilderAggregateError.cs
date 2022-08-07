@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using LfrlAnvil.Computable.Expressions.Internal;
@@ -15,7 +14,7 @@ public sealed class ParsedExpressionBuilderAggregateError : ParsedExpressionBuil
         StringSlice? token = null)
         : base( type, token )
     {
-        Debug.Assert( inner.Count > 0, "Inner errors collection should not be empty." );
+        Assume.IsNotEmpty( inner, nameof( inner ) );
         Inner = inner;
     }
 

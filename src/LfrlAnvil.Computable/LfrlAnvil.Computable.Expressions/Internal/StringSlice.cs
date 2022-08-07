@@ -1,12 +1,13 @@
 ﻿using System;
-using System.Diagnostics;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
 
-internal readonly struct StringSlice : IEquatable<StringSlice>, IEquatable<char>
+internal readonly struct StringSlice : IEquatable<StringSlice>, IEquatable<char>, IEnumerable<char>
 {
     private StringSlice(string source, int startIndex, int length)
     {
@@ -14,9 +15,9 @@ internal readonly struct StringSlice : IEquatable<StringSlice>, IEquatable<char>
         StartIndex = startIndex;
         Length = length;
 
-        Debug.Assert( Length >= 0, "Length >= 0" );
-        Debug.Assert( StartIndex <= Source.Length, "StartIndex <= Source.Length" );
-        Debug.Assert( EndIndex <= Source.Length, "EndIndex <= Source.Length" );
+        Assume.IsGreaterThanOrEqualTo( Length, 0, nameof( Length ) );
+        Assume.IsLessThanOrEqualTo( StartIndex, Source.Length, nameof( StartIndex ) );
+        Assume.IsLessThanOrEqualTo( EndIndex, Source.Length, nameof( EndIndex ) );
     }
 
     internal string Source { get; }
@@ -46,7 +47,10 @@ internal readonly struct StringSlice : IEquatable<StringSlice>, IEquatable<char>
     [Pure]
     public override bool Equals(object? obj)
     {
-        return obj is StringSlice s && Equals( s );
+        if ( obj is StringSlice s )
+            return Equals( s );
+
+        return obj is char c && Equals( c );
     }
 
     [Pure]
@@ -129,5 +133,17 @@ internal readonly struct StringSlice : IEquatable<StringSlice>, IEquatable<char>
         return MemoryMarshal.TryGetString( source, out var text, out var startIndex, out var length )
             ? Create( text, startIndex, length )
             : Create( source.ToString() );
+    }
+
+    [Pure]
+    public IEnumerator<char> GetEnumerator()
+    {
+        return ToString().GetEnumerator();
+    }
+
+    [Pure]
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
     }
 }

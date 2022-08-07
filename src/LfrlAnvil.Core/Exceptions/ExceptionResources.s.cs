@@ -21,9 +21,16 @@ public static class ExceptionResources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string AssumedNotNull<T>(T value, string paramName)
+    public static string AssumedNull<T>(T value, string paramName)
     {
         return $"Assumed {paramName} to be null but found {value}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string AssumedNotNull(string paramName)
+    {
+        return $"Assumed {paramName} to not be null.";
     }
 
     [Pure]

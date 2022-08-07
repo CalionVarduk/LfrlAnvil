@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
 
@@ -52,7 +51,7 @@ internal struct ExpressionTokenizer
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private IntermediateToken ReadNextToken()
     {
-        Debug.Assert( _index < _input.Length, "index < input.Length" );
+        Assume.IsLessThan( _index, _input.Length, nameof( _index ) );
 
         if ( ! _subStream.IsFinished )
             return ReadNextTokenFromSubStream();
@@ -85,7 +84,7 @@ internal struct ExpressionTokenizer
 
     private IntermediateToken ReadNextTokenFromSubStream()
     {
-        Debug.Assert( ! _subStream.IsFinished, "subStream is not Finished" );
+        Assume.False( _subStream.IsFinished, "Assumed sub stream to not be finished." );
 
         var result = _subStream.ReadNext( _configuration );
         return result;

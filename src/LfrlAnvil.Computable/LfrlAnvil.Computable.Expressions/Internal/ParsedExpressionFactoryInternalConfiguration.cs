@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Linq;
@@ -146,7 +145,8 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
         [Pure]
         public object GetFormat(Type? formatType)
         {
-            Debug.Assert( formatType == typeof( NumberFormatInfo ), "only NumberFormatInfo is supported" );
+            Assume.IsNotNull( formatType, nameof( formatType ) );
+            Assume.Equals( formatType, typeof( NumberFormatInfo ), nameof( formatType ) );
             return _info;
         }
     }

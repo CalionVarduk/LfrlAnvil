@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
@@ -37,9 +36,9 @@ public sealed class TreeDictionaryNode<TKey, TValue> : ITreeDictionaryNode<TKey,
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void SetTree(TreeDictionary<TKey, TValue> tree)
     {
-        Debug.Assert( Tree is null, "tree assigned to node should be null" );
-        Debug.Assert( Parent is null, "parent assigned to node should be null" );
-        Debug.Assert( _children.Count == 0, "children assigned to node should be empty" );
+        Assume.IsNull( Tree, nameof( Tree ) );
+        Assume.IsNull( Parent, nameof( Parent ) );
+        Assume.IsEmpty( _children, nameof( _children ) );
 
         Tree = tree;
     }
@@ -47,7 +46,7 @@ public sealed class TreeDictionaryNode<TKey, TValue> : ITreeDictionaryNode<TKey,
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void SetParent(TreeDictionaryNode<TKey, TValue> parent)
     {
-        Debug.Assert( Tree is not null, "tree assigned to node should not be null" );
+        Assume.IsNotNull( Tree, nameof( Tree ) );
 
         Parent = parent;
         Parent._children.Add( this );
@@ -56,8 +55,8 @@ public sealed class TreeDictionaryNode<TKey, TValue> : ITreeDictionaryNode<TKey,
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void ClearParent()
     {
-        Debug.Assert( Tree is not null, "tree assigned to node should not be null" );
-        Debug.Assert( Parent is not null, "parent assigned to node should not be null" );
+        Assume.IsNotNull( Tree, nameof( Tree ) );
+        Assume.IsNotNull( Parent, nameof( Parent ) );
 
         Parent = null;
     }
@@ -65,8 +64,8 @@ public sealed class TreeDictionaryNode<TKey, TValue> : ITreeDictionaryNode<TKey,
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void RemoveFromParent()
     {
-        Debug.Assert( Tree is not null, "tree assigned to node should not be null" );
-        Debug.Assert( Parent is not null, "parent assigned to node should not be null" );
+        Assume.IsNotNull( Tree, nameof( Tree ) );
+        Assume.IsNotNull( Parent, nameof( Parent ) );
 
         Parent._children.Remove( this );
     }
@@ -74,7 +73,7 @@ public sealed class TreeDictionaryNode<TKey, TValue> : ITreeDictionaryNode<TKey,
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void Clear()
     {
-        Debug.Assert( Tree is not null, "tree assigned to node should not be null" );
+        Assume.IsNotNull( Tree, nameof( Tree ) );
 
         Tree = null;
         Parent = null;
@@ -84,16 +83,16 @@ public sealed class TreeDictionaryNode<TKey, TValue> : ITreeDictionaryNode<TKey,
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void SwapParentWith(TreeDictionaryNode<TKey, TValue> node)
     {
-        Debug.Assert( Tree is not null, "tree assigned to node should not be null" );
-        Debug.Assert( node.Tree is not null, "tree assigned to node should not be null" );
+        Assume.IsNotNull( Tree, nameof( Tree ) );
+        Assume.IsNotNull( node.Tree, nameof( node ) + '.' + nameof( Tree ) );
 
         (Parent, node.Parent) = (node.Parent, Parent);
     }
 
     internal void SwapChildrenWith(TreeDictionaryNode<TKey, TValue> node)
     {
-        Debug.Assert( Tree is not null, "tree assigned to node should not be null" );
-        Debug.Assert( node.Tree is not null, "tree assigned to node should not be null" );
+        Assume.IsNotNull( Tree, nameof( Tree ) );
+        Assume.IsNotNull( node.Tree, nameof( node ) + '.' + nameof( Tree ) );
 
         (_children, node._children) = (node._children, _children);
 
@@ -107,16 +106,16 @@ public sealed class TreeDictionaryNode<TKey, TValue> : ITreeDictionaryNode<TKey,
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void ReplaceChildAt(int index, TreeDictionaryNode<TKey, TValue> newChild)
     {
-        Debug.Assert( Tree is not null, "tree assigned to node should not be null" );
-        Debug.Assert( index >= 0 && index < _children.Count, "index is out of bounds" );
+        Assume.IsNotNull( Tree, nameof( Tree ) );
+        Assume.IsInRange( index, 0, _children.Count - 1, nameof( index ) );
 
         _children[index] = newChild;
     }
 
     internal void InheritChildrenFrom(TreeDictionaryNode<TKey, TValue> node)
     {
-        Debug.Assert( Tree is not null, "tree assigned to node should not be null" );
-        Debug.Assert( node.Tree is not null, "tree assigned to node should not be null" );
+        Assume.IsNotNull( Tree, nameof( Tree ) );
+        Assume.IsNotNull( node.Tree, nameof( node ) + '.' + nameof( Tree ) );
 
         _children.AddRange( node._children );
 
