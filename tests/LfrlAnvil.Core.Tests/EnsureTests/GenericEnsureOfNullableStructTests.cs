@@ -1,8 +1,4 @@
-﻿using System;
-using System.Linq;
-using AutoFixture;
-using LfrlAnvil.TestExtensions;
-using Xunit;
+﻿using System.Linq;
 
 namespace LfrlAnvil.Tests.EnsureTests;
 

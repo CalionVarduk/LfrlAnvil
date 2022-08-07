@@ -1,8 +1,4 @@
-﻿using FluentAssertions;
-using LfrlAnvil.TestExtensions;
-using Xunit;
-
-namespace LfrlAnvil.Collections.Tests.HeapTests;
+﻿namespace LfrlAnvil.Collections.Tests.HeapTests;
 
 public class HeapStaticTests : TestsBase
 {

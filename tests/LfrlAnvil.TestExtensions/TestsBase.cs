@@ -1,7 +1,4 @@
-﻿using System;
-using AutoFixture;
-
-namespace LfrlAnvil.TestExtensions;
+﻿namespace LfrlAnvil.TestExtensions;
 
 public abstract class TestsBase
 {

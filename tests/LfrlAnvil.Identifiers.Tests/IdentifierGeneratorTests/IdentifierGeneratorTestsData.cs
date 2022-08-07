@@ -1,7 +1,4 @@
-﻿using System;
-using AutoFixture;
-using LfrlAnvil.Chrono;
-using Xunit;
+﻿using LfrlAnvil.Chrono;
 
 namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests;
 

@@ -1,16 +1,10 @@
-﻿using System;
-using System.Threading;
-using AutoFixture;
-using FluentAssertions;
+﻿using System.Threading;
 using FluentAssertions.Execution;
 using LfrlAnvil.Async;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Decorators;
 using LfrlAnvil.Reactive.Extensions;
-using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
-using NSubstitute;
-using Xunit;
 
 namespace LfrlAnvil.Reactive.Tests.DecoratorsTests;
 

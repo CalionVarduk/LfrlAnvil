@@ -1,12 +1,8 @@
 ﻿using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using AutoFixture;
-using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlAnvil.Reactive.Extensions;
-using LfrlAnvil.TestExtensions;
-using Xunit;
 
 namespace LfrlAnvil.Reactive.Tests.ToTaskTests;
 

@@ -1,6 +1,4 @@
-﻿using System;
-using NSubstitute;
-using NSubstitute.Core;
+﻿using NSubstitute.Core;
 
 namespace LfrlAnvil.TestExtensions.NSubstitute;
 

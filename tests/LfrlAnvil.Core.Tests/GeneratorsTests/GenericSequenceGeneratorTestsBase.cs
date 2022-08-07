@@ -1,12 +1,7 @@
-﻿using System;
-using AutoFixture;
-using FluentAssertions;
-using FluentAssertions.Execution;
+﻿using FluentAssertions.Execution;
 using LfrlAnvil.Exceptions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Generators;
-using LfrlAnvil.TestExtensions;
-using Xunit;
 
 namespace LfrlAnvil.Tests.GeneratorsTests;
 

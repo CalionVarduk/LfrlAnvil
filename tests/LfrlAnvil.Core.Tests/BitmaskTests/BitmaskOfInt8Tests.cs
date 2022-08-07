@@ -1,7 +1,4 @@
-﻿using AutoFixture;
-using Xunit;
-
-namespace LfrlAnvil.Tests.BitmaskTests;
+﻿namespace LfrlAnvil.Tests.BitmaskTests;
 
 public class BitmaskOfInt8Tests : GenericBitmaskTests<sbyte>
 {

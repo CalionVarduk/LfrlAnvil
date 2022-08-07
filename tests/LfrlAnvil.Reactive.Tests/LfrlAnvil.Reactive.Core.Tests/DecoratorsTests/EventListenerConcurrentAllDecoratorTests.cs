@@ -1,15 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using AutoFixture;
-using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlAnvil.Reactive.Decorators;
 using LfrlAnvil.Reactive.Extensions;
-using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
-using NSubstitute;
-using Xunit;
 
 namespace LfrlAnvil.Reactive.Tests.DecoratorsTests;
 

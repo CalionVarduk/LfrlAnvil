@@ -1,8 +1,4 @@
-﻿using System;
-using FluentAssertions;
-using Xunit;
-
-namespace LfrlAnvil.Tests.OneTests;
+﻿namespace LfrlAnvil.Tests.OneTests;
 
 public class OneStaticTests
 {

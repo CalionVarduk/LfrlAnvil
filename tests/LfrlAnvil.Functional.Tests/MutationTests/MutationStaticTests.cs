@@ -1,9 +1,4 @@
-﻿using System;
-using FluentAssertions;
-using LfrlAnvil.TestExtensions;
-using Xunit;
-
-namespace LfrlAnvil.Functional.Tests.MutationTests;
+﻿namespace LfrlAnvil.Functional.Tests.MutationTests;
 
 public class MutationStaticTests : TestsBase
 {

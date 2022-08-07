@@ -1,11 +1,6 @@
-﻿using System;
-using System.Diagnostics;
-using AutoFixture;
-using FluentAssertions;
+﻿using System.Diagnostics;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions;
 using LfrlAnvil.Tests.EnsureTests;
-using Xunit;
 
 namespace LfrlAnvil.Tests.AssumeTests;
 

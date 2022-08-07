@@ -1,7 +1,5 @@
 ﻿using System.Linq;
-using FluentAssertions;
 using LfrlAnvil.Extensions;
-using Xunit;
 
 namespace LfrlAnvil.Tests.ExtensionsTests.TypeTests;
 

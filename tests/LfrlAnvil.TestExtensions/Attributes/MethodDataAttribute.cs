@@ -1,6 +1,4 @@
-﻿using System;
-using System.Reflection;
-using AutoFixture;
+﻿using System.Reflection;
 
 namespace LfrlAnvil.TestExtensions.Attributes;
 

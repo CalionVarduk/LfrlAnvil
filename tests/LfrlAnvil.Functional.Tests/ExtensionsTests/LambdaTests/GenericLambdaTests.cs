@@ -1,14 +1,8 @@
-﻿using System;
-using System.Linq;
-using AutoFixture;
-using FluentAssertions;
+﻿using System.Linq;
 using FluentAssertions.Execution;
 using LfrlAnvil.Functional.Delegates;
 using LfrlAnvil.Functional.Extensions;
-using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
-using NSubstitute;
-using Xunit;
 
 namespace LfrlAnvil.Functional.Tests.ExtensionsTests.LambdaTests;
 

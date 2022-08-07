@@ -1,9 +1,4 @@
-﻿using FluentAssertions;
-using LfrlAnvil.TestExtensions;
-using NSubstitute;
-using Xunit;
-
-namespace LfrlAnvil.Requests.Tests.RequestHandlerFactoryTests;
+﻿namespace LfrlAnvil.Requests.Tests.RequestHandlerFactoryTests;
 
 public class RequestHandlerFactoryTests : TestsBase
 {

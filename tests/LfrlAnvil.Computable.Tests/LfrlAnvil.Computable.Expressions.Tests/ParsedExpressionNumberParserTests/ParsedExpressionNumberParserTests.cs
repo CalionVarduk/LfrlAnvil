@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Numerics;
-using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlAnvil.Computable.Expressions.Internal;
-using LfrlAnvil.TestExtensions;
-using NSubstitute;
-using Xunit;
 
 namespace LfrlAnvil.Computable.Expressions.Tests.ParsedExpressionNumberParserTests;
 

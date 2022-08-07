@@ -1,4 +1,5 @@
 ﻿using LfrlAnvil.Generators;
+using ByteSequenceGenerator = LfrlAnvil.Generators.ByteSequenceGenerator;
 
 namespace LfrlAnvil.Tests.GeneratorsTests.ByteSequenceGeneratorTests;
 

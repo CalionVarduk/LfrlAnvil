@@ -1,9 +1,4 @@
-﻿using System;
-using FluentAssertions;
-using LfrlAnvil.TestExtensions;
-using Xunit;
-
-namespace LfrlAnvil.Chrono.Tests.TimestampProviderTests;
+﻿namespace LfrlAnvil.Chrono.Tests.TimestampProviderTests;
 
 public class TimestampProviderTests : TestsBase
 {

@@ -1,11 +1,6 @@
-﻿using System;
-using AutoFixture;
-using FluentAssertions;
-using LfrlAnvil.Extensions;
+﻿using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.Attributes;
-using Xunit;
 
 namespace LfrlAnvil.Tests.ExtensionsTests.ArithmeticTests;
 

@@ -1,8 +1,4 @@
-﻿using System;
-using AutoFixture;
-using Xunit;
-
-namespace LfrlAnvil.Chrono.Tests.ExtensionsTests.TimeZoneInfoTests;
+﻿namespace LfrlAnvil.Chrono.Tests.ExtensionsTests.TimeZoneInfoTests;
 
 public class TransitionTimeExtensionsTestsData
 {

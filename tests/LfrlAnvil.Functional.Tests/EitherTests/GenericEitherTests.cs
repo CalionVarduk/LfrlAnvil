@@ -1,14 +1,8 @@
-﻿using System;
-using AutoFixture;
-using FluentAssertions;
-using FluentAssertions.Execution;
+﻿using FluentAssertions.Execution;
 using LfrlAnvil.Functional.Exceptions;
-using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.Attributes;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
-using NSubstitute;
-using Xunit;
 
 namespace LfrlAnvil.Functional.Tests.EitherTests;
 

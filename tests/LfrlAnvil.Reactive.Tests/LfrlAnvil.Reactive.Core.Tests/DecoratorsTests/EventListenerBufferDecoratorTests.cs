@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using FluentAssertions;
+﻿using System.Collections.Generic;
 using FluentAssertions.Execution;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Decorators;
 using LfrlAnvil.Reactive.Extensions;
-using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
-using NSubstitute;
-using Xunit;
 
 namespace LfrlAnvil.Reactive.Tests.DecoratorsTests;
 

@@ -1,7 +1,4 @@
-﻿using AutoFixture;
-using Xunit;
-
-namespace LfrlAnvil.Tests.BitmaskTests;
+﻿namespace LfrlAnvil.Tests.BitmaskTests;
 
 public class BitmaskOfUInt32Tests : GenericBitmaskTests<uint>
 {

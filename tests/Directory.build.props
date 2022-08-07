@@ -7,6 +7,15 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Using Include="System"/>
+        <Using Include="AutoFixture"/>
+        <Using Include="FluentAssertions"/>
+        <Using Include="LfrlAnvil.TestExtensions"/>
+        <Using Include="NSubstitute"/>
+        <Using Include="Xunit"/>
+    </ItemGroup>
+    
+    <ItemGroup>
         <PackageReference Include="AutoFixture" Version="4.17.0" />
         <PackageReference Include="FluentAssertions" Version="5.10.3" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />

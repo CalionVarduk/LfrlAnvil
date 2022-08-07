@@ -1,9 +1,5 @@
-﻿using AutoFixture;
-using FluentAssertions;
-using LfrlAnvil.Extensions;
-using LfrlAnvil.TestExtensions;
+﻿using LfrlAnvil.Extensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
-using Xunit;
 
 namespace LfrlAnvil.Tests.ExtensionsTests.PairTests;
 

@@ -1,8 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using AutoFixture;
-using LfrlAnvil.TestExtensions;
-using Xunit;
 
 namespace LfrlAnvil.Tests.ExtensionsTests.ListTests;
 

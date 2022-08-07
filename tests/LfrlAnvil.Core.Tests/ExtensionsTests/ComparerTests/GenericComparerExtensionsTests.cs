@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using FluentAssertions;
+﻿using System.Collections.Generic;
 using FluentAssertions.Execution;
 using LfrlAnvil.Extensions;
-using LfrlAnvil.TestExtensions;
-using Xunit;
 
 namespace LfrlAnvil.Tests.ExtensionsTests.ComparerTests;
 

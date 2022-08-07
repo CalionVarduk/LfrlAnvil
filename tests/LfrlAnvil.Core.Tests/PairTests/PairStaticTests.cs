@@ -1,8 +1,4 @@
-﻿using System;
-using FluentAssertions;
-using Xunit;
-
-namespace LfrlAnvil.Tests.PairTests;
+﻿namespace LfrlAnvil.Tests.PairTests;
 
 public class PairStaticTests
 {

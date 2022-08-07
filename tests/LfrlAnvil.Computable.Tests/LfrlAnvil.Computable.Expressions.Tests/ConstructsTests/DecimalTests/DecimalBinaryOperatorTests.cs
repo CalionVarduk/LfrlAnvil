@@ -1,11 +1,6 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Linq.Expressions;
-using AutoFixture;
-using FluentAssertions;
 using LfrlAnvil.Computable.Expressions.Constructs.Decimal;
-using LfrlAnvil.TestExtensions;
-using Xunit;
 
 namespace LfrlAnvil.Computable.Expressions.Tests.ConstructsTests.DecimalTests;
 

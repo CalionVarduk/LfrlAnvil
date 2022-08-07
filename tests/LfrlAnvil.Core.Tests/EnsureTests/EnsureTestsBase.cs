@@ -1,8 +1,4 @@
-﻿using System;
-using FluentAssertions;
-using LfrlAnvil.TestExtensions;
-
-namespace LfrlAnvil.Tests.EnsureTests;
+﻿namespace LfrlAnvil.Tests.EnsureTests;
 
 public abstract class EnsureTestsBase : TestsBase
 {

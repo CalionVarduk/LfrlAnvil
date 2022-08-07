@@ -1,9 +1,5 @@
 ﻿using System.Collections.Generic;
-using AutoFixture;
-using FluentAssertions;
-using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.Attributes;
-using Xunit;
 
 namespace LfrlAnvil.Tests.EqualityTests;
 

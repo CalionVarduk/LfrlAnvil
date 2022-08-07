@@ -1,6 +1,4 @@
-﻿using Xunit;
-
-namespace LfrlAnvil.Tests.EnsureTests;
+﻿namespace LfrlAnvil.Tests.EnsureTests;
 
 public class EnsureTypelessTests : EnsureTestsBase
 {

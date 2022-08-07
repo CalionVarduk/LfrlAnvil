@@ -1,8 +1,4 @@
-﻿using System;
-using FluentAssertions;
-using Xunit;
-
-namespace LfrlAnvil.Tests.ManyTests;
+﻿namespace LfrlAnvil.Tests.ManyTests;
 
 public class ManyStaticTests
 {

@@ -1,7 +1,4 @@
-﻿using LfrlAnvil.TestExtensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
-using NSubstitute;
-using Xunit;
+﻿using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.DecoratedEventListenerTests;
 

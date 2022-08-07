@@ -1,16 +1,11 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using AutoFixture;
-using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Exceptions;
 using LfrlAnvil.Reactive.Extensions;
 using LfrlAnvil.Reactive.Internal;
-using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
-using NSubstitute;
-using Xunit;
 
 namespace LfrlAnvil.Reactive.Tests.ConcurrentEventSourceTests;
 

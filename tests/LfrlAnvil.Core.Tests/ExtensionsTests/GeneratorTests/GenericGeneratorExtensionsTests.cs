@@ -1,13 +1,8 @@
-﻿using System;
-using System.Linq;
-using FluentAssertions;
+﻿using System.Linq;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Generators;
-using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
-using NSubstitute;
 using NSubstitute.Core;
-using Xunit;
 
 namespace LfrlAnvil.Tests.ExtensionsTests.GeneratorTests;
 

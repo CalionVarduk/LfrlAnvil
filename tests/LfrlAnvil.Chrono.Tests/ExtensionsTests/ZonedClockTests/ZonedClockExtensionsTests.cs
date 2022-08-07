@@ -1,12 +1,6 @@
-﻿using System;
-using System.Linq;
-using AutoFixture;
-using FluentAssertions;
+﻿using System.Linq;
 using FluentAssertions.Execution;
 using LfrlAnvil.Chrono.Extensions;
-using LfrlAnvil.TestExtensions;
-using NSubstitute;
-using Xunit;
 
 namespace LfrlAnvil.Chrono.Tests.ExtensionsTests.ZonedClockTests;
 

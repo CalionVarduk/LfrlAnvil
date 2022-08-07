@@ -1,8 +1,4 @@
-﻿using System;
-using AutoFixture;
-using Xunit;
-
-namespace LfrlAnvil.Chrono.Tests.ExtensionsTests.DateTimeTests;
+﻿namespace LfrlAnvil.Chrono.Tests.ExtensionsTests.DateTimeTests;
 
 public class DateTimeExtensionsTestsData
 {

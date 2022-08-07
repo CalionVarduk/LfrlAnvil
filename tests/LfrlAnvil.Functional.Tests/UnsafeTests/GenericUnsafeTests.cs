@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using AutoFixture;
-using FluentAssertions;
+﻿using System.Collections.Generic;
 using FluentAssertions.Execution;
 using LfrlAnvil.Functional.Exceptions;
-using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.Attributes;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
-using NSubstitute;
-using Xunit;
 
 namespace LfrlAnvil.Functional.Tests.UnsafeTests;
 

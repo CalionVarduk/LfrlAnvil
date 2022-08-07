@@ -1,10 +1,5 @@
-﻿using System;
-using AutoFixture;
-using FluentAssertions;
-using FluentAssertions.Execution;
-using LfrlAnvil.TestExtensions;
+﻿using FluentAssertions.Execution;
 using LfrlAnvil.TestExtensions.Attributes;
-using Xunit;
 
 namespace LfrlAnvil.Identifiers.Tests.IdentifierTests;
 

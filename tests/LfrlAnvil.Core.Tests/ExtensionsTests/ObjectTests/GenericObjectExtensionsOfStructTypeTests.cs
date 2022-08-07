@@ -1,8 +1,4 @@
-﻿using System;
-using AutoFixture;
-using FluentAssertions;
-using LfrlAnvil.Extensions;
-using Xunit;
+﻿using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Tests.ExtensionsTests.ObjectTests;
 

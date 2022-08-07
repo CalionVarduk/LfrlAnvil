@@ -1,10 +1,5 @@
-﻿using System;
-using AutoFixture;
-using FluentAssertions;
-using LfrlAnvil.Functional;
+﻿using LfrlAnvil.Functional;
 using LfrlAnvil.Generators;
-using LfrlAnvil.TestExtensions;
-using Xunit;
 using DoubleSequenceGenerator = LfrlAnvil.Generators.DoubleSequenceGenerator;
 
 namespace LfrlAnvil.Tests.GeneratorsTests.DoubleSequenceGeneratorTests;

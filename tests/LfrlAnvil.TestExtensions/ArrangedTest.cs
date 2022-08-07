@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace LfrlAnvil.TestExtensions;
+﻿namespace LfrlAnvil.TestExtensions;
 
 public sealed class ArrangedTest<T>
 {

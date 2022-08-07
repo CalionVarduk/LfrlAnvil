@@ -1,6 +1,4 @@
-﻿using System;
-using FluentAssertions;
-using FluentAssertions.Primitives;
+﻿using FluentAssertions.Primitives;
 using FluentAssertions.Specialized;
 
 namespace LfrlAnvil.TestExtensions.FluentAssertions;

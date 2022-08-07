@@ -1,15 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using AutoFixture;
-using FluentAssertions;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Reactive.Chrono.Composites;
 using LfrlAnvil.Reactive.Chrono.Decorators;
 using LfrlAnvil.Reactive.Chrono.Extensions;
-using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
-using NSubstitute;
-using Xunit;
 
 namespace LfrlAnvil.Reactive.Chrono.Tests.DecoratorsTests;
 

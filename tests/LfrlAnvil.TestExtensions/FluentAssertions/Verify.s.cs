@@ -1,7 +1,4 @@
-﻿using System;
-using FluentAssertions;
-using NSubstitute;
-using NSubstitute.Exceptions;
+﻿using NSubstitute.Exceptions;
 
 namespace LfrlAnvil.TestExtensions.FluentAssertions;
 

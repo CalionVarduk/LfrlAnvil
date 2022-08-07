@@ -1,4 +1,5 @@
 ﻿using LfrlAnvil.Generators;
+using DecimalSequenceGenerator = LfrlAnvil.Generators.DecimalSequenceGenerator;
 
 namespace LfrlAnvil.Tests.GeneratorsTests.DecimalSequenceGeneratorTests;
 

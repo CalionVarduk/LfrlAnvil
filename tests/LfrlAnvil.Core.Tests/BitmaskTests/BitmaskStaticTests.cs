@@ -1,7 +1,4 @@
-﻿using System;
-using FluentAssertions;
-using LfrlAnvil.Functional;
-using Xunit;
+﻿using LfrlAnvil.Functional;
 
 namespace LfrlAnvil.Tests.BitmaskTests;
 

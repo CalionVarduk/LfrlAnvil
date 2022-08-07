@@ -1,18 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AutoFixture;
-using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Chrono.Composites;
-using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
-using NSubstitute;
-using Xunit;
 
 namespace LfrlAnvil.Reactive.Chrono.Tests.ReactiveTimerTests;
 

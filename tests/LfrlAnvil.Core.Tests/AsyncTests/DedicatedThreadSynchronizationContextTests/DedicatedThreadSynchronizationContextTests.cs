@@ -1,11 +1,7 @@
 ﻿using System.Globalization;
 using System.Threading;
-using AutoFixture;
-using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlAnvil.Async;
-using LfrlAnvil.TestExtensions;
-using Xunit;
 
 namespace LfrlAnvil.Tests.AsyncTests.DedicatedThreadSynchronizationContextTests;
 

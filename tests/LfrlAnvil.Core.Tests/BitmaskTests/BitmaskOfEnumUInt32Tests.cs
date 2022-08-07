@@ -1,5 +1,4 @@
 ﻿using LfrlAnvil.TestExtensions.Attributes;
-using Xunit;
 
 namespace LfrlAnvil.Tests.BitmaskTests;
 

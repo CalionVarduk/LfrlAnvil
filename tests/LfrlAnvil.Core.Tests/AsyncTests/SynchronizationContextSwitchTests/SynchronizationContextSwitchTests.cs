@@ -1,9 +1,6 @@
 ﻿using System.Threading;
-using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlAnvil.Async;
-using LfrlAnvil.TestExtensions;
-using Xunit;
 
 namespace LfrlAnvil.Tests.AsyncTests.SynchronizationContextSwitchTests;
 

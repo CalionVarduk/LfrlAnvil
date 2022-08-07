@@ -1,8 +1,4 @@
-﻿using System;
-using FluentAssertions;
-using Xunit;
-
-namespace LfrlAnvil.Tests.RefTests;
+﻿namespace LfrlAnvil.Tests.RefTests;
 
 public class RefStaticTests
 {

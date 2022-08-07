@@ -1,8 +1,4 @@
-﻿using System;
-using FluentAssertions;
-using Xunit;
-
-namespace LfrlAnvil.Tests.EqualityTests;
+﻿namespace LfrlAnvil.Tests.EqualityTests;
 
 public class EqualityStaticTests
 {

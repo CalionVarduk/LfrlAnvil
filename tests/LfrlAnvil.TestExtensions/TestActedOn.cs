@@ -1,5 +1,4 @@
-﻿using System;
-using FluentAssertions.Execution;
+﻿using FluentAssertions.Execution;
 
 namespace LfrlAnvil.TestExtensions;
 

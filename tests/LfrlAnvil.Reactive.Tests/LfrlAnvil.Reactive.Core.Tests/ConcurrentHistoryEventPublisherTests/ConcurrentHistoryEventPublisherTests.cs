@@ -1,12 +1,9 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using FluentAssertions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Extensions;
 using LfrlAnvil.Reactive.Internal;
-using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
-using Xunit;
 
 namespace LfrlAnvil.Reactive.Tests.ConcurrentHistoryEventPublisherTests;
 

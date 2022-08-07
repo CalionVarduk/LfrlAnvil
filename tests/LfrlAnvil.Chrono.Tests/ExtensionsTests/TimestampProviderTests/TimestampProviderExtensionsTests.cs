@@ -1,10 +1,6 @@
 ﻿using System.Linq;
-using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlAnvil.Chrono.Extensions;
-using LfrlAnvil.TestExtensions;
-using NSubstitute;
-using Xunit;
 
 namespace LfrlAnvil.Chrono.Tests.ExtensionsTests.TimestampProviderTests;
 

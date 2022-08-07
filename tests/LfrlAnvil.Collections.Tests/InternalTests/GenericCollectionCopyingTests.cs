@@ -1,9 +1,6 @@
 ﻿using System.Linq;
-using FluentAssertions;
 using LfrlAnvil.Collections.Internal;
-using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
-using Xunit;
 
 namespace LfrlAnvil.Collections.Tests.InternalTests;
 

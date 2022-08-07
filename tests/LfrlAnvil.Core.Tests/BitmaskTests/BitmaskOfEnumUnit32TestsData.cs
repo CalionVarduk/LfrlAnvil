@@ -1,8 +1,4 @@
-﻿using System;
-using AutoFixture;
-using Xunit;
-
-namespace LfrlAnvil.Tests.BitmaskTests;
+﻿namespace LfrlAnvil.Tests.BitmaskTests;
 
 [Flags]
 public enum TestEnumUInt32 : uint

@@ -1,6 +1,4 @@
-﻿using FluentAssertions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
-using Xunit;
+﻿using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.BoundsRangeTests;
 

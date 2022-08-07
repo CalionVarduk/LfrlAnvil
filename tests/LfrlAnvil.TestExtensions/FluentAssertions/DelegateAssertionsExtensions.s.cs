@@ -1,8 +1,6 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions.Specialized;
-using NSubstitute;
 
 namespace LfrlAnvil.TestExtensions.FluentAssertions;
 

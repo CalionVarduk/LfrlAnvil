@@ -1,7 +1,4 @@
-﻿using LfrlAnvil.TestExtensions;
-using Xunit;
-
-namespace LfrlAnvil.Tests.EnsureTests;
+﻿namespace LfrlAnvil.Tests.EnsureTests;
 
 public class EnsureOfStringTests : GenericEnsureOfRefTypeTests<string>
 {

@@ -1,10 +1,5 @@
-﻿using System;
-using AutoFixture;
-using FluentAssertions;
-using FluentAssertions.Execution;
+﻿using FluentAssertions.Execution;
 using LfrlAnvil.Functional.Extensions;
-using LfrlAnvil.TestExtensions;
-using Xunit;
 
 namespace LfrlAnvil.Functional.Tests.ExtensionsTests.ObjectTests;
 

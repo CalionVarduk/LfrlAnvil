@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using AutoFixture;
+﻿using System.Collections.Generic;
 using LfrlAnvil.Computable.Expressions.Internal;
-using Xunit;
 
 namespace LfrlAnvil.Computable.Expressions.Tests.ExpressionTokenizerTests;
 

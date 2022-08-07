@@ -1,9 +1,6 @@
 ﻿using System.Threading;
-using FluentAssertions;
 using LfrlAnvil.Async;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions;
-using Xunit;
 
 namespace LfrlAnvil.Tests.AsyncTests.DisposableLockTests;
 

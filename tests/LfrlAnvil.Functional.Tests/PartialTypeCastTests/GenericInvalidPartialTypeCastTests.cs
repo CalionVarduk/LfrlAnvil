@@ -1,7 +1,4 @@
-﻿using AutoFixture;
-using FluentAssertions;
-using FluentAssertions.Execution;
-using Xunit;
+﻿using FluentAssertions.Execution;
 
 namespace LfrlAnvil.Functional.Tests.PartialTypeCastTests;
 

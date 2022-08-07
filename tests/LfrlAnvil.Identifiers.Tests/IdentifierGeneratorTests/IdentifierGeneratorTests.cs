@@ -1,17 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Generators;
 using LfrlAnvil.Identifiers.Exceptions;
-using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.Attributes;
 using LfrlAnvil.TestExtensions.NSubstitute;
-using NSubstitute;
-using Xunit;
 
 namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests;
 

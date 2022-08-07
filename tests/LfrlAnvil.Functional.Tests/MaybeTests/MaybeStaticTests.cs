@@ -1,9 +1,4 @@
-﻿using System;
-using FluentAssertions;
-using LfrlAnvil.TestExtensions;
-using Xunit;
-
-namespace LfrlAnvil.Functional.Tests.MaybeTests;
+﻿namespace LfrlAnvil.Functional.Tests.MaybeTests;
 
 public class MaybeStaticTests : TestsBase
 {

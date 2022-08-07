@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using AutoFixture;
-using Xunit;
+﻿using System.Collections.Generic;
 
 namespace LfrlAnvil.Chrono.Tests.ExtensionsTests.BoundsRangeTests;
 

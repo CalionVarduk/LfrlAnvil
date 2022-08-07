@@ -1,8 +1,4 @@
-﻿using System;
-using AutoFixture;
-using Xunit;
-
-namespace LfrlAnvil.Tests.EnsureTests;
+﻿namespace LfrlAnvil.Tests.EnsureTests;
 
 public abstract class GenericEnsureOfStructTypeTests<T> : GenericEnsureOfComparableTypeTests<T>
     where T : struct, IEquatable<T>, IComparable<T>

@@ -1,9 +1,4 @@
-﻿using System;
-using FluentAssertions;
-using LfrlAnvil.TestExtensions;
-using Xunit;
-
-namespace LfrlAnvil.Tests.ChainTests;
+﻿namespace LfrlAnvil.Tests.ChainTests;
 
 public class ChainStaticTests : TestsBase
 {

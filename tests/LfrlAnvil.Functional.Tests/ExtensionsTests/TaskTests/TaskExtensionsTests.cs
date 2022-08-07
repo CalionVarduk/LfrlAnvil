@@ -1,12 +1,7 @@
-﻿using System;
-using System.Threading.Tasks;
-using FluentAssertions;
+﻿using System.Threading.Tasks;
 using FluentAssertions.Execution;
 using LfrlAnvil.Functional.Extensions;
-using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
-using NSubstitute;
-using Xunit;
 
 namespace LfrlAnvil.Functional.Tests.ExtensionsTests.TaskTests;
 

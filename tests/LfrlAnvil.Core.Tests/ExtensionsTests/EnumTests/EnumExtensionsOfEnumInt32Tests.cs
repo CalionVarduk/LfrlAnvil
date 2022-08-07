@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace LfrlAnvil.Tests.ExtensionsTests.EnumTests;
+﻿namespace LfrlAnvil.Tests.ExtensionsTests.EnumTests;
 
 public class EnumExtensionsOfEnumInt32Tests : GenericEnumExtensionsTests<TestEnumInt32> { }
 

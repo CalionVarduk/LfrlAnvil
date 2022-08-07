@@ -1,9 +1,4 @@
-﻿using System;
-using FluentAssertions;
-using LfrlAnvil.TestExtensions;
-using Xunit;
-
-namespace LfrlAnvil.Functional.Tests.EitherTests;
+﻿namespace LfrlAnvil.Functional.Tests.EitherTests;
 
 public class EitherStaticTests : TestsBase
 {

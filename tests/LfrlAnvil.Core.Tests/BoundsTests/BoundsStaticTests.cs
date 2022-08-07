@@ -1,8 +1,4 @@
-﻿using System;
-using FluentAssertions;
-using Xunit;
-
-namespace LfrlAnvil.Tests.BoundsTests;
+﻿namespace LfrlAnvil.Tests.BoundsTests;
 
 public class BoundsStaticTests
 {

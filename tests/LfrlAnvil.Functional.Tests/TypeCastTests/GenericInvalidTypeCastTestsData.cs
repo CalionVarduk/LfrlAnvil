@@ -1,7 +1,4 @@
 ﻿using System.Collections.Generic;
-using AutoFixture;
-using LfrlAnvil.TestExtensions;
-using Xunit;
 
 namespace LfrlAnvil.Functional.Tests.TypeCastTests;
 

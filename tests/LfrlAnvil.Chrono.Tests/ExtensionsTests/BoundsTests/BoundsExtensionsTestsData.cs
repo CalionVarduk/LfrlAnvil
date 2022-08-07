@@ -1,8 +1,4 @@
-﻿using System;
-using AutoFixture;
-using Xunit;
-
-namespace LfrlAnvil.Chrono.Tests.ExtensionsTests.BoundsTests;
+﻿namespace LfrlAnvil.Chrono.Tests.ExtensionsTests.BoundsTests;
 
 public class BoundsExtensionsTestsData
 {

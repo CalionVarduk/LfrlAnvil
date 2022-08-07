@@ -1,10 +1,6 @@
 ﻿using System.Collections.Generic;
-using AutoFixture;
-using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlAnvil.Functional.Extensions;
-using LfrlAnvil.TestExtensions;
-using Xunit;
 
 namespace LfrlAnvil.Functional.Tests.ExtensionsTests.DictionaryTests;
 

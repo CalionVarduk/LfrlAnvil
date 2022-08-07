@@ -1,8 +1,5 @@
-﻿using System;
-using System.Linq;
-using FluentAssertions;
+﻿using System.Linq;
 using FluentAssertions.Primitives;
-using NSubstitute;
 using NSubstitute.Core;
 
 namespace LfrlAnvil.TestExtensions.FluentAssertions;

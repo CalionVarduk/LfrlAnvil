@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace LfrlAnvil.TestExtensions.FluentAssertions;
+﻿namespace LfrlAnvil.TestExtensions.FluentAssertions;
 
 public static class DelegateExtensions
 {

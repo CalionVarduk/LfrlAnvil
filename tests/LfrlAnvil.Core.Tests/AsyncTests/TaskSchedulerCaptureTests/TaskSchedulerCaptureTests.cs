@@ -1,11 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using FluentAssertions;
 using FluentAssertions.Execution;
 using LfrlAnvil.Async;
-using LfrlAnvil.TestExtensions;
-using NSubstitute;
-using Xunit;
 
 namespace LfrlAnvil.Tests.AsyncTests.TaskSchedulerCaptureTests;
 

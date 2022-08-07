@@ -1,7 +1,4 @@
-﻿using System;
-using FluentAssertions;
-using LfrlAnvil.Functional.Extensions;
-using Xunit;
+﻿using LfrlAnvil.Functional.Extensions;
 
 namespace LfrlAnvil.Functional.Tests.ExtensionsTests.ObjectTests;
 

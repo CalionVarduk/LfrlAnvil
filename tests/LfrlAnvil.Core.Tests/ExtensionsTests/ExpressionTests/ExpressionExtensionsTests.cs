@@ -1,12 +1,7 @@
-﻿using System;
-using System.Linq.Expressions;
-using AutoFixture;
-using FluentAssertions;
+﻿using System.Linq.Expressions;
 using FluentAssertions.Execution;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions;
-using Xunit;
 
 namespace LfrlAnvil.Tests.ExtensionsTests.ExpressionTests;
 

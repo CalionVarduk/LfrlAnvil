@@ -1,9 +1,4 @@
-﻿using System;
-using FluentAssertions;
-using LfrlAnvil.TestExtensions;
-using Xunit;
-
-namespace LfrlAnvil.Functional.Tests.TypeCastTests;
+﻿namespace LfrlAnvil.Functional.Tests.TypeCastTests;
 
 public class TypeCastStaticTests : TestsBase
 {

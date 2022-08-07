@@ -1,8 +1,4 @@
-﻿using System;
-using FluentAssertions;
-using Xunit;
-
-namespace LfrlAnvil.Functional.Tests.MaybeTests;
+﻿namespace LfrlAnvil.Functional.Tests.MaybeTests;
 
 public abstract class GenericMaybeOfRefTypeTests<T> : GenericMaybeTests<T>
     where T : class

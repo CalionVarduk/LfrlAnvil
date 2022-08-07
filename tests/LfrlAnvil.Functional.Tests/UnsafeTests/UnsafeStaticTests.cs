@@ -1,9 +1,4 @@
-﻿using System;
-using FluentAssertions;
-using LfrlAnvil.TestExtensions;
-using Xunit;
-
-namespace LfrlAnvil.Functional.Tests.UnsafeTests;
+﻿namespace LfrlAnvil.Functional.Tests.UnsafeTests;
 
 public class UnsafeStaticTests : TestsBase
 {

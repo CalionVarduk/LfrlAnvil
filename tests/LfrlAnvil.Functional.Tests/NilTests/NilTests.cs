@@ -1,8 +1,4 @@
-﻿using FluentAssertions;
-using LfrlAnvil.TestExtensions;
-using Xunit;
-
-namespace LfrlAnvil.Functional.Tests.NilTests;
+﻿namespace LfrlAnvil.Functional.Tests.NilTests;
 
 public class NilTests : TestsBase
 {

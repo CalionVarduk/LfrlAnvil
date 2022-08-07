@@ -1,8 +1,5 @@
-﻿using System;
-using System.Linq.Expressions;
-using AutoFixture;
+﻿using System.Linq.Expressions;
 using LfrlAnvil.Computable.Expressions.Constructs;
-using Xunit;
 
 namespace LfrlAnvil.Computable.Expressions.Tests.ConstructsTests;
 

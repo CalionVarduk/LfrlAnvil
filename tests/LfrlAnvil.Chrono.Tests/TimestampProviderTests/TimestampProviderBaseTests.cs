@@ -1,11 +1,6 @@
-﻿using AutoFixture;
-using FluentAssertions;
-using FluentAssertions.Execution;
+﻿using FluentAssertions.Execution;
 using LfrlAnvil.Chrono.Internal;
 using LfrlAnvil.Generators;
-using LfrlAnvil.TestExtensions;
-using NSubstitute;
-using Xunit;
 
 namespace LfrlAnvil.Chrono.Tests.TimestampProviderTests;
 

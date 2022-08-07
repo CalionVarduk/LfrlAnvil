@@ -1,9 +1,4 @@
-﻿using System;
-using AutoFixture;
-using FluentAssertions;
-using LfrlAnvil.Extensions;
-using LfrlAnvil.TestExtensions;
-using Xunit;
+﻿using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Tests.ExtensionsTests.EnumTests;
 

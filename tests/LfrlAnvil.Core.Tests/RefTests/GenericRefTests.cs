@@ -1,9 +1,4 @@
-﻿using AutoFixture;
-using FluentAssertions;
-using LfrlAnvil.TestExtensions;
-using Xunit;
-
-namespace LfrlAnvil.Tests.RefTests;
+﻿namespace LfrlAnvil.Tests.RefTests;
 
 public abstract class GenericRefTests<T> : TestsBase
     where T : struct

@@ -1,9 +1,4 @@
-﻿using AutoFixture;
-using FluentAssertions;
-using LfrlAnvil.TestExtensions;
-using Xunit;
-
-namespace LfrlAnvil.Functional.Tests.PartialTypeCastTests;
+﻿namespace LfrlAnvil.Functional.Tests.PartialTypeCastTests;
 
 public abstract class GenericPartialTypeCastTests<TSource> : TestsBase
 {

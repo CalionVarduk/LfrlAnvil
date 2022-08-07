@@ -1,14 +1,8 @@
-﻿using System;
-using System.Linq;
-using AutoFixture;
-using FluentAssertions;
+﻿using System.Linq;
 using FluentAssertions.Execution;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Exceptions;
-using LfrlAnvil.TestExtensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
-using NSubstitute;
-using Xunit;
 
 namespace LfrlAnvil.Reactive.Tests.EventPublisherTests;
 

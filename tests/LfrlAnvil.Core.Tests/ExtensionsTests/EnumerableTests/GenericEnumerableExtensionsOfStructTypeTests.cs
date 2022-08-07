@@ -1,10 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using AutoFixture;
-using FluentAssertions;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
-using Xunit;
 
 namespace LfrlAnvil.Tests.ExtensionsTests.EnumerableTests;
 

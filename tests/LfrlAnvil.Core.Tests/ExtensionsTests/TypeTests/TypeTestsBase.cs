@@ -1,6 +1,4 @@
-﻿using LfrlAnvil.TestExtensions;
-
-namespace LfrlAnvil.Tests.ExtensionsTests.TypeTests;
+﻿namespace LfrlAnvil.Tests.ExtensionsTests.TypeTests;
 
 public abstract class TypeTestsBase : TestsBase
 {

@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using AutoFixture;
-using FluentAssertions;
+﻿using System.Collections.Generic;
 using FluentAssertions.Execution;
-using LfrlAnvil.TestExtensions;
-using Xunit;
 
 namespace LfrlAnvil.Collections.Tests;
 

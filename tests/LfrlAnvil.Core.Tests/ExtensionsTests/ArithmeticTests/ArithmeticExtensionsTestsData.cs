@@ -1,6 +1,4 @@
 ﻿using System.Collections.Generic;
-using AutoFixture;
-using Xunit;
 
 namespace LfrlAnvil.Tests.ExtensionsTests.ArithmeticTests;
 
