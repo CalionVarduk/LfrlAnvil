@@ -48,9 +48,8 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
     {
         var sut = new ParsedExpressionToStringTypeConverter();
         var operand = CreateConstantOperand( (object?)null );
-        var stack = CreateStack( operand );
 
-        var action = Lambda.Of( () => sut.Process( stack ) );
+        var action = Lambda.Of( () => sut.Process( operand ) );
 
         action.Should().ThrowExactly<ArgumentNullException>();
     }

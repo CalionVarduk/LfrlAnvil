@@ -245,7 +245,7 @@ internal static class Resources
     internal static string InvalidExpressionArguments(Chain<ReadOnlyMemory<char>> argumentNames)
     {
         var headerText = $"Expression doesn't contain following arguments:{Environment.NewLine}";
-        var allArgumentsText = argumentNames.Select( (n, i) => $"{i + 1}. {n}" );
+        var allArgumentsText = string.Join( Environment.NewLine, argumentNames.Select( (n, i) => $"{i + 1}. {n}" ) );
         return $"{headerText}{allArgumentsText}";
     }
 

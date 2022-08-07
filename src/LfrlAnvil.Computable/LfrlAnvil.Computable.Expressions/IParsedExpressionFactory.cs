@@ -36,7 +36,7 @@ public interface IParsedExpressionFactory
 
     [Pure]
     bool IsFunctionSymbol(ReadOnlyMemory<char> symbol);
-    
+
     [Pure]
     bool IsConstantSymbol(string symbol);
 

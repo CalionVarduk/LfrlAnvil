@@ -14,17 +14,11 @@ public abstract class TypeConvertersTestsBase : ConstructsTestsBase
         ExpressionType expectedNodeType = ExpressionType.Convert)
     {
         var operand = CreateVariableOperand<TSourceArg>( "value" );
-        var stack = CreateStack( operand );
 
-        sut.Process( stack );
+        var result = sut.Process( operand );
 
         using ( new AssertionScope() )
         {
-            stack.Count.Should().Be( 1 );
-            if ( stack.Count == 0 )
-                return;
-
-            var result = stack[0];
             result.NodeType.Should().Be( expectedNodeType );
             result.Type.Should().Be( typeof( TResult ) );
             nodeAssertion( operand, result );
@@ -38,17 +32,11 @@ public abstract class TypeConvertersTestsBase : ConstructsTestsBase
         ExpressionType expectedNodeType = ExpressionType.Convert)
     {
         var operand = CreateConstantOperand( operandValue );
-        var stack = CreateStack( operand );
 
-        sut.Process( stack );
+        var result = sut.Process( operand );
 
         using ( new AssertionScope() )
         {
-            stack.Count.Should().Be( 1 );
-            if ( stack.Count == 0 )
-                return;
-
-            var result = stack[0];
             result.NodeType.Should().Be( expectedNodeType );
             result.Type.Should().Be( typeof( TResult ) );
             nodeAssertion( operand, result );
@@ -61,10 +49,7 @@ public abstract class TypeConvertersTestsBase : ConstructsTestsBase
         where TException : Exception
     {
         var operand = CreateVariableOperand<TSourceArg>( "value" );
-        var stack = CreateStack( operand );
-
-        var action = Lambda.Of( () => sut.Process( stack ) );
-
+        var action = Lambda.Of( () => sut.Process( operand ) );
         action.Should().ThrowExactly<TException>().AndMatch( matcher ?? (_ => true) );
     }
 

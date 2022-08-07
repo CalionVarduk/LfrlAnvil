@@ -105,7 +105,7 @@ public class ParsedExpressionBuilderError
     [Pure]
     internal static ParsedExpressionBuilderError CreateConstructHasThrownException(
         IntermediateToken token,
-        IParsedExpressionConstruct construct,
+        object construct,
         Exception exception)
     {
         return new ParsedExpressionBuilderConstructError(
@@ -113,17 +113,6 @@ public class ParsedExpressionBuilderError
             construct,
             token.Symbol,
             exception );
-    }
-
-    [Pure]
-    internal static ParsedExpressionBuilderError CreateConstructConsumedInvalidAmountOfOperands(
-        IntermediateToken token,
-        IParsedExpressionConstruct construct)
-    {
-        return new ParsedExpressionBuilderConstructError(
-            ParsedExpressionBuilderErrorType.ConstructConsumedInvalidAmountOfOperands,
-            construct,
-            token.Symbol );
     }
 
     [Pure]

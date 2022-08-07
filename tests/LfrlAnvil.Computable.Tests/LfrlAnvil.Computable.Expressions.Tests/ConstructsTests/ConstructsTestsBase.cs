@@ -1,19 +1,9 @@
 ﻿using System.Linq.Expressions;
-using LfrlAnvil.Computable.Expressions.Internal;
 
 namespace LfrlAnvil.Computable.Expressions.Tests.ConstructsTests;
 
 public abstract class ConstructsTestsBase : TestsBase
 {
-    protected static ParsedExpressionOperandStack CreateStack(params Expression[] operands)
-    {
-        var stack = new ParsedExpressionOperandStack();
-        foreach ( var o in operands )
-            stack.Push( o );
-
-        return stack;
-    }
-
     protected static Expression CreateConstantOperand<T>(T value)
     {
         return Expression.Constant( value, typeof( T ) );

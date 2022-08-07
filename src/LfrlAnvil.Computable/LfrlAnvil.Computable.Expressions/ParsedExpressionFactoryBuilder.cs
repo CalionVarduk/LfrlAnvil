@@ -10,14 +10,14 @@ namespace LfrlAnvil.Computable.Expressions;
 
 public sealed class ParsedExpressionFactoryBuilder
 {
-    private readonly List<(StringSlice Symbol, ConstructType Type, object Object)> _objects;
+    private readonly List<(StringSlice Symbol, ConstructType Type, object Construct)> _constructs;
     private readonly Dictionary<(StringSlice Symbol, ConstructType Type), int> _precedences;
     private IParsedExpressionFactoryConfiguration? _configuration;
     private Func<ParsedExpressionNumberParserParams, IParsedExpressionNumberParser>? _numberParserProvider;
 
     public ParsedExpressionFactoryBuilder()
     {
-        _objects = new List<(StringSlice, ConstructType, object)>();
+        _constructs = new List<(StringSlice, ConstructType, object)>();
         _precedences = new Dictionary<(StringSlice, ConstructType), int>();
         _configuration = null;
         _numberParserProvider = null;
@@ -50,73 +50,73 @@ public sealed class ParsedExpressionFactoryBuilder
 
     public ParsedExpressionFactoryBuilder AddBinaryOperator(string symbol, ParsedExpressionBinaryOperator @operator)
     {
-        _objects.Add( (StringSlice.Create( symbol ), ConstructType.BinaryOperator, @operator) );
+        _constructs.Add( (StringSlice.Create( symbol ), ConstructType.BinaryOperator, @operator) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddBinaryOperator(ReadOnlyMemory<char> symbol, ParsedExpressionBinaryOperator @operator)
     {
-        _objects.Add( (StringSlice.Create( symbol ), ConstructType.BinaryOperator, @operator) );
+        _constructs.Add( (StringSlice.Create( symbol ), ConstructType.BinaryOperator, @operator) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddPrefixUnaryOperator(string symbol, ParsedExpressionUnaryOperator @operator)
     {
-        _objects.Add( (StringSlice.Create( symbol ), ConstructType.PrefixUnaryConstruct, @operator) );
+        _constructs.Add( (StringSlice.Create( symbol ), ConstructType.PrefixUnaryConstruct, @operator) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddPrefixUnaryOperator(ReadOnlyMemory<char> symbol, ParsedExpressionUnaryOperator @operator)
     {
-        _objects.Add( (StringSlice.Create( symbol ), ConstructType.PrefixUnaryConstruct, @operator) );
+        _constructs.Add( (StringSlice.Create( symbol ), ConstructType.PrefixUnaryConstruct, @operator) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddPostfixUnaryOperator(string symbol, ParsedExpressionUnaryOperator @operator)
     {
-        _objects.Add( (StringSlice.Create( symbol ), ConstructType.PostfixUnaryConstruct, @operator) );
+        _constructs.Add( (StringSlice.Create( symbol ), ConstructType.PostfixUnaryConstruct, @operator) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddPostfixUnaryOperator(ReadOnlyMemory<char> symbol, ParsedExpressionUnaryOperator @operator)
     {
-        _objects.Add( (StringSlice.Create( symbol ), ConstructType.PostfixUnaryConstruct, @operator) );
+        _constructs.Add( (StringSlice.Create( symbol ), ConstructType.PostfixUnaryConstruct, @operator) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddPrefixTypeConverter(string symbol, ParsedExpressionTypeConverter converter)
     {
-        _objects.Add( (StringSlice.Create( symbol ), ConstructType.PrefixUnaryConstruct, converter) );
+        _constructs.Add( (StringSlice.Create( symbol ), ConstructType.PrefixUnaryConstruct, converter) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddPrefixTypeConverter(ReadOnlyMemory<char> symbol, ParsedExpressionTypeConverter converter)
     {
-        _objects.Add( (StringSlice.Create( symbol ), ConstructType.PrefixUnaryConstruct, converter) );
+        _constructs.Add( (StringSlice.Create( symbol ), ConstructType.PrefixUnaryConstruct, converter) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddPostfixTypeConverter(string symbol, ParsedExpressionTypeConverter converter)
     {
-        _objects.Add( (StringSlice.Create( symbol ), ConstructType.PostfixUnaryConstruct, converter) );
+        _constructs.Add( (StringSlice.Create( symbol ), ConstructType.PostfixUnaryConstruct, converter) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddPostfixTypeConverter(ReadOnlyMemory<char> symbol, ParsedExpressionTypeConverter converter)
     {
-        _objects.Add( (StringSlice.Create( symbol ), ConstructType.PostfixUnaryConstruct, converter) );
+        _constructs.Add( (StringSlice.Create( symbol ), ConstructType.PostfixUnaryConstruct, converter) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddConstant(string symbol, ParsedExpressionConstant constant)
     {
-        _objects.Add( (StringSlice.Create( symbol ), ConstructType.Constant, constant) );
+        _constructs.Add( (StringSlice.Create( symbol ), ConstructType.Constant, constant) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddConstant(ReadOnlyMemory<char> symbol, ParsedExpressionConstant constant)
     {
-        _objects.Add( (StringSlice.Create( symbol ), ConstructType.Constant, constant) );
+        _constructs.Add( (StringSlice.Create( symbol ), ConstructType.Constant, constant) );
         return this;
     }
 
@@ -169,19 +169,9 @@ public sealed class ParsedExpressionFactoryBuilder
     }
 
     [Pure]
-    public IEnumerable<KeyValuePair<ReadOnlyMemory<char>, IParsedExpressionConstruct>> GetCurrentConstructs()
+    public IEnumerable<KeyValuePair<ReadOnlyMemory<char>, object>> GetCurrentConstructs()
     {
-        return _objects
-            .Where( x => x.Object is IParsedExpressionConstruct )
-            .Select( x => KeyValuePair.Create( x.Symbol.AsMemory(), (IParsedExpressionConstruct)x.Object ) );
-    }
-
-    [Pure]
-    public IEnumerable<KeyValuePair<ReadOnlyMemory<char>, ParsedExpressionConstant>> GetCurrentConstants()
-    {
-        return _objects
-            .Where( x => x.Object is ParsedExpressionConstant )
-            .Select( x => KeyValuePair.Create( x.Symbol.AsMemory(), (ParsedExpressionConstant)x.Object ) );
+        return _constructs.Select( x => KeyValuePair.Create( x.Symbol.AsMemory(), x.Construct ) );
     }
 
     [Pure]
@@ -223,14 +213,14 @@ public sealed class ParsedExpressionFactoryBuilder
             _configuration ?? new ParsedExpressionFactoryDefaultConfiguration() );
 
         var errorMessages = configuration.Validate();
-        var symbolGroups = _objects.GroupBy( c => c.Symbol );
+        var symbolGroups = _constructs.GroupBy( c => c.Symbol );
 
         foreach ( var g in symbolGroups )
         {
             if ( ! TokenValidation.IsValidConstructSymbol( g.Key, configuration.StringDelimiter ) )
                 errorMessages = errorMessages.Extend( Resources.InvalidConstructSymbol( g.Key ) );
 
-            var firstConstruct = g.First().Object;
+            var firstConstruct = g.First().Construct;
 
             var definition = firstConstruct switch
             {

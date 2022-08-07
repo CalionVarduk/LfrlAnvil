@@ -1,20 +1,16 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Computable.Expressions.Internal;
 using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs;
 
-public abstract class ParsedExpressionUnaryOperator : IParsedExpressionConstruct
+public abstract class ParsedExpressionUnaryOperator
 {
-    public void Process(ParsedExpressionOperandStack operandStack)
+    internal Expression Process(Expression operand)
     {
-        Assume.IsNotEmpty( operandStack, nameof( operandStack ) );
-
-        var operand = operandStack.Pop();
         var result = CreateResult( operand );
-        operandStack.Push( result );
+        return result;
     }
 
     protected virtual Expression? TryCreateFromConstant(ConstantExpression operand)

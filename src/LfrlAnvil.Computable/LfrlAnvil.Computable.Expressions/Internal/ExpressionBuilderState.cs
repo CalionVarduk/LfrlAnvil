@@ -16,7 +16,7 @@ namespace LfrlAnvil.Computable.Expressions.Internal;
 internal sealed class ExpressionBuilderState
 {
     private readonly ExpressionTokenStack _tokenStack;
-    private readonly ParsedExpressionOperandStack _operandStack;
+    private readonly ExpressionOperandStack _operandStack;
     private readonly Dictionary<StringSlice, int> _argumentIndexes;
     private readonly List<Expression> _argumentAccessExpressions;
     private readonly ParameterExpression _parameterExpression;
@@ -35,7 +35,7 @@ internal sealed class ExpressionBuilderState
         IParsedExpressionNumberParser numberParser)
     {
         _tokenStack = new ExpressionTokenStack();
-        _operandStack = new ParsedExpressionOperandStack();
+        _operandStack = new ExpressionOperandStack();
         _argumentIndexes = argumentIndexes;
         _argumentAccessExpressions = argumentAccessExpressions;
         _parameterExpression = parameterExpression;
@@ -549,18 +549,6 @@ internal sealed class ExpressionBuilderState
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private Chain<ParsedExpressionBuilderError> ProcessUnaryOperator(IntermediateToken token, ParsedExpressionUnaryOperator @operator)
-    {
-        return ProcessConstruct( token, @operator, expectedOperandCount: 1 );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private Chain<ParsedExpressionBuilderError> ProcessTypeConverter(IntermediateToken token, ParsedExpressionTypeConverter converter)
-    {
-        return ProcessConstruct( token, converter, expectedOperandCount: 1 );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Chain<ParsedExpressionBuilderError> ProcessBinaryOperator(IntermediateToken token)
     {
         Assume.ContainsAtLeast( _operandStack, 2, nameof( _operandStack ) );
@@ -576,51 +564,83 @@ internal sealed class ExpressionBuilderState
             : ProcessBinaryOperator( token, binaryOperator );
     }
 
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private Chain<ParsedExpressionBuilderError> ProcessBinaryOperator(IntermediateToken token, ParsedExpressionBinaryOperator @operator)
+    private Chain<ParsedExpressionBuilderError> ProcessUnaryOperator(IntermediateToken token, ParsedExpressionUnaryOperator @operator)
     {
-        return ProcessConstruct( token, @operator, expectedOperandCount: 2 );
-    }
+        Assume.IsNotEmpty( _operandStack, nameof( _operandStack ) );
 
-    private Chain<ParsedExpressionBuilderError> ProcessConstruct(
-        IntermediateToken token,
-        IParsedExpressionConstruct construct,
-        int expectedOperandCount)
-    {
-        Assume.ContainsAtLeast( _operandStack, expectedOperandCount, nameof( _operandStack ) );
-        var operandCount = _operandStack.Count;
+        var operand = _operandStack.Pop();
+        Expression result;
 
         try
         {
-            construct.Process( _operandStack );
+            result = @operator.Process( operand );
         }
         catch ( Exception exc )
         {
-            return Chain.Create( ParsedExpressionBuilderError.CreateConstructHasThrownException( token, construct, exc ) );
+            return Chain.Create( ParsedExpressionBuilderError.CreateConstructHasThrownException( token, @operator, exc ) );
         }
 
-        // TODO: this cannot really happen, since no known construct type allows to override Process method
-        // maybe functions will somehow be able to cause this error
-        var consumedOperandsCount = operandCount - _operandStack.Count;
-        return consumedOperandsCount == expectedOperandCount - 1
-            ? Chain<ParsedExpressionBuilderError>.Empty
-            : Chain.Create( ParsedExpressionBuilderError.CreateConstructConsumedInvalidAmountOfOperands( token, construct ) );
+        _operandStack.Push( result );
+        return Chain<ParsedExpressionBuilderError>.Empty;
+    }
+
+    private Chain<ParsedExpressionBuilderError> ProcessTypeConverter(IntermediateToken token, ParsedExpressionTypeConverter converter)
+    {
+        Assume.IsNotEmpty( _operandStack, nameof( _operandStack ) );
+
+        var operand = _operandStack.Pop();
+        Expression result;
+
+        try
+        {
+            result = converter.Process( operand );
+        }
+        catch ( Exception exc )
+        {
+            return Chain.Create( ParsedExpressionBuilderError.CreateConstructHasThrownException( token, converter, exc ) );
+        }
+
+        _operandStack.Push( result );
+        return Chain<ParsedExpressionBuilderError>.Empty;
+    }
+
+    private Chain<ParsedExpressionBuilderError> ProcessBinaryOperator(IntermediateToken token, ParsedExpressionBinaryOperator @operator)
+    {
+        Assume.ContainsAtLeast( _operandStack, 2, nameof( _operandStack ) );
+
+        var rightOperand = _operandStack.Pop();
+        var leftOperand = _operandStack.Pop();
+        Expression result;
+
+        try
+        {
+            result = @operator.Process( leftOperand, rightOperand );
+        }
+        catch ( Exception exc )
+        {
+            return Chain.Create( ParsedExpressionBuilderError.CreateConstructHasThrownException( token, @operator, exc ) );
+        }
+
+        _operandStack.Push( result );
+        return Chain<ParsedExpressionBuilderError>.Empty;
     }
 
     private Chain<ParsedExpressionBuilderError> ProcessOutputTypeConverter(ParsedExpressionTypeConverter converter, Expression rawBody)
     {
         Assume.IsEmpty( _operandStack, nameof( _operandStack ) );
-        _operandStack.Push( rawBody );
+
+        Expression result;
 
         try
         {
-            converter.Process( _operandStack );
+            result = converter.Process( rawBody );
         }
         catch ( Exception exc )
         {
             return Chain.Create( ParsedExpressionBuilderError.CreateOutputTypeConverterHasThrownException( converter, exc ) );
         }
 
+        _operandStack.Push( result );
         return Chain<ParsedExpressionBuilderError>.Empty;
     }
 

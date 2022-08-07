@@ -3,12 +3,11 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Computable.Expressions.Exceptions;
-using LfrlAnvil.Computable.Expressions.Internal;
 using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs;
 
-public class ParsedExpressionTypeConverter : IParsedExpressionConstruct
+public class ParsedExpressionTypeConverter
 {
     public ParsedExpressionTypeConverter(Type targetType, Type? sourceType = null)
     {
@@ -19,11 +18,8 @@ public class ParsedExpressionTypeConverter : IParsedExpressionConstruct
     public Type TargetType { get; }
     public Type? SourceType { get; }
 
-    public void Process(ParsedExpressionOperandStack operandStack)
+    internal Expression Process(Expression operand)
     {
-        Assume.IsNotEmpty( operandStack, nameof( operandStack ) );
-
-        var operand = operandStack.Pop();
         var result = CreateResult( operand );
 
         if ( result.Type != TargetType )
@@ -36,7 +32,7 @@ public class ParsedExpressionTypeConverter : IParsedExpressionConstruct
             result = Expression.Convert( result, TargetType );
         }
 
-        operandStack.Push( result );
+        return result;
     }
 
     protected virtual Expression? TryCreateFromConstant(ConstantExpression operand)

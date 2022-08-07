@@ -14,17 +14,11 @@ public abstract class BinaryOperatorsTestsBase : ConstructsTestsBase
     {
         var left = CreateVariableOperand<TLeftArg>( "left" );
         var right = CreateVariableOperand<TRightArg>( "right" );
-        var stack = CreateStack( left, right );
 
-        sut.Process( stack );
+        var result = sut.Process( left, right );
 
         using ( new AssertionScope() )
         {
-            stack.Count.Should().Be( 1 );
-            if ( stack.Count == 0 )
-                return;
-
-            var result = stack[0];
             result.NodeType.Should().Be( expectedNodeType );
             result.Type.Should().Be( typeof( TResult ) );
             nodeAssertion( left, right, result );
@@ -40,17 +34,11 @@ public abstract class BinaryOperatorsTestsBase : ConstructsTestsBase
     {
         var left = CreateConstantOperand( leftValue );
         var right = CreateConstantOperand( rightValue );
-        var stack = CreateStack( left, right );
 
-        sut.Process( stack );
+        var result = sut.Process( left, right );
 
         using ( new AssertionScope() )
         {
-            stack.Count.Should().Be( 1 );
-            if ( stack.Count == 0 )
-                return;
-
-            var result = stack[0];
             result.NodeType.Should().Be( expectedNodeType );
             result.Type.Should().Be( typeof( TResult ) );
             nodeAssertion( left, right, result );
@@ -65,17 +53,11 @@ public abstract class BinaryOperatorsTestsBase : ConstructsTestsBase
     {
         var left = CreateConstantOperand( leftValue );
         var right = CreateVariableOperand<TRightArg>( "right" );
-        var stack = CreateStack( left, right );
 
-        sut.Process( stack );
+        var result = sut.Process( left, right );
 
         using ( new AssertionScope() )
         {
-            stack.Count.Should().Be( 1 );
-            if ( stack.Count == 0 )
-                return;
-
-            var result = stack[0];
             result.NodeType.Should().Be( expectedNodeType );
             result.Type.Should().Be( typeof( TResult ) );
             nodeAssertion( left, right, result );
@@ -90,17 +72,11 @@ public abstract class BinaryOperatorsTestsBase : ConstructsTestsBase
     {
         var left = CreateVariableOperand<TLeftArg>( "left" );
         var right = CreateConstantOperand( rightValue );
-        var stack = CreateStack( left, right );
 
-        sut.Process( stack );
+        var result = sut.Process( left, right );
 
         using ( new AssertionScope() )
         {
-            stack.Count.Should().Be( 1 );
-            if ( stack.Count == 0 )
-                return;
-
-            var result = stack[0];
             result.NodeType.Should().Be( expectedNodeType );
             result.Type.Should().Be( typeof( TResult ) );
             nodeAssertion( left, right, result );
@@ -113,9 +89,8 @@ public abstract class BinaryOperatorsTestsBase : ConstructsTestsBase
     {
         var left = CreateVariableOperand<TLeftArg>( "left" );
         var right = CreateVariableOperand<TRightArg>( "right" );
-        var stack = CreateStack( left, right );
 
-        var action = Lambda.Of( () => sut.Process( stack ) );
+        var action = Lambda.Of( () => sut.Process( left, right ) );
 
         action.Should().ThrowExactly<TException>();
     }
@@ -127,9 +102,8 @@ public abstract class BinaryOperatorsTestsBase : ConstructsTestsBase
     {
         var left = CreateVariableOperand<TLeftArg>( "left" );
         var right = CreateConstantOperand( rightValue );
-        var stack = CreateStack( left, right );
 
-        var action = Lambda.Of( () => sut.Process( stack ) );
+        var action = Lambda.Of( () => sut.Process( left, right ) );
 
         action.Should().ThrowExactly<TException>();
     }

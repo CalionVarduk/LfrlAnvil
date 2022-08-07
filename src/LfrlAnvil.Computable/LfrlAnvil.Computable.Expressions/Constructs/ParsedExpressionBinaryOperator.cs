@@ -1,21 +1,16 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Computable.Expressions.Internal;
 using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs;
 
-public abstract class ParsedExpressionBinaryOperator : IParsedExpressionConstruct
+public abstract class ParsedExpressionBinaryOperator
 {
-    public void Process(ParsedExpressionOperandStack operandStack)
+    internal Expression Process(Expression leftOperand, Expression rightOperand)
     {
-        Assume.ContainsAtLeast( operandStack, 2, nameof( operandStack ) );
-
-        var rightOperand = operandStack.Pop();
-        var leftOperand = operandStack.Pop();
         var result = CreateResult( leftOperand, rightOperand );
-        operandStack.Push( result );
+        return result;
     }
 
     protected virtual Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)

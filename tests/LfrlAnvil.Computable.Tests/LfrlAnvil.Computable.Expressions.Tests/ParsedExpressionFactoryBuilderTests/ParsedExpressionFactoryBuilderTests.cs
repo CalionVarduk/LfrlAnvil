@@ -22,7 +22,6 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             sut.GetCurrentConfiguration().Should().BeNull();
             sut.GetCurrentNumberParserProvider().Should().BeNull();
             sut.GetCurrentConstructs().Should().BeEmpty();
-            sut.GetCurrentConstants().Should().BeEmpty();
         }
     }
 
@@ -282,7 +281,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            var entry = sut.GetCurrentConstants().Should().HaveCount( 1 ).And.Subject.First();
+            var entry = sut.GetCurrentConstructs().Should().HaveCount( 1 ).And.Subject.First();
             entry.Key.ToString().Should().Be( symbol );
             entry.Value.Should().BeSameAs( constant );
             result.Should().BeSameAs( sut );
@@ -300,7 +299,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            var entry = sut.GetCurrentConstants().Should().HaveCount( 1 ).And.Subject.First();
+            var entry = sut.GetCurrentConstructs().Should().HaveCount( 1 ).And.Subject.First();
             entry.Key.ToString().Should().Be( symbol );
             entry.Value.Should().BeSameAs( constant );
             result.Should().BeSameAs( sut );

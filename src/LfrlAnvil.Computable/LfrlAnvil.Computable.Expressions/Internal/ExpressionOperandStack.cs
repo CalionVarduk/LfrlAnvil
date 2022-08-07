@@ -6,11 +6,11 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
 
-public sealed class ParsedExpressionOperandStack : IReadOnlyList<Expression>
+internal sealed class ExpressionOperandStack : IReadOnlyList<Expression>
 {
     private readonly List<Expression> _expressions;
 
-    internal ParsedExpressionOperandStack()
+    internal ExpressionOperandStack()
     {
         _expressions = new List<Expression>();
     }
