@@ -307,6 +307,40 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     }
 
     [Fact]
+    public void AddTypeDeclaration_WithString_ShouldAddNewTypeDeclaration()
+    {
+        var symbol = Fixture.Create<string>();
+        var sut = new ParsedExpressionFactoryBuilder();
+
+        var result = sut.AddTypeDeclaration<int>( symbol );
+
+        using ( new AssertionScope() )
+        {
+            var entry = sut.GetCurrentConstructs().Should().HaveCount( 1 ).And.Subject.First();
+            entry.Key.ToString().Should().Be( symbol );
+            entry.Value.Should().BeSameAs( typeof( int ) );
+            result.Should().BeSameAs( sut );
+        }
+    }
+
+    [Fact]
+    public void AddTypeDeclaration_WithMemory_ShouldAddNewTypeDeclaration()
+    {
+        var symbol = Fixture.Create<string>();
+        var sut = new ParsedExpressionFactoryBuilder();
+
+        var result = sut.AddTypeDeclaration<int>( symbol.AsMemory() );
+
+        using ( new AssertionScope() )
+        {
+            var entry = sut.GetCurrentConstructs().Should().HaveCount( 1 ).And.Subject.First();
+            entry.Key.ToString().Should().Be( symbol );
+            entry.Value.Should().BeSameAs( typeof( int ) );
+            result.Should().BeSameAs( sut );
+        }
+    }
+
+    [Fact]
     public void SetBinaryOperatorPrecedence_WithString_ShouldRegisterPrecedence()
     {
         var symbol = Fixture.Create<string>();
@@ -436,6 +470,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.IsTypeConverterSymbol( nonExistingSymbol.AsMemory() ).Should().BeFalse();
             result.IsConstantSymbol( nonExistingSymbol ).Should().BeFalse();
             result.IsConstantSymbol( nonExistingSymbol.AsMemory() ).Should().BeFalse();
+            result.IsTypeDeclarationSymbol( nonExistingSymbol ).Should().BeFalse();
+            result.IsTypeDeclarationSymbol( nonExistingSymbol.AsMemory() ).Should().BeFalse();
             result.GetBinaryOperatorPrecedence( nonExistingSymbol ).Should().BeNull();
             result.GetBinaryOperatorPrecedence( nonExistingSymbol.AsMemory() ).Should().BeNull();
             result.GetPrefixUnaryConstructPrecedence( nonExistingSymbol ).Should().BeNull();
@@ -470,6 +506,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.IsTypeConverterSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.IsConstantSymbol( symbol ).Should().BeFalse();
             result.IsConstantSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsTypeDeclarationSymbol( symbol ).Should().BeFalse();
+            result.IsTypeDeclarationSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.GetBinaryOperatorPrecedence( symbol ).Should().Be( precedence );
             result.GetBinaryOperatorPrecedence( symbol.AsMemory() ).Should().Be( precedence );
             result.GetPrefixUnaryConstructPrecedence( symbol ).Should().BeNull();
@@ -504,6 +542,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.IsTypeConverterSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.IsConstantSymbol( symbol ).Should().BeFalse();
             result.IsConstantSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsTypeDeclarationSymbol( symbol ).Should().BeFalse();
+            result.IsTypeDeclarationSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.GetBinaryOperatorPrecedence( symbol ).Should().Be( precedence );
             result.GetBinaryOperatorPrecedence( symbol.AsMemory() ).Should().Be( precedence );
             result.GetPrefixUnaryConstructPrecedence( symbol ).Should().BeNull();
@@ -538,6 +578,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.IsTypeConverterSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.IsConstantSymbol( symbol ).Should().BeFalse();
             result.IsConstantSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsTypeDeclarationSymbol( symbol ).Should().BeFalse();
+            result.IsTypeDeclarationSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.GetBinaryOperatorPrecedence( symbol ).Should().BeNull();
             result.GetBinaryOperatorPrecedence( symbol.AsMemory() ).Should().BeNull();
             result.GetPrefixUnaryConstructPrecedence( symbol ).Should().Be( precedence );
@@ -572,6 +614,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.IsTypeConverterSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.IsConstantSymbol( symbol ).Should().BeFalse();
             result.IsConstantSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsTypeDeclarationSymbol( symbol ).Should().BeFalse();
+            result.IsTypeDeclarationSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.GetBinaryOperatorPrecedence( symbol ).Should().BeNull();
             result.GetBinaryOperatorPrecedence( symbol.AsMemory() ).Should().BeNull();
             result.GetPrefixUnaryConstructPrecedence( symbol ).Should().Be( precedence );
@@ -606,6 +650,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.IsTypeConverterSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.IsConstantSymbol( symbol ).Should().BeFalse();
             result.IsConstantSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsTypeDeclarationSymbol( symbol ).Should().BeFalse();
+            result.IsTypeDeclarationSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.GetBinaryOperatorPrecedence( symbol ).Should().BeNull();
             result.GetBinaryOperatorPrecedence( symbol.AsMemory() ).Should().BeNull();
             result.GetPrefixUnaryConstructPrecedence( symbol ).Should().BeNull();
@@ -640,6 +686,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.IsTypeConverterSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.IsConstantSymbol( symbol ).Should().BeFalse();
             result.IsConstantSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsTypeDeclarationSymbol( symbol ).Should().BeFalse();
+            result.IsTypeDeclarationSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.GetBinaryOperatorPrecedence( symbol ).Should().BeNull();
             result.GetBinaryOperatorPrecedence( symbol.AsMemory() ).Should().BeNull();
             result.GetPrefixUnaryConstructPrecedence( symbol ).Should().BeNull();
@@ -674,6 +722,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.IsTypeConverterSymbol( symbol.AsMemory() ).Should().BeTrue();
             result.IsConstantSymbol( symbol ).Should().BeFalse();
             result.IsConstantSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsTypeDeclarationSymbol( symbol ).Should().BeFalse();
+            result.IsTypeDeclarationSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.GetBinaryOperatorPrecedence( symbol ).Should().BeNull();
             result.GetBinaryOperatorPrecedence( symbol.AsMemory() ).Should().BeNull();
             result.GetPrefixUnaryConstructPrecedence( symbol ).Should().Be( precedence );
@@ -708,6 +758,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.IsTypeConverterSymbol( symbol.AsMemory() ).Should().BeTrue();
             result.IsConstantSymbol( symbol ).Should().BeFalse();
             result.IsConstantSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsTypeDeclarationSymbol( symbol ).Should().BeFalse();
+            result.IsTypeDeclarationSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.GetBinaryOperatorPrecedence( symbol ).Should().BeNull();
             result.GetBinaryOperatorPrecedence( symbol.AsMemory() ).Should().BeNull();
             result.GetPrefixUnaryConstructPrecedence( symbol ).Should().Be( precedence );
@@ -742,6 +794,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.IsTypeConverterSymbol( symbol.AsMemory() ).Should().BeTrue();
             result.IsConstantSymbol( symbol ).Should().BeFalse();
             result.IsConstantSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsTypeDeclarationSymbol( symbol ).Should().BeFalse();
+            result.IsTypeDeclarationSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.GetBinaryOperatorPrecedence( symbol ).Should().BeNull();
             result.GetBinaryOperatorPrecedence( symbol.AsMemory() ).Should().BeNull();
             result.GetPrefixUnaryConstructPrecedence( symbol ).Should().BeNull();
@@ -776,6 +830,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.IsTypeConverterSymbol( symbol.AsMemory() ).Should().BeTrue();
             result.IsConstantSymbol( symbol ).Should().BeFalse();
             result.IsConstantSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsTypeDeclarationSymbol( symbol ).Should().BeFalse();
+            result.IsTypeDeclarationSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.GetBinaryOperatorPrecedence( symbol ).Should().BeNull();
             result.GetBinaryOperatorPrecedence( symbol.AsMemory() ).Should().BeNull();
             result.GetPrefixUnaryConstructPrecedence( symbol ).Should().BeNull();
@@ -808,6 +864,41 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.IsTypeConverterSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.IsConstantSymbol( symbol ).Should().BeTrue();
             result.IsConstantSymbol( symbol.AsMemory() ).Should().BeTrue();
+            result.IsTypeDeclarationSymbol( symbol ).Should().BeFalse();
+            result.IsTypeDeclarationSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.GetBinaryOperatorPrecedence( symbol ).Should().BeNull();
+            result.GetBinaryOperatorPrecedence( symbol.AsMemory() ).Should().BeNull();
+            result.GetPrefixUnaryConstructPrecedence( symbol ).Should().BeNull();
+            result.GetPrefixUnaryConstructPrecedence( symbol.AsMemory() ).Should().BeNull();
+            result.GetPostfixUnaryConstructPrecedence( symbol ).Should().BeNull();
+            result.GetPostfixUnaryConstructPrecedence( symbol.AsMemory() ).Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void Build_ShouldReturnValidFactory_WhenBuilderHasOneTypeDeclaration()
+    {
+        var symbol = $"_{Fixture.Create<string>()}";
+        var sut = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<int>( symbol );
+
+        var result = sut.Build();
+
+        using ( new AssertionScope() )
+        {
+            result.GetConstructSymbols().Select( s => s.ToString() ).Should().BeSequentiallyEqualTo( symbol );
+            result.ContainsConstructSymbol( symbol ).Should().BeTrue();
+            result.ContainsConstructSymbol( symbol.AsMemory() ).Should().BeTrue();
+            result.IsFunctionSymbol( symbol ).Should().BeFalse();
+            result.IsFunctionSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsOperatorSymbol( symbol ).Should().BeFalse();
+            result.IsOperatorSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsTypeConverterSymbol( symbol ).Should().BeFalse();
+            result.IsTypeConverterSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsConstantSymbol( symbol ).Should().BeFalse();
+            result.IsConstantSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsTypeDeclarationSymbol( symbol ).Should().BeTrue();
+            result.IsTypeDeclarationSymbol( symbol.AsMemory() ).Should().BeTrue();
             result.GetBinaryOperatorPrecedence( symbol ).Should().BeNull();
             result.GetBinaryOperatorPrecedence( symbol.AsMemory() ).Should().BeNull();
             result.GetPrefixUnaryConstructPrecedence( symbol ).Should().BeNull();
@@ -820,8 +911,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     [Fact]
     public void Build_ShouldReturnValidFactory_WhenBuilderHasOneOfEachConstructsWithPrecedence()
     {
-        var (operatorSymbol, typeConverterSymbol, constantSymbol) =
-            Fixture.CreateDistinctCollection<string>( count: 3 ).Select( s => $"_{s}" ).ToList();
+        var (operatorSymbol, typeConverterSymbol, constantSymbol, typeDeclarationSymbol) =
+            Fixture.CreateDistinctCollection<string>( count: 4 ).Select( s => $"_{s}" ).ToList();
 
         var precedence = Fixture.Create<int>();
         var sut = new ParsedExpressionFactoryBuilder()
@@ -836,6 +927,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             .AddPostfixTypeConverter( typeConverterSymbol, new ParsedExpressionTypeConverter<int>() )
             .AddPostfixTypeConverter( typeConverterSymbol, new ParsedExpressionTypeConverter<int, long>() )
             .AddConstant( constantSymbol, new ParsedExpressionConstant<int>( Fixture.Create<int>() ) )
+            .AddTypeDeclaration<int>( typeDeclarationSymbol )
             .SetBinaryOperatorPrecedence( operatorSymbol, precedence )
             .SetPrefixUnaryConstructPrecedence( operatorSymbol, precedence )
             .SetPostfixUnaryConstructPrecedence( operatorSymbol, precedence )
@@ -847,7 +939,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
         result.GetConstructSymbols()
             .Select( s => s.ToString() )
             .Should()
-            .BeEquivalentTo( operatorSymbol, typeConverterSymbol, constantSymbol );
+            .BeEquivalentTo( operatorSymbol, typeConverterSymbol, constantSymbol, typeDeclarationSymbol );
     }
 
     [Theory]
@@ -1173,6 +1265,31 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder()
             .AddConstant( "e", new ParsedExpressionConstant<int>( Fixture.Create<int>() ) )
+            .AddBinaryOperator( "e", new ParsedExpressionAddOperator() )
+            .SetBinaryOperatorPrecedence( "e", 1 );
+
+        var action = Lambda.Of( () => sut.Build() );
+
+        action.Should().ThrowExactly<ParsedExpressionFactoryBuilderException>();
+    }
+
+    [Fact]
+    public void Build_ShouldThrowMathExpressionFactoryBuilderException_WhenTypeDeclarationDefinitionContainsMoreThanOneTypeDeclaration()
+    {
+        var sut = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<int>( "e" )
+            .AddTypeDeclaration<long>( "e" );
+
+        var action = Lambda.Of( () => sut.Build() );
+
+        action.Should().ThrowExactly<ParsedExpressionFactoryBuilderException>();
+    }
+
+    [Fact]
+    public void Build_ShouldThrowMathExpressionFactoryBuilderException_WhenTypeDeclarationDefinitionContainsNonTypeDeclarationConstruct()
+    {
+        var sut = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<int>( "e" )
             .AddBinaryOperator( "e", new ParsedExpressionAddOperator() )
             .SetBinaryOperatorPrecedence( "e", 1 );
 

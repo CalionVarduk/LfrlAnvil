@@ -1,4 +1,7 @@
-﻿using System.Diagnostics.Contracts;
+﻿using System;
+using System.Diagnostics.Contracts;
+using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 using LfrlAnvil.Computable.Expressions.Constructs;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
@@ -12,6 +15,7 @@ internal sealed class ConstructTokenDefinition
         TypeConverterCollection prefixTypeConverters,
         TypeConverterCollection postfixTypeConverters,
         ParsedExpressionConstant? constant,
+        Type? typeDeclaration,
         ConstructTokenType type)
     {
         BinaryOperators = binaryOperators;
@@ -19,7 +23,8 @@ internal sealed class ConstructTokenDefinition
         PostfixUnaryOperators = postfixUnaryOperators;
         PrefixTypeConverters = prefixTypeConverters;
         PostfixTypeConverters = postfixTypeConverters;
-        Constant = constant;
+        Constant = constant?.Expression;
+        TypeDeclaration = typeDeclaration;
         Type = type;
     }
 
@@ -28,8 +33,16 @@ internal sealed class ConstructTokenDefinition
     internal UnaryOperatorCollection PostfixUnaryOperators { get; }
     internal TypeConverterCollection PrefixTypeConverters { get; }
     internal TypeConverterCollection PostfixTypeConverters { get; }
-    internal ParsedExpressionConstant? Constant { get; }
+    internal ConstantExpression? Constant { get; }
+    internal Type? TypeDeclaration { get; }
     internal ConstructTokenType Type { get; }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool IsAny(ConstructTokenType type)
+    {
+        return (Type & type) != ConstructTokenType.None;
+    }
 
     [Pure]
     internal static ConstructTokenDefinition CreateOperator(
@@ -37,6 +50,17 @@ internal sealed class ConstructTokenDefinition
         UnaryOperatorCollection prefixUnary,
         UnaryOperatorCollection postfixUnary)
     {
+        var type = ConstructTokenType.None;
+
+        if ( ! binary.IsEmpty )
+            type |= ConstructTokenType.BinaryOperator;
+
+        if ( ! prefixUnary.IsEmpty )
+            type |= ConstructTokenType.PrefixUnaryOperator;
+
+        if ( ! postfixUnary.IsEmpty )
+            type |= ConstructTokenType.PostfixUnaryOperator;
+
         return new ConstructTokenDefinition(
             binary,
             prefixUnary,
@@ -44,7 +68,8 @@ internal sealed class ConstructTokenDefinition
             TypeConverterCollection.Empty,
             TypeConverterCollection.Empty,
             constant: null,
-            ConstructTokenType.Operator );
+            typeDeclaration: null,
+            type );
     }
 
     [Pure]
@@ -52,6 +77,14 @@ internal sealed class ConstructTokenDefinition
         TypeConverterCollection prefix,
         TypeConverterCollection postfix)
     {
+        var type = ConstructTokenType.None;
+
+        if ( ! prefix.IsEmpty )
+            type |= ConstructTokenType.PrefixTypeConverter;
+
+        if ( ! postfix.IsEmpty )
+            type |= ConstructTokenType.PostfixTypeConverter;
+
         return new ConstructTokenDefinition(
             BinaryOperatorCollection.Empty,
             UnaryOperatorCollection.Empty,
@@ -59,7 +92,8 @@ internal sealed class ConstructTokenDefinition
             prefix,
             postfix,
             constant: null,
-            ConstructTokenType.TypeConverter );
+            typeDeclaration: null,
+            type );
     }
 
     [Pure]
@@ -72,6 +106,21 @@ internal sealed class ConstructTokenDefinition
             TypeConverterCollection.Empty,
             TypeConverterCollection.Empty,
             constant,
+            typeDeclaration: null,
             ConstructTokenType.Constant );
+    }
+
+    [Pure]
+    internal static ConstructTokenDefinition CreateTypeDeclaration(Type? type)
+    {
+        return new ConstructTokenDefinition(
+            BinaryOperatorCollection.Empty,
+            UnaryOperatorCollection.Empty,
+            UnaryOperatorCollection.Empty,
+            TypeConverterCollection.Empty,
+            TypeConverterCollection.Empty,
+            constant: null,
+            typeDeclaration: type,
+            ConstructTokenType.TypeDeclaration );
     }
 }

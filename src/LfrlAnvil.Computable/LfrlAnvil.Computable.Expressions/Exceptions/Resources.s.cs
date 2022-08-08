@@ -142,25 +142,25 @@ internal static class Resources
     internal static string FoundDuplicateTypedUnaryOperator(
         StringSlice symbol,
         ParsedExpressionTypedUnaryOperator @operator,
-        ParsedExpressionFactoryBuilder.ConstructType type)
+        ConstructTokenType type)
     {
-        var typeText = type == ParsedExpressionFactoryBuilder.ConstructType.PrefixUnaryConstruct ? "prefix" : "postfix";
+        var typeText = (type & ConstructTokenType.PrefixUnaryConstruct) != ConstructTokenType.None ? "prefix" : "postfix";
         return $"Found duplicate {typeText} unary operator for symbol '{symbol}' (argument type: {@operator.ArgumentType.FullName}).";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FoundDuplicateGenericUnaryOperator(StringSlice symbol, ParsedExpressionFactoryBuilder.ConstructType type)
+    internal static string FoundDuplicateGenericUnaryOperator(StringSlice symbol, ConstructTokenType type)
     {
-        var typeText = type == ParsedExpressionFactoryBuilder.ConstructType.PrefixUnaryConstruct ? "prefix" : "postfix";
+        var typeText = (type & ConstructTokenType.PrefixUnaryConstruct) != ConstructTokenType.None ? "prefix" : "postfix";
         return $"Found duplicate generic {typeText} unary operator for symbol '{symbol}'.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string UndefinedUnaryOperatorPrecedence(StringSlice symbol, ParsedExpressionFactoryBuilder.ConstructType type)
+    internal static string UndefinedUnaryOperatorPrecedence(StringSlice symbol, ConstructTokenType type)
     {
-        var typeText = type == ParsedExpressionFactoryBuilder.ConstructType.PrefixUnaryConstruct ? "Prefix" : "Postfix";
+        var typeText = (type & ConstructTokenType.PrefixUnaryConstruct) != ConstructTokenType.None ? "Prefix" : "Postfix";
         return $"{typeText} unary operator precedence for symbol '{symbol}' is undefined.";
     }
 
@@ -176,25 +176,25 @@ internal static class Resources
     internal static string FoundDuplicateTypedTypeConverter(
         StringSlice symbol,
         ParsedExpressionTypeConverter converter,
-        ParsedExpressionFactoryBuilder.ConstructType type)
+        ConstructTokenType type)
     {
-        var typeText = type == ParsedExpressionFactoryBuilder.ConstructType.PrefixUnaryConstruct ? "prefix" : "postfix";
+        var typeText = (type & ConstructTokenType.PrefixUnaryConstruct) != ConstructTokenType.None ? "prefix" : "postfix";
         return $"Found duplicate {typeText} type converter for symbol '{symbol}' (source type: {converter.SourceType!.FullName}).";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FoundDuplicateGenericTypeConverter(StringSlice symbol, ParsedExpressionFactoryBuilder.ConstructType type)
+    internal static string FoundDuplicateGenericTypeConverter(StringSlice symbol, ConstructTokenType type)
     {
-        var typeText = type == ParsedExpressionFactoryBuilder.ConstructType.PrefixUnaryConstruct ? "prefix" : "postfix";
+        var typeText = (type & ConstructTokenType.PrefixUnaryConstruct) != ConstructTokenType.None ? "prefix" : "postfix";
         return $"Found duplicate generic {typeText} type converter for symbol '{symbol}'.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string UndefinedTypeConverterPrecedence(StringSlice symbol, ParsedExpressionFactoryBuilder.ConstructType type)
+    internal static string UndefinedTypeConverterPrecedence(StringSlice symbol, ConstructTokenType type)
     {
-        var typeText = type == ParsedExpressionFactoryBuilder.ConstructType.PrefixUnaryConstruct ? "Prefix" : "Postfix";
+        var typeText = (type & ConstructTokenType.PrefixUnaryConstruct) != ConstructTokenType.None ? "Prefix" : "Postfix";
         return $"{typeText} type converter precedence for symbol '{symbol}' is undefined.";
     }
 
@@ -203,9 +203,9 @@ internal static class Resources
     internal static string NotAllTypeConvertersHaveTheSameTargetType(
         StringSlice symbol,
         Type targetType,
-        ParsedExpressionFactoryBuilder.ConstructType type)
+        ConstructTokenType type)
     {
-        var typeText = type == ParsedExpressionFactoryBuilder.ConstructType.PrefixUnaryConstruct ? "prefix" : "postfix";
+        var typeText = (type & ConstructTokenType.PrefixUnaryConstruct) != ConstructTokenType.None ? "prefix" : "postfix";
         return $"Not all {typeText} type converters for symbol '{symbol}' have the same {targetType.FullName} target type.";
     }
 
@@ -232,6 +232,20 @@ internal static class Resources
     internal static string ConstantGroupContainsConstructsOfOtherType(StringSlice symbol)
     {
         return $"Expected constant group with '{symbol}' symbol to be comprised of only constants but found other construct types.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string TypeDeclarationGroupContainsMoreThanOneType(StringSlice symbol)
+    {
+        return $"Expected type declaration group with '{symbol}' symbol to contain only one type.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string TypeDeclarationGroupContainsConstructsOfOtherType(StringSlice symbol)
+    {
+        return $"Expected type declaration group with '{symbol}' symbol to be comprised of only types but found other construct types.";
     }
 
     [Pure]

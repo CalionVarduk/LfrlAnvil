@@ -92,6 +92,18 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     }
 
     [Pure]
+    public bool IsTypeDeclarationSymbol(string symbol)
+    {
+        return IsTypeDeclarationSymbol( StringSlice.Create( symbol ) );
+    }
+
+    [Pure]
+    public bool IsTypeDeclarationSymbol(ReadOnlyMemory<char> symbol)
+    {
+        return IsTypeDeclarationSymbol( StringSlice.Create( symbol ) );
+    }
+
+    [Pure]
     public int? GetBinaryOperatorPrecedence(string symbol)
     {
         return GetBinaryOperatorPrecedence( StringSlice.Create( symbol ) );
@@ -214,13 +226,13 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     [Pure]
     private bool IsOperatorSymbol(StringSlice symbol)
     {
-        return _configuration.Constructs.GetValueOrDefault( symbol )?.Type == ConstructTokenType.Operator;
+        return _configuration.Constructs.GetValueOrDefault( symbol )?.IsAny( ConstructTokenType.Operator ) == true;
     }
 
     [Pure]
     private bool IsTypeConverterSymbol(StringSlice symbol)
     {
-        return _configuration.Constructs.GetValueOrDefault( symbol )?.Type == ConstructTokenType.TypeConverter;
+        return _configuration.Constructs.GetValueOrDefault( symbol )?.IsAny( ConstructTokenType.TypeConverter ) == true;
     }
 
     [Pure]
@@ -233,6 +245,12 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     private bool IsConstantSymbol(StringSlice symbol)
     {
         return _configuration.Constructs.GetValueOrDefault( symbol )?.Type == ConstructTokenType.Constant;
+    }
+
+    [Pure]
+    private bool IsTypeDeclarationSymbol(StringSlice symbol)
+    {
+        return _configuration.Constructs.GetValueOrDefault( symbol )?.Type == ConstructTokenType.TypeDeclaration;
     }
 
     [Pure]

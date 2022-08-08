@@ -136,82 +136,76 @@ public class ParsedExpressionBuilderError
     }
 
     [Pure]
-    internal static ParsedExpressionBuilderError CreatePrefixUnaryOperatorDoesNotExist(IntermediateToken token, Type argumentType)
+    internal static ParsedExpressionBuilderError CreatePrefixUnaryOperatorCouldNotBeResolved(IntermediateToken token, Type argumentType)
     {
         return new ParsedExpressionBuilderMissingUnaryOperatorError(
-            ParsedExpressionBuilderErrorType.PrefixUnaryOperatorDoesNotExist,
+            ParsedExpressionBuilderErrorType.PrefixUnaryOperatorCouldNotBeResolved,
             token.Symbol,
             argumentType );
     }
 
     [Pure]
-    internal static ParsedExpressionBuilderError CreatePostfixUnaryOperatorDoesNotExist(IntermediateToken token, Type argumentType)
+    internal static ParsedExpressionBuilderError CreatePostfixUnaryOperatorCouldNotBeResolved(IntermediateToken token, Type argumentType)
     {
         return new ParsedExpressionBuilderMissingUnaryOperatorError(
-            ParsedExpressionBuilderErrorType.PostfixUnaryOperatorDoesNotExist,
+            ParsedExpressionBuilderErrorType.PostfixUnaryOperatorCouldNotBeResolved,
             token.Symbol,
             argumentType );
     }
 
     [Pure]
-    internal static ParsedExpressionBuilderError CreatePrefixTypeConverterDoesNotExist(IntermediateToken token, Type argumentType)
+    internal static ParsedExpressionBuilderError CreatePrefixTypeConverterCouldNotBeResolved(IntermediateToken token, Type argumentType)
     {
         return new ParsedExpressionBuilderMissingUnaryOperatorError(
-            ParsedExpressionBuilderErrorType.PrefixTypeConverterDoesNotExist,
+            ParsedExpressionBuilderErrorType.PrefixTypeConverterCouldNotBeResolved,
             token.Symbol,
             argumentType );
     }
 
     [Pure]
-    internal static ParsedExpressionBuilderError CreatePostfixTypeConverterDoesNotExist(IntermediateToken token, Type argumentType)
+    internal static ParsedExpressionBuilderError CreatePostfixTypeConverterCouldNotBeResolved(IntermediateToken token, Type argumentType)
     {
         return new ParsedExpressionBuilderMissingUnaryOperatorError(
-            ParsedExpressionBuilderErrorType.PostfixTypeConverterDoesNotExist,
+            ParsedExpressionBuilderErrorType.PostfixTypeConverterCouldNotBeResolved,
             token.Symbol,
             argumentType );
     }
 
     [Pure]
-    internal static ParsedExpressionBuilderError CreateBinaryOperatorDoesNotExist(
+    internal static ParsedExpressionBuilderError CreateBinaryOperatorCouldNotBeResolved(
         IntermediateToken token,
         Type leftArgumentType,
         Type rightArgumentType)
     {
         return new ParsedExpressionBuilderMissingBinaryOperatorError(
-            ParsedExpressionBuilderErrorType.BinaryOperatorDoesNotExist,
+            ParsedExpressionBuilderErrorType.BinaryOperatorCouldNotBeResolved,
             token.Symbol,
             leftArgumentType,
             rightArgumentType );
     }
 
     [Pure]
-    internal static ParsedExpressionBuilderError CreatePrefixUnaryOperatorCollectionIsEmpty(IntermediateToken token)
+    internal static ParsedExpressionBuilderError CreateExpectedPrefixUnaryConstruct(IntermediateToken token)
     {
-        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.PrefixUnaryOperatorCollectionIsEmpty, token.Symbol );
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.ExpectedPrefixUnaryConstruct, token.Symbol );
     }
 
     [Pure]
-    internal static ParsedExpressionBuilderError CreatePrefixTypeConverterCollectionIsEmpty(IntermediateToken token)
+    internal static ParsedExpressionBuilderError CreateExpectedBinaryOperator(IntermediateToken token)
     {
-        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.PrefixTypeConverterCollectionIsEmpty, token.Symbol );
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.ExpectedBinaryOperator, token.Symbol );
     }
 
     [Pure]
-    internal static ParsedExpressionBuilderError CreateBinaryOperatorCollectionIsEmpty(IntermediateToken token)
+    internal static ParsedExpressionBuilderError CreateExpectedPostfixUnaryOrBinaryConstruct(IntermediateToken token)
     {
-        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.BinaryOperatorCollectionIsEmpty, token.Symbol );
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.ExpectedPostfixUnaryOrBinaryConstruct, token.Symbol );
     }
 
     [Pure]
-    internal static ParsedExpressionBuilderError CreatePostfixUnaryOrBinaryConstructDoesNotExist(IntermediateToken token)
+    internal static ParsedExpressionBuilderError CreateExpectedBinaryOrPrefixUnaryConstruct(IntermediateToken token)
     {
-        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.PostfixUnaryOrBinaryConstructDoesNotExist, token.Symbol );
-    }
-
-    [Pure]
-    internal static ParsedExpressionBuilderError CreateBinaryOrPrefixUnaryConstructDoesNotExist(IntermediateToken token)
-    {
-        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.BinaryOrPrefixUnaryConstructDoesNotExist, token.Symbol );
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.ExpectedBinaryOrPrefixUnaryConstruct, token.Symbol );
     }
 
     [Pure]

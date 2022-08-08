@@ -1349,4 +1349,24 @@ public class ParsedExpressionFactoryTestsData
             { "12.34 ToString", "( 12.34|PostDecimalCast )" }
         };
     }
+
+    public static TheoryData<string> GetTypeDeclarationIsUsedOutsideOfDelegateParametersDefinitionData(IFixture fixture)
+    {
+        return new TheoryData<string>
+        {
+            "int",
+            "int 'foobar'",
+            "int 12.34",
+            "int false",
+            "int Zero",
+            "int a",
+            "- int",
+            "int ^",
+            "int + a",
+            "a + int",
+            "[string] int",
+            "int ToString",
+            "( int )"
+        };
+    }
 }

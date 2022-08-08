@@ -44,6 +44,12 @@ public interface IParsedExpressionFactory
     bool IsConstantSymbol(ReadOnlyMemory<char> symbol);
 
     [Pure]
+    bool IsTypeDeclarationSymbol(string symbol);
+
+    [Pure]
+    bool IsTypeDeclarationSymbol(ReadOnlyMemory<char> symbol);
+
+    [Pure]
     int? GetBinaryOperatorPrecedence(string symbol);
 
     [Pure]

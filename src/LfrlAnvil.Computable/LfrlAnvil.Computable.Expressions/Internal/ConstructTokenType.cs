@@ -1,9 +1,21 @@
-﻿namespace LfrlAnvil.Computable.Expressions.Internal;
+﻿using System;
 
-internal enum ConstructTokenType : byte
+namespace LfrlAnvil.Computable.Expressions.Internal;
+
+[Flags]
+internal enum ConstructTokenType : ushort
 {
-    Operator = 0,
-    Function = 1,
-    TypeConverter = 2,
-    Constant = 3
+    None = 0,
+    BinaryOperator = 1,
+    PrefixUnaryOperator = 2,
+    PostfixUnaryOperator = 4,
+    PrefixTypeConverter = 8,
+    PostfixTypeConverter = 16,
+    Function = 32,
+    Constant = 64,
+    TypeDeclaration = 128,
+    Operator = BinaryOperator | PrefixUnaryOperator | PostfixUnaryOperator,
+    TypeConverter = PrefixTypeConverter | PostfixTypeConverter,
+    PrefixUnaryConstruct = PrefixUnaryOperator | PrefixTypeConverter,
+    PostfixUnaryConstruct = PostfixUnaryOperator | PostfixTypeConverter
 }

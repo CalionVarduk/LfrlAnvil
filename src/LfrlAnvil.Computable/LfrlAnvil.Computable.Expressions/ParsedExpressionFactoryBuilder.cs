@@ -10,15 +10,15 @@ namespace LfrlAnvil.Computable.Expressions;
 
 public sealed class ParsedExpressionFactoryBuilder
 {
-    private readonly List<(StringSlice Symbol, ConstructType Type, object Construct)> _constructs;
-    private readonly Dictionary<(StringSlice Symbol, ConstructType Type), int> _precedences;
+    private readonly List<(StringSlice Symbol, ConstructTokenType Type, object Construct)> _constructs;
+    private readonly Dictionary<(StringSlice Symbol, ConstructTokenType Type), int> _precedences;
     private IParsedExpressionFactoryConfiguration? _configuration;
     private Func<ParsedExpressionNumberParserParams, IParsedExpressionNumberParser>? _numberParserProvider;
 
     public ParsedExpressionFactoryBuilder()
     {
-        _constructs = new List<(StringSlice, ConstructType, object)>();
-        _precedences = new Dictionary<(StringSlice, ConstructType), int>();
+        _constructs = new List<(StringSlice, ConstructTokenType, object)>();
+        _precedences = new Dictionary<(StringSlice, ConstructTokenType), int>();
         _configuration = null;
         _numberParserProvider = null;
     }
@@ -50,109 +50,131 @@ public sealed class ParsedExpressionFactoryBuilder
 
     public ParsedExpressionFactoryBuilder AddBinaryOperator(string symbol, ParsedExpressionBinaryOperator @operator)
     {
-        _constructs.Add( (StringSlice.Create( symbol ), ConstructType.BinaryOperator, @operator) );
+        _constructs.Add( (StringSlice.Create( symbol ), ConstructTokenType.BinaryOperator, @operator) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddBinaryOperator(ReadOnlyMemory<char> symbol, ParsedExpressionBinaryOperator @operator)
     {
-        _constructs.Add( (StringSlice.Create( symbol ), ConstructType.BinaryOperator, @operator) );
+        _constructs.Add( (StringSlice.Create( symbol ), ConstructTokenType.BinaryOperator, @operator) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddPrefixUnaryOperator(string symbol, ParsedExpressionUnaryOperator @operator)
     {
-        _constructs.Add( (StringSlice.Create( symbol ), ConstructType.PrefixUnaryConstruct, @operator) );
+        _constructs.Add( (StringSlice.Create( symbol ), ConstructTokenType.PrefixUnaryOperator, @operator) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddPrefixUnaryOperator(ReadOnlyMemory<char> symbol, ParsedExpressionUnaryOperator @operator)
     {
-        _constructs.Add( (StringSlice.Create( symbol ), ConstructType.PrefixUnaryConstruct, @operator) );
+        _constructs.Add( (StringSlice.Create( symbol ), ConstructTokenType.PrefixUnaryOperator, @operator) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddPostfixUnaryOperator(string symbol, ParsedExpressionUnaryOperator @operator)
     {
-        _constructs.Add( (StringSlice.Create( symbol ), ConstructType.PostfixUnaryConstruct, @operator) );
+        _constructs.Add( (StringSlice.Create( symbol ), ConstructTokenType.PostfixUnaryOperator, @operator) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddPostfixUnaryOperator(ReadOnlyMemory<char> symbol, ParsedExpressionUnaryOperator @operator)
     {
-        _constructs.Add( (StringSlice.Create( symbol ), ConstructType.PostfixUnaryConstruct, @operator) );
+        _constructs.Add( (StringSlice.Create( symbol ), ConstructTokenType.PostfixUnaryOperator, @operator) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddPrefixTypeConverter(string symbol, ParsedExpressionTypeConverter converter)
     {
-        _constructs.Add( (StringSlice.Create( symbol ), ConstructType.PrefixUnaryConstruct, converter) );
+        _constructs.Add( (StringSlice.Create( symbol ), ConstructTokenType.PrefixTypeConverter, converter) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddPrefixTypeConverter(ReadOnlyMemory<char> symbol, ParsedExpressionTypeConverter converter)
     {
-        _constructs.Add( (StringSlice.Create( symbol ), ConstructType.PrefixUnaryConstruct, converter) );
+        _constructs.Add( (StringSlice.Create( symbol ), ConstructTokenType.PrefixTypeConverter, converter) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddPostfixTypeConverter(string symbol, ParsedExpressionTypeConverter converter)
     {
-        _constructs.Add( (StringSlice.Create( symbol ), ConstructType.PostfixUnaryConstruct, converter) );
+        _constructs.Add( (StringSlice.Create( symbol ), ConstructTokenType.PostfixTypeConverter, converter) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddPostfixTypeConverter(ReadOnlyMemory<char> symbol, ParsedExpressionTypeConverter converter)
     {
-        _constructs.Add( (StringSlice.Create( symbol ), ConstructType.PostfixUnaryConstruct, converter) );
+        _constructs.Add( (StringSlice.Create( symbol ), ConstructTokenType.PostfixTypeConverter, converter) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddConstant(string symbol, ParsedExpressionConstant constant)
     {
-        _constructs.Add( (StringSlice.Create( symbol ), ConstructType.Constant, constant) );
+        _constructs.Add( (StringSlice.Create( symbol ), ConstructTokenType.Constant, constant) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddConstant(ReadOnlyMemory<char> symbol, ParsedExpressionConstant constant)
     {
-        _constructs.Add( (StringSlice.Create( symbol ), ConstructType.Constant, constant) );
+        _constructs.Add( (StringSlice.Create( symbol ), ConstructTokenType.Constant, constant) );
+        return this;
+    }
+
+    public ParsedExpressionFactoryBuilder AddTypeDeclaration<T>(string name)
+    {
+        return AddTypeDeclaration( name, typeof( T ) );
+    }
+
+    public ParsedExpressionFactoryBuilder AddTypeDeclaration<T>(ReadOnlyMemory<char> name)
+    {
+        return AddTypeDeclaration( name, typeof( T ) );
+    }
+
+    public ParsedExpressionFactoryBuilder AddTypeDeclaration(string name, Type type)
+    {
+        _constructs.Add( (StringSlice.Create( name ), ConstructTokenType.TypeDeclaration, type) );
+        return this;
+    }
+
+    public ParsedExpressionFactoryBuilder AddTypeDeclaration(ReadOnlyMemory<char> name, Type type)
+    {
+        _constructs.Add( (StringSlice.Create( name ), ConstructTokenType.TypeDeclaration, type) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder SetBinaryOperatorPrecedence(string symbol, int precedence)
     {
-        _precedences[(StringSlice.Create( symbol ), ConstructType.BinaryOperator)] = precedence;
+        _precedences[(StringSlice.Create( symbol ), ConstructTokenType.BinaryOperator)] = precedence;
         return this;
     }
 
     public ParsedExpressionFactoryBuilder SetBinaryOperatorPrecedence(ReadOnlyMemory<char> symbol, int precedence)
     {
-        _precedences[(StringSlice.Create( symbol ), ConstructType.BinaryOperator)] = precedence;
+        _precedences[(StringSlice.Create( symbol ), ConstructTokenType.BinaryOperator)] = precedence;
         return this;
     }
 
     public ParsedExpressionFactoryBuilder SetPrefixUnaryConstructPrecedence(string symbol, int precedence)
     {
-        _precedences[(StringSlice.Create( symbol ), ConstructType.PrefixUnaryConstruct)] = precedence;
+        _precedences[(StringSlice.Create( symbol ), ConstructTokenType.PrefixUnaryConstruct)] = precedence;
         return this;
     }
 
     public ParsedExpressionFactoryBuilder SetPrefixUnaryConstructPrecedence(ReadOnlyMemory<char> symbol, int precedence)
     {
-        _precedences[(StringSlice.Create( symbol ), ConstructType.PrefixUnaryConstruct)] = precedence;
+        _precedences[(StringSlice.Create( symbol ), ConstructTokenType.PrefixUnaryConstruct)] = precedence;
         return this;
     }
 
     public ParsedExpressionFactoryBuilder SetPostfixUnaryConstructPrecedence(string symbol, int precedence)
     {
-        _precedences[(StringSlice.Create( symbol ), ConstructType.PostfixUnaryConstruct)] = precedence;
+        _precedences[(StringSlice.Create( symbol ), ConstructTokenType.PostfixUnaryConstruct)] = precedence;
         return this;
     }
 
     public ParsedExpressionFactoryBuilder SetPostfixUnaryConstructPrecedence(ReadOnlyMemory<char> symbol, int precedence)
     {
-        _precedences[(StringSlice.Create( symbol ), ConstructType.PostfixUnaryConstruct)] = precedence;
+        _precedences[(StringSlice.Create( symbol ), ConstructTokenType.PostfixUnaryConstruct)] = precedence;
         return this;
     }
 
@@ -178,7 +200,7 @@ public sealed class ParsedExpressionFactoryBuilder
     public IEnumerable<KeyValuePair<ReadOnlyMemory<char>, int>> GetCurrentBinaryOperatorPrecedences()
     {
         return _precedences
-            .Where( kv => kv.Key.Type == ConstructType.BinaryOperator )
+            .Where( kv => kv.Key.Type == ConstructTokenType.BinaryOperator )
             .Select( kv => KeyValuePair.Create( kv.Key.Symbol.AsMemory(), kv.Value ) );
     }
 
@@ -186,7 +208,7 @@ public sealed class ParsedExpressionFactoryBuilder
     public IEnumerable<KeyValuePair<ReadOnlyMemory<char>, int>> GetCurrentPrefixUnaryConstructPrecedences()
     {
         return _precedences
-            .Where( kv => kv.Key.Type == ConstructType.PrefixUnaryConstruct )
+            .Where( kv => kv.Key.Type == ConstructTokenType.PrefixUnaryConstruct )
             .Select( kv => KeyValuePair.Create( kv.Key.Symbol.AsMemory(), kv.Value ) );
     }
 
@@ -194,7 +216,7 @@ public sealed class ParsedExpressionFactoryBuilder
     public IEnumerable<KeyValuePair<ReadOnlyMemory<char>, int>> GetCurrentPostfixUnaryConstructPrecedences()
     {
         return _precedences
-            .Where( kv => kv.Key.Type == ConstructType.PostfixUnaryConstruct )
+            .Where( kv => kv.Key.Type == ConstructTokenType.PostfixUnaryConstruct )
             .Select( kv => KeyValuePair.Create( kv.Key.Symbol.AsMemory(), kv.Value ) );
     }
 
@@ -226,8 +248,8 @@ public sealed class ParsedExpressionFactoryBuilder
             {
                 ParsedExpressionTypeConverter =>
                     CreateTypeConverterDefinition( g, prefixTypeConverters, postfixTypeConverters, ref errorMessages ),
-                ParsedExpressionConstant =>
-                    CreateConstantDefinition( g, ref errorMessages ),
+                ParsedExpressionConstant => CreateConstantDefinition( g, ref errorMessages ),
+                Type => CreateTypeDeclarationDefinition( g, ref errorMessages ),
                 _ => CreateOperatorDefinition( g, binaryOperators, prefixUnaryOperators, postfixUnaryOperators, ref errorMessages )
             };
 
@@ -241,7 +263,7 @@ public sealed class ParsedExpressionFactoryBuilder
     }
 
     private ConstructTokenDefinition CreateOperatorDefinition(
-        IGrouping<StringSlice, (StringSlice Symbol, ConstructType Type, object Object)> group,
+        IGrouping<StringSlice, (StringSlice Symbol, ConstructTokenType Type, object Object)> group,
         List<ParsedExpressionBinaryOperator> binaryBuffer,
         List<ParsedExpressionUnaryOperator> prefixUnaryBuffer,
         List<ParsedExpressionUnaryOperator> postfixUnaryBuffer,
@@ -259,7 +281,7 @@ public sealed class ParsedExpressionFactoryBuilder
 
             if ( construct is ParsedExpressionUnaryOperator unaryOperator )
             {
-                var targetBuffer = type == ConstructType.PrefixUnaryConstruct ? prefixUnaryBuffer : postfixUnaryBuffer;
+                var targetBuffer = type == ConstructTokenType.PrefixUnaryOperator ? prefixUnaryBuffer : postfixUnaryBuffer;
                 targetBuffer.Add( unaryOperator );
                 continue;
             }
@@ -275,13 +297,13 @@ public sealed class ParsedExpressionFactoryBuilder
         var prefixCollection = CreateUnaryOperatorCollection(
             group.Key,
             prefixUnaryBuffer,
-            ConstructType.PrefixUnaryConstruct,
+            ConstructTokenType.PrefixUnaryOperator,
             ref errorMessages );
 
         var postfixCollection = CreateUnaryOperatorCollection(
             group.Key,
             postfixUnaryBuffer,
-            ConstructType.PostfixUnaryConstruct,
+            ConstructTokenType.PostfixUnaryOperator,
             ref errorMessages );
 
         binaryBuffer.Clear();
@@ -326,7 +348,7 @@ public sealed class ParsedExpressionFactoryBuilder
         if ( duplicateGenericConstructErrorMessage is not null )
             errorMessages = errorMessages.Extend( duplicateGenericConstructErrorMessage );
 
-        if ( _precedences.TryGetValue( (symbol, ConstructType.BinaryOperator), out var precedence ) )
+        if ( _precedences.TryGetValue( (symbol, ConstructTokenType.BinaryOperator), out var precedence ) )
             return new BinaryOperatorCollection( genericConstruct, specializedConstructs, precedence );
 
         errorMessages = errorMessages.Extend( Resources.UndefinedBinaryOperatorPrecedence( symbol ) );
@@ -336,10 +358,10 @@ public sealed class ParsedExpressionFactoryBuilder
     private UnaryOperatorCollection CreateUnaryOperatorCollection(
         StringSlice symbol,
         List<ParsedExpressionUnaryOperator> buffer,
-        ConstructType type,
+        ConstructTokenType type,
         ref Chain<string> errorMessages)
     {
-        Assume.NotEquals( type, ConstructType.BinaryOperator, nameof( type ) );
+        Assume.NotEquals( type, ConstructTokenType.BinaryOperator, nameof( type ) );
 
         if ( buffer.Count == 0 )
             return UnaryOperatorCollection.Empty;
@@ -371,7 +393,11 @@ public sealed class ParsedExpressionFactoryBuilder
         if ( duplicateGenericConstructErrorMessage is not null )
             errorMessages = errorMessages.Extend( duplicateGenericConstructErrorMessage );
 
-        if ( _precedences.TryGetValue( (symbol, type), out var precedence ) )
+        var precedenceType = (type & ConstructTokenType.PrefixUnaryConstruct) != ConstructTokenType.None
+            ? ConstructTokenType.PrefixUnaryConstruct
+            : ConstructTokenType.PostfixUnaryConstruct;
+
+        if ( _precedences.TryGetValue( (symbol, precedenceType), out var precedence ) )
             return new UnaryOperatorCollection( genericConstruct, specializedConstructs, precedence );
 
         errorMessages = errorMessages.Extend( Resources.UndefinedUnaryOperatorPrecedence( symbol, type ) );
@@ -379,7 +405,7 @@ public sealed class ParsedExpressionFactoryBuilder
     }
 
     private ConstructTokenDefinition CreateTypeConverterDefinition(
-        IGrouping<StringSlice, (StringSlice Symbol, ConstructType Type, object Object)> group,
+        IGrouping<StringSlice, (StringSlice Symbol, ConstructTokenType Type, object Object)> group,
         List<ParsedExpressionTypeConverter> prefixBuffer,
         List<ParsedExpressionTypeConverter> postfixBuffer,
         ref Chain<string> errorMessages)
@@ -390,7 +416,7 @@ public sealed class ParsedExpressionFactoryBuilder
         {
             if ( construct is ParsedExpressionTypeConverter converter )
             {
-                var targetBuffer = type == ConstructType.PrefixUnaryConstruct ? prefixBuffer : postfixBuffer;
+                var targetBuffer = type == ConstructTokenType.PrefixTypeConverter ? prefixBuffer : postfixBuffer;
                 targetBuffer.Add( converter );
                 continue;
             }
@@ -404,13 +430,13 @@ public sealed class ParsedExpressionFactoryBuilder
         var prefixCollection = CreateTypeConverterCollection(
             group.Key,
             prefixBuffer,
-            ConstructType.PrefixUnaryConstruct,
+            ConstructTokenType.PrefixTypeConverter,
             ref errorMessages );
 
         var postfixCollection = CreateTypeConverterCollection(
             group.Key,
             postfixBuffer,
-            ConstructType.PostfixUnaryConstruct,
+            ConstructTokenType.PostfixTypeConverter,
             ref errorMessages );
 
         prefixBuffer.Clear();
@@ -433,10 +459,10 @@ public sealed class ParsedExpressionFactoryBuilder
     private TypeConverterCollection CreateTypeConverterCollection(
         StringSlice symbol,
         List<ParsedExpressionTypeConverter> buffer,
-        ConstructType type,
+        ConstructTokenType type,
         ref Chain<string> errorMessages)
     {
-        Assume.NotEquals( type, ConstructType.BinaryOperator, nameof( type ) );
+        Assume.NotEquals( type, ConstructTokenType.BinaryOperator, nameof( type ) );
 
         if ( buffer.Count == 0 )
             return TypeConverterCollection.Empty;
@@ -482,7 +508,11 @@ public sealed class ParsedExpressionFactoryBuilder
         if ( invalidTargetTypeErrorMessage is not null )
             errorMessages = errorMessages.Extend( invalidTargetTypeErrorMessage );
 
-        if ( _precedences.TryGetValue( (symbol, type), out var precedence ) )
+        var precedenceType = (type & ConstructTokenType.PrefixUnaryConstruct) != ConstructTokenType.None
+            ? ConstructTokenType.PrefixUnaryConstruct
+            : ConstructTokenType.PostfixUnaryConstruct;
+
+        if ( _precedences.TryGetValue( (symbol, precedenceType), out var precedence ) )
             return new TypeConverterCollection( targetType, genericConstruct, specializedConstructs, precedence );
 
         errorMessages = errorMessages.Extend( Resources.UndefinedTypeConverterPrecedence( symbol, type ) );
@@ -490,7 +520,7 @@ public sealed class ParsedExpressionFactoryBuilder
     }
 
     private static ConstructTokenDefinition CreateConstantDefinition(
-        IGrouping<StringSlice, (StringSlice Symbol, ConstructType Type, object Object)> group,
+        IGrouping<StringSlice, (StringSlice Symbol, ConstructTokenType Type, object Object)> group,
         ref Chain<string> errorMessages)
     {
         ParsedExpressionConstant? result = null;
@@ -519,11 +549,33 @@ public sealed class ParsedExpressionFactoryBuilder
         return ConstructTokenDefinition.CreateConstant( result );
     }
 
-    internal enum ConstructType : byte
+    private static ConstructTokenDefinition CreateTypeDeclarationDefinition(
+        IGrouping<StringSlice, (StringSlice Symbol, ConstructTokenType Type, object Object)> group,
+        ref Chain<string> errorMessages)
     {
-        BinaryOperator = 0,
-        PrefixUnaryConstruct = 1,
-        PostfixUnaryConstruct = 2,
-        Constant = 3
+        Type? result = null;
+        string? definitionErrorMessage = null;
+
+        foreach ( var (_, _, construct) in group )
+        {
+            if ( construct is Type type )
+            {
+                if ( result is not null )
+                {
+                    errorMessages = errorMessages.Extend( Resources.TypeDeclarationGroupContainsMoreThanOneType( group.Key ) );
+                    break;
+                }
+
+                result = type;
+                continue;
+            }
+
+            definitionErrorMessage ??= Resources.TypeDeclarationGroupContainsConstructsOfOtherType( group.Key );
+        }
+
+        if ( definitionErrorMessage is not null )
+            errorMessages = errorMessages.Extend( definitionErrorMessage );
+
+        return ConstructTokenDefinition.CreateTypeDeclaration( result );
     }
 }

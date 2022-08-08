@@ -240,7 +240,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.PostfixUnaryOrBinaryConstructDoesNotExist ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ExpectedPostfixUnaryOrBinaryConstruct ) );
     }
 
     [Theory]
@@ -258,7 +258,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.PostfixUnaryOrBinaryConstructDoesNotExist ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ExpectedPostfixUnaryOrBinaryConstruct ) );
     }
 
     [Theory]
@@ -663,7 +663,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.BinaryOrPrefixUnaryConstructDoesNotExist ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ExpectedBinaryOrPrefixUnaryConstruct ) );
     }
 
     [Fact]
@@ -684,7 +684,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.BinaryOrPrefixUnaryConstructDoesNotExist ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ExpectedBinaryOrPrefixUnaryConstruct ) );
     }
 
     [Theory]
@@ -983,7 +983,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.BinaryOperatorCollectionIsEmpty ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ExpectedBinaryOperator ) );
     }
 
     [Fact]
@@ -1002,7 +1002,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.BinaryOperatorCollectionIsEmpty ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ExpectedBinaryOperator ) );
     }
 
     [Theory]
@@ -1043,7 +1043,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.PrefixUnaryOperatorCollectionIsEmpty ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ExpectedPrefixUnaryConstruct ) );
     }
 
     [Fact]
@@ -1062,7 +1062,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.PrefixUnaryOperatorCollectionIsEmpty ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ExpectedPrefixUnaryConstruct ) );
     }
 
     [Fact]
@@ -1081,7 +1081,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.PrefixTypeConverterCollectionIsEmpty ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ExpectedPrefixUnaryConstruct ) );
     }
 
     [Fact]
@@ -1100,7 +1100,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.PrefixTypeConverterCollectionIsEmpty ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ExpectedPrefixUnaryConstruct ) );
     }
 
     [Theory]
@@ -1312,7 +1312,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.BinaryOperatorDoesNotExist ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.BinaryOperatorCouldNotBeResolved ) );
     }
 
     [Fact]
@@ -1329,7 +1329,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.PrefixUnaryOperatorDoesNotExist ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.PrefixUnaryOperatorCouldNotBeResolved ) );
     }
 
     [Fact]
@@ -1346,7 +1346,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.PrefixTypeConverterDoesNotExist ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.PrefixTypeConverterCouldNotBeResolved ) );
     }
 
     [Fact]
@@ -1363,7 +1363,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.PostfixUnaryOperatorDoesNotExist ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.PostfixUnaryOperatorCouldNotBeResolved ) );
     }
 
     [Fact]
@@ -1380,7 +1380,33 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.PostfixTypeConverterDoesNotExist ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.PostfixTypeConverterCouldNotBeResolved ) );
+    }
+
+    [Theory]
+    [MethodData( nameof( ParsedExpressionFactoryTestsData.GetTypeDeclarationIsUsedOutsideOfDelegateParametersDefinitionData ) )]
+    public void Create_ShouldThrowMathExpressionCreationException_WhenTypeDeclarationIsUsedOutsideOfDelegateParametersDefinition(
+        string input)
+    {
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<int>( "int" )
+            .AddConstant( "Zero", new ZeroConstant() )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .AddPrefixUnaryOperator( "-", new MockPrefixUnaryOperator() )
+            .AddPostfixUnaryOperator( "^", new MockPostfixUnaryOperator() )
+            .AddPrefixTypeConverter( "[string]", new MockPrefixTypeConverter() )
+            .AddPostfixTypeConverter( "ToString", new MockPostfixTypeConverter() )
+            .SetBinaryOperatorPrecedence( "+", 1 )
+            .SetPrefixUnaryConstructPrecedence( "-", 1 )
+            .SetPrefixUnaryConstructPrecedence( "[string]", 1 )
+            .SetPostfixUnaryConstructPrecedence( "^", 1 )
+            .SetPostfixUnaryConstructPrecedence( "ToString", 1 );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should().ThrowExactly<ParsedExpressionCreationException>();
     }
 
     [Fact]
