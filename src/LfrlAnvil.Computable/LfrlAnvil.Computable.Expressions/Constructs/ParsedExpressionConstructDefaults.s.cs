@@ -1,4 +1,6 @@
-﻿namespace LfrlAnvil.Computable.Expressions.Constructs;
+﻿using LfrlAnvil.Computable.Expressions.Extensions;
+
+namespace LfrlAnvil.Computable.Expressions.Constructs;
 
 public static class ParsedExpressionConstructDefaults
 {
@@ -50,4 +52,31 @@ public static class ParsedExpressionConstructDefaults
     public const int AndPrecedence = 11;
     public const int OrPrecedence = 12;
     public const int CoalescePrecedence = 13;
+
+    public static readonly ParsedExpressionTypeDefinitionSymbols BooleanTypeSymbols = new ParsedExpressionTypeDefinitionSymbols()
+        .SetName( "boolean" );
+
+    public static readonly ParsedExpressionTypeDefinitionSymbols DecimalTypeSymbols = new ParsedExpressionTypeDefinitionSymbols()
+        .SetName( "decimal" )
+        .SetPostfixTypeConverter( "M" );
+
+    public static readonly ParsedExpressionTypeDefinitionSymbols DoubleTypeSymbols = new ParsedExpressionTypeDefinitionSymbols()
+        .SetName( "double" );
+
+    public static readonly ParsedExpressionTypeDefinitionSymbols FloatTypeSymbols = new ParsedExpressionTypeDefinitionSymbols()
+        .SetName( "float" )
+        .SetPostfixTypeConverter( "F" );
+
+    public static readonly ParsedExpressionTypeDefinitionSymbols Int32TypeSymbols = new ParsedExpressionTypeDefinitionSymbols()
+        .SetName( "int32" );
+
+    public static readonly ParsedExpressionTypeDefinitionSymbols Int64TypeSymbols = new ParsedExpressionTypeDefinitionSymbols()
+        .SetName( "int64" )
+        .SetPostfixTypeConverter( "L" );
+
+    public static readonly ParsedExpressionTypeDefinitionSymbols BigIntTypeSymbols = new ParsedExpressionTypeDefinitionSymbols()
+        .SetName( "bigint" );
+
+    public static readonly ParsedExpressionTypeDefinitionSymbols StringTypeSymbols = new ParsedExpressionTypeDefinitionSymbols()
+        .SetName( "string" );
 }

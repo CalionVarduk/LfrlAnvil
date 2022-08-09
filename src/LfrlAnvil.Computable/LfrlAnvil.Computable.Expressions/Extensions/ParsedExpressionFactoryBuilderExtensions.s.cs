@@ -161,22 +161,34 @@ public static class ParsedExpressionFactoryBuilderExtensions
                 ParsedExpressionConstructDefaults.NotPrecedence );
     }
 
-    public static ParsedExpressionFactoryBuilder AddToBooleanTypeConversion(
+    public static ParsedExpressionFactoryBuilder AddBooleanTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
-        IEnumerable<ParsedExpressionTypeConverter> specializedConverters,
-        string symbol = "[boolean]",
-        string? postfixSymbol = null)
+        IEnumerable<ParsedExpressionTypeConverter> specializedConverters)
     {
-        return AddTypeConverters( builder, new ParsedExpressionTypeConverter<bool>(), specializedConverters, symbol, postfixSymbol );
+        return builder.AddBooleanTypeDefinition( ParsedExpressionConstructDefaults.BooleanTypeSymbols, specializedConverters );
     }
 
-    public static ParsedExpressionFactoryBuilder AddToBooleanTypeConversion(
+    public static ParsedExpressionFactoryBuilder AddBooleanTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
-        string symbol = "[boolean]",
-        string? postfixSymbol = null,
+        ParsedExpressionTypeDefinitionSymbols symbols,
+        IEnumerable<ParsedExpressionTypeConverter> specializedConverters)
+    {
+        return AddTypeDefinition( builder, symbols, new ParsedExpressionTypeConverter<bool>(), specializedConverters );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddBooleanTypeDefinition(
+        this ParsedExpressionFactoryBuilder builder,
         params ParsedExpressionTypeConverter[] specializedConverters)
     {
-        return builder.AddToBooleanTypeConversion( specializedConverters.AsEnumerable(), symbol, postfixSymbol );
+        return builder.AddBooleanTypeDefinition( specializedConverters.AsEnumerable() );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddBooleanTypeDefinition(
+        this ParsedExpressionFactoryBuilder builder,
+        ParsedExpressionTypeDefinitionSymbols symbols,
+        params ParsedExpressionTypeConverter[] specializedConverters)
+    {
+        return builder.AddBooleanTypeDefinition( symbols, specializedConverters.AsEnumerable() );
     }
 
     public static ParsedExpressionFactoryBuilder AddDecimalArithmeticOperators(this ParsedExpressionFactoryBuilder builder)
@@ -245,22 +257,34 @@ public static class ParsedExpressionFactoryBuilderExtensions
                 ParsedExpressionConstructDefaults.ComparePrecedence );
     }
 
-    public static ParsedExpressionFactoryBuilder AddToDecimalTypeConversion(
+    public static ParsedExpressionFactoryBuilder AddDecimalTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
-        IEnumerable<ParsedExpressionTypeConverter> specializedConverters,
-        string symbol = "[decimal]",
-        string? postfixSymbol = "M")
+        IEnumerable<ParsedExpressionTypeConverter> specializedConverters)
     {
-        return AddTypeConverters( builder, new ParsedExpressionTypeConverter<decimal>(), specializedConverters, symbol, postfixSymbol );
+        return builder.AddDecimalTypeDefinition( ParsedExpressionConstructDefaults.DecimalTypeSymbols, specializedConverters );
     }
 
-    public static ParsedExpressionFactoryBuilder AddToDecimalTypeConversion(
+    public static ParsedExpressionFactoryBuilder AddDecimalTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
-        string symbol = "[decimal]",
-        string? postfixSymbol = "M",
+        ParsedExpressionTypeDefinitionSymbols symbols,
+        IEnumerable<ParsedExpressionTypeConverter> specializedConverters)
+    {
+        return AddTypeDefinition( builder, symbols, new ParsedExpressionTypeConverter<decimal>(), specializedConverters );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddDecimalTypeDefinition(
+        this ParsedExpressionFactoryBuilder builder,
         params ParsedExpressionTypeConverter[] specializedConverters)
     {
-        return builder.AddToDecimalTypeConversion( specializedConverters.AsEnumerable(), symbol, postfixSymbol );
+        return builder.AddDecimalTypeDefinition( specializedConverters.AsEnumerable() );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddDecimalTypeDefinition(
+        this ParsedExpressionFactoryBuilder builder,
+        ParsedExpressionTypeDefinitionSymbols symbols,
+        params ParsedExpressionTypeConverter[] specializedConverters)
+    {
+        return builder.AddDecimalTypeDefinition( symbols, specializedConverters.AsEnumerable() );
     }
 
     public static ParsedExpressionFactoryBuilder AddDoubleArithmeticOperators(this ParsedExpressionFactoryBuilder builder)
@@ -329,22 +353,34 @@ public static class ParsedExpressionFactoryBuilderExtensions
                 ParsedExpressionConstructDefaults.ComparePrecedence );
     }
 
-    public static ParsedExpressionFactoryBuilder AddToDoubleTypeConversion(
+    public static ParsedExpressionFactoryBuilder AddDoubleTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
-        IEnumerable<ParsedExpressionTypeConverter> specializedConverters,
-        string symbol = "[double]",
-        string? postfixSymbol = null)
+        IEnumerable<ParsedExpressionTypeConverter> specializedConverters)
     {
-        return AddTypeConverters( builder, new ParsedExpressionTypeConverter<double>(), specializedConverters, symbol, postfixSymbol );
+        return builder.AddDoubleTypeDefinition( ParsedExpressionConstructDefaults.DoubleTypeSymbols, specializedConverters );
     }
 
-    public static ParsedExpressionFactoryBuilder AddToDoubleTypeConversion(
+    public static ParsedExpressionFactoryBuilder AddDoubleTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
-        string symbol = "[double]",
-        string? postfixSymbol = null,
+        ParsedExpressionTypeDefinitionSymbols symbols,
+        IEnumerable<ParsedExpressionTypeConverter> specializedConverters)
+    {
+        return AddTypeDefinition( builder, symbols, new ParsedExpressionTypeConverter<double>(), specializedConverters );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddDoubleTypeDefinition(
+        this ParsedExpressionFactoryBuilder builder,
         params ParsedExpressionTypeConverter[] specializedConverters)
     {
-        return builder.AddToDoubleTypeConversion( specializedConverters.AsEnumerable(), symbol, postfixSymbol );
+        return builder.AddDoubleTypeDefinition( specializedConverters.AsEnumerable() );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddDoubleTypeDefinition(
+        this ParsedExpressionFactoryBuilder builder,
+        ParsedExpressionTypeDefinitionSymbols symbols,
+        params ParsedExpressionTypeConverter[] specializedConverters)
+    {
+        return builder.AddDoubleTypeDefinition( symbols, specializedConverters.AsEnumerable() );
     }
 
     public static ParsedExpressionFactoryBuilder AddFloatArithmeticOperators(this ParsedExpressionFactoryBuilder builder)
@@ -413,22 +449,34 @@ public static class ParsedExpressionFactoryBuilderExtensions
                 ParsedExpressionConstructDefaults.ComparePrecedence );
     }
 
-    public static ParsedExpressionFactoryBuilder AddToFloatTypeConversion(
+    public static ParsedExpressionFactoryBuilder AddFloatTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
-        IEnumerable<ParsedExpressionTypeConverter> specializedConverters,
-        string symbol = "[float]",
-        string? postfixSymbol = "F")
+        IEnumerable<ParsedExpressionTypeConverter> specializedConverters)
     {
-        return AddTypeConverters( builder, new ParsedExpressionTypeConverter<float>(), specializedConverters, symbol, postfixSymbol );
+        return builder.AddFloatTypeDefinition( ParsedExpressionConstructDefaults.FloatTypeSymbols, specializedConverters );
     }
 
-    public static ParsedExpressionFactoryBuilder AddToFloatTypeConversion(
+    public static ParsedExpressionFactoryBuilder AddFloatTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
-        string symbol = "[float]",
-        string? postfixSymbol = "F",
+        ParsedExpressionTypeDefinitionSymbols symbols,
+        IEnumerable<ParsedExpressionTypeConverter> specializedConverters)
+    {
+        return AddTypeDefinition( builder, symbols, new ParsedExpressionTypeConverter<float>(), specializedConverters );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddFloatTypeDefinition(
+        this ParsedExpressionFactoryBuilder builder,
         params ParsedExpressionTypeConverter[] specializedConverters)
     {
-        return builder.AddToFloatTypeConversion( specializedConverters.AsEnumerable(), symbol, postfixSymbol );
+        return builder.AddFloatTypeDefinition( specializedConverters.AsEnumerable() );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddFloatTypeDefinition(
+        this ParsedExpressionFactoryBuilder builder,
+        ParsedExpressionTypeDefinitionSymbols symbols,
+        params ParsedExpressionTypeConverter[] specializedConverters)
+    {
+        return builder.AddFloatTypeDefinition( symbols, specializedConverters.AsEnumerable() );
     }
 
     public static ParsedExpressionFactoryBuilder AddInt32ArithmeticOperators(this ParsedExpressionFactoryBuilder builder)
@@ -530,22 +578,34 @@ public static class ParsedExpressionFactoryBuilderExtensions
                 ParsedExpressionConstructDefaults.ComparePrecedence );
     }
 
-    public static ParsedExpressionFactoryBuilder AddToInt32TypeConversion(
+    public static ParsedExpressionFactoryBuilder AddInt32TypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
-        IEnumerable<ParsedExpressionTypeConverter> specializedConverters,
-        string symbol = "[int32]",
-        string? postfixSymbol = null)
+        IEnumerable<ParsedExpressionTypeConverter> specializedConverters)
     {
-        return AddTypeConverters( builder, new ParsedExpressionTypeConverter<int>(), specializedConverters, symbol, postfixSymbol );
+        return builder.AddInt32TypeDefinition( ParsedExpressionConstructDefaults.Int32TypeSymbols, specializedConverters );
     }
 
-    public static ParsedExpressionFactoryBuilder AddToInt32TypeConversion(
+    public static ParsedExpressionFactoryBuilder AddInt32TypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
-        string symbol = "[int32]",
-        string? postfixSymbol = null,
+        ParsedExpressionTypeDefinitionSymbols symbols,
+        IEnumerable<ParsedExpressionTypeConverter> specializedConverters)
+    {
+        return AddTypeDefinition( builder, symbols, new ParsedExpressionTypeConverter<int>(), specializedConverters );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddInt32TypeDefinition(
+        this ParsedExpressionFactoryBuilder builder,
         params ParsedExpressionTypeConverter[] specializedConverters)
     {
-        return builder.AddToInt32TypeConversion( specializedConverters.AsEnumerable(), symbol, postfixSymbol );
+        return builder.AddInt32TypeDefinition( specializedConverters.AsEnumerable() );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddInt32TypeDefinition(
+        this ParsedExpressionFactoryBuilder builder,
+        ParsedExpressionTypeDefinitionSymbols symbols,
+        params ParsedExpressionTypeConverter[] specializedConverters)
+    {
+        return builder.AddInt32TypeDefinition( symbols, specializedConverters.AsEnumerable() );
     }
 
     public static ParsedExpressionFactoryBuilder AddInt64ArithmeticOperators(this ParsedExpressionFactoryBuilder builder)
@@ -647,22 +707,34 @@ public static class ParsedExpressionFactoryBuilderExtensions
                 ParsedExpressionConstructDefaults.ComparePrecedence );
     }
 
-    public static ParsedExpressionFactoryBuilder AddToInt64TypeConversion(
+    public static ParsedExpressionFactoryBuilder AddInt64TypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
-        IEnumerable<ParsedExpressionTypeConverter> specializedConverters,
-        string symbol = "[int64]",
-        string? postfixSymbol = "L")
+        IEnumerable<ParsedExpressionTypeConverter> specializedConverters)
     {
-        return AddTypeConverters( builder, new ParsedExpressionTypeConverter<long>(), specializedConverters, symbol, postfixSymbol );
+        return builder.AddInt64TypeDefinition( ParsedExpressionConstructDefaults.Int64TypeSymbols, specializedConverters );
     }
 
-    public static ParsedExpressionFactoryBuilder AddToInt64TypeConversion(
+    public static ParsedExpressionFactoryBuilder AddInt64TypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
-        string symbol = "[int64]",
-        string? postfixSymbol = "L",
+        ParsedExpressionTypeDefinitionSymbols symbols,
+        IEnumerable<ParsedExpressionTypeConverter> specializedConverters)
+    {
+        return AddTypeDefinition( builder, symbols, new ParsedExpressionTypeConverter<long>(), specializedConverters );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddInt64TypeDefinition(
+        this ParsedExpressionFactoryBuilder builder,
         params ParsedExpressionTypeConverter[] specializedConverters)
     {
-        return builder.AddToInt64TypeConversion( specializedConverters.AsEnumerable(), symbol, postfixSymbol );
+        return builder.AddInt64TypeDefinition( specializedConverters.AsEnumerable() );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddInt64TypeDefinition(
+        this ParsedExpressionFactoryBuilder builder,
+        ParsedExpressionTypeDefinitionSymbols symbols,
+        params ParsedExpressionTypeConverter[] specializedConverters)
+    {
+        return builder.AddInt64TypeDefinition( symbols, specializedConverters.AsEnumerable() );
     }
 
     public static ParsedExpressionFactoryBuilder AddBigIntArithmeticOperators(this ParsedExpressionFactoryBuilder builder)
@@ -764,22 +836,34 @@ public static class ParsedExpressionFactoryBuilderExtensions
                 ParsedExpressionConstructDefaults.ComparePrecedence );
     }
 
-    public static ParsedExpressionFactoryBuilder AddToBigIntTypeConversion(
+    public static ParsedExpressionFactoryBuilder AddBigIntTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
-        IEnumerable<ParsedExpressionTypeConverter> specializedConverters,
-        string symbol = "[bigint]",
-        string? postfixSymbol = null)
+        IEnumerable<ParsedExpressionTypeConverter> specializedConverters)
     {
-        return AddTypeConverters( builder, new ParsedExpressionTypeConverter<BigInteger>(), specializedConverters, symbol, postfixSymbol );
+        return builder.AddBigIntTypeDefinition( ParsedExpressionConstructDefaults.BigIntTypeSymbols, specializedConverters );
     }
 
-    public static ParsedExpressionFactoryBuilder AddToBigIntTypeConversion(
+    public static ParsedExpressionFactoryBuilder AddBigIntTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
-        string symbol = "[bigint]",
-        string? postfixSymbol = null,
+        ParsedExpressionTypeDefinitionSymbols symbols,
+        IEnumerable<ParsedExpressionTypeConverter> specializedConverters)
+    {
+        return AddTypeDefinition( builder, symbols, new ParsedExpressionTypeConverter<BigInteger>(), specializedConverters );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddBigIntTypeDefinition(
+        this ParsedExpressionFactoryBuilder builder,
         params ParsedExpressionTypeConverter[] specializedConverters)
     {
-        return builder.AddToBigIntTypeConversion( specializedConverters.AsEnumerable(), symbol, postfixSymbol );
+        return builder.AddBigIntTypeDefinition( specializedConverters.AsEnumerable() );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddBigIntTypeDefinition(
+        this ParsedExpressionFactoryBuilder builder,
+        ParsedExpressionTypeDefinitionSymbols symbols,
+        params ParsedExpressionTypeConverter[] specializedConverters)
+    {
+        return builder.AddBigIntTypeDefinition( symbols, specializedConverters.AsEnumerable() );
     }
 
     public static ParsedExpressionFactoryBuilder AddStringArithmeticOperators(this ParsedExpressionFactoryBuilder builder)
@@ -806,48 +890,66 @@ public static class ParsedExpressionFactoryBuilderExtensions
                 ParsedExpressionConstructDefaults.ComparePrecedence );
     }
 
-    public static ParsedExpressionFactoryBuilder AddToStringTypeConversion(
+    public static ParsedExpressionFactoryBuilder AddStringTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
-        IEnumerable<ParsedExpressionTypeConverter> specializedConverters,
-        string symbol = "[string]",
-        string? postfixSymbol = null)
+        IEnumerable<ParsedExpressionTypeConverter> specializedConverters)
     {
-        return AddTypeConverters( builder, new ParsedExpressionToStringTypeConverter(), specializedConverters, symbol, postfixSymbol );
+        return builder.AddStringTypeDefinition( ParsedExpressionConstructDefaults.StringTypeSymbols, specializedConverters );
     }
 
-    public static ParsedExpressionFactoryBuilder AddToStringTypeConversion(
+    public static ParsedExpressionFactoryBuilder AddStringTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
-        string symbol = "[string]",
-        string? postfixSymbol = null,
+        ParsedExpressionTypeDefinitionSymbols symbols,
+        IEnumerable<ParsedExpressionTypeConverter> specializedConverters)
+    {
+        return AddTypeDefinition( builder, symbols, new ParsedExpressionToStringTypeConverter(), specializedConverters );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddStringTypeDefinition(
+        this ParsedExpressionFactoryBuilder builder,
         params ParsedExpressionTypeConverter[] specializedConverters)
     {
-        return builder.AddToStringTypeConversion( specializedConverters.AsEnumerable(), symbol, postfixSymbol );
+        return builder.AddStringTypeDefinition( specializedConverters.AsEnumerable() );
     }
 
-    private static ParsedExpressionFactoryBuilder AddTypeConverters(
+    public static ParsedExpressionFactoryBuilder AddStringTypeDefinition(
+        this ParsedExpressionFactoryBuilder builder,
+        ParsedExpressionTypeDefinitionSymbols symbols,
+        params ParsedExpressionTypeConverter[] specializedConverters)
+    {
+        return builder.AddStringTypeDefinition( symbols, specializedConverters.AsEnumerable() );
+    }
+
+    private static ParsedExpressionFactoryBuilder AddTypeDefinition(
         ParsedExpressionFactoryBuilder builder,
+        ParsedExpressionTypeDefinitionSymbols symbols,
         ParsedExpressionTypeConverter genericConverter,
-        IEnumerable<ParsedExpressionTypeConverter> specializedConverters,
-        string symbol,
-        string? postfixSymbol)
+        IEnumerable<ParsedExpressionTypeConverter> specializedConverters)
     {
         var specialized = specializedConverters.Materialize();
+        builder.AddTypeDeclaration( symbols.Name, genericConverter.TargetType );
 
-        builder
-            .AddPrefixTypeConverter( symbol, genericConverter )
-            .SetPrefixUnaryConstructPrecedence( symbol, ParsedExpressionConstructDefaults.TypeConverterPrecedence );
+        var prefixSymbol = symbols.PrefixTypeConverter;
+        var postfixSymbol = symbols.PostfixTypeConverter;
 
-        foreach ( var specializedConverter in specialized )
-            builder.AddPrefixTypeConverter( symbol, specializedConverter );
+        if ( prefixSymbol is not null )
+        {
+            builder
+                .AddPrefixTypeConverter( prefixSymbol.Value, genericConverter )
+                .SetPrefixUnaryConstructPrecedence( prefixSymbol.Value, ParsedExpressionConstructDefaults.TypeConverterPrecedence );
+
+            foreach ( var specializedConverter in specialized )
+                builder.AddPrefixTypeConverter( prefixSymbol.Value, specializedConverter );
+        }
 
         if ( postfixSymbol is not null )
         {
             builder
-                .AddPostfixTypeConverter( postfixSymbol, genericConverter )
-                .SetPostfixUnaryConstructPrecedence( postfixSymbol, ParsedExpressionConstructDefaults.TypeConverterPrecedence );
+                .AddPostfixTypeConverter( postfixSymbol.Value, genericConverter )
+                .SetPostfixUnaryConstructPrecedence( postfixSymbol.Value, ParsedExpressionConstructDefaults.TypeConverterPrecedence );
 
             foreach ( var specializedConverter in specialized )
-                builder.AddPostfixTypeConverter( postfixSymbol, specializedConverter );
+                builder.AddPostfixTypeConverter( postfixSymbol.Value, specializedConverter );
         }
 
         return builder;
