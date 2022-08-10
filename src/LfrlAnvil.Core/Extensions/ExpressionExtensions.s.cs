@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Expressions;
 
 namespace LfrlAnvil.Extensions;
 
@@ -43,5 +45,13 @@ public static class ExpressionExtensions
     public static T? GetValueOrDefault<T>(this ConstantExpression expression)
     {
         return expression.Value is T value ? value : default;
+    }
+
+    [Pure]
+    public static Expression ReplaceParameters(this Expression expression, IReadOnlyDictionary<string, Expression> parametersToReplace)
+    {
+        var injector = new ExpressionParameterReplacer( parametersToReplace );
+        var result = injector.Visit( expression );
+        return result;
     }
 }

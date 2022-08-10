@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using System.Collections.Generic;
+using System.Linq.Expressions;
 using FluentAssertions.Execution;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
@@ -153,6 +154,61 @@ public class ExpressionExtensionsTests : TestsBase
         var sut = Expression.Constant( null, typeof( string ) );
         var result = sut.GetValueOrDefault<string>();
         result.Should().BeNull();
+    }
+
+    [Fact]
+    public void ReplaceParameters_ShouldInjectNewExpressionsInPlaceOfSpecifiedNamedParameterExpressions()
+    {
+        var p1 = Expression.Parameter( typeof( int ), "p1" );
+        var p2 = Expression.Parameter( typeof( int ), "p2" );
+        var p3 = Expression.Parameter( typeof( int ), "p3" );
+        var pNoName = Expression.Parameter( typeof( int ) );
+        var c1 = Expression.Constant( 0 );
+
+        var p1Replacement = Expression.Constant( 10 );
+        var p3Replacement = Expression.Constant( 20 );
+
+        var parametersToReplace = new Dictionary<string, Expression>
+        {
+            { "p1", p1Replacement },
+            { "p3", p3Replacement }
+        };
+
+        var p1P2Add = Expression.Add( p1, p2 );
+        var p3PNoNameAdd = Expression.Add( p3, pNoName );
+        var p1P2P3PNoNameAdd = Expression.Add( p1P2Add, p3PNoNameAdd );
+
+        // 0 + ((p1 + p2) + (p3 + pNoName))
+        var sut = Expression.Add( c1, p1P2P3PNoNameAdd );
+
+        // 0 + ((10 + p2) + (20 + pNoName))
+        var result = sut.ReplaceParameters( parametersToReplace );
+
+        using ( new AssertionScope() )
+        {
+            result.NodeType.Should().Be( ExpressionType.Add );
+            result.Should().BeAssignableTo<BinaryExpression>();
+            if ( result is not BinaryExpression newSut )
+                return;
+
+            newSut.Left.Should().BeSameAs( c1 );
+            newSut.Right.NodeType.Should().Be( ExpressionType.Add );
+            newSut.Right.Should().BeAssignableTo<BinaryExpression>();
+            if ( newSut.Right is not BinaryExpression newP1P2P3PNoNameAdd )
+                return;
+
+            newP1P2P3PNoNameAdd.Left.NodeType.Should().Be( ExpressionType.Add );
+            newP1P2P3PNoNameAdd.Right.NodeType.Should().Be( ExpressionType.Add );
+
+            if ( newP1P2P3PNoNameAdd.Left is not BinaryExpression newP1P2Add ||
+                newP1P2P3PNoNameAdd.Right is not BinaryExpression newP3PNoNameAdd )
+                return;
+
+            newP1P2Add.Left.Should().BeSameAs( p1Replacement );
+            newP1P2Add.Right.Should().BeSameAs( p2 );
+            newP3PNoNameAdd.Left.Should().BeSameAs( p3Replacement );
+            newP3PNoNameAdd.Right.Should().BeSameAs( pNoName );
+        }
     }
 }
 
