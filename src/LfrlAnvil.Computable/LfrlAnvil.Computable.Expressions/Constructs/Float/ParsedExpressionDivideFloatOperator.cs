@@ -1,9 +1,11 @@
-﻿using System.Linq.Expressions;
+﻿using System.Diagnostics.Contracts;
+using System.Linq.Expressions;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.Float;
 
 public sealed class ParsedExpressionDivideFloatOperator : ParsedExpressionBinaryOperator<float>
 {
+    [Pure]
     protected override Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
         return TryGetArgumentValue( left, out var leftValue ) && TryGetArgumentValue( right, out var rightValue )
@@ -11,6 +13,7 @@ public sealed class ParsedExpressionDivideFloatOperator : ParsedExpressionBinary
             : null;
     }
 
+    [Pure]
     protected override Expression? TryCreateFromOneConstant(Expression left, ConstantExpression right)
     {
         if ( ! TryGetArgumentValue( right, out var rightValue ) )
@@ -25,6 +28,7 @@ public sealed class ParsedExpressionDivideFloatOperator : ParsedExpressionBinary
         return null;
     }
 
+    [Pure]
     protected override Expression CreateBinaryExpression(Expression left, Expression right)
     {
         return Expression.Divide( left, right );

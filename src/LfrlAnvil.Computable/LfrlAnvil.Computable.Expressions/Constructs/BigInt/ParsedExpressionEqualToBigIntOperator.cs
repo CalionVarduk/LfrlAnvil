@@ -1,10 +1,12 @@
-﻿using System.Linq.Expressions;
+﻿using System.Diagnostics.Contracts;
+using System.Linq.Expressions;
 using System.Numerics;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.BigInt;
 
 public sealed class ParsedExpressionEqualToBigIntOperator : ParsedExpressionBinaryOperator<BigInteger>
 {
+    [Pure]
     protected override Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
         return TryGetArgumentValue( left, out var leftValue ) && TryGetArgumentValue( right, out var rightValue )
@@ -12,6 +14,7 @@ public sealed class ParsedExpressionEqualToBigIntOperator : ParsedExpressionBina
             : null;
     }
 
+    [Pure]
     protected override Expression CreateBinaryExpression(Expression left, Expression right)
     {
         return Expression.Equal( left, right );

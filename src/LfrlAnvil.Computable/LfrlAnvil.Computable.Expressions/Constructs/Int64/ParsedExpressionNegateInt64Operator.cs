@@ -1,9 +1,11 @@
-﻿using System.Linq.Expressions;
+﻿using System.Diagnostics.Contracts;
+using System.Linq.Expressions;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.Int64;
 
 public sealed class ParsedExpressionNegateInt64Operator : ParsedExpressionUnaryOperator<long>
 {
+    [Pure]
     protected override Expression? TryCreateFromConstant(ConstantExpression operand)
     {
         return TryGetArgumentValue( operand, out var value )
@@ -11,6 +13,7 @@ public sealed class ParsedExpressionNegateInt64Operator : ParsedExpressionUnaryO
             : null;
     }
 
+    [Pure]
     protected override Expression CreateUnaryExpression(Expression operand)
     {
         return Expression.Negate( operand );

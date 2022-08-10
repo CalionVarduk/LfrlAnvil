@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Extensions;
@@ -7,29 +8,35 @@ namespace LfrlAnvil.Computable.Expressions.Constructs;
 
 public abstract class ParsedExpressionBinaryOperator
 {
+    [Pure]
     internal Expression Process(Expression leftOperand, Expression rightOperand)
     {
         var result = CreateResult( leftOperand, rightOperand );
         return result;
     }
 
+    [Pure]
     protected virtual Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
         return null;
     }
 
+    [Pure]
     protected virtual Expression? TryCreateFromOneConstant(ConstantExpression left, Expression right)
     {
         return null;
     }
 
+    [Pure]
     protected virtual Expression? TryCreateFromOneConstant(Expression left, ConstantExpression right)
     {
         return null;
     }
 
+    [Pure]
     protected abstract Expression CreateBinaryExpression(Expression left, Expression right);
 
+    [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Expression CreateResult(Expression left, Expression right)
     {

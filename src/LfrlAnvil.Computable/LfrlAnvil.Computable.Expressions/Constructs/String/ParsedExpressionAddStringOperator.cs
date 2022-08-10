@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using System.Diagnostics.Contracts;
+using System.Linq.Expressions;
 using System.Reflection;
 using LfrlAnvil.Computable.Expressions.Internal;
 
@@ -13,6 +14,7 @@ public sealed class ParsedExpressionAddStringOperator : ParsedExpressionBinaryOp
         _concat = MemberInfoLocator.FindStringConcatMethod();
     }
 
+    [Pure]
     protected override Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
         return TryGetArgumentValue( left, out var leftValue ) && TryGetArgumentValue( right, out var rightValue )
@@ -20,6 +22,7 @@ public sealed class ParsedExpressionAddStringOperator : ParsedExpressionBinaryOp
             : null;
     }
 
+    [Pure]
     protected override Expression? TryCreateFromOneConstant(ConstantExpression left, Expression right)
     {
         return TryGetArgumentValue( left, out var leftValue ) && leftValue.Length == 0
@@ -27,6 +30,7 @@ public sealed class ParsedExpressionAddStringOperator : ParsedExpressionBinaryOp
             : null;
     }
 
+    [Pure]
     protected override Expression? TryCreateFromOneConstant(Expression left, ConstantExpression right)
     {
         return TryGetArgumentValue( right, out var rightValue ) && rightValue.Length == 0
@@ -34,6 +38,7 @@ public sealed class ParsedExpressionAddStringOperator : ParsedExpressionBinaryOp
             : null;
     }
 
+    [Pure]
     protected override Expression CreateBinaryExpression(Expression left, Expression right)
     {
         return Expression.Call( null, _concat, left, right );

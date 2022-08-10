@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Extensions;
@@ -7,19 +8,23 @@ namespace LfrlAnvil.Computable.Expressions.Constructs;
 
 public abstract class ParsedExpressionUnaryOperator
 {
+    [Pure]
     internal Expression Process(Expression operand)
     {
         var result = CreateResult( operand );
         return result;
     }
 
+    [Pure]
     protected virtual Expression? TryCreateFromConstant(ConstantExpression operand)
     {
         return null;
     }
 
+    [Pure]
     protected abstract Expression CreateUnaryExpression(Expression operand);
 
+    [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Expression CreateResult(Expression operand)
     {

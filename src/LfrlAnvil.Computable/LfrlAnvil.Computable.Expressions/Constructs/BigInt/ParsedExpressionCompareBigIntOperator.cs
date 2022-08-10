@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using System.Diagnostics.Contracts;
+using System.Linq.Expressions;
 using System.Numerics;
 using System.Reflection;
 using LfrlAnvil.Computable.Expressions.Internal;
@@ -17,6 +18,7 @@ public sealed class ParsedExpressionCompareBigIntOperator : ParsedExpressionBina
             typeof( ParsedExpressionCompareBigIntOperator ) );
     }
 
+    [Pure]
     protected override Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
         return TryGetArgumentValue( left, out var leftValue ) && TryGetArgumentValue( right, out var rightValue )
@@ -24,6 +26,7 @@ public sealed class ParsedExpressionCompareBigIntOperator : ParsedExpressionBina
             : null;
     }
 
+    [Pure]
     protected override Expression CreateBinaryExpression(Expression left, Expression right)
     {
         return Expression.Call( left, _compareTo, right );

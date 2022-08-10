@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
 using System.Numerics;
 using LfrlAnvil.Exceptions;
@@ -7,6 +8,7 @@ namespace LfrlAnvil.Computable.Expressions.Constructs.BigInt;
 
 public sealed class ParsedExpressionDivideBigIntOperator : ParsedExpressionBinaryOperator<BigInteger>
 {
+    [Pure]
     protected override Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
         return TryGetArgumentValue( left, out var leftValue ) && TryGetArgumentValue( right, out var rightValue )
@@ -14,6 +16,7 @@ public sealed class ParsedExpressionDivideBigIntOperator : ParsedExpressionBinar
             : null;
     }
 
+    [Pure]
     protected override Expression? TryCreateFromOneConstant(Expression left, ConstantExpression right)
     {
         if ( ! TryGetArgumentValue( right, out var rightValue ) )
@@ -31,6 +34,7 @@ public sealed class ParsedExpressionDivideBigIntOperator : ParsedExpressionBinar
         return null;
     }
 
+    [Pure]
     protected override Expression CreateBinaryExpression(Expression left, Expression right)
     {
         return Expression.Divide( left, right );

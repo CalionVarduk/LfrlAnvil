@@ -1,9 +1,11 @@
-﻿using System.Linq.Expressions;
+﻿using System.Diagnostics.Contracts;
+using System.Linq.Expressions;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.Decimal;
 
 public sealed class ParsedExpressionEqualToDecimalOperator : ParsedExpressionBinaryOperator<decimal>
 {
+    [Pure]
     protected override Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
         return TryGetArgumentValue( left, out var leftValue ) && TryGetArgumentValue( right, out var rightValue )
@@ -11,6 +13,7 @@ public sealed class ParsedExpressionEqualToDecimalOperator : ParsedExpressionBin
             : null;
     }
 
+    [Pure]
     protected override Expression CreateBinaryExpression(Expression left, Expression right)
     {
         return Expression.Equal( left, right );

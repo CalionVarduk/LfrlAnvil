@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
 using LfrlAnvil.Exceptions;
 
@@ -6,6 +7,7 @@ namespace LfrlAnvil.Computable.Expressions.Constructs.Int32;
 
 public sealed class ParsedExpressionDivideInt32Operator : ParsedExpressionBinaryOperator<int>
 {
+    [Pure]
     protected override Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
         return TryGetArgumentValue( left, out var leftValue ) && TryGetArgumentValue( right, out var rightValue )
@@ -13,6 +15,7 @@ public sealed class ParsedExpressionDivideInt32Operator : ParsedExpressionBinary
             : null;
     }
 
+    [Pure]
     protected override Expression? TryCreateFromOneConstant(Expression left, ConstantExpression right)
     {
         if ( ! TryGetArgumentValue( right, out var rightValue ) )
@@ -30,6 +33,7 @@ public sealed class ParsedExpressionDivideInt32Operator : ParsedExpressionBinary
         return null;
     }
 
+    [Pure]
     protected override Expression CreateBinaryExpression(Expression left, Expression right)
     {
         return Expression.Divide( left, right );

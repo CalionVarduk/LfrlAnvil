@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Computable.Expressions.Exceptions;
@@ -18,6 +19,7 @@ public class ParsedExpressionTypeConverter
     public Type TargetType { get; }
     public Type? SourceType { get; }
 
+    [Pure]
     internal Expression Process(Expression operand)
     {
         var result = CreateResult( operand );
@@ -35,16 +37,19 @@ public class ParsedExpressionTypeConverter
         return result;
     }
 
+    [Pure]
     protected virtual Expression? TryCreateFromConstant(ConstantExpression operand)
     {
         return null;
     }
 
+    [Pure]
     protected virtual Expression CreateConversionExpression(Expression operand)
     {
         return Expression.Convert( operand, TargetType );
     }
 
+    [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Expression CreateResult(Expression operand)
     {

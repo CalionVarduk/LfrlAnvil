@@ -1,9 +1,11 @@
-﻿using System.Linq.Expressions;
+﻿using System.Diagnostics.Contracts;
+using System.Linq.Expressions;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.Int32;
 
 public sealed class ParsedExpressionMultiplyInt32Operator : ParsedExpressionBinaryOperator<int>
 {
+    [Pure]
     protected override Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
         return TryGetArgumentValue( left, out var leftValue ) && TryGetArgumentValue( right, out var rightValue )
@@ -11,21 +13,25 @@ public sealed class ParsedExpressionMultiplyInt32Operator : ParsedExpressionBina
             : null;
     }
 
+    [Pure]
     protected override Expression? TryCreateFromOneConstant(ConstantExpression left, Expression right)
     {
         return TryCreateFromOneConstantInternal( right, left );
     }
 
+    [Pure]
     protected override Expression? TryCreateFromOneConstant(Expression left, ConstantExpression right)
     {
         return TryCreateFromOneConstantInternal( left, right );
     }
 
+    [Pure]
     protected override Expression CreateBinaryExpression(Expression left, Expression right)
     {
         return Expression.Multiply( left, right );
     }
 
+    [Pure]
     private static Expression? TryCreateFromOneConstantInternal(Expression expression, ConstantExpression constant)
     {
         if ( ! TryGetArgumentValue( constant, out var value ) )

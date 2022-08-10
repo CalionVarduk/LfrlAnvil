@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
 using System.Reflection;
 using LfrlAnvil.Computable.Expressions.Internal;
@@ -14,6 +15,7 @@ public sealed class ParsedExpressionToStringTypeConverter : ParsedExpressionType
         _toString = MemberInfoLocator.FindToStringMethod();
     }
 
+    [Pure]
     protected override Expression TryCreateFromConstant(ConstantExpression operand)
     {
         if ( operand.Value is null )
@@ -22,6 +24,7 @@ public sealed class ParsedExpressionToStringTypeConverter : ParsedExpressionType
         return Expression.Constant( operand.Value.ToString() );
     }
 
+    [Pure]
     protected override Expression CreateConversionExpression(Expression operand)
     {
         return Expression.Call( operand, _toString );

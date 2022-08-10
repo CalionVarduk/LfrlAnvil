@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using System.Diagnostics.Contracts;
+using System.Linq.Expressions;
 using System.Reflection;
 using LfrlAnvil.Computable.Expressions.Internal;
 
@@ -16,6 +17,7 @@ public sealed class ParsedExpressionCompareInt64Operator : ParsedExpressionBinar
             typeof( ParsedExpressionCompareInt64Operator ) );
     }
 
+    [Pure]
     protected override Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
         return TryGetArgumentValue( left, out var leftValue ) && TryGetArgumentValue( right, out var rightValue )
@@ -23,6 +25,7 @@ public sealed class ParsedExpressionCompareInt64Operator : ParsedExpressionBinar
             : null;
     }
 
+    [Pure]
     protected override Expression CreateBinaryExpression(Expression left, Expression right)
     {
         return Expression.Call( left, _compareTo, right );

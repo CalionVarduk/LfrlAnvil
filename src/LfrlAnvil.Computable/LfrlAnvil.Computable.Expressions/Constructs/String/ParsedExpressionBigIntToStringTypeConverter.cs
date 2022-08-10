@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
 using System.Numerics;
 using System.Reflection;
@@ -17,6 +18,7 @@ public sealed class ParsedExpressionBigIntToStringTypeConverter : ParsedExpressi
         _toString = MemberInfoLocator.FindToStringWithFormatProviderMethod( typeof( BigInteger ) );
     }
 
+    [Pure]
     protected override Expression? TryCreateFromConstant(ConstantExpression operand)
     {
         return TryGetSourceValue( operand, out var value )
@@ -24,6 +26,7 @@ public sealed class ParsedExpressionBigIntToStringTypeConverter : ParsedExpressi
             : null;
     }
 
+    [Pure]
     protected override Expression CreateConversionExpression(Expression operand)
     {
         return Expression.Call( operand, _toString, _formatProvider );

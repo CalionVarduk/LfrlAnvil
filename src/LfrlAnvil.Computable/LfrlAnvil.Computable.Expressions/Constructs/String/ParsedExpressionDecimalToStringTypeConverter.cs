@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
 using System.Reflection;
 using LfrlAnvil.Computable.Expressions.Internal;
@@ -16,6 +17,7 @@ public sealed class ParsedExpressionDecimalToStringTypeConverter : ParsedExpress
         _toString = MemberInfoLocator.FindToStringWithFormatProviderMethod( typeof( decimal ) );
     }
 
+    [Pure]
     protected override Expression? TryCreateFromConstant(ConstantExpression operand)
     {
         return TryGetSourceValue( operand, out var value )
@@ -23,6 +25,7 @@ public sealed class ParsedExpressionDecimalToStringTypeConverter : ParsedExpress
             : null;
     }
 
+    [Pure]
     protected override Expression CreateConversionExpression(Expression operand)
     {
         return Expression.Call( operand, _toString, _formatProvider );

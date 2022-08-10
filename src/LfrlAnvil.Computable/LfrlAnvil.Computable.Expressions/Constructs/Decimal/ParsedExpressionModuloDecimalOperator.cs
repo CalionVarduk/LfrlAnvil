@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
 using LfrlAnvil.Exceptions;
 
@@ -6,6 +7,7 @@ namespace LfrlAnvil.Computable.Expressions.Constructs.Decimal;
 
 public sealed class ParsedExpressionModuloDecimalOperator : ParsedExpressionBinaryOperator<decimal>
 {
+    [Pure]
     protected override Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
         return TryGetArgumentValue( left, out var leftValue ) && TryGetArgumentValue( right, out var rightValue )
@@ -13,6 +15,7 @@ public sealed class ParsedExpressionModuloDecimalOperator : ParsedExpressionBina
             : null;
     }
 
+    [Pure]
     protected override Expression? TryCreateFromOneConstant(Expression left, ConstantExpression right)
     {
         if ( ! TryGetArgumentValue( right, out var rightValue ) )
@@ -24,6 +27,7 @@ public sealed class ParsedExpressionModuloDecimalOperator : ParsedExpressionBina
         return null;
     }
 
+    [Pure]
     protected override Expression CreateBinaryExpression(Expression left, Expression right)
     {
         return Expression.Modulo( left, right );
