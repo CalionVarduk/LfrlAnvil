@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Functional.Delegates;
 
@@ -151,6 +152,66 @@ public static class Lambda
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static OutFunc<T1, T2, T3, T4> Of<T1, T2, T3, T4>(OutFunc<T1, T2, T3, T4> func)
+    {
+        return func;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static Expression<Func<TReturn>> ExpressionOf<TReturn>(Expression<Func<TReturn>> func)
+    {
+        return func;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static Expression<Func<T1, TReturn>> ExpressionOf<T1, TReturn>(Expression<Func<T1, TReturn>> func)
+    {
+        return func;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static Expression<Func<T1, T2, TReturn>> ExpressionOf<T1, T2, TReturn>(Expression<Func<T1, T2, TReturn>> func)
+    {
+        return func;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static Expression<Func<T1, T2, T3, TReturn>> ExpressionOf<T1, T2, T3, TReturn>(Expression<Func<T1, T2, T3, TReturn>> func)
+    {
+        return func;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static Expression<Func<T1, T2, T3, T4, TReturn>> ExpressionOf<T1, T2, T3, T4, TReturn>(
+        Expression<Func<T1, T2, T3, T4, TReturn>> func)
+    {
+        return func;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static Expression<Func<T1, T2, T3, T4, T5, TReturn>> ExpressionOf<T1, T2, T3, T4, T5, TReturn>(
+        Expression<Func<T1, T2, T3, T4, T5, TReturn>> func)
+    {
+        return func;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static Expression<Func<T1, T2, T3, T4, T5, T6, TReturn>> ExpressionOf<T1, T2, T3, T4, T5, T6, TReturn>(
+        Expression<Func<T1, T2, T3, T4, T5, T6, TReturn>> func)
+    {
+        return func;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static Expression<Func<T1, T2, T3, T4, T5, T6, T7, TReturn>> ExpressionOf<T1, T2, T3, T4, T5, T6, T7, TReturn>(
+        Expression<Func<T1, T2, T3, T4, T5, T6, T7, TReturn>> func)
     {
         return func;
     }

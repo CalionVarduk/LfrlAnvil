@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Linq.Expressions;
 using FluentAssertions.Execution;
 using LfrlAnvil.Functional.Delegates;
 using LfrlAnvil.Functional.Extensions;
@@ -638,6 +639,70 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         var sut = Substitute.For<OutFunc<T1, T2, T3, TReturn>>();
         var result = Lambda.Of( sut );
+        result.Should().BeSameAs( sut );
+    }
+
+    [Fact]
+    public void ExpressionOf_Func0_ShouldReturnCorrectResult()
+    {
+        Expression<Func<TReturn>> sut = () => Fixture.Create<TReturn>();
+        var result = Lambda.ExpressionOf( sut );
+        result.Should().BeSameAs( sut );
+    }
+
+    [Fact]
+    public void ExpressionOf_Func1_ShouldReturnCorrectResult()
+    {
+        Expression<Func<T1, TReturn>> sut = _ => Fixture.Create<TReturn>();
+        var result = Lambda.ExpressionOf( sut );
+        result.Should().BeSameAs( sut );
+    }
+
+    [Fact]
+    public void ExpressionOf_Func2_ShouldReturnCorrectResult()
+    {
+        Expression<Func<T1, T2, TReturn>> sut = (_, _) => Fixture.Create<TReturn>();
+        var result = Lambda.ExpressionOf( sut );
+        result.Should().BeSameAs( sut );
+    }
+
+    [Fact]
+    public void ExpressionOf_Func3_ShouldReturnCorrectResult()
+    {
+        Expression<Func<T1, T2, T3, TReturn>> sut = (_, _, _) => Fixture.Create<TReturn>();
+        var result = Lambda.ExpressionOf( sut );
+        result.Should().BeSameAs( sut );
+    }
+
+    [Fact]
+    public void ExpressionOf_Func4_ShouldReturnCorrectResult()
+    {
+        Expression<Func<T1, T2, T3, T4, TReturn>> sut = (_, _, _, _) => Fixture.Create<TReturn>();
+        var result = Lambda.ExpressionOf( sut );
+        result.Should().BeSameAs( sut );
+    }
+
+    [Fact]
+    public void ExpressionOf_Func5_ShouldReturnCorrectResult()
+    {
+        Expression<Func<T1, T2, T3, T4, T5, TReturn>> sut = (_, _, _, _, _) => Fixture.Create<TReturn>();
+        var result = Lambda.ExpressionOf( sut );
+        result.Should().BeSameAs( sut );
+    }
+
+    [Fact]
+    public void ExpressionOf_Func6_ShouldReturnCorrectResult()
+    {
+        Expression<Func<T1, T2, T3, T4, T5, T6, TReturn>> sut = (_, _, _, _, _, _) => Fixture.Create<TReturn>();
+        var result = Lambda.ExpressionOf( sut );
+        result.Should().BeSameAs( sut );
+    }
+
+    [Fact]
+    public void ExpressionOf_Func7_ShouldReturnCorrectResult()
+    {
+        Expression<Func<T1, T2, T3, T4, T5, T6, T7, TReturn>> sut = (_, _, _, _, _, _, _) => Fixture.Create<TReturn>();
+        var result = Lambda.ExpressionOf( sut );
         result.Should().BeSameAs( sut );
     }
 }
