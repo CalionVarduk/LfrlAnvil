@@ -10,12 +10,12 @@ internal sealed class TypeConverterCollection
     internal static readonly TypeConverterCollection Empty = new TypeConverterCollection( null, null, null, int.MaxValue );
 
     private readonly ParsedExpressionTypeConverter? _genericConstruct;
-    private readonly Dictionary<Type, ParsedExpressionTypeConverter>? _specializedConstructs;
+    private readonly IReadOnlyDictionary<Type, ParsedExpressionTypeConverter>? _specializedConstructs;
 
     internal TypeConverterCollection(
         Type? targetType,
         ParsedExpressionTypeConverter? genericConstruct,
-        Dictionary<Type, ParsedExpressionTypeConverter>? specializedConstructs,
+        IReadOnlyDictionary<Type, ParsedExpressionTypeConverter>? specializedConstructs,
         int precedence)
     {
         TargetType = targetType;

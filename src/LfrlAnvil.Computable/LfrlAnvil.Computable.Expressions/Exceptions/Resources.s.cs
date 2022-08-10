@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -246,6 +247,23 @@ internal static class Resources
     internal static string TypeDeclarationGroupContainsConstructsOfOtherType(StringSlice symbol)
     {
         return $"Expected type declaration group with '{symbol}' symbol to be comprised of only types but found other construct types.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string FoundDuplicateFunctionSignature(
+        StringSlice symbol,
+        IReadOnlyList<Type> parameterTypes)
+    {
+        var parameterTypesText = string.Join( ", ", parameterTypes.Select( p => p.FullName ) );
+        return $"Found duplicate function signature for symbol '{symbol}' (parameter types: [{parameterTypesText}])";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string FunctionGroupContainsConstructsOfOtherType(StringSlice symbol)
+    {
+        return $"Expected function group with '{symbol}' symbol to be comprised of only functions but found other construct types.";
     }
 
     [Pure]

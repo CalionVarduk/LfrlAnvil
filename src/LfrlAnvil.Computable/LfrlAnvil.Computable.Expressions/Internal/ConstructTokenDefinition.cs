@@ -14,6 +14,7 @@ internal sealed class ConstructTokenDefinition
         UnaryOperatorCollection postfixUnaryOperators,
         TypeConverterCollection prefixTypeConverters,
         TypeConverterCollection postfixTypeConverters,
+        FunctionCollection functions,
         ParsedExpressionConstant? constant,
         Type? typeDeclaration,
         ConstructTokenType type)
@@ -23,6 +24,7 @@ internal sealed class ConstructTokenDefinition
         PostfixUnaryOperators = postfixUnaryOperators;
         PrefixTypeConverters = prefixTypeConverters;
         PostfixTypeConverters = postfixTypeConverters;
+        Functions = functions;
         Constant = constant?.Expression;
         TypeDeclaration = typeDeclaration;
         Type = type;
@@ -33,6 +35,7 @@ internal sealed class ConstructTokenDefinition
     internal UnaryOperatorCollection PostfixUnaryOperators { get; }
     internal TypeConverterCollection PrefixTypeConverters { get; }
     internal TypeConverterCollection PostfixTypeConverters { get; }
+    internal FunctionCollection Functions { get; }
     internal ConstantExpression? Constant { get; }
     internal Type? TypeDeclaration { get; }
     internal ConstructTokenType Type { get; }
@@ -67,6 +70,7 @@ internal sealed class ConstructTokenDefinition
             postfixUnary,
             TypeConverterCollection.Empty,
             TypeConverterCollection.Empty,
+            FunctionCollection.Empty,
             constant: null,
             typeDeclaration: null,
             type );
@@ -91,9 +95,25 @@ internal sealed class ConstructTokenDefinition
             UnaryOperatorCollection.Empty,
             prefix,
             postfix,
+            FunctionCollection.Empty,
             constant: null,
             typeDeclaration: null,
             type );
+    }
+
+    [Pure]
+    internal static ConstructTokenDefinition CreateFunction(FunctionCollection functions)
+    {
+        return new ConstructTokenDefinition(
+            BinaryOperatorCollection.Empty,
+            UnaryOperatorCollection.Empty,
+            UnaryOperatorCollection.Empty,
+            TypeConverterCollection.Empty,
+            TypeConverterCollection.Empty,
+            functions,
+            constant: null,
+            typeDeclaration: null,
+            ConstructTokenType.Function );
     }
 
     [Pure]
@@ -105,6 +125,7 @@ internal sealed class ConstructTokenDefinition
             UnaryOperatorCollection.Empty,
             TypeConverterCollection.Empty,
             TypeConverterCollection.Empty,
+            FunctionCollection.Empty,
             constant,
             typeDeclaration: null,
             ConstructTokenType.Constant );
@@ -119,6 +140,7 @@ internal sealed class ConstructTokenDefinition
             UnaryOperatorCollection.Empty,
             TypeConverterCollection.Empty,
             TypeConverterCollection.Empty,
+            FunctionCollection.Empty,
             constant: null,
             typeDeclaration: type,
             ConstructTokenType.TypeDeclaration );

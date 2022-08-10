@@ -10,11 +10,11 @@ internal sealed class BinaryOperatorCollection
     internal static readonly BinaryOperatorCollection Empty = new BinaryOperatorCollection( null, null, int.MaxValue );
 
     private readonly ParsedExpressionBinaryOperator? _genericConstruct;
-    private readonly Dictionary<(Type Left, Type Right), ParsedExpressionTypedBinaryOperator>? _specializedConstructs;
+    private readonly IReadOnlyDictionary<(Type Left, Type Right), ParsedExpressionTypedBinaryOperator>? _specializedConstructs;
 
     internal BinaryOperatorCollection(
         ParsedExpressionBinaryOperator? genericConstruct,
-        Dictionary<(Type Left, Type Right), ParsedExpressionTypedBinaryOperator>? specializedConstructs,
+        IReadOnlyDictionary<(Type Left, Type Right), ParsedExpressionTypedBinaryOperator>? specializedConstructs,
         int precedence)
     {
         _genericConstruct = genericConstruct;

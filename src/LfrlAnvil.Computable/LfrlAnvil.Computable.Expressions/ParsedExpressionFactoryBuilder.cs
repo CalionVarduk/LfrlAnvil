@@ -142,6 +142,18 @@ public sealed class ParsedExpressionFactoryBuilder
         return this;
     }
 
+    public ParsedExpressionFactoryBuilder AddFunction(string symbol, ParsedExpressionFunction function)
+    {
+        _constructs.Add( (StringSlice.Create( symbol ), ConstructTokenType.Function, function) );
+        return this;
+    }
+
+    public ParsedExpressionFactoryBuilder AddFunction(ReadOnlyMemory<char> symbol, ParsedExpressionFunction function)
+    {
+        _constructs.Add( (StringSlice.Create( symbol ), ConstructTokenType.Function, function) );
+        return this;
+    }
+
     public ParsedExpressionFactoryBuilder SetBinaryOperatorPrecedence(string symbol, int precedence)
     {
         _precedences[(StringSlice.Create( symbol ), ConstructTokenType.BinaryOperator)] = precedence;
@@ -249,6 +261,7 @@ public sealed class ParsedExpressionFactoryBuilder
                 ParsedExpressionTypeConverter =>
                     CreateTypeConverterDefinition( g, prefixTypeConverters, postfixTypeConverters, ref errorMessages ),
                 ParsedExpressionConstant => CreateConstantDefinition( g, ref errorMessages ),
+                ParsedExpressionFunction => CreateFunctionDefinition( g, ref errorMessages ),
                 Type => CreateTypeDeclarationDefinition( g, ref errorMessages ),
                 _ => CreateOperatorDefinition( g, binaryOperators, prefixUnaryOperators, postfixUnaryOperators, ref errorMessages )
             };
@@ -577,5 +590,38 @@ public sealed class ParsedExpressionFactoryBuilder
             errorMessages = errorMessages.Extend( definitionErrorMessage );
 
         return ConstructTokenDefinition.CreateTypeDeclaration( result );
+    }
+
+    private static ConstructTokenDefinition CreateFunctionDefinition(
+        IGrouping<StringSlice, (StringSlice Symbol, ConstructTokenType Type, object Object)> group,
+        ref Chain<string> errorMessages)
+    {
+        Dictionary<FunctionSignatureKey, ParsedExpressionFunction>? functions = null;
+        string? definitionErrorMessage = null;
+
+        foreach ( var (_, _, construct) in group )
+        {
+            if ( construct is ParsedExpressionFunction function )
+            {
+                var parameters = function.Lambda.Parameters;
+                var parameterTypes = parameters.Count == 0 ? Array.Empty<Type>() : new Type[parameters.Count];
+                for ( var i = 0; i < parameters.Count; ++i )
+                    parameterTypes[i] = parameters[i].Type;
+
+                functions ??= new Dictionary<FunctionSignatureKey, ParsedExpressionFunction>();
+                if ( ! functions.TryAdd( new FunctionSignatureKey( parameterTypes ), function ) )
+                    errorMessages = errorMessages.Extend( Resources.FoundDuplicateFunctionSignature( group.Key, parameterTypes ) );
+
+                continue;
+            }
+
+            definitionErrorMessage ??= Resources.FunctionGroupContainsConstructsOfOtherType( group.Key );
+        }
+
+        if ( definitionErrorMessage is not null )
+            errorMessages = errorMessages.Extend( definitionErrorMessage );
+
+        var collection = functions is null ? FunctionCollection.Empty : new FunctionCollection( functions );
+        return ConstructTokenDefinition.CreateFunction( collection );
     }
 }

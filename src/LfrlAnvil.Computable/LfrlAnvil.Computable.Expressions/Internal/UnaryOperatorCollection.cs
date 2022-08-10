@@ -10,11 +10,11 @@ internal sealed class UnaryOperatorCollection
     internal static readonly UnaryOperatorCollection Empty = new UnaryOperatorCollection( null, null, int.MaxValue );
 
     private readonly ParsedExpressionUnaryOperator? _genericConstruct;
-    private readonly Dictionary<Type, ParsedExpressionTypedUnaryOperator>? _specializedConstructs;
+    private readonly IReadOnlyDictionary<Type, ParsedExpressionTypedUnaryOperator>? _specializedConstructs;
 
     internal UnaryOperatorCollection(
         ParsedExpressionUnaryOperator? genericConstruct,
-        Dictionary<Type, ParsedExpressionTypedUnaryOperator>? specializedConstructs,
+        IReadOnlyDictionary<Type, ParsedExpressionTypedUnaryOperator>? specializedConstructs,
         int precedence)
     {
         _genericConstruct = genericConstruct;
