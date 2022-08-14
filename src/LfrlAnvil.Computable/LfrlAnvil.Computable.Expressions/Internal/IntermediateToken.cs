@@ -26,7 +26,10 @@ internal readonly struct IntermediateToken
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateOpenedParenthesis(StringSlice symbol)
     {
-        Assume.True( symbol.Equals( TokenConstants.OpenedParenthesis ), "Assumed symbol to be OpenedParenthesis." );
+        Assume.True(
+            symbol.Equals( TokenConstants.OpenedParenthesis ),
+            "Assumed symbol to be " + nameof( TokenConstants.OpenedParenthesis ) + "." );
+
         return new IntermediateToken( IntermediateTokenType.OpenedParenthesis, symbol );
     }
 
@@ -34,7 +37,10 @@ internal readonly struct IntermediateToken
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateClosedParenthesis(StringSlice symbol)
     {
-        Assume.True( symbol.Equals( TokenConstants.ClosedParenthesis ), "Assumed symbol to be ClosedParenthesis." );
+        Assume.True(
+            symbol.Equals( TokenConstants.ClosedParenthesis ),
+            "Assumed symbol to be " + nameof( TokenConstants.ClosedParenthesis ) + "." );
+
         return new IntermediateToken( IntermediateTokenType.ClosedParenthesis, symbol );
     }
 
@@ -42,23 +48,32 @@ internal readonly struct IntermediateToken
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateInlineFunctionSeparator(StringSlice symbol)
     {
-        Assume.True( symbol.Equals( TokenConstants.InlineFunctionSeparator ), "Assumed symbol to be InlineFunctionSeparator." );
+        Assume.True(
+            symbol.Equals( TokenConstants.InlineFunctionSeparator ),
+            "Assumed symbol to be " + nameof( TokenConstants.InlineFunctionSeparator ) + "." );
+
         return new IntermediateToken( IntermediateTokenType.InlineFunctionSeparator, symbol );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static IntermediateToken CreateFunctionParameterSeparator(StringSlice symbol)
+    internal static IntermediateToken CreateElementSeparator(StringSlice symbol)
     {
-        Assume.True( symbol.Equals( TokenConstants.FunctionParameterSeparator ), "Assumed symbol to be FunctionParameterSeparator." );
-        return new IntermediateToken( IntermediateTokenType.FunctionParameterSeparator, symbol );
+        Assume.True(
+            symbol.Equals( TokenConstants.ElementSeparator ),
+            "Assumed symbol to be " + nameof( TokenConstants.ElementSeparator ) + "." );
+
+        return new IntermediateToken( IntermediateTokenType.ElementSeparator, symbol );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateMemberAccess(StringSlice symbol)
     {
-        Assume.True( symbol.Equals( TokenConstants.MemberAccess ), "Assumed symbol to be MemberAccess." );
+        Assume.True(
+            symbol.Equals( TokenConstants.MemberAccess ),
+            "Assumed symbol to be " + nameof( TokenConstants.MemberAccess ) + "." );
+
         return new IntermediateToken( IntermediateTokenType.MemberAccess, symbol );
     }
 

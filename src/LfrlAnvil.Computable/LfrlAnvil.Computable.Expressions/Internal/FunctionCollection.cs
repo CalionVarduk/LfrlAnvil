@@ -1,6 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq.Expressions;
 using LfrlAnvil.Computable.Expressions.Constructs;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
@@ -18,8 +18,8 @@ internal sealed class FunctionCollection
     }
 
     [Pure]
-    internal ParsedExpressionFunction? FindConstruct(IReadOnlyList<Type> parameterTypes)
+    internal ParsedExpressionFunction? FindConstruct(IReadOnlyList<Expression> parameters)
     {
-        return _functions.GetValueOrDefault( new FunctionSignatureKey( parameterTypes ) );
+        return _functions.GetValueOrDefault( new FunctionSignatureKey( parameters ) );
     }
 }

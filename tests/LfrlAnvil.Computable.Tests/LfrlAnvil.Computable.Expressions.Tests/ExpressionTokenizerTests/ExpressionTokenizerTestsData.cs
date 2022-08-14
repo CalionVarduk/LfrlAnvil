@@ -340,7 +340,7 @@ public class ExpressionTokenizerTestsData
                 new[]
                 {
                     new Token( IntermediateTokenType.Argument, "a" ),
-                    new Token( IntermediateTokenType.FunctionParameterSeparator, "," ),
+                    new Token( IntermediateTokenType.ElementSeparator, "," ),
                     new Token( IntermediateTokenType.Argument, "b" )
                 }
             },
@@ -350,8 +350,8 @@ public class ExpressionTokenizerTestsData
                 new[]
                 {
                     new Token( IntermediateTokenType.Argument, "a" ),
-                    new Token( IntermediateTokenType.FunctionParameterSeparator, "," ),
-                    new Token( IntermediateTokenType.FunctionParameterSeparator, "," ),
+                    new Token( IntermediateTokenType.ElementSeparator, "," ),
+                    new Token( IntermediateTokenType.ElementSeparator, "," ),
                     new Token( IntermediateTokenType.Argument, "b" )
                 }
             },
@@ -371,7 +371,7 @@ public class ExpressionTokenizerTestsData
                 new[]
                 {
                     new Token( IntermediateTokenType.Argument, "a" ),
-                    new Token( IntermediateTokenType.FunctionParameterSeparator, "," ),
+                    new Token( IntermediateTokenType.ElementSeparator, "," ),
                     new Token( IntermediateTokenType.Constructs, "+" ),
                     new Token( IntermediateTokenType.Argument, "b" )
                 }
@@ -383,7 +383,7 @@ public class ExpressionTokenizerTestsData
                 {
                     new Token( IntermediateTokenType.Argument, "a" ),
                     new Token( IntermediateTokenType.Constructs, "+" ),
-                    new Token( IntermediateTokenType.FunctionParameterSeparator, "," ),
+                    new Token( IntermediateTokenType.ElementSeparator, "," ),
                     new Token( IntermediateTokenType.Argument, "b" )
                 }
             },
@@ -503,9 +503,9 @@ public class ExpressionTokenizerTestsData
                     new Token( IntermediateTokenType.Argument, "i" ),
                     new Token( IntermediateTokenType.Constructs, "/" ),
                     new Token( IntermediateTokenType.Argument, "j" ),
-                    new Token( IntermediateTokenType.FunctionParameterSeparator, "," ),
+                    new Token( IntermediateTokenType.ElementSeparator, "," ),
                     new Token( IntermediateTokenType.Argument, "f" ),
-                    new Token( IntermediateTokenType.FunctionParameterSeparator, "," ),
+                    new Token( IntermediateTokenType.ElementSeparator, "," ),
                     new Token( IntermediateTokenType.Argument, "g" ),
                     new Token( IntermediateTokenType.Constructs, "*" ),
                     new Token( IntermediateTokenType.Argument, "h" ),
@@ -533,7 +533,7 @@ public class ExpressionTokenizerTestsData
             {
                 IntermediateTokenType.OpenedParenthesis => IntermediateToken.CreateOpenedParenthesis( s ),
                 IntermediateTokenType.ClosedParenthesis => IntermediateToken.CreateClosedParenthesis( s ),
-                IntermediateTokenType.FunctionParameterSeparator => IntermediateToken.CreateFunctionParameterSeparator( s ),
+                IntermediateTokenType.ElementSeparator => IntermediateToken.CreateElementSeparator( s ),
                 IntermediateTokenType.InlineFunctionSeparator => IntermediateToken.CreateInlineFunctionSeparator( s ),
                 IntermediateTokenType.MemberAccess => IntermediateToken.CreateMemberAccess( s ),
                 IntermediateTokenType.StringConstant => IntermediateToken.CreateStringConstant( s ),

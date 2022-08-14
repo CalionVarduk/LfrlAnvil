@@ -247,11 +247,11 @@ internal struct ExpressionTokenizerSubStream
         var first = _remainingSymbols[0];
         switch ( first )
         {
-            case TokenConstants.FunctionParameterSeparator:
+            case TokenConstants.ElementSeparator:
             {
                 var startIndex = _remainingSymbols.StartIndex;
                 _remainingSymbols = _remainingSymbols.Slice( 1 );
-                return ExpressionTokenReader.ReadFunctionParameterSeparator( _remainingSymbols.Source, startIndex );
+                return ExpressionTokenReader.ReadElementSeparator( _remainingSymbols.Source, startIndex );
             }
 
             case TokenConstants.MemberAccess:

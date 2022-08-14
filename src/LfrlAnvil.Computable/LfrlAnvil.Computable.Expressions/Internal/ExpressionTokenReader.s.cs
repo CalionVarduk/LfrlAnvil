@@ -25,10 +25,10 @@ internal static class ExpressionTokenReader
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static IntermediateToken ReadFunctionParameterSeparator(string input, int index)
+    internal static IntermediateToken ReadElementSeparator(string input, int index)
     {
         Assume.IsLessThan( index, input.Length, nameof( index ) );
-        var result = IntermediateToken.CreateFunctionParameterSeparator( StringSlice.Create( input, index, length: 1 ) );
+        var result = IntermediateToken.CreateElementSeparator( StringSlice.Create( input, index, length: 1 ) );
         return result;
     }
 

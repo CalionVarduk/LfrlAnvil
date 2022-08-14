@@ -1,39 +1,82 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Linq.Expressions;
-using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
 
 internal sealed class ExpressionOperandStack : IReadOnlyList<Expression>
 {
-    private readonly List<Expression> _expressions;
+    private const int BaseCapacity = 7;
+
+    private Expression?[] _expressions;
 
     internal ExpressionOperandStack()
     {
-        _expressions = new List<Expression>();
+        _expressions = new Expression?[BaseCapacity];
+        Count = 0;
     }
 
-    public int Count => _expressions.Count;
-    public Expression this[int index] => _expressions[_expressions.Count - index - 1];
+    public int Count { get; private set; }
 
-    public void Push(Expression operand)
+    public Expression this[int index] => _expressions[Count - index - 1]!;
+
+    internal void Push(Expression operand)
     {
-        _expressions.Add( operand );
+        if ( Count == _expressions.Length )
+        {
+            var newExpressions = new Expression?[(_expressions.Length << 1) + 1];
+            for ( var i = 0; i < Count; ++i )
+                newExpressions[i] = _expressions[i];
+
+            _expressions = newExpressions;
+        }
+
+        _expressions[Count++] = operand;
     }
 
-    public Expression Pop()
+    internal Expression Pop()
     {
-        var result = _expressions[^1];
-        _expressions.RemoveLast();
+        Assume.IsGreaterThan( Count, 0, nameof( Count ) );
+
+        var index = Count-- - 1;
+        var result = _expressions[index]!;
+        _expressions[index] = null;
+        return result;
+    }
+
+    internal void Pop(int count)
+    {
+        Assume.IsInRange( count, 1, Count, nameof( count ) );
+
+        Count -= count;
+        Array.Clear( _expressions, Count, count );
+    }
+
+    internal Expression[] PopAndReturn(int count)
+    {
+        Assume.IsInRange( count, 0, Count, nameof( count ) );
+
+        if ( count == 0 )
+            return Array.Empty<Expression>();
+
+        var oldCount = Count;
+        Count -= count;
+
+        var result = new Expression[count];
+        for ( var i = Count; i < oldCount; ++i )
+            result[i - Count] = _expressions[i]!;
+
+        Array.Clear( _expressions, Count, count );
         return result;
     }
 
     [Pure]
     public IEnumerator<Expression> GetEnumerator()
     {
-        return _expressions.GetEnumerator();
+        return _expressions.Take( Count ).GetEnumerator()!;
     }
 
     [Pure]

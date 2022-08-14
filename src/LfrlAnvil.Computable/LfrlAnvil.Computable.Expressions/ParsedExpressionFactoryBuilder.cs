@@ -604,13 +604,9 @@ public sealed class ParsedExpressionFactoryBuilder
             if ( construct is ParsedExpressionFunction function )
             {
                 var parameters = function.Lambda.Parameters;
-                var parameterTypes = parameters.Count == 0 ? Array.Empty<Type>() : new Type[parameters.Count];
-                for ( var i = 0; i < parameters.Count; ++i )
-                    parameterTypes[i] = parameters[i].Type;
-
                 functions ??= new Dictionary<FunctionSignatureKey, ParsedExpressionFunction>();
-                if ( ! functions.TryAdd( new FunctionSignatureKey( parameterTypes ), function ) )
-                    errorMessages = errorMessages.Extend( Resources.FoundDuplicateFunctionSignature( group.Key, parameterTypes ) );
+                if ( ! functions.TryAdd( new FunctionSignatureKey( parameters ), function ) )
+                    errorMessages = errorMessages.Extend( Resources.FoundDuplicateFunctionSignature( group.Key, parameters ) );
 
                 continue;
             }

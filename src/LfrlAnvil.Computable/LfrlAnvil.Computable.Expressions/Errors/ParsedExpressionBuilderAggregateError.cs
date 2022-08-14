@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using LfrlAnvil.Computable.Expressions.Internal;
@@ -10,7 +9,7 @@ public sealed class ParsedExpressionBuilderAggregateError : ParsedExpressionBuil
 {
     internal ParsedExpressionBuilderAggregateError(
         ParsedExpressionBuilderErrorType type,
-        IReadOnlyList<ParsedExpressionBuilderError> inner,
+        Chain<ParsedExpressionBuilderError> inner,
         StringSlice? token = null)
         : base( type, token )
     {
@@ -18,14 +17,14 @@ public sealed class ParsedExpressionBuilderAggregateError : ParsedExpressionBuil
         Inner = inner;
     }
 
-    public IReadOnlyList<ParsedExpressionBuilderError> Inner { get; }
+    public Chain<ParsedExpressionBuilderError> Inner { get; }
 
     [Pure]
     public override string ToString()
     {
         var headerText = $"{base.ToString()}, with {Inner.Count} inner error(s):";
-        var innerTexts = Inner.Select( (e, i) => $"{i + 1}. {e}" );
-        var fullInnerText = string.Join( $"{Environment.NewLine}{Environment.NewLine}", innerTexts );
+        var innerTexts = Inner.Select( (e, i) => $"  {i + 1}. {e.ToString().Replace( Environment.NewLine, $"{Environment.NewLine}  " )}" );
+        var fullInnerText = string.Join( Environment.NewLine, innerTexts );
         return $"{headerText}{Environment.NewLine}{fullInnerText}";
     }
 }

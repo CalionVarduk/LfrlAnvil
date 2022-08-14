@@ -170,7 +170,7 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
         [MaybeNullWhen( false )] out ParsedExpression<TArg, TResult> result,
         out Chain<ParsedExpressionBuilderError> errors)
     {
-        var state = ExpressionBuilderState.CreateRoot(
+        var state = new ExpressionBuilderRootState(
             typeof( TArg ),
             _configuration,
             CreateNumberParser( typeof( TArg ), typeof( TResult ) ) );

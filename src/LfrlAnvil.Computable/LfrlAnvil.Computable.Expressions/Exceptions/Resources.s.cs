@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Computable.Expressions.Errors;
@@ -253,9 +254,9 @@ internal static class Resources
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string FoundDuplicateFunctionSignature(
         StringSlice symbol,
-        IReadOnlyList<Type> parameterTypes)
+        IReadOnlyList<Expression> parameters)
     {
-        var parameterTypesText = string.Join( ", ", parameterTypes.Select( p => p.FullName ) );
+        var parameterTypesText = string.Join( ", ", parameters.Select( e => e.Type.FullName ) );
         return $"Found duplicate function signature for symbol '{symbol}' (parameter types: [{parameterTypesText}])";
     }
 

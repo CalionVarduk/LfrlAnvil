@@ -10,6 +10,6 @@ internal enum IntermediateTokenType : byte
     OpenedParenthesis = 5,
     ClosedParenthesis = 6,
     InlineFunctionSeparator = 7,
-    FunctionParameterSeparator = 8,
+    ElementSeparator = 8,
     MemberAccess = 9
 }

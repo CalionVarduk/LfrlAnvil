@@ -220,6 +220,18 @@ public partial class ParsedExpressionFactoryTests
         }
     }
 
+    private sealed class MockParameterlessFunction : ParsedExpressionFunction<string>
+    {
+        internal MockParameterlessFunction()
+            : base( () => "Func()" ) { }
+    }
+
+    private sealed class MockFunctionWithThreeParameters : ParsedExpressionFunction<string, string, string, string>
+    {
+        internal MockFunctionWithThreeParameters()
+            : base( (a, b, c) => $"Func({a},{b},{c})" ) { }
+    }
+
     private sealed class ThrowingUnaryOperator : ParsedExpressionUnaryOperator
     {
         protected override Expression CreateUnaryExpression(Expression operand)

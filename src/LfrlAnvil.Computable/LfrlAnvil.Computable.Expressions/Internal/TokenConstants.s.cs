@@ -9,7 +9,7 @@ internal static class TokenConstants
     internal const char OpenedParenthesis = '(';
     internal const char ClosedParenthesis = ')';
     internal const char InlineFunctionSeparator = ';';
-    internal const char FunctionParameterSeparator = ',';
+    internal const char ElementSeparator = ',';
     internal const char MemberAccess = '.';
     internal const char ScientificNotationPositiveExponentOperator = '+';
     internal const char ScientificNotationNegativeExponentOperator = '-';
@@ -82,6 +82,6 @@ internal static class TokenConstants
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static bool IsReservedSymbol(char c)
     {
-        return c is OpenedParenthesis or ClosedParenthesis or InlineFunctionSeparator or FunctionParameterSeparator or MemberAccess;
+        return c is OpenedParenthesis or ClosedParenthesis or InlineFunctionSeparator or ElementSeparator or MemberAccess;
     }
 }

@@ -67,7 +67,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenUnexpectedExceptionIsThrown()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenUnexpectedExceptionIsThrown()
     {
         var input = "a";
         var exception = new Exception();
@@ -120,7 +120,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     [InlineData( "true", true )]
     [InlineData( "( true )", true )]
     [InlineData( "( ( ( true ) ) )", true )]
-    public void DelegateInvoke_ShouldReturnCorrectResult_WhenExpressionConsistsOfOnlyBooleanFalse(string input, bool expected)
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenExpressionConsistsOfOnlyBooleanConstant(string input, bool expected)
     {
         var builder = new ParsedExpressionFactoryBuilder();
         var sut = builder.Build();
@@ -169,8 +169,24 @@ public partial class ParsedExpressionFactoryTests : TestsBase
         result.Should().Be( "ZERO" );
     }
 
+    [Theory]
+    [InlineData( "foo()" )]
+    [InlineData( "( foo() )" )]
+    [InlineData( "( ( ( foo() ) ) )" )]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenExpressionConsistsOfOnlyParameterlessFunction(string input)
+    {
+        var builder = new ParsedExpressionFactoryBuilder().AddFunction( "foo", new MockParameterlessFunction() );
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+
+        result.Should().Be( "Func()" );
+    }
+
     [Fact]
-    public void Build_ShouldThrowMathExpressionCreationException_WhenStringConstantIsTheLastTokenAndDoesNotHaveClosingDelimiter()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenStringConstantIsTheLastTokenAndDoesNotHaveClosingDelimiter()
     {
         var input = "'foobar";
         var builder = new ParsedExpressionFactoryBuilder();
@@ -184,7 +200,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenNumberParserFailedToParseNumberConstant()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenNumberParserFailedToParseNumberConstant()
     {
         var input = "12.34";
         var builder = new ParsedExpressionFactoryBuilder().SetNumberParserProvider( _ => new FailingNumberParser() );
@@ -198,7 +214,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenArgumentHasInvalidName()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenArgumentHasInvalidName()
     {
         var input = "/";
         var builder = new ParsedExpressionFactoryBuilder();
@@ -213,9 +229,12 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
     [Theory]
     [MethodData( nameof( ParsedExpressionFactoryTestsData.GetOperandFollowedByOperandData ) )]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenOperandIsFollowedByOperand(string input)
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenOperandIsFollowedByOperand(string input)
     {
-        var builder = new ParsedExpressionFactoryBuilder().AddConstant( "Zero", new ZeroConstant() );
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddConstant( "Zero", new ZeroConstant() )
+            .AddFunction( "foo", new MockParameterlessFunction() );
+
         var sut = builder.Build();
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
@@ -226,11 +245,29 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Theory]
-    [MethodData( nameof( ParsedExpressionFactoryTestsData.GetOperandFollowedByPrefixUnaryOperatorData ) )]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenOperandIsFollowedByPrefixUnaryOperator(string input)
+    [MethodData( nameof( ParsedExpressionFactoryTestsData.GetOperandFollowedByFunctionData ) )]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenOperandIsFollowedByFunction(string input)
     {
         var builder = new ParsedExpressionFactoryBuilder()
             .AddConstant( "Zero", new ZeroConstant() )
+            .AddFunction( "foo", new MockParameterlessFunction() );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedFunctionCall ) );
+    }
+
+    [Theory]
+    [MethodData( nameof( ParsedExpressionFactoryTestsData.GetOperandFollowedByPrefixUnaryOperatorData ) )]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenOperandIsFollowedByPrefixUnaryOperator(string input)
+    {
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddConstant( "Zero", new ZeroConstant() )
+            .AddFunction( "foo", new MockParameterlessFunction() )
             .AddPrefixUnaryOperator( "-", new MockPrefixUnaryOperator() )
             .SetPrefixUnaryConstructPrecedence( "-", 1 );
 
@@ -245,10 +282,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
     [Theory]
     [MethodData( nameof( ParsedExpressionFactoryTestsData.GetOperandFollowedByPrefixTypeConverterData ) )]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenOperandIsFollowedByPrefixTypeConverter(string input)
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenOperandIsFollowedByPrefixTypeConverter(string input)
     {
         var builder = new ParsedExpressionFactoryBuilder()
             .AddConstant( "Zero", new ZeroConstant() )
+            .AddFunction( "foo", new MockParameterlessFunction() )
             .AddPrefixTypeConverter( "[string]", new MockPrefixTypeConverter() )
             .SetPrefixUnaryConstructPrecedence( "[string]", 1 );
 
@@ -263,9 +301,12 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
     [Theory]
     [MethodData( nameof( ParsedExpressionFactoryTestsData.GetOperandFollowedByOpenParenthesisData ) )]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenOperandIsFollowedByOpenedParenthesis(string input)
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenOperandIsFollowedByOpenedParenthesis(string input)
     {
-        var builder = new ParsedExpressionFactoryBuilder().AddConstant( "Zero", new ZeroConstant() );
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddConstant( "Zero", new ZeroConstant() )
+            .AddFunction( "foo", new MockParameterlessFunction() );
+
         var sut = builder.Build();
 
         var action = Lambda.Of( () => sut.Create<decimal, decimal>( input ) );
@@ -276,7 +317,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenPostfixUnaryOperatorIsFollowedByOpenedParenthesis()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenPostfixUnaryOperatorIsFollowedByOpenedParenthesis()
     {
         var input = "a ^ (";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -293,7 +334,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenPostfixTypeConverterIsFollowedByOpenedParenthesis()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenPostfixTypeConverterIsFollowedByOpenedParenthesis()
     {
         var input = "a ToString (";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -302,7 +343,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var sut = builder.Build();
 
-        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+        var action = Lambda.Of( () => sut.Create<decimal, string>( input ) );
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
@@ -310,7 +351,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenClosedParenthesisIsFollowedByOpenedParenthesis()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenClosedParenthesisIsFollowedByOpenedParenthesis()
     {
         var input = "( a ) (";
         var builder = new ParsedExpressionFactoryBuilder();
@@ -324,7 +365,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenOpenedParenthesisIsFollowedByClosedParenthesis()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenOpenedParenthesisIsFollowedByClosedParenthesis()
     {
         var input = "( )";
         var builder = new ParsedExpressionFactoryBuilder();
@@ -339,7 +380,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
     [Fact]
     public void
-        Create_ShouldThrowMathExpressionCreationException_WhenAmbiguousBinaryOperatorCannotBeProcessedDuringOpenedParenthesisHandling()
+        Create_ShouldThrowParsedExpressionCreationException_WhenAmbiguousBinaryOperatorCannotBeProcessedDuringOpenedParenthesisHandling()
     {
         var input = "a + ( b )";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -359,7 +400,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
     [Fact]
     public void
-        Create_ShouldThrowMathExpressionCreationException_WhenAmbiguousPostfixUnaryOperatorCannotBeProcessedDuringOpenedParenthesisHandling()
+        Create_ShouldThrowParsedExpressionCreationException_WhenAmbiguousPostfixUnaryOperatorCannotBeProcessedDuringOpenedParenthesisHandling()
     {
         var input = "a + + ( b )";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -381,11 +422,12 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
     [Theory]
     [MethodData( nameof( ParsedExpressionFactoryTestsData.GetClosedParenthesisDoesNotHaveCorrespondingOpenParenthesisData ) )]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenClosedParenthesisDoesNotHaveCorrespondingOpenedParenthesis(
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenClosedParenthesisDoesNotHaveCorrespondingOpenedParenthesis(
         string input)
     {
         var builder = new ParsedExpressionFactoryBuilder()
             .AddConstant( "Zero", new ZeroConstant() )
+            .AddFunction( "foo", new MockParameterlessFunction() )
             .AddBinaryOperator( "+", new MockBinaryOperator() )
             .AddPrefixUnaryOperator( "-", new MockPrefixUnaryOperator() )
             .AddPrefixTypeConverter( "[string]", new MockPrefixTypeConverter() )
@@ -407,7 +449,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenPrefixUnaryOperatorIsFollowedByClosedParenthesis()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenPrefixUnaryOperatorIsFollowedByClosedParenthesis()
     {
         var input = "( - )";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -424,7 +466,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenPrefixTypeConverterIsFollowedByClosedParenthesis()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenPrefixTypeConverterIsFollowedByClosedParenthesis()
     {
         var input = "( [string] )";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -441,7 +483,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenBinaryOperatorIsFollowedByClosedParenthesis()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenBinaryOperatorIsFollowedByClosedParenthesis()
     {
         var input = "( a + )";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -459,7 +501,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
     [Fact]
     public void
-        Create_ShouldThrowMathExpressionCreationException_WhenAmbiguousPostfixUnaryOperatorCannotBeProcessedDuringClosedParenthesisHandling()
+        Create_ShouldThrowParsedExpressionCreationException_WhenAmbiguousPostfixUnaryOperatorCannotBeProcessedDuringClosedParenthesisHandling()
     {
         var input = "( a + )";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -479,7 +521,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
     [Fact]
     public void
-        Create_ShouldThrowMathExpressionCreationException_WhenPostfixUnaryConstructAmbiguityCannotBeResolvedDueToBinaryOperatorAmbiguity()
+        Create_ShouldThrowParsedExpressionCreationException_WhenPostfixUnaryConstructAmbiguityCannotBeResolvedDueToBinaryOperatorAmbiguity()
     {
         var input = "( a + + )";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -501,7 +543,8 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenPrefixUnaryConstructCannotBeProcessedDuringClosedParenthesisHandling()
+    public void
+        Create_ShouldThrowParsedExpressionCreationException_WhenPrefixUnaryConstructCannotBeProcessedDuringClosedParenthesisHandling()
     {
         var input = "( - a )";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -518,7 +561,8 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenPrefixTypeConverterCannotBeProcessedDuringClosedParenthesisHandling()
+    public void
+        Create_ShouldThrowParsedExpressionCreationException_WhenPrefixTypeConverterCannotBeProcessedDuringClosedParenthesisHandling()
     {
         var input = "( [string] a )";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -535,7 +579,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenBinaryOperatorCannotBeProcessedDuringClosedParenthesisHandling()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenBinaryOperatorCannotBeProcessedDuringClosedParenthesisHandling()
     {
         var input = "( a + b )";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -553,7 +597,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
     [Fact]
     public void
-        Create_ShouldThrowMathExpressionCreationException_WhenAmbiguousPostfixUnaryOperatorCannotBeProcessedDuringPrefixUnaryOperatorHandling()
+        Create_ShouldThrowParsedExpressionCreationException_WhenAmbiguousPostfixUnaryOperatorCannotBeProcessedDuringPrefixUnaryOperatorHandling()
     {
         var input = "a + * * b";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -577,7 +621,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
     [Fact]
     public void
-        Create_ShouldThrowMathExpressionCreationException_WhenAmbiguousBinaryOperatorCannotBeProcessedDuringPrefixUnaryOperatorHandling()
+        Create_ShouldThrowParsedExpressionCreationException_WhenAmbiguousBinaryOperatorCannotBeProcessedDuringPrefixUnaryOperatorHandling()
     {
         var input = "a + b + * c";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -599,7 +643,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
     [Fact]
     public void
-        Create_ShouldThrowMathExpressionCreationException_WhenAmbiguousPostfixUnaryOperatorCannotBeProcessedDuringPrefixTypeConverterHandling()
+        Create_ShouldThrowParsedExpressionCreationException_WhenAmbiguousPostfixUnaryOperatorCannotBeProcessedDuringPrefixTypeConverterHandling()
     {
         var input = "a + * [string] b";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -625,7 +669,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
     [Fact]
     public void
-        Create_ShouldThrowMathExpressionCreationException_WhenAmbiguousBinaryOperatorCannotBeProcessedDuringPrefixTypeConverterHandling()
+        Create_ShouldThrowParsedExpressionCreationException_WhenAmbiguousBinaryOperatorCannotBeProcessedDuringPrefixTypeConverterHandling()
     {
         var input = "a + b + [string] c";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -646,7 +690,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenAmbiguousPostfixUnaryOperatorIsFollowedByPostfixUnaryOperator()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenAmbiguousPostfixUnaryOperatorIsFollowedByPostfixUnaryOperator()
     {
         var input = "a + * b";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -667,7 +711,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenAmbiguousPostfixUnaryOperatorIsFollowedByPostfixTypeConverter()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenAmbiguousPostfixUnaryOperatorIsFollowedByPostfixTypeConverter()
     {
         var input = "a + ToString b";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -689,7 +733,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
     [Theory]
     [MethodData( nameof( ParsedExpressionFactoryTestsData.GetPrefixUnaryConstructIsFollowedByAnotherConstructData ) )]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenPrefixUnaryConstructIsFollowedByAnotherConstruct(string input)
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenPrefixUnaryConstructIsFollowedByAnotherConstruct(string input)
     {
         var builder = new ParsedExpressionFactoryBuilder()
             .AddPrefixUnaryOperator( "-", new MockPrefixUnaryOperator() )
@@ -714,7 +758,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
     [Fact]
     public void
-        Create_ShouldThrowMathExpressionCreationException_WhenAmbiguousPostfixUnaryOperatorCannotBeProcessedDuringBinaryOperatorHandling()
+        Create_ShouldThrowParsedExpressionCreationException_WhenAmbiguousPostfixUnaryOperatorCannotBeProcessedDuringBinaryOperatorHandling()
     {
         var input = "a + * b";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -735,7 +779,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenPrefixUnaryOperatorThrowsExceptionDuringBinaryOperatorHandling()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenPrefixUnaryOperatorThrowsExceptionDuringBinaryOperatorHandling()
     {
         var input = "- a + b";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -754,7 +798,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenPrefixTypeConverterThrowsExceptionDuringBinaryOperatorHandling()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenPrefixTypeConverterThrowsExceptionDuringBinaryOperatorHandling()
     {
         var input = "[string] a + b";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -773,7 +817,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenBinaryOperatorThrowsException()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenBinaryOperatorThrowsException()
     {
         var input = "a + b";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -790,7 +834,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenPostfixUnaryOperatorThrowsException()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenPostfixUnaryOperatorThrowsException()
     {
         var input = "a ^";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -807,7 +851,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenPostfixTypeConverterThrowsException()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenPostfixTypeConverterThrowsException()
     {
         var input = "a ToString";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -828,7 +872,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     [InlineData( 1, 2 )]
     [InlineData( 2, 1 )]
     public void
-        Create_ShouldThrowMathExpressionCreationException_WhenPostfixUnaryOperatorThrowsExceptionDuringPrefixUnaryOperatorResolution(
+        Create_ShouldThrowParsedExpressionCreationException_WhenPostfixUnaryOperatorThrowsExceptionDuringPrefixUnaryOperatorResolution(
             int prefixPrecedence,
             int postfixPrecedence)
     {
@@ -853,7 +897,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     [InlineData( 1, 2 )]
     [InlineData( 2, 1 )]
     public void
-        Create_ShouldThrowMathExpressionCreationException_WhenPostfixUnaryOperatorThrowsExceptionDuringPrefixTypeConverterResolution(
+        Create_ShouldThrowParsedExpressionCreationException_WhenPostfixUnaryOperatorThrowsExceptionDuringPrefixTypeConverterResolution(
             int prefixPrecedence,
             int postfixPrecedence)
     {
@@ -875,7 +919,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
     [Fact]
     public void
-        Create_ShouldThrowMathExpressionCreationException_WhenPostfixTypeConverterThrowsExceptionDuringPrefixUnaryOperatorResolution()
+        Create_ShouldThrowParsedExpressionCreationException_WhenPostfixTypeConverterThrowsExceptionDuringPrefixUnaryOperatorResolution()
     {
         var input = "- a ToString";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -898,7 +942,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     [InlineData( 1, 2 )]
     [InlineData( 2, 1 )]
     public void
-        Create_ShouldThrowMathExpressionCreationException_WhenPrefixUnaryOperatorThrowsExceptionDuringItsResolutionWithPostfixUnaryOperator(
+        Create_ShouldThrowParsedExpressionCreationException_WhenPrefixUnaryOperatorThrowsExceptionDuringItsResolutionWithPostfixUnaryOperator(
             int prefixPrecedence,
             int postfixPrecedence)
     {
@@ -922,7 +966,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     [InlineData( 1, 1 )]
     [InlineData( 1, 2 )]
     public void
-        Create_ShouldThrowMathExpressionCreationException_WhenPrefixTypeConverterThrowsExceptionDuringItsResolutionWithPostfixUnaryOperator(
+        Create_ShouldThrowParsedExpressionCreationException_WhenPrefixTypeConverterThrowsExceptionDuringItsResolutionWithPostfixUnaryOperator(
             int prefixPrecedence,
             int postfixPrecedence)
     {
@@ -946,7 +990,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     [InlineData( 1, 1 )]
     [InlineData( 1, 2 )]
     public void
-        Create_ShouldThrowMathExpressionCreationException_WhenPrefixUnaryOperatorThrowsExceptionDuringItsResolutionWithPostfixTypeConverter(
+        Create_ShouldThrowParsedExpressionCreationException_WhenPrefixUnaryOperatorThrowsExceptionDuringItsResolutionWithPostfixTypeConverter(
             int prefixPrecedence,
             int postfixPrecedence)
     {
@@ -968,7 +1012,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
     [Fact]
     public void
-        Create_ShouldThrowMathExpressionCreationException_WhenBinaryOperatorCollectionIsEmptyAfterNonAmbiguousPostfixUnaryOperatorHandling()
+        Create_ShouldThrowParsedExpressionCreationException_WhenBinaryOperatorCollectionIsEmptyAfterNonAmbiguousPostfixUnaryOperatorHandling()
     {
         var input = "a ^ + b";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -987,7 +1031,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenBinaryOperatorCollectionIsEmptyAfterPostfixTypeConverterHandling()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenBinaryOperatorCollectionIsEmptyAfterPostfixTypeConverterHandling()
     {
         var input = "a ToString + b";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -1009,7 +1053,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     [InlineData( 1, 1 )]
     [InlineData( 1, 2 )]
     public void
-        Create_ShouldThrowMathExpressionCreationException_WhenBinaryOperatorCannotBeProcessedDuringBinaryOperatorWithGreaterOrEqualPrecedenceHandling(
+        Create_ShouldThrowParsedExpressionCreationException_WhenBinaryOperatorCannotBeProcessedDuringBinaryOperatorWithGreaterOrEqualPrecedenceHandling(
             int firstOperatorPrecedence,
             int secondOperatorPrecedence)
     {
@@ -1030,7 +1074,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenPrefixUnaryOperatorCollectionIsEmptyAtTheStart()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenPrefixUnaryOperatorCollectionIsEmptyAtTheStart()
     {
         var input = "+ a + b";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -1047,7 +1091,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenPrefixUnaryOperatorCollectionIsEmptyAfterBinaryOperatorHandling()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenPrefixUnaryOperatorCollectionIsEmptyAfterBinaryOperatorHandling()
     {
         var input = "a * + b";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -1066,7 +1110,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenPrefixTypeConverterCollectionIsEmptyAtTheStart()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenPrefixTypeConverterCollectionIsEmptyAtTheStart()
     {
         var input = "[string] a + b";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -1085,7 +1129,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenPrefixTypeConverterCollectionIsEmptyAfterBinaryOperatorHandling()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenPrefixTypeConverterCollectionIsEmptyAfterBinaryOperatorHandling()
     {
         var input = "a + [string] b";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -1112,6 +1156,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     {
         var builder = new ParsedExpressionFactoryBuilder()
             .AddConstant( "Zero", new ZeroConstant() )
+            .AddFunction( "foo", new MockParameterlessFunction() )
             .AddBinaryOperator( "+", new MockBinaryOperator() )
             .AddPrefixUnaryOperator( "-", new MockPrefixUnaryOperator() )
             .AddPrefixTypeConverter( "[string]", new MockPrefixTypeConverter() )
@@ -1172,6 +1217,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     {
         var builder = new ParsedExpressionFactoryBuilder()
             .AddConstant( "Zero", new ZeroConstant() )
+            .AddFunction( "foo", new MockParameterlessFunction() )
             .AddBinaryOperator( "/", new MockBinaryOperator( "Div" ) )
             .AddPrefixUnaryOperator( "^", new MockPrefixUnaryOperator( "Caret" ) )
             .AddPostfixUnaryOperator( "!", new MockPostfixUnaryOperator( "Excl" ) )
@@ -1299,7 +1345,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenBinaryOperatorForArgumentTypesDoesNotExist()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenBinaryOperatorForArgumentTypesDoesNotExist()
     {
         var input = "12.34 + 'foo'";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -1316,7 +1362,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenPrefixUnaryOperatorForArgumentTypeDoesNotExist()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenPrefixUnaryOperatorForArgumentTypeDoesNotExist()
     {
         var input = "- 12.34";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -1333,7 +1379,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenPrefixTypeConverterForArgumentTypeDoesNotExist()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenPrefixTypeConverterForArgumentTypeDoesNotExist()
     {
         var input = "[string] 12.34";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -1350,7 +1396,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenPostfixUnaryOperatorForArgumentTypeDoesNotExist()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenPostfixUnaryOperatorForArgumentTypeDoesNotExist()
     {
         var input = "12.34 ^";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -1367,7 +1413,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenPostfixTypeConverterForArgumentTypeDoesNotExist()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenPostfixTypeConverterForArgumentTypeDoesNotExist()
     {
         var input = "12.34 ToString";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -1385,12 +1431,13 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
     [Theory]
     [MethodData( nameof( ParsedExpressionFactoryTestsData.GetTypeDeclarationIsUsedOutsideOfDelegateParametersDefinitionData ) )]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenTypeDeclarationIsUsedOutsideOfDelegateParametersDefinition(
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenTypeDeclarationIsUsedOutsideOfDelegateParametersDefinition(
         string input)
     {
         var builder = new ParsedExpressionFactoryBuilder()
             .AddTypeDeclaration<int>( "int" )
             .AddConstant( "Zero", new ZeroConstant() )
+            .AddFunction( "foo", new MockParameterlessFunction() )
             .AddBinaryOperator( "+", new MockBinaryOperator() )
             .AddPrefixUnaryOperator( "-", new MockPrefixUnaryOperator() )
             .AddPostfixUnaryOperator( "^", new MockPostfixUnaryOperator() )
@@ -1406,11 +1453,13 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Should().ThrowExactly<ParsedExpressionCreationException>();
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedTypeDeclaration ) );
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenInputIsEmpty()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenInputIsEmpty()
     {
         var input = string.Empty;
         var builder = new ParsedExpressionFactoryBuilder();
@@ -1429,7 +1478,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenOperandCountIsDifferentFromOperatorCountPlusOne()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenOperandCountIsDifferentFromOperatorCountPlusOne()
     {
         var input = "a +";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -1447,7 +1496,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenSomeOpenedParenthesisAreUnclosed()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenSomeOpenedParenthesisAreUnclosed()
     {
         var input = "( ( a";
         var builder = new ParsedExpressionFactoryBuilder();
@@ -1461,7 +1510,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenAmbiguousPostfixUnaryOperatorCannotBeProcessedAtTheEndOfInput()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenAmbiguousPostfixUnaryOperatorCannotBeProcessedAtTheEndOfInput()
     {
         var input = "a +";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -1480,7 +1529,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenPrefixUnaryOperatorCannotBeProcessedAtTheEndOfInput()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenPrefixUnaryOperatorCannotBeProcessedAtTheEndOfInput()
     {
         var input = "- a";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -1497,7 +1546,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenPrefixTypeConverterCannotBeProcessedAtTheEndOfInput()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenPrefixTypeConverterCannotBeProcessedAtTheEndOfInput()
     {
         var input = "[string] a";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -1511,6 +1560,276 @@ public partial class ParsedExpressionFactoryTests : TestsBase
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
             .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
+    }
+
+    [Theory]
+    [InlineData( "," )]
+    [InlineData( "a , b" )]
+    [InlineData( "( a , b )" )]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenElementSeparatorIsFoundWhenFunctionParametersAreNotBeingParsed(
+        string input)
+    {
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedElementSeparator ) );
+    }
+
+    [Theory]
+    [InlineData( "foo)" )]
+    [InlineData( "foo( a , )" )]
+    [InlineData( "foo( a , - )" )]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenClosedParenthesisIsTooSoonDuringFunctionParametersParsing(
+        string input)
+    {
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddFunction( "foo", new MockParameterlessFunction() )
+            .AddPrefixUnaryOperator( "-", new MockPrefixUnaryOperator() )
+            .SetPrefixUnaryConstructPrecedence( "-", 1 );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) );
+    }
+
+    [Theory]
+    [InlineData( "foo 'foobar'" )]
+    [InlineData( "foo 12.34" )]
+    [InlineData( "foo false" )]
+    [InlineData( "foo a" )]
+    [InlineData( "foo Zero" )]
+    [InlineData( "foo foo" )]
+    [InlineData( "foo int" )]
+    [InlineData( "foo -" )]
+    [InlineData( "foo ^" )]
+    [InlineData( "foo +" )]
+    [InlineData( "foo [string]" )]
+    [InlineData( "foo ToString" )]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenFunctionIsNotFollowedByOpenedParenthesis(string input)
+    {
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddFunction( "foo", new MockParameterlessFunction() )
+            .AddConstant( "Zero", new ZeroConstant() )
+            .AddTypeDeclaration<int>( "int" )
+            .AddPrefixUnaryOperator( "-", new MockPrefixUnaryOperator() )
+            .AddPrefixTypeConverter( "[string]", new MockPrefixTypeConverter() )
+            .AddPostfixUnaryOperator( "^", new MockPostfixUnaryOperator() )
+            .AddPostfixTypeConverter( "ToString", new MockPostfixTypeConverter() )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetPrefixUnaryConstructPrecedence( "-", 1 )
+            .SetPrefixUnaryConstructPrecedence( "[string]", 1 )
+            .SetPostfixUnaryConstructPrecedence( "^", 1 )
+            .SetPostfixUnaryConstructPrecedence( "ToString", 1 )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) );
+    }
+
+    [Theory]
+    [InlineData( "foo" )]
+    [InlineData( "foo(" )]
+    [InlineData( "foo( a" )]
+    [InlineData( "foo( a ," )]
+    [InlineData( "foo( a , b" )]
+    [InlineData( "foo( a , b , ( c )" )]
+    [InlineData( "foo( a , b , foo(" )]
+    [InlineData( "a + foo" )]
+    [InlineData( "a + foo(" )]
+    [InlineData( "a + foo( a" )]
+    [InlineData( "a + foo( a ," )]
+    [InlineData( "a + foo( a , b" )]
+    [InlineData( "a + foo( a , b , ( c )" )]
+    [InlineData( "a + foo( a , b , foo(" )]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenFunctionParametersDoNotEndWithClosedParenthesis(string input)
+    {
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddFunction( "foo", new MockFunctionWithThreeParameters() )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch(
+                e => e.Errors.Any(
+                    er => er.Type is ParsedExpressionBuilderErrorType.NestedExpressionFailure
+                        or ParsedExpressionBuilderErrorType.MissingSubExpressionClosingSymbol ) );
+    }
+
+    [Theory]
+    [InlineData( "foo( a )" )]
+    [InlineData( "foo( a , b )" )]
+    [InlineData( "foo( a , b , c , d )" )]
+    [InlineData( "foo( 1 , 2 , 3 )" )]
+    [InlineData( "foo( 1 , a , b )" )]
+    [InlineData( "foo( a , 1 , b )" )]
+    [InlineData( "foo( a , b , 1 )" )]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenFunctionSignatureDoesNotExist(string input)
+    {
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddFunction( "foo", new MockParameterlessFunction() )
+            .AddFunction( "foo", new MockFunctionWithThreeParameters() );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.FunctionCouldNotBeResolved ) );
+    }
+
+    [Theory]
+    [InlineData( "foo( , b , c )" )]
+    [InlineData( "foo( a , , c )" )]
+    [InlineData( "foo( a + , b , c )" )]
+    [InlineData( "foo( a , b + , c )" )]
+    [InlineData( "foo( a , b , c + )" )]
+    [InlineData( "foo( ( a , b , c )" )]
+    [InlineData( "foo( a , ( b , c )" )]
+    [InlineData( "foo( - , b , c )" )]
+    [InlineData( "foo( a , - , c )" )]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenAnyFunctionParameterCouldNotBeParsed(string input)
+    {
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddFunction( "foo", new MockFunctionWithThreeParameters() )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .AddPrefixUnaryOperator( "-", new MockPrefixUnaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 )
+            .SetPrefixUnaryConstructPrecedence( "-", 1 );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WithCorrectNesting_WhenAnySubExpressionErrorOccurs()
+    {
+        var input = "foo( bar( 1 + ) )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddFunction( "foo", new MockParameterlessFunction() )
+            .AddFunction( "bar", new MockParameterlessFunction() );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        using ( new AssertionScope() )
+        {
+            var exception = action.Should().ThrowExactly<ParsedExpressionCreationException>().And;
+            exception.Errors.Select( e => e.Type )
+                .Should()
+                .BeSequentiallyEqualTo( ParsedExpressionBuilderErrorType.NestedExpressionFailure );
+
+            if ( exception.Errors.Count == 0 || exception.Errors.First() is not ParsedExpressionBuilderAggregateError fooAggregateError )
+                return;
+
+            fooAggregateError.Token.ToString().Should().Be( "foo" );
+            fooAggregateError.Inner.Select( e => e.Type )
+                .Should()
+                .BeSequentiallyEqualTo( ParsedExpressionBuilderErrorType.NestedExpressionFailure );
+
+            if ( fooAggregateError.Inner.First() is not ParsedExpressionBuilderAggregateError barAggregateError )
+                return;
+
+            barAggregateError.Token.ToString().Should().Be( "bar" );
+            barAggregateError.Inner.Select( e => e.Token.ToString() ).Distinct().Should().BeSequentiallyEqualTo( "+" );
+        }
+    }
+
+    [Fact]
+    public void Create_ShouldReturnExpressionWithCorrectArgumentIndexes_WhenArgumentsAreUsedAsFunctionParameters()
+    {
+        var (aValue, bValue, cValue, dValue) = Fixture.CreateDistinctCollection<decimal>( count: 4 );
+        var expected = aValue + bValue + cValue + bValue + dValue + dValue + cValue;
+        var input = "a + b + foo( c , b , d ) + d + c";
+
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddBinaryOperator( "+", new ParsedExpressionAddOperator() )
+            .AddFunction( "foo", new ParsedExpressionFunction<decimal, decimal, decimal, decimal>( (a, b, c) => a + b + c ) )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<decimal, decimal>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( aValue, bValue, cValue, dValue );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().Be( expected );
+            expression.GetUnboundArgumentIndex( "a" ).Should().Be( 0 );
+            expression.GetUnboundArgumentIndex( "b" ).Should().Be( 1 );
+            expression.GetUnboundArgumentIndex( "c" ).Should().Be( 2 );
+            expression.GetUnboundArgumentIndex( "d" ).Should().Be( 3 );
+        }
+    }
+
+    [Theory]
+    [InlineData( "foo( 'a', 'b', 'c' )", "Func(a,b,c)" )]
+    [InlineData( "foo( ( 'a' ), ( 'b' ), ( 'c' ) )", "Func(a,b,c)" )]
+    [InlineData( "foo( 'a', 'b', bar() )", "Func(a,b,Func())" )]
+    [InlineData( "foo( 'a', foo( 'b', 'c', 'd' ), 'e' )", "Func(a,Func(b,c,d),e)" )]
+    [InlineData( "foo( bar(), foo( ( bar() ) , foo( 'a' , 'b' , 'c' ) , 'd' ) , 'e' )", "Func(Func(),Func(Func(),Func(a,b,c),d),e)" )]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenExpressionContainsFunction(string input, string expected)
+    {
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddFunction( "foo", new MockFunctionWithThreeParameters() )
+            .AddFunction( "bar", new MockParameterlessFunction() );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+
+        result.Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( "foo( 'a' + , 'b' , 'c' )", "Func(( a|PostOp ),b,c)" )]
+    [InlineData( "foo( 'a' , 'b' + , 'c' )", "Func(a,( b|PostOp ),c)" )]
+    [InlineData( "foo( 'a' , 'b' , 'c' + )", "Func(a,b,( c|PostOp ))" )]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenPostfixUnaryOperatorAmbiguityIsResolvedInFunctionParameters(
+        string input,
+        string expected)
+    {
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddFunction( "foo", new MockFunctionWithThreeParameters() )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .AddPostfixUnaryOperator( "+", new MockPostfixUnaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 )
+            .SetPostfixUnaryConstructPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+
+        result.Should().Be( expected );
     }
 
     [Fact]
@@ -1566,7 +1885,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenAutomaticResultConversionFailsDueToTypeConverterThrowingException()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenAutomaticResultConversionFailsDueToTypeConverterThrowingException()
     {
         var input = "12.34";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -1615,7 +1934,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowMathExpressionCreationException_WhenAutomaticResultConversionFailsDueToMissingConversionOperator()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenAutomaticResultConversionFailsDueToMissingConversionOperator()
     {
         var input = "12.34";
         var builder = new ParsedExpressionFactoryBuilder();
@@ -1654,7 +1973,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
     [Fact]
     public void
-        Create_ShouldThrowMathExpressionCreationException_WhenAutomaticResultConversionIsDisabledAndResultIsNotAssignableToResultType()
+        Create_ShouldThrowParsedExpressionCreationException_WhenAutomaticResultConversionIsDisabledAndResultIsNotAssignableToResultType()
     {
         var input = "12.34";
         var configuration = Substitute.For<IParsedExpressionFactoryConfiguration>();

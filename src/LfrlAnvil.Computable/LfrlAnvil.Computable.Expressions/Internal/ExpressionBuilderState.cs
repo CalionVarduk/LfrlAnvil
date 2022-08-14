@@ -11,104 +11,92 @@ using LfrlAnvil.Computable.Expressions.Errors;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
 
-// TODO:
-// this might have to memorize parent state (e.g. for functions or member accesses, so that we can give a bit more descriptive error msg)
-internal sealed class ExpressionBuilderState
+internal class ExpressionBuilderState
 {
     private readonly ExpressionTokenStack _tokenStack;
     private readonly ExpressionOperandStack _operandStack;
-    private readonly Dictionary<StringSlice, int> _argumentIndexes;
     private readonly List<Expression> _argumentAccessExpressions;
-    private readonly ParameterExpression _parameterExpression;
     private readonly ParsedExpressionFactoryInternalConfiguration _configuration;
     private readonly IParsedExpressionNumberParser _numberParser;
-    private readonly ExpressionBuilderState _rootState;
-    private ExpressionBuilderState _activeState;
+    private readonly ExpressionBuilderRootState _rootState;
+    private int _operandCount;
+    private int _operatorCount;
+    private int _parenthesesCount;
     private Expectation _expectation;
 
-    private ExpressionBuilderState(
-        ExpressionBuilderState? rootState,
-        Dictionary<StringSlice, int> argumentIndexes,
-        List<Expression> argumentAccessExpressions,
+    protected ExpressionBuilderState(
         ParameterExpression parameterExpression,
         ParsedExpressionFactoryInternalConfiguration configuration,
         IParsedExpressionNumberParser numberParser)
     {
         _tokenStack = new ExpressionTokenStack();
         _operandStack = new ExpressionOperandStack();
-        _argumentIndexes = argumentIndexes;
-        _argumentAccessExpressions = argumentAccessExpressions;
-        _parameterExpression = parameterExpression;
+        ArgumentIndexes = new Dictionary<StringSlice, int>();
+        _argumentAccessExpressions = new List<Expression>();
+        ParameterExpression = parameterExpression;
         _configuration = configuration;
         _numberParser = numberParser;
-        OperandCount = 0;
-        OperatorCount = 0;
-        ParenthesesCount = 0;
-        _expectation = Expectation.Operand | Expectation.OpenedParenthesis | Expectation.PrefixUnaryConstruct | Expectation.Function;
+        _operandCount = 0;
+        _operatorCount = 0;
+        _parenthesesCount = 0;
         LastHandledToken = null;
-        _rootState = rootState ?? this;
-        _activeState = this;
+        _rootState = (ExpressionBuilderRootState)this;
+        _expectation = Expectation.Operand | Expectation.OpenedParenthesis | Expectation.PrefixUnaryConstruct;
     }
 
-    internal int OperandCount { get; private set; }
-    internal int OperatorCount { get; private set; }
-    internal int ParenthesesCount { get; private set; }
+    protected ExpressionBuilderState(ExpressionBuilderState prototype, Expectation initialState)
+    {
+        _tokenStack = new ExpressionTokenStack();
+        _operandStack = new ExpressionOperandStack();
+        ArgumentIndexes = prototype.ArgumentIndexes;
+        _argumentAccessExpressions = prototype._argumentAccessExpressions;
+        ParameterExpression = prototype.ParameterExpression;
+        _configuration = prototype._configuration;
+        _numberParser = prototype._numberParser;
+        _operandCount = 0;
+        _operatorCount = 0;
+        _parenthesesCount = -1;
+        LastHandledToken = null;
+        _rootState = prototype._rootState;
+        _expectation = initialState;
+    }
+
+    internal Dictionary<StringSlice, int> ArgumentIndexes { get; }
+    internal ParameterExpression ParameterExpression { get; }
     internal IntermediateToken? LastHandledToken { get; private set; }
+    internal bool IsRoot => ReferenceEquals( this, _rootState );
 
-    [Pure]
-    internal static ExpressionBuilderState CreateRoot(
-        Type argumentType,
-        ParsedExpressionFactoryInternalConfiguration configuration,
-        IParsedExpressionNumberParser numberParser)
+    internal Chain<ParsedExpressionBuilderError> HandleTokenInternal(IntermediateToken token)
     {
-        var argumentArrayType = argumentType.MakeArrayType();
-        var parameterExpression = Expression.Parameter( argumentArrayType, "args" );
+        var errors = token.Type switch
+        {
+            IntermediateTokenType.NumberConstant => HandleNumberConstant( token ),
+            IntermediateTokenType.StringConstant => HandleStringConstant( token ),
+            IntermediateTokenType.BooleanConstant => HandleBooleanConstant( token ),
+            IntermediateTokenType.OpenedParenthesis => HandleOpenedParenthesis( token ),
+            IntermediateTokenType.ClosedParenthesis => HandleClosedParenthesis( token ),
+            IntermediateTokenType.Constructs => HandleConstructs( token ),
+            IntermediateTokenType.MemberAccess => HandleMemberAccess( token ),
+            IntermediateTokenType.ElementSeparator => HandleElementSeparator( token ),
+            IntermediateTokenType.InlineFunctionSeparator => HandleInlineFunctionSeparator( token ),
+            _ => HandleArgument( token )
+        };
 
-        var result = new ExpressionBuilderState(
-            rootState: null,
-            argumentIndexes: new Dictionary<StringSlice, int>(),
-            argumentAccessExpressions: new List<Expression>(),
-            parameterExpression: parameterExpression,
-            configuration: configuration,
-            numberParser: numberParser );
-
-        return result;
+        LastHandledToken = token;
+        return errors;
     }
 
-    [Pure]
-    internal ExpressionBuilderState CreateChild()
-    {
-        var result = new ExpressionBuilderState(
-            rootState: _rootState,
-            argumentIndexes: _argumentIndexes,
-            argumentAccessExpressions: _argumentAccessExpressions,
-            parameterExpression: _parameterExpression,
-            configuration: _configuration,
-            numberParser: _numberParser );
-
-        _activeState = result;
-        _rootState._activeState = result;
-        return result;
-    }
-
-    internal Chain<ParsedExpressionBuilderError> HandleToken(IntermediateToken token)
-    {
-        // TODO: better to make a separate class for root state
-        Debug.Assert( ReferenceEquals( this, _rootState ), "only root state can handle tokens explicitly" );
-        return _activeState.HandleTokenInternal( token );
-    }
-
-    internal UnsafeBuilderResult<ExpressionBuilderResult> GetResult(Type outputType)
+    protected Chain<ParsedExpressionBuilderError> HandleExpressionEnd()
     {
         var errors = HandleAmbiguousConstructAsPostfixUnaryOperator();
 
-        if ( OperandCount == 0 )
+        if ( _operandCount == 0 )
             errors = errors.Extend( ParsedExpressionBuilderError.CreateExpressionMustContainAtLeastOneOperand() );
 
-        if ( OperandCount != OperatorCount + 1 )
+        if ( _operandCount != _operatorCount + 1 )
             errors = errors.Extend( ParsedExpressionBuilderError.CreateExpressionContainsInvalidOperandToOperatorRatio() );
 
-        if ( ParenthesesCount > 0 )
+        if ( _parenthesesCount > 0 )
         {
             var remainingOpenedParenthesisTokens = _tokenStack
                 .Select( x => x.Token )
@@ -119,7 +107,7 @@ internal sealed class ExpressionBuilderState
         }
 
         if ( errors.Count > 0 )
-            return UnsafeBuilderResult<ExpressionBuilderResult>.CreateErrors( errors );
+            return errors;
 
         if ( _tokenStack.TryPeek( out var data ) && data.Expectation == Expectation.PrefixUnaryConstruct )
         {
@@ -127,7 +115,7 @@ internal sealed class ExpressionBuilderState
 
             errors = ProcessPrefixUnaryConstruct( data.Token );
             if ( errors.Count > 0 )
-                return UnsafeBuilderResult<ExpressionBuilderResult>.CreateErrors( errors );
+                return errors;
         }
 
         while ( _tokenStack.TryPop( out data ) )
@@ -136,20 +124,16 @@ internal sealed class ExpressionBuilderState
 
             errors = ProcessBinaryOperator( data.Token );
             if ( errors.Count > 0 )
-                return UnsafeBuilderResult<ExpressionBuilderResult>.CreateErrors( errors );
+                return errors;
         }
 
-        var typeCastResult = ConvertResultToOutputType( _operandStack.Pop(), outputType );
-        if ( ! typeCastResult.IsOk )
-            return typeCastResult.CastErrorsTo<ExpressionBuilderResult>();
-
-        var result = new ExpressionBuilderResult( typeCastResult.Result!, _parameterExpression, _argumentIndexes );
-        return UnsafeBuilderResult<ExpressionBuilderResult>.CreateOk( result );
+        return Chain<ParsedExpressionBuilderError>.Empty;
     }
 
-    private UnsafeBuilderResult<Expression> ConvertResultToOutputType(Expression rawBody, Type outputType)
+    protected UnsafeBuilderResult<Expression> ConvertResultToOutputType(Type outputType)
     {
-        Assume.IsEmpty( _operandStack, nameof( _operandStack ) );
+        Assume.ContainsExactly( _operandStack, 1, nameof( _operandStack ) );
+        var rawBody = _operandStack.Pop();
 
         if ( rawBody.Type == outputType )
             return UnsafeBuilderResult<Expression>.CreateOk( rawBody );
@@ -182,26 +166,6 @@ internal sealed class ExpressionBuilderState
         return castErrors.Count > 0
             ? UnsafeBuilderResult<Expression>.CreateErrors( castErrors )
             : UnsafeBuilderResult<Expression>.CreateOk( _operandStack.Pop() );
-    }
-
-    private Chain<ParsedExpressionBuilderError> HandleTokenInternal(IntermediateToken token)
-    {
-        var errors = token.Type switch
-        {
-            IntermediateTokenType.NumberConstant => HandleNumberConstant( token ),
-            IntermediateTokenType.StringConstant => HandleStringConstant( token ),
-            IntermediateTokenType.BooleanConstant => HandleBooleanConstant( token ),
-            IntermediateTokenType.OpenedParenthesis => HandleOpenedParenthesis( token ),
-            IntermediateTokenType.ClosedParenthesis => HandleClosedParenthesis( token ),
-            IntermediateTokenType.Constructs => HandleConstructs( token ),
-            IntermediateTokenType.MemberAccess => HandleMemberAccess( token ),
-            IntermediateTokenType.FunctionParameterSeparator => HandleFunctionParameterSeparator( token ),
-            IntermediateTokenType.InlineFunctionSeparator => HandleInlineFunctionSeparator( token ),
-            _ => HandleArgument( token )
-        };
-
-        LastHandledToken = token;
-        return errors;
     }
 
     private Chain<ParsedExpressionBuilderError> HandleNumberConstant(IntermediateToken token)
@@ -300,22 +264,21 @@ internal sealed class ExpressionBuilderState
         AssumeTokenType( token, IntermediateTokenType.Constructs );
         Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
 
-        if ( token.Constructs.Type == ConstructTokenType.Function )
+        var result = token.Constructs.Type switch
         {
-            var errors = HandleAmbiguousConstructAsBinaryOperator();
-            if ( errors.Count > 0 )
-                return errors;
+            ConstructTokenType.Function => HandleFunction( token ),
+            ConstructTokenType.Constant => HandleConstant( token ),
+            ConstructTokenType.TypeDeclaration => HandleTypeDeclaration( token ),
+            _ => HandleOperatorOrTypeConverter( token )
+        };
 
-            throw new NotImplementedException( "Function constructs aren't supported yet." );
-        }
+        return result;
+    }
 
-        if ( token.Constructs.Type == ConstructTokenType.TypeDeclaration )
-        {
-            throw new NotImplementedException( "Type declaration constructs aren't supported yet." );
-        }
-
-        if ( token.Constructs.Type == ConstructTokenType.Constant )
-            return HandleConstant( token );
+    private Chain<ParsedExpressionBuilderError> HandleOperatorOrTypeConverter(IntermediateToken token)
+    {
+        AssumeTokenType( token, IntermediateTokenType.Constructs );
+        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
 
         if ( Expects( Expectation.AmbiguousPrefixConstructResolution ) )
         {
@@ -335,7 +298,7 @@ internal sealed class ExpressionBuilderState
                     return PushBinaryOperator( token );
 
                 _expectation &= ~Expectation.PostfixUnaryConstruct;
-                _expectation |= Expectation.AmbiguousPostfixConstructResolution | Expectation.PrefixUnaryConstruct;
+                _expectation |= Expectation.PrefixUnaryConstruct | Expectation.AmbiguousPostfixConstructResolution;
                 _tokenStack.Push( token, Expectation.PostfixUnaryConstruct | Expectation.BinaryOperator );
                 return Chain<ParsedExpressionBuilderError>.Empty;
             }
@@ -377,6 +340,24 @@ internal sealed class ExpressionBuilderState
         return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedConstruct( token ) );
     }
 
+    private Chain<ParsedExpressionBuilderError> HandleFunction(IntermediateToken token)
+    {
+        AssumeTokenType( token, IntermediateTokenType.Constructs );
+        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
+
+        var errors = HandleAmbiguousConstructAsBinaryOperator();
+
+        if ( ! Expects( Expectation.Operand ) )
+            errors = errors.Extend( ParsedExpressionBuilderError.CreateUnexpectedFunctionCall( token ) );
+
+        if ( errors.Count > 0 )
+            return errors;
+
+        _expectation = (_expectation & Expectation.PrefixUnaryConstructResolution) | Expectation.FunctionResolution;
+        _rootState.ActiveState = new ExpressionBuilderChildState( this );
+        return Chain<ParsedExpressionBuilderError>.Empty;
+    }
+
     private Chain<ParsedExpressionBuilderError> HandleConstant(IntermediateToken token)
     {
         AssumeTokenType( token, IntermediateTokenType.Constructs );
@@ -395,6 +376,16 @@ internal sealed class ExpressionBuilderState
         return Chain<ParsedExpressionBuilderError>.Empty;
     }
 
+    private Chain<ParsedExpressionBuilderError> HandleTypeDeclaration(IntermediateToken token)
+    {
+        AssumeTokenType( token, IntermediateTokenType.Constructs );
+        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
+        Assume.IsNotNull( token.Constructs.TypeDeclaration, nameof( token.Constructs.TypeDeclaration ) );
+
+        // TODO: add proper handling during delegate parameters parsing
+        return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedTypeDeclaration( token ) );
+    }
+
     private Chain<ParsedExpressionBuilderError> HandleOpenedParenthesis(IntermediateToken token)
     {
         AssumeTokenType( token, IntermediateTokenType.OpenedParenthesis );
@@ -406,10 +397,11 @@ internal sealed class ExpressionBuilderState
         if ( ! Expects( Expectation.OpenedParenthesis ) )
             return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedOpenedParenthesis( token ) );
 
-        _tokenStack.Push( token, Expectation.OpenedParenthesis );
+        if ( ! Expects( Expectation.FunctionParametersStart ) )
+            _tokenStack.Push( token, Expectation.OpenedParenthesis );
 
-        _expectation = Expectation.Operand | Expectation.OpenedParenthesis | Expectation.PrefixUnaryConstruct | Expectation.Function;
-        ++ParenthesesCount;
+        _expectation = Expectation.Operand | Expectation.OpenedParenthesis | Expectation.PrefixUnaryConstruct;
+        ++_parenthesesCount;
         return Chain<ParsedExpressionBuilderError>.Empty;
     }
 
@@ -422,7 +414,11 @@ internal sealed class ExpressionBuilderState
             return errors;
 
         if ( ! Expects( Expectation.ClosedParenthesis ) )
-            return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedClosedParenthesis( token ) );
+        {
+            return ! IsRoot && ! Expects( Expectation.FunctionParametersStart )
+                ? HandleElementExpressionsEnd( token )
+                : Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedClosedParenthesis( token ) );
+        }
 
         Assume.IsNotEmpty( _tokenStack, nameof( _tokenStack ) );
         var data = _tokenStack.Peek();
@@ -448,12 +444,70 @@ internal sealed class ExpressionBuilderState
         _tokenStack.Pop();
 
         _expectation = Expectation.PostfixUnaryConstruct | Expectation.BinaryOperator;
-        if ( --ParenthesesCount > 0 )
+        if ( --_parenthesesCount > 0 )
             _expectation |= Expectation.ClosedParenthesis;
 
         if ( _tokenStack.TryPeek( out data ) && data.Expectation == Expectation.PrefixUnaryConstruct )
             _expectation |= Expectation.PrefixUnaryConstructResolution;
 
+        return Chain<ParsedExpressionBuilderError>.Empty;
+    }
+
+    private Chain<ParsedExpressionBuilderError> HandleElementExpressionsEnd(IntermediateToken token)
+    {
+        Assume.False( IsRoot, "Assumed the state to be a child state." );
+        Assume.IsNotNull( LastHandledToken, nameof( LastHandledToken ) );
+
+        var self = (ExpressionBuilderChildState)this;
+
+        var containsOneMoreElement = _tokenStack.Count > 0 ||
+            _operandStack.Count > 0 ||
+            LastHandledToken.Value.Type == IntermediateTokenType.ElementSeparator;
+
+        if ( containsOneMoreElement )
+        {
+            var errors = HandleExpressionEnd();
+            if ( errors.Count > 0 )
+                return errors.Extend( ParsedExpressionBuilderError.CreateUnexpectedClosedParenthesis( token ) );
+
+            self.IncreaseElementCount();
+            self.ParentState._operandStack.Push( _operandStack.Pop() );
+        }
+
+        return self.ParentState.HandleFunctionParametersEnd( token, self.ElementCount );
+    }
+
+    private Chain<ParsedExpressionBuilderError> HandleFunctionParametersEnd(IntermediateToken token, int parameterCount)
+    {
+        Assume.IsGreaterThanOrEqualTo( parameterCount, 0, nameof( parameterCount ) );
+        Assume.IsNotNull( LastHandledToken, nameof( LastHandledToken ) );
+        Assume.IsNotNull( LastHandledToken.Value.Constructs, nameof( LastHandledToken.Value.Constructs ) );
+        AssumeConstructsType( LastHandledToken.Value.Constructs, ConstructTokenType.Function );
+        AssumeStateExpectation( Expectation.FunctionResolution );
+
+        var functionToken = LastHandledToken.Value;
+        LastHandledToken = token;
+        _rootState.ActiveState = this;
+
+        var parameters = _operandStack.PopAndReturn( parameterCount );
+        var function = functionToken.Constructs.Functions.FindConstruct( parameters );
+
+        if ( function is null )
+            return Chain.Create( ParsedExpressionBuilderError.CreateFunctionCouldNotBeResolved( functionToken, parameters ) );
+
+        Expression result;
+
+        try
+        {
+            result = function.Process( parameters );
+        }
+        catch ( Exception exc )
+        {
+            return Chain.Create( ParsedExpressionBuilderError.CreateConstructHasThrownException( functionToken, function, exc ) );
+        }
+
+        AddAssumedExpectation( Expectation.Operand );
+        PushOperand( result );
         return Chain<ParsedExpressionBuilderError>.Empty;
     }
 
@@ -463,10 +517,27 @@ internal sealed class ExpressionBuilderState
         throw new NotSupportedException( "Member access token is not supported yet." );
     }
 
-    private Chain<ParsedExpressionBuilderError> HandleFunctionParameterSeparator(IntermediateToken token)
+    private Chain<ParsedExpressionBuilderError> HandleElementSeparator(IntermediateToken token)
     {
-        AssumeTokenType( token, IntermediateTokenType.FunctionParameterSeparator );
-        throw new NotSupportedException( "Function parameter separator token is not supported yet." );
+        AssumeTokenType( token, IntermediateTokenType.ElementSeparator );
+
+        if ( IsRoot )
+            return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedElementSeparator( token ) );
+
+        var errors = HandleExpressionEnd();
+        if ( errors.Count > 0 )
+            return errors.Extend( ParsedExpressionBuilderError.CreateUnexpectedElementSeparator( token ) );
+
+        var self = (ExpressionBuilderChildState)this;
+        self.IncreaseElementCount();
+        self.ParentState._operandStack.Push( _operandStack.Pop() );
+
+        _operandCount = 0;
+        _operatorCount = 0;
+        _parenthesesCount = 0;
+        _expectation = Expectation.Operand | Expectation.OpenedParenthesis | Expectation.PrefixUnaryConstruct;
+
+        return Chain<ParsedExpressionBuilderError>.Empty;
     }
 
     private Chain<ParsedExpressionBuilderError> HandleInlineFunctionSeparator(IntermediateToken token)
@@ -618,8 +689,9 @@ internal sealed class ExpressionBuilderState
     {
         Assume.ContainsAtLeast( _operandStack, 2, nameof( _operandStack ) );
 
-        var rightOperand = _operandStack.Pop();
-        var leftOperand = _operandStack.Pop();
+        var rightOperand = _operandStack[0];
+        var leftOperand = _operandStack[1];
+        _operandStack.Pop( count: 2 );
         Expression result;
 
         try
@@ -696,8 +768,8 @@ internal sealed class ExpressionBuilderState
         }
 
         _tokenStack.Push( token, Expectation.BinaryOperator );
-        _expectation = Expectation.Operand | Expectation.OpenedParenthesis | Expectation.PrefixUnaryConstruct | Expectation.Function;
-        ++OperatorCount;
+        _expectation = Expectation.Operand | Expectation.OpenedParenthesis | Expectation.PrefixUnaryConstruct;
+        ++_operatorCount;
         return Chain<ParsedExpressionBuilderError>.Empty;
     }
 
@@ -788,10 +860,10 @@ internal sealed class ExpressionBuilderState
             Expectation.PostfixUnaryConstruct |
             Expectation.BinaryOperator;
 
-        if ( ParenthesesCount > 0 )
+        if ( _parenthesesCount > 0 )
             _expectation |= Expectation.ClosedParenthesis;
 
-        ++OperandCount;
+        ++_operandCount;
     }
 
     private Chain<ParsedExpressionBuilderError> HandleAmbiguousConstructAsPostfixUnaryOperator()
@@ -807,7 +879,7 @@ internal sealed class ExpressionBuilderState
 
         AssumeAllExpectations( data.Expectation, Expectation.BinaryOperator | Expectation.PostfixUnaryConstruct );
         _expectation &= ~Expectation.AmbiguousPostfixConstructResolution;
-        _expectation |= Expectation.PostfixUnaryConstruct;
+        AddAssumedExpectation( Expectation.PostfixUnaryConstruct );
 
         return PushPostfixUnaryConstruct( data.Token );
     }
@@ -828,7 +900,7 @@ internal sealed class ExpressionBuilderState
             : Expectation.AmbiguousPrefixConstructResolution;
 
         _expectation &= ~currentResolution;
-        _expectation |= Expectation.BinaryOperator;
+        AddAssumedExpectation( Expectation.BinaryOperator );
 
         return PushBinaryOperator( data.Token );
     }
@@ -842,16 +914,22 @@ internal sealed class ExpressionBuilderState
 
     private Expression GetOrAddArgumentAccessExpression(StringSlice name)
     {
-        if ( _argumentIndexes.TryGetValue( name, out var index ) )
+        if ( ArgumentIndexes.TryGetValue( name, out var index ) )
             return _argumentAccessExpressions[index];
 
-        index = _argumentIndexes.Count;
+        index = ArgumentIndexes.Count;
         var indexExpression = Expression.Constant( index );
-        var result = Expression.ArrayIndex( _parameterExpression, indexExpression );
+        var result = Expression.ArrayIndex( ParameterExpression, indexExpression );
 
-        _argumentIndexes.Add( name, index );
+        ArgumentIndexes.Add( name, index );
         _argumentAccessExpressions.Add( result );
         return result;
+    }
+
+    [Conditional( "DEBUG" )]
+    private void AddAssumedExpectation(Expectation expectation)
+    {
+        _expectation |= expectation;
     }
 
     [Conditional( "DEBUG" )]
@@ -894,9 +972,10 @@ internal sealed class ExpressionBuilderState
         PrefixUnaryConstruct = 8,
         PostfixUnaryConstruct = 16,
         BinaryOperator = 32,
-        Function = 64,
-        PrefixUnaryConstructResolution = 128,
-        AmbiguousPostfixConstructResolution = 256,
-        AmbiguousPrefixConstructResolution = 512
+        PrefixUnaryConstructResolution = 2048,
+        AmbiguousPostfixConstructResolution = 4096,
+        AmbiguousPrefixConstructResolution = 8192,
+        FunctionResolution = 16384,
+        FunctionParametersStart = 32768
     }
 }

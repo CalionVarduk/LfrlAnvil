@@ -2,32 +2,33 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Linq.Expressions;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
 
 internal readonly struct FunctionSignatureKey : IEquatable<FunctionSignatureKey>
 {
-    internal FunctionSignatureKey(IReadOnlyList<Type> parameterTypes)
+    internal FunctionSignatureKey(IReadOnlyList<Expression> parameters)
     {
-        ParameterTypes = parameterTypes;
+        Parameters = parameters;
     }
 
-    internal IReadOnlyList<Type> ParameterTypes { get; }
+    internal IReadOnlyList<Expression> Parameters { get; }
 
     [Pure]
     public override string ToString()
     {
-        return $"[{string.Join( ", ", ParameterTypes.Select( p => p.FullName ) )}]";
+        return $"[{string.Join( ", ", Parameters.Select( e => e.Type.FullName ) )}]";
     }
 
     [Pure]
     public override int GetHashCode()
     {
-        var count = ParameterTypes.Count;
+        var count = Parameters.Count;
 
         var hash = Hash.Default.Add( count );
         for ( var i = 0; i < count; ++i )
-            hash = hash.Add( ParameterTypes[i] );
+            hash = hash.Add( Parameters[i].Type );
 
         return hash.Value;
     }
@@ -41,15 +42,15 @@ internal readonly struct FunctionSignatureKey : IEquatable<FunctionSignatureKey>
     [Pure]
     public bool Equals(FunctionSignatureKey other)
     {
-        var count = ParameterTypes.Count;
-        var otherCount = other.ParameterTypes.Count;
+        var count = Parameters.Count;
+        var otherCount = other.Parameters.Count;
 
         if ( count != otherCount )
             return false;
 
         for ( var i = 0; i < count; ++i )
         {
-            if ( ParameterTypes[i] != other.ParameterTypes[i] )
+            if ( Parameters[i].Type != other.Parameters[i].Type )
                 return false;
         }
 

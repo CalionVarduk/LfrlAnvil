@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Linq.Expressions;
 using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Computable.Expressions.Internal;
 
@@ -34,7 +35,7 @@ public class ParsedExpressionBuilderError
         var nearToken = token.Expand( count: 5 );
         var nearTokenPrefix = nearToken.StartIndex == 0 ? string.Empty : "...";
         var nearTokenPostfix = nearToken.EndIndex == nearToken.Source.Length ? string.Empty : "...";
-        return $"{typeText} at index {token.StartIndex}, symbol '{token}', near {nearTokenPrefix}{nearToken}{nearTokenPostfix}";
+        return $"{typeText} at index {token.StartIndex}, symbol '{token}', near \"{nearTokenPrefix}{nearToken}{nearTokenPostfix}\"";
     }
 
     [Pure]
@@ -47,6 +48,12 @@ public class ParsedExpressionBuilderError
     internal static ParsedExpressionBuilderError CreateExpressionContainsInvalidOperandToOperatorRatio()
     {
         return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.ExpressionContainsInvalidOperandToOperatorRatio );
+    }
+
+    [Pure]
+    internal static ParsedExpressionBuilderError CreateMissingSubExpressionClosingSymbol(IntermediateToken token)
+    {
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.MissingSubExpressionClosingSymbol, token.Symbol );
     }
 
     [Pure]
@@ -64,6 +71,18 @@ public class ParsedExpressionBuilderError
     internal static ParsedExpressionBuilderError CreateUnexpectedOperand(IntermediateToken token)
     {
         return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.UnexpectedOperand, token.Symbol );
+    }
+
+    [Pure]
+    internal static ParsedExpressionBuilderError CreateUnexpectedFunctionCall(IntermediateToken token)
+    {
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.UnexpectedFunctionCall, token.Symbol );
+    }
+
+    [Pure]
+    internal static ParsedExpressionBuilderError CreateUnexpectedTypeDeclaration(IntermediateToken token)
+    {
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.UnexpectedTypeDeclaration, token.Symbol );
     }
 
     [Pure]
@@ -121,7 +140,7 @@ public class ParsedExpressionBuilderError
     {
         return new ParsedExpressionBuilderAggregateError(
             ParsedExpressionBuilderErrorType.ExpressionContainsUnclosedParentheses,
-            openedParenthesisTokens.Select( CreateUnclosedParenthesis ).ToList() );
+            Chain.Create( openedParenthesisTokens.Select( CreateUnclosedParenthesis ) ) );
     }
 
     [Pure]
@@ -185,6 +204,17 @@ public class ParsedExpressionBuilderError
     }
 
     [Pure]
+    internal static ParsedExpressionBuilderError CreateFunctionCouldNotBeResolved(
+        IntermediateToken token,
+        IReadOnlyList<Expression> parameters)
+    {
+        return new ParsedExpressionBuilderMissingFunctionError(
+            ParsedExpressionBuilderErrorType.FunctionCouldNotBeResolved,
+            token.Symbol,
+            parameters.Select( e => e.Type ).ToList() );
+    }
+
+    [Pure]
     internal static ParsedExpressionBuilderError CreateExpectedPrefixUnaryConstruct(IntermediateToken token)
     {
         return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.ExpectedPrefixUnaryConstruct, token.Symbol );
@@ -214,6 +244,23 @@ public class ParsedExpressionBuilderError
         return new ParsedExpressionBuilderError(
             ParsedExpressionBuilderErrorType.AmbiguousPostfixUnaryConstructResolutionFailure,
             token?.Symbol );
+    }
+
+    [Pure]
+    internal static ParsedExpressionBuilderError CreateUnexpectedElementSeparator(IntermediateToken token)
+    {
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.UnexpectedElementSeparator, token.Symbol );
+    }
+
+    [Pure]
+    internal static ParsedExpressionBuilderError CreateNestedExpressionFailure(
+        IntermediateToken token,
+        Chain<ParsedExpressionBuilderError> nestedErrors)
+    {
+        return new ParsedExpressionBuilderAggregateError(
+            ParsedExpressionBuilderErrorType.NestedExpressionFailure,
+            nestedErrors,
+            token.Symbol );
     }
 
     [Pure]

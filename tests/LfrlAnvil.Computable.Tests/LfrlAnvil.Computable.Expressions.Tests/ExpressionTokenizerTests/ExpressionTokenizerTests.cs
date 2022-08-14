@@ -67,10 +67,10 @@ public class ExpressionTokenizerTests : TestsBase
     }
 
     [Fact]
-    public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleFunctionParameterSeparator()
+    public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleElementSeparator()
     {
         var input = ",";
-        var expected = IntermediateToken.CreateFunctionParameterSeparator( StringSlice.Create( input ) );
+        var expected = IntermediateToken.CreateElementSeparator( StringSlice.Create( input ) );
         var configuration = new ParsedExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
         var sut = new ExpressionTokenizer( input, configuration );
 
