@@ -17,6 +17,6 @@ public sealed class ParsedExpressionBuilderMissingUnaryOperatorError : ParsedExp
     [Pure]
     public override string ToString()
     {
-        return $"{base.ToString()}, argument type {ArgumentType.FullName}";
+        return $"{base.ToString()}, argument type: {ArgumentType.FullName}";
     }
 }

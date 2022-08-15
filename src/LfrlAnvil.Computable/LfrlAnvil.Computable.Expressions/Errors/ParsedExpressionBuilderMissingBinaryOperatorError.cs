@@ -23,6 +23,6 @@ public sealed class ParsedExpressionBuilderMissingBinaryOperatorError : ParsedEx
     [Pure]
     public override string ToString()
     {
-        return $"{base.ToString()}, left argument type {LeftArgumentType.FullName}, right argument type {RightArgumentType.FullName}";
+        return $"{base.ToString()}, left argument type: {LeftArgumentType.FullName}, right argument type: {RightArgumentType.FullName}";
     }
 }

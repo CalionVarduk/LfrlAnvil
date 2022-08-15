@@ -21,6 +21,6 @@ public sealed class ParsedExpressionBuilderResultTypeError : ParsedExpressionBui
     [Pure]
     public override string ToString()
     {
-        return $"{base.ToString()}, result type {ResultType.FullName}, expected type {ExpectedType.FullName}";
+        return $"{base.ToString()}, result type: {ResultType.FullName}, expected type: {ExpectedType.FullName}";
     }
 }

@@ -270,4 +270,37 @@ public partial class ParsedExpressionFactoryTests
             return false;
         }
     }
+
+    private sealed class TestParameter
+    {
+        private string _setOnly;
+
+        private string _privateField;
+        private string PrivateProperty { get; }
+        public string PublicField;
+        public string PublicProperty { get; }
+        public TestParameter? Next { get; }
+        public string value;
+        public string Value { get; }
+
+        public string SetOnly
+        {
+            set => _setOnly = value;
+        }
+
+        public string PrivateGetterProperty { private get; set; }
+
+        internal TestParameter(string privateField, string privateProperty, string publicField, string publicProperty, TestParameter? next)
+        {
+            _privateField = privateField;
+            PrivateProperty = privateProperty;
+            PublicField = publicField;
+            PublicProperty = publicProperty;
+            value = publicField;
+            Value = publicProperty;
+            Next = next;
+            _setOnly = publicProperty;
+            PrivateGetterProperty = privateProperty;
+        }
+    }
 }

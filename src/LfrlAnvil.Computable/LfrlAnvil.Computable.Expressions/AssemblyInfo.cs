@@ -3,7 +3,6 @@
 [assembly: InternalsVisibleTo( "LfrlAnvil.Computable.Expressions.Tests" )]
 
 // TODO:
-// Add member access support (include implicit null check, basically treat it as ?. operator, support only fields and properties, for now)
 // Add branching function constructs (start with if-else, then add switch, maybe also throw?)
 // add array support
 // add indexer member access support

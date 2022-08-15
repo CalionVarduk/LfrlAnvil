@@ -1613,6 +1613,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     [InlineData( "foo +" )]
     [InlineData( "foo [string]" )]
     [InlineData( "foo ToString" )]
+    [InlineData( "foo ." )]
     public void Create_ShouldThrowParsedExpressionCreationException_WhenFunctionIsNotFollowedByOpenedParenthesis(string input)
     {
         var builder = new ParsedExpressionFactoryBuilder()
@@ -1830,6 +1831,435 @@ public partial class ParsedExpressionFactoryTests : TestsBase
         var result = @delegate.Invoke();
 
         result.Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( "." )]
+    [InlineData( "( ." )]
+    [InlineData( "- ." )]
+    [InlineData( "[string] ." )]
+    [InlineData( "a + ." )]
+    [InlineData( "a ^ ." )]
+    [InlineData( "a ToString ." )]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenUnexpectedMemberAccessIsEncountered(string input)
+    {
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .AddPrefixUnaryOperator( "-", new MockPrefixUnaryOperator() )
+            .AddPrefixTypeConverter( "[string]", new MockPrefixTypeConverter() )
+            .AddPostfixUnaryOperator( "^", new MockPostfixUnaryOperator() )
+            .AddPostfixTypeConverter( "ToString", new MockPostfixTypeConverter() )
+            .SetBinaryOperatorPrecedence( "+", 1 )
+            .SetPrefixUnaryConstructPrecedence( "-", 1 )
+            .SetPrefixUnaryConstructPrecedence( "[string]", 1 )
+            .SetPostfixUnaryConstructPrecedence( "^", 1 )
+            .SetPostfixUnaryConstructPrecedence( "ToString", 1 );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<decimal, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedMemberAccess ) );
+    }
+
+    [Theory]
+    [InlineData( "a . ." )]
+    [InlineData( "a . +" )]
+    [InlineData( "a . -" )]
+    [InlineData( "a . [string]" )]
+    [InlineData( "a . ^" )]
+    [InlineData( "a . ToString" )]
+    [InlineData( "a . (" )]
+    [InlineData( "a . )" )]
+    [InlineData( "a . 'foo'" )]
+    [InlineData( "a . 12.34" )]
+    [InlineData( "a . false" )]
+    [InlineData( "a . Zero" )]
+    [InlineData( "a . foo" )]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMemberAccessIsNotFollowedByPotentialMemberName(string input)
+    {
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddConstant( "Zero", new ZeroConstant() )
+            .AddFunction( "foo", new MockParameterlessFunction() )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .AddPrefixUnaryOperator( "-", new MockPrefixUnaryOperator() )
+            .AddPrefixTypeConverter( "[string]", new MockPrefixTypeConverter() )
+            .AddPostfixUnaryOperator( "^", new MockPostfixUnaryOperator() )
+            .AddPostfixTypeConverter( "ToString", new MockPostfixTypeConverter() )
+            .SetBinaryOperatorPrecedence( "+", 1 )
+            .SetPrefixUnaryConstructPrecedence( "-", 1 )
+            .SetPrefixUnaryConstructPrecedence( "[string]", 1 )
+            .SetPostfixUnaryConstructPrecedence( "^", 1 )
+            .SetPostfixUnaryConstructPrecedence( "ToString", 1 );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<decimal, string>( input ) );
+
+        action.Should().ThrowExactly<ParsedExpressionCreationException>();
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_ForPublicFieldMemberAccess()
+    {
+        var value = new TestParameter( "privateField", "privateProperty", "publicField", "publicProperty", next: null );
+        var input = "a.PublicField";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var expression = sut.Create<TestParameter, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( value );
+
+        result.Should().Be( "publicField" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_ForPublicPropertyMemberAccess()
+    {
+        var value = new TestParameter( "privateField", "privateProperty", "publicField", "publicProperty", next: null );
+        var input = "a.PublicProperty";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var expression = sut.Create<TestParameter, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( value );
+
+        result.Should().Be( "publicProperty" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenMemberNameEqualsOneOfArgumentNames()
+    {
+        var value = new TestParameter( "privateField", "privateProperty", "publicField", "publicProperty", next: null );
+        var input = "PublicField.PublicField";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var expression = sut.Create<TestParameter, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( value );
+
+        result.Should().Be( "publicField" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenMemberAccessIsChained()
+    {
+        var value = new TestParameter(
+            "privateField",
+            "privateProperty",
+            "publicField",
+            "publicProperty",
+            next:
+            new TestParameter( "privateField_next", "privateProperty_next", "publicField_next", "publicProperty_next", next: null ) );
+
+        var input = "a.Next.PublicProperty.Length";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var expression = sut.Create<TestParameter, int>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( value );
+
+        result.Should().Be( "publicProperty_next".Length );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMemberDoesNotExist()
+    {
+        var input = "a.foobar";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MemberCouldNotBeResolved ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMemberIsMethod()
+    {
+        var input = "a.ToString";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MemberCouldNotBeResolved ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMemberIsStatic()
+    {
+        var input = "a.Empty";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MemberCouldNotBeResolved ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMemberIsPropertyWithSetterOnly()
+    {
+        var input = "a.SetOnly";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MemberCouldNotBeResolved ) );
+    }
+
+    [Theory]
+    [InlineData( "a.publicproperty" )]
+    [InlineData( "a.Publicproperty" )]
+    [InlineData( "a.publicProperty" )]
+    [InlineData( "a.PUBLICPROPERTY" )]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenMemberIsFoundWithIgnoredCase(string input)
+    {
+        var value = new TestParameter( "privateField", "privateProperty", "publicField", "publicProperty", next: null );
+        var configuration = Substitute.For<IParsedExpressionFactoryConfiguration>();
+        configuration.DecimalPoint.Returns( '.' );
+        configuration.IntegerDigitSeparator.Returns( '_' );
+        configuration.StringDelimiter.Returns( '\'' );
+        configuration.ScientificNotationExponents.Returns( "eE" );
+        configuration.AllowScientificNotation.Returns( true );
+        configuration.AllowNonIntegerNumbers.Returns( true );
+        configuration.ConvertResultToOutputTypeAutomatically.Returns( false );
+        configuration.AllowNonPublicMemberAccess.Returns( false );
+        configuration.IgnoreMemberNameCase.Returns( true );
+        var builder = new ParsedExpressionFactoryBuilder().SetConfiguration( configuration );
+        var sut = builder.Build();
+
+        var expression = sut.Create<TestParameter, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( value );
+
+        result.Should().Be( "publicProperty" );
+    }
+
+    [Theory]
+    [InlineData( "a.value" )]
+    [InlineData( "a.Value" )]
+    [InlineData( "a.VALUE" )]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMemberNameIsAmbiguous(string input)
+    {
+        var configuration = Substitute.For<IParsedExpressionFactoryConfiguration>();
+        configuration.DecimalPoint.Returns( '.' );
+        configuration.IntegerDigitSeparator.Returns( '_' );
+        configuration.StringDelimiter.Returns( '\'' );
+        configuration.ScientificNotationExponents.Returns( "eE" );
+        configuration.AllowScientificNotation.Returns( true );
+        configuration.AllowNonIntegerNumbers.Returns( true );
+        configuration.ConvertResultToOutputTypeAutomatically.Returns( false );
+        configuration.AllowNonPublicMemberAccess.Returns( false );
+        configuration.IgnoreMemberNameCase.Returns( true );
+        var builder = new ParsedExpressionFactoryBuilder().SetConfiguration( configuration );
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.AmbiguousMemberAccess ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenFieldMemberExistsButIsPrivateAndAllowNonPublicMemberAccessIsFalse()
+    {
+        var input = "a._privateField";
+        var configuration = Substitute.For<IParsedExpressionFactoryConfiguration>();
+        configuration.DecimalPoint.Returns( '.' );
+        configuration.IntegerDigitSeparator.Returns( '_' );
+        configuration.StringDelimiter.Returns( '\'' );
+        configuration.ScientificNotationExponents.Returns( "eE" );
+        configuration.AllowScientificNotation.Returns( true );
+        configuration.AllowNonIntegerNumbers.Returns( true );
+        configuration.ConvertResultToOutputTypeAutomatically.Returns( false );
+        configuration.AllowNonPublicMemberAccess.Returns( false );
+        configuration.IgnoreMemberNameCase.Returns( false );
+        var builder = new ParsedExpressionFactoryBuilder().SetConfiguration( configuration );
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MemberCouldNotBeResolved ) );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenFieldMemberExistsButIsPrivateAndAllowNonPublicMemberAccessIsTrue()
+    {
+        var value = new TestParameter( "privateField", "privateProperty", "publicField", "publicProperty", next: null );
+        var input = "a._privateField";
+        var configuration = Substitute.For<IParsedExpressionFactoryConfiguration>();
+        configuration.DecimalPoint.Returns( '.' );
+        configuration.IntegerDigitSeparator.Returns( '_' );
+        configuration.StringDelimiter.Returns( '\'' );
+        configuration.ScientificNotationExponents.Returns( "eE" );
+        configuration.AllowScientificNotation.Returns( true );
+        configuration.AllowNonIntegerNumbers.Returns( true );
+        configuration.ConvertResultToOutputTypeAutomatically.Returns( false );
+        configuration.AllowNonPublicMemberAccess.Returns( true );
+        configuration.IgnoreMemberNameCase.Returns( false );
+        var builder = new ParsedExpressionFactoryBuilder().SetConfiguration( configuration );
+        var sut = builder.Build();
+
+        var expression = sut.Create<TestParameter, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( value );
+
+        result.Should().Be( "privateField" );
+    }
+
+    [Fact]
+    public void
+        Create_ShouldThrowParsedExpressionCreationException_WhenPropertyMemberExistsButIsPrivateAndAllowNonPublicMemberAccessIsFalse()
+    {
+        var input = "a.PrivateProperty";
+        var configuration = Substitute.For<IParsedExpressionFactoryConfiguration>();
+        configuration.DecimalPoint.Returns( '.' );
+        configuration.IntegerDigitSeparator.Returns( '_' );
+        configuration.StringDelimiter.Returns( '\'' );
+        configuration.ScientificNotationExponents.Returns( "eE" );
+        configuration.AllowScientificNotation.Returns( true );
+        configuration.AllowNonIntegerNumbers.Returns( true );
+        configuration.ConvertResultToOutputTypeAutomatically.Returns( false );
+        configuration.AllowNonPublicMemberAccess.Returns( false );
+        configuration.IgnoreMemberNameCase.Returns( false );
+        var builder = new ParsedExpressionFactoryBuilder().SetConfiguration( configuration );
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MemberCouldNotBeResolved ) );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenPropertyMemberExistsButIsPrivateAndAllowNonPublicMemberAccessIsTrue()
+    {
+        var value = new TestParameter( "privateField", "privateProperty", "publicField", "publicProperty", next: null );
+        var input = "a.PrivateProperty";
+        var configuration = Substitute.For<IParsedExpressionFactoryConfiguration>();
+        configuration.DecimalPoint.Returns( '.' );
+        configuration.IntegerDigitSeparator.Returns( '_' );
+        configuration.StringDelimiter.Returns( '\'' );
+        configuration.ScientificNotationExponents.Returns( "eE" );
+        configuration.AllowScientificNotation.Returns( true );
+        configuration.AllowNonIntegerNumbers.Returns( true );
+        configuration.ConvertResultToOutputTypeAutomatically.Returns( false );
+        configuration.AllowNonPublicMemberAccess.Returns( true );
+        configuration.IgnoreMemberNameCase.Returns( false );
+        var builder = new ParsedExpressionFactoryBuilder().SetConfiguration( configuration );
+        var sut = builder.Build();
+
+        var expression = sut.Create<TestParameter, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( value );
+
+        result.Should().Be( "privateProperty" );
+    }
+
+    [Fact]
+    public void
+        Create_ShouldThrowParsedExpressionCreationException_WhenPublicPropertyMemberExistsButItsGetterIsPrivateAndAllowNonPublicMemberAccessIsFalse()
+    {
+        var input = "a.PrivateGetterProperty";
+        var configuration = Substitute.For<IParsedExpressionFactoryConfiguration>();
+        configuration.DecimalPoint.Returns( '.' );
+        configuration.IntegerDigitSeparator.Returns( '_' );
+        configuration.StringDelimiter.Returns( '\'' );
+        configuration.ScientificNotationExponents.Returns( "eE" );
+        configuration.AllowScientificNotation.Returns( true );
+        configuration.AllowNonIntegerNumbers.Returns( true );
+        configuration.ConvertResultToOutputTypeAutomatically.Returns( false );
+        configuration.AllowNonPublicMemberAccess.Returns( false );
+        configuration.IgnoreMemberNameCase.Returns( false );
+        var builder = new ParsedExpressionFactoryBuilder().SetConfiguration( configuration );
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MemberCouldNotBeResolved ) );
+    }
+
+    [Fact]
+    public void
+        DelegateInvoke_ShouldReturnCorrectResult_WhenPublicPropertyMemberExistsButItsGetterIsPrivateAndAllowNonPublicMemberAccessIsTrue()
+    {
+        var value = new TestParameter( "privateField", "privateProperty", "publicField", "publicProperty", next: null );
+        var input = "a.PrivateGetterProperty";
+        var configuration = Substitute.For<IParsedExpressionFactoryConfiguration>();
+        configuration.DecimalPoint.Returns( '.' );
+        configuration.IntegerDigitSeparator.Returns( '_' );
+        configuration.StringDelimiter.Returns( '\'' );
+        configuration.ScientificNotationExponents.Returns( "eE" );
+        configuration.AllowScientificNotation.Returns( true );
+        configuration.AllowNonIntegerNumbers.Returns( true );
+        configuration.ConvertResultToOutputTypeAutomatically.Returns( false );
+        configuration.AllowNonPublicMemberAccess.Returns( true );
+        configuration.IgnoreMemberNameCase.Returns( false );
+        var builder = new ParsedExpressionFactoryBuilder().SetConfiguration( configuration );
+        var sut = builder.Build();
+
+        var expression = sut.Create<TestParameter, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( value );
+
+        result.Should().Be( "privateProperty" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_ForMemberAccessOnSubExpressionInsideParentheses()
+    {
+        var input = "(a + b).Length";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, int>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( "foobar", "qux" );
+
+        result.Should().Be( "( foobar|BiOp|qux )".Length );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_ForMemberAccessWithPrefixUnaryOperatorResolution()
+    {
+        var input = "- a.Length";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddPrefixUnaryOperator( "-", new MockPrefixUnaryOperator() )
+            .SetPrefixUnaryConstructPrecedence( "-", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( "foobar" );
+
+        result.Should().Be( "( PreOp|6 )" );
     }
 
     [Fact]

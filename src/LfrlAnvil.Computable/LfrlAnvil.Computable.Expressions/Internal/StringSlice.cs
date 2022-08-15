@@ -70,6 +70,22 @@ internal readonly struct StringSlice : IEquatable<StringSlice>, IEquatable<char>
     }
 
     [Pure]
+    public bool EqualsIgnoreCase(StringSlice other)
+    {
+        if ( Length != other.Length )
+            return false;
+
+        var endIndex = EndIndex;
+        for ( int i = StartIndex, j = other.StartIndex; i < endIndex; ++i, ++j )
+        {
+            if ( char.ToLowerInvariant( Source[i] ) != char.ToLowerInvariant( other.Source[j] ) )
+                return false;
+        }
+
+        return true;
+    }
+
+    [Pure]
     public bool Equals(char other)
     {
         return Length == 1 && Source[StartIndex] == other;

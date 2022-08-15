@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using LfrlAnvil.Computable.Expressions.Constructs;
@@ -243,6 +244,9 @@ internal class ExpressionBuilderState
     {
         AssumeTokenType( token, IntermediateTokenType.Argument );
 
+        if ( Expects( Expectation.MemberName ) )
+            return HandleMemberName( token );
+
         var errors = HandleAmbiguousConstructAsBinaryOperator();
 
         if ( ! Expects( Expectation.Operand ) )
@@ -256,6 +260,34 @@ internal class ExpressionBuilderState
 
         var expression = GetOrAddArgumentAccessExpression( token.Symbol );
         PushOperand( expression );
+        return Chain<ParsedExpressionBuilderError>.Empty;
+    }
+
+    private Chain<ParsedExpressionBuilderError> HandleMemberName(IntermediateToken token)
+    {
+        AssumeTokenType( token, IntermediateTokenType.Argument );
+        AssumeStateExpectation( Expectation.MemberName );
+
+        var operand = _operandStack.Pop();
+
+        var members = operand.Type.FindMembers(
+            MemberTypes.Field | MemberTypes.Property,
+            _configuration.MemberBindingFlags,
+            _configuration.GetMemberFilter( token.Symbol ),
+            null );
+
+        if ( members.Length == 0 )
+            return Chain.Create( ParsedExpressionBuilderError.CreateMemberCouldNotBeResolved( token, operand.Type ) );
+
+        if ( members.Length > 1 )
+            return Chain.Create( ParsedExpressionBuilderError.CreateAmbiguousMemberAccess( token, operand.Type, members ) );
+
+        var member = members[0];
+        var newOperand = Expression.MakeMemberAccess( operand, member );
+
+        --_operandCount;
+        AddAssumedExpectation( Expectation.Operand );
+        PushOperand( newOperand );
         return Chain<ParsedExpressionBuilderError>.Empty;
     }
 
@@ -443,7 +475,7 @@ internal class ExpressionBuilderState
 
         _tokenStack.Pop();
 
-        _expectation = Expectation.PostfixUnaryConstruct | Expectation.BinaryOperator;
+        _expectation = Expectation.PostfixUnaryConstruct | Expectation.BinaryOperator | Expectation.MemberAccess;
         if ( --_parenthesesCount > 0 )
             _expectation |= Expectation.ClosedParenthesis;
 
@@ -514,7 +546,12 @@ internal class ExpressionBuilderState
     private Chain<ParsedExpressionBuilderError> HandleMemberAccess(IntermediateToken token)
     {
         AssumeTokenType( token, IntermediateTokenType.MemberAccess );
-        throw new NotSupportedException( "Member access token is not supported yet." );
+
+        if ( ! Expects( Expectation.MemberAccess ) )
+            return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedMemberAccess( token ) );
+
+        _expectation = Expectation.MemberName;
+        return Chain<ParsedExpressionBuilderError>.Empty;
     }
 
     private Chain<ParsedExpressionBuilderError> HandleElementSeparator(IntermediateToken token)
@@ -846,7 +883,7 @@ internal class ExpressionBuilderState
                 return errors;
         }
 
-        _expectation &= ~Expectation.PostfixUnaryConstruct;
+        _expectation &= ~(Expectation.PostfixUnaryConstruct | Expectation.MemberAccess);
         return Chain<ParsedExpressionBuilderError>.Empty;
     }
 
@@ -858,7 +895,8 @@ internal class ExpressionBuilderState
 
         _expectation = (_expectation & Expectation.PrefixUnaryConstructResolution) |
             Expectation.PostfixUnaryConstruct |
-            Expectation.BinaryOperator;
+            Expectation.BinaryOperator |
+            Expectation.MemberAccess;
 
         if ( _parenthesesCount > 0 )
             _expectation |= Expectation.ClosedParenthesis;
@@ -972,6 +1010,8 @@ internal class ExpressionBuilderState
         PrefixUnaryConstruct = 8,
         PostfixUnaryConstruct = 16,
         BinaryOperator = 32,
+        MemberAccess = 64,
+        MemberName = 128,
         PrefixUnaryConstructResolution = 2048,
         AmbiguousPostfixConstructResolution = 4096,
         AmbiguousPrefixConstructResolution = 8192,

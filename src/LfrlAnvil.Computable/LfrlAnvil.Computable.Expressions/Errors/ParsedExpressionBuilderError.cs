@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Computable.Expressions.Internal;
 
@@ -122,6 +123,12 @@ public class ParsedExpressionBuilderError
     }
 
     [Pure]
+    internal static ParsedExpressionBuilderError CreateUnexpectedMemberAccess(IntermediateToken token)
+    {
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.UnexpectedMemberAccess, token.Symbol );
+    }
+
+    [Pure]
     internal static ParsedExpressionBuilderError CreateConstructHasThrownException(
         IntermediateToken token,
         object construct,
@@ -215,6 +222,15 @@ public class ParsedExpressionBuilderError
     }
 
     [Pure]
+    internal static ParsedExpressionBuilderError CreateMemberCouldNotBeResolved(IntermediateToken token, Type targetType)
+    {
+        return new ParsedExpressionBuilderMissingMemberError(
+            ParsedExpressionBuilderErrorType.MemberCouldNotBeResolved,
+            token.Symbol,
+            targetType );
+    }
+
+    [Pure]
     internal static ParsedExpressionBuilderError CreateExpectedPrefixUnaryConstruct(IntermediateToken token)
     {
         return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.ExpectedPrefixUnaryConstruct, token.Symbol );
@@ -244,6 +260,19 @@ public class ParsedExpressionBuilderError
         return new ParsedExpressionBuilderError(
             ParsedExpressionBuilderErrorType.AmbiguousPostfixUnaryConstructResolutionFailure,
             token?.Symbol );
+    }
+
+    [Pure]
+    internal static ParsedExpressionBuilderError CreateAmbiguousMemberAccess(
+        IntermediateToken token,
+        Type targetType,
+        IReadOnlyList<MemberInfo> members)
+    {
+        return new ParsedExpressionBuilderAmbiguousMemberAccessError(
+            ParsedExpressionBuilderErrorType.AmbiguousMemberAccess,
+            token.Symbol,
+            targetType,
+            members );
     }
 
     [Pure]

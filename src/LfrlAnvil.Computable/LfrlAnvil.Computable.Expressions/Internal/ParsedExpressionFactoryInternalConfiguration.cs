@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Computable.Expressions.Exceptions;
 
@@ -22,6 +24,21 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
         AllowScientificNotation = configuration.AllowScientificNotation;
         StringDelimiter = configuration.StringDelimiter;
         ConvertResultToOutputTypeAutomatically = configuration.ConvertResultToOutputTypeAutomatically;
+        AllowNonPublicMemberAccess = configuration.AllowNonPublicMemberAccess;
+        IgnoreMemberNameCase = configuration.IgnoreMemberNameCase;
+
+        NumberStyles = NumberStyles.AllowThousands;
+
+        if ( AllowNonIntegerNumbers )
+            NumberStyles |= NumberStyles.AllowDecimalPoint;
+
+        if ( AllowScientificNotation )
+            NumberStyles |= NumberStyles.AllowExponent;
+
+        MemberBindingFlags = BindingFlags.Instance | BindingFlags.Public;
+        if ( AllowNonPublicMemberAccess )
+            MemberBindingFlags |= BindingFlags.NonPublic;
+
         NumberFormatProvider = new FormatProvider( this );
     }
 
@@ -32,21 +49,19 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
     public bool AllowScientificNotation { get; }
     public char StringDelimiter { get; }
     public bool ConvertResultToOutputTypeAutomatically { get; }
+    public bool AllowNonPublicMemberAccess { get; }
+    public bool IgnoreMemberNameCase { get; }
+    public NumberStyles NumberStyles { get; }
+    public BindingFlags MemberBindingFlags { get; }
     public IFormatProvider NumberFormatProvider { get; }
     internal IReadOnlyDictionary<StringSlice, ConstructTokenDefinition> Constructs { get; }
 
     [Pure]
-    public NumberStyles GetNumberStyles()
+    internal MemberFilter GetMemberFilter(StringSlice symbol)
     {
-        var result = NumberStyles.AllowThousands;
-
-        if ( AllowNonIntegerNumbers )
-            result |= NumberStyles.AllowDecimalPoint;
-
-        if ( AllowScientificNotation )
-            result |= NumberStyles.AllowExponent;
-
-        return result;
+        return IgnoreMemberNameCase
+            ? (m, _) => symbol.EqualsIgnoreCase( StringSlice.Create( m.Name ) ) && IsValidMember( m )
+            : (m, _) => symbol.Equals( StringSlice.Create( m.Name ) ) && IsValidMember( m );
     }
 
     [Pure]
@@ -117,6 +132,13 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
         }
 
         return null;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private bool IsValidMember(MemberInfo member)
+    {
+        return member is not PropertyInfo property || property.GetGetMethod( AllowNonPublicMemberAccess ) is not null;
     }
 
     private sealed class FormatProvider : IFormatProvider

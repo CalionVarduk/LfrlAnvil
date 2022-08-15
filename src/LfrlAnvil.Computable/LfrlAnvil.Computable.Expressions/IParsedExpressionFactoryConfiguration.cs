@@ -9,4 +9,6 @@ public interface IParsedExpressionFactoryConfiguration
     bool AllowScientificNotation { get; }
     char StringDelimiter { get; }
     bool ConvertResultToOutputTypeAutomatically { get; }
+    bool AllowNonPublicMemberAccess { get; }
+    bool IgnoreMemberNameCase { get; }
 }

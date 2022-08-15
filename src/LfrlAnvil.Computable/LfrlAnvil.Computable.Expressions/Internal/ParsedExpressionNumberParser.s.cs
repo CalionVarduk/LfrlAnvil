@@ -11,37 +11,37 @@ public static class ParsedExpressionNumberParser
     [Pure]
     public static IParsedExpressionNumberParser CreateDefaultDecimal(ParsedExpressionFactoryInternalConfiguration configuration)
     {
-        return new DecimalParser( configuration.NumberFormatProvider, configuration.GetNumberStyles() );
+        return new DecimalParser( configuration.NumberFormatProvider, configuration.NumberStyles );
     }
 
     [Pure]
     public static IParsedExpressionNumberParser CreateDefaultDouble(ParsedExpressionFactoryInternalConfiguration configuration)
     {
-        return new DoubleParser( configuration.NumberFormatProvider, configuration.GetNumberStyles() );
+        return new DoubleParser( configuration.NumberFormatProvider, configuration.NumberStyles );
     }
 
     [Pure]
     public static IParsedExpressionNumberParser CreateDefaultFloat(ParsedExpressionFactoryInternalConfiguration configuration)
     {
-        return new FloatParser( configuration.NumberFormatProvider, configuration.GetNumberStyles() );
+        return new FloatParser( configuration.NumberFormatProvider, configuration.NumberStyles );
     }
 
     [Pure]
     public static IParsedExpressionNumberParser CreateDefaultBigInteger(ParsedExpressionFactoryInternalConfiguration configuration)
     {
-        return new BigIntegerParser( configuration.NumberFormatProvider, configuration.GetNumberStyles() );
+        return new BigIntegerParser( configuration.NumberFormatProvider, configuration.NumberStyles );
     }
 
     [Pure]
     public static IParsedExpressionNumberParser CreateDefaultInt64(ParsedExpressionFactoryInternalConfiguration configuration)
     {
-        return new Int64Parser( configuration.NumberFormatProvider, configuration.GetNumberStyles() );
+        return new Int64Parser( configuration.NumberFormatProvider, configuration.NumberStyles );
     }
 
     [Pure]
     public static IParsedExpressionNumberParser CreateDefaultInt32(ParsedExpressionFactoryInternalConfiguration configuration)
     {
-        return new Int32Parser( configuration.NumberFormatProvider, configuration.GetNumberStyles() );
+        return new Int32Parser( configuration.NumberFormatProvider, configuration.NumberStyles );
     }
 
     private sealed class DecimalParser : IParsedExpressionNumberParser

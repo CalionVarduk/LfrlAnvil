@@ -9,4 +9,6 @@ public class ParsedExpressionFactoryDefaultConfiguration : IParsedExpressionFact
     public virtual bool AllowScientificNotation => true;
     public virtual char StringDelimiter => '\'';
     public virtual bool ConvertResultToOutputTypeAutomatically => true;
+    public virtual bool AllowNonPublicMemberAccess => false;
+    public virtual bool IgnoreMemberNameCase => false;
 }
