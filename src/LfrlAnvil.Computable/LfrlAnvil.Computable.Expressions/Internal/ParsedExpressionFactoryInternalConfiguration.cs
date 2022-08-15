@@ -57,11 +57,11 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
     internal IReadOnlyDictionary<StringSlice, ConstructTokenDefinition> Constructs { get; }
 
     [Pure]
-    internal MemberFilter GetMemberFilter(StringSlice symbol)
+    internal MemberFilter GetAccessibleMemberFilter(StringSlice symbol)
     {
         return IgnoreMemberNameCase
-            ? (m, _) => symbol.EqualsIgnoreCase( StringSlice.Create( m.Name ) ) && IsValidMember( m )
-            : (m, _) => symbol.Equals( StringSlice.Create( m.Name ) ) && IsValidMember( m );
+            ? (m, _) => symbol.EqualsIgnoreCase( StringSlice.Create( m.Name ) ) && IsMemberAccessible( m )
+            : (m, _) => symbol.Equals( StringSlice.Create( m.Name ) ) && IsMemberAccessible( m );
     }
 
     [Pure]
@@ -136,9 +136,13 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private bool IsValidMember(MemberInfo member)
+    private bool IsMemberAccessible(MemberInfo member)
     {
-        return member is not PropertyInfo property || property.GetGetMethod( AllowNonPublicMemberAccess ) is not null;
+        if ( member is not PropertyInfo property )
+            return true;
+
+        var getter = property.GetGetMethod( AllowNonPublicMemberAccess );
+        return getter is not null && getter.GetParameters().Length == 0;
     }
 
     private sealed class FormatProvider : IFormatProvider

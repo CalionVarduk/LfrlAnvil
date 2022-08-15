@@ -2263,6 +2263,86 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_ForFieldMemberAccessOnConstantValue()
+    {
+        var input = "const.PublicField";
+        var constant = new TestParameter( "privateField", "privateProperty", "publicField", "publicProperty", next: null );
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddConstant( "const", new ParsedExpressionConstant<TestParameter>( constant ) );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<TestParameter, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+
+        result.Should().Be( "publicField" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_ForPropertyMemberAccessOnConstantValue()
+    {
+        var input = "const.PublicProperty";
+        var constant = new TestParameter( "privateField", "privateProperty", "publicField", "publicProperty", next: null );
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddConstant( "const", new ParsedExpressionConstant<TestParameter>( constant ) );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<TestParameter, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+
+        result.Should().Be( "publicProperty" );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_ForFieldMemberAccessOnNullConstant()
+    {
+        var input = "const.PublicField";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddConstant( "const", new ParsedExpressionConstant<TestParameter?>( null ) );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MemberHasThrownException ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_ForPropertyMemberAccessOnNullConstant()
+    {
+        var input = "const.PublicProperty";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddConstant( "const", new ParsedExpressionConstant<TestParameter?>( null ) );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MemberHasThrownException ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_ForIndexerMemberAccess()
+    {
+        var input = "a.Item";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<TestParameter, int>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MemberCouldNotBeResolved ) );
+    }
+
+    [Fact]
     public void Create_ShouldAddAutomaticResultConversion_WhenActualResultTypeIsDifferentFromExpected_BasedOnPrefixTypeConverter()
     {
         var input = "12.34";

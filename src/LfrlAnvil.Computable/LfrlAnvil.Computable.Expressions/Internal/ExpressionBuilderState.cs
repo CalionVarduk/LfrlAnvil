@@ -273,7 +273,7 @@ internal class ExpressionBuilderState
         var members = operand.Type.FindMembers(
             MemberTypes.Field | MemberTypes.Property,
             _configuration.MemberBindingFlags,
-            _configuration.GetMemberFilter( token.Symbol ),
+            _configuration.GetAccessibleMemberFilter( token.Symbol ),
             null );
 
         if ( members.Length == 0 )
@@ -282,13 +282,7 @@ internal class ExpressionBuilderState
         if ( members.Length > 1 )
             return Chain.Create( ParsedExpressionBuilderError.CreateAmbiguousMemberAccess( token, operand.Type, members ) );
 
-        var member = members[0];
-        var newOperand = Expression.MakeMemberAccess( operand, member );
-
-        --_operandCount;
-        AddAssumedExpectation( Expectation.Operand );
-        PushOperand( newOperand );
-        return Chain<ParsedExpressionBuilderError>.Empty;
+        return ProcessMemberAccess( token, operand, members[0] );
     }
 
     private Chain<ParsedExpressionBuilderError> HandleConstructs(IntermediateToken token)
@@ -760,6 +754,49 @@ internal class ExpressionBuilderState
         }
 
         _operandStack.Push( result );
+        return Chain<ParsedExpressionBuilderError>.Empty;
+    }
+
+    private Chain<ParsedExpressionBuilderError> ProcessMemberAccess(IntermediateToken token, Expression operand, MemberInfo member)
+    {
+        --_operandCount;
+        AddAssumedExpectation( Expectation.Operand );
+
+        if ( operand.NodeType != ExpressionType.Constant )
+        {
+            var memberAccess = Expression.MakeMemberAccess( operand, member );
+            PushOperand( memberAccess );
+            return Chain<ParsedExpressionBuilderError>.Empty;
+        }
+
+        var constant = (ConstantExpression)operand;
+        Expression result;
+
+        if ( member is FieldInfo field )
+        {
+            try
+            {
+                result = Expression.Constant( field.GetValue( constant.Value ), field.FieldType );
+            }
+            catch ( Exception exc )
+            {
+                return Chain.Create( ParsedExpressionBuilderError.CreateMemberHasThrownException( token, operand.Type, member, exc ) );
+            }
+        }
+        else
+        {
+            var property = (PropertyInfo)member;
+            try
+            {
+                result = Expression.Constant( property.GetValue( constant.Value ), property.PropertyType );
+            }
+            catch ( Exception exc )
+            {
+                return Chain.Create( ParsedExpressionBuilderError.CreateMemberHasThrownException( token, operand.Type, member, exc ) );
+            }
+        }
+
+        PushOperand( result );
         return Chain<ParsedExpressionBuilderError>.Empty;
     }
 

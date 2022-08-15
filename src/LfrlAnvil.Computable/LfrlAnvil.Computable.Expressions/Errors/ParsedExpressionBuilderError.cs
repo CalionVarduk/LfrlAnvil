@@ -162,6 +162,21 @@ public class ParsedExpressionBuilderError
     }
 
     [Pure]
+    internal static ParsedExpressionBuilderError CreateMemberHasThrownException(
+        IntermediateToken token,
+        Type targetType,
+        MemberInfo member,
+        Exception exception)
+    {
+        return new ParsedExpressionBuilderMemberError(
+            ParsedExpressionBuilderErrorType.MemberHasThrownException,
+            token.Symbol,
+            targetType,
+            member,
+            exception );
+    }
+
+    [Pure]
     internal static ParsedExpressionBuilderError CreatePrefixUnaryOperatorCouldNotBeResolved(IntermediateToken token, Type argumentType)
     {
         return new ParsedExpressionBuilderMissingUnaryOperatorError(

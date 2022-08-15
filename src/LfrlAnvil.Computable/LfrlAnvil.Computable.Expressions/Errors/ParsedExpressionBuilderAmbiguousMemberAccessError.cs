@@ -7,7 +7,7 @@ using LfrlAnvil.Computable.Expressions.Internal;
 
 namespace LfrlAnvil.Computable.Expressions.Errors;
 
-public class ParsedExpressionBuilderAmbiguousMemberAccessError : ParsedExpressionBuilderError
+public sealed class ParsedExpressionBuilderAmbiguousMemberAccessError : ParsedExpressionBuilderError
 {
     internal ParsedExpressionBuilderAmbiguousMemberAccessError(
         ParsedExpressionBuilderErrorType type,

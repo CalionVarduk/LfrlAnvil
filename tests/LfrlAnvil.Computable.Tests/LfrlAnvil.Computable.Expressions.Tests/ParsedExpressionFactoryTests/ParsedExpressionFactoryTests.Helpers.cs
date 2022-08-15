@@ -290,6 +290,8 @@ public partial class ParsedExpressionFactoryTests
 
         public string PrivateGetterProperty { private get; set; }
 
+        public int this[int i] => i;
+
         internal TestParameter(string privateField, string privateProperty, string publicField, string publicProperty, TestParameter? next)
         {
             _privateField = privateField;

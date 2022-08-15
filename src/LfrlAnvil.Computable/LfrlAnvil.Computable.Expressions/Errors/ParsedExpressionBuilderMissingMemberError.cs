@@ -4,7 +4,7 @@ using LfrlAnvil.Computable.Expressions.Internal;
 
 namespace LfrlAnvil.Computable.Expressions.Errors;
 
-public class ParsedExpressionBuilderMissingMemberError : ParsedExpressionBuilderError
+public sealed class ParsedExpressionBuilderMissingMemberError : ParsedExpressionBuilderError
 {
     internal ParsedExpressionBuilderMissingMemberError(
         ParsedExpressionBuilderErrorType type,
