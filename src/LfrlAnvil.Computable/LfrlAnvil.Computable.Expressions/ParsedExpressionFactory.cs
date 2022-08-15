@@ -80,6 +80,18 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     }
 
     [Pure]
+    public bool IsVariadicFunctionSymbol(string symbol)
+    {
+        return IsVariadicFunctionSymbol( StringSlice.Create( symbol ) );
+    }
+
+    [Pure]
+    public bool IsVariadicFunctionSymbol(ReadOnlyMemory<char> symbol)
+    {
+        return IsVariadicFunctionSymbol( StringSlice.Create( symbol ) );
+    }
+
+    [Pure]
     public bool IsConstantSymbol(string symbol)
     {
         return IsConstantSymbol( StringSlice.Create( symbol ) );
@@ -239,6 +251,12 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     private bool IsFunctionSymbol(StringSlice symbol)
     {
         return _configuration.Constructs.GetValueOrDefault( symbol )?.Type == ConstructTokenType.Function;
+    }
+
+    [Pure]
+    private bool IsVariadicFunctionSymbol(StringSlice symbol)
+    {
+        return _configuration.Constructs.GetValueOrDefault( symbol )?.Type == ConstructTokenType.VariadicFunction;
     }
 
     [Pure]

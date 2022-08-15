@@ -6,6 +6,18 @@ using LfrlAnvil.Computable.Expressions.Errors;
 
 namespace LfrlAnvil.Computable.Expressions;
 
+// TODO:
+// replace Is*Symbol methods with GetConstructType
+// add methods for getting more info, like:
+// - get generic binary operator type
+// - get specialized binary operator types (construct type, left arg type, right arg type)
+// - get generic prefix unary construct type
+// - get specialized prefix unary construct types (construct type, arg type)
+// - get generic postfix unary construct type
+// - get specialized postfix unary construct types (construct type, arg type)
+// - get type declaration type
+// - get constant expression
+// - get function expressions
 public interface IParsedExpressionFactory
 {
     IParsedExpressionFactoryConfiguration Configuration { get; }
@@ -36,6 +48,12 @@ public interface IParsedExpressionFactory
 
     [Pure]
     bool IsFunctionSymbol(ReadOnlyMemory<char> symbol);
+
+    [Pure]
+    bool IsVariadicFunctionSymbol(string symbol);
+
+    [Pure]
+    bool IsVariadicFunctionSymbol(ReadOnlyMemory<char> symbol);
 
     [Pure]
     bool IsConstantSymbol(string symbol);

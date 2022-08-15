@@ -15,6 +15,7 @@ internal sealed class ConstructTokenDefinition
         TypeConverterCollection prefixTypeConverters,
         TypeConverterCollection postfixTypeConverters,
         FunctionCollection functions,
+        ParsedExpressionVariadicFunction? variadicFunction,
         ParsedExpressionConstant? constant,
         Type? typeDeclaration,
         ConstructTokenType type)
@@ -25,6 +26,7 @@ internal sealed class ConstructTokenDefinition
         PrefixTypeConverters = prefixTypeConverters;
         PostfixTypeConverters = postfixTypeConverters;
         Functions = functions;
+        VariadicFunction = variadicFunction;
         Constant = constant?.Expression;
         TypeDeclaration = typeDeclaration;
         Type = type;
@@ -36,6 +38,7 @@ internal sealed class ConstructTokenDefinition
     internal TypeConverterCollection PrefixTypeConverters { get; }
     internal TypeConverterCollection PostfixTypeConverters { get; }
     internal FunctionCollection Functions { get; }
+    internal ParsedExpressionVariadicFunction? VariadicFunction { get; }
     internal ConstantExpression? Constant { get; }
     internal Type? TypeDeclaration { get; }
     internal ConstructTokenType Type { get; }
@@ -71,6 +74,7 @@ internal sealed class ConstructTokenDefinition
             TypeConverterCollection.Empty,
             TypeConverterCollection.Empty,
             FunctionCollection.Empty,
+            variadicFunction: null,
             constant: null,
             typeDeclaration: null,
             type );
@@ -96,6 +100,7 @@ internal sealed class ConstructTokenDefinition
             prefix,
             postfix,
             FunctionCollection.Empty,
+            variadicFunction: null,
             constant: null,
             typeDeclaration: null,
             type );
@@ -111,9 +116,26 @@ internal sealed class ConstructTokenDefinition
             TypeConverterCollection.Empty,
             TypeConverterCollection.Empty,
             functions,
+            variadicFunction: null,
             constant: null,
             typeDeclaration: null,
             ConstructTokenType.Function );
+    }
+
+    [Pure]
+    internal static ConstructTokenDefinition CreateVariadicFunction(ParsedExpressionVariadicFunction? function)
+    {
+        return new ConstructTokenDefinition(
+            BinaryOperatorCollection.Empty,
+            UnaryOperatorCollection.Empty,
+            UnaryOperatorCollection.Empty,
+            TypeConverterCollection.Empty,
+            TypeConverterCollection.Empty,
+            FunctionCollection.Empty,
+            variadicFunction: function,
+            constant: null,
+            typeDeclaration: null,
+            ConstructTokenType.VariadicFunction );
     }
 
     [Pure]
@@ -126,6 +148,7 @@ internal sealed class ConstructTokenDefinition
             TypeConverterCollection.Empty,
             TypeConverterCollection.Empty,
             FunctionCollection.Empty,
+            variadicFunction: null,
             constant,
             typeDeclaration: null,
             ConstructTokenType.Constant );
@@ -141,6 +164,7 @@ internal sealed class ConstructTokenDefinition
             TypeConverterCollection.Empty,
             TypeConverterCollection.Empty,
             FunctionCollection.Empty,
+            variadicFunction: null,
             constant: null,
             typeDeclaration: type,
             ConstructTokenType.TypeDeclaration );

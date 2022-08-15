@@ -2,6 +2,8 @@
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
 
+// TODO: this could be made public
+// it would make IParsedExpressionFactory interface a lot more compact & factory builder could also give access to it
 [Flags]
 internal enum ConstructTokenType : ushort
 {
@@ -12,8 +14,9 @@ internal enum ConstructTokenType : ushort
     PrefixTypeConverter = 8,
     PostfixTypeConverter = 16,
     Function = 32,
-    Constant = 64,
-    TypeDeclaration = 128,
+    VariadicFunction = 64,
+    Constant = 128,
+    TypeDeclaration = 256,
     Operator = BinaryOperator | PrefixUnaryOperator | PostfixUnaryOperator,
     TypeConverter = PrefixTypeConverter | PostfixTypeConverter,
     PrefixUnaryConstruct = PrefixUnaryOperator | PrefixTypeConverter,

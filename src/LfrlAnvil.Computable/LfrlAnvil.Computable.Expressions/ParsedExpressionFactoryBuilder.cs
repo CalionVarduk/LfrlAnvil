@@ -154,6 +154,18 @@ public sealed class ParsedExpressionFactoryBuilder
         return this;
     }
 
+    public ParsedExpressionFactoryBuilder AddVariadicFunction(string symbol, ParsedExpressionVariadicFunction function)
+    {
+        _constructs.Add( (StringSlice.Create( symbol ), ConstructTokenType.VariadicFunction, function) );
+        return this;
+    }
+
+    public ParsedExpressionFactoryBuilder AddVariadicFunction(ReadOnlyMemory<char> symbol, ParsedExpressionVariadicFunction function)
+    {
+        _constructs.Add( (StringSlice.Create( symbol ), ConstructTokenType.VariadicFunction, function) );
+        return this;
+    }
+
     public ParsedExpressionFactoryBuilder SetBinaryOperatorPrecedence(string symbol, int precedence)
     {
         _precedences[(StringSlice.Create( symbol ), ConstructTokenType.BinaryOperator)] = precedence;
@@ -202,6 +214,7 @@ public sealed class ParsedExpressionFactoryBuilder
         return _numberParserProvider;
     }
 
+    // TODO: add ConstructType to the result
     [Pure]
     public IEnumerable<KeyValuePair<ReadOnlyMemory<char>, object>> GetCurrentConstructs()
     {
@@ -262,6 +275,7 @@ public sealed class ParsedExpressionFactoryBuilder
                     CreateTypeConverterDefinition( g, prefixTypeConverters, postfixTypeConverters, ref errorMessages ),
                 ParsedExpressionConstant => CreateConstantDefinition( g, ref errorMessages ),
                 ParsedExpressionFunction => CreateFunctionDefinition( g, ref errorMessages ),
+                ParsedExpressionVariadicFunction => CreateVariadicFunctionDefinition( g, ref errorMessages ),
                 Type => CreateTypeDeclarationDefinition( g, ref errorMessages ),
                 _ => CreateOperatorDefinition( g, binaryOperators, prefixUnaryOperators, postfixUnaryOperators, ref errorMessages )
             };
@@ -619,5 +633,35 @@ public sealed class ParsedExpressionFactoryBuilder
 
         var collection = functions is null ? FunctionCollection.Empty : new FunctionCollection( functions );
         return ConstructTokenDefinition.CreateFunction( collection );
+    }
+
+    private static ConstructTokenDefinition CreateVariadicFunctionDefinition(
+        IGrouping<StringSlice, (StringSlice Symbol, ConstructTokenType Type, object Object)> group,
+        ref Chain<string> errorMessages)
+    {
+        ParsedExpressionVariadicFunction? result = null;
+        string? definitionErrorMessage = null;
+
+        foreach ( var (_, _, construct) in group )
+        {
+            if ( construct is ParsedExpressionVariadicFunction function )
+            {
+                if ( result is not null )
+                {
+                    errorMessages = errorMessages.Extend( Resources.VariadicFunctionGroupContainsMoreThanOneFunction( group.Key ) );
+                    break;
+                }
+
+                result = function;
+                continue;
+            }
+
+            definitionErrorMessage ??= Resources.VariadicFunctionGroupContainsConstructsOfOtherType( group.Key );
+        }
+
+        if ( definitionErrorMessage is not null )
+            errorMessages = errorMessages.Extend( definitionErrorMessage );
+
+        return ConstructTokenDefinition.CreateVariadicFunction( result );
     }
 }

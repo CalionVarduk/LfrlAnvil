@@ -26,6 +26,8 @@
 // if array is empty, then its type is inferred from the parameter type, if it is used as a function parameter
 // if not, then its type will be 'System.Object' (make it configurable)
 // if all array values are const, then array is also made into const
+// note on array type: type declaration can be used to specify the array type e.g. 'int[0,1,2]' instead of '[0,1,2]' or 'int[]'
+// a branching function 'reduce' could be added to consume arrays
 //
 // type declaration:
 // this can be used to specify 'anonymous' delegate parameter types explicitly

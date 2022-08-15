@@ -377,6 +377,42 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     }
 
     [Fact]
+    public void AddVariadicFunction_WithString_ShouldAddNewConstruct()
+    {
+        var symbol = Fixture.Create<string>();
+        var sut = new ParsedExpressionFactoryBuilder();
+        var function = Substitute.ForPartsOf<ParsedExpressionVariadicFunction>();
+
+        var result = sut.AddVariadicFunction( symbol, function );
+
+        using ( new AssertionScope() )
+        {
+            var entry = sut.GetCurrentConstructs().Should().HaveCount( 1 ).And.Subject.First();
+            entry.Key.ToString().Should().Be( symbol );
+            entry.Value.Should().BeSameAs( function );
+            result.Should().BeSameAs( sut );
+        }
+    }
+
+    [Fact]
+    public void AddVariadicFunction_WithMemory_ShouldAddNewConstruct()
+    {
+        var symbol = Fixture.Create<string>();
+        var sut = new ParsedExpressionFactoryBuilder();
+        var function = Substitute.ForPartsOf<ParsedExpressionVariadicFunction>();
+
+        var result = sut.AddVariadicFunction( symbol.AsMemory(), function );
+
+        using ( new AssertionScope() )
+        {
+            var entry = sut.GetCurrentConstructs().Should().HaveCount( 1 ).And.Subject.First();
+            entry.Key.ToString().Should().Be( symbol );
+            entry.Value.Should().BeSameAs( function );
+            result.Should().BeSameAs( sut );
+        }
+    }
+
+    [Fact]
     public void SetBinaryOperatorPrecedence_WithString_ShouldRegisterPrecedence()
     {
         var symbol = Fixture.Create<string>();
@@ -500,6 +536,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.ContainsConstructSymbol( nonExistingSymbol.AsMemory() ).Should().BeFalse();
             result.IsFunctionSymbol( nonExistingSymbol ).Should().BeFalse();
             result.IsFunctionSymbol( nonExistingSymbol.AsMemory() ).Should().BeFalse();
+            result.IsVariadicFunctionSymbol( nonExistingSymbol ).Should().BeFalse();
+            result.IsVariadicFunctionSymbol( nonExistingSymbol.AsMemory() ).Should().BeFalse();
             result.IsOperatorSymbol( nonExistingSymbol ).Should().BeFalse();
             result.IsOperatorSymbol( nonExistingSymbol.AsMemory() ).Should().BeFalse();
             result.IsTypeConverterSymbol( nonExistingSymbol ).Should().BeFalse();
@@ -536,6 +574,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.ContainsConstructSymbol( symbol.AsMemory() ).Should().BeTrue();
             result.IsFunctionSymbol( symbol ).Should().BeFalse();
             result.IsFunctionSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsVariadicFunctionSymbol( symbol ).Should().BeFalse();
+            result.IsVariadicFunctionSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.IsOperatorSymbol( symbol ).Should().BeTrue();
             result.IsOperatorSymbol( symbol.AsMemory() ).Should().BeTrue();
             result.IsTypeConverterSymbol( symbol ).Should().BeFalse();
@@ -572,6 +612,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.ContainsConstructSymbol( symbol.AsMemory() ).Should().BeTrue();
             result.IsFunctionSymbol( symbol ).Should().BeFalse();
             result.IsFunctionSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsVariadicFunctionSymbol( symbol ).Should().BeFalse();
+            result.IsVariadicFunctionSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.IsOperatorSymbol( symbol ).Should().BeTrue();
             result.IsOperatorSymbol( symbol.AsMemory() ).Should().BeTrue();
             result.IsTypeConverterSymbol( symbol ).Should().BeFalse();
@@ -608,6 +650,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.ContainsConstructSymbol( symbol.AsMemory() ).Should().BeTrue();
             result.IsFunctionSymbol( symbol ).Should().BeFalse();
             result.IsFunctionSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsVariadicFunctionSymbol( symbol ).Should().BeFalse();
+            result.IsVariadicFunctionSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.IsOperatorSymbol( symbol ).Should().BeTrue();
             result.IsOperatorSymbol( symbol.AsMemory() ).Should().BeTrue();
             result.IsTypeConverterSymbol( symbol ).Should().BeFalse();
@@ -644,6 +688,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.ContainsConstructSymbol( symbol.AsMemory() ).Should().BeTrue();
             result.IsFunctionSymbol( symbol ).Should().BeFalse();
             result.IsFunctionSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsVariadicFunctionSymbol( symbol ).Should().BeFalse();
+            result.IsVariadicFunctionSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.IsOperatorSymbol( symbol ).Should().BeTrue();
             result.IsOperatorSymbol( symbol.AsMemory() ).Should().BeTrue();
             result.IsTypeConverterSymbol( symbol ).Should().BeFalse();
@@ -680,6 +726,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.ContainsConstructSymbol( symbol.AsMemory() ).Should().BeTrue();
             result.IsFunctionSymbol( symbol ).Should().BeFalse();
             result.IsFunctionSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsVariadicFunctionSymbol( symbol ).Should().BeFalse();
+            result.IsVariadicFunctionSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.IsOperatorSymbol( symbol ).Should().BeTrue();
             result.IsOperatorSymbol( symbol.AsMemory() ).Should().BeTrue();
             result.IsTypeConverterSymbol( symbol ).Should().BeFalse();
@@ -716,6 +764,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.ContainsConstructSymbol( symbol.AsMemory() ).Should().BeTrue();
             result.IsFunctionSymbol( symbol ).Should().BeFalse();
             result.IsFunctionSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsVariadicFunctionSymbol( symbol ).Should().BeFalse();
+            result.IsVariadicFunctionSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.IsOperatorSymbol( symbol ).Should().BeTrue();
             result.IsOperatorSymbol( symbol.AsMemory() ).Should().BeTrue();
             result.IsTypeConverterSymbol( symbol ).Should().BeFalse();
@@ -752,6 +802,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.ContainsConstructSymbol( symbol.AsMemory() ).Should().BeTrue();
             result.IsFunctionSymbol( symbol ).Should().BeFalse();
             result.IsFunctionSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsVariadicFunctionSymbol( symbol ).Should().BeFalse();
+            result.IsVariadicFunctionSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.IsOperatorSymbol( symbol ).Should().BeFalse();
             result.IsOperatorSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.IsTypeConverterSymbol( symbol ).Should().BeTrue();
@@ -788,6 +840,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.ContainsConstructSymbol( symbol.AsMemory() ).Should().BeTrue();
             result.IsFunctionSymbol( symbol ).Should().BeFalse();
             result.IsFunctionSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsVariadicFunctionSymbol( symbol ).Should().BeFalse();
+            result.IsVariadicFunctionSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.IsOperatorSymbol( symbol ).Should().BeFalse();
             result.IsOperatorSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.IsTypeConverterSymbol( symbol ).Should().BeTrue();
@@ -824,6 +878,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.ContainsConstructSymbol( symbol.AsMemory() ).Should().BeTrue();
             result.IsFunctionSymbol( symbol ).Should().BeFalse();
             result.IsFunctionSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsVariadicFunctionSymbol( symbol ).Should().BeFalse();
+            result.IsVariadicFunctionSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.IsOperatorSymbol( symbol ).Should().BeFalse();
             result.IsOperatorSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.IsTypeConverterSymbol( symbol ).Should().BeTrue();
@@ -860,6 +916,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.ContainsConstructSymbol( symbol.AsMemory() ).Should().BeTrue();
             result.IsFunctionSymbol( symbol ).Should().BeFalse();
             result.IsFunctionSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsVariadicFunctionSymbol( symbol ).Should().BeFalse();
+            result.IsVariadicFunctionSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.IsOperatorSymbol( symbol ).Should().BeFalse();
             result.IsOperatorSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.IsTypeConverterSymbol( symbol ).Should().BeTrue();
@@ -894,6 +952,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.ContainsConstructSymbol( symbol.AsMemory() ).Should().BeTrue();
             result.IsFunctionSymbol( symbol ).Should().BeFalse();
             result.IsFunctionSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsVariadicFunctionSymbol( symbol ).Should().BeFalse();
+            result.IsVariadicFunctionSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.IsOperatorSymbol( symbol ).Should().BeFalse();
             result.IsOperatorSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.IsTypeConverterSymbol( symbol ).Should().BeFalse();
@@ -927,6 +987,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.ContainsConstructSymbol( symbol.AsMemory() ).Should().BeTrue();
             result.IsFunctionSymbol( symbol ).Should().BeFalse();
             result.IsFunctionSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsVariadicFunctionSymbol( symbol ).Should().BeFalse();
+            result.IsVariadicFunctionSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.IsOperatorSymbol( symbol ).Should().BeFalse();
             result.IsOperatorSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.IsTypeConverterSymbol( symbol ).Should().BeFalse();
@@ -961,6 +1023,44 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.ContainsConstructSymbol( symbol.AsMemory() ).Should().BeTrue();
             result.IsFunctionSymbol( symbol ).Should().BeTrue();
             result.IsFunctionSymbol( symbol.AsMemory() ).Should().BeTrue();
+            result.IsVariadicFunctionSymbol( symbol ).Should().BeFalse();
+            result.IsVariadicFunctionSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsOperatorSymbol( symbol ).Should().BeFalse();
+            result.IsOperatorSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsTypeConverterSymbol( symbol ).Should().BeFalse();
+            result.IsTypeConverterSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsConstantSymbol( symbol ).Should().BeFalse();
+            result.IsConstantSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsTypeDeclarationSymbol( symbol ).Should().BeFalse();
+            result.IsTypeDeclarationSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.GetBinaryOperatorPrecedence( symbol ).Should().BeNull();
+            result.GetBinaryOperatorPrecedence( symbol.AsMemory() ).Should().BeNull();
+            result.GetPrefixUnaryConstructPrecedence( symbol ).Should().BeNull();
+            result.GetPrefixUnaryConstructPrecedence( symbol.AsMemory() ).Should().BeNull();
+            result.GetPostfixUnaryConstructPrecedence( symbol ).Should().BeNull();
+            result.GetPostfixUnaryConstructPrecedence( symbol.AsMemory() ).Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void Build_ShouldReturnValidFactory_WhenBuilderHasOneVariadicFunction()
+    {
+        var symbol = $"_{Fixture.Create<string>()}";
+        var function = Substitute.ForPartsOf<ParsedExpressionVariadicFunction>();
+        var sut = new ParsedExpressionFactoryBuilder()
+            .AddVariadicFunction( symbol, function );
+
+        var result = sut.Build();
+
+        using ( new AssertionScope() )
+        {
+            result.GetConstructSymbols().Select( s => s.ToString() ).Should().BeSequentiallyEqualTo( symbol );
+            result.ContainsConstructSymbol( symbol ).Should().BeTrue();
+            result.ContainsConstructSymbol( symbol.AsMemory() ).Should().BeTrue();
+            result.IsFunctionSymbol( symbol ).Should().BeFalse();
+            result.IsFunctionSymbol( symbol.AsMemory() ).Should().BeFalse();
+            result.IsVariadicFunctionSymbol( symbol ).Should().BeTrue();
+            result.IsVariadicFunctionSymbol( symbol.AsMemory() ).Should().BeTrue();
             result.IsOperatorSymbol( symbol ).Should().BeFalse();
             result.IsOperatorSymbol( symbol.AsMemory() ).Should().BeFalse();
             result.IsTypeConverterSymbol( symbol ).Should().BeFalse();
@@ -981,8 +1081,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     [Fact]
     public void Build_ShouldReturnValidFactory_WhenBuilderHasOneOfEachConstructsWithPrecedence()
     {
-        var (operatorSymbol, typeConverterSymbol, constantSymbol, typeDeclarationSymbol, functionSymbol) =
-            Fixture.CreateDistinctCollection<string>( count: 5 ).Select( s => $"_{s}" ).ToList();
+        var (operatorSymbol, typeConverterSymbol, constantSymbol, typeDeclarationSymbol, functionSymbol, variadicFunctionSymbol) =
+            Fixture.CreateDistinctCollection<string>( count: 6 ).Select( s => $"_{s}" ).ToList();
 
         var precedence = Fixture.Create<int>();
         var sut = new ParsedExpressionFactoryBuilder()
@@ -1000,6 +1100,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             .AddFunction( functionSymbol, new ParsedExpressionFunction<int>( () => Fixture.Create<int>() ) )
             .AddFunction( functionSymbol, new ParsedExpressionFunction<int, int>( a => a ) )
             .AddFunction( functionSymbol, new ParsedExpressionFunction<double, int>( a => (int)a ) )
+            .AddVariadicFunction( variadicFunctionSymbol, Substitute.ForPartsOf<ParsedExpressionVariadicFunction>() )
             .AddTypeDeclaration<int>( typeDeclarationSymbol )
             .SetBinaryOperatorPrecedence( operatorSymbol, precedence )
             .SetPrefixUnaryConstructPrecedence( operatorSymbol, precedence )
@@ -1012,7 +1113,13 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
         result.GetConstructSymbols()
             .Select( s => s.ToString() )
             .Should()
-            .BeEquivalentTo( operatorSymbol, typeConverterSymbol, constantSymbol, typeDeclarationSymbol, functionSymbol );
+            .BeEquivalentTo(
+                operatorSymbol,
+                typeConverterSymbol,
+                constantSymbol,
+                typeDeclarationSymbol,
+                functionSymbol,
+                variadicFunctionSymbol );
     }
 
     [Theory]
@@ -1389,6 +1496,31 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
         var sut = new ParsedExpressionFactoryBuilder()
             .AddFunction( "f", new ParsedExpressionFunction<int>( () => Fixture.Create<int>() ) )
             .AddBinaryOperator( "f", new ParsedExpressionAddOperator() );
+
+        var action = Lambda.Of( () => sut.Build() );
+
+        action.Should().ThrowExactly<ParsedExpressionFactoryBuilderException>();
+    }
+
+    [Fact]
+    public void Build_ShouldThrowMathExpressionFactoryBuilderException_WhenVariadicFunctionDefinitionContainsMoreThanOneFunction()
+    {
+        var sut = new ParsedExpressionFactoryBuilder()
+            .AddVariadicFunction( "e", Substitute.ForPartsOf<ParsedExpressionVariadicFunction>() )
+            .AddVariadicFunction( "e", Substitute.ForPartsOf<ParsedExpressionVariadicFunction>() );
+
+        var action = Lambda.Of( () => sut.Build() );
+
+        action.Should().ThrowExactly<ParsedExpressionFactoryBuilderException>();
+    }
+
+    [Fact]
+    public void Build_ShouldThrowMathExpressionFactoryBuilderException_WhenVariadicFunctionDefinitionContainsNonVariadicFunctionConstruct()
+    {
+        var sut = new ParsedExpressionFactoryBuilder()
+            .AddVariadicFunction( "e", Substitute.ForPartsOf<ParsedExpressionVariadicFunction>() )
+            .AddBinaryOperator( "e", new ParsedExpressionAddOperator() )
+            .SetBinaryOperatorPrecedence( "e", 1 );
 
         var action = Lambda.Of( () => sut.Build() );
 

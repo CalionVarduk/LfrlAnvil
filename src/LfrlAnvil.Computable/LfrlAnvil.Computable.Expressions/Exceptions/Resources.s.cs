@@ -252,6 +252,21 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string VariadicFunctionGroupContainsMoreThanOneFunction(StringSlice symbol)
+    {
+        return $"Expected variadic function group with '{symbol}' symbol to contain only one function.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string VariadicFunctionGroupContainsConstructsOfOtherType(StringSlice symbol)
+    {
+        return
+            $"Expected variadic function group with '{symbol}' symbol to be comprised of only variadic functions but found other construct types.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string FoundDuplicateFunctionSignature(
         StringSlice symbol,
         IReadOnlyList<Expression> parameters)
