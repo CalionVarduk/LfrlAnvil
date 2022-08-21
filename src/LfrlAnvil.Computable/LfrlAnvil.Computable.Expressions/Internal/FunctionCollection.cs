@@ -10,16 +10,16 @@ internal sealed class FunctionCollection
     internal static readonly FunctionCollection Empty =
         new FunctionCollection( new Dictionary<FunctionSignatureKey, ParsedExpressionFunction>() );
 
-    private readonly IReadOnlyDictionary<FunctionSignatureKey, ParsedExpressionFunction> _functions;
-
     internal FunctionCollection(IReadOnlyDictionary<FunctionSignatureKey, ParsedExpressionFunction> functions)
     {
-        _functions = functions;
+        Functions = functions;
     }
+
+    internal IReadOnlyDictionary<FunctionSignatureKey, ParsedExpressionFunction> Functions { get; }
 
     [Pure]
     internal ParsedExpressionFunction? FindConstruct(IReadOnlyList<Expression> parameters)
     {
-        return _functions.GetValueOrDefault( new FunctionSignatureKey( parameters ) );
+        return Functions.GetValueOrDefault( new FunctionSignatureKey( parameters ) );
     }
 }

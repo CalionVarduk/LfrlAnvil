@@ -9,9 +9,6 @@ internal sealed class TypeConverterCollection
 {
     internal static readonly TypeConverterCollection Empty = new TypeConverterCollection( null, null, null, int.MaxValue );
 
-    private readonly ParsedExpressionTypeConverter? _genericConstruct;
-    private readonly IReadOnlyDictionary<Type, ParsedExpressionTypeConverter>? _specializedConstructs;
-
     internal TypeConverterCollection(
         Type? targetType,
         ParsedExpressionTypeConverter? genericConstruct,
@@ -19,11 +16,13 @@ internal sealed class TypeConverterCollection
         int precedence)
     {
         TargetType = targetType;
-        _genericConstruct = genericConstruct;
-        _specializedConstructs = specializedConstructs;
+        GenericConstruct = genericConstruct;
+        SpecializedConstructs = specializedConstructs;
         Precedence = precedence;
     }
 
+    internal ParsedExpressionTypeConverter? GenericConstruct { get; }
+    internal IReadOnlyDictionary<Type, ParsedExpressionTypeConverter>? SpecializedConstructs { get; }
     internal Type? TargetType { get; }
     internal int Precedence { get; }
     internal bool IsEmpty => TargetType is null;
@@ -31,10 +30,10 @@ internal sealed class TypeConverterCollection
     [Pure]
     internal ParsedExpressionTypeConverter? FindConstruct(Type sourceType)
     {
-        if ( _specializedConstructs is null )
-            return _genericConstruct;
+        if ( SpecializedConstructs is null )
+            return GenericConstruct;
 
-        var specialized = _specializedConstructs.GetValueOrDefault( sourceType );
-        return specialized ?? _genericConstruct;
+        var specialized = SpecializedConstructs.GetValueOrDefault( sourceType );
+        return specialized ?? GenericConstruct;
     }
 }

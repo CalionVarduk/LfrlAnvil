@@ -1834,6 +1834,41 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Theory]
+    [InlineData( "foo()", "Variadic()" )]
+    [InlineData( "foo( 'a' )", "Variadic(a)" )]
+    [InlineData( "foo( 'a' , 'b' , 'c' )", "Variadic(a,b,c)" )]
+    [InlineData( "foo( foo() , 'a' , foo( 'b' , 'c' ) )", "Variadic(Variadic(),a,Variadic(b,c))" )]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenExpressionContainsVariadicFunction(string input, string expected)
+    {
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddVariadicFunction( "foo", new MockVariadicFunction() );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+
+        result.Should().Be( expected );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenVariadicFunctionCannotBeProcessed()
+    {
+        var input = "foo()";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddVariadicFunction( "foo", new ThrowingVariadicFunction() );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
+    }
+
+    [Theory]
     [InlineData( "." )]
     [InlineData( "( ." )]
     [InlineData( "- ." )]

@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
@@ -6,6 +7,7 @@ using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Computable.Expressions.Errors;
 using LfrlAnvil.Computable.Expressions.Exceptions;
 using LfrlAnvil.Computable.Expressions.Internal;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Tests.ParsedExpressionFactoryTests;
 
@@ -232,6 +234,36 @@ public partial class ParsedExpressionFactoryTests
             : base( (a, b, c) => $"Func({a},{b},{c})" ) { }
     }
 
+    private sealed class MockVariadicFunction : ParsedExpressionVariadicFunction
+    {
+        protected internal override Expression Process(IReadOnlyList<Expression> parameters)
+        {
+            var concat = MemberInfoLocator.FindStringConcatMethod();
+            var formatProvider = Expression.Constant( CultureInfo.InvariantCulture, typeof( IFormatProvider ) );
+
+            var comma = Expression.Constant( "," );
+            var expressions = new List<Expression> { Expression.Constant( "Variadic(" ) };
+
+            foreach ( var p in parameters )
+            {
+                var toString = MemberInfoLocator.FindToStringWithFormatProviderMethod( p.Type );
+                expressions.Add( Expression.Call( p, toString, formatProvider ) );
+                expressions.Add( comma );
+            }
+
+            if ( expressions.Count > 1 )
+                expressions.RemoveLast();
+
+            expressions.Add( Expression.Constant( ")" ) );
+
+            var result = Expression.Call( null, concat, expressions[0], expressions[1] );
+            for ( var i = 2; i < expressions.Count; ++i )
+                result = Expression.Call( null, concat, result, expressions[i] );
+
+            return result;
+        }
+    }
+
     private sealed class ThrowingUnaryOperator : ParsedExpressionUnaryOperator
     {
         protected override Expression CreateUnaryExpression(Expression operand)
@@ -251,6 +283,14 @@ public partial class ParsedExpressionFactoryTests
     private sealed class ThrowingBinaryOperator : ParsedExpressionBinaryOperator
     {
         protected override Expression CreateBinaryExpression(Expression left, Expression right)
+        {
+            throw new Exception();
+        }
+    }
+
+    private sealed class ThrowingVariadicFunction : ParsedExpressionVariadicFunction
+    {
+        protected internal override Expression Process(IReadOnlyList<Expression> parameters)
         {
             throw new Exception();
         }

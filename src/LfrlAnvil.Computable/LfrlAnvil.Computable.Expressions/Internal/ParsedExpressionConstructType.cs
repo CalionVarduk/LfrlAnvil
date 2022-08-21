@@ -2,10 +2,8 @@
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
 
-// TODO: this could be made public
-// it would make IParsedExpressionFactory interface a lot more compact & factory builder could also give access to it
 [Flags]
-internal enum ConstructTokenType : ushort
+public enum ParsedExpressionConstructType : ushort
 {
     None = 0,
     BinaryOperator = 1,

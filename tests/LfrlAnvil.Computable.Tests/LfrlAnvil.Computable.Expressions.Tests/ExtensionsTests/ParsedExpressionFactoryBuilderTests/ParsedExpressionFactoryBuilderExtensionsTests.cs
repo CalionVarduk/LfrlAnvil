@@ -11,6 +11,7 @@ using LfrlAnvil.Computable.Expressions.Constructs.Int32;
 using LfrlAnvil.Computable.Expressions.Constructs.Int64;
 using LfrlAnvil.Computable.Expressions.Constructs.String;
 using LfrlAnvil.Computable.Expressions.Extensions;
+using LfrlAnvil.Computable.Expressions.Internal;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Computable.Expressions.Tests.ExtensionsTests.ParsedExpressionFactoryBuilderTests;
@@ -22,14 +23,14 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("+", typeof( ParsedExpressionAddOperator )),
-            ("-", typeof( ParsedExpressionSubtractOperator )),
-            ("*", typeof( ParsedExpressionMultiplyOperator )),
-            ("/", typeof( ParsedExpressionDivideOperator )),
-            ("mod", typeof( ParsedExpressionModuloOperator )),
-            ("-", typeof( ParsedExpressionNegateOperator ))
+            ("+", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionAddOperator )),
+            ("-", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionSubtractOperator )),
+            ("*", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionMultiplyOperator )),
+            ("/", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionDivideOperator )),
+            ("mod", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionModuloOperator )),
+            ("-", ParsedExpressionConstructType.PrefixUnaryOperator, typeof( ParsedExpressionNegateOperator ))
         };
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
@@ -47,12 +48,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddGenericArithmeticOperators();
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
-        var actualBinaryOperatorPrecedences = result.GetCurrentBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+        var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
         var actualPrefixUnaryConstructPrecedences =
-            result.GetCurrentPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -68,14 +69,14 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("&", typeof( ParsedExpressionBitwiseAndOperator )),
-            ("|", typeof( ParsedExpressionBitwiseOrOperator )),
-            ("^", typeof( ParsedExpressionBitwiseXorOperator )),
-            ("<<", typeof( ParsedExpressionBitwiseLeftShiftOperator )),
-            (">>", typeof( ParsedExpressionBitwiseRightShiftOperator )),
-            ("~", typeof( ParsedExpressionBitwiseNotOperator ))
+            ("&", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionBitwiseAndOperator )),
+            ("|", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionBitwiseOrOperator )),
+            ("^", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionBitwiseXorOperator )),
+            ("<<", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionBitwiseLeftShiftOperator )),
+            (">>", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionBitwiseRightShiftOperator )),
+            ("~", ParsedExpressionConstructType.PrefixUnaryOperator, typeof( ParsedExpressionBitwiseNotOperator ))
         };
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
@@ -93,12 +94,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddGenericBitwiseOperators();
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
-        var actualBinaryOperatorPrecedences = result.GetCurrentBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+        var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
         var actualPrefixUnaryConstructPrecedences =
-            result.GetCurrentPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -114,16 +115,16 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("??", typeof( ParsedExpressionCoalesceOperator )),
-            ("==", typeof( ParsedExpressionEqualToOperator )),
-            ("!=", typeof( ParsedExpressionNotEqualToOperator )),
-            (">", typeof( ParsedExpressionGreaterThanOperator )),
-            ("<", typeof( ParsedExpressionLessThanOperator )),
-            (">=", typeof( ParsedExpressionGreaterThanOrEqualToOperator )),
-            ("<=", typeof( ParsedExpressionLessThanOrEqualToOperator )),
-            ("<=>", typeof( ParsedExpressionCompareOperator ))
+            ("??", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionCoalesceOperator )),
+            ("==", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionEqualToOperator )),
+            ("!=", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionNotEqualToOperator )),
+            (">", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionGreaterThanOperator )),
+            ("<", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionLessThanOperator )),
+            (">=", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionGreaterThanOrEqualToOperator )),
+            ("<=", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionLessThanOrEqualToOperator )),
+            ("<=>", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionCompareOperator ))
         };
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
@@ -139,10 +140,10 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddGenericLogicalOperators();
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
-        var actualBinaryOperatorPrecedences = result.GetCurrentBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+        var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -157,11 +158,11 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("&", typeof( ParsedExpressionBitwiseAndBooleanOperator )),
-            ("|", typeof( ParsedExpressionBitwiseOrBooleanOperator )),
-            ("^", typeof( ParsedExpressionBitwiseXorBooleanOperator ))
+            ("&", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionBitwiseAndBooleanOperator )),
+            ("|", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionBitwiseOrBooleanOperator )),
+            ("^", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionBitwiseXorBooleanOperator ))
         };
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
@@ -172,10 +173,10 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddBooleanBitwiseOperators();
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
-        var actualBinaryOperatorPrecedences = result.GetCurrentBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+        var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -190,14 +191,14 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("==", typeof( ParsedExpressionEqualToBooleanOperator )),
-            ("!=", typeof( ParsedExpressionNotEqualToBooleanOperator )),
-            ("<=>", typeof( ParsedExpressionCompareBooleanOperator )),
-            ("and", typeof( ParsedExpressionAndOperator )),
-            ("or", typeof( ParsedExpressionOrOperator )),
-            ("not", typeof( ParsedExpressionNotOperator ))
+            ("==", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionEqualToBooleanOperator )),
+            ("!=", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionNotEqualToBooleanOperator )),
+            ("<=>", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionCompareBooleanOperator )),
+            ("and", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionAndOperator )),
+            ("or", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionOrOperator )),
+            ("not", ParsedExpressionConstructType.PrefixUnaryOperator, typeof( ParsedExpressionNotOperator ))
         };
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
@@ -215,12 +216,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddBooleanLogicalOperators();
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
-        var actualBinaryOperatorPrecedences = result.GetCurrentBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+        var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
         var actualPrefixUnaryConstructPrecedences =
-            result.GetCurrentPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -236,11 +237,11 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("boolean", typeof( Type )),
-            ("[boolean]", typeof( ParsedExpressionTypeConverter<bool> )),
-            ("[boolean]", typeof( ParsedExpressionTypeConverter<bool, int> ))
+            ("boolean", ParsedExpressionConstructType.TypeDeclaration, typeof( bool )),
+            ("[boolean]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<bool> )),
+            ("[boolean]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<bool, int> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -251,14 +252,14 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var expectedPostfixUnaryConstructPrecedences = Array.Empty<(string Symbol, int Value)>();
 
         var result = sut.AddBooleanTypeDefinition( new ParsedExpressionTypeConverter<bool, int>() );
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
         var actualPrefixUnaryConstructPrecedences =
-            result.GetCurrentPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         var actualPostfixUnaryConstructPrecedences =
-            result.GetCurrentPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -277,13 +278,13 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             .SetName( "b" )
             .SetPostfixTypeConverter( "B" );
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("b", typeof( Type )),
-            ("[b]", typeof( ParsedExpressionTypeConverter<bool> )),
-            ("[b]", typeof( ParsedExpressionTypeConverter<bool, int> )),
-            ("B", typeof( ParsedExpressionTypeConverter<bool> )),
-            ("B", typeof( ParsedExpressionTypeConverter<bool, int> ))
+            ("b", ParsedExpressionConstructType.TypeDeclaration, typeof( bool )),
+            ("[b]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<bool> )),
+            ("[b]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<bool, int> )),
+            ("B", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<bool> )),
+            ("B", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<bool, int> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -297,14 +298,14 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddBooleanTypeDefinition( symbols, new ParsedExpressionTypeConverter<bool, int>() );
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
         var actualPrefixUnaryConstructPrecedences =
-            result.GetCurrentPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         var actualPostfixUnaryConstructPrecedences =
-            result.GetCurrentPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -324,12 +325,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             .DisablePrefixTypeConverter();
 
         var result = sut.AddBooleanTypeDefinition( symbols );
-        var actualConstructs = result.GetCurrentConstructs().Select( x => (x.Key.ToString(), x.Value) );
+        var actualConstructs = result.GetConstructs().Select( x => (x.Symbol.ToString(), x.Type, x.Construct) );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( ("b", typeof( bool )) );
+            actualConstructs.Should().BeSequentiallyEqualTo( ("b", ParsedExpressionConstructType.TypeDeclaration, typeof( bool )) );
         }
     }
 
@@ -338,14 +339,14 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("+", typeof( ParsedExpressionAddDecimalOperator )),
-            ("-", typeof( ParsedExpressionSubtractDecimalOperator )),
-            ("*", typeof( ParsedExpressionMultiplyDecimalOperator )),
-            ("/", typeof( ParsedExpressionDivideDecimalOperator )),
-            ("mod", typeof( ParsedExpressionModuloDecimalOperator )),
-            ("-", typeof( ParsedExpressionNegateDecimalOperator ))
+            ("+", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionAddDecimalOperator )),
+            ("-", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionSubtractDecimalOperator )),
+            ("*", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionMultiplyDecimalOperator )),
+            ("/", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionDivideDecimalOperator )),
+            ("mod", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionModuloDecimalOperator )),
+            ("-", ParsedExpressionConstructType.PrefixUnaryOperator, typeof( ParsedExpressionNegateDecimalOperator ))
         };
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
@@ -363,12 +364,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddDecimalArithmeticOperators();
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
-        var actualBinaryOperatorPrecedences = result.GetCurrentBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+        var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
         var actualPrefixUnaryConstructPrecedences =
-            result.GetCurrentPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -384,15 +385,15 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("==", typeof( ParsedExpressionEqualToDecimalOperator )),
-            ("!=", typeof( ParsedExpressionNotEqualToDecimalOperator )),
-            (">", typeof( ParsedExpressionGreaterThanDecimalOperator )),
-            ("<", typeof( ParsedExpressionLessThanDecimalOperator )),
-            (">=", typeof( ParsedExpressionGreaterThanOrEqualToDecimalOperator )),
-            ("<=", typeof( ParsedExpressionLessThanOrEqualToDecimalOperator )),
-            ("<=>", typeof( ParsedExpressionCompareDecimalOperator ))
+            ("==", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionEqualToDecimalOperator )),
+            ("!=", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionNotEqualToDecimalOperator )),
+            (">", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionGreaterThanDecimalOperator )),
+            ("<", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionLessThanDecimalOperator )),
+            (">=", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionGreaterThanOrEqualToDecimalOperator )),
+            ("<=", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionLessThanOrEqualToDecimalOperator )),
+            ("<=>", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionCompareDecimalOperator ))
         };
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
@@ -407,10 +408,10 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddDecimalLogicalOperators();
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
-        var actualBinaryOperatorPrecedences = result.GetCurrentBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+        var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -425,13 +426,13 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("decimal", typeof( Type )),
-            ("[decimal]", typeof( ParsedExpressionTypeConverter<decimal> )),
-            ("[decimal]", typeof( ParsedExpressionTypeConverter<decimal, double> )),
-            ("M", typeof( ParsedExpressionTypeConverter<decimal> )),
-            ("M", typeof( ParsedExpressionTypeConverter<decimal, double> ))
+            ("decimal", ParsedExpressionConstructType.TypeDeclaration, typeof( decimal )),
+            ("[decimal]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<decimal> )),
+            ("[decimal]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<decimal, double> )),
+            ("M", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<decimal> )),
+            ("M", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<decimal, double> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -445,14 +446,14 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddDecimalTypeDefinition( new ParsedExpressionTypeConverter<decimal, double>() );
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
         var actualPrefixUnaryConstructPrecedences =
-            result.GetCurrentPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         var actualPostfixUnaryConstructPrecedences =
-            result.GetCurrentPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -470,11 +471,11 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var symbols = new ParsedExpressionTypeDefinitionSymbols()
             .SetName( "d" );
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("d", typeof( Type )),
-            ("[d]", typeof( ParsedExpressionTypeConverter<decimal> )),
-            ("[d]", typeof( ParsedExpressionTypeConverter<decimal, double> ))
+            ("d", ParsedExpressionConstructType.TypeDeclaration, typeof( decimal )),
+            ("[d]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<decimal> )),
+            ("[d]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<decimal, double> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -485,14 +486,14 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var expectedPostfixUnaryConstructPrecedences = Array.Empty<(string Symbol, int Value)>();
 
         var result = sut.AddDecimalTypeDefinition( symbols, new ParsedExpressionTypeConverter<decimal, double>() );
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
         var actualPrefixUnaryConstructPrecedences =
-            result.GetCurrentPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         var actualPostfixUnaryConstructPrecedences =
-            result.GetCurrentPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -512,12 +513,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             .DisablePrefixTypeConverter();
 
         var result = sut.AddDecimalTypeDefinition( symbols );
-        var actualConstructs = result.GetCurrentConstructs().Select( x => (x.Key.ToString(), x.Value) );
+        var actualConstructs = result.GetConstructs().Select( x => (x.Symbol.ToString(), x.Type, x.Construct) );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( ("d", typeof( decimal )) );
+            actualConstructs.Should().BeSequentiallyEqualTo( ("d", ParsedExpressionConstructType.TypeDeclaration, typeof( decimal )) );
         }
     }
 
@@ -526,14 +527,14 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("+", typeof( ParsedExpressionAddDoubleOperator )),
-            ("-", typeof( ParsedExpressionSubtractDoubleOperator )),
-            ("*", typeof( ParsedExpressionMultiplyDoubleOperator )),
-            ("/", typeof( ParsedExpressionDivideDoubleOperator )),
-            ("mod", typeof( ParsedExpressionModuloDoubleOperator )),
-            ("-", typeof( ParsedExpressionNegateDoubleOperator ))
+            ("+", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionAddDoubleOperator )),
+            ("-", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionSubtractDoubleOperator )),
+            ("*", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionMultiplyDoubleOperator )),
+            ("/", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionDivideDoubleOperator )),
+            ("mod", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionModuloDoubleOperator )),
+            ("-", ParsedExpressionConstructType.PrefixUnaryOperator, typeof( ParsedExpressionNegateDoubleOperator ))
         };
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
@@ -551,12 +552,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddDoubleArithmeticOperators();
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
-        var actualBinaryOperatorPrecedences = result.GetCurrentBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+        var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
         var actualPrefixUnaryConstructPrecedences =
-            result.GetCurrentPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -572,15 +573,15 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("==", typeof( ParsedExpressionEqualToDoubleOperator )),
-            ("!=", typeof( ParsedExpressionNotEqualToDoubleOperator )),
-            (">", typeof( ParsedExpressionGreaterThanDoubleOperator )),
-            ("<", typeof( ParsedExpressionLessThanDoubleOperator )),
-            (">=", typeof( ParsedExpressionGreaterThanOrEqualToDoubleOperator )),
-            ("<=", typeof( ParsedExpressionLessThanOrEqualToDoubleOperator )),
-            ("<=>", typeof( ParsedExpressionCompareDoubleOperator ))
+            ("==", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionEqualToDoubleOperator )),
+            ("!=", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionNotEqualToDoubleOperator )),
+            (">", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionGreaterThanDoubleOperator )),
+            ("<", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionLessThanDoubleOperator )),
+            (">=", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionGreaterThanOrEqualToDoubleOperator )),
+            ("<=", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionLessThanOrEqualToDoubleOperator )),
+            ("<=>", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionCompareDoubleOperator ))
         };
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
@@ -595,10 +596,10 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddDoubleLogicalOperators();
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
-        var actualBinaryOperatorPrecedences = result.GetCurrentBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+        var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -613,11 +614,11 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("double", typeof( Type )),
-            ("[double]", typeof( ParsedExpressionTypeConverter<double> )),
-            ("[double]", typeof( ParsedExpressionTypeConverter<double, decimal> ))
+            ("double", ParsedExpressionConstructType.TypeDeclaration, typeof( double )),
+            ("[double]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<double> )),
+            ("[double]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<double, decimal> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -628,14 +629,14 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var expectedPostfixUnaryConstructPrecedences = Array.Empty<(string Symbol, int Value)>();
 
         var result = sut.AddDoubleTypeDefinition( new ParsedExpressionTypeConverter<double, decimal>() );
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
         var actualPrefixUnaryConstructPrecedences =
-            result.GetCurrentPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         var actualPostfixUnaryConstructPrecedences =
-            result.GetCurrentPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -654,13 +655,13 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             .SetName( "d" )
             .SetPostfixTypeConverter( "D" );
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("d", typeof( Type )),
-            ("[d]", typeof( ParsedExpressionTypeConverter<double> )),
-            ("[d]", typeof( ParsedExpressionTypeConverter<double, decimal> )),
-            ("D", typeof( ParsedExpressionTypeConverter<double> )),
-            ("D", typeof( ParsedExpressionTypeConverter<double, decimal> ))
+            ("d", ParsedExpressionConstructType.TypeDeclaration, typeof( double )),
+            ("[d]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<double> )),
+            ("[d]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<double, decimal> )),
+            ("D", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<double> )),
+            ("D", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<double, decimal> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -674,14 +675,14 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddDoubleTypeDefinition( symbols, new ParsedExpressionTypeConverter<double, decimal>() );
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
         var actualPrefixUnaryConstructPrecedences =
-            result.GetCurrentPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         var actualPostfixUnaryConstructPrecedences =
-            result.GetCurrentPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -701,12 +702,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             .DisablePrefixTypeConverter();
 
         var result = sut.AddDoubleTypeDefinition( symbols );
-        var actualConstructs = result.GetCurrentConstructs().Select( x => (x.Key.ToString(), x.Value) );
+        var actualConstructs = result.GetConstructs().Select( x => (x.Symbol.ToString(), x.Type, x.Construct) );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( ("d", typeof( double )) );
+            actualConstructs.Should().BeSequentiallyEqualTo( ("d", ParsedExpressionConstructType.TypeDeclaration, typeof( double )) );
         }
     }
 
@@ -715,14 +716,14 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("+", typeof( ParsedExpressionAddFloatOperator )),
-            ("-", typeof( ParsedExpressionSubtractFloatOperator )),
-            ("*", typeof( ParsedExpressionMultiplyFloatOperator )),
-            ("/", typeof( ParsedExpressionDivideFloatOperator )),
-            ("mod", typeof( ParsedExpressionModuloFloatOperator )),
-            ("-", typeof( ParsedExpressionNegateFloatOperator ))
+            ("+", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionAddFloatOperator )),
+            ("-", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionSubtractFloatOperator )),
+            ("*", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionMultiplyFloatOperator )),
+            ("/", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionDivideFloatOperator )),
+            ("mod", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionModuloFloatOperator )),
+            ("-", ParsedExpressionConstructType.PrefixUnaryOperator, typeof( ParsedExpressionNegateFloatOperator ))
         };
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
@@ -740,12 +741,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddFloatArithmeticOperators();
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
-        var actualBinaryOperatorPrecedences = result.GetCurrentBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+        var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
         var actualPrefixUnaryConstructPrecedences =
-            result.GetCurrentPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -761,15 +762,15 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("==", typeof( ParsedExpressionEqualToFloatOperator )),
-            ("!=", typeof( ParsedExpressionNotEqualToFloatOperator )),
-            (">", typeof( ParsedExpressionGreaterThanFloatOperator )),
-            ("<", typeof( ParsedExpressionLessThanFloatOperator )),
-            (">=", typeof( ParsedExpressionGreaterThanOrEqualToFloatOperator )),
-            ("<=", typeof( ParsedExpressionLessThanOrEqualToFloatOperator )),
-            ("<=>", typeof( ParsedExpressionCompareFloatOperator ))
+            ("==", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionEqualToFloatOperator )),
+            ("!=", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionNotEqualToFloatOperator )),
+            (">", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionGreaterThanFloatOperator )),
+            ("<", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionLessThanFloatOperator )),
+            (">=", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionGreaterThanOrEqualToFloatOperator )),
+            ("<=", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionLessThanOrEqualToFloatOperator )),
+            ("<=>", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionCompareFloatOperator ))
         };
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
@@ -784,10 +785,10 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddFloatLogicalOperators();
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
-        var actualBinaryOperatorPrecedences = result.GetCurrentBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+        var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -802,13 +803,13 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("float", typeof( Type )),
-            ("[float]", typeof( ParsedExpressionTypeConverter<float> )),
-            ("[float]", typeof( ParsedExpressionTypeConverter<float, decimal> )),
-            ("F", typeof( ParsedExpressionTypeConverter<float> )),
-            ("F", typeof( ParsedExpressionTypeConverter<float, decimal> ))
+            ("float", ParsedExpressionConstructType.TypeDeclaration, typeof( float )),
+            ("[float]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<float> )),
+            ("[float]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<float, decimal> )),
+            ("F", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<float> )),
+            ("F", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<float, decimal> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -822,14 +823,14 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddFloatTypeDefinition( new ParsedExpressionTypeConverter<float, decimal>() );
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
         var actualPrefixUnaryConstructPrecedences =
-            result.GetCurrentPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         var actualPostfixUnaryConstructPrecedences =
-            result.GetCurrentPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -847,11 +848,11 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var symbols = new ParsedExpressionTypeDefinitionSymbols()
             .SetName( "f" );
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("f", typeof( Type )),
-            ("[f]", typeof( ParsedExpressionTypeConverter<float> )),
-            ("[f]", typeof( ParsedExpressionTypeConverter<float, decimal> ))
+            ("f", ParsedExpressionConstructType.TypeDeclaration, typeof( float )),
+            ("[f]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<float> )),
+            ("[f]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<float, decimal> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -862,14 +863,14 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var expectedPostfixUnaryConstructPrecedences = Array.Empty<(string Symbol, int Value)>();
 
         var result = sut.AddFloatTypeDefinition( symbols, new ParsedExpressionTypeConverter<float, decimal>() );
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
         var actualPrefixUnaryConstructPrecedences =
-            result.GetCurrentPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         var actualPostfixUnaryConstructPrecedences =
-            result.GetCurrentPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -889,12 +890,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             .DisablePrefixTypeConverter();
 
         var result = sut.AddFloatTypeDefinition( symbols );
-        var actualConstructs = result.GetCurrentConstructs().Select( x => (x.Key.ToString(), x.Value) );
+        var actualConstructs = result.GetConstructs().Select( x => (x.Symbol.ToString(), x.Type, x.Construct) );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( ("f", typeof( float )) );
+            actualConstructs.Should().BeSequentiallyEqualTo( ("f", ParsedExpressionConstructType.TypeDeclaration, typeof( float )) );
         }
     }
 
@@ -903,14 +904,14 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("+", typeof( ParsedExpressionAddInt32Operator )),
-            ("-", typeof( ParsedExpressionSubtractInt32Operator )),
-            ("*", typeof( ParsedExpressionMultiplyInt32Operator )),
-            ("/", typeof( ParsedExpressionDivideInt32Operator )),
-            ("mod", typeof( ParsedExpressionModuloInt32Operator )),
-            ("-", typeof( ParsedExpressionNegateInt32Operator ))
+            ("+", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionAddInt32Operator )),
+            ("-", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionSubtractInt32Operator )),
+            ("*", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionMultiplyInt32Operator )),
+            ("/", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionDivideInt32Operator )),
+            ("mod", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionModuloInt32Operator )),
+            ("-", ParsedExpressionConstructType.PrefixUnaryOperator, typeof( ParsedExpressionNegateInt32Operator ))
         };
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
@@ -928,12 +929,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddInt32ArithmeticOperators();
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
-        var actualBinaryOperatorPrecedences = result.GetCurrentBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+        var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
         var actualPrefixUnaryConstructPrecedences =
-            result.GetCurrentPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -949,14 +950,14 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("&", typeof( ParsedExpressionBitwiseAndInt32Operator )),
-            ("|", typeof( ParsedExpressionBitwiseOrInt32Operator )),
-            ("^", typeof( ParsedExpressionBitwiseXorInt32Operator )),
-            ("<<", typeof( ParsedExpressionBitwiseLeftShiftInt32Operator )),
-            (">>", typeof( ParsedExpressionBitwiseRightShiftInt32Operator )),
-            ("~", typeof( ParsedExpressionBitwiseNotInt32Operator ))
+            ("&", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionBitwiseAndInt32Operator )),
+            ("|", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionBitwiseOrInt32Operator )),
+            ("^", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionBitwiseXorInt32Operator )),
+            ("<<", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionBitwiseLeftShiftInt32Operator )),
+            (">>", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionBitwiseRightShiftInt32Operator )),
+            ("~", ParsedExpressionConstructType.PrefixUnaryOperator, typeof( ParsedExpressionBitwiseNotInt32Operator ))
         };
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
@@ -974,12 +975,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddInt32BitwiseOperators();
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
-        var actualBinaryOperatorPrecedences = result.GetCurrentBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+        var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
         var actualPrefixUnaryConstructPrecedences =
-            result.GetCurrentPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -995,15 +996,15 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("==", typeof( ParsedExpressionEqualToInt32Operator )),
-            ("!=", typeof( ParsedExpressionNotEqualToInt32Operator )),
-            (">", typeof( ParsedExpressionGreaterThanInt32Operator )),
-            ("<", typeof( ParsedExpressionLessThanInt32Operator )),
-            (">=", typeof( ParsedExpressionGreaterThanOrEqualToInt32Operator )),
-            ("<=", typeof( ParsedExpressionLessThanOrEqualToInt32Operator )),
-            ("<=>", typeof( ParsedExpressionCompareInt32Operator ))
+            ("==", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionEqualToInt32Operator )),
+            ("!=", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionNotEqualToInt32Operator )),
+            (">", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionGreaterThanInt32Operator )),
+            ("<", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionLessThanInt32Operator )),
+            (">=", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionGreaterThanOrEqualToInt32Operator )),
+            ("<=", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionLessThanOrEqualToInt32Operator )),
+            ("<=>", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionCompareInt32Operator ))
         };
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
@@ -1018,10 +1019,10 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddInt32LogicalOperators();
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
-        var actualBinaryOperatorPrecedences = result.GetCurrentBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+        var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -1036,11 +1037,11 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("int32", typeof( Type )),
-            ("[int32]", typeof( ParsedExpressionTypeConverter<int> )),
-            ("[int32]", typeof( ParsedExpressionTypeConverter<int, long> ))
+            ("int32", ParsedExpressionConstructType.TypeDeclaration, typeof( int )),
+            ("[int32]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<int> )),
+            ("[int32]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<int, long> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -1051,14 +1052,14 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var expectedPostfixUnaryConstructPrecedences = Array.Empty<(string Symbol, int Value)>();
 
         var result = sut.AddInt32TypeDefinition( new ParsedExpressionTypeConverter<int, long>() );
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
         var actualPrefixUnaryConstructPrecedences =
-            result.GetCurrentPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         var actualPostfixUnaryConstructPrecedences =
-            result.GetCurrentPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -1077,13 +1078,13 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             .SetName( "i" )
             .SetPostfixTypeConverter( "I" );
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("i", typeof( Type )),
-            ("[i]", typeof( ParsedExpressionTypeConverter<int> )),
-            ("[i]", typeof( ParsedExpressionTypeConverter<int, long> )),
-            ("I", typeof( ParsedExpressionTypeConverter<int> )),
-            ("I", typeof( ParsedExpressionTypeConverter<int, long> ))
+            ("i", ParsedExpressionConstructType.TypeDeclaration, typeof( int )),
+            ("[i]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<int> )),
+            ("[i]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<int, long> )),
+            ("I", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<int> )),
+            ("I", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<int, long> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -1097,14 +1098,14 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddInt32TypeDefinition( symbols, new ParsedExpressionTypeConverter<int, long>() );
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
         var actualPrefixUnaryConstructPrecedences =
-            result.GetCurrentPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         var actualPostfixUnaryConstructPrecedences =
-            result.GetCurrentPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -1124,12 +1125,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             .DisablePrefixTypeConverter();
 
         var result = sut.AddInt32TypeDefinition( symbols );
-        var actualConstructs = result.GetCurrentConstructs().Select( x => (x.Key.ToString(), x.Value) );
+        var actualConstructs = result.GetConstructs().Select( x => (x.Symbol.ToString(), x.Type, x.Construct) );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( ("i", typeof( int )) );
+            actualConstructs.Should().BeSequentiallyEqualTo( ("i", ParsedExpressionConstructType.TypeDeclaration, typeof( int )) );
         }
     }
 
@@ -1138,14 +1139,14 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("+", typeof( ParsedExpressionAddInt64Operator )),
-            ("-", typeof( ParsedExpressionSubtractInt64Operator )),
-            ("*", typeof( ParsedExpressionMultiplyInt64Operator )),
-            ("/", typeof( ParsedExpressionDivideInt64Operator )),
-            ("mod", typeof( ParsedExpressionModuloInt64Operator )),
-            ("-", typeof( ParsedExpressionNegateInt64Operator ))
+            ("+", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionAddInt64Operator )),
+            ("-", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionSubtractInt64Operator )),
+            ("*", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionMultiplyInt64Operator )),
+            ("/", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionDivideInt64Operator )),
+            ("mod", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionModuloInt64Operator )),
+            ("-", ParsedExpressionConstructType.PrefixUnaryOperator, typeof( ParsedExpressionNegateInt64Operator ))
         };
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
@@ -1163,12 +1164,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddInt64ArithmeticOperators();
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
-        var actualBinaryOperatorPrecedences = result.GetCurrentBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+        var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
         var actualPrefixUnaryConstructPrecedences =
-            result.GetCurrentPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -1184,14 +1185,14 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("&", typeof( ParsedExpressionBitwiseAndInt64Operator )),
-            ("|", typeof( ParsedExpressionBitwiseOrInt64Operator )),
-            ("^", typeof( ParsedExpressionBitwiseXorInt64Operator )),
-            ("<<", typeof( ParsedExpressionBitwiseLeftShiftInt64Operator )),
-            (">>", typeof( ParsedExpressionBitwiseRightShiftInt64Operator )),
-            ("~", typeof( ParsedExpressionBitwiseNotInt64Operator ))
+            ("&", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionBitwiseAndInt64Operator )),
+            ("|", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionBitwiseOrInt64Operator )),
+            ("^", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionBitwiseXorInt64Operator )),
+            ("<<", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionBitwiseLeftShiftInt64Operator )),
+            (">>", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionBitwiseRightShiftInt64Operator )),
+            ("~", ParsedExpressionConstructType.PrefixUnaryOperator, typeof( ParsedExpressionBitwiseNotInt64Operator ))
         };
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
@@ -1209,12 +1210,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddInt64BitwiseOperators();
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
-        var actualBinaryOperatorPrecedences = result.GetCurrentBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+        var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
         var actualPrefixUnaryConstructPrecedences =
-            result.GetCurrentPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -1230,15 +1231,15 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("==", typeof( ParsedExpressionEqualToInt64Operator )),
-            ("!=", typeof( ParsedExpressionNotEqualToInt64Operator )),
-            (">", typeof( ParsedExpressionGreaterThanInt64Operator )),
-            ("<", typeof( ParsedExpressionLessThanInt64Operator )),
-            (">=", typeof( ParsedExpressionGreaterThanOrEqualToInt64Operator )),
-            ("<=", typeof( ParsedExpressionLessThanOrEqualToInt64Operator )),
-            ("<=>", typeof( ParsedExpressionCompareInt64Operator ))
+            ("==", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionEqualToInt64Operator )),
+            ("!=", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionNotEqualToInt64Operator )),
+            (">", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionGreaterThanInt64Operator )),
+            ("<", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionLessThanInt64Operator )),
+            (">=", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionGreaterThanOrEqualToInt64Operator )),
+            ("<=", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionLessThanOrEqualToInt64Operator )),
+            ("<=>", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionCompareInt64Operator ))
         };
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
@@ -1253,10 +1254,10 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddInt64LogicalOperators();
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
-        var actualBinaryOperatorPrecedences = result.GetCurrentBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+        var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -1271,13 +1272,13 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("int64", typeof( Type )),
-            ("[int64]", typeof( ParsedExpressionTypeConverter<long> )),
-            ("[int64]", typeof( ParsedExpressionTypeConverter<long, int> )),
-            ("L", typeof( ParsedExpressionTypeConverter<long> )),
-            ("L", typeof( ParsedExpressionTypeConverter<long, int> ))
+            ("int64", ParsedExpressionConstructType.TypeDeclaration, typeof( long )),
+            ("[int64]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<long> )),
+            ("[int64]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<long, int> )),
+            ("L", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<long> )),
+            ("L", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<long, int> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -1291,14 +1292,14 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddInt64TypeDefinition( new ParsedExpressionTypeConverter<long, int>() );
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
         var actualPrefixUnaryConstructPrecedences =
-            result.GetCurrentPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         var actualPostfixUnaryConstructPrecedences =
-            result.GetCurrentPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -1316,11 +1317,11 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var symbols = new ParsedExpressionTypeDefinitionSymbols()
             .SetName( "i" );
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("i", typeof( Type )),
-            ("[i]", typeof( ParsedExpressionTypeConverter<long> )),
-            ("[i]", typeof( ParsedExpressionTypeConverter<long, int> ))
+            ("i", ParsedExpressionConstructType.TypeDeclaration, typeof( long )),
+            ("[i]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<long> )),
+            ("[i]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<long, int> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -1331,14 +1332,14 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var expectedPostfixUnaryConstructPrecedences = Array.Empty<(string Symbol, int Value)>();
 
         var result = sut.AddInt64TypeDefinition( symbols, new ParsedExpressionTypeConverter<long, int>() );
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
         var actualPrefixUnaryConstructPrecedences =
-            result.GetCurrentPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         var actualPostfixUnaryConstructPrecedences =
-            result.GetCurrentPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -1358,12 +1359,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             .DisablePrefixTypeConverter();
 
         var result = sut.AddInt64TypeDefinition( symbols );
-        var actualConstructs = result.GetCurrentConstructs().Select( x => (x.Key.ToString(), x.Value) );
+        var actualConstructs = result.GetConstructs().Select( x => (x.Symbol.ToString(), x.Type, x.Construct) );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( ("i", typeof( long )) );
+            actualConstructs.Should().BeSequentiallyEqualTo( ("i", ParsedExpressionConstructType.TypeDeclaration, typeof( long )) );
         }
     }
 
@@ -1372,14 +1373,14 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("+", typeof( ParsedExpressionAddBigIntOperator )),
-            ("-", typeof( ParsedExpressionSubtractBigIntOperator )),
-            ("*", typeof( ParsedExpressionMultiplyBigIntOperator )),
-            ("/", typeof( ParsedExpressionDivideBigIntOperator )),
-            ("mod", typeof( ParsedExpressionModuloBigIntOperator )),
-            ("-", typeof( ParsedExpressionNegateBigIntOperator ))
+            ("+", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionAddBigIntOperator )),
+            ("-", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionSubtractBigIntOperator )),
+            ("*", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionMultiplyBigIntOperator )),
+            ("/", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionDivideBigIntOperator )),
+            ("mod", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionModuloBigIntOperator )),
+            ("-", ParsedExpressionConstructType.PrefixUnaryOperator, typeof( ParsedExpressionNegateBigIntOperator ))
         };
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
@@ -1397,12 +1398,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddBigIntArithmeticOperators();
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
-        var actualBinaryOperatorPrecedences = result.GetCurrentBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+        var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
         var actualPrefixUnaryConstructPrecedences =
-            result.GetCurrentPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -1418,14 +1419,14 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("&", typeof( ParsedExpressionBitwiseAndBigIntOperator )),
-            ("|", typeof( ParsedExpressionBitwiseOrBigIntOperator )),
-            ("^", typeof( ParsedExpressionBitwiseXorBigIntOperator )),
-            ("<<", typeof( ParsedExpressionBitwiseLeftShiftBigIntOperator )),
-            (">>", typeof( ParsedExpressionBitwiseRightShiftBigIntOperator )),
-            ("~", typeof( ParsedExpressionBitwiseNotBigIntOperator ))
+            ("&", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionBitwiseAndBigIntOperator )),
+            ("|", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionBitwiseOrBigIntOperator )),
+            ("^", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionBitwiseXorBigIntOperator )),
+            ("<<", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionBitwiseLeftShiftBigIntOperator )),
+            (">>", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionBitwiseRightShiftBigIntOperator )),
+            ("~", ParsedExpressionConstructType.PrefixUnaryOperator, typeof( ParsedExpressionBitwiseNotBigIntOperator ))
         };
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
@@ -1443,12 +1444,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddBigIntBitwiseOperators();
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
-        var actualBinaryOperatorPrecedences = result.GetCurrentBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+        var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
         var actualPrefixUnaryConstructPrecedences =
-            result.GetCurrentPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -1464,15 +1465,15 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("==", typeof( ParsedExpressionEqualToBigIntOperator )),
-            ("!=", typeof( ParsedExpressionNotEqualToBigIntOperator )),
-            (">", typeof( ParsedExpressionGreaterThanBigIntOperator )),
-            ("<", typeof( ParsedExpressionLessThanBigIntOperator )),
-            (">=", typeof( ParsedExpressionGreaterThanOrEqualToBigIntOperator )),
-            ("<=", typeof( ParsedExpressionLessThanOrEqualToBigIntOperator )),
-            ("<=>", typeof( ParsedExpressionCompareBigIntOperator ))
+            ("==", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionEqualToBigIntOperator )),
+            ("!=", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionNotEqualToBigIntOperator )),
+            (">", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionGreaterThanBigIntOperator )),
+            ("<", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionLessThanBigIntOperator )),
+            (">=", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionGreaterThanOrEqualToBigIntOperator )),
+            ("<=", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionLessThanOrEqualToBigIntOperator )),
+            ("<=>", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionCompareBigIntOperator ))
         };
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
@@ -1487,10 +1488,10 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddBigIntLogicalOperators();
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
-        var actualBinaryOperatorPrecedences = result.GetCurrentBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+        var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -1505,11 +1506,11 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("bigint", typeof( Type )),
-            ("[bigint]", typeof( ParsedExpressionTypeConverter<BigInteger> )),
-            ("[bigint]", typeof( ParsedExpressionTypeConverter<BigInteger, long> ))
+            ("bigint", ParsedExpressionConstructType.TypeDeclaration, typeof( BigInteger )),
+            ("[bigint]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<BigInteger> )),
+            ("[bigint]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<BigInteger, long> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -1520,14 +1521,14 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var expectedPostfixUnaryConstructPrecedences = Array.Empty<(string Symbol, int Value)>();
 
         var result = sut.AddBigIntTypeDefinition( new ParsedExpressionTypeConverter<BigInteger, long>() );
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
         var actualPrefixUnaryConstructPrecedences =
-            result.GetCurrentPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         var actualPostfixUnaryConstructPrecedences =
-            result.GetCurrentPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -1546,13 +1547,13 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             .SetName( "b" )
             .SetPostfixTypeConverter( "B" );
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("b", typeof( Type )),
-            ("[b]", typeof( ParsedExpressionTypeConverter<BigInteger> )),
-            ("[b]", typeof( ParsedExpressionTypeConverter<BigInteger, long> )),
-            ("B", typeof( ParsedExpressionTypeConverter<BigInteger> )),
-            ("B", typeof( ParsedExpressionTypeConverter<BigInteger, long> ))
+            ("b", ParsedExpressionConstructType.TypeDeclaration, typeof( BigInteger )),
+            ("[b]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<BigInteger> )),
+            ("[b]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<BigInteger, long> )),
+            ("B", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<BigInteger> )),
+            ("B", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<BigInteger, long> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -1566,14 +1567,14 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddBigIntTypeDefinition( symbols, new ParsedExpressionTypeConverter<BigInteger, long>() );
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
         var actualPrefixUnaryConstructPrecedences =
-            result.GetCurrentPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         var actualPostfixUnaryConstructPrecedences =
-            result.GetCurrentPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -1593,12 +1594,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             .DisablePrefixTypeConverter();
 
         var result = sut.AddBigIntTypeDefinition( symbols );
-        var actualConstructs = result.GetCurrentConstructs().Select( x => (x.Key.ToString(), x.Value) );
+        var actualConstructs = result.GetConstructs().Select( x => (x.Symbol.ToString(), x.Type, x.Construct) );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( ("b", typeof( BigInteger )) );
+            actualConstructs.Should().BeSequentiallyEqualTo( ("b", ParsedExpressionConstructType.TypeDeclaration, typeof( BigInteger )) );
         }
     }
 
@@ -1607,9 +1608,9 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("+", typeof( ParsedExpressionAddStringOperator ))
+            ("+", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionAddStringOperator ))
         };
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
@@ -1618,10 +1619,10 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddStringArithmeticOperators();
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
-        var actualBinaryOperatorPrecedences = result.GetCurrentBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+        var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -1636,11 +1637,11 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("==", typeof( ParsedExpressionEqualToStringOperator )),
-            ("!=", typeof( ParsedExpressionNotEqualToStringOperator )),
-            ("<=>", typeof( ParsedExpressionCompareStringOperator ))
+            ("==", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionEqualToStringOperator )),
+            ("!=", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionNotEqualToStringOperator )),
+            ("<=>", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionCompareStringOperator ))
         };
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
@@ -1651,10 +1652,10 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddStringLogicalOperators();
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
-        var actualBinaryOperatorPrecedences = result.GetCurrentBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+        var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -1669,11 +1670,11 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("string", typeof( Type )),
-            ("[string]", typeof( ParsedExpressionToStringTypeConverter )),
-            ("[string]", typeof( ParsedExpressionTypeConverter<string, int> ))
+            ("string", ParsedExpressionConstructType.TypeDeclaration, typeof( string )),
+            ("[string]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionToStringTypeConverter )),
+            ("[string]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<string, int> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -1684,14 +1685,14 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var expectedPostfixUnaryConstructPrecedences = Array.Empty<(string Symbol, int Value)>();
 
         var result = sut.AddStringTypeDefinition( new ParsedExpressionTypeConverter<string, int>() );
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
         var actualPrefixUnaryConstructPrecedences =
-            result.GetCurrentPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         var actualPostfixUnaryConstructPrecedences =
-            result.GetCurrentPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -1710,13 +1711,13 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             .SetName( "s" )
             .SetPostfixTypeConverter( "S" );
 
-        var expectedConstructs = new (string Symbol, Type Type)[]
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
-            ("s", typeof( Type )),
-            ("[s]", typeof( ParsedExpressionToStringTypeConverter )),
-            ("[s]", typeof( ParsedExpressionTypeConverter<string, int> )),
-            ("S", typeof( ParsedExpressionToStringTypeConverter )),
-            ("S", typeof( ParsedExpressionTypeConverter<string, int> ))
+            ("s", ParsedExpressionConstructType.TypeDeclaration, typeof( string )),
+            ("[s]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionToStringTypeConverter )),
+            ("[s]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<string, int> )),
+            ("S", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionToStringTypeConverter )),
+            ("S", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<string, int> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -1730,14 +1731,14 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         };
 
         var result = sut.AddStringTypeDefinition( symbols, new ParsedExpressionTypeConverter<string, int>() );
-        var actualConstructs = result.GetCurrentConstructs()
-            .Select( x => (x.Key.ToString(), x.Value is Type ? typeof( Type ) : x.Value.GetType()) );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
         var actualPrefixUnaryConstructPrecedences =
-            result.GetCurrentPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         var actualPostfixUnaryConstructPrecedences =
-            result.GetCurrentPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+            result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
         using ( new AssertionScope() )
         {
@@ -1757,12 +1758,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             .DisablePrefixTypeConverter();
 
         var result = sut.AddStringTypeDefinition( symbols );
-        var actualConstructs = result.GetCurrentConstructs().Select( x => (x.Key.ToString(), x.Value) );
+        var actualConstructs = result.GetConstructs().Select( x => (x.Symbol.ToString(), x.Type, x.Construct) );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( ("s", typeof( string )) );
+            actualConstructs.Should().BeSequentiallyEqualTo( ("s", ParsedExpressionConstructType.TypeDeclaration, typeof( string )) );
         }
     }
 }

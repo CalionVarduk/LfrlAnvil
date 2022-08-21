@@ -18,7 +18,7 @@ internal sealed class ConstructTokenDefinition
         ParsedExpressionVariadicFunction? variadicFunction,
         ParsedExpressionConstant? constant,
         Type? typeDeclaration,
-        ConstructTokenType type)
+        ParsedExpressionConstructType type)
     {
         BinaryOperators = binaryOperators;
         PrefixUnaryOperators = prefixUnaryOperators;
@@ -41,13 +41,13 @@ internal sealed class ConstructTokenDefinition
     internal ParsedExpressionVariadicFunction? VariadicFunction { get; }
     internal ConstantExpression? Constant { get; }
     internal Type? TypeDeclaration { get; }
-    internal ConstructTokenType Type { get; }
+    internal ParsedExpressionConstructType Type { get; }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool IsAny(ConstructTokenType type)
+    internal bool IsAny(ParsedExpressionConstructType type)
     {
-        return (Type & type) != ConstructTokenType.None;
+        return (Type & type) != ParsedExpressionConstructType.None;
     }
 
     [Pure]
@@ -56,16 +56,16 @@ internal sealed class ConstructTokenDefinition
         UnaryOperatorCollection prefixUnary,
         UnaryOperatorCollection postfixUnary)
     {
-        var type = ConstructTokenType.None;
+        var type = ParsedExpressionConstructType.None;
 
         if ( ! binary.IsEmpty )
-            type |= ConstructTokenType.BinaryOperator;
+            type |= ParsedExpressionConstructType.BinaryOperator;
 
         if ( ! prefixUnary.IsEmpty )
-            type |= ConstructTokenType.PrefixUnaryOperator;
+            type |= ParsedExpressionConstructType.PrefixUnaryOperator;
 
         if ( ! postfixUnary.IsEmpty )
-            type |= ConstructTokenType.PostfixUnaryOperator;
+            type |= ParsedExpressionConstructType.PostfixUnaryOperator;
 
         return new ConstructTokenDefinition(
             binary,
@@ -85,13 +85,13 @@ internal sealed class ConstructTokenDefinition
         TypeConverterCollection prefix,
         TypeConverterCollection postfix)
     {
-        var type = ConstructTokenType.None;
+        var type = ParsedExpressionConstructType.None;
 
         if ( ! prefix.IsEmpty )
-            type |= ConstructTokenType.PrefixTypeConverter;
+            type |= ParsedExpressionConstructType.PrefixTypeConverter;
 
         if ( ! postfix.IsEmpty )
-            type |= ConstructTokenType.PostfixTypeConverter;
+            type |= ParsedExpressionConstructType.PostfixTypeConverter;
 
         return new ConstructTokenDefinition(
             BinaryOperatorCollection.Empty,
@@ -119,7 +119,7 @@ internal sealed class ConstructTokenDefinition
             variadicFunction: null,
             constant: null,
             typeDeclaration: null,
-            ConstructTokenType.Function );
+            ParsedExpressionConstructType.Function );
     }
 
     [Pure]
@@ -135,7 +135,7 @@ internal sealed class ConstructTokenDefinition
             variadicFunction: function,
             constant: null,
             typeDeclaration: null,
-            ConstructTokenType.VariadicFunction );
+            ParsedExpressionConstructType.VariadicFunction );
     }
 
     [Pure]
@@ -151,7 +151,7 @@ internal sealed class ConstructTokenDefinition
             variadicFunction: null,
             constant,
             typeDeclaration: null,
-            ConstructTokenType.Constant );
+            ParsedExpressionConstructType.Constant );
     }
 
     [Pure]
@@ -167,6 +167,6 @@ internal sealed class ConstructTokenDefinition
             variadicFunction: null,
             constant: null,
             typeDeclaration: type,
-            ConstructTokenType.TypeDeclaration );
+            ParsedExpressionConstructType.TypeDeclaration );
     }
 }

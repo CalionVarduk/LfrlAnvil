@@ -113,7 +113,7 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
     {
         foreach ( var (_, definition) in Constructs )
         {
-            if ( ! definition.IsAny( ConstructTokenType.TypeConverter ) )
+            if ( ! definition.IsAny( ParsedExpressionConstructType.TypeConverter ) )
                 continue;
 
             if ( definition.PrefixTypeConverters.TargetType == outputType )

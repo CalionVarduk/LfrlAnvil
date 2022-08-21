@@ -9,29 +9,28 @@ internal sealed class UnaryOperatorCollection
 {
     internal static readonly UnaryOperatorCollection Empty = new UnaryOperatorCollection( null, null, int.MaxValue );
 
-    private readonly ParsedExpressionUnaryOperator? _genericConstruct;
-    private readonly IReadOnlyDictionary<Type, ParsedExpressionTypedUnaryOperator>? _specializedConstructs;
-
     internal UnaryOperatorCollection(
         ParsedExpressionUnaryOperator? genericConstruct,
         IReadOnlyDictionary<Type, ParsedExpressionTypedUnaryOperator>? specializedConstructs,
         int precedence)
     {
-        _genericConstruct = genericConstruct;
-        _specializedConstructs = specializedConstructs;
+        GenericConstruct = genericConstruct;
+        SpecializedConstructs = specializedConstructs;
         Precedence = precedence;
     }
 
+    internal ParsedExpressionUnaryOperator? GenericConstruct { get; }
+    internal IReadOnlyDictionary<Type, ParsedExpressionTypedUnaryOperator>? SpecializedConstructs { get; }
     internal int Precedence { get; }
-    internal bool IsEmpty => _genericConstruct is null && _specializedConstructs is null;
+    internal bool IsEmpty => GenericConstruct is null && SpecializedConstructs is null;
 
     [Pure]
     internal ParsedExpressionUnaryOperator? FindConstruct(Type argumentType)
     {
-        if ( _specializedConstructs is null )
-            return _genericConstruct;
+        if ( SpecializedConstructs is null )
+            return GenericConstruct;
 
-        var specialized = _specializedConstructs.GetValueOrDefault( argumentType );
-        return specialized ?? _genericConstruct;
+        var specialized = SpecializedConstructs.GetValueOrDefault( argumentType );
+        return specialized ?? GenericConstruct;
     }
 }

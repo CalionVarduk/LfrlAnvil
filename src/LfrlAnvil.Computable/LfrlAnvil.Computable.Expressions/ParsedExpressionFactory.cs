@@ -32,123 +32,227 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     }
 
     [Pure]
-    public bool ContainsConstructSymbol(string symbol)
+    public ParsedExpressionConstructType GetConstructType(string symbol)
     {
-        return ContainsConstructSymbol( StringSlice.Create( symbol ) );
+        return GetConstructType( symbol.AsMemory() );
     }
 
     [Pure]
-    public bool ContainsConstructSymbol(ReadOnlyMemory<char> symbol)
+    public ParsedExpressionConstructType GetConstructType(ReadOnlyMemory<char> symbol)
     {
-        return ContainsConstructSymbol( StringSlice.Create( symbol ) );
+        return _configuration.Constructs.TryGetValue( StringSlice.Create( symbol ), out var definition )
+            ? definition.Type
+            : ParsedExpressionConstructType.None;
     }
 
     [Pure]
-    public bool IsOperatorSymbol(string symbol)
+    public Type? GetGenericBinaryOperatorType(string symbol)
     {
-        return IsOperatorSymbol( StringSlice.Create( symbol ) );
+        return GetGenericBinaryOperatorType( symbol.AsMemory() );
     }
 
     [Pure]
-    public bool IsOperatorSymbol(ReadOnlyMemory<char> symbol)
+    public Type? GetGenericBinaryOperatorType(ReadOnlyMemory<char> symbol)
     {
-        return IsOperatorSymbol( StringSlice.Create( symbol ) );
+        return _configuration.Constructs.GetValueOrDefault( StringSlice.Create( symbol ) )?.BinaryOperators.GenericConstruct?.GetType();
     }
 
     [Pure]
-    public bool IsTypeConverterSymbol(string symbol)
+    public IEnumerable<ParsedExpressionBinaryOperatorInfo> GetSpecializedBinaryOperators(string symbol)
     {
-        return IsTypeConverterSymbol( StringSlice.Create( symbol ) );
+        return GetSpecializedBinaryOperators( symbol.AsMemory() );
     }
 
     [Pure]
-    public bool IsTypeConverterSymbol(ReadOnlyMemory<char> symbol)
+    public IEnumerable<ParsedExpressionBinaryOperatorInfo> GetSpecializedBinaryOperators(ReadOnlyMemory<char> symbol)
     {
-        return IsTypeConverterSymbol( StringSlice.Create( symbol ) );
+        return _configuration.Constructs.GetValueOrDefault( StringSlice.Create( symbol ) )
+                ?.BinaryOperators.SpecializedConstructs?.Select(
+                    kv => new ParsedExpressionBinaryOperatorInfo( kv.Value.GetType(), kv.Key.Left, kv.Key.Right ) ) ??
+            Enumerable.Empty<ParsedExpressionBinaryOperatorInfo>();
     }
 
     [Pure]
-    public bool IsFunctionSymbol(string symbol)
+    public Type? GetGenericPrefixUnaryConstructType(string symbol)
     {
-        return IsFunctionSymbol( StringSlice.Create( symbol ) );
+        return GetGenericPrefixUnaryConstructType( symbol.AsMemory() );
     }
 
     [Pure]
-    public bool IsFunctionSymbol(ReadOnlyMemory<char> symbol)
+    public Type? GetGenericPrefixUnaryConstructType(ReadOnlyMemory<char> symbol)
     {
-        return IsFunctionSymbol( StringSlice.Create( symbol ) );
+        return _configuration.Constructs.TryGetValue( StringSlice.Create( symbol ), out var definition )
+            ? definition.PrefixUnaryOperators.GenericConstruct?.GetType() ?? definition.PrefixTypeConverters.GenericConstruct?.GetType()
+            : null;
     }
 
     [Pure]
-    public bool IsVariadicFunctionSymbol(string symbol)
+    public IEnumerable<ParsedExpressionUnaryConstructInfo> GetSpecializedPrefixUnaryConstructs(string symbol)
     {
-        return IsVariadicFunctionSymbol( StringSlice.Create( symbol ) );
+        return GetSpecializedPrefixUnaryConstructs( symbol.AsMemory() );
     }
 
     [Pure]
-    public bool IsVariadicFunctionSymbol(ReadOnlyMemory<char> symbol)
+    public IEnumerable<ParsedExpressionUnaryConstructInfo> GetSpecializedPrefixUnaryConstructs(ReadOnlyMemory<char> symbol)
     {
-        return IsVariadicFunctionSymbol( StringSlice.Create( symbol ) );
+        return _configuration.Constructs.TryGetValue( StringSlice.Create( symbol ), out var definition )
+            ? (definition.PrefixUnaryOperators.SpecializedConstructs?.Select(
+                    kv => new ParsedExpressionUnaryConstructInfo( kv.Value.GetType(), kv.Key ) ) ??
+                Enumerable.Empty<ParsedExpressionUnaryConstructInfo>())
+            .Concat(
+                definition.PrefixTypeConverters.SpecializedConstructs?.Select(
+                    kv => new ParsedExpressionUnaryConstructInfo( kv.Value.GetType(), kv.Key ) ) ??
+                Enumerable.Empty<ParsedExpressionUnaryConstructInfo>() )
+            : Enumerable.Empty<ParsedExpressionUnaryConstructInfo>();
     }
 
     [Pure]
-    public bool IsConstantSymbol(string symbol)
+    public Type? GetGenericPostfixUnaryConstructType(string symbol)
     {
-        return IsConstantSymbol( StringSlice.Create( symbol ) );
+        return GetGenericPostfixUnaryConstructType( symbol.AsMemory() );
     }
 
     [Pure]
-    public bool IsConstantSymbol(ReadOnlyMemory<char> symbol)
+    public Type? GetGenericPostfixUnaryConstructType(ReadOnlyMemory<char> symbol)
     {
-        return IsConstantSymbol( StringSlice.Create( symbol ) );
+        return _configuration.Constructs.TryGetValue( StringSlice.Create( symbol ), out var definition )
+            ? definition.PostfixUnaryOperators.GenericConstruct?.GetType() ?? definition.PostfixTypeConverters.GenericConstruct?.GetType()
+            : null;
     }
 
     [Pure]
-    public bool IsTypeDeclarationSymbol(string symbol)
+    public IEnumerable<ParsedExpressionUnaryConstructInfo> GetSpecializedPostfixUnaryConstructs(string symbol)
     {
-        return IsTypeDeclarationSymbol( StringSlice.Create( symbol ) );
+        return GetSpecializedPostfixUnaryConstructs( symbol.AsMemory() );
     }
 
     [Pure]
-    public bool IsTypeDeclarationSymbol(ReadOnlyMemory<char> symbol)
+    public IEnumerable<ParsedExpressionUnaryConstructInfo> GetSpecializedPostfixUnaryConstructs(ReadOnlyMemory<char> symbol)
     {
-        return IsTypeDeclarationSymbol( StringSlice.Create( symbol ) );
+        return _configuration.Constructs.TryGetValue( StringSlice.Create( symbol ), out var definition )
+            ? (definition.PostfixUnaryOperators.SpecializedConstructs?.Select(
+                    kv => new ParsedExpressionUnaryConstructInfo( kv.Value.GetType(), kv.Key ) ) ??
+                Enumerable.Empty<ParsedExpressionUnaryConstructInfo>())
+            .Concat(
+                definition.PostfixTypeConverters.SpecializedConstructs?.Select(
+                    kv => new ParsedExpressionUnaryConstructInfo( kv.Value.GetType(), kv.Key ) ) ??
+                Enumerable.Empty<ParsedExpressionUnaryConstructInfo>() )
+            : Enumerable.Empty<ParsedExpressionUnaryConstructInfo>();
+    }
+
+    [Pure]
+    public Type? GetTypeConverterTargetType(string symbol)
+    {
+        return GetTypeConverterTargetType( symbol.AsMemory() );
+    }
+
+    [Pure]
+    public Type? GetTypeConverterTargetType(ReadOnlyMemory<char> symbol)
+    {
+        return _configuration.Constructs.TryGetValue( StringSlice.Create( symbol ), out var definition )
+            ? definition.PrefixTypeConverters.TargetType ?? definition.PostfixTypeConverters.TargetType
+            : null;
+    }
+
+    [Pure]
+    public Type? GetTypeDeclarationType(string symbol)
+    {
+        return GetTypeDeclarationType( symbol.AsMemory() );
+    }
+
+    [Pure]
+    public Type? GetTypeDeclarationType(ReadOnlyMemory<char> symbol)
+    {
+        return _configuration.Constructs.GetValueOrDefault( StringSlice.Create( symbol ) )?.TypeDeclaration;
+    }
+
+    [Pure]
+    public ConstantExpression? GetConstantExpression(string symbol)
+    {
+        return GetConstantExpression( symbol.AsMemory() );
+    }
+
+    [Pure]
+    public ConstantExpression? GetConstantExpression(ReadOnlyMemory<char> symbol)
+    {
+        return _configuration.Constructs.GetValueOrDefault( StringSlice.Create( symbol ) )?.Constant;
+    }
+
+    [Pure]
+    public IEnumerable<LambdaExpression> GetFunctionExpressions(string symbol)
+    {
+        return GetFunctionExpressions( symbol.AsMemory() );
+    }
+
+    [Pure]
+    public IEnumerable<LambdaExpression> GetFunctionExpressions(ReadOnlyMemory<char> symbol)
+    {
+        return _configuration.Constructs.GetValueOrDefault( StringSlice.Create( symbol ) )
+                ?.Functions.Functions.Select( kv => kv.Value.Lambda ) ??
+            Enumerable.Empty<LambdaExpression>();
+    }
+
+    [Pure]
+    public Type? GetVariadicFunctionType(string symbol)
+    {
+        return GetVariadicFunctionType( symbol.AsMemory() );
+    }
+
+    [Pure]
+    public Type? GetVariadicFunctionType(ReadOnlyMemory<char> symbol)
+    {
+        return _configuration.Constructs.GetValueOrDefault( StringSlice.Create( symbol ) )?.VariadicFunction?.GetType();
     }
 
     [Pure]
     public int? GetBinaryOperatorPrecedence(string symbol)
     {
-        return GetBinaryOperatorPrecedence( StringSlice.Create( symbol ) );
+        return GetBinaryOperatorPrecedence( symbol.AsMemory() );
     }
 
     [Pure]
     public int? GetBinaryOperatorPrecedence(ReadOnlyMemory<char> symbol)
     {
-        return GetBinaryOperatorPrecedence( StringSlice.Create( symbol ) );
+        var constructs = _configuration.Constructs.GetValueOrDefault( StringSlice.Create( symbol ) )?.BinaryOperators;
+        return constructs?.IsEmpty == false ? constructs.Precedence : null;
     }
 
     [Pure]
     public int? GetPrefixUnaryConstructPrecedence(string symbol)
     {
-        return GetPrefixUnaryConstructPrecedence( StringSlice.Create( symbol ) );
+        return GetPrefixUnaryConstructPrecedence( symbol.AsMemory() );
     }
 
     [Pure]
     public int? GetPrefixUnaryConstructPrecedence(ReadOnlyMemory<char> symbol)
     {
-        return GetPrefixUnaryConstructPrecedence( StringSlice.Create( symbol ) );
+        var definition = _configuration.Constructs.GetValueOrDefault( StringSlice.Create( symbol ) );
+        if ( definition is null )
+            return null;
+
+        if ( definition.PrefixUnaryOperators.IsEmpty )
+            return definition.PrefixTypeConverters.IsEmpty ? null : definition.PrefixTypeConverters.Precedence;
+
+        return definition.PrefixUnaryOperators.Precedence;
     }
 
     [Pure]
     public int? GetPostfixUnaryConstructPrecedence(string symbol)
     {
-        return GetPostfixUnaryConstructPrecedence( StringSlice.Create( symbol ) );
+        return GetPostfixUnaryConstructPrecedence( symbol.AsMemory() );
     }
 
     [Pure]
     public int? GetPostfixUnaryConstructPrecedence(ReadOnlyMemory<char> symbol)
     {
-        return GetPostfixUnaryConstructPrecedence( StringSlice.Create( symbol ) );
+        var definition = _configuration.Constructs.GetValueOrDefault( StringSlice.Create( symbol ) );
+        if ( definition is null )
+            return null;
+
+        if ( definition.PostfixUnaryOperators.IsEmpty )
+            return definition.PostfixTypeConverters.IsEmpty ? null : definition.PostfixTypeConverters.Precedence;
+
+        return definition.PostfixUnaryOperators.Precedence;
     }
 
     [Pure]
@@ -227,81 +331,6 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
         return _numberParserProvider is null
             ? ParsedExpressionNumberParser.CreateDefaultDecimal( _configuration )
             : _numberParserProvider( new ParsedExpressionNumberParserParams( _configuration, argumentType, resultType ) );
-    }
-
-    [Pure]
-    private bool ContainsConstructSymbol(StringSlice symbol)
-    {
-        return _configuration.Constructs.ContainsKey( symbol );
-    }
-
-    [Pure]
-    private bool IsOperatorSymbol(StringSlice symbol)
-    {
-        return _configuration.Constructs.GetValueOrDefault( symbol )?.IsAny( ConstructTokenType.Operator ) == true;
-    }
-
-    [Pure]
-    private bool IsTypeConverterSymbol(StringSlice symbol)
-    {
-        return _configuration.Constructs.GetValueOrDefault( symbol )?.IsAny( ConstructTokenType.TypeConverter ) == true;
-    }
-
-    [Pure]
-    private bool IsFunctionSymbol(StringSlice symbol)
-    {
-        return _configuration.Constructs.GetValueOrDefault( symbol )?.Type == ConstructTokenType.Function;
-    }
-
-    [Pure]
-    private bool IsVariadicFunctionSymbol(StringSlice symbol)
-    {
-        return _configuration.Constructs.GetValueOrDefault( symbol )?.Type == ConstructTokenType.VariadicFunction;
-    }
-
-    [Pure]
-    private bool IsConstantSymbol(StringSlice symbol)
-    {
-        return _configuration.Constructs.GetValueOrDefault( symbol )?.Type == ConstructTokenType.Constant;
-    }
-
-    [Pure]
-    private bool IsTypeDeclarationSymbol(StringSlice symbol)
-    {
-        return _configuration.Constructs.GetValueOrDefault( symbol )?.Type == ConstructTokenType.TypeDeclaration;
-    }
-
-    [Pure]
-    private int? GetBinaryOperatorPrecedence(StringSlice symbol)
-    {
-        var constructs = _configuration.Constructs.GetValueOrDefault( symbol )?.BinaryOperators;
-        return constructs?.IsEmpty == false ? constructs.Precedence : null;
-    }
-
-    [Pure]
-    private int? GetPrefixUnaryConstructPrecedence(StringSlice symbol)
-    {
-        var definition = _configuration.Constructs.GetValueOrDefault( symbol );
-        if ( definition is null )
-            return null;
-
-        if ( definition.PrefixUnaryOperators.IsEmpty )
-            return definition.PrefixTypeConverters.IsEmpty ? null : definition.PrefixTypeConverters.Precedence;
-
-        return definition.PrefixUnaryOperators.Precedence;
-    }
-
-    [Pure]
-    private int? GetPostfixUnaryConstructPrecedence(StringSlice symbol)
-    {
-        var definition = _configuration.Constructs.GetValueOrDefault( symbol );
-        if ( definition is null )
-            return null;
-
-        if ( definition.PostfixUnaryOperators.IsEmpty )
-            return definition.PostfixTypeConverters.IsEmpty ? null : definition.PostfixTypeConverters.Precedence;
-
-        return definition.PostfixUnaryOperators.Precedence;
     }
 
     [Pure]

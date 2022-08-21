@@ -2,22 +2,12 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
+using System.Linq.Expressions;
 using LfrlAnvil.Computable.Expressions.Errors;
+using LfrlAnvil.Computable.Expressions.Internal;
 
 namespace LfrlAnvil.Computable.Expressions;
 
-// TODO:
-// replace Is*Symbol methods with GetConstructType
-// add methods for getting more info, like:
-// - get generic binary operator type
-// - get specialized binary operator types (construct type, left arg type, right arg type)
-// - get generic prefix unary construct type
-// - get specialized prefix unary construct types (construct type, arg type)
-// - get generic postfix unary construct type
-// - get specialized postfix unary construct types (construct type, arg type)
-// - get type declaration type
-// - get constant expression
-// - get function expressions
 public interface IParsedExpressionFactory
 {
     IParsedExpressionFactoryConfiguration Configuration { get; }
@@ -26,46 +16,76 @@ public interface IParsedExpressionFactory
     IEnumerable<ReadOnlyMemory<char>> GetConstructSymbols();
 
     [Pure]
-    bool ContainsConstructSymbol(string symbol);
+    ParsedExpressionConstructType GetConstructType(string symbol);
 
     [Pure]
-    bool ContainsConstructSymbol(ReadOnlyMemory<char> symbol);
+    ParsedExpressionConstructType GetConstructType(ReadOnlyMemory<char> symbol);
 
     [Pure]
-    bool IsOperatorSymbol(string symbol);
+    Type? GetGenericBinaryOperatorType(string symbol);
 
     [Pure]
-    bool IsOperatorSymbol(ReadOnlyMemory<char> symbol);
+    Type? GetGenericBinaryOperatorType(ReadOnlyMemory<char> symbol);
 
     [Pure]
-    bool IsTypeConverterSymbol(string symbol);
+    IEnumerable<ParsedExpressionBinaryOperatorInfo> GetSpecializedBinaryOperators(string symbol);
 
     [Pure]
-    bool IsTypeConverterSymbol(ReadOnlyMemory<char> symbol);
+    IEnumerable<ParsedExpressionBinaryOperatorInfo> GetSpecializedBinaryOperators(ReadOnlyMemory<char> symbol);
 
     [Pure]
-    bool IsFunctionSymbol(string symbol);
+    Type? GetGenericPrefixUnaryConstructType(string symbol);
 
     [Pure]
-    bool IsFunctionSymbol(ReadOnlyMemory<char> symbol);
+    Type? GetGenericPrefixUnaryConstructType(ReadOnlyMemory<char> symbol);
 
     [Pure]
-    bool IsVariadicFunctionSymbol(string symbol);
+    IEnumerable<ParsedExpressionUnaryConstructInfo> GetSpecializedPrefixUnaryConstructs(string symbol);
 
     [Pure]
-    bool IsVariadicFunctionSymbol(ReadOnlyMemory<char> symbol);
+    IEnumerable<ParsedExpressionUnaryConstructInfo> GetSpecializedPrefixUnaryConstructs(ReadOnlyMemory<char> symbol);
 
     [Pure]
-    bool IsConstantSymbol(string symbol);
+    Type? GetGenericPostfixUnaryConstructType(string symbol);
 
     [Pure]
-    bool IsConstantSymbol(ReadOnlyMemory<char> symbol);
+    Type? GetGenericPostfixUnaryConstructType(ReadOnlyMemory<char> symbol);
 
     [Pure]
-    bool IsTypeDeclarationSymbol(string symbol);
+    IEnumerable<ParsedExpressionUnaryConstructInfo> GetSpecializedPostfixUnaryConstructs(string symbol);
 
     [Pure]
-    bool IsTypeDeclarationSymbol(ReadOnlyMemory<char> symbol);
+    IEnumerable<ParsedExpressionUnaryConstructInfo> GetSpecializedPostfixUnaryConstructs(ReadOnlyMemory<char> symbol);
+
+    [Pure]
+    Type? GetTypeConverterTargetType(string symbol);
+
+    [Pure]
+    Type? GetTypeConverterTargetType(ReadOnlyMemory<char> symbol);
+
+    [Pure]
+    Type? GetTypeDeclarationType(string symbol);
+
+    [Pure]
+    Type? GetTypeDeclarationType(ReadOnlyMemory<char> symbol);
+
+    [Pure]
+    ConstantExpression? GetConstantExpression(string symbol);
+
+    [Pure]
+    ConstantExpression? GetConstantExpression(ReadOnlyMemory<char> symbol);
+
+    [Pure]
+    IEnumerable<LambdaExpression> GetFunctionExpressions(string symbol);
+
+    [Pure]
+    IEnumerable<LambdaExpression> GetFunctionExpressions(ReadOnlyMemory<char> symbol);
+
+    [Pure]
+    Type? GetVariadicFunctionType(string symbol);
+
+    [Pure]
+    Type? GetVariadicFunctionType(ReadOnlyMemory<char> symbol);
 
     [Pure]
     int? GetBinaryOperatorPrecedence(string symbol);
