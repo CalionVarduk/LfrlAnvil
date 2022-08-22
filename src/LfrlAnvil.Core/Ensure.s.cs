@@ -319,7 +319,7 @@ public static class Ensure
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static void IsEmpty<T>(IReadOnlyCollection<T> param, string paramName = DefaultParamName)
     {
-        if ( param.Count > 0 )
+        if ( ! param.IsEmpty() )
             throw Exceptions.NotEmpty( paramName );
     }
 
@@ -340,7 +340,7 @@ public static class Ensure
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static void IsNotEmpty<T>(IReadOnlyCollection<T> param, string paramName = DefaultParamName)
     {
-        if ( param.Count == 0 )
+        if ( param.IsEmpty() )
             throw Exceptions.Empty( paramName );
     }
 
@@ -354,14 +354,14 @@ public static class Ensure
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static void IsNullOrEmpty<T>(IEnumerable<T>? param, string paramName = DefaultParamName)
     {
-        if ( param?.Any() == true )
+        if ( ! param.IsNullOrEmpty() )
             throw Exceptions.NotNullOrEmpty( paramName );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static void IsNullOrEmpty<T>(IReadOnlyCollection<T>? param, string paramName = DefaultParamName)
     {
-        if ( param?.Count > 0 )
+        if ( ! param.IsNullOrEmpty() )
             throw Exceptions.NotNullOrEmpty( paramName );
     }
 
@@ -375,14 +375,14 @@ public static class Ensure
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static void IsNotNullOrEmpty<T>([NotNull] IEnumerable<T>? param, string paramName = DefaultParamName)
     {
-        if ( param?.Any() != true )
+        if ( param.IsNullOrEmpty() )
             throw Exceptions.NullOrEmpty( paramName );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static void IsNotNullOrEmpty<T>([NotNull] IReadOnlyCollection<T>? param, string paramName = DefaultParamName)
     {
-        if ( param is null || param.Count == 0 )
+        if ( param.IsNullOrEmpty() )
             throw Exceptions.NullOrEmpty( paramName );
     }
 
@@ -460,7 +460,21 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static void ContainsAtLeast<T>(IReadOnlyCollection<T> param, int count, string paramName = DefaultParamName)
+    {
+        if ( ! param.ContainsAtLeast( count ) )
+            throw Exceptions.NotContainsAtLeast( count, paramName );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static void ContainsAtMost<T>(IEnumerable<T> param, int count, string paramName = DefaultParamName)
+    {
+        if ( ! param.ContainsAtMost( count ) )
+            throw Exceptions.NotContainsAtMost( count, paramName );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static void ContainsAtMost<T>(IReadOnlyCollection<T> param, int count, string paramName = DefaultParamName)
     {
         if ( ! param.ContainsAtMost( count ) )
             throw Exceptions.NotContainsAtMost( count, paramName );
@@ -474,7 +488,21 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static void ContainsInRange<T>(IReadOnlyCollection<T> param, int minCount, int maxCount, string paramName = DefaultParamName)
+    {
+        if ( ! param.ContainsInRange( minCount, maxCount ) )
+            throw Exceptions.NotContainsInRange( minCount, maxCount, paramName );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static void ContainsExactly<T>(IEnumerable<T> param, int count, string paramName = DefaultParamName)
+    {
+        if ( ! param.ContainsExactly( count ) )
+            throw Exceptions.NotContainsExactly( count, paramName );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static void ContainsExactly<T>(IReadOnlyCollection<T> param, int count, string paramName = DefaultParamName)
     {
         if ( ! param.ContainsExactly( count ) )
             throw Exceptions.NotContainsExactly( count, paramName );

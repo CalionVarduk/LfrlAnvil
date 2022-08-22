@@ -548,64 +548,127 @@ public abstract class GenericEnsureTests<T> : EnsureTestsBase
 
     [Theory]
     [GenericMethodData( nameof( GenericEnsureTestsData<T>.GetContainsAtLeastPassData ) )]
-    public void ContainsAtLeast_ShouldPass_WhenCollectionContainsEnoughElements(int minCount)
+    public void ContainsAtLeast_ShouldPass_WhenEnumerableContainsEnoughElements(int minCount)
     {
         var param = Fixture.CreateMany<T>( 3 );
         ShouldPass( () => Ensure.ContainsAtLeast( param, minCount ) );
     }
 
     [Theory]
+    [GenericMethodData( nameof( GenericEnsureTestsData<T>.GetContainsAtLeastPassData ) )]
+    public void ContainsAtLeast_ShouldPass_WhenCollectionContainsEnoughElements(int minCount)
+    {
+        var param = Fixture.CreateMany<T>( 3 ).ToList();
+        ShouldPass( () => Ensure.ContainsAtLeast( param, minCount ) );
+    }
+
+    [Theory]
     [GenericMethodData( nameof( GenericEnsureTestsData<T>.GetContainsAtLeastThrowData ) )]
-    public void ContainsAtLeast_ShouldThrowArgumentException_WhenCollectionContainsTooFewElements(int minCount)
+    public void ContainsAtLeast_ShouldThrowArgumentException_WhenEnumerableContainsTooFewElements(int minCount)
     {
         var param = Fixture.CreateMany<T>( 3 );
         ShouldThrowArgumentException( () => Ensure.ContainsAtLeast( param, minCount ) );
     }
 
     [Theory]
+    [GenericMethodData( nameof( GenericEnsureTestsData<T>.GetContainsAtLeastThrowData ) )]
+    public void ContainsAtLeast_ShouldThrowArgumentException_WhenCollectionContainsTooFewElements(int minCount)
+    {
+        var param = Fixture.CreateMany<T>( 3 ).ToList();
+        ShouldThrowArgumentException( () => Ensure.ContainsAtLeast( param, minCount ) );
+    }
+
+    [Theory]
     [GenericMethodData( nameof( GenericEnsureTestsData<T>.GetContainsAtMostPassData ) )]
-    public void ContainsAtMost_ShouldPass_WhenCollectionDoesntContainTooManyElements(int maxCount)
+    public void ContainsAtMost_ShouldPass_WhenEnumerableDoesntContainTooManyElements(int maxCount)
     {
         var param = Fixture.CreateMany<T>( 3 );
         ShouldPass( () => Ensure.ContainsAtMost( param, maxCount ) );
     }
 
     [Theory]
+    [GenericMethodData( nameof( GenericEnsureTestsData<T>.GetContainsAtMostPassData ) )]
+    public void ContainsAtMost_ShouldPass_WhenCollectionDoesntContainTooManyElements(int maxCount)
+    {
+        var param = Fixture.CreateMany<T>( 3 ).ToList();
+        ShouldPass( () => Ensure.ContainsAtMost( param, maxCount ) );
+    }
+
+    [Theory]
     [GenericMethodData( nameof( GenericEnsureTestsData<T>.GetContainsAtMostThrowData ) )]
-    public void ContainsAtMost_ShouldThrowArgumentException_WhenCollectionContainsTooManyElements(int maxCount)
+    public void ContainsAtMost_ShouldThrowArgumentException_WhenEnumerableContainsTooManyElements(int maxCount)
     {
         var param = Fixture.CreateMany<T>( 3 );
         ShouldThrowArgumentException( () => Ensure.ContainsAtMost( param, maxCount ) );
     }
 
+    [Theory]
+    [GenericMethodData( nameof( GenericEnsureTestsData<T>.GetContainsAtMostThrowData ) )]
+    public void ContainsAtMost_ShouldThrowArgumentException_WhenCollectionContainsTooManyElements(int maxCount)
+    {
+        var param = Fixture.CreateMany<T>( 3 ).ToList();
+        ShouldThrowArgumentException( () => Ensure.ContainsAtMost( param, maxCount ) );
+    }
+
     [Fact]
-    public void ContainsExactly_ShouldPass_WhenCollectionContainsExactlyTheRightAmountOfElements()
+    public void ContainsExactly_ShouldPass_WhenEnumerableContainsExactlyTheRightAmountOfElements()
     {
         var param = Fixture.CreateMany<T>( 3 );
         ShouldPass( () => Ensure.ContainsExactly( param, 3 ) );
     }
 
+    [Fact]
+    public void ContainsExactly_ShouldPass_WhenCollectionContainsExactlyTheRightAmountOfElements()
+    {
+        var param = Fixture.CreateMany<T>( 3 ).ToList();
+        ShouldPass( () => Ensure.ContainsExactly( param, 3 ) );
+    }
+
     [Theory]
     [GenericMethodData( nameof( GenericEnsureTestsData<T>.GetContainsExactlyThrowData ) )]
-    public void ContainsExactly_ShouldThrowArgumentException_WhenCollectionContainsTooFewOrManyElements(int count)
+    public void ContainsExactly_ShouldThrowArgumentException_WhenEnumerableContainsTooFewOrManyElements(int count)
     {
         var param = Fixture.CreateMany<T>( 3 );
         ShouldThrowArgumentException( () => Ensure.ContainsExactly( param, count ) );
     }
 
     [Theory]
+    [GenericMethodData( nameof( GenericEnsureTestsData<T>.GetContainsExactlyThrowData ) )]
+    public void ContainsExactly_ShouldThrowArgumentException_WhenCollectionContainsTooFewOrManyElements(int count)
+    {
+        var param = Fixture.CreateMany<T>( 3 ).ToList();
+        ShouldThrowArgumentException( () => Ensure.ContainsExactly( param, count ) );
+    }
+
+    [Theory]
     [GenericMethodData( nameof( GenericEnsureTestsData<T>.GetContainsInRangePassData ) )]
-    public void ContainsInRange_ShouldPass_WhenCollectionContainsCorrectAmountOfElements(int minCount, int maxCount)
+    public void ContainsInRange_ShouldPass_WhenEnumerableContainsCorrectAmountOfElements(int minCount, int maxCount)
     {
         var param = Fixture.CreateMany<T>( 3 );
         ShouldPass( () => Ensure.ContainsInRange( param, minCount, maxCount ) );
     }
 
     [Theory]
+    [GenericMethodData( nameof( GenericEnsureTestsData<T>.GetContainsInRangePassData ) )]
+    public void ContainsInRange_ShouldPass_WhenCollectionContainsCorrectAmountOfElements(int minCount, int maxCount)
+    {
+        var param = Fixture.CreateMany<T>( 3 ).ToList();
+        ShouldPass( () => Ensure.ContainsInRange( param, minCount, maxCount ) );
+    }
+
+    [Theory]
+    [GenericMethodData( nameof( GenericEnsureTestsData<T>.GetContainsInRangeThrowData ) )]
+    public void ContainsInRange_ShouldThrowArgumentException_WhenEnumerableContainsTooManyOrTooFewElements(int minCount, int maxCount)
+    {
+        var param = Fixture.CreateMany<T>( 3 );
+        ShouldThrowArgumentException( () => Ensure.ContainsInRange( param, minCount, maxCount ) );
+    }
+
+    [Theory]
     [GenericMethodData( nameof( GenericEnsureTestsData<T>.GetContainsInRangeThrowData ) )]
     public void ContainsInRange_ShouldThrowArgumentException_WhenCollectionContainsTooManyOrTooFewElements(int minCount, int maxCount)
     {
-        var param = Fixture.CreateMany<T>( 3 );
+        var param = Fixture.CreateMany<T>( 3 ).ToList();
         ShouldThrowArgumentException( () => Ensure.ContainsInRange( param, minCount, maxCount ) );
     }
 

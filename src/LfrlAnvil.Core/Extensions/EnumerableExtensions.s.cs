@@ -72,7 +72,7 @@ public static class EnumerableExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static bool IsNullOrEmpty<T>(this IEnumerable<T>? source)
+    public static bool IsNullOrEmpty<T>([NotNullWhen( false )] this IEnumerable<T>? source)
     {
         return source is null || source.IsEmpty();
     }
@@ -88,14 +88,26 @@ public static class EnumerableExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool ContainsAtLeast<T>(this IEnumerable<T> source, int count)
     {
-        return count <= 0 || source.Skip( count - 1 ).Any();
+        if ( count <= 0 )
+            return true;
+
+        if ( source.TryGetNonEnumeratedCount( out var counter ) )
+            return counter >= count;
+
+        return source.Skip( count - 1 ).Any();
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool ContainsAtMost<T>(this IEnumerable<T> source, int count)
     {
-        return count >= 0 && ! source.Skip( count ).Any();
+        if ( count < 0 )
+            return false;
+
+        if ( source.TryGetNonEnumeratedCount( out var counter ) )
+            return counter <= count;
+
+        return ! source.Skip( count ).Any();
     }
 
     [Pure]
@@ -107,12 +119,15 @@ public static class EnumerableExtensions
         if ( minCount <= 0 )
             return source.ContainsAtMost( maxCount );
 
+        if ( source.TryGetNonEnumeratedCount( out var counter ) )
+            return counter >= minCount && counter <= maxCount;
+
         using var enumerator = source.Skip( minCount - 1 ).GetEnumerator();
 
         if ( ! enumerator.MoveNext() )
             return false;
 
-        var counter = 1;
+        counter = 1;
         var counterLimit = maxCount - minCount + 1;
 
         while ( enumerator.MoveNext() )
@@ -130,7 +145,9 @@ public static class EnumerableExtensions
         if ( count < 0 )
             return false;
 
-        var counter = 0;
+        if ( source.TryGetNonEnumeratedCount( out var counter ) )
+            return counter == count;
+
         using var enumerator = source.GetEnumerator();
 
         while ( enumerator.MoveNext() )

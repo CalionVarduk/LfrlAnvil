@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
@@ -8,7 +9,7 @@ public static class CollectionExtensions
 {
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static bool IsNullOrEmpty<T>(this IReadOnlyCollection<T>? source)
+    public static bool IsNullOrEmpty<T>([NotNullWhen( false )] this IReadOnlyCollection<T>? source)
     {
         return source is null || source.IsEmpty();
     }

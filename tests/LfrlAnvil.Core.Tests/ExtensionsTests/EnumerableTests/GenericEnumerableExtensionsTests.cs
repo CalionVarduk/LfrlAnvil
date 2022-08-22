@@ -83,10 +83,28 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsAtLeastData ) )]
+    public void ContainsAtLeast_WithMaterializedSource_ShouldReturnCorrectResult(int sourceCount, int minCount, bool expected)
+    {
+        var sut = Fixture.CreateMany<T>( sourceCount ).ToList().AsEnumerable();
+        var result = sut.ContainsAtLeast( minCount );
+        result.Should().Be( expected );
+    }
+
+    [Theory]
     [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsAtMostData ) )]
     public void ContainsAtMost_ShouldReturnCorrectResult(int sourceCount, int maxCount, bool expected)
     {
         var sut = Fixture.CreateMany<T>( sourceCount );
+        var result = sut.ContainsAtMost( maxCount );
+        result.Should().Be( expected );
+    }
+
+    [Theory]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsAtMostData ) )]
+    public void ContainsAtMost_WithMaterializedSource_ShouldReturnCorrectResult(int sourceCount, int maxCount, bool expected)
+    {
+        var sut = Fixture.CreateMany<T>( sourceCount ).ToList().AsEnumerable();
         var result = sut.ContainsAtMost( maxCount );
         result.Should().Be( expected );
     }
@@ -104,10 +122,31 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForMaxCountLessThanMinCountData ) )]
+    public void ContainsInRange_WithMaterializedSource_ShouldReturnFalse_WhenMaxCountIsLessThanMinCount(int count)
+    {
+        var (max, min) = Fixture.CreateDistinctSortedCollection<int>( 2 );
+        var sut = Fixture.CreateMany<T>( count ).ToList().AsEnumerable();
+
+        var result = sut.ContainsInRange( min, max );
+
+        result.Should().BeFalse();
+    }
+
+    [Theory]
     [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForZeroMinCountData ) )]
     public void ContainsInRange_ShouldReturnCorrectResult_WhenMinCountIsZero(int count, int maxCount, bool expected)
     {
         var sut = Fixture.CreateMany<T>( count );
+        var result = sut.ContainsInRange( 0, maxCount );
+        result.Should().Be( expected );
+    }
+
+    [Theory]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForZeroMinCountData ) )]
+    public void ContainsInRange_WithMaterializedSource_ShouldReturnCorrectResult_WhenMinCountIsZero(int count, int maxCount, bool expected)
+    {
+        var sut = Fixture.CreateMany<T>( count ).ToList().AsEnumerable();
         var result = sut.ContainsInRange( 0, maxCount );
         result.Should().Be( expected );
     }
@@ -125,10 +164,34 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForNegativeMinCountData ) )]
+    public void ContainsInRange_WithMaterializedSource_ShouldReturnCorrectResult_WhenMinCountIsNegative(
+        int count,
+        int maxCount,
+        bool expected)
+    {
+        var minCount = Fixture.CreateNegativeInt32();
+        var sut = Fixture.CreateMany<T>( count ).ToList().AsEnumerable();
+
+        var result = sut.ContainsInRange( minCount, maxCount );
+
+        result.Should().Be( expected );
+    }
+
+    [Theory]
     [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForCountLessThanMinCountData ) )]
     public void ContainsInRange_ShouldReturnFalse_WhenSourceCountIsLessThanMinCount(int count, int minCount)
     {
         var sut = Fixture.CreateMany<T>( count );
+        var result = sut.ContainsInRange( minCount, minCount + 1 );
+        result.Should().BeFalse();
+    }
+
+    [Theory]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForCountLessThanMinCountData ) )]
+    public void ContainsInRange_WithMaterializedSource_ShouldReturnFalse_WhenSourceCountIsLessThanMinCount(int count, int minCount)
+    {
+        var sut = Fixture.CreateMany<T>( count ).ToList().AsEnumerable();
         var result = sut.ContainsInRange( minCount, minCount + 1 );
         result.Should().BeFalse();
     }
@@ -143,10 +206,31 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForCountGreaterThanMaxCountData ) )]
+    public void ContainsInRange_WithMaterializedSource_ShouldReturnFalse_WhenSourceCountIsGreaterThanMaxCount(int count, int maxCount)
+    {
+        var sut = Fixture.CreateMany<T>( count ).ToList().AsEnumerable();
+        var result = sut.ContainsInRange( maxCount - 1, maxCount );
+        result.Should().BeFalse();
+    }
+
+    [Theory]
     [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForCountBetweenMinAndMaxData ) )]
     public void ContainsInRange_ShouldReturnTrue_WhenSourceCountIsBetweenMinAndMaxCount(int sourceCount, int minCount, int maxCount)
     {
         var sut = Fixture.CreateMany<T>( sourceCount );
+        var result = sut.ContainsInRange( minCount, maxCount );
+        result.Should().BeTrue();
+    }
+
+    [Theory]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForCountBetweenMinAndMaxData ) )]
+    public void ContainsInRange_WithMaterializedSource_ShouldReturnTrue_WhenSourceCountIsBetweenMinAndMaxCount(
+        int sourceCount,
+        int minCount,
+        int maxCount)
+    {
+        var sut = Fixture.CreateMany<T>( sourceCount ).ToList().AsEnumerable();
         var result = sut.ContainsInRange( minCount, maxCount );
         result.Should().BeTrue();
     }
@@ -164,10 +248,34 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsExactlyForNegativeCountData ) )]
+    public void ContainsExactly_WithMaterializedSource_ShouldReturnFalse_WhenCountIsNegative(int sourceCount)
+    {
+        var count = Fixture.CreateNegativeInt32();
+        var sut = Fixture.CreateMany<T>( sourceCount ).ToList().AsEnumerable();
+
+        var result = sut.ContainsExactly( count );
+
+        result.Should().BeFalse();
+    }
+
+    [Theory]
     [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsExactlyForNonNegativeCountData ) )]
     public void ContainsExactly_ShouldReturnCorrectResult_WhenCountIsNotNegative(int sourceCount, int count, bool expected)
     {
         var sut = Fixture.CreateMany<T>( sourceCount );
+        var result = sut.ContainsExactly( count );
+        result.Should().Be( expected );
+    }
+
+    [Theory]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsExactlyForNonNegativeCountData ) )]
+    public void ContainsExactly_WithMaterializedSource_ShouldReturnCorrectResult_WhenCountIsNotNegative(
+        int sourceCount,
+        int count,
+        bool expected)
+    {
+        var sut = Fixture.CreateMany<T>( sourceCount ).ToList().AsEnumerable();
         var result = sut.ContainsExactly( count );
         result.Should().Be( expected );
     }
