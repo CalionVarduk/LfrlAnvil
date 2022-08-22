@@ -359,6 +359,13 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string IfTestMustBeOfBooleanType(Type testType)
+    {
+        return $"Expected IF test type to be {typeof( bool ).FullName} but found {testType.FullName}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static string ConfigurationSymbolsMustBeDifferent(string firstSymbolName, string secondSymbolName)
     {
         return $"{firstSymbolName} and {secondSymbolName} symbols must be different.";
