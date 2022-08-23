@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Linq.Expressions;
+using FluentAssertions.Execution;
 using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Computable.Expressions.Exceptions;
 
@@ -880,6 +881,33 @@ public class GenericBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Coalesce,
             rightValue: Fixture.Create<string>(),
             DefaultNodeAssertion );
+    }
+
+    [Fact]
+    public void CoalesceOperatorProcess_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsThrow()
+    {
+        var exception = Expression.Constant( new Exception() );
+        var left = CreateConstantOperand( "left" );
+        var right = Expression.Throw( exception );
+        var sut = new ParsedExpressionCoalesceOperator();
+
+        var result = sut.Process( left, right );
+
+        using ( new AssertionScope() )
+        {
+            result.NodeType.Should().Be( ExpressionType.Coalesce );
+            result.Type.Should().Be( typeof( string ) );
+            if ( result is not BinaryExpression binary )
+                return;
+
+            binary.Left.Should().BeSameAs( left );
+            binary.Right.NodeType.Should().Be( ExpressionType.Throw );
+            if ( binary.Right is not UnaryExpression @throw )
+                return;
+
+            @throw.Type.Should().Be( typeof( string ) );
+            @throw.Operand.Should().BeSameAs( exception );
+        }
     }
 
     [Fact]
