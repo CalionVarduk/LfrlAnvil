@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 using LfrlAnvil.Computable.Expressions.Exceptions;
 using LfrlAnvil.Computable.Expressions.Internal;
 
@@ -18,7 +19,9 @@ public sealed class ParsedExpressionIf : ParsedExpressionVariadicFunction
         var ifTrue = parameters[1];
         var ifFalse = parameters[2];
 
-        var expectedType = GetExpectedType( ifTrue, ifFalse, nameof( parameters ) );
+        var expectedType = GetExpectedType( ifTrue, ifFalse );
+        if ( expectedType is null )
+            throw new ArgumentException( Resources.CannotDetermineIfReturnType, nameof( parameters ) );
 
         ifTrue = ExpressionHelpers.TryUpdateThrowType( ifTrue, expectedType );
         ifFalse = ExpressionHelpers.TryUpdateThrowType( ifFalse, expectedType );
@@ -41,7 +44,8 @@ public sealed class ParsedExpressionIf : ParsedExpressionVariadicFunction
     }
 
     [Pure]
-    private static Type GetExpectedType(Expression ifTrue, Expression ifFalse, string paramName)
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static Type? GetExpectedType(Expression ifTrue, Expression ifFalse)
     {
         if ( ifTrue.NodeType != ExpressionType.Throw )
             return ifTrue.Type;
@@ -49,6 +53,6 @@ public sealed class ParsedExpressionIf : ParsedExpressionVariadicFunction
         if ( ifFalse.NodeType != ExpressionType.Throw )
             return ifFalse.Type;
 
-        throw new ArgumentException( Resources.CannotDetermineIfReturnType, paramName );
+        return null;
     }
 }

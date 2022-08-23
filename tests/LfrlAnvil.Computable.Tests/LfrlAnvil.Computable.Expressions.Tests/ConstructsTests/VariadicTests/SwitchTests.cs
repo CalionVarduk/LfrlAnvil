@@ -277,4 +277,129 @@ public class SwitchTests : TestsBase
             switchCase.TestValues.Should().BeSequentiallyEqualTo( caseParameter );
         }
     }
+
+    [Fact]
+    public void Process_ShouldThrowArgumentException_WhenAllCasesAreThrowExpressions()
+    {
+        var exception = Expression.Constant( new Exception() );
+        var parameters = new Expression[]
+        {
+            Expression.Constant( 0 ),
+            Expression.Constant( Expression.SwitchCase( Expression.Throw( exception ), Expression.Parameter( typeof( int ) ) ) ),
+            Expression.Constant( Expression.SwitchCase( Expression.Throw( exception ), Expression.Parameter( typeof( int ) ) ) ),
+            Expression.Constant( Expression.SwitchCase( Expression.Throw( exception ), Expression.Parameter( typeof( int ) ) ) ),
+            Expression.Throw( exception )
+        };
+
+        var sut = new ParsedExpressionSwitch();
+
+        var action = Lambda.Of( () => sut.Process( parameters ) );
+
+        action.Should().ThrowExactly<ArgumentException>();
+    }
+
+    [Fact]
+    public void Process_ShouldReturnSwitchExpression_WhenValueIsNotConstantAndSomeCasesAreThrowExpressions()
+    {
+        var exception = Expression.Constant( new Exception() );
+        var parameters = new Expression[]
+        {
+            Expression.Parameter( typeof( int ) ),
+            Expression.Constant( Expression.SwitchCase( Expression.Constant( "foo" ), Expression.Constant( 0 ) ) ),
+            Expression.Constant( Expression.SwitchCase( Expression.Throw( exception ), Expression.Constant( 1 ) ) ),
+            Expression.Constant( Expression.SwitchCase( Expression.Constant( "qux" ), Expression.Constant( 2 ) ) ),
+            Expression.Throw( exception )
+        };
+
+        var sut = new ParsedExpressionSwitch();
+
+        var result = sut.Process( parameters );
+
+        using ( new AssertionScope() )
+        {
+            result.NodeType.Should().Be( ExpressionType.Switch );
+            if ( result is not SwitchExpression @switch )
+                return;
+
+            @switch.SwitchValue.Should().BeSameAs( parameters[0] );
+            (@switch.DefaultBody?.NodeType).Should().Be( ExpressionType.Throw );
+            @switch.Cases.Should().HaveCount( 3 );
+
+            if ( @switch.DefaultBody is not UnaryExpression defaultThrow || @switch.Cases.Count != 3 )
+                return;
+
+            defaultThrow.Type.Should().Be( typeof( string ) );
+            defaultThrow.Operand.Should().BeSameAs( exception );
+            @switch.Cases[0].Should().BeSameAs( (SwitchCase)((ConstantExpression)parameters[1]).Value! );
+
+            @switch.Cases[1].Body.NodeType.Should().Be( ExpressionType.Throw );
+            @switch.Cases[1]
+                .TestValues.Should()
+                .BeSequentiallyEqualTo( ((SwitchCase)((ConstantExpression)parameters[2]).Value!).TestValues );
+
+            @switch.Cases[2].Should().BeSameAs( (SwitchCase)((ConstantExpression)parameters[3]).Value! );
+
+            if ( @switch.Cases[1].Body is not UnaryExpression caseThrow )
+                return;
+
+            caseThrow.Type.Should().Be( typeof( string ) );
+            caseThrow.Operand.Should().BeSameAs( exception );
+        }
+    }
+
+    [Fact]
+    public void Process_ShouldReturnCorrectCaseBody_WhenValueIsConstantAndEqualsToOneOfConstantCaseValuesWithThrowBody()
+    {
+        var exception = Expression.Constant( new Exception() );
+        var parameters = new Expression[]
+        {
+            Expression.Constant( 2 ),
+            Expression.Constant( Expression.SwitchCase( Expression.Constant( "foo" ), Expression.Constant( 0 ) ) ),
+            Expression.Constant( Expression.SwitchCase( Expression.Constant( "bar" ), Expression.Constant( 1 ) ) ),
+            Expression.Constant( Expression.SwitchCase( Expression.Throw( exception ), Expression.Constant( 2 ) ) ),
+            Expression.Constant( "foobar" )
+        };
+
+        var sut = new ParsedExpressionSwitch();
+
+        var result = sut.Process( parameters );
+
+        using ( new AssertionScope() )
+        {
+            result.NodeType.Should().Be( ExpressionType.Throw );
+            if ( result is not UnaryExpression @throw )
+                return;
+
+            @throw.Type.Should().Be( typeof( string ) );
+            @throw.Operand.Should().BeSameAs( exception );
+        }
+    }
+
+    [Fact]
+    public void Process_ShouldReturnDefaultBody_WhenValueIsConstantAndDoesNorEqualToAnyConstantCaseValueAndDefaultBodyIsThrowExpression()
+    {
+        var exception = Expression.Constant( new Exception() );
+        var parameters = new Expression[]
+        {
+            Expression.Constant( 3 ),
+            Expression.Constant( Expression.SwitchCase( Expression.Constant( "foo" ), Expression.Constant( 0 ) ) ),
+            Expression.Constant( Expression.SwitchCase( Expression.Constant( "bar" ), Expression.Constant( 1 ) ) ),
+            Expression.Constant( Expression.SwitchCase( Expression.Constant( "qux" ), Expression.Constant( 2 ) ) ),
+            Expression.Throw( exception )
+        };
+
+        var sut = new ParsedExpressionSwitch();
+
+        var result = sut.Process( parameters );
+
+        using ( new AssertionScope() )
+        {
+            result.NodeType.Should().Be( ExpressionType.Throw );
+            if ( result is not UnaryExpression @throw )
+                return;
+
+            @throw.Type.Should().Be( typeof( string ) );
+            @throw.Operand.Should().BeSameAs( exception );
+        }
+    }
 }

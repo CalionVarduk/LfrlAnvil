@@ -18,6 +18,9 @@ internal static class Resources
     internal const string CannotDetermineIfReturnType =
         "Cannot determine IF return type due to both TRUE and FALSE bodies representing throw expressions.";
 
+    internal const string CannotDetermineSwitchReturnType =
+        "Cannot determine SWITCH return type due to all CASE bodies representing throw expressions.";
+
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string InvalidConstructSymbol(StringSlice symbol)

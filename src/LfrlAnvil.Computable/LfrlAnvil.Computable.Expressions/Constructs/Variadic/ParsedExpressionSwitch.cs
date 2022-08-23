@@ -5,6 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Computable.Expressions.Exceptions;
+using LfrlAnvil.Computable.Expressions.Internal;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.Variadic;
 
@@ -44,15 +45,7 @@ public sealed class ParsedExpressionSwitch : ParsedExpressionVariadicFunction
                 }
 
                 var constantTest = (ConstantExpression)test;
-                if ( switchValue.Value is null )
-                {
-                    if ( constantTest.Value is null )
-                        return @case.Body;
-
-                    continue;
-                }
-
-                if ( switchValue.Value.Equals( constantTest.Value ) )
+                if ( Equals( switchValue.Value, constantTest.Value ) )
                     return @case.Body;
             }
         }
@@ -99,6 +92,21 @@ public sealed class ParsedExpressionSwitch : ParsedExpressionVariadicFunction
             cases[i - 1] = switchCase ?? throw new ArgumentException( Resources.InvalidSwitchCaseParameter( i ), nameof( parameters ) );
         }
 
+        var expectedType = GetExpectedType( cases, defaultBody );
+        if ( expectedType is null )
+            throw new ArgumentException( Resources.CannotDetermineSwitchReturnType, nameof( parameters ) );
+
+        for ( var i = 0; i < cases.Length; ++i )
+        {
+            var expectedCaseBody = ExpressionHelpers.TryUpdateThrowType( cases[i].Body, expectedType );
+            if ( ReferenceEquals( expectedCaseBody, cases[i].Body ) )
+                continue;
+
+            cases[i] = Expression.SwitchCase( expectedCaseBody, cases[i].TestValues );
+        }
+
+        defaultBody = ExpressionHelpers.TryUpdateThrowType( defaultBody, expectedType );
+
         return (cases, defaultBody);
     }
 
@@ -107,5 +115,21 @@ public sealed class ParsedExpressionSwitch : ParsedExpressionVariadicFunction
     private static SwitchCase? TryGetSwitchCase(Expression expression)
     {
         return (expression as ConstantExpression)?.Value as SwitchCase;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static Type? GetExpectedType(SwitchCase[] cases, Expression defaultBody)
+    {
+        foreach ( var @case in cases )
+        {
+            if ( @case.Body.NodeType != ExpressionType.Throw )
+                return @case.Body.Type;
+        }
+
+        if ( defaultBody.NodeType != ExpressionType.Throw )
+            return defaultBody.Type;
+
+        return null;
     }
 }
