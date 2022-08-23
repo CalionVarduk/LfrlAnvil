@@ -366,6 +366,13 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidSwitchCaseParameter(int index)
+    {
+        return $"Expected SWITCH parameter at index {index} to be a {nameof( SwitchCase )}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static string ConfigurationSymbolsMustBeDifferent(string firstSymbolName, string secondSymbolName)
     {
         return $"{firstSymbolName} and {secondSymbolName} symbols must be different.";
