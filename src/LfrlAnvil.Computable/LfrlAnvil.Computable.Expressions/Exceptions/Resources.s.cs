@@ -13,6 +13,8 @@ namespace LfrlAnvil.Computable.Expressions.Exceptions;
 internal static class Resources
 {
     internal const string CannotBindValueToArgumentThatDoesNotExist = "Cannot bind a value to an argument that doesn't exist.";
+    internal const string InvocationHasThrownAnException = "Invocation has thrown an exception.";
+    internal const string ExpectedAllThrowParametersToBeOfStringType = "Expected all THROW parameters to be of string type.";
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

@@ -68,4 +68,13 @@ internal static class MemberInfoLocator
 
         return result!;
     }
+
+    [Pure]
+    internal static ConstructorInfo FindInvocationExceptionCtor()
+    {
+        var result = typeof( ParsedExpressionInvocationException )
+            .GetConstructor( new[] { typeof( string ), typeof( object?[] ) } )!;
+
+        return result;
+    }
 }
