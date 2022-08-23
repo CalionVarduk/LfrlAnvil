@@ -53,6 +53,10 @@ public static class ParsedExpressionConstructDefaults
     public const int OrPrecedence = 12;
     public const int CoalescePrecedence = 13;
 
+    public const string IfSymbol = "if";
+    public const string SwitchCaseSymbol = "case";
+    public const string SwitchSymbol = "switch";
+
     public static readonly ParsedExpressionTypeDefinitionSymbols BooleanTypeSymbols = new ParsedExpressionTypeDefinitionSymbols()
         .SetName( "boolean" );
 

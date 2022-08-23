@@ -10,6 +10,7 @@ using LfrlAnvil.Computable.Expressions.Constructs.Float;
 using LfrlAnvil.Computable.Expressions.Constructs.Int32;
 using LfrlAnvil.Computable.Expressions.Constructs.Int64;
 using LfrlAnvil.Computable.Expressions.Constructs.String;
+using LfrlAnvil.Computable.Expressions.Constructs.Variadic;
 using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Extensions;
@@ -918,6 +919,16 @@ public static class ParsedExpressionFactoryBuilderExtensions
         params ParsedExpressionTypeConverter[] specializedConverters)
     {
         return builder.AddStringTypeDefinition( symbols, specializedConverters.AsEnumerable() );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddBranchingVariadicFunctions(
+        this ParsedExpressionFactoryBuilder builder,
+        ParsedExpressionBranchingVariadicFunctionSymbols symbols = default)
+    {
+        return builder
+            .AddVariadicFunction( symbols.If, new ParsedExpressionIf() )
+            .AddVariadicFunction( symbols.SwitchCase, new ParsedExpressionSwitchCase() )
+            .AddVariadicFunction( symbols.Switch, new ParsedExpressionSwitch() );
     }
 
     private static ParsedExpressionFactoryBuilder AddTypeDefinition(

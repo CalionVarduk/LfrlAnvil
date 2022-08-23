@@ -10,6 +10,7 @@ using LfrlAnvil.Computable.Expressions.Constructs.Float;
 using LfrlAnvil.Computable.Expressions.Constructs.Int32;
 using LfrlAnvil.Computable.Expressions.Constructs.Int64;
 using LfrlAnvil.Computable.Expressions.Constructs.String;
+using LfrlAnvil.Computable.Expressions.Constructs.Variadic;
 using LfrlAnvil.Computable.Expressions.Extensions;
 using LfrlAnvil.Computable.Expressions.Internal;
 using LfrlAnvil.TestExtensions.FluentAssertions;
@@ -1764,6 +1765,30 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             actualConstructs.Should().BeSequentiallyEqualTo( ("s", ParsedExpressionConstructType.TypeDeclaration, typeof( string )) );
+        }
+    }
+
+    [Fact]
+    public void AddBranchingVariadicFunctions_ShouldAddCorrectFunctions()
+    {
+        var sut = new ParsedExpressionFactoryBuilder();
+        var symbols = ParsedExpressionBranchingVariadicFunctionSymbols.Default;
+
+        var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
+        {
+            (symbols.If.ToString(), ParsedExpressionConstructType.VariadicFunction, typeof( ParsedExpressionIf )),
+            (symbols.SwitchCase.ToString(), ParsedExpressionConstructType.VariadicFunction, typeof( ParsedExpressionSwitchCase )),
+            (symbols.Switch.ToString(), ParsedExpressionConstructType.VariadicFunction, typeof( ParsedExpressionSwitch ))
+        };
+
+        var result = sut.AddBranchingVariadicFunctions( symbols );
+        var actualConstructs = result.GetConstructs()
+            .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
         }
     }
 }
