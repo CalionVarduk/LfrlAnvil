@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Computable.Expressions.Exceptions;
 using LfrlAnvil.Computable.Expressions.Internal;
@@ -11,6 +12,15 @@ namespace LfrlAnvil.Computable.Expressions.Constructs.Variadic;
 
 public sealed class ParsedExpressionSwitch : ParsedExpressionVariadicFunction
 {
+    private readonly ConstructorInfo _exceptionCtor;
+    private readonly ConstantExpression _defaultBodyThrowFormat;
+
+    public ParsedExpressionSwitch()
+    {
+        _exceptionCtor = MemberInfoLocator.FindInvocationExceptionCtor();
+        _defaultBodyThrowFormat = Expression.Constant( Resources.SwitchValueWasNotHandledByAnyCaseFormat );
+    }
+
     [Pure]
     protected internal override Expression Process(IReadOnlyList<Expression> parameters)
     {
@@ -80,13 +90,19 @@ public sealed class ParsedExpressionSwitch : ParsedExpressionVariadicFunction
     }
 
     [Pure]
-    private static (SwitchCase[] Cases, Expression DefaultBody) ExtractSwitchCases(IReadOnlyList<Expression> parameters)
+    private (SwitchCase[] Cases, Expression DefaultBody) ExtractSwitchCases(IReadOnlyList<Expression> parameters)
     {
-        var lastIndex = parameters.Count - 1;
-        var cases = lastIndex == 1 ? Array.Empty<SwitchCase>() : new SwitchCase[lastIndex - 1];
-        var defaultBody = parameters[lastIndex];
+        var casesEnd = parameters.Count - 1;
+        var defaultBody = TryGetSwitchCase( parameters[casesEnd] ) is null ? parameters[casesEnd] : null;
+        if ( defaultBody is null )
+        {
+            defaultBody = CreateDefaultThrowBody( parameters[0] );
+            ++casesEnd;
+        }
 
-        for ( var i = 1; i < lastIndex; ++i )
+        var cases = casesEnd == 1 ? Array.Empty<SwitchCase>() : new SwitchCase[casesEnd - 1];
+
+        for ( var i = 1; i < casesEnd; ++i )
         {
             var switchCase = TryGetSwitchCase( parameters[i] );
             cases[i - 1] = switchCase ?? throw new ArgumentException( Resources.InvalidSwitchCaseParameter( i ), nameof( parameters ) );
@@ -108,6 +124,18 @@ public sealed class ParsedExpressionSwitch : ParsedExpressionVariadicFunction
         defaultBody = ExpressionHelpers.TryUpdateThrowType( defaultBody, expectedType );
 
         return (cases, defaultBody);
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private UnaryExpression CreateDefaultThrowBody(Expression switchValue)
+    {
+        var args = Expression.NewArrayInit(
+            typeof( object ),
+            switchValue.Type == typeof( object ) ? switchValue : Expression.Convert( switchValue, typeof( object ) ) );
+
+        var exception = Expression.New( _exceptionCtor, _defaultBodyThrowFormat, args );
+        return Expression.Throw( exception );
     }
 
     [Pure]

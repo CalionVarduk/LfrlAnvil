@@ -2,6 +2,7 @@
 using System.Linq.Expressions;
 using FluentAssertions.Execution;
 using LfrlAnvil.Computable.Expressions.Constructs.Variadic;
+using LfrlAnvil.Computable.Expressions.Exceptions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
@@ -125,6 +126,62 @@ public class SwitchTests : TestsBase
         var result = sut.Process( parameters );
 
         result.Should().BeSameAs( parameters[^1] );
+    }
+
+    [Fact]
+    public void Process_ShouldReturnSwitchExpressionWithImplicitDefaultBody_WhenValueIsNotConstantAndNoDefaultBodyIsProvided()
+    {
+        var parameters = new Expression[]
+        {
+            Expression.Parameter( typeof( int ) ),
+            Expression.Constant( Expression.SwitchCase( Expression.Constant( "foo" ), Expression.Constant( 0 ) ) )
+        };
+
+        var sut = new ParsedExpressionSwitch();
+
+        var result = sut.Process( parameters );
+
+        using ( new AssertionScope() )
+        {
+            result.NodeType.Should().Be( ExpressionType.Switch );
+            if ( result is not SwitchExpression @switch )
+                return;
+
+            @switch.SwitchValue.Should().BeSameAs( parameters[0] );
+            @switch.Cases.Should().BeSequentiallyEqualTo( (SwitchCase)((ConstantExpression)parameters[1]).Value! );
+            (@switch.DefaultBody?.NodeType).Should().Be( ExpressionType.Throw );
+            if ( @switch.DefaultBody is not UnaryExpression defaultThrow )
+                return;
+
+            defaultThrow.Type.Should().Be( typeof( string ) );
+            defaultThrow.Operand.NodeType.Should().Be( ExpressionType.New );
+            if ( defaultThrow.Operand is not NewExpression exception )
+                return;
+
+            exception.Type.Should().Be( typeof( ParsedExpressionInvocationException ) );
+            exception.Arguments.Should().HaveCount( 2 );
+            if ( exception.Arguments.Count != 2 )
+                return;
+
+            var firstArg = exception.Arguments[0];
+            var secondArg = exception.Arguments[1];
+
+            firstArg.NodeType.Should().Be( ExpressionType.Constant );
+            secondArg.NodeType.Should().Be( ExpressionType.NewArrayInit );
+            if ( firstArg is not ConstantExpression constantArg || secondArg is not NewArrayExpression arrayArg )
+                return;
+
+            constantArg.Value.Should().Be( Resources.SwitchValueWasNotHandledByAnyCaseFormat );
+            arrayArg.Expressions.Should().HaveCount( 1 );
+            if ( arrayArg.Expressions.Count != 1 )
+                return;
+
+            arrayArg.Expressions[0].NodeType.Should().Be( ExpressionType.Convert );
+            if ( arrayArg.Expressions[0] is not UnaryExpression argConvert )
+                return;
+
+            argConvert.Operand.Should().BeSameAs( parameters[0] );
+        }
     }
 
     [Fact]
