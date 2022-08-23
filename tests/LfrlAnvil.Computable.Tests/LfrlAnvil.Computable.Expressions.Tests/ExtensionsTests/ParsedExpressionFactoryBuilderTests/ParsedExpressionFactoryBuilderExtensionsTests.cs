@@ -1778,7 +1778,8 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         {
             (symbols.If.ToString(), ParsedExpressionConstructType.VariadicFunction, typeof( ParsedExpressionIf )),
             (symbols.SwitchCase.ToString(), ParsedExpressionConstructType.VariadicFunction, typeof( ParsedExpressionSwitchCase )),
-            (symbols.Switch.ToString(), ParsedExpressionConstructType.VariadicFunction, typeof( ParsedExpressionSwitch ))
+            (symbols.Switch.ToString(), ParsedExpressionConstructType.VariadicFunction, typeof( ParsedExpressionSwitch )),
+            (symbols.Throw.ToString(), ParsedExpressionConstructType.VariadicFunction, typeof( ParsedExpressionThrow ))
         };
 
         var result = sut.AddBranchingVariadicFunctions( symbols );

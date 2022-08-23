@@ -56,6 +56,7 @@ public static class ParsedExpressionConstructDefaults
     public const string IfSymbol = "if";
     public const string SwitchCaseSymbol = "case";
     public const string SwitchSymbol = "switch";
+    public const string ThrowSymbol = "throw";
 
     public static readonly ParsedExpressionTypeDefinitionSymbols BooleanTypeSymbols = new ParsedExpressionTypeDefinitionSymbols()
         .SetName( "boolean" );

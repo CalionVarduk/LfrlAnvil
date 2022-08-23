@@ -15,6 +15,7 @@ public class ParsedExpressionBranchingVariadicFunctionSymbolsTests : TestsBase
             sut.If.ToString().Should().Be( "if" );
             sut.SwitchCase.ToString().Should().Be( "case" );
             sut.Switch.ToString().Should().Be( "switch" );
+            sut.Throw.ToString().Should().Be( "throw" );
         }
     }
 
@@ -28,6 +29,7 @@ public class ParsedExpressionBranchingVariadicFunctionSymbolsTests : TestsBase
             sut.If.ToString().Should().Be( "if" );
             sut.SwitchCase.ToString().Should().Be( "case" );
             sut.Switch.ToString().Should().Be( "switch" );
+            sut.Throw.ToString().Should().Be( "throw" );
         }
     }
 
@@ -37,11 +39,12 @@ public class ParsedExpressionBranchingVariadicFunctionSymbolsTests : TestsBase
         var sut = new ParsedExpressionBranchingVariadicFunctionSymbols()
             .SetIf( "foo" )
             .SetSwitchCase( "bar" )
-            .SetSwitch( "qux" );
+            .SetSwitch( "qux" )
+            .SetThrow( "foobar" );
 
         var result = sut.ToString();
 
-        result.Should().Be( "If: 'foo', Switch: 'qux', SwitchCase: 'bar'" );
+        result.Should().Be( "If: 'foo', Switch: 'qux', SwitchCase: 'bar', Throw: 'foobar'" );
     }
 
     [Fact]
@@ -55,6 +58,7 @@ public class ParsedExpressionBranchingVariadicFunctionSymbolsTests : TestsBase
             sut.If.ToString().Should().Be( "foo" );
             sut.SwitchCase.ToString().Should().Be( "case" );
             sut.Switch.ToString().Should().Be( "switch" );
+            sut.Throw.ToString().Should().Be( "throw" );
         }
     }
 
@@ -69,6 +73,7 @@ public class ParsedExpressionBranchingVariadicFunctionSymbolsTests : TestsBase
             sut.If.ToString().Should().Be( "if" );
             sut.SwitchCase.ToString().Should().Be( "foo" );
             sut.Switch.ToString().Should().Be( "switch" );
+            sut.Throw.ToString().Should().Be( "throw" );
         }
     }
 
@@ -83,6 +88,22 @@ public class ParsedExpressionBranchingVariadicFunctionSymbolsTests : TestsBase
             sut.If.ToString().Should().Be( "if" );
             sut.SwitchCase.ToString().Should().Be( "case" );
             sut.Switch.ToString().Should().Be( "foo" );
+            sut.Throw.ToString().Should().Be( "throw" );
+        }
+    }
+
+    [Fact]
+    public void SetThrow_ShouldReturnCorrectResult()
+    {
+        var sut = new ParsedExpressionBranchingVariadicFunctionSymbols()
+            .SetThrow( "foo" );
+
+        using ( new AssertionScope() )
+        {
+            sut.If.ToString().Should().Be( "if" );
+            sut.SwitchCase.ToString().Should().Be( "case" );
+            sut.Switch.ToString().Should().Be( "switch" );
+            sut.Throw.ToString().Should().Be( "foo" );
         }
     }
 }

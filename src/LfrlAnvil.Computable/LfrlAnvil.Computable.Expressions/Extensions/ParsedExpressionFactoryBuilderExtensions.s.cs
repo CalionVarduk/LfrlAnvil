@@ -928,7 +928,8 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return builder
             .AddVariadicFunction( symbols.If, new ParsedExpressionIf() )
             .AddVariadicFunction( symbols.SwitchCase, new ParsedExpressionSwitchCase() )
-            .AddVariadicFunction( symbols.Switch, new ParsedExpressionSwitch() );
+            .AddVariadicFunction( symbols.Switch, new ParsedExpressionSwitch() )
+            .AddVariadicFunction( symbols.Throw, new ParsedExpressionThrow() );
     }
 
     private static ParsedExpressionFactoryBuilder AddTypeDefinition(
