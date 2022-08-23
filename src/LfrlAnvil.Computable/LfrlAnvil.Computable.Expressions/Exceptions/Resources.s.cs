@@ -14,7 +14,9 @@ internal static class Resources
 {
     internal const string CannotBindValueToArgumentThatDoesNotExist = "Cannot bind a value to an argument that doesn't exist.";
     internal const string InvocationHasThrownAnException = "Invocation has thrown an exception.";
-    internal const string ExpectedAllThrowParametersToBeOfStringType = "Expected all THROW parameters to be of string type.";
+
+    internal const string CannotDetermineIfReturnType =
+        "Cannot determine IF return type due to both TRUE and FALSE bodies representing throw expressions.";
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
