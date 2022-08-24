@@ -122,6 +122,10 @@ public class ExpressionTokenizerTestsData
             { "false(", "false" },
             { "true)", "true" },
             { "false)", "false" },
+            { "true[", "true" },
+            { "false[", "false" },
+            { "true]", "true" },
+            { "false]", "false" },
             { "true;", "true" },
             { "false;", "false" },
             { "true'", "true" },
@@ -148,6 +152,8 @@ public class ExpressionTokenizerTestsData
             { "foo ", "foo" },
             { "foo(", "foo" },
             { "foo)", "foo" },
+            { "foo[", "foo" },
+            { "foo]", "foo" },
             { "foo;", "foo" },
             { "foo'", "foo" }
         };
@@ -388,6 +394,123 @@ public class ExpressionTokenizerTestsData
                 }
             },
             {
+                "a[b",
+                noTokens,
+                new[]
+                {
+                    new Token( IntermediateTokenType.Argument, "a" ),
+                    new Token( IntermediateTokenType.OpenedSquareBracket, "[" ),
+                    new Token( IntermediateTokenType.Argument, "b" )
+                }
+            },
+            {
+                "a[[b",
+                noTokens,
+                new[]
+                {
+                    new Token( IntermediateTokenType.Argument, "a" ),
+                    new Token( IntermediateTokenType.OpenedSquareBracket, "[" ),
+                    new Token( IntermediateTokenType.OpenedSquareBracket, "[" ),
+                    new Token( IntermediateTokenType.Argument, "b" )
+                }
+            },
+            {
+                "a[[b",
+                new[] { "[[" },
+                new[]
+                {
+                    new Token( IntermediateTokenType.Argument, "a" ),
+                    new Token( IntermediateTokenType.Constructs, "[[" ),
+                    new Token( IntermediateTokenType.Argument, "b" )
+                }
+            },
+            {
+                "a[+b",
+                new[] { "+" },
+                new[]
+                {
+                    new Token( IntermediateTokenType.Argument, "a" ),
+                    new Token( IntermediateTokenType.OpenedSquareBracket, "[" ),
+                    new Token( IntermediateTokenType.Constructs, "+" ),
+                    new Token( IntermediateTokenType.Argument, "b" )
+                }
+            },
+            {
+                "a+[b",
+                new[] { "+" },
+                new[]
+                {
+                    new Token( IntermediateTokenType.Argument, "a" ),
+                    new Token( IntermediateTokenType.Constructs, "+" ),
+                    new Token( IntermediateTokenType.OpenedSquareBracket, "[" ),
+                    new Token( IntermediateTokenType.Argument, "b" )
+                }
+            },
+            {
+                "a]b",
+                noTokens,
+                new[]
+                {
+                    new Token( IntermediateTokenType.Argument, "a" ),
+                    new Token( IntermediateTokenType.ClosedSquareBracket, "]" ),
+                    new Token( IntermediateTokenType.Argument, "b" )
+                }
+            },
+            {
+                "a]]b",
+                noTokens,
+                new[]
+                {
+                    new Token( IntermediateTokenType.Argument, "a" ),
+                    new Token( IntermediateTokenType.ClosedSquareBracket, "]" ),
+                    new Token( IntermediateTokenType.ClosedSquareBracket, "]" ),
+                    new Token( IntermediateTokenType.Argument, "b" )
+                }
+            },
+            {
+                "a]]b",
+                new[] { "]]" },
+                new[]
+                {
+                    new Token( IntermediateTokenType.Argument, "a" ),
+                    new Token( IntermediateTokenType.Constructs, "]]" ),
+                    new Token( IntermediateTokenType.Argument, "b" )
+                }
+            },
+            {
+                "a]+b",
+                new[] { "+" },
+                new[]
+                {
+                    new Token( IntermediateTokenType.Argument, "a" ),
+                    new Token( IntermediateTokenType.ClosedSquareBracket, "]" ),
+                    new Token( IntermediateTokenType.Constructs, "+" ),
+                    new Token( IntermediateTokenType.Argument, "b" )
+                }
+            },
+            {
+                "a+]b",
+                new[] { "+" },
+                new[]
+                {
+                    new Token( IntermediateTokenType.Argument, "a" ),
+                    new Token( IntermediateTokenType.Constructs, "+" ),
+                    new Token( IntermediateTokenType.ClosedSquareBracket, "]" ),
+                    new Token( IntermediateTokenType.Argument, "b" )
+                }
+            },
+            {
+                "[[]]",
+                noTokens,
+                new[]
+                {
+                    new Token( IntermediateTokenType.OpenedSquareBracket, "[" ),
+                    new Token( IntermediateTokenType.OpenedSquareBracket, "[" ),
+                    new Token( IntermediateTokenType.ClosedSquareBracket, "]" ),
+                    new Token( IntermediateTokenType.ClosedSquareBracket, "]" )
+                }
+            },
+            {
                 "Tuue|FuLSe",
                 new[] { "|" },
                 new[]
@@ -472,6 +595,27 @@ public class ExpressionTokenizerTestsData
                 }
             },
             {
+                "int[0,1,2,[3,4]]",
+                new[] { "int" },
+                new[]
+                {
+                    new Token( IntermediateTokenType.Constructs, "int" ),
+                    new Token( IntermediateTokenType.OpenedSquareBracket, "[" ),
+                    new Token( IntermediateTokenType.NumberConstant, "0" ),
+                    new Token( IntermediateTokenType.ElementSeparator, "," ),
+                    new Token( IntermediateTokenType.NumberConstant, "1" ),
+                    new Token( IntermediateTokenType.ElementSeparator, "," ),
+                    new Token( IntermediateTokenType.NumberConstant, "2" ),
+                    new Token( IntermediateTokenType.ElementSeparator, "," ),
+                    new Token( IntermediateTokenType.OpenedSquareBracket, "[" ),
+                    new Token( IntermediateTokenType.NumberConstant, "3" ),
+                    new Token( IntermediateTokenType.ElementSeparator, "," ),
+                    new Token( IntermediateTokenType.NumberConstant, "4" ),
+                    new Token( IntermediateTokenType.ClosedSquareBracket, "]" ),
+                    new Token( IntermediateTokenType.ClosedSquareBracket, "]" )
+                }
+            },
+            {
                 "a+b*c/d mod e.calc() ++(f-g--h*func(+mixed i/j,f,g*h)/(1_234.567-'foo'))",
                 new[] { "+", "*", "/", "mod", "++", "-", "--", "func", "+mixed" },
                 new[]
@@ -533,6 +677,8 @@ public class ExpressionTokenizerTestsData
             {
                 IntermediateTokenType.OpenedParenthesis => IntermediateToken.CreateOpenedParenthesis( s ),
                 IntermediateTokenType.ClosedParenthesis => IntermediateToken.CreateClosedParenthesis( s ),
+                IntermediateTokenType.OpenedSquareBracket => IntermediateToken.CreateOpenedSquareBracket( s ),
+                IntermediateTokenType.ClosedSquareBracket => IntermediateToken.CreateClosedSquareBracket( s ),
                 IntermediateTokenType.ElementSeparator => IntermediateToken.CreateElementSeparator( s ),
                 IntermediateTokenType.InlineFunctionSeparator => IntermediateToken.CreateInlineFunctionSeparator( s ),
                 IntermediateTokenType.MemberAccess => IntermediateToken.CreateMemberAccess( s ),

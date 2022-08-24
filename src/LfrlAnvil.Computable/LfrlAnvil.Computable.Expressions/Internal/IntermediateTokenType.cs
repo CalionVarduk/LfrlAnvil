@@ -9,7 +9,9 @@ internal enum IntermediateTokenType : byte
     Constructs = 4,
     OpenedParenthesis = 5,
     ClosedParenthesis = 6,
-    InlineFunctionSeparator = 7,
-    ElementSeparator = 8,
-    MemberAccess = 9
+    OpenedSquareBracket = 7,
+    ClosedSquareBracket = 8,
+    InlineFunctionSeparator = 9,
+    ElementSeparator = 10,
+    MemberAccess = 11
 }

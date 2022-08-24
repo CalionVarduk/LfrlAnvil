@@ -37,7 +37,7 @@ public class ExpressionTokenizerTests : TestsBase
     }
 
     [Fact]
-    public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleOpenParenthesis()
+    public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleOpenedParenthesis()
     {
         var input = "(";
         var expected = IntermediateToken.CreateOpenedParenthesis( StringSlice.Create( input ) );
@@ -52,10 +52,40 @@ public class ExpressionTokenizerTests : TestsBase
     }
 
     [Fact]
-    public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleCloseParenthesis()
+    public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleClosedParenthesis()
     {
         var input = ")";
         var expected = IntermediateToken.CreateClosedParenthesis( StringSlice.Create( input ) );
+        var configuration = new ParsedExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
+        var sut = new ExpressionTokenizer( input, configuration );
+
+        var result = new List<IntermediateToken>();
+        while ( sut.ReadNextToken( out var token ) )
+            result.Add( token );
+
+        result.Should().BeSequentiallyEqualTo( expected );
+    }
+
+    [Fact]
+    public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleOpenedSquareBracket()
+    {
+        var input = "[";
+        var expected = IntermediateToken.CreateOpenedSquareBracket( StringSlice.Create( input ) );
+        var configuration = new ParsedExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
+        var sut = new ExpressionTokenizer( input, configuration );
+
+        var result = new List<IntermediateToken>();
+        while ( sut.ReadNextToken( out var token ) )
+            result.Add( token );
+
+        result.Should().BeSequentiallyEqualTo( expected );
+    }
+
+    [Fact]
+    public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleClosedSquareBracket()
+    {
+        var input = "]";
+        var expected = IntermediateToken.CreateClosedSquareBracket( StringSlice.Create( input ) );
         var configuration = new ParsedExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
         var sut = new ExpressionTokenizer( input, configuration );
 

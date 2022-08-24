@@ -260,6 +260,20 @@ internal struct ExpressionTokenizerSubStream
                 _remainingSymbols = _remainingSymbols.Slice( 1 );
                 return ExpressionTokenReader.ReadMemberAccess( _remainingSymbols.Source, startIndex );
             }
+
+            case TokenConstants.OpenedSquareBracket:
+            {
+                var startIndex = _remainingSymbols.StartIndex;
+                _remainingSymbols = _remainingSymbols.Slice( 1 );
+                return ExpressionTokenReader.ReadOpenedSquareBracket( _remainingSymbols.Source, startIndex );
+            }
+
+            case TokenConstants.ClosedSquareBracket:
+            {
+                var startIndex = _remainingSymbols.StartIndex;
+                _remainingSymbols = _remainingSymbols.Slice( 1 );
+                return ExpressionTokenReader.ReadClosedSquareBracket( _remainingSymbols.Source, startIndex );
+            }
         }
 
         return null;

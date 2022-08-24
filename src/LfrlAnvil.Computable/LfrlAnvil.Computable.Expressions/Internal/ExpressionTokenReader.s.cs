@@ -25,6 +25,24 @@ internal static class ExpressionTokenReader
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static IntermediateToken ReadOpenedSquareBracket(string input, int index)
+    {
+        Assume.IsLessThan( index, input.Length, nameof( index ) );
+        var result = IntermediateToken.CreateOpenedSquareBracket( StringSlice.Create( input, index, length: 1 ) );
+        return result;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static IntermediateToken ReadClosedSquareBracket(string input, int index)
+    {
+        Assume.IsLessThan( index, input.Length, nameof( index ) );
+        var result = IntermediateToken.CreateClosedSquareBracket( StringSlice.Create( input, index, length: 1 ) );
+        return result;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken ReadElementSeparator(string input, int index)
     {
         Assume.IsLessThan( index, input.Length, nameof( index ) );

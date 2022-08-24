@@ -46,6 +46,28 @@ internal readonly struct IntermediateToken
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static IntermediateToken CreateOpenedSquareBracket(StringSlice symbol)
+    {
+        Assume.True(
+            symbol.Equals( TokenConstants.OpenedSquareBracket ),
+            "Assumed symbol to be " + nameof( TokenConstants.OpenedSquareBracket ) + "." );
+
+        return new IntermediateToken( IntermediateTokenType.OpenedSquareBracket, symbol );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static IntermediateToken CreateClosedSquareBracket(StringSlice symbol)
+    {
+        Assume.True(
+            symbol.Equals( TokenConstants.ClosedSquareBracket ),
+            "Assumed symbol to be " + nameof( TokenConstants.ClosedSquareBracket ) + "." );
+
+        return new IntermediateToken( IntermediateTokenType.ClosedSquareBracket, symbol );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateInlineFunctionSeparator(StringSlice symbol)
     {
         Assume.True(
