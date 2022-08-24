@@ -123,6 +123,18 @@ public class ParsedExpressionBuilderError
     }
 
     [Pure]
+    internal static ParsedExpressionBuilderError CreateUnexpectedOpenedSquareBracket(IntermediateToken token)
+    {
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.UnexpectedOpenedSquareBracket, token.Symbol );
+    }
+
+    [Pure]
+    internal static ParsedExpressionBuilderError CreateUnexpectedClosedSquareBracket(IntermediateToken token)
+    {
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.UnexpectedClosedSquareBracket, token.Symbol );
+    }
+
+    [Pure]
     internal static ParsedExpressionBuilderError CreateUnexpectedMemberAccess(IntermediateToken token)
     {
         return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.UnexpectedMemberAccess, token.Symbol );
@@ -294,6 +306,26 @@ public class ParsedExpressionBuilderError
     internal static ParsedExpressionBuilderError CreateUnexpectedElementSeparator(IntermediateToken token)
     {
         return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.UnexpectedElementSeparator, token.Symbol );
+    }
+
+    [Pure]
+    internal static ParsedExpressionBuilderError CreateInlineArrayCouldNotBeResolved(
+        IntermediateToken token,
+        Chain<ParsedExpressionBuilderError> elementErrors)
+    {
+        return new ParsedExpressionBuilderAggregateError(
+            ParsedExpressionBuilderErrorType.InlineArrayCouldNotBeResolved,
+            elementErrors,
+            token.Symbol );
+    }
+
+    [Pure]
+    internal static ParsedExpressionBuilderError CreateArrayElementTypeIsNotCompatibleWithArrayType(Type elementType, int index)
+    {
+        return new ParsedExpressionBuilderArrayElementTypeError(
+            ParsedExpressionBuilderErrorType.ArrayElementTypeIsNotCompatibleWithArrayType,
+            elementType,
+            index );
     }
 
     [Pure]

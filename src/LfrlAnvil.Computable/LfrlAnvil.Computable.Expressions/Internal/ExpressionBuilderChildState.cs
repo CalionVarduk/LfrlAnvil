@@ -1,11 +1,12 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
 
 internal sealed class ExpressionBuilderChildState : ExpressionBuilderState
 {
-    internal ExpressionBuilderChildState(ExpressionBuilderState parentState)
-        : base( parentState, Expectation.OpenedParenthesis | Expectation.FunctionParametersStart )
+    private ExpressionBuilderChildState(ExpressionBuilderState parentState, Expectation expectation, int parenthesesCount)
+        : base( parentState, expectation, parenthesesCount )
     {
         ParentState = parentState;
         ElementCount = 0;
@@ -18,5 +19,25 @@ internal sealed class ExpressionBuilderChildState : ExpressionBuilderState
     internal void IncreaseElementCount()
     {
         ++ElementCount;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static ExpressionBuilderChildState CreateFunctionParameters(ExpressionBuilderState parentState)
+    {
+        return new ExpressionBuilderChildState(
+            parentState,
+            Expectation.OpenedParenthesis | Expectation.FunctionParametersStart,
+            parenthesesCount: -1 );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static ExpressionBuilderChildState CreateArrayElements(ExpressionBuilderState parentState)
+    {
+        return new ExpressionBuilderChildState(
+            parentState,
+            Expectation.ArrayElementsStart,
+            parenthesesCount: 0 );
     }
 }

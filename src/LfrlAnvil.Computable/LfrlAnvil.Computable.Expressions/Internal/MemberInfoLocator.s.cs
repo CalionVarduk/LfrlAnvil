@@ -77,4 +77,30 @@ internal static class MemberInfoLocator
 
         return result;
     }
+
+    [Pure]
+    internal static MethodInfo FindArrayEmptyMethod(Type elementType)
+    {
+        var genericMethod = typeof( Array ).GetMethod(
+            nameof( Array.Empty ),
+            BindingFlags.Public | BindingFlags.Static,
+            Array.Empty<Type>() )!;
+
+        var result = genericMethod.MakeGenericMethod( elementType );
+        return result;
+    }
+
+    [Pure]
+    internal static ConstructorInfo FindArrayCtor(Type arrayType)
+    {
+        var result = arrayType.GetConstructor( new[] { typeof( int ) } )!;
+        return result;
+    }
+
+    [Pure]
+    internal static MethodInfo FindArraySetMethod(Type arrayType)
+    {
+        var result = arrayType.GetMethod( "Set" )!;
+        return result;
+    }
 }

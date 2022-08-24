@@ -51,7 +51,12 @@ public class ParsedExpressionFactoryTestsData
             "foo() 12.34",
             "foo() false",
             "foo() a",
-            "foo() Zero"
+            "foo() Zero",
+            "int[] 'qux'",
+            "int[] 12.34",
+            "int[] false",
+            "int[] a",
+            "int[] Zero"
         };
     }
 
@@ -64,7 +69,8 @@ public class ParsedExpressionFactoryTestsData
             "false foo()",
             "a foo()",
             "Zero foo()",
-            "foo() foo()"
+            "foo() foo()",
+            "int[] foo()"
         };
     }
 
@@ -77,7 +83,8 @@ public class ParsedExpressionFactoryTestsData
             "false -",
             "a -",
             "Zero -",
-            "foo() -"
+            "foo() -",
+            "int[] -"
         };
     }
 
@@ -90,7 +97,8 @@ public class ParsedExpressionFactoryTestsData
             "false [string]",
             "a [string]",
             "Zero [string]",
-            "foo() [string]"
+            "foo() [string]",
+            "int[] [string]"
         };
     }
 
@@ -103,7 +111,22 @@ public class ParsedExpressionFactoryTestsData
             "false (",
             "a (",
             "Zero (",
-            "foo() ("
+            "foo() (",
+            "int[] ("
+        };
+    }
+
+    public static TheoryData<string> GetOperandFollowedByTypeDeclarationData(IFixture fixture)
+    {
+        return new TheoryData<string>
+        {
+            "'foobar' int",
+            "12.34 int",
+            "false int",
+            "a int",
+            "Zero int",
+            "foo() int",
+            "int[] int"
         };
     }
 
@@ -118,18 +141,21 @@ public class ParsedExpressionFactoryTestsData
             "a )",
             "Zero )",
             "foo() )",
+            "int[] )",
             "( 'foobar' ) )",
             "( 12.34 ) )",
             "( false ) )",
             "( a ) )",
             "( Zero ) )",
             "( foo() ) )",
+            "( int[] ) )",
             "- 'foobar' )",
             "- 12.34 )",
             "- false )",
             "- a )",
             "- Zero )",
             "- foo() )",
+            "- int[] )",
             "'foobar' ^ )",
             "12.34 ^ )",
             "false ^ )",
@@ -1583,24 +1609,57 @@ public class ParsedExpressionFactoryTestsData
         };
     }
 
-    public static TheoryData<string> GetTypeDeclarationIsUsedOutsideOfDelegateParametersDefinitionData(IFixture fixture)
+    public static TheoryData<string, string> GetExpressionContainsFunctionData(IFixture fixture)
     {
-        return new TheoryData<string>
+        return new TheoryData<string, string>
         {
-            "int",
-            "int 'foobar'",
-            "int 12.34",
-            "int false",
-            "int Zero",
-            "int foo()",
-            "int a",
-            "- int",
-            "int ^",
-            "int + a",
-            "a + int",
-            "[string] int",
-            "int ToString",
-            "( int )"
+            { "foo( 'a', 'b', 'c' )", "Func(a,b,c)" },
+            { "foo( ( 'a' ), ( 'b' ), ( 'c' ) )", "Func(a,b,c)" },
+            { "foo( 'a', 'b', bar() )", "Func(a,b,Func())" },
+            { "foo( 'a', foo( 'b', 'c', 'd' ), 'e' )", "Func(a,Func(b,c,d),e)" },
+            { "foo( bar(), foo( ( bar() ) , foo( 'a' , 'b' , 'c' ) , 'd' ) , 'e' )", "Func(Func(),Func(Func(),Func(a,b,c),d),e)" }
+        };
+    }
+
+    public static TheoryData<string, string> GetPostfixUnaryOperatorAmbiguityIsResolvedInFunctionParametersData(IFixture fixture)
+    {
+        return new TheoryData<string, string>
+        {
+            { "foo( 'a' + , 'b' , 'c' )", "Func(( a|PostOp ),b,c)" },
+            { "foo( 'a' , 'b' + , 'c' )", "Func(a,( b|PostOp ),c)" },
+            { "foo( 'a' , 'b' , 'c' + )", "Func(a,b,( c|PostOp ))" }
+        };
+    }
+
+    public static TheoryData<string, string> GetExpressionContainsVariadicFunctionData(IFixture fixture)
+    {
+        return new TheoryData<string, string>
+        {
+            { "foo()", "Variadic()" },
+            { "foo( 'a' )", "Variadic(a)" },
+            { "foo( 'a' , 'b' , 'c' )", "Variadic(a,b,c)" },
+            { "foo( foo() , 'a' , foo( 'b' , 'c' ) )", "Variadic(Variadic(),a,Variadic(b,c))" }
+        };
+    }
+
+    public static TheoryData<string, string[], string[]> GetExpressionContainsInlineArrayData(IFixture fixture)
+    {
+        return new TheoryData<string, string[], string[]>
+        {
+            { "string[ 'a', 'b', 'c' ]", Array.Empty<string>(), new[] { "a", "b", "c" } },
+            { "string[ ( 'a' ), ( 'b' ), ( 'c' ) ]", Array.Empty<string>(), new[] { "a", "b", "c" } },
+            { "string[ 'a', 'b', p0 ]", new[] { "c" }, new[] { "a", "b", "c" } },
+            { "string[ p0, p1 ]", new[] { "a", "b" }, new[] { "a", "b" } }
+        };
+    }
+
+    public static TheoryData<string, string[]> GetPostfixUnaryOperatorAmbiguityIsResolvedInInlineArrayElementsData(IFixture fixture)
+    {
+        return new TheoryData<string, string[]>
+        {
+            { "string[ 'a' + , 'b' , 'c' ]", new[] { "( a|PostOp )", "b", "c" } },
+            { "string[ 'a' , 'b' + , 'c' ]", new[] { "a", "( b|PostOp )", "c" } },
+            { "string[ 'a' , 'b' , 'c' + ]", new[] { "a", "b", "( c|PostOp )" } }
         };
     }
 }
