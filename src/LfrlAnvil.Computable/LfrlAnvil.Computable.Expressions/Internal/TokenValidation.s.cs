@@ -45,7 +45,11 @@ internal static class TokenValidation
         if ( token.Length == 0 )
             return false;
 
-        if ( TokenConstants.IsBooleanTrue( token ) || TokenConstants.IsBooleanFalse( token ) )
+        if ( TokenConstants.IsBooleanTrue( token ) ||
+            TokenConstants.IsBooleanFalse( token ) ||
+            token.Equals( TokenConstants.OpenedSquareBracket ) ||
+            token.Equals( TokenConstants.ClosedSquareBracket ) ||
+            TokenConstants.IsSquareBrackets( token ) )
             return false;
 
         var source = token.Source;
@@ -89,6 +93,8 @@ internal static class TokenValidation
             symbol != TokenConstants.ScientificNotationNegativeExponentOperator &&
             symbol != TokenConstants.OpenedParenthesis &&
             symbol != TokenConstants.ClosedParenthesis &&
+            symbol != TokenConstants.OpenedSquareBracket &&
+            symbol != TokenConstants.ClosedSquareBracket &&
             symbol != TokenConstants.InlineFunctionSeparator &&
             (char.IsLetter( symbol ) || char.IsSymbol( symbol ) || char.IsPunctuation( symbol ));
     }
@@ -97,6 +103,8 @@ internal static class TokenValidation
     internal static bool IsStringDelimiterSymbolValid(char symbol)
     {
         return symbol != TokenConstants.Underscore &&
+            symbol != TokenConstants.OpenedSquareBracket &&
+            symbol != TokenConstants.ClosedSquareBracket &&
             symbol != TokenConstants.ScientificNotationPositiveExponentOperator &&
             symbol != TokenConstants.ScientificNotationNegativeExponentOperator &&
             ! TokenConstants.IsReservedSymbol( symbol ) &&

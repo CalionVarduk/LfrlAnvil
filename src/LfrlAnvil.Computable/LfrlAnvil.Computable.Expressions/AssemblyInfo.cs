@@ -3,7 +3,9 @@
 [assembly: InternalsVisibleTo( "LfrlAnvil.Computable.Expressions.Tests" )]
 
 // TODO:
-// Add branching function constructs (start with if-else, then add switch, maybe also throw?)
+// add filtering out of unused arguments e.g. 'a * 0' where '*' is a specialized multiplication operator that recognizes 0
+// ^ and returns a constant '0', making the 'a' argument unused & safe to completely remove from the expression
+//
 // add array support
 // add indexer member access support
 // Add inline function support (defining named function in the same input, that can be used e.g. as branching function's argument)

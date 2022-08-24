@@ -8,6 +8,8 @@ internal static class TokenConstants
     internal const char Underscore = '_';
     internal const char OpenedParenthesis = '(';
     internal const char ClosedParenthesis = ')';
+    internal const char OpenedSquareBracket = '[';
+    internal const char ClosedSquareBracket = ']';
     internal const char InlineFunctionSeparator = ';';
     internal const char ElementSeparator = ',';
     internal const char MemberAccess = '.';
@@ -69,6 +71,15 @@ internal static class TokenConstants
         }
 
         return false;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static bool IsSquareBrackets(StringSlice text)
+    {
+        return text.Length == 2 &&
+            text.Source[text.StartIndex] == OpenedSquareBracket &&
+            text.Source[text.StartIndex + 1] == ClosedSquareBracket;
     }
 
     [Pure]
