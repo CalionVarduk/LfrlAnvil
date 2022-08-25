@@ -3,11 +3,10 @@
 [assembly: InternalsVisibleTo( "LfrlAnvil.Computable.Expressions.Tests" )]
 
 // TODO:
+// add to type registering extensions a possibility to register additional constant construct containing the CLR type ref
 // add filtering out of unused arguments e.g. 'a * 0' where '*' is a specialized multiplication operator that recognizes 0
 // ^ and returns a constant '0', making the 'a' argument unused & safe to completely remove from the expression
 //
-// add array support
-// add indexer member access support
 // Add inline function support (defining named function in the same input, that can be used e.g. as branching function's argument)
 // ^ this would go very well together with the thing below
 //
@@ -22,14 +21,7 @@
 // - if the next token is not ',' & not '(', then treat the whole thing as a "normal", non-callable value
 // - if the next token is '(', then there is a possibility, that this is still a func, whose first parameter is also a func, ad infinitum
 //
-// add possibility to write a const-sized array, use '[' and ']' symbols as delimiters
-// values can be resolved exactly like function parameters, separated by ','
-// array type is inferred from its first element
-// if array is empty, then its type is inferred from the parameter type, if it is used as a function parameter
-// if not, then its type will be 'System.Object' (make it configurable)
-// if all array values are const, then array is also made into const
-// note on array type: type declaration can be used to specify the array type e.g. 'int[0,1,2]' instead of '[0,1,2]' or 'int[]'
-// a branching function 'reduce' could be added to consume arrays
+// a variadic function 'reduce' could be added to consume arrays
 //
 // type declaration:
 // this can be used to specify 'anonymous' delegate parameter types explicitly

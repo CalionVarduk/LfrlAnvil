@@ -254,7 +254,21 @@ public class ParsedExpressionBuilderError
         return new ParsedExpressionBuilderMissingMemberError(
             ParsedExpressionBuilderErrorType.MemberCouldNotBeResolved,
             token.Symbol,
-            targetType );
+            targetType,
+            parameterTypes: Array.Empty<Type>() );
+    }
+
+    [Pure]
+    internal static ParsedExpressionBuilderError CreateIndexerCouldNotBeResolved(
+        IntermediateToken token,
+        Type targetType,
+        IReadOnlyList<Type> parameterTypes)
+    {
+        return new ParsedExpressionBuilderMissingMemberError(
+            ParsedExpressionBuilderErrorType.IndexerCouldNotBeResolved,
+            token.Symbol,
+            targetType,
+            parameterTypes );
     }
 
     [Pure]

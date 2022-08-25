@@ -57,7 +57,7 @@ internal class ExpressionBuilderState
         _operandCount = 0;
         _operatorCount = 0;
         _parenthesesCount = parenthesesCount;
-        LastHandledToken = null;
+        LastHandledToken = prototype.LastHandledToken;
         _rootState = prototype._rootState;
         _expectation = initialState;
     }
@@ -269,6 +269,7 @@ internal class ExpressionBuilderState
     {
         AssumeTokenType( token, IntermediateTokenType.Argument );
         AssumeStateExpectation( Expectation.MemberName );
+        Assume.IsNotEmpty( _operandStack, nameof( _operandStack ) );
 
         var operand = _operandStack.Pop();
 
@@ -496,10 +497,16 @@ internal class ExpressionBuilderState
     {
         AssumeTokenType( token, IntermediateTokenType.OpenedSquareBracket );
 
-        // TODO: add handling as indexer start
         if ( Expects( Expectation.ArrayElementsStart ) )
         {
             _expectation = Expectation.Operand | Expectation.OpenedParenthesis | Expectation.PrefixUnaryConstruct;
+            return Chain<ParsedExpressionBuilderError>.Empty;
+        }
+
+        if ( Expects( Expectation.PostfixUnaryConstruct ) )
+        {
+            _expectation = (_expectation & Expectation.PrefixUnaryConstructResolution) | Expectation.IndexerResolution;
+            _rootState.ActiveState = ExpressionBuilderChildState.CreateIndexerParameters( this );
             return Chain<ParsedExpressionBuilderError>.Empty;
         }
 
@@ -510,9 +517,8 @@ internal class ExpressionBuilderState
     {
         AssumeTokenType( token, IntermediateTokenType.ClosedSquareBracket );
 
-        // TODO: add handling as indexer end
         if ( ! IsRoot && ! Expects( Expectation.ArrayElementsStart ) )
-            return HandleArrayElementsEnd( token );
+            return HandleArrayElementsOrIndexerParametersEnd( token );
 
         return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedClosedSquareBracket( token ) );
     }
@@ -523,7 +529,7 @@ internal class ExpressionBuilderState
         AssumeTokenType( token, IntermediateTokenType.ClosedParenthesis );
 
         var self = (ExpressionBuilderChildState)this;
-        if ( self.ParentState.Expects( Expectation.ArrayResolution ) )
+        if ( ! self.ParentState.Expects( Expectation.FunctionResolution ) )
             return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedClosedParenthesis( token ) );
 
         Assume.IsNotNull( LastHandledToken, nameof( LastHandledToken ) );
@@ -568,7 +574,7 @@ internal class ExpressionBuilderState
             : ProcessVariadicFunction( functionToken, parameters );
     }
 
-    private Chain<ParsedExpressionBuilderError> HandleArrayElementsEnd(IntermediateToken token)
+    private Chain<ParsedExpressionBuilderError> HandleArrayElementsOrIndexerParametersEnd(IntermediateToken token)
     {
         Assume.False( IsRoot, "Assumed the state to be a child state." );
         AssumeTokenType( token, IntermediateTokenType.ClosedSquareBracket );
@@ -593,7 +599,9 @@ internal class ExpressionBuilderState
             self.ParentState._operandStack.Push( _operandStack.Pop() );
         }
 
-        return self.ParentState.HandleArrayResolution( token, self.ElementCount );
+        return self.ParentState.Expects( Expectation.ArrayResolution )
+            ? self.ParentState.HandleArrayResolution( token, self.ElementCount )
+            : self.ParentState.HandleIndexerResolution( token, self.ElementCount );
     }
 
     private Chain<ParsedExpressionBuilderError> HandleArrayResolution(IntermediateToken token, int elementCount)
@@ -611,6 +619,33 @@ internal class ExpressionBuilderState
 
         var elements = _operandStack.PopAndReturn( elementCount );
         return ProcessInlineArray( typeDeclarationToken, elements );
+    }
+
+    private Chain<ParsedExpressionBuilderError> HandleIndexerResolution(IntermediateToken token, int parameterCount)
+    {
+        Assume.IsGreaterThanOrEqualTo( parameterCount, 0, nameof( parameterCount ) );
+        Assume.IsNotNull( LastHandledToken, nameof( LastHandledToken ) );
+        AssumeStateExpectation( Expectation.IndexerResolution );
+
+        var startIndexerToken = LastHandledToken.Value;
+        LastHandledToken = token;
+        _rootState.ActiveState = this;
+
+        var parameters = _operandStack.PopAndReturn( parameterCount );
+        Assume.IsNotEmpty( _operandStack, nameof( _operandStack ) );
+
+        var operand = _operandStack.Pop();
+
+        var parameterTypes = parameters.Length == 0 ? Array.Empty<Type>() : new Type[parameters.Length];
+        for ( var i = 0; i < parameters.Length; ++i )
+            parameterTypes[i] = parameters[i].Type;
+
+        var indexer = MemberInfoLocator.TryFindIndexer( operand.Type, parameterTypes, _configuration.MemberBindingFlags );
+        if ( indexer is not null )
+            return ProcessIndexer( startIndexerToken, operand, indexer, parameters );
+
+        return Chain.Create(
+            ParsedExpressionBuilderError.CreateIndexerCouldNotBeResolved( startIndexerToken, operand.Type, parameterTypes ) );
     }
 
     private Chain<ParsedExpressionBuilderError> HandleMemberAccess(IntermediateToken token)
@@ -925,31 +960,47 @@ internal class ExpressionBuilderState
             return Chain<ParsedExpressionBuilderError>.Empty;
         }
 
-        var constant = (ConstantExpression)operand;
         Expression result;
-
-        if ( member is FieldInfo field )
+        try
         {
-            try
-            {
-                result = Expression.Constant( field.GetValue( constant.Value ), field.FieldType );
-            }
-            catch ( Exception exc )
-            {
-                return Chain.Create( ParsedExpressionBuilderError.CreateMemberHasThrownException( token, operand.Type, member, exc ) );
-            }
+            result = ExpressionHelpers.CreateConstantMemberAccess( (ConstantExpression)operand, member );
         }
-        else
+        catch ( Exception exc )
         {
-            var property = (PropertyInfo)member;
-            try
-            {
-                result = Expression.Constant( property.GetValue( constant.Value ), property.PropertyType );
-            }
-            catch ( Exception exc )
-            {
-                return Chain.Create( ParsedExpressionBuilderError.CreateMemberHasThrownException( token, operand.Type, member, exc ) );
-            }
+            return Chain.Create( ParsedExpressionBuilderError.CreateMemberHasThrownException( token, operand.Type, member, exc ) );
+        }
+
+        PushOperand( result );
+        return Chain<ParsedExpressionBuilderError>.Empty;
+    }
+
+    private Chain<ParsedExpressionBuilderError> ProcessIndexer(
+        IntermediateToken token,
+        Expression operand,
+        MemberInfo indexer,
+        IReadOnlyList<Expression> parameters)
+    {
+        --_operandCount;
+        AddAssumedExpectation( Expectation.Operand );
+
+        if ( operand.NodeType != ExpressionType.Constant || parameters.Any( p => p.NodeType != ExpressionType.Constant ) )
+        {
+            Expression indexerAccess = indexer is PropertyInfo p
+                ? Expression.MakeIndex( operand, p, parameters )
+                : Expression.Call( operand, (MethodInfo)indexer, parameters );
+
+            PushOperand( indexerAccess );
+            return Chain<ParsedExpressionBuilderError>.Empty;
+        }
+
+        Expression result;
+        try
+        {
+            result = ExpressionHelpers.CreateConstantIndexer( (ConstantExpression)operand, indexer, parameters );
+        }
+        catch ( Exception exc )
+        {
+            return Chain.Create( ParsedExpressionBuilderError.CreateMemberHasThrownException( token, operand.Type, indexer, exc ) );
         }
 
         PushOperand( result );
@@ -1208,6 +1259,7 @@ internal class ExpressionBuilderState
         BinaryOperator = 32,
         MemberAccess = 64,
         MemberName = 128,
+        IndexerResolution = 256,
         ArrayResolution = 512,
         ArrayElementsStart = 1024,
         PrefixUnaryConstructResolution = 2048,

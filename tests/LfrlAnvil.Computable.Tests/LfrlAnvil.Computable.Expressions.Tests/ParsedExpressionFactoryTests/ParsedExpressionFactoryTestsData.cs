@@ -1662,4 +1662,23 @@ public class ParsedExpressionFactoryTestsData
             { "string[ 'a' , 'b' , 'c' + ]", new[] { "a", "b", "( c|PostOp )" } }
         };
     }
+
+    public static TheoryData<string, int, string> GetExpressionContainsArrayIndexerData(IFixture fixture)
+    {
+        return new TheoryData<string, int, string>
+        {
+            { "string[ 'a', 'b', 'c' ][ i ]", 0, "a" },
+            { "string[ ( 'a' ), ( 'b' ), ( 'c' ) ][ i ]", 1, "b" }
+        };
+    }
+
+    public static TheoryData<string, int> GetExpressionContainsObjectIndexerData(IFixture fixture)
+    {
+        return new TheoryData<string, int>
+        {
+            { "map[ 'a' ]", 0 },
+            { "map[ 'b' ]", 1 },
+            { "map[ 'c' ]", 2 }
+        };
+    }
 }

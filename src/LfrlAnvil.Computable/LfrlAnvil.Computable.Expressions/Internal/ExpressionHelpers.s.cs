@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
@@ -50,5 +51,34 @@ internal static class ExpressionHelpers
             elements.Select( p => p.Type == elementType ? p : Expression.Convert( p, elementType ) ) );
 
         return result;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static ConstantExpression CreateConstantMemberAccess(ConstantExpression operand, MemberInfo member)
+    {
+        if ( member is FieldInfo field )
+            return Expression.Constant( field.GetValue( operand.Value ), field.FieldType );
+
+        var property = (PropertyInfo)member;
+        return Expression.Constant( property.GetValue( operand.Value ), property.PropertyType );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static ConstantExpression CreateConstantIndexer(
+        ConstantExpression operand,
+        MemberInfo indexer,
+        IReadOnlyList<Expression> parameters)
+    {
+        var @params = new object?[parameters.Count];
+        for ( var i = 0; i < @params.Length; ++i )
+            @params[i] = ((ConstantExpression)parameters[i]).Value;
+
+        if ( indexer is PropertyInfo property )
+            return Expression.Constant( property.GetValue( operand.Value, @params ), property.PropertyType );
+
+        var method = (MethodInfo)indexer;
+        return Expression.Constant( method.Invoke( operand.Value, @params ), method.ReturnType );
     }
 }

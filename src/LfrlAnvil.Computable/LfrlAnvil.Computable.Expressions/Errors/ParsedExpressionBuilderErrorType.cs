@@ -33,12 +33,13 @@ public enum ParsedExpressionBuilderErrorType : byte
     BinaryOperatorCouldNotBeResolved = 28,
     FunctionCouldNotBeResolved = 29,
     MemberCouldNotBeResolved = 30,
-    InlineArrayCouldNotBeResolved = 31,
-    ExpectedPrefixUnaryConstruct = 32,
-    ExpectedBinaryOperator = 33,
-    ExpectedPostfixUnaryOrBinaryConstruct = 34,
-    ExpectedBinaryOrPrefixUnaryConstruct = 35,
-    AmbiguousPostfixUnaryConstructResolutionFailure = 36,
-    AmbiguousMemberAccess = 37,
-    NestedExpressionFailure = 38
+    IndexerCouldNotBeResolved = 31,
+    InlineArrayCouldNotBeResolved = 32,
+    ExpectedPrefixUnaryConstruct = 33,
+    ExpectedBinaryOperator = 34,
+    ExpectedPostfixUnaryOrBinaryConstruct = 35,
+    ExpectedBinaryOrPrefixUnaryConstruct = 36,
+    AmbiguousPostfixUnaryConstructResolutionFailure = 37,
+    AmbiguousMemberAccess = 38,
+    NestedExpressionFailure = 39
 }

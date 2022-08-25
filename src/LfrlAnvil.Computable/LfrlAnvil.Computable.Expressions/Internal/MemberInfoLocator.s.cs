@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Reflection;
 using LfrlAnvil.Computable.Expressions.Exceptions;
 
@@ -102,5 +103,36 @@ internal static class MemberInfoLocator
     {
         var result = arrayType.GetMethod( "Set" )!;
         return result;
+    }
+
+    [Pure]
+    internal static MemberInfo? TryFindIndexer(Type type, Type[] parameterTypes, BindingFlags bindingFlags)
+    {
+        if ( type.IsArray )
+        {
+            var getMethod = type.GetMethod( "Get" )!;
+            var parameters = getMethod.GetParameters();
+
+            if ( parameters.Length == parameterTypes.Length && parameters.Select( p => p.ParameterType ).SequenceEqual( parameterTypes ) )
+                return getMethod;
+
+            return null;
+        }
+
+        var nonPublic = (bindingFlags & BindingFlags.NonPublic) == BindingFlags.NonPublic;
+        var properties = type.GetProperties( bindingFlags );
+
+        foreach ( var property in properties )
+        {
+            var getter = property.GetGetMethod( nonPublic );
+            if ( getter is null )
+                continue;
+
+            var parameters = getter.GetParameters();
+            if ( parameters.Length == parameterTypes.Length && parameters.Select( p => p.ParameterType ).SequenceEqual( parameterTypes ) )
+                return property;
+        }
+
+        return null;
     }
 }

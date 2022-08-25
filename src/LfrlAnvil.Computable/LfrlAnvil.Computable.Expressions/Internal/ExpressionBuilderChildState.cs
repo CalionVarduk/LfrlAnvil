@@ -40,4 +40,14 @@ internal sealed class ExpressionBuilderChildState : ExpressionBuilderState
             Expectation.ArrayElementsStart,
             parenthesesCount: 0 );
     }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static ExpressionBuilderChildState CreateIndexerParameters(ExpressionBuilderState parentState)
+    {
+        return new ExpressionBuilderChildState(
+            parentState,
+            Expectation.Operand | Expectation.OpenedParenthesis | Expectation.PrefixUnaryConstruct,
+            parenthesesCount: 0 );
+    }
 }
