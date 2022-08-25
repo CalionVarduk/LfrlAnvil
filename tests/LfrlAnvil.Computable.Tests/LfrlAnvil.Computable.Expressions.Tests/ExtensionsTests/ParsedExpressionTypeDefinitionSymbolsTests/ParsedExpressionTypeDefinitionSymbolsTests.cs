@@ -15,6 +15,7 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
             sut.Name.ToString().Should().BeEmpty();
             sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( "[]" );
             sut.PostfixTypeConverter.Should().BeNull();
+            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().BeEmpty();
         }
     }
 
@@ -28,6 +29,7 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
             sut.Name.ToString().Should().BeEmpty();
             sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( "[]" );
             sut.PostfixTypeConverter.Should().BeNull();
+            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().BeEmpty();
         }
     }
 
@@ -37,11 +39,12 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
         var sut = new ParsedExpressionTypeDefinitionSymbols()
             .SetName( "name" )
             .SetPrefixTypeConverter( "prefix" )
-            .SetPostfixTypeConverter( "postfix" );
+            .SetPostfixTypeConverter( "postfix" )
+            .SetConstant( "constant" );
 
         var result = sut.ToString();
 
-        result.Should().Be( "Name: 'name', PrefixTypeConverter: 'prefix', PostfixTypeConverter: 'postfix'" );
+        result.Should().Be( "Name: 'name', PrefixTypeConverter: 'prefix', PostfixTypeConverter: 'postfix', Constant: 'constant'" );
     }
 
     [Fact]
@@ -49,7 +52,8 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
     {
         var sut = new ParsedExpressionTypeDefinitionSymbols()
             .SetName( "name" )
-            .DisablePrefixTypeConverter();
+            .DisablePrefixTypeConverter()
+            .DisableConstant();
 
         var result = sut.ToString();
 
@@ -61,7 +65,8 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
     {
         var sut = new ParsedExpressionTypeDefinitionSymbols()
             .SetName( "name" )
-            .SetPrefixTypeConverter( "prefix" );
+            .SetPrefixTypeConverter( "prefix" )
+            .DisableConstant();
 
         var result = sut.ToString();
 
@@ -74,6 +79,7 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
         var sut = new ParsedExpressionTypeDefinitionSymbols()
             .SetName( "name" )
             .DisablePrefixTypeConverter()
+            .DisableConstant()
             .SetPostfixTypeConverter( "postfix" );
 
         var result = sut.ToString();
@@ -82,7 +88,21 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
     }
 
     [Fact]
-    public void SetName_ShouldUpdateNameAndPrefixTypeConverter_WhenPrefixTypeConverterIsEnabledAndIsNotSetToCustomValue()
+    public void ToString_ShouldReturnCorrectResult_WhenOnlyNameAndConstantAreSet()
+    {
+        var sut = new ParsedExpressionTypeDefinitionSymbols()
+            .SetName( "name" )
+            .DisablePrefixTypeConverter()
+            .SetConstant( "constant" );
+
+        var result = sut.ToString();
+
+        result.Should().Be( "Name: 'name', Constant: 'constant'" );
+    }
+
+    [Fact]
+    public void
+        SetName_ShouldUpdateNameAndPrefixTypeConverterAndConstant_WhenPrefixTypeConverterAndConstantAreEnabledAndAreNotSetToCustomValues()
     {
         var name = Fixture.Create<string>();
         var sut = new ParsedExpressionTypeDefinitionSymbols().SetName( name );
@@ -92,6 +112,7 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
             sut.Name.ToString().Should().Be( name );
             sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( $"[{name}]" );
             sut.PostfixTypeConverter.Should().BeNull();
+            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().Be( name.ToUpperInvariant() );
         }
     }
 
@@ -105,6 +126,7 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
             sut.Name.ToString().Should().BeEmpty();
             sut.PrefixTypeConverter.Should().BeNull();
             sut.PostfixTypeConverter.Should().BeNull();
+            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().BeEmpty();
         }
     }
 
@@ -121,6 +143,7 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
             sut.Name.ToString().Should().BeEmpty();
             sut.PrefixTypeConverter.Should().BeNull();
             sut.PostfixTypeConverter.Should().BeNull();
+            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().BeEmpty();
         }
     }
 
@@ -135,6 +158,7 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
             sut.Name.ToString().Should().BeEmpty();
             sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( symbol );
             sut.PostfixTypeConverter.Should().BeNull();
+            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().BeEmpty();
         }
     }
 
@@ -151,15 +175,17 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
             sut.Name.ToString().Should().BeEmpty();
             sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( symbol );
             sut.PostfixTypeConverter.Should().BeNull();
+            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().BeEmpty();
         }
     }
 
     [Fact]
-    public void SetName_ShouldUpdateNameOnly_WhenPrefixTypeConverterIsSetToCustomValue()
+    public void SetName_ShouldUpdateNameOnly_WhenPrefixTypeConverterAndConstantAreSetToCustomValues()
     {
-        var (name, prefixSymbol) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (name, prefixSymbol, constant) = Fixture.CreateDistinctCollection<string>( count: 3 );
         var sut = new ParsedExpressionTypeDefinitionSymbols()
             .SetPrefixTypeConverter( prefixSymbol )
+            .SetConstant( constant )
             .SetName( name );
 
         using ( new AssertionScope() )
@@ -167,15 +193,17 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
             sut.Name.ToString().Should().Be( name );
             sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( prefixSymbol );
             sut.PostfixTypeConverter.Should().BeNull();
+            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().Be( constant );
         }
     }
 
     [Fact]
-    public void SetName_ShouldUpdateNameOnly_WhenPrefixTypeConverterIsDisabled()
+    public void SetName_ShouldUpdateNameOnly_WhenPrefixTypeConverterAndConstantAreDisabled()
     {
         var name = Fixture.Create<string>();
         var sut = new ParsedExpressionTypeDefinitionSymbols()
             .DisablePrefixTypeConverter()
+            .DisableConstant()
             .SetName( name );
 
         using ( new AssertionScope() )
@@ -183,6 +211,7 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
             sut.Name.ToString().Should().Be( name );
             sut.PrefixTypeConverter.Should().BeNull();
             sut.PostfixTypeConverter.Should().BeNull();
+            sut.Constant.Should().BeNull();
         }
     }
 
@@ -200,6 +229,7 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
             sut.Name.ToString().Should().Be( name );
             sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( $"[{name}]" );
             sut.PostfixTypeConverter.Should().BeNull();
+            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().Be( name.ToUpperInvariant() );
         }
     }
 
@@ -217,6 +247,7 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
             sut.Name.ToString().Should().Be( name );
             sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( $"[{name}]" );
             sut.PostfixTypeConverter.Should().BeNull();
+            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().Be( name.ToUpperInvariant() );
         }
     }
 
@@ -232,6 +263,7 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
             sut.Name.ToString().Should().BeEmpty();
             sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( "[]" );
             sut.PostfixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( symbol );
+            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().BeEmpty();
         }
     }
 
@@ -248,6 +280,106 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
             sut.Name.ToString().Should().BeEmpty();
             sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( "[]" );
             sut.PostfixTypeConverter.Should().BeNull();
+            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void DisableConstant_ShouldUpdateConstantToNull_WhenConstantIsEnabledAndIsNotSetToCustomValue()
+    {
+        var sut = new ParsedExpressionTypeDefinitionSymbols().DisableConstant();
+
+        using ( new AssertionScope() )
+        {
+            sut.Name.ToString().Should().BeEmpty();
+            sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( "[]" );
+            sut.PostfixTypeConverter.Should().BeNull();
+            sut.Constant.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void DisableConstant_ShouldUpdateConstantToNull_WhenConstantHasCustomValue()
+    {
+        var symbol = Fixture.Create<string>();
+        var sut = new ParsedExpressionTypeDefinitionSymbols()
+            .SetConstant( symbol )
+            .DisableConstant();
+
+        using ( new AssertionScope() )
+        {
+            sut.Name.ToString().Should().BeEmpty();
+            sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( "[]" );
+            sut.PostfixTypeConverter.Should().BeNull();
+            sut.Constant.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void SetConstant_ShouldUpdateConstant_WhenConstantIsEnabled()
+    {
+        var symbol = Fixture.Create<string>();
+        var sut = new ParsedExpressionTypeDefinitionSymbols().SetConstant( symbol );
+
+        using ( new AssertionScope() )
+        {
+            sut.Name.ToString().Should().BeEmpty();
+            sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( "[]" );
+            sut.PostfixTypeConverter.Should().BeNull();
+            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().Be( symbol );
+        }
+    }
+
+    [Fact]
+    public void SetConstant_ShouldUpdateConstant_WhenConstantIsDisabled()
+    {
+        var symbol = Fixture.Create<string>();
+        var sut = new ParsedExpressionTypeDefinitionSymbols()
+            .DisableConstant()
+            .SetConstant( symbol );
+
+        using ( new AssertionScope() )
+        {
+            sut.Name.ToString().Should().BeEmpty();
+            sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( "[]" );
+            sut.PostfixTypeConverter.Should().BeNull();
+            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().Be( symbol );
+        }
+    }
+
+    [Fact]
+    public void SetDefaultConstant_ShouldUpdateConstant_WhenConstantIsSetToCustomValue()
+    {
+        var (name, constant) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var sut = new ParsedExpressionTypeDefinitionSymbols()
+            .SetName( name )
+            .SetConstant( constant )
+            .SetDefaultConstant();
+
+        using ( new AssertionScope() )
+        {
+            sut.Name.ToString().Should().Be( name );
+            sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( $"[{name}]" );
+            sut.PostfixTypeConverter.Should().BeNull();
+            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().Be( name.ToUpperInvariant() );
+        }
+    }
+
+    [Fact]
+    public void SetDefaultConstant_ShouldUpdateConstant_WhenConstantIsDisabled()
+    {
+        var name = Fixture.Create<string>();
+        var sut = new ParsedExpressionTypeDefinitionSymbols()
+            .SetName( name )
+            .DisableConstant()
+            .SetDefaultConstant();
+
+        using ( new AssertionScope() )
+        {
+            sut.Name.ToString().Should().Be( name );
+            sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( $"[{name}]" );
+            sut.PostfixTypeConverter.Should().BeNull();
+            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().Be( name.ToUpperInvariant() );
         }
     }
 }

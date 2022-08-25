@@ -3,7 +3,6 @@
 [assembly: InternalsVisibleTo( "LfrlAnvil.Computable.Expressions.Tests" )]
 
 // TODO:
-// add to type registering extensions a possibility to register additional constant construct containing the CLR type ref
 // add filtering out of unused arguments e.g. 'a * 0' where '*' is a specialized multiplication operator that recognizes 0
 // ^ and returns a constant '0', making the 'a' argument unused & safe to completely remove from the expression
 //

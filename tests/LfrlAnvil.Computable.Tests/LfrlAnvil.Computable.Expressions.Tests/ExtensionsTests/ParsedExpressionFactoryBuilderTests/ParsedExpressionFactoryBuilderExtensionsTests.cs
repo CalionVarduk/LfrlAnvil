@@ -242,7 +242,8 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         {
             ("boolean", ParsedExpressionConstructType.TypeDeclaration, typeof( bool )),
             ("[boolean]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<bool> )),
-            ("[boolean]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<bool, int> ))
+            ("[boolean]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<bool, int> )),
+            ("BOOLEAN", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -277,15 +278,16 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var sut = new ParsedExpressionFactoryBuilder();
         var symbols = new ParsedExpressionTypeDefinitionSymbols()
             .SetName( "b" )
-            .SetPostfixTypeConverter( "B" );
+            .SetPostfixTypeConverter( "as_b" );
 
         var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
             ("b", ParsedExpressionConstructType.TypeDeclaration, typeof( bool )),
             ("[b]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<bool> )),
             ("[b]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<bool, int> )),
-            ("B", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<bool> )),
-            ("B", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<bool, int> ))
+            ("as_b", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<bool> )),
+            ("as_b", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<bool, int> )),
+            ("B", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -295,7 +297,7 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
 
         var expectedPostfixUnaryConstructPrecedences = new (string Symbol, int Value)[]
         {
-            ("B", 1)
+            ("as_b", 1)
         };
 
         var result = sut.AddBooleanTypeDefinition( symbols, new ParsedExpressionTypeConverter<bool, int>() );
@@ -323,7 +325,8 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var sut = new ParsedExpressionFactoryBuilder();
         var symbols = new ParsedExpressionTypeDefinitionSymbols()
             .SetName( "b" )
-            .DisablePrefixTypeConverter();
+            .DisablePrefixTypeConverter()
+            .DisableConstant();
 
         var result = sut.AddBooleanTypeDefinition( symbols );
         var actualConstructs = result.GetConstructs().Select( x => (x.Symbol.ToString(), x.Type, x.Construct) );
@@ -432,8 +435,9 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("decimal", ParsedExpressionConstructType.TypeDeclaration, typeof( decimal )),
             ("[decimal]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<decimal> )),
             ("[decimal]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<decimal, double> )),
-            ("M", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<decimal> )),
-            ("M", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<decimal, double> ))
+            ("m", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<decimal> )),
+            ("m", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<decimal, double> )),
+            ("DECIMAL", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -443,7 +447,7 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
 
         var expectedPostfixUnaryConstructPrecedences = new (string Symbol, int Value)[]
         {
-            ("M", 1)
+            ("m", 1)
         };
 
         var result = sut.AddDecimalTypeDefinition( new ParsedExpressionTypeConverter<decimal, double>() );
@@ -476,7 +480,8 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         {
             ("d", ParsedExpressionConstructType.TypeDeclaration, typeof( decimal )),
             ("[d]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<decimal> )),
-            ("[d]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<decimal, double> ))
+            ("[d]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<decimal, double> )),
+            ("D", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -511,7 +516,8 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var sut = new ParsedExpressionFactoryBuilder();
         var symbols = new ParsedExpressionTypeDefinitionSymbols()
             .SetName( "d" )
-            .DisablePrefixTypeConverter();
+            .DisablePrefixTypeConverter()
+            .DisableConstant();
 
         var result = sut.AddDecimalTypeDefinition( symbols );
         var actualConstructs = result.GetConstructs().Select( x => (x.Symbol.ToString(), x.Type, x.Construct) );
@@ -619,7 +625,8 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         {
             ("double", ParsedExpressionConstructType.TypeDeclaration, typeof( double )),
             ("[double]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<double> )),
-            ("[double]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<double, decimal> ))
+            ("[double]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<double, decimal> )),
+            ("DOUBLE", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -654,15 +661,16 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var sut = new ParsedExpressionFactoryBuilder();
         var symbols = new ParsedExpressionTypeDefinitionSymbols()
             .SetName( "d" )
-            .SetPostfixTypeConverter( "D" );
+            .SetPostfixTypeConverter( "as_d" );
 
         var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
             ("d", ParsedExpressionConstructType.TypeDeclaration, typeof( double )),
             ("[d]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<double> )),
             ("[d]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<double, decimal> )),
-            ("D", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<double> )),
-            ("D", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<double, decimal> ))
+            ("as_d", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<double> )),
+            ("as_d", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<double, decimal> )),
+            ("D", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -672,7 +680,7 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
 
         var expectedPostfixUnaryConstructPrecedences = new (string Symbol, int Value)[]
         {
-            ("D", 1)
+            ("as_d", 1)
         };
 
         var result = sut.AddDoubleTypeDefinition( symbols, new ParsedExpressionTypeConverter<double, decimal>() );
@@ -700,7 +708,8 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var sut = new ParsedExpressionFactoryBuilder();
         var symbols = new ParsedExpressionTypeDefinitionSymbols()
             .SetName( "d" )
-            .DisablePrefixTypeConverter();
+            .DisablePrefixTypeConverter()
+            .DisableConstant();
 
         var result = sut.AddDoubleTypeDefinition( symbols );
         var actualConstructs = result.GetConstructs().Select( x => (x.Symbol.ToString(), x.Type, x.Construct) );
@@ -809,8 +818,9 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("float", ParsedExpressionConstructType.TypeDeclaration, typeof( float )),
             ("[float]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<float> )),
             ("[float]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<float, decimal> )),
-            ("F", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<float> )),
-            ("F", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<float, decimal> ))
+            ("f", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<float> )),
+            ("f", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<float, decimal> )),
+            ("FLOAT", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -820,7 +830,7 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
 
         var expectedPostfixUnaryConstructPrecedences = new (string Symbol, int Value)[]
         {
-            ("F", 1)
+            ("f", 1)
         };
 
         var result = sut.AddFloatTypeDefinition( new ParsedExpressionTypeConverter<float, decimal>() );
@@ -853,7 +863,8 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         {
             ("f", ParsedExpressionConstructType.TypeDeclaration, typeof( float )),
             ("[f]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<float> )),
-            ("[f]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<float, decimal> ))
+            ("[f]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<float, decimal> )),
+            ("F", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -888,7 +899,8 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var sut = new ParsedExpressionFactoryBuilder();
         var symbols = new ParsedExpressionTypeDefinitionSymbols()
             .SetName( "f" )
-            .DisablePrefixTypeConverter();
+            .DisablePrefixTypeConverter()
+            .DisableConstant();
 
         var result = sut.AddFloatTypeDefinition( symbols );
         var actualConstructs = result.GetConstructs().Select( x => (x.Symbol.ToString(), x.Type, x.Construct) );
@@ -1042,7 +1054,10 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         {
             ("int32", ParsedExpressionConstructType.TypeDeclaration, typeof( int )),
             ("[int32]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<int> )),
-            ("[int32]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<int, long> ))
+            ("[int32]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<int, long> )),
+            ("i", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<int> )),
+            ("i", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<int, long> )),
+            ("INT32", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -1050,7 +1065,10 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("[int32]", 1)
         };
 
-        var expectedPostfixUnaryConstructPrecedences = Array.Empty<(string Symbol, int Value)>();
+        var expectedPostfixUnaryConstructPrecedences = new (string Symbol, int Value)[]
+        {
+            ("i", 1)
+        };
 
         var result = sut.AddInt32TypeDefinition( new ParsedExpressionTypeConverter<int, long>() );
         var actualConstructs = result.GetConstructs()
@@ -1076,16 +1094,14 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
     {
         var sut = new ParsedExpressionFactoryBuilder();
         var symbols = new ParsedExpressionTypeDefinitionSymbols()
-            .SetName( "i" )
-            .SetPostfixTypeConverter( "I" );
+            .SetName( "i" );
 
         var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
             ("i", ParsedExpressionConstructType.TypeDeclaration, typeof( int )),
             ("[i]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<int> )),
             ("[i]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<int, long> )),
-            ("I", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<int> )),
-            ("I", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<int, long> ))
+            ("I", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -1093,10 +1109,7 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("[i]", 1)
         };
 
-        var expectedPostfixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("I", 1)
-        };
+        var expectedPostfixUnaryConstructPrecedences = Array.Empty<(string Symbol, int Value)>();
 
         var result = sut.AddInt32TypeDefinition( symbols, new ParsedExpressionTypeConverter<int, long>() );
         var actualConstructs = result.GetConstructs()
@@ -1123,7 +1136,8 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var sut = new ParsedExpressionFactoryBuilder();
         var symbols = new ParsedExpressionTypeDefinitionSymbols()
             .SetName( "i" )
-            .DisablePrefixTypeConverter();
+            .DisablePrefixTypeConverter()
+            .DisableConstant();
 
         var result = sut.AddInt32TypeDefinition( symbols );
         var actualConstructs = result.GetConstructs().Select( x => (x.Symbol.ToString(), x.Type, x.Construct) );
@@ -1278,8 +1292,9 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("int64", ParsedExpressionConstructType.TypeDeclaration, typeof( long )),
             ("[int64]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<long> )),
             ("[int64]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<long, int> )),
-            ("L", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<long> )),
-            ("L", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<long, int> ))
+            ("l", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<long> )),
+            ("l", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<long, int> )),
+            ("INT64", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -1289,7 +1304,7 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
 
         var expectedPostfixUnaryConstructPrecedences = new (string Symbol, int Value)[]
         {
-            ("L", 1)
+            ("l", 1)
         };
 
         var result = sut.AddInt64TypeDefinition( new ParsedExpressionTypeConverter<long, int>() );
@@ -1322,7 +1337,8 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         {
             ("i", ParsedExpressionConstructType.TypeDeclaration, typeof( long )),
             ("[i]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<long> )),
-            ("[i]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<long, int> ))
+            ("[i]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<long, int> )),
+            ("I", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -1357,7 +1373,8 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var sut = new ParsedExpressionFactoryBuilder();
         var symbols = new ParsedExpressionTypeDefinitionSymbols()
             .SetName( "i" )
-            .DisablePrefixTypeConverter();
+            .DisablePrefixTypeConverter()
+            .DisableConstant();
 
         var result = sut.AddInt64TypeDefinition( symbols );
         var actualConstructs = result.GetConstructs().Select( x => (x.Symbol.ToString(), x.Type, x.Construct) );
@@ -1511,7 +1528,8 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         {
             ("bigint", ParsedExpressionConstructType.TypeDeclaration, typeof( BigInteger )),
             ("[bigint]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<BigInteger> )),
-            ("[bigint]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<BigInteger, long> ))
+            ("[bigint]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<BigInteger, long> )),
+            ("BIGINT", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -1546,15 +1564,16 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var sut = new ParsedExpressionFactoryBuilder();
         var symbols = new ParsedExpressionTypeDefinitionSymbols()
             .SetName( "b" )
-            .SetPostfixTypeConverter( "B" );
+            .SetPostfixTypeConverter( "as_b" );
 
         var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
             ("b", ParsedExpressionConstructType.TypeDeclaration, typeof( BigInteger )),
             ("[b]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<BigInteger> )),
             ("[b]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<BigInteger, long> )),
-            ("B", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<BigInteger> )),
-            ("B", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<BigInteger, long> ))
+            ("as_b", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<BigInteger> )),
+            ("as_b", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<BigInteger, long> )),
+            ("B", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -1564,7 +1583,7 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
 
         var expectedPostfixUnaryConstructPrecedences = new (string Symbol, int Value)[]
         {
-            ("B", 1)
+            ("as_b", 1)
         };
 
         var result = sut.AddBigIntTypeDefinition( symbols, new ParsedExpressionTypeConverter<BigInteger, long>() );
@@ -1592,7 +1611,8 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var sut = new ParsedExpressionFactoryBuilder();
         var symbols = new ParsedExpressionTypeDefinitionSymbols()
             .SetName( "b" )
-            .DisablePrefixTypeConverter();
+            .DisablePrefixTypeConverter()
+            .DisableConstant();
 
         var result = sut.AddBigIntTypeDefinition( symbols );
         var actualConstructs = result.GetConstructs().Select( x => (x.Symbol.ToString(), x.Type, x.Construct) );
@@ -1675,7 +1695,8 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         {
             ("string", ParsedExpressionConstructType.TypeDeclaration, typeof( string )),
             ("[string]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionToStringTypeConverter )),
-            ("[string]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<string, int> ))
+            ("[string]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<string, int> )),
+            ("STRING", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -1710,15 +1731,16 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var sut = new ParsedExpressionFactoryBuilder();
         var symbols = new ParsedExpressionTypeDefinitionSymbols()
             .SetName( "s" )
-            .SetPostfixTypeConverter( "S" );
+            .SetPostfixTypeConverter( "as_s" );
 
         var expectedConstructs = new (string Symbol, ParsedExpressionConstructType Type, Type ConstructType)[]
         {
             ("s", ParsedExpressionConstructType.TypeDeclaration, typeof( string )),
             ("[s]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionToStringTypeConverter )),
             ("[s]", ParsedExpressionConstructType.PrefixTypeConverter, typeof( ParsedExpressionTypeConverter<string, int> )),
-            ("S", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionToStringTypeConverter )),
-            ("S", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<string, int> ))
+            ("as_s", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionToStringTypeConverter )),
+            ("as_s", ParsedExpressionConstructType.PostfixTypeConverter, typeof( ParsedExpressionTypeConverter<string, int> )),
+            ("S", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
@@ -1728,7 +1750,7 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
 
         var expectedPostfixUnaryConstructPrecedences = new (string Symbol, int Value)[]
         {
-            ("S", 1)
+            ("as_s", 1)
         };
 
         var result = sut.AddStringTypeDefinition( symbols, new ParsedExpressionTypeConverter<string, int>() );
@@ -1756,7 +1778,8 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var sut = new ParsedExpressionFactoryBuilder();
         var symbols = new ParsedExpressionTypeDefinitionSymbols()
             .SetName( "s" )
-            .DisablePrefixTypeConverter();
+            .DisablePrefixTypeConverter()
+            .DisableConstant();
 
         var result = sut.AddStringTypeDefinition( symbols );
         var actualConstructs = result.GetConstructs().Select( x => (x.Symbol.ToString(), x.Type, x.Construct) );

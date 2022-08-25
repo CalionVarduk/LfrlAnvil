@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using LfrlAnvil.Computable.Expressions.Constructs;
@@ -943,6 +944,7 @@ public static class ParsedExpressionFactoryBuilderExtensions
 
         var prefixSymbol = symbols.PrefixTypeConverter;
         var postfixSymbol = symbols.PostfixTypeConverter;
+        var constantSymbol = symbols.Constant;
 
         if ( prefixSymbol is not null )
         {
@@ -963,6 +965,9 @@ public static class ParsedExpressionFactoryBuilderExtensions
             foreach ( var specializedConverter in specialized )
                 builder.AddPostfixTypeConverter( postfixSymbol.Value, specializedConverter );
         }
+
+        if ( constantSymbol is not null )
+            builder.AddConstant( constantSymbol.Value, new ParsedExpressionConstant<Type>( genericConverter.TargetType ) );
 
         return builder;
     }

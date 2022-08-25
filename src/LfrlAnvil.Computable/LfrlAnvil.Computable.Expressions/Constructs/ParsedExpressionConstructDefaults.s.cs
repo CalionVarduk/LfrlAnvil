@@ -63,21 +63,22 @@ public static class ParsedExpressionConstructDefaults
 
     public static readonly ParsedExpressionTypeDefinitionSymbols DecimalTypeSymbols = new ParsedExpressionTypeDefinitionSymbols()
         .SetName( "decimal" )
-        .SetPostfixTypeConverter( "M" );
+        .SetPostfixTypeConverter( "m" );
 
     public static readonly ParsedExpressionTypeDefinitionSymbols DoubleTypeSymbols = new ParsedExpressionTypeDefinitionSymbols()
         .SetName( "double" );
 
     public static readonly ParsedExpressionTypeDefinitionSymbols FloatTypeSymbols = new ParsedExpressionTypeDefinitionSymbols()
         .SetName( "float" )
-        .SetPostfixTypeConverter( "F" );
+        .SetPostfixTypeConverter( "f" );
 
     public static readonly ParsedExpressionTypeDefinitionSymbols Int32TypeSymbols = new ParsedExpressionTypeDefinitionSymbols()
-        .SetName( "int32" );
+        .SetName( "int32" )
+        .SetPostfixTypeConverter( "i" );
 
     public static readonly ParsedExpressionTypeDefinitionSymbols Int64TypeSymbols = new ParsedExpressionTypeDefinitionSymbols()
         .SetName( "int64" )
-        .SetPostfixTypeConverter( "L" );
+        .SetPostfixTypeConverter( "l" );
 
     public static readonly ParsedExpressionTypeDefinitionSymbols BigIntTypeSymbols = new ParsedExpressionTypeDefinitionSymbols()
         .SetName( "bigint" );
