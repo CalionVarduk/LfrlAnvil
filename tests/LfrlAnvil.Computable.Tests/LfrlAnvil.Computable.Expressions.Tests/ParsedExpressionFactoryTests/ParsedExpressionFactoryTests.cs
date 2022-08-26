@@ -2,6 +2,7 @@
 using System.Linq;
 using FluentAssertions.Execution;
 using LfrlAnvil.Computable.Expressions.Constructs;
+using LfrlAnvil.Computable.Expressions.Constructs.Boolean;
 using LfrlAnvil.Computable.Expressions.Errors;
 using LfrlAnvil.Computable.Expressions.Exceptions;
 using LfrlAnvil.Computable.Expressions.Internal;
@@ -3429,6 +3430,66 @@ public partial class ParsedExpressionFactoryTests : TestsBase
                     e,
                     input,
                     ParsedExpressionBuilderErrorType.ExpressionResultTypeIsNotCompatibleWithExpectedOutputType ) );
+    }
+
+    [Fact]
+    public void Create_ShouldRemoveUnusedArguments_WhenAllArgumentsAreUnused()
+    {
+        var input = "a || b || c || true";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddBinaryOperator( "||", new ParsedExpressionOrOperator() )
+            .SetBinaryOperatorPrecedence( "||", 1 );
+
+        var sut = builder.Build();
+
+        var result = sut.Create<bool, bool>( input );
+
+        result.GetArgumentCount().Should().Be( 0 );
+    }
+
+    [Fact]
+    public void Create_ShouldRemoveUnusedArguments_WhenOnlyArgumentsAtEndAreUnused()
+    {
+        var input = "a && ( b || c || true )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddBinaryOperator( "||", new ParsedExpressionOrOperator() )
+            .AddBinaryOperator( "&&", new ParsedExpressionAndOperator() )
+            .SetBinaryOperatorPrecedence( "||", 1 )
+            .SetBinaryOperatorPrecedence( "&&", 1 );
+
+        var sut = builder.Build();
+
+        var result = sut.Create<bool, bool>( input );
+
+        using ( new AssertionScope() )
+        {
+            result.GetArgumentCount().Should().Be( 1 );
+            result.GetArgumentNames().Select( n => n.ToString() ).Should().BeEquivalentTo( "a" );
+            result.GetUnboundArgumentIndex( "a" ).Should().Be( 0 );
+        }
+    }
+
+    [Fact]
+    public void Create_ShouldRemoveUnusedArguments_WhenRemainingArgumentsNeedToBeReorganized()
+    {
+        var input = "a && ( b || c || true ) && d && ( e || true )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddBinaryOperator( "||", new ParsedExpressionOrOperator() )
+            .AddBinaryOperator( "&&", new ParsedExpressionAndOperator() )
+            .SetBinaryOperatorPrecedence( "||", 1 )
+            .SetBinaryOperatorPrecedence( "&&", 1 );
+
+        var sut = builder.Build();
+
+        var result = sut.Create<bool, bool>( input );
+
+        using ( new AssertionScope() )
+        {
+            result.GetArgumentCount().Should().Be( 2 );
+            result.GetArgumentNames().Select( n => n.ToString() ).Should().BeEquivalentTo( "a", "d" );
+            result.GetUnboundArgumentIndex( "a" ).Should().Be( 0 );
+            result.GetUnboundArgumentIndex( "d" ).Should().Be( 1 );
+        }
     }
 
     [Fact]

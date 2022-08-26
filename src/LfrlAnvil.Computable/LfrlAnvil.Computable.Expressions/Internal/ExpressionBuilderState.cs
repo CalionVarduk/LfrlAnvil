@@ -1200,8 +1200,7 @@ internal class ExpressionBuilderState
             return _argumentAccessExpressions[index];
 
         index = ArgumentIndexes.Count;
-        var indexExpression = Expression.Constant( index );
-        var result = Expression.ArrayIndex( ParameterExpression, indexExpression );
+        var result = ParameterExpression.CreateArgumentAccess( index );
 
         ArgumentIndexes.Add( name, index );
         _argumentAccessExpressions.Add( result );

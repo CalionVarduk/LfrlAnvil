@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
@@ -80,5 +81,42 @@ internal static class ExpressionHelpers
 
         var method = (MethodInfo)indexer;
         return Expression.Constant( method.Invoke( operand.Value, @params ), method.ReturnType );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static BinaryExpression CreateArgumentAccess(this ParameterExpression parameter, int index)
+    {
+        var indexExpression = Expression.Constant( index );
+        var result = Expression.ArrayIndex( parameter, indexExpression );
+        return result;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static bool TryGetArgumentAccessIndex(
+        [NotNullWhen( true )] this Expression? expression,
+        ParameterExpression parameter,
+        int argumentCount,
+        out int index)
+    {
+        index = 0;
+        if ( expression is null )
+            return false;
+
+        if ( expression.NodeType != ExpressionType.ArrayIndex )
+            return false;
+
+        var arrayIndexExpression = (BinaryExpression)expression;
+        if ( ! ReferenceEquals( arrayIndexExpression.Left, parameter ) )
+            return false;
+
+        if ( arrayIndexExpression.Right.NodeType != ExpressionType.Constant )
+            return false;
+
+        var indexExpression = (ConstantExpression)arrayIndexExpression.Right;
+        index = (int)indexExpression.Value!;
+
+        return index >= 0 && index < argumentCount;
     }
 }

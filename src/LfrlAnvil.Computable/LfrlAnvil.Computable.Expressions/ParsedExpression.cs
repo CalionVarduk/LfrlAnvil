@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
@@ -280,27 +281,13 @@ public sealed class ParsedExpression<TArg, TResult> : IParsedExpression<TArg, TR
         public Dictionary<StringSlice, int> ArgumentIndexes { get; }
         public Dictionary<StringSlice, TArg?> BoundArguments { get; }
 
-        public override Expression Visit(Expression? node)
+        [return: NotNullIfNotNull( "node" )]
+        public override Expression? Visit(Expression? node)
         {
-            Assume.IsNotNull( node, nameof( node ) );
-
-            if ( node.NodeType != ExpressionType.ArrayIndex )
+            if ( ! node.TryGetArgumentAccessIndex( ParameterExpression, _expressions.Length, out var index ) )
                 return base.Visit( node );
 
-            var arrayIndexExpression = (BinaryExpression)node;
-            if ( arrayIndexExpression.Left.NodeType != ExpressionType.Parameter )
-                return base.Visit( node );
-
-            if ( arrayIndexExpression.Right.NodeType != ExpressionType.Constant )
-                return base.Visit( node );
-
-            var indexExpression = (ConstantExpression)arrayIndexExpression.Right;
-            var indexValue = (int)indexExpression.Value!;
-
-            if ( indexValue < 0 || indexValue >= _expressions.Length )
-                return base.Visit( node );
-
-            return _expressions[indexValue];
+            return _expressions[index];
         }
     }
 

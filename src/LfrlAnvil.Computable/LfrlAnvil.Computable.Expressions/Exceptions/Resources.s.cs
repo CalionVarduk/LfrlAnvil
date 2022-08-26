@@ -316,7 +316,7 @@ internal static class Resources
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string InvalidExpressionArgumentCount(int actual, int expected, string paramName)
     {
-        return $"Expected '{paramName}' to contain {expected} elements but found {actual}.";
+        return $"Expected '{paramName}' to contain {expected} element(s) but found {actual}.";
     }
 
     [Pure]

@@ -6,16 +6,16 @@ namespace LfrlAnvil.Computable.Expressions.Internal;
 internal readonly struct ExpressionBuilderResult
 {
     internal ExpressionBuilderResult(
-        Expression bodyExpression,
         ParameterExpression parameterExpression,
+        Expression bodyExpression,
         IReadOnlyDictionary<StringSlice, int> argumentIndexes)
     {
-        BodyExpression = bodyExpression;
         ParameterExpression = parameterExpression;
+        BodyExpression = bodyExpression;
         ArgumentIndexes = argumentIndexes;
     }
 
-    internal Expression BodyExpression { get; }
     internal ParameterExpression ParameterExpression { get; }
+    internal Expression BodyExpression { get; }
     internal IReadOnlyDictionary<StringSlice, int> ArgumentIndexes { get; }
 }

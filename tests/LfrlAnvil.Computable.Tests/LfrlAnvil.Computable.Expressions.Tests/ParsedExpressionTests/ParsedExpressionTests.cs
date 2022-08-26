@@ -386,7 +386,7 @@ public class ParsedExpressionTests : TestsBase
     public void BindArguments_ShouldNotModifyParameterArrayIndexerWithNonConstantIndex()
     {
         var (aValue, bValue, cValue) = Fixture.CreateDistinctCollection<decimal>( count: 3 );
-        var expected = aValue + cValue + cValue;
+        var expected = aValue + bValue + cValue + cValue;
 
         var input = "a + external_parameter_accessor b + c";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -628,7 +628,7 @@ public class ParsedExpressionTests : TestsBase
         protected override Expression CreateUnaryExpression(Expression operand)
         {
             var parameterAccess = (BinaryExpression)operand;
-            return Expression.ArrayIndex( parameterAccess.Left, _index );
+            return Expression.Add( operand, Expression.ArrayIndex( parameterAccess.Left, _index ) );
         }
     }
 
@@ -644,7 +644,7 @@ public class ParsedExpressionTests : TestsBase
         protected override Expression CreateUnaryExpression(Expression operand)
         {
             var parameterAccess = (BinaryExpression)operand;
-            return Expression.ArrayIndex( parameterAccess.Left, _index );
+            return Expression.Add( operand, Expression.ArrayIndex( parameterAccess.Left, _index ) );
         }
     }
 }
