@@ -344,5 +344,91 @@ public partial class ParsedExpressionFactoryTests
             _setOnly = publicProperty;
             PrivateGetterProperty = privateProperty;
         }
+
+        public string PublicMethodZero()
+        {
+            return string.Empty;
+        }
+
+        public string PublicGenericMethodZero<T>()
+        {
+            return typeof( T ).Name!;
+        }
+
+        public string PublicMethodOne(int i)
+        {
+            return i.ToString( CultureInfo.InvariantCulture );
+        }
+
+        public string PublicMethodOne(string a)
+        {
+            return a;
+        }
+
+        public string ThrowingMethod(string a)
+        {
+            throw new Exception( a );
+        }
+
+        public string PublicGenericMethodThreeSameType<T>(T a, T b, T c)
+        {
+            return $"{a?.GetType().Name} {b?.GetType().Name} {c?.GetType().Name}";
+        }
+
+        public string PublicGenericMethodThreeDiffTypes<T1, T2, T3>(T1 a, T2 b, T3 c)
+        {
+            return $"{a?.GetType().Name} {b?.GetType().Name} {c?.GetType().Name}";
+        }
+
+        public string PublicAmbiguousMethodOne(int i)
+        {
+            return i.ToString( CultureInfo.InvariantCulture );
+        }
+
+        public string PublicAmbiguousMethodOne(string a)
+        {
+            return a;
+        }
+
+        public string PublicAmbiguousMethodOne<T>(T a)
+        {
+            return $"{a?.GetType().Name}";
+        }
+
+        public string PublicAmbiguousMethodTwo<T>(T a, string b)
+        {
+            return $"{a?.GetType().Name} {b}";
+        }
+
+        public string PublicAmbiguousMethodTwo<T>(string a, T b)
+        {
+            return $"{a} {b?.GetType().Name}";
+        }
+
+        public string PublicAmbiguousMethodTwo<T>(T a, T b)
+        {
+            return $"{a?.GetType().Name} {b?.GetType().Name}";
+        }
+
+        public string PublicAmbiguousMethodTwo<T1, T2>(T2 a, T1 b)
+        {
+            return $"{a?.GetType().Name} {b?.GetType().Name}";
+        }
+
+        public T2? PublicGenericMethodOne<T1, T2>(T1 a)
+        {
+            return default;
+        }
+
+        public string PublicConstrainedMethod<T>(T a)
+            where T : class
+        {
+            return $"{a?.GetType().Name}";
+        }
+
+        private string PrivateMethod(string a)
+        {
+            return a;
+        }
     }
 }

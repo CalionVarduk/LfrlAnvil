@@ -72,14 +72,22 @@ internal static class ExpressionHelpers
         MemberInfo indexer,
         IReadOnlyList<Expression> parameters)
     {
-        var @params = new object?[parameters.Count];
-        for ( var i = 0; i < @params.Length; ++i )
-            @params[i] = ((ConstantExpression)parameters[i]).Value;
+        if ( indexer is MethodInfo method )
+            return CreateConstantMethodCall( operand, method, parameters );
 
-        if ( indexer is PropertyInfo property )
-            return Expression.Constant( property.GetValue( operand.Value, @params ), property.PropertyType );
+        var property = (PropertyInfo)indexer;
+        var @params = parameters.GetValues();
+        return Expression.Constant( property.GetValue( operand.Value, @params ), property.PropertyType );
+    }
 
-        var method = (MethodInfo)indexer;
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static ConstantExpression CreateConstantMethodCall(
+        ConstantExpression operand,
+        MethodInfo method,
+        IReadOnlyList<Expression> parameters)
+    {
+        var @params = parameters.GetValues();
         return Expression.Constant( method.Invoke( operand.Value, @params ), method.ReturnType );
     }
 
@@ -118,5 +126,33 @@ internal static class ExpressionHelpers
         index = (int)indexExpression.Value!;
 
         return index >= 0 && index < argumentCount;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static Type[] GetTypes(this IReadOnlyList<Expression> expressions)
+    {
+        if ( expressions.Count == 0 )
+            return Array.Empty<Type>();
+
+        var result = new Type[expressions.Count];
+        for ( var i = 0; i < result.Length; ++i )
+            result[i] = expressions[i].Type;
+
+        return result;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static object?[] GetValues(this IReadOnlyList<Expression> expressions)
+    {
+        if ( expressions.Count == 0 )
+            return Array.Empty<object?>();
+
+        var result = new object?[expressions.Count];
+        for ( var i = 0; i < result.Length; ++i )
+            result[i] = ((ConstantExpression)expressions[i]).Value;
+
+        return result;
     }
 }

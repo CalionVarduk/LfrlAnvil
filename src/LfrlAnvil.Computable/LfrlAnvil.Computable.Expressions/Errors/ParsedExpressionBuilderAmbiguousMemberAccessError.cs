@@ -31,6 +31,19 @@ public sealed class ParsedExpressionBuilderAmbiguousMemberAccessError : ParsedEx
             Members.Select(
                 (m, i) =>
                 {
+                    if ( m is MethodInfo method )
+                    {
+                        var genericArgs = method.GetGenericArguments();
+                        var parameters = method.GetParameters();
+
+                        var fullName = method.Name;
+                        if ( genericArgs.Length > 0 )
+                            fullName += $"[{string.Join( ", ", genericArgs.Select( t => t.FullName ) )}]";
+
+                        fullName += $"({string.Join( ", ", parameters.Select( p => $"{p.ParameterType.FullName} {p.Name}" ) )})";
+                        return $"{i + 1}. {fullName} (Method)";
+                    }
+
                     var typeText = m is FieldInfo ? "(Field)" : "(Property)";
                     return $"{i + 1}. {m.Name} {typeText}";
                 } ) );

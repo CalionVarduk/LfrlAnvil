@@ -271,21 +271,25 @@ internal class ExpressionBuilderState
         AssumeStateExpectation( Expectation.MemberName );
         Assume.IsNotEmpty( _operandStack, nameof( _operandStack ) );
 
-        var operand = _operandStack.Pop();
-
-        var members = operand.Type.FindMembers(
-            MemberTypes.Field | MemberTypes.Property,
-            _configuration.MemberBindingFlags,
-            _configuration.GetAccessibleMemberFilter( token.Symbol ),
-            null );
+        var operand = _operandStack[0];
+        var members = MemberInfoLocator.FindMembers( operand.Type, token.Symbol, _configuration );
 
         if ( members.Length == 0 )
             return Chain.Create( ParsedExpressionBuilderError.CreateMemberCouldNotBeResolved( token, operand.Type ) );
 
+        var isMethod = members.All( m => m is MethodInfo );
+        if ( isMethod )
+        {
+            _expectation = (_expectation & Expectation.PrefixUnaryConstructResolution) | Expectation.MethodResolution;
+            _rootState.ActiveState = ExpressionBuilderChildState.CreateFunctionParameters( this );
+            return Chain<ParsedExpressionBuilderError>.Empty;
+        }
+
         if ( members.Length > 1 )
             return Chain.Create( ParsedExpressionBuilderError.CreateAmbiguousMemberAccess( token, operand.Type, members ) );
 
-        return ProcessMemberAccess( token, operand, members[0] );
+        _operandStack.Pop();
+        return ProcessFieldOrPropertyAccess( token, operand, members[0] );
     }
 
     private Chain<ParsedExpressionBuilderError> HandleConstructs(IntermediateToken token)
@@ -529,7 +533,7 @@ internal class ExpressionBuilderState
         AssumeTokenType( token, IntermediateTokenType.ClosedParenthesis );
 
         var self = (ExpressionBuilderChildState)this;
-        if ( ! self.ParentState.Expects( Expectation.FunctionResolution ) )
+        if ( ! self.ParentState.Expects( Expectation.FunctionResolution ) && ! self.ParentState.Expects( Expectation.MethodResolution ) )
             return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedClosedParenthesis( token ) );
 
         Assume.IsNotNull( LastHandledToken, nameof( LastHandledToken ) );
@@ -548,7 +552,9 @@ internal class ExpressionBuilderState
             self.ParentState._operandStack.Push( _operandStack.Pop() );
         }
 
-        return self.ParentState.HandleFunctionResolution( token, self.ElementCount );
+        return self.ParentState.Expects( Expectation.FunctionResolution )
+            ? self.ParentState.HandleFunctionResolution( token, self.ElementCount )
+            : self.ParentState.HandleMethodResolution( token, self.ElementCount );
     }
 
     private Chain<ParsedExpressionBuilderError> HandleFunctionResolution(IntermediateToken token, int parameterCount)
@@ -574,13 +580,32 @@ internal class ExpressionBuilderState
             : ProcessVariadicFunction( functionToken, parameters );
     }
 
+    private Chain<ParsedExpressionBuilderError> HandleMethodResolution(IntermediateToken token, int parameterCount)
+    {
+        Assume.IsGreaterThanOrEqualTo( parameterCount, 0, nameof( parameterCount ) );
+        Assume.IsNotNull( LastHandledToken, nameof( LastHandledToken ) );
+
+        AssumeStateExpectation( Expectation.MethodResolution );
+        AddAssumedExpectation( Expectation.Operand );
+
+        var methodNameToken = LastHandledToken.Value;
+        LastHandledToken = token;
+        _rootState.ActiveState = this;
+
+        var parameters = _operandStack.PopAndReturn( parameterCount );
+        Assume.IsNotEmpty( _operandStack, nameof( _operandStack ) );
+        var operand = _operandStack.Pop();
+
+        return ProcessMethodCall( methodNameToken, operand, parameters );
+    }
+
     private Chain<ParsedExpressionBuilderError> HandleArrayElementsOrIndexerParametersEnd(IntermediateToken token)
     {
         Assume.False( IsRoot, "Assumed the state to be a child state." );
         AssumeTokenType( token, IntermediateTokenType.ClosedSquareBracket );
 
         var self = (ExpressionBuilderChildState)this;
-        if ( self.ParentState.Expects( Expectation.FunctionResolution ) )
+        if ( self.ParentState.Expects( Expectation.FunctionResolution ) || self.ParentState.Expects( Expectation.MethodResolution ) )
             return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedClosedSquareBracket( token ) );
 
         Assume.IsNotNull( LastHandledToken, nameof( LastHandledToken ) );
@@ -636,10 +661,7 @@ internal class ExpressionBuilderState
 
         var operand = _operandStack.Pop();
 
-        var parameterTypes = parameters.Length == 0 ? Array.Empty<Type>() : new Type[parameters.Length];
-        for ( var i = 0; i < parameters.Length; ++i )
-            parameterTypes[i] = parameters[i].Type;
-
+        var parameterTypes = parameters.GetTypes();
         var indexer = MemberInfoLocator.TryFindIndexer( operand.Type, parameterTypes, _configuration.MemberBindingFlags );
         if ( indexer is not null )
             return ProcessIndexer( startIndexerToken, operand, indexer, parameters );
@@ -655,7 +677,7 @@ internal class ExpressionBuilderState
         if ( ! Expects( Expectation.MemberAccess ) )
             return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedMemberAccess( token ) );
 
-        _expectation = Expectation.MemberName;
+        _expectation = (_expectation & Expectation.PrefixUnaryConstructResolution) | Expectation.MemberName;
         return Chain<ParsedExpressionBuilderError>.Empty;
     }
 
@@ -915,6 +937,46 @@ internal class ExpressionBuilderState
         return Chain<ParsedExpressionBuilderError>.Empty;
     }
 
+    private Chain<ParsedExpressionBuilderError> ProcessMethodCall(
+        IntermediateToken token,
+        Expression operand,
+        IReadOnlyList<Expression> parameters)
+    {
+        --_operandCount;
+        AssumeTokenType( token, IntermediateTokenType.Argument );
+
+        var parameterTypes = parameters.GetTypes();
+        var methods = MemberInfoLocator.TryFindMethods( operand.Type, token.Symbol, parameterTypes, _configuration );
+
+        if ( methods.Length == 0 )
+            return Chain.Create( ParsedExpressionBuilderError.CreateMethodCouldNotBeResolved( token, operand.Type, parameterTypes ) );
+
+        if ( methods.Length > 1 )
+            return Chain.Create( ParsedExpressionBuilderError.CreateAmbiguousMethod( token, operand.Type, methods ) );
+
+        var method = methods[0];
+
+        if ( operand.NodeType != ExpressionType.Constant || parameters.Any( p => p.NodeType != ExpressionType.Constant ) )
+        {
+            var methodCall = Expression.Call( operand, method, parameters );
+            PushOperand( methodCall );
+            return Chain<ParsedExpressionBuilderError>.Empty;
+        }
+
+        Expression result;
+        try
+        {
+            result = ExpressionHelpers.CreateConstantMethodCall( (ConstantExpression)operand, method, parameters );
+        }
+        catch ( Exception exc )
+        {
+            return Chain.Create( ParsedExpressionBuilderError.CreateMemberHasThrownException( token, operand.Type, method, exc ) );
+        }
+
+        PushOperand( result );
+        return Chain<ParsedExpressionBuilderError>.Empty;
+    }
+
     private Chain<ParsedExpressionBuilderError> ProcessInlineArray(IntermediateToken token, IReadOnlyList<Expression> elements)
     {
         Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
@@ -948,7 +1010,7 @@ internal class ExpressionBuilderState
         return Chain<ParsedExpressionBuilderError>.Empty;
     }
 
-    private Chain<ParsedExpressionBuilderError> ProcessMemberAccess(IntermediateToken token, Expression operand, MemberInfo member)
+    private Chain<ParsedExpressionBuilderError> ProcessFieldOrPropertyAccess(IntermediateToken token, Expression operand, MemberInfo member)
     {
         --_operandCount;
         AddAssumedExpectation( Expectation.Operand );
@@ -1247,24 +1309,25 @@ internal class ExpressionBuilderState
     }
 
     [Flags]
-    internal enum Expectation : ushort
+    internal enum Expectation : uint
     {
-        None = 0,
-        Operand = 1,
-        OpenedParenthesis = 2,
-        ClosedParenthesis = 4,
-        PrefixUnaryConstruct = 8,
-        PostfixUnaryConstruct = 16,
-        BinaryOperator = 32,
-        MemberAccess = 64,
-        MemberName = 128,
-        IndexerResolution = 256,
-        ArrayResolution = 512,
-        ArrayElementsStart = 1024,
-        PrefixUnaryConstructResolution = 2048,
-        AmbiguousPostfixConstructResolution = 4096,
-        AmbiguousPrefixConstructResolution = 8192,
-        FunctionResolution = 16384,
-        FunctionParametersStart = 32768
+        None = 0x0,
+        Operand = 0x1,
+        OpenedParenthesis = 0x2,
+        ClosedParenthesis = 0x4,
+        PrefixUnaryConstruct = 0x8,
+        PostfixUnaryConstruct = 0x10,
+        BinaryOperator = 0x20,
+        MemberAccess = 0x40,
+        MemberName = 0x80,
+        IndexerResolution = 0x800000,
+        ArrayResolution = 0x1000000,
+        PrefixUnaryConstructResolution = 0x2000000,
+        AmbiguousPostfixConstructResolution = 0x4000000,
+        AmbiguousPrefixConstructResolution = 0x8000000,
+        FunctionResolution = 0x10000000,
+        MethodResolution = 0x20000000,
+        ArrayElementsStart = 0x40000000,
+        FunctionParametersStart = 0x80000000
     }
 }

@@ -3,6 +3,18 @@
 [assembly: InternalsVisibleTo( "LfrlAnvil.Computable.Expressions.Tests" )]
 
 // TODO:
+// add AddDefaultUnaryConstructPrecedences(int default) extension to factory builder
+// add built-in configurable variadic functions for various syntactic sugars:
+// - MEMBER_ACCESS(target, memberName)
+// - INDEXER_ACCESS(target, ...parameters)
+// - METHOD_CALL(target, methodName, ...parameters)
+// - DELEGATE_CALL(target, ...parameters)
+// - MAKE_ARRAY(elementType, ...values)
+// - MAKE_DELEGATE(...parameters, body)
+//
+// add delegate call support
+// ^ use [TYPE arg, Type arg, ...] BODY syntax
+//
 // Add inline function support (defining named function in the same input, that can be used e.g. as branching function's argument)
 // ^ this would go very well together with the thing below
 //

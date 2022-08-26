@@ -2465,6 +2465,196 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_ForPublicParameterlessMethodCall()
+    {
+        var value = new TestParameter( "privateField", "privateProperty", "publicField", "publicProperty", next: null );
+        var input = "a.PublicMethodZero()";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var expression = sut.Create<TestParameter, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( value );
+
+        result.Should().Be( value.PublicMethodZero() );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMethodExistsButWithDifferentAmountOfParameters()
+    {
+        var input = "a.PublicMethodOne( 'foo' , 'bar' )";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MethodCouldNotBeResolved ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMethodExistsButWithDifferentParameterTypes()
+    {
+        var input = "a.PublicMethodOne( true )";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MethodCouldNotBeResolved ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_ForPublicParameterlessGenericMethodCall()
+    {
+        var input = "a.PublicGenericMethodZero()";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MethodCouldNotBeResolved ) );
+    }
+
+    [Theory]
+    [InlineData( "'foo'", "foo" )]
+    [InlineData( "1", "1" )]
+    public void DelegateInvoke_ShouldReturnCorrectResult_ForPublicMethodCallWithOverloads(string parameter, string expected)
+    {
+        var value = new TestParameter( "privateField", "privateProperty", "publicField", "publicProperty", next: null );
+        var input = $"a.PublicMethodOne( {parameter} )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<TestParameter, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( value );
+
+        result.Should().Be( expected );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_ForPublicFullyGenericMethodWithParametersOfTheSameType()
+    {
+        var value = new TestParameter( "privateField", "privateProperty", "publicField", "publicProperty", next: null );
+        var input = "a.PublicGenericMethodThreeSameType( 'foo' , 'bar' , 'qux' )";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var expression = sut.Create<TestParameter, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( value );
+
+        result.Should().Be( value.PublicGenericMethodThreeSameType( "foo", "bar", "qux" ) );
+    }
+
+    [Fact]
+    public void
+        Create_ShouldThrowParsedExpressionCreationException_WhenPublicFullyGenericMethodWithParametersOfTheSameTypeReceivesInvalidParameters()
+    {
+        var input = "a.PublicGenericMethodThreeSameType( 'foo' , 1 , true )";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MethodCouldNotBeResolved ) );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_ForPublicFullyGenericMethodWithParametersOfDifferentTypes()
+    {
+        var value = new TestParameter( "privateField", "privateProperty", "publicField", "publicProperty", next: null );
+        var input = "a.PublicGenericMethodThreeDiffTypes( 'foo' , 1 , true )";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var expression = sut.Create<TestParameter, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( value );
+
+        result.Should().Be( value.PublicGenericMethodThreeDiffTypes( "foo", 1m, true ) );
+    }
+
+    [Theory]
+    [InlineData( "'foo'", "foo" )]
+    [InlineData( "1", "1" )]
+    [InlineData( "true", "Boolean" )]
+    public void DelegateInvoke_ShouldReturnCorrectResult_ForPublicMethodCallWithSingleGenericOverload(string parameter, string expected)
+    {
+        var value = new TestParameter( "privateField", "privateProperty", "publicField", "publicProperty", next: null );
+        var input = $"a.PublicAmbiguousMethodOne( {parameter} )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<TestParameter, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( value );
+
+        result.Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( "1", "'foo'", "Decimal foo" )]
+    [InlineData( "'foo'", "1", "foo Decimal" )]
+    [InlineData( "1", "true", "Decimal Boolean" )]
+    public void DelegateInvoke_ShouldReturnCorrectResult_ForPublicMethodCallWithManyGenericOverloads(
+        string parameter1,
+        string parameter2,
+        string expected)
+    {
+        var value = new TestParameter( "privateField", "privateProperty", "publicField", "publicProperty", next: null );
+        var input = $"a.PublicAmbiguousMethodTwo( {parameter1} , {parameter2} )";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var expression = sut.Create<TestParameter, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( value );
+
+        result.Should().Be( expected );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenPublicGenericMethodOverloadsAreAmbiguous()
+    {
+        var input = "a.PublicAmbiguousMethodTwo( 1, 2 )";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.AmbiguousMethod ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenPublicGenericAndNonGenericMethodOverloadsAreAmbiguous()
+    {
+        var input = "a.PublicAmbiguousMethodTwo( 'foo' , 'bar' )";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.AmbiguousMethod ) );
+    }
+
+    [Fact]
     public void DelegateInvoke_ShouldReturnCorrectResult_WhenMemberNameEqualsOneOfArgumentNames()
     {
         var value = new TestParameter( "privateField", "privateProperty", "publicField", "publicProperty", next: null );
@@ -2477,6 +2667,84 @@ public partial class ParsedExpressionFactoryTests : TestsBase
         var result = @delegate.Invoke( value );
 
         result.Should().Be( "publicField" );
+    }
+
+    [Fact]
+    public void
+        Create_ShouldThrowParsedExpressionCreationException_WhenPublicGenericMethodHasGenericArgumentsThatCannotBeInferredFromParameters()
+    {
+        var input = "a.PublicGenericMethodOne( 'foo' )";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MethodCouldNotBeResolved ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenPublicGenericMethodCannotBeResolvedDueToConstraints()
+    {
+        var input = "a.PublicConstrainedMethod( true )";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MethodCouldNotBeResolved ) );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenPublicGenericMethodCanBeResolvedDespiteConstraints()
+    {
+        var value = new TestParameter( "privateField", "privateProperty", "publicField", "publicProperty", next: null );
+        var input = "a.PublicConstrainedMethod( 'foo' )";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var expression = sut.Create<TestParameter, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( value );
+
+        result.Should().Be( value.PublicConstrainedMethod( "foo" ) );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenMethodTargetAndParametersAreConstant()
+    {
+        var input = "const.PublicMethodOne( 'foo' )";
+        var value = new TestParameter( "privateField", "privateProperty", "publicField", "publicProperty", next: null );
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddConstant( "const", new ParsedExpressionConstant<TestParameter>( value ) );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+
+        result.Should().Be( value.PublicMethodOne( "foo" ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMethodTargetAndParametersAreConstantButItThrowsAnException()
+    {
+        var input = "const.ThrowingMethod( 'foo' )";
+        var value = new TestParameter( "privateField", "privateProperty", "publicField", "publicProperty", next: null );
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddConstant( "const", new ParsedExpressionConstant<TestParameter>( value ) );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MemberHasThrownException ) );
     }
 
     [Fact]
@@ -2505,20 +2773,6 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     public void Create_ShouldThrowParsedExpressionCreationException_WhenMemberDoesNotExist()
     {
         var input = "a.foobar";
-        var builder = new ParsedExpressionFactoryBuilder();
-        var sut = builder.Build();
-
-        var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
-
-        action.Should()
-            .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MemberCouldNotBeResolved ) );
-    }
-
-    [Fact]
-    public void Create_ShouldThrowParsedExpressionCreationException_WhenMemberIsMethod()
-    {
-        var input = "a.ToString";
         var builder = new ParsedExpressionFactoryBuilder();
         var sut = builder.Build();
 
@@ -2762,6 +3016,55 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMethodExistsButIsPrivateAndAllowNonPublicMemberAccessIsFalse()
+    {
+        var input = "a.PrivateMethod( 'foo' )";
+        var configuration = Substitute.For<IParsedExpressionFactoryConfiguration>();
+        configuration.DecimalPoint.Returns( '.' );
+        configuration.IntegerDigitSeparator.Returns( '_' );
+        configuration.StringDelimiter.Returns( '\'' );
+        configuration.ScientificNotationExponents.Returns( "eE" );
+        configuration.AllowScientificNotation.Returns( true );
+        configuration.AllowNonIntegerNumbers.Returns( true );
+        configuration.ConvertResultToOutputTypeAutomatically.Returns( false );
+        configuration.AllowNonPublicMemberAccess.Returns( false );
+        configuration.IgnoreMemberNameCase.Returns( false );
+        var builder = new ParsedExpressionFactoryBuilder().SetConfiguration( configuration );
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<TestParameter, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MemberCouldNotBeResolved ) );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenMethodExistsButIsPrivateAndAllowNonPublicMemberAccessIsTrue()
+    {
+        var value = new TestParameter( "privateField", "privateProperty", "publicField", "publicProperty", next: null );
+        var input = "a.PrivateMethod( 'foo' )";
+        var configuration = Substitute.For<IParsedExpressionFactoryConfiguration>();
+        configuration.DecimalPoint.Returns( '.' );
+        configuration.IntegerDigitSeparator.Returns( '_' );
+        configuration.StringDelimiter.Returns( '\'' );
+        configuration.ScientificNotationExponents.Returns( "eE" );
+        configuration.AllowScientificNotation.Returns( true );
+        configuration.AllowNonIntegerNumbers.Returns( true );
+        configuration.ConvertResultToOutputTypeAutomatically.Returns( false );
+        configuration.AllowNonPublicMemberAccess.Returns( true );
+        configuration.IgnoreMemberNameCase.Returns( false );
+        var builder = new ParsedExpressionFactoryBuilder().SetConfiguration( configuration );
+        var sut = builder.Build();
+
+        var expression = sut.Create<TestParameter, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( value );
+
+        result.Should().Be( "foo" );
+    }
+
+    [Fact]
     public void DelegateInvoke_ShouldReturnCorrectResult_ForMemberAccessOnSubExpressionInsideParentheses()
     {
         var input = "(a + b).Length";
@@ -2810,6 +3113,31 @@ public partial class ParsedExpressionFactoryTests : TestsBase
         var result = @delegate.Invoke( "foobar" );
 
         result.Should().Be( "( 6|PostOp )" );
+    }
+
+    [Theory]
+    [InlineData( 1, 2, "( ( PreOp|6 )|PostOp )" )]
+    [InlineData( 2, 1, "( PreOp|( 6|PostOp ) )" )]
+    public void DelegateInvoke_ShouldReturnCorrectResult_ForMemberAccessWithPrefixAndPostfixUnaryOperator(
+        int prefixPrecedence,
+        int postfixPrecedence,
+        string expected)
+    {
+        var input = "- a.Length ^";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<string>( "string" )
+            .AddPrefixUnaryOperator( "-", new MockPrefixUnaryOperator() )
+            .AddPostfixUnaryOperator( "^", new MockPostfixUnaryOperator() )
+            .SetPrefixUnaryConstructPrecedence( "-", prefixPrecedence )
+            .SetPostfixUnaryConstructPrecedence( "^", postfixPrecedence );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( "foobar" );
+
+        result.Should().Be( expected );
     }
 
     [Fact]
@@ -3215,6 +3543,31 @@ public partial class ParsedExpressionFactoryTests : TestsBase
         var result = @delegate.Invoke( 0 );
 
         result.Should().Be( "( a|PostOp )" );
+    }
+
+    [Theory]
+    [InlineData( 1, 2, "( ( PreOp|a )|PostOp )" )]
+    [InlineData( 2, 1, "( PreOp|( a|PostOp ) )" )]
+    public void DelegateInvoke_ShouldReturnCorrectResult_ForIndexerWithPrefixAndPostfixUnaryOperator(
+        int prefixPrecedence,
+        int postfixPrecedence,
+        string expected)
+    {
+        var input = "- string[ 'a' ][ i ] ^";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<string>( "string" )
+            .AddPrefixUnaryOperator( "-", new MockPrefixUnaryOperator() )
+            .AddPostfixUnaryOperator( "^", new MockPostfixUnaryOperator() )
+            .SetPrefixUnaryConstructPrecedence( "-", prefixPrecedence )
+            .SetPostfixUnaryConstructPrecedence( "^", postfixPrecedence );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( 0 );
+
+        result.Should().Be( expected );
     }
 
     [Fact]

@@ -259,6 +259,19 @@ public class ParsedExpressionBuilderError
     }
 
     [Pure]
+    internal static ParsedExpressionBuilderError CreateMethodCouldNotBeResolved(
+        IntermediateToken token,
+        Type targetType,
+        IReadOnlyList<Type> parameterTypes)
+    {
+        return new ParsedExpressionBuilderMissingMemberError(
+            ParsedExpressionBuilderErrorType.MethodCouldNotBeResolved,
+            token.Symbol,
+            targetType,
+            parameterTypes );
+    }
+
+    [Pure]
     internal static ParsedExpressionBuilderError CreateIndexerCouldNotBeResolved(
         IntermediateToken token,
         Type targetType,
@@ -311,6 +324,19 @@ public class ParsedExpressionBuilderError
     {
         return new ParsedExpressionBuilderAmbiguousMemberAccessError(
             ParsedExpressionBuilderErrorType.AmbiguousMemberAccess,
+            token.Symbol,
+            targetType,
+            members );
+    }
+
+    [Pure]
+    internal static ParsedExpressionBuilderError CreateAmbiguousMethod(
+        IntermediateToken token,
+        Type targetType,
+        IReadOnlyList<MemberInfo> members)
+    {
+        return new ParsedExpressionBuilderAmbiguousMemberAccessError(
+            ParsedExpressionBuilderErrorType.AmbiguousMethod,
             token.Symbol,
             targetType,
             members );
