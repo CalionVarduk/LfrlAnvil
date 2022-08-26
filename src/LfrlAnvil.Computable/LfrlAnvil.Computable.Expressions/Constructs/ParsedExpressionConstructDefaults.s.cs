@@ -28,10 +28,11 @@ public static class ParsedExpressionConstructDefaults
     public const string BitwiseLeftShiftSymbol = "<<";
     public const string BitwiseRightShiftSymbol = ">>";
 
-    public const int TypeConverterPrecedence = 1;
-    public const int NegatePrecedence = 1;
-    public const int NotPrecedence = 1;
-    public const int BitwiseNotPrecedence = 1;
+    public const int DefaultUnaryPrecedence = 1;
+    public const int TypeConverterPrecedence = DefaultUnaryPrecedence;
+    public const int NegatePrecedence = DefaultUnaryPrecedence;
+    public const int NotPrecedence = DefaultUnaryPrecedence;
+    public const int BitwiseNotPrecedence = DefaultUnaryPrecedence;
     public const int MultiplyPrecedence = 2;
     public const int DividePrecedence = 2;
     public const int ModuloPrecedence = 2;

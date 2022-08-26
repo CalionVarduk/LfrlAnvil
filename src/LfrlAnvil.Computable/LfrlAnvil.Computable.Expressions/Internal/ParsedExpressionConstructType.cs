@@ -18,5 +18,6 @@ public enum ParsedExpressionConstructType : ushort
     Operator = BinaryOperator | PrefixUnaryOperator | PostfixUnaryOperator,
     TypeConverter = PrefixTypeConverter | PostfixTypeConverter,
     PrefixUnaryConstruct = PrefixUnaryOperator | PrefixTypeConverter,
-    PostfixUnaryConstruct = PostfixUnaryOperator | PostfixTypeConverter
+    PostfixUnaryConstruct = PostfixUnaryOperator | PostfixTypeConverter,
+    UnaryConstruct = PrefixUnaryConstruct | PostfixUnaryConstruct
 }

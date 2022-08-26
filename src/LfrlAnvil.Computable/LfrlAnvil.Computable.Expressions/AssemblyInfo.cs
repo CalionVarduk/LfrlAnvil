@@ -3,7 +3,6 @@
 [assembly: InternalsVisibleTo( "LfrlAnvil.Computable.Expressions.Tests" )]
 
 // TODO:
-// add AddDefaultUnaryConstructPrecedences(int default) extension to factory builder
 // add built-in configurable variadic functions for various syntactic sugars:
 // - MEMBER_ACCESS(target, memberName)
 // - INDEXER_ACCESS(target, ...parameters)

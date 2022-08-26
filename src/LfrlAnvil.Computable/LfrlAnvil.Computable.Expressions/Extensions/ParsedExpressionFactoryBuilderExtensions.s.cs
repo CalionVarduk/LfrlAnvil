@@ -12,6 +12,7 @@ using LfrlAnvil.Computable.Expressions.Constructs.Int32;
 using LfrlAnvil.Computable.Expressions.Constructs.Int64;
 using LfrlAnvil.Computable.Expressions.Constructs.String;
 using LfrlAnvil.Computable.Expressions.Constructs.Variadic;
+using LfrlAnvil.Computable.Expressions.Internal;
 using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Extensions;
@@ -931,6 +932,38 @@ public static class ParsedExpressionFactoryBuilderExtensions
             .AddVariadicFunction( symbols.SwitchCase, new ParsedExpressionSwitchCase() )
             .AddVariadicFunction( symbols.Switch, new ParsedExpressionSwitch() )
             .AddVariadicFunction( symbols.Throw, new ParsedExpressionThrow() );
+    }
+
+    public static ParsedExpressionFactoryBuilder AddDefaultUnaryConstructPrecedences(
+        this ParsedExpressionFactoryBuilder builder,
+        int defaultPrecedence = ParsedExpressionConstructDefaults.DefaultUnaryPrecedence)
+    {
+        var unaryConstructs = builder.GetConstructs()
+            .Where( i => (i.Type & ParsedExpressionConstructType.UnaryConstruct) != ParsedExpressionConstructType.None );
+
+        var prefixPrecedences = builder.GetPrefixUnaryConstructPrecedences()
+            .Select( kv => StringSlice.Create( kv.Key ) )
+            .ToHashSet();
+
+        var postfixPrecedences = builder.GetPostfixUnaryConstructPrecedences()
+            .Select( kv => StringSlice.Create( kv.Key ) )
+            .ToHashSet();
+
+        foreach ( var info in unaryConstructs )
+        {
+            if ( (info.Type & ParsedExpressionConstructType.PrefixUnaryConstruct) != ParsedExpressionConstructType.None )
+            {
+                if ( ! prefixPrecedences.Contains( StringSlice.Create( info.Symbol ) ) )
+                    builder.SetPrefixUnaryConstructPrecedence( info.Symbol, defaultPrecedence );
+
+                continue;
+            }
+
+            if ( ! postfixPrecedences.Contains( StringSlice.Create( info.Symbol ) ) )
+                builder.SetPostfixUnaryConstructPrecedence( info.Symbol, defaultPrecedence );
+        }
+
+        return builder;
     }
 
     private static ParsedExpressionFactoryBuilder AddTypeDefinition(

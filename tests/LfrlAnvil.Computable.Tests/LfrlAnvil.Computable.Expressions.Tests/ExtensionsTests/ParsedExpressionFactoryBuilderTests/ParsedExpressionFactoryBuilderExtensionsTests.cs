@@ -1815,4 +1815,50 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
         }
     }
+
+    [Fact]
+    public void AddDefaultUnaryConstructPrecedences_ShouldAddCorrectMissingPrecedences()
+    {
+        var sut = new ParsedExpressionFactoryBuilder()
+            .AddBinaryOperator( "+", new ParsedExpressionAddOperator() )
+            .AddPrefixUnaryOperator( "+", new ParsedExpressionNegateOperator() )
+            .AddPostfixUnaryOperator( "+", new ParsedExpressionNegateOperator() )
+            .AddPrefixUnaryOperator( "-", new ParsedExpressionNegateOperator() )
+            .AddPostfixUnaryOperator( "^", new ParsedExpressionNegateOperator() )
+            .AddPrefixTypeConverter( "[int]", new ParsedExpressionTypeConverter<int>() )
+            .AddPostfixTypeConverter( "ToInt", new ParsedExpressionTypeConverter<int>() )
+            .SetPrefixUnaryConstructPrecedence( "+", 2 )
+            .SetPostfixUnaryConstructPrecedence( "+", 2 );
+
+        var defaultPrecedence = 3;
+
+        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
+        {
+            ("+", 2),
+            ("-", defaultPrecedence),
+            ("[int]", defaultPrecedence)
+        };
+
+        var expectedPostfixUnaryConstructPrecedences = new (string Symbol, int Value)[]
+        {
+            ("+", 2),
+            ("^", defaultPrecedence),
+            ("ToInt", defaultPrecedence)
+        };
+
+        var result = sut.AddDefaultUnaryConstructPrecedences( defaultPrecedence );
+
+        var actualPrefixUnaryConstructPrecedences =
+            result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+
+        var actualPostfixUnaryConstructPrecedences =
+            result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
+            actualPostfixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPostfixUnaryConstructPrecedences );
+        }
+    }
 }
