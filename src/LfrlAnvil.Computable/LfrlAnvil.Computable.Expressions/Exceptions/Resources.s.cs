@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Computable.Expressions.Errors;
@@ -22,6 +23,7 @@ internal static class Resources
         "Cannot determine SWITCH return type due to all CASE bodies representing throw expressions.";
 
     internal const string SwitchValueWasNotHandledByAnyCaseFormat = "SWITCH value '{0}' was not handled by any CASE.";
+    internal const string MemberNameMustBeConstantNonNullString = "Member name must be a constant non-null string.";
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -378,6 +380,48 @@ internal static class Resources
     internal static string InvalidSwitchCaseParameter(int index)
     {
         return $"Expected SWITCH parameter at index {index} to be a {nameof( SwitchCase )}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string UnresolvableMember(Type targetType, MemberTypes memberType, string memberName)
+    {
+        var distinctMemberTypes = Enumerable.Range( 0, 8 )
+            .Where( i => (((int)memberType >> i) & 1) == 1 )
+            .Select( i => (MemberTypes)(1 << i) );
+
+        var memberTypeText = string.Join( " or ", distinctMemberTypes );
+        return $"{memberTypeText} member '{memberName}' could not be resolved for {targetType.FullName} type.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string AmbiguousMembers(Type targetType, string memberName, IReadOnlyList<MemberInfo> members)
+    {
+        var headerText = $"Found {members.Count} ambiguous '{memberName}' members in {targetType.FullName} type:";
+        var membersText = string.Join(
+            Environment.NewLine,
+            members.Select(
+                (m, i) =>
+                {
+                    if ( m is MethodInfo method )
+                    {
+                        var genericArgs = method.GetGenericArguments();
+                        var parameters = method.GetParameters();
+
+                        var fullName = method.Name;
+                        if ( genericArgs.Length > 0 )
+                            fullName += $"[{string.Join( ", ", genericArgs.Select( t => t.FullName ) )}]";
+
+                        fullName += $"({string.Join( ", ", parameters.Select( p => $"{p.ParameterType.FullName} {p.Name}" ) )})";
+                        return $"{i + 1}. {fullName} (Method)";
+                    }
+
+                    var typeText = m is FieldInfo ? "(Field)" : "(Property)";
+                    return $"{i + 1}. {m.Name} {typeText}";
+                } ) );
+
+        return $"{headerText}{Environment.NewLine}{membersText}";
     }
 
     [Pure]

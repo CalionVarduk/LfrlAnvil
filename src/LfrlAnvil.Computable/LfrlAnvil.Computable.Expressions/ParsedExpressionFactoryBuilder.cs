@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using LfrlAnvil.Computable.Expressions.Constructs;
+using LfrlAnvil.Computable.Expressions.Constructs.Variadic;
 using LfrlAnvil.Computable.Expressions.Exceptions;
 using LfrlAnvil.Computable.Expressions.Internal;
 
@@ -14,6 +15,11 @@ public sealed class ParsedExpressionFactoryBuilder
     private readonly Dictionary<(StringSlice Symbol, ParsedExpressionConstructType Type), int> _precedences;
     private IParsedExpressionFactoryConfiguration? _configuration;
     private Func<ParsedExpressionNumberParserParams, IParsedExpressionNumberParser>? _numberParserProvider;
+    private Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? _memberAccessProvider;
+    private Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? _indexerAccessProvider;
+
+    private Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? _methodCallProvider;
+    // TODO: add remaining providers
 
     public ParsedExpressionFactoryBuilder()
     {
@@ -21,6 +27,9 @@ public sealed class ParsedExpressionFactoryBuilder
         _precedences = new Dictionary<(StringSlice, ParsedExpressionConstructType), int>();
         _configuration = null;
         _numberParserProvider = null;
+        _memberAccessProvider = null;
+        _indexerAccessProvider = null;
+        _methodCallProvider = null;
     }
 
     public ParsedExpressionFactoryBuilder SetDefaultConfiguration()
@@ -45,6 +54,19 @@ public sealed class ParsedExpressionFactoryBuilder
         Func<ParsedExpressionNumberParserParams, IParsedExpressionNumberParser> numberParserProvider)
     {
         _numberParserProvider = numberParserProvider;
+        return this;
+    }
+
+    public ParsedExpressionFactoryBuilder SetDefaultMemberAccessProvider()
+    {
+        _memberAccessProvider = null;
+        return this;
+    }
+
+    public ParsedExpressionFactoryBuilder SetMemberAccessProvider(
+        Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction> memberAccessProvider)
+    {
+        _memberAccessProvider = memberAccessProvider;
         return this;
     }
 
@@ -215,6 +237,12 @@ public sealed class ParsedExpressionFactoryBuilder
     }
 
     [Pure]
+    public Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? GetMemberAccessProvider()
+    {
+        return _memberAccessProvider;
+    }
+
+    [Pure]
     public IEnumerable<ParsedExpressionConstructInfo> GetConstructs()
     {
         return _constructs.Select( x => new ParsedExpressionConstructInfo( x.Symbol.AsMemory(), x.Type, x.Construct ) );
@@ -259,7 +287,9 @@ public sealed class ParsedExpressionFactoryBuilder
             _configuration ?? new ParsedExpressionFactoryDefaultConfiguration() );
 
         var errorMessages = configuration.Validate();
-        var symbolGroups = _constructs.GroupBy( c => c.Symbol );
+
+        var internalVariadicFunctions = CreateInternalVariadicFunctions( configuration );
+        var symbolGroups = _constructs.Concat( internalVariadicFunctions ).GroupBy( c => c.Symbol );
 
         foreach ( var g in symbolGroups )
         {
@@ -286,6 +316,22 @@ public sealed class ParsedExpressionFactoryBuilder
             throw new ParsedExpressionFactoryBuilderException( errorMessages );
 
         return new ParsedExpressionFactory( configuration, _numberParserProvider );
+    }
+
+    [Pure]
+    private IEnumerable<(StringSlice Symbol, ParsedExpressionConstructType Type, object Construct)> CreateInternalVariadicFunctions(
+        ParsedExpressionFactoryInternalConfiguration configuration)
+    {
+        const ParsedExpressionConstructType type = ParsedExpressionConstructType.VariadicFunction;
+
+        var memberAccess = _memberAccessProvider is null
+            ? new ParsedExpressionMemberAccess( configuration )
+            : _memberAccessProvider( configuration );
+
+        return new[]
+        {
+            (StringSlice.Create( ParsedExpressionConstructDefaults.MemberAccessSymbol ), type, (object)memberAccess)
+        };
     }
 
     private ConstructTokenDefinition CreateOperatorDefinition(

@@ -3,6 +3,7 @@ using FluentAssertions.Execution;
 using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Computable.Expressions.Constructs.Boolean;
 using LfrlAnvil.Computable.Expressions.Constructs.Decimal;
+using LfrlAnvil.Computable.Expressions.Constructs.Variadic;
 using LfrlAnvil.Computable.Expressions.Exceptions;
 using LfrlAnvil.Computable.Expressions.Internal;
 using LfrlAnvil.Functional;
@@ -86,6 +87,37 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.GetNumberParserProvider().Should().BeNull();
+            result.Should().BeSameAs( sut );
+        }
+    }
+
+    [Fact]
+    public void SetMemberAccessProvider_ShouldUpdateDelegateToNewObject()
+    {
+        var sut = new ParsedExpressionFactoryBuilder();
+        var @delegate = Lambda.Of( (ParsedExpressionFactoryInternalConfiguration c) => new ParsedExpressionMemberAccess( c ) );
+
+        var result = sut.SetMemberAccessProvider( @delegate );
+
+        using ( new AssertionScope() )
+        {
+            sut.GetMemberAccessProvider().Should().BeSameAs( @delegate );
+            result.Should().BeSameAs( sut );
+        }
+    }
+
+    [Fact]
+    public void SetDefaultMemberAccessProvider_ShouldUpdateDelegateToNull()
+    {
+        var sut = new ParsedExpressionFactoryBuilder();
+        var @delegate = Lambda.Of( (ParsedExpressionFactoryInternalConfiguration c) => new ParsedExpressionMemberAccess( c ) );
+        sut.SetMemberAccessProvider( @delegate );
+
+        var result = sut.SetDefaultMemberAccessProvider();
+
+        using ( new AssertionScope() )
+        {
+            sut.GetMemberAccessProvider().Should().BeNull();
             result.Should().BeSameAs( sut );
         }
     }
@@ -542,6 +574,11 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     public void Build_ShouldReturnValidFactory_WhenBuilderIsEmpty()
     {
         var nonExistingSymbol = Fixture.Create<string>();
+        var internalSymbols = new[]
+        {
+            ParsedExpressionConstructDefaults.MemberAccessSymbol
+        };
+
         var sut = new ParsedExpressionFactoryBuilder();
 
         var result = sut.Build();
@@ -549,7 +586,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Configuration.Should().NotBeNull();
-            result.GetConstructSymbols().Should().BeEmpty();
+            result.GetConstructSymbols().Select( s => s.ToString() ).Should().BeEquivalentTo( internalSymbols );
             result.GetConstructType( nonExistingSymbol ).Should().Be( ParsedExpressionConstructType.None );
             result.GetGenericBinaryOperatorType( nonExistingSymbol ).Should().BeNull();
             result.GetSpecializedBinaryOperators( nonExistingSymbol ).Should().BeEmpty();
@@ -565,6 +602,10 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.GetBinaryOperatorPrecedence( nonExistingSymbol ).Should().BeNull();
             result.GetPrefixUnaryConstructPrecedence( nonExistingSymbol ).Should().BeNull();
             result.GetPostfixUnaryConstructPrecedence( nonExistingSymbol ).Should().BeNull();
+
+            internalSymbols.Select( s => result.GetConstructType( s ) )
+                .Should()
+                .AllBeEquivalentTo( ParsedExpressionConstructType.VariadicFunction );
         }
     }
 
@@ -582,7 +623,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            result.GetConstructSymbols().Select( s => s.ToString() ).Should().BeSequentiallyEqualTo( symbol );
+            result.GetConstructSymbols().Select( s => s.ToString() ).Should().Contain( symbol );
             result.GetConstructType( symbol ).Should().Be( ParsedExpressionConstructType.BinaryOperator );
             result.GetGenericBinaryOperatorType( symbol ).Should().Be( typeof( ParsedExpressionAddOperator ) );
             result.GetSpecializedBinaryOperators( symbol ).Should().BeEmpty();
@@ -615,7 +656,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            result.GetConstructSymbols().Select( s => s.ToString() ).Should().BeSequentiallyEqualTo( symbol );
+            result.GetConstructSymbols().Select( s => s.ToString() ).Should().Contain( symbol );
             result.GetConstructType( symbol ).Should().Be( ParsedExpressionConstructType.BinaryOperator );
             result.GetGenericBinaryOperatorType( symbol ).Should().BeNull();
             result.GetSpecializedBinaryOperators( symbol )
@@ -657,7 +698,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            result.GetConstructSymbols().Select( s => s.ToString() ).Should().BeSequentiallyEqualTo( symbol );
+            result.GetConstructSymbols().Select( s => s.ToString() ).Should().Contain( symbol );
             result.GetConstructType( symbol ).Should().Be( ParsedExpressionConstructType.PrefixUnaryOperator );
             result.GetGenericBinaryOperatorType( symbol ).Should().BeNull();
             result.GetSpecializedBinaryOperators( symbol ).Should().BeEmpty();
@@ -690,7 +731,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            result.GetConstructSymbols().Select( s => s.ToString() ).Should().BeSequentiallyEqualTo( symbol );
+            result.GetConstructSymbols().Select( s => s.ToString() ).Should().Contain( symbol );
             result.GetConstructType( symbol ).Should().Be( ParsedExpressionConstructType.PrefixUnaryOperator );
             result.GetGenericBinaryOperatorType( symbol ).Should().BeNull();
             result.GetSpecializedBinaryOperators( symbol ).Should().BeEmpty();
@@ -726,7 +767,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            result.GetConstructSymbols().Select( s => s.ToString() ).Should().BeSequentiallyEqualTo( symbol );
+            result.GetConstructSymbols().Select( s => s.ToString() ).Should().Contain( symbol );
             result.GetConstructType( symbol ).Should().Be( ParsedExpressionConstructType.PostfixUnaryOperator );
             result.GetGenericBinaryOperatorType( symbol ).Should().BeNull();
             result.GetSpecializedBinaryOperators( symbol ).Should().BeEmpty();
@@ -759,7 +800,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            result.GetConstructSymbols().Select( s => s.ToString() ).Should().BeSequentiallyEqualTo( symbol );
+            result.GetConstructSymbols().Select( s => s.ToString() ).Should().Contain( symbol );
             result.GetConstructType( symbol ).Should().Be( ParsedExpressionConstructType.PostfixUnaryOperator );
             result.GetGenericBinaryOperatorType( symbol ).Should().BeNull();
             result.GetSpecializedBinaryOperators( symbol ).Should().BeEmpty();
@@ -795,7 +836,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            result.GetConstructSymbols().Select( s => s.ToString() ).Should().BeSequentiallyEqualTo( symbol );
+            result.GetConstructSymbols().Select( s => s.ToString() ).Should().Contain( symbol );
             result.GetConstructType( symbol ).Should().Be( ParsedExpressionConstructType.PrefixTypeConverter );
             result.GetGenericBinaryOperatorType( symbol ).Should().BeNull();
             result.GetSpecializedBinaryOperators( symbol ).Should().BeEmpty();
@@ -828,7 +869,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            result.GetConstructSymbols().Select( s => s.ToString() ).Should().BeSequentiallyEqualTo( symbol );
+            result.GetConstructSymbols().Select( s => s.ToString() ).Should().Contain( symbol );
             result.GetConstructType( symbol ).Should().Be( ParsedExpressionConstructType.PrefixTypeConverter );
             result.GetGenericBinaryOperatorType( symbol ).Should().BeNull();
             result.GetSpecializedBinaryOperators( symbol ).Should().BeEmpty();
@@ -865,7 +906,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            result.GetConstructSymbols().Select( s => s.ToString() ).Should().BeSequentiallyEqualTo( symbol );
+            result.GetConstructSymbols().Select( s => s.ToString() ).Should().Contain( symbol );
             result.GetConstructType( symbol ).Should().Be( ParsedExpressionConstructType.PostfixTypeConverter );
             result.GetGenericBinaryOperatorType( symbol ).Should().BeNull();
             result.GetSpecializedBinaryOperators( symbol ).Should().BeEmpty();
@@ -898,7 +939,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            result.GetConstructSymbols().Select( s => s.ToString() ).Should().BeSequentiallyEqualTo( symbol );
+            result.GetConstructSymbols().Select( s => s.ToString() ).Should().Contain( symbol );
             result.GetConstructType( symbol ).Should().Be( ParsedExpressionConstructType.PostfixTypeConverter );
             result.GetGenericBinaryOperatorType( symbol ).Should().BeNull();
             result.GetSpecializedBinaryOperators( symbol ).Should().BeEmpty();
@@ -933,7 +974,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            result.GetConstructSymbols().Select( s => s.ToString() ).Should().BeSequentiallyEqualTo( symbol );
+            result.GetConstructSymbols().Select( s => s.ToString() ).Should().Contain( symbol );
             result.GetConstructType( symbol ).Should().Be( ParsedExpressionConstructType.Constant );
             result.GetGenericBinaryOperatorType( symbol ).Should().BeNull();
             result.GetSpecializedBinaryOperators( symbol ).Should().BeEmpty();
@@ -963,7 +1004,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            result.GetConstructSymbols().Select( s => s.ToString() ).Should().BeSequentiallyEqualTo( symbol );
+            result.GetConstructSymbols().Select( s => s.ToString() ).Should().Contain( symbol );
             result.GetConstructType( symbol ).Should().Be( ParsedExpressionConstructType.TypeDeclaration );
             result.GetGenericBinaryOperatorType( symbol ).Should().BeNull();
             result.GetSpecializedBinaryOperators( symbol ).Should().BeEmpty();
@@ -994,7 +1035,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            result.GetConstructSymbols().Select( s => s.ToString() ).Should().BeSequentiallyEqualTo( symbol );
+            result.GetConstructSymbols().Select( s => s.ToString() ).Should().Contain( symbol );
             result.GetConstructType( symbol ).Should().Be( ParsedExpressionConstructType.Function );
             result.GetGenericBinaryOperatorType( symbol ).Should().BeNull();
             result.GetSpecializedBinaryOperators( symbol ).Should().BeEmpty();
@@ -1025,7 +1066,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            result.GetConstructSymbols().Select( s => s.ToString() ).Should().BeSequentiallyEqualTo( symbol );
+            result.GetConstructSymbols().Select( s => s.ToString() ).Should().Contain( symbol );
             result.GetConstructType( symbol ).Should().Be( ParsedExpressionConstructType.VariadicFunction );
             result.GetGenericBinaryOperatorType( symbol ).Should().BeNull();
             result.GetSpecializedBinaryOperators( symbol ).Should().BeEmpty();
@@ -1079,7 +1120,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
         result.GetConstructSymbols()
             .Select( s => s.ToString() )
             .Should()
-            .BeEquivalentTo(
+            .Contain(
                 operatorSymbol,
                 typeConverterSymbol,
                 constantSymbol,
@@ -1487,6 +1528,19 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             .AddVariadicFunction( "e", Substitute.ForPartsOf<ParsedExpressionVariadicFunction>() )
             .AddBinaryOperator( "e", new ParsedExpressionAddOperator() )
             .SetBinaryOperatorPrecedence( "e", 1 );
+
+        var action = Lambda.Of( () => sut.Build() );
+
+        action.Should().ThrowExactly<ParsedExpressionFactoryBuilderException>();
+    }
+
+    [Fact]
+    public void Build_ShouldThrowMathExpressionFactoryBuilderException_WhenAnyConstructHasMemberAccessSymbol()
+    {
+        var sut = new ParsedExpressionFactoryBuilder()
+            .AddFunction(
+                ParsedExpressionConstructDefaults.MemberAccessSymbol,
+                new ParsedExpressionFunction<int>( () => Fixture.Create<int>() ) );
 
         var action = Lambda.Of( () => sut.Build() );
 

@@ -2780,7 +2780,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MemberCouldNotBeResolved ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
     }
 
     [Fact]
@@ -2794,7 +2794,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MemberCouldNotBeResolved ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
     }
 
     [Fact]
@@ -2808,7 +2808,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MemberCouldNotBeResolved ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
     }
 
     [Theory]
@@ -2843,7 +2843,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     [InlineData( "a.value" )]
     [InlineData( "a.Value" )]
     [InlineData( "a.VALUE" )]
-    public void Create_ShouldThrowParsedExpressionCreationException_WhenMemberNameIsAmbiguous(string input)
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenFieldOrPropertyNameIsAmbiguous(string input)
     {
         var configuration = Substitute.For<IParsedExpressionFactoryConfiguration>();
         configuration.DecimalPoint.Returns( '.' );
@@ -2862,7 +2862,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.AmbiguousMemberAccess ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
     }
 
     [Fact]
@@ -2886,7 +2886,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MemberCouldNotBeResolved ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
     }
 
     [Fact]
@@ -2936,7 +2936,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MemberCouldNotBeResolved ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
     }
 
     [Fact]
@@ -2986,7 +2986,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MemberCouldNotBeResolved ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
     }
 
     [Fact]
@@ -3036,7 +3036,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MemberCouldNotBeResolved ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
     }
 
     [Fact]
@@ -3187,7 +3187,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MemberHasThrownException ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
     }
 
     [Fact]
@@ -3203,7 +3203,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MemberHasThrownException ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
     }
 
     [Fact]
@@ -3217,7 +3217,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MemberCouldNotBeResolved ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
     }
 
     [Theory]
@@ -3617,6 +3617,80 @@ public partial class ParsedExpressionFactoryTests : TestsBase
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
             .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MemberHasThrownException ) );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenMemberAccessVariadicIsCalledDirectly()
+    {
+        var input = "MEMBER_ACCESS( 'foo' , 'Length' )";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, int>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+
+        result.Should().Be( "foo".Length );
+    }
+
+    [Theory]
+    [InlineData( 0 )]
+    [InlineData( 1 )]
+    [InlineData( 3 )]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMemberAccessVariadicReceivesInvalidAmountOfParameters(int count)
+    {
+        var input = $"MEMBER_ACCESS( {string.Join( " , ", Fixture.CreateMany<string>( count ).Select( p => $"'{p}'" ) )} )";
+        var builder = new ParsedExpressionFactoryBuilder();
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMemberAccessVariadicReceivesNonConstantSecondParameter()
+    {
+        var input = "MEMBER_ACCESS( 'foo' , a )";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMemberAccessVariadicReceivesSecondParameterNotOfStringType()
+    {
+        var input = "MEMBER_ACCESS( 'foo' , 1 )";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMemberAccessVariadicReceivesNullSecondParameterOfStringType()
+    {
+        var input = "MEMBER_ACCESS( 'foo' , null )";
+        var builder = new ParsedExpressionFactoryBuilder().AddConstant( "null", new ParsedExpressionConstant<string?>( null ) );
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
     }
 
     [Fact]

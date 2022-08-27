@@ -272,24 +272,13 @@ internal class ExpressionBuilderState
         Assume.IsNotEmpty( _operandStack, nameof( _operandStack ) );
 
         var operand = _operandStack[0];
-        var members = MemberInfoLocator.FindMembers( operand.Type, token.Symbol, _configuration );
+        var handleAsMethod = _configuration.TypeContainsMethod( operand.Type, token.Symbol );
+        if ( ! handleAsMethod )
+            return HandleFieldOrPropertyAccess( token );
 
-        if ( members.Length == 0 )
-            return Chain.Create( ParsedExpressionBuilderError.CreateMemberCouldNotBeResolved( token, operand.Type ) );
-
-        var isMethod = members.All( m => m is MethodInfo );
-        if ( isMethod )
-        {
-            _expectation = (_expectation & Expectation.PrefixUnaryConstructResolution) | Expectation.MethodResolution;
-            _rootState.ActiveState = ExpressionBuilderChildState.CreateFunctionParameters( this );
-            return Chain<ParsedExpressionBuilderError>.Empty;
-        }
-
-        if ( members.Length > 1 )
-            return Chain.Create( ParsedExpressionBuilderError.CreateAmbiguousMemberAccess( token, operand.Type, members ) );
-
-        _operandStack.Pop();
-        return ProcessFieldOrPropertyAccess( token, operand, members[0] );
+        _expectation = GetExpectationWithPreservedPrefixUnaryConstructResolution( Expectation.MethodResolution );
+        _rootState.ActiveState = ExpressionBuilderChildState.CreateFunctionParameters( this );
+        return Chain<ParsedExpressionBuilderError>.Empty;
     }
 
     private Chain<ParsedExpressionBuilderError> HandleConstructs(IntermediateToken token)
@@ -387,7 +376,7 @@ internal class ExpressionBuilderState
         if ( errors.Count > 0 )
             return errors;
 
-        _expectation = (_expectation & Expectation.PrefixUnaryConstructResolution) | Expectation.FunctionResolution;
+        _expectation = GetExpectationWithPreservedPrefixUnaryConstructResolution( Expectation.FunctionResolution );
         _rootState.ActiveState = ExpressionBuilderChildState.CreateFunctionParameters( this );
         return Chain<ParsedExpressionBuilderError>.Empty;
     }
@@ -425,7 +414,7 @@ internal class ExpressionBuilderState
         if ( errors.Count > 0 )
             return errors;
 
-        _expectation = (_expectation & Expectation.PrefixUnaryConstructResolution) | Expectation.ArrayResolution;
+        _expectation = GetExpectationWithPreservedPrefixUnaryConstructResolution( Expectation.ArrayResolution );
         _rootState.ActiveState = ExpressionBuilderChildState.CreateArrayElements( this );
         return Chain<ParsedExpressionBuilderError>.Empty;
     }
@@ -509,7 +498,7 @@ internal class ExpressionBuilderState
 
         if ( Expects( Expectation.PostfixUnaryConstruct ) )
         {
-            _expectation = (_expectation & Expectation.PrefixUnaryConstructResolution) | Expectation.IndexerResolution;
+            _expectation = GetExpectationWithPreservedPrefixUnaryConstructResolution( Expectation.IndexerResolution );
             _rootState.ActiveState = ExpressionBuilderChildState.CreateIndexerParameters( this );
             return Chain<ParsedExpressionBuilderError>.Empty;
         }
@@ -670,6 +659,19 @@ internal class ExpressionBuilderState
             ParsedExpressionBuilderError.CreateIndexerCouldNotBeResolved( startIndexerToken, operand.Type, parameterTypes ) );
     }
 
+    private Chain<ParsedExpressionBuilderError> HandleFieldOrPropertyAccess(IntermediateToken token)
+    {
+        AssumeTokenType( token, IntermediateTokenType.Argument );
+
+        --_operandCount;
+        var operand = _operandStack.Pop();
+        AddAssumedExpectation( Expectation.Operand );
+
+        var parameters = new[] { operand, Expression.Constant( token.Symbol.ToString() ) };
+        var memberAccess = GetInternalVariadicFunction( ParsedExpressionConstructDefaults.MemberAccessSymbol );
+        return ProcessVariadicFunction( token, memberAccess, parameters );
+    }
+
     private Chain<ParsedExpressionBuilderError> HandleMemberAccess(IntermediateToken token)
     {
         AssumeTokenType( token, IntermediateTokenType.MemberAccess );
@@ -677,7 +679,7 @@ internal class ExpressionBuilderState
         if ( ! Expects( Expectation.MemberAccess ) )
             return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedMemberAccess( token ) );
 
-        _expectation = (_expectation & Expectation.PrefixUnaryConstructResolution) | Expectation.MemberName;
+        _expectation = GetExpectationWithPreservedPrefixUnaryConstructResolution( Expectation.MemberName );
         return Chain<ParsedExpressionBuilderError>.Empty;
     }
 
@@ -915,6 +917,7 @@ internal class ExpressionBuilderState
         return Chain<ParsedExpressionBuilderError>.Empty;
     }
 
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Chain<ParsedExpressionBuilderError> ProcessVariadicFunction(IntermediateToken token, IReadOnlyList<Expression> parameters)
     {
         Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
@@ -922,6 +925,14 @@ internal class ExpressionBuilderState
         AssumeConstructsType( token.Constructs, ParsedExpressionConstructType.VariadicFunction );
 
         var function = token.Constructs.VariadicFunction;
+        return ProcessVariadicFunction( token, function, parameters );
+    }
+
+    private Chain<ParsedExpressionBuilderError> ProcessVariadicFunction(
+        IntermediateToken token,
+        ParsedExpressionVariadicFunction function,
+        IReadOnlyList<Expression> parameters)
+    {
         Expression result;
 
         try
@@ -1005,32 +1016,6 @@ internal class ExpressionBuilderState
         var result = containsVariableElements
             ? ExpressionHelpers.CreateVariableArray( elementType, elements )
             : ExpressionHelpers.CreateConstantArray( elementType, elements );
-
-        PushOperand( result );
-        return Chain<ParsedExpressionBuilderError>.Empty;
-    }
-
-    private Chain<ParsedExpressionBuilderError> ProcessFieldOrPropertyAccess(IntermediateToken token, Expression operand, MemberInfo member)
-    {
-        --_operandCount;
-        AddAssumedExpectation( Expectation.Operand );
-
-        if ( operand.NodeType != ExpressionType.Constant )
-        {
-            var memberAccess = Expression.MakeMemberAccess( operand, member );
-            PushOperand( memberAccess );
-            return Chain<ParsedExpressionBuilderError>.Empty;
-        }
-
-        Expression result;
-        try
-        {
-            result = ExpressionHelpers.CreateConstantMemberAccess( (ConstantExpression)operand, member );
-        }
-        catch ( Exception exc )
-        {
-            return Chain.Create( ParsedExpressionBuilderError.CreateMemberHasThrownException( token, operand.Type, member, exc ) );
-        }
 
         PushOperand( result );
         return Chain<ParsedExpressionBuilderError>.Empty;
@@ -1199,10 +1184,10 @@ internal class ExpressionBuilderState
 
         _operandStack.Push( operand );
 
-        _expectation = (_expectation & Expectation.PrefixUnaryConstructResolution) |
+        _expectation = GetExpectationWithPreservedPrefixUnaryConstructResolution(
             Expectation.PostfixUnaryConstruct |
             Expectation.BinaryOperator |
-            Expectation.MemberAccess;
+            Expectation.MemberAccess );
 
         if ( _parenthesesCount > 0 )
             _expectation |= Expectation.ClosedParenthesis;
@@ -1254,6 +1239,22 @@ internal class ExpressionBuilderState
     private bool Expects(Expectation expectation)
     {
         return (_expectation & expectation) == expectation;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private Expectation GetExpectationWithPreservedPrefixUnaryConstructResolution(Expectation expectation)
+    {
+        return (_expectation & Expectation.PrefixUnaryConstructResolution) | expectation;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private ParsedExpressionVariadicFunction GetInternalVariadicFunction(string symbol)
+    {
+        var constructs = _configuration.Constructs[StringSlice.Create( symbol )];
+        Assume.IsNotNull( constructs.VariadicFunction, nameof( constructs.VariadicFunction ) );
+        return constructs.VariadicFunction;
     }
 
     private Expression GetOrAddArgumentAccessExpression(StringSlice name)

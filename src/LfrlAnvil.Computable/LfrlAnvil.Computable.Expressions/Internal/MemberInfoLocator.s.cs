@@ -106,18 +106,6 @@ internal static class MemberInfoLocator
     }
 
     [Pure]
-    internal static MemberInfo[] FindMembers(Type type, StringSlice symbol, ParsedExpressionFactoryInternalConfiguration configuration)
-    {
-        var result = type.FindMembers(
-            MemberTypes.Field | MemberTypes.Property | MemberTypes.Method,
-            configuration.MemberBindingFlags,
-            configuration.GetAccessibleMemberFilter( symbol ),
-            null );
-
-        return result;
-    }
-
-    [Pure]
     internal static MemberInfo? TryFindIndexer(Type type, Type[] parameterTypes, BindingFlags bindingFlags)
     {
         if ( type.IsArray )

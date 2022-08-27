@@ -56,12 +56,48 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
     public IFormatProvider NumberFormatProvider { get; }
     internal IReadOnlyDictionary<StringSlice, ConstructTokenDefinition> Constructs { get; }
 
+    // TODO: move simple member finding here, as public methods
+
+    [Pure]
+    public MemberInfo[] FindTypeFieldsAndProperties(Type type, string name)
+    {
+        var result = type.FindMembers(
+            MemberTypes.Field | MemberTypes.Property,
+            MemberBindingFlags,
+            GetAccessibleMemberFilter( name ),
+            filterCriteria: null );
+
+        return result;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public MemberFilter GetAccessibleMemberFilter(string name)
+    {
+        return GetAccessibleMemberFilter( StringSlice.Create( name ) );
+    }
+
     [Pure]
     internal MemberFilter GetAccessibleMemberFilter(StringSlice symbol)
     {
         return IgnoreMemberNameCase
             ? (m, _) => symbol.EqualsIgnoreCase( StringSlice.Create( m.Name ) ) && IsMemberAccessible( m )
             : (m, _) => symbol.Equals( StringSlice.Create( m.Name ) ) && IsMemberAccessible( m );
+    }
+
+    [Pure]
+    internal bool TypeContainsMethod(Type type, StringSlice symbol)
+    {
+        var methods = type.GetMethods( MemberBindingFlags );
+        var filter = GetAccessibleMemberFilter( symbol );
+
+        for ( var i = 0; i < methods.Length; ++i )
+        {
+            if ( filter( methods[i], null ) )
+                return true;
+        }
+
+        return false;
     }
 
     [Pure]
