@@ -384,14 +384,31 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string UnresolvableMember(Type targetType, MemberTypes memberType, string memberName)
+    internal static string UnresolvableMember(
+        Type targetType,
+        MemberTypes memberType,
+        string memberName,
+        IReadOnlyList<Type>? parameterTypes)
     {
         var distinctMemberTypes = Enumerable.Range( 0, 8 )
             .Where( i => (((int)memberType >> i) & 1) == 1 )
             .Select( i => (MemberTypes)(1 << i) );
 
         var memberTypeText = string.Join( " or ", distinctMemberTypes );
-        return $"{memberTypeText} member '{memberName}' could not be resolved for {targetType.FullName} type.";
+
+        var parametersText = parameterTypes is null
+            ? string.Empty
+            : $" (parameter types: [{string.Join( ", ", parameterTypes.Select( p => p.FullName ) )}])";
+
+        return $"{memberTypeText} member '{memberName}'{parametersText} could not be resolved for {targetType.FullName} type.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string UnresolvableIndexer(Type targetType, IReadOnlyList<Type> parameterTypes)
+    {
+        var parametersText = $"(parameter types: [{string.Join( ", ", parameterTypes.Select( p => p.FullName ) )}])";
+        return $"Indexer member {parametersText} could not be resolved for {targetType.FullName} type.";
     }
 
     [Pure]

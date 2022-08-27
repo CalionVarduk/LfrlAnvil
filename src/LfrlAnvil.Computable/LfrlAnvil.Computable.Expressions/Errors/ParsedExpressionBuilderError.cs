@@ -262,19 +262,6 @@ public class ParsedExpressionBuilderError
     }
 
     [Pure]
-    internal static ParsedExpressionBuilderError CreateIndexerCouldNotBeResolved(
-        IntermediateToken token,
-        Type targetType,
-        IReadOnlyList<Type> parameterTypes)
-    {
-        return new ParsedExpressionBuilderMissingMemberError(
-            ParsedExpressionBuilderErrorType.IndexerCouldNotBeResolved,
-            token.Symbol,
-            targetType,
-            parameterTypes );
-    }
-
-    [Pure]
     internal static ParsedExpressionBuilderError CreateExpectedPrefixUnaryConstruct(IntermediateToken token)
     {
         return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.ExpectedPrefixUnaryConstruct, token.Symbol );

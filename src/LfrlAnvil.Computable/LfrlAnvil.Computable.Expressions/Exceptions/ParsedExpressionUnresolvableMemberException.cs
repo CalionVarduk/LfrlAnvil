@@ -6,7 +6,7 @@ namespace LfrlAnvil.Computable.Expressions.Exceptions;
 public class ParsedExpressionUnresolvableMemberException : InvalidOperationException
 {
     public ParsedExpressionUnresolvableMemberException(Type targetType, MemberTypes memberType, string memberName)
-        : base( Resources.UnresolvableMember( targetType, memberType, memberName ) )
+        : base( Resources.UnresolvableMember( targetType, memberType, memberName, parameterTypes: null ) )
     {
         TargetType = targetType;
         MemberType = memberType;

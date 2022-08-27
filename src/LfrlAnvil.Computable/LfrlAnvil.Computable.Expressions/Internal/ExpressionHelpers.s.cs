@@ -130,6 +130,23 @@ internal static class ExpressionHelpers
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static Expression[] Slice(this IReadOnlyList<Expression> expressions, int startIndex)
+    {
+        var resultCount = expressions.Count - startIndex;
+        Assume.IsGreaterThanOrEqualTo( resultCount, 0, nameof( resultCount ) );
+
+        if ( resultCount == 0 )
+            return Array.Empty<Expression>();
+
+        var result = new Expression[resultCount];
+        for ( var i = 0; i < resultCount; ++i )
+            result[i] = expressions[i + startIndex];
+
+        return result;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static Type[] GetTypes(this IReadOnlyList<Expression> expressions)
     {
         if ( expressions.Count == 0 )

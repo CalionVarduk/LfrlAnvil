@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using LfrlAnvil.Computable.Expressions.Constructs;
@@ -645,18 +644,16 @@ internal class ExpressionBuilderState
         LastHandledToken = token;
         _rootState.ActiveState = this;
 
-        var parameters = _operandStack.PopAndReturn( parameterCount );
+        var parameters = new Expression[parameterCount + 1];
+        _operandStack.PopInto( parameterCount, parameters, startIndex: 1 );
         Assume.IsNotEmpty( _operandStack, nameof( _operandStack ) );
 
-        var operand = _operandStack.Pop();
+        --_operandCount;
+        parameters[0] = _operandStack.Pop();
+        AddAssumedExpectation( Expectation.Operand );
 
-        var parameterTypes = parameters.GetTypes();
-        var indexer = MemberInfoLocator.TryFindIndexer( operand.Type, parameterTypes, _configuration.MemberBindingFlags );
-        if ( indexer is not null )
-            return ProcessIndexer( startIndexerToken, operand, indexer, parameters );
-
-        return Chain.Create(
-            ParsedExpressionBuilderError.CreateIndexerCouldNotBeResolved( startIndexerToken, operand.Type, parameterTypes ) );
+        var indexerCall = GetInternalVariadicFunction( ParsedExpressionConstructDefaults.IndexerCallSymbol );
+        return ProcessVariadicFunction( startIndexerToken, indexerCall, parameters );
     }
 
     private Chain<ParsedExpressionBuilderError> HandleFieldOrPropertyAccess(IntermediateToken token)
@@ -1016,39 +1013,6 @@ internal class ExpressionBuilderState
         var result = containsVariableElements
             ? ExpressionHelpers.CreateVariableArray( elementType, elements )
             : ExpressionHelpers.CreateConstantArray( elementType, elements );
-
-        PushOperand( result );
-        return Chain<ParsedExpressionBuilderError>.Empty;
-    }
-
-    private Chain<ParsedExpressionBuilderError> ProcessIndexer(
-        IntermediateToken token,
-        Expression operand,
-        MemberInfo indexer,
-        IReadOnlyList<Expression> parameters)
-    {
-        --_operandCount;
-        AddAssumedExpectation( Expectation.Operand );
-
-        if ( operand.NodeType != ExpressionType.Constant || parameters.Any( p => p.NodeType != ExpressionType.Constant ) )
-        {
-            Expression indexerAccess = indexer is PropertyInfo p
-                ? Expression.MakeIndex( operand, p, parameters )
-                : Expression.Call( operand, (MethodInfo)indexer, parameters );
-
-            PushOperand( indexerAccess );
-            return Chain<ParsedExpressionBuilderError>.Empty;
-        }
-
-        Expression result;
-        try
-        {
-            result = ExpressionHelpers.CreateConstantIndexer( (ConstantExpression)operand, indexer, parameters );
-        }
-        catch ( Exception exc )
-        {
-            return Chain.Create( ParsedExpressionBuilderError.CreateMemberHasThrownException( token, operand.Type, indexer, exc ) );
-        }
 
         PushOperand( result );
         return Chain<ParsedExpressionBuilderError>.Empty;

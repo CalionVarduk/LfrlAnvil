@@ -60,7 +60,7 @@ public static class ParsedExpressionConstructDefaults
     public const string ThrowSymbol = "throw";
 
     public const string MemberAccessSymbol = "MEMBER_ACCESS";
-    public const string IndexerAccessSymbol = "INDEXER_ACCESS";
+    public const string IndexerCallSymbol = "INDEXER_CALL";
     public const string MethodCallSymbol = "METHOD_CALL";
     public const string DelegateCallSymbol = "DELEGATE_CALL";
     public const string MakeArraySymbol = "MAKE_ARRAY";

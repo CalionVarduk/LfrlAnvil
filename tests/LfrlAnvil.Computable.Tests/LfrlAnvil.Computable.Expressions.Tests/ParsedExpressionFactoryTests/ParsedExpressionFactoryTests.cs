@@ -3459,7 +3459,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.IndexerCouldNotBeResolved ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
     }
 
     [Fact]
@@ -3473,7 +3473,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.IndexerCouldNotBeResolved ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
     }
 
     [Fact]
@@ -3487,7 +3487,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.IndexerCouldNotBeResolved ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
     }
 
     [Fact]
@@ -3616,7 +3616,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MemberHasThrownException ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
     }
 
     [Fact]
@@ -3684,6 +3684,39 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     {
         var input = "MEMBER_ACCESS( 'foo' , null )";
         var builder = new ParsedExpressionFactoryBuilder().AddConstant( "null", new ParsedExpressionConstant<string?>( null ) );
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenIndexerCallVariadicIsCalledDirectly()
+    {
+        var input = "INDEXER_CALL( 'foo' , 1 )";
+        var builder = new ParsedExpressionFactoryBuilder().SetNumberParserProvider(
+            p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, char>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+
+        result.Should().Be( 'o' );
+    }
+
+    [Theory]
+    [InlineData( 0 )]
+    [InlineData( 1 )]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenIndexerCallVariadicReceivesInvalidAmountOfParameters(int count)
+    {
+        var input = $"INDEXER_CALL( {string.Join( " , ", Fixture.CreateMany<string>( count ).Select( p => $"'{p}'" ) )} )";
+        var builder = new ParsedExpressionFactoryBuilder();
+
         var sut = builder.Build();
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );

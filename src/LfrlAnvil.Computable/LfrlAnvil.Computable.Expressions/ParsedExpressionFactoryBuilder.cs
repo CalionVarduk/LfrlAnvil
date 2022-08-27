@@ -16,7 +16,7 @@ public sealed class ParsedExpressionFactoryBuilder
     private IParsedExpressionFactoryConfiguration? _configuration;
     private Func<ParsedExpressionNumberParserParams, IParsedExpressionNumberParser>? _numberParserProvider;
     private Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? _memberAccessProvider;
-    private Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? _indexerAccessProvider;
+    private Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? _indexerCallProvider;
 
     private Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? _methodCallProvider;
     // TODO: add remaining providers
@@ -28,7 +28,7 @@ public sealed class ParsedExpressionFactoryBuilder
         _configuration = null;
         _numberParserProvider = null;
         _memberAccessProvider = null;
-        _indexerAccessProvider = null;
+        _indexerCallProvider = null;
         _methodCallProvider = null;
     }
 
@@ -67,6 +67,19 @@ public sealed class ParsedExpressionFactoryBuilder
         Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction> memberAccessProvider)
     {
         _memberAccessProvider = memberAccessProvider;
+        return this;
+    }
+
+    public ParsedExpressionFactoryBuilder SetDefaultIndexerCallProvider()
+    {
+        _indexerCallProvider = null;
+        return this;
+    }
+
+    public ParsedExpressionFactoryBuilder SetIndexerCallProvider(
+        Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction> indexerCallProvider)
+    {
+        _indexerCallProvider = indexerCallProvider;
         return this;
     }
 
@@ -243,6 +256,12 @@ public sealed class ParsedExpressionFactoryBuilder
     }
 
     [Pure]
+    public Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? GetIndexerCallProvider()
+    {
+        return _indexerCallProvider;
+    }
+
+    [Pure]
     public IEnumerable<ParsedExpressionConstructInfo> GetConstructs()
     {
         return _constructs.Select( x => new ParsedExpressionConstructInfo( x.Symbol.AsMemory(), x.Type, x.Construct ) );
@@ -328,9 +347,14 @@ public sealed class ParsedExpressionFactoryBuilder
             ? new ParsedExpressionMemberAccess( configuration )
             : _memberAccessProvider( configuration );
 
-        return new[]
+        var indexerCall = _indexerCallProvider is null
+            ? new ParsedExpressionIndexerCall( configuration )
+            : _indexerCallProvider( configuration );
+
+        return new (StringSlice, ParsedExpressionConstructType, object)[]
         {
-            (StringSlice.Create( ParsedExpressionConstructDefaults.MemberAccessSymbol ), type, (object)memberAccess)
+            (StringSlice.Create( ParsedExpressionConstructDefaults.MemberAccessSymbol ), type, memberAccess),
+            (StringSlice.Create( ParsedExpressionConstructDefaults.IndexerCallSymbol ), type, indexerCall)
         };
     }
 

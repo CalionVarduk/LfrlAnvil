@@ -106,37 +106,6 @@ internal static class MemberInfoLocator
     }
 
     [Pure]
-    internal static MemberInfo? TryFindIndexer(Type type, Type[] parameterTypes, BindingFlags bindingFlags)
-    {
-        if ( type.IsArray )
-        {
-            var getMethod = type.GetMethod( "Get" )!;
-            var parameters = getMethod.GetParameters();
-
-            if ( parameters.Length == parameterTypes.Length && AreParametersMatching( parameters, parameterTypes ) )
-                return getMethod;
-
-            return null;
-        }
-
-        var nonPublic = (bindingFlags & BindingFlags.NonPublic) == BindingFlags.NonPublic;
-        var properties = type.GetProperties( bindingFlags );
-
-        foreach ( var property in properties )
-        {
-            var getter = property.GetGetMethod( nonPublic );
-            if ( getter is null )
-                continue;
-
-            var parameters = getter.GetParameters();
-            if ( parameters.Length == parameterTypes.Length && AreParametersMatching( parameters, parameterTypes ) )
-                return property;
-        }
-
-        return null;
-    }
-
-    [Pure]
     internal static MethodInfo[] TryFindMethods(
         Type type,
         StringSlice symbol,
@@ -221,7 +190,7 @@ internal static class MemberInfoLocator
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static bool AreParametersMatching(ParameterInfo[] parameters, Type[] expectedTypes)
+    internal static bool AreParametersMatching(ParameterInfo[] parameters, Type[] expectedTypes)
     {
         Assume.Equals( parameters.Length, expectedTypes.Length, nameof( parameters.Length ) );
 

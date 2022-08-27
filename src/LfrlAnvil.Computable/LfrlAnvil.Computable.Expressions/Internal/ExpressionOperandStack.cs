@@ -73,6 +73,23 @@ internal sealed class ExpressionOperandStack : IReadOnlyList<Expression>
         return result;
     }
 
+    internal void PopInto(int count, Expression[] buffer, int startIndex)
+    {
+        Assume.IsInRange( count, 0, Count, nameof( count ) );
+        Assume.IsLessThanOrEqualTo( startIndex + count, buffer.Length, nameof( startIndex ) + '+' + nameof( count ) );
+
+        if ( count == 0 )
+            return;
+
+        var oldCount = Count;
+        Count -= count;
+
+        for ( var i = Count; i < oldCount; ++i )
+            buffer[i - Count + startIndex] = _expressions[i]!;
+
+        Array.Clear( _expressions, Count, count );
+    }
+
     [Pure]
     public IEnumerator<Expression> GetEnumerator()
     {

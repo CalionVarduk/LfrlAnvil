@@ -71,6 +71,36 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
     }
 
     [Pure]
+    public MemberInfo? TryFindTypeIndexer(Type type, Type[] parameterTypes)
+    {
+        if ( type.IsArray )
+        {
+            var getMethod = type.GetMethod( "Get" )!;
+            var parameters = getMethod.GetParameters();
+
+            if ( parameters.Length == parameterTypes.Length && MemberInfoLocator.AreParametersMatching( parameters, parameterTypes ) )
+                return getMethod;
+
+            return null;
+        }
+
+        var properties = type.GetProperties( MemberBindingFlags );
+
+        foreach ( var property in properties )
+        {
+            var getter = property.GetGetMethod( AllowNonPublicMemberAccess );
+            if ( getter is null )
+                continue;
+
+            var parameters = getter.GetParameters();
+            if ( parameters.Length == parameterTypes.Length && MemberInfoLocator.AreParametersMatching( parameters, parameterTypes ) )
+                return property;
+        }
+
+        return null;
+    }
+
+    [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public MemberFilter GetAccessibleMemberFilter(string name)
     {
