@@ -561,7 +561,8 @@ internal class ExpressionBuilderState
         LastHandledToken = token;
         _rootState.ActiveState = this;
 
-        var parameters = _operandStack.PopAndReturn( parameterCount );
+        var parameters = parameterCount == 0 ? Array.Empty<Expression>() : new Expression[parameterCount];
+        _operandStack.PopInto( parameterCount, parameters, startIndex: 0 );
 
         return functionToken.Constructs.Type == ParsedExpressionConstructType.Function
             ? ProcessFunction( functionToken, parameters )
@@ -580,11 +581,17 @@ internal class ExpressionBuilderState
         LastHandledToken = token;
         _rootState.ActiveState = this;
 
-        var parameters = _operandStack.PopAndReturn( parameterCount );
+        var parameters = new Expression[parameterCount + 2];
+        _operandStack.PopInto( parameterCount, parameters, startIndex: 2 );
         Assume.IsNotEmpty( _operandStack, nameof( _operandStack ) );
-        var operand = _operandStack.Pop();
 
-        return ProcessMethodCall( methodNameToken, operand, parameters );
+        --_operandCount;
+        parameters[0] = _operandStack.Pop();
+        parameters[1] = Expression.Constant( methodNameToken.Symbol.ToString() );
+        AddAssumedExpectation( Expectation.Operand );
+
+        var methodCall = GetInternalVariadicFunction( ParsedExpressionConstructDefaults.MethodCallSymbol );
+        return ProcessVariadicFunction( methodNameToken, methodCall, parameters );
     }
 
     private Chain<ParsedExpressionBuilderError> HandleArrayElementsOrIndexerParametersEnd(IntermediateToken token)
@@ -630,7 +637,8 @@ internal class ExpressionBuilderState
         LastHandledToken = token;
         _rootState.ActiveState = this;
 
-        var elements = _operandStack.PopAndReturn( elementCount );
+        var elements = elementCount == 0 ? Array.Empty<Expression>() : new Expression[elementCount];
+        _operandStack.PopInto( elementCount, elements, startIndex: 0 );
         return ProcessInlineArray( typeDeclarationToken, elements );
     }
 
@@ -939,46 +947,6 @@ internal class ExpressionBuilderState
         catch ( Exception exc )
         {
             return Chain.Create( ParsedExpressionBuilderError.CreateConstructHasThrownException( token, function, exc ) );
-        }
-
-        PushOperand( result );
-        return Chain<ParsedExpressionBuilderError>.Empty;
-    }
-
-    private Chain<ParsedExpressionBuilderError> ProcessMethodCall(
-        IntermediateToken token,
-        Expression operand,
-        IReadOnlyList<Expression> parameters)
-    {
-        --_operandCount;
-        AssumeTokenType( token, IntermediateTokenType.Argument );
-
-        var parameterTypes = parameters.GetTypes();
-        var methods = MemberInfoLocator.TryFindMethods( operand.Type, token.Symbol, parameterTypes, _configuration );
-
-        if ( methods.Length == 0 )
-            return Chain.Create( ParsedExpressionBuilderError.CreateMethodCouldNotBeResolved( token, operand.Type, parameterTypes ) );
-
-        if ( methods.Length > 1 )
-            return Chain.Create( ParsedExpressionBuilderError.CreateAmbiguousMethod( token, operand.Type, methods ) );
-
-        var method = methods[0];
-
-        if ( operand.NodeType != ExpressionType.Constant || parameters.Any( p => p.NodeType != ExpressionType.Constant ) )
-        {
-            var methodCall = Expression.Call( operand, method, parameters );
-            PushOperand( methodCall );
-            return Chain<ParsedExpressionBuilderError>.Empty;
-        }
-
-        Expression result;
-        try
-        {
-            result = ExpressionHelpers.CreateConstantMethodCall( (ConstantExpression)operand, method, parameters );
-        }
-        catch ( Exception exc )
-        {
-            return Chain.Create( ParsedExpressionBuilderError.CreateMemberHasThrownException( token, operand.Type, method, exc ) );
         }
 
         PushOperand( result );

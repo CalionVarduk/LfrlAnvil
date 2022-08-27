@@ -106,14 +106,54 @@ internal static class MemberInfoLocator
     }
 
     [Pure]
-    internal static MethodInfo[] TryFindMethods(
-        Type type,
-        StringSlice symbol,
-        Type[] parameterTypes,
-        ParsedExpressionFactoryInternalConfiguration configuration)
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MemberInfo[] FindFieldsAndProperties(Type type, BindingFlags bindingFlags, MemberFilter filter)
     {
-        var baseFilter = configuration.GetAccessibleMemberFilter( symbol );
-        MethodInfo?[] methods = type.GetMethods( configuration.MemberBindingFlags );
+        var result = type.FindMembers(
+            MemberTypes.Field | MemberTypes.Property,
+            bindingFlags,
+            filter,
+            filterCriteria: null );
+
+        return result;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MemberInfo? TryFindIndexer(Type type, Type[] parameterTypes, BindingFlags bindingFlags)
+    {
+        if ( type.IsArray )
+        {
+            var getMethod = type.GetMethod( "Get" )!;
+            var parameters = getMethod.GetParameters();
+
+            if ( parameters.Length == parameterTypes.Length && AreParametersMatching( parameters, parameterTypes ) )
+                return getMethod;
+
+            return null;
+        }
+
+        var nonPublic = (bindingFlags & BindingFlags.NonPublic) != BindingFlags.Default;
+        var properties = type.GetProperties( bindingFlags );
+
+        foreach ( var property in properties )
+        {
+            var getter = property.GetGetMethod( nonPublic );
+            if ( getter is null )
+                continue;
+
+            var parameters = getter.GetParameters();
+            if ( parameters.Length == parameterTypes.Length && AreParametersMatching( parameters, parameterTypes ) )
+                return property;
+        }
+
+        return null;
+    }
+
+    [Pure]
+    internal static MethodInfo[] FindMethods(Type type, Type[] parameterTypes, BindingFlags bindingFlags, MemberFilter filter)
+    {
+        MethodInfo?[] methods = type.GetMethods( bindingFlags );
         var nonGenericParameterCount = new int[methods.Length];
         var maxNonGenericParameterCount = 0;
 
@@ -122,7 +162,7 @@ internal static class MemberInfoLocator
             var method = methods[i]!;
             nonGenericParameterCount[i] = -1;
 
-            if ( ! baseFilter( method, null ) )
+            if ( ! filter( method, null ) )
             {
                 methods[i] = null;
                 continue;
@@ -190,7 +230,7 @@ internal static class MemberInfoLocator
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static bool AreParametersMatching(ParameterInfo[] parameters, Type[] expectedTypes)
+    private static bool AreParametersMatching(ParameterInfo[] parameters, Type[] expectedTypes)
     {
         Assume.Equals( parameters.Length, expectedTypes.Length, nameof( parameters.Length ) );
 

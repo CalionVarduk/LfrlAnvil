@@ -55,24 +55,6 @@ internal sealed class ExpressionOperandStack : IReadOnlyList<Expression>
         Array.Clear( _expressions, Count, count );
     }
 
-    internal Expression[] PopAndReturn(int count)
-    {
-        Assume.IsInRange( count, 0, Count, nameof( count ) );
-
-        if ( count == 0 )
-            return Array.Empty<Expression>();
-
-        var oldCount = Count;
-        Count -= count;
-
-        var result = new Expression[count];
-        for ( var i = Count; i < oldCount; ++i )
-            result[i - Count] = _expressions[i]!;
-
-        Array.Clear( _expressions, Count, count );
-        return result;
-    }
-
     internal void PopInto(int count, Expression[] buffer, int startIndex)
     {
         Assume.IsInRange( count, 0, Count, nameof( count ) );

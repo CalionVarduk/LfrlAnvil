@@ -154,6 +154,37 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     }
 
     [Fact]
+    public void SetMethodCallProvider_ShouldUpdateDelegateToNewObject()
+    {
+        var sut = new ParsedExpressionFactoryBuilder();
+        var @delegate = Lambda.Of( (ParsedExpressionFactoryInternalConfiguration c) => new ParsedExpressionMemberAccess( c ) );
+
+        var result = sut.SetMethodCallProvider( @delegate );
+
+        using ( new AssertionScope() )
+        {
+            sut.GetMethodCallProvider().Should().BeSameAs( @delegate );
+            result.Should().BeSameAs( sut );
+        }
+    }
+
+    [Fact]
+    public void SetDefaultMethodCallProvider_ShouldUpdateDelegateToNull()
+    {
+        var sut = new ParsedExpressionFactoryBuilder();
+        var @delegate = Lambda.Of( (ParsedExpressionFactoryInternalConfiguration c) => new ParsedExpressionMemberAccess( c ) );
+        sut.SetMethodCallProvider( @delegate );
+
+        var result = sut.SetDefaultMethodCallProvider();
+
+        using ( new AssertionScope() )
+        {
+            sut.GetMethodCallProvider().Should().BeNull();
+            result.Should().BeSameAs( sut );
+        }
+    }
+
+    [Fact]
     public void AddBinaryOperator_WithString_ShouldAddNewConstruct()
     {
         var symbol = Fixture.Create<string>();
@@ -608,7 +639,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
         var internalSymbols = new[]
         {
             ParsedExpressionConstructDefaults.MemberAccessSymbol,
-            ParsedExpressionConstructDefaults.IndexerCallSymbol
+            ParsedExpressionConstructDefaults.IndexerCallSymbol,
+            ParsedExpressionConstructDefaults.MethodCallSymbol
         };
 
         var sut = new ParsedExpressionFactoryBuilder();
@@ -1521,8 +1553,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     public void Build_ShouldThrowMathExpressionFactoryBuilderException_WhenFunctionSignatureIsDuplicatedWithinTheSameDefinition()
     {
         var sut = new ParsedExpressionFactoryBuilder()
-            .AddFunction( "f", new ParsedExpressionFunction<int>( () => Fixture.Create<int>() ) )
-            .AddFunction( "f", new ParsedExpressionFunction<int>( () => Fixture.Create<int>() ) );
+            .AddFunction( "f", new ParsedExpressionFunction<int, int>( x => x ) )
+            .AddFunction( "f", new ParsedExpressionFunction<int, int>( x => x ) );
 
         var action = Lambda.Of( () => sut.Build() );
 
@@ -1585,6 +1617,19 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
         var sut = new ParsedExpressionFactoryBuilder()
             .AddFunction(
                 ParsedExpressionConstructDefaults.IndexerCallSymbol,
+                new ParsedExpressionFunction<int>( () => Fixture.Create<int>() ) );
+
+        var action = Lambda.Of( () => sut.Build() );
+
+        action.Should().ThrowExactly<ParsedExpressionFactoryBuilderException>();
+    }
+
+    [Fact]
+    public void Build_ShouldThrowMathExpressionFactoryBuilderException_WhenAnyConstructHasMethodCallSymbol()
+    {
+        var sut = new ParsedExpressionFactoryBuilder()
+            .AddFunction(
+                ParsedExpressionConstructDefaults.MethodCallSymbol,
                 new ParsedExpressionFunction<int>( () => Fixture.Create<int>() ) );
 
         var action = Lambda.Of( () => sut.Build() );

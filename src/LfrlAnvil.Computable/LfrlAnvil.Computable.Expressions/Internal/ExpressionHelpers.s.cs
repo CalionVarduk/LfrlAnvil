@@ -6,6 +6,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Computable.Expressions.Exceptions;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
 
@@ -169,6 +170,19 @@ internal static class ExpressionHelpers
         var result = new object?[expressions.Count];
         for ( var i = 0; i < result.Length; ++i )
             result[i] = ((ConstantExpression)expressions[i]).Value;
+
+        return result;
+    }
+
+    [Pure]
+    internal static string GetAccessibleMemberName(this Expression expression)
+    {
+        if ( expression.NodeType != ExpressionType.Constant || expression.Type != typeof( string ) )
+            throw new ParsedExpressionInvalidMemberNameException( expression );
+
+        var result = (string?)((ConstantExpression)expression).Value;
+        if ( result is null )
+            throw new ParsedExpressionInvalidMemberNameException( expression );
 
         return result;
     }

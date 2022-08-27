@@ -17,9 +17,7 @@ public sealed class ParsedExpressionFactoryBuilder
     private Func<ParsedExpressionNumberParserParams, IParsedExpressionNumberParser>? _numberParserProvider;
     private Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? _memberAccessProvider;
     private Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? _indexerCallProvider;
-
     private Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? _methodCallProvider;
-    // TODO: add remaining providers
 
     public ParsedExpressionFactoryBuilder()
     {
@@ -80,6 +78,19 @@ public sealed class ParsedExpressionFactoryBuilder
         Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction> indexerCallProvider)
     {
         _indexerCallProvider = indexerCallProvider;
+        return this;
+    }
+
+    public ParsedExpressionFactoryBuilder SetDefaultMethodCallProvider()
+    {
+        _methodCallProvider = null;
+        return this;
+    }
+
+    public ParsedExpressionFactoryBuilder SetMethodCallProvider(
+        Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction> methodCallProvider)
+    {
+        _methodCallProvider = methodCallProvider;
         return this;
     }
 
@@ -262,6 +273,12 @@ public sealed class ParsedExpressionFactoryBuilder
     }
 
     [Pure]
+    public Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? GetMethodCallProvider()
+    {
+        return _methodCallProvider;
+    }
+
+    [Pure]
     public IEnumerable<ParsedExpressionConstructInfo> GetConstructs()
     {
         return _constructs.Select( x => new ParsedExpressionConstructInfo( x.Symbol.AsMemory(), x.Type, x.Construct ) );
@@ -351,10 +368,15 @@ public sealed class ParsedExpressionFactoryBuilder
             ? new ParsedExpressionIndexerCall( configuration )
             : _indexerCallProvider( configuration );
 
+        var methodCall = _methodCallProvider is null
+            ? new ParsedExpressionMethodCall( configuration )
+            : _methodCallProvider( configuration );
+
         return new (StringSlice, ParsedExpressionConstructType, object)[]
         {
             (StringSlice.Create( ParsedExpressionConstructDefaults.MemberAccessSymbol ), type, memberAccess),
-            (StringSlice.Create( ParsedExpressionConstructDefaults.IndexerCallSymbol ), type, indexerCall)
+            (StringSlice.Create( ParsedExpressionConstructDefaults.IndexerCallSymbol ), type, indexerCall),
+            (StringSlice.Create( ParsedExpressionConstructDefaults.MethodCallSymbol ), type, methodCall)
         };
     }
 

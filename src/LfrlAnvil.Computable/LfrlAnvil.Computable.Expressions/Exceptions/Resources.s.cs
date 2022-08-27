@@ -424,13 +424,21 @@ internal static class Resources
                     if ( m is MethodInfo method )
                     {
                         var genericArgs = method.GetGenericArguments();
-                        var parameters = method.GetParameters();
 
                         var fullName = method.Name;
                         if ( genericArgs.Length > 0 )
-                            fullName += $"[{string.Join( ", ", genericArgs.Select( t => t.FullName ) )}]";
+                        {
+                            method = method.GetGenericMethodDefinition();
+                            var openGenericArgs = method.GetGenericArguments();
+                            var genericArgsTexts = openGenericArgs.Zip( genericArgs )
+                                .Select( x => $"{x.First.Name} is {x.Second.FullName}" );
 
-                        fullName += $"({string.Join( ", ", parameters.Select( p => $"{p.ParameterType.FullName} {p.Name}" ) )})";
+                            fullName += $"[{string.Join( ", ", genericArgsTexts )}]";
+                        }
+
+                        var parameters = method.GetParameters();
+                        var parameterTexts = parameters.Select( p => $"{p.ParameterType.FullName ?? p.ParameterType.Name} {p.Name}" );
+                        fullName += $"({string.Join( ", ", parameterTexts )})";
                         return $"{i + 1}. {fullName} (Method)";
                     }
 

@@ -56,48 +56,25 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
     public IFormatProvider NumberFormatProvider { get; }
     internal IReadOnlyDictionary<StringSlice, ConstructTokenDefinition> Constructs { get; }
 
-    // TODO: move simple member finding here, as public methods
-
     [Pure]
     public MemberInfo[] FindTypeFieldsAndProperties(Type type, string name)
     {
-        var result = type.FindMembers(
-            MemberTypes.Field | MemberTypes.Property,
-            MemberBindingFlags,
-            GetAccessibleMemberFilter( name ),
-            filterCriteria: null );
-
+        var result = MemberInfoLocator.FindFieldsAndProperties( type, MemberBindingFlags, GetAccessibleMemberFilter( name ) );
         return result;
     }
 
     [Pure]
     public MemberInfo? TryFindTypeIndexer(Type type, Type[] parameterTypes)
     {
-        if ( type.IsArray )
-        {
-            var getMethod = type.GetMethod( "Get" )!;
-            var parameters = getMethod.GetParameters();
+        var result = MemberInfoLocator.TryFindIndexer( type, parameterTypes, MemberBindingFlags );
+        return result;
+    }
 
-            if ( parameters.Length == parameterTypes.Length && MemberInfoLocator.AreParametersMatching( parameters, parameterTypes ) )
-                return getMethod;
-
-            return null;
-        }
-
-        var properties = type.GetProperties( MemberBindingFlags );
-
-        foreach ( var property in properties )
-        {
-            var getter = property.GetGetMethod( AllowNonPublicMemberAccess );
-            if ( getter is null )
-                continue;
-
-            var parameters = getter.GetParameters();
-            if ( parameters.Length == parameterTypes.Length && MemberInfoLocator.AreParametersMatching( parameters, parameterTypes ) )
-                return property;
-        }
-
-        return null;
+    [Pure]
+    public MethodInfo[] FindTypeMethods(Type type, string name, Type[] parameterTypes)
+    {
+        var result = MemberInfoLocator.FindMethods( type, parameterTypes, MemberBindingFlags, GetAccessibleMemberFilter( name ) );
+        return result;
     }
 
     [Pure]

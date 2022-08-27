@@ -2490,7 +2490,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MethodCouldNotBeResolved ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
     }
 
     [Fact]
@@ -2504,7 +2504,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MethodCouldNotBeResolved ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
     }
 
     [Fact]
@@ -2518,7 +2518,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MethodCouldNotBeResolved ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
     }
 
     [Theory]
@@ -2567,7 +2567,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MethodCouldNotBeResolved ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
     }
 
     [Fact]
@@ -2637,7 +2637,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.AmbiguousMethod ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
     }
 
     [Fact]
@@ -2651,7 +2651,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.AmbiguousMethod ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
     }
 
     [Fact]
@@ -2681,7 +2681,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MethodCouldNotBeResolved ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
     }
 
     [Fact]
@@ -2695,7 +2695,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MethodCouldNotBeResolved ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
     }
 
     [Fact]
@@ -2744,7 +2744,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MemberHasThrownException ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
     }
 
     [Fact]
@@ -3717,6 +3717,80 @@ public partial class ParsedExpressionFactoryTests : TestsBase
         var input = $"INDEXER_CALL( {string.Join( " , ", Fixture.CreateMany<string>( count ).Select( p => $"'{p}'" ) )} )";
         var builder = new ParsedExpressionFactoryBuilder();
 
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenMethodCallVariadicIsCalledDirectly()
+    {
+        var input = "METHOD_CALL( a , 'PublicMethodOne' , 'foo' )";
+        var value = new TestParameter( "privateField", "privateProperty", "publicField", "publicProperty", next: null );
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var expression = sut.Create<TestParameter, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( value );
+
+        result.Should().Be( value.PublicMethodOne( "foo" ) );
+    }
+
+    [Theory]
+    [InlineData( 0 )]
+    [InlineData( 1 )]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMethodCallVariadicReceivesInvalidAmountOfParameters(int count)
+    {
+        var input = $"METHOD_CALL( {string.Join( " , ", Fixture.CreateMany<string>( count ).Select( p => $"'{p}'" ) )} )";
+        var builder = new ParsedExpressionFactoryBuilder();
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMethodCallVariadicReceivesNonConstantSecondParameter()
+    {
+        var input = "METHOD_CALL( 'foo' , a )";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMethodCallVariadicReceivesSecondParameterNotOfStringType()
+    {
+        var input = "METHOD_CALL( 'foo' , 1 )";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMethodCallVariadicReceivesNullSecondParameterOfStringType()
+    {
+        var input = "METHOD_CALL( 'foo' , null )";
+        var builder = new ParsedExpressionFactoryBuilder().AddConstant( "null", new ParsedExpressionConstant<string?>( null ) );
         var sut = builder.Build();
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );

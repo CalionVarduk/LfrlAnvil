@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
 using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Computable.Expressions.Internal;
 
@@ -174,21 +173,6 @@ public class ParsedExpressionBuilderError
     }
 
     [Pure]
-    internal static ParsedExpressionBuilderError CreateMemberHasThrownException(
-        IntermediateToken token,
-        Type targetType,
-        MemberInfo member,
-        Exception exception)
-    {
-        return new ParsedExpressionBuilderMemberError(
-            ParsedExpressionBuilderErrorType.MemberHasThrownException,
-            token.Symbol,
-            targetType,
-            member,
-            exception );
-    }
-
-    [Pure]
     internal static ParsedExpressionBuilderError CreatePrefixUnaryOperatorCouldNotBeResolved(IntermediateToken token, Type argumentType)
     {
         return new ParsedExpressionBuilderMissingUnaryOperatorError(
@@ -249,19 +233,6 @@ public class ParsedExpressionBuilderError
     }
 
     [Pure]
-    internal static ParsedExpressionBuilderError CreateMethodCouldNotBeResolved(
-        IntermediateToken token,
-        Type targetType,
-        IReadOnlyList<Type> parameterTypes)
-    {
-        return new ParsedExpressionBuilderMissingMemberError(
-            ParsedExpressionBuilderErrorType.MethodCouldNotBeResolved,
-            token.Symbol,
-            targetType,
-            parameterTypes );
-    }
-
-    [Pure]
     internal static ParsedExpressionBuilderError CreateExpectedPrefixUnaryConstruct(IntermediateToken token)
     {
         return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.ExpectedPrefixUnaryConstruct, token.Symbol );
@@ -291,19 +262,6 @@ public class ParsedExpressionBuilderError
         return new ParsedExpressionBuilderError(
             ParsedExpressionBuilderErrorType.AmbiguousPostfixUnaryConstructResolutionFailure,
             token?.Symbol );
-    }
-
-    [Pure]
-    internal static ParsedExpressionBuilderError CreateAmbiguousMethod(
-        IntermediateToken token,
-        Type targetType,
-        IReadOnlyList<MemberInfo> members)
-    {
-        return new ParsedExpressionBuilderAmbiguousMemberAccessError(
-            ParsedExpressionBuilderErrorType.AmbiguousMethod,
-            token.Symbol,
-            targetType,
-            members );
     }
 
     [Pure]

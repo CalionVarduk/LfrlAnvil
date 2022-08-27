@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
-using System.Reflection;
 using LfrlAnvil.Computable.Expressions.Exceptions;
 using LfrlAnvil.Computable.Expressions.Internal;
 
@@ -22,12 +21,12 @@ public sealed class ParsedExpressionMemberAccess : ParsedExpressionVariadicFunct
         Ensure.ContainsExactly( parameters, 2, nameof( parameters ) );
 
         var target = parameters[0];
-        var memberName = GetMemberName( parameters[1] );
+        var memberName = parameters[1].GetAccessibleMemberName();
 
         var members = _configuration.FindTypeFieldsAndProperties( target.Type, memberName );
 
         if ( members.Length == 0 )
-            throw new ParsedExpressionUnresolvableMemberException( target.Type, MemberTypes.Field | MemberTypes.Property, memberName );
+            throw new ParsedExpressionUnresolvableMemberException( target.Type, memberName );
 
         if ( members.Length > 1 )
             throw new ParsedExpressionMemberAmbiguityException( target.Type, memberName, members );
@@ -37,18 +36,5 @@ public sealed class ParsedExpressionMemberAccess : ParsedExpressionVariadicFunct
         return target.NodeType == ExpressionType.Constant
             ? ExpressionHelpers.CreateConstantMemberAccess( (ConstantExpression)target, member )
             : Expression.MakeMemberAccess( target, member );
-    }
-
-    [Pure]
-    private static string GetMemberName(Expression expression)
-    {
-        if ( expression.NodeType != ExpressionType.Constant || expression.Type != typeof( string ) )
-            throw new ParsedExpressionInvalidMemberNameException( expression );
-
-        var result = (string?)((ConstantExpression)expression).Value;
-        if ( result is null )
-            throw new ParsedExpressionInvalidMemberNameException( expression );
-
-        return result;
     }
 }
