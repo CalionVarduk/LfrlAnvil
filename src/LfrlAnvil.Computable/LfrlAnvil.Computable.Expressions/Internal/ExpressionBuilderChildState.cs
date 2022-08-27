@@ -43,7 +43,7 @@ internal sealed class ExpressionBuilderChildState : ExpressionBuilderState
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static ExpressionBuilderChildState CreateIndexerParameters(ExpressionBuilderState parentState)
+    internal static ExpressionBuilderChildState CreateInvocationParameters(ExpressionBuilderState parentState)
     {
         return new ExpressionBuilderChildState(
             parentState,

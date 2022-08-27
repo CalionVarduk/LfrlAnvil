@@ -1777,7 +1777,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     [InlineData( "," )]
     [InlineData( "a , b" )]
     [InlineData( "( a , b )" )]
-    public void Create_ShouldThrowParsedExpressionCreationException_WhenElementSeparatorIsFoundWhenFunctionParametersAreNotBeingParsed(
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenElementSeparatorIsFoundWhenNestedElementsAreNotBeingParsed(
         string input)
     {
         var builder = new ParsedExpressionFactoryBuilder();
@@ -2135,6 +2135,110 @@ public partial class ParsedExpressionFactoryTests : TestsBase
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
             .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenConstantDelegateIsInvoked()
+    {
+        var input = "const( 'foo' , 'bar' )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddConstant( "const", new ParsedExpressionConstant<Func<string, string, string>>( (a, b) => a + b ) );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+
+        result.Should().Be( "foobar" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenArgumentDelegateIsInvoked()
+    {
+        var input = "delegate( 'foo' , 'bar' )";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var expression = sut.Create<Func<string, string, string>, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( (a, b) => a + b );
+
+        result.Should().Be( "foobar" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenDelegateInParenthesesIsInvoked()
+    {
+        var input = "( delegate ) ( 'foo' , 'bar' )";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var expression = sut.Create<Func<string, string, string>, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( (a, b) => a + b );
+
+        result.Should().Be( "foobar" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenDelegateFromIndexerIsInvoked()
+    {
+        var input = "delegates [ 0 ] ( 'foo' , 'bar' )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .AddConstant(
+                "delegates",
+                new ParsedExpressionConstant<Func<string, string, string>[]>( new Func<string, string, string>[] { (a, b) => a + b } ) );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+
+        result.Should().Be( "foobar" );
+    }
+
+    [Theory]
+    [InlineData( 1, 2, "( ( PreOp|foobar )|PostOp )" )]
+    [InlineData( 2, 1, "( PreOp|( foobar|PostOp ) )" )]
+    public void DelegateInvoke_ShouldReturnCorrectResult_ForDelegateInvocationWithPrefixAndPostfixUnaryOperator(
+        int prefixPrecedence,
+        int postfixPrecedence,
+        string expected)
+    {
+        var input = "- delegate ( 'foo' , 'bar' ) ^";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddPrefixUnaryOperator( "-", new MockPrefixUnaryOperator() )
+            .AddPostfixUnaryOperator( "^", new MockPostfixUnaryOperator() )
+            .SetPrefixUnaryConstructPrecedence( "-", prefixPrecedence )
+            .SetPostfixUnaryConstructPrecedence( "^", postfixPrecedence );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<Func<string, string, string>, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( (a, b) => a + b );
+
+        result.Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( 0 )]
+    [InlineData( 1 )]
+    [InlineData( 3 )]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenDelegateReceivesInvalidAmountOfParameters(int count)
+    {
+        var input = $"delegate ( {string.Join( " , ", Fixture.CreateMany<string>( count ).Select( v => $"'{v}'" ) )} )";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<Func<string, string, string>, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
     }
 
     [Theory]
