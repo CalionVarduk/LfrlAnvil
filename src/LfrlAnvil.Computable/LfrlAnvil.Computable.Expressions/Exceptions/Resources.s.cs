@@ -24,6 +24,7 @@ internal static class Resources
 
     internal const string SwitchValueWasNotHandledByAnyCaseFormat = "SWITCH value '{0}' was not handled by any CASE.";
     internal const string MemberNameMustBeConstantNonNullString = "Member name must be a constant non-null string.";
+    internal const string ArrayElementTypeMustBeConstantNonNullType = "Array element type must be a constant non-null type.";
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -447,6 +448,13 @@ internal static class Resources
                 } ) );
 
         return $"{headerText}{Environment.NewLine}{membersText}";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidArrayElementType(Type expectedType, Type actualType)
+    {
+        return $"Expected all elements in an array to be assignable to {expectedType.FullName} type but found {actualType.FullName}.";
     }
 
     [Pure]

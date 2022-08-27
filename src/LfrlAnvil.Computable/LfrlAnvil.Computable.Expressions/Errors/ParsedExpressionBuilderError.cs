@@ -271,26 +271,6 @@ public class ParsedExpressionBuilderError
     }
 
     [Pure]
-    internal static ParsedExpressionBuilderError CreateInlineArrayCouldNotBeResolved(
-        IntermediateToken token,
-        Chain<ParsedExpressionBuilderError> elementErrors)
-    {
-        return new ParsedExpressionBuilderAggregateError(
-            ParsedExpressionBuilderErrorType.InlineArrayCouldNotBeResolved,
-            elementErrors,
-            token.Symbol );
-    }
-
-    [Pure]
-    internal static ParsedExpressionBuilderError CreateArrayElementTypeIsNotCompatibleWithArrayType(Type elementType, int index)
-    {
-        return new ParsedExpressionBuilderArrayElementTypeError(
-            ParsedExpressionBuilderErrorType.ArrayElementTypeIsNotCompatibleWithArrayType,
-            elementType,
-            index );
-    }
-
-    [Pure]
     internal static ParsedExpressionBuilderError CreateNestedExpressionFailure(
         IntermediateToken token,
         Chain<ParsedExpressionBuilderError> nestedErrors)

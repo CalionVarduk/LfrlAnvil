@@ -7,7 +7,7 @@ using LfrlAnvil.Computable.Expressions.Internal;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.Variadic;
 
-public class ParsedExpressionMethodCall : ParsedExpressionVariadicFunction
+public sealed class ParsedExpressionMethodCall : ParsedExpressionVariadicFunction
 {
     private readonly ParsedExpressionFactoryInternalConfiguration _configuration;
 

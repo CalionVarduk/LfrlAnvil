@@ -178,11 +178,24 @@ internal static class ExpressionHelpers
     internal static string GetAccessibleMemberName(this Expression expression)
     {
         if ( expression.NodeType != ExpressionType.Constant || expression.Type != typeof( string ) )
-            throw new ParsedExpressionInvalidMemberNameException( expression );
+            throw new ParsedExpressionInvalidExpressionException( Resources.MemberNameMustBeConstantNonNullString, expression );
 
         var result = (string?)((ConstantExpression)expression).Value;
         if ( result is null )
-            throw new ParsedExpressionInvalidMemberNameException( expression );
+            throw new ParsedExpressionInvalidExpressionException( Resources.MemberNameMustBeConstantNonNullString, expression );
+
+        return result;
+    }
+
+    [Pure]
+    internal static Type GetArrayElementType(this Expression expression)
+    {
+        if ( expression.NodeType != ExpressionType.Constant || ! expression.Type.IsAssignableTo( typeof( Type ) ) )
+            throw new ParsedExpressionInvalidExpressionException( Resources.ArrayElementTypeMustBeConstantNonNullType, expression );
+
+        var result = (Type?)((ConstantExpression)expression).Value;
+        if ( result is null )
+            throw new ParsedExpressionInvalidExpressionException( Resources.ArrayElementTypeMustBeConstantNonNullType, expression );
 
         return result;
     }

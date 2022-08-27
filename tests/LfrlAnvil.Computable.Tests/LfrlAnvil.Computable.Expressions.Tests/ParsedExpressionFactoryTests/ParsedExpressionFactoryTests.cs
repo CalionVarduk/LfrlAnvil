@@ -2343,7 +2343,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.InlineArrayCouldNotBeResolved ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
     }
 
     [Fact]
@@ -2359,7 +2359,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.InlineArrayCouldNotBeResolved ) );
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
     }
 
     [Theory]
@@ -3794,6 +3794,79 @@ public partial class ParsedExpressionFactoryTests : TestsBase
         var sut = builder.Build();
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenMakeArrayVariadicIsCalledDirectly()
+    {
+        var input = "MAKE_ARRAY( STRING , 'foo' , 'bar' )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddConstant( "STRING", new ParsedExpressionConstant<Type>( typeof( string ) ) );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, string[]>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+
+        result.Should().BeSequentiallyEqualTo( "foo", "bar" );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMakeArrayVariadicReceivesZeroParameters()
+    {
+        var input = "MAKE_ARRAY()";
+        var builder = new ParsedExpressionFactoryBuilder();
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string[]>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMakeArrayVariadicReceivesNonConstantFirstParameter()
+    {
+        var input = "MAKE_ARRAY( a )";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<Type, string[]>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMakeArrayVariadicReceivesFirstParameterNotOfTypeType()
+    {
+        var input = "MAKE_ARRAY( 1 )";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string[]>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMakeArrayVariadicReceivesNullFirstParameterOfTypeType()
+    {
+        var input = "MAKE_ARRAY( null )";
+        var builder = new ParsedExpressionFactoryBuilder().AddConstant( "null", new ParsedExpressionConstant<Type?>( null ) );
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string[]>( input ) );
 
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()

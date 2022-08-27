@@ -637,9 +637,12 @@ internal class ExpressionBuilderState
         LastHandledToken = token;
         _rootState.ActiveState = this;
 
-        var elements = elementCount == 0 ? Array.Empty<Expression>() : new Expression[elementCount];
-        _operandStack.PopInto( elementCount, elements, startIndex: 0 );
-        return ProcessInlineArray( typeDeclarationToken, elements );
+        var parameters = new Expression[elementCount + 1];
+        parameters[0] = Expression.Constant( typeDeclarationToken.Constructs.TypeDeclaration );
+        _operandStack.PopInto( elementCount, parameters, startIndex: 1 );
+
+        var makeArray = GetInternalVariadicFunction( ParsedExpressionConstructDefaults.MakeArraySymbol );
+        return ProcessVariadicFunction( typeDeclarationToken, makeArray, parameters );
     }
 
     private Chain<ParsedExpressionBuilderError> HandleIndexerResolution(IntermediateToken token, int parameterCount)
@@ -948,39 +951,6 @@ internal class ExpressionBuilderState
         {
             return Chain.Create( ParsedExpressionBuilderError.CreateConstructHasThrownException( token, function, exc ) );
         }
-
-        PushOperand( result );
-        return Chain<ParsedExpressionBuilderError>.Empty;
-    }
-
-    private Chain<ParsedExpressionBuilderError> ProcessInlineArray(IntermediateToken token, IReadOnlyList<Expression> elements)
-    {
-        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
-        Assume.IsNotNull( token.Constructs.TypeDeclaration, nameof( token.Constructs.TypeDeclaration ) );
-        AssumeConstructsType( token.Constructs, ParsedExpressionConstructType.TypeDeclaration );
-
-        var elementType = token.Constructs.TypeDeclaration;
-        var errors = Chain<ParsedExpressionBuilderError>.Empty;
-        var containsVariableElements = false;
-
-        for ( var i = 0; i < elements.Count; ++i )
-        {
-            var element = elements[i];
-            var actualType = element.Type;
-
-            if ( ! actualType.IsAssignableTo( elementType ) )
-                errors = errors.Extend( ParsedExpressionBuilderError.CreateArrayElementTypeIsNotCompatibleWithArrayType( actualType, i ) );
-
-            if ( element.NodeType != ExpressionType.Constant )
-                containsVariableElements = true;
-        }
-
-        if ( errors.Count > 0 )
-            return Chain.Create( ParsedExpressionBuilderError.CreateInlineArrayCouldNotBeResolved( token, errors ) );
-
-        var result = containsVariableElements
-            ? ExpressionHelpers.CreateVariableArray( elementType, elements )
-            : ExpressionHelpers.CreateConstantArray( elementType, elements );
 
         PushOperand( result );
         return Chain<ParsedExpressionBuilderError>.Empty;

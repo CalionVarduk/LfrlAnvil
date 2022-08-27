@@ -185,6 +185,37 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     }
 
     [Fact]
+    public void SetMakeArrayProvider_ShouldUpdateDelegateToNewObject()
+    {
+        var sut = new ParsedExpressionFactoryBuilder();
+        var @delegate = Lambda.Of( (ParsedExpressionFactoryInternalConfiguration c) => new ParsedExpressionMemberAccess( c ) );
+
+        var result = sut.SetMakeArrayProvider( @delegate );
+
+        using ( new AssertionScope() )
+        {
+            sut.GetMakeArrayProvider().Should().BeSameAs( @delegate );
+            result.Should().BeSameAs( sut );
+        }
+    }
+
+    [Fact]
+    public void SetDefaultMakeArrayProvider_ShouldUpdateDelegateToNull()
+    {
+        var sut = new ParsedExpressionFactoryBuilder();
+        var @delegate = Lambda.Of( (ParsedExpressionFactoryInternalConfiguration c) => new ParsedExpressionMemberAccess( c ) );
+        sut.SetMakeArrayProvider( @delegate );
+
+        var result = sut.SetDefaultMakeArrayProvider();
+
+        using ( new AssertionScope() )
+        {
+            sut.GetMakeArrayProvider().Should().BeNull();
+            result.Should().BeSameAs( sut );
+        }
+    }
+
+    [Fact]
     public void AddBinaryOperator_WithString_ShouldAddNewConstruct()
     {
         var symbol = Fixture.Create<string>();
@@ -640,7 +671,8 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
         {
             ParsedExpressionConstructDefaults.MemberAccessSymbol,
             ParsedExpressionConstructDefaults.IndexerCallSymbol,
-            ParsedExpressionConstructDefaults.MethodCallSymbol
+            ParsedExpressionConstructDefaults.MethodCallSymbol,
+            ParsedExpressionConstructDefaults.MakeArraySymbol
         };
 
         var sut = new ParsedExpressionFactoryBuilder();
@@ -1630,6 +1662,19 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
         var sut = new ParsedExpressionFactoryBuilder()
             .AddFunction(
                 ParsedExpressionConstructDefaults.MethodCallSymbol,
+                new ParsedExpressionFunction<int>( () => Fixture.Create<int>() ) );
+
+        var action = Lambda.Of( () => sut.Build() );
+
+        action.Should().ThrowExactly<ParsedExpressionFactoryBuilderException>();
+    }
+
+    [Fact]
+    public void Build_ShouldThrowMathExpressionFactoryBuilderException_WhenAnyConstructHasMakeArraySymbol()
+    {
+        var sut = new ParsedExpressionFactoryBuilder()
+            .AddFunction(
+                ParsedExpressionConstructDefaults.MakeArraySymbol,
                 new ParsedExpressionFunction<int>( () => Fixture.Create<int>() ) );
 
         var action = Lambda.Of( () => sut.Build() );
