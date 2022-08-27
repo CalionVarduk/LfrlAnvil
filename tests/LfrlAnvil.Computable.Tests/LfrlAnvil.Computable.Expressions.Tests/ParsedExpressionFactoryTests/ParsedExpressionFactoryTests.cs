@@ -3874,6 +3874,52 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenInvokeVariadicIsCalledDirectly()
+    {
+        var input = "INVOKE( delegate , 'foo' , 'bar' )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddConstant( "delegate", new ParsedExpressionConstant<Func<string, string, string>>( (a, b) => a + b ) );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+
+        result.Should().Be( "foobar" );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenInvokeVariadicReceivesZeroParameters()
+    {
+        var input = "INVOKE()";
+        var builder = new ParsedExpressionFactoryBuilder();
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenInvokeVariadicReceivesNonInvocableFirstParameter()
+    {
+        var input = "INVOKE( 'foo' )";
+        var builder = new ParsedExpressionFactoryBuilder();
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
+    }
+
+    [Fact]
     public void Create_ShouldAddAutomaticResultConversion_WhenActualResultTypeIsDifferentFromExpected_BasedOnPrefixTypeConverter()
     {
         var input = "12.34";

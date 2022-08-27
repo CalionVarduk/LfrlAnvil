@@ -19,6 +19,7 @@ public sealed class ParsedExpressionFactoryBuilder
     private Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? _indexerCallProvider;
     private Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? _methodCallProvider;
     private Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? _makeArrayProvider;
+    private Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? _invokeProvider;
 
     public ParsedExpressionFactoryBuilder()
     {
@@ -30,6 +31,7 @@ public sealed class ParsedExpressionFactoryBuilder
         _indexerCallProvider = null;
         _methodCallProvider = null;
         _makeArrayProvider = null;
+        _invokeProvider = null;
     }
 
     public ParsedExpressionFactoryBuilder SetDefaultConfiguration()
@@ -106,6 +108,19 @@ public sealed class ParsedExpressionFactoryBuilder
         Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction> makeArrayProvider)
     {
         _makeArrayProvider = makeArrayProvider;
+        return this;
+    }
+
+    public ParsedExpressionFactoryBuilder SetDefaultInvokeProvider()
+    {
+        _invokeProvider = null;
+        return this;
+    }
+
+    public ParsedExpressionFactoryBuilder SetInvokeProvider(
+        Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction> invokeProvider)
+    {
+        _invokeProvider = invokeProvider;
         return this;
     }
 
@@ -300,6 +315,12 @@ public sealed class ParsedExpressionFactoryBuilder
     }
 
     [Pure]
+    public Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? GetInvokeProvider()
+    {
+        return _invokeProvider;
+    }
+
+    [Pure]
     public IEnumerable<ParsedExpressionConstructInfo> GetConstructs()
     {
         return _constructs.Select( x => new ParsedExpressionConstructInfo( x.Symbol.AsMemory(), x.Type, x.Construct ) );
@@ -397,12 +418,17 @@ public sealed class ParsedExpressionFactoryBuilder
             ? new ParsedExpressionMakeArray()
             : _makeArrayProvider( configuration );
 
+        var invoke = _invokeProvider is null
+            ? new ParsedExpressionInvoke()
+            : _invokeProvider( configuration );
+
         return new (StringSlice, ParsedExpressionConstructType, object)[]
         {
             (StringSlice.Create( ParsedExpressionConstructDefaults.MemberAccessSymbol ), type, memberAccess),
             (StringSlice.Create( ParsedExpressionConstructDefaults.IndexerCallSymbol ), type, indexerCall),
             (StringSlice.Create( ParsedExpressionConstructDefaults.MethodCallSymbol ), type, methodCall),
-            (StringSlice.Create( ParsedExpressionConstructDefaults.MakeArraySymbol ), type, makeArray)
+            (StringSlice.Create( ParsedExpressionConstructDefaults.MakeArraySymbol ), type, makeArray),
+            (StringSlice.Create( ParsedExpressionConstructDefaults.InvokeSymbol ), type, invoke)
         };
     }
 

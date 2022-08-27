@@ -4,11 +4,6 @@
 
 // TODO:
 // add built-in configurable variadic functions for various syntactic sugars:
-// - MEMBER_ACCESS(target, memberName)
-// - INDEXER_ACCESS(target, ...parameters)
-// - METHOD_CALL(target, methodName, ...parameters)
-// - DELEGATE_CALL(target, ...parameters)
-// - MAKE_ARRAY(elementType, ...values)
 // - MAKE_DELEGATE(...parameters, body)
 //
 // add delegate call support
