@@ -24,7 +24,7 @@ public sealed class ParsedExpressionIndexerCall : ParsedExpressionVariadicFuncti
 
         var target = parameters[0];
         var callParameters = parameters.Slice( 1 );
-        var parameterTypes = callParameters.GetTypes();
+        var parameterTypes = callParameters.GetExpressionTypes();
 
         var indexer = _configuration.TryFindTypeIndexer( target.Type, parameterTypes );
         if ( indexer is null )

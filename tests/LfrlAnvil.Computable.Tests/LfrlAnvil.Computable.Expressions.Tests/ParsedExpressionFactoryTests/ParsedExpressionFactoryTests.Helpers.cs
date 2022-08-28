@@ -264,6 +264,14 @@ public partial class ParsedExpressionFactoryTests
         }
     }
 
+    private sealed class MockNoOpUnaryOperator : ParsedExpressionUnaryOperator
+    {
+        protected override Expression CreateUnaryExpression(Expression operand)
+        {
+            return operand;
+        }
+    }
+
     private sealed class ThrowingUnaryOperator : ParsedExpressionUnaryOperator
     {
         protected override Expression CreateUnaryExpression(Expression operand)

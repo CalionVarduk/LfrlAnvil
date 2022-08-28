@@ -5,8 +5,12 @@ namespace LfrlAnvil.Computable.Expressions.Internal;
 
 internal sealed class ExpressionBuilderChildState : ExpressionBuilderState
 {
-    private ExpressionBuilderChildState(ExpressionBuilderState parentState, Expectation expectation, int parenthesesCount)
-        : base( parentState, expectation, parenthesesCount )
+    private ExpressionBuilderChildState(
+        ExpressionBuilderState parentState,
+        Expectation expectation,
+        int parenthesesCount,
+        bool useDelegateParameters = false)
+        : base( parentState, expectation, parenthesesCount, useDelegateParameters )
     {
         ParentState = parentState;
         ElementCount = 0;
@@ -49,5 +53,16 @@ internal sealed class ExpressionBuilderChildState : ExpressionBuilderState
             parentState,
             Expectation.Operand | Expectation.OpenedParenthesis | Expectation.PrefixUnaryConstruct,
             parenthesesCount: 0 );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static ExpressionBuilderChildState CreateDelegate(ExpressionBuilderState parentState)
+    {
+        return new ExpressionBuilderChildState(
+            parentState,
+            Expectation.ParameterType | Expectation.InlineDelegateParametersResolution,
+            parenthesesCount: 0,
+            useDelegateParameters: true );
     }
 }

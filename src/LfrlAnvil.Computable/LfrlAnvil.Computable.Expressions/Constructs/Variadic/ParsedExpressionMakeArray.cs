@@ -13,7 +13,7 @@ public sealed class ParsedExpressionMakeArray : ParsedExpressionVariadicFunction
     {
         Ensure.ContainsAtLeast( parameters, 1, nameof( parameters ) );
 
-        var elementType = parameters[0].GetArrayElementType();
+        var elementType = parameters[0].GetConstantArrayElementTypeValue();
         var elements = parameters.Slice( 1 );
         var containsVariableElements = false;
 

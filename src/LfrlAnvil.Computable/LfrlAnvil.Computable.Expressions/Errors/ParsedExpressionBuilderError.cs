@@ -74,6 +74,12 @@ public class ParsedExpressionBuilderError
     }
 
     [Pure]
+    internal static ParsedExpressionBuilderError CreateUnexpectedDelegateParameterName(IntermediateToken token)
+    {
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.UnexpectedDelegateParameterName, token.Symbol );
+    }
+
+    [Pure]
     internal static ParsedExpressionBuilderError CreateUnexpectedFunctionCall(IntermediateToken token)
     {
         return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.UnexpectedFunctionCall, token.Symbol );
@@ -107,6 +113,18 @@ public class ParsedExpressionBuilderError
     internal static ParsedExpressionBuilderError CreateInvalidArgumentName(IntermediateToken token)
     {
         return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.InvalidArgumentName, token.Symbol );
+    }
+
+    [Pure]
+    internal static ParsedExpressionBuilderError CreateInvalidDelegateParameterName(IntermediateToken token)
+    {
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.InvalidDelegateParameterName, token.Symbol );
+    }
+
+    [Pure]
+    internal static ParsedExpressionBuilderError CreateDuplicatedDelegateParameterName(IntermediateToken token)
+    {
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.DuplicatedDelegateParameterName, token.Symbol );
     }
 
     [Pure]
@@ -279,6 +297,23 @@ public class ParsedExpressionBuilderError
             ParsedExpressionBuilderErrorType.NestedExpressionFailure,
             nestedErrors,
             token.Symbol );
+    }
+
+    [Pure]
+    internal static Chain<ParsedExpressionBuilderError> CreateUnexpectedToken(IntermediateToken? token)
+    {
+        if ( token is null )
+            return Chain<ParsedExpressionBuilderError>.Empty;
+
+        var error = token.Value.Type switch
+        {
+            IntermediateTokenType.ClosedParenthesis => CreateUnexpectedClosedParenthesis( token.Value ),
+            IntermediateTokenType.ClosedSquareBracket => CreateUnexpectedClosedSquareBracket( token.Value ),
+            IntermediateTokenType.ElementSeparator => CreateUnexpectedElementSeparator( token.Value ),
+            _ => throw new NotImplementedException( "inline function separator isn't supported yet" )
+        };
+
+        return Chain.Create( error );
     }
 
     [Pure]

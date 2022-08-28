@@ -420,7 +420,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldThrowParsedExpressionCreationException_WhenOpenedSquareBracketIsFirst()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenInputContainsOnlyOpenedSquareBracket()
     {
         var input = "[";
         var builder = new ParsedExpressionFactoryBuilder();
@@ -428,13 +428,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Should()
-            .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedOpenedSquareBracket ) );
+        action.Should().ThrowExactly<ParsedExpressionCreationException>();
     }
 
     [Fact]
-    public void Create_ShouldThrowParsedExpressionCreationException_WhenPrefixUnaryOperatorIsFollowedByOpenedSquareBracket()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenPrefixUnaryOperatorIsFollowedByUnclosedOpenedSquareBracket()
     {
         var input = "- [";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -445,13 +443,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Should()
-            .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedOpenedSquareBracket ) );
+        action.Should().ThrowExactly<ParsedExpressionCreationException>();
     }
 
     [Fact]
-    public void Create_ShouldThrowParsedExpressionCreationException_WhenPrefixTypeConverterIsFollowedByOpenedSquareBracket()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenPrefixTypeConverterIsFollowedByUnclosedSquareBracket()
     {
         var input = "[string] [";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -462,13 +458,11 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Should()
-            .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedOpenedSquareBracket ) );
+        action.Should().ThrowExactly<ParsedExpressionCreationException>();
     }
 
     [Fact]
-    public void Create_ShouldThrowParsedExpressionCreationException_WhenBinaryOperatorIsFollowedByOpenedSquareBracket()
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenBinaryOperatorIsFollowedByUnclosedOpenedSquareBracket()
     {
         var input = "a + [";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -479,9 +473,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
-        action.Should()
-            .ThrowExactly<ParsedExpressionCreationException>()
-            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedOpenedSquareBracket ) );
+        action.Should().ThrowExactly<ParsedExpressionCreationException>();
     }
 
     [Fact]
@@ -2208,7 +2200,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
         int postfixPrecedence,
         string expected)
     {
-        var input = "- delegate ( 'foo' , 'bar' ) ^";
+        var input = "- delegate( 'foo' , 'bar' ) ^";
         var builder = new ParsedExpressionFactoryBuilder()
             .AddPrefixUnaryOperator( "-", new MockPrefixUnaryOperator() )
             .AddPostfixUnaryOperator( "^", new MockPostfixUnaryOperator() )
@@ -2230,7 +2222,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     [InlineData( 3 )]
     public void Create_ShouldThrowParsedExpressionCreationException_WhenDelegateReceivesInvalidAmountOfParameters(int count)
     {
-        var input = $"delegate ( {string.Join( " , ", Fixture.CreateMany<string>( count ).Select( v => $"'{v}'" ) )} )";
+        var input = $"delegate( {string.Join( " , ", Fixture.CreateMany<string>( count ).Select( v => $"'{v}'" ) )} )";
         var builder = new ParsedExpressionFactoryBuilder();
         var sut = builder.Build();
 
@@ -2239,6 +2231,40 @@ public partial class ParsedExpressionFactoryTests : TestsBase
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
             .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenDelegateInvocationIsPrecededByPostfixUnaryOperator()
+    {
+        var input = "delegate ^ ( 'foo' , 'bar' )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddPostfixUnaryOperator( "^", new MockNoOpUnaryOperator() )
+            .SetPostfixUnaryConstructPrecedence( "^", 1 );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<Func<string, string, string>, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedOpenedParenthesis ) );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenDelegateInvocationIsPrecededByPostfixUnaryOperatorWrappedInParentheses()
+    {
+        var input = "( delegate ^ ) ( 'foo' , 'bar' )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddPostfixUnaryOperator( "^", new MockNoOpUnaryOperator() )
+            .SetPostfixUnaryConstructPrecedence( "^", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<Func<string, string, string>, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( (a, b) => a + b );
+
+        result.Should().Be( "foobar" );
     }
 
     [Theory]
@@ -2464,6 +2490,361 @@ public partial class ParsedExpressionFactoryTests : TestsBase
         action.Should()
             .ThrowExactly<ParsedExpressionCreationException>()
             .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenExpressionContainsParameterlessInlineDelegate()
+    {
+        var input = "[] 'foo' + 'bar'";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, Func<string>>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+        var delegateResult = result();
+
+        delegateResult.Should().Be( "( foo|BiOp|bar )" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenExpressionContainsInlineDelegateWithParameters()
+    {
+        var input = "[ int a , int b , int c ] a + b + c";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<int>( "int" )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, Func<int, int, int, string>>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+        var delegateResult = result( 1, 2, 3 );
+
+        delegateResult.Should().Be( "( ( 1|BiOp|2 )|BiOp|3 )" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenExpressionContainsInlineDelegateInvocation()
+    {
+        var input = "( [string a] a + 'bar' ) ( 'foo' )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<string>( "string" )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+
+        result.Should().Be( "( foo|BiOp|bar )" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenExpressionContainsInlineDelegateFromArrayInvocation()
+    {
+        var input = "func[ [string a] a + 'bar' ] [ 0 ] ( 'foo' )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .AddTypeDeclaration<Func<string, string>>( "func" )
+            .AddTypeDeclaration<string>( "string" )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+
+        result.Should().Be( "( foo|BiOp|bar )" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenExpressionContainsInlineDelegatePassedAsFunctionArgument()
+    {
+        var input = "func( [string a] a + 'bar' , 'qux' )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<string>( "string" )
+            .AddFunction( "func", ParsedExpressionFunction.Create( (Func<string, string> f, string s) => f( "foo" ) + s ) )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+
+        result.Should().Be( "( foo|BiOp|bar )qux" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenExpressionContainsChainedInlineDelegates()
+    {
+        var input = "[ string a ] [ string b ] [ string c ] c";
+        var builder = new ParsedExpressionFactoryBuilder().AddTypeDeclaration<string>( "string" );
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, Func<string, Func<string, Func<string, string>>>>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+        var delegateResult = result( "foo" )( "bar" )( "qux" );
+
+        delegateResult.Should().Be( "qux" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenExpressionContainsComplexInlineDelegateChaining()
+    {
+        var input = "[ string a ] a + ( [ string b ] [ string c ] c ) ( 'qux' ) ( 'bar' ) + ( [ string d ] d ) ( 'foobar' )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<string>( "string" )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, Func<string, string>>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+        var delegateResult = result( "foo" );
+
+        delegateResult.Should().Be( "( ( foo|BiOp|bar )|BiOp|foobar )" );
+    }
+
+    [Theory]
+    [InlineData( "[string a , string a] a + a" )]
+    [InlineData( ("[string a] [string a] a + a") )]
+    [InlineData( "a + ( ( [string a] a + a ) ( a ) )" )]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenInlineDelegateParameterIsDuplicated(string input)
+    {
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<string>( "string" )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) );
+    }
+
+    [Theory]
+    [InlineData( "[ a ] a" )]
+    [InlineData( "[ string a b ] a + b" )]
+    [InlineData( ("[ string a , b ] a + b") )]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenInlineDelegateParameterNameIsUnexpected(string input)
+    {
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<string>( "string" )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) );
+    }
+
+    [Theory]
+    [InlineData( "[ string string ] 'foo'" )]
+    [InlineData( "[ string a string ] a" )]
+    [InlineData( "[ string a , string string ] a" )]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenInlineDelegateParameterTypeIsUnexpected(string input)
+    {
+        var builder = new ParsedExpressionFactoryBuilder().AddTypeDeclaration<string>( "string" );
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) );
+    }
+
+    [Theory]
+    [InlineData( "[ string , ] 'foo'" )]
+    [InlineData( "[ , ] 'foo'" )]
+    [InlineData( "[ string a , , ] a" )]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenInlineDelegateParameterSeparatorIsUnexpected(string input)
+    {
+        var builder = new ParsedExpressionFactoryBuilder().AddTypeDeclaration<string>( "string" );
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) );
+    }
+
+    [Theory]
+    [InlineData( "[ string a , ] a" )]
+    [InlineData( "[ string a , string ] a" )]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenInlineDelegateParameterEndIsUnexpected(string input)
+    {
+        var builder = new ParsedExpressionFactoryBuilder().AddTypeDeclaration<string>( "string" );
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenInlineDelegateParameterNameIsInvalid()
+    {
+        var input = "[string +] 'foo'";
+        var builder = new ParsedExpressionFactoryBuilder().AddTypeDeclaration<string>( "string" );
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) );
+    }
+
+    [Theory]
+    [InlineData( "[ string" )]
+    [InlineData( "[ string a" )]
+    [InlineData( "[ string a ," )]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenInlineDelegateParametersAreUnfinished(string input)
+    {
+        var builder = new ParsedExpressionFactoryBuilder().AddTypeDeclaration<string>( "string" );
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should().ThrowExactly<ParsedExpressionCreationException>();
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenInlineDelegateParameterEndWithUnexpectedInParentClosedParenthesis()
+    {
+        var input = "[] 'foo' )";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedClosedParenthesis ) );
+    }
+
+    [Fact]
+    public void
+        Create_ShouldThrowParsedExpressionCreationException_WhenInlineDelegateParameterEndWithUnexpectedInParentClosedSquareBracket()
+    {
+        var input = "[] 'foo' ]";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedClosedSquareBracket ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenInlineDelegateParameterEndWithUnexpectedInParentElementSeparator()
+    {
+        var input = "[] 'foo' ,";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.UnexpectedElementSeparator ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenInlineDelegateParameterEndsPrematurelyDueToClosedParenthesis()
+    {
+        var input = "( [] 'foo' + )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenInlineDelegateParameterEndsPrematurelyDueToClosedSquareBracket()
+    {
+        var input = "string[ [] 'foo' + ]";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<string>( "string" )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenInlineDelegateParameterEndsPrematurelyDueToElementSeparator()
+    {
+        var input = "string[ [] 'foo' + , 'bar' ]";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<string>( "string" )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenInlineDelegateParameterEndsPrematurely()
+    {
+        var input = "[] 'foo' +";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<string>( "string" )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should().ThrowExactly<ParsedExpressionCreationException>();
     }
 
     [Theory]

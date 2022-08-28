@@ -21,7 +21,7 @@ public sealed class ParsedExpressionMemberAccess : ParsedExpressionVariadicFunct
         Ensure.ContainsExactly( parameters, 2, nameof( parameters ) );
 
         var target = parameters[0];
-        var memberName = parameters[1].GetAccessibleMemberName();
+        var memberName = parameters[1].GetConstantMemberNameValue();
 
         var members = _configuration.FindTypeFieldsAndProperties( target.Type, memberName );
 

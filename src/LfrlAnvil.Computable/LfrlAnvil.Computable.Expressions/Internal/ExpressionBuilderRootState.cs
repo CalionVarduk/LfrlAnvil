@@ -11,6 +11,8 @@ namespace LfrlAnvil.Computable.Expressions.Internal;
 
 internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
 {
+    private int _nextStateId;
+
     internal ExpressionBuilderRootState(
         Type argumentType,
         ParsedExpressionFactoryInternalConfiguration configuration,
@@ -21,6 +23,7 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
             numberParser: numberParser )
     {
         ActiveState = this;
+        _nextStateId = Id + 1;
     }
 
     internal ExpressionBuilderState ActiveState { get; set; }
@@ -38,7 +41,12 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal UnsafeBuilderResult<ExpressionBuilderResult> GetResult(Type outputType)
     {
-        var errors = HandleExpressionEnd();
+        var errors = ActiveState.IsRoot
+            ? Chain<ParsedExpressionBuilderError>.Empty
+            : ActiveState.TryHandleExpressionEndAsInlineDelegate();
+
+        errors = errors.Extend( HandleExpressionEnd() );
+
         if ( ! ActiveState.IsRoot )
         {
             var parentState = ((ExpressionBuilderChildState)ActiveState).ParentState;
@@ -59,6 +67,12 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
 
         var result = RemoveUnusedArguments( ParameterExpression, typeCastResult.Result!, ArgumentIndexes );
         return UnsafeBuilderResult<ExpressionBuilderResult>.CreateOk( result );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal int GetNextStateId()
+    {
+        return _nextStateId++;
     }
 
     [Pure]

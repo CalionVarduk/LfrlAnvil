@@ -22,9 +22,9 @@ public sealed class ParsedExpressionMethodCall : ParsedExpressionVariadicFunctio
         Ensure.ContainsAtLeast( parameters, 2, nameof( parameters ) );
 
         var target = parameters[0];
-        var methodName = parameters[1].GetAccessibleMemberName();
+        var methodName = parameters[1].GetConstantMemberNameValue();
         var callParameters = parameters.Slice( 2 );
-        var parameterTypes = callParameters.GetTypes();
+        var parameterTypes = callParameters.GetExpressionTypes();
 
         var methods = _configuration.FindTypeMethods( target.Type, methodName, parameterTypes );
 

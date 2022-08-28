@@ -77,7 +77,7 @@ internal static class ExpressionHelpers
             return CreateConstantMethodCall( operand, method, parameters );
 
         var property = (PropertyInfo)indexer;
-        var @params = parameters.GetValues();
+        var @params = parameters.GetConstantValues();
         return Expression.Constant( property.GetValue( operand.Value, @params ), property.PropertyType );
     }
 
@@ -88,7 +88,7 @@ internal static class ExpressionHelpers
         MethodInfo method,
         IReadOnlyList<Expression> parameters)
     {
-        var @params = parameters.GetValues();
+        var @params = parameters.GetConstantValues();
         return Expression.Constant( method.Invoke( operand.Value, @params ), method.ReturnType );
     }
 
@@ -133,14 +133,21 @@ internal static class ExpressionHelpers
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static Expression[] Slice(this IReadOnlyList<Expression> expressions, int startIndex)
     {
-        var resultCount = expressions.Count - startIndex;
-        Assume.IsGreaterThanOrEqualTo( resultCount, 0, nameof( resultCount ) );
+        return Slice( expressions, startIndex, expressions.Count - startIndex );
+    }
 
-        if ( resultCount == 0 )
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static Expression[] Slice(this IReadOnlyList<Expression> expressions, int startIndex, int length)
+    {
+        Assume.IsInRange( startIndex, 0, expressions.Count, nameof( startIndex ) );
+        Assume.IsInRange( length, 0, expressions.Count - startIndex, nameof( length ) );
+
+        if ( length == 0 )
             return Array.Empty<Expression>();
 
-        var result = new Expression[resultCount];
-        for ( var i = 0; i < resultCount; ++i )
+        var result = new Expression[length];
+        for ( var i = 0; i < length; ++i )
             result[i] = expressions[i + startIndex];
 
         return result;
@@ -148,7 +155,7 @@ internal static class ExpressionHelpers
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static Type[] GetTypes(this IReadOnlyList<Expression> expressions)
+    internal static Type[] GetExpressionTypes(this IReadOnlyList<Expression> expressions)
     {
         if ( expressions.Count == 0 )
             return Array.Empty<Type>();
@@ -162,7 +169,7 @@ internal static class ExpressionHelpers
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static object?[] GetValues(this IReadOnlyList<Expression> expressions)
+    internal static object?[] GetConstantValues(this IReadOnlyList<Expression> expressions)
     {
         if ( expressions.Count == 0 )
             return Array.Empty<object?>();
@@ -175,7 +182,7 @@ internal static class ExpressionHelpers
     }
 
     [Pure]
-    internal static string GetAccessibleMemberName(this Expression expression)
+    internal static string GetConstantMemberNameValue(this Expression expression)
     {
         if ( expression.NodeType != ExpressionType.Constant || expression.Type != typeof( string ) )
             throw new ParsedExpressionInvalidExpressionException( Resources.MemberNameMustBeConstantNonNullString, expression );
@@ -188,7 +195,7 @@ internal static class ExpressionHelpers
     }
 
     [Pure]
-    internal static Type GetArrayElementType(this Expression expression)
+    internal static Type GetConstantArrayElementTypeValue(this Expression expression)
     {
         if ( expression.NodeType != ExpressionType.Constant || ! expression.Type.IsAssignableTo( typeof( Type ) ) )
             throw new ParsedExpressionInvalidExpressionException( Resources.ArrayElementTypeMustBeConstantNonNullType, expression );
