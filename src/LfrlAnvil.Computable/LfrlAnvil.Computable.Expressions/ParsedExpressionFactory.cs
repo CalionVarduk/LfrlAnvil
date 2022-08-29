@@ -336,7 +336,7 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     [Pure]
     IParsedExpression<TArg, TResult> IParsedExpressionFactory.Create<TArg, TResult>(string input)
     {
-        if ( ((IParsedExpressionFactory)this).TryCreate<TArg, TResult>( input, out var result, out var errors ) )
+        if ( ReinterpretCast.To<IParsedExpressionFactory>( this ).TryCreate<TArg, TResult>( input, out var result, out var errors ) )
             return result;
 
         throw new ParsedExpressionCreationException( input, errors );

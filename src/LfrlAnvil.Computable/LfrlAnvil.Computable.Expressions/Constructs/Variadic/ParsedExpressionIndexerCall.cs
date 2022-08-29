@@ -31,7 +31,7 @@ public sealed class ParsedExpressionIndexerCall : ParsedExpressionVariadicFuncti
             throw new ParsedExpressionUnresolvableIndexerException( target.Type, parameterTypes );
 
         return target.NodeType == ExpressionType.Constant && callParameters.All( p => p.NodeType == ExpressionType.Constant )
-            ? ExpressionHelpers.CreateConstantIndexer( (ConstantExpression)target, indexer, callParameters )
+            ? ExpressionHelpers.CreateConstantIndexer( ReinterpretCast.To<ConstantExpression>( target ), indexer, callParameters )
             : CreateVariableIndexer( target, indexer, callParameters );
     }
 
@@ -41,7 +41,7 @@ public sealed class ParsedExpressionIndexerCall : ParsedExpressionVariadicFuncti
         if ( indexer is PropertyInfo property )
             return Expression.MakeIndex( target, property, parameters );
 
-        var arrayMethod = (MethodInfo)indexer;
+        var arrayMethod = ReinterpretCast.To<MethodInfo>( indexer );
         return Expression.Call( target, arrayMethod, parameters );
     }
 }

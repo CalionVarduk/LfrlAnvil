@@ -18,7 +18,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
         var a = value1 is null ? TypeCast<TSource, TDestination>.Empty : (TSource)value1;
         var b = value2 is null ? TypeCast<TSource, TDestination>.Empty : (TSource)value2;
 
-        var result = ((Object)a).Equals( b );
+        var result = ((object)a).Equals( b );
 
         result.Should().Be( expected );
     }

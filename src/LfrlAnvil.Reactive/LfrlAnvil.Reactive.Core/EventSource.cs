@@ -19,7 +19,7 @@ public abstract class EventSource<TEvent> : IEventSource<TEvent>
     protected EventSource()
     {
         _state = 0;
-        _subscribers = new List<EventSubscriber<TEvent>>( capacity: 1 );
+        _subscribers = new List<EventSubscriber<TEvent>>();
     }
 
     public bool IsDisposed => _state == 1;

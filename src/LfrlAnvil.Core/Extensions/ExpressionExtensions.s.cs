@@ -18,7 +18,7 @@ public static class ExpressionExtensions
             body.NodeType == ExpressionType.MemberAccess,
             "Expression must be of the member access type." );
 
-        var memberExpr = (MemberExpression)body;
+        var memberExpr = ReinterpretCast.To<MemberExpression>( body );
 
         Ensure.True(
             memberExpr.Expression == source.Parameters[0],

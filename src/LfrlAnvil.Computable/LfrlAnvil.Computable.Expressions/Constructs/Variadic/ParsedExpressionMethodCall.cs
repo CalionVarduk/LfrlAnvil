@@ -37,7 +37,7 @@ public sealed class ParsedExpressionMethodCall : ParsedExpressionVariadicFunctio
         var method = methods[0];
 
         return target.NodeType == ExpressionType.Constant && callParameters.All( p => p.NodeType == ExpressionType.Constant )
-            ? ExpressionHelpers.CreateConstantMethodCall( (ConstantExpression)target, method, callParameters )
+            ? ExpressionHelpers.CreateConstantMethodCall( ReinterpretCast.To<ConstantExpression>( target ), method, callParameters )
             : Expression.Call( target, method, callParameters );
     }
 }

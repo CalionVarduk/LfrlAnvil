@@ -49,7 +49,7 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
 
         if ( ! ActiveState.IsRoot )
         {
-            var parentState = ((ExpressionBuilderChildState)ActiveState).ParentState;
+            var parentState = ReinterpretCast.To<ExpressionBuilderChildState>( ActiveState ).ParentState;
             Assume.IsNotNull( parentState.LastHandledToken, nameof( parentState.LastHandledToken ) );
 
             var missingClosingSymbolError =
@@ -83,7 +83,7 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
     {
         while ( ! state.IsRoot )
         {
-            state = ((ExpressionBuilderChildState)state).ParentState;
+            state = ReinterpretCast.To<ExpressionBuilderChildState>( state ).ParentState;
             Assume.IsNotNull( state.LastHandledToken, nameof( state.LastHandledToken ) );
             errors = Chain.Create( ParsedExpressionBuilderError.CreateNestedExpressionFailure( state.LastHandledToken.Value, errors ) );
         }

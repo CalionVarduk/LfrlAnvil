@@ -29,7 +29,7 @@ public abstract class ParsedExpressionUnaryOperator
     private Expression CreateResult(Expression operand)
     {
         if ( operand.NodeType == ExpressionType.Constant )
-            return TryCreateFromConstant( (ConstantExpression)operand ) ?? CreateUnaryExpression( operand );
+            return TryCreateFromConstant( ReinterpretCast.To<ConstantExpression>( operand ) ) ?? CreateUnaryExpression( operand );
 
         return CreateUnaryExpression( operand );
     }

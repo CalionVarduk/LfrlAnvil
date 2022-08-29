@@ -30,7 +30,7 @@ public sealed class ParsedExpressionSwitch : ParsedExpressionVariadicFunction
         var (switchCases, defaultBody) = ExtractSwitchCases( parameters );
 
         var result = switchValue.NodeType == ExpressionType.Constant
-            ? CreateFromConstantValue( (ConstantExpression)switchValue, switchCases, defaultBody )
+            ? CreateFromConstantValue( ReinterpretCast.To<ConstantExpression>( switchValue ), switchCases, defaultBody )
             : CreateFromVariableValue( switchValue, switchCases, defaultBody );
 
         return result;
@@ -54,7 +54,7 @@ public sealed class ParsedExpressionSwitch : ParsedExpressionVariadicFunction
                     continue;
                 }
 
-                var constantTest = (ConstantExpression)test;
+                var constantTest = ReinterpretCast.To<ConstantExpression>( test );
                 if ( Equals( switchValue.Value, constantTest.Value ) )
                     return @case.Body;
             }

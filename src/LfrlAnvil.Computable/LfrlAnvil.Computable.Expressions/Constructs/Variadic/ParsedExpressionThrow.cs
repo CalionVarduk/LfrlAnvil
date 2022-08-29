@@ -60,7 +60,7 @@ public sealed class ParsedExpressionThrow : ParsedExpressionVariadicFunction
         {
             var args = new object?[parameters.Count - 1];
             for ( var i = 1; i < parameters.Count; ++i )
-                args[i - 1] = ((ConstantExpression)parameters[i]).Value;
+                args[i - 1] = ReinterpretCast.To<ConstantExpression>( parameters[i] ).Value;
 
             return Expression.New( _exceptionCtor, format, Expression.Constant( args ) );
         }

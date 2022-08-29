@@ -13,7 +13,7 @@ public sealed class TreeDictionaryNode<TKey, TValue> : ITreeDictionaryNode<TKey,
     {
         Key = key;
         Value = value;
-        _children = new List<TreeDictionaryNode<TKey, TValue>>( capacity: 1 );
+        _children = new List<TreeDictionaryNode<TKey, TValue>>();
     }
 
     public TKey Key { get; }

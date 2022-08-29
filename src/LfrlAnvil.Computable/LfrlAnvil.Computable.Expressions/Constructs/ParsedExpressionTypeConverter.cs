@@ -57,7 +57,7 @@ public class ParsedExpressionTypeConverter
             return operand;
 
         if ( operand.NodeType == ExpressionType.Constant )
-            return TryCreateFromConstant( (ConstantExpression)operand ) ?? CreateConversionExpression( operand );
+            return TryCreateFromConstant( ReinterpretCast.To<ConstantExpression>( operand ) ) ?? CreateConversionExpression( operand );
 
         return CreateConversionExpression( operand );
     }

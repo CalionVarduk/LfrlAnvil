@@ -34,7 +34,7 @@ public sealed class ParsedExpressionMemberAccess : ParsedExpressionVariadicFunct
         var member = members[0];
 
         return target.NodeType == ExpressionType.Constant
-            ? ExpressionHelpers.CreateConstantMemberAccess( (ConstantExpression)target, member )
+            ? ExpressionHelpers.CreateConstantMemberAccess( ReinterpretCast.To<ConstantExpression>( target ), member )
             : Expression.MakeMemberAccess( target, member );
     }
 }

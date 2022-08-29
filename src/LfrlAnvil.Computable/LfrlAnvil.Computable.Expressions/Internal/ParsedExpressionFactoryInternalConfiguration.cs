@@ -198,14 +198,14 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
 
             if ( ! StringSlice.Create( _info.NumberDecimalSeparator ).Equals( configuration.DecimalPoint ) )
             {
-                _info = (NumberFormatInfo)_info.Clone();
+                _info = ReinterpretCast.To<NumberFormatInfo>( _info.Clone() );
                 _info.NumberDecimalSeparator = configuration.DecimalPoint.ToString();
             }
 
             if ( ! StringSlice.Create( _info.NumberGroupSeparator ).Equals( configuration.IntegerDigitSeparator ) )
             {
                 if ( _info.IsReadOnly )
-                    _info = (NumberFormatInfo)_info.Clone();
+                    _info = ReinterpretCast.To<NumberFormatInfo>( _info.Clone() );
 
                 _info.NumberGroupSeparator = configuration.IntegerDigitSeparator.ToString();
             }

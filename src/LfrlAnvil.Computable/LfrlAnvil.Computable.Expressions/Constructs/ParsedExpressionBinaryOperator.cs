@@ -44,15 +44,19 @@ public abstract class ParsedExpressionBinaryOperator
         {
             if ( right.NodeType == ExpressionType.Constant )
             {
-                return TryCreateFromTwoConstants( (ConstantExpression)left, (ConstantExpression)right ) ??
+                return TryCreateFromTwoConstants(
+                        ReinterpretCast.To<ConstantExpression>( left ),
+                        ReinterpretCast.To<ConstantExpression>( right ) ) ??
                     CreateBinaryExpression( left, right );
             }
 
-            return TryCreateFromOneConstant( (ConstantExpression)left, right ) ?? CreateBinaryExpression( left, right );
+            return TryCreateFromOneConstant( ReinterpretCast.To<ConstantExpression>( left ), right ) ??
+                CreateBinaryExpression( left, right );
         }
 
         if ( right.NodeType == ExpressionType.Constant )
-            return TryCreateFromOneConstant( left, (ConstantExpression)right ) ?? CreateBinaryExpression( left, right );
+            return TryCreateFromOneConstant( left, ReinterpretCast.To<ConstantExpression>( right ) ) ??
+                CreateBinaryExpression( left, right );
 
         return CreateBinaryExpression( left, right );
     }
