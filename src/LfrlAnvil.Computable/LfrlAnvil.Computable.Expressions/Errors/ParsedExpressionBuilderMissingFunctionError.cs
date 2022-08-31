@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using LfrlAnvil.Computable.Expressions.Internal;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Errors;
 
@@ -22,6 +23,6 @@ public sealed class ParsedExpressionBuilderMissingFunctionError : ParsedExpressi
     [Pure]
     public override string ToString()
     {
-        return $"{base.ToString()}, parameter types: [{string.Join( ", ", ParameterTypes.Select( p => p.FullName ) )}]";
+        return $"{base.ToString()}, parameter types: [{string.Join( ", ", ParameterTypes.Select( p => p.GetDebugString() ) )}]";
     }
 }

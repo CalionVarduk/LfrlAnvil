@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Computable.Expressions.Exceptions;
 using LfrlAnvil.Computable.Expressions.Internal;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions;
 
@@ -33,7 +34,7 @@ public sealed class ParsedExpression<TArg, TResult> : IParsedExpression<TArg, TR
     [Pure]
     public override string ToString()
     {
-        return $"[{typeof( TArg ).FullName} => {typeof( TResult ).FullName}] {Input}";
+        return $"[{typeof( TArg ).GetDebugString()} => {typeof( TResult ).GetDebugString()}] {Input}";
     }
 
     [Pure]

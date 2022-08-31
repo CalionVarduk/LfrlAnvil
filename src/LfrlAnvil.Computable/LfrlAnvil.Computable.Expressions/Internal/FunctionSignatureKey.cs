@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
 
@@ -18,7 +19,7 @@ internal readonly struct FunctionSignatureKey : IEquatable<FunctionSignatureKey>
     [Pure]
     public override string ToString()
     {
-        return $"[{string.Join( ", ", Parameters.Select( e => e.Type.FullName ) )}]";
+        return $"[{string.Join( ", ", Parameters.Select( e => e.Type.GetDebugString() ) )}]";
     }
 
     [Pure]

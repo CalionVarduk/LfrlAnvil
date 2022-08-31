@@ -1,4 +1,5 @@
 ﻿using System;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
 
@@ -17,6 +18,6 @@ public readonly struct ParsedExpressionBinaryOperatorInfo
 
     public override string ToString()
     {
-        return $"{OperatorType.FullName}({LeftArgumentType.FullName}, {RightArgumentType.FullName})";
+        return $"{OperatorType.GetDebugString()}({LeftArgumentType.GetDebugString()}, {RightArgumentType.GetDebugString()})";
     }
 }

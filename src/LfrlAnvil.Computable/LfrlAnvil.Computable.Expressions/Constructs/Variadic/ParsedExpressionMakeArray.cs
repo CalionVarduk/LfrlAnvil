@@ -25,7 +25,7 @@ public sealed class ParsedExpressionMakeArray : ParsedExpressionVariadicFunction
             if ( ! actualType.IsAssignableTo( elementType ) )
                 throw new ParsedExpressionInvalidArrayElementException( elementType, actualType );
 
-            if ( element.NodeType != ExpressionType.Constant )
+            if ( element is not ConstantExpression )
                 containsVariableElements = true;
         }
 

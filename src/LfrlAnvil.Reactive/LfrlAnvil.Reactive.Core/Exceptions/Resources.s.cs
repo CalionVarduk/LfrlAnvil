@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Reactive.Exceptions;
 
@@ -17,21 +18,21 @@ internal static class Resources
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string InvalidArgumentType(object? argument, Type expectedType)
     {
-        var argumentTypeName = argument is null ? "<null>" : argument.GetType().FullName;
-        return $"Expected argument of type {expectedType.FullName} but found {argumentTypeName}.";
+        var argumentTypeName = argument is null ? "<null>" : argument.GetType().GetDebugString();
+        return $"Expected argument of type {expectedType.GetDebugString()} but found {argumentTypeName}.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string EventPublisherNotFound(Type eventType)
     {
-        return $"Event publisher for event type {eventType.FullName} was not found.";
+        return $"Event publisher for event type {eventType.GetDebugString()} was not found.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string EventPublisherAlreadyExists(Type eventType)
     {
-        return $"Event publisher for event type {eventType.FullName} already exists.";
+        return $"Event publisher for event type {eventType.GetDebugString()} already exists.";
     }
 }

@@ -40,23 +40,16 @@ public abstract class ParsedExpressionBinaryOperator
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Expression CreateResult(Expression left, Expression right)
     {
-        if ( left.NodeType == ExpressionType.Constant )
+        if ( left is ConstantExpression constantLeft )
         {
-            if ( right.NodeType == ExpressionType.Constant )
-            {
-                return TryCreateFromTwoConstants(
-                        ReinterpretCast.To<ConstantExpression>( left ),
-                        ReinterpretCast.To<ConstantExpression>( right ) ) ??
-                    CreateBinaryExpression( left, right );
-            }
+            if ( right is ConstantExpression andConstantRight )
+                return TryCreateFromTwoConstants( constantLeft, andConstantRight ) ?? CreateBinaryExpression( left, right );
 
-            return TryCreateFromOneConstant( ReinterpretCast.To<ConstantExpression>( left ), right ) ??
-                CreateBinaryExpression( left, right );
+            return TryCreateFromOneConstant( constantLeft, right ) ?? CreateBinaryExpression( left, right );
         }
 
-        if ( right.NodeType == ExpressionType.Constant )
-            return TryCreateFromOneConstant( left, ReinterpretCast.To<ConstantExpression>( right ) ) ??
-                CreateBinaryExpression( left, right );
+        if ( right is ConstantExpression constantRight )
+            return TryCreateFromOneConstant( left, constantRight ) ?? CreateBinaryExpression( left, right );
 
         return CreateBinaryExpression( left, right );
     }

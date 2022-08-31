@@ -1,4 +1,5 @@
 ﻿using System;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
 
@@ -15,6 +16,6 @@ public readonly struct ParsedExpressionUnaryConstructInfo
 
     public override string ToString()
     {
-        return $"{ConstructType.FullName}({ArgumentType.FullName})";
+        return $"{ConstructType.GetDebugString()}({ArgumentType.GetDebugString()})";
     }
 }

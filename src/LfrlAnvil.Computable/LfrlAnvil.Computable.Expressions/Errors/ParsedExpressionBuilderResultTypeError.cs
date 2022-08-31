@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Errors;
 
@@ -21,6 +22,6 @@ public sealed class ParsedExpressionBuilderResultTypeError : ParsedExpressionBui
     [Pure]
     public override string ToString()
     {
-        return $"{base.ToString()}, result type: {ResultType.FullName}, expected type: {ExpectedType.FullName}";
+        return $"{base.ToString()}, result type: {ResultType.GetDebugString()}, expected type: {ExpectedType.GetDebugString()}";
     }
 }

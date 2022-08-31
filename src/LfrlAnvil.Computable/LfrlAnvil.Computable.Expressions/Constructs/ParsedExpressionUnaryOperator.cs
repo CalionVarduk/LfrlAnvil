@@ -28,8 +28,8 @@ public abstract class ParsedExpressionUnaryOperator
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Expression CreateResult(Expression operand)
     {
-        if ( operand.NodeType == ExpressionType.Constant )
-            return TryCreateFromConstant( ReinterpretCast.To<ConstantExpression>( operand ) ) ?? CreateUnaryExpression( operand );
+        if ( operand is ConstantExpression constant )
+            return TryCreateFromConstant( constant ) ?? CreateUnaryExpression( operand );
 
         return CreateUnaryExpression( operand );
     }

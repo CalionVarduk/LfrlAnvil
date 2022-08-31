@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Exceptions;
 
@@ -37,7 +38,7 @@ public static class ExceptionResources
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string AssumedDefinedEnum<T>(T value, Type enumType, string paramName)
     {
-        return $"Assumed {paramName} to be defined in {enumType.FullName} enum type but found {value}.";
+        return $"Assumed {paramName} to be defined in {enumType.GetDebugString()} enum type but found {value}.";
     }
 
     [Pure]
@@ -156,7 +157,7 @@ public static class ExceptionResources
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string AssumedInstanceOfType(Type type, Type? actualType, string paramName)
     {
-        return $"Assumed {paramName} to be an instance of type {type.FullName} but found {actualType?.FullName}.";
+        return $"Assumed {paramName} to be an instance of type {type.GetDebugString()} but found {actualType?.GetDebugString()}.";
     }
 
     [Pure]
@@ -184,35 +185,35 @@ public static class ExceptionResources
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string ExpectedOfType(Type type, Type actualType, string paramName)
     {
-        return $"Expected {paramName} to be of type {type.FullName} but found {actualType.FullName}.";
+        return $"Expected {paramName} to be of type {type.GetDebugString()} but found {actualType.GetDebugString()}.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string ExpectedNotOfType(Type type, string paramName)
     {
-        return $"Expected {paramName} to not be of type {type.FullName}.";
+        return $"Expected {paramName} to not be of type {type.GetDebugString()}.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string ExpectedInstanceOfType(Type type, Type actualType, string paramName)
     {
-        return $"Expected {paramName} to be an instance of type {type.FullName} but found {actualType.FullName}.";
+        return $"Expected {paramName} to be an instance of type {type.GetDebugString()} but found {actualType.GetDebugString()}.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string ExpectedNotInstanceOfType(Type type, string paramName)
     {
-        return $"Expected {paramName} to not be an instance of type {type.FullName}.";
+        return $"Expected {paramName} to not be an instance of type {type.GetDebugString()}.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string ExpectedDefinedEnum<T>(T value, Type enumType, string paramName)
     {
-        return $"Expected {paramName} to be defined in {enumType.FullName} enum type but found {value}.";
+        return $"Expected {paramName} to be defined in {enumType.GetDebugString()} enum type but found {value}.";
     }
 
     [Pure]
@@ -429,21 +430,21 @@ public static class ExceptionResources
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string MissingEnumFlagsAttribute<T>()
     {
-        return $"Enum type {typeof( T ).FullName} doesn't have the {nameof( FlagsAttribute )} attribute.";
+        return $"Enum type {typeof( T ).GetDebugString()} doesn't have the {nameof( FlagsAttribute )} attribute.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string MissingEnumZeroValueMember<T>()
     {
-        return $"Enum type {typeof( T ).FullName} doesn't have the 0-value member.";
+        return $"Enum type {typeof( T ).GetDebugString()} doesn't have the 0-value member.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string FailedToCreateConverter<T>(string converterName)
     {
-        return $"Failed to create {converterName} converter for type {typeof( T ).FullName}.";
+        return $"Failed to create {converterName} converter for type {typeof( T ).GetDebugString()}.";
     }
 
     [Pure]

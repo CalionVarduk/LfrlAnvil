@@ -54,7 +54,7 @@ internal static class MemberInfoLocator
         var result = typeof( object ).GetMethod(
             name: nameof( ToString ),
             bindingAttr: BindingFlags.Public | BindingFlags.Instance,
-            types: Array.Empty<Type>() );
+            types: Type.EmptyTypes );
 
         return result!;
     }
@@ -83,9 +83,9 @@ internal static class MemberInfoLocator
     internal static MethodInfo FindArrayEmptyMethod(Type elementType)
     {
         var genericMethod = typeof( Array ).GetMethod(
-            nameof( Array.Empty ),
-            BindingFlags.Public | BindingFlags.Static,
-            Array.Empty<Type>() )!;
+            name: nameof( Array.Empty ),
+            bindingAttr: BindingFlags.Public | BindingFlags.Static,
+            types: Type.EmptyTypes )!;
 
         var result = genericMethod.MakeGenericMethod( elementType );
         return result;

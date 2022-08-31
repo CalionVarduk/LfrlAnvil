@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Computable.Expressions.Internal;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Errors;
 
@@ -17,6 +18,6 @@ public sealed class ParsedExpressionBuilderMissingUnaryOperatorError : ParsedExp
     [Pure]
     public override string ToString()
     {
-        return $"{base.ToString()}, argument type: {ArgumentType.FullName}";
+        return $"{base.ToString()}, argument type: {ArgumentType.GetDebugString()}";
     }
 }

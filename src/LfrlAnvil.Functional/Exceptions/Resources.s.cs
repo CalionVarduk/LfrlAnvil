@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Functional.Exceptions;
 
@@ -53,27 +54,27 @@ internal static class Resources
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static string GetEitherName<T1, T2>()
     {
-        return $"{nameof( Either )}<{typeof( T1 ).FullName}, {typeof( T2 ).FullName}>";
+        return $"{nameof( Either )}<{typeof( T1 ).GetDebugString()}, {typeof( T2 ).GetDebugString()}>";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static string GetUnsafeName<T>()
     {
-        return $"{nameof( Unsafe )}<{typeof( T ).FullName}>";
+        return $"{nameof( Unsafe )}<{typeof( T ).GetDebugString()}>";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static string GetMaybeName<T>()
     {
-        return $"{nameof( Maybe )}<{typeof( T ).FullName}>";
+        return $"{nameof( Maybe )}<{typeof( T ).GetDebugString()}>";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static string GetTypeCastName<TSource, TDestination>()
     {
-        return $"{nameof( TypeCast )}<{typeof( TSource ).FullName}, {typeof( TDestination ).FullName}>";
+        return $"{nameof( TypeCast )}<{typeof( TSource ).GetDebugString()}, {typeof( TDestination ).GetDebugString()}>";
     }
 }

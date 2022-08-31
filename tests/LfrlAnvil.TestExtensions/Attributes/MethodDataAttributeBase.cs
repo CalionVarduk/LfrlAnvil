@@ -54,7 +54,7 @@ public abstract class MethodDataAttributeBase : MemberDataAttributeBase
 
     private Func<object?>? CreateDataMethodDelegate(Type testMethodDeclaringType)
     {
-        var parameterTypes = Parameters == null ? Array.Empty<Type>() : Parameters.Select( p => p?.GetType() ).ToArray();
+        var parameterTypes = Parameters == null ? Type.EmptyTypes : Parameters.Select( p => p?.GetType() ).ToArray();
 
         var method = testMethodDeclaringType
             .GetRuntimeMethods()

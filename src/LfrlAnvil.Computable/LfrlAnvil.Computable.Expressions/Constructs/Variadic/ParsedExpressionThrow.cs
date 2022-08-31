@@ -56,7 +56,7 @@ public sealed class ParsedExpressionThrow : ParsedExpressionVariadicFunction
         if ( parameters.Count == 1 )
             return Expression.New( _exceptionCtor, format, Expression.Constant( Array.Empty<object?>() ) );
 
-        if ( parameters.Skip( 1 ).All( p => p.NodeType == ExpressionType.Constant ) )
+        if ( parameters.Skip( 1 ).All( p => p is ConstantExpression ) )
         {
             var args = new object?[parameters.Count - 1];
             for ( var i = 1; i < parameters.Count; ++i )

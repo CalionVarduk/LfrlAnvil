@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
 
@@ -19,6 +20,6 @@ public readonly struct ParsedExpressionConstructInfo
     [Pure]
     public override string ToString()
     {
-        return $"[{Type}] '{Symbol}' -> {Construct.GetType().FullName}";
+        return $"[{Type}] '{Symbol}' -> {Construct.GetType().GetDebugString()}";
     }
 }

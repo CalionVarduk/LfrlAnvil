@@ -29,8 +29,8 @@ public sealed class ParsedExpressionSwitch : ParsedExpressionVariadicFunction
         var switchValue = parameters[0];
         var (switchCases, defaultBody) = ExtractSwitchCases( parameters );
 
-        var result = switchValue.NodeType == ExpressionType.Constant
-            ? CreateFromConstantValue( ReinterpretCast.To<ConstantExpression>( switchValue ), switchCases, defaultBody )
+        var result = switchValue is ConstantExpression constantSwitchValue
+            ? CreateFromConstantValue( constantSwitchValue, switchCases, defaultBody )
             : CreateFromVariableValue( switchValue, switchCases, defaultBody );
 
         return result;
@@ -47,14 +47,17 @@ public sealed class ParsedExpressionSwitch : ParsedExpressionVariadicFunction
 
             foreach ( var test in @case.TestValues )
             {
-                if ( test.NodeType != ExpressionType.Constant && ! isCountedAsVariable )
+                if ( test is not ConstantExpression constantTest )
                 {
-                    isCountedAsVariable = true;
-                    ++variableCaseCount;
+                    if ( ! isCountedAsVariable )
+                    {
+                        isCountedAsVariable = true;
+                        ++variableCaseCount;
+                    }
+
                     continue;
                 }
 
-                var constantTest = ReinterpretCast.To<ConstantExpression>( test );
                 if ( Equals( switchValue.Value, constantTest.Value ) )
                     return @case.Body;
             }
@@ -67,12 +70,12 @@ public sealed class ParsedExpressionSwitch : ParsedExpressionVariadicFunction
         var cases = new SwitchCase[variableCaseCount];
         foreach ( var @case in switchCases )
         {
-            if ( @case.TestValues.All( t => t.NodeType == ExpressionType.Constant ) )
+            if ( @case.TestValues.All( t => t is ConstantExpression ) )
                 continue;
 
-            cases[caseIndex++] = @case.TestValues.All( t => t.NodeType != ExpressionType.Constant )
+            cases[caseIndex++] = @case.TestValues.All( t => t is not ConstantExpression )
                 ? @case
-                : Expression.SwitchCase( @case.Body, @case.TestValues.Where( t => t.NodeType != ExpressionType.Constant ) );
+                : Expression.SwitchCase( @case.Body, @case.TestValues.Where( t => t is not ConstantExpression ) );
         }
 
         var result = Expression.Switch( switchValue, defaultBody, cases );

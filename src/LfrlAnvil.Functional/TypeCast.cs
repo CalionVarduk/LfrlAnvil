@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional.Exceptions;
 using LfrlAnvil.Internal;
 
@@ -46,8 +47,8 @@ public readonly struct TypeCast<TSource, TDestination> : ITypeCast<TDestination>
     public override string ToString()
     {
         return IsValid
-            ? $"{nameof( TypeCast )}<{typeof( TSource ).FullName} -> {typeof( TDestination ).FullName}>({Result})"
-            : $"Invalid{nameof( TypeCast )}<{typeof( TSource ).FullName} -> {typeof( TDestination ).FullName}>({Generic<TSource>.ToString( Source )})";
+            ? $"{nameof( TypeCast )}<{typeof( TSource ).GetDebugString()} -> {typeof( TDestination ).GetDebugString()}>({Result})"
+            : $"Invalid{nameof( TypeCast )}<{typeof( TSource ).GetDebugString()} -> {typeof( TDestination ).GetDebugString()}>({Generic<TSource>.ToString( Source )})";
     }
 
     [Pure]

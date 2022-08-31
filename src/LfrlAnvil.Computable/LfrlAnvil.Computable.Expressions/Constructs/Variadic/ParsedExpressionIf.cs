@@ -26,8 +26,8 @@ public sealed class ParsedExpressionIf : ParsedExpressionVariadicFunction
         ifTrue = ExpressionHelpers.TryUpdateThrowType( ifTrue, expectedType );
         ifFalse = ExpressionHelpers.TryUpdateThrowType( ifFalse, expectedType );
 
-        var result = test.NodeType == ExpressionType.Constant
-            ? CreateFromConstantTest( ReinterpretCast.To<ConstantExpression>( test ), ifTrue, ifFalse )
+        var result = test is ConstantExpression constantTest
+            ? CreateFromConstantTest( constantTest, ifTrue, ifFalse )
             : Expression.Condition( test, ifTrue, ifFalse );
 
         return result;

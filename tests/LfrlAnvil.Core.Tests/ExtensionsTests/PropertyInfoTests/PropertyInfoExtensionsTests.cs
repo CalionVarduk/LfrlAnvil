@@ -86,6 +86,38 @@ public class PropertyInfoExtensionsTests : TestsBase
         result.Should().Match<FieldInfo>( r => MatchBackingField( sut, r ) );
     }
 
+    [Fact]
+    public void GetDebugString_ShouldReturnCorrectResult_WithoutIncludedDeclaringType()
+    {
+        var property = typeof( string ).GetProperty( nameof( string.Length ) )!;
+        var result = property.GetDebugString( includeDeclaringType: false );
+        result.Should().Be( "System.Int32 Length [get]" );
+    }
+
+    [Fact]
+    public void GetDebugString_ShouldReturnCorrectResult_WithIncludedDeclaringType()
+    {
+        var property = typeof( string ).GetProperty( nameof( string.Length ) )!;
+        var result = property.GetDebugString( includeDeclaringType: true );
+        result.Should().Be( "System.Int32 System.String.Length [get]" );
+    }
+
+    [Fact]
+    public void GetDebugString_ShouldReturnCorrectResult_ForPropertyWithGetterAndSetter()
+    {
+        var property = TestClass.GetPublicAutoWritableInfo();
+        var result = property.GetDebugString( includeDeclaringType: false );
+        result.Should().Be( "System.Int32 PublicAutoWritableProperty [get][set]" );
+    }
+
+    [Fact]
+    public void GetDebugString_ShouldReturnCorrectResult_ForPropertyWithSetterOnly()
+    {
+        var property = TestClass.GetPublicExplicitWriteOnlyInfo();
+        var result = property.GetDebugString( includeDeclaringType: false );
+        result.Should().Be( "System.Int32 PublicExplicitWriteOnlyProperty [set]" );
+    }
+
     private static bool MatchBackingField(PropertyInfo property, FieldInfo? info)
     {
         return info != null &&

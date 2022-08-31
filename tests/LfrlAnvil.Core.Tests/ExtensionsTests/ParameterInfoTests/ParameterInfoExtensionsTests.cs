@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
@@ -169,6 +170,39 @@ public class ParameterInfoExtensionsTests : TestsBase
         result.Should().BeFalse();
     }
 
+    [Fact]
+    public void GetDebugString_ShouldReturnCorrectResult_ForNonByRefParameter()
+    {
+        var parameter = typeof( Dictionary<int, string> )
+            .GetMethod( nameof( Dictionary<int, string>.TryGetValue ) )!
+            .GetParameters()[0];
+
+        var result = parameter.GetDebugString();
+        result.Should().Be( "System.Int32 key" );
+    }
+
+    [Fact]
+    public void GetDebugString_ShouldReturnCorrectResult_ForOutParameter()
+    {
+        var parameter = typeof( Dictionary<int, string> )
+            .GetMethod( nameof( Dictionary<int, string>.TryGetValue ) )!
+            .GetParameters()[1];
+
+        var result = parameter.GetDebugString();
+        result.Should().Be( "System.String& value [out]" );
+    }
+
+    [Fact]
+    public void GetDebugString_ShouldReturnCorrectResult_ForInParameter()
+    {
+        var parameter = typeof( ParameterInfoExtensionsTests )
+            .GetMethod( nameof( MethodWithInParameter ), BindingFlags.Static | BindingFlags.NonPublic )!
+            .GetParameters()[0];
+
+        var result = parameter.GetDebugString();
+        result.Should().Be( "System.Int32& a [in]" );
+    }
+
     private static ParameterInfo GetBaseParameter()
     {
         return typeof( BaseClass ).GetMethod( nameof( BaseClass.TestMethod ) )!.GetParameters()[0];
@@ -178,6 +212,8 @@ public class ParameterInfoExtensionsTests : TestsBase
     {
         return typeof( DerivedClass ).GetMethod( nameof( BaseClass.TestMethod ) )!.GetParameters()[0];
     }
+
+    private static void MethodWithInParameter(in int a) { }
 
     [AttributeUsage( AttributeTargets.Parameter )]
     public class TestBaseOnlyAttribute : Attribute

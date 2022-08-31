@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Computable.Expressions.Errors;
 using LfrlAnvil.Computable.Expressions.Internal;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Exceptions;
 
@@ -134,7 +135,7 @@ internal static class Resources
     internal static string FoundDuplicateTypedBinaryOperator(StringSlice symbol, ParsedExpressionTypedBinaryOperator @operator)
     {
         return
-            $"Found duplicate binary operator for symbol '{symbol}' (left argument type: {@operator.LeftArgumentType.FullName}, right argument type: {@operator.RightArgumentType.FullName}).";
+            $"Found duplicate binary operator for symbol '{symbol}' (left argument type: {@operator.LeftArgumentType.GetDebugString()}, right argument type: {@operator.RightArgumentType.GetDebugString()}).";
     }
 
     [Pure]
@@ -162,7 +163,8 @@ internal static class Resources
             ? "prefix"
             : "postfix";
 
-        return $"Found duplicate {typeText} unary operator for symbol '{symbol}' (argument type: {@operator.ArgumentType.FullName}).";
+        return
+            $"Found duplicate {typeText} unary operator for symbol '{symbol}' (argument type: {@operator.ArgumentType.GetDebugString()}).";
     }
 
     [Pure]
@@ -205,7 +207,7 @@ internal static class Resources
             ? "prefix"
             : "postfix";
 
-        return $"Found duplicate {typeText} type converter for symbol '{symbol}' (source type: {converter.SourceType!.FullName}).";
+        return $"Found duplicate {typeText} type converter for symbol '{symbol}' (source type: {converter.SourceType!.GetDebugString()}).";
     }
 
     [Pure]
@@ -241,7 +243,7 @@ internal static class Resources
             ? "prefix"
             : "postfix";
 
-        return $"Not all {typeText} type converters for symbol '{symbol}' have the same {targetType.FullName} target type.";
+        return $"Not all {typeText} type converters for symbol '{symbol}' have the same {targetType.GetDebugString()} target type.";
     }
 
     [Pure]
@@ -252,7 +254,7 @@ internal static class Resources
         Type postfixTargetType)
     {
         return
-            $"Type converter collections for symbol '{symbol}' don't have the same target type (prefix: {prefixTargetType.FullName}, postfix: {postfixTargetType.FullName}).";
+            $"Type converter collections for symbol '{symbol}' don't have the same target type (prefix: {prefixTargetType.GetDebugString()}, postfix: {postfixTargetType.GetDebugString()}).";
     }
 
     [Pure]
@@ -304,7 +306,7 @@ internal static class Resources
         StringSlice symbol,
         IReadOnlyList<Expression> parameters)
     {
-        var parameterTypesText = string.Join( ", ", parameters.Select( e => e.Type.FullName ) );
+        var parameterTypesText = string.Join( ", ", parameters.Select( e => e.Type.GetDebugString() ) );
         return $"Found duplicate function signature for symbol '{symbol}' (parameter types: [{parameterTypesText}])";
     }
 
@@ -351,15 +353,18 @@ internal static class Resources
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string InvalidTypeConverterResultType(Type actual, Type expected)
     {
-        return $"Expected type converter to return result of type assignable to {expected.FullName} but found {actual.FullName}.";
+        return
+            $"Expected type converter to return result of type assignable to {expected.GetDebugString()} but found {actual.GetDebugString()}.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string ConstructFailedToFindCompareToMethod(Type targetType, Type parameterType, Type constructType)
     {
-        var methodSignature = $"{typeof( int ).FullName} {targetType}.{nameof( IComparable.CompareTo )}({parameterType})";
-        return $"{constructType.FullName} has failed to find method {methodSignature}.";
+        var methodSignature =
+            $"{typeof( int ).GetDebugString()} {targetType.GetDebugString()}.{nameof( IComparable.CompareTo )}({parameterType.GetDebugString()})";
+
+        return $"{constructType.GetDebugString()} has failed to find method {methodSignature}.";
     }
 
     [Pure]
@@ -373,7 +378,7 @@ internal static class Resources
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string IfTestMustBeOfBooleanType(Type testType)
     {
-        return $"Expected IF test type to be {typeof( bool ).FullName} but found {testType.FullName}.";
+        return $"Expected IF test type to be {typeof( bool ).GetDebugString()} but found {testType.GetDebugString()}.";
     }
 
     [Pure]
@@ -399,52 +404,38 @@ internal static class Resources
 
         var parametersText = parameterTypes is null
             ? string.Empty
-            : $" (parameter types: [{string.Join( ", ", parameterTypes.Select( p => p.FullName ) )}])";
+            : $" (parameter types: [{string.Join( ", ", parameterTypes.Select( p => p.GetDebugString() ) )}])";
 
-        return $"{memberTypeText} member '{memberName}'{parametersText} could not be resolved for {targetType.FullName} type.";
+        return $"{memberTypeText} member '{memberName}'{parametersText} could not be resolved for {targetType.GetDebugString()} type.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string UnresolvableIndexer(Type targetType, IReadOnlyList<Type> parameterTypes)
     {
-        var parametersText = $"(parameter types: [{string.Join( ", ", parameterTypes.Select( p => p.FullName ) )}])";
-        return $"Indexer member {parametersText} could not be resolved for {targetType.FullName} type.";
+        var parametersText = $"(parameter types: [{string.Join( ", ", parameterTypes.Select( p => p.GetDebugString() ) )}])";
+        return $"Indexer member {parametersText} could not be resolved for {targetType.GetDebugString()} type.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string AmbiguousMembers(Type targetType, string memberName, IReadOnlyList<MemberInfo> members)
     {
-        var headerText = $"Found {members.Count} ambiguous '{memberName}' members in {targetType.FullName} type:";
+        var headerText = $"Found {members.Count} ambiguous '{memberName}' members in {targetType.GetDebugString()} type:";
         var membersText = string.Join(
             Environment.NewLine,
             members.Select(
-                (m, i) =>
+                (member, i) =>
                 {
-                    if ( m is MethodInfo method )
+                    var memberText = member switch
                     {
-                        var genericArgs = method.GetGenericArguments();
+                        FieldInfo f => f.GetDebugString(),
+                        PropertyInfo p => p.GetDebugString(),
+                        MethodInfo m => m.GetDebugString(),
+                        _ => member.ToString() ?? string.Empty
+                    };
 
-                        var fullName = method.Name;
-                        if ( genericArgs.Length > 0 )
-                        {
-                            method = method.GetGenericMethodDefinition();
-                            var openGenericArgs = method.GetGenericArguments();
-                            var genericArgsTexts = openGenericArgs.Zip( genericArgs )
-                                .Select( x => $"{x.First.Name} is {x.Second.FullName}" );
-
-                            fullName += $"[{string.Join( ", ", genericArgsTexts )}]";
-                        }
-
-                        var parameters = method.GetParameters();
-                        var parameterTexts = parameters.Select( p => $"{p.ParameterType.FullName ?? p.ParameterType.Name} {p.Name}" );
-                        fullName += $"({string.Join( ", ", parameterTexts )})";
-                        return $"{i + 1}. {fullName} (Method)";
-                    }
-
-                    var typeText = m is FieldInfo ? "(Field)" : "(Property)";
-                    return $"{i + 1}. {m.Name} {typeText}";
+                    return $"{i + 1}. {memberText}";
                 } ) );
 
         return $"{headerText}{Environment.NewLine}{membersText}";
@@ -454,7 +445,8 @@ internal static class Resources
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string InvalidArrayElementType(Type expectedType, Type actualType)
     {
-        return $"Expected all elements in an array to be assignable to {expectedType.FullName} type but found {actualType.FullName}.";
+        return
+            $"Expected all elements in an array to be assignable to {expectedType.GetDebugString()} type but found {actualType.GetDebugString()}.";
     }
 
     [Pure]

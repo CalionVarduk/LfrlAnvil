@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace LfrlAnvil.Extensions;
 
@@ -120,5 +122,77 @@ public static class TypeExtensions
             .Where( t => t.IsGenericType )
             .Select( t => t.GetGenericTypeDefinition() )
             .Distinct();
+    }
+
+    [Pure]
+    public static string GetDebugString(this Type type)
+    {
+        return AppendDebugString( new StringBuilder(), type ).ToString();
+    }
+
+    internal static StringBuilder AppendDebugString(StringBuilder builder, Type type)
+    {
+        if ( ! type.IsNested )
+            builder.Append( type.Namespace ).Append( '.' );
+        else if ( ! type.IsGenericParameter && type.DeclaringType is not null )
+            AppendDebugString( builder, type.DeclaringType ).Append( '+' );
+
+        builder.Append( type.Name );
+
+        if ( ! type.IsGenericType )
+            return builder;
+
+        Type[] openGenericArgs;
+        var closedGenericArgs = type.GetGenericArguments();
+
+        if ( type.IsGenericTypeDefinition )
+        {
+            openGenericArgs = closedGenericArgs;
+            closedGenericArgs = Type.EmptyTypes;
+        }
+        else
+            openGenericArgs = type.GetGenericTypeDefinition().GetGenericArguments();
+
+        return AppendGenericArgumentsString( builder, openGenericArgs, closedGenericArgs );
+    }
+
+    internal static StringBuilder AppendGenericArgumentsString(StringBuilder builder, Type[] openGenericArgs, Type[] closedGenericArgs)
+    {
+        Assume.IsNotEmpty( openGenericArgs, nameof( openGenericArgs ) );
+
+        builder.Append( '[' );
+        if ( closedGenericArgs.Length == 0 )
+        {
+            foreach ( var arg in openGenericArgs )
+                AppendOpenGenericArgumentString( builder, arg ).Append( ", " );
+        }
+        else
+        {
+            Assume.ContainsExactly( closedGenericArgs, openGenericArgs.Length, nameof( closedGenericArgs ) );
+
+            for ( var i = 0; i < openGenericArgs.Length; ++i )
+            {
+                AppendOpenGenericArgumentString( builder, openGenericArgs[i] ).Append( " is " );
+                AppendDebugString( builder, closedGenericArgs[i] ).Append( ", " );
+            }
+        }
+
+        builder.Length -= 2;
+        builder.Append( ']' );
+        return builder;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static StringBuilder AppendOpenGenericArgumentString(StringBuilder builder, Type type)
+    {
+        Assume.Equals( type.IsGenericParameter, true, nameof( type.IsGenericParameter ) );
+        AppendDebugString( builder, type );
+
+        if ( (type.GenericParameterAttributes & GenericParameterAttributes.Contravariant) != GenericParameterAttributes.None )
+            builder.Append( " [in]" );
+        else if ( (type.GenericParameterAttributes & GenericParameterAttributes.Covariant) != GenericParameterAttributes.None )
+            builder.Append( " [out]" );
+
+        return builder;
     }
 }
