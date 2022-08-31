@@ -67,7 +67,7 @@ public static class EnumerableExtensions
         if ( ! Generic<T>.IsReferenceType && ! Generic<T>.IsNullableType )
             return false;
 
-        return source.Any( e => comparer.Equals( e!, default! ) );
+        return source.Any( e => comparer.Equals( e, default ) );
     }
 
     [Pure]
@@ -321,7 +321,7 @@ public static class EnumerableExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IMemoizedCollection<T> Memoize<T>(this IEnumerable<T> source)
     {
-        return source as IMemoizedCollection<T> ?? new MemoizedCollection<T>( source );
+        return DynamicCast.TryTo<IMemoizedCollection<T>>( source ) ?? new MemoizedCollection<T>( source );
     }
 
     [Pure]

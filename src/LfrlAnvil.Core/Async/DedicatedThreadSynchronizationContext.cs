@@ -62,7 +62,8 @@ public class DedicatedThreadSynchronizationContext : SynchronizationContext, IDi
 
     private static void OnThreadStart(object? threadState)
     {
-        var context = ReinterpretCast.To<DedicatedThreadSynchronizationContext>( threadState! );
+        Assume.IsNotNull( threadState, nameof( threadState ) );
+        var context = ReinterpretCast.To<DedicatedThreadSynchronizationContext>( threadState );
         SetSynchronizationContext( context );
 
         if ( context._threadCulture is not null )
@@ -91,7 +92,8 @@ public class DedicatedThreadSynchronizationContext : SynchronizationContext, IDi
 
     private static void SendCallback(object? state)
     {
-        var @params = ReinterpretCast.To<SendCallbackState>( state! );
+        Assume.IsNotNull( state, nameof( state ) );
+        var @params = ReinterpretCast.To<SendCallbackState>( state );
         try
         {
             @params.Callback( @params.CallbackState );

@@ -154,6 +154,13 @@ public static class ExceptionResources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string AssumedInstanceOfType(Type type, Type? actualType, string paramName)
+    {
+        return $"Assumed {paramName} to be an instance of type {type.FullName} but found {actualType?.FullName}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string ExpectedNotNull<T>(T value, string paramName)
     {
         return $"Expected {paramName} to be null but found {value}.";

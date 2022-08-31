@@ -17,7 +17,7 @@ public static class Maybe
         if ( Generic<T>.IsNull( value ) )
             throw new ArgumentNullException( nameof( value ) );
 
-        return new Maybe<T>( value! );
+        return new Maybe<T>( value );
     }
 
     [Pure]

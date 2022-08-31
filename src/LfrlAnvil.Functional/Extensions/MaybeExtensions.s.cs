@@ -11,7 +11,7 @@ public static class MaybeExtensions
     public static Either<T, Nil> ToEither<T>(this Maybe<T> source)
         where T : notnull
     {
-        return source.HasValue ? new Either<T, Nil>( source.Value! ) : new Either<T, Nil>( Nil.Instance );
+        return source.HasValue ? new Either<T, Nil>( source.Value ) : new Either<T, Nil>( Nil.Instance );
     }
 
     [Pure]
@@ -35,9 +35,9 @@ public static class MaybeExtensions
         where T2 : notnull
     {
         if ( source.HasValue )
-            return other.HasValue ? both( source.Value!, other.Value! ) : first( source.Value! );
+            return other.HasValue ? both( source.Value, other.Value ) : first( source.Value );
 
-        return other.HasValue ? second( other.Value! ) : none();
+        return other.HasValue ? second( other.Value ) : none();
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -54,12 +54,12 @@ public static class MaybeExtensions
         if ( source.HasValue )
         {
             if ( other.HasValue )
-                both( source.Value!, other.Value! );
+                both( source.Value, other.Value );
             else
-                first( source.Value! );
+                first( source.Value );
         }
         else if ( other.HasValue )
-            second( other.Value! );
+            second( other.Value );
         else
             none();
 

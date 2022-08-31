@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -28,15 +29,21 @@ public readonly struct Unsafe<T> : IUnsafe, IEquatable<Unsafe<T>>, IReadOnlyColl
         Error = error;
     }
 
+    [MemberNotNullWhen( true, nameof( Error ) )]
+    [MemberNotNullWhen( false, nameof( Value ) )]
     public bool HasError => Error is not null;
+
+    [MemberNotNullWhen( true, nameof( Value ) )]
+    [MemberNotNullWhen( false, nameof( Error ) )]
     public bool IsOk => ! HasError;
+
     public int Count => HasError ? 0 : 1;
 
     [Pure]
     public override string ToString()
     {
         return HasError
-            ? $"{nameof( Error )}({Error!.GetType().Name})"
+            ? $"{nameof( Error )}({Error.GetType().Name})"
             : $"{nameof( Value )}({Generic<T>.ToString( Value )})";
     }
 
@@ -56,7 +63,7 @@ public readonly struct Unsafe<T> : IUnsafe, IEquatable<Unsafe<T>>, IReadOnlyColl
     public bool Equals(Unsafe<T> other)
     {
         if ( HasError )
-            return other.HasError && Error!.Equals( other.Error );
+            return other.HasError && Error.Equals( other.Error );
 
         return other.IsOk && Equality.Create( Value, other.Value ).Result;
     }
@@ -66,7 +73,7 @@ public readonly struct Unsafe<T> : IUnsafe, IEquatable<Unsafe<T>>, IReadOnlyColl
     public T GetValue()
     {
         if ( IsOk )
-            return Value!;
+            return Value;
 
         throw new ValueAccessException( Resources.MissingUnsafeValue<T>(), nameof( Value ) );
     }
@@ -82,7 +89,7 @@ public readonly struct Unsafe<T> : IUnsafe, IEquatable<Unsafe<T>>, IReadOnlyColl
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public T GetValueOrDefault(T defaultValue)
     {
-        return IsOk ? Value! : defaultValue;
+        return IsOk ? Value : defaultValue;
     }
 
     [Pure]
@@ -90,7 +97,7 @@ public readonly struct Unsafe<T> : IUnsafe, IEquatable<Unsafe<T>>, IReadOnlyColl
     public Exception GetError()
     {
         if ( HasError )
-            return Error!;
+            return Error;
 
         throw new ValueAccessException( Resources.MissingUnsafeError<T>(), nameof( Error ) );
     }
@@ -106,7 +113,7 @@ public readonly struct Unsafe<T> : IUnsafe, IEquatable<Unsafe<T>>, IReadOnlyColl
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Unsafe<T2> Bind<T2>(Func<T, Unsafe<T2>> ok)
     {
-        return IsOk ? ok( Value! ) : new Unsafe<T2>( Error! );
+        return IsOk ? ok( Value ) : new Unsafe<T2>( Error );
     }
 
     [Pure]
@@ -120,16 +127,16 @@ public readonly struct Unsafe<T> : IUnsafe, IEquatable<Unsafe<T>>, IReadOnlyColl
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public T2 Match<T2>(Func<T, T2> ok, Func<Exception, T2> error)
     {
-        return IsOk ? ok( Value! ) : error( Error! );
+        return IsOk ? ok( Value ) : error( Error );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Nil Match(Action<T> ok, Action<Exception> error)
     {
         if ( IsOk )
-            ok( Value! );
+            ok( Value );
         else
-            error( Error! );
+            error( Error );
 
         return Nil.Instance;
     }
@@ -139,14 +146,14 @@ public readonly struct Unsafe<T> : IUnsafe, IEquatable<Unsafe<T>>, IReadOnlyColl
     public Maybe<T2> IfOk<T2>(Func<T, T2?> ok)
         where T2 : notnull
     {
-        return IsOk ? ok( Value! ) : Maybe<T2>.None;
+        return IsOk ? ok( Value ) : Maybe<T2>.None;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Nil IfOk(Action<T> ok)
     {
         if ( IsOk )
-            ok( Value! );
+            ok( Value );
 
         return Nil.Instance;
     }
@@ -155,14 +162,14 @@ public readonly struct Unsafe<T> : IUnsafe, IEquatable<Unsafe<T>>, IReadOnlyColl
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public T2? IfOkOrDefault<T2>(Func<T, T2> ok)
     {
-        return IsOk ? ok( Value! ) : default;
+        return IsOk ? ok( Value ) : default;
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public T2 IfOkOrDefault<T2>(Func<T, T2> ok, T2 defaultValue)
     {
-        return IsOk ? ok( Value! ) : defaultValue;
+        return IsOk ? ok( Value ) : defaultValue;
     }
 
     [Pure]
@@ -170,14 +177,14 @@ public readonly struct Unsafe<T> : IUnsafe, IEquatable<Unsafe<T>>, IReadOnlyColl
     public Maybe<T2> IfError<T2>(Func<Exception, T2?> error)
         where T2 : notnull
     {
-        return HasError ? error( Error! ) : Maybe<T2>.None;
+        return HasError ? error( Error ) : Maybe<T2>.None;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Nil IfError(Action<Exception> error)
     {
         if ( HasError )
-            error( Error! );
+            error( Error );
 
         return Nil.Instance;
     }
@@ -186,14 +193,14 @@ public readonly struct Unsafe<T> : IUnsafe, IEquatable<Unsafe<T>>, IReadOnlyColl
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public T2? IfErrorOrDefault<T2>(Func<Exception, T2> error)
     {
-        return HasError ? error( Error! ) : default;
+        return HasError ? error( Error ) : default;
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public T2 IfErrorOrDefault<T2>(Func<Exception, T2> error, T2 defaultValue)
     {
-        return HasError ? error( Error! ) : defaultValue;
+        return HasError ? error( Error ) : defaultValue;
     }
 
     [Pure]
@@ -214,14 +221,14 @@ public readonly struct Unsafe<T> : IUnsafe, IEquatable<Unsafe<T>>, IReadOnlyColl
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static implicit operator Either<T, Exception>(Unsafe<T> value)
     {
-        return value.HasError ? new Either<T, Exception>( value.Error! ) : new Either<T, Exception>( value.Value! );
+        return value.HasError ? new Either<T, Exception>( value.Error ) : new Either<T, Exception>( value.Value );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static implicit operator Unsafe<T>(Either<T, Exception> value)
     {
-        return value.HasFirst ? new Unsafe<T>( value.First! ) : new Unsafe<T>( value.Second! );
+        return value.HasFirst ? new Unsafe<T>( value.First ) : new Unsafe<T>( value.Second );
     }
 
     [Pure]
@@ -288,7 +295,7 @@ public readonly struct Unsafe<T> : IUnsafe, IEquatable<Unsafe<T>>, IReadOnlyColl
     [Pure]
     IEnumerator<T> IEnumerable<T>.GetEnumerator()
     {
-        return (IsOk ? One.Create( Value! ) : Enumerable.Empty<T>()).GetEnumerator();
+        return (IsOk ? One.Create( Value ) : Enumerable.Empty<T>()).GetEnumerator();
     }
 
     [Pure]

@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.Contracts;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.Contracts;
 using LfrlAnvil.Computable.Expressions.Errors;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
@@ -13,6 +14,8 @@ internal readonly struct UnsafeBuilderResult<T>
 
     internal T? Result { get; }
     internal Chain<ParsedExpressionBuilderError> Errors { get; }
+
+    [MemberNotNullWhen( true, nameof( Result ) )]
     internal bool IsOk => Errors.Count == 0;
 
     [Pure]

@@ -21,7 +21,7 @@ public static class ParameterInfoExtensions
     public static T? GetAttribute<T>(this ParameterInfo parameter, bool inherit = true)
         where T : Attribute
     {
-        return (T?)parameter.GetAttribute( typeof( T ), inherit );
+        return DynamicCast.To<T>( parameter.GetAttribute( typeof( T ), inherit ) );
     }
 
     [Pure]
@@ -36,7 +36,7 @@ public static class ParameterInfoExtensions
     public static IEnumerable<T> GetAttributeRange<T>(this ParameterInfo parameter, bool inherit = true)
         where T : Attribute
     {
-        return parameter.GetAttributeRange( typeof( T ), inherit ).Select( a => (T)a );
+        return parameter.GetAttributeRange( typeof( T ), inherit ).Select( DynamicCast.To<T> )!;
     }
 
     [Pure]

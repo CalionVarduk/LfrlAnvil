@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Functional.Exceptions;
@@ -27,7 +28,12 @@ public readonly struct Either<T1, T2> : IEquatable<Either<T1, T2>>
         Second = second;
     }
 
+    [MemberNotNullWhen( true, nameof( First ) )]
+    [MemberNotNullWhen( false, nameof( Second ) )]
     public bool HasFirst { get; }
+
+    [MemberNotNullWhen( true, nameof( Second ) )]
+    [MemberNotNullWhen( false, nameof( First ) )]
     public bool HasSecond => ! HasFirst;
 
     [Pure]
@@ -64,7 +70,7 @@ public readonly struct Either<T1, T2> : IEquatable<Either<T1, T2>>
     public T1 GetFirst()
     {
         if ( HasFirst )
-            return First!;
+            return First;
 
         throw new ValueAccessException( Resources.MissingFirstEitherValue<T1, T2>(), nameof( First ) );
     }
@@ -80,7 +86,7 @@ public readonly struct Either<T1, T2> : IEquatable<Either<T1, T2>>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public T1 GetFirstOrDefault(T1 defaultValue)
     {
-        return HasFirst ? First! : defaultValue;
+        return HasFirst ? First : defaultValue;
     }
 
     [Pure]
@@ -88,7 +94,7 @@ public readonly struct Either<T1, T2> : IEquatable<Either<T1, T2>>
     public T2 GetSecond()
     {
         if ( HasSecond )
-            return Second!;
+            return Second;
 
         throw new ValueAccessException( Resources.MissingSecondEitherValue<T1, T2>(), nameof( Second ) );
     }
@@ -104,28 +110,28 @@ public readonly struct Either<T1, T2> : IEquatable<Either<T1, T2>>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public T2 GetSecondOrDefault(T2 defaultValue)
     {
-        return HasSecond ? Second! : defaultValue;
+        return HasSecond ? Second : defaultValue;
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Either<T2, T1> Swap()
     {
-        return HasFirst ? new Either<T2, T1>( First! ) : new Either<T2, T1>( Second! );
+        return HasFirst ? new Either<T2, T1>( First ) : new Either<T2, T1>( Second );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Either<T3, T2> Bind<T3>(Func<T1, Either<T3, T2>> first)
     {
-        return HasFirst ? first( First! ) : new Either<T3, T2>( Second! );
+        return HasFirst ? first( First ) : new Either<T3, T2>( Second );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Either<T1, T3> BindSecond<T3>(Func<T2, Either<T1, T3>> second)
     {
-        return HasSecond ? second( Second! ) : new Either<T1, T3>( First! );
+        return HasSecond ? second( Second ) : new Either<T1, T3>( First );
     }
 
     [Pure]
@@ -139,16 +145,16 @@ public readonly struct Either<T1, T2> : IEquatable<Either<T1, T2>>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public T3 Match<T3>(Func<T1, T3> first, Func<T2, T3> second)
     {
-        return HasFirst ? first( First! ) : second( Second! );
+        return HasFirst ? first( First ) : second( Second );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Nil Match(Action<T1> first, Action<T2> second)
     {
         if ( HasFirst )
-            first( First! );
+            first( First );
         else
-            second( Second! );
+            second( Second );
 
         return Nil.Instance;
     }
@@ -158,14 +164,14 @@ public readonly struct Either<T1, T2> : IEquatable<Either<T1, T2>>
     public Maybe<T3> IfFirst<T3>(Func<T1, T3?> first)
         where T3 : notnull
     {
-        return HasFirst ? first( First! ) : Maybe<T3>.None;
+        return HasFirst ? first( First ) : Maybe<T3>.None;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Nil IfFirst(Action<T1> first)
     {
         if ( HasFirst )
-            first( First! );
+            first( First );
 
         return Nil.Instance;
     }
@@ -174,14 +180,14 @@ public readonly struct Either<T1, T2> : IEquatable<Either<T1, T2>>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public T3? IfFirstOrDefault<T3>(Func<T1, T3> first)
     {
-        return HasFirst ? first( First! ) : default;
+        return HasFirst ? first( First ) : default;
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public T3 IfFirstOrDefault<T3>(Func<T1, T3> first, T3 defaultValue)
     {
-        return HasFirst ? first( First! ) : defaultValue;
+        return HasFirst ? first( First ) : defaultValue;
     }
 
     [Pure]
@@ -189,14 +195,14 @@ public readonly struct Either<T1, T2> : IEquatable<Either<T1, T2>>
     public Maybe<T3> IfSecond<T3>(Func<T2, T3?> second)
         where T3 : notnull
     {
-        return HasSecond ? second( Second! ) : Maybe<T3>.None;
+        return HasSecond ? second( Second ) : Maybe<T3>.None;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Nil IfSecond(Action<T2> second)
     {
         if ( HasSecond )
-            second( Second! );
+            second( Second );
 
         return Nil.Instance;
     }
@@ -205,14 +211,14 @@ public readonly struct Either<T1, T2> : IEquatable<Either<T1, T2>>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public T3? IfSecondOrDefault<T3>(Func<T2, T3> second)
     {
-        return HasSecond ? second( Second! ) : default;
+        return HasSecond ? second( Second ) : default;
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public T3 IfSecondOrDefault<T3>(Func<T2, T3> second, T3 defaultValue)
     {
-        return HasSecond ? second( Second! ) : defaultValue;
+        return HasSecond ? second( Second ) : defaultValue;
     }
 
     [Pure]

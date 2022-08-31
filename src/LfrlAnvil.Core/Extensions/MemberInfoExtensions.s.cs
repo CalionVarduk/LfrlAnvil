@@ -21,7 +21,7 @@ public static class MemberInfoExtensions
     public static T? GetAttribute<T>(this MemberInfo member, bool inherit = true)
         where T : Attribute
     {
-        return (T?)member.GetAttribute( typeof( T ), inherit );
+        return DynamicCast.To<T>( member.GetAttribute( typeof( T ), inherit ) );
     }
 
     [Pure]
@@ -36,7 +36,7 @@ public static class MemberInfoExtensions
     public static IEnumerable<T> GetAttributeRange<T>(this MemberInfo member, bool inherit = true)
         where T : Attribute
     {
-        return member.GetAttributeRange( typeof( T ), inherit ).Select( a => (T)a );
+        return member.GetAttributeRange( typeof( T ), inherit ).Select( DynamicCast.To<T> )!;
     }
 
     [Pure]
@@ -58,41 +58,41 @@ public static class MemberInfoExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static EventInfo? TryAsEvent(this MemberInfo member)
     {
-        return member as EventInfo;
+        return DynamicCast.TryTo<EventInfo>( member );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static FieldInfo? TryAsField(this MemberInfo member)
     {
-        return member as FieldInfo;
+        return DynamicCast.TryTo<FieldInfo>( member );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static PropertyInfo? TryAsProperty(this MemberInfo member)
     {
-        return member as PropertyInfo;
+        return DynamicCast.TryTo<PropertyInfo>( member );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Type? TryAsType(this MemberInfo member)
     {
-        return member as Type;
+        return DynamicCast.TryTo<Type>( member );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ConstructorInfo? TryAsConstructor(this MemberInfo member)
     {
-        return member as ConstructorInfo;
+        return DynamicCast.TryTo<ConstructorInfo>( member );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static MethodInfo? TryAsMethod(this MemberInfo member)
     {
-        return member as MethodInfo;
+        return DynamicCast.TryTo<MethodInfo>( member );
     }
 }

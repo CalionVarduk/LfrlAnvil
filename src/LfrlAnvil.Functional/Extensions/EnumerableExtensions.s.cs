@@ -40,9 +40,9 @@ public static class EnumerableExtensions
         foreach ( var e in source )
         {
             if ( e.HasFirst )
-                first.Add( e.First! );
+                first.Add( e.First );
             else
-                second.Add( e.Second! );
+                second.Add( e.Second );
         }
 
         return (first, second);
@@ -71,9 +71,9 @@ public static class EnumerableExtensions
         foreach ( var e in source )
         {
             if ( e.IsOk )
-                values.Add( e.Value! );
+                values.Add( e.Value );
             else
-                errors.Add( e.Error! );
+                errors.Add( e.Error );
         }
 
         return (values, errors);
@@ -159,7 +159,7 @@ public static class EnumerableExtensions
             return list.Count > 0 ? new Maybe<T>( list[0] ) : Maybe<T>.None;
 
         using var enumerator = source.GetEnumerator();
-        return enumerator.MoveNext() ? new Maybe<T>( enumerator.Current! ) : Maybe<T>.None;
+        return enumerator.MoveNext() ? new Maybe<T>( enumerator.Current ) : Maybe<T>.None;
     }
 
     [Pure]
@@ -178,7 +178,7 @@ public static class EnumerableExtensions
         while ( enumerator.MoveNext() )
             last = enumerator.Current;
 
-        return new Maybe<T>( last! );
+        return new Maybe<T>( last );
     }
 
     [Pure]
@@ -194,7 +194,7 @@ public static class EnumerableExtensions
             return Maybe<T>.None;
 
         var candidate = enumerator.Current;
-        return enumerator.MoveNext() ? Maybe<T>.None : new Maybe<T>( candidate! );
+        return enumerator.MoveNext() ? Maybe<T>.None : new Maybe<T>( candidate );
     }
 
     [Pure]
@@ -213,13 +213,13 @@ public static class EnumerableExtensions
             return Maybe<T>.None;
 
         if ( index == 0 )
-            return new Maybe<T>( enumerator.Current! );
+            return new Maybe<T>( enumerator.Current );
 
         --index;
         while ( enumerator.MoveNext() )
         {
             if ( index == 0 )
-                return new Maybe<T>( enumerator.Current! );
+                return new Maybe<T>( enumerator.Current );
 
             --index;
         }

@@ -10,6 +10,6 @@ public static class TypeCastExtensions
     public static Maybe<TDestination> ToMaybe<TSource, TDestination>(this TypeCast<TSource, TDestination> source)
         where TDestination : notnull
     {
-        return source.IsValid ? new Maybe<TDestination>( source.Result! ) : Maybe<TDestination>.None;
+        return source.IsValid ? new Maybe<TDestination>( source.Result ) : Maybe<TDestination>.None;
     }
 }

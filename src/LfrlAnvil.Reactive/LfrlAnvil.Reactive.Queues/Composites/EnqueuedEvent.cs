@@ -86,8 +86,10 @@ public readonly struct EnqueuedEvent<TEvent, TPoint, TPointDelta>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal EnqueuedEvent<TEvent, TPoint, TPointDelta> Repeat(TPoint dequeuePoint)
     {
+        Assume.IsNotNull( Delta, nameof( Delta ) );
+
         return IsInfinite
-            ? CreateInfinite( Event, dequeuePoint, Delta! )
-            : Create( Event, dequeuePoint, Delta!, Repetitions - 1 );
+            ? CreateInfinite( Event, dequeuePoint, Delta )
+            : Create( Event, dequeuePoint, Delta, Repetitions - 1 );
     }
 }

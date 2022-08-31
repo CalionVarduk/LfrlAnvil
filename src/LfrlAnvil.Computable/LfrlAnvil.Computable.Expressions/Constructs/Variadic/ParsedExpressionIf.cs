@@ -39,7 +39,7 @@ public sealed class ParsedExpressionIf : ParsedExpressionVariadicFunction
         if ( test.Type != typeof( bool ) )
             throw new ArgumentException( Resources.IfTestMustBeOfBooleanType( test.Type ), nameof( test ) );
 
-        var testValue = (bool)test.Value!;
+        var testValue = DynamicCast.Unbox<bool>( test.Value );
         return testValue ? ifTrue : ifFalse;
     }
 

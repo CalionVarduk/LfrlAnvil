@@ -142,7 +142,8 @@ public sealed class ParsedExpressionSwitch : ParsedExpressionVariadicFunction
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static SwitchCase? TryGetSwitchCase(Expression expression)
     {
-        return (expression as ConstantExpression)?.Value as SwitchCase;
+        var constant = DynamicCast.TryTo<ConstantExpression>( expression );
+        return DynamicCast.TryTo<SwitchCase>( constant?.Value );
     }
 
     [Pure]

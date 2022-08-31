@@ -22,7 +22,7 @@ public sealed class ParsedExpressionBigIntToStringTypeConverter : ParsedExpressi
     protected override Expression? TryCreateFromConstant(ConstantExpression operand)
     {
         return TryGetSourceValue( operand, out var value )
-            ? Expression.Constant( value.ToString( (IFormatProvider?)_formatProvider.Value ) )
+            ? Expression.Constant( value.ToString( ReinterpretCast.To<IFormatProvider>( _formatProvider.Value ) ) )
             : null;
     }
 

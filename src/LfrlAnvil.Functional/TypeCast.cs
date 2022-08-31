@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -31,8 +32,13 @@ public readonly struct TypeCast<TSource, TDestination> : ITypeCast<TDestination>
     }
 
     public TSource Source { get; }
+
+    [MemberNotNullWhen( true, nameof( Result ) )]
     public bool IsValid { get; }
+
+    [MemberNotNullWhen( false, nameof( Result ) )]
     public bool IsInvalid => ! IsValid;
+
     object? ITypeCast<TDestination>.Source => Source;
     int IReadOnlyCollection<TDestination>.Count => IsValid ? 1 : 0;
 
@@ -60,7 +66,7 @@ public readonly struct TypeCast<TSource, TDestination> : ITypeCast<TDestination>
     public bool Equals(TypeCast<TSource, TDestination> other)
     {
         if ( IsValid )
-            return other.IsValid && Result!.Equals( other.Result );
+            return other.IsValid && Result.Equals( other.Result );
 
         return ! other.IsValid && Equality.Create( Source, other.Source ).Result;
     }
@@ -70,7 +76,7 @@ public readonly struct TypeCast<TSource, TDestination> : ITypeCast<TDestination>
     public TDestination GetResult()
     {
         if ( IsValid )
-            return Result!;
+            return Result;
 
         throw new ValueAccessException( Resources.MissingTypeCastResult<TSource, TDestination>(), nameof( Result ) );
     }
@@ -86,14 +92,14 @@ public readonly struct TypeCast<TSource, TDestination> : ITypeCast<TDestination>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public TDestination GetResultOrDefault(TDestination defaultValue)
     {
-        return IsValid ? Result! : defaultValue;
+        return IsValid ? Result : defaultValue;
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public TypeCast<TDestination, T> Bind<T>(Func<TDestination, TypeCast<TDestination, T>> valid)
     {
-        return IsValid ? valid( Result! ) : TypeCast<TDestination, T>.Empty;
+        return IsValid ? valid( Result ) : TypeCast<TDestination, T>.Empty;
     }
 
     [Pure]
@@ -109,14 +115,14 @@ public readonly struct TypeCast<TSource, TDestination> : ITypeCast<TDestination>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public T Match<T>(Func<TDestination, T> valid, Func<TSource, T> invalid)
     {
-        return IsValid ? valid( Result! ) : invalid( Source );
+        return IsValid ? valid( Result ) : invalid( Source );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Nil Match(Action<TDestination> valid, Action<TSource> invalid)
     {
         if ( IsValid )
-            valid( Result! );
+            valid( Result );
         else
             invalid( Source );
 
@@ -128,14 +134,14 @@ public readonly struct TypeCast<TSource, TDestination> : ITypeCast<TDestination>
     public Maybe<T> IfValid<T>(Func<TDestination, T?> valid)
         where T : notnull
     {
-        return IsValid ? valid( Result! ) : Maybe<T>.None;
+        return IsValid ? valid( Result ) : Maybe<T>.None;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Nil IfValid(Action<TDestination> valid)
     {
         if ( IsValid )
-            valid( Result! );
+            valid( Result );
 
         return Nil.Instance;
     }
@@ -144,14 +150,14 @@ public readonly struct TypeCast<TSource, TDestination> : ITypeCast<TDestination>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public T? IfValidOrDefault<T>(Func<TDestination, T> valid)
     {
-        return IsValid ? valid( Result! ) : default;
+        return IsValid ? valid( Result ) : default;
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public T IfValidOrDefault<T>(Func<TDestination, T> valid, T defaultValue)
     {
-        return IsValid ? valid( Result! ) : defaultValue;
+        return IsValid ? valid( Result ) : defaultValue;
     }
 
     [Pure]
@@ -228,7 +234,7 @@ public readonly struct TypeCast<TSource, TDestination> : ITypeCast<TDestination>
     [Pure]
     IEnumerator<TDestination> IEnumerable<TDestination>.GetEnumerator()
     {
-        return (IsValid ? One.Create( Result! ) : Enumerable.Empty<TDestination>()).GetEnumerator();
+        return (IsValid ? One.Create( Result ) : Enumerable.Empty<TDestination>()).GetEnumerator();
     }
 
     [Pure]

@@ -18,7 +18,7 @@ public static class UnsafeExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Either<T, Exception> ToEither<T>(this Unsafe<T> source)
     {
-        return source.IsOk ? new Either<T, Exception>( source.Value! ) : new Either<T, Exception>( source.Error! );
+        return source.IsOk ? new Either<T, Exception>( source.Value ) : new Either<T, Exception>( source.Error );
     }
 
     [Pure]
@@ -26,8 +26,8 @@ public static class UnsafeExtensions
     public static Unsafe<T> Reduce<T>(this Unsafe<Unsafe<T>> source)
     {
         if ( source.IsOk )
-            return source.Value.IsOk ? new Unsafe<T>( source.Value.Value! ) : new Unsafe<T>( source.Value.Error! );
+            return source.Value.IsOk ? new Unsafe<T>( source.Value.Value ) : new Unsafe<T>( source.Value.Error );
 
-        return new Unsafe<T>( source.Error! );
+        return new Unsafe<T>( source.Error );
     }
 }

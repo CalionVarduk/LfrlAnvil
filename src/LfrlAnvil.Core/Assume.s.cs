@@ -12,28 +12,12 @@ public static class Assume
 {
     [Conditional( "DEBUG" )]
     public static void IsNull<T>(T? param, string paramName)
-        where T : class
-    {
-        Debug.Assert( param is null, ExceptionResources.AssumedNull( param, paramName ) );
-    }
-
-    [Conditional( "DEBUG" )]
-    public static void IsNull<T>(T? param, string paramName)
-        where T : struct
     {
         Debug.Assert( param is null, ExceptionResources.AssumedNull( param, paramName ) );
     }
 
     [Conditional( "DEBUG" )]
     public static void IsNotNull<T>([NotNull] T? param, string paramName)
-        where T : class
-    {
-        Debug.Assert( param is not null, ExceptionResources.AssumedNotNull( paramName ) );
-    }
-
-    [Conditional( "DEBUG" )]
-    public static void IsNotNull<T>([NotNull] T? param, string paramName)
-        where T : struct
     {
         Debug.Assert( param is not null, ExceptionResources.AssumedNotNull( paramName ) );
     }
