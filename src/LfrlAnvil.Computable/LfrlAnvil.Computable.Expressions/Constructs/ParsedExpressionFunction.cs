@@ -10,10 +10,7 @@ namespace LfrlAnvil.Computable.Expressions.Constructs;
 
 public class ParsedExpressionFunction
 {
-    // TODO: add parameter to ctor that allows to explicitly enable/disable inlining, enabled by default
-    private readonly bool _canBeInlined;
-
-    public ParsedExpressionFunction(LambdaExpression lambda)
+    public ParsedExpressionFunction(LambdaExpression lambda, bool inlineIfPossible = true)
     {
         Ensure.NotEquals(
             lambda.ReturnType,
@@ -21,13 +18,12 @@ public class ParsedExpressionFunction
             EqualityComparer<Type>.Default,
             nameof( lambda ) + '.' + nameof( lambda.ReturnType ) );
 
-        // TODO: test if block expression actually doesn't work as inlined
-        // also, test inlining a function which has a closure
-        _canBeInlined = lambda.Body.NodeType != ExpressionType.Block && lambda.Parameters.All( p => p.Name is not null );
+        IsInlined = inlineIfPossible && lambda.Parameters.All( p => p.Name is not null );
         Lambda = lambda;
     }
 
     public LambdaExpression Lambda { get; }
+    public bool IsInlined { get; }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -94,7 +90,7 @@ public class ParsedExpressionFunction
     {
         Assume.Equals( parameters.Count, Lambda.Parameters.Count, nameof( parameters ) + '.' + nameof( parameters.Count ) );
 
-        if ( ! _canBeInlined )
+        if ( ! IsInlined )
             return Expression.Invoke( Lambda, parameters );
 
         if ( parameters.Count == 0 )

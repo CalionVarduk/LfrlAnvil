@@ -17,7 +17,7 @@ public class FunctionTests : TestsBase
     }
 
     [Fact]
-    public void Process_ShouldReturnLambdaBody_WhenExpressionDoesNotHaveAnyParametersAndIsNotBlock()
+    public void Process_ShouldReturnLambdaBody_WhenExpressionDoesNotHaveAnyParameters()
     {
         var expression = Lambda.ExpressionOf( () => Fixture.Create<int>() );
         var sut = new ParsedExpressionFunction( expression );
@@ -28,7 +28,7 @@ public class FunctionTests : TestsBase
     }
 
     [Fact]
-    public void Process_ShouldReturnLambdaBodyWithReplacedParameters_WhenExpressionHasAllNamedParametersAndIsNotBlock()
+    public void Process_ShouldReturnLambdaBodyWithReplacedParameters_WhenExpressionHasAllNamedParameters()
     {
         var expression = Lambda.ExpressionOf( (int a, int b) => a + b + 10 );
         var sut = new ParsedExpressionFunction( expression );
@@ -56,50 +56,6 @@ public class FunctionTests : TestsBase
     }
 
     [Fact]
-    public void Process_ShouldReturnLambdaInvocation_WhenExpressionDoesNotHaveAnyParametersAndIsBlock()
-    {
-        var block = Expression.Block( Expression.Constant( Fixture.Create<int>() ) );
-        var expression = Expression.Lambda<Func<int>>( block );
-        var sut = new ParsedExpressionFunction( expression );
-
-        var result = sut.Process( Array.Empty<Expression>() );
-
-        using ( new AssertionScope() )
-        {
-            result.NodeType.Should().Be( ExpressionType.Invoke );
-            if ( result is not InvocationExpression invocation )
-                return;
-
-            invocation.Expression.Should().BeSameAs( expression );
-        }
-    }
-
-    [Fact]
-    public void Process_ShouldReturnLambdaInvocation_WhenExpressionHasAllNamedParametersAndIsBlock()
-    {
-        var p1 = Expression.Parameter( typeof( int ), "p1" );
-        var p2 = Expression.Parameter( typeof( int ), "p2" );
-        var body = Expression.Add( p1, p2 );
-        var expression = Expression.Lambda<Func<int, int, int>>( Expression.Block( body ), p1, p2 );
-        var sut = new ParsedExpressionFunction( expression );
-
-        var v1 = Expression.Constant( 1 );
-        var v2 = Expression.Constant( 2 );
-
-        var result = sut.Process( new[] { v1, v2 } );
-
-        using ( new AssertionScope() )
-        {
-            result.NodeType.Should().Be( ExpressionType.Invoke );
-            if ( result is not InvocationExpression invocation )
-                return;
-
-            invocation.Expression.Should().BeSameAs( expression );
-            invocation.Arguments.Should().BeSequentiallyEqualTo( v1, v2 );
-        }
-    }
-
-    [Fact]
     public void Process_ShouldReturnLambdaInvocation_WhenExpressionHasParametersAndAtLeastOneIsNotNamed()
     {
         var p1 = Expression.Parameter( typeof( int ), "p1" );
@@ -123,6 +79,25 @@ public class FunctionTests : TestsBase
 
             invocation.Expression.Should().BeSameAs( expression );
             invocation.Arguments.Should().BeSequentiallyEqualTo( v1, v2, v3 );
+        }
+    }
+
+    [Fact]
+    public void Process_ShouldReturnLambdaInvocation_WhenExpressionCanBeInlinedButInlineIfPossibleIsSetToFalse()
+    {
+        var value = Fixture.Create<int>();
+        var expression = Expression.Lambda<Func<int>>( Expression.Constant( value ) );
+        var sut = new ParsedExpressionFunction( expression, inlineIfPossible: false );
+
+        var result = sut.Process( Array.Empty<Expression>() );
+
+        using ( new AssertionScope() )
+        {
+            result.NodeType.Should().Be( ExpressionType.Invoke );
+            if ( result is not InvocationExpression invocation )
+                return;
+
+            invocation.Expression.Should().BeSameAs( expression );
         }
     }
 
