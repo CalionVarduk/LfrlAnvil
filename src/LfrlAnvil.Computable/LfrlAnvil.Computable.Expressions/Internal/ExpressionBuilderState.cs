@@ -120,16 +120,15 @@ internal class ExpressionBuilderState
             : Chain<ParsedExpressionBuilderError>.Empty;
     }
 
-    protected Chain<ParsedExpressionBuilderError> HandleExpressionEnd()
+    protected Chain<ParsedExpressionBuilderError> HandleExpressionEnd(IntermediateToken? parentToken)
     {
         var errors = HandleAmbiguousConstructAsPostfixUnaryOperator();
 
-        // TODO: errors without tokens could be given an optional ParentState?.LastHandledToken, to give more context
         if ( _operandCount == 0 )
-            errors = errors.Extend( ParsedExpressionBuilderError.CreateExpressionMustContainAtLeastOneOperand() );
+            errors = errors.Extend( ParsedExpressionBuilderError.CreateExpressionMustContainAtLeastOneOperand( parentToken ) );
 
         if ( _operandCount != _operatorCount + 1 )
-            errors = errors.Extend( ParsedExpressionBuilderError.CreateExpressionContainsInvalidOperandToOperatorRatio() );
+            errors = errors.Extend( ParsedExpressionBuilderError.CreateExpressionContainsInvalidOperandToOperatorRatio( parentToken ) );
 
         if ( _parenthesesCount > 0 )
         {
@@ -138,7 +137,7 @@ internal class ExpressionBuilderState
                 .Where( t => t.Type == IntermediateTokenType.OpenedParenthesis );
 
             errors = errors.Extend(
-                ParsedExpressionBuilderError.CreateExpressionContainsUnclosedParentheses( remainingOpenedParenthesisTokens ) );
+                ParsedExpressionBuilderError.CreateExpressionContainsUnclosedParentheses( parentToken, remainingOpenedParenthesisTokens ) );
         }
 
         if ( errors.Count > 0 )
@@ -646,7 +645,8 @@ internal class ExpressionBuilderState
         Assume.Equals( IsRoot, false, nameof( IsRoot ) );
         Assume.IsNotNull( _delegateCollectionState, nameof( _delegateCollectionState ) );
 
-        var errors = HandleExpressionEnd();
+        var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
+        var errors = HandleExpressionEnd( self.ParentState.LastHandledToken );
         if ( errors.Count > 0 )
             return errors.Extend( ParsedExpressionBuilderError.CreateUnexpectedToken( token ) );
 
@@ -663,7 +663,6 @@ internal class ExpressionBuilderState
             return Chain.Create( ParsedExpressionBuilderError.CreateInlineDelegateHasThrownException( token, exc ) );
         }
 
-        var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
         return self.ParentState.HandleInlineDelegateResolution( token, result );
     }
 
@@ -691,7 +690,7 @@ internal class ExpressionBuilderState
 
         if ( containsOneMoreElement )
         {
-            var errors = HandleExpressionEnd();
+            var errors = HandleExpressionEnd( self.ParentState.LastHandledToken );
             if ( errors.Count > 0 )
                 return errors.Extend( ParsedExpressionBuilderError.CreateUnexpectedClosedParenthesis( token ) );
 
@@ -824,7 +823,7 @@ internal class ExpressionBuilderState
 
         if ( containsOneMoreElement )
         {
-            var errors = HandleExpressionEnd();
+            var errors = HandleExpressionEnd( self.ParentState.LastHandledToken );
             if ( errors.Count > 0 )
                 return errors.Extend( ParsedExpressionBuilderError.CreateUnexpectedClosedSquareBracket( token ) );
 
@@ -918,7 +917,7 @@ internal class ExpressionBuilderState
         if ( self.ParentState.Expects( Expectation.InlineDelegateResolution ) )
             return HandleInlineDelegateBodyEnd( token );
 
-        var errors = HandleExpressionEnd();
+        var errors = HandleExpressionEnd( self.ParentState.LastHandledToken );
         if ( errors.Count > 0 )
             return errors.Extend( ParsedExpressionBuilderError.CreateUnexpectedElementSeparator( token ) );
 

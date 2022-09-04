@@ -39,15 +39,17 @@ public class ParsedExpressionBuilderError
     }
 
     [Pure]
-    internal static ParsedExpressionBuilderError CreateExpressionMustContainAtLeastOneOperand()
+    internal static ParsedExpressionBuilderError CreateExpressionMustContainAtLeastOneOperand(IntermediateToken? token)
     {
-        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.ExpressionMustContainAtLeastOneOperand );
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.ExpressionMustContainAtLeastOneOperand, token?.Symbol );
     }
 
     [Pure]
-    internal static ParsedExpressionBuilderError CreateExpressionContainsInvalidOperandToOperatorRatio()
+    internal static ParsedExpressionBuilderError CreateExpressionContainsInvalidOperandToOperatorRatio(IntermediateToken? token)
     {
-        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.ExpressionContainsInvalidOperandToOperatorRatio );
+        return new ParsedExpressionBuilderError(
+            ParsedExpressionBuilderErrorType.ExpressionContainsInvalidOperandToOperatorRatio,
+            token?.Symbol );
     }
 
     [Pure]
@@ -172,11 +174,13 @@ public class ParsedExpressionBuilderError
 
     [Pure]
     internal static ParsedExpressionBuilderError CreateExpressionContainsUnclosedParentheses(
+        IntermediateToken? token,
         IEnumerable<IntermediateToken> openedParenthesisTokens)
     {
         return new ParsedExpressionBuilderAggregateError(
             ParsedExpressionBuilderErrorType.ExpressionContainsUnclosedParentheses,
-            Chain.Create( openedParenthesisTokens.Select( CreateUnclosedParenthesis ) ) );
+            Chain.Create( openedParenthesisTokens.Select( CreateUnclosedParenthesis ) ),
+            token?.Symbol );
     }
 
     [Pure]

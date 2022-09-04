@@ -49,7 +49,7 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
             ? Chain<ParsedExpressionBuilderError>.Empty
             : ActiveState.TryHandleExpressionEndAsInlineDelegate();
 
-        errors = errors.Extend( HandleExpressionEnd() );
+        errors = errors.Extend( HandleExpressionEnd( parentToken: null ) );
 
         if ( ! ActiveState.IsRoot )
         {
