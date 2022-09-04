@@ -5,58 +5,14 @@ using System.Linq.Expressions;
 
 namespace LfrlAnvil.Computable.Expressions;
 
-public interface IParsedExpression<TArg, TResult>
+public interface IParsedExpression<TArg, out TResult>
 {
     string Input { get; }
-    Expression<Func<TArg?[], TResult>> Expression { get; }
-
-    [Pure]
-    int GetArgumentCount();
-
-    [Pure]
-    int GetUnboundArgumentCount();
-
-    [Pure]
-    int GetBoundArgumentCount();
-
-    [Pure]
-    IEnumerable<ReadOnlyMemory<char>> GetArgumentNames();
-
-    [Pure]
-    IEnumerable<ReadOnlyMemory<char>> GetUnboundArgumentNames();
-
-    [Pure]
-    IEnumerable<ReadOnlyMemory<char>> GetBoundArgumentNames();
-
-    [Pure]
-    bool ContainsArgument(string argumentName);
-
-    [Pure]
-    bool ContainsArgument(ReadOnlyMemory<char> argumentName);
-
-    [Pure]
-    bool ContainsUnboundArgument(string argumentName);
-
-    [Pure]
-    bool ContainsUnboundArgument(ReadOnlyMemory<char> argumentName);
-
-    [Pure]
-    bool ContainsBoundArgument(string argumentName);
-
-    [Pure]
-    bool ContainsBoundArgument(ReadOnlyMemory<char> argumentName);
-
-    [Pure]
-    int GetUnboundArgumentIndex(string argumentName);
-
-    [Pure]
-    int GetUnboundArgumentIndex(ReadOnlyMemory<char> argumentName);
-
-    bool TryGetBoundArgumentValue(string argumentName, out TArg? result);
-    bool TryGetBoundArgumentValue(ReadOnlyMemory<char> argumentName, out TArg? result);
-
-    [Pure]
-    ReadOnlyMemory<char> GetUnboundArgumentName(int index);
+    Expression Body { get; }
+    ParameterExpression Parameter { get; }
+    ParsedExpressionUnboundArguments UnboundArguments { get; }
+    ParsedExpressionBoundArguments<TArg> BoundArguments { get; }
+    ParsedExpressionDiscardedArguments DiscardedArguments { get; }
 
     [Pure]
     IParsedExpression<TArg, TResult> BindArguments(IEnumerable<KeyValuePair<string, TArg?>> arguments);

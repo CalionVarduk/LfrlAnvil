@@ -157,7 +157,7 @@ internal sealed class InlineDelegateCollectionState
                 parent?.Finalization.CapturedParameters );
 
             finalization.Parameters[0] = closure.Value.Parameter;
-            bindClosureMethod = ClosureHelpers.FindBindClosureMethod( finalization.Body, finalization.Parameters );
+            bindClosureMethod = ClosureHelpers.GetBindClosureMethod( finalization.Body, finalization.Parameters );
 
             closureCtorCall = parent?.Closure is null
                 ? closure.Value.CreateCtorCallForRootDelegate()
@@ -458,7 +458,7 @@ internal sealed class InlineDelegateCollectionState
             ParameterExpression[] parameters,
             ClosureInfo capturedParameters)
         {
-            var lambdaType = ClosureHelpers.FindDelegateWithCaptureType( body, parameters );
+            var lambdaType = ClosureHelpers.GetDelegateWithCaptureType( body, parameters );
             var lambdaPlaceholder = ExpressionHelpers.CreateLambdaPlaceholder( lambdaType );
 
             return new FinalizedDelegate(

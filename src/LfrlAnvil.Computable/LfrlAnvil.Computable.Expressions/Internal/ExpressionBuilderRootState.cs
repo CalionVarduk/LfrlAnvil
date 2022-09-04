@@ -19,11 +19,13 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
     internal ExpressionBuilderRootState(
         Type argumentType,
         ParsedExpressionFactoryInternalConfiguration configuration,
-        IParsedExpressionNumberParser numberParser)
+        IParsedExpressionNumberParser numberParser,
+        IReadOnlyDictionary<StringSlice, ConstantExpression>? boundArguments)
         : base(
             parameterExpression: Expression.Parameter( argumentType.MakeArrayType(), "args" ),
             configuration: configuration,
-            numberParser: numberParser )
+            numberParser: numberParser,
+            boundArguments: boundArguments )
     {
         ActiveState = this;
         _nextStateId = Id + 1;
@@ -106,8 +108,10 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private ExpressionBuilderResult RemoveUnusedArguments(Expression expression)
     {
+        var discardedArguments = new HashSet<StringSlice>();
+
         if ( ArgumentIndexes.Count == 0 && _compilableDelegates.Count == 0 )
-            return new ExpressionBuilderResult( ParameterExpression, expression, Array.Empty<CompilableInlineDelegate>(), ArgumentIndexes );
+            return new ExpressionBuilderResult( expression, ParameterExpression, ArgumentIndexes, discardedArguments );
 
         var argumentUsageValidator = new ExpressionUsageValidator( ParameterExpression, _compilableDelegates, ArgumentIndexes.Count );
         argumentUsageValidator.Visit( expression );
@@ -153,13 +157,16 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
         }
 
         if ( unusedArgumentCount == 0 )
-            return new ExpressionBuilderResult( ParameterExpression, expression, compilableDelegates, ArgumentIndexes );
+            return new ExpressionBuilderResult( expression, ParameterExpression, compilableDelegates, ArgumentIndexes, discardedArguments );
 
         if ( unusedArgumentCount == ArgumentIndexes.Count )
         {
+            foreach ( var (name, _) in ArgumentIndexes )
+                discardedArguments.Add( name );
+
             ArgumentIndexes.Clear();
             ArgumentIndexes.TrimExcess();
-            return new ExpressionBuilderResult( ParameterExpression, expression, compilableDelegates, ArgumentIndexes );
+            return new ExpressionBuilderResult( expression, ParameterExpression, compilableDelegates, ArgumentIndexes, discardedArguments );
         }
 
         if ( ! requiresArgumentReorganizing )
@@ -177,10 +184,13 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
             }
 
             foreach ( var key in keysToRemove )
+            {
+                discardedArguments.Add( key );
                 ArgumentIndexes.Remove( key );
+            }
 
             ArgumentIndexes.TrimExcess();
-            return new ExpressionBuilderResult( ParameterExpression, expression, compilableDelegates, ArgumentIndexes );
+            return new ExpressionBuilderResult( expression, ParameterExpression, compilableDelegates, ArgumentIndexes, discardedArguments );
         }
 
         var argumentNames = ArgumentIndexes.ToDictionary( kv => kv.Value, kv => kv.Key );
@@ -190,10 +200,14 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
         for ( var i = 0; i < argumentUsageValidator.ArgumentUsage.Length; ++i )
         {
             var isUsed = argumentUsageValidator.ArgumentUsage[i];
-            if ( ! isUsed )
-                continue;
-
             var argumentName = argumentNames[i];
+
+            if ( ! isUsed )
+            {
+                discardedArguments.Add( argumentName );
+                continue;
+            }
+
             var newIndex = ArgumentIndexes.Count;
             var argumentExpression = i == newIndex ? GetArgumentAccess( i ) : ParameterExpression.CreateArgumentAccess( newIndex );
             ArgumentIndexes.Add( argumentName, newIndex );
@@ -210,7 +224,7 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
             @delegate.ReorganizeArgumentAccess( argumentAccessReorganizer );
 
         expression = argumentAccessReorganizer.Visit( expression );
-        return new ExpressionBuilderResult( ParameterExpression, expression, compilableDelegates, ArgumentIndexes );
+        return new ExpressionBuilderResult( expression, ParameterExpression, compilableDelegates, ArgumentIndexes, discardedArguments );
     }
 
     private sealed class ExpressionUsageValidator : ExpressionVisitor

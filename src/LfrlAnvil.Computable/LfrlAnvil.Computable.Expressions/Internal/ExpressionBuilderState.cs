@@ -21,6 +21,7 @@ internal class ExpressionBuilderState
     private readonly ParsedExpressionFactoryInternalConfiguration _configuration;
     private readonly IParsedExpressionNumberParser _numberParser;
     private readonly ExpressionBuilderRootState _rootState;
+    private readonly IReadOnlyDictionary<StringSlice, ConstantExpression>? _boundArguments;
     private int _operandCount;
     private int _operatorCount;
     private int _parenthesesCount;
@@ -29,7 +30,8 @@ internal class ExpressionBuilderState
     protected ExpressionBuilderState(
         ParameterExpression parameterExpression,
         ParsedExpressionFactoryInternalConfiguration configuration,
-        IParsedExpressionNumberParser numberParser)
+        IParsedExpressionNumberParser numberParser,
+        IReadOnlyDictionary<StringSlice, ConstantExpression>? boundArguments)
     {
         Id = 0;
         _tokenStack = new RandomAccessStack<(IntermediateToken, Expectation)>();
@@ -45,6 +47,7 @@ internal class ExpressionBuilderState
         _parenthesesCount = 0;
         LastHandledToken = null;
         _rootState = ReinterpretCast.To<ExpressionBuilderRootState>( this );
+        _boundArguments = boundArguments;
         _expectation = Expectation.Operand | Expectation.OpenedParenthesis | Expectation.PrefixUnaryConstruct;
     }
 
@@ -68,6 +71,7 @@ internal class ExpressionBuilderState
         _parenthesesCount = parenthesesCount;
         LastHandledToken = prototype.LastHandledToken;
         _rootState = prototype._rootState;
+        _boundArguments = prototype._boundArguments;
         _expectation = initialState;
 
         if ( ! isInlineDelegate )
@@ -1423,6 +1427,9 @@ internal class ExpressionBuilderState
 
     private Expression GetOrAddArgumentAccessExpression(StringSlice name)
     {
+        if ( _boundArguments is not null && _boundArguments.TryGetValue( name, out var constant ) )
+            return constant;
+
         if ( ArgumentIndexes.TryGetValue( name, out var index ) )
         {
             _delegateCollectionState?.AddArgumentCapture( this, index );

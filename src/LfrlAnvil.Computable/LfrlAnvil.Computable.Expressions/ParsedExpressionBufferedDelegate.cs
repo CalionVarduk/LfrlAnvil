@@ -11,7 +11,7 @@ public sealed class ParsedExpressionBufferedDelegate<TArg, TResult>
     internal ParsedExpressionBufferedDelegate(IParsedExpressionDelegate<TArg, TResult> @base)
     {
         Base = @base;
-        var argumentCount = Base.GetArgumentCount();
+        var argumentCount = Base.Arguments.Count;
         _buffer = argumentCount == 0 ? Array.Empty<TArg?>() : new TArg?[argumentCount];
     }
 
@@ -25,7 +25,7 @@ public sealed class ParsedExpressionBufferedDelegate<TArg, TResult>
 
     public ParsedExpressionBufferedDelegate<TArg, TResult> SetArgumentValue(string argumentName, TArg? value)
     {
-        var index = Base.GetArgumentIndex( argumentName );
+        var index = Base.Arguments.GetIndex( argumentName );
         if ( index < 0 )
             throw new InvalidParsedExpressionArgumentsException( Chain.Create( argumentName.AsMemory() ), nameof( argumentName ) );
 
@@ -35,7 +35,7 @@ public sealed class ParsedExpressionBufferedDelegate<TArg, TResult>
 
     public ParsedExpressionBufferedDelegate<TArg, TResult> SetArgumentValue(ReadOnlyMemory<char> argumentName, TArg? value)
     {
-        var index = Base.GetArgumentIndex( argumentName );
+        var index = Base.Arguments.GetIndex( argumentName );
         if ( index < 0 )
             throw new InvalidParsedExpressionArgumentsException( Chain.Create( argumentName ), nameof( argumentName ) );
 
@@ -52,7 +52,7 @@ public sealed class ParsedExpressionBufferedDelegate<TArg, TResult>
     [Pure]
     public TArg? GetArgumentValue(string argumentName)
     {
-        var index = Base.GetArgumentIndex( argumentName );
+        var index = Base.Arguments.GetIndex( argumentName );
         if ( index < 0 )
             throw new InvalidParsedExpressionArgumentsException( Chain.Create( argumentName.AsMemory() ), nameof( argumentName ) );
 
@@ -62,7 +62,7 @@ public sealed class ParsedExpressionBufferedDelegate<TArg, TResult>
     [Pure]
     public TArg? GetArgumentValue(ReadOnlyMemory<char> argumentName)
     {
-        var index = Base.GetArgumentIndex( argumentName );
+        var index = Base.Arguments.GetIndex( argumentName );
         if ( index < 0 )
             throw new InvalidParsedExpressionArgumentsException( Chain.Create( argumentName ), nameof( argumentName ) );
 

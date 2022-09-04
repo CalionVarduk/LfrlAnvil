@@ -23,7 +23,7 @@ public static class ParsedExpressionDelegateExtensions
         this IParsedExpressionDelegate<TArg, TResult> source,
         IEnumerable<KeyValuePair<string, TArg?>> arguments)
     {
-        var argumentCount = source.GetArgumentCount();
+        var argumentCount = source.Arguments.Count;
         var buffer = argumentCount == 0 ? Array.Empty<TArg?>() : new TArg?[argumentCount];
         source.MapArguments( buffer, arguments );
         return buffer;
@@ -42,7 +42,7 @@ public static class ParsedExpressionDelegateExtensions
         this IParsedExpressionDelegate<TArg, TResult> source,
         IEnumerable<KeyValuePair<ReadOnlyMemory<char>, TArg?>> arguments)
     {
-        var argumentCount = source.GetArgumentCount();
+        var argumentCount = source.Arguments.Count;
         var buffer = argumentCount == 0 ? Array.Empty<TArg?>() : new TArg?[argumentCount];
         source.MapArguments( buffer, arguments );
         return buffer;
@@ -93,7 +93,7 @@ public static class ParsedExpressionDelegateExtensions
         TArg?[] buffer,
         IEnumerable<KeyValuePair<StringSlice, TArg?>> arguments)
     {
-        var argumentCount = source.GetArgumentCount();
+        var argumentCount = source.Arguments.Count;
         if ( argumentCount == 0 )
             return;
 
@@ -104,11 +104,11 @@ public static class ParsedExpressionDelegateExtensions
 
         foreach ( var (name, value) in arguments )
         {
-            var nameMemory = name.AsMemory();
-            var index = source.GetArgumentIndex( nameMemory );
+            var n = name.AsMemory();
+            var index = source.Arguments.GetIndex( n );
             if ( index < 0 )
             {
-                invalidArgumentNames = invalidArgumentNames.Extend( nameMemory );
+                invalidArgumentNames = invalidArgumentNames.Extend( n );
                 continue;
             }
 

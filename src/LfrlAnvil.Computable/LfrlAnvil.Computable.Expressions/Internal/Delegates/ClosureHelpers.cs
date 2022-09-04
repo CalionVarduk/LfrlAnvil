@@ -20,7 +20,7 @@ internal static class ClosureHelpers
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static Type FindDelegateWithCaptureType(Expression body, ParameterExpression[] parameters)
+    internal static Type GetDelegateWithCaptureType(Expression body, ParameterExpression[] parameters)
     {
         Assume.IsNotEmpty( parameters, nameof( parameters ) );
         Assume.IsNull( parameters[0], nameof( parameters ) + "[0]" );
@@ -43,7 +43,7 @@ internal static class ClosureHelpers
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static MethodInfo FindBindClosureMethod(Expression body, ParameterExpression[] parameters)
+    internal static MethodInfo GetBindClosureMethod(Expression body, ParameterExpression[] parameters)
     {
         Assume.ContainsInRange( parameters, 1, 16, nameof( parameters ) );
 

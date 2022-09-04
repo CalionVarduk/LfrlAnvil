@@ -14,143 +14,40 @@ namespace LfrlAnvil.Computable.Expressions;
 
 public sealed class ParsedExpression<TArg, TResult> : IParsedExpression<TArg, TResult>
 {
-    // TODO:
-    // refactor arguments into a single structure with its own methods
-    // this will make the IParsedExpression & IParsedExpressionDelegate interfaces a lot more concise
-    // also, include info about arguments that were optimized away (call them discarded arguments)
-    private readonly IReadOnlyDictionary<StringSlice, int> _argumentIndexes;
+    private readonly ParsedExpressionFactory _factory;
     private readonly IReadOnlyList<CompilableInlineDelegate> _delegates;
-    private readonly IReadOnlyDictionary<StringSlice, TArg?> _boundArguments;
 
     internal ParsedExpression(
+        ParsedExpressionFactory factory,
         string input,
-        Expression<Func<TArg?[], TResult>> expression,
+        Expression body,
+        ParameterExpression parameter,
         IReadOnlyList<CompilableInlineDelegate> delegates,
-        IReadOnlyDictionary<StringSlice, int> argumentIndexes,
-        IReadOnlyDictionary<StringSlice, TArg?> boundArguments)
+        ParsedExpressionUnboundArguments unboundArguments,
+        ParsedExpressionBoundArguments<TArg> boundArguments,
+        ParsedExpressionDiscardedArguments discardedArguments)
     {
+        _factory = factory;
         Input = input;
-        Expression = expression;
+        Body = body;
+        Parameter = parameter;
         _delegates = delegates;
-        _argumentIndexes = argumentIndexes;
-        _boundArguments = boundArguments;
+        UnboundArguments = unboundArguments;
+        BoundArguments = boundArguments;
+        DiscardedArguments = discardedArguments;
     }
 
     public string Input { get; }
-    public Expression<Func<TArg?[], TResult>> Expression { get; }
+    public Expression Body { get; }
+    public ParameterExpression Parameter { get; }
+    public ParsedExpressionUnboundArguments UnboundArguments { get; }
+    public ParsedExpressionBoundArguments<TArg> BoundArguments { get; }
+    public ParsedExpressionDiscardedArguments DiscardedArguments { get; }
 
     [Pure]
     public override string ToString()
     {
         return $"[{typeof( TArg ).GetDebugString()} => {typeof( TResult ).GetDebugString()}] {Input}";
-    }
-
-    [Pure]
-    public int GetArgumentCount()
-    {
-        return GetUnboundArgumentCount() + GetBoundArgumentCount();
-    }
-
-    [Pure]
-    public int GetUnboundArgumentCount()
-    {
-        return _argumentIndexes.Count;
-    }
-
-    [Pure]
-    public int GetBoundArgumentCount()
-    {
-        return _boundArguments.Count;
-    }
-
-    [Pure]
-    public IEnumerable<ReadOnlyMemory<char>> GetArgumentNames()
-    {
-        return GetUnboundArgumentNames().Concat( GetBoundArgumentNames() );
-    }
-
-    [Pure]
-    public IEnumerable<ReadOnlyMemory<char>> GetUnboundArgumentNames()
-    {
-        return _argumentIndexes.Select( kv => kv.Key.AsMemory() );
-    }
-
-    [Pure]
-    public IEnumerable<ReadOnlyMemory<char>> GetBoundArgumentNames()
-    {
-        return _boundArguments.Select( kv => kv.Key.AsMemory() );
-    }
-
-    [Pure]
-    public bool ContainsArgument(string argumentName)
-    {
-        return ContainsArgument( StringSlice.Create( argumentName ) );
-    }
-
-    [Pure]
-    public bool ContainsArgument(ReadOnlyMemory<char> argumentName)
-    {
-        return ContainsArgument( StringSlice.Create( argumentName ) );
-    }
-
-    [Pure]
-    public bool ContainsUnboundArgument(string argumentName)
-    {
-        return ContainsUnboundArgument( StringSlice.Create( argumentName ) );
-    }
-
-    [Pure]
-    public bool ContainsUnboundArgument(ReadOnlyMemory<char> argumentName)
-    {
-        return ContainsUnboundArgument( StringSlice.Create( argumentName ) );
-    }
-
-    [Pure]
-    public bool ContainsBoundArgument(string argumentName)
-    {
-        return ContainsBoundArgument( StringSlice.Create( argumentName ) );
-    }
-
-    [Pure]
-    public bool ContainsBoundArgument(ReadOnlyMemory<char> argumentName)
-    {
-        return ContainsBoundArgument( StringSlice.Create( argumentName ) );
-    }
-
-    [Pure]
-    public int GetUnboundArgumentIndex(string argumentName)
-    {
-        return GetUnboundArgumentIndex( StringSlice.Create( argumentName ) );
-    }
-
-    [Pure]
-    public int GetUnboundArgumentIndex(ReadOnlyMemory<char> argumentName)
-    {
-        return GetUnboundArgumentIndex( StringSlice.Create( argumentName ) );
-    }
-
-    public bool TryGetBoundArgumentValue(string argumentName, out TArg? result)
-    {
-        return TryGetBoundArgumentValue( StringSlice.Create( argumentName ), out result );
-    }
-
-    public bool TryGetBoundArgumentValue(ReadOnlyMemory<char> argumentName, out TArg? result)
-    {
-        return TryGetBoundArgumentValue( StringSlice.Create( argumentName ), out result );
-    }
-
-    [Pure]
-    public ReadOnlyMemory<char> GetUnboundArgumentName(int index)
-    {
-        foreach ( var (name, i) in _argumentIndexes )
-        {
-            if ( index != i )
-                continue;
-
-            return name.AsMemory();
-        }
-
-        return string.Empty.AsMemory();
     }
 
     [Pure]
@@ -183,33 +80,24 @@ public sealed class ParsedExpression<TArg, TResult> : IParsedExpression<TArg, TR
         if ( arguments.TryGetNonEnumeratedCount( out var count ) && count == 0 )
             return this;
 
-        var argumentsToBind = new Dictionary<int, TArg?>();
+        var argumentsToBind = BoundArguments.ToDictionary( kv => StringSlice.Create( kv.Key ), kv => kv.Value );
 
         foreach ( var (index, value) in arguments )
         {
-            if ( index < 0 || index >= _argumentIndexes.Count )
+            if ( index < 0 || index >= UnboundArguments.Count )
                 throw new ParsedExpressionArgumentBindingException();
 
-            argumentsToBind[index] = value;
+            var name = UnboundArguments.GetName( index );
+            argumentsToBind.Add( StringSlice.Create( name ), value );
         }
 
         if ( argumentsToBind.Count == 0 )
             return this;
 
-        var parameterBinder = new ParameterBinder( this, argumentsToBind );
-        var bodyExpression = parameterBinder.Visit( Expression.Body );
+        if ( _factory.TryCreateInternal<TArg, TResult>( Input, (this, argumentsToBind), out var result, out var errors ) )
+            return result;
 
-        var expression = System.Linq.Expressions.Expression.Lambda<Func<TArg?[], TResult>>(
-            bodyExpression,
-            parameterBinder.ParameterExpression );
-
-        // TODO: remake argument binding from scratch, make it parse the input again, with overriden bound argument symbol constants
-        return new ParsedExpression<TArg, TResult>(
-            Input,
-            expression,
-            _delegates,
-            parameterBinder.ArgumentIndexes,
-            parameterBinder.BoundArguments );
+        throw new ParsedExpressionCreationException( Input, errors );
     }
 
     [Pure]
@@ -221,7 +109,8 @@ public sealed class ParsedExpression<TArg, TResult> : IParsedExpression<TArg, TR
     [Pure]
     public ParsedExpressionDelegate<TArg, TResult> Compile()
     {
-        var expression = Expression;
+        var body = Body;
+
         if ( _delegates.Count != 0 )
         {
             var replacements = new ExpressionReplacement[_delegates.Count];
@@ -229,49 +118,18 @@ public sealed class ParsedExpression<TArg, TResult> : IParsedExpression<TArg, TR
                 replacements[i] = _delegates[i].Compile();
 
             var replacer = new DelegatePlaceholderReplacer( replacements );
-            var body = replacer.Visit( expression.Body );
-            expression = System.Linq.Expressions.Expression.Lambda<Func<TArg?[], TResult>>( body, Expression.Parameters );
+            body = replacer.Visit( Body );
         }
 
-        return new ParsedExpressionDelegate<TArg, TResult>( expression.Compile(), _argumentIndexes );
-    }
-
-    [Pure]
-    private bool ContainsArgument(StringSlice argumentName)
-    {
-        return ContainsUnboundArgument( argumentName ) || ContainsBoundArgument( argumentName );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private bool ContainsUnboundArgument(StringSlice argumentName)
-    {
-        return _argumentIndexes.ContainsKey( argumentName );
-    }
-
-    [Pure]
-    private bool ContainsBoundArgument(StringSlice argumentName)
-    {
-        return _boundArguments.ContainsKey( argumentName );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private int GetUnboundArgumentIndex(StringSlice argumentName)
-    {
-        return _argumentIndexes.TryGetValue( argumentName, out var index ) ? index : -1;
-    }
-
-    private bool TryGetBoundArgumentValue(StringSlice argumentName, out TArg? result)
-    {
-        return _boundArguments.TryGetValue( argumentName, out result );
+        var lambda = Expression.Lambda<Func<TArg?[], TResult>>( body, Parameter );
+        return new ParsedExpressionDelegate<TArg, TResult>( lambda.Compile(), UnboundArguments );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private ParsedExpression<TArg, TResult> BindArguments(IEnumerable<KeyValuePair<StringSlice, TArg?>> arguments)
     {
-        return BindArguments( arguments.Select( kv => KeyValuePair.Create( GetUnboundArgumentIndex( kv.Key ), kv.Value ) ) );
+        return BindArguments( arguments.Select( kv => KeyValuePair.Create( UnboundArguments.GetIndex( kv.Key.AsMemory() ), kv.Value ) ) );
     }
 
     private sealed class DelegatePlaceholderReplacer : ExpressionVisitor
@@ -296,50 +154,6 @@ public sealed class ParsedExpression<TArg, TResult> : IParsedExpression<TArg, TR
 
             var result = _replacements[index].Replacement;
             return result;
-        }
-    }
-
-    private sealed class ParameterBinder : ExpressionVisitor
-    {
-        private readonly Expression[] _expressions;
-
-        public ParameterBinder(ParsedExpression<TArg, TResult> source, IReadOnlyDictionary<int, TArg?> argumentsToBind)
-        {
-            ParameterExpression = source.Expression.Parameters[0];
-            ArgumentIndexes = new Dictionary<StringSlice, int>();
-            BoundArguments = new Dictionary<StringSlice, TArg?>( source._boundArguments );
-            _expressions = new Expression[source._argumentIndexes.Count];
-
-            var exprIndex = 0;
-            foreach ( var (name, i) in source._argumentIndexes )
-            {
-                if ( argumentsToBind.TryGetValue( i, out var value ) )
-                {
-                    _expressions[exprIndex++] = System.Linq.Expressions.Expression.Constant( value );
-                    BoundArguments.Add( name, value );
-                    continue;
-                }
-
-                var index = ArgumentIndexes.Count;
-                ArgumentIndexes.Add( name, index );
-
-                var indexExpression = System.Linq.Expressions.Expression.Constant( index );
-                var arrayIndexExpression = System.Linq.Expressions.Expression.ArrayIndex( ParameterExpression, indexExpression );
-                _expressions[exprIndex++] = arrayIndexExpression;
-            }
-        }
-
-        public ParameterExpression ParameterExpression { get; }
-        public Dictionary<StringSlice, int> ArgumentIndexes { get; }
-        public Dictionary<StringSlice, TArg?> BoundArguments { get; }
-
-        [return: NotNullIfNotNull( "node" )]
-        public override Expression? Visit(Expression? node)
-        {
-            if ( ! node.TryGetArgumentAccessIndex( ParameterExpression, _expressions.Length, out var index ) )
-                return base.Visit( node );
-
-            return _expressions[index];
         }
     }
 

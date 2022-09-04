@@ -271,7 +271,7 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     {
         try
         {
-            return TryCreateInternal( input, out result, out errors );
+            return TryCreateInternal( input, bindingInfo: null, out result, out errors );
         }
         catch ( Exception exc )
         {
@@ -281,15 +281,19 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
         }
     }
 
-    private bool TryCreateInternal<TArg, TResult>(
+    internal bool TryCreateInternal<TArg, TResult>(
         string input,
+        (ParsedExpression<TArg, TResult> Expression, Dictionary<StringSlice, TArg?> Arguments)? bindingInfo,
         [MaybeNullWhen( false )] out ParsedExpression<TArg, TResult> result,
         out Chain<ParsedExpressionBuilderError> errors)
     {
+        var boundArguments = bindingInfo?.Arguments.ToDictionary( kv => kv.Key, kv => Expression.Constant( kv.Value, typeof( TArg ) ) );
+
         var state = new ExpressionBuilderRootState(
             typeof( TArg ),
             _configuration,
-            CreateNumberParser( typeof( TArg ), typeof( TResult ) ) );
+            CreateNumberParser( typeof( TArg ), typeof( TResult ) ),
+            boundArguments );
 
         var tokenizer = new ExpressionTokenizer( input, _configuration );
 
@@ -306,16 +310,25 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
         var stateResult = state.GetResult( typeof( TResult ) );
         if ( stateResult.IsOk )
         {
-            var expression = Expression.Lambda<Func<TArg?[], TResult>>(
-                stateResult.Result.BodyExpression,
-                stateResult.Result.ParameterExpression );
-
-            result = new ParsedExpression<TArg, TResult>(
-                input,
-                expression,
-                stateResult.Result.Delegates,
-                stateResult.Result.ArgumentIndexes,
-                boundArguments: new Dictionary<StringSlice, TArg?>() );
+            result = bindingInfo is null
+                ? new ParsedExpression<TArg, TResult>(
+                    this,
+                    input,
+                    stateResult.Result.BodyExpression,
+                    stateResult.Result.ParameterExpression,
+                    stateResult.Result.Delegates,
+                    new ParsedExpressionUnboundArguments( stateResult.Result.ArgumentIndexes ),
+                    ParsedExpressionBoundArguments<TArg>.Empty,
+                    new ParsedExpressionDiscardedArguments( stateResult.Result.DiscardedArguments ) )
+                : new ParsedExpression<TArg, TResult>(
+                    this,
+                    input,
+                    stateResult.Result.BodyExpression,
+                    stateResult.Result.ParameterExpression,
+                    stateResult.Result.Delegates,
+                    new ParsedExpressionUnboundArguments( stateResult.Result.ArgumentIndexes ),
+                    new ParsedExpressionBoundArguments<TArg>( bindingInfo.Value.Arguments ),
+                    bindingInfo.Value.Expression.DiscardedArguments.AddTo( stateResult.Result.DiscardedArguments ) );
 
             errors = Chain<ParsedExpressionBuilderError>.Empty;
             return true;

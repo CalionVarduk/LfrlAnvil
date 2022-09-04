@@ -63,10 +63,10 @@ public partial class ParsedExpressionFactoryTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Should().Be( expected );
-            expression.GetUnboundArgumentIndex( "a" ).Should().Be( 0 );
-            expression.GetUnboundArgumentIndex( "b" ).Should().Be( 1 );
-            expression.GetUnboundArgumentIndex( "c" ).Should().Be( 2 );
-            expression.GetUnboundArgumentIndex( "d" ).Should().Be( 3 );
+            expression.UnboundArguments.GetIndex( "a" ).Should().Be( 0 );
+            expression.UnboundArguments.GetIndex( "b" ).Should().Be( 1 );
+            expression.UnboundArguments.GetIndex( "c" ).Should().Be( 2 );
+            expression.UnboundArguments.GetIndex( "d" ).Should().Be( 3 );
         }
     }
 
@@ -147,8 +147,10 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            expression.GetArgumentNames().Select( n => n.ToString() ).Should().BeSequentiallyEqualTo( "a" );
-            if ( expression.GetArgumentCount() != 1 )
+            expression.UnboundArguments.Select( kv => kv.Key.ToString() ).Should().BeSequentiallyEqualTo( "a" );
+            expression.BoundArguments.Should().BeEmpty();
+            expression.DiscardedArguments.Should().BeEmpty();
+            if ( expression.UnboundArguments.Count != 1 )
                 return;
 
             var @delegate = expression.Compile();
@@ -1988,10 +1990,10 @@ public partial class ParsedExpressionFactoryTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Should().Be( expected );
-            expression.GetUnboundArgumentIndex( "a" ).Should().Be( 0 );
-            expression.GetUnboundArgumentIndex( "b" ).Should().Be( 1 );
-            expression.GetUnboundArgumentIndex( "c" ).Should().Be( 2 );
-            expression.GetUnboundArgumentIndex( "d" ).Should().Be( 3 );
+            expression.UnboundArguments.GetIndex( "a" ).Should().Be( 0 );
+            expression.UnboundArguments.GetIndex( "b" ).Should().Be( 1 );
+            expression.UnboundArguments.GetIndex( "c" ).Should().Be( 2 );
+            expression.UnboundArguments.GetIndex( "d" ).Should().Be( 3 );
         }
     }
 
@@ -5072,7 +5074,11 @@ a + b + c + d + e + f + g + h + i + j ) ( 'a' , 'b' , 'c' , 'd' , 'e' , 'f' , 'g
 
         var result = sut.Create<bool, bool>( input );
 
-        result.GetArgumentCount().Should().Be( 0 );
+        using ( new AssertionScope() )
+        {
+            result.UnboundArguments.Should().BeEmpty();
+            result.DiscardedArguments.Select( n => n.ToString() ).Should().BeEquivalentTo( "a", "b", "c" );
+        }
     }
 
     [Fact]
@@ -5091,9 +5097,9 @@ a + b + c + d + e + f + g + h + i + j ) ( 'a' , 'b' , 'c' , 'd' , 'e' , 'f' , 'g
 
         using ( new AssertionScope() )
         {
-            result.GetArgumentCount().Should().Be( 1 );
-            result.GetArgumentNames().Select( n => n.ToString() ).Should().BeEquivalentTo( "a" );
-            result.GetUnboundArgumentIndex( "a" ).Should().Be( 0 );
+            result.UnboundArguments.Should().HaveCount( 1 );
+            result.UnboundArguments.GetIndex( "a" ).Should().Be( 0 );
+            result.DiscardedArguments.Select( n => n.ToString() ).Should().BeEquivalentTo( "b", "c" );
         }
     }
 
@@ -5113,10 +5119,99 @@ a + b + c + d + e + f + g + h + i + j ) ( 'a' , 'b' , 'c' , 'd' , 'e' , 'f' , 'g
 
         using ( new AssertionScope() )
         {
-            result.GetArgumentCount().Should().Be( 2 );
-            result.GetArgumentNames().Select( n => n.ToString() ).Should().BeEquivalentTo( "a", "d" );
-            result.GetUnboundArgumentIndex( "a" ).Should().Be( 0 );
-            result.GetUnboundArgumentIndex( "d" ).Should().Be( 1 );
+            result.UnboundArguments.Should().HaveCount( 2 );
+            result.UnboundArguments.GetIndex( "a" ).Should().Be( 0 );
+            result.UnboundArguments.GetIndex( "d" ).Should().Be( 1 );
+            result.DiscardedArguments.Select( n => n.ToString() ).Should().BeEquivalentTo( "b", "c", "e" );
+        }
+    }
+
+    [Fact]
+    public void Create_ShouldNotRemoveIndexersFromNonParameterExpressionArray_WhenTryingToRemoveUnusedArguments()
+    {
+        var (aValue, externalValue) = Fixture.CreateDistinctCollection<int>( count: 2 );
+        var expected = aValue + externalValue;
+
+        var input = "a + external_at 0";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .AddBinaryOperator( "+", new ParsedExpressionAddOperator() )
+            .AddPrefixUnaryOperator( "external_at", new ExternalArrayIndexUnaryOperator( externalValue ) )
+            .SetBinaryOperatorPrecedence( "+", 1 )
+            .SetPrefixUnaryConstructPrecedence( "external_at", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, int>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( aValue );
+
+        using ( new AssertionScope() )
+        {
+            expression.UnboundArguments.Should().HaveCount( 1 );
+            expression.UnboundArguments.GetIndex( "a" ).Should().Be( 0 );
+            expression.DiscardedArguments.Should().BeEmpty();
+            result.Should().Be( expected );
+        }
+    }
+
+    [Theory]
+    [InlineData( -1 )]
+    [InlineData( 2 )]
+    public void Create_ShouldIgnoreParameterArrayIndexesThatAreOutOfRange_WhenTryingToRemoveUnusedArguments(int index)
+    {
+        var (aValue, bValue) = Fixture.CreateDistinctCollection<int>( count: 2 );
+
+        var input = "a + external_parameter_accessor b";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddBinaryOperator( "+", new ParsedExpressionAddOperator() )
+            .AddPrefixUnaryOperator( "external_parameter_accessor", new ParameterAccessorWithConstantIndexUnaryOperator( index ) )
+            .SetBinaryOperatorPrecedence( "+", 1 )
+            .SetPrefixUnaryConstructPrecedence( "external_parameter_accessor", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, int>( input );
+        var @delegate = expression.Compile();
+        var action = Lambda.Of( () => @delegate.Invoke( aValue, bValue ) );
+
+        using ( new AssertionScope() )
+        {
+            expression.UnboundArguments.Should().HaveCount( 2 );
+            expression.UnboundArguments.GetIndex( "a" ).Should().Be( 0 );
+            expression.UnboundArguments.GetIndex( "b" ).Should().Be( 1 );
+            expression.DiscardedArguments.Should().BeEmpty();
+            action.Should().ThrowExactly<IndexOutOfRangeException>();
+        }
+    }
+
+    [Fact]
+    public void Create_ShouldIgnoreParameterArrayIndexesThatAreNotConstant_WhenTryingToRemoveUnusedArguments()
+    {
+        var (aValue, bValue, cValue) = Fixture.CreateDistinctCollection<int>( count: 3 );
+        var expected = aValue + bValue + bValue + cValue;
+
+        var input = "a + external_parameter_accessor b + c";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddBinaryOperator( "+", new ParsedExpressionAddOperator() )
+            .AddPrefixUnaryOperator( "external_parameter_accessor", new ParameterAccessorWithVariableIndexUnaryOperator( -1, 2 ) )
+            .SetBinaryOperatorPrecedence( "+", 1 )
+            .SetPrefixUnaryConstructPrecedence( "external_parameter_accessor", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, int>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( aValue, bValue, cValue );
+
+        using ( new AssertionScope() )
+        {
+            expression.UnboundArguments.Should().HaveCount( 3 );
+            expression.UnboundArguments.GetIndex( "a" ).Should().Be( 0 );
+            expression.UnboundArguments.GetIndex( "b" ).Should().Be( 1 );
+            expression.UnboundArguments.GetIndex( "c" ).Should().Be( 2 );
+            expression.DiscardedArguments.Should().BeEmpty();
+            result.Should().Be( expected );
         }
     }
 

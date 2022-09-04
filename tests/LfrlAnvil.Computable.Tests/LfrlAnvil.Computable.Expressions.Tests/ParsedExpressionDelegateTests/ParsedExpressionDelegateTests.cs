@@ -1,6 +1,4 @@
-﻿using System.Linq;
-using FluentAssertions.Execution;
-using LfrlAnvil.Computable.Expressions.Constructs;
+﻿using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Computable.Expressions.Exceptions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions.FluentAssertions;
@@ -22,74 +20,7 @@ public class ParsedExpressionDelegateTests : TestsBase
 
         var sut = expression.Compile();
 
-        using ( new AssertionScope() )
-        {
-            sut.GetArgumentCount().Should().Be( 2 );
-            sut.GetArgumentNames().Select( n => n.ToString() ).Should().BeEquivalentTo( "a", "b" );
-        }
-    }
-
-    [Theory]
-    [InlineData( "a", true )]
-    [InlineData( "b", true )]
-    [InlineData( "c", false )]
-    public void ContainsArgument_ShouldReturnTrueIfArgumentWithNameExists(string name, bool expected)
-    {
-        var input = "a + 12.34 + b";
-        var builder = new ParsedExpressionFactoryBuilder()
-            .AddBinaryOperator( "+", new ParsedExpressionAddOperator() )
-            .SetBinaryOperatorPrecedence( "+", 1 );
-
-        var factory = builder.Build();
-        var expression = factory.Create<decimal, decimal>( input );
-        var sut = expression.Compile();
-
-        using ( new AssertionScope() )
-        {
-            sut.ContainsArgument( name ).Should().Be( expected );
-            sut.ContainsArgument( name.AsMemory() ).Should().Be( expected );
-        }
-    }
-
-    [Theory]
-    [InlineData( "a", 0 )]
-    [InlineData( "b", 1 )]
-    [InlineData( "c", -1 )]
-    public void GetArgumentIndex_ShouldReturnCorrectResult(string name, int expected)
-    {
-        var input = "a + 12.34 + b";
-        var builder = new ParsedExpressionFactoryBuilder()
-            .AddBinaryOperator( "+", new ParsedExpressionAddOperator() )
-            .SetBinaryOperatorPrecedence( "+", 1 );
-
-        var factory = builder.Build();
-        var expression = factory.Create<decimal, decimal>( input );
-        var sut = expression.Compile();
-
-        using ( new AssertionScope() )
-        {
-            sut.GetArgumentIndex( name ).Should().Be( expected );
-            sut.GetArgumentIndex( name.AsMemory() ).Should().Be( expected );
-        }
-    }
-
-    [Theory]
-    [InlineData( 0, "a" )]
-    [InlineData( 1, "b" )]
-    [InlineData( -1, "" )]
-    [InlineData( 2, "" )]
-    public void GetArgumentName_ShouldReturnCorrectResult(int index, string expected)
-    {
-        var input = "a + 12.34 + b";
-        var builder = new ParsedExpressionFactoryBuilder()
-            .AddBinaryOperator( "+", new ParsedExpressionAddOperator() )
-            .SetBinaryOperatorPrecedence( "+", 1 );
-
-        var factory = builder.Build();
-        var expression = factory.Create<decimal, decimal>( input );
-        var sut = expression.Compile();
-
-        sut.GetArgumentName( index ).ToString().Should().Be( expected );
+        sut.Arguments.Should().BeSameAs( expression.UnboundArguments );
     }
 
     [Fact]
@@ -133,6 +64,6 @@ public class ParsedExpressionDelegateTests : TestsBase
 
         action.Should()
             .ThrowExactly<InvalidParsedExpressionArgumentCountException>()
-            .AndMatch( e => e.Actual == valuesCount && e.Expected == sut.GetArgumentCount() );
+            .AndMatch( e => e.Actual == valuesCount && e.Expected == sut.Arguments.Count );
     }
 }

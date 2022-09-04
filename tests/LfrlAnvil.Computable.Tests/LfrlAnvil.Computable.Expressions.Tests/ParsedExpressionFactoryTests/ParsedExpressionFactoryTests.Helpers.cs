@@ -310,6 +310,53 @@ public partial class ParsedExpressionFactoryTests
             : base( "ZERO" ) { }
     }
 
+    private sealed class ExternalArrayIndexUnaryOperator : ParsedExpressionUnaryOperator
+    {
+        private readonly ConstantExpression _array;
+
+        internal ExternalArrayIndexUnaryOperator(params int[] values)
+        {
+            _array = Expression.Constant( values );
+        }
+
+        protected override Expression CreateUnaryExpression(Expression operand)
+        {
+            return Expression.ArrayIndex( _array, operand );
+        }
+    }
+
+    private sealed class ParameterAccessorWithConstantIndexUnaryOperator : ParsedExpressionUnaryOperator
+    {
+        private readonly ConstantExpression _index;
+
+        internal ParameterAccessorWithConstantIndexUnaryOperator(int index)
+        {
+            _index = Expression.Constant( index );
+        }
+
+        protected override Expression CreateUnaryExpression(Expression operand)
+        {
+            var parameterAccess = (BinaryExpression)operand;
+            return Expression.Add( operand, Expression.ArrayIndex( parameterAccess.Left, _index ) );
+        }
+    }
+
+    private sealed class ParameterAccessorWithVariableIndexUnaryOperator : ParsedExpressionUnaryOperator
+    {
+        private readonly BinaryExpression _index;
+
+        internal ParameterAccessorWithVariableIndexUnaryOperator(int left, int right)
+        {
+            _index = Expression.Add( Expression.Constant( left ), Expression.Constant( right ) );
+        }
+
+        protected override Expression CreateUnaryExpression(Expression operand)
+        {
+            var parameterAccess = (BinaryExpression)operand;
+            return Expression.Add( operand, Expression.ArrayIndex( parameterAccess.Left, _index ) );
+        }
+    }
+
     private sealed class FailingNumberParser : IParsedExpressionNumberParser
     {
         public bool TryParse(ReadOnlySpan<char> text, [MaybeNullWhen( false )] out object result)
