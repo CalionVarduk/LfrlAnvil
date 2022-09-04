@@ -14,10 +14,8 @@ public static class ExpressionExtensions
     public static string GetMemberName<T, TMember>(this Expression<Func<T, TMember>> source)
     {
         var body = source.Body;
-        Ensure.True(
-            body.NodeType == ExpressionType.MemberAccess,
-            "Expression must be of the member access type." );
 
+        Ensure.IsInstanceOfType<MemberExpression>( body, nameof( source.Body ) );
         var memberExpr = ReinterpretCast.To<MemberExpression>( body );
 
         Ensure.True(

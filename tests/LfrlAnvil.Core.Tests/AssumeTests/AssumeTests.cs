@@ -596,4 +596,68 @@ public class AssumeTests : TestsBase
         var action = Lambda.Of( () => Assume.False( true, string.Empty ) );
         action.Should().Throw<Exception>();
     }
+
+    [Fact]
+    [Conditional( "DEBUG" )]
+    public void Conditional_ShouldPass_WhenConditionIsFalse()
+    {
+        var action = Lambda.Of( () => Assume.Conditional( false, () => Assume.True( false, string.Empty ) ) );
+        action.Should().NotThrow();
+    }
+
+    [Fact]
+    [Conditional( "DEBUG" )]
+    public void Conditional_ShouldPass_WhenConditionIsTrueAndAssumptionPasses()
+    {
+        var action = Lambda.Of( () => Assume.Conditional( true, () => Assume.True( true, string.Empty ) ) );
+        action.Should().NotThrow();
+    }
+
+    [Fact]
+    [Conditional( "DEBUG" )]
+    public void Conditional_ShouldFail_WhenConditionIsTrueAndAssumptionFails()
+    {
+        var action = Lambda.Of( () => Assume.Conditional( true, () => Assume.True( false, string.Empty ) ) );
+        action.Should().Throw<Exception>();
+    }
+
+    [Fact]
+    [Conditional( "DEBUG" )]
+    public void Conditional_WithTwoParameters_ShouldPass_WhenConditionIsFalseAndIfFalseAssumptionPasses()
+    {
+        var action = Lambda.Of(
+            () => Assume.Conditional( false, () => Assume.True( false, string.Empty ), () => Assume.True( true, string.Empty ) ) );
+
+        action.Should().NotThrow();
+    }
+
+    [Fact]
+    [Conditional( "DEBUG" )]
+    public void Conditional_WithTwoParameters_ShouldFail_WhenConditionIsFalseAndIfFalseAssumptionFails()
+    {
+        var action = Lambda.Of(
+            () => Assume.Conditional( false, () => Assume.True( true, string.Empty ), () => Assume.True( false, string.Empty ) ) );
+
+        action.Should().Throw<Exception>();
+    }
+
+    [Fact]
+    [Conditional( "DEBUG" )]
+    public void Conditional_WithTwoParameters_ShouldPass_WhenConditionIsTrueAndIfTrueAssumptionPasses()
+    {
+        var action = Lambda.Of(
+            () => Assume.Conditional( true, () => Assume.True( true, string.Empty ), () => Assume.True( false, string.Empty ) ) );
+
+        action.Should().NotThrow();
+    }
+
+    [Fact]
+    [Conditional( "DEBUG" )]
+    public void Conditional_WithTwoParameters_ShouldFail_WhenConditionIsTrueAndIfTrueAssumptionFails()
+    {
+        var action = Lambda.Of(
+            () => Assume.Conditional( true, () => Assume.True( false, string.Empty ), () => Assume.True( true, string.Empty ) ) );
+
+        action.Should().Throw<Exception>();
+    }
 }

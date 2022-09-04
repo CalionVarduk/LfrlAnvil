@@ -152,4 +152,20 @@ public static class Assume
     {
         Debug.Assert( ! condition, description );
     }
+
+    [Conditional( "DEBUG" )]
+    public static void Conditional(bool condition, Action assumption)
+    {
+        if ( condition )
+            assumption();
+    }
+
+    [Conditional( "DEBUG" )]
+    public static void Conditional(bool condition, Action assumptionIfTrue, Action assumptionIfFalse)
+    {
+        if ( condition )
+            assumptionIfTrue();
+        else
+            assumptionIfFalse();
+    }
 }
