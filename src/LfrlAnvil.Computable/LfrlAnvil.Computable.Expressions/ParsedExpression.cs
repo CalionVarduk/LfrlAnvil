@@ -7,23 +7,31 @@ using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Computable.Expressions.Exceptions;
 using LfrlAnvil.Computable.Expressions.Internal;
+using LfrlAnvil.Computable.Expressions.Internal.Delegates;
 using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions;
 
 public sealed class ParsedExpression<TArg, TResult> : IParsedExpression<TArg, TResult>
 {
+    // TODO:
+    // refactor arguments into a single structure with its own methods
+    // this will make the IParsedExpression & IParsedExpressionDelegate interfaces a lot more concise
+    // also, include info about arguments that were optimized away (call them discarded arguments)
     private readonly IReadOnlyDictionary<StringSlice, int> _argumentIndexes;
+    private readonly IReadOnlyList<CompilableInlineDelegate> _delegates;
     private readonly IReadOnlyDictionary<StringSlice, TArg?> _boundArguments;
 
     internal ParsedExpression(
         string input,
         Expression<Func<TArg?[], TResult>> expression,
+        IReadOnlyList<CompilableInlineDelegate> delegates,
         IReadOnlyDictionary<StringSlice, int> argumentIndexes,
         IReadOnlyDictionary<StringSlice, TArg?> boundArguments)
     {
         Input = input;
         Expression = expression;
+        _delegates = delegates;
         _argumentIndexes = argumentIndexes;
         _boundArguments = boundArguments;
     }
@@ -195,7 +203,13 @@ public sealed class ParsedExpression<TArg, TResult> : IParsedExpression<TArg, TR
             bodyExpression,
             parameterBinder.ParameterExpression );
 
-        return new ParsedExpression<TArg, TResult>( Input, expression, parameterBinder.ArgumentIndexes, parameterBinder.BoundArguments );
+        // TODO: remake argument binding from scratch, make it parse the input again, with overriden bound argument symbol constants
+        return new ParsedExpression<TArg, TResult>(
+            Input,
+            expression,
+            _delegates,
+            parameterBinder.ArgumentIndexes,
+            parameterBinder.BoundArguments );
     }
 
     [Pure]
@@ -207,7 +221,19 @@ public sealed class ParsedExpression<TArg, TResult> : IParsedExpression<TArg, TR
     [Pure]
     public ParsedExpressionDelegate<TArg, TResult> Compile()
     {
-        return new ParsedExpressionDelegate<TArg, TResult>( Expression.Compile(), _argumentIndexes );
+        var expression = Expression;
+        if ( _delegates.Count != 0 )
+        {
+            var replacements = new ExpressionReplacement[_delegates.Count];
+            for ( var i = 0; i < replacements.Length; ++i )
+                replacements[i] = _delegates[i].Compile();
+
+            var replacer = new DelegatePlaceholderReplacer( replacements );
+            var body = replacer.Visit( expression.Body );
+            expression = System.Linq.Expressions.Expression.Lambda<Func<TArg?[], TResult>>( body, Expression.Parameters );
+        }
+
+        return new ParsedExpressionDelegate<TArg, TResult>( expression.Compile(), _argumentIndexes );
     }
 
     [Pure]
@@ -246,6 +272,31 @@ public sealed class ParsedExpression<TArg, TResult> : IParsedExpression<TArg, TR
     private ParsedExpression<TArg, TResult> BindArguments(IEnumerable<KeyValuePair<StringSlice, TArg?>> arguments)
     {
         return BindArguments( arguments.Select( kv => KeyValuePair.Create( GetUnboundArgumentIndex( kv.Key ), kv.Value ) ) );
+    }
+
+    private sealed class DelegatePlaceholderReplacer : ExpressionVisitor
+    {
+        private readonly ExpressionReplacement[] _replacements;
+
+        internal DelegatePlaceholderReplacer(ExpressionReplacement[] replacements)
+        {
+            _replacements = replacements;
+        }
+
+        [Pure]
+        [return: NotNullIfNotNull( "node" )]
+        public override Expression? Visit(Expression? node)
+        {
+            if ( ! ExpressionHelpers.IsLambdaPlaceholder( node ) )
+                return base.Visit( node );
+
+            var index = Array.FindIndex( _replacements, x => x.IsMatched( node ) );
+            if ( index < 0 )
+                return base.Visit( node );
+
+            var result = _replacements[index].Replacement;
+            return result;
+        }
     }
 
     private sealed class ParameterBinder : ExpressionVisitor

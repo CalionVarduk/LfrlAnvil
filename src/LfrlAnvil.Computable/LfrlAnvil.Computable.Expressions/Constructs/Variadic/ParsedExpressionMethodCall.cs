@@ -36,8 +36,9 @@ public sealed class ParsedExpressionMethodCall : ParsedExpressionVariadicFunctio
 
         var method = methods[0];
 
-        return target.NodeType == ExpressionType.Constant && callParameters.All( p => p.NodeType == ExpressionType.Constant )
-            ? ExpressionHelpers.CreateConstantMethodCall( ReinterpretCast.To<ConstantExpression>( target ), method, callParameters )
+        // TODO: add property to ctor that allows to disable constant resolution, enabled by default
+        return target is ConstantExpression constantTarget && callParameters.All( p => p is ConstantExpression )
+            ? ExpressionHelpers.CreateConstantMethodCall( constantTarget, method, callParameters )
             : Expression.Call( target, method, callParameters );
     }
 }

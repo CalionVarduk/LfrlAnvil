@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Computable.Expressions.Exceptions;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
 
@@ -16,10 +17,12 @@ internal static class ExpressionHelpers
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static Expression TryUpdateThrowType(Expression expression, Type expectedType)
     {
-        if ( expression.NodeType != ExpressionType.Throw || expression.Type == expectedType )
+        if ( expression.NodeType != ExpressionType.Throw ||
+            expression.Type == expectedType ||
+            expression is not UnaryExpression throwExpression )
             return expression;
 
-        return Expression.Throw( ((UnaryExpression)expression).Operand, expectedType );
+        return Expression.Throw( throwExpression.Operand, expectedType );
     }
 
     [Pure]
@@ -39,7 +42,7 @@ internal static class ExpressionHelpers
         var result = arrayCtor.Invoke( new object[] { elements.Count } );
 
         for ( var i = 0; i < elements.Count; ++i )
-            setItem.Invoke( result, new[] { i, ((ConstantExpression)elements[i]).Value } );
+            setItem.Invoke( result, new[] { i, ReinterpretCast.To<ConstantExpression>( elements[i] ).Value } );
 
         return Expression.Constant( result, arrayType );
     }
@@ -62,7 +65,7 @@ internal static class ExpressionHelpers
         if ( member is FieldInfo field )
             return Expression.Constant( field.GetValue( operand.Value ), field.FieldType );
 
-        var property = (PropertyInfo)member;
+        var property = ReinterpretCast.To<PropertyInfo>( member );
         return Expression.Constant( property.GetValue( operand.Value ), property.PropertyType );
     }
 
@@ -76,7 +79,7 @@ internal static class ExpressionHelpers
         if ( indexer is MethodInfo method )
             return CreateConstantMethodCall( operand, method, parameters );
 
-        var property = (PropertyInfo)indexer;
+        var property = ReinterpretCast.To<PropertyInfo>( indexer );
         var @params = parameters.GetConstantValues();
         return Expression.Constant( property.GetValue( operand.Value, @params ), property.PropertyType );
     }
@@ -110,22 +113,19 @@ internal static class ExpressionHelpers
         out int index)
     {
         index = 0;
-        if ( expression is null )
+        if ( expression is null || argumentCount == 0 )
             return false;
 
-        if ( expression.NodeType != ExpressionType.ArrayIndex )
+        if ( expression.NodeType != ExpressionType.ArrayIndex || expression is not BinaryExpression arrayIndexExpression )
             return false;
 
-        var arrayIndexExpression = (BinaryExpression)expression;
         if ( ! ReferenceEquals( arrayIndexExpression.Left, parameter ) )
             return false;
 
-        if ( arrayIndexExpression.Right.NodeType != ExpressionType.Constant )
+        if ( arrayIndexExpression.Right is not ConstantExpression indexExpression || indexExpression.Type != typeof( int ) )
             return false;
 
-        var indexExpression = (ConstantExpression)arrayIndexExpression.Right;
-        index = (int)indexExpression.Value!;
-
+        index = DynamicCast.Unbox<int>( indexExpression.Value );
         return index >= 0 && index < argumentCount;
     }
 
@@ -158,7 +158,7 @@ internal static class ExpressionHelpers
     internal static Type[] GetExpressionTypes(this IReadOnlyList<Expression> expressions)
     {
         if ( expressions.Count == 0 )
-            return Array.Empty<Type>();
+            return Type.EmptyTypes;
 
         var result = new Type[expressions.Count];
         for ( var i = 0; i < result.Length; ++i )
@@ -169,41 +169,80 @@ internal static class ExpressionHelpers
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static object?[] GetConstantValues(this IReadOnlyList<Expression> expressions)
+    internal static string GetConstantMemberNameValue(this Expression expression)
+    {
+        return GetConstantRefValue<string>( expression, Resources.MemberNameMustBeConstantNonNullString );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static Type GetConstantArrayElementTypeValue(this Expression expression)
+    {
+        return GetConstantRefValue<Type>( expression, Resources.ArrayElementTypeMustBeConstantNonNullType );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static Expression CreateLambdaPlaceholder(Type type)
+    {
+        return new LambdaPlaceholderExpression( type );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static bool IsLambdaPlaceholder([NotNullWhen( true )] Expression? expression)
+    {
+        return expression is LambdaPlaceholderExpression;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static object?[] GetConstantValues(this IReadOnlyList<Expression> expressions)
     {
         if ( expressions.Count == 0 )
             return Array.Empty<object?>();
 
         var result = new object?[expressions.Count];
         for ( var i = 0; i < result.Length; ++i )
-            result[i] = ((ConstantExpression)expressions[i]).Value;
+            result[i] = ReinterpretCast.To<ConstantExpression>( expressions[i] ).Value;
 
         return result;
     }
 
     [Pure]
-    internal static string GetConstantMemberNameValue(this Expression expression)
+    private static T GetConstantRefValue<T>(this Expression expression, string errorMessage)
+        where T : class
     {
-        if ( expression.NodeType != ExpressionType.Constant || expression.Type != typeof( string ) )
-            throw new ParsedExpressionInvalidExpressionException( Resources.MemberNameMustBeConstantNonNullString, expression );
+        if ( expression is not ConstantExpression constant || ! expression.Type.IsAssignableTo( typeof( T ) ) )
+            throw new ParsedExpressionInvalidExpressionException( errorMessage, expression );
 
-        var result = (string?)((ConstantExpression)expression).Value;
+        var result = DynamicCast.To<T>( constant.Value );
         if ( result is null )
-            throw new ParsedExpressionInvalidExpressionException( Resources.MemberNameMustBeConstantNonNullString, expression );
+            throw new ParsedExpressionInvalidExpressionException( errorMessage, expression );
 
         return result;
     }
 
-    [Pure]
-    internal static Type GetConstantArrayElementTypeValue(this Expression expression)
+    private sealed class LambdaPlaceholderExpression : Expression
     {
-        if ( expression.NodeType != ExpressionType.Constant || ! expression.Type.IsAssignableTo( typeof( Type ) ) )
-            throw new ParsedExpressionInvalidExpressionException( Resources.ArrayElementTypeMustBeConstantNonNullType, expression );
+        internal LambdaPlaceholderExpression(Type type)
+        {
+            Type = type;
+        }
 
-        var result = (Type?)((ConstantExpression)expression).Value;
-        if ( result is null )
-            throw new ParsedExpressionInvalidExpressionException( Resources.ArrayElementTypeMustBeConstantNonNullType, expression );
+        public override Type Type { get; }
+        public override ExpressionType NodeType => ExpressionType.Extension;
 
-        return result;
+        [Pure]
+        public override string ToString()
+        {
+            return $"LambdaPlaceholder({Type.GetDebugString()})";
+        }
+
+        [Pure]
+        protected override Expression VisitChildren(ExpressionVisitor visitor)
+        {
+            return this;
+        }
     }
 }

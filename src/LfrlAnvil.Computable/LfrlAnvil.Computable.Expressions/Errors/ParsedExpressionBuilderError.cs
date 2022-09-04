@@ -191,6 +191,15 @@ public class ParsedExpressionBuilderError
     }
 
     [Pure]
+    internal static ParsedExpressionBuilderError CreateInlineDelegateHasThrownException(IntermediateToken? token, Exception exception)
+    {
+        return new ParsedExpressionBuilderExceptionError(
+            exception,
+            ParsedExpressionBuilderErrorType.InlineDelegateError,
+            token?.Symbol );
+    }
+
+    [Pure]
     internal static ParsedExpressionBuilderError CreatePrefixUnaryOperatorCouldNotBeResolved(IntermediateToken token, Type argumentType)
     {
         return new ParsedExpressionBuilderMissingUnaryOperatorError(

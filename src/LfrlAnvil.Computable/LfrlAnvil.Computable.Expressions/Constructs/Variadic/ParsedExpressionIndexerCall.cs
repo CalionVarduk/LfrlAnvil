@@ -30,8 +30,9 @@ public sealed class ParsedExpressionIndexerCall : ParsedExpressionVariadicFuncti
         if ( indexer is null )
             throw new ParsedExpressionUnresolvableIndexerException( target.Type, parameterTypes );
 
-        return target.NodeType == ExpressionType.Constant && callParameters.All( p => p.NodeType == ExpressionType.Constant )
-            ? ExpressionHelpers.CreateConstantIndexer( ReinterpretCast.To<ConstantExpression>( target ), indexer, callParameters )
+        // TODO: add property to ctor that allows to disable constant resolution, enabled by default
+        return target is ConstantExpression constantTarget && callParameters.All( p => p is ConstantExpression )
+            ? ExpressionHelpers.CreateConstantIndexer( constantTarget, indexer, callParameters )
             : CreateVariableIndexer( target, indexer, callParameters );
     }
 

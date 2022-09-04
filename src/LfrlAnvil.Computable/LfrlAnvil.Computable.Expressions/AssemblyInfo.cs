@@ -9,6 +9,7 @@
 // add variable support (syntax: let NAME = BODY;)
 // add macro support (syntax: macro NAME = BODY;)
 // variables are calculated while macros are inlined
+// constant variables will be optimized away (configurable)
 //
 // other ideas:
 // Int128, Int256, UInt128, UInt256 structs

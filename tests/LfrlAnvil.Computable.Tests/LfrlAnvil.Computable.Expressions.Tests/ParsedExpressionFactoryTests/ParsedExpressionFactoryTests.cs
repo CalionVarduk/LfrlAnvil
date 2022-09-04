@@ -3,6 +3,8 @@ using System.Linq;
 using FluentAssertions.Execution;
 using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Computable.Expressions.Constructs.Boolean;
+using LfrlAnvil.Computable.Expressions.Constructs.Int32;
+using LfrlAnvil.Computable.Expressions.Constructs.String;
 using LfrlAnvil.Computable.Expressions.Errors;
 using LfrlAnvil.Computable.Expressions.Exceptions;
 using LfrlAnvil.Computable.Expressions.Internal;
@@ -2267,6 +2269,20 @@ public partial class ParsedExpressionFactoryTests : TestsBase
         result.Should().Be( "foobar" );
     }
 
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenDelegateInvocationIsChained()
+    {
+        var input = "delegate( 'foo' ) ( 'bar' ) ( 'qux' )";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var expression = sut.Create<Func<string, Func<string, Func<string, string>>>, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( a => b => c => a + b + c );
+
+        result.Should().Be( "foobarqux" );
+    }
+
     [Theory]
     [InlineData( "int" )]
     [InlineData( "int[" )]
@@ -2620,6 +2636,45 @@ public partial class ParsedExpressionFactoryTests : TestsBase
         delegateResult.Should().Be( "( ( foo|BiOp|bar )|BiOp|foobar )" );
     }
 
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenExpressionContainsNestedInlineDelegatesWithSameParameterNames()
+    {
+        var input = "[] ( [ string a ] a ) ( 'foo' ) + ( [ string a ] a ) ( 'bar' )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<string>( "string" )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, Func<string>>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+        var delegateResult = result();
+
+        delegateResult.Should().Be( "( foo|BiOp|bar )" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenExpressionContainsDelegateWithManyParameters()
+    {
+        var input = @"( [ string a , string b , string c , string d , string e , string f , string g , string h , string i , string j ]
+a + b + c + d + e + f + g + h + i + j ) ( 'a' , 'b' , 'c' , 'd' , 'e' , 'f' , 'g' , 'h' , 'i' , 'j' )";
+
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<string>( "string" )
+            .AddBinaryOperator( "+", new ParsedExpressionAddStringOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+
+        result.Should().Be( "abcdefghij" );
+    }
+
     [Theory]
     [InlineData( "[string a , string a] a + a" )]
     [InlineData( ("[string a] [string a] a + a") )]
@@ -2845,6 +2900,424 @@ public partial class ParsedExpressionFactoryTests : TestsBase
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );
 
         action.Should().ThrowExactly<ParsedExpressionCreationException>();
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenDelegateCapturesAnArgument()
+    {
+        var input = "[ string a ] a + b";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<string>( "string" )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, Func<string, string>>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( "bar" );
+        var delegateResult = result( "foo" );
+
+        delegateResult.Should().Be( "( foo|BiOp|bar )" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenDelegateCapturesAnArgumentAndIsInvoked()
+    {
+        var input = "( [ string a ] a + b ) ( 'foo' )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<string>( "string" )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( "bar" );
+
+        result.Should().Be( "( foo|BiOp|bar )" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenMultipleDelegatesCaptureArguments()
+    {
+        var input = "( [ string a ] b + a ) ( 'bar' ) + ( [ string a ] a + c ) ( 'foo' )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<string>( "string" )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( "foo", "qux" );
+
+        result.Should().Be( "( ( foo|BiOp|bar )|BiOp|( foo|BiOp|qux ) )" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenNestedDelegateCapturesAnArgument()
+    {
+        var input = "[] [] [ string a ] a + b";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<string>( "string" )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, Func<Func<Func<string, string>>>>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( "bar" );
+        var delegateResult = result()()( "foo" );
+
+        delegateResult.Should().Be( "( foo|BiOp|bar )" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenNestedDelegateCapturesParentParameter()
+    {
+        var input = "[ string a ] [ string b ] [ string c ] a + b + c";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<string>( "string" )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, Func<string, Func<string, Func<string, string>>>>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+        var delegateResult = result( "foo" )( "bar" )( "qux" );
+
+        delegateResult.Should().Be( "( ( foo|BiOp|bar )|BiOp|qux )" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenNestedDelegateCapturesParentParameterAndParentIsInvoked()
+    {
+        var input = "( [ string a ] [ string b ] [ string c ] a + b + c ) ( 'foo' ) ( 'bar' ) ( 'qux' )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<string>( "string" )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+
+        result.Should().Be( "( ( foo|BiOp|bar )|BiOp|qux )" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenNestedDelegateCapturesParentParameterAndIsInvoked()
+    {
+        var input = "[ string a ] [ string b ] ( [ string c ] a + b + c ) ( 'qux' )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<string>( "string" )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, Func<string, Func<string, string>>>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+        var delegateResult = result( "foo" )( "bar" );
+
+        delegateResult.Should().Be( "( ( foo|BiOp|bar )|BiOp|qux )" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenNestedDelegateCapturesParentParameterAndArgument()
+    {
+        var input = "[ string a ] [ string b ] [ string c ] a + b + c + d";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<string>( "string" )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, Func<string, Func<string, Func<string, string>>>>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( "baz" );
+        var delegateResult = result( "foo" )( "bar" )( "qux" );
+
+        delegateResult.Should().Be( "( ( ( foo|BiOp|bar )|BiOp|qux )|BiOp|baz )" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenNestedDelegateCapturesParentParameterAndArgumentAndParentIsInvoked()
+    {
+        var input = "( [ string a ] [ string b ] [ string c ] a + b + c + d ) ( 'foo' ) ( 'bar' ) ( 'qux' )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<string>( "string" )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( "baz" );
+
+        result.Should().Be( "( ( ( foo|BiOp|bar )|BiOp|qux )|BiOp|baz )" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenNestedDelegateCapturesParentParameterAndArgumentAndIsInvoked()
+    {
+        var input = "[ string a ] [ string b ] ( [ string c ] a + b + c + d ) ( 'qux' )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<string>( "string" )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, Func<string, Func<string, string>>>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( "baz" );
+        var delegateResult = result( "foo" )( "bar" );
+
+        delegateResult.Should().Be( "( ( ( foo|BiOp|bar )|BiOp|qux )|BiOp|baz )" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenDelegateContainsMultipleNestedDelegatesWithClosure()
+    {
+        var input = "[ string p1 ] p1 + ( [ string p2 ] p1 + p2 + a ) ( 'bar' ) + ( [ string p3 ] p1 + p3 + a ) ( 'baz' )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<string>( "string" )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, Func<string, string>>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( "qux" );
+        var delegateResult = result( "foo" );
+
+        delegateResult.Should().Be( "( ( foo|BiOp|( ( foo|BiOp|bar )|BiOp|qux ) )|BiOp|( ( foo|BiOp|baz )|BiOp|qux ) )" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenDelegateWithClosureContainsNestedStaticDelegate()
+    {
+        var input = "[ string a ] a + b + ( [] 'qux' ) ( ) + ( [] a ) ( )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<string>( "string" )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, Func<string, string>>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( "bar" );
+        var delegateResult = result( "foo" );
+
+        delegateResult.Should().Be( "( ( ( foo|BiOp|bar )|BiOp|qux )|BiOp|foo )" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenStaticDelegateHasBeenOptimizedAway()
+    {
+        var input = "0 * ( [ int a ] a * a ) ( 10 ) + b";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .AddTypeDeclaration<int>( "int" )
+            .AddBinaryOperator( "*", new ParsedExpressionMultiplyInt32Operator() )
+            .AddBinaryOperator( "+", new ParsedExpressionAddOperator() )
+            .SetBinaryOperatorPrecedence( "*", 1 )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, int>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( 5 );
+
+        result.Should().Be( 5 );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenDelegateWithCapturedArgumentHasBeenOptimizedAway()
+    {
+        var input = "0 * ( [ int a ] a * b ) ( 10 ) + c";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .AddTypeDeclaration<int>( "int" )
+            .AddBinaryOperator( "*", new ParsedExpressionMultiplyInt32Operator() )
+            .AddBinaryOperator( "+", new ParsedExpressionAddOperator() )
+            .SetBinaryOperatorPrecedence( "*", 1 )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, int>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( 5 );
+
+        result.Should().Be( 5 );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenNestedStaticDelegateHasBeenOptimizedAway()
+    {
+        var input = "[ int p1 ] 0 * ( [ int p2 ] p2 * p2 ) ( 10 ) + p1 + a";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .AddTypeDeclaration<int>( "int" )
+            .AddBinaryOperator( "*", new ParsedExpressionMultiplyInt32Operator() )
+            .AddBinaryOperator( "+", new ParsedExpressionAddOperator() )
+            .SetBinaryOperatorPrecedence( "*", 1 )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, Func<int, int>>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( 5 );
+        var delegateResult = result( 100 );
+
+        delegateResult.Should().Be( 105 );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenNestedDelegateWithClosureHasBeenOptimizedAway()
+    {
+        var input = "[ int p1 ] 0 * ( [ int p2 ] p1 + p2 + a ) ( 10 ) + p1 + b";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .AddTypeDeclaration<int>( "int" )
+            .AddBinaryOperator( "*", new ParsedExpressionMultiplyInt32Operator() )
+            .AddBinaryOperator( "+", new ParsedExpressionAddOperator() )
+            .SetBinaryOperatorPrecedence( "*", 1 )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, Func<int, int>>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( 5 );
+        var delegateResult = result( 100 );
+
+        delegateResult.Should().Be( 105 );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenDelegateWithClosureWithNestedDelegatesHasBeenOptimizedAway()
+    {
+        var input = "0 * ( [ int p1 ] p1 + a + ( [ int p2 ] p2 + b ) ( 10 ) + ( [ int p2 ] p2 + c ) ( 20 ) ) ( 30 ) + d";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .AddTypeDeclaration<int>( "int" )
+            .AddBinaryOperator( "*", new ParsedExpressionMultiplyInt32Operator() )
+            .AddBinaryOperator( "+", new ParsedExpressionAddOperator() )
+            .SetBinaryOperatorPrecedence( "*", 1 )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, int>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( 5 );
+
+        result.Should().Be( 5 );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenDelegatesCaptureArgumentsWhenOtherArgumentsHaveBeenRemoved()
+    {
+        var input = "a * 0 + b * 0 + ( [ int p1 ] p1 * c + ( [ int p2 ] p2 * d ) ( 20 ) ) ( 10 )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .AddTypeDeclaration<int>( "int" )
+            .AddBinaryOperator( "*", new ParsedExpressionMultiplyInt32Operator() )
+            .AddBinaryOperator( "+", new ParsedExpressionAddOperator() )
+            .SetBinaryOperatorPrecedence( "*", 1 )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, int>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( 2, 3 );
+
+        result.Should().Be( 80 );
+    }
+
+    [Theory]
+    [MethodData( nameof( ParsedExpressionFactoryTestsData.GetDelegateNestedInStaticDelegateCapturesManyParametersData ) )]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenDelegateNestedInStaticDelegateCapturesManyParameters(
+        string input,
+        int expected)
+    {
+        var builder = new ParsedExpressionFactoryBuilder()
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .AddTypeDeclaration<int>( "int" )
+            .AddBinaryOperator( "+", new ParsedExpressionAddOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, Func<int>>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+        var delegateResult = result();
+
+        delegateResult.Should().Be( expected );
+    }
+
+    [Theory]
+    [MethodData( nameof( ParsedExpressionFactoryTestsData.GetDelegateNestedInNonStaticDelegateCapturesManyParametersData ) )]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenDelegateNestedInNonStaticDelegateCapturesManyParameters(
+        string input,
+        int expected)
+    {
+        var builder = new ParsedExpressionFactoryBuilder()
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .AddTypeDeclaration<int>( "int" )
+            .AddBinaryOperator( "+", new ParsedExpressionAddOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, Func<int>>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( 10 );
+        var delegateResult = result();
+
+        delegateResult.Should().Be( expected );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenDelegateWithClosureHasMoreThanFifteenParameters()
+    {
+        var input =
+            @"( [ int a , int b , int c , int d , int e , int f , int g , int h , int i , int j , int k , int l , int m , int n , int o , int p ]
+[] a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p + x ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 , 11 , 12 , 13 , 14 , 15 , 16 )";
+
+        var builder = new ParsedExpressionFactoryBuilder()
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .AddTypeDeclaration<int>( "int" )
+            .AddBinaryOperator( "+", new ParsedExpressionAddOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<int, Func<int>>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) );
     }
 
     [Theory]
@@ -3213,6 +3686,23 @@ public partial class ParsedExpressionFactoryTests : TestsBase
         var result = @delegate.Invoke();
 
         result.Should().Be( value.PublicMethodOne( "foo" ) );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenParameterlessMethodTargetIsConstant()
+    {
+        var input = "const.PublicMethodZero()";
+        var value = new TestParameter( "privateField", "privateProperty", "publicField", "publicProperty", next: null );
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddConstant( "const", new ParsedExpressionConstant<TestParameter>( value ) );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+
+        result.Should().Be( value.PublicMethodZero() );
     }
 
     [Fact]

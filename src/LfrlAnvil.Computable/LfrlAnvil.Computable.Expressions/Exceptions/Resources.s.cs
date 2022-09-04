@@ -451,6 +451,13 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string UnsupportedDelegateParameterCount(int parameterCount)
+    {
+        return $"Inline delegates with captured parameters cannot support more than 15 parameters but found {parameterCount}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static string ConfigurationSymbolsMustBeDifferent(string firstSymbolName, string secondSymbolName)
     {
         return $"{firstSymbolName} and {secondSymbolName} symbols must be different.";

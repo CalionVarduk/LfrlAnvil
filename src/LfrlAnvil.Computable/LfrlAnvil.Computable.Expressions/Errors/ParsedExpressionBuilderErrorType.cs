@@ -38,5 +38,6 @@ public enum ParsedExpressionBuilderErrorType : byte
     ExpectedPostfixUnaryOrBinaryConstruct = 33,
     ExpectedBinaryOrPrefixUnaryConstruct = 34,
     AmbiguousPostfixUnaryConstructResolutionFailure = 35,
-    NestedExpressionFailure = 36
+    NestedExpressionFailure = 36,
+    InlineDelegateError = 37
 }

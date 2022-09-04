@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
 
+// TODO: extract to Core
 internal readonly struct StringSlice : IEquatable<StringSlice>, IEquatable<char>, IEnumerable<char>
 {
     private StringSlice(string source, int startIndex, int length)

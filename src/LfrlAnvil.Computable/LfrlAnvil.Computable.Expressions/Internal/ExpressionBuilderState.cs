@@ -8,15 +8,16 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Computable.Expressions.Errors;
+using LfrlAnvil.Computable.Expressions.Internal.Delegates;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
 
 internal class ExpressionBuilderState
 {
-    private readonly ExpressionTokenStack _tokenStack;
-    private readonly ExpressionOperandStack _operandStack;
+    private readonly RandomAccessStack<(IntermediateToken Token, Expectation Expectation)> _tokenStack;
+    private readonly RandomAccessStack<Expression> _operandStack;
     private readonly List<Expression> _argumentAccessExpressions;
-    private readonly InlineDelegateParametersMap? _delegateParameters;
+    private readonly InlineDelegateCollectionState? _delegateCollectionState;
     private readonly ParsedExpressionFactoryInternalConfiguration _configuration;
     private readonly IParsedExpressionNumberParser _numberParser;
     private readonly ExpressionBuilderRootState _rootState;
@@ -31,11 +32,11 @@ internal class ExpressionBuilderState
         IParsedExpressionNumberParser numberParser)
     {
         Id = 0;
-        _tokenStack = new ExpressionTokenStack();
-        _operandStack = new ExpressionOperandStack();
+        _tokenStack = new RandomAccessStack<(IntermediateToken, Expectation)>();
+        _operandStack = new RandomAccessStack<Expression>();
         ArgumentIndexes = new Dictionary<StringSlice, int>();
         _argumentAccessExpressions = new List<Expression>();
-        _delegateParameters = null;
+        _delegateCollectionState = null;
         ParameterExpression = parameterExpression;
         _configuration = configuration;
         _numberParser = numberParser;
@@ -43,7 +44,7 @@ internal class ExpressionBuilderState
         _operatorCount = 0;
         _parenthesesCount = 0;
         LastHandledToken = null;
-        _rootState = (ExpressionBuilderRootState)this;
+        _rootState = ReinterpretCast.To<ExpressionBuilderRootState>( this );
         _expectation = Expectation.Operand | Expectation.OpenedParenthesis | Expectation.PrefixUnaryConstruct;
     }
 
@@ -51,14 +52,14 @@ internal class ExpressionBuilderState
         ExpressionBuilderState prototype,
         Expectation initialState,
         int parenthesesCount,
-        bool useDelegateParameters)
+        bool isInlineDelegate)
     {
         Id = prototype._rootState.GetNextStateId();
-        _tokenStack = new ExpressionTokenStack();
-        _operandStack = new ExpressionOperandStack();
+        _tokenStack = new RandomAccessStack<(IntermediateToken, Expectation)>();
+        _operandStack = new RandomAccessStack<Expression>();
         ArgumentIndexes = prototype.ArgumentIndexes;
         _argumentAccessExpressions = prototype._argumentAccessExpressions;
-        _delegateParameters = prototype._delegateParameters;
+        _delegateCollectionState = prototype._delegateCollectionState;
         ParameterExpression = prototype.ParameterExpression;
         _configuration = prototype._configuration;
         _numberParser = prototype._numberParser;
@@ -69,16 +70,16 @@ internal class ExpressionBuilderState
         _rootState = prototype._rootState;
         _expectation = initialState;
 
-        if ( ! useDelegateParameters )
+        if ( ! isInlineDelegate )
             return;
 
-        if ( _delegateParameters is null )
+        if ( _delegateCollectionState is null )
         {
-            _delegateParameters = new InlineDelegateParametersMap( this );
+            _delegateCollectionState = new InlineDelegateCollectionState( this );
             return;
         }
 
-        _delegateParameters.Activate( this );
+        _delegateCollectionState.Register( this );
     }
 
     internal int Id { get; }
@@ -113,7 +114,7 @@ internal class ExpressionBuilderState
     {
         Assume.Equals( IsRoot, false, nameof( IsRoot ) );
 
-        var self = (ExpressionBuilderChildState)this;
+        var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
         return self.ParentState.Expects( Expectation.InlineDelegateResolution ) && ! IsHandlingInlineDelegateParameters()
             ? HandleInlineDelegateBodyEnd( token: null )
             : Chain<ParsedExpressionBuilderError>.Empty;
@@ -123,6 +124,7 @@ internal class ExpressionBuilderState
     {
         var errors = HandleAmbiguousConstructAsPostfixUnaryOperator();
 
+        // TODO: errors without tokens could be given an optional ParentState?.LastHandledToken, to give more context
         if ( _operandCount == 0 )
             errors = errors.Extend( ParsedExpressionBuilderError.CreateExpressionMustContainAtLeastOneOperand() );
 
@@ -199,6 +201,13 @@ internal class ExpressionBuilderState
         return castErrors.Count > 0
             ? UnsafeBuilderResult<Expression>.CreateErrors( castErrors )
             : UnsafeBuilderResult<Expression>.CreateOk( _operandStack.Pop() );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    protected Expression GetArgumentAccess(int index)
+    {
+        return _argumentAccessExpressions[index];
     }
 
     private Chain<ParsedExpressionBuilderError> HandleNumberConstant(IntermediateToken token)
@@ -293,7 +302,9 @@ internal class ExpressionBuilderState
         if ( errors.Count > 0 )
             return errors;
 
-        var expression = _delegateParameters?.TryGet( token.Symbol ) ?? GetOrAddArgumentAccessExpression( token.Symbol );
+        var expression = _delegateCollectionState?.TryGetParameter( this, token.Symbol ) ??
+            GetOrAddArgumentAccessExpression( token.Symbol );
+
         PushOperand( expression );
         return errors;
     }
@@ -301,7 +312,7 @@ internal class ExpressionBuilderState
     private Chain<ParsedExpressionBuilderError> HandleDelegateParameterName(IntermediateToken token)
     {
         AssumeTokenType( token, IntermediateTokenType.Argument );
-        Assume.IsNotNull( _delegateParameters, nameof( _delegateParameters ) );
+        Assume.IsNotNull( _delegateCollectionState, nameof( _delegateCollectionState ) );
 
         var errors = Chain<ParsedExpressionBuilderError>.Empty;
 
@@ -323,7 +334,7 @@ internal class ExpressionBuilderState
         var parameterType = LastHandledToken.Value.Constructs.TypeDeclaration;
         var parameterName = token.Symbol;
 
-        if ( ArgumentIndexes.ContainsKey( parameterName ) || ! _delegateParameters.TryAdd( parameterType, parameterName ) )
+        if ( ArgumentIndexes.ContainsKey( parameterName ) || ! _delegateCollectionState.TryAddParameter( parameterType, parameterName ) )
             return Chain.Create( ParsedExpressionBuilderError.CreateDuplicatedDelegateParameterName( token ) );
 
         _expectation = Expectation.InlineDelegateParameterSeparator | Expectation.InlineDelegateParametersResolution;
@@ -387,7 +398,7 @@ internal class ExpressionBuilderState
 
                 _expectation &= ~Expectation.PostfixUnaryConstruct;
                 _expectation |= Expectation.PrefixUnaryConstruct | Expectation.AmbiguousPostfixConstructResolution;
-                _tokenStack.Push( token, Expectation.PostfixUnaryConstruct | Expectation.BinaryOperator );
+                _tokenStack.Push( (token, Expectation.PostfixUnaryConstruct | Expectation.BinaryOperator) );
                 return Chain<ParsedExpressionBuilderError>.Empty;
             }
 
@@ -410,7 +421,7 @@ internal class ExpressionBuilderState
 
                 _expectation &= ~Expectation.BinaryOperator;
                 _expectation |= Expectation.AmbiguousPrefixConstructResolution;
-                _tokenStack.Push( token, Expectation.PrefixUnaryConstruct | Expectation.BinaryOperator );
+                _tokenStack.Push( (token, Expectation.PrefixUnaryConstruct | Expectation.BinaryOperator) );
                 return Chain<ParsedExpressionBuilderError>.Empty;
             }
 
@@ -490,7 +501,7 @@ internal class ExpressionBuilderState
     {
         Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
         Assume.IsNotNull( token.Constructs.TypeDeclaration, nameof( token.Constructs.TypeDeclaration ) );
-        Assume.IsNotNull( _delegateParameters, nameof( _delegateParameters ) );
+        Assume.IsNotNull( _delegateCollectionState, nameof( _delegateCollectionState ) );
 
         if ( ! Expects( Expectation.ParameterType ) )
             return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedTypeDeclaration( token ) );
@@ -512,14 +523,14 @@ internal class ExpressionBuilderState
             if ( ! IsLastHandledTokenInvocable( out var invocableToken ) )
                 return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedOpenedParenthesis( token ) );
 
-            _tokenStack.Push( invocableToken, Expectation.InvocationResolution );
+            _tokenStack.Push( (invocableToken, Expectation.InvocationResolution) );
             _expectation = GetExpectationWithPreservedPrefixUnaryConstructResolution( Expectation.InvocationResolution );
             _rootState.ActiveState = ExpressionBuilderChildState.CreateInvocationParameters( this );
             return Chain<ParsedExpressionBuilderError>.Empty;
         }
 
         if ( ! Expects( Expectation.FunctionParametersStart ) )
-            _tokenStack.Push( token, Expectation.OpenedParenthesis );
+            _tokenStack.Push( (token, Expectation.OpenedParenthesis) );
 
         _expectation = Expectation.Operand | Expectation.OpenedParenthesis | Expectation.PrefixUnaryConstruct;
         ++_parenthesesCount;
@@ -619,13 +630,13 @@ internal class ExpressionBuilderState
 
     private Chain<ParsedExpressionBuilderError> HandleInlineDelegateParametersEnd(IntermediateToken token)
     {
-        Assume.IsNotNull( _delegateParameters, nameof( _delegateParameters ) );
+        Assume.IsNotNull( _delegateCollectionState, nameof( _delegateCollectionState ) );
         AssumeTokenType( token, IntermediateTokenType.ClosedSquareBracket );
 
         if ( ! Expects( Expectation.InlineDelegateParametersResolution ) )
             return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedClosedSquareBracket( token ) );
 
-        _delegateParameters.Lock( this );
+        _delegateCollectionState.LockParameters();
         _expectation = Expectation.Operand | Expectation.OpenedParenthesis | Expectation.PrefixUnaryConstruct;
         return Chain<ParsedExpressionBuilderError>.Empty;
     }
@@ -633,19 +644,27 @@ internal class ExpressionBuilderState
     private Chain<ParsedExpressionBuilderError> HandleInlineDelegateBodyEnd(IntermediateToken? token)
     {
         Assume.Equals( IsRoot, false, nameof( IsRoot ) );
-        Assume.IsNotNull( _delegateParameters, nameof( _delegateParameters ) );
+        Assume.IsNotNull( _delegateCollectionState, nameof( _delegateCollectionState ) );
 
         var errors = HandleExpressionEnd();
         if ( errors.Count > 0 )
             return errors.Extend( ParsedExpressionBuilderError.CreateUnexpectedToken( token ) );
 
-        var parameters = _delegateParameters.GetParameters( this );
-        var body = _operandStack.Pop();
-        var lambda = Expression.Lambda( body, parameters );
-        var @delegate = lambda.Compile();
+        Expression result;
+        try
+        {
+            result = _delegateCollectionState.FinalizeLastState( _operandStack.Pop() );
 
-        var self = (ExpressionBuilderChildState)this;
-        return self.ParentState.HandleInlineDelegateResolution( token, Expression.Constant( @delegate ) );
+            if ( _delegateCollectionState.AreAllStatesFinalized )
+                _rootState.AddCompilableDelegate( _delegateCollectionState.CreateCompilableDelegates() );
+        }
+        catch ( Exception exc )
+        {
+            return Chain.Create( ParsedExpressionBuilderError.CreateInlineDelegateHasThrownException( token, exc ) );
+        }
+
+        var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
+        return self.ParentState.HandleInlineDelegateResolution( token, result );
     }
 
     private Chain<ParsedExpressionBuilderError> HandleCallParametersOrInlineDelegateBodyEnd(IntermediateToken token)
@@ -653,7 +672,7 @@ internal class ExpressionBuilderState
         Assume.Equals( IsRoot, false, nameof( IsRoot ) );
         AssumeTokenType( token, IntermediateTokenType.ClosedParenthesis );
 
-        var self = (ExpressionBuilderChildState)this;
+        var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
         if ( ! self.ParentState.ExpectsAny(
                 Expectation.FunctionResolution |
                 Expectation.MethodResolution |
@@ -789,7 +808,7 @@ internal class ExpressionBuilderState
         Assume.Equals( IsRoot, false, nameof( IsRoot ) );
         AssumeTokenType( token, IntermediateTokenType.ClosedSquareBracket );
 
-        var self = (ExpressionBuilderChildState)this;
+        var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
         if ( ! self.ParentState.ExpectsAny(
                 Expectation.ArrayResolution | Expectation.IndexerResolution | Expectation.InlineDelegateResolution ) )
             return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedClosedSquareBracket( token ) );
@@ -895,7 +914,7 @@ internal class ExpressionBuilderState
         if ( IsHandlingInlineDelegateParameters() )
             return HandleInlineDelegateParameterSeparator( token );
 
-        var self = (ExpressionBuilderChildState)this;
+        var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
         if ( self.ParentState.Expects( Expectation.InlineDelegateResolution ) )
             return HandleInlineDelegateBodyEnd( token );
 
@@ -917,7 +936,7 @@ internal class ExpressionBuilderState
     private Chain<ParsedExpressionBuilderError> HandleInlineDelegateParameterSeparator(IntermediateToken token)
     {
         AssumeTokenType( token, IntermediateTokenType.ElementSeparator );
-        Assume.IsNotNull( _delegateParameters, nameof( _delegateParameters ) );
+        Assume.IsNotNull( _delegateCollectionState, nameof( _delegateCollectionState ) );
 
         if ( ! Expects( Expectation.InlineDelegateParameterSeparator ) )
             return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedElementSeparator( token ) );
@@ -1209,7 +1228,7 @@ internal class ExpressionBuilderState
                 return errors;
         }
 
-        _tokenStack.Push( token, Expectation.BinaryOperator );
+        _tokenStack.Push( (token, Expectation.BinaryOperator) );
         _expectation = Expectation.Operand | Expectation.OpenedParenthesis | Expectation.PrefixUnaryConstruct;
         ++_operatorCount;
         return Chain<ParsedExpressionBuilderError>.Empty;
@@ -1229,7 +1248,7 @@ internal class ExpressionBuilderState
         if ( errors.Count > 0 )
             return errors;
 
-        _tokenStack.Push( token, Expectation.PrefixUnaryConstruct );
+        _tokenStack.Push( (token, Expectation.PrefixUnaryConstruct) );
         _expectation &= ~Expectation.PrefixUnaryConstruct;
         _expectation |= Expectation.PrefixUnaryConstructResolution;
         return Chain<ParsedExpressionBuilderError>.Empty;
@@ -1391,7 +1410,7 @@ internal class ExpressionBuilderState
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private bool IsHandlingInlineDelegateParameters()
     {
-        return _delegateParameters is not null && ! _delegateParameters.IsLocked( this );
+        return _delegateCollectionState is not null && ! _delegateCollectionState.AreParametersLocked( this );
     }
 
     [Pure]
@@ -1406,9 +1425,13 @@ internal class ExpressionBuilderState
     private Expression GetOrAddArgumentAccessExpression(StringSlice name)
     {
         if ( ArgumentIndexes.TryGetValue( name, out var index ) )
+        {
+            _delegateCollectionState?.AddArgumentCapture( this, index );
             return _argumentAccessExpressions[index];
+        }
 
         index = ArgumentIndexes.Count;
+        _delegateCollectionState?.AddArgumentCapture( this, index );
         var result = ParameterExpression.CreateArgumentAccess( index );
 
         ArgumentIndexes.Add( name, index );

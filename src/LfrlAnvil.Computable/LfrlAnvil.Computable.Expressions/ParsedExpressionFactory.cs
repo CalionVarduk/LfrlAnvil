@@ -313,6 +313,7 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
             result = new ParsedExpression<TArg, TResult>(
                 input,
                 expression,
+                stateResult.Result.Delegates,
                 stateResult.Result.ArgumentIndexes,
                 boundArguments: new Dictionary<StringSlice, TArg?>() );
 

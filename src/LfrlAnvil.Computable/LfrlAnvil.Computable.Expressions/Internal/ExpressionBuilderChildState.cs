@@ -9,8 +9,8 @@ internal sealed class ExpressionBuilderChildState : ExpressionBuilderState
         ExpressionBuilderState parentState,
         Expectation expectation,
         int parenthesesCount,
-        bool useDelegateParameters = false)
-        : base( parentState, expectation, parenthesesCount, useDelegateParameters )
+        bool isInlineDelegate = false)
+        : base( parentState, expectation, parenthesesCount, isInlineDelegate )
     {
         ParentState = parentState;
         ElementCount = 0;
@@ -63,6 +63,6 @@ internal sealed class ExpressionBuilderChildState : ExpressionBuilderState
             parentState,
             Expectation.ParameterType | Expectation.InlineDelegateParametersResolution,
             parenthesesCount: 0,
-            useDelegateParameters: true );
+            isInlineDelegate: true );
     }
 }
