@@ -458,6 +458,13 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string NonInvocableType(Type type)
+    {
+        return $"Type {type.GetDebugString()} is not invocable.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static string ConfigurationSymbolsMustBeDifferent(string firstSymbolName, string secondSymbolName)
     {
         return $"{firstSymbolName} and {secondSymbolName} symbols must be different.";

@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Computable.Expressions.Exceptions;
+using LfrlAnvil.Exceptions;
 using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
@@ -93,6 +94,24 @@ internal static class ExpressionHelpers
     {
         var @params = parameters.GetConstantValues();
         return Expression.Constant( method.Invoke( operand.Value, @params ), method.ReturnType );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static ConstantExpression CreateConstantDelegateInvocation(
+        ConstantExpression operand,
+        IReadOnlyList<Expression> parameters)
+    {
+        if ( ! operand.Type.IsAssignableTo( typeof( Delegate ) ) )
+            throw new ParsedExpressionNonInvocableTypeExpression( operand.Type );
+
+        if ( operand.Value is null )
+            throw new TargetException( ExceptionResources.NonStaticMethodRequiresTarget );
+
+        var @delegate = DynamicCast.To<Delegate>( operand.Value );
+        var method = @delegate.GetType().GetMethod( nameof( Action.Invoke ) )!;
+        var @params = parameters.GetConstantValues();
+        return Expression.Constant( @delegate.DynamicInvoke( @params ), method.ReturnType );
     }
 
     [Pure]

@@ -400,6 +400,11 @@ public partial class ParsedExpressionFactoryTests
             PrivateGetterProperty = privateProperty;
         }
 
+        public int IntTest(int a, int b, int c)
+        {
+            return this[a] + this[b] - this[c];
+        }
+
         public string PublicMethodZero()
         {
             return string.Empty;

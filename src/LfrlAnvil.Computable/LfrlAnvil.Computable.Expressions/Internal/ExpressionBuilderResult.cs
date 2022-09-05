@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq.Expressions;
 using LfrlAnvil.Computable.Expressions.Internal.Delegates;
 
@@ -7,13 +6,6 @@ namespace LfrlAnvil.Computable.Expressions.Internal;
 
 internal readonly struct ExpressionBuilderResult
 {
-    internal ExpressionBuilderResult(
-        Expression bodyExpression,
-        ParameterExpression parameterExpression,
-        IReadOnlyDictionary<StringSlice, int> argumentIndexes,
-        HashSet<StringSlice> discardedArguments)
-        : this( bodyExpression, parameterExpression, Array.Empty<CompilableInlineDelegate>(), argumentIndexes, discardedArguments ) { }
-
     internal ExpressionBuilderResult(
         Expression bodyExpression,
         ParameterExpression parameterExpression,

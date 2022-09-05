@@ -11,10 +11,15 @@ public sealed class ParsedExpressionMethodCall : ParsedExpressionVariadicFunctio
 {
     private readonly ParsedExpressionFactoryInternalConfiguration _configuration;
 
-    public ParsedExpressionMethodCall(ParsedExpressionFactoryInternalConfiguration configuration)
+    public ParsedExpressionMethodCall(
+        ParsedExpressionFactoryInternalConfiguration configuration,
+        bool foldConstantsWhenPossible = true)
     {
         _configuration = configuration;
+        FoldConstantsWhenPossible = foldConstantsWhenPossible;
     }
+
+    public bool FoldConstantsWhenPossible { get; }
 
     [Pure]
     protected internal override Expression Process(IReadOnlyList<Expression> parameters)
@@ -36,9 +41,10 @@ public sealed class ParsedExpressionMethodCall : ParsedExpressionVariadicFunctio
 
         var method = methods[0];
 
-        // TODO: add property to ctor that allows to disable constant resolution, enabled by default
-        return target is ConstantExpression constantTarget && callParameters.All( p => p is ConstantExpression )
-            ? ExpressionHelpers.CreateConstantMethodCall( constantTarget, method, callParameters )
-            : Expression.Call( target, method, callParameters );
+        return FoldConstantsWhenPossible &&
+            target is ConstantExpression constantTarget &&
+            callParameters.All( p => p is ConstantExpression )
+                ? ExpressionHelpers.CreateConstantMethodCall( constantTarget, method, callParameters )
+                : Expression.Call( target, method, callParameters );
     }
 }

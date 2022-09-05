@@ -10,10 +10,15 @@ public sealed class ParsedExpressionMemberAccess : ParsedExpressionVariadicFunct
 {
     private readonly ParsedExpressionFactoryInternalConfiguration _configuration;
 
-    public ParsedExpressionMemberAccess(ParsedExpressionFactoryInternalConfiguration configuration)
+    public ParsedExpressionMemberAccess(
+        ParsedExpressionFactoryInternalConfiguration configuration,
+        bool foldConstantsWhenPossible = true)
     {
         _configuration = configuration;
+        FoldConstantsWhenPossible = foldConstantsWhenPossible;
     }
+
+    public bool FoldConstantsWhenPossible { get; }
 
     [Pure]
     protected internal override Expression Process(IReadOnlyList<Expression> parameters)
@@ -33,7 +38,7 @@ public sealed class ParsedExpressionMemberAccess : ParsedExpressionVariadicFunct
 
         var member = members[0];
 
-        return target is ConstantExpression constantTarget
+        return FoldConstantsWhenPossible && target is ConstantExpression constantTarget
             ? ExpressionHelpers.CreateConstantMemberAccess( constantTarget, member )
             : Expression.MakeMemberAccess( target, member );
     }

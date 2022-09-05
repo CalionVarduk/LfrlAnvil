@@ -2,19 +2,31 @@
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
+using LfrlAnvil.Computable.Expressions.Internal;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.Variadic;
 
 public sealed class ParsedExpressionInvoke : ParsedExpressionVariadicFunction
 {
+    public ParsedExpressionInvoke(bool foldConstantsWhenPossible = true)
+    {
+        FoldConstantsWhenPossible = foldConstantsWhenPossible;
+    }
+
+    public bool FoldConstantsWhenPossible { get; }
+
     [Pure]
     protected internal override Expression Process(IReadOnlyList<Expression> parameters)
     {
         Ensure.ContainsAtLeast( parameters, 1, nameof( parameters ) );
+
         var target = parameters[0];
-        // TODO: create constant from invocation if target & all parameters are constant expressions
-        // TODO: add property to ctor that allows to disable constant resolution, enabled by default
-        // null delegates will be ignored by this configuration due to how closures for inline delegates work
-        return Expression.Invoke( target, parameters.Skip( 1 ) );
+        var callParameters = parameters.Slice( 1 );
+
+        return FoldConstantsWhenPossible &&
+            target is ConstantExpression constantTarget &&
+            callParameters.All( p => p is ConstantExpression )
+                ? ExpressionHelpers.CreateConstantDelegateInvocation( constantTarget, callParameters )
+                : Expression.Invoke( target, callParameters );
     }
 }

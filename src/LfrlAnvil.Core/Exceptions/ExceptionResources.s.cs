@@ -9,6 +9,7 @@ public static class ExceptionResources
 {
     public const string DividedByZero = "Attempted to divide by zero.";
     public const string SequenceContainsNoElements = "Sequence contains no elements.";
+    public const string NonStaticMethodRequiresTarget = "Non-static method requires a target.";
     public const string ExpectedConditionToBeTrue = "Expected condition to be true.";
     public const string ExpectedConditionToBeFalse = "Expected condition to be false.";
 

@@ -5,6 +5,7 @@ using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Computable.Expressions.Constructs.Boolean;
 using LfrlAnvil.Computable.Expressions.Constructs.Int32;
 using LfrlAnvil.Computable.Expressions.Constructs.String;
+using LfrlAnvil.Computable.Expressions.Constructs.Variadic;
 using LfrlAnvil.Computable.Expressions.Errors;
 using LfrlAnvil.Computable.Expressions.Exceptions;
 using LfrlAnvil.Computable.Expressions.Internal;
@@ -2285,6 +2286,54 @@ public partial class ParsedExpressionFactoryTests : TestsBase
         result.Should().Be( "foobarqux" );
     }
 
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenInvokedDelegateAndItsParametersAreConstantAndConstantFoldingIsEnabled()
+    {
+        var input = "delegate( 1 , 2 , 3 ) * a";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddConstant( "delegate", new ParsedExpressionConstant<Func<int, int, int, int>>( (a, b, c) => a + b - c ) )
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .SetInvokeProvider( _ => new ParsedExpressionInvoke( foldConstantsWhenPossible: true ) )
+            .AddBinaryOperator( "*", new ParsedExpressionMultiplyInt32Operator() )
+            .SetBinaryOperatorPrecedence( "*", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, int>( input );
+        var @delegate = expression.Compile();
+
+        using ( new AssertionScope() )
+        {
+            expression.UnboundArguments.Should().BeEmpty();
+            var result = @delegate.Invoke();
+            result.Should().Be( 0 );
+        }
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenInvokedDelegateAndItsParametersAreConstantAndConstantFoldingIsDisabled()
+    {
+        var input = "delegate( 1 , 2 , 3 ) * a";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddConstant( "delegate", new ParsedExpressionConstant<Func<int, int, int, int>>( (a, b, c) => a + b - c ) )
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .SetInvokeProvider( _ => new ParsedExpressionInvoke( foldConstantsWhenPossible: false ) )
+            .AddBinaryOperator( "*", new ParsedExpressionMultiplyInt32Operator() )
+            .SetBinaryOperatorPrecedence( "*", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, int>( input );
+        var @delegate = expression.Compile();
+
+        using ( new AssertionScope() )
+        {
+            expression.UnboundArguments.Contains( "a" ).Should().BeTrue();
+            var result = @delegate.Invoke( 100 );
+            result.Should().Be( 0 );
+        }
+    }
+
     [Theory]
     [InlineData( "int" )]
     [InlineData( "int[" )]
@@ -3256,6 +3305,26 @@ a + b + c + d + e + f + g + h + i + j ) ( 'a' , 'b' , 'c' , 'd' , 'e' , 'f' , 'g
         result.Should().Be( 80 );
     }
 
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenIndirectNestedDelegateCapturesParameters()
+    {
+        var input = "[ string a ] a + foo( ( [] a + b )() )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<string>( "string" )
+            .AddFunction( "foo", ParsedExpressionFunction.Create( (string a) => $"foo({a})" ) )
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, Func<string, string>>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( "bar" );
+        var delegateResult = result( "foo" );
+
+        delegateResult.Should().Be( "( foo|BiOp|foo(( foo|BiOp|bar )) )" );
+    }
+
     [Theory]
     [MethodData( nameof( ParsedExpressionFactoryTestsData.GetDelegateNestedInStaticDelegateCapturesManyParametersData ) )]
     public void DelegateInvoke_ShouldReturnCorrectResult_WhenDelegateNestedInStaticDelegateCapturesManyParameters(
@@ -3708,6 +3777,58 @@ a + b + c + d + e + f + g + h + i + j ) ( 'a' , 'b' , 'c' , 'd' , 'e' , 'f' , 'g
     }
 
     [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenMethodTargetAndParametersAreConstantWithEnabledConstantsFolding()
+    {
+        var input = "const.IntTest( 1 , 2 , 3 ) * a";
+        var value = new TestParameter( "privateField", "privateProperty", "publicField", "publicProperty", next: null );
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<string>( "string" )
+            .AddConstant( "const", new ParsedExpressionConstant<TestParameter>( value ) )
+            .SetMethodCallProvider( c => new ParsedExpressionMethodCall( c, foldConstantsWhenPossible: true ) )
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .AddBinaryOperator( "*", new ParsedExpressionMultiplyInt32Operator() )
+            .SetBinaryOperatorPrecedence( "*", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, int>( input );
+        var @delegate = expression.Compile();
+
+        using ( new AssertionScope() )
+        {
+            expression.UnboundArguments.Should().BeEmpty();
+            var result = @delegate.Invoke();
+            result.Should().Be( 0 );
+        }
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenMethodTargetAndParametersAreConstantWithDisabledConstantsFolding()
+    {
+        var input = "const.IntTest( 1 , 2 , 3 ) * a";
+        var value = new TestParameter( "privateField", "privateProperty", "publicField", "publicProperty", next: null );
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<string>( "string" )
+            .AddConstant( "const", new ParsedExpressionConstant<TestParameter>( value ) )
+            .SetMethodCallProvider( c => new ParsedExpressionMethodCall( c, foldConstantsWhenPossible: false ) )
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .AddBinaryOperator( "*", new ParsedExpressionMultiplyInt32Operator() )
+            .SetBinaryOperatorPrecedence( "*", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, int>( input );
+        var @delegate = expression.Compile();
+
+        using ( new AssertionScope() )
+        {
+            expression.UnboundArguments.Contains( "a" ).Should().BeTrue();
+            var result = @delegate.Invoke( 100 );
+            result.Should().Be( 0 );
+        }
+    }
+
+    [Fact]
     public void Create_ShouldThrowParsedExpressionCreationException_WhenMethodTargetAndParametersAreConstantButItThrowsAnException()
     {
         var input = "const.ThrowingMethod( 'foo' )";
@@ -4135,6 +4256,56 @@ a + b + c + d + e + f + g + h + i + j ) ( 'a' , 'b' , 'c' , 'd' , 'e' , 'f' , 'g
     }
 
     [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_ForFieldMemberAccessOnConstantValueWithEnabledConstantsFolding()
+    {
+        var input = "const.PublicField.Length * a";
+        var constant = new TestParameter( "privateField", "privateProperty", string.Empty, "publicProperty", next: null );
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddConstant( "const", new ParsedExpressionConstant<TestParameter>( constant ) )
+            .SetMemberAccessProvider( c => new ParsedExpressionMemberAccess( c, foldConstantsWhenPossible: true ) )
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .AddBinaryOperator( "*", new ParsedExpressionMultiplyInt32Operator() )
+            .SetBinaryOperatorPrecedence( "*", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, int>( input );
+        var @delegate = expression.Compile();
+
+        using ( new AssertionScope() )
+        {
+            expression.UnboundArguments.Should().BeEmpty();
+            var result = @delegate.Invoke();
+            result.Should().Be( 0 );
+        }
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_ForFieldMemberAccessOnConstantValueWithDisabledConstantsFolding()
+    {
+        var input = "const.PublicField.Length * a";
+        var constant = new TestParameter( "privateField", "privateProperty", string.Empty, "publicProperty", next: null );
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddConstant( "const", new ParsedExpressionConstant<TestParameter>( constant ) )
+            .SetMemberAccessProvider( c => new ParsedExpressionMemberAccess( c, foldConstantsWhenPossible: false ) )
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .AddBinaryOperator( "*", new ParsedExpressionMultiplyInt32Operator() )
+            .SetBinaryOperatorPrecedence( "*", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, int>( input );
+        var @delegate = expression.Compile();
+
+        using ( new AssertionScope() )
+        {
+            expression.UnboundArguments.Contains( "a" ).Should().BeTrue();
+            var result = @delegate.Invoke( 100 );
+            result.Should().Be( 0 );
+        }
+    }
+
+    [Fact]
     public void DelegateInvoke_ShouldReturnCorrectResult_ForPropertyMemberAccessOnConstantValue()
     {
         var input = "const.PublicProperty";
@@ -4149,6 +4320,56 @@ a + b + c + d + e + f + g + h + i + j ) ( 'a' , 'b' , 'c' , 'd' , 'e' , 'f' , 'g
         var result = @delegate.Invoke();
 
         result.Should().Be( "publicProperty" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_ForPropertyMemberAccessOnConstantValueWithEnabledConstantsFolding()
+    {
+        var input = "const.PublicProperty.Length * a";
+        var constant = new TestParameter( "privateField", "privateProperty", "publicField", string.Empty, next: null );
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddConstant( "const", new ParsedExpressionConstant<TestParameter>( constant ) )
+            .SetMemberAccessProvider( c => new ParsedExpressionMemberAccess( c, foldConstantsWhenPossible: true ) )
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .AddBinaryOperator( "*", new ParsedExpressionMultiplyInt32Operator() )
+            .SetBinaryOperatorPrecedence( "*", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, int>( input );
+        var @delegate = expression.Compile();
+
+        using ( new AssertionScope() )
+        {
+            expression.UnboundArguments.Should().BeEmpty();
+            var result = @delegate.Invoke();
+            result.Should().Be( 0 );
+        }
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_ForPropertyMemberAccessOnConstantValueWithDisabledConstantsFolding()
+    {
+        var input = "const.PublicProperty.Length * a";
+        var constant = new TestParameter( "privateField", "privateProperty", "publicField", string.Empty, next: null );
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddConstant( "const", new ParsedExpressionConstant<TestParameter>( constant ) )
+            .SetMemberAccessProvider( c => new ParsedExpressionMemberAccess( c, foldConstantsWhenPossible: false ) )
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .AddBinaryOperator( "*", new ParsedExpressionMultiplyInt32Operator() )
+            .SetBinaryOperatorPrecedence( "*", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, int>( input );
+        var @delegate = expression.Compile();
+
+        using ( new AssertionScope() )
+        {
+            expression.UnboundArguments.Contains( "a" ).Should().BeTrue();
+            var result = @delegate.Invoke( 100 );
+            result.Should().Be( 0 );
+        }
     }
 
     [Fact]
@@ -4565,6 +4786,54 @@ a + b + c + d + e + f + g + h + i + j ) ( 'a' , 'b' , 'c' , 'd' , 'e' , 'f' , 'g
     }
 
     [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenArrayIndexerTargetAndParametersAreConstantWithEnabledConstantsFolding()
+    {
+        var input = "string[ '' ][ 0 ].Length * a";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<string>( "string" )
+            .SetIndexerCallProvider( c => new ParsedExpressionIndexerCall( c, foldConstantsWhenPossible: true ) )
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .AddBinaryOperator( "*", new ParsedExpressionMultiplyInt32Operator() )
+            .SetBinaryOperatorPrecedence( "*", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, int>( input );
+        var @delegate = expression.Compile();
+
+        using ( new AssertionScope() )
+        {
+            expression.UnboundArguments.Should().BeEmpty();
+            var result = @delegate.Invoke();
+            result.Should().Be( 0 );
+        }
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenArrayIndexerTargetAndParametersAreConstantWithDisabledConstantsFolding()
+    {
+        var input = "string[ '' ][ 0 ].Length * a";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<string>( "string" )
+            .SetIndexerCallProvider( c => new ParsedExpressionIndexerCall( c, foldConstantsWhenPossible: false ) )
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .AddBinaryOperator( "*", new ParsedExpressionMultiplyInt32Operator() )
+            .SetBinaryOperatorPrecedence( "*", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, int>( input );
+        var @delegate = expression.Compile();
+
+        using ( new AssertionScope() )
+        {
+            expression.UnboundArguments.Contains( "a" ).Should().BeTrue();
+            var result = @delegate.Invoke( 100 );
+            result.Should().Be( 0 );
+        }
+    }
+
+    [Fact]
     public void DelegateInvoke_ShouldReturnCorrectResult_WhenObjectIndexerTargetAndParametersAreConstant()
     {
         var input = "'a'[ 0 ]";
@@ -4578,6 +4847,56 @@ a + b + c + d + e + f + g + h + i + j ) ( 'a' , 'b' , 'c' , 'd' , 'e' , 'f' , 'g
         var result = @delegate.Invoke();
 
         result.Should().Be( 'a' );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenObjectIndexerTargetAndParametersAreConstantWithEnabledConstantsFolding()
+    {
+        var input = "const[ 0 ] * a";
+        var constant = new TestParameter( "privateField", "privateProperty", "publicField", string.Empty, next: null );
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddConstant( "const", new ParsedExpressionConstant<TestParameter>( constant ) )
+            .SetIndexerCallProvider( c => new ParsedExpressionIndexerCall( c, foldConstantsWhenPossible: true ) )
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .AddBinaryOperator( "*", new ParsedExpressionMultiplyInt32Operator() )
+            .SetBinaryOperatorPrecedence( "*", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, int>( input );
+        var @delegate = expression.Compile();
+
+        using ( new AssertionScope() )
+        {
+            expression.UnboundArguments.Should().BeEmpty();
+            var result = @delegate.Invoke();
+            result.Should().Be( 0 );
+        }
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenObjectIndexerTargetAndParametersAreConstantWithDisabledConstantsFolding()
+    {
+        var input = "const[ 0 ] * a";
+        var constant = new TestParameter( "privateField", "privateProperty", "publicField", string.Empty, next: null );
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddConstant( "const", new ParsedExpressionConstant<TestParameter>( constant ) )
+            .SetIndexerCallProvider( c => new ParsedExpressionIndexerCall( c, foldConstantsWhenPossible: false ) )
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .AddBinaryOperator( "*", new ParsedExpressionMultiplyInt32Operator() )
+            .SetBinaryOperatorPrecedence( "*", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, int>( input );
+        var @delegate = expression.Compile();
+
+        using ( new AssertionScope() )
+        {
+            expression.UnboundArguments.Contains( "a" ).Should().BeTrue();
+            var result = @delegate.Invoke( 100 );
+            result.Should().Be( 0 );
+        }
     }
 
     [Fact]
@@ -4897,6 +5216,21 @@ a + b + c + d + e + f + g + h + i + j ) ( 'a' , 'b' , 'c' , 'd' , 'e' , 'f' , 'g
     }
 
     [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenInvokeVariadicReceivesNullInvocableFirstParameter()
+    {
+        var input = "INVOKE( delegate )";
+        var builder = new ParsedExpressionFactoryBuilder().AddConstant( "delegate", new ParsedExpressionConstant<Func<string>?>( null ) );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
+    }
+
+    [Fact]
     public void Create_ShouldAddAutomaticResultConversion_WhenActualResultTypeIsDifferentFromExpected_BasedOnPrefixTypeConverter()
     {
         var input = "12.34";
@@ -5060,6 +5394,142 @@ a + b + c + d + e + f + g + h + i + j ) ( 'a' , 'b' , 'c' , 'd' , 'e' , 'f' , 'g
                     e,
                     input,
                     ParsedExpressionBuilderErrorType.ExpressionResultTypeIsNotCompatibleWithExpectedOutputType ) );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenDiscardUnusedArgumentsIsDisabled()
+    {
+        var input = "0 * a";
+        var configuration = Substitute.For<IParsedExpressionFactoryConfiguration>();
+        configuration.DecimalPoint.Returns( '.' );
+        configuration.IntegerDigitSeparator.Returns( '_' );
+        configuration.StringDelimiter.Returns( '\'' );
+        configuration.ScientificNotationExponents.Returns( "eE" );
+        configuration.AllowScientificNotation.Returns( true );
+        configuration.AllowNonIntegerNumbers.Returns( true );
+        configuration.ConvertResultToOutputTypeAutomatically.Returns( true );
+        configuration.PostponeStaticInlineDelegateCompilation.Returns( false );
+        configuration.DiscardUnusedArguments.Returns( false );
+
+        var builder = new ParsedExpressionFactoryBuilder()
+            .SetConfiguration( configuration )
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .AddBinaryOperator( "*", new ParsedExpressionMultiplyInt32Operator() )
+            .SetBinaryOperatorPrecedence( "*", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, int>( input );
+        var @delegate = expression.Compile();
+
+        using ( new AssertionScope() )
+        {
+            expression.UnboundArguments.Contains( "a" ).Should().BeTrue();
+            var result = @delegate.Invoke( 100 );
+            result.Should().Be( 0 );
+        }
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenDiscardUnusedArgumentsIsEnabled()
+    {
+        var input = "0 * a";
+        var configuration = Substitute.For<IParsedExpressionFactoryConfiguration>();
+        configuration.DecimalPoint.Returns( '.' );
+        configuration.IntegerDigitSeparator.Returns( '_' );
+        configuration.StringDelimiter.Returns( '\'' );
+        configuration.ScientificNotationExponents.Returns( "eE" );
+        configuration.AllowScientificNotation.Returns( true );
+        configuration.AllowNonIntegerNumbers.Returns( true );
+        configuration.ConvertResultToOutputTypeAutomatically.Returns( true );
+        configuration.PostponeStaticInlineDelegateCompilation.Returns( false );
+        configuration.DiscardUnusedArguments.Returns( true );
+
+        var builder = new ParsedExpressionFactoryBuilder()
+            .SetConfiguration( configuration )
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .AddBinaryOperator( "*", new ParsedExpressionMultiplyInt32Operator() )
+            .SetBinaryOperatorPrecedence( "*", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, int>( input );
+        var @delegate = expression.Compile();
+
+        using ( new AssertionScope() )
+        {
+            expression.UnboundArguments.Should().BeEmpty();
+            var result = @delegate.Invoke();
+            result.Should().Be( 0 );
+        }
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenPostponeStaticInlineDelegateCompilationIsDisabled()
+    {
+        var input = "( [] 0 )() * a";
+        var configuration = Substitute.For<IParsedExpressionFactoryConfiguration>();
+        configuration.DecimalPoint.Returns( '.' );
+        configuration.IntegerDigitSeparator.Returns( '_' );
+        configuration.StringDelimiter.Returns( '\'' );
+        configuration.ScientificNotationExponents.Returns( "eE" );
+        configuration.AllowScientificNotation.Returns( true );
+        configuration.AllowNonIntegerNumbers.Returns( true );
+        configuration.ConvertResultToOutputTypeAutomatically.Returns( true );
+        configuration.PostponeStaticInlineDelegateCompilation.Returns( false );
+        configuration.DiscardUnusedArguments.Returns( true );
+
+        var builder = new ParsedExpressionFactoryBuilder()
+            .SetConfiguration( configuration )
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .AddBinaryOperator( "*", new ParsedExpressionMultiplyInt32Operator() )
+            .SetBinaryOperatorPrecedence( "*", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, int>( input );
+        var @delegate = expression.Compile();
+
+        using ( new AssertionScope() )
+        {
+            expression.UnboundArguments.Should().BeEmpty();
+            var result = @delegate.Invoke();
+            result.Should().Be( 0 );
+        }
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenPostponeStaticInlineDelegateCompilationIsEnabled()
+    {
+        var input = "( [] 0 )() * a";
+        var configuration = Substitute.For<IParsedExpressionFactoryConfiguration>();
+        configuration.DecimalPoint.Returns( '.' );
+        configuration.IntegerDigitSeparator.Returns( '_' );
+        configuration.StringDelimiter.Returns( '\'' );
+        configuration.ScientificNotationExponents.Returns( "eE" );
+        configuration.AllowScientificNotation.Returns( true );
+        configuration.AllowNonIntegerNumbers.Returns( true );
+        configuration.ConvertResultToOutputTypeAutomatically.Returns( true );
+        configuration.PostponeStaticInlineDelegateCompilation.Returns( true );
+        configuration.DiscardUnusedArguments.Returns( true );
+
+        var builder = new ParsedExpressionFactoryBuilder()
+            .SetConfiguration( configuration )
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .AddBinaryOperator( "*", new ParsedExpressionMultiplyInt32Operator() )
+            .SetBinaryOperatorPrecedence( "*", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, int>( input );
+        var @delegate = expression.Compile();
+
+        using ( new AssertionScope() )
+        {
+            expression.UnboundArguments.Contains( "a" ).Should().BeTrue();
+            var result = @delegate.Invoke( 100 );
+            result.Should().Be( 0 );
+        }
     }
 
     [Fact]

@@ -11,4 +11,6 @@ public class ParsedExpressionFactoryDefaultConfiguration : IParsedExpressionFact
     public virtual bool ConvertResultToOutputTypeAutomatically => true;
     public virtual bool AllowNonPublicMemberAccess => false;
     public virtual bool IgnoreMemberNameCase => false;
+    public virtual bool PostponeStaticInlineDelegateCompilation => false;
+    public virtual bool DiscardUnusedArguments => true;
 }

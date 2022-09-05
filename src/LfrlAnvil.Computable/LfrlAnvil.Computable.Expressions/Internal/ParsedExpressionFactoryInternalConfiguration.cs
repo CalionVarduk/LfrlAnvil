@@ -26,6 +26,8 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
         ConvertResultToOutputTypeAutomatically = configuration.ConvertResultToOutputTypeAutomatically;
         AllowNonPublicMemberAccess = configuration.AllowNonPublicMemberAccess;
         IgnoreMemberNameCase = configuration.IgnoreMemberNameCase;
+        PostponeStaticInlineDelegateCompilation = configuration.PostponeStaticInlineDelegateCompilation;
+        DiscardUnusedArguments = configuration.DiscardUnusedArguments;
 
         NumberStyles = NumberStyles.AllowThousands;
 
@@ -51,6 +53,8 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
     public bool ConvertResultToOutputTypeAutomatically { get; }
     public bool AllowNonPublicMemberAccess { get; }
     public bool IgnoreMemberNameCase { get; }
+    public bool PostponeStaticInlineDelegateCompilation { get; }
+    public bool DiscardUnusedArguments { get; }
     public NumberStyles NumberStyles { get; }
     public BindingFlags MemberBindingFlags { get; }
     public IFormatProvider NumberFormatProvider { get; }

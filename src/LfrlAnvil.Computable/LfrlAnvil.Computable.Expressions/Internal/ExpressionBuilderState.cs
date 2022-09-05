@@ -18,7 +18,6 @@ internal class ExpressionBuilderState
     private readonly RandomAccessStack<Expression> _operandStack;
     private readonly List<Expression> _argumentAccessExpressions;
     private readonly InlineDelegateCollectionState? _delegateCollectionState;
-    private readonly ParsedExpressionFactoryInternalConfiguration _configuration;
     private readonly IParsedExpressionNumberParser _numberParser;
     private readonly ExpressionBuilderRootState _rootState;
     private readonly IReadOnlyDictionary<StringSlice, ConstantExpression>? _boundArguments;
@@ -40,7 +39,7 @@ internal class ExpressionBuilderState
         _argumentAccessExpressions = new List<Expression>();
         _delegateCollectionState = null;
         ParameterExpression = parameterExpression;
-        _configuration = configuration;
+        Configuration = configuration;
         _numberParser = numberParser;
         _operandCount = 0;
         _operatorCount = 0;
@@ -64,7 +63,7 @@ internal class ExpressionBuilderState
         _argumentAccessExpressions = prototype._argumentAccessExpressions;
         _delegateCollectionState = prototype._delegateCollectionState;
         ParameterExpression = prototype.ParameterExpression;
-        _configuration = prototype._configuration;
+        Configuration = prototype.Configuration;
         _numberParser = prototype._numberParser;
         _operandCount = 0;
         _operatorCount = 0;
@@ -86,8 +85,9 @@ internal class ExpressionBuilderState
         _delegateCollectionState.Register( this );
     }
 
+    protected ParsedExpressionFactoryInternalConfiguration Configuration { get; }
+    protected Dictionary<StringSlice, int> ArgumentIndexes { get; }
     internal int Id { get; }
-    internal Dictionary<StringSlice, int> ArgumentIndexes { get; }
     internal ParameterExpression ParameterExpression { get; }
     internal IntermediateToken? LastHandledToken { get; private set; }
     internal bool IsRoot => ReferenceEquals( this, _rootState );
@@ -176,7 +176,7 @@ internal class ExpressionBuilderState
         if ( rawBody.Type == outputType )
             return UnsafeBuilderResult<Expression>.CreateOk( rawBody );
 
-        if ( ! _configuration.ConvertResultToOutputTypeAutomatically )
+        if ( ! Configuration.ConvertResultToOutputTypeAutomatically )
         {
             return rawBody.Type.IsAssignableTo( outputType )
                 ? UnsafeBuilderResult<Expression>.CreateOk( Expression.Convert( rawBody, outputType ) )
@@ -186,7 +186,7 @@ internal class ExpressionBuilderState
                         outputType ) );
         }
 
-        var validConverter = _configuration.FindFirstValidTypeConverter( rawBody.Type, outputType );
+        var validConverter = Configuration.FindFirstValidTypeConverter( rawBody.Type, outputType );
         if ( validConverter is not null )
         {
             var errors = ProcessOutputTypeConverter( validConverter, rawBody );
@@ -245,7 +245,7 @@ internal class ExpressionBuilderState
         var index = token.Symbol.StartIndex;
         var endIndex = token.Symbol.EndIndex - 1;
 
-        if ( token.Symbol.Source[endIndex] != _configuration.StringDelimiter )
+        if ( token.Symbol.Source[endIndex] != Configuration.StringDelimiter )
             errors = errors.Extend( ParsedExpressionBuilderError.CreateStringConstantParsingFailure( token ) );
 
         if ( errors.Count > 0 )
@@ -258,7 +258,7 @@ internal class ExpressionBuilderState
         {
             var c = token.Symbol.Source[index];
             builder.Append( c );
-            index += c == _configuration.StringDelimiter ? 2 : 1;
+            index += c == Configuration.StringDelimiter ? 2 : 1;
         }
 
         var expression = Expression.Constant( builder.ToString() );
@@ -299,7 +299,7 @@ internal class ExpressionBuilderState
         if ( ! Expects( Expectation.Operand ) )
             errors = errors.Extend( ParsedExpressionBuilderError.CreateUnexpectedOperand( token ) );
 
-        if ( ! TokenValidation.IsValidArgumentName( token.Symbol, _configuration.StringDelimiter ) )
+        if ( ! TokenValidation.IsValidArgumentName( token.Symbol, Configuration.StringDelimiter ) )
             errors = errors.Extend( ParsedExpressionBuilderError.CreateInvalidArgumentName( token ) );
 
         if ( errors.Count > 0 )
@@ -322,7 +322,7 @@ internal class ExpressionBuilderState
         if ( ! Expects( Expectation.ParameterName ) )
             errors = errors.Extend( ParsedExpressionBuilderError.CreateUnexpectedDelegateParameterName( token ) );
 
-        if ( ! TokenValidation.IsValidArgumentName( token.Symbol, _configuration.StringDelimiter ) )
+        if ( ! TokenValidation.IsValidArgumentName( token.Symbol, Configuration.StringDelimiter ) )
             errors = errors.Extend( ParsedExpressionBuilderError.CreateInvalidDelegateParameterName( token ) );
 
         if ( errors.Count > 0 )
@@ -351,7 +351,7 @@ internal class ExpressionBuilderState
         Assume.IsNotEmpty( _operandStack, nameof( _operandStack ) );
 
         var operand = _operandStack[0];
-        var handleAsMethod = _configuration.TypeContainsMethod( operand.Type, token.Symbol );
+        var handleAsMethod = Configuration.TypeContainsMethod( operand.Type, token.Symbol );
         if ( ! handleAsMethod )
             return HandleFieldOrPropertyAccess( token );
 
@@ -657,7 +657,9 @@ internal class ExpressionBuilderState
         Expression result;
         try
         {
-            result = _delegateCollectionState.FinalizeLastState( _operandStack.Pop() );
+            result = _delegateCollectionState.FinalizeLastState(
+                lambdaBody: _operandStack.Pop(),
+                compileWhenStatic: ! Configuration.PostponeStaticInlineDelegateCompilation );
 
             if ( _delegateCollectionState.AreAllStatesFinalized )
                 _rootState.AddCompilableDelegate( _delegateCollectionState.CreateCompilableDelegates() );
@@ -1420,7 +1422,7 @@ internal class ExpressionBuilderState
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private ParsedExpressionVariadicFunction GetInternalVariadicFunction(string symbol)
     {
-        var constructs = _configuration.Constructs[StringSlice.Create( symbol )];
+        var constructs = Configuration.Constructs[StringSlice.Create( symbol )];
         Assume.IsNotNull( constructs.VariadicFunction, nameof( constructs.VariadicFunction ) );
         return constructs.VariadicFunction;
     }

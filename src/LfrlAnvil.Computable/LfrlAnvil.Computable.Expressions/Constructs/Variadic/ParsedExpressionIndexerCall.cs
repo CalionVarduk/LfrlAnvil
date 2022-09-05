@@ -12,10 +12,15 @@ public sealed class ParsedExpressionIndexerCall : ParsedExpressionVariadicFuncti
 {
     private readonly ParsedExpressionFactoryInternalConfiguration _configuration;
 
-    public ParsedExpressionIndexerCall(ParsedExpressionFactoryInternalConfiguration configuration)
+    public ParsedExpressionIndexerCall(
+        ParsedExpressionFactoryInternalConfiguration configuration,
+        bool foldConstantsWhenPossible = true)
     {
         _configuration = configuration;
+        FoldConstantsWhenPossible = foldConstantsWhenPossible;
     }
+
+    public bool FoldConstantsWhenPossible { get; }
 
     [Pure]
     protected internal override Expression Process(IReadOnlyList<Expression> parameters)
@@ -30,10 +35,11 @@ public sealed class ParsedExpressionIndexerCall : ParsedExpressionVariadicFuncti
         if ( indexer is null )
             throw new ParsedExpressionUnresolvableIndexerException( target.Type, parameterTypes );
 
-        // TODO: add property to ctor that allows to disable constant resolution, enabled by default
-        return target is ConstantExpression constantTarget && callParameters.All( p => p is ConstantExpression )
-            ? ExpressionHelpers.CreateConstantIndexer( constantTarget, indexer, callParameters )
-            : CreateVariableIndexer( target, indexer, callParameters );
+        return FoldConstantsWhenPossible &&
+            target is ConstantExpression constantTarget &&
+            callParameters.All( p => p is ConstantExpression )
+                ? ExpressionHelpers.CreateConstantIndexer( constantTarget, indexer, callParameters )
+                : CreateVariableIndexer( target, indexer, callParameters );
     }
 
     [Pure]

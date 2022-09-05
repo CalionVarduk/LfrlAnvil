@@ -99,7 +99,7 @@ internal sealed class InlineDelegateCollectionState
         AddParameterCapture( state.Id, _rootParameter, 0, index );
     }
 
-    internal Expression FinalizeLastState(Expression lambdaBody, bool compileWhenStatic = true)
+    internal Expression FinalizeLastState(Expression lambdaBody, bool compileWhenStatic)
     {
         Assume.IsNotEmpty( _registeredStates, nameof( _registeredStates ) );
         Assume.Equals( _isLastStateActive, false, nameof( _isLastStateActive ) );

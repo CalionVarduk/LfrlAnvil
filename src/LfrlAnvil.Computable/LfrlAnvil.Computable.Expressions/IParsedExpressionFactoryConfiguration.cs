@@ -11,4 +11,6 @@ public interface IParsedExpressionFactoryConfiguration
     bool ConvertResultToOutputTypeAutomatically { get; }
     bool AllowNonPublicMemberAccess { get; }
     bool IgnoreMemberNameCase { get; }
+    bool PostponeStaticInlineDelegateCompilation { get; }
+    bool DiscardUnusedArguments { get; }
 }
