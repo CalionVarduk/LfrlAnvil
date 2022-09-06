@@ -29,7 +29,7 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string InvalidConstructSymbol(StringSlice symbol)
+    internal static string InvalidConstructSymbol(StringSliceOld symbol)
     {
         return $"'{symbol}' is not a valid construct symbol.";
     }
@@ -125,14 +125,14 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string OperatorGroupContainsConstructsOfOtherType(StringSlice symbol)
+    internal static string OperatorGroupContainsConstructsOfOtherType(StringSliceOld symbol)
     {
         return $"Expected construct group with '{symbol}' symbol to be comprised of only operators but found other construct types.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FoundDuplicateTypedBinaryOperator(StringSlice symbol, ParsedExpressionTypedBinaryOperator @operator)
+    internal static string FoundDuplicateTypedBinaryOperator(StringSliceOld symbol, ParsedExpressionTypedBinaryOperator @operator)
     {
         return
             $"Found duplicate binary operator for symbol '{symbol}' (left argument type: {@operator.LeftArgumentType.GetDebugString()}, right argument type: {@operator.RightArgumentType.GetDebugString()}).";
@@ -140,14 +140,14 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FoundDuplicateGenericBinaryOperator(StringSlice symbol)
+    internal static string FoundDuplicateGenericBinaryOperator(StringSliceOld symbol)
     {
         return $"Found duplicate generic binary operator for symbol '{symbol}'.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string UndefinedBinaryOperatorPrecedence(StringSlice symbol)
+    internal static string UndefinedBinaryOperatorPrecedence(StringSliceOld symbol)
     {
         return $"Binary operator precedence for symbol '{symbol}' is undefined.";
     }
@@ -155,7 +155,7 @@ internal static class Resources
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string FoundDuplicateTypedUnaryOperator(
-        StringSlice symbol,
+        StringSliceOld symbol,
         ParsedExpressionTypedUnaryOperator @operator,
         ParsedExpressionConstructType type)
     {
@@ -169,7 +169,7 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FoundDuplicateGenericUnaryOperator(StringSlice symbol, ParsedExpressionConstructType type)
+    internal static string FoundDuplicateGenericUnaryOperator(StringSliceOld symbol, ParsedExpressionConstructType type)
     {
         var typeText = (type & ParsedExpressionConstructType.PrefixUnaryConstruct) != ParsedExpressionConstructType.None
             ? "prefix"
@@ -180,7 +180,7 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string UndefinedUnaryOperatorPrecedence(StringSlice symbol, ParsedExpressionConstructType type)
+    internal static string UndefinedUnaryOperatorPrecedence(StringSliceOld symbol, ParsedExpressionConstructType type)
     {
         var typeText = (type & ParsedExpressionConstructType.PrefixUnaryConstruct) != ParsedExpressionConstructType.None
             ? "Prefix"
@@ -191,7 +191,7 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string TypeConverterGroupContainsConstructsOfOtherType(StringSlice symbol)
+    internal static string TypeConverterGroupContainsConstructsOfOtherType(StringSliceOld symbol)
     {
         return $"Expected construct group with '{symbol}' symbol to be comprised of only type converters but found other construct types.";
     }
@@ -199,7 +199,7 @@ internal static class Resources
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string FoundDuplicateTypedTypeConverter(
-        StringSlice symbol,
+        StringSliceOld symbol,
         ParsedExpressionTypeConverter converter,
         ParsedExpressionConstructType type)
     {
@@ -212,7 +212,7 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FoundDuplicateGenericTypeConverter(StringSlice symbol, ParsedExpressionConstructType type)
+    internal static string FoundDuplicateGenericTypeConverter(StringSliceOld symbol, ParsedExpressionConstructType type)
     {
         var typeText = (type & ParsedExpressionConstructType.PrefixUnaryConstruct) != ParsedExpressionConstructType.None
             ? "prefix"
@@ -223,7 +223,7 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string UndefinedTypeConverterPrecedence(StringSlice symbol, ParsedExpressionConstructType type)
+    internal static string UndefinedTypeConverterPrecedence(StringSliceOld symbol, ParsedExpressionConstructType type)
     {
         var typeText = (type & ParsedExpressionConstructType.PrefixUnaryConstruct) != ParsedExpressionConstructType.None
             ? "Prefix"
@@ -235,7 +235,7 @@ internal static class Resources
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string NotAllTypeConvertersHaveTheSameTargetType(
-        StringSlice symbol,
+        StringSliceOld symbol,
         Type targetType,
         ParsedExpressionConstructType type)
     {
@@ -249,7 +249,7 @@ internal static class Resources
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string TypeConverterCollectionsDoNotHaveTheSameTargetType(
-        StringSlice symbol,
+        StringSliceOld symbol,
         Type prefixTargetType,
         Type postfixTargetType)
     {
@@ -259,42 +259,42 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string ConstantGroupContainsMoreThanOneConstant(StringSlice symbol)
+    internal static string ConstantGroupContainsMoreThanOneConstant(StringSliceOld symbol)
     {
         return $"Expected constant group with '{symbol}' symbol to contain only one constant.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string ConstantGroupContainsConstructsOfOtherType(StringSlice symbol)
+    internal static string ConstantGroupContainsConstructsOfOtherType(StringSliceOld symbol)
     {
         return $"Expected constant group with '{symbol}' symbol to be comprised of only constants but found other construct types.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string TypeDeclarationGroupContainsMoreThanOneType(StringSlice symbol)
+    internal static string TypeDeclarationGroupContainsMoreThanOneType(StringSliceOld symbol)
     {
         return $"Expected type declaration group with '{symbol}' symbol to contain only one type.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string TypeDeclarationGroupContainsConstructsOfOtherType(StringSlice symbol)
+    internal static string TypeDeclarationGroupContainsConstructsOfOtherType(StringSliceOld symbol)
     {
         return $"Expected type declaration group with '{symbol}' symbol to be comprised of only types but found other construct types.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string VariadicFunctionGroupContainsMoreThanOneFunction(StringSlice symbol)
+    internal static string VariadicFunctionGroupContainsMoreThanOneFunction(StringSliceOld symbol)
     {
         return $"Expected variadic function group with '{symbol}' symbol to contain only one function.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string VariadicFunctionGroupContainsConstructsOfOtherType(StringSlice symbol)
+    internal static string VariadicFunctionGroupContainsConstructsOfOtherType(StringSliceOld symbol)
     {
         return
             $"Expected variadic function group with '{symbol}' symbol to be comprised of only variadic functions but found other construct types.";
@@ -303,7 +303,7 @@ internal static class Resources
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string FoundDuplicateFunctionSignature(
-        StringSlice symbol,
+        StringSliceOld symbol,
         IReadOnlyList<Expression> parameters)
     {
         var parameterTypesText = string.Join( ", ", parameters.Select( e => e.Type.GetDebugString() ) );
@@ -312,7 +312,7 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FunctionGroupContainsConstructsOfOtherType(StringSlice symbol)
+    internal static string FunctionGroupContainsConstructsOfOtherType(StringSliceOld symbol)
     {
         return $"Expected function group with '{symbol}' symbol to be comprised of only functions but found other construct types.";
     }

@@ -10,12 +10,12 @@ namespace LfrlAnvil.Computable.Expressions.Errors;
 
 public class ParsedExpressionBuilderError
 {
-    private readonly StringSlice? _token;
+    private readonly StringSliceOld? _token;
 
     public ParsedExpressionBuilderError()
         : this( ParsedExpressionBuilderErrorType.Error ) { }
 
-    internal ParsedExpressionBuilderError(ParsedExpressionBuilderErrorType type, StringSlice? token = null)
+    internal ParsedExpressionBuilderError(ParsedExpressionBuilderErrorType type, StringSliceOld? token = null)
     {
         _token = token;
         Type = type;

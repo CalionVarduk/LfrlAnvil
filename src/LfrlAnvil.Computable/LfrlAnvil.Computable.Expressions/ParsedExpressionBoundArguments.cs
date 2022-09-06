@@ -10,16 +10,16 @@ namespace LfrlAnvil.Computable.Expressions;
 public sealed class ParsedExpressionBoundArguments<TArg> : IReadOnlyCollection<KeyValuePair<ReadOnlyMemory<char>, TArg?>>
 {
     public static readonly ParsedExpressionBoundArguments<TArg> Empty = new ParsedExpressionBoundArguments<TArg>(
-        new Dictionary<StringSlice, TArg?>() );
+        new Dictionary<StringSliceOld, TArg?>() );
 
-    private readonly IReadOnlyDictionary<StringSlice, TArg?> _map;
+    private readonly IReadOnlyDictionary<StringSliceOld, TArg?> _map;
 
     public ParsedExpressionBoundArguments(IEnumerable<KeyValuePair<ReadOnlyMemory<char>, TArg?>> map)
     {
-        _map = new Dictionary<StringSlice, TArg?>( map.Select( kv => KeyValuePair.Create( StringSlice.Create( kv.Key ), kv.Value ) ) );
+        _map = new Dictionary<StringSliceOld, TArg?>( map.Select( kv => KeyValuePair.Create( StringSliceOld.Create( kv.Key ), kv.Value ) ) );
     }
 
-    internal ParsedExpressionBoundArguments(IReadOnlyDictionary<StringSlice, TArg?> map)
+    internal ParsedExpressionBoundArguments(IReadOnlyDictionary<StringSliceOld, TArg?> map)
     {
         _map = map;
     }
@@ -35,7 +35,7 @@ public sealed class ParsedExpressionBoundArguments<TArg> : IReadOnlyCollection<K
     [Pure]
     public bool Contains(ReadOnlyMemory<char> name)
     {
-        return _map.ContainsKey( StringSlice.Create( name ) );
+        return _map.ContainsKey( StringSliceOld.Create( name ) );
     }
 
     [Pure]
@@ -47,7 +47,7 @@ public sealed class ParsedExpressionBoundArguments<TArg> : IReadOnlyCollection<K
     [Pure]
     public bool TryGetValue(ReadOnlyMemory<char> name, out TArg? result)
     {
-        return _map.TryGetValue( StringSlice.Create( name ), out result );
+        return _map.TryGetValue( StringSliceOld.Create( name ), out result );
     }
 
     [Pure]

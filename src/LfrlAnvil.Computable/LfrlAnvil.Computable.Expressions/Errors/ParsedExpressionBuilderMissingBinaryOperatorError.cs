@@ -9,7 +9,7 @@ public sealed class ParsedExpressionBuilderMissingBinaryOperatorError : ParsedEx
 {
     internal ParsedExpressionBuilderMissingBinaryOperatorError(
         ParsedExpressionBuilderErrorType type,
-        StringSlice token,
+        StringSliceOld token,
         Type leftArgumentType,
         Type rightArgumentType)
         : base( type, token )

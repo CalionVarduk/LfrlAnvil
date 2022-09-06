@@ -53,7 +53,7 @@ public sealed class ParsedExpression<TArg, TResult> : IParsedExpression<TArg, TR
     [Pure]
     public ParsedExpression<TArg, TResult> BindArguments(IEnumerable<KeyValuePair<string, TArg?>> arguments)
     {
-        return BindArguments( arguments.Select( kv => KeyValuePair.Create( StringSlice.Create( kv.Key ), kv.Value ) ) );
+        return BindArguments( arguments.Select( kv => KeyValuePair.Create( StringSliceOld.Create( kv.Key ), kv.Value ) ) );
     }
 
     [Pure]
@@ -65,7 +65,7 @@ public sealed class ParsedExpression<TArg, TResult> : IParsedExpression<TArg, TR
     [Pure]
     public ParsedExpression<TArg, TResult> BindArguments(IEnumerable<KeyValuePair<ReadOnlyMemory<char>, TArg?>> arguments)
     {
-        return BindArguments( arguments.Select( kv => KeyValuePair.Create( StringSlice.Create( kv.Key ), kv.Value ) ) );
+        return BindArguments( arguments.Select( kv => KeyValuePair.Create( StringSliceOld.Create( kv.Key ), kv.Value ) ) );
     }
 
     [Pure]
@@ -80,7 +80,7 @@ public sealed class ParsedExpression<TArg, TResult> : IParsedExpression<TArg, TR
         if ( arguments.TryGetNonEnumeratedCount( out var count ) && count == 0 )
             return this;
 
-        var argumentsToBind = BoundArguments.ToDictionary( kv => StringSlice.Create( kv.Key ), kv => kv.Value );
+        var argumentsToBind = BoundArguments.ToDictionary( kv => StringSliceOld.Create( kv.Key ), kv => kv.Value );
 
         foreach ( var (index, value) in arguments )
         {
@@ -88,7 +88,7 @@ public sealed class ParsedExpression<TArg, TResult> : IParsedExpression<TArg, TR
                 throw new ParsedExpressionArgumentBindingException();
 
             var name = UnboundArguments.GetName( index );
-            argumentsToBind.Add( StringSlice.Create( name ), value );
+            argumentsToBind.Add( StringSliceOld.Create( name ), value );
         }
 
         if ( argumentsToBind.Count == 0 )
@@ -127,7 +127,7 @@ public sealed class ParsedExpression<TArg, TResult> : IParsedExpression<TArg, TR
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private ParsedExpression<TArg, TResult> BindArguments(IEnumerable<KeyValuePair<StringSlice, TArg?>> arguments)
+    private ParsedExpression<TArg, TResult> BindArguments(IEnumerable<KeyValuePair<StringSliceOld, TArg?>> arguments)
     {
         return BindArguments( arguments.Select( kv => KeyValuePair.Create( UnboundArguments.GetIndex( kv.Key.AsMemory() ), kv.Value ) ) );
     }

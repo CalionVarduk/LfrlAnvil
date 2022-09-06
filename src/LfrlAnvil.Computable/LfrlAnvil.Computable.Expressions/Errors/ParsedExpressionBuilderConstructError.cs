@@ -10,7 +10,7 @@ public sealed class ParsedExpressionBuilderConstructError : ParsedExpressionBuil
     internal ParsedExpressionBuilderConstructError(
         ParsedExpressionBuilderErrorType type,
         object construct,
-        StringSlice? token = null,
+        StringSliceOld? token = null,
         Exception? exception = null)
         : base( type, token )
     {

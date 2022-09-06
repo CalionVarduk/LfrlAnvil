@@ -10,18 +10,18 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
 
     private readonly bool _isPrefixTypeConverterDisabled;
     private readonly bool _isConstantDisabled;
-    private readonly StringSlice? _name;
-    private readonly StringSlice? _customPrefixTypeConverter;
-    private readonly StringSlice? _postfixTypeConverter;
-    private readonly StringSlice? _customConstant;
+    private readonly StringSliceOld? _name;
+    private readonly StringSliceOld? _customPrefixTypeConverter;
+    private readonly StringSliceOld? _postfixTypeConverter;
+    private readonly StringSliceOld? _customConstant;
 
     private ParsedExpressionTypeDefinitionSymbols(
         bool isPrefixTypeConverterDisabled,
         bool isConstantDisabled,
-        StringSlice? name,
-        StringSlice? customPrefixTypeConverter,
-        StringSlice? postfixTypeConverter,
-        StringSlice? customConstant)
+        StringSliceOld? name,
+        StringSliceOld? customPrefixTypeConverter,
+        StringSliceOld? postfixTypeConverter,
+        StringSliceOld? customConstant)
     {
         _isPrefixTypeConverterDisabled = isPrefixTypeConverterDisabled;
         _isConstantDisabled = isConstantDisabled;
@@ -60,7 +60,7 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
         return new ParsedExpressionTypeDefinitionSymbols(
             _isPrefixTypeConverterDisabled,
             _isConstantDisabled,
-            StringSlice.Create( name ),
+            StringSliceOld.Create( name ),
             _customPrefixTypeConverter,
             _postfixTypeConverter,
             _customConstant );
@@ -79,7 +79,7 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
             isPrefixTypeConverterDisabled: false,
             _isConstantDisabled,
             _name,
-            StringSlice.Create( symbol ),
+            StringSliceOld.Create( symbol ),
             _postfixTypeConverter,
             _customConstant );
     }
@@ -122,7 +122,7 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
             _isConstantDisabled,
             _name,
             _customPrefixTypeConverter,
-            StringSlice.Create( symbol ),
+            StringSliceOld.Create( symbol ),
             _customConstant );
     }
 
@@ -153,7 +153,7 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
             _name,
             _customPrefixTypeConverter,
             _postfixTypeConverter,
-            StringSlice.Create( symbol ) );
+            StringSliceOld.Create( symbol ) );
     }
 
     [Pure]
@@ -186,7 +186,7 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
         if ( _isPrefixTypeConverterDisabled )
             return null;
 
-        var name = _name ?? StringSlice.Create( string.Empty );
+        var name = _name ?? StringSliceOld.Create( string.Empty );
         return $"[{name}]".AsMemory();
     }
 
@@ -196,7 +196,7 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
         if ( _isConstantDisabled )
             return null;
 
-        var name = _name ?? StringSlice.Create( string.Empty );
+        var name = _name ?? StringSliceOld.Create( string.Empty );
         return name.ToString().ToUpperInvariant().AsMemory();
     }
 }

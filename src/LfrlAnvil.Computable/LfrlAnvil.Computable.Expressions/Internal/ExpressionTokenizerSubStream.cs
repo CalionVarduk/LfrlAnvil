@@ -6,9 +6,9 @@ internal struct ExpressionTokenizerSubStream
 {
     private readonly int _length;
     private readonly int _endIndex;
-    private StringSlice _remaining;
-    private StringSlice _skippedSymbols;
-    private StringSlice _remainingSymbols;
+    private StringSliceOld _remaining;
+    private StringSliceOld _skippedSymbols;
+    private StringSliceOld _remainingSymbols;
     private IntermediateToken? _bufferedToken;
     private State _state;
 
@@ -37,7 +37,7 @@ internal struct ExpressionTokenizerSubStream
 
         _endIndex = index;
         _length = _endIndex - startIndex;
-        _remaining = StringSlice.Create( input, startIndex, _length );
+        _remaining = StringSliceOld.Create( input, startIndex, _length );
         _skippedSymbols = _remaining.Slice( 0, 0 );
         _remainingSymbols = _skippedSymbols;
         _bufferedToken = null;
@@ -292,7 +292,7 @@ internal struct ExpressionTokenizerSubStream
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void Finish()
     {
-        _remaining = StringSlice.Create( _remaining.Source, _endIndex, length: 0 );
+        _remaining = StringSliceOld.Create( _remaining.Source, _endIndex, length: 0 );
         _state = State.Finished;
     }
 

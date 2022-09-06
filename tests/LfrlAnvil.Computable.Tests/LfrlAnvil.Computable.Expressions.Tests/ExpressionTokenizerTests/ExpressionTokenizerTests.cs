@@ -40,7 +40,7 @@ public class ExpressionTokenizerTests : TestsBase
     public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleOpenedParenthesis()
     {
         var input = "(";
-        var expected = IntermediateToken.CreateOpenedParenthesis( StringSlice.Create( input ) );
+        var expected = IntermediateToken.CreateOpenedParenthesis( StringSliceOld.Create( input ) );
         var configuration = new ParsedExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
         var sut = new ExpressionTokenizer( input, configuration );
 
@@ -55,7 +55,7 @@ public class ExpressionTokenizerTests : TestsBase
     public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleClosedParenthesis()
     {
         var input = ")";
-        var expected = IntermediateToken.CreateClosedParenthesis( StringSlice.Create( input ) );
+        var expected = IntermediateToken.CreateClosedParenthesis( StringSliceOld.Create( input ) );
         var configuration = new ParsedExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
         var sut = new ExpressionTokenizer( input, configuration );
 
@@ -70,7 +70,7 @@ public class ExpressionTokenizerTests : TestsBase
     public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleOpenedSquareBracket()
     {
         var input = "[";
-        var expected = IntermediateToken.CreateOpenedSquareBracket( StringSlice.Create( input ) );
+        var expected = IntermediateToken.CreateOpenedSquareBracket( StringSliceOld.Create( input ) );
         var configuration = new ParsedExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
         var sut = new ExpressionTokenizer( input, configuration );
 
@@ -85,7 +85,7 @@ public class ExpressionTokenizerTests : TestsBase
     public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleClosedSquareBracket()
     {
         var input = "]";
-        var expected = IntermediateToken.CreateClosedSquareBracket( StringSlice.Create( input ) );
+        var expected = IntermediateToken.CreateClosedSquareBracket( StringSliceOld.Create( input ) );
         var configuration = new ParsedExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
         var sut = new ExpressionTokenizer( input, configuration );
 
@@ -100,7 +100,7 @@ public class ExpressionTokenizerTests : TestsBase
     public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleElementSeparator()
     {
         var input = ",";
-        var expected = IntermediateToken.CreateElementSeparator( StringSlice.Create( input ) );
+        var expected = IntermediateToken.CreateElementSeparator( StringSliceOld.Create( input ) );
         var configuration = new ParsedExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
         var sut = new ExpressionTokenizer( input, configuration );
 
@@ -115,7 +115,7 @@ public class ExpressionTokenizerTests : TestsBase
     public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleInlineFunctionSeparator()
     {
         var input = ";";
-        var expected = IntermediateToken.CreateInlineFunctionSeparator( StringSlice.Create( input ) );
+        var expected = IntermediateToken.CreateInlineFunctionSeparator( StringSliceOld.Create( input ) );
         var configuration = new ParsedExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
         var sut = new ExpressionTokenizer( input, configuration );
 
@@ -130,7 +130,7 @@ public class ExpressionTokenizerTests : TestsBase
     public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleMemberAccess()
     {
         var input = ".";
-        var expected = IntermediateToken.CreateMemberAccess( StringSlice.Create( input ) );
+        var expected = IntermediateToken.CreateMemberAccess( StringSliceOld.Create( input ) );
         var configuration = new ParsedExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
         var sut = new ExpressionTokenizer( input, configuration );
 
@@ -145,7 +145,7 @@ public class ExpressionTokenizerTests : TestsBase
     [MethodData( nameof( ExpressionTokenizerTestsData.GetStringOnlyData ) )]
     public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleStringValue(string input)
     {
-        var expected = IntermediateToken.CreateStringConstant( StringSlice.Create( input ) );
+        var expected = IntermediateToken.CreateStringConstant( StringSliceOld.Create( input ) );
         var configuration = new ParsedExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
         var sut = new ExpressionTokenizer( input, configuration );
 
@@ -160,7 +160,7 @@ public class ExpressionTokenizerTests : TestsBase
     [MethodData( nameof( ExpressionTokenizerTestsData.GetStartsWithStringData ) )]
     public void ReadNextToken_ShouldReturnCorrectFirstToken_WhenInputStartsWithStringValue(string input, string expected)
     {
-        var expectedToken = IntermediateToken.CreateStringConstant( StringSlice.Create( expected ) );
+        var expectedToken = IntermediateToken.CreateStringConstant( StringSliceOld.Create( expected ) );
         var configuration = new ParsedExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
         var sut = new ExpressionTokenizer( input, configuration );
 
@@ -173,7 +173,7 @@ public class ExpressionTokenizerTests : TestsBase
     [MethodData( nameof( ExpressionTokenizerTestsData.GetNumberOnlyData ) )]
     public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleNumberValue(string input)
     {
-        var expected = IntermediateToken.CreateNumberConstant( StringSlice.Create( input ) );
+        var expected = IntermediateToken.CreateNumberConstant( StringSliceOld.Create( input ) );
         var configuration = new ParsedExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
         var sut = new ExpressionTokenizer( input, configuration );
 
@@ -188,7 +188,7 @@ public class ExpressionTokenizerTests : TestsBase
     [MethodData( nameof( ExpressionTokenizerTestsData.GetStartsWithNumberData ) )]
     public void ReadNextToken_ShouldStopAndReturnCorrectFirstToken_WhenInputStartsWithNumberValue(string input, string expected)
     {
-        var expectedToken = IntermediateToken.CreateNumberConstant( StringSlice.Create( expected ) );
+        var expectedToken = IntermediateToken.CreateNumberConstant( StringSliceOld.Create( expected ) );
         var configuration = new ParsedExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
         var sut = new ExpressionTokenizer( input, configuration );
 
@@ -201,7 +201,7 @@ public class ExpressionTokenizerTests : TestsBase
     public void ReadNextToken_ShouldReturnCorrectFirstToken_WhenInputStartsWithNumberValueAndConfigurationDoesNotAllowDecimalPoints()
     {
         var input = "1234.567";
-        var expected = IntermediateToken.CreateNumberConstant( StringSlice.Create( "1234" ) );
+        var expected = IntermediateToken.CreateNumberConstant( StringSliceOld.Create( "1234" ) );
         var configuration = new ParsedExpressionFactoryInternalConfiguration(
             GetConstructs(),
             GetDefaultConfiguration( allowNonIntegerNumbers: false ) );
@@ -217,7 +217,7 @@ public class ExpressionTokenizerTests : TestsBase
     public void ReadNextToken_ShouldReturnCorrectFirstToken_WhenInputStartsWithNumberValueAndConfigurationDoesNotAllowScientificNotation()
     {
         var input = "1234.567E890";
-        var expected = IntermediateToken.CreateNumberConstant( StringSlice.Create( "1234.567" ) );
+        var expected = IntermediateToken.CreateNumberConstant( StringSliceOld.Create( "1234.567" ) );
         var configuration = new ParsedExpressionFactoryInternalConfiguration(
             GetConstructs(),
             GetDefaultConfiguration( allowScientificNotation: false ) );
@@ -233,7 +233,7 @@ public class ExpressionTokenizerTests : TestsBase
     [MethodData( nameof( ExpressionTokenizerTestsData.GetBooleanOnlyData ) )]
     public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleBooleanValue(string input)
     {
-        var expected = IntermediateToken.CreateBooleanConstant( StringSlice.Create( input ) );
+        var expected = IntermediateToken.CreateBooleanConstant( StringSliceOld.Create( input ) );
         var configuration = new ParsedExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
         var sut = new ExpressionTokenizer( input, configuration );
 
@@ -248,7 +248,7 @@ public class ExpressionTokenizerTests : TestsBase
     [MethodData( nameof( ExpressionTokenizerTestsData.GetStartsWithBooleanData ) )]
     public void ReadNextToken_ShouldStopAndReturnCorrectFirstToken_WhenInputStartsWithBooleanValue(string input, string expected)
     {
-        var expectedToken = IntermediateToken.CreateBooleanConstant( StringSlice.Create( expected ) );
+        var expectedToken = IntermediateToken.CreateBooleanConstant( StringSliceOld.Create( expected ) );
         var configuration = new ParsedExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
         var sut = new ExpressionTokenizer( input, configuration );
 
@@ -261,7 +261,7 @@ public class ExpressionTokenizerTests : TestsBase
     [MethodData( nameof( ExpressionTokenizerTestsData.GetArgumentOnlyData ) )]
     public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleArgument(string input)
     {
-        var expected = IntermediateToken.CreateArgument( StringSlice.Create( input ) );
+        var expected = IntermediateToken.CreateArgument( StringSliceOld.Create( input ) );
         var configuration = new ParsedExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
         var sut = new ExpressionTokenizer( input, configuration );
 
@@ -276,7 +276,7 @@ public class ExpressionTokenizerTests : TestsBase
     [MethodData( nameof( ExpressionTokenizerTestsData.GetStartsWithArgumentData ) )]
     public void ReadNextToken_ShouldStopAndReturnCorrectFirstToken_WhenInputStartsWithArgument(string input, string expected)
     {
-        var expectedToken = IntermediateToken.CreateArgument( StringSlice.Create( expected ) );
+        var expectedToken = IntermediateToken.CreateArgument( StringSliceOld.Create( expected ) );
         var configuration = new ParsedExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
         var sut = new ExpressionTokenizer( input, configuration );
 
@@ -319,9 +319,9 @@ public class ExpressionTokenizerTests : TestsBase
         return result;
     }
 
-    private static IReadOnlyDictionary<StringSlice, ConstructTokenDefinition> GetConstructs(params string[] symbols)
+    private static IReadOnlyDictionary<StringSliceOld, ConstructTokenDefinition> GetConstructs(params string[] symbols)
     {
-        var result = new Dictionary<StringSlice, ConstructTokenDefinition>();
+        var result = new Dictionary<StringSliceOld, ConstructTokenDefinition>();
         foreach ( var s in symbols )
         {
             var set = ConstructTokenDefinition.CreateOperator(
@@ -329,7 +329,7 @@ public class ExpressionTokenizerTests : TestsBase
                 UnaryOperatorCollection.Empty,
                 UnaryOperatorCollection.Empty );
 
-            result.Add( StringSlice.Create( s ), set );
+            result.Add( StringSliceOld.Create( s ), set );
         }
 
         return result;

@@ -10,8 +10,8 @@ internal readonly struct ExpressionBuilderResult
         Expression bodyExpression,
         ParameterExpression parameterExpression,
         IReadOnlyList<CompilableInlineDelegate> delegates,
-        IReadOnlyDictionary<StringSlice, int> argumentIndexes,
-        HashSet<StringSlice> discardedArguments)
+        IReadOnlyDictionary<StringSliceOld, int> argumentIndexes,
+        HashSet<StringSliceOld> discardedArguments)
     {
         BodyExpression = bodyExpression;
         ParameterExpression = parameterExpression;
@@ -23,6 +23,6 @@ internal readonly struct ExpressionBuilderResult
     internal Expression BodyExpression { get; }
     internal ParameterExpression ParameterExpression { get; }
     internal IReadOnlyList<CompilableInlineDelegate> Delegates { get; }
-    internal IReadOnlyDictionary<StringSlice, int> ArgumentIndexes { get; }
-    internal HashSet<StringSlice> DiscardedArguments { get; }
+    internal IReadOnlyDictionary<StringSliceOld, int> ArgumentIndexes { get; }
+    internal HashSet<StringSliceOld> DiscardedArguments { get; }
 }

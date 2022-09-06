@@ -9,16 +9,16 @@ namespace LfrlAnvil.Computable.Expressions;
 
 public sealed class ParsedExpressionDiscardedArguments : IReadOnlyCollection<ReadOnlyMemory<char>>
 {
-    public static readonly ParsedExpressionDiscardedArguments Empty = new ParsedExpressionDiscardedArguments( new HashSet<StringSlice>() );
+    public static readonly ParsedExpressionDiscardedArguments Empty = new ParsedExpressionDiscardedArguments( new HashSet<StringSliceOld>() );
 
-    private readonly IReadOnlySet<StringSlice> _set;
+    private readonly IReadOnlySet<StringSliceOld> _set;
 
     public ParsedExpressionDiscardedArguments(IEnumerable<ReadOnlyMemory<char>> set)
     {
-        _set = new HashSet<StringSlice>( set.Select( StringSlice.Create ) );
+        _set = new HashSet<StringSliceOld>( set.Select( StringSliceOld.Create ) );
     }
 
-    internal ParsedExpressionDiscardedArguments(IReadOnlySet<StringSlice> set)
+    internal ParsedExpressionDiscardedArguments(IReadOnlySet<StringSliceOld> set)
     {
         _set = set;
     }
@@ -34,7 +34,7 @@ public sealed class ParsedExpressionDiscardedArguments : IReadOnlyCollection<Rea
     [Pure]
     public bool Contains(ReadOnlyMemory<char> name)
     {
-        return _set.Contains( StringSlice.Create( name ) );
+        return _set.Contains( StringSliceOld.Create( name ) );
     }
 
     [Pure]
@@ -44,7 +44,7 @@ public sealed class ParsedExpressionDiscardedArguments : IReadOnlyCollection<Rea
     }
 
     [Pure]
-    internal ParsedExpressionDiscardedArguments AddTo(HashSet<StringSlice> other)
+    internal ParsedExpressionDiscardedArguments AddTo(HashSet<StringSliceOld> other)
     {
         foreach ( var name in _set )
             other.Add( name );

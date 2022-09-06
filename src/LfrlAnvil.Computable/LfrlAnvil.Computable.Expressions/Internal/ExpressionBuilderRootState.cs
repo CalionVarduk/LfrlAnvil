@@ -20,7 +20,7 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
         Type argumentType,
         ParsedExpressionFactoryInternalConfiguration configuration,
         IParsedExpressionNumberParser numberParser,
-        IReadOnlyDictionary<StringSlice, ConstantExpression>? boundArguments)
+        IReadOnlyDictionary<StringSliceOld, ConstantExpression>? boundArguments)
         : base(
             parameterExpression: Expression.Parameter( argumentType.MakeArrayType(), "args" ),
             configuration: configuration,
@@ -199,13 +199,13 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
             ParameterExpression,
             delegates,
             ArgumentIndexes,
-            discardedArguments: new HashSet<StringSlice>() );
+            discardedArguments: new HashSet<StringSliceOld>() );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private ExpressionBuilderResult CreateResultWithAllArgumentsDiscarded(Expression expression, CompilableInlineDelegate[] delegates)
     {
-        var discardedArguments = new HashSet<StringSlice>();
+        var discardedArguments = new HashSet<StringSliceOld>();
         foreach ( var (name, _) in ArgumentIndexes )
             discardedArguments.Add( name );
 
@@ -222,7 +222,7 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
     {
         var i = 0;
         var firstIndexToRemove = ArgumentIndexes.Count - unusedArgumentCount;
-        var keysToRemove = new StringSlice[unusedArgumentCount];
+        var keysToRemove = new StringSliceOld[unusedArgumentCount];
 
         foreach ( var (key, index) in ArgumentIndexes )
         {
@@ -232,7 +232,7 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
             keysToRemove[i++] = key;
         }
 
-        var discardedArguments = new HashSet<StringSlice>();
+        var discardedArguments = new HashSet<StringSliceOld>();
         foreach ( var key in keysToRemove )
         {
             discardedArguments.Add( key );
@@ -254,7 +254,7 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
 
         var argumentNames = ArgumentIndexes.ToDictionary( kv => kv.Value, kv => kv.Key );
         var argumentAccessExpressions = new Dictionary<int, Expression>();
-        var discardedArguments = new HashSet<StringSlice>();
+        var discardedArguments = new HashSet<StringSliceOld>();
         ArgumentIndexes.Clear();
 
         for ( var i = 0; i < usage.Length; ++i )

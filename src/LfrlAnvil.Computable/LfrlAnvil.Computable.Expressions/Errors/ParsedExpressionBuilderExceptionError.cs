@@ -11,7 +11,7 @@ public sealed class ParsedExpressionBuilderExceptionError : ParsedExpressionBuil
         Exception = exception;
     }
 
-    internal ParsedExpressionBuilderExceptionError(Exception exception, ParsedExpressionBuilderErrorType type, StringSlice? token)
+    internal ParsedExpressionBuilderExceptionError(Exception exception, ParsedExpressionBuilderErrorType type, StringSliceOld? token)
         : base( type, token )
     {
         Exception = exception;

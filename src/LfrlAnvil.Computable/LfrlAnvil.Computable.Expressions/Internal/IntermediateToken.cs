@@ -16,7 +16,7 @@ namespace LfrlAnvil.Computable.Expressions.Internal;
 // or methods that give some context bitmasks, when a specific token combination could be considered correct (e.g. delegate invocation)
 internal readonly struct IntermediateToken
 {
-    private IntermediateToken(IntermediateTokenType type, StringSlice symbol, ConstructTokenDefinition? constructs = null)
+    private IntermediateToken(IntermediateTokenType type, StringSliceOld symbol, ConstructTokenDefinition? constructs = null)
     {
         Type = type;
         Symbol = symbol;
@@ -24,7 +24,7 @@ internal readonly struct IntermediateToken
     }
 
     public IntermediateTokenType Type { get; }
-    public StringSlice Symbol { get; }
+    public StringSliceOld Symbol { get; }
     public ConstructTokenDefinition? Constructs { get; }
 
     [Pure]
@@ -35,7 +35,7 @@ internal readonly struct IntermediateToken
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static IntermediateToken CreateOpenedParenthesis(StringSlice symbol)
+    internal static IntermediateToken CreateOpenedParenthesis(StringSliceOld symbol)
     {
         Assume.True(
             symbol.Equals( TokenConstants.OpenedParenthesis ),
@@ -46,7 +46,7 @@ internal readonly struct IntermediateToken
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static IntermediateToken CreateClosedParenthesis(StringSlice symbol)
+    internal static IntermediateToken CreateClosedParenthesis(StringSliceOld symbol)
     {
         Assume.True(
             symbol.Equals( TokenConstants.ClosedParenthesis ),
@@ -57,7 +57,7 @@ internal readonly struct IntermediateToken
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static IntermediateToken CreateOpenedSquareBracket(StringSlice symbol)
+    internal static IntermediateToken CreateOpenedSquareBracket(StringSliceOld symbol)
     {
         Assume.True(
             symbol.Equals( TokenConstants.OpenedSquareBracket ),
@@ -68,7 +68,7 @@ internal readonly struct IntermediateToken
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static IntermediateToken CreateClosedSquareBracket(StringSlice symbol)
+    internal static IntermediateToken CreateClosedSquareBracket(StringSliceOld symbol)
     {
         Assume.True(
             symbol.Equals( TokenConstants.ClosedSquareBracket ),
@@ -79,7 +79,7 @@ internal readonly struct IntermediateToken
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static IntermediateToken CreateInlineFunctionSeparator(StringSlice symbol)
+    internal static IntermediateToken CreateInlineFunctionSeparator(StringSliceOld symbol)
     {
         Assume.True(
             symbol.Equals( TokenConstants.InlineFunctionSeparator ),
@@ -90,7 +90,7 @@ internal readonly struct IntermediateToken
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static IntermediateToken CreateElementSeparator(StringSlice symbol)
+    internal static IntermediateToken CreateElementSeparator(StringSliceOld symbol)
     {
         Assume.True(
             symbol.Equals( TokenConstants.ElementSeparator ),
@@ -101,7 +101,7 @@ internal readonly struct IntermediateToken
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static IntermediateToken CreateMemberAccess(StringSlice symbol)
+    internal static IntermediateToken CreateMemberAccess(StringSliceOld symbol)
     {
         Assume.True(
             symbol.Equals( TokenConstants.MemberAccess ),
@@ -112,7 +112,7 @@ internal readonly struct IntermediateToken
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static IntermediateToken CreateStringConstant(StringSlice symbol)
+    internal static IntermediateToken CreateStringConstant(StringSliceOld symbol)
     {
         Assume.IsNotEmpty( symbol, nameof( symbol ) );
         return new IntermediateToken( IntermediateTokenType.StringConstant, symbol );
@@ -120,7 +120,7 @@ internal readonly struct IntermediateToken
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static IntermediateToken CreateNumberConstant(StringSlice symbol)
+    internal static IntermediateToken CreateNumberConstant(StringSliceOld symbol)
     {
         Assume.IsNotEmpty( symbol, nameof( symbol ) );
         var firstChar = symbol[0];
@@ -131,7 +131,7 @@ internal readonly struct IntermediateToken
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static IntermediateToken CreateBooleanConstant(StringSlice symbol)
+    internal static IntermediateToken CreateBooleanConstant(StringSliceOld symbol)
     {
         Assume.True(
             TokenConstants.IsBooleanTrue( symbol ) || TokenConstants.IsBooleanFalse( symbol ),
@@ -142,7 +142,7 @@ internal readonly struct IntermediateToken
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static IntermediateToken CreateConstructs(StringSlice symbol, ConstructTokenDefinition constructs)
+    internal static IntermediateToken CreateConstructs(StringSliceOld symbol, ConstructTokenDefinition constructs)
     {
         Assume.IsNotEmpty( symbol, nameof( symbol ) );
         return new IntermediateToken( IntermediateTokenType.Constructs, symbol, constructs );
@@ -150,7 +150,7 @@ internal readonly struct IntermediateToken
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static IntermediateToken CreateArgument(StringSlice symbol)
+    internal static IntermediateToken CreateArgument(StringSliceOld symbol)
     {
         Assume.IsNotEmpty( symbol, nameof( symbol ) );
         return new IntermediateToken( IntermediateTokenType.Argument, symbol );

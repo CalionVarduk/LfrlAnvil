@@ -61,7 +61,7 @@ public static class ParsedExpressionDelegateExtensions
         TArg?[] buffer,
         IEnumerable<KeyValuePair<string, TArg?>> arguments)
     {
-        MapArguments( source, buffer, arguments.Select( kv => KeyValuePair.Create( StringSlice.Create( kv.Key ), kv.Value ) ) );
+        MapArguments( source, buffer, arguments.Select( kv => KeyValuePair.Create( StringSliceOld.Create( kv.Key ), kv.Value ) ) );
     }
 
     public static void MapArguments<TArg, TResult>(
@@ -77,7 +77,7 @@ public static class ParsedExpressionDelegateExtensions
         TArg?[] buffer,
         IEnumerable<KeyValuePair<ReadOnlyMemory<char>, TArg?>> arguments)
     {
-        MapArguments( source, buffer, arguments.Select( kv => KeyValuePair.Create( StringSlice.Create( kv.Key ), kv.Value ) ) );
+        MapArguments( source, buffer, arguments.Select( kv => KeyValuePair.Create( StringSliceOld.Create( kv.Key ), kv.Value ) ) );
     }
 
     public static void MapArguments<TArg, TResult>(
@@ -91,7 +91,7 @@ public static class ParsedExpressionDelegateExtensions
     private static void MapArguments<TArg, TResult>(
         IParsedExpressionDelegate<TArg, TResult> source,
         TArg?[] buffer,
-        IEnumerable<KeyValuePair<StringSlice, TArg?>> arguments)
+        IEnumerable<KeyValuePair<StringSliceOld, TArg?>> arguments)
     {
         var argumentCount = source.Arguments.Count;
         if ( argumentCount == 0 )

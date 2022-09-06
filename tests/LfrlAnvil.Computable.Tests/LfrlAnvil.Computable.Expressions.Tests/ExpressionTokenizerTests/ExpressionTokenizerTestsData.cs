@@ -672,7 +672,7 @@ public class ExpressionTokenizerTestsData
 
         internal Token(IntermediateTokenType type, string symbol)
         {
-            var s = StringSlice.Create( symbol );
+            var s = StringSliceOld.Create( symbol );
             _token = type switch
             {
                 IntermediateTokenType.OpenedParenthesis => IntermediateToken.CreateOpenedParenthesis( s ),
@@ -695,7 +695,7 @@ public class ExpressionTokenizerTestsData
             };
         }
 
-        internal IntermediateToken GetToken(IReadOnlyDictionary<StringSlice, ConstructTokenDefinition> constructs)
+        internal IntermediateToken GetToken(IReadOnlyDictionary<StringSliceOld, ConstructTokenDefinition> constructs)
         {
             return _token.Type == IntermediateTokenType.Constructs
                 ? IntermediateToken.CreateConstructs( _token.Symbol, constructs[_token.Symbol] )

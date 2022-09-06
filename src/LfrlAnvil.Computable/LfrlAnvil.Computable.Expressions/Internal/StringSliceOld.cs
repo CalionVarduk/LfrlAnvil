@@ -7,10 +7,9 @@ using System.Runtime.InteropServices;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
 
-// TODO: extract to Core
-internal readonly struct StringSlice : IEquatable<StringSlice>, IEquatable<char>, IEnumerable<char>
+internal readonly struct StringSliceOld : IEquatable<StringSliceOld>, IEquatable<char>, IEnumerable<char>
 {
-    private StringSlice(string source, int startIndex, int length)
+    private StringSliceOld(string source, int startIndex, int length)
     {
         Source = source;
         StartIndex = startIndex;
@@ -48,14 +47,14 @@ internal readonly struct StringSlice : IEquatable<StringSlice>, IEquatable<char>
     [Pure]
     public override bool Equals(object? obj)
     {
-        if ( obj is StringSlice s )
+        if ( obj is StringSliceOld s )
             return Equals( s );
 
         return obj is char c && Equals( c );
     }
 
     [Pure]
-    public bool Equals(StringSlice other)
+    public bool Equals(StringSliceOld other)
     {
         if ( Length != other.Length )
             return false;
@@ -71,7 +70,7 @@ internal readonly struct StringSlice : IEquatable<StringSlice>, IEquatable<char>
     }
 
     [Pure]
-    public bool EqualsIgnoreCase(StringSlice other)
+    public bool EqualsIgnoreCase(StringSliceOld other)
     {
         if ( Length != other.Length )
             return false;
@@ -94,25 +93,25 @@ internal readonly struct StringSlice : IEquatable<StringSlice>, IEquatable<char>
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal StringSlice Slice(int startIndex)
+    internal StringSliceOld Slice(int startIndex)
     {
-        return new StringSlice( Source, StartIndex + startIndex, Length - startIndex );
+        return new StringSliceOld( Source, StartIndex + startIndex, Length - startIndex );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal StringSlice Slice(int startIndex, int length)
+    internal StringSliceOld Slice(int startIndex, int length)
     {
-        return new StringSlice( Source, StartIndex + startIndex, length );
+        return new StringSliceOld( Source, StartIndex + startIndex, length );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal StringSlice Expand(int count)
+    internal StringSliceOld Expand(int count)
     {
         var startIndex = Math.Max( StartIndex - count, 0 );
         var endIndex = Math.Min( EndIndex + count, Source.Length );
-        return new StringSlice( Source, startIndex, endIndex - startIndex );
+        return new StringSliceOld( Source, startIndex, endIndex - startIndex );
     }
 
     [Pure]
@@ -131,21 +130,21 @@ internal readonly struct StringSlice : IEquatable<StringSlice>, IEquatable<char>
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static StringSlice Create(string source)
+    internal static StringSliceOld Create(string source)
     {
         return Create( source, 0, source.Length );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static StringSlice Create(string source, int startIndex, int length)
+    internal static StringSliceOld Create(string source, int startIndex, int length)
     {
-        return new StringSlice( source, startIndex, length );
+        return new StringSliceOld( source, startIndex, length );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static StringSlice Create(ReadOnlyMemory<char> source)
+    internal static StringSliceOld Create(ReadOnlyMemory<char> source)
     {
         return MemoryMarshal.TryGetString( source, out var text, out var startIndex, out var length )
             ? Create( text, startIndex, length )

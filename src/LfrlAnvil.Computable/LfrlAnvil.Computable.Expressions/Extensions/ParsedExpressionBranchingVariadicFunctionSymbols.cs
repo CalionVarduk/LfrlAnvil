@@ -10,16 +10,16 @@ public readonly struct ParsedExpressionBranchingVariadicFunctionSymbols
     public static readonly ParsedExpressionBranchingVariadicFunctionSymbols
         Default = new ParsedExpressionBranchingVariadicFunctionSymbols();
 
-    private readonly StringSlice? _if;
-    private readonly StringSlice? _switchCase;
-    private readonly StringSlice? _switch;
-    private readonly StringSlice? _throw;
+    private readonly StringSliceOld? _if;
+    private readonly StringSliceOld? _switchCase;
+    private readonly StringSliceOld? _switch;
+    private readonly StringSliceOld? _throw;
 
     private ParsedExpressionBranchingVariadicFunctionSymbols(
-        StringSlice? @if,
-        StringSlice? switchCase,
-        StringSlice? @switch,
-        StringSlice? @throw)
+        StringSliceOld? @if,
+        StringSliceOld? switchCase,
+        StringSliceOld? @switch,
+        StringSliceOld? @throw)
     {
         _if = @if;
         _switchCase = switchCase;
@@ -48,7 +48,7 @@ public readonly struct ParsedExpressionBranchingVariadicFunctionSymbols
     [Pure]
     public ParsedExpressionBranchingVariadicFunctionSymbols SetIf(ReadOnlyMemory<char> symbol)
     {
-        return new ParsedExpressionBranchingVariadicFunctionSymbols( StringSlice.Create( symbol ), _switchCase, _switch, _throw );
+        return new ParsedExpressionBranchingVariadicFunctionSymbols( StringSliceOld.Create( symbol ), _switchCase, _switch, _throw );
     }
 
     [Pure]
@@ -60,7 +60,7 @@ public readonly struct ParsedExpressionBranchingVariadicFunctionSymbols
     [Pure]
     public ParsedExpressionBranchingVariadicFunctionSymbols SetSwitchCase(ReadOnlyMemory<char> symbol)
     {
-        return new ParsedExpressionBranchingVariadicFunctionSymbols( _if, StringSlice.Create( symbol ), _switch, _throw );
+        return new ParsedExpressionBranchingVariadicFunctionSymbols( _if, StringSliceOld.Create( symbol ), _switch, _throw );
     }
 
     [Pure]
@@ -72,7 +72,7 @@ public readonly struct ParsedExpressionBranchingVariadicFunctionSymbols
     [Pure]
     public ParsedExpressionBranchingVariadicFunctionSymbols SetSwitch(ReadOnlyMemory<char> symbol)
     {
-        return new ParsedExpressionBranchingVariadicFunctionSymbols( _if, _switchCase, StringSlice.Create( symbol ), _throw );
+        return new ParsedExpressionBranchingVariadicFunctionSymbols( _if, _switchCase, StringSliceOld.Create( symbol ), _throw );
     }
 
     [Pure]
@@ -84,6 +84,6 @@ public readonly struct ParsedExpressionBranchingVariadicFunctionSymbols
     [Pure]
     public ParsedExpressionBranchingVariadicFunctionSymbols SetThrow(ReadOnlyMemory<char> symbol)
     {
-        return new ParsedExpressionBranchingVariadicFunctionSymbols( _if, _switchCase, _switch, StringSlice.Create( symbol ) );
+        return new ParsedExpressionBranchingVariadicFunctionSymbols( _if, _switchCase, _switch, StringSliceOld.Create( symbol ) );
     }
 }

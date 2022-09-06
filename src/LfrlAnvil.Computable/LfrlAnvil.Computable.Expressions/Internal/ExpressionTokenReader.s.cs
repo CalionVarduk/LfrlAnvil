@@ -10,7 +10,7 @@ internal static class ExpressionTokenReader
     internal static IntermediateToken ReadOpenedParenthesis(string input, int index)
     {
         Assume.IsLessThan( index, input.Length, nameof( index ) );
-        var result = IntermediateToken.CreateOpenedParenthesis( StringSlice.Create( input, index, length: 1 ) );
+        var result = IntermediateToken.CreateOpenedParenthesis( StringSliceOld.Create( input, index, length: 1 ) );
         return result;
     }
 
@@ -19,7 +19,7 @@ internal static class ExpressionTokenReader
     internal static IntermediateToken ReadClosedParenthesis(string input, int index)
     {
         Assume.IsLessThan( index, input.Length, nameof( index ) );
-        var result = IntermediateToken.CreateClosedParenthesis( StringSlice.Create( input, index, length: 1 ) );
+        var result = IntermediateToken.CreateClosedParenthesis( StringSliceOld.Create( input, index, length: 1 ) );
         return result;
     }
 
@@ -28,7 +28,7 @@ internal static class ExpressionTokenReader
     internal static IntermediateToken ReadOpenedSquareBracket(string input, int index)
     {
         Assume.IsLessThan( index, input.Length, nameof( index ) );
-        var result = IntermediateToken.CreateOpenedSquareBracket( StringSlice.Create( input, index, length: 1 ) );
+        var result = IntermediateToken.CreateOpenedSquareBracket( StringSliceOld.Create( input, index, length: 1 ) );
         return result;
     }
 
@@ -37,7 +37,7 @@ internal static class ExpressionTokenReader
     internal static IntermediateToken ReadClosedSquareBracket(string input, int index)
     {
         Assume.IsLessThan( index, input.Length, nameof( index ) );
-        var result = IntermediateToken.CreateClosedSquareBracket( StringSlice.Create( input, index, length: 1 ) );
+        var result = IntermediateToken.CreateClosedSquareBracket( StringSliceOld.Create( input, index, length: 1 ) );
         return result;
     }
 
@@ -46,7 +46,7 @@ internal static class ExpressionTokenReader
     internal static IntermediateToken ReadElementSeparator(string input, int index)
     {
         Assume.IsLessThan( index, input.Length, nameof( index ) );
-        var result = IntermediateToken.CreateElementSeparator( StringSlice.Create( input, index, length: 1 ) );
+        var result = IntermediateToken.CreateElementSeparator( StringSliceOld.Create( input, index, length: 1 ) );
         return result;
     }
 
@@ -55,7 +55,7 @@ internal static class ExpressionTokenReader
     internal static IntermediateToken ReadInlineFunctionSeparator(string input, int index)
     {
         Assume.IsLessThan( index, input.Length, nameof( index ) );
-        var result = IntermediateToken.CreateInlineFunctionSeparator( StringSlice.Create( input, index, length: 1 ) );
+        var result = IntermediateToken.CreateInlineFunctionSeparator( StringSliceOld.Create( input, index, length: 1 ) );
         return result;
     }
 
@@ -64,7 +64,7 @@ internal static class ExpressionTokenReader
     internal static IntermediateToken ReadMemberAccess(string input, int index)
     {
         Assume.IsLessThan( index, input.Length, nameof( index ) );
-        var result = IntermediateToken.CreateMemberAccess( StringSlice.Create( input, index, length: 1 ) );
+        var result = IntermediateToken.CreateMemberAccess( StringSliceOld.Create( input, index, length: 1 ) );
         return result;
     }
 
@@ -96,14 +96,14 @@ internal static class ExpressionTokenReader
         }
 
         var result = IntermediateToken.CreateStringConstant(
-            StringSlice.Create( input, startIndex, length: index - startIndex ) );
+            StringSliceOld.Create( input, startIndex, length: index - startIndex ) );
 
         return result;
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static IntermediateToken? TryReadBoolean(StringSlice input)
+    internal static IntermediateToken? TryReadBoolean(StringSliceOld input)
     {
         if ( TokenConstants.IsBooleanTrue( input ) || TokenConstants.IsBooleanFalse( input ) )
             return IntermediateToken.CreateBooleanConstant( input );
@@ -113,7 +113,7 @@ internal static class ExpressionTokenReader
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static IntermediateToken? TryReadConstructs(StringSlice input, ParsedExpressionFactoryInternalConfiguration configuration)
+    internal static IntermediateToken? TryReadConstructs(StringSliceOld input, ParsedExpressionFactoryInternalConfiguration configuration)
     {
         if ( configuration.Constructs.TryGetValue( input, out var constructs ) )
             return IntermediateToken.CreateConstructs( input, constructs );
@@ -152,7 +152,7 @@ internal static class ExpressionTokenReader
         }
 
         var result = IntermediateToken.CreateNumberConstant(
-            StringSlice.Create( input, startIndex, length: index - startIndex ) );
+            StringSliceOld.Create( input, startIndex, length: index - startIndex ) );
 
         return result;
     }

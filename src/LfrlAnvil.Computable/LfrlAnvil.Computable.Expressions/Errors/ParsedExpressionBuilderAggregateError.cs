@@ -10,7 +10,7 @@ public sealed class ParsedExpressionBuilderAggregateError : ParsedExpressionBuil
     internal ParsedExpressionBuilderAggregateError(
         ParsedExpressionBuilderErrorType type,
         Chain<ParsedExpressionBuilderError> inner,
-        StringSlice? token = null)
+        StringSliceOld? token = null)
         : base( type, token )
     {
         Assume.IsNotEmpty( inner, nameof( inner ) );

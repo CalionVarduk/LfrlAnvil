@@ -11,18 +11,18 @@ namespace LfrlAnvil.Computable.Expressions;
 public sealed class ParsedExpressionUnboundArguments : IReadOnlyCollection<KeyValuePair<ReadOnlyMemory<char>, int>>
 {
     public static readonly ParsedExpressionUnboundArguments Empty = new ParsedExpressionUnboundArguments(
-        new Dictionary<StringSlice, int>() );
+        new Dictionary<StringSliceOld, int>() );
 
-    private readonly IReadOnlyDictionary<StringSlice, int> _indexes;
-    private readonly StringSlice[] _names;
+    private readonly IReadOnlyDictionary<StringSliceOld, int> _indexes;
+    private readonly StringSliceOld[] _names;
 
     public ParsedExpressionUnboundArguments(IEnumerable<KeyValuePair<ReadOnlyMemory<char>, int>> map)
     {
-        _indexes = new Dictionary<StringSlice, int>( map.Select( kv => KeyValuePair.Create( StringSlice.Create( kv.Key ), kv.Value ) ) );
+        _indexes = new Dictionary<StringSliceOld, int>( map.Select( kv => KeyValuePair.Create( StringSliceOld.Create( kv.Key ), kv.Value ) ) );
         _names = CreateNames( _indexes );
     }
 
-    internal ParsedExpressionUnboundArguments(IReadOnlyDictionary<StringSlice, int> indexes)
+    internal ParsedExpressionUnboundArguments(IReadOnlyDictionary<StringSliceOld, int> indexes)
     {
         _indexes = indexes;
         _names = CreateNames( _indexes );
@@ -39,7 +39,7 @@ public sealed class ParsedExpressionUnboundArguments : IReadOnlyCollection<KeyVa
     [Pure]
     public bool Contains(ReadOnlyMemory<char> name)
     {
-        return _indexes.ContainsKey( StringSlice.Create( name ) );
+        return _indexes.ContainsKey( StringSliceOld.Create( name ) );
     }
 
     [Pure]
@@ -51,7 +51,7 @@ public sealed class ParsedExpressionUnboundArguments : IReadOnlyCollection<KeyVa
     [Pure]
     public int GetIndex(ReadOnlyMemory<char> name)
     {
-        return _indexes.TryGetValue( StringSlice.Create( name ), out var index ) ? index : -1;
+        return _indexes.TryGetValue( StringSliceOld.Create( name ), out var index ) ? index : -1;
     }
 
     [Pure]
@@ -68,9 +68,9 @@ public sealed class ParsedExpressionUnboundArguments : IReadOnlyCollection<KeyVa
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static StringSlice[] CreateNames(IReadOnlyDictionary<StringSlice, int> indexes)
+    private static StringSliceOld[] CreateNames(IReadOnlyDictionary<StringSliceOld, int> indexes)
     {
-        var result = indexes.Count == 0 ? Array.Empty<StringSlice>() : new StringSlice[indexes.Count];
+        var result = indexes.Count == 0 ? Array.Empty<StringSliceOld>() : new StringSliceOld[indexes.Count];
         foreach ( var (name, index) in indexes )
             result[index] = name;
 

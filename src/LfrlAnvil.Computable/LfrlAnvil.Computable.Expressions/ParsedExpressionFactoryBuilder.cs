@@ -11,8 +11,8 @@ namespace LfrlAnvil.Computable.Expressions;
 
 public sealed class ParsedExpressionFactoryBuilder
 {
-    private readonly List<(StringSlice Symbol, ParsedExpressionConstructType Type, object Construct)> _constructs;
-    private readonly Dictionary<(StringSlice Symbol, ParsedExpressionConstructType Type), int> _precedences;
+    private readonly List<(StringSliceOld Symbol, ParsedExpressionConstructType Type, object Construct)> _constructs;
+    private readonly Dictionary<(StringSliceOld Symbol, ParsedExpressionConstructType Type), int> _precedences;
     private IParsedExpressionFactoryConfiguration? _configuration;
     private Func<ParsedExpressionNumberParserParams, IParsedExpressionNumberParser>? _numberParserProvider;
     private Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? _memberAccessProvider;
@@ -23,8 +23,8 @@ public sealed class ParsedExpressionFactoryBuilder
 
     public ParsedExpressionFactoryBuilder()
     {
-        _constructs = new List<(StringSlice, ParsedExpressionConstructType, object)>();
-        _precedences = new Dictionary<(StringSlice, ParsedExpressionConstructType), int>();
+        _constructs = new List<(StringSliceOld, ParsedExpressionConstructType, object)>();
+        _precedences = new Dictionary<(StringSliceOld, ParsedExpressionConstructType), int>();
         _configuration = null;
         _numberParserProvider = null;
         _memberAccessProvider = null;
@@ -126,73 +126,73 @@ public sealed class ParsedExpressionFactoryBuilder
 
     public ParsedExpressionFactoryBuilder AddBinaryOperator(string symbol, ParsedExpressionBinaryOperator @operator)
     {
-        _constructs.Add( (StringSlice.Create( symbol ), ParsedExpressionConstructType.BinaryOperator, @operator) );
+        _constructs.Add( (StringSliceOld.Create( symbol ), ParsedExpressionConstructType.BinaryOperator, @operator) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddBinaryOperator(ReadOnlyMemory<char> symbol, ParsedExpressionBinaryOperator @operator)
     {
-        _constructs.Add( (StringSlice.Create( symbol ), ParsedExpressionConstructType.BinaryOperator, @operator) );
+        _constructs.Add( (StringSliceOld.Create( symbol ), ParsedExpressionConstructType.BinaryOperator, @operator) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddPrefixUnaryOperator(string symbol, ParsedExpressionUnaryOperator @operator)
     {
-        _constructs.Add( (StringSlice.Create( symbol ), ParsedExpressionConstructType.PrefixUnaryOperator, @operator) );
+        _constructs.Add( (StringSliceOld.Create( symbol ), ParsedExpressionConstructType.PrefixUnaryOperator, @operator) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddPrefixUnaryOperator(ReadOnlyMemory<char> symbol, ParsedExpressionUnaryOperator @operator)
     {
-        _constructs.Add( (StringSlice.Create( symbol ), ParsedExpressionConstructType.PrefixUnaryOperator, @operator) );
+        _constructs.Add( (StringSliceOld.Create( symbol ), ParsedExpressionConstructType.PrefixUnaryOperator, @operator) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddPostfixUnaryOperator(string symbol, ParsedExpressionUnaryOperator @operator)
     {
-        _constructs.Add( (StringSlice.Create( symbol ), ParsedExpressionConstructType.PostfixUnaryOperator, @operator) );
+        _constructs.Add( (StringSliceOld.Create( symbol ), ParsedExpressionConstructType.PostfixUnaryOperator, @operator) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddPostfixUnaryOperator(ReadOnlyMemory<char> symbol, ParsedExpressionUnaryOperator @operator)
     {
-        _constructs.Add( (StringSlice.Create( symbol ), ParsedExpressionConstructType.PostfixUnaryOperator, @operator) );
+        _constructs.Add( (StringSliceOld.Create( symbol ), ParsedExpressionConstructType.PostfixUnaryOperator, @operator) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddPrefixTypeConverter(string symbol, ParsedExpressionTypeConverter converter)
     {
-        _constructs.Add( (StringSlice.Create( symbol ), ParsedExpressionConstructType.PrefixTypeConverter, converter) );
+        _constructs.Add( (StringSliceOld.Create( symbol ), ParsedExpressionConstructType.PrefixTypeConverter, converter) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddPrefixTypeConverter(ReadOnlyMemory<char> symbol, ParsedExpressionTypeConverter converter)
     {
-        _constructs.Add( (StringSlice.Create( symbol ), ParsedExpressionConstructType.PrefixTypeConverter, converter) );
+        _constructs.Add( (StringSliceOld.Create( symbol ), ParsedExpressionConstructType.PrefixTypeConverter, converter) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddPostfixTypeConverter(string symbol, ParsedExpressionTypeConverter converter)
     {
-        _constructs.Add( (StringSlice.Create( symbol ), ParsedExpressionConstructType.PostfixTypeConverter, converter) );
+        _constructs.Add( (StringSliceOld.Create( symbol ), ParsedExpressionConstructType.PostfixTypeConverter, converter) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddPostfixTypeConverter(ReadOnlyMemory<char> symbol, ParsedExpressionTypeConverter converter)
     {
-        _constructs.Add( (StringSlice.Create( symbol ), ParsedExpressionConstructType.PostfixTypeConverter, converter) );
+        _constructs.Add( (StringSliceOld.Create( symbol ), ParsedExpressionConstructType.PostfixTypeConverter, converter) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddConstant(string symbol, ParsedExpressionConstant constant)
     {
-        _constructs.Add( (StringSlice.Create( symbol ), ParsedExpressionConstructType.Constant, constant) );
+        _constructs.Add( (StringSliceOld.Create( symbol ), ParsedExpressionConstructType.Constant, constant) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddConstant(ReadOnlyMemory<char> symbol, ParsedExpressionConstant constant)
     {
-        _constructs.Add( (StringSlice.Create( symbol ), ParsedExpressionConstructType.Constant, constant) );
+        _constructs.Add( (StringSliceOld.Create( symbol ), ParsedExpressionConstructType.Constant, constant) );
         return this;
     }
 
@@ -208,73 +208,73 @@ public sealed class ParsedExpressionFactoryBuilder
 
     public ParsedExpressionFactoryBuilder AddTypeDeclaration(string name, Type type)
     {
-        _constructs.Add( (StringSlice.Create( name ), ParsedExpressionConstructType.TypeDeclaration, type) );
+        _constructs.Add( (StringSliceOld.Create( name ), ParsedExpressionConstructType.TypeDeclaration, type) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddTypeDeclaration(ReadOnlyMemory<char> name, Type type)
     {
-        _constructs.Add( (StringSlice.Create( name ), ParsedExpressionConstructType.TypeDeclaration, type) );
+        _constructs.Add( (StringSliceOld.Create( name ), ParsedExpressionConstructType.TypeDeclaration, type) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddFunction(string symbol, ParsedExpressionFunction function)
     {
-        _constructs.Add( (StringSlice.Create( symbol ), ParsedExpressionConstructType.Function, function) );
+        _constructs.Add( (StringSliceOld.Create( symbol ), ParsedExpressionConstructType.Function, function) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddFunction(ReadOnlyMemory<char> symbol, ParsedExpressionFunction function)
     {
-        _constructs.Add( (StringSlice.Create( symbol ), ParsedExpressionConstructType.Function, function) );
+        _constructs.Add( (StringSliceOld.Create( symbol ), ParsedExpressionConstructType.Function, function) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddVariadicFunction(string symbol, ParsedExpressionVariadicFunction function)
     {
-        _constructs.Add( (StringSlice.Create( symbol ), ParsedExpressionConstructType.VariadicFunction, function) );
+        _constructs.Add( (StringSliceOld.Create( symbol ), ParsedExpressionConstructType.VariadicFunction, function) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder AddVariadicFunction(ReadOnlyMemory<char> symbol, ParsedExpressionVariadicFunction function)
     {
-        _constructs.Add( (StringSlice.Create( symbol ), ParsedExpressionConstructType.VariadicFunction, function) );
+        _constructs.Add( (StringSliceOld.Create( symbol ), ParsedExpressionConstructType.VariadicFunction, function) );
         return this;
     }
 
     public ParsedExpressionFactoryBuilder SetBinaryOperatorPrecedence(string symbol, int precedence)
     {
-        _precedences[(StringSlice.Create( symbol ), ParsedExpressionConstructType.BinaryOperator)] = precedence;
+        _precedences[(StringSliceOld.Create( symbol ), ParsedExpressionConstructType.BinaryOperator)] = precedence;
         return this;
     }
 
     public ParsedExpressionFactoryBuilder SetBinaryOperatorPrecedence(ReadOnlyMemory<char> symbol, int precedence)
     {
-        _precedences[(StringSlice.Create( symbol ), ParsedExpressionConstructType.BinaryOperator)] = precedence;
+        _precedences[(StringSliceOld.Create( symbol ), ParsedExpressionConstructType.BinaryOperator)] = precedence;
         return this;
     }
 
     public ParsedExpressionFactoryBuilder SetPrefixUnaryConstructPrecedence(string symbol, int precedence)
     {
-        _precedences[(StringSlice.Create( symbol ), ParsedExpressionConstructType.PrefixUnaryConstruct)] = precedence;
+        _precedences[(StringSliceOld.Create( symbol ), ParsedExpressionConstructType.PrefixUnaryConstruct)] = precedence;
         return this;
     }
 
     public ParsedExpressionFactoryBuilder SetPrefixUnaryConstructPrecedence(ReadOnlyMemory<char> symbol, int precedence)
     {
-        _precedences[(StringSlice.Create( symbol ), ParsedExpressionConstructType.PrefixUnaryConstruct)] = precedence;
+        _precedences[(StringSliceOld.Create( symbol ), ParsedExpressionConstructType.PrefixUnaryConstruct)] = precedence;
         return this;
     }
 
     public ParsedExpressionFactoryBuilder SetPostfixUnaryConstructPrecedence(string symbol, int precedence)
     {
-        _precedences[(StringSlice.Create( symbol ), ParsedExpressionConstructType.PostfixUnaryConstruct)] = precedence;
+        _precedences[(StringSliceOld.Create( symbol ), ParsedExpressionConstructType.PostfixUnaryConstruct)] = precedence;
         return this;
     }
 
     public ParsedExpressionFactoryBuilder SetPostfixUnaryConstructPrecedence(ReadOnlyMemory<char> symbol, int precedence)
     {
-        _precedences[(StringSlice.Create( symbol ), ParsedExpressionConstructType.PostfixUnaryConstruct)] = precedence;
+        _precedences[(StringSliceOld.Create( symbol ), ParsedExpressionConstructType.PostfixUnaryConstruct)] = precedence;
         return this;
     }
 
@@ -358,7 +358,7 @@ public sealed class ParsedExpressionFactoryBuilder
         var postfixUnaryOperators = new List<ParsedExpressionUnaryOperator>();
         var prefixTypeConverters = new List<ParsedExpressionTypeConverter>();
         var postfixTypeConverters = new List<ParsedExpressionTypeConverter>();
-        var constructDefinitions = new Dictionary<StringSlice, ConstructTokenDefinition>();
+        var constructDefinitions = new Dictionary<StringSliceOld, ConstructTokenDefinition>();
 
         var configuration = new ParsedExpressionFactoryInternalConfiguration(
             constructDefinitions,
@@ -397,7 +397,7 @@ public sealed class ParsedExpressionFactoryBuilder
     }
 
     [Pure]
-    private IEnumerable<(StringSlice Symbol, ParsedExpressionConstructType Type, object Construct)> CreateInternalVariadicFunctions(
+    private IEnumerable<(StringSliceOld Symbol, ParsedExpressionConstructType Type, object Construct)> CreateInternalVariadicFunctions(
         ParsedExpressionFactoryInternalConfiguration configuration)
     {
         const ParsedExpressionConstructType type = ParsedExpressionConstructType.VariadicFunction;
@@ -422,18 +422,18 @@ public sealed class ParsedExpressionFactoryBuilder
             ? new ParsedExpressionInvoke()
             : _invokeProvider( configuration );
 
-        return new (StringSlice, ParsedExpressionConstructType, object)[]
+        return new (StringSliceOld, ParsedExpressionConstructType, object)[]
         {
-            (StringSlice.Create( ParsedExpressionConstructDefaults.MemberAccessSymbol ), type, memberAccess),
-            (StringSlice.Create( ParsedExpressionConstructDefaults.IndexerCallSymbol ), type, indexerCall),
-            (StringSlice.Create( ParsedExpressionConstructDefaults.MethodCallSymbol ), type, methodCall),
-            (StringSlice.Create( ParsedExpressionConstructDefaults.MakeArraySymbol ), type, makeArray),
-            (StringSlice.Create( ParsedExpressionConstructDefaults.InvokeSymbol ), type, invoke)
+            (StringSliceOld.Create( ParsedExpressionConstructDefaults.MemberAccessSymbol ), type, memberAccess),
+            (StringSliceOld.Create( ParsedExpressionConstructDefaults.IndexerCallSymbol ), type, indexerCall),
+            (StringSliceOld.Create( ParsedExpressionConstructDefaults.MethodCallSymbol ), type, methodCall),
+            (StringSliceOld.Create( ParsedExpressionConstructDefaults.MakeArraySymbol ), type, makeArray),
+            (StringSliceOld.Create( ParsedExpressionConstructDefaults.InvokeSymbol ), type, invoke)
         };
     }
 
     private ConstructTokenDefinition CreateOperatorDefinition(
-        IGrouping<StringSlice, (StringSlice Symbol, ParsedExpressionConstructType Type, object Object)> group,
+        IGrouping<StringSliceOld, (StringSliceOld Symbol, ParsedExpressionConstructType Type, object Object)> group,
         List<ParsedExpressionBinaryOperator> binaryBuffer,
         List<ParsedExpressionUnaryOperator> prefixUnaryBuffer,
         List<ParsedExpressionUnaryOperator> postfixUnaryBuffer,
@@ -483,7 +483,7 @@ public sealed class ParsedExpressionFactoryBuilder
     }
 
     private BinaryOperatorCollection CreateBinaryOperatorCollection(
-        StringSlice symbol,
+        StringSliceOld symbol,
         List<ParsedExpressionBinaryOperator> buffer,
         ref Chain<string> errorMessages)
     {
@@ -526,7 +526,7 @@ public sealed class ParsedExpressionFactoryBuilder
     }
 
     private UnaryOperatorCollection CreateUnaryOperatorCollection(
-        StringSlice symbol,
+        StringSliceOld symbol,
         List<ParsedExpressionUnaryOperator> buffer,
         ParsedExpressionConstructType type,
         ref Chain<string> errorMessages)
@@ -575,7 +575,7 @@ public sealed class ParsedExpressionFactoryBuilder
     }
 
     private ConstructTokenDefinition CreateTypeConverterDefinition(
-        IGrouping<StringSlice, (StringSlice Symbol, ParsedExpressionConstructType Type, object Object)> group,
+        IGrouping<StringSliceOld, (StringSliceOld Symbol, ParsedExpressionConstructType Type, object Object)> group,
         List<ParsedExpressionTypeConverter> prefixBuffer,
         List<ParsedExpressionTypeConverter> postfixBuffer,
         ref Chain<string> errorMessages)
@@ -627,7 +627,7 @@ public sealed class ParsedExpressionFactoryBuilder
     }
 
     private TypeConverterCollection CreateTypeConverterCollection(
-        StringSlice symbol,
+        StringSliceOld symbol,
         List<ParsedExpressionTypeConverter> buffer,
         ParsedExpressionConstructType type,
         ref Chain<string> errorMessages)
@@ -690,7 +690,7 @@ public sealed class ParsedExpressionFactoryBuilder
     }
 
     private static ConstructTokenDefinition CreateConstantDefinition(
-        IGrouping<StringSlice, (StringSlice Symbol, ParsedExpressionConstructType Type, object Object)> group,
+        IGrouping<StringSliceOld, (StringSliceOld Symbol, ParsedExpressionConstructType Type, object Object)> group,
         ref Chain<string> errorMessages)
     {
         ParsedExpressionConstant? result = null;
@@ -720,7 +720,7 @@ public sealed class ParsedExpressionFactoryBuilder
     }
 
     private static ConstructTokenDefinition CreateTypeDeclarationDefinition(
-        IGrouping<StringSlice, (StringSlice Symbol, ParsedExpressionConstructType Type, object Object)> group,
+        IGrouping<StringSliceOld, (StringSliceOld Symbol, ParsedExpressionConstructType Type, object Object)> group,
         ref Chain<string> errorMessages)
     {
         Type? result = null;
@@ -750,7 +750,7 @@ public sealed class ParsedExpressionFactoryBuilder
     }
 
     private static ConstructTokenDefinition CreateFunctionDefinition(
-        IGrouping<StringSlice, (StringSlice Symbol, ParsedExpressionConstructType Type, object Object)> group,
+        IGrouping<StringSliceOld, (StringSliceOld Symbol, ParsedExpressionConstructType Type, object Object)> group,
         ref Chain<string> errorMessages)
     {
         Dictionary<FunctionSignatureKey, ParsedExpressionFunction>? functions = null;
@@ -779,7 +779,7 @@ public sealed class ParsedExpressionFactoryBuilder
     }
 
     private static ConstructTokenDefinition CreateVariadicFunctionDefinition(
-        IGrouping<StringSlice, (StringSlice Symbol, ParsedExpressionConstructType Type, object Object)> group,
+        IGrouping<StringSliceOld, (StringSliceOld Symbol, ParsedExpressionConstructType Type, object Object)> group,
         ref Chain<string> errorMessages)
     {
         ParsedExpressionVariadicFunction? result = null;

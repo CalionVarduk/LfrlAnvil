@@ -11,7 +11,7 @@ public sealed class ParsedExpressionBuilderMissingFunctionError : ParsedExpressi
 {
     internal ParsedExpressionBuilderMissingFunctionError(
         ParsedExpressionBuilderErrorType type,
-        StringSlice token,
+        StringSliceOld token,
         IReadOnlyList<Type> parameterTypes)
         : base( type, token )
     {
