@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
-using LfrlAnvil.Computable.Expressions.Internal;
 
 namespace LfrlAnvil.Computable.Expressions.Errors;
 
@@ -11,7 +10,7 @@ public sealed class ParsedExpressionBuilderExceptionError : ParsedExpressionBuil
         Exception = exception;
     }
 
-    internal ParsedExpressionBuilderExceptionError(Exception exception, ParsedExpressionBuilderErrorType type, StringSliceOld? token)
+    internal ParsedExpressionBuilderExceptionError(Exception exception, ParsedExpressionBuilderErrorType type, StringSlice? token)
         : base( type, token )
     {
         Exception = exception;

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions.Execution;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
 
 namespace LfrlAnvil.Computable.Expressions.Tests.ParsedExpressionUnboundArgumentsTests;
@@ -20,9 +21,9 @@ public class ParsedExpressionUnboundArgumentsTests : TestsBase
         var sut = new ParsedExpressionUnboundArguments(
             new[]
             {
-                KeyValuePair.Create( "a".AsMemory(), 0 ),
-                KeyValuePair.Create( "b".AsMemory(), 1 ),
-                KeyValuePair.Create( "c".AsMemory(), 2 )
+                KeyValuePair.Create( "a".AsSlice(), 0 ),
+                KeyValuePair.Create( "b".AsSlice(), 1 ),
+                KeyValuePair.Create( "c".AsSlice(), 2 )
             } );
 
         using ( new AssertionScope() )
@@ -43,9 +44,9 @@ public class ParsedExpressionUnboundArgumentsTests : TestsBase
         var sut = new ParsedExpressionUnboundArguments(
             new[]
             {
-                KeyValuePair.Create( "a".AsMemory(), 0 ),
-                KeyValuePair.Create( "b".AsMemory(), 1 ),
-                KeyValuePair.Create( "c".AsMemory(), 2 )
+                KeyValuePair.Create( "a".AsSlice(), 0 ),
+                KeyValuePair.Create( "b".AsSlice(), 1 ),
+                KeyValuePair.Create( "c".AsSlice(), 2 )
             } );
 
         var result = sut.Contains( name );
@@ -56,7 +57,7 @@ public class ParsedExpressionUnboundArgumentsTests : TestsBase
     [Fact]
     public void Contains_ShouldReturnFalse_WhenNameDoesNotExist()
     {
-        var sut = new ParsedExpressionUnboundArguments( new[] { KeyValuePair.Create( "a".AsMemory(), 0 ) } );
+        var sut = new ParsedExpressionUnboundArguments( new[] { KeyValuePair.Create( "a".AsSlice(), 0 ) } );
         var result = sut.Contains( "b" );
         result.Should().BeFalse();
     }
@@ -70,9 +71,9 @@ public class ParsedExpressionUnboundArgumentsTests : TestsBase
         var sut = new ParsedExpressionUnboundArguments(
             new[]
             {
-                KeyValuePair.Create( "a".AsMemory(), 0 ),
-                KeyValuePair.Create( "b".AsMemory(), 1 ),
-                KeyValuePair.Create( "c".AsMemory(), 2 )
+                KeyValuePair.Create( "a".AsSlice(), 0 ),
+                KeyValuePair.Create( "b".AsSlice(), 1 ),
+                KeyValuePair.Create( "c".AsSlice(), 2 )
             } );
 
         var result = sut.GetIndex( name );
@@ -83,7 +84,7 @@ public class ParsedExpressionUnboundArgumentsTests : TestsBase
     [Fact]
     public void GetIndex_ShouldReturnMinusOne_WhenNameDoesNotExist()
     {
-        var sut = new ParsedExpressionUnboundArguments( new[] { KeyValuePair.Create( "a".AsMemory(), 0 ) } );
+        var sut = new ParsedExpressionUnboundArguments( new[] { KeyValuePair.Create( "a".AsSlice(), 0 ) } );
         var result = sut.GetIndex( "b" );
         result.Should().Be( -1 );
     }
@@ -97,9 +98,9 @@ public class ParsedExpressionUnboundArgumentsTests : TestsBase
         var sut = new ParsedExpressionUnboundArguments(
             new[]
             {
-                KeyValuePair.Create( "a".AsMemory(), 0 ),
-                KeyValuePair.Create( "b".AsMemory(), 1 ),
-                KeyValuePair.Create( "c".AsMemory(), 2 )
+                KeyValuePair.Create( "a".AsSlice(), 0 ),
+                KeyValuePair.Create( "b".AsSlice(), 1 ),
+                KeyValuePair.Create( "c".AsSlice(), 2 )
             } );
 
         var result = sut.GetName( index );
@@ -112,7 +113,7 @@ public class ParsedExpressionUnboundArgumentsTests : TestsBase
     [InlineData( 1 )]
     public void GetName_ShouldThrowIndexOutOfRangeException_WhenIndexDoesNotExist(int index)
     {
-        var sut = new ParsedExpressionUnboundArguments( new[] { KeyValuePair.Create( "a".AsMemory(), 0 ) } );
+        var sut = new ParsedExpressionUnboundArguments( new[] { KeyValuePair.Create( "a".AsSlice(), 0 ) } );
         var action = Lambda.Of( () => sut.GetName( index ) );
         action.Should().ThrowExactly<IndexOutOfRangeException>();
     }

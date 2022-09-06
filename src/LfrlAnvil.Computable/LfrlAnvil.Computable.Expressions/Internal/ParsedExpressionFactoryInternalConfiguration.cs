@@ -7,13 +7,14 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Computable.Expressions.Exceptions;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
 
 public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpressionFactoryConfiguration
 {
     internal ParsedExpressionFactoryInternalConfiguration(
-        IReadOnlyDictionary<StringSliceOld, ConstructTokenDefinition> constructs,
+        IReadOnlyDictionary<StringSlice, ConstructTokenDefinition> constructs,
         IParsedExpressionFactoryConfiguration configuration)
     {
         Constructs = constructs;
@@ -58,7 +59,7 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
     public NumberStyles NumberStyles { get; }
     public BindingFlags MemberBindingFlags { get; }
     public IFormatProvider NumberFormatProvider { get; }
-    internal IReadOnlyDictionary<StringSliceOld, ConstructTokenDefinition> Constructs { get; }
+    internal IReadOnlyDictionary<StringSlice, ConstructTokenDefinition> Constructs { get; }
 
     [Pure]
     public MemberInfo[] FindTypeFieldsAndProperties(Type type, string name)
@@ -85,19 +86,19 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public MemberFilter GetAccessibleMemberFilter(string name)
     {
-        return GetAccessibleMemberFilter( StringSliceOld.Create( name ) );
+        return GetAccessibleMemberFilter( name.AsSlice() );
     }
 
     [Pure]
-    internal MemberFilter GetAccessibleMemberFilter(StringSliceOld symbol)
+    internal MemberFilter GetAccessibleMemberFilter(StringSlice symbol)
     {
         return IgnoreMemberNameCase
-            ? (m, _) => symbol.EqualsIgnoreCase( StringSliceOld.Create( m.Name ) ) && IsMemberAccessible( m )
-            : (m, _) => symbol.Equals( StringSliceOld.Create( m.Name ) ) && IsMemberAccessible( m );
+            ? (m, _) => symbol.Equals( m.Name.AsSlice(), StringComparison.OrdinalIgnoreCase ) && IsMemberAccessible( m )
+            : (m, _) => symbol.Equals( m.Name.AsSlice() ) && IsMemberAccessible( m );
     }
 
     [Pure]
-    internal bool TypeContainsMethod(Type type, StringSliceOld symbol)
+    internal bool TypeContainsMethod(Type type, StringSlice symbol)
     {
         var methods = type.GetMethods( MemberBindingFlags );
         var filter = GetAccessibleMemberFilter( symbol );
@@ -200,13 +201,13 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
         {
             _info = CultureInfo.InvariantCulture.NumberFormat;
 
-            if ( ! StringSliceOld.Create( _info.NumberDecimalSeparator ).Equals( configuration.DecimalPoint ) )
+            if ( ! TokenConstants.AreEqual( _info.NumberDecimalSeparator.AsSlice(), configuration.DecimalPoint ) )
             {
                 _info = ReinterpretCast.To<NumberFormatInfo>( _info.Clone() );
                 _info.NumberDecimalSeparator = configuration.DecimalPoint.ToString();
             }
 
-            if ( ! StringSliceOld.Create( _info.NumberGroupSeparator ).Equals( configuration.IntegerDigitSeparator ) )
+            if ( ! TokenConstants.AreEqual( _info.NumberGroupSeparator.AsSlice(), configuration.IntegerDigitSeparator ) )
             {
                 if ( _info.IsReadOnly )
                     _info = ReinterpretCast.To<NumberFormatInfo>( _info.Clone() );

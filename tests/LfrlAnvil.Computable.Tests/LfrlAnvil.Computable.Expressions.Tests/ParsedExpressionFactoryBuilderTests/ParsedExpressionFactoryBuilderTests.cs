@@ -6,6 +6,7 @@ using LfrlAnvil.Computable.Expressions.Constructs.Decimal;
 using LfrlAnvil.Computable.Expressions.Constructs.Variadic;
 using LfrlAnvil.Computable.Expressions.Exceptions;
 using LfrlAnvil.Computable.Expressions.Internal;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
@@ -266,13 +267,13 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     }
 
     [Fact]
-    public void AddBinaryOperator_WithMemory_ShouldAddNewConstruct()
+    public void AddBinaryOperator_WithStringSlice_ShouldAddNewConstruct()
     {
         var symbol = Fixture.Create<string>();
         var sut = new ParsedExpressionFactoryBuilder();
         var @operator = new ParsedExpressionAddOperator();
 
-        var result = sut.AddBinaryOperator( symbol.AsMemory(), @operator );
+        var result = sut.AddBinaryOperator( symbol.AsSlice(), @operator );
 
         using ( new AssertionScope() )
         {
@@ -304,13 +305,13 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     }
 
     [Fact]
-    public void AddPrefixUnaryOperator_WithMemory_ShouldAddNewConstruct()
+    public void AddPrefixUnaryOperator_WithStringSlice_ShouldAddNewConstruct()
     {
         var symbol = Fixture.Create<string>();
         var sut = new ParsedExpressionFactoryBuilder();
         var @operator = new ParsedExpressionNegateOperator();
 
-        var result = sut.AddPrefixUnaryOperator( symbol.AsMemory(), @operator );
+        var result = sut.AddPrefixUnaryOperator( symbol.AsSlice(), @operator );
 
         using ( new AssertionScope() )
         {
@@ -342,13 +343,13 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     }
 
     [Fact]
-    public void AddPostfixUnaryOperator_WithMemory_ShouldAddNewConstruct()
+    public void AddPostfixUnaryOperator_WithStringSlice_ShouldAddNewConstruct()
     {
         var symbol = Fixture.Create<string>();
         var sut = new ParsedExpressionFactoryBuilder();
         var @operator = new ParsedExpressionNegateOperator();
 
-        var result = sut.AddPostfixUnaryOperator( symbol.AsMemory(), @operator );
+        var result = sut.AddPostfixUnaryOperator( symbol.AsSlice(), @operator );
 
         using ( new AssertionScope() )
         {
@@ -380,13 +381,13 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     }
 
     [Fact]
-    public void AddPrefixTypeConverter_WithMemory_ShouldAddNewConstruct()
+    public void AddPrefixTypeConverter_WithStringSlice_ShouldAddNewConstruct()
     {
         var symbol = Fixture.Create<string>();
         var sut = new ParsedExpressionFactoryBuilder();
         var converter = new ParsedExpressionTypeConverter<int>();
 
-        var result = sut.AddPrefixTypeConverter( symbol.AsMemory(), converter );
+        var result = sut.AddPrefixTypeConverter( symbol.AsSlice(), converter );
 
         using ( new AssertionScope() )
         {
@@ -418,13 +419,13 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     }
 
     [Fact]
-    public void AddPostfixTypeConverter_WithMemory_ShouldAddNewConstruct()
+    public void AddPostfixTypeConverter_WithStringSlice_ShouldAddNewConstruct()
     {
         var symbol = Fixture.Create<string>();
         var sut = new ParsedExpressionFactoryBuilder();
         var converter = new ParsedExpressionTypeConverter<int>();
 
-        var result = sut.AddPostfixTypeConverter( symbol.AsMemory(), converter );
+        var result = sut.AddPostfixTypeConverter( symbol.AsSlice(), converter );
 
         using ( new AssertionScope() )
         {
@@ -456,13 +457,13 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     }
 
     [Fact]
-    public void AddConstant_WithMemory_ShouldAddNewConstant()
+    public void AddConstant_WithStringSlice_ShouldAddNewConstant()
     {
         var symbol = Fixture.Create<string>();
         var sut = new ParsedExpressionFactoryBuilder();
         var constant = new ParsedExpressionConstant<int>( Fixture.Create<int>() );
 
-        var result = sut.AddConstant( symbol.AsMemory(), constant );
+        var result = sut.AddConstant( symbol.AsSlice(), constant );
 
         using ( new AssertionScope() )
         {
@@ -493,12 +494,12 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     }
 
     [Fact]
-    public void AddTypeDeclaration_WithMemory_ShouldAddNewTypeDeclaration()
+    public void AddTypeDeclaration_WithStringSlice_ShouldAddNewTypeDeclaration()
     {
         var symbol = Fixture.Create<string>();
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var result = sut.AddTypeDeclaration<int>( symbol.AsMemory() );
+        var result = sut.AddTypeDeclaration<int>( symbol.AsSlice() );
 
         using ( new AssertionScope() )
         {
@@ -530,13 +531,13 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     }
 
     [Fact]
-    public void AddFunction_WithMemory_ShouldAddNewConstruct()
+    public void AddFunction_WithStringSlice_ShouldAddNewConstruct()
     {
         var symbol = Fixture.Create<string>();
         var sut = new ParsedExpressionFactoryBuilder();
         var function = new ParsedExpressionFunction<int>( () => Fixture.Create<int>() );
 
-        var result = sut.AddFunction( symbol.AsMemory(), function );
+        var result = sut.AddFunction( symbol.AsSlice(), function );
 
         using ( new AssertionScope() )
         {
@@ -568,13 +569,13 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     }
 
     [Fact]
-    public void AddVariadicFunction_WithMemory_ShouldAddNewConstruct()
+    public void AddVariadicFunction_WithStringSlice_ShouldAddNewConstruct()
     {
         var symbol = Fixture.Create<string>();
         var sut = new ParsedExpressionFactoryBuilder();
         var function = Substitute.ForPartsOf<ParsedExpressionVariadicFunction>();
 
-        var result = sut.AddVariadicFunction( symbol.AsMemory(), function );
+        var result = sut.AddVariadicFunction( symbol.AsSlice(), function );
 
         using ( new AssertionScope() )
         {
@@ -605,13 +606,13 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     }
 
     [Fact]
-    public void SetBinaryOperatorPrecedence_WithMemory_ShouldRegisterPrecedence()
+    public void SetBinaryOperatorPrecedence_WithStringSlice_ShouldRegisterPrecedence()
     {
         var symbol = Fixture.Create<string>();
         var sut = new ParsedExpressionFactoryBuilder();
         var value = Fixture.Create<int>();
 
-        var result = sut.SetBinaryOperatorPrecedence( symbol.AsMemory(), value );
+        var result = sut.SetBinaryOperatorPrecedence( symbol.AsSlice(), value );
 
         using ( new AssertionScope() )
         {
@@ -641,13 +642,13 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     }
 
     [Fact]
-    public void SetPrefixUnaryConstructPrecedence_WithMemory_ShouldRegisterPrecedence()
+    public void SetPrefixUnaryConstructPrecedence_WithStringSlice_ShouldRegisterPrecedence()
     {
         var symbol = Fixture.Create<string>();
         var sut = new ParsedExpressionFactoryBuilder();
         var value = Fixture.Create<int>();
 
-        var result = sut.SetPrefixUnaryConstructPrecedence( symbol.AsMemory(), value );
+        var result = sut.SetPrefixUnaryConstructPrecedence( symbol.AsSlice(), value );
 
         using ( new AssertionScope() )
         {
@@ -677,13 +678,13 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     }
 
     [Fact]
-    public void SetPostfixUnaryConstructPrecedence_WithMemory_ShouldRegisterPrecedence()
+    public void SetPostfixUnaryConstructPrecedence_WithStringSlice_ShouldRegisterPrecedence()
     {
         var symbol = Fixture.Create<string>();
         var sut = new ParsedExpressionFactoryBuilder();
         var value = Fixture.Create<int>();
 
-        var result = sut.SetPostfixUnaryConstructPrecedence( symbol.AsMemory(), value );
+        var result = sut.SetPostfixUnaryConstructPrecedence( symbol.AsSlice(), value );
 
         using ( new AssertionScope() )
         {

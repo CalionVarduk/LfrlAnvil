@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Linq;
-using LfrlAnvil.Computable.Expressions.Internal;
 
 namespace LfrlAnvil.Computable.Expressions.Errors;
 
@@ -10,7 +9,7 @@ public sealed class ParsedExpressionBuilderAggregateError : ParsedExpressionBuil
     internal ParsedExpressionBuilderAggregateError(
         ParsedExpressionBuilderErrorType type,
         Chain<ParsedExpressionBuilderError> inner,
-        StringSliceOld? token = null)
+        StringSlice? token = null)
         : base( type, token )
     {
         Assume.IsNotEmpty( inner, nameof( inner ) );

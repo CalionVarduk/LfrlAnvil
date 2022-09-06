@@ -2,27 +2,26 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Computable.Expressions.Internal;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions;
 
-public sealed class ParsedExpressionUnboundArguments : IReadOnlyCollection<KeyValuePair<ReadOnlyMemory<char>, int>>
+public sealed class ParsedExpressionUnboundArguments : IReadOnlyCollection<KeyValuePair<StringSlice, int>>
 {
     public static readonly ParsedExpressionUnboundArguments Empty = new ParsedExpressionUnboundArguments(
-        new Dictionary<StringSliceOld, int>() );
+        new Dictionary<StringSlice, int>() );
 
-    private readonly IReadOnlyDictionary<StringSliceOld, int> _indexes;
-    private readonly StringSliceOld[] _names;
+    private readonly IReadOnlyDictionary<StringSlice, int> _indexes;
+    private readonly StringSlice[] _names;
 
-    public ParsedExpressionUnboundArguments(IEnumerable<KeyValuePair<ReadOnlyMemory<char>, int>> map)
+    public ParsedExpressionUnboundArguments(IEnumerable<KeyValuePair<StringSlice, int>> map)
     {
-        _indexes = new Dictionary<StringSliceOld, int>( map.Select( kv => KeyValuePair.Create( StringSliceOld.Create( kv.Key ), kv.Value ) ) );
+        _indexes = new Dictionary<StringSlice, int>( map );
         _names = CreateNames( _indexes );
     }
 
-    internal ParsedExpressionUnboundArguments(IReadOnlyDictionary<StringSliceOld, int> indexes)
+    internal ParsedExpressionUnboundArguments(IReadOnlyDictionary<StringSlice, int> indexes)
     {
         _indexes = indexes;
         _names = CreateNames( _indexes );
@@ -33,44 +32,44 @@ public sealed class ParsedExpressionUnboundArguments : IReadOnlyCollection<KeyVa
     [Pure]
     public bool Contains(string name)
     {
-        return Contains( name.AsMemory() );
+        return Contains( name.AsSlice() );
     }
 
     [Pure]
-    public bool Contains(ReadOnlyMemory<char> name)
+    public bool Contains(StringSlice name)
     {
-        return _indexes.ContainsKey( StringSliceOld.Create( name ) );
+        return _indexes.ContainsKey( name );
     }
 
     [Pure]
     public int GetIndex(string name)
     {
-        return GetIndex( name.AsMemory() );
+        return GetIndex( name.AsSlice() );
     }
 
     [Pure]
-    public int GetIndex(ReadOnlyMemory<char> name)
+    public int GetIndex(StringSlice name)
     {
-        return _indexes.TryGetValue( StringSliceOld.Create( name ), out var index ) ? index : -1;
+        return _indexes.TryGetValue( name, out var index ) ? index : -1;
     }
 
     [Pure]
-    public ReadOnlyMemory<char> GetName(int index)
+    public StringSlice GetName(int index)
     {
-        return _names[index].AsMemory();
+        return _names[index];
     }
 
     [Pure]
-    public IEnumerator<KeyValuePair<ReadOnlyMemory<char>, int>> GetEnumerator()
+    public IEnumerator<KeyValuePair<StringSlice, int>> GetEnumerator()
     {
-        return _indexes.Select( kv => KeyValuePair.Create( kv.Key.AsMemory(), kv.Value ) ).GetEnumerator();
+        return _indexes.GetEnumerator();
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static StringSliceOld[] CreateNames(IReadOnlyDictionary<StringSliceOld, int> indexes)
+    private static StringSlice[] CreateNames(IReadOnlyDictionary<StringSlice, int> indexes)
     {
-        var result = indexes.Count == 0 ? Array.Empty<StringSliceOld>() : new StringSliceOld[indexes.Count];
+        var result = indexes.Count == 0 ? Array.Empty<StringSlice>() : new StringSlice[indexes.Count];
         foreach ( var (name, index) in indexes )
             result[index] = name;
 

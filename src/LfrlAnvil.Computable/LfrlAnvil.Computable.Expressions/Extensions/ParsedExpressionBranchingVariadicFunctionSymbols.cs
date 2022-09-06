@@ -1,25 +1,24 @@
-﻿using System;
-using System.Diagnostics.Contracts;
+﻿using System.Diagnostics.Contracts;
 using LfrlAnvil.Computable.Expressions.Constructs;
-using LfrlAnvil.Computable.Expressions.Internal;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Extensions;
 
 public readonly struct ParsedExpressionBranchingVariadicFunctionSymbols
 {
-    public static readonly ParsedExpressionBranchingVariadicFunctionSymbols
-        Default = new ParsedExpressionBranchingVariadicFunctionSymbols();
+    public static readonly ParsedExpressionBranchingVariadicFunctionSymbols Default =
+        new ParsedExpressionBranchingVariadicFunctionSymbols();
 
-    private readonly StringSliceOld? _if;
-    private readonly StringSliceOld? _switchCase;
-    private readonly StringSliceOld? _switch;
-    private readonly StringSliceOld? _throw;
+    private readonly StringSlice? _if;
+    private readonly StringSlice? _switchCase;
+    private readonly StringSlice? _switch;
+    private readonly StringSlice? _throw;
 
     private ParsedExpressionBranchingVariadicFunctionSymbols(
-        StringSliceOld? @if,
-        StringSliceOld? switchCase,
-        StringSliceOld? @switch,
-        StringSliceOld? @throw)
+        StringSlice? @if,
+        StringSlice? switchCase,
+        StringSlice? @switch,
+        StringSlice? @throw)
     {
         _if = @if;
         _switchCase = switchCase;
@@ -27,10 +26,10 @@ public readonly struct ParsedExpressionBranchingVariadicFunctionSymbols
         _throw = @throw;
     }
 
-    public ReadOnlyMemory<char> If => _if?.AsMemory() ?? ParsedExpressionConstructDefaults.IfSymbol.AsMemory();
-    public ReadOnlyMemory<char> SwitchCase => _switchCase?.AsMemory() ?? ParsedExpressionConstructDefaults.SwitchCaseSymbol.AsMemory();
-    public ReadOnlyMemory<char> Switch => _switch?.AsMemory() ?? ParsedExpressionConstructDefaults.SwitchSymbol.AsMemory();
-    public ReadOnlyMemory<char> Throw => _throw?.AsMemory() ?? ParsedExpressionConstructDefaults.ThrowSymbol.AsMemory();
+    public StringSlice If => _if ?? ParsedExpressionConstructDefaults.IfSymbol.AsSlice();
+    public StringSlice SwitchCase => _switchCase ?? ParsedExpressionConstructDefaults.SwitchCaseSymbol.AsSlice();
+    public StringSlice Switch => _switch ?? ParsedExpressionConstructDefaults.SwitchSymbol.AsSlice();
+    public StringSlice Throw => _throw ?? ParsedExpressionConstructDefaults.ThrowSymbol.AsSlice();
 
     [Pure]
     public override string ToString()
@@ -42,48 +41,48 @@ public readonly struct ParsedExpressionBranchingVariadicFunctionSymbols
     [Pure]
     public ParsedExpressionBranchingVariadicFunctionSymbols SetIf(string symbol)
     {
-        return SetIf( symbol.AsMemory() );
+        return SetIf( symbol.AsSlice() );
     }
 
     [Pure]
-    public ParsedExpressionBranchingVariadicFunctionSymbols SetIf(ReadOnlyMemory<char> symbol)
+    public ParsedExpressionBranchingVariadicFunctionSymbols SetIf(StringSlice symbol)
     {
-        return new ParsedExpressionBranchingVariadicFunctionSymbols( StringSliceOld.Create( symbol ), _switchCase, _switch, _throw );
+        return new ParsedExpressionBranchingVariadicFunctionSymbols( symbol, _switchCase, _switch, _throw );
     }
 
     [Pure]
     public ParsedExpressionBranchingVariadicFunctionSymbols SetSwitchCase(string symbol)
     {
-        return SetSwitchCase( symbol.AsMemory() );
+        return SetSwitchCase( symbol.AsSlice() );
     }
 
     [Pure]
-    public ParsedExpressionBranchingVariadicFunctionSymbols SetSwitchCase(ReadOnlyMemory<char> symbol)
+    public ParsedExpressionBranchingVariadicFunctionSymbols SetSwitchCase(StringSlice symbol)
     {
-        return new ParsedExpressionBranchingVariadicFunctionSymbols( _if, StringSliceOld.Create( symbol ), _switch, _throw );
+        return new ParsedExpressionBranchingVariadicFunctionSymbols( _if, symbol, _switch, _throw );
     }
 
     [Pure]
     public ParsedExpressionBranchingVariadicFunctionSymbols SetSwitch(string symbol)
     {
-        return SetSwitch( symbol.AsMemory() );
+        return SetSwitch( symbol.AsSlice() );
     }
 
     [Pure]
-    public ParsedExpressionBranchingVariadicFunctionSymbols SetSwitch(ReadOnlyMemory<char> symbol)
+    public ParsedExpressionBranchingVariadicFunctionSymbols SetSwitch(StringSlice symbol)
     {
-        return new ParsedExpressionBranchingVariadicFunctionSymbols( _if, _switchCase, StringSliceOld.Create( symbol ), _throw );
+        return new ParsedExpressionBranchingVariadicFunctionSymbols( _if, _switchCase, symbol, _throw );
     }
 
     [Pure]
     public ParsedExpressionBranchingVariadicFunctionSymbols SetThrow(string symbol)
     {
-        return SetThrow( symbol.AsMemory() );
+        return SetThrow( symbol.AsSlice() );
     }
 
     [Pure]
-    public ParsedExpressionBranchingVariadicFunctionSymbols SetThrow(ReadOnlyMemory<char> symbol)
+    public ParsedExpressionBranchingVariadicFunctionSymbols SetThrow(StringSlice symbol)
     {
-        return new ParsedExpressionBranchingVariadicFunctionSymbols( _if, _switchCase, _switch, StringSliceOld.Create( symbol ) );
+        return new ParsedExpressionBranchingVariadicFunctionSymbols( _if, _switchCase, _switch, symbol );
     }
 }

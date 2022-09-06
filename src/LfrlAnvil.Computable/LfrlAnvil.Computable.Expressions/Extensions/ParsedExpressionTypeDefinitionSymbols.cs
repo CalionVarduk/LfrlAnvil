@@ -1,6 +1,5 @@
-﻿using System;
-using System.Diagnostics.Contracts;
-using LfrlAnvil.Computable.Expressions.Internal;
+﻿using System.Diagnostics.Contracts;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Extensions;
 
@@ -10,18 +9,18 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
 
     private readonly bool _isPrefixTypeConverterDisabled;
     private readonly bool _isConstantDisabled;
-    private readonly StringSliceOld? _name;
-    private readonly StringSliceOld? _customPrefixTypeConverter;
-    private readonly StringSliceOld? _postfixTypeConverter;
-    private readonly StringSliceOld? _customConstant;
+    private readonly StringSlice? _name;
+    private readonly StringSlice? _customPrefixTypeConverter;
+    private readonly StringSlice? _postfixTypeConverter;
+    private readonly StringSlice? _customConstant;
 
     private ParsedExpressionTypeDefinitionSymbols(
         bool isPrefixTypeConverterDisabled,
         bool isConstantDisabled,
-        StringSliceOld? name,
-        StringSliceOld? customPrefixTypeConverter,
-        StringSliceOld? postfixTypeConverter,
-        StringSliceOld? customConstant)
+        StringSlice? name,
+        StringSlice? customPrefixTypeConverter,
+        StringSlice? postfixTypeConverter,
+        StringSlice? customConstant)
     {
         _isPrefixTypeConverterDisabled = isPrefixTypeConverterDisabled;
         _isConstantDisabled = isConstantDisabled;
@@ -31,10 +30,10 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
         _customConstant = customConstant;
     }
 
-    public ReadOnlyMemory<char> Name => _name?.AsMemory() ?? string.Empty.AsMemory();
-    public ReadOnlyMemory<char>? PrefixTypeConverter => _customPrefixTypeConverter?.AsMemory() ?? GetDefaultPrefixTypeConverter();
-    public ReadOnlyMemory<char>? PostfixTypeConverter => _postfixTypeConverter?.AsMemory();
-    public ReadOnlyMemory<char>? Constant => _customConstant?.AsMemory() ?? GetDefaultConstant();
+    public StringSlice Name => _name ?? StringSlice.Empty;
+    public StringSlice? PrefixTypeConverter => _customPrefixTypeConverter ?? GetDefaultPrefixTypeConverter();
+    public StringSlice? PostfixTypeConverter => _postfixTypeConverter;
+    public StringSlice? Constant => _customConstant ?? GetDefaultConstant();
 
     [Pure]
     public override string ToString()
@@ -51,16 +50,16 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
     [Pure]
     public ParsedExpressionTypeDefinitionSymbols SetName(string name)
     {
-        return SetName( name.AsMemory() );
+        return SetName( name.AsSlice() );
     }
 
     [Pure]
-    public ParsedExpressionTypeDefinitionSymbols SetName(ReadOnlyMemory<char> name)
+    public ParsedExpressionTypeDefinitionSymbols SetName(StringSlice name)
     {
         return new ParsedExpressionTypeDefinitionSymbols(
             _isPrefixTypeConverterDisabled,
             _isConstantDisabled,
-            StringSliceOld.Create( name ),
+            name,
             _customPrefixTypeConverter,
             _postfixTypeConverter,
             _customConstant );
@@ -69,17 +68,17 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
     [Pure]
     public ParsedExpressionTypeDefinitionSymbols SetPrefixTypeConverter(string symbol)
     {
-        return SetPrefixTypeConverter( symbol.AsMemory() );
+        return SetPrefixTypeConverter( symbol.AsSlice() );
     }
 
     [Pure]
-    public ParsedExpressionTypeDefinitionSymbols SetPrefixTypeConverter(ReadOnlyMemory<char> symbol)
+    public ParsedExpressionTypeDefinitionSymbols SetPrefixTypeConverter(StringSlice symbol)
     {
         return new ParsedExpressionTypeDefinitionSymbols(
             isPrefixTypeConverterDisabled: false,
             _isConstantDisabled,
             _name,
-            StringSliceOld.Create( symbol ),
+            symbol,
             _postfixTypeConverter,
             _customConstant );
     }
@@ -111,18 +110,18 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
     [Pure]
     public ParsedExpressionTypeDefinitionSymbols SetPostfixTypeConverter(string symbol)
     {
-        return SetPostfixTypeConverter( symbol.AsMemory() );
+        return SetPostfixTypeConverter( symbol.AsSlice() );
     }
 
     [Pure]
-    public ParsedExpressionTypeDefinitionSymbols SetPostfixTypeConverter(ReadOnlyMemory<char> symbol)
+    public ParsedExpressionTypeDefinitionSymbols SetPostfixTypeConverter(StringSlice symbol)
     {
         return new ParsedExpressionTypeDefinitionSymbols(
             _isPrefixTypeConverterDisabled,
             _isConstantDisabled,
             _name,
             _customPrefixTypeConverter,
-            StringSliceOld.Create( symbol ),
+            symbol,
             _customConstant );
     }
 
@@ -141,11 +140,11 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
     [Pure]
     public ParsedExpressionTypeDefinitionSymbols SetConstant(string symbol)
     {
-        return SetConstant( symbol.AsMemory() );
+        return SetConstant( symbol.AsSlice() );
     }
 
     [Pure]
-    public ParsedExpressionTypeDefinitionSymbols SetConstant(ReadOnlyMemory<char> symbol)
+    public ParsedExpressionTypeDefinitionSymbols SetConstant(StringSlice symbol)
     {
         return new ParsedExpressionTypeDefinitionSymbols(
             _isPrefixTypeConverterDisabled,
@@ -153,7 +152,7 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
             _name,
             _customPrefixTypeConverter,
             _postfixTypeConverter,
-            StringSliceOld.Create( symbol ) );
+            symbol );
     }
 
     [Pure]
@@ -181,22 +180,22 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
     }
 
     [Pure]
-    private ReadOnlyMemory<char>? GetDefaultPrefixTypeConverter()
+    private StringSlice? GetDefaultPrefixTypeConverter()
     {
         if ( _isPrefixTypeConverterDisabled )
             return null;
 
-        var name = _name ?? StringSliceOld.Create( string.Empty );
-        return $"[{name}]".AsMemory();
+        var name = _name ?? new StringSlice( string.Empty );
+        return $"[{name}]".AsSlice();
     }
 
     [Pure]
-    private ReadOnlyMemory<char>? GetDefaultConstant()
+    private StringSlice? GetDefaultConstant()
     {
         if ( _isConstantDisabled )
             return null;
 
-        var name = _name ?? StringSliceOld.Create( string.Empty );
-        return name.ToString().ToUpperInvariant().AsMemory();
+        var name = _name ?? new StringSlice( string.Empty );
+        return name.ToString().ToUpperInvariant().AsSlice();
     }
 }

@@ -14,7 +14,7 @@ public class TokenValidationTests : TestsBase
     [InlineData( "foo_0123456789_" )]
     public void IsValidArgumentName_ShouldReturnTrue_WhenTextIsValid(string text)
     {
-        var result = TokenValidation.IsValidArgumentName( StringSliceOld.Create( text ), stringDelimiter: '\'' );
+        var result = TokenValidation.IsValidArgumentName( new StringSlice( text ), stringDelimiter: '\'' );
         result.Should().BeTrue();
     }
 
@@ -32,7 +32,7 @@ public class TokenValidationTests : TestsBase
     [InlineData( "foo " )]
     public void IsValidArgumentName_ShouldReturnFalse_WhenTextIsInvalid(string text)
     {
-        var result = TokenValidation.IsValidArgumentName( StringSliceOld.Create( text ), stringDelimiter: '\'' );
+        var result = TokenValidation.IsValidArgumentName( new StringSlice( text ), stringDelimiter: '\'' );
         result.Should().BeFalse();
     }
 
@@ -53,7 +53,7 @@ public class TokenValidationTests : TestsBase
     [InlineData( "][" )]
     public void IsValidConstructSymbol_ShouldReturnTrue_WhenTextIsValid(string text)
     {
-        var result = TokenValidation.IsValidConstructSymbol( StringSliceOld.Create( text ), stringDelimiter: '\'' );
+        var result = TokenValidation.IsValidConstructSymbol( new StringSlice( text ), stringDelimiter: '\'' );
         result.Should().BeTrue();
     }
 
@@ -87,7 +87,7 @@ public class TokenValidationTests : TestsBase
     [InlineData( "True" )]
     public void IsValidConstructSymbol_ShouldReturnFalse_WhenTextIsInvalid(string text)
     {
-        var result = TokenValidation.IsValidConstructSymbol( StringSliceOld.Create( text ), stringDelimiter: '\'' );
+        var result = TokenValidation.IsValidConstructSymbol( new StringSlice( text ), stringDelimiter: '\'' );
         result.Should().BeFalse();
     }
 

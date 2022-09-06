@@ -4,7 +4,7 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Computable.Expressions.Exceptions;
-using LfrlAnvil.Computable.Expressions.Internal;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Extensions;
 
@@ -40,7 +40,7 @@ public static class ParsedExpressionDelegateExtensions
     [Pure]
     public static TArg?[] MapArguments<TArg, TResult>(
         this IParsedExpressionDelegate<TArg, TResult> source,
-        IEnumerable<KeyValuePair<ReadOnlyMemory<char>, TArg?>> arguments)
+        IEnumerable<KeyValuePair<StringSlice, TArg?>> arguments)
     {
         var argumentCount = source.Arguments.Count;
         var buffer = argumentCount == 0 ? Array.Empty<TArg?>() : new TArg?[argumentCount];
@@ -51,7 +51,7 @@ public static class ParsedExpressionDelegateExtensions
     [Pure]
     public static TArg?[] MapArguments<TArg, TResult>(
         this IParsedExpressionDelegate<TArg, TResult> source,
-        params KeyValuePair<ReadOnlyMemory<char>, TArg?>[] arguments)
+        params KeyValuePair<StringSlice, TArg?>[] arguments)
     {
         return source.MapArguments( arguments.AsEnumerable() );
     }
@@ -61,7 +61,7 @@ public static class ParsedExpressionDelegateExtensions
         TArg?[] buffer,
         IEnumerable<KeyValuePair<string, TArg?>> arguments)
     {
-        MapArguments( source, buffer, arguments.Select( kv => KeyValuePair.Create( StringSliceOld.Create( kv.Key ), kv.Value ) ) );
+        MapArguments( source, buffer, arguments.Select( kv => KeyValuePair.Create( kv.Key.AsSlice(), kv.Value ) ) );
     }
 
     public static void MapArguments<TArg, TResult>(
@@ -75,23 +75,7 @@ public static class ParsedExpressionDelegateExtensions
     public static void MapArguments<TArg, TResult>(
         this IParsedExpressionDelegate<TArg, TResult> source,
         TArg?[] buffer,
-        IEnumerable<KeyValuePair<ReadOnlyMemory<char>, TArg?>> arguments)
-    {
-        MapArguments( source, buffer, arguments.Select( kv => KeyValuePair.Create( StringSliceOld.Create( kv.Key ), kv.Value ) ) );
-    }
-
-    public static void MapArguments<TArg, TResult>(
-        this IParsedExpressionDelegate<TArg, TResult> source,
-        TArg?[] buffer,
-        params KeyValuePair<ReadOnlyMemory<char>, TArg?>[] arguments)
-    {
-        source.MapArguments( buffer, arguments.AsEnumerable() );
-    }
-
-    private static void MapArguments<TArg, TResult>(
-        IParsedExpressionDelegate<TArg, TResult> source,
-        TArg?[] buffer,
-        IEnumerable<KeyValuePair<StringSliceOld, TArg?>> arguments)
+        IEnumerable<KeyValuePair<StringSlice, TArg?>> arguments)
     {
         var argumentCount = source.Arguments.Count;
         if ( argumentCount == 0 )
@@ -100,15 +84,14 @@ public static class ParsedExpressionDelegateExtensions
         if ( buffer.Length < argumentCount )
             throw new ParsedExpressionArgumentBufferTooSmallException( buffer.Length, argumentCount, nameof( buffer ) );
 
-        var invalidArgumentNames = Chain<ReadOnlyMemory<char>>.Empty;
+        var invalidArgumentNames = Chain<StringSlice>.Empty;
 
         foreach ( var (name, value) in arguments )
         {
-            var n = name.AsMemory();
-            var index = source.Arguments.GetIndex( n );
+            var index = source.Arguments.GetIndex( name );
             if ( index < 0 )
             {
-                invalidArgumentNames = invalidArgumentNames.Extend( n );
+                invalidArgumentNames = invalidArgumentNames.Extend( name );
                 continue;
             }
 
@@ -117,5 +100,13 @@ public static class ParsedExpressionDelegateExtensions
 
         if ( invalidArgumentNames.Count > 0 )
             throw new InvalidParsedExpressionArgumentsException( invalidArgumentNames, nameof( arguments ) );
+    }
+
+    public static void MapArguments<TArg, TResult>(
+        this IParsedExpressionDelegate<TArg, TResult> source,
+        TArg?[] buffer,
+        params KeyValuePair<StringSlice, TArg?>[] arguments)
+    {
+        source.MapArguments( buffer, arguments.AsEnumerable() );
     }
 }

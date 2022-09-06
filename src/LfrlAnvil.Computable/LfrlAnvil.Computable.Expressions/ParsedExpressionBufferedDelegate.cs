@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Computable.Expressions.Exceptions;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions;
 
@@ -25,15 +26,10 @@ public sealed class ParsedExpressionBufferedDelegate<TArg, TResult>
 
     public ParsedExpressionBufferedDelegate<TArg, TResult> SetArgumentValue(string argumentName, TArg? value)
     {
-        var index = Base.Arguments.GetIndex( argumentName );
-        if ( index < 0 )
-            throw new InvalidParsedExpressionArgumentsException( Chain.Create( argumentName.AsMemory() ), nameof( argumentName ) );
-
-        _buffer[index] = value;
-        return this;
+        return SetArgumentValue( argumentName.AsSlice(), value );
     }
 
-    public ParsedExpressionBufferedDelegate<TArg, TResult> SetArgumentValue(ReadOnlyMemory<char> argumentName, TArg? value)
+    public ParsedExpressionBufferedDelegate<TArg, TResult> SetArgumentValue(StringSlice argumentName, TArg? value)
     {
         var index = Base.Arguments.GetIndex( argumentName );
         if ( index < 0 )
@@ -52,15 +48,11 @@ public sealed class ParsedExpressionBufferedDelegate<TArg, TResult>
     [Pure]
     public TArg? GetArgumentValue(string argumentName)
     {
-        var index = Base.Arguments.GetIndex( argumentName );
-        if ( index < 0 )
-            throw new InvalidParsedExpressionArgumentsException( Chain.Create( argumentName.AsMemory() ), nameof( argumentName ) );
-
-        return GetArgumentValue( index );
+        return GetArgumentValue( argumentName.AsSlice() );
     }
 
     [Pure]
-    public TArg? GetArgumentValue(ReadOnlyMemory<char> argumentName)
+    public TArg? GetArgumentValue(StringSlice argumentName)
     {
         var index = Base.Arguments.GetIndex( argumentName );
         if ( index < 0 )

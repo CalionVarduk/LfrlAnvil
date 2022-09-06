@@ -1,25 +1,23 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using System.Linq;
-using LfrlAnvil.Computable.Expressions.Internal;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions;
 
-public sealed class ParsedExpressionBoundArguments<TArg> : IReadOnlyCollection<KeyValuePair<ReadOnlyMemory<char>, TArg?>>
+public sealed class ParsedExpressionBoundArguments<TArg> : IReadOnlyCollection<KeyValuePair<StringSlice, TArg?>>
 {
     public static readonly ParsedExpressionBoundArguments<TArg> Empty = new ParsedExpressionBoundArguments<TArg>(
-        new Dictionary<StringSliceOld, TArg?>() );
+        new Dictionary<StringSlice, TArg?>() );
 
-    private readonly IReadOnlyDictionary<StringSliceOld, TArg?> _map;
+    private readonly IReadOnlyDictionary<StringSlice, TArg?> _map;
 
-    public ParsedExpressionBoundArguments(IEnumerable<KeyValuePair<ReadOnlyMemory<char>, TArg?>> map)
+    public ParsedExpressionBoundArguments(IEnumerable<KeyValuePair<StringSlice, TArg?>> map)
     {
-        _map = new Dictionary<StringSliceOld, TArg?>( map.Select( kv => KeyValuePair.Create( StringSliceOld.Create( kv.Key ), kv.Value ) ) );
+        _map = new Dictionary<StringSlice, TArg?>( map );
     }
 
-    internal ParsedExpressionBoundArguments(IReadOnlyDictionary<StringSliceOld, TArg?> map)
+    internal ParsedExpressionBoundArguments(IReadOnlyDictionary<StringSlice, TArg?> map)
     {
         _map = map;
     }
@@ -29,31 +27,31 @@ public sealed class ParsedExpressionBoundArguments<TArg> : IReadOnlyCollection<K
     [Pure]
     public bool Contains(string name)
     {
-        return Contains( name.AsMemory() );
+        return Contains( name.AsSlice() );
     }
 
     [Pure]
-    public bool Contains(ReadOnlyMemory<char> name)
+    public bool Contains(StringSlice name)
     {
-        return _map.ContainsKey( StringSliceOld.Create( name ) );
+        return _map.ContainsKey( name );
     }
 
     [Pure]
     public bool TryGetValue(string name, out TArg? result)
     {
-        return TryGetValue( name.AsMemory(), out result );
+        return TryGetValue( name.AsSlice(), out result );
     }
 
     [Pure]
-    public bool TryGetValue(ReadOnlyMemory<char> name, out TArg? result)
+    public bool TryGetValue(StringSlice name, out TArg? result)
     {
-        return _map.TryGetValue( StringSliceOld.Create( name ), out result );
+        return _map.TryGetValue( name, out result );
     }
 
     [Pure]
-    public IEnumerator<KeyValuePair<ReadOnlyMemory<char>, TArg?>> GetEnumerator()
+    public IEnumerator<KeyValuePair<StringSlice, TArg?>> GetEnumerator()
     {
-        return _map.Select( kv => KeyValuePair.Create( kv.Key.AsMemory(), kv.Value ) ).GetEnumerator();
+        return _map.GetEnumerator();
     }
 
     [Pure]

@@ -9,6 +9,7 @@ using System.Text;
 using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Computable.Expressions.Errors;
 using LfrlAnvil.Computable.Expressions.Internal.Delegates;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
 
@@ -20,7 +21,7 @@ internal class ExpressionBuilderState
     private readonly InlineDelegateCollectionState? _delegateCollectionState;
     private readonly IParsedExpressionNumberParser _numberParser;
     private readonly ExpressionBuilderRootState _rootState;
-    private readonly IReadOnlyDictionary<StringSliceOld, ConstantExpression>? _boundArguments;
+    private readonly IReadOnlyDictionary<StringSlice, ConstantExpression>? _boundArguments;
     private int _operandCount;
     private int _operatorCount;
     private int _parenthesesCount;
@@ -30,12 +31,12 @@ internal class ExpressionBuilderState
         ParameterExpression parameterExpression,
         ParsedExpressionFactoryInternalConfiguration configuration,
         IParsedExpressionNumberParser numberParser,
-        IReadOnlyDictionary<StringSliceOld, ConstantExpression>? boundArguments)
+        IReadOnlyDictionary<StringSlice, ConstantExpression>? boundArguments)
     {
         Id = 0;
         _tokenStack = new RandomAccessStack<(IntermediateToken, Expectation)>();
         _operandStack = new RandomAccessStack<Expression>();
-        ArgumentIndexes = new Dictionary<StringSliceOld, int>();
+        ArgumentIndexes = new Dictionary<StringSlice, int>();
         _argumentAccessExpressions = new List<Expression>();
         _delegateCollectionState = null;
         ParameterExpression = parameterExpression;
@@ -86,7 +87,7 @@ internal class ExpressionBuilderState
     }
 
     protected ParsedExpressionFactoryInternalConfiguration Configuration { get; }
-    protected Dictionary<StringSliceOld, int> ArgumentIndexes { get; }
+    protected Dictionary<StringSlice, int> ArgumentIndexes { get; }
     internal int Id { get; }
     internal ParameterExpression ParameterExpression { get; }
     internal IntermediateToken? LastHandledToken { get; private set; }
@@ -1422,12 +1423,12 @@ internal class ExpressionBuilderState
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private ParsedExpressionVariadicFunction GetInternalVariadicFunction(string symbol)
     {
-        var constructs = Configuration.Constructs[StringSliceOld.Create( symbol )];
+        var constructs = Configuration.Constructs[symbol.AsSlice()];
         Assume.IsNotNull( constructs.VariadicFunction, nameof( constructs.VariadicFunction ) );
         return constructs.VariadicFunction;
     }
 
-    private Expression GetOrAddArgumentAccessExpression(StringSliceOld name)
+    private Expression GetOrAddArgumentAccessExpression(StringSlice name)
     {
         if ( _boundArguments is not null && _boundArguments.TryGetValue( name, out var constant ) )
             return constant;

@@ -942,24 +942,24 @@ public static class ParsedExpressionFactoryBuilderExtensions
             .Where( i => (i.Type & ParsedExpressionConstructType.UnaryConstruct) != ParsedExpressionConstructType.None );
 
         var prefixPrecedences = builder.GetPrefixUnaryConstructPrecedences()
-            .Select( kv => StringSliceOld.Create( kv.Key ) )
+            .Select( kv => kv.Key )
             .ToHashSet();
 
         var postfixPrecedences = builder.GetPostfixUnaryConstructPrecedences()
-            .Select( kv => StringSliceOld.Create( kv.Key ) )
+            .Select( kv => kv.Key )
             .ToHashSet();
 
         foreach ( var info in unaryConstructs )
         {
             if ( (info.Type & ParsedExpressionConstructType.PrefixUnaryConstruct) != ParsedExpressionConstructType.None )
             {
-                if ( ! prefixPrecedences.Contains( StringSliceOld.Create( info.Symbol ) ) )
+                if ( ! prefixPrecedences.Contains( info.Symbol ) )
                     builder.SetPrefixUnaryConstructPrecedence( info.Symbol, defaultPrecedence );
 
                 continue;
             }
 
-            if ( ! postfixPrecedences.Contains( StringSliceOld.Create( info.Symbol ) ) )
+            if ( ! postfixPrecedences.Contains( info.Symbol ) )
                 builder.SetPostfixUnaryConstructPrecedence( info.Symbol, defaultPrecedence );
         }
 

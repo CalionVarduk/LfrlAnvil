@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using LfrlAnvil.Computable.Expressions.Errors;
 using LfrlAnvil.Computable.Expressions.Exceptions;
 using LfrlAnvil.Computable.Expressions.Internal;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions;
 
@@ -26,21 +27,21 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     public IParsedExpressionFactoryConfiguration Configuration => _configuration;
 
     [Pure]
-    public IEnumerable<ReadOnlyMemory<char>> GetConstructSymbols()
+    public IEnumerable<StringSlice> GetConstructSymbols()
     {
-        return _configuration.Constructs.Select( kv => kv.Key.AsMemory() );
+        return _configuration.Constructs.Select( kv => kv.Key );
     }
 
     [Pure]
     public ParsedExpressionConstructType GetConstructType(string symbol)
     {
-        return GetConstructType( symbol.AsMemory() );
+        return GetConstructType( symbol.AsSlice() );
     }
 
     [Pure]
-    public ParsedExpressionConstructType GetConstructType(ReadOnlyMemory<char> symbol)
+    public ParsedExpressionConstructType GetConstructType(StringSlice symbol)
     {
-        return _configuration.Constructs.TryGetValue( StringSliceOld.Create( symbol ), out var definition )
+        return _configuration.Constructs.TryGetValue( symbol, out var definition )
             ? definition.Type
             : ParsedExpressionConstructType.None;
     }
@@ -48,25 +49,25 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     [Pure]
     public Type? GetGenericBinaryOperatorType(string symbol)
     {
-        return GetGenericBinaryOperatorType( symbol.AsMemory() );
+        return GetGenericBinaryOperatorType( symbol.AsSlice() );
     }
 
     [Pure]
-    public Type? GetGenericBinaryOperatorType(ReadOnlyMemory<char> symbol)
+    public Type? GetGenericBinaryOperatorType(StringSlice symbol)
     {
-        return _configuration.Constructs.GetValueOrDefault( StringSliceOld.Create( symbol ) )?.BinaryOperators.GenericConstruct?.GetType();
+        return _configuration.Constructs.GetValueOrDefault( symbol )?.BinaryOperators.GenericConstruct?.GetType();
     }
 
     [Pure]
     public IEnumerable<ParsedExpressionBinaryOperatorInfo> GetSpecializedBinaryOperators(string symbol)
     {
-        return GetSpecializedBinaryOperators( symbol.AsMemory() );
+        return GetSpecializedBinaryOperators( symbol.AsSlice() );
     }
 
     [Pure]
-    public IEnumerable<ParsedExpressionBinaryOperatorInfo> GetSpecializedBinaryOperators(ReadOnlyMemory<char> symbol)
+    public IEnumerable<ParsedExpressionBinaryOperatorInfo> GetSpecializedBinaryOperators(StringSlice symbol)
     {
-        return _configuration.Constructs.GetValueOrDefault( StringSliceOld.Create( symbol ) )
+        return _configuration.Constructs.GetValueOrDefault( symbol )
                 ?.BinaryOperators.SpecializedConstructs?.Select(
                     kv => new ParsedExpressionBinaryOperatorInfo( kv.Value.GetType(), kv.Key.Left, kv.Key.Right ) ) ??
             Enumerable.Empty<ParsedExpressionBinaryOperatorInfo>();
@@ -75,13 +76,13 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     [Pure]
     public Type? GetGenericPrefixUnaryConstructType(string symbol)
     {
-        return GetGenericPrefixUnaryConstructType( symbol.AsMemory() );
+        return GetGenericPrefixUnaryConstructType( symbol.AsSlice() );
     }
 
     [Pure]
-    public Type? GetGenericPrefixUnaryConstructType(ReadOnlyMemory<char> symbol)
+    public Type? GetGenericPrefixUnaryConstructType(StringSlice symbol)
     {
-        return _configuration.Constructs.TryGetValue( StringSliceOld.Create( symbol ), out var definition )
+        return _configuration.Constructs.TryGetValue( symbol, out var definition )
             ? definition.PrefixUnaryOperators.GenericConstruct?.GetType() ?? definition.PrefixTypeConverters.GenericConstruct?.GetType()
             : null;
     }
@@ -89,13 +90,13 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     [Pure]
     public IEnumerable<ParsedExpressionUnaryConstructInfo> GetSpecializedPrefixUnaryConstructs(string symbol)
     {
-        return GetSpecializedPrefixUnaryConstructs( symbol.AsMemory() );
+        return GetSpecializedPrefixUnaryConstructs( symbol.AsSlice() );
     }
 
     [Pure]
-    public IEnumerable<ParsedExpressionUnaryConstructInfo> GetSpecializedPrefixUnaryConstructs(ReadOnlyMemory<char> symbol)
+    public IEnumerable<ParsedExpressionUnaryConstructInfo> GetSpecializedPrefixUnaryConstructs(StringSlice symbol)
     {
-        return _configuration.Constructs.TryGetValue( StringSliceOld.Create( symbol ), out var definition )
+        return _configuration.Constructs.TryGetValue( symbol, out var definition )
             ? (definition.PrefixUnaryOperators.SpecializedConstructs?.Select(
                     kv => new ParsedExpressionUnaryConstructInfo( kv.Value.GetType(), kv.Key ) ) ??
                 Enumerable.Empty<ParsedExpressionUnaryConstructInfo>())
@@ -109,13 +110,13 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     [Pure]
     public Type? GetGenericPostfixUnaryConstructType(string symbol)
     {
-        return GetGenericPostfixUnaryConstructType( symbol.AsMemory() );
+        return GetGenericPostfixUnaryConstructType( symbol.AsSlice() );
     }
 
     [Pure]
-    public Type? GetGenericPostfixUnaryConstructType(ReadOnlyMemory<char> symbol)
+    public Type? GetGenericPostfixUnaryConstructType(StringSlice symbol)
     {
-        return _configuration.Constructs.TryGetValue( StringSliceOld.Create( symbol ), out var definition )
+        return _configuration.Constructs.TryGetValue( symbol, out var definition )
             ? definition.PostfixUnaryOperators.GenericConstruct?.GetType() ?? definition.PostfixTypeConverters.GenericConstruct?.GetType()
             : null;
     }
@@ -123,13 +124,13 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     [Pure]
     public IEnumerable<ParsedExpressionUnaryConstructInfo> GetSpecializedPostfixUnaryConstructs(string symbol)
     {
-        return GetSpecializedPostfixUnaryConstructs( symbol.AsMemory() );
+        return GetSpecializedPostfixUnaryConstructs( symbol.AsSlice() );
     }
 
     [Pure]
-    public IEnumerable<ParsedExpressionUnaryConstructInfo> GetSpecializedPostfixUnaryConstructs(ReadOnlyMemory<char> symbol)
+    public IEnumerable<ParsedExpressionUnaryConstructInfo> GetSpecializedPostfixUnaryConstructs(StringSlice symbol)
     {
-        return _configuration.Constructs.TryGetValue( StringSliceOld.Create( symbol ), out var definition )
+        return _configuration.Constructs.TryGetValue( symbol, out var definition )
             ? (definition.PostfixUnaryOperators.SpecializedConstructs?.Select(
                     kv => new ParsedExpressionUnaryConstructInfo( kv.Value.GetType(), kv.Key ) ) ??
                 Enumerable.Empty<ParsedExpressionUnaryConstructInfo>())
@@ -143,13 +144,13 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     [Pure]
     public Type? GetTypeConverterTargetType(string symbol)
     {
-        return GetTypeConverterTargetType( symbol.AsMemory() );
+        return GetTypeConverterTargetType( symbol.AsSlice() );
     }
 
     [Pure]
-    public Type? GetTypeConverterTargetType(ReadOnlyMemory<char> symbol)
+    public Type? GetTypeConverterTargetType(StringSlice symbol)
     {
-        return _configuration.Constructs.TryGetValue( StringSliceOld.Create( symbol ), out var definition )
+        return _configuration.Constructs.TryGetValue( symbol, out var definition )
             ? definition.PrefixTypeConverters.TargetType ?? definition.PostfixTypeConverters.TargetType
             : null;
     }
@@ -157,37 +158,37 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     [Pure]
     public Type? GetTypeDeclarationType(string symbol)
     {
-        return GetTypeDeclarationType( symbol.AsMemory() );
+        return GetTypeDeclarationType( symbol.AsSlice() );
     }
 
     [Pure]
-    public Type? GetTypeDeclarationType(ReadOnlyMemory<char> symbol)
+    public Type? GetTypeDeclarationType(StringSlice symbol)
     {
-        return _configuration.Constructs.GetValueOrDefault( StringSliceOld.Create( symbol ) )?.TypeDeclaration;
+        return _configuration.Constructs.GetValueOrDefault( symbol )?.TypeDeclaration;
     }
 
     [Pure]
     public ConstantExpression? GetConstantExpression(string symbol)
     {
-        return GetConstantExpression( symbol.AsMemory() );
+        return GetConstantExpression( symbol.AsSlice() );
     }
 
     [Pure]
-    public ConstantExpression? GetConstantExpression(ReadOnlyMemory<char> symbol)
+    public ConstantExpression? GetConstantExpression(StringSlice symbol)
     {
-        return _configuration.Constructs.GetValueOrDefault( StringSliceOld.Create( symbol ) )?.Constant;
+        return _configuration.Constructs.GetValueOrDefault( symbol )?.Constant;
     }
 
     [Pure]
     public IEnumerable<LambdaExpression> GetFunctionExpressions(string symbol)
     {
-        return GetFunctionExpressions( symbol.AsMemory() );
+        return GetFunctionExpressions( symbol.AsSlice() );
     }
 
     [Pure]
-    public IEnumerable<LambdaExpression> GetFunctionExpressions(ReadOnlyMemory<char> symbol)
+    public IEnumerable<LambdaExpression> GetFunctionExpressions(StringSlice symbol)
     {
-        return _configuration.Constructs.GetValueOrDefault( StringSliceOld.Create( symbol ) )
+        return _configuration.Constructs.GetValueOrDefault( symbol )
                 ?.Functions.Functions.Select( kv => kv.Value.Lambda ) ??
             Enumerable.Empty<LambdaExpression>();
     }
@@ -195,38 +196,38 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     [Pure]
     public Type? GetVariadicFunctionType(string symbol)
     {
-        return GetVariadicFunctionType( symbol.AsMemory() );
+        return GetVariadicFunctionType( symbol.AsSlice() );
     }
 
     [Pure]
-    public Type? GetVariadicFunctionType(ReadOnlyMemory<char> symbol)
+    public Type? GetVariadicFunctionType(StringSlice symbol)
     {
-        return _configuration.Constructs.GetValueOrDefault( StringSliceOld.Create( symbol ) )?.VariadicFunction?.GetType();
+        return _configuration.Constructs.GetValueOrDefault( symbol )?.VariadicFunction?.GetType();
     }
 
     [Pure]
     public int? GetBinaryOperatorPrecedence(string symbol)
     {
-        return GetBinaryOperatorPrecedence( symbol.AsMemory() );
+        return GetBinaryOperatorPrecedence( symbol.AsSlice() );
     }
 
     [Pure]
-    public int? GetBinaryOperatorPrecedence(ReadOnlyMemory<char> symbol)
+    public int? GetBinaryOperatorPrecedence(StringSlice symbol)
     {
-        var constructs = _configuration.Constructs.GetValueOrDefault( StringSliceOld.Create( symbol ) )?.BinaryOperators;
+        var constructs = _configuration.Constructs.GetValueOrDefault( symbol )?.BinaryOperators;
         return constructs?.IsEmpty == false ? constructs.Precedence : null;
     }
 
     [Pure]
     public int? GetPrefixUnaryConstructPrecedence(string symbol)
     {
-        return GetPrefixUnaryConstructPrecedence( symbol.AsMemory() );
+        return GetPrefixUnaryConstructPrecedence( symbol.AsSlice() );
     }
 
     [Pure]
-    public int? GetPrefixUnaryConstructPrecedence(ReadOnlyMemory<char> symbol)
+    public int? GetPrefixUnaryConstructPrecedence(StringSlice symbol)
     {
-        var definition = _configuration.Constructs.GetValueOrDefault( StringSliceOld.Create( symbol ) );
+        var definition = _configuration.Constructs.GetValueOrDefault( symbol );
         if ( definition is null )
             return null;
 
@@ -239,13 +240,13 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     [Pure]
     public int? GetPostfixUnaryConstructPrecedence(string symbol)
     {
-        return GetPostfixUnaryConstructPrecedence( symbol.AsMemory() );
+        return GetPostfixUnaryConstructPrecedence( symbol.AsSlice() );
     }
 
     [Pure]
-    public int? GetPostfixUnaryConstructPrecedence(ReadOnlyMemory<char> symbol)
+    public int? GetPostfixUnaryConstructPrecedence(StringSlice symbol)
     {
-        var definition = _configuration.Constructs.GetValueOrDefault( StringSliceOld.Create( symbol ) );
+        var definition = _configuration.Constructs.GetValueOrDefault( symbol );
         if ( definition is null )
             return null;
 
@@ -283,7 +284,7 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
 
     internal bool TryCreateInternal<TArg, TResult>(
         string input,
-        (ParsedExpression<TArg, TResult> Expression, Dictionary<StringSliceOld, TArg?> Arguments)? bindingInfo,
+        (ParsedExpression<TArg, TResult> Expression, Dictionary<StringSlice, TArg?> Arguments)? bindingInfo,
         [MaybeNullWhen( false )] out ParsedExpression<TArg, TResult> result,
         out Chain<ParsedExpressionBuilderError> errors)
     {

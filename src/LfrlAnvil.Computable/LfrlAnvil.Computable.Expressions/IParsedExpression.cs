@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
 
@@ -21,10 +20,10 @@ public interface IParsedExpression<TArg, out TResult>
     IParsedExpression<TArg, TResult> BindArguments(params KeyValuePair<string, TArg?>[] arguments);
 
     [Pure]
-    IParsedExpression<TArg, TResult> BindArguments(IEnumerable<KeyValuePair<ReadOnlyMemory<char>, TArg?>> arguments);
+    IParsedExpression<TArg, TResult> BindArguments(IEnumerable<KeyValuePair<StringSlice, TArg?>> arguments);
 
     [Pure]
-    IParsedExpression<TArg, TResult> BindArguments(params KeyValuePair<ReadOnlyMemory<char>, TArg?>[] arguments);
+    IParsedExpression<TArg, TResult> BindArguments(params KeyValuePair<StringSlice, TArg?>[] arguments);
 
     [Pure]
     IParsedExpression<TArg, TResult> BindArguments(IEnumerable<KeyValuePair<int, TArg?>> arguments);

@@ -4,7 +4,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Runtime.CompilerServices;
 using LfrlAnvil.Computable.Expressions.Exceptions;
 using LfrlAnvil.Computable.Expressions.Internal;
 using LfrlAnvil.Computable.Expressions.Internal.Delegates;
@@ -53,7 +52,7 @@ public sealed class ParsedExpression<TArg, TResult> : IParsedExpression<TArg, TR
     [Pure]
     public ParsedExpression<TArg, TResult> BindArguments(IEnumerable<KeyValuePair<string, TArg?>> arguments)
     {
-        return BindArguments( arguments.Select( kv => KeyValuePair.Create( StringSliceOld.Create( kv.Key ), kv.Value ) ) );
+        return BindArguments( arguments.Select( kv => KeyValuePair.Create( kv.Key.AsSlice(), kv.Value ) ) );
     }
 
     [Pure]
@@ -63,32 +62,20 @@ public sealed class ParsedExpression<TArg, TResult> : IParsedExpression<TArg, TR
     }
 
     [Pure]
-    public ParsedExpression<TArg, TResult> BindArguments(IEnumerable<KeyValuePair<ReadOnlyMemory<char>, TArg?>> arguments)
-    {
-        return BindArguments( arguments.Select( kv => KeyValuePair.Create( StringSliceOld.Create( kv.Key ), kv.Value ) ) );
-    }
-
-    [Pure]
-    public ParsedExpression<TArg, TResult> BindArguments(params KeyValuePair<ReadOnlyMemory<char>, TArg?>[] arguments)
-    {
-        return BindArguments( arguments.AsEnumerable() );
-    }
-
-    [Pure]
-    public ParsedExpression<TArg, TResult> BindArguments(IEnumerable<KeyValuePair<int, TArg?>> arguments)
+    public ParsedExpression<TArg, TResult> BindArguments(IEnumerable<KeyValuePair<StringSlice, TArg?>> arguments)
     {
         if ( arguments.TryGetNonEnumeratedCount( out var count ) && count == 0 )
             return this;
 
-        var argumentsToBind = BoundArguments.ToDictionary( kv => StringSliceOld.Create( kv.Key ), kv => kv.Value );
+        var argumentsToBind = new Dictionary<StringSlice, TArg?>( BoundArguments );
 
-        foreach ( var (index, value) in arguments )
+        foreach ( var (name, value) in arguments )
         {
+            var index = UnboundArguments.GetIndex( name );
             if ( index < 0 || index >= UnboundArguments.Count )
                 throw new ParsedExpressionArgumentBindingException();
 
-            var name = UnboundArguments.GetName( index );
-            argumentsToBind.Add( StringSliceOld.Create( name ), value );
+            argumentsToBind.Add( name, value );
         }
 
         if ( argumentsToBind.Count == 0 )
@@ -98,6 +85,18 @@ public sealed class ParsedExpression<TArg, TResult> : IParsedExpression<TArg, TR
             return result;
 
         throw new ParsedExpressionCreationException( Input, errors );
+    }
+
+    [Pure]
+    public ParsedExpression<TArg, TResult> BindArguments(params KeyValuePair<StringSlice, TArg?>[] arguments)
+    {
+        return BindArguments( arguments.AsEnumerable() );
+    }
+
+    [Pure]
+    public ParsedExpression<TArg, TResult> BindArguments(IEnumerable<KeyValuePair<int, TArg?>> arguments)
+    {
+        return BindArguments( arguments.Select( kv => KeyValuePair.Create( UnboundArguments.GetName( kv.Key ), kv.Value ) ) );
     }
 
     [Pure]
@@ -123,13 +122,6 @@ public sealed class ParsedExpression<TArg, TResult> : IParsedExpression<TArg, TR
 
         var lambda = Expression.Lambda<Func<TArg?[], TResult>>( body, Parameter );
         return new ParsedExpressionDelegate<TArg, TResult>( lambda.Compile(), UnboundArguments );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private ParsedExpression<TArg, TResult> BindArguments(IEnumerable<KeyValuePair<StringSliceOld, TArg?>> arguments)
-    {
-        return BindArguments( arguments.Select( kv => KeyValuePair.Create( UnboundArguments.GetIndex( kv.Key.AsMemory() ), kv.Value ) ) );
     }
 
     private sealed class DelegatePlaceholderReplacer : ExpressionVisitor
@@ -171,14 +163,14 @@ public sealed class ParsedExpression<TArg, TResult> : IParsedExpression<TArg, TR
 
     [Pure]
     IParsedExpression<TArg, TResult> IParsedExpression<TArg, TResult>.BindArguments(
-        IEnumerable<KeyValuePair<ReadOnlyMemory<char>, TArg?>> arguments)
+        IEnumerable<KeyValuePair<StringSlice, TArg?>> arguments)
     {
         return BindArguments( arguments );
     }
 
     [Pure]
     IParsedExpression<TArg, TResult> IParsedExpression<TArg, TResult>.BindArguments(
-        params KeyValuePair<ReadOnlyMemory<char>, TArg?>[] arguments)
+        params KeyValuePair<StringSlice, TArg?>[] arguments)
     {
         return BindArguments( arguments );
     }

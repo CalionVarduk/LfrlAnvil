@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions.Execution;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Tests.ParsedExpressionBoundArgumentsTests;
 
@@ -19,9 +20,9 @@ public class ParsedExpressionBoundArgumentsTests : TestsBase
         var sut = new ParsedExpressionBoundArguments<int>(
             new[]
             {
-                KeyValuePair.Create( "a".AsMemory(), 10 ),
-                KeyValuePair.Create( "b".AsMemory(), 20 ),
-                KeyValuePair.Create( "c".AsMemory(), 30 )
+                KeyValuePair.Create( "a".AsSlice(), 10 ),
+                KeyValuePair.Create( "b".AsSlice(), 20 ),
+                KeyValuePair.Create( "c".AsSlice(), 30 )
             } );
 
         using ( new AssertionScope() )
@@ -42,9 +43,9 @@ public class ParsedExpressionBoundArgumentsTests : TestsBase
         var sut = new ParsedExpressionBoundArguments<int>(
             new[]
             {
-                KeyValuePair.Create( "a".AsMemory(), 10 ),
-                KeyValuePair.Create( "b".AsMemory(), 20 ),
-                KeyValuePair.Create( "c".AsMemory(), 30 )
+                KeyValuePair.Create( "a".AsSlice(), 10 ),
+                KeyValuePair.Create( "b".AsSlice(), 20 ),
+                KeyValuePair.Create( "c".AsSlice(), 30 )
             } );
 
         var result = sut.Contains( name );
@@ -55,7 +56,7 @@ public class ParsedExpressionBoundArgumentsTests : TestsBase
     [Fact]
     public void Contains_ShouldReturnFalse_WhenNameDoesNotExist()
     {
-        var sut = new ParsedExpressionBoundArguments<int>( new[] { KeyValuePair.Create( "a".AsMemory(), 10 ) } );
+        var sut = new ParsedExpressionBoundArguments<int>( new[] { KeyValuePair.Create( "a".AsSlice(), 10 ) } );
         var result = sut.Contains( "b" );
         result.Should().BeFalse();
     }
@@ -69,9 +70,9 @@ public class ParsedExpressionBoundArgumentsTests : TestsBase
         var sut = new ParsedExpressionBoundArguments<int>(
             new[]
             {
-                KeyValuePair.Create( "a".AsMemory(), 10 ),
-                KeyValuePair.Create( "b".AsMemory(), 20 ),
-                KeyValuePair.Create( "c".AsMemory(), 30 )
+                KeyValuePair.Create( "a".AsSlice(), 10 ),
+                KeyValuePair.Create( "b".AsSlice(), 20 ),
+                KeyValuePair.Create( "c".AsSlice(), 30 )
             } );
 
         var result = sut.TryGetValue( name, out var outResult );
@@ -86,7 +87,7 @@ public class ParsedExpressionBoundArgumentsTests : TestsBase
     [Fact]
     public void TryGetValue_ShouldReturnFalse_WhenNameDoesNotExist()
     {
-        var sut = new ParsedExpressionBoundArguments<int>( new[] { KeyValuePair.Create( "a".AsMemory(), 10 ) } );
+        var sut = new ParsedExpressionBoundArguments<int>( new[] { KeyValuePair.Create( "a".AsSlice(), 10 ) } );
 
         var result = sut.TryGetValue( "b", out var outResult );
 

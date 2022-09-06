@@ -3,6 +3,7 @@ using FluentAssertions.Execution;
 using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Computable.Expressions.Exceptions;
 using LfrlAnvil.Computable.Expressions.Extensions;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
@@ -85,7 +86,7 @@ public class ParsedExpressionBufferedDelegateTests : TestsBase
     }
 
     [Fact]
-    public void SetArgumentValue_WithReadOnlyMemoryKey_ShouldUpdateUnderlyingBufferCorrectly()
+    public void SetArgumentValue_WithStringSliceKey_ShouldUpdateUnderlyingBufferCorrectly()
     {
         var (aValue, bValue) = Fixture.CreateDistinctCollection<decimal>( count: 2 );
 
@@ -99,14 +100,14 @@ public class ParsedExpressionBufferedDelegateTests : TestsBase
         var @delegate = expression.Compile();
         var sut = @delegate.ToBuffered();
 
-        sut.SetArgumentValue( "a".AsMemory(), aValue );
-        var result = sut.SetArgumentValue( "b".AsMemory(), bValue );
+        sut.SetArgumentValue( "a".AsSlice(), aValue );
+        var result = sut.SetArgumentValue( "b".AsSlice(), bValue );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            sut.GetArgumentValue( "a".AsMemory() ).Should().Be( aValue );
-            sut.GetArgumentValue( "b".AsMemory() ).Should().Be( bValue );
+            sut.GetArgumentValue( "a".AsSlice() ).Should().Be( aValue );
+            sut.GetArgumentValue( "b".AsSlice() ).Should().Be( bValue );
         }
     }
 
@@ -155,7 +156,7 @@ public class ParsedExpressionBufferedDelegateTests : TestsBase
     }
 
     [Fact]
-    public void SetArgumentValue_WithReadOnlyMemoryKey_ShouldThrowInvalidMathExpressionArgumentsException_WhenArgumentNameDoesNotExist()
+    public void SetArgumentValue_WithStringSliceKey_ShouldThrowInvalidMathExpressionArgumentsException_WhenArgumentNameDoesNotExist()
     {
         var value = Fixture.Create<decimal>();
 
@@ -169,7 +170,7 @@ public class ParsedExpressionBufferedDelegateTests : TestsBase
         var @delegate = expression.Compile();
         var sut = @delegate.ToBuffered();
 
-        var action = Lambda.Of( () => sut.SetArgumentValue( "c".AsMemory(), value ) );
+        var action = Lambda.Of( () => sut.SetArgumentValue( "c".AsSlice(), value ) );
 
         action.Should()
             .ThrowExactly<InvalidParsedExpressionArgumentsException>()
@@ -217,7 +218,7 @@ public class ParsedExpressionBufferedDelegateTests : TestsBase
     }
 
     [Fact]
-    public void GetArgumentValue_WithReadOnlyMemoryKey_ShouldThrowInvalidMathExpressionArgumentsException_WhenArgumentNameDoesNotExist()
+    public void GetArgumentValue_WithStringSliceKey_ShouldThrowInvalidMathExpressionArgumentsException_WhenArgumentNameDoesNotExist()
     {
         var input = "a + b";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -229,7 +230,7 @@ public class ParsedExpressionBufferedDelegateTests : TestsBase
         var @delegate = expression.Compile();
         var sut = @delegate.ToBuffered();
 
-        var action = Lambda.Of( () => sut.GetArgumentValue( "c".AsMemory() ) );
+        var action = Lambda.Of( () => sut.GetArgumentValue( "c".AsSlice() ) );
 
         action.Should()
             .ThrowExactly<InvalidParsedExpressionArgumentsException>()

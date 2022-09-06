@@ -18,25 +18,23 @@ internal static class TokenConstants
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static bool IsBooleanTrue(StringSliceOld text)
+    internal static bool IsBooleanTrue(StringSlice text)
     {
         if ( text.Length != 4 )
             return false;
 
-        if ( text.Source[text.StartIndex] == 't' )
-        {
-            return text.Source[text.StartIndex + 1] == 'r' &&
-                text.Source[text.StartIndex + 2] == 'u' &&
-                text.Source[text.StartIndex + 3] == 'e';
-        }
+        var source = text.Source;
 
-        if ( text.Source[text.StartIndex] == 'T' )
-        {
-            if ( text.Source[text.StartIndex + 1] == 'R' )
-                return text.Source[text.StartIndex + 2] == 'U' && text.Source[text.StartIndex + 3] == 'E';
+        if ( source[text.StartIndex] == 't' )
+            return source[text.StartIndex + 1] == 'r' && source[text.StartIndex + 2] == 'u' && source[text.StartIndex + 3] == 'e';
 
-            if ( text.Source[text.StartIndex + 1] == 'r' )
-                return text.Source[text.StartIndex + 2] == 'u' && text.Source[text.StartIndex + 3] == 'e';
+        if ( source[text.StartIndex] == 'T' )
+        {
+            if ( source[text.StartIndex + 1] == 'R' )
+                return source[text.StartIndex + 2] == 'U' && source[text.StartIndex + 3] == 'E';
+
+            if ( source[text.StartIndex + 1] == 'r' )
+                return source[text.StartIndex + 2] == 'u' && source[text.StartIndex + 3] == 'e';
         }
 
         return false;
@@ -44,30 +42,32 @@ internal static class TokenConstants
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static bool IsBooleanFalse(StringSliceOld text)
+    internal static bool IsBooleanFalse(StringSlice text)
     {
         if ( text.Length != 5 )
             return false;
 
-        if ( text.Source[text.StartIndex] == 'f' )
+        var source = text.Source;
+
+        if ( source[text.StartIndex] == 'f' )
         {
-            return text.Source[text.StartIndex + 1] == 'a' &&
-                text.Source[text.StartIndex + 2] == 'l' &&
-                text.Source[text.StartIndex + 3] == 's' &&
-                text.Source[text.StartIndex + 4] == 'e';
+            return source[text.StartIndex + 1] == 'a' &&
+                source[text.StartIndex + 2] == 'l' &&
+                source[text.StartIndex + 3] == 's' &&
+                source[text.StartIndex + 4] == 'e';
         }
 
-        if ( text.Source[text.StartIndex] == 'F' )
+        if ( source[text.StartIndex] == 'F' )
         {
-            if ( text.Source[text.StartIndex + 1] == 'A' )
-                return text.Source[text.StartIndex + 2] == 'L' &&
-                    text.Source[text.StartIndex + 3] == 'S' &&
-                    text.Source[text.StartIndex + 4] == 'E';
+            if ( source[text.StartIndex + 1] == 'A' )
+                return source[text.StartIndex + 2] == 'L' &&
+                    source[text.StartIndex + 3] == 'S' &&
+                    source[text.StartIndex + 4] == 'E';
 
-            if ( text.Source[text.StartIndex + 1] == 'a' )
-                return text.Source[text.StartIndex + 2] == 'l' &&
-                    text.Source[text.StartIndex + 3] == 's' &&
-                    text.Source[text.StartIndex + 4] == 'e';
+            if ( source[text.StartIndex + 1] == 'a' )
+                return source[text.StartIndex + 2] == 'l' &&
+                    source[text.StartIndex + 3] == 's' &&
+                    source[text.StartIndex + 4] == 'e';
         }
 
         return false;
@@ -75,11 +75,15 @@ internal static class TokenConstants
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static bool IsSquareBrackets(StringSliceOld text)
+    internal static bool IsSquareBrackets(StringSlice text)
     {
-        return text.Length == 2 &&
-            text.Source[text.StartIndex] == OpenedSquareBracket &&
-            text.Source[text.StartIndex + 1] == ClosedSquareBracket;
+        if ( text.Length != 2 )
+            return false;
+
+        var source = text.Source;
+
+        return source[text.StartIndex] == OpenedSquareBracket &&
+            source[text.StartIndex + 1] == ClosedSquareBracket;
     }
 
     [Pure]
@@ -94,5 +98,12 @@ internal static class TokenConstants
     internal static bool IsReservedSymbol(char c)
     {
         return c is OpenedParenthesis or ClosedParenthesis or InlineFunctionSeparator or ElementSeparator or MemberAccess;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static bool AreEqual(StringSlice a, char b)
+    {
+        return a.Length == 1 && a.Source[a.StartIndex] == b;
     }
 }

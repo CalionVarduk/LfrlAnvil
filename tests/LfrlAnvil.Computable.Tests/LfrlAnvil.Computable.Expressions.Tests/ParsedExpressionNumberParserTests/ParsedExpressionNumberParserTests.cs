@@ -184,7 +184,7 @@ public class ParsedExpressionNumberParserTests : TestsBase
         configuration.ConvertResultToOutputTypeAutomatically.Returns( true );
 
         return new ParsedExpressionFactoryInternalConfiguration(
-            new Dictionary<StringSliceOld, ConstructTokenDefinition>(),
+            new Dictionary<StringSlice, ConstructTokenDefinition>(),
             configuration );
     }
 }

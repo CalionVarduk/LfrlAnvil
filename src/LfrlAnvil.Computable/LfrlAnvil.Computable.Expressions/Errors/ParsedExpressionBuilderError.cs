@@ -10,28 +10,26 @@ namespace LfrlAnvil.Computable.Expressions.Errors;
 
 public class ParsedExpressionBuilderError
 {
-    private readonly StringSliceOld? _token;
-
     public ParsedExpressionBuilderError()
         : this( ParsedExpressionBuilderErrorType.Error ) { }
 
-    internal ParsedExpressionBuilderError(ParsedExpressionBuilderErrorType type, StringSliceOld? token = null)
+    internal ParsedExpressionBuilderError(ParsedExpressionBuilderErrorType type, StringSlice? token = null)
     {
-        _token = token;
+        Token = token;
         Type = type;
     }
 
     public ParsedExpressionBuilderErrorType Type { get; }
-    public ReadOnlyMemory<char>? Token => _token?.AsMemory();
+    public StringSlice? Token { get; }
 
     [Pure]
     public override string ToString()
     {
         var typeText = Type.ToString();
-        if ( _token is null )
+        if ( Token is null )
             return typeText;
 
-        var token = _token.Value;
+        var token = Token.Value;
         var nearToken = token.Expand( count: 5 );
         var nearTokenPrefix = nearToken.StartIndex == 0 ? string.Empty : "...";
         var nearTokenPostfix = nearToken.EndIndex == nearToken.Source.Length ? string.Empty : "...";

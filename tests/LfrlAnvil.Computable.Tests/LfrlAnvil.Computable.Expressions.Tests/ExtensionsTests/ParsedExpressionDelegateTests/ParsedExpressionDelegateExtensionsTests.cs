@@ -3,6 +3,7 @@ using System.Linq;
 using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Computable.Expressions.Exceptions;
 using LfrlAnvil.Computable.Expressions.Extensions;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
@@ -33,7 +34,7 @@ public class ParsedExpressionDelegateExtensionsTests : TestsBase
     }
 
     [Fact]
-    public void MapArguments_WithReadOnlyMemoryKey_ShouldReturnCorrectlyPopulatedArray()
+    public void MapArguments_WithStringSliceKey_ShouldReturnCorrectlyPopulatedArray()
     {
         var (aValue, bValue, dValue) = Fixture.CreateDistinctCollection<decimal>( count: 3 );
 
@@ -47,9 +48,9 @@ public class ParsedExpressionDelegateExtensionsTests : TestsBase
         var sut = expression.Compile();
 
         var result = sut.MapArguments(
-            KeyValuePair.Create( "a".AsMemory(), aValue ),
-            KeyValuePair.Create( "b".AsMemory(), bValue ),
-            KeyValuePair.Create( "d".AsMemory(), dValue ) );
+            KeyValuePair.Create( "a".AsSlice(), aValue ),
+            KeyValuePair.Create( "b".AsSlice(), bValue ),
+            KeyValuePair.Create( "d".AsSlice(), dValue ) );
 
         result.Should().BeSequentiallyEqualTo( aValue, bValue, default, dValue );
     }
@@ -79,7 +80,7 @@ public class ParsedExpressionDelegateExtensionsTests : TestsBase
     }
 
     [Fact]
-    public void MapArguments_WithReadOnlyMemoryKeyAndCustomBuffer_ShouldCorrectlyPopulateProvidedArray()
+    public void MapArguments_WithStringSliceKeyAndCustomBuffer_ShouldCorrectlyPopulateProvidedArray()
     {
         var (aValue, bValue, dValue) = Fixture.CreateDistinctCollection<decimal>( count: 3 );
 
@@ -95,9 +96,9 @@ public class ParsedExpressionDelegateExtensionsTests : TestsBase
 
         sut.MapArguments(
             buffer,
-            KeyValuePair.Create( "a".AsMemory(), aValue ),
-            KeyValuePair.Create( "b".AsMemory(), bValue ),
-            KeyValuePair.Create( "d".AsMemory(), dValue ) );
+            KeyValuePair.Create( "a".AsSlice(), aValue ),
+            KeyValuePair.Create( "b".AsSlice(), bValue ),
+            KeyValuePair.Create( "d".AsSlice(), dValue ) );
 
         buffer.Should().BeSequentiallyEqualTo( aValue, bValue, default, dValue );
     }

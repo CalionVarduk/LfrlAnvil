@@ -1,24 +1,22 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using System.Linq;
-using LfrlAnvil.Computable.Expressions.Internal;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions;
 
-public sealed class ParsedExpressionDiscardedArguments : IReadOnlyCollection<ReadOnlyMemory<char>>
+public sealed class ParsedExpressionDiscardedArguments : IReadOnlyCollection<StringSlice>
 {
-    public static readonly ParsedExpressionDiscardedArguments Empty = new ParsedExpressionDiscardedArguments( new HashSet<StringSliceOld>() );
+    public static readonly ParsedExpressionDiscardedArguments Empty = new ParsedExpressionDiscardedArguments( new HashSet<StringSlice>() );
 
-    private readonly IReadOnlySet<StringSliceOld> _set;
+    private readonly IReadOnlySet<StringSlice> _set;
 
-    public ParsedExpressionDiscardedArguments(IEnumerable<ReadOnlyMemory<char>> set)
+    public ParsedExpressionDiscardedArguments(IEnumerable<StringSlice> set)
     {
-        _set = new HashSet<StringSliceOld>( set.Select( StringSliceOld.Create ) );
+        _set = new HashSet<StringSlice>( set );
     }
 
-    internal ParsedExpressionDiscardedArguments(IReadOnlySet<StringSliceOld> set)
+    internal ParsedExpressionDiscardedArguments(IReadOnlySet<StringSlice> set)
     {
         _set = set;
     }
@@ -28,23 +26,23 @@ public sealed class ParsedExpressionDiscardedArguments : IReadOnlyCollection<Rea
     [Pure]
     public bool Contains(string name)
     {
-        return Contains( name.AsMemory() );
+        return Contains( name.AsSlice() );
     }
 
     [Pure]
-    public bool Contains(ReadOnlyMemory<char> name)
+    public bool Contains(StringSlice name)
     {
-        return _set.Contains( StringSliceOld.Create( name ) );
+        return _set.Contains( name );
     }
 
     [Pure]
-    public IEnumerator<ReadOnlyMemory<char>> GetEnumerator()
+    public IEnumerator<StringSlice> GetEnumerator()
     {
-        return _set.Select( n => n.AsMemory() ).GetEnumerator();
+        return _set.GetEnumerator();
     }
 
     [Pure]
-    internal ParsedExpressionDiscardedArguments AddTo(HashSet<StringSliceOld> other)
+    internal ParsedExpressionDiscardedArguments AddTo(HashSet<StringSlice> other)
     {
         foreach ( var name in _set )
             other.Add( name );

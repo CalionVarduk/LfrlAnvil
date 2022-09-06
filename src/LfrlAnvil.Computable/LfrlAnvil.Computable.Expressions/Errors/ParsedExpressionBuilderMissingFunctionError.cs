@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
-using LfrlAnvil.Computable.Expressions.Internal;
 using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Errors;
@@ -11,7 +10,7 @@ public sealed class ParsedExpressionBuilderMissingFunctionError : ParsedExpressi
 {
     internal ParsedExpressionBuilderMissingFunctionError(
         ParsedExpressionBuilderErrorType type,
-        StringSliceOld token,
+        StringSlice token,
         IReadOnlyList<Type> parameterTypes)
         : base( type, token )
     {

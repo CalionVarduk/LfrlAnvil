@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
 
@@ -6,9 +7,9 @@ internal struct ExpressionTokenizerSubStream
 {
     private readonly int _length;
     private readonly int _endIndex;
-    private StringSliceOld _remaining;
-    private StringSliceOld _skippedSymbols;
-    private StringSliceOld _remainingSymbols;
+    private StringSlice _remaining;
+    private StringSlice _skippedSymbols;
+    private StringSlice _remainingSymbols;
     private IntermediateToken? _bufferedToken;
     private State _state;
 
@@ -37,7 +38,7 @@ internal struct ExpressionTokenizerSubStream
 
         _endIndex = index;
         _length = _endIndex - startIndex;
-        _remaining = StringSliceOld.Create( input, startIndex, _length );
+        _remaining = input.AsSlice( startIndex, _length );
         _skippedSymbols = _remaining.Slice( 0, 0 );
         _remainingSymbols = _skippedSymbols;
         _bufferedToken = null;
@@ -202,7 +203,7 @@ internal struct ExpressionTokenizerSubStream
                 return ReadSkippedSymbols();
             }
 
-            _skippedSymbols = _remainingSymbols.Slice( -_skippedSymbols.Length, _skippedSymbols.Length + 1 );
+            _skippedSymbols = _skippedSymbols.SetLength( _skippedSymbols.Length + 1 );
             _remainingSymbols = _remainingSymbols.Slice( 1 );
         }
         while ( _remainingSymbols.Length > 0 );
@@ -292,7 +293,7 @@ internal struct ExpressionTokenizerSubStream
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void Finish()
     {
-        _remaining = StringSliceOld.Create( _remaining.Source, _endIndex, length: 0 );
+        _remaining = _remaining.Source.AsSlice( _endIndex, length: 0 );
         _state = State.Finished;
     }
 

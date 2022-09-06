@@ -14,7 +14,7 @@ internal sealed class InlineDelegateCollectionState
 {
     private readonly ParameterExpression _rootParameter;
     private readonly Dictionary<int, ClosureInfo> _capturedParametersByState;
-    private readonly Dictionary<StringSliceOld, OwnedParameterExpression> _parametersMap;
+    private readonly Dictionary<StringSlice, OwnedParameterExpression> _parametersMap;
     private readonly RandomAccessStack<ParameterExpression> _parameters;
     private readonly RandomAccessStack<StateRegistration> _registeredStates;
     private readonly List<FinalizedDelegate> _nestedStateFinalization;
@@ -27,7 +27,7 @@ internal sealed class InlineDelegateCollectionState
         _parentStateIdOfLastFinalizedState = null;
         _rootParameter = state.ParameterExpression;
         _capturedParametersByState = new Dictionary<int, ClosureInfo>();
-        _parametersMap = new Dictionary<StringSliceOld, OwnedParameterExpression>();
+        _parametersMap = new Dictionary<StringSlice, OwnedParameterExpression>();
         _parameters = new RandomAccessStack<ParameterExpression>();
         _registeredStates = new RandomAccessStack<StateRegistration>();
         _registeredStates.Push( new StateRegistration( state.Id ) );
@@ -60,7 +60,7 @@ internal sealed class InlineDelegateCollectionState
         _isLastStateActive = true;
     }
 
-    internal bool TryAddParameter(Type type, StringSliceOld name)
+    internal bool TryAddParameter(Type type, StringSlice name)
     {
         Assume.IsNotEmpty( _registeredStates, nameof( _registeredStates ) );
         Assume.Equals( _isLastStateActive, true, nameof( _isLastStateActive ) );
@@ -78,7 +78,7 @@ internal sealed class InlineDelegateCollectionState
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ParameterExpression? TryGetParameter(ExpressionBuilderState state, StringSliceOld name)
+    internal ParameterExpression? TryGetParameter(ExpressionBuilderState state, StringSlice name)
     {
         Assume.Equals( _isLastStateActive, false, nameof( _isLastStateActive ) );
 
@@ -257,7 +257,7 @@ internal sealed class InlineDelegateCollectionState
         _parameters.PopInto( count, buffer, bufferStartIndex );
 
         for ( var i = bufferStartIndex; i < buffer.Length; ++i )
-            _parametersMap.Remove( StringSliceOld.Create( buffer[i].Name! ) );
+            _parametersMap.Remove( new StringSlice( buffer[i].Name! ) );
     }
 
     private void AddParameterCapture(int stateId, ParameterExpression expression, int ownerStateId, int argumentIndex = -1)
