@@ -85,6 +85,8 @@ public class TokenValidationTests : TestsBase
     [InlineData( "true" )]
     [InlineData( "TRUE" )]
     [InlineData( "True" )]
+    [InlineData( "let" )]
+    [InlineData( "LET" )]
     public void IsValidConstructSymbol_ShouldReturnFalse_WhenTextIsInvalid(string text)
     {
         var result = TokenValidation.IsValidConstructSymbol( new StringSlice( text ), stringDelimiter: '\'' );
@@ -116,6 +118,7 @@ public class TokenValidationTests : TestsBase
     [InlineData( ';' )]
     [InlineData( '0' )]
     [InlineData( ' ' )]
+    [InlineData( '=' )]
     public void IsNumberSymbolValid_ShouldReturnFalse_WhenSymbolIsInvalid(char symbol)
     {
         var result = TokenValidation.IsNumberSymbolValid( symbol );
@@ -147,6 +150,7 @@ public class TokenValidationTests : TestsBase
     [InlineData( ',' )]
     [InlineData( '0' )]
     [InlineData( ' ' )]
+    [InlineData( '=' )]
     public void IsStringDelimiterSymbolValid_ShouldReturnFalse_WhenSymbolIsInvalid(char symbol)
     {
         var result = TokenValidation.IsStringDelimiterSymbolValid( symbol );
@@ -180,6 +184,7 @@ public class TokenValidationTests : TestsBase
     [InlineData( '"' )]
     [InlineData( '0' )]
     [InlineData( ' ' )]
+    [InlineData( '=' )]
     public void IsExponentSymbolValid_ShouldReturnFalse_WhenSymbolIsInvalid(char symbol)
     {
         var result = TokenValidation.IsExponentSymbolValid( symbol );

@@ -112,11 +112,58 @@ public class ExpressionTokenizerTests : TestsBase
     }
 
     [Fact]
-    public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleInlineFunctionSeparator()
+    public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleVariableSeparator()
     {
         var input = ";";
-        var expected = IntermediateToken.CreateInlineFunctionSeparator( new StringSlice( input ) );
+        var expected = IntermediateToken.CreateLineSeparator( new StringSlice( input ) );
         var configuration = new ParsedExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
+        var sut = new ExpressionTokenizer( input, configuration );
+
+        var result = new List<IntermediateToken>();
+        while ( sut.ReadNextToken( out var token ) )
+            result.Add( token );
+
+        result.Should().BeSequentiallyEqualTo( expected );
+    }
+
+    [Theory]
+    [InlineData( "let" )]
+    [InlineData( "LET" )]
+    public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleVariableDeclaration(string input)
+    {
+        var expected = IntermediateToken.CreateVariableDeclaration( new StringSlice( input ) );
+        var configuration = new ParsedExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
+        var sut = new ExpressionTokenizer( input, configuration );
+
+        var result = new List<IntermediateToken>();
+        while ( sut.ReadNextToken( out var token ) )
+            result.Add( token );
+
+        result.Should().BeSequentiallyEqualTo( expected );
+    }
+
+    [Fact]
+    public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleAssignment()
+    {
+        var input = "=";
+        var expected = IntermediateToken.CreateAssignment( new StringSlice( input ) );
+        var configuration = new ParsedExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
+        var sut = new ExpressionTokenizer( input, configuration );
+
+        var result = new List<IntermediateToken>();
+        while ( sut.ReadNextToken( out var token ) )
+            result.Add( token );
+
+        result.Should().BeSequentiallyEqualTo( expected );
+    }
+
+    [Fact]
+    public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleAssignmentWithConstructs()
+    {
+        var input = "=";
+        var constructs = GetConstructs( "=" );
+        var expected = IntermediateToken.CreateAssignmentWithConstructs( new StringSlice( input ), constructs.First().Value );
+        var configuration = new ParsedExpressionFactoryInternalConfiguration( constructs, GetDefaultConfiguration() );
         var sut = new ExpressionTokenizer( input, configuration );
 
         var result = new List<IntermediateToken>();

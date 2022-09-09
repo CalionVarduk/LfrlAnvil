@@ -65,4 +65,14 @@ internal sealed class ExpressionBuilderChildState : ExpressionBuilderState
             parenthesesCount: 0,
             isInlineDelegate: true );
     }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static ExpressionBuilderChildState CreateVariable(ExpressionBuilderState parentState)
+    {
+        return new ExpressionBuilderChildState(
+            parentState,
+            Expectation.VariableName,
+            parenthesesCount: 0 );
+    }
 }

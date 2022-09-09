@@ -43,6 +43,15 @@ internal static class ExpressionTokenReader
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static IntermediateToken ReadAssignment(string input, int index)
+    {
+        Assume.IsLessThan( index, input.Length, nameof( index ) );
+        var result = IntermediateToken.CreateAssignment( new StringSlice( input, index, length: 1 ) );
+        return result;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken ReadElementSeparator(string input, int index)
     {
         Assume.IsLessThan( index, input.Length, nameof( index ) );
@@ -52,10 +61,10 @@ internal static class ExpressionTokenReader
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static IntermediateToken ReadInlineFunctionSeparator(string input, int index)
+    internal static IntermediateToken ReadLineSeparator(string input, int index)
     {
         Assume.IsLessThan( index, input.Length, nameof( index ) );
-        var result = IntermediateToken.CreateInlineFunctionSeparator( new StringSlice( input, index, length: 1 ) );
+        var result = IntermediateToken.CreateLineSeparator( new StringSlice( input, index, length: 1 ) );
         return result;
     }
 
@@ -113,12 +122,24 @@ internal static class ExpressionTokenReader
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static IntermediateToken? TryReadConstructs(StringSlice input, ParsedExpressionFactoryInternalConfiguration configuration)
+    internal static IntermediateToken? TryReadVariableDeclaration(StringSlice input)
     {
-        if ( configuration.Constructs.TryGetValue( input, out var constructs ) )
-            return IntermediateToken.CreateConstructs( input, constructs );
+        if ( TokenConstants.IsVariableDeclaration( input ) )
+            return IntermediateToken.CreateVariableDeclaration( input );
 
         return null;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static IntermediateToken? TryReadConstructs(StringSlice input, ParsedExpressionFactoryInternalConfiguration configuration)
+    {
+        if ( ! configuration.Constructs.TryGetValue( input, out var constructs ) )
+            return null;
+
+        return TokenConstants.AreEqual( input, TokenConstants.Assignment )
+            ? IntermediateToken.CreateAssignmentWithConstructs( input, constructs )
+            : IntermediateToken.CreateConstructs( input, constructs );
     }
 
     [Pure]

@@ -79,13 +79,13 @@ internal readonly struct IntermediateToken
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static IntermediateToken CreateInlineFunctionSeparator(StringSlice symbol)
+    internal static IntermediateToken CreateLineSeparator(StringSlice symbol)
     {
         Assume.True(
-            TokenConstants.AreEqual( symbol, TokenConstants.InlineFunctionSeparator ),
-            "Assumed symbol to be " + nameof( TokenConstants.InlineFunctionSeparator ) + "." );
+            TokenConstants.AreEqual( symbol, TokenConstants.LineSeparator ),
+            "Assumed symbol to be " + nameof( TokenConstants.LineSeparator ) + "." );
 
-        return new IntermediateToken( IntermediateTokenType.InlineFunctionSeparator, symbol );
+        return new IntermediateToken( IntermediateTokenType.LineSeparator, symbol );
     }
 
     [Pure]
@@ -142,10 +142,40 @@ internal readonly struct IntermediateToken
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static IntermediateToken CreateVariableDeclaration(StringSlice symbol)
+    {
+        Assume.True( TokenConstants.IsVariableDeclaration( symbol ), "Assumed symbol to be a variable declaration." );
+        return new IntermediateToken( IntermediateTokenType.VariableDeclaration, symbol );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateConstructs(StringSlice symbol, ConstructTokenDefinition constructs)
     {
         Assume.IsNotEmpty( symbol, nameof( symbol ) );
         return new IntermediateToken( IntermediateTokenType.Constructs, symbol, constructs );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static IntermediateToken CreateAssignment(StringSlice symbol)
+    {
+        Assume.True(
+            TokenConstants.AreEqual( symbol, TokenConstants.Assignment ),
+            "Assumed symbol to be " + nameof( TokenConstants.Assignment ) + "." );
+
+        return new IntermediateToken( IntermediateTokenType.Assignment, symbol );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static IntermediateToken CreateAssignmentWithConstructs(StringSlice symbol, ConstructTokenDefinition constructs)
+    {
+        Assume.True(
+            TokenConstants.AreEqual( symbol, TokenConstants.Assignment ),
+            "Assumed symbol to be " + nameof( TokenConstants.Assignment ) + "." );
+
+        return new IntermediateToken( IntermediateTokenType.Assignment, symbol, constructs );
     }
 
     [Pure]

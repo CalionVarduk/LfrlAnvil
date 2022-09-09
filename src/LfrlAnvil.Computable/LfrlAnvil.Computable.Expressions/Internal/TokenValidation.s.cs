@@ -47,6 +47,7 @@ internal static class TokenValidation
 
         if ( TokenConstants.IsBooleanTrue( token ) ||
             TokenConstants.IsBooleanFalse( token ) ||
+            TokenConstants.IsVariableDeclaration( token ) ||
             TokenConstants.AreEqual( token, TokenConstants.OpenedSquareBracket ) ||
             TokenConstants.AreEqual( token, TokenConstants.ClosedSquareBracket ) ||
             TokenConstants.IsSquareBrackets( token ) )
@@ -95,7 +96,8 @@ internal static class TokenValidation
             symbol != TokenConstants.ClosedParenthesis &&
             symbol != TokenConstants.OpenedSquareBracket &&
             symbol != TokenConstants.ClosedSquareBracket &&
-            symbol != TokenConstants.InlineFunctionSeparator &&
+            symbol != TokenConstants.LineSeparator &&
+            symbol != TokenConstants.Assignment &&
             (char.IsLetter( symbol ) || char.IsSymbol( symbol ) || char.IsPunctuation( symbol ));
     }
 
@@ -107,6 +109,7 @@ internal static class TokenValidation
             symbol != TokenConstants.ClosedSquareBracket &&
             symbol != TokenConstants.ScientificNotationPositiveExponentOperator &&
             symbol != TokenConstants.ScientificNotationNegativeExponentOperator &&
+            symbol != TokenConstants.Assignment &&
             ! TokenConstants.IsReservedSymbol( symbol ) &&
             (char.IsLetter( symbol ) || char.IsSymbol( symbol ) || char.IsPunctuation( symbol ));
     }

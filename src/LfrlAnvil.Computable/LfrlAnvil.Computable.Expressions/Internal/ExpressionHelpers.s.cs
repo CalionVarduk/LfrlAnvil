@@ -215,6 +215,18 @@ internal static class ExpressionHelpers
     }
 
     [Pure]
+    internal static Expression IncludeVariables(Expression expression, IReadOnlyList<VariableAssignment> assignments)
+    {
+        if ( assignments.Count == 0 )
+            return expression;
+
+        var variables = assignments.Select( a => a.Variable ).DistinctBy( v => v.Name );
+        var expressions = assignments.Select( a => a.Expression ).Append( expression );
+        var result = Expression.Block( variables, expressions );
+        return result;
+    }
+
+    [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static object?[] GetConstantValues(this IReadOnlyList<Expression> expressions)
     {

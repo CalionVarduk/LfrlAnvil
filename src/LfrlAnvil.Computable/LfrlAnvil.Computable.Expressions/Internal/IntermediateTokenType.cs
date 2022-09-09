@@ -11,7 +11,9 @@ internal enum IntermediateTokenType : byte
     ClosedParenthesis = 6,
     OpenedSquareBracket = 7,
     ClosedSquareBracket = 8,
-    InlineFunctionSeparator = 9,
+    LineSeparator = 9,
     ElementSeparator = 10,
-    MemberAccess = 11
+    MemberAccess = 11,
+    Assignment = 12,
+    VariableDeclaration = 13
 }

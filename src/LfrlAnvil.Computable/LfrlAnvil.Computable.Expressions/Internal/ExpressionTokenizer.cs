@@ -66,8 +66,8 @@ internal struct ExpressionTokenizer
                 return ExpressionTokenReader.ReadClosedParenthesis( _input, _index );
             case TokenConstants.ElementSeparator:
                 return ExpressionTokenReader.ReadElementSeparator( _input, _index );
-            case TokenConstants.InlineFunctionSeparator:
-                return ExpressionTokenReader.ReadInlineFunctionSeparator( _input, _index );
+            case TokenConstants.LineSeparator:
+                return ExpressionTokenReader.ReadLineSeparator( _input, _index );
             case TokenConstants.MemberAccess:
                 return ExpressionTokenReader.ReadMemberAccess( _input, _index );
         }

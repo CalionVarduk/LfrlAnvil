@@ -74,6 +74,24 @@ public class ParsedExpressionBuilderError
     }
 
     [Pure]
+    internal static ParsedExpressionBuilderError CreateUnexpectedVariableDeclaration(IntermediateToken token)
+    {
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.UnexpectedVariableDeclaration, token.Symbol );
+    }
+
+    [Pure]
+    internal static ParsedExpressionBuilderError CreateUnexpectedAssignment(IntermediateToken token)
+    {
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.UnexpectedAssignment, token.Symbol );
+    }
+
+    [Pure]
+    internal static ParsedExpressionBuilderError CreateUndeclaredVariableUsage(IntermediateToken token)
+    {
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.UndeclaredVariableUsage, token.Symbol );
+    }
+
+    [Pure]
     internal static ParsedExpressionBuilderError CreateUnexpectedDelegateParameterName(IntermediateToken token)
     {
         return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.UnexpectedDelegateParameterName, token.Symbol );
@@ -113,6 +131,18 @@ public class ParsedExpressionBuilderError
     internal static ParsedExpressionBuilderError CreateInvalidArgumentName(IntermediateToken token)
     {
         return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.InvalidArgumentName, token.Symbol );
+    }
+
+    [Pure]
+    internal static ParsedExpressionBuilderError CreateInvalidVariableName(IntermediateToken token)
+    {
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.InvalidVariableName, token.Symbol );
+    }
+
+    [Pure]
+    internal static ParsedExpressionBuilderError CreateDuplicatedVariableName(IntermediateToken token)
+    {
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.DuplicatedVariableName, token.Symbol );
     }
 
     [Pure]
@@ -199,6 +229,15 @@ public class ParsedExpressionBuilderError
             exception,
             ParsedExpressionBuilderErrorType.InlineDelegateError,
             token?.Symbol );
+    }
+
+    [Pure]
+    internal static ParsedExpressionBuilderError CreateLocalTermHasThrownException(StringSlice name, Exception exception)
+    {
+        return new ParsedExpressionBuilderExceptionError(
+            exception,
+            ParsedExpressionBuilderErrorType.LocalTermError,
+            name );
     }
 
     [Pure]
@@ -300,6 +339,18 @@ public class ParsedExpressionBuilderError
     }
 
     [Pure]
+    internal static ParsedExpressionBuilderError CreateUnexpectedLineSeparator(IntermediateToken token)
+    {
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.UnexpectedLineSeparator, token.Symbol );
+    }
+
+    [Pure]
+    internal static ParsedExpressionBuilderError CreateUnexpectedEnd(IntermediateToken? token)
+    {
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.UnexpectedEnd, token?.Symbol );
+    }
+
+    [Pure]
     internal static ParsedExpressionBuilderError CreateNestedExpressionFailure(
         IntermediateToken token,
         Chain<ParsedExpressionBuilderError> nestedErrors)
@@ -321,7 +372,7 @@ public class ParsedExpressionBuilderError
             IntermediateTokenType.ClosedParenthesis => CreateUnexpectedClosedParenthesis( token.Value ),
             IntermediateTokenType.ClosedSquareBracket => CreateUnexpectedClosedSquareBracket( token.Value ),
             IntermediateTokenType.ElementSeparator => CreateUnexpectedElementSeparator( token.Value ),
-            _ => throw new NotImplementedException( "inline function separator isn't supported yet" )
+            _ => CreateUnexpectedLineSeparator( token.Value )
         };
 
         return Chain.Create( error );

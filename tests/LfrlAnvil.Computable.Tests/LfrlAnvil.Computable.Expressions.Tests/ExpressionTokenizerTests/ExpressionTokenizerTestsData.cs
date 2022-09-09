@@ -209,7 +209,7 @@ public class ExpressionTokenizerTestsData
                 {
                     new Token( IntermediateTokenType.Argument, "a" ),
                     new Token( IntermediateTokenType.Constructs, "==" ),
-                    new Token( IntermediateTokenType.Argument, "=" ),
+                    new Token( IntermediateTokenType.Assignment, "=" ),
                     new Token( IntermediateTokenType.Argument, "b" )
                 }
             },
@@ -220,7 +220,7 @@ public class ExpressionTokenizerTestsData
                 {
                     new Token( IntermediateTokenType.Argument, "a" ),
                     new Token( IntermediateTokenType.Constructs, "==" ),
-                    new Token( IntermediateTokenType.Constructs, "=" ),
+                    new Token( IntermediateTokenType.Assignment, "=" ),
                     new Token( IntermediateTokenType.Argument, "b" )
                 }
             },
@@ -240,7 +240,9 @@ public class ExpressionTokenizerTestsData
                 new[]
                 {
                     new Token( IntermediateTokenType.Argument, "a" ),
-                    new Token( IntermediateTokenType.Argument, "===" ),
+                    new Token( IntermediateTokenType.Assignment, "=" ),
+                    new Token( IntermediateTokenType.Assignment, "=" ),
+                    new Token( IntermediateTokenType.Assignment, "=" ),
                     new Token( IntermediateTokenType.Argument, "b" )
                 }
             },
@@ -263,7 +265,7 @@ public class ExpressionTokenizerTestsData
                     new Token( IntermediateTokenType.Argument, "a" ),
                     new Token( IntermediateTokenType.Argument, "-+" ),
                     new Token( IntermediateTokenType.Constructs, "==" ),
-                    new Token( IntermediateTokenType.Argument, "=" ),
+                    new Token( IntermediateTokenType.Assignment, "=" ),
                     new Token( IntermediateTokenType.Argument, "b" )
                 }
             },
@@ -511,6 +513,17 @@ public class ExpressionTokenizerTestsData
                 }
             },
             {
+                "let LET lEt Let",
+                noTokens,
+                new[]
+                {
+                    new Token( IntermediateTokenType.VariableDeclaration, "let" ),
+                    new Token( IntermediateTokenType.VariableDeclaration, "LET" ),
+                    new Token( IntermediateTokenType.Argument, "lEt" ),
+                    new Token( IntermediateTokenType.Argument, "Let" )
+                }
+            },
+            {
                 "Tuue|FuLSe",
                 new[] { "|" },
                 new[]
@@ -520,6 +533,7 @@ public class ExpressionTokenizerTestsData
                     new Token( IntermediateTokenType.Argument, "FuLSe" )
                 }
             },
+
             {
                 "_a_+_b_",
                 new[] { "+" },
@@ -680,12 +694,14 @@ public class ExpressionTokenizerTestsData
                 IntermediateTokenType.OpenedSquareBracket => IntermediateToken.CreateOpenedSquareBracket( s ),
                 IntermediateTokenType.ClosedSquareBracket => IntermediateToken.CreateClosedSquareBracket( s ),
                 IntermediateTokenType.ElementSeparator => IntermediateToken.CreateElementSeparator( s ),
-                IntermediateTokenType.InlineFunctionSeparator => IntermediateToken.CreateInlineFunctionSeparator( s ),
+                IntermediateTokenType.LineSeparator => IntermediateToken.CreateLineSeparator( s ),
                 IntermediateTokenType.MemberAccess => IntermediateToken.CreateMemberAccess( s ),
                 IntermediateTokenType.StringConstant => IntermediateToken.CreateStringConstant( s ),
                 IntermediateTokenType.NumberConstant => IntermediateToken.CreateNumberConstant( s ),
                 IntermediateTokenType.BooleanConstant => IntermediateToken.CreateBooleanConstant( s ),
                 IntermediateTokenType.Argument => IntermediateToken.CreateArgument( s ),
+                IntermediateTokenType.VariableDeclaration => IntermediateToken.CreateVariableDeclaration( s ),
+                IntermediateTokenType.Assignment => IntermediateToken.CreateAssignment( s ),
                 _ => IntermediateToken.CreateConstructs(
                     s,
                     ConstructTokenDefinition.CreateOperator(
@@ -697,9 +713,13 @@ public class ExpressionTokenizerTestsData
 
         internal IntermediateToken GetToken(IReadOnlyDictionary<StringSlice, ConstructTokenDefinition> constructs)
         {
-            return _token.Type == IntermediateTokenType.Constructs
-                ? IntermediateToken.CreateConstructs( _token.Symbol, constructs[_token.Symbol] )
-                : _token;
+            if ( _token.Type == IntermediateTokenType.Constructs )
+                return IntermediateToken.CreateConstructs( _token.Symbol, constructs[_token.Symbol] );
+
+            if ( _token.Type == IntermediateTokenType.Assignment && constructs.TryGetValue( _token.Symbol, out var definition ) )
+                return IntermediateToken.CreateAssignmentWithConstructs( _token.Symbol, definition );
+
+            return _token;
         }
 
         public override string ToString()

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
@@ -72,8 +71,8 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
             return typeCastResult.CastErrorsTo<ExpressionBuilderResult>();
 
         var result = Configuration.DiscardUnusedArguments
-            ? DiscardUnusedDelegatesAndArguments( typeCastResult.Result )
-            : DiscardUnusedDelegates( typeCastResult.Result );
+            ? DiscardUnusedDelegatesAndVariablesAndArguments( typeCastResult.Result )
+            : DiscardUnusedDelegatesAndVariables( typeCastResult.Result );
 
         return UnsafeBuilderResult<ExpressionBuilderResult>.CreateOk( result );
     }
@@ -93,6 +92,19 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal IReadOnlyList<InlineDelegateCollectionState.Result> GetCompilableDelegates()
+    {
+        return _compilableDelegates;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void ClearCompilableDelegates()
+    {
+        _compilableDelegates.Clear();
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static Chain<ParsedExpressionBuilderError> CollectChildStateErrors(
         ExpressionBuilderState state,
         Chain<ParsedExpressionBuilderError> errors)
@@ -107,69 +119,62 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
         return errors;
     }
 
-    private ExpressionBuilderResult DiscardUnusedDelegatesAndArguments(Expression expression)
+    private ExpressionBuilderResult DiscardUnusedDelegatesAndVariablesAndArguments(Expression expression)
     {
-        if ( ArgumentIndexes.Count == 0 )
-            return DiscardUnusedDelegates( expression );
+        if ( LocalTerms.ArgumentIndexes.Count == 0 )
+            return DiscardUnusedDelegatesAndVariables( expression );
 
-        var usageValidator = new ExpressionUsageValidator( ParameterExpression, _compilableDelegates, ArgumentIndexes.Count );
-        usageValidator.Visit( expression );
+        var (delegateUsage, variableUsage) = ExpressionUsage.FindDelegateAndVariableUsage( expression, _compilableDelegates, LocalTerms );
+        var usedDelegates = ExpressionUsage.GetUsedDelegates( _compilableDelegates, delegateUsage );
+        var usedVariables = ExpressionUsage.GetUsedVariables( LocalTerms, variableUsage );
+        MarkUsedVariableAssignments( usedVariables );
 
-        var compilableDelegates = GetUsedCompilableDelegates( usageValidator.DelegateUsage );
-        var (unusedArgumentCount, requiresArgumentReorganizing) = GetArgumentUsageInfo( usageValidator.ArgumentUsage );
+        var usedAssignments = LocalTerms.GetUsedVariableAssignments();
+        var compilableDelegates = ExpressionUsage.GetCompilableDelegates( usedDelegates, usedAssignments );
+        expression = ExpressionHelpers.IncludeVariables( expression, usedAssignments );
+
+        var argumentUsage = ExpressionUsage.FindArgumentUsage( expression, LocalTerms );
+        ExpressionUsage.AddDelegateArgumentUsage( argumentUsage, usedDelegates, usedAssignments );
+        var (unusedArgumentCount, requiresArgumentReorganizing) = GetArgumentUsageInfo( argumentUsage );
 
         if ( unusedArgumentCount == 0 )
             return CreateResultWithoutAnyDiscardedArguments( expression, compilableDelegates );
 
-        if ( unusedArgumentCount == ArgumentIndexes.Count )
+        if ( unusedArgumentCount == LocalTerms.ArgumentIndexes.Count )
             return CreateResultWithAllArgumentsDiscarded( expression, compilableDelegates );
 
         return requiresArgumentReorganizing
-            ? CreateResultWithSomeDiscardedArguments( expression, compilableDelegates, usageValidator.ArgumentUsage )
+            ? CreateResultWithSomeDiscardedArguments( expression, compilableDelegates, argumentUsage )
             : CreateResultWithSomeDiscardedArgumentsOnlyAtTheEnd( expression, compilableDelegates, unusedArgumentCount );
     }
 
     [Pure]
-    private ExpressionBuilderResult DiscardUnusedDelegates(Expression expression)
+    private ExpressionBuilderResult DiscardUnusedDelegatesAndVariables(Expression expression)
     {
-        if ( _compilableDelegates.Count == 0 )
-            return CreateResultWithoutAnyDiscardedArguments( expression, Array.Empty<CompilableInlineDelegate>() );
+        var (delegateUsage, variableUsage) = ExpressionUsage.FindDelegateAndVariableUsage( expression, _compilableDelegates, LocalTerms );
+        var usedDelegates = ExpressionUsage.GetUsedDelegates( _compilableDelegates, delegateUsage );
+        var usedVariables = ExpressionUsage.GetUsedVariables( LocalTerms, variableUsage );
+        MarkUsedVariableAssignments( usedVariables );
 
-        var usageValidator = new DelegateUsageValidator( _compilableDelegates );
-        usageValidator.Visit( expression );
+        var usedAssignments = LocalTerms.GetUsedVariableAssignments();
+        var compilableDelegates = ExpressionUsage.GetCompilableDelegates( usedDelegates, usedAssignments );
+        expression = ExpressionHelpers.IncludeVariables( expression, usedAssignments );
 
-        var compilableDelegates = GetUsedCompilableDelegates( usageValidator.DelegateUsage );
         return CreateResultWithoutAnyDiscardedArguments( expression, compilableDelegates );
     }
 
-    [Pure]
-    private CompilableInlineDelegate[] GetUsedCompilableDelegates(BitArray usage)
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static void MarkUsedVariableAssignments(VariableAssignment[] assignments)
     {
-        Assume.ContainsExactly( _compilableDelegates, usage.Length, nameof( _compilableDelegates ) );
-
-        var count = 0;
-        for ( var i = 0; i < usage.Length; ++i )
-        {
-            if ( usage[i] )
-                ++count;
-        }
-
-        var index = 0;
-        var result = count == 0 ? Array.Empty<CompilableInlineDelegate>() : new CompilableInlineDelegate[count];
-        for ( var i = 0; i < usage.Length; ++i )
-        {
-            if ( usage[i] )
-                result[index++] = _compilableDelegates[i].Delegate;
-        }
-
-        return result;
+        foreach ( var assignment in assignments )
+            assignment.MarkAsUsed();
     }
 
     [Pure]
     private (int DiscardedCount, bool RequiresReorganizing) GetArgumentUsageInfo(BitArray usage)
     {
-        Assume.IsNotEmpty( ArgumentIndexes, nameof( ArgumentIndexes ) );
-        Assume.ContainsExactly( ArgumentIndexes, usage.Length, nameof( ArgumentIndexes ) );
+        Assume.IsNotEmpty( LocalTerms.ArgumentIndexes, nameof( LocalTerms.ArgumentIndexes ) );
+        Assume.ContainsExactly( LocalTerms.ArgumentIndexes, usage.Length, nameof( LocalTerms.ArgumentIndexes ) );
 
         var discardedCount = usage[0] ? 0 : 1;
         var requiresReorganizing = false;
@@ -196,9 +201,9 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
     {
         return new ExpressionBuilderResult(
             expression,
-            ParameterExpression,
+            LocalTerms.ParameterExpression,
             delegates,
-            ArgumentIndexes,
+            LocalTerms.ArgumentIndexes,
             discardedArguments: new HashSet<StringSlice>() );
     }
 
@@ -206,12 +211,17 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
     private ExpressionBuilderResult CreateResultWithAllArgumentsDiscarded(Expression expression, CompilableInlineDelegate[] delegates)
     {
         var discardedArguments = new HashSet<StringSlice>();
-        foreach ( var (name, _) in ArgumentIndexes )
+        foreach ( var (name, _) in LocalTerms.ArgumentIndexes )
             discardedArguments.Add( name );
 
-        ArgumentIndexes.Clear();
-        ArgumentIndexes.TrimExcess();
-        return new ExpressionBuilderResult( expression, ParameterExpression, delegates, ArgumentIndexes, discardedArguments );
+        LocalTerms.ArgumentIndexes.Clear();
+        LocalTerms.ArgumentIndexes.TrimExcess();
+        return new ExpressionBuilderResult(
+            expression,
+            LocalTerms.ParameterExpression,
+            delegates,
+            LocalTerms.ArgumentIndexes,
+            discardedArguments );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -221,10 +231,10 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
         int unusedArgumentCount)
     {
         var i = 0;
-        var firstIndexToRemove = ArgumentIndexes.Count - unusedArgumentCount;
+        var firstIndexToRemove = LocalTerms.ArgumentIndexes.Count - unusedArgumentCount;
         var keysToRemove = new StringSlice[unusedArgumentCount];
 
-        foreach ( var (key, index) in ArgumentIndexes )
+        foreach ( var (key, index) in LocalTerms.ArgumentIndexes )
         {
             if ( index < firstIndexToRemove )
                 continue;
@@ -236,11 +246,16 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
         foreach ( var key in keysToRemove )
         {
             discardedArguments.Add( key );
-            ArgumentIndexes.Remove( key );
+            LocalTerms.ArgumentIndexes.Remove( key );
         }
 
-        ArgumentIndexes.TrimExcess();
-        return new ExpressionBuilderResult( expression, ParameterExpression, delegates, ArgumentIndexes, discardedArguments );
+        LocalTerms.ArgumentIndexes.TrimExcess();
+        return new ExpressionBuilderResult(
+            expression,
+            LocalTerms.ParameterExpression,
+            delegates,
+            LocalTerms.ArgumentIndexes,
+            discardedArguments );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -249,13 +264,13 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
         CompilableInlineDelegate[] delegates,
         BitArray usage)
     {
-        Assume.IsNotEmpty( ArgumentIndexes, nameof( ArgumentIndexes ) );
-        Assume.ContainsExactly( ArgumentIndexes, usage.Length, nameof( ArgumentIndexes ) );
+        Assume.IsNotEmpty( LocalTerms.ArgumentIndexes, nameof( LocalTerms.ArgumentIndexes ) );
+        Assume.ContainsExactly( LocalTerms.ArgumentIndexes, usage.Length, nameof( LocalTerms.ArgumentIndexes ) );
 
-        var argumentNames = ArgumentIndexes.ToDictionary( kv => kv.Value, kv => kv.Key );
+        var argumentNames = LocalTerms.ArgumentIndexes.ToDictionary( kv => kv.Value, kv => kv.Key );
         var argumentAccessExpressions = new Dictionary<int, Expression>();
         var discardedArguments = new HashSet<StringSlice>();
-        ArgumentIndexes.Clear();
+        LocalTerms.ArgumentIndexes.Clear();
 
         for ( var i = 0; i < usage.Length; ++i )
         {
@@ -266,93 +281,30 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
                 continue;
             }
 
-            var newIndex = ArgumentIndexes.Count;
-            var argumentExpression = i == newIndex ? GetArgumentAccess( i ) : ParameterExpression.CreateArgumentAccess( newIndex );
-            ArgumentIndexes.Add( argumentName, newIndex );
+            var newIndex = LocalTerms.ArgumentIndexes.Count;
+            var argumentExpression = i == newIndex
+                ? LocalTerms.GetArgumentAccess( i )
+                : LocalTerms.ParameterExpression.CreateArgumentAccess( newIndex );
+
+            LocalTerms.ArgumentIndexes.Add( argumentName, newIndex );
             argumentAccessExpressions.Add( i, argumentExpression );
         }
 
-        ArgumentIndexes.TrimExcess();
-        var argumentAccessReorganizer = new ArgumentAccessReorganizer( ParameterExpression, argumentAccessExpressions, usage.Length );
+        LocalTerms.ArgumentIndexes.TrimExcess();
+        var argumentAccessReorganizer = new ArgumentAccessReorganizer(
+            LocalTerms.ParameterExpression,
+            argumentAccessExpressions,
+            usage.Length );
+
         foreach ( var @delegate in delegates )
             @delegate.ReorganizeArgumentAccess( argumentAccessReorganizer );
 
         expression = argumentAccessReorganizer.Visit( expression );
-        return new ExpressionBuilderResult( expression, ParameterExpression, delegates, ArgumentIndexes, discardedArguments );
-    }
-
-    private sealed class ExpressionUsageValidator : ExpressionVisitor
-    {
-        private readonly ParameterExpression _parameter;
-        private readonly List<InlineDelegateCollectionState.Result> _compilableDelegates;
-
-        internal ExpressionUsageValidator(
-            ParameterExpression parameter,
-            List<InlineDelegateCollectionState.Result> compilableDelegates,
-            int argumentCount)
-        {
-            Assume.IsGreaterThan( argumentCount, 0, nameof( argumentCount ) );
-
-            ArgumentUsage = new BitArray( argumentCount );
-            DelegateUsage = new BitArray( compilableDelegates.Count );
-            _parameter = parameter;
-            _compilableDelegates = compilableDelegates;
-        }
-
-        public BitArray ArgumentUsage { get; }
-        public BitArray DelegateUsage { get; }
-
-        [return: NotNullIfNotNull( "node" )]
-        public override Expression? Visit(Expression? node)
-        {
-            if ( node.TryGetArgumentAccessIndex( _parameter, ArgumentUsage.Length, out var index ) )
-                ArgumentUsage[index] = true;
-            else if ( ExpressionHelpers.IsLambdaPlaceholder( node ) )
-            {
-                var lambdaIndex = _compilableDelegates.FindIndex( x => ReferenceEquals( x.Delegate.Placeholder, node ) );
-                if ( lambdaIndex >= 0 )
-                {
-                    DelegateUsage[lambdaIndex] = true;
-
-                    var delegateArgumentIndexes = _compilableDelegates[lambdaIndex].UsedArgumentIndexes;
-                    foreach ( var i in delegateArgumentIndexes )
-                        ArgumentUsage[i] = true;
-
-                    return node;
-                }
-            }
-
-            return base.Visit( node );
-        }
-    }
-
-    private sealed class DelegateUsageValidator : ExpressionVisitor
-    {
-        private readonly List<InlineDelegateCollectionState.Result> _compilableDelegates;
-
-        internal DelegateUsageValidator(List<InlineDelegateCollectionState.Result> compilableDelegates)
-        {
-            Assume.IsNotEmpty( compilableDelegates, nameof( compilableDelegates ) );
-            DelegateUsage = new BitArray( compilableDelegates.Count );
-            _compilableDelegates = compilableDelegates;
-        }
-
-        public BitArray DelegateUsage { get; }
-
-        [return: NotNullIfNotNull( "node" )]
-        public override Expression? Visit(Expression? node)
-        {
-            if ( ExpressionHelpers.IsLambdaPlaceholder( node ) )
-            {
-                var lambdaIndex = _compilableDelegates.FindIndex( x => ReferenceEquals( x.Delegate.Placeholder, node ) );
-                if ( lambdaIndex >= 0 )
-                {
-                    DelegateUsage[lambdaIndex] = true;
-                    return node;
-                }
-            }
-
-            return base.Visit( node );
-        }
+        return new ExpressionBuilderResult(
+            expression,
+            LocalTerms.ParameterExpression,
+            delegates,
+            LocalTerms.ArgumentIndexes,
+            discardedArguments );
     }
 }

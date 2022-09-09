@@ -29,7 +29,7 @@ internal struct ExpressionTokenizerSubStream
 
             if ( c is TokenConstants.OpenedParenthesis or
                     TokenConstants.ClosedParenthesis or
-                    TokenConstants.InlineFunctionSeparator ||
+                    TokenConstants.LineSeparator ||
                 c == configuration.StringDelimiter )
                 break;
 
@@ -122,6 +122,10 @@ internal struct ExpressionTokenizerSubStream
         var boolean = ExpressionTokenReader.TryReadBoolean( slice );
         if ( boolean is not null )
             return boolean.Value;
+
+        var variableDeclaration = ExpressionTokenReader.TryReadVariableDeclaration( slice );
+        if ( variableDeclaration is not null )
+            return variableDeclaration.Value;
 
         if ( slice.Length != _length )
         {
@@ -274,6 +278,13 @@ internal struct ExpressionTokenizerSubStream
                 var startIndex = _remainingSymbols.StartIndex;
                 _remainingSymbols = _remainingSymbols.Slice( 1 );
                 return ExpressionTokenReader.ReadClosedSquareBracket( _remainingSymbols.Source, startIndex );
+            }
+
+            case TokenConstants.Assignment:
+            {
+                var startIndex = _remainingSymbols.StartIndex;
+                _remainingSymbols = _remainingSymbols.Slice( 1 );
+                return ExpressionTokenReader.ReadAssignment( _remainingSymbols.Source, startIndex );
             }
         }
 

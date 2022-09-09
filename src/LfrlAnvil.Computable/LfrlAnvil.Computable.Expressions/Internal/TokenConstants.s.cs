@@ -10,11 +10,12 @@ internal static class TokenConstants
     internal const char ClosedParenthesis = ')';
     internal const char OpenedSquareBracket = '[';
     internal const char ClosedSquareBracket = ']';
-    internal const char InlineFunctionSeparator = ';';
+    internal const char LineSeparator = ';';
     internal const char ElementSeparator = ',';
     internal const char MemberAccess = '.';
     internal const char ScientificNotationPositiveExponentOperator = '+';
     internal const char ScientificNotationNegativeExponentOperator = '-';
+    internal const char Assignment = '=';
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -60,14 +61,18 @@ internal static class TokenConstants
         if ( source[text.StartIndex] == 'F' )
         {
             if ( source[text.StartIndex + 1] == 'A' )
+            {
                 return source[text.StartIndex + 2] == 'L' &&
                     source[text.StartIndex + 3] == 'S' &&
                     source[text.StartIndex + 4] == 'E';
+            }
 
             if ( source[text.StartIndex + 1] == 'a' )
+            {
                 return source[text.StartIndex + 2] == 'l' &&
                     source[text.StartIndex + 3] == 's' &&
                     source[text.StartIndex + 4] == 'e';
+            }
         }
 
         return false;
@@ -88,6 +93,24 @@ internal static class TokenConstants
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static bool IsVariableDeclaration(StringSlice text)
+    {
+        if ( text.Length != 3 )
+            return false;
+
+        var source = text.Source;
+
+        if ( source[text.StartIndex] == 'l' )
+            return source[text.StartIndex + 1] == 'e' && source[text.StartIndex + 2] == 't';
+
+        if ( source[text.StartIndex] == 'L' )
+            return source[text.StartIndex + 1] == 'E' && source[text.StartIndex + 2] == 'T';
+
+        return false;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static bool InterpretAsSymbol(char c)
     {
         return c != Underscore && (char.IsSymbol( c ) || char.IsPunctuation( c ));
@@ -97,7 +120,7 @@ internal static class TokenConstants
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static bool IsReservedSymbol(char c)
     {
-        return c is OpenedParenthesis or ClosedParenthesis or InlineFunctionSeparator or ElementSeparator or MemberAccess;
+        return c is OpenedParenthesis or ClosedParenthesis or LineSeparator or ElementSeparator or MemberAccess;
     }
 
     [Pure]

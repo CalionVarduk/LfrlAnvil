@@ -12,7 +12,7 @@ namespace LfrlAnvil.Computable.Expressions.Internal.Delegates;
 
 internal sealed class InlineDelegateCollectionState
 {
-    private readonly ParameterExpression _rootParameter;
+    private readonly LocalTermsCollection _localTerms;
     private readonly Dictionary<int, ClosureInfo> _capturedParametersByState;
     private readonly Dictionary<StringSlice, OwnedParameterExpression> _parametersMap;
     private readonly RandomAccessStack<ParameterExpression> _parameters;
@@ -25,7 +25,7 @@ internal sealed class InlineDelegateCollectionState
     {
         _isLastStateActive = true;
         _parentStateIdOfLastFinalizedState = null;
-        _rootParameter = state.ParameterExpression;
+        _localTerms = state.LocalTerms;
         _capturedParametersByState = new Dictionary<int, ClosureInfo>();
         _parametersMap = new Dictionary<StringSlice, OwnedParameterExpression>();
         _parameters = new RandomAccessStack<ParameterExpression>();
@@ -96,7 +96,14 @@ internal sealed class InlineDelegateCollectionState
     internal void AddArgumentCapture(ExpressionBuilderState state, int index)
     {
         Assume.Equals( _isLastStateActive, false, nameof( _isLastStateActive ) );
-        AddParameterCapture( state.Id, _rootParameter, 0, index );
+        AddParameterCapture( state.Id, _localTerms.ParameterExpression, 0, index );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void AddVariableCapture(ExpressionBuilderState state, ParameterExpression variable)
+    {
+        Assume.Equals( _isLastStateActive, false, nameof( _isLastStateActive ) );
+        AddParameterCapture( state.Id, variable, 0 );
     }
 
     internal Expression FinalizeLastState(Expression lambdaBody, bool compileWhenStatic)
@@ -132,17 +139,19 @@ internal sealed class InlineDelegateCollectionState
             return null;
 
         var usedArgumentIndexes = new HashSet<int>();
-        var result = CreateCompilableInlineDelegate( usedArgumentIndexes, rootFinalization, parent: null );
-        return new Result( result, usedArgumentIndexes );
+        var usedVariables = new HashSet<StringSlice>();
+        var result = CreateCompilableInlineDelegate( usedArgumentIndexes, usedVariables, rootFinalization, parent: null );
+        return new Result( result, usedArgumentIndexes, usedVariables );
     }
 
     private static CompilableInlineDelegate CreateCompilableInlineDelegate(
         HashSet<int> usedArgumentIndexes,
+        HashSet<StringSlice> usedVariables,
         FinalizedDelegate finalization,
         (FinalizedDelegate Finalization, ClosureExpressionFactory? Closure)? parent)
     {
         Assume.IsNotNull( finalization.LambdaPlaceholder, nameof( finalization.LambdaPlaceholder ) );
-        Assume.Equals( finalization.IsUnused, false, nameof( finalization.IsUnused ) );
+        Assume.Equals( finalization.IsUsed, true, nameof( finalization.IsUsed ) );
 
         ClosureExpressionFactory? closure = null;
         NewExpression? closureCtorCall = null;
@@ -151,6 +160,7 @@ internal sealed class InlineDelegateCollectionState
         if ( ! finalization.IsStatic )
         {
             usedArgumentIndexes.UnionWith( finalization.CapturedParameters.Value.ArgumentIndexes );
+            usedVariables.UnionWith( finalization.CapturedParameters.Value.Variables );
 
             closure = ClosureHelpers.CreateClosureTypeFactory(
                 finalization.CapturedParameters.Value,
@@ -169,7 +179,7 @@ internal sealed class InlineDelegateCollectionState
 
         foreach ( var nested in nestedFinalization )
         {
-            if ( ! nested.IsCompiled && ! nested.IsUnused )
+            if ( ! nested.IsCompiled && nested.IsUsed )
                 ++activeNestedCount;
         }
 
@@ -182,10 +192,14 @@ internal sealed class InlineDelegateCollectionState
         {
             foreach ( var nested in nestedFinalization )
             {
-                if ( nested.IsCompiled || nested.IsUnused )
+                if ( nested.IsCompiled || ! nested.IsUsed )
                     continue;
 
-                nestedDelegates[index++] = CreateCompilableInlineDelegate( usedArgumentIndexes, nested, (finalization, closure) );
+                nestedDelegates[index++] = CreateCompilableInlineDelegate(
+                    usedArgumentIndexes,
+                    usedVariables,
+                    nested,
+                    (finalization, closure) );
             }
         }
 
@@ -215,7 +229,7 @@ internal sealed class InlineDelegateCollectionState
             capturedParameters = new ClosureInfo( state.Id );
         }
 
-        var capturedParameterUsageValidator = new CapturedParameterUsageValidator( _rootParameter, capturedParameters, nestedFinalization );
+        var capturedParameterUsageValidator = new CapturedParameterUsageValidator( _localTerms, capturedParameters, nestedFinalization );
         capturedParameterUsageValidator.Visit( body );
         capturedParameterUsageValidator.ApplyChanges( _capturedParametersByState );
 
@@ -276,25 +290,27 @@ internal sealed class InlineDelegateCollectionState
 
     private sealed class CapturedParameterUsageValidator : ExpressionVisitor
     {
-        private readonly ParameterExpression _rootParameter;
+        private readonly LocalTermsCollection _localTerms;
         private readonly ClosureInfo _capturedParameters;
         private readonly IReadOnlyList<FinalizedDelegate> _nestedFinalization;
         private readonly int _usableArgumentCount;
         private readonly HashSet<int> _usedArgumentIndexes;
+        private readonly HashSet<StringSlice> _usedVariables;
         private readonly List<OwnedParameterExpression> _usedParameters;
         private readonly List<FinalizedDelegate> _usedNestedFinalization;
         private bool _usesRootParameter;
 
         internal CapturedParameterUsageValidator(
-            ParameterExpression rootParameter,
+            LocalTermsCollection localTerms,
             ClosureInfo capturedParameters,
             IReadOnlyList<FinalizedDelegate> nestedFinalization)
         {
             _usedArgumentIndexes = new HashSet<int>();
+            _usedVariables = new HashSet<StringSlice>();
             _usedParameters = new List<OwnedParameterExpression>();
             _usedNestedFinalization = new List<FinalizedDelegate>();
             _capturedParameters = capturedParameters;
-            _rootParameter = rootParameter;
+            _localTerms = localTerms;
             _nestedFinalization = nestedFinalization;
             _usableArgumentCount = capturedParameters.ArgumentIndexes.TryMax( out var maxIndex ) ? maxIndex + 1 : 0;
             _usesRootParameter = false;
@@ -303,12 +319,13 @@ internal sealed class InlineDelegateCollectionState
         [return: NotNullIfNotNull( "node" )]
         public override Expression? Visit(Expression? node)
         {
-            if ( _usableArgumentCount > 0 && node.TryGetArgumentAccessIndex( _rootParameter, _usableArgumentCount, out var index ) )
+            if ( _usableArgumentCount > 0 &&
+                node.TryGetArgumentAccessIndex( _localTerms.ParameterExpression, _usableArgumentCount, out var index ) )
             {
                 if ( ! _usesRootParameter )
                 {
                     _usesRootParameter = true;
-                    _usedParameters.Add( new OwnedParameterExpression( _rootParameter, 0 ) );
+                    _usedParameters.Add( new OwnedParameterExpression( _localTerms.ParameterExpression, 0 ) );
                 }
 
                 _usedArgumentIndexes.Add( index );
@@ -316,8 +333,11 @@ internal sealed class InlineDelegateCollectionState
             else if ( node is ParameterExpression parameter )
             {
                 var ownerStateId = _capturedParameters.FindOwnerStateId( parameter );
-                if ( ownerStateId > 0 )
+                if ( ownerStateId > 0 || (ownerStateId == 0 && ! ReferenceEquals( parameter, _localTerms.ParameterExpression )) )
+                {
                     _usedParameters.Add( new OwnedParameterExpression( parameter, ownerStateId ) );
+                    _usedVariables.Add( parameter.Name!.AsSlice() );
+                }
             }
             else
             {
@@ -346,6 +366,8 @@ internal sealed class InlineDelegateCollectionState
             _capturedParameters.Parameters.AddRange( _usedParameters );
             _capturedParameters.ArgumentIndexes.Clear();
             _capturedParameters.ArgumentIndexes.UnionWith( _usedArgumentIndexes );
+            _capturedParameters.Variables.Clear();
+            _capturedParameters.Variables.UnionWith( _usedVariables );
 
             foreach ( var finalization in _nestedFinalization )
             {
@@ -373,11 +395,13 @@ internal sealed class InlineDelegateCollectionState
     {
         internal readonly CompilableInlineDelegate Delegate;
         internal readonly IReadOnlySet<int> UsedArgumentIndexes;
+        internal readonly IReadOnlySet<StringSlice> UsedVariables;
 
-        internal Result(CompilableInlineDelegate @delegate, IReadOnlySet<int> usedArgumentIndexes)
+        internal Result(CompilableInlineDelegate @delegate, IReadOnlySet<int> usedArgumentIndexes, IReadOnlySet<StringSlice> usedVariables)
         {
             Delegate = @delegate;
             UsedArgumentIndexes = usedArgumentIndexes;
+            UsedVariables = usedVariables;
         }
     }
 
@@ -399,7 +423,7 @@ internal sealed class InlineDelegateCollectionState
             CapturedParameters = capturedParameters;
             CompiledLambda = compiledLambda;
             LambdaPlaceholder = lambdaPlaceholder;
-            IsUnused = false;
+            IsUsed = true;
             _nestedFinalization = null;
         }
 
@@ -409,7 +433,7 @@ internal sealed class InlineDelegateCollectionState
         internal ClosureInfo? CapturedParameters { get; }
         internal Expression? CompiledLambda { get; }
         internal Expression? LambdaPlaceholder { get; }
-        internal bool IsUnused { get; private set; }
+        internal bool IsUsed { get; private set; }
         internal IReadOnlyList<FinalizedDelegate> NestedFinalization => _nestedFinalization ?? Array.Empty<FinalizedDelegate>();
 
         [MemberNotNullWhen( false, nameof( CapturedParameters ) )]
@@ -486,10 +510,10 @@ internal sealed class InlineDelegateCollectionState
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void MarkAsUnused()
         {
-            if ( IsUnused )
+            if ( ! IsUsed )
                 return;
 
-            IsUnused = true;
+            IsUsed = false;
             foreach ( var state in NestedFinalization )
                 state.MarkAsUnused();
         }
@@ -500,15 +524,17 @@ internal sealed class InlineDelegateCollectionState
         internal readonly int StateId;
         internal readonly List<OwnedParameterExpression> Parameters;
         internal readonly HashSet<int> ArgumentIndexes;
+        internal readonly HashSet<StringSlice> Variables;
 
         internal ClosureInfo(int stateId)
         {
             StateId = stateId;
             Parameters = new List<OwnedParameterExpression>();
             ArgumentIndexes = new HashSet<int>();
+            Variables = new HashSet<StringSlice>();
         }
 
-        internal bool IsEmpty => Parameters.Count == 0 && ArgumentIndexes.Count == 0;
+        internal bool IsEmpty => Parameters.Count == 0 && ArgumentIndexes.Count == 0 && Variables.Count == 0;
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
