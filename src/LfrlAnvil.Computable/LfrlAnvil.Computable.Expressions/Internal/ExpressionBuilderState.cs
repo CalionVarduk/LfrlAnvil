@@ -214,7 +214,7 @@ internal class ExpressionBuilderState
         if ( ! Expects( Expectation.Operand ) )
         {
             if ( Expects( Expectation.MacroEnd ) )
-                return LocalTerms.AddMacroToken( token );
+                return HandleMacroToken( token );
 
             errors = errors.Extend( ParsedExpressionBuilderError.CreateUnexpectedOperand( token ) );
         }
@@ -239,7 +239,7 @@ internal class ExpressionBuilderState
         if ( ! Expects( Expectation.Operand ) )
         {
             if ( Expects( Expectation.MacroEnd ) )
-                return LocalTerms.AddMacroToken( token );
+                return HandleMacroToken( token );
 
             errors = errors.Extend( ParsedExpressionBuilderError.CreateUnexpectedOperand( token ) );
         }
@@ -277,7 +277,7 @@ internal class ExpressionBuilderState
         if ( ! Expects( Expectation.Operand ) )
         {
             if ( Expects( Expectation.MacroEnd ) )
-                return LocalTerms.AddMacroToken( token );
+                return HandleMacroToken( token );
 
             errors = errors.Extend( ParsedExpressionBuilderError.CreateUnexpectedOperand( token ) );
         }
@@ -305,17 +305,20 @@ internal class ExpressionBuilderState
         {
             return LocalTerms.IsTermStarted( token.Symbol )
                 ? Chain.Create( ParsedExpressionBuilderError.CreateUndeclaredLocalTermUsage( token ) )
-                : LocalTerms.AddMacroToken( token );
+                : HandleMacroToken( token );
         }
 
         if ( LocalTerms.TryGetMacro( token.Symbol, out var declaration ) )
             return ProcessMacro( token, declaration );
 
+        if ( Expects( Expectation.MemberName ) )
+            return HandleMemberName( token );
+
         if ( IsHandlingInlineDelegateParameters() )
             return HandleDelegateParameterName( token );
 
-        if ( Expects( Expectation.MemberName ) )
-            return HandleMemberName( token );
+        if ( Expects( Expectation.ParameterName ) )
+            return HandleMacroParameterName( token );
 
         return ProcessLocalTermOrDelegateParameter( token );
     }
@@ -352,8 +355,26 @@ internal class ExpressionBuilderState
             ! _delegateCollectionState.TryAddParameter( parameterType, parameterName ) )
             return Chain.Create( ParsedExpressionBuilderError.CreateDuplicatedDelegateParameterName( token ) );
 
-        _expectation = Expectation.InlineDelegateParameterSeparator | Expectation.InlineDelegateParametersResolution;
+        _expectation = Expectation.InlineParameterSeparator | Expectation.InlineParametersResolution;
         return Chain<ParsedExpressionBuilderError>.Empty;
+    }
+
+    private Chain<ParsedExpressionBuilderError> HandleMacroParameterName(IntermediateToken token)
+    {
+        AssumeTokenType( token, IntermediateTokenType.Argument );
+
+        var parameterName = token.Symbol;
+        if ( ! TokenValidation.IsValidLocalTermName( parameterName, Configuration.StringDelimiter ) )
+            return Chain.Create( ParsedExpressionBuilderError.CreateInvalidMacroParameterName( token ) );
+
+        if ( LocalTerms.ContainsArgument( parameterName ) ||
+            LocalTerms.ContainsVariable( parameterName ) ||
+            LocalTerms.ContainsMacro( parameterName ) ||
+            LocalTerms.IsTermStarted( parameterName ) )
+            return Chain.Create( ParsedExpressionBuilderError.CreateDuplicatedMacroParameterName( token ) );
+
+        _expectation = Expectation.InlineParameterSeparator | Expectation.InlineParametersResolution;
+        return LocalTerms.AddMacroParameter( token );
     }
 
     private Chain<ParsedExpressionBuilderError> HandleMemberName(IntermediateToken token)
@@ -406,10 +427,12 @@ internal class ExpressionBuilderState
 
         var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
         self.ParentState.LastHandledToken = token;
-        LocalTerms.StartMacro( token.Symbol );
+        var errors = LocalTerms.StartMacro( token );
 
-        _expectation = Expectation.Assignment;
-        return Chain<ParsedExpressionBuilderError>.Empty;
+        if ( errors.Count == 0 )
+            _expectation = Expectation.Assignment;
+
+        return errors;
     }
 
     private Chain<ParsedExpressionBuilderError> HandleConstructs(IntermediateToken token)
@@ -492,7 +515,7 @@ internal class ExpressionBuilderState
             return PushPrefixUnaryConstruct( token );
 
         return Expects( Expectation.MacroEnd )
-            ? LocalTerms.AddMacroToken( token )
+            ? HandleMacroToken( token )
             : Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedConstruct( token ) );
     }
 
@@ -506,7 +529,7 @@ internal class ExpressionBuilderState
         if ( ! Expects( Expectation.Operand ) )
         {
             if ( Expects( Expectation.MacroEnd ) )
-                return LocalTerms.AddMacroToken( token );
+                return HandleMacroToken( token );
 
             errors = errors.Extend( ParsedExpressionBuilderError.CreateUnexpectedFunctionCall( token ) );
         }
@@ -530,7 +553,7 @@ internal class ExpressionBuilderState
         if ( ! Expects( Expectation.Operand ) )
         {
             if ( Expects( Expectation.MacroEnd ) )
-                return LocalTerms.AddMacroToken( token );
+                return HandleMacroToken( token );
 
             errors = errors.Extend( ParsedExpressionBuilderError.CreateUnexpectedOperand( token ) );
         }
@@ -556,7 +579,7 @@ internal class ExpressionBuilderState
         if ( ! Expects( Expectation.Operand ) )
         {
             if ( Expects( Expectation.MacroEnd ) )
-                return LocalTerms.AddMacroToken( token );
+                return HandleMacroToken( token );
 
             errors = errors.Extend( ParsedExpressionBuilderError.CreateUnexpectedTypeDeclaration( token ) );
         }
@@ -593,7 +616,7 @@ internal class ExpressionBuilderState
         if ( ! Expects( Expectation.OpenedParenthesis ) )
         {
             if ( Expects( Expectation.MacroEnd ) )
-                return LocalTerms.AddMacroToken( token );
+                return HandleMacroToken( token );
 
             if ( ! IsLastHandledTokenInvocable( out var invocableToken ) )
                 return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedOpenedParenthesis( token ) );
@@ -605,9 +628,20 @@ internal class ExpressionBuilderState
         }
 
         if ( ! Expects( Expectation.FunctionParametersStart ) )
+        {
             _tokenStack.Push( (token, Expectation.OpenedParenthesis) );
+            _expectation = Expectation.Operand | Expectation.OpenedParenthesis | Expectation.PrefixUnaryConstruct;
+            ++_parenthesesCount;
+            return Chain<ParsedExpressionBuilderError>.Empty;
+        }
 
-        _expectation = Expectation.Operand | Expectation.OpenedParenthesis | Expectation.PrefixUnaryConstruct;
+        Assume.Equals( IsRoot, false, nameof( IsRoot ) );
+
+        var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
+        _expectation = self.ParentState.Expects( Expectation.MacroParametersResolution )
+            ? Expectation.MacroEnd
+            : Expectation.Operand | Expectation.OpenedParenthesis | Expectation.PrefixUnaryConstruct;
+
         ++_parenthesesCount;
         return Chain<ParsedExpressionBuilderError>.Empty;
     }
@@ -623,7 +657,7 @@ internal class ExpressionBuilderState
         if ( ! Expects( Expectation.ClosedParenthesis ) )
         {
             if ( Expects( Expectation.MacroEnd ) )
-                return LocalTerms.AddMacroToken( token );
+                return HandleMacroToken( token );
 
             return ! IsRoot && ! Expects( Expectation.FunctionParametersStart )
                 ? HandleCallParametersOrInlineDelegateBodyEnd( token )
@@ -673,6 +707,9 @@ internal class ExpressionBuilderState
             return Chain<ParsedExpressionBuilderError>.Empty;
         }
 
+        if ( Expects( Expectation.MacroParametersStart ) )
+            return HandleMacroParametersStart();
+
         if ( Expects( Expectation.PostfixUnaryConstruct ) )
         {
             _expectation = GetExpectationWithPreservedPrefixUnaryConstructResolution( Expectation.IndexerResolution );
@@ -688,8 +725,15 @@ internal class ExpressionBuilderState
         }
 
         return Expects( Expectation.MacroEnd )
-            ? LocalTerms.AddMacroToken( token )
+            ? HandleMacroToken( token )
             : Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedOpenedSquareBracket( token ) );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private Chain<ParsedExpressionBuilderError> HandleMacroParametersStart()
+    {
+        _expectation = Expectation.ParameterName;
+        return Chain<ParsedExpressionBuilderError>.Empty;
     }
 
     private Chain<ParsedExpressionBuilderError> HandleClosedSquareBracket(IntermediateToken token)
@@ -699,10 +743,13 @@ internal class ExpressionBuilderState
         if ( ! IsRoot )
         {
             if ( Expects( Expectation.MacroEnd ) )
-                return LocalTerms.AddMacroToken( token );
+                return HandleMacroToken( token );
 
             if ( IsHandlingInlineDelegateParameters() )
                 return HandleInlineDelegateParametersEnd( token );
+
+            if ( Expects( Expectation.InlineParametersResolution ) )
+                return HandleMacroParametersEnd();
 
             if ( ! Expects( Expectation.ArrayElementsStart ) )
                 return HandleArrayElementsOrIndexerParametersOrInlineDelegateBodyEnd( token );
@@ -711,12 +758,19 @@ internal class ExpressionBuilderState
         return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedClosedSquareBracket( token ) );
     }
 
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private Chain<ParsedExpressionBuilderError> HandleMacroParametersEnd()
+    {
+        _expectation = Expectation.MacroName;
+        return Chain<ParsedExpressionBuilderError>.Empty;
+    }
+
     private Chain<ParsedExpressionBuilderError> HandleInlineDelegateParametersEnd(IntermediateToken token)
     {
         Assume.IsNotNull( _delegateCollectionState, nameof( _delegateCollectionState ) );
         AssumeTokenType( token, IntermediateTokenType.ClosedSquareBracket );
 
-        if ( ! Expects( Expectation.InlineDelegateParametersResolution ) )
+        if ( ! Expects( Expectation.InlineParametersResolution ) )
             return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedClosedSquareBracket( token ) );
 
         _delegateCollectionState.LockParameters();
@@ -934,6 +988,44 @@ internal class ExpressionBuilderState
         return errors;
     }
 
+    private Chain<ParsedExpressionBuilderError> HandleMacroParametersResolution(IntermediateToken token, int parameterCount)
+    {
+        AssumeStateExpectation( Expectation.MacroParametersResolution );
+        Assume.IsNotNull( LastHandledToken, nameof( LastHandledToken ) );
+        Assume.ContainsAtLeast( _operandStack, parameterCount, nameof( _operandStack ) );
+        Assume.IsNotEmpty( _tokenStack, nameof( _tokenStack ) );
+
+        var macroName = LastHandledToken.Value;
+        LastHandledToken = token;
+        _rootState.ActiveState = this;
+
+        LocalTerms.TryGetMacro( macroName.Symbol, out var declaration );
+        Assume.IsNotNull( declaration, nameof( declaration ) );
+
+        if ( declaration.ParameterCount != parameterCount )
+        {
+            var error = ParsedExpressionBuilderError.CreateInvalidMacroParameterCount(
+                macroName,
+                parameterCount,
+                declaration.ParameterCount );
+
+            return Chain.Create( error );
+        }
+
+        var parameters = new IReadOnlyList<IntermediateToken>[parameterCount];
+        for ( var i = parameters.Length - 1; i >= 0; --i )
+        {
+            var expression = _operandStack.Pop();
+            Assume.Equals( expression.NodeType, ExpressionType.Constant, nameof( expression.NodeType ) );
+            var constant = ReinterpretCast.To<ConstantExpression>( expression );
+            Assume.IsNotNull( constant.Value, nameof( constant.Value ) );
+            parameters[i] = DynamicCast.To<IntermediateToken[]>( constant.Value );
+        }
+
+        _expectation = _tokenStack.Pop().Expectation;
+        return declaration.Process( _rootState, macroName, parameters );
+    }
+
     private Chain<ParsedExpressionBuilderError> HandleArrayElementsOrIndexerParametersOrInlineDelegateBodyEnd(IntermediateToken token)
     {
         Assume.Equals( IsRoot, false, nameof( IsRoot ) );
@@ -1031,7 +1123,7 @@ internal class ExpressionBuilderState
         if ( ! Expects( Expectation.MemberAccess ) )
         {
             if ( Expects( Expectation.MacroEnd ) )
-                return LocalTerms.AddMacroToken( token );
+                return HandleMacroToken( token );
 
             return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedMemberAccess( token ) );
         }
@@ -1048,10 +1140,13 @@ internal class ExpressionBuilderState
             return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedElementSeparator( token ) );
 
         if ( Expects( Expectation.MacroEnd ) )
-            return LocalTerms.AddMacroToken( token );
+            return HandleMacroToken( token );
 
         if ( IsHandlingInlineDelegateParameters() )
             return HandleInlineDelegateParameterSeparator( token );
+
+        if ( Expects( Expectation.InlineParameterSeparator ) )
+            return HandleMacroParameterSeparator();
 
         var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
         if ( self.ParentState.Expects( Expectation.InlineDelegateResolution ) )
@@ -1072,12 +1167,19 @@ internal class ExpressionBuilderState
         return Chain<ParsedExpressionBuilderError>.Empty;
     }
 
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private Chain<ParsedExpressionBuilderError> HandleMacroParameterSeparator()
+    {
+        _expectation = Expectation.ParameterName;
+        return Chain<ParsedExpressionBuilderError>.Empty;
+    }
+
     private Chain<ParsedExpressionBuilderError> HandleInlineDelegateParameterSeparator(IntermediateToken token)
     {
         AssumeTokenType( token, IntermediateTokenType.ElementSeparator );
         Assume.IsNotNull( _delegateCollectionState, nameof( _delegateCollectionState ) );
 
-        if ( ! Expects( Expectation.InlineDelegateParameterSeparator ) )
+        if ( ! Expects( Expectation.InlineParameterSeparator ) )
             return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedElementSeparator( token ) );
 
         _expectation = Expectation.ParameterType;
@@ -1121,7 +1223,7 @@ internal class ExpressionBuilderState
         if ( ! Expects( Expectation.LocalTermDeclaration ) )
         {
             if ( Expects( Expectation.MacroEnd ) )
-                return LocalTerms.AddMacroToken( token );
+                return HandleMacroToken( token );
 
             return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedLocalTermDeclaration( token ) );
         }
@@ -1138,7 +1240,7 @@ internal class ExpressionBuilderState
         if ( ! Expects( Expectation.LocalTermDeclaration ) )
         {
             if ( Expects( Expectation.MacroEnd ) )
-                return LocalTerms.AddMacroToken( token );
+                return HandleMacroToken( token );
 
             return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedLocalTermDeclaration( token ) );
         }
@@ -1171,8 +1273,92 @@ internal class ExpressionBuilderState
         }
 
         return Expects( Expectation.MacroEnd )
-            ? LocalTerms.AddMacroToken( token )
+            ? HandleMacroToken( token )
             : Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedAssignment( token ) );
+    }
+
+    private Chain<ParsedExpressionBuilderError> HandleMacroToken(IntermediateToken token)
+    {
+        Assume.Equals( IsRoot, false, nameof( IsRoot ) );
+        AssumeStateExpectation( Expectation.MacroEnd );
+
+        var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
+        if ( self.ParentState.Expects( Expectation.MacroResolution ) )
+            return LocalTerms.AddMacroToken( token );
+
+        self.ParentState.AssumeStateExpectation( Expectation.MacroParametersResolution );
+
+        var errors = token.Type switch
+        {
+            IntermediateTokenType.OpenedParenthesis => HandleMacroParametersOpenedParenthesis( token ),
+            IntermediateTokenType.ClosedParenthesis => HandleMacroParametersClosedParenthesis( self, token ),
+            IntermediateTokenType.ElementSeparator => HandleMacroParametersNextParameter( self, token ),
+            _ => PushMacroParametersToken( token )
+        };
+
+        return errors;
+    }
+
+    private Chain<ParsedExpressionBuilderError> HandleMacroParametersOpenedParenthesis(IntermediateToken token)
+    {
+        AssumeTokenType( token, IntermediateTokenType.OpenedParenthesis );
+        ++_parenthesesCount;
+        return PushMacroParametersToken( token );
+    }
+
+    private Chain<ParsedExpressionBuilderError> HandleMacroParametersClosedParenthesis(
+        ExpressionBuilderChildState self,
+        IntermediateToken token)
+    {
+        AssumeStateExpectation( Expectation.MacroEnd );
+        AssumeTokenType( token, IntermediateTokenType.ClosedParenthesis );
+
+        if ( _parenthesesCount > 0 )
+        {
+            --_parenthesesCount;
+            return PushMacroParametersToken( token );
+        }
+
+        Assume.IsNotNull( LastHandledToken, nameof( LastHandledToken ) );
+
+        var containsOneMoreElement = _tokenStack.Count > 0 ||
+            LastHandledToken.Value.Type == IntermediateTokenType.ElementSeparator;
+
+        if ( containsOneMoreElement )
+        {
+            var errors = HandleMacroParametersNextParameter( self, token );
+            if ( errors.Count > 0 )
+                return errors;
+        }
+
+        return self.ParentState.HandleMacroParametersResolution( token, self.ElementCount );
+    }
+
+    private Chain<ParsedExpressionBuilderError> HandleMacroParametersNextParameter(
+        ExpressionBuilderChildState self,
+        IntermediateToken token)
+    {
+        AssumeStateExpectation( Expectation.MacroEnd );
+
+        if ( _tokenStack.Count == 0 )
+            return Chain.Create( ParsedExpressionBuilderError.CreateMacroParameterMustContainAtLeastOneToken( token ) );
+
+        _parenthesesCount = 0;
+        self.IncreaseElementCount();
+
+        var tokens = new IntermediateToken[_tokenStack.Count];
+        for ( var i = tokens.Length - 1; i >= 0; --i )
+            tokens[i] = _tokenStack.Pop().Token;
+
+        self.ParentState._operandStack.Push( Expression.Constant( tokens ) );
+        return Chain<ParsedExpressionBuilderError>.Empty;
+    }
+
+    private Chain<ParsedExpressionBuilderError> PushMacroParametersToken(IntermediateToken token)
+    {
+        AssumeStateExpectation( Expectation.MacroEnd );
+        _tokenStack.Push( (token, Expectation.MacroEnd) );
+        return Chain<ParsedExpressionBuilderError>.Empty;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -1707,16 +1893,12 @@ internal class ExpressionBuilderState
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Chain<ParsedExpressionBuilderError> ProcessMacro(IntermediateToken token, MacroDeclaration macro)
     {
-        foreach ( var macroToken in macro.Tokens )
-        {
-            var errors = _rootState.HandleToken( macroToken );
-            if ( errors.Count == 0 )
-                continue;
+        if ( macro.ParameterCount == 0 )
+            return macro.Process( _rootState, token, Array.Empty<IReadOnlyList<IntermediateToken>>() );
 
-            errors = Chain.Create( ParsedExpressionBuilderError.CreateMacroResolutionFailure( token, errors ) );
-            return errors;
-        }
-
+        _rootState.ActiveState = ExpressionBuilderChildState.CreateFunctionParameters( this );
+        _tokenStack.Push( (token, _expectation) );
+        _expectation = Expectation.MacroParametersResolution;
         return Chain<ParsedExpressionBuilderError>.Empty;
     }
 
@@ -1795,19 +1977,21 @@ internal class ExpressionBuilderState
         MacroName = 0x1000,
         LocalTermDeclaration = 0x2000,
         MacroEnd = 0x4000,
-        InlineDelegateParameterSeparator = 0x20000,
-        VariableResolution = 0x40000,
-        MacroResolution = 0x80000,
-        InlineDelegateParametersResolution = 0x100000,
-        InlineDelegateResolution = 0x200000,
-        InvocationResolution = 0x400000,
-        IndexerResolution = 0x800000,
-        ArrayResolution = 0x1000000,
-        FunctionResolution = 0x2000000,
-        MethodResolution = 0x4000000,
-        PrefixUnaryConstructResolution = 0x8000000,
-        AmbiguousPostfixConstructResolution = 0x10000000,
-        AmbiguousPrefixConstructResolution = 0x20000000,
+        InlineParameterSeparator = 0x8000,
+        VariableResolution = 0x10000,
+        MacroResolution = 0x20000,
+        MacroParametersResolution = 0x40000,
+        InlineParametersResolution = 0x80000,
+        InlineDelegateResolution = 0x100000,
+        InvocationResolution = 0x200000,
+        IndexerResolution = 0x400000,
+        ArrayResolution = 0x800000,
+        FunctionResolution = 0x1000000,
+        MethodResolution = 0x2000000,
+        PrefixUnaryConstructResolution = 0x4000000,
+        AmbiguousPostfixConstructResolution = 0x8000000,
+        AmbiguousPrefixConstructResolution = 0x10000000,
+        MacroParametersStart = 0x20000000,
         ArrayElementsStart = 0x40000000,
         FunctionParametersStart = 0x80000000
     }

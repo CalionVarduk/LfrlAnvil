@@ -5878,6 +5878,26 @@ a + b + c + d + e + f + g + h + i + j ) ( 'a' , 'b' , 'c' , 'd' , 'e' , 'f' , 'g
     [InlineData( "macro a let" )]
     [InlineData( "macro a macro" )]
     [InlineData( "macro a const" )]
+    [InlineData( "macro []" )]
+    [InlineData( "macro [,]" )]
+    [InlineData( "macro [ a , ]" )]
+    [InlineData( "macro [ a ] ;" )]
+    [InlineData( "macro [ a ] -" )]
+    [InlineData( "macro [ a ] +" )]
+    [InlineData( "macro [ a ] ^" )]
+    [InlineData( "macro [ a ] [string]" )]
+    [InlineData( "macro [ a ] ToString" )]
+    [InlineData( "macro [ a ] int" )]
+    [InlineData( "macro [ a ] (" )]
+    [InlineData( "macro [ a ] )" )]
+    [InlineData( "macro [ a ] [" )]
+    [InlineData( "macro [ a ] ]" )]
+    [InlineData( "macro [ a ] ." )]
+    [InlineData( "macro [ a ] ," )]
+    [InlineData( "macro [ a ] =" )]
+    [InlineData( "macro [ a ] let" )]
+    [InlineData( "macro [ a ] macro" )]
+    [InlineData( "macro [ a ] const" )]
     public void Create_ShouldThrowParsedExpressionCreationException_WhenMacroDeclarationIsNotFollowedByItsNameAndAssignment(string input)
     {
         var builder = new ParsedExpressionFactoryBuilder()
@@ -6322,6 +6342,264 @@ a + b + c + d + e + f + g + h + i + j ) ( 'a' , 'b' , 'c' , 'd' , 'e' , 'f' , 'g
     public void Create_ShouldThrowParsedExpressionCreationException_WhenMacroResolutionCausesAnError()
     {
         var input = "macro m = + b ; a + m ;";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.MacroResolutionFailure ) );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenExpressionContainsSingleParameterizedMacro()
+    {
+        var input = "macro [ a , b ] m = a ( b + c ) ; m( 'foo' + , 'bar' ) ;";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( "qux" );
+
+        result.Should().Be( "( foo|BiOp|( bar|BiOp|qux ) )" );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMacroParameterNameIsInvalid()
+    {
+        var input = "macro[ ? ] m = a + 'bar' ; m( 'foo' ) ;";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMacroParameterNameDuplicatesArgumentName()
+    {
+        var input = "let v = a + 'bar' ; macro[ a ] m = a + 'qux' ; m( 'foo' ) ;";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMacroParameterNameDuplicatesVariableName()
+    {
+        var input = "let v = a + 'bar' ; macro[ v ] m = v + 'qux' ; m( 'foo' ) ;";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMacroNameDuplicatesOneOfItsOwnParameterNames()
+    {
+        var input = "macro[ a ] a = a + 'bar' ; m( 'foo' ) ;";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenMacroParameterNameDuplicatesOtherMacroName()
+    {
+        var input = "macro n = a , b ; macro[ n ] m = a + b ; m( 'foo' , 'bar' ) ;";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+
+        result.Should().Be( "( foo|BiOp|bar )" );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMacroLastParameterResolutionIsEmpty()
+    {
+        var input = "macro[ a , b ] m = a + b ; m( 'foo' , ) ;";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMacroNonLastParameterResolutionIsEmpty()
+    {
+        var input = "macro[ a , b ] m = a + b ; m( , 'bar' ) ;";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.NestedExpressionFailure ) );
+    }
+
+    [Theory]
+    [InlineData( 0 )]
+    [InlineData( 1 )]
+    [InlineData( 3 )]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMacroParameterCountIsInvalid(int count)
+    {
+        var parameters = Enumerable.Range( 1, count ).Select( p => $"'{p}'" );
+        var input = $"macro[ a , b ] m = a + b ; m( {string.Join( " , ", parameters )} ) ;";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.InvalidMacroParameterCount ) );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenMacroParameterNameAndItsResolutionAreEquivalent()
+    {
+        var input = "macro[ a ] m = a + 'bar' ; m( a ) ;";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( "foo" );
+
+        result.Should().Be( "( foo|BiOp|bar )" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenMacroParameterResolutionContainsMethodCall()
+    {
+        var input = "macro[ a ] m = a + true ; m( x . Equals( 'foo' ) ) ;";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( "bar" );
+
+        result.Should().Be( "( False|BiOp|True )" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenMacroParameterResolutionsContainParentheses()
+    {
+        var input = "macro[ a , b ] m = a + b ; m( ( x ) , ( 'foo' + 'bar' ) ) ;";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( "qux" );
+
+        result.Should().Be( "( qux|BiOp|( foo|BiOp|bar ) )" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenParameterizedMacroIsResolvedAsItsOwnParameter()
+    {
+        var input = "macro[ a ] m = a + 'bar' ; m( m( m( 'foo' ) ) ) ;";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddBinaryOperator( "+", new MockBinaryOperator() )
+            .SetBinaryOperatorPrecedence( "+", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+
+        result.Should().Be( "( ( ( foo|BiOp|bar )|BiOp|bar )|BiOp|bar )" );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenMacroParametersContainSyntaxResemblingFunctionCallWithElementSeparators()
+    {
+        var input = "macro[ x , y , z ] m = x , y , z ; m( foo( a , b , c ) ) ;";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddFunction( "foo", new MockFunctionWithThreeParameters() );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<string, string>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( "foo", "bar", "qux" );
+
+        result.Should().Be( "Func(foo,bar,qux)" );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenMacroParameterResolutionCausesAnError()
+    {
+        var input = "macro[ x ] m = a x ; m( + + ) 'bar' ;";
         var builder = new ParsedExpressionFactoryBuilder()
             .AddBinaryOperator( "+", new MockBinaryOperator() )
             .SetBinaryOperatorPrecedence( "+", 1 );

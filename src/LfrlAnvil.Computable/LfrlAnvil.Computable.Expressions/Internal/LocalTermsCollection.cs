@@ -17,6 +17,7 @@ internal sealed class LocalTermsCollection
     private readonly List<VariableAssignment> _variableAssignments;
     private readonly Dictionary<StringSlice, MacroDeclaration> _macros;
     private StringSlice? _activeNewLocalTerm;
+    private Dictionary<StringSlice, int>? _macroParameters;
 
     internal LocalTermsCollection(
         ParameterExpression parameterExpression,
@@ -30,6 +31,7 @@ internal sealed class LocalTermsCollection
         _variableAssignments = new List<VariableAssignment>();
         _macros = new Dictionary<StringSlice, MacroDeclaration>();
         _activeNewLocalTerm = null;
+        _macroParameters = null;
     }
 
     internal ParameterExpression ParameterExpression { get; }
@@ -138,12 +140,18 @@ internal sealed class LocalTermsCollection
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void StartMacro(StringSlice name)
+    internal Chain<ParsedExpressionBuilderError> StartMacro(IntermediateToken token)
     {
         Assume.IsNull( _activeNewLocalTerm, nameof( _activeNewLocalTerm ) );
-        _activeNewLocalTerm = name;
-        var declaration = new MacroDeclaration( name );
-        _macros.Add( name, declaration );
+
+        if ( _macroParameters is not null && _macroParameters.ContainsKey( token.Symbol ) )
+            return Chain.Create( ParsedExpressionBuilderError.CreateDuplicatedLocalTermName( token ) );
+
+        _activeNewLocalTerm = token.Symbol;
+        var declaration = new MacroDeclaration( _macroParameters );
+        _macros.Add( token.Symbol, declaration );
+        _macroParameters = null;
+        return Chain<ParsedExpressionBuilderError>.Empty;
     }
 
     internal Chain<ParsedExpressionBuilderError> FinalizeVariableAssignment(
@@ -167,9 +175,21 @@ internal sealed class LocalTermsCollection
     internal Chain<ParsedExpressionBuilderError> AddMacroToken(IntermediateToken token)
     {
         Assume.IsNotNull( _activeNewLocalTerm, nameof( _activeNewLocalTerm ) );
+
         var declaration = _macros[_activeNewLocalTerm.Value];
         declaration.AddToken( token );
         return Chain<ParsedExpressionBuilderError>.Empty;
+    }
+
+    internal Chain<ParsedExpressionBuilderError> AddMacroParameter(IntermediateToken token)
+    {
+        Assume.IsNull( _activeNewLocalTerm, nameof( _activeNewLocalTerm ) );
+
+        _macroParameters ??= new Dictionary<StringSlice, int>();
+        var index = _macroParameters.Count;
+        return _macroParameters.TryAdd( token.Symbol, index )
+            ? Chain<ParsedExpressionBuilderError>.Empty
+            : Chain.Create( ParsedExpressionBuilderError.CreateDuplicatedMacroParameterName( token ) );
     }
 
     internal Chain<ParsedExpressionBuilderError> FinalizeMacroDeclaration()
@@ -180,7 +200,7 @@ internal sealed class LocalTermsCollection
         _activeNewLocalTerm = null;
         var declaration = _macros[name];
 
-        return declaration.Tokens.Count == 0
+        return declaration.IsEmpty
             ? Chain.Create( ParsedExpressionBuilderError.CreateMacroMustContainAtLeastOneToken( name ) )
             : Chain<ParsedExpressionBuilderError>.Empty;
     }

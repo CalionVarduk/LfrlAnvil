@@ -49,6 +49,12 @@ public class ParsedExpressionBuilderError
     }
 
     [Pure]
+    internal static ParsedExpressionBuilderError CreateMacroParameterMustContainAtLeastOneToken(IntermediateToken token)
+    {
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.MacroParameterMustContainAtLeastOneToken, token.Symbol );
+    }
+
+    [Pure]
     internal static ParsedExpressionBuilderError CreateExpressionContainsInvalidOperandToOperatorRatio(IntermediateToken? token)
     {
         return new ParsedExpressionBuilderError(
@@ -161,6 +167,18 @@ public class ParsedExpressionBuilderError
     internal static ParsedExpressionBuilderError CreateDuplicatedDelegateParameterName(IntermediateToken token)
     {
         return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.DuplicatedDelegateParameterName, token.Symbol );
+    }
+
+    [Pure]
+    internal static ParsedExpressionBuilderError CreateInvalidMacroParameterName(IntermediateToken token)
+    {
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.InvalidMacroParameterName, token.Symbol );
+    }
+
+    [Pure]
+    internal static ParsedExpressionBuilderError CreateDuplicatedMacroParameterName(IntermediateToken token)
+    {
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.DuplicatedMacroParameterName, token.Symbol );
     }
 
     [Pure]
@@ -307,6 +325,16 @@ public class ParsedExpressionBuilderError
     }
 
     [Pure]
+    internal static ParsedExpressionBuilderError CreateInvalidMacroParameterCount(IntermediateToken token, int actual, int expected)
+    {
+        return new ParsedExpressionBuilderParameterCountError(
+            ParsedExpressionBuilderErrorType.InvalidMacroParameterCount,
+            token.Symbol,
+            actual,
+            expected );
+    }
+
+    [Pure]
     internal static ParsedExpressionBuilderError CreateExpectedPrefixUnaryConstruct(IntermediateToken token)
     {
         return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.ExpectedPrefixUnaryConstruct, token.Symbol );
@@ -391,6 +419,17 @@ public class ParsedExpressionBuilderError
     {
         return new ParsedExpressionBuilderAggregateError(
             ParsedExpressionBuilderErrorType.MacroResolutionFailure,
+            nestedErrors,
+            token.Symbol );
+    }
+
+    [Pure]
+    internal static ParsedExpressionBuilderError CreateMacroParameterResolutionFailure(
+        IntermediateToken token,
+        Chain<ParsedExpressionBuilderError> nestedErrors)
+    {
+        return new ParsedExpressionBuilderAggregateError(
+            ParsedExpressionBuilderErrorType.MacroParameterResolutionFailure,
             nestedErrors,
             token.Symbol );
     }

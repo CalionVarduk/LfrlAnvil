@@ -3,7 +3,7 @@
 [assembly: InternalsVisibleTo( "LfrlAnvil.Computable.Expressions.Tests" )]
 
 // TODO:
-// parameterized macros would be amazing! e.g. 'macro(a,b) my_macro = a + b;', usage: 'macro(x,y) + c' => 'x + y + c'
+// ctor calls: [TYPE_DECL]( [CALL_PARAMS...] )
 //
 // a variadic function 'lazy' could be added that creates a Lazy<T> instance
 //

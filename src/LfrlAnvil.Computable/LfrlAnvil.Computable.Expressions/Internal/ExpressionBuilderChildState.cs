@@ -61,7 +61,7 @@ internal sealed class ExpressionBuilderChildState : ExpressionBuilderState
     {
         return new ExpressionBuilderChildState(
             parentState,
-            Expectation.ParameterType | Expectation.InlineDelegateParametersResolution,
+            Expectation.ParameterType | Expectation.InlineParametersResolution,
             parenthesesCount: 0,
             isInlineDelegate: true );
     }
@@ -82,7 +82,7 @@ internal sealed class ExpressionBuilderChildState : ExpressionBuilderState
     {
         return new ExpressionBuilderChildState(
             parentState,
-            Expectation.MacroName,
+            Expectation.MacroName | Expectation.MacroParametersStart,
             parenthesesCount: 0 );
     }
 }
