@@ -87,6 +87,14 @@ internal static class ExpressionHelpers
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static ConstantExpression CreateConstantCtorCall(ConstructorInfo ctor, IReadOnlyList<Expression> parameters)
+    {
+        var @params = parameters.GetConstantValues();
+        return Expression.Constant( ctor.Invoke( @params ), ctor.DeclaringType! );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static ConstantExpression CreateConstantMethodCall(
         ConstantExpression operand,
         MethodInfo method,
@@ -198,6 +206,13 @@ internal static class ExpressionHelpers
     internal static Type GetConstantArrayElementTypeValue(this Expression expression)
     {
         return GetConstantRefValue<Type>( expression, Resources.ArrayElementTypeMustBeConstantNonNullType );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static Type GetConstantCtorTypeValue(this Expression expression)
+    {
+        return GetConstantRefValue<Type>( expression, Resources.CtorTypeMustBeConstantNonNullType );
     }
 
     [Pure]

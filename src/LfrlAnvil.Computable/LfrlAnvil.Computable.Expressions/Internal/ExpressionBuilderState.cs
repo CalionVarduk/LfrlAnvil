@@ -587,8 +587,10 @@ internal class ExpressionBuilderState
         if ( errors.Count > 0 )
             return errors;
 
-        _expectation = GetExpectationWithPreservedPrefixUnaryConstructResolution( Expectation.ArrayResolution );
-        _rootState.ActiveState = ExpressionBuilderChildState.CreateArrayElements( this );
+        _expectation = GetExpectationWithPreservedPrefixUnaryConstructResolution(
+            Expectation.ArrayResolution | Expectation.ConstructorResolution );
+
+        _rootState.ActiveState = ExpressionBuilderChildState.CreateArrayElementsOrConstructorParameters( this );
         return Chain<ParsedExpressionBuilderError>.Empty;
     }
 
@@ -638,6 +640,8 @@ internal class ExpressionBuilderState
         Assume.Equals( IsRoot, false, nameof( IsRoot ) );
 
         var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
+        self.ParentState._expectation &= ~Expectation.ArrayResolution;
+
         _expectation = self.ParentState.Expects( Expectation.MacroParametersResolution )
             ? Expectation.MacroEnd
             : Expectation.Operand | Expectation.OpenedParenthesis | Expectation.PrefixUnaryConstruct;
@@ -703,7 +707,11 @@ internal class ExpressionBuilderState
 
         if ( Expects( Expectation.ArrayElementsStart ) )
         {
+            Assume.Equals( IsRoot, false, nameof( IsRoot ) );
+            var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
+            self.ParentState._expectation &= ~Expectation.ConstructorResolution;
             _expectation = Expectation.Operand | Expectation.OpenedParenthesis | Expectation.PrefixUnaryConstruct;
+            _parenthesesCount = 0;
             return Chain<ParsedExpressionBuilderError>.Empty;
         }
 
@@ -815,6 +823,7 @@ internal class ExpressionBuilderState
         if ( ! self.ParentState.ExpectsAny(
                 Expectation.FunctionResolution |
                 Expectation.MethodResolution |
+                Expectation.ConstructorResolution |
                 Expectation.InvocationResolution |
                 Expectation.InlineDelegateResolution ) )
             return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedClosedParenthesis( token ) );
@@ -843,6 +852,9 @@ internal class ExpressionBuilderState
 
         if ( self.ParentState.Expects( Expectation.MethodResolution ) )
             return self.ParentState.HandleMethodResolution( token, self.ElementCount );
+
+        if ( self.ParentState.Expects( Expectation.ConstructorResolution ) )
+            return self.ParentState.HandleConstructorResolution( token, self.ElementCount );
 
         return self.ParentState.HandleInvocationResolution( token, self.ElementCount );
     }
@@ -893,6 +905,27 @@ internal class ExpressionBuilderState
 
         var methodCall = GetInternalVariadicFunction( ParsedExpressionConstructDefaults.MethodCallSymbol );
         return ProcessVariadicFunction( methodNameToken, methodCall, parameters );
+    }
+
+    private Chain<ParsedExpressionBuilderError> HandleConstructorResolution(IntermediateToken token, int parameterCount)
+    {
+        Assume.IsGreaterThanOrEqualTo( parameterCount, 0, nameof( parameterCount ) );
+        Assume.IsNotNull( LastHandledToken, nameof( LastHandledToken ) );
+        Assume.IsNotNull( LastHandledToken.Value.Constructs, nameof( LastHandledToken.Value.Constructs ) );
+        AssumeConstructsType( LastHandledToken.Value.Constructs, ParsedExpressionConstructType.TypeDeclaration );
+        AssumeStateExpectation( Expectation.ConstructorResolution );
+        AddAssumedExpectation( Expectation.Operand );
+
+        var typeDeclarationToken = LastHandledToken.Value;
+        LastHandledToken = token;
+        _rootState.ActiveState = this;
+
+        var parameters = new Expression[parameterCount + 1];
+        parameters[0] = Expression.Constant( typeDeclarationToken.Constructs.TypeDeclaration );
+        _operandStack.PopInto( parameterCount, parameters, startIndex: 1 );
+
+        var ctorCall = GetInternalVariadicFunction( ParsedExpressionConstructDefaults.CtorCallSymbol );
+        return ProcessVariadicFunction( typeDeclarationToken, ctorCall, parameters );
     }
 
     private Chain<ParsedExpressionBuilderError> HandleInvocationResolution(IntermediateToken token, int parameterCount)
@@ -992,6 +1025,7 @@ internal class ExpressionBuilderState
     {
         AssumeStateExpectation( Expectation.MacroParametersResolution );
         Assume.IsNotNull( LastHandledToken, nameof( LastHandledToken ) );
+        Assume.IsGreaterThanOrEqualTo( parameterCount, 0, nameof( parameterCount ) );
         Assume.ContainsAtLeast( _operandStack, parameterCount, nameof( _operandStack ) );
         Assume.IsNotEmpty( _tokenStack, nameof( _tokenStack ) );
 
@@ -1959,7 +1993,7 @@ internal class ExpressionBuilderState
     }
 
     [Flags]
-    protected enum Expectation : uint
+    protected enum Expectation : ulong
     {
         None = 0x0,
         Operand = 0x1,
@@ -1978,21 +2012,22 @@ internal class ExpressionBuilderState
         LocalTermDeclaration = 0x2000,
         MacroEnd = 0x4000,
         InlineParameterSeparator = 0x8000,
-        VariableResolution = 0x10000,
-        MacroResolution = 0x20000,
-        MacroParametersResolution = 0x40000,
-        InlineParametersResolution = 0x80000,
-        InlineDelegateResolution = 0x100000,
-        InvocationResolution = 0x200000,
-        IndexerResolution = 0x400000,
-        ArrayResolution = 0x800000,
-        FunctionResolution = 0x1000000,
-        MethodResolution = 0x2000000,
-        PrefixUnaryConstructResolution = 0x4000000,
-        AmbiguousPostfixConstructResolution = 0x8000000,
-        AmbiguousPrefixConstructResolution = 0x10000000,
-        MacroParametersStart = 0x20000000,
-        ArrayElementsStart = 0x40000000,
-        FunctionParametersStart = 0x80000000
+        VariableResolution = 0x800000000000,
+        MacroResolution = 0x1000000000000,
+        MacroParametersResolution = 0x2000000000000,
+        InlineParametersResolution = 0x4000000000000,
+        InlineDelegateResolution = 0x8000000000000,
+        InvocationResolution = 0x10000000000000,
+        IndexerResolution = 0x20000000000000,
+        ArrayResolution = 0x40000000000000,
+        FunctionResolution = 0x80000000000000,
+        MethodResolution = 0x100000000000000,
+        ConstructorResolution = 0x200000000000000,
+        PrefixUnaryConstructResolution = 0x400000000000000,
+        AmbiguousPostfixConstructResolution = 0x800000000000000,
+        AmbiguousPrefixConstructResolution = 0x1000000000000000,
+        MacroParametersStart = 0x2000000000000000,
+        ArrayElementsStart = 0x4000000000000000,
+        FunctionParametersStart = 0x8000000000000000
     }
 }

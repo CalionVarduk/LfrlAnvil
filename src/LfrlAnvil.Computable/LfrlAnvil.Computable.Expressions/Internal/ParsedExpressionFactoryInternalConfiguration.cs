@@ -64,7 +64,7 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
     [Pure]
     public MemberInfo[] FindTypeFieldsAndProperties(Type type, string name)
     {
-        var result = MemberInfoLocator.FindFieldsAndProperties( type, MemberBindingFlags, GetAccessibleMemberFilter( name ) );
+        var result = MemberInfoLocator.FindFieldsAndProperties( type, MemberBindingFlags, GetAccessibleMemberFilter( name.AsSlice() ) );
         return result;
     }
 
@@ -76,21 +76,21 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
     }
 
     [Pure]
-    public MethodInfo[] FindTypeMethods(Type type, string name, Type[] parameterTypes)
+    public ConstructorInfo? TryFindTypeCtor(Type type, Type[] parameterTypes)
     {
-        var result = MemberInfoLocator.FindMethods( type, parameterTypes, MemberBindingFlags, GetAccessibleMemberFilter( name ) );
+        var result = MemberInfoLocator.TryFindCtor( type, parameterTypes, MemberBindingFlags );
         return result;
     }
 
     [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public MemberFilter GetAccessibleMemberFilter(string name)
+    public MethodInfo[] FindTypeMethods(Type type, string name, Type[] parameterTypes)
     {
-        return GetAccessibleMemberFilter( name.AsSlice() );
+        var result = MemberInfoLocator.FindMethods( type, parameterTypes, MemberBindingFlags, GetAccessibleMemberFilter( name.AsSlice() ) );
+        return result;
     }
 
     [Pure]
-    internal MemberFilter GetAccessibleMemberFilter(StringSlice symbol)
+    public MemberFilter GetAccessibleMemberFilter(StringSlice symbol)
     {
         return IgnoreMemberNameCase
             ? (m, _) => symbol.Equals( m.Name.AsSlice(), StringComparison.OrdinalIgnoreCase ) && IsMemberAccessible( m )

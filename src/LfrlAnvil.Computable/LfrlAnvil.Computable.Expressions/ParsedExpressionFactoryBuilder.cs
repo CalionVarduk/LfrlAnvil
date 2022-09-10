@@ -19,6 +19,7 @@ public sealed class ParsedExpressionFactoryBuilder
     private Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? _memberAccessProvider;
     private Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? _indexerCallProvider;
     private Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? _methodCallProvider;
+    private Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? _ctorCallProvider;
     private Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? _makeArrayProvider;
     private Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? _invokeProvider;
 
@@ -31,6 +32,7 @@ public sealed class ParsedExpressionFactoryBuilder
         _memberAccessProvider = null;
         _indexerCallProvider = null;
         _methodCallProvider = null;
+        _ctorCallProvider = null;
         _makeArrayProvider = null;
         _invokeProvider = null;
     }
@@ -96,6 +98,19 @@ public sealed class ParsedExpressionFactoryBuilder
         Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction> methodCallProvider)
     {
         _methodCallProvider = methodCallProvider;
+        return this;
+    }
+
+    public ParsedExpressionFactoryBuilder SetDefaultCtorCallProvider()
+    {
+        _ctorCallProvider = null;
+        return this;
+    }
+
+    public ParsedExpressionFactoryBuilder SetCtorCallProvider(
+        Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction> ctorCallProvider)
+    {
+        _ctorCallProvider = ctorCallProvider;
         return this;
     }
 
@@ -298,6 +313,12 @@ public sealed class ParsedExpressionFactoryBuilder
     }
 
     [Pure]
+    public Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? GetCtorCallProvider()
+    {
+        return _ctorCallProvider;
+    }
+
+    [Pure]
     public Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? GetMakeArrayProvider()
     {
         return _makeArrayProvider;
@@ -403,6 +424,10 @@ public sealed class ParsedExpressionFactoryBuilder
             ? new ParsedExpressionMethodCall( configuration )
             : _methodCallProvider( configuration );
 
+        var ctorCall = _ctorCallProvider is null
+            ? new ParsedExpressionConstructorCall( configuration )
+            : _ctorCallProvider( configuration );
+
         var makeArray = _makeArrayProvider is null
             ? new ParsedExpressionMakeArray()
             : _makeArrayProvider( configuration );
@@ -416,6 +441,7 @@ public sealed class ParsedExpressionFactoryBuilder
             (new StringSlice( ParsedExpressionConstructDefaults.MemberAccessSymbol ), type, memberAccess),
             (new StringSlice( ParsedExpressionConstructDefaults.IndexerCallSymbol ), type, indexerCall),
             (new StringSlice( ParsedExpressionConstructDefaults.MethodCallSymbol ), type, methodCall),
+            (new StringSlice( ParsedExpressionConstructDefaults.CtorCallSymbol ), type, ctorCall),
             (new StringSlice( ParsedExpressionConstructDefaults.MakeArraySymbol ), type, makeArray),
             (new StringSlice( ParsedExpressionConstructDefaults.InvokeSymbol ), type, invoke)
         };

@@ -62,9 +62,9 @@ public static class ParsedExpressionConstructDefaults
     public const string MemberAccessSymbol = "MEMBER_ACCESS";
     public const string IndexerCallSymbol = "INDEXER_CALL";
     public const string MethodCallSymbol = "METHOD_CALL";
+    public const string CtorCallSymbol = "CTOR_CALL";
     public const string InvokeSymbol = "INVOKE";
     public const string MakeArraySymbol = "MAKE_ARRAY";
-    public const string MakeDelegateSymbol = "MAKE_DELEGATE";
 
     public static readonly ParsedExpressionTypeDefinitionSymbols BooleanTypeSymbols = new ParsedExpressionTypeDefinitionSymbols()
         .SetName( "boolean" );

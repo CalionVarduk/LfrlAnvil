@@ -5,6 +5,7 @@ using FluentAssertions.Execution;
 using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Computable.Expressions.Constructs.Boolean;
 using LfrlAnvil.Computable.Expressions.Constructs.Int32;
+using LfrlAnvil.Computable.Expressions.Constructs.Int64;
 using LfrlAnvil.Computable.Expressions.Constructs.String;
 using LfrlAnvil.Computable.Expressions.Constructs.Variadic;
 using LfrlAnvil.Computable.Expressions.Errors;
@@ -2110,11 +2111,9 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     [InlineData( "int [string]" )]
     [InlineData( "int ToString" )]
     [InlineData( "int ." )]
-    [InlineData( "int (" )]
     [InlineData( "int )" )]
-    public void
-        Create_ShouldThrowParsedExpressionCreationException_WhenTypeDeclarationIsNotFollowedByOpenedSquareBracketDuringInlineArrayParsing(
-            string input)
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenTypeDeclarationIsNotFollowedByOpenedSquareBracketOrParenthesis(
+        string input)
     {
         var builder = new ParsedExpressionFactoryBuilder()
             .AddFunction( "foo", new MockParameterlessFunction() )
@@ -3870,6 +3869,156 @@ a + b + c + d + e + f + g + h + i + j ) ( 'a' , 'b' , 'c' , 'd' , 'e' , 'f' , 'g
     }
 
     [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_ForParameterlessCtorCall()
+    {
+        var input = "list()";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<List<int>>( "list" );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, List<int>>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenCtorExistsButWithDifferentAmountOfParameters()
+    {
+        var input = "test( 'foo' )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<TestParameter>( "test" );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<int, TestParameter>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenCtorExistsButWithDifferentParameterTypes()
+    {
+        var input = "dt( true )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<DateTime>( "dt" );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<int, DateTime>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_ForCtorCallWithParameters()
+    {
+        var input = "dt( y , m , d )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<DateTime>( "dt" );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, DateTime>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke( 2022, 9, 10 );
+
+        result.Should().Be( new DateTime( 2022, 9, 10 ) );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_ForCtorCallWithParametersWhenAllParametersAreConstant()
+    {
+        var input = "dt( 2022 , 9 , 10 )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .AddTypeDeclaration<DateTime>( "dt" );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, DateTime>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+
+        result.Should().Be( new DateTime( 2022, 9, 10 ) );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenCtorParametersAreConstantWithEnabledConstantsFolding()
+    {
+        var input = "dt( 0 ).Ticks * a";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<DateTime>( "dt" )
+            .SetCtorCallProvider( c => new ParsedExpressionConstructorCall( c, foldConstantsWhenPossible: true ) )
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt64( p.Configuration ) )
+            .AddBinaryOperator( "*", new ParsedExpressionMultiplyInt64Operator() )
+            .SetBinaryOperatorPrecedence( "*", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<long, long>( input );
+        var @delegate = expression.Compile();
+
+        using ( new AssertionScope() )
+        {
+            expression.UnboundArguments.Should().BeEmpty();
+            var result = @delegate.Invoke();
+            result.Should().Be( 0 );
+        }
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenCtorParametersAreConstantWithDisabledConstantsFolding()
+    {
+        var input = "dt( 0 ).Ticks * a";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .AddTypeDeclaration<DateTime>( "dt" )
+            .SetCtorCallProvider( c => new ParsedExpressionConstructorCall( c, foldConstantsWhenPossible: false ) )
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt64( p.Configuration ) )
+            .AddBinaryOperator( "*", new ParsedExpressionMultiplyInt64Operator() )
+            .SetBinaryOperatorPrecedence( "*", 1 );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<long, long>( input );
+        var @delegate = expression.Compile();
+
+        using ( new AssertionScope() )
+        {
+            expression.UnboundArguments.Contains( "a" ).Should().BeTrue();
+            var result = @delegate.Invoke( 100 );
+            result.Should().Be( 0 );
+        }
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenCtorParametersAreConstantButItThrowsAnException()
+    {
+        var input = "dt( -1 , -1 , -1 )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .AddTypeDeclaration<DateTime>( "dt" )
+            .AddPrefixUnaryOperator( "-", new ParsedExpressionNegateInt32Operator() )
+            .SetPrefixUnaryConstructPrecedence( "-", 1 );
+
+        ;
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
+    }
+
+    [Fact]
     public void DelegateInvoke_ShouldReturnCorrectResult_WhenMemberAccessIsChained()
     {
         var value = new TestParameter(
@@ -5111,6 +5260,80 @@ a + b + c + d + e + f + g + h + i + j ) ( 'a' , 'b' , 'c' , 'd' , 'e' , 'f' , 'g
     {
         var input = "METHOD_CALL( 'foo' , null )";
         var builder = new ParsedExpressionFactoryBuilder().AddConstant( "null", new ParsedExpressionConstant<string?>( null ) );
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
+    }
+
+    [Fact]
+    public void DelegateInvoke_ShouldReturnCorrectResult_WhenCtorCallVariadicIsCalledDirectly()
+    {
+        var input = "CTOR_CALL( DATETIME , 2022 , 9 , 10 )";
+        var builder = new ParsedExpressionFactoryBuilder()
+            .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )
+            .AddConstant( "DATETIME", new ParsedExpressionConstant<Type>( typeof( DateTime ) ) );
+
+        var sut = builder.Build();
+
+        var expression = sut.Create<int, DateTime>( input );
+        var @delegate = expression.Compile();
+        var result = @delegate.Invoke();
+
+        result.Should().Be( new DateTime( 2022, 9, 10 ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenCtorCallVariadicReceivesZeroParameters()
+    {
+        var input = "CTOR_CALL()";
+        var builder = new ParsedExpressionFactoryBuilder();
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenCtorCallVariadicReceivesNonConstantFirstParameter()
+    {
+        var input = "CTOR_CALL( a )";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<Type, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenCtorCallVariadicReceivesFirstParameterNotOfTypeType()
+    {
+        var input = "CTOR_CALL( 1 )";
+        var builder = new ParsedExpressionFactoryBuilder();
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.Create<string, string>( input ) );
+
+        action.Should()
+            .ThrowExactly<ParsedExpressionCreationException>()
+            .AndMatch( e => MatchExpectations( e, input, ParsedExpressionBuilderErrorType.ConstructHasThrownException ) );
+    }
+
+    [Fact]
+    public void Create_ShouldThrowParsedExpressionCreationException_WhenCtorCallVariadicReceivesNullFirstParameterOfTypeType()
+    {
+        var input = "CTOR_CALL( null )";
+        var builder = new ParsedExpressionFactoryBuilder().AddConstant( "null", new ParsedExpressionConstant<Type?>( null ) );
         var sut = builder.Build();
 
         var action = Lambda.Of( () => sut.Create<string, string>( input ) );

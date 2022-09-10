@@ -37,12 +37,12 @@ internal sealed class ExpressionBuilderChildState : ExpressionBuilderState
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static ExpressionBuilderChildState CreateArrayElements(ExpressionBuilderState parentState)
+    internal static ExpressionBuilderChildState CreateArrayElementsOrConstructorParameters(ExpressionBuilderState parentState)
     {
         return new ExpressionBuilderChildState(
             parentState,
-            Expectation.ArrayElementsStart,
-            parenthesesCount: 0 );
+            Expectation.ArrayElementsStart | Expectation.OpenedParenthesis | Expectation.FunctionParametersStart,
+            parenthesesCount: -1 );
     }
 
     [Pure]

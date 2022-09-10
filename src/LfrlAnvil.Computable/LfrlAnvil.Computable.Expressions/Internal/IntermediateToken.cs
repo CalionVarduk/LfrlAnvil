@@ -3,17 +3,6 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
 
-// TODO: if StringSlice were to be extracted to Core, then this could possibly be made public
-// & a new factory method for input tokenization only could be implemented
-// also, a new factory method for parsing enumerable of tokens into expression
-// + functionality to join an enumerable of tokens together into one input string
-// this potentially would allow the user to arrange tokens themselves whichever way they want, using them like little building blocks
-// note: there should probably be made a simplified, public-safe struct for 'external' tokens
-// since this struct actually contains a construct token definition instance
-// be careful with this since this could open the flood gates of a multitude of functionalities, which could require a lot of refactoring
-// the simplified structure could simply hold a bitmask of construct types, giving a bit more info than just 'construct'
-// maybe some helper methods for checking if a token can be followed by some other token
-// or methods that give some context bitmasks, when a specific token combination could be considered correct (e.g. delegate invocation)
 internal readonly struct IntermediateToken
 {
     private IntermediateToken(IntermediateTokenType type, StringSlice symbol, ConstructTokenDefinition? constructs = null)

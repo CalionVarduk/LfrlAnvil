@@ -186,6 +186,37 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     }
 
     [Fact]
+    public void SetCtorCallProvider_ShouldUpdateDelegateToNewObject()
+    {
+        var sut = new ParsedExpressionFactoryBuilder();
+        var @delegate = Lambda.Of( (ParsedExpressionFactoryInternalConfiguration c) => new ParsedExpressionMemberAccess( c ) );
+
+        var result = sut.SetCtorCallProvider( @delegate );
+
+        using ( new AssertionScope() )
+        {
+            sut.GetCtorCallProvider().Should().BeSameAs( @delegate );
+            result.Should().BeSameAs( sut );
+        }
+    }
+
+    [Fact]
+    public void SetDefaultCtorCallProvider_ShouldUpdateDelegateToNull()
+    {
+        var sut = new ParsedExpressionFactoryBuilder();
+        var @delegate = Lambda.Of( (ParsedExpressionFactoryInternalConfiguration c) => new ParsedExpressionMemberAccess( c ) );
+        sut.SetCtorCallProvider( @delegate );
+
+        var result = sut.SetDefaultCtorCallProvider();
+
+        using ( new AssertionScope() )
+        {
+            sut.GetCtorCallProvider().Should().BeNull();
+            result.Should().BeSameAs( sut );
+        }
+    }
+
+    [Fact]
     public void SetMakeArrayProvider_ShouldUpdateDelegateToNewObject()
     {
         var sut = new ParsedExpressionFactoryBuilder();
@@ -704,6 +735,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             ParsedExpressionConstructDefaults.MemberAccessSymbol,
             ParsedExpressionConstructDefaults.IndexerCallSymbol,
             ParsedExpressionConstructDefaults.MethodCallSymbol,
+            ParsedExpressionConstructDefaults.CtorCallSymbol,
             ParsedExpressionConstructDefaults.MakeArraySymbol,
             ParsedExpressionConstructDefaults.InvokeSymbol
         };
@@ -1695,6 +1727,19 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
         var sut = new ParsedExpressionFactoryBuilder()
             .AddFunction(
                 ParsedExpressionConstructDefaults.MethodCallSymbol,
+                new ParsedExpressionFunction<int>( () => Fixture.Create<int>() ) );
+
+        var action = Lambda.Of( () => sut.Build() );
+
+        action.Should().ThrowExactly<ParsedExpressionFactoryBuilderException>();
+    }
+
+    [Fact]
+    public void Build_ShouldThrowMathExpressionFactoryBuilderException_WhenAnyConstructHasCtorCallSymbol()
+    {
+        var sut = new ParsedExpressionFactoryBuilder()
+            .AddFunction(
+                ParsedExpressionConstructDefaults.CtorCallSymbol,
                 new ParsedExpressionFunction<int>( () => Fixture.Create<int>() ) );
 
         var action = Lambda.Of( () => sut.Build() );

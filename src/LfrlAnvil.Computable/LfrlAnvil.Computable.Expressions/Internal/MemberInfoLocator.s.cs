@@ -151,6 +151,21 @@ internal static class MemberInfoLocator
     }
 
     [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static ConstructorInfo? TryFindCtor(Type type, Type[] parameterTypes, BindingFlags bindingFlags)
+    {
+        var constructors = type.GetConstructors( bindingFlags );
+        foreach ( var ctor in constructors )
+        {
+            var parameters = ctor.GetParameters();
+            if ( parameters.Length == parameterTypes.Length && AreParametersMatching( parameters, parameterTypes ) )
+                return ctor;
+        }
+
+        return null;
+    }
+
+    [Pure]
     internal static MethodInfo[] FindMethods(Type type, Type[] parameterTypes, BindingFlags bindingFlags, MemberFilter filter)
     {
         MethodInfo?[] methods = type.GetMethods( bindingFlags );
