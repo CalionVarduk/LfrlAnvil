@@ -129,9 +129,27 @@ public class ExpressionTokenizerTests : TestsBase
     [Theory]
     [InlineData( "let" )]
     [InlineData( "LET" )]
+    [InlineData( "Let" )]
     public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleVariableDeclaration(string input)
     {
         var expected = IntermediateToken.CreateVariableDeclaration( new StringSlice( input ) );
+        var configuration = new ParsedExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
+        var sut = new ExpressionTokenizer( input, configuration );
+
+        var result = new List<IntermediateToken>();
+        while ( sut.ReadNextToken( out var token ) )
+            result.Add( token );
+
+        result.Should().BeSequentiallyEqualTo( expected );
+    }
+
+    [Theory]
+    [InlineData( "macro" )]
+    [InlineData( "MACRO" )]
+    [InlineData( "Macro" )]
+    public void ReadNextToken_ShouldReturnCorrectResult_WhenInputConsistsOfSingleMacroDeclaration(string input)
+    {
+        var expected = IntermediateToken.CreateMacroDeclaration( new StringSlice( input ) );
         var configuration = new ParsedExpressionFactoryInternalConfiguration( GetConstructs(), GetDefaultConfiguration() );
         var sut = new ExpressionTokenizer( input, configuration );
 

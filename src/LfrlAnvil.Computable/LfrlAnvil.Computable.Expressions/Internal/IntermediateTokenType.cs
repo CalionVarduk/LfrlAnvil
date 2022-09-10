@@ -15,5 +15,6 @@ internal enum IntermediateTokenType : byte
     ElementSeparator = 10,
     MemberAccess = 11,
     Assignment = 12,
-    VariableDeclaration = 13
+    VariableDeclaration = 13,
+    MacroDeclaration = 14
 }

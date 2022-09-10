@@ -15,7 +15,8 @@ internal sealed class LocalTermsCollection
     private readonly IReadOnlyDictionary<StringSlice, ConstantExpression>? _boundArguments;
     private readonly Dictionary<StringSlice, VariableAssignment> _variables;
     private readonly List<VariableAssignment> _variableAssignments;
-    private StringSlice? _activeNewVariable;
+    private readonly Dictionary<StringSlice, MacroDeclaration> _macros;
+    private StringSlice? _activeNewLocalTerm;
 
     internal LocalTermsCollection(
         ParameterExpression parameterExpression,
@@ -27,7 +28,8 @@ internal sealed class LocalTermsCollection
         _argumentAccessExpressions = new List<Expression>();
         _variables = new Dictionary<StringSlice, VariableAssignment>();
         _variableAssignments = new List<VariableAssignment>();
-        _activeNewVariable = null;
+        _macros = new Dictionary<StringSlice, MacroDeclaration>();
+        _activeNewLocalTerm = null;
     }
 
     internal ParameterExpression ParameterExpression { get; }
@@ -76,14 +78,21 @@ internal sealed class LocalTermsCollection
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal bool ContainsVariable(StringSlice name)
     {
-        return IsActiveVariable( name ) || _variables.ContainsKey( name );
+        return _variables.ContainsKey( name );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool IsActiveVariable(StringSlice name)
+    internal bool ContainsMacro(StringSlice name)
     {
-        return _activeNewVariable == name;
+        return _macros.ContainsKey( name );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool IsTermStarted(StringSlice name)
+    {
+        return _activeNewLocalTerm == name;
     }
 
     [Pure]
@@ -97,6 +106,12 @@ internal sealed class LocalTermsCollection
     internal bool TryGetVariable(StringSlice name, [MaybeNullWhen( false )] out VariableAssignment result)
     {
         return _variables.TryGetValue( name, out result );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool TryGetMacro(StringSlice name, [MaybeNullWhen( false )] out MacroDeclaration result)
+    {
+        return _macros.TryGetValue( name, out result );
     }
 
     internal (Expression Result, int? Index) GetOrAddArgumentAccess(StringSlice name)
@@ -116,31 +131,61 @@ internal sealed class LocalTermsCollection
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void RegisterVariable(StringSlice name)
+    internal void StartVariable(StringSlice name)
     {
-        Assume.IsNull( _activeNewVariable, nameof( _activeNewVariable ) );
-        _activeNewVariable = name;
+        Assume.IsNull( _activeNewLocalTerm, nameof( _activeNewLocalTerm ) );
+        _activeNewLocalTerm = name;
     }
 
-    internal Chain<ParsedExpressionBuilderError> AddVariableAssignment(
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void StartMacro(StringSlice name)
+    {
+        Assume.IsNull( _activeNewLocalTerm, nameof( _activeNewLocalTerm ) );
+        _activeNewLocalTerm = name;
+        var declaration = new MacroDeclaration( name );
+        _macros.Add( name, declaration );
+    }
+
+    internal Chain<ParsedExpressionBuilderError> FinalizeVariableAssignment(
         Expression expression,
         IReadOnlyList<InlineDelegateCollectionState.Result> delegates)
     {
-        Assume.IsNotNull( _activeNewVariable, nameof( _activeNewVariable ) );
+        Assume.IsNotNull( _activeNewLocalTerm, nameof( _activeNewLocalTerm ) );
 
-        var name = _activeNewVariable.Value;
-        _activeNewVariable = null;
+        var name = _activeNewLocalTerm.Value;
+        _activeNewLocalTerm = null;
 
         var (delegateUsage, variableUsage) = ExpressionUsage.FindDelegateAndVariableUsage( expression, delegates, this );
         var usedDelegates = ExpressionUsage.GetUsedDelegates( delegates, delegateUsage );
         var usedVariables = ExpressionUsage.GetUsedVariables( this, variableUsage );
 
         return _variables.TryGetValue( name, out var assignment )
-            ? AddNextVariableAssignment( name, expression, usedVariables, usedDelegates, assignment )
-            : AddFirstVariableAssignment( name, expression, usedVariables, usedDelegates );
+            ? FinalizeNextVariableAssignment( name, expression, usedVariables, usedDelegates, assignment )
+            : FinalizeFirstVariableAssignment( name, expression, usedVariables, usedDelegates );
     }
 
-    private Chain<ParsedExpressionBuilderError> AddFirstVariableAssignment(
+    internal Chain<ParsedExpressionBuilderError> AddMacroToken(IntermediateToken token)
+    {
+        Assume.IsNotNull( _activeNewLocalTerm, nameof( _activeNewLocalTerm ) );
+        var declaration = _macros[_activeNewLocalTerm.Value];
+        declaration.AddToken( token );
+        return Chain<ParsedExpressionBuilderError>.Empty;
+    }
+
+    internal Chain<ParsedExpressionBuilderError> FinalizeMacroDeclaration()
+    {
+        Assume.IsNotNull( _activeNewLocalTerm, nameof( _activeNewLocalTerm ) );
+
+        var name = _activeNewLocalTerm.Value;
+        _activeNewLocalTerm = null;
+        var declaration = _macros[name];
+
+        return declaration.Tokens.Count == 0
+            ? Chain.Create( ParsedExpressionBuilderError.CreateMacroMustContainAtLeastOneToken( name ) )
+            : Chain<ParsedExpressionBuilderError>.Empty;
+    }
+
+    private Chain<ParsedExpressionBuilderError> FinalizeFirstVariableAssignment(
         StringSlice name,
         Expression expression,
         VariableAssignment[] usedVariables,
@@ -156,7 +201,7 @@ internal sealed class LocalTermsCollection
         return Chain<ParsedExpressionBuilderError>.Empty;
     }
 
-    private Chain<ParsedExpressionBuilderError> AddNextVariableAssignment(
+    private Chain<ParsedExpressionBuilderError> FinalizeNextVariableAssignment(
         StringSlice name,
         Expression expression,
         VariableAssignment[] usedVariables,

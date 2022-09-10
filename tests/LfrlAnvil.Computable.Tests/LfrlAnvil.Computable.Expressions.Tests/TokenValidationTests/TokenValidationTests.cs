@@ -12,9 +12,9 @@ public class TokenValidationTests : TestsBase
     [InlineData( "_0a" )]
     [InlineData( "foo" )]
     [InlineData( "foo_0123456789_" )]
-    public void IsValidArgumentName_ShouldReturnTrue_WhenTextIsValid(string text)
+    public void IsValidLocalTermName_ShouldReturnTrue_WhenTextIsValid(string text)
     {
-        var result = TokenValidation.IsValidArgumentName( new StringSlice( text ), stringDelimiter: '\'' );
+        var result = TokenValidation.IsValidLocalTermName( new StringSlice( text ), stringDelimiter: '\'' );
         result.Should().BeTrue();
     }
 
@@ -30,9 +30,9 @@ public class TokenValidationTests : TestsBase
     [InlineData( "'" )]
     [InlineData( "foo'" )]
     [InlineData( "foo " )]
-    public void IsValidArgumentName_ShouldReturnFalse_WhenTextIsInvalid(string text)
+    public void IsValidLocalTermName_ShouldReturnFalse_WhenTextIsInvalid(string text)
     {
-        var result = TokenValidation.IsValidArgumentName( new StringSlice( text ), stringDelimiter: '\'' );
+        var result = TokenValidation.IsValidLocalTermName( new StringSlice( text ), stringDelimiter: '\'' );
         result.Should().BeFalse();
     }
 
@@ -87,6 +87,7 @@ public class TokenValidationTests : TestsBase
     [InlineData( "True" )]
     [InlineData( "let" )]
     [InlineData( "LET" )]
+    [InlineData( "Let" )]
     public void IsValidConstructSymbol_ShouldReturnFalse_WhenTextIsInvalid(string text)
     {
         var result = TokenValidation.IsValidConstructSymbol( new StringSlice( text ), stringDelimiter: '\'' );

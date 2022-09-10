@@ -513,14 +513,27 @@ public class ExpressionTokenizerTestsData
                 }
             },
             {
-                "let LET lEt Let",
+                "let LET lEt Let Lat",
                 noTokens,
                 new[]
                 {
                     new Token( IntermediateTokenType.VariableDeclaration, "let" ),
                     new Token( IntermediateTokenType.VariableDeclaration, "LET" ),
                     new Token( IntermediateTokenType.Argument, "lEt" ),
-                    new Token( IntermediateTokenType.Argument, "Let" )
+                    new Token( IntermediateTokenType.VariableDeclaration, "Let" ),
+                    new Token( IntermediateTokenType.Argument, "Lat" ),
+                }
+            },
+            {
+                "macro MACRO mAcRo Macro Micro",
+                noTokens,
+                new[]
+                {
+                    new Token( IntermediateTokenType.MacroDeclaration, "macro" ),
+                    new Token( IntermediateTokenType.MacroDeclaration, "MACRO" ),
+                    new Token( IntermediateTokenType.Argument, "mAcRo" ),
+                    new Token( IntermediateTokenType.MacroDeclaration, "Macro" ),
+                    new Token( IntermediateTokenType.Argument, "Micro" ),
                 }
             },
             {
@@ -701,6 +714,7 @@ public class ExpressionTokenizerTestsData
                 IntermediateTokenType.BooleanConstant => IntermediateToken.CreateBooleanConstant( s ),
                 IntermediateTokenType.Argument => IntermediateToken.CreateArgument( s ),
                 IntermediateTokenType.VariableDeclaration => IntermediateToken.CreateVariableDeclaration( s ),
+                IntermediateTokenType.MacroDeclaration => IntermediateToken.CreateMacroDeclaration( s ),
                 IntermediateTokenType.Assignment => IntermediateToken.CreateAssignment( s ),
                 _ => IntermediateToken.CreateConstructs(
                     s,

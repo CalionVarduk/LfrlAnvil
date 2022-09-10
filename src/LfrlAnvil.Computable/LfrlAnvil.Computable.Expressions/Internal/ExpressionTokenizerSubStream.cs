@@ -123,9 +123,13 @@ internal struct ExpressionTokenizerSubStream
         if ( boolean is not null )
             return boolean.Value;
 
-        var variableDeclaration = ExpressionTokenReader.TryReadVariableDeclaration( slice );
-        if ( variableDeclaration is not null )
-            return variableDeclaration.Value;
+        var localTermDeclaration = ExpressionTokenReader.TryReadVariableDeclaration( slice );
+        if ( localTermDeclaration is not null )
+            return localTermDeclaration.Value;
+
+        localTermDeclaration = ExpressionTokenReader.TryReadMacroDeclaration( slice );
+        if ( localTermDeclaration is not null )
+            return localTermDeclaration.Value;
 
         if ( slice.Length != _length )
         {

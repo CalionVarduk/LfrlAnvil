@@ -132,6 +132,16 @@ internal static class ExpressionTokenReader
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static IntermediateToken? TryReadMacroDeclaration(StringSlice input)
+    {
+        if ( TokenConstants.IsMacroDeclaration( input ) )
+            return IntermediateToken.CreateMacroDeclaration( input );
+
+        return null;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken? TryReadConstructs(StringSlice input, ParsedExpressionFactoryInternalConfiguration configuration)
     {
         if ( ! configuration.Constructs.TryGetValue( input, out var constructs ) )

@@ -75,4 +75,14 @@ internal sealed class ExpressionBuilderChildState : ExpressionBuilderState
             Expectation.VariableName,
             parenthesesCount: 0 );
     }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static ExpressionBuilderChildState CreateMacro(ExpressionBuilderState parentState)
+    {
+        return new ExpressionBuilderChildState(
+            parentState,
+            Expectation.MacroName,
+            parenthesesCount: 0 );
+    }
 }

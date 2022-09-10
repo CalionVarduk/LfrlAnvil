@@ -104,7 +104,46 @@ internal static class TokenConstants
             return source[text.StartIndex + 1] == 'e' && source[text.StartIndex + 2] == 't';
 
         if ( source[text.StartIndex] == 'L' )
-            return source[text.StartIndex + 1] == 'E' && source[text.StartIndex + 2] == 'T';
+        {
+            if ( source[text.StartIndex + 1] == 'E' )
+                return source[text.StartIndex + 2] == 'T';
+
+            if ( source[text.StartIndex + 1] == 'e' )
+                return source[text.StartIndex + 2] == 't';
+        }
+
+        return false;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static bool IsMacroDeclaration(StringSlice text)
+    {
+        if ( text.Length != 5 )
+            return false;
+
+        var source = text.Source;
+
+        if ( source[text.StartIndex] == 'm' )
+        {
+            return source[text.StartIndex + 1] == 'a' &&
+                source[text.StartIndex + 2] == 'c' &&
+                source[text.StartIndex + 3] == 'r' &&
+                source[text.StartIndex + 4] == 'o';
+        }
+
+        if ( source[text.StartIndex] == 'M' )
+        {
+            if ( source[text.StartIndex + 1] == 'A' )
+                return source[text.StartIndex + 2] == 'C' &&
+                    source[text.StartIndex + 3] == 'R' &&
+                    source[text.StartIndex + 4] == 'O';
+
+            if ( source[text.StartIndex + 1] == 'a' )
+                return source[text.StartIndex + 2] == 'c' &&
+                    source[text.StartIndex + 3] == 'r' &&
+                    source[text.StartIndex + 4] == 'o';
+        }
 
         return false;
     }

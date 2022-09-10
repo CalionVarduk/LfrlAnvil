@@ -55,9 +55,9 @@ public static class ParsedExpressionNumberParser
             _styles = styles;
         }
 
-        public bool TryParse(ReadOnlySpan<char> text, [MaybeNullWhen( false )] out object result)
+        public bool TryParse(StringSlice text, [MaybeNullWhen( false )] out object result)
         {
-            if ( decimal.TryParse( text, _styles, _formatter, out var parsedResult ) )
+            if ( decimal.TryParse( text.AsSpan(), _styles, _formatter, out var parsedResult ) )
             {
                 result = parsedResult;
                 return true;
@@ -79,9 +79,9 @@ public static class ParsedExpressionNumberParser
             _styles = styles;
         }
 
-        public bool TryParse(ReadOnlySpan<char> text, [MaybeNullWhen( false )] out object result)
+        public bool TryParse(StringSlice text, [MaybeNullWhen( false )] out object result)
         {
-            if ( double.TryParse( text, _styles, _formatter, out var parsedResult ) )
+            if ( double.TryParse( text.AsSpan(), _styles, _formatter, out var parsedResult ) )
             {
                 result = parsedResult;
                 return true;
@@ -103,9 +103,9 @@ public static class ParsedExpressionNumberParser
             _styles = styles;
         }
 
-        public bool TryParse(ReadOnlySpan<char> text, [MaybeNullWhen( false )] out object result)
+        public bool TryParse(StringSlice text, [MaybeNullWhen( false )] out object result)
         {
-            if ( float.TryParse( text, _styles, _formatter, out var parsedResult ) )
+            if ( float.TryParse( text.AsSpan(), _styles, _formatter, out var parsedResult ) )
             {
                 result = parsedResult;
                 return true;
@@ -127,9 +127,9 @@ public static class ParsedExpressionNumberParser
             _styles = styles;
         }
 
-        public bool TryParse(ReadOnlySpan<char> text, [MaybeNullWhen( false )] out object result)
+        public bool TryParse(StringSlice text, [MaybeNullWhen( false )] out object result)
         {
-            if ( BigInteger.TryParse( text, _styles, _formatter, out var parsedResult ) )
+            if ( BigInteger.TryParse( text.AsSpan(), _styles, _formatter, out var parsedResult ) )
             {
                 result = parsedResult;
                 return true;
@@ -151,9 +151,9 @@ public static class ParsedExpressionNumberParser
             _styles = styles;
         }
 
-        public bool TryParse(ReadOnlySpan<char> text, [MaybeNullWhen( false )] out object result)
+        public bool TryParse(StringSlice text, [MaybeNullWhen( false )] out object result)
         {
-            if ( long.TryParse( text, _styles, _formatter, out var parsedResult ) )
+            if ( long.TryParse( text.AsSpan(), _styles, _formatter, out var parsedResult ) )
             {
                 result = parsedResult;
                 return true;
@@ -175,9 +175,9 @@ public static class ParsedExpressionNumberParser
             _styles = styles;
         }
 
-        public bool TryParse(ReadOnlySpan<char> text, [MaybeNullWhen( false )] out object result)
+        public bool TryParse(StringSlice text, [MaybeNullWhen( false )] out object result)
         {
-            if ( int.TryParse( text, _styles, _formatter, out var parsedResult ) )
+            if ( int.TryParse( text.AsSpan(), _styles, _formatter, out var parsedResult ) )
             {
                 result = parsedResult;
                 return true;

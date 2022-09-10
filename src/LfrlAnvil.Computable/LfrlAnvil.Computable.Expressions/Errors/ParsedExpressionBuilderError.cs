@@ -43,6 +43,12 @@ public class ParsedExpressionBuilderError
     }
 
     [Pure]
+    internal static ParsedExpressionBuilderError CreateMacroMustContainAtLeastOneToken(StringSlice macroName)
+    {
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.MacroMustContainAtLeastOneToken, macroName );
+    }
+
+    [Pure]
     internal static ParsedExpressionBuilderError CreateExpressionContainsInvalidOperandToOperatorRatio(IntermediateToken? token)
     {
         return new ParsedExpressionBuilderError(
@@ -74,9 +80,9 @@ public class ParsedExpressionBuilderError
     }
 
     [Pure]
-    internal static ParsedExpressionBuilderError CreateUnexpectedVariableDeclaration(IntermediateToken token)
+    internal static ParsedExpressionBuilderError CreateUnexpectedLocalTermDeclaration(IntermediateToken token)
     {
-        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.UnexpectedVariableDeclaration, token.Symbol );
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.UnexpectedLocalTermDeclaration, token.Symbol );
     }
 
     [Pure]
@@ -86,9 +92,9 @@ public class ParsedExpressionBuilderError
     }
 
     [Pure]
-    internal static ParsedExpressionBuilderError CreateUndeclaredVariableUsage(IntermediateToken token)
+    internal static ParsedExpressionBuilderError CreateUndeclaredLocalTermUsage(IntermediateToken token)
     {
-        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.UndeclaredVariableUsage, token.Symbol );
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.UndeclaredLocalTermUsage, token.Symbol );
     }
 
     [Pure]
@@ -134,15 +140,15 @@ public class ParsedExpressionBuilderError
     }
 
     [Pure]
-    internal static ParsedExpressionBuilderError CreateInvalidVariableName(IntermediateToken token)
+    internal static ParsedExpressionBuilderError CreateInvalidLocalTermName(IntermediateToken token)
     {
-        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.InvalidVariableName, token.Symbol );
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.InvalidLocalTermName, token.Symbol );
     }
 
     [Pure]
-    internal static ParsedExpressionBuilderError CreateDuplicatedVariableName(IntermediateToken token)
+    internal static ParsedExpressionBuilderError CreateDuplicatedLocalTermName(IntermediateToken token)
     {
-        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.DuplicatedVariableName, token.Symbol );
+        return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.DuplicatedLocalTermName, token.Symbol );
     }
 
     [Pure]
@@ -376,6 +382,17 @@ public class ParsedExpressionBuilderError
         };
 
         return Chain.Create( error );
+    }
+
+    [Pure]
+    internal static ParsedExpressionBuilderError CreateMacroResolutionFailure(
+        IntermediateToken token,
+        Chain<ParsedExpressionBuilderError> nestedErrors)
+    {
+        return new ParsedExpressionBuilderAggregateError(
+            ParsedExpressionBuilderErrorType.MacroResolutionFailure,
+            nestedErrors,
+            token.Symbol );
     }
 
     [Pure]

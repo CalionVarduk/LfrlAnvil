@@ -359,7 +359,7 @@ public partial class ParsedExpressionFactoryTests
 
     private sealed class FailingNumberParser : IParsedExpressionNumberParser
     {
-        public bool TryParse(ReadOnlySpan<char> text, [MaybeNullWhen( false )] out object result)
+        public bool TryParse(StringSlice text, [MaybeNullWhen( false )] out object result)
         {
             result = null;
             return false;

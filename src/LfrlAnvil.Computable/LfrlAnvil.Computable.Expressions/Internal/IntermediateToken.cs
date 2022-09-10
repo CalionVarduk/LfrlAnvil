@@ -150,6 +150,14 @@ internal readonly struct IntermediateToken
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static IntermediateToken CreateMacroDeclaration(StringSlice symbol)
+    {
+        Assume.True( TokenConstants.IsMacroDeclaration( symbol ), "Assumed symbol to be a macro declaration." );
+        return new IntermediateToken( IntermediateTokenType.MacroDeclaration, symbol );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateConstructs(StringSlice symbol, ConstructTokenDefinition constructs)
     {
         Assume.IsNotEmpty( symbol, nameof( symbol ) );
