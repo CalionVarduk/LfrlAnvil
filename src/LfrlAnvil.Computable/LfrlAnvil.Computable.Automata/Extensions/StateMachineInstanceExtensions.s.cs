@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Computable.Automata.Exceptions;
 
 namespace LfrlAnvil.Computable.Automata.Extensions;
 
@@ -52,6 +54,42 @@ public static class StateMachineInstanceExtensions
         where TInput : notnull
     {
         return instance.CurrentState.GetAvailableDestinations( instance.Machine.StateComparer );
+    }
+
+    [Pure]
+    public static IEnumerable<KeyValuePair<TInput, IStateMachineTransition<TState, TInput, TResult>>> FindTransitionsTo<
+        TState, TInput, TResult>(
+        this IStateMachineInstance<TState, TInput, TResult> instance,
+        TState destination)
+        where TState : notnull
+        where TInput : notnull
+    {
+        return instance.CurrentState.FindTransitionsTo( destination, instance.Machine.StateComparer );
+    }
+
+    public static bool TryGetTransition<TState, TInput, TResult>(
+        this IStateMachineInstance<TState, TInput, TResult> instance,
+        TInput input,
+        [MaybeNullWhen( false )] out IStateMachineTransition<TState, TInput, TResult> result)
+        where TState : notnull
+        where TInput : notnull
+    {
+        return instance.CurrentState.Transitions.TryGetValue( input, out result );
+    }
+
+    [Pure]
+    public static IStateMachineTransition<TState, TInput, TResult> GetTransition<TState, TInput, TResult>(
+        this IStateMachineInstance<TState, TInput, TResult> instance,
+        TInput input)
+        where TState : notnull
+        where TInput : notnull
+    {
+        if ( instance.TryGetTransition( input, out var result ) )
+            return result;
+
+        throw new StateMachineTransitionException(
+            Resources.TransitionDoesNotExist( instance.CurrentState.Value, input ),
+            nameof( input ) );
     }
 
     [Pure]

@@ -1,5 +1,8 @@
-﻿using FluentAssertions.Execution;
+﻿using System.Collections.Generic;
+using FluentAssertions.Execution;
+using LfrlAnvil.Computable.Automata.Exceptions;
 using LfrlAnvil.Computable.Automata.Extensions;
+using LfrlAnvil.Functional;
 
 namespace LfrlAnvil.Computable.Automata.Tests.ExtensionsTests.StateMachineInstanceTests;
 
@@ -176,6 +179,58 @@ public class StateMachineInstanceExtensionsTests : TestsBase
         var result = sut.GetAvailableDestinations();
 
         result.Should().BeEquivalentTo( sut.Machine.States[a], sut.Machine.States[b] );
+    }
+
+    [Fact]
+    public void FindTransitionsTo_ShouldReturnCorrectTransitionsFromCurrentStateToDestinationState()
+    {
+        var (a, b, c) = ("a", "b", "c");
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
+            .AddTransition( a, b, 0 )
+            .AddTransition( a, b, 1 )
+            .AddTransition( a, c, 2 )
+            .MarkAsInitial( a );
+
+        var machine = builder.Build();
+        var sut = machine.CreateInstance( a );
+
+        var result = sut.FindTransitionsTo( b );
+
+        result.Should()
+            .BeEquivalentTo(
+                KeyValuePair.Create( 0, sut.Machine.States[a].Transitions[0] ),
+                KeyValuePair.Create( 1, sut.Machine.States[a].Transitions[1] ) );
+    }
+
+    [Fact]
+    public void GetTransition_ShouldThrowStateMachineTransitionException_WhenTransitionInCurrentStateDoesNotExist()
+    {
+        var a = "a";
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
+            .MarkAsInitial( a );
+
+        var machine = builder.Build();
+        var sut = machine.CreateInstance( a );
+
+        var action = Lambda.Of( () => sut.GetTransition( 0 ) );
+
+        action.Should().ThrowExactly<StateMachineTransitionException>();
+    }
+
+    [Fact]
+    public void GetTransition_ShouldReturnCorrectResult_WhenTransitionInCurrentStateExists()
+    {
+        var a = "a";
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
+            .AddTransition( a, 0 )
+            .MarkAsInitial( a );
+
+        var machine = builder.Build();
+        var sut = machine.CreateInstance( a );
+
+        var result = sut.GetTransition( 0 );
+
+        result.Should().BeSameAs( sut.Machine.States[a].Transitions[0] );
     }
 
     [Fact]

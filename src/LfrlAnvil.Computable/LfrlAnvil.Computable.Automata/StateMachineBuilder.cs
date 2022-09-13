@@ -28,17 +28,17 @@ public sealed class StateMachineBuilder<TState, TInput, TResult>
     public IEqualityComparer<TState> StateComparer => _states.Comparer;
 
     [Pure]
-    public IEnumerable<StateMachineNodeInfo<TState>> GetStates()
+    public IEnumerable<KeyValuePair<TState, StateMachineNodeType>> GetStates()
     {
-        return _states.Select( kv => new StateMachineNodeInfo<TState>( kv.Key, kv.Value.Type ) );
+        return _states.Select( kv => KeyValuePair.Create( kv.Key, kv.Value.Type ) );
     }
 
     [Pure]
-    public IEnumerable<StateMachineTransitionInfo<TState, TInput>> GetTransitions(TState source)
+    public IEnumerable<KeyValuePair<TInput, TState>> GetTransitions(TState source)
     {
         return _states.TryGetValue( source, out var state )
-            ? state.Transitions.Select( kv => new StateMachineTransitionInfo<TState, TInput>( kv.Value.Destination, kv.Key ) )
-            : Enumerable.Empty<StateMachineTransitionInfo<TState, TInput>>();
+            ? state.Transitions.Select( kv => KeyValuePair.Create( kv.Key, kv.Value.Destination ) )
+            : Enumerable.Empty<KeyValuePair<TInput, TState>>();
     }
 
     public StateMachineBuilder<TState, TInput, TResult> AddTransition(

@@ -1,12 +1,15 @@
 ﻿using System.Collections.Generic;
+using FluentAssertions.Execution;
+using LfrlAnvil.Computable.Automata.Exceptions;
 using LfrlAnvil.Computable.Automata.Extensions;
+using LfrlAnvil.Functional;
 
 namespace LfrlAnvil.Computable.Automata.Tests.ExtensionsTests.StateMachineTests;
 
 public class StateMachineExtensionsTests : TestsBase
 {
     [Fact]
-    public void GetAcceptStates_ShouldReturnAllStatesMarkedAsAccept()
+    public void FindAcceptStates_ShouldReturnAllStatesMarkedAsAccept()
     {
         var (a, b, c, d) = ("a", "b", "c", "d");
         var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
@@ -18,13 +21,13 @@ public class StateMachineExtensionsTests : TestsBase
 
         var sut = builder.Build();
 
-        var result = sut.GetAcceptStates();
+        var result = sut.FindAcceptStates();
 
         result.Should().BeEquivalentTo( sut.States[b], sut.States[d] );
     }
 
     [Fact]
-    public void GetDefaultStates_ShouldReturnAllStatesMarkedAsDefault()
+    public void FindDefaultStates_ShouldReturnAllStatesMarkedAsDefault()
     {
         var (a, b, c, d) = ("a", "b", "c", "d");
         var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
@@ -36,7 +39,7 @@ public class StateMachineExtensionsTests : TestsBase
 
         var sut = builder.Build();
 
-        var result = sut.GetDefaultStates();
+        var result = sut.FindDefaultStates();
 
         result.Should().BeEquivalentTo( sut.States[a], sut.States[d] );
     }
@@ -145,11 +148,11 @@ public class StateMachineExtensionsTests : TestsBase
 
         result.Should()
             .BeEquivalentTo(
-                KeyValuePair.Create( sut.States[a], sut.States[a].Transitions[_0] ),
-                KeyValuePair.Create( sut.States[a], sut.States[a].Transitions[_1] ),
-                KeyValuePair.Create( sut.States[b], sut.States[b].Transitions[_0] ),
-                KeyValuePair.Create( sut.States[c], sut.States[c].Transitions[_0] ),
-                KeyValuePair.Create( sut.States[c], sut.States[c].Transitions[_1] ) );
+                KeyValuePair.Create( sut.States[a], KeyValuePair.Create( _0, sut.States[a].Transitions[_0] ) ),
+                KeyValuePair.Create( sut.States[a], KeyValuePair.Create( _1, sut.States[a].Transitions[_1] ) ),
+                KeyValuePair.Create( sut.States[b], KeyValuePair.Create( _0, sut.States[b].Transitions[_0] ) ),
+                KeyValuePair.Create( sut.States[c], KeyValuePair.Create( _0, sut.States[c].Transitions[_0] ) ),
+                KeyValuePair.Create( sut.States[c], KeyValuePair.Create( _1, sut.States[c].Transitions[_1] ) ) );
     }
 
     [Fact]
@@ -206,5 +209,137 @@ public class StateMachineExtensionsTests : TestsBase
         var result = sut.GetAvailableDestinations( b );
 
         result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void FindTransitionsTo_ShouldReturnCorrectTransitionsFromSourceToDestinationState()
+    {
+        var (a, b, c) = ("a", "b", "c");
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
+            .AddTransition( a, b, 0 )
+            .AddTransition( a, b, 1 )
+            .AddTransition( a, c, 2 )
+            .MarkAsInitial( a );
+
+        var sut = builder.Build();
+
+        var result = sut.FindTransitionsTo( a, b );
+
+        result.Should()
+            .BeEquivalentTo(
+                KeyValuePair.Create( 0, sut.States[a].Transitions[0] ),
+                KeyValuePair.Create( 1, sut.States[a].Transitions[1] ) );
+    }
+
+    [Fact]
+    public void FindTransitionsTo_ShouldReturnEmptyResult_WhenSourceStateDoesNotExist()
+    {
+        var (a, b) = ("a", "b");
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
+            .MarkAsInitial( a );
+
+        var sut = builder.Build();
+
+        var result = sut.FindTransitionsTo( b, a );
+
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void TryGetTransition_ShouldReturnFalse_WhenSourceStateDoesNotExist()
+    {
+        var (a, b) = ("a", "b");
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
+            .MarkAsInitial( a );
+
+        var sut = builder.Build();
+
+        var result = sut.TryGetTransition( b, 0, out var outResult );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeFalse();
+            outResult.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void TryGetTransition_ShouldReturnFalse_WhenSourceStateExistsButTransitionDoesNot()
+    {
+        var a = "a";
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
+            .MarkAsInitial( a );
+
+        var sut = builder.Build();
+
+        var result = sut.TryGetTransition( a, 0, out var outResult );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeFalse();
+            outResult.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void TryGetTransition_ShouldReturnTrue_WhenSourceStateAndTransitionExist()
+    {
+        var a = "a";
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
+            .AddTransition( a, 0 )
+            .MarkAsInitial( a );
+
+        var sut = builder.Build();
+
+        var result = sut.TryGetTransition( a, 0, out var outResult );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeTrue();
+            outResult.Should().BeSameAs( sut.States[a].Transitions[0] );
+        }
+    }
+
+    [Fact]
+    public void GetTransition_ShouldThrowStateMachineStateException_WhenSourceStateDoesNotExist()
+    {
+        var (a, b) = ("a", "b");
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
+            .MarkAsInitial( a );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.GetTransition( b, 0 ) );
+
+        action.Should().ThrowExactly<StateMachineStateException>();
+    }
+
+    [Fact]
+    public void GetTransition_ShouldThrowStateMachineTransitionException_WhenSourceStateExistsButTransitionDoesNot()
+    {
+        var a = "a";
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
+            .MarkAsInitial( a );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.GetTransition( a, 0 ) );
+
+        action.Should().ThrowExactly<StateMachineTransitionException>();
+    }
+
+    [Fact]
+    public void GetTransition_ShouldReturnCorrectResult_WhenSourceStateAndTransitionExist()
+    {
+        var a = "a";
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
+            .AddTransition( a, 0 )
+            .MarkAsInitial( a );
+
+        var sut = builder.Build();
+
+        var result = sut.GetTransition( a, 0 );
+
+        result.Should().BeSameAs( sut.States[a].Transitions[0] );
     }
 }

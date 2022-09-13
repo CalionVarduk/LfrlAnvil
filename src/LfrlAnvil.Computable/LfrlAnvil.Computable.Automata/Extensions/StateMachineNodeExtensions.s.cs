@@ -65,4 +65,16 @@ public static class StateMachineNodeExtensions
     {
         return node.Transitions.Select( kv => kv.Value.Destination ).DistinctBy( n => n.Value, comparer );
     }
+
+    [Pure]
+    internal static IEnumerable<KeyValuePair<TInput, IStateMachineTransition<TState, TInput, TResult>>> FindTransitionsTo<
+        TState, TInput, TResult>(
+        this IStateMachineNode<TState, TInput, TResult> node,
+        TState destination,
+        IEqualityComparer<TState> comparer)
+        where TState : notnull
+        where TInput : notnull
+    {
+        return node.Transitions.Where( t => comparer.Equals( t.Value.Destination.Value, destination ) );
+    }
 }

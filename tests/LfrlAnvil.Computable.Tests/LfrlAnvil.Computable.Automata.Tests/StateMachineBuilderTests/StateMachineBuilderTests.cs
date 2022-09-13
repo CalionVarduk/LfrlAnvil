@@ -46,11 +46,11 @@ public class StateMachineBuilderTests : TestsBase
         var input = Fixture.Create<int>();
         var expectedStates = new[]
         {
-            new StateMachineNodeInfo<string>( source, StateMachineNodeType.Default ),
-            new StateMachineNodeInfo<string>( destination, StateMachineNodeType.Default )
+            KeyValuePair.Create( source, StateMachineNodeType.Default ),
+            KeyValuePair.Create( destination, StateMachineNodeType.Default )
         };
 
-        var expectedSourceTransitions = new[] { new StateMachineTransitionInfo<string, int>( destination, input ) };
+        var expectedSourceTransitions = new[] { KeyValuePair.Create( input, destination ) };
 
         var sut = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() );
 
@@ -72,11 +72,11 @@ public class StateMachineBuilderTests : TestsBase
         var input = Fixture.Create<int>();
         var expectedStates = new[]
         {
-            new StateMachineNodeInfo<string>( source, StateMachineNodeType.Accept ),
-            new StateMachineNodeInfo<string>( destination, StateMachineNodeType.Default )
+            KeyValuePair.Create( source, StateMachineNodeType.Accept ),
+            KeyValuePair.Create( destination, StateMachineNodeType.Default )
         };
 
-        var expectedSourceTransitions = new[] { new StateMachineTransitionInfo<string, int>( destination, input ) };
+        var expectedSourceTransitions = new[] { KeyValuePair.Create( input, destination ) };
 
         var sut = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() );
         sut.MarkAsAccept( source );
@@ -99,11 +99,11 @@ public class StateMachineBuilderTests : TestsBase
         var input = Fixture.Create<int>();
         var expectedStates = new[]
         {
-            new StateMachineNodeInfo<string>( source, StateMachineNodeType.Default ),
-            new StateMachineNodeInfo<string>( destination, StateMachineNodeType.Accept )
+            KeyValuePair.Create( source, StateMachineNodeType.Default ),
+            KeyValuePair.Create( destination, StateMachineNodeType.Accept )
         };
 
-        var expectedSourceTransitions = new[] { new StateMachineTransitionInfo<string, int>( destination, input ) };
+        var expectedSourceTransitions = new[] { KeyValuePair.Create( input, destination ) };
 
         var sut = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() );
         sut.MarkAsAccept( destination );
@@ -126,11 +126,11 @@ public class StateMachineBuilderTests : TestsBase
         var input = Fixture.Create<int>();
         var expectedStates = new[]
         {
-            new StateMachineNodeInfo<string>( source, StateMachineNodeType.Accept ),
-            new StateMachineNodeInfo<string>( destination, StateMachineNodeType.Accept )
+            KeyValuePair.Create( source, StateMachineNodeType.Accept ),
+            KeyValuePair.Create( destination, StateMachineNodeType.Accept )
         };
 
-        var expectedSourceTransitions = new[] { new StateMachineTransitionInfo<string, int>( destination, input ) };
+        var expectedSourceTransitions = new[] { KeyValuePair.Create( input, destination ) };
 
         var sut = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() );
         sut.MarkAsAccept( source );
@@ -154,15 +154,15 @@ public class StateMachineBuilderTests : TestsBase
         var (input, existingInput) = Fixture.CreateDistinctCollection<int>( count: 2 );
         var expectedStates = new[]
         {
-            new StateMachineNodeInfo<string>( source, StateMachineNodeType.Default ),
-            new StateMachineNodeInfo<string>( existingDestination, StateMachineNodeType.Default ),
-            new StateMachineNodeInfo<string>( destination, StateMachineNodeType.Default )
+            KeyValuePair.Create( source, StateMachineNodeType.Default ),
+            KeyValuePair.Create( existingDestination, StateMachineNodeType.Default ),
+            KeyValuePair.Create( destination, StateMachineNodeType.Default )
         };
 
         var expectedSourceTransitions = new[]
         {
-            new StateMachineTransitionInfo<string, int>( existingDestination, existingInput ),
-            new StateMachineTransitionInfo<string, int>( destination, input )
+            KeyValuePair.Create( existingInput, existingDestination ),
+            KeyValuePair.Create( input, destination )
         };
 
         var sut = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() );
@@ -184,8 +184,8 @@ public class StateMachineBuilderTests : TestsBase
     {
         var state = Fixture.Create<string>();
         var input = Fixture.Create<int>();
-        var expectedStates = new[] { new StateMachineNodeInfo<string>( state, StateMachineNodeType.Default ) };
-        var expectedTransitions = new[] { new StateMachineTransitionInfo<string, int>( state, input ) };
+        var expectedStates = new[] { KeyValuePair.Create( state, StateMachineNodeType.Default ) };
+        var expectedTransitions = new[] { KeyValuePair.Create( input, state ) };
 
         var sut = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() );
 
@@ -217,7 +217,7 @@ public class StateMachineBuilderTests : TestsBase
     public void MarkAsAccept_ShouldAddNewAcceptState_WhenStateDoesNotExist()
     {
         var state = Fixture.Create<string>();
-        var expectedStates = new[] { new StateMachineNodeInfo<string>( state, StateMachineNodeType.Accept ) };
+        var expectedStates = new[] { KeyValuePair.Create( state, StateMachineNodeType.Accept ) };
 
         var sut = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() );
 
@@ -235,7 +235,7 @@ public class StateMachineBuilderTests : TestsBase
     public void MarkAsAccept_ShouldChangeStateTypeToAccept_WhenStateExistsAndIsMarkedAsDefault()
     {
         var state = Fixture.Create<string>();
-        var expectedStates = new[] { new StateMachineNodeInfo<string>( state, StateMachineNodeType.Accept ) };
+        var expectedStates = new[] { KeyValuePair.Create( state, StateMachineNodeType.Accept ) };
 
         var sut = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() );
         sut.MarkAsDefault( state );
@@ -254,7 +254,7 @@ public class StateMachineBuilderTests : TestsBase
     public void MarkAsAccept_ShouldDoNothing_WhenStateExistsAndIsMarkedAsAccept()
     {
         var state = Fixture.Create<string>();
-        var expectedStates = new[] { new StateMachineNodeInfo<string>( state, StateMachineNodeType.Accept ) };
+        var expectedStates = new[] { KeyValuePair.Create( state, StateMachineNodeType.Accept ) };
 
         var sut = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() );
         sut.MarkAsAccept( state );
@@ -275,7 +275,7 @@ public class StateMachineBuilderTests : TestsBase
         var state = Fixture.Create<string>();
         var expectedStates = new[]
         {
-            new StateMachineNodeInfo<string>( state, StateMachineNodeType.Initial | StateMachineNodeType.Accept )
+            KeyValuePair.Create( state, StateMachineNodeType.Initial | StateMachineNodeType.Accept )
         };
 
         var sut = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() );
@@ -295,7 +295,7 @@ public class StateMachineBuilderTests : TestsBase
     public void MarkAsDefault_ShouldAddNewDefaultState_WhenStateDoesNotExist()
     {
         var state = Fixture.Create<string>();
-        var expectedStates = new[] { new StateMachineNodeInfo<string>( state, StateMachineNodeType.Default ) };
+        var expectedStates = new[] { KeyValuePair.Create( state, StateMachineNodeType.Default ) };
 
         var sut = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() );
 
@@ -313,7 +313,7 @@ public class StateMachineBuilderTests : TestsBase
     public void MarkAsDefault_ShouldChangeStateTypeToDefault_WhenStateExistsAndIsMarkedAsAccept()
     {
         var state = Fixture.Create<string>();
-        var expectedStates = new[] { new StateMachineNodeInfo<string>( state, StateMachineNodeType.Default ) };
+        var expectedStates = new[] { KeyValuePair.Create( state, StateMachineNodeType.Default ) };
 
         var sut = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() );
         sut.MarkAsAccept( state );
@@ -332,7 +332,7 @@ public class StateMachineBuilderTests : TestsBase
     public void MarkAsDefault_ShouldDoNothing_WhenStateExistsAndIsMarkedAsDefault()
     {
         var state = Fixture.Create<string>();
-        var expectedStates = new[] { new StateMachineNodeInfo<string>( state, StateMachineNodeType.Default ) };
+        var expectedStates = new[] { KeyValuePair.Create( state, StateMachineNodeType.Default ) };
 
         var sut = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() );
         sut.MarkAsDefault( state );
@@ -353,7 +353,7 @@ public class StateMachineBuilderTests : TestsBase
         var state = Fixture.Create<string>();
         var expectedStates = new[]
         {
-            new StateMachineNodeInfo<string>( state, StateMachineNodeType.Initial )
+            KeyValuePair.Create( state, StateMachineNodeType.Initial )
         };
 
         var sut = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() );
@@ -373,7 +373,7 @@ public class StateMachineBuilderTests : TestsBase
     public void MarkAsInitial_ShouldAddNewInitialState_WhenStateDoesNotExist()
     {
         var state = Fixture.Create<string>();
-        var expectedStates = new[] { new StateMachineNodeInfo<string>( state, StateMachineNodeType.Initial ) };
+        var expectedStates = new[] { KeyValuePair.Create( state, StateMachineNodeType.Initial ) };
 
         var sut = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() );
 
@@ -393,7 +393,7 @@ public class StateMachineBuilderTests : TestsBase
         var state = Fixture.Create<string>();
         var expectedStates = new[]
         {
-            new StateMachineNodeInfo<string>( state, StateMachineNodeType.Accept | StateMachineNodeType.Initial )
+            KeyValuePair.Create( state, StateMachineNodeType.Accept | StateMachineNodeType.Initial )
         };
 
         var sut = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() );
@@ -415,7 +415,7 @@ public class StateMachineBuilderTests : TestsBase
         var state = Fixture.Create<string>();
         var expectedStates = new[]
         {
-            new StateMachineNodeInfo<string>( state, StateMachineNodeType.Initial )
+            KeyValuePair.Create( state, StateMachineNodeType.Initial )
         };
 
         var sut = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() );
@@ -435,7 +435,7 @@ public class StateMachineBuilderTests : TestsBase
     public void MarkAsDefault_ShouldDoNothing_WhenStateExistsAndIsMarkedAsInitial()
     {
         var state = Fixture.Create<string>();
-        var expectedStates = new[] { new StateMachineNodeInfo<string>( state, StateMachineNodeType.Initial ) };
+        var expectedStates = new[] { KeyValuePair.Create( state, StateMachineNodeType.Initial ) };
 
         var sut = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() );
         sut.MarkAsInitial( state );
@@ -456,8 +456,8 @@ public class StateMachineBuilderTests : TestsBase
         var (state, other) = Fixture.CreateDistinctCollection<string>( count: 2 );
         var expectedStates = new[]
         {
-            new StateMachineNodeInfo<string>( state, StateMachineNodeType.Initial ),
-            new StateMachineNodeInfo<string>( other, StateMachineNodeType.Default )
+            KeyValuePair.Create( state, StateMachineNodeType.Initial ),
+            KeyValuePair.Create( other, StateMachineNodeType.Default )
         };
 
         var sut = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() );
