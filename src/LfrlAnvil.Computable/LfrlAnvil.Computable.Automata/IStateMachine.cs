@@ -12,6 +12,7 @@ public interface IStateMachine<TState, TInput, TResult>
     IEqualityComparer<TState> StateComparer { get; }
     IEqualityComparer<TInput> InputComparer { get; }
     TResult DefaultResult { get; }
+    StateMachineOptimization Optimization { get; }
 
     [Pure]
     IStateMachineInstance<TState, TInput, TResult> CreateInstance();
@@ -24,4 +25,7 @@ public interface IStateMachine<TState, TInput, TResult>
 
     [Pure]
     IStateMachineInstance<TState, TInput, TResult> CreateInstanceWithSubject(TState initialState, object subject);
+
+    [Pure]
+    IStateMachine<TState, TInput, TResult> WithOptimization(StateMachineOptimization optimization);
 }

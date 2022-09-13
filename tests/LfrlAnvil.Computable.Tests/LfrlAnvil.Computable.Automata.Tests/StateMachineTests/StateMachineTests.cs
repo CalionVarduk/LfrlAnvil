@@ -137,6 +137,66 @@ public class StateMachineTests : TestsBase
         action.Should().ThrowExactly<StateMachineStateException>();
     }
 
+    [Theory]
+    [InlineData( StateMachineOptimization.None, StateMachineOptimization.None )]
+    [InlineData( StateMachineOptimization.RemoveUnreachableStates, StateMachineOptimization.None )]
+    [InlineData( StateMachineOptimization.RemoveUnreachableStates, StateMachineOptimization.RemoveUnreachableStates )]
+    public void WithOptimization_ShouldDoNothingAndReturnSelf_WhenProvidedOptimizationIsNotMoreAdvancedThanTheCurrentOne(
+        StateMachineOptimization current,
+        StateMachineOptimization value)
+    {
+        var a = "a";
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
+            .SetOptimization( current )
+            .MarkAsInitial( a );
+
+        var sut = builder.Build();
+
+        var result = sut.WithOptimization( value );
+
+        result.Should().BeSameAs( sut );
+    }
+
+    [Fact]
+    public void WithOptimization_ShouldReturnNewStateMachine_WhenCurrentOptimizationIsNoneAndNewOptimizationRemovesUnreachableStates()
+    {
+        var (a, b) = ("a", "b");
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
+            .MarkAsDefault( b )
+            .MarkAsInitial( a );
+
+        var sut = builder.Build();
+
+        var result = sut.WithOptimization( StateMachineOptimization.RemoveUnreachableStates );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().NotBeSameAs( sut );
+            result.States.Should().NotBeSameAs( sut.States );
+            result.Optimization.Should().Be( StateMachineOptimization.RemoveUnreachableStates );
+            result.DefaultResult.Should().Be( sut.DefaultResult );
+            result.StateComparer.Should().BeSameAs( sut.StateComparer );
+            result.InputComparer.Should().BeSameAs( sut.InputComparer );
+            result.InitialState.Should().BeSameAs( sut.InitialState );
+            result.States.Should().HaveCount( 1 );
+            result.States.Keys.Should().BeEquivalentTo( a );
+        }
+    }
+
+    [Fact]
+    public void WithOptimization_ShouldThrowArgumentException_WhenNewOptimizationIsNotDefinedInEnum()
+    {
+        var a = "a";
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
+            .MarkAsInitial( a );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.WithOptimization( (StateMachineOptimization)10 ) );
+
+        action.Should().ThrowExactly<ArgumentException>();
+    }
+
     [Fact]
     public void IStateMachineCreateInstance_ShouldBeEquivalentToCreateInstance()
     {
@@ -159,7 +219,7 @@ public class StateMachineTests : TestsBase
     }
 
     [Fact]
-    public void IStateMachineCreateInstance_WithExplicitInitialState_ShouldEquivalentToCreateInstance()
+    public void IStateMachineCreateInstance_WithExplicitInitialState_ShouldBeEquivalentToCreateInstance()
     {
         var (a, b) = ("a", "b");
 
@@ -202,7 +262,7 @@ public class StateMachineTests : TestsBase
     }
 
     [Fact]
-    public void IStateMachineCreateInstanceWithSubject_WithExplicitInitialState_ShouldEquivalentToCreateInstanceWithSubject()
+    public void IStateMachineCreateInstanceWithSubject_WithExplicitInitialState_ShouldBeEquivalentToCreateInstanceWithSubject()
     {
         var (a, b) = ("a", "b");
         var subject = new object();
@@ -220,6 +280,27 @@ public class StateMachineTests : TestsBase
             result.Machine.Should().BeSameAs( sut );
             result.CurrentState.Should().BeSameAs( sut.States[b] );
             result.Subject.Should().BeSameAs( subject );
+        }
+    }
+
+    [Fact]
+    public void IStateMachineWithOptimization_ShouldBeEquivalentToWithOptimization()
+    {
+        var (a, b) = ("a", "b");
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
+            .MarkAsDefault( b )
+            .MarkAsInitial( a );
+
+        IStateMachine<string, int, string> sut = builder.Build();
+
+        var result = sut.WithOptimization( StateMachineOptimization.RemoveUnreachableStates );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().NotBeSameAs( sut );
+            result.Optimization.Should().Be( StateMachineOptimization.RemoveUnreachableStates );
+            result.States.Should().HaveCount( 1 );
+            result.States.Keys.Should().BeEquivalentTo( a );
         }
     }
 }

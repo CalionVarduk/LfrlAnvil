@@ -2,6 +2,7 @@
 using System.Diagnostics.Contracts;
 using System.Linq;
 using LfrlAnvil.Computable.Automata.Exceptions;
+using LfrlAnvil.Computable.Automata.Internal;
 
 namespace LfrlAnvil.Computable.Automata;
 
@@ -18,12 +19,14 @@ public sealed class StateMachineBuilder<TState, TInput, TResult>
     public StateMachineBuilder(TResult defaultResult, IEqualityComparer<TState> stateComparer, IEqualityComparer<TInput> inputComparer)
     {
         DefaultResult = defaultResult;
+        Optimization = StateMachineOptimization.None;
         InputComparer = inputComparer;
         _states = new Dictionary<TState, State>( stateComparer );
         _initialState = null;
     }
 
-    public TResult DefaultResult { get; }
+    public TResult DefaultResult { get; private set; }
+    public StateMachineOptimization Optimization { get; private set; }
     public IEqualityComparer<TInput> InputComparer { get; }
     public IEqualityComparer<TState> StateComparer => _states.Comparer;
 
@@ -39,6 +42,19 @@ public sealed class StateMachineBuilder<TState, TInput, TResult>
         return _states.TryGetValue( source, out var state )
             ? state.Transitions.Select( kv => KeyValuePair.Create( kv.Key, kv.Value.Destination ) )
             : Enumerable.Empty<KeyValuePair<TInput, TState>>();
+    }
+
+    public StateMachineBuilder<TState, TInput, TResult> SetDefaultResult(TResult value)
+    {
+        DefaultResult = value;
+        return this;
+    }
+
+    public StateMachineBuilder<TState, TInput, TResult> SetOptimization(StateMachineOptimization value)
+    {
+        Ensure.IsDefined( value, nameof( value ) );
+        Optimization = value;
+        return this;
     }
 
     public StateMachineBuilder<TState, TInput, TResult> AddTransition(
@@ -139,7 +155,11 @@ public sealed class StateMachineBuilder<TState, TInput, TResult>
         }
 
         var initialStateNode = states[_initialState.Value.Value];
-        return new StateMachine<TState, TInput, TResult>( states, initialStateNode, InputComparer, DefaultResult );
+
+        if ( Optimization == StateMachineOptimization.RemoveUnreachableStates )
+            StateMachineOptimizer.RemoveUnreachableStates( states, initialStateNode );
+
+        return new StateMachine<TState, TInput, TResult>( states, initialStateNode, InputComparer, DefaultResult, Optimization );
     }
 
     private State AddState(TState state, StateMachineNodeType type)
