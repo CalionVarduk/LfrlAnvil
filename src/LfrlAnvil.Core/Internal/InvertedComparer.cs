@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
@@ -18,7 +17,6 @@ internal sealed class InvertedComparer<T> : IComparer<T>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public int Compare(T? x, T? y)
     {
-        var result = BaseComparer.Compare( x, y );
-        return -Math.Sign( result );
+        return BaseComparer.Compare( y, x );
     }
 }
