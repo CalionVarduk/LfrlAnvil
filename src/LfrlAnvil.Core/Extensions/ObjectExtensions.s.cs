@@ -127,6 +127,14 @@ public static class ObjectExtensions
     public static T Max<T>(this T source, T other)
         where T : IComparable<T>
     {
-        return source.CompareTo( other ) >= 0 ? source : other;
+        return source.CompareTo( other ) <= 0 ? other : source;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static (T Min, T Max) MinMax<T>(this T source, T other)
+        where T : IComparable<T>
+    {
+        return source.CompareTo( other ) <= 0 ? (source, other) : (other, source);
     }
 }

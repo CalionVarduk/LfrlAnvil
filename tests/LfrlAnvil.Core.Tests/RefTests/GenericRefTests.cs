@@ -1,7 +1,6 @@
 ﻿namespace LfrlAnvil.Tests.RefTests;
 
 public abstract class GenericRefTests<T> : TestsBase
-    where T : struct
 {
     [Fact]
     public void Create_ShouldCreateCorrectRef()
@@ -9,13 +8,6 @@ public abstract class GenericRefTests<T> : TestsBase
         var value = Fixture.Create<T>();
         var sut = Ref.Create( value );
         sut.Value.Should().Be( value );
-    }
-
-    [Fact]
-    public void ParameterlessCtor_ShouldCreateWithDefaultValue()
-    {
-        var sut = new Ref<T>();
-        sut.Value.Should().Be( default( T ) );
     }
 
     [Fact]

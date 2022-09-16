@@ -353,10 +353,10 @@ public static class EnumerableExtensions
     {
         var sourceSet = GetSet( source, comparer );
 
-        if ( other is HashSet<T> hashSet && hashSet.Comparer.Equals( comparer ) )
-            return SetEquals( sourceSet, hashSet );
+        if ( other is HashSet<T> otherSet && otherSet.Comparer.Equals( comparer ) )
+            return SetEquals( sourceSet, otherSet );
 
-        var otherSet = new HashSet<T>( comparer );
+        otherSet = new HashSet<T>( comparer );
 
         foreach ( var o in other )
         {
@@ -727,12 +727,15 @@ public static class EnumerableExtensions
     [Pure]
     private static bool SetEquals<T>(IReadOnlySet<T> set, IReadOnlySet<T> other)
     {
+        if ( set.Count != other.Count )
+            return false;
+
         foreach ( var o in other )
         {
             if ( ! set.Contains( o ) )
                 return false;
         }
 
-        return set.Count == other.Count;
+        return true;
     }
 }

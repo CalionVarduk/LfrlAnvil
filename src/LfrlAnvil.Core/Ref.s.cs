@@ -8,7 +8,6 @@ public static class Ref
 {
     [Pure]
     public static Ref<T> Create<T>(T value)
-        where T : struct
     {
         return new Ref<T>( value );
     }

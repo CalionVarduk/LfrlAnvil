@@ -4,11 +4,7 @@ using System.Runtime.CompilerServices;
 namespace LfrlAnvil;
 
 public sealed class Ref<T> : IReadOnlyRef<T>
-    where T : struct
 {
-    public Ref()
-        : this( default ) { }
-
     public Ref(T value)
     {
         Value = value;
