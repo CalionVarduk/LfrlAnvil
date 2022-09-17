@@ -58,15 +58,24 @@ public sealed class StateMachine<TState, TInput, TResult> : IStateMachine<TState
     }
 
     [Pure]
-    public StateMachine<TState, TInput, TResult> WithOptimization(StateMachineOptimization optimization)
+    public StateMachine<TState, TInput, TResult> WithOptimization(StateMachineOptimizationParams<TState> optimization)
     {
-        Ensure.IsDefined( optimization, nameof( optimization ) );
-        if ( Optimization >= optimization )
+        if ( Optimization >= optimization.Level )
             return this;
 
+        // TODO:
+        // if nothing actually changes due to optimization level change, then return this with updated Optimization
+        // and don't create new states dictionary
         var states = new Dictionary<TState, IStateMachineNode<TState, TInput, TResult>>( _states, StateComparer );
-        StateMachineOptimizer.RemoveUnreachableStates( states, InitialState );
-        return new StateMachine<TState, TInput, TResult>( states, InitialState, InputComparer, DefaultResult, optimization );
+        var initialState = InitialState;
+
+        if ( Optimization == StateMachineOptimization.None )
+            StateMachineOptimizer.RemoveUnreachableStates( states, InitialState );
+
+        if ( optimization.Level == StateMachineOptimization.Minimize )
+            StateMachineOptimizer.Minimize( states, ref initialState, optimization.StateMerger!, InputComparer );
+
+        return new StateMachine<TState, TInput, TResult>( states, initialState, InputComparer, DefaultResult, optimization.Level );
     }
 
     [Pure]
@@ -105,7 +114,8 @@ public sealed class StateMachine<TState, TInput, TResult> : IStateMachine<TState
     }
 
     [Pure]
-    IStateMachine<TState, TInput, TResult> IStateMachine<TState, TInput, TResult>.WithOptimization(StateMachineOptimization optimization)
+    IStateMachine<TState, TInput, TResult> IStateMachine<TState, TInput, TResult>.WithOptimization(
+        StateMachineOptimizationParams<TState> optimization)
     {
         return WithOptimization( optimization );
     }

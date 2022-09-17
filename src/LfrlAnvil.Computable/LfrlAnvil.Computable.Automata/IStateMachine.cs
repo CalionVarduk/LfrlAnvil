@@ -27,5 +27,5 @@ public interface IStateMachine<TState, TInput, TResult>
     IStateMachineInstance<TState, TInput, TResult> CreateInstanceWithSubject(TState initialState, object subject);
 
     [Pure]
-    IStateMachine<TState, TInput, TResult> WithOptimization(StateMachineOptimization optimization);
+    IStateMachine<TState, TInput, TResult> WithOptimization(StateMachineOptimizationParams<TState> optimization);
 }

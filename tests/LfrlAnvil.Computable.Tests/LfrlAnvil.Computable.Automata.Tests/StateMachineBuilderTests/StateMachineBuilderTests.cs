@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using FluentAssertions.Execution;
 using LfrlAnvil.Computable.Automata.Exceptions;
 using LfrlAnvil.Functional;
@@ -16,7 +17,7 @@ public class StateMachineBuilderTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.DefaultResult.Should().Be( defaultResult );
-            sut.Optimization.Should().Be( StateMachineOptimization.None );
+            sut.Optimization.Level.Should().Be( StateMachineOptimization.None );
             sut.StateComparer.Should().BeSameAs( EqualityComparer<string>.Default );
             sut.InputComparer.Should().BeSameAs( EqualityComparer<int>.Default );
             sut.GetStates().Should().BeEmpty();
@@ -34,7 +35,7 @@ public class StateMachineBuilderTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.DefaultResult.Should().Be( defaultResult );
-            sut.Optimization.Should().Be( StateMachineOptimization.None );
+            sut.Optimization.Level.Should().Be( StateMachineOptimization.None );
             sut.StateComparer.Should().BeSameAs( stateComparer );
             sut.InputComparer.Should().BeSameAs( inputComparer );
             sut.GetStates().Should().BeEmpty();
@@ -56,28 +57,43 @@ public class StateMachineBuilderTests : TestsBase
         }
     }
 
-    [Theory]
-    [InlineData( StateMachineOptimization.None )]
-    [InlineData( StateMachineOptimization.RemoveUnreachableStates )]
-    public void SetOptimization_ShouldUpdateOptimization(StateMachineOptimization value)
+    [Fact]
+    public void SetOptimization_ShouldUpdateOptimization_WhenParamsPointToNone()
     {
         var sut = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() );
-
-        var result = sut.SetOptimization( value );
+        var result = sut.SetOptimization( StateMachineOptimizationParams<string>.None() );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            result.Optimization.Should().Be( value );
+            result.Optimization.Level.Should().Be( StateMachineOptimization.None );
         }
     }
 
     [Fact]
-    public void SetOptimization_ShouldThrowArgumentException_WhenValueIsNotDefinedInEnum()
+    public void SetOptimization_ShouldUpdateOptimization_WhenParamsPointToRemoveUnreachableStates()
     {
         var sut = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() );
-        var action = Lambda.Of( () => sut.SetOptimization( (StateMachineOptimization)10 ) );
-        action.Should().ThrowExactly<ArgumentException>();
+        var result = sut.SetOptimization( StateMachineOptimizationParams<string>.RemoveUnreachableStates() );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            result.Optimization.Level.Should().Be( StateMachineOptimization.RemoveUnreachableStates );
+        }
+    }
+
+    [Fact]
+    public void SetOptimization_ShouldUpdateOptimization_WhenParamsPointToMinimize()
+    {
+        var sut = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() );
+        var result = sut.SetOptimization( StateMachineOptimizationParams<string>.Minimize( (s, _) => s ) );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            result.Optimization.Level.Should().Be( StateMachineOptimization.Minimize );
+        }
     }
 
     [Fact]
@@ -539,7 +555,7 @@ public class StateMachineBuilderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DefaultResult.Should().Be( defaultResult );
-            result.Optimization.Should().Be( sut.Optimization );
+            result.Optimization.Should().Be( sut.Optimization.Level );
             result.StateComparer.Should().BeSameAs( sut.StateComparer );
             result.InputComparer.Should().BeSameAs( sut.InputComparer );
             result.States.Should().HaveCount( 1 );
@@ -552,7 +568,7 @@ public class StateMachineBuilderTests : TestsBase
     }
 
     [Fact]
-    public void Build_ShouldReturnCorrectResult_ForActualStateMachineExample()
+    public void Build_ShouldReturnCorrectResult_ForMoreComplexStateMachine()
     {
         var defaultResult = Fixture.Create<string>();
         var (a, b, c, d, e, f) = ("a", "b", "c", "d", "e", "f");
@@ -581,7 +597,7 @@ public class StateMachineBuilderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DefaultResult.Should().Be( defaultResult );
-            result.Optimization.Should().Be( sut.Optimization );
+            result.Optimization.Should().Be( sut.Optimization.Level );
             result.StateComparer.Should().BeSameAs( sut.StateComparer );
             result.InputComparer.Should().BeSameAs( sut.InputComparer );
             result.States.Should().HaveCount( 6 );
@@ -642,7 +658,7 @@ public class StateMachineBuilderTests : TestsBase
         var (_0, _1) = (0, 1);
 
         var sut = new StateMachineBuilder<string, int, string>( defaultResult )
-            .SetOptimization( StateMachineOptimization.RemoveUnreachableStates )
+            .SetOptimization( StateMachineOptimizationParams<string>.RemoveUnreachableStates() )
             .AddTransition( b, c, _0 )
             .AddTransition( b, a, _1 )
             .AddTransition( c, _0 )
@@ -655,7 +671,7 @@ public class StateMachineBuilderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DefaultResult.Should().Be( defaultResult );
-            result.Optimization.Should().Be( sut.Optimization );
+            result.Optimization.Should().Be( sut.Optimization.Level );
             result.StateComparer.Should().BeSameAs( sut.StateComparer );
             result.InputComparer.Should().BeSameAs( sut.InputComparer );
             result.States.Should().HaveCount( 1 );
@@ -678,7 +694,7 @@ public class StateMachineBuilderTests : TestsBase
         var (_0, _1) = (0, 1);
 
         var sut = new StateMachineBuilder<string, int, string>( defaultResult )
-            .SetOptimization( StateMachineOptimization.RemoveUnreachableStates )
+            .SetOptimization( StateMachineOptimizationParams<string>.RemoveUnreachableStates() )
             .AddTransition( a, b, _0 )
             .AddTransition( a, _1 )
             .AddTransition( b, a, _0 )
@@ -691,7 +707,7 @@ public class StateMachineBuilderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DefaultResult.Should().Be( defaultResult );
-            result.Optimization.Should().Be( sut.Optimization );
+            result.Optimization.Should().Be( sut.Optimization.Level );
             result.StateComparer.Should().BeSameAs( sut.StateComparer );
             result.InputComparer.Should().BeSameAs( sut.InputComparer );
             result.States.Should().HaveCount( 3 );
@@ -728,7 +744,7 @@ public class StateMachineBuilderTests : TestsBase
         var (_0, _1) = (0, 1);
 
         var sut = new StateMachineBuilder<string, int, string>( defaultResult )
-            .SetOptimization( StateMachineOptimization.RemoveUnreachableStates )
+            .SetOptimization( StateMachineOptimizationParams<string>.RemoveUnreachableStates() )
             .AddTransition( a, b, _0 )
             .AddTransition( a, _1 )
             .AddTransition( b, a, _0 )
@@ -744,7 +760,7 @@ public class StateMachineBuilderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DefaultResult.Should().Be( defaultResult );
-            result.Optimization.Should().Be( sut.Optimization );
+            result.Optimization.Should().Be( sut.Optimization.Level );
             result.StateComparer.Should().BeSameAs( sut.StateComparer );
             result.InputComparer.Should().BeSameAs( sut.InputComparer );
             result.States.Should().HaveCount( 2 );
@@ -764,6 +780,624 @@ public class StateMachineBuilderTests : TestsBase
             bNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
             bNode.Transitions[_0].Destination.Should().BeSameAs( aNode );
             bNode.Transitions[_1].Destination.Should().BeSameAs( aNode );
+        }
+    }
+
+    [Fact]
+    public void Build_ShouldReturnCorrectResult_WhenStateMachineIsMinimizedAndMinimizationIsEnabled()
+    {
+        var defaultResult = Fixture.Create<string>();
+        var (a, b) = ("a", "b");
+        var (_0, _1) = (0, 1);
+
+        var sut = new StateMachineBuilder<string, int, string>( defaultResult )
+            .SetOptimization(
+                StateMachineOptimizationParams<string>.Minimize( (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) )
+            .AddTransition( a, b, _0 )
+            .AddTransition( a, b, _1 )
+            .AddTransition( b, _0 )
+            .AddTransition( b, _1 )
+            .MarkAsInitial( a )
+            .MarkAsAccept( b );
+
+        var result = sut.Build();
+
+        using ( new AssertionScope() )
+        {
+            result.DefaultResult.Should().Be( defaultResult );
+            result.Optimization.Should().Be( sut.Optimization.Level );
+            result.StateComparer.Should().BeSameAs( sut.StateComparer );
+            result.InputComparer.Should().BeSameAs( sut.InputComparer );
+            result.States.Should().HaveCount( 2 );
+            result.States.Keys.Should().BeEquivalentTo( a, b );
+
+            var aNode = result.States[a];
+            var bNode = result.States[b];
+
+            aNode.Type.Should().Be( StateMachineNodeType.Initial );
+            aNode.Transitions.Should().HaveCount( 2 );
+            aNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
+            aNode.Transitions[_0].Destination.Should().BeSameAs( bNode );
+            aNode.Transitions[_1].Destination.Should().BeSameAs( bNode );
+
+            bNode.Type.Should().Be( StateMachineNodeType.Accept );
+            bNode.Transitions.Should().HaveCount( 2 );
+            bNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
+            bNode.Transitions[_0].Destination.Should().BeSameAs( bNode );
+            bNode.Transitions[_1].Destination.Should().BeSameAs( bNode );
+        }
+    }
+
+    [Fact]
+    public void Build_ShouldReturnCorrectResult_WhenStateMachineIsNotMinimizedAndMinimizationIsEnabled()
+    {
+        var defaultResult = Fixture.Create<string>();
+        var (a, b, c) = ("a", "b", "c");
+        var (_0, _1) = (0, 1);
+
+        var sut = new StateMachineBuilder<string, int, string>( defaultResult )
+            .SetOptimization(
+                StateMachineOptimizationParams<string>.Minimize( (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) )
+            .AddTransition( a, c, _0 )
+            .AddTransition( a, b, _1 )
+            .AddTransition( b, _0 )
+            .AddTransition( b, _1 )
+            .AddTransition( c, _0 )
+            .AddTransition( c, _1 )
+            .MarkAsInitial( a )
+            .MarkAsAccept( b )
+            .MarkAsAccept( c );
+
+        var result = sut.Build();
+
+        using ( new AssertionScope() )
+        {
+            result.DefaultResult.Should().Be( defaultResult );
+            result.Optimization.Should().Be( sut.Optimization.Level );
+            result.StateComparer.Should().BeSameAs( sut.StateComparer );
+            result.InputComparer.Should().BeSameAs( sut.InputComparer );
+            result.States.Should().HaveCount( 2 );
+            result.States.Keys.Should().BeEquivalentTo( a, b + c );
+
+            var aNode = result.States[a];
+            var bcNode = result.States[b + c];
+
+            aNode.Type.Should().Be( StateMachineNodeType.Initial );
+            aNode.Transitions.Should().HaveCount( 2 );
+            aNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
+            aNode.Transitions[_0].Destination.Should().BeSameAs( bcNode );
+            aNode.Transitions[_1].Destination.Should().BeSameAs( bcNode );
+
+            bcNode.Type.Should().Be( StateMachineNodeType.Accept );
+            bcNode.Transitions.Should().HaveCount( 2 );
+            bcNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
+            bcNode.Transitions[_0].Destination.Should().BeSameAs( bcNode );
+            bcNode.Transitions[_1].Destination.Should().BeSameAs( bcNode );
+        }
+    }
+
+    [Fact]
+    public void Build_ShouldReturnCorrectResult_WhenStateMachineIsNotMinimizedAndContainsUnreachableStatesAndMinimizationIsEnabled()
+    {
+        var defaultResult = Fixture.Create<string>();
+        var (a, b, c) = ("a", "b", "c");
+        var (_0, _1) = (0, 1);
+
+        var sut = new StateMachineBuilder<string, int, string>( defaultResult )
+            .SetOptimization(
+                StateMachineOptimizationParams<string>.Minimize( (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) )
+            .AddTransition( a, _0 )
+            .AddTransition( a, b, _1 )
+            .AddTransition( b, _0 )
+            .AddTransition( b, _1 )
+            .AddTransition( c, b, _0 )
+            .AddTransition( c, _1 )
+            .MarkAsInitial( a )
+            .MarkAsAccept( a )
+            .MarkAsAccept( b );
+
+        var result = sut.Build();
+
+        using ( new AssertionScope() )
+        {
+            result.DefaultResult.Should().Be( defaultResult );
+            result.Optimization.Should().Be( sut.Optimization.Level );
+            result.StateComparer.Should().BeSameAs( sut.StateComparer );
+            result.InputComparer.Should().BeSameAs( sut.InputComparer );
+            result.States.Should().HaveCount( 1 );
+            result.States.Keys.Should().BeEquivalentTo( a + b );
+
+            var abNode = result.States[a + b];
+
+            abNode.Type.Should().Be( StateMachineNodeType.Initial | StateMachineNodeType.Accept );
+            abNode.Transitions.Should().HaveCount( 2 );
+            abNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
+            abNode.Transitions[_0].Destination.Should().BeSameAs( abNode );
+            abNode.Transitions[_1].Destination.Should().BeSameAs( abNode );
+        }
+    }
+
+    [Fact]
+    public void Build_ShouldReturnCorrectResult_WhenMinimizationIsEnabledAndTwoStatesCouldBeMergedButHaveDifferentAcceptFlag()
+    {
+        var defaultResult = Fixture.Create<string>();
+        var (a, b, c) = ("a", "b", "c");
+        var (_0, _1) = (0, 1);
+
+        var sut = new StateMachineBuilder<string, int, string>( defaultResult )
+            .SetOptimization(
+                StateMachineOptimizationParams<string>.Minimize( (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) )
+            .AddTransition( a, c, _0 )
+            .AddTransition( a, b, _1 )
+            .AddTransition( b, _0 )
+            .AddTransition( b, _1 )
+            .AddTransition( c, _0 )
+            .AddTransition( c, _1 )
+            .MarkAsInitial( a )
+            .MarkAsDefault( b )
+            .MarkAsAccept( c );
+
+        var result = sut.Build();
+
+        using ( new AssertionScope() )
+        {
+            result.DefaultResult.Should().Be( defaultResult );
+            result.Optimization.Should().Be( sut.Optimization.Level );
+            result.StateComparer.Should().BeSameAs( sut.StateComparer );
+            result.InputComparer.Should().BeSameAs( sut.InputComparer );
+            result.States.Should().HaveCount( 3 );
+            result.States.Keys.Should().BeEquivalentTo( a, b, c );
+
+            var aNode = result.States[a];
+            var bNode = result.States[b];
+            var cNode = result.States[c];
+
+            aNode.Type.Should().Be( StateMachineNodeType.Initial );
+            aNode.Transitions.Should().HaveCount( 2 );
+            aNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
+            aNode.Transitions[_0].Destination.Should().BeSameAs( cNode );
+            aNode.Transitions[_1].Destination.Should().BeSameAs( bNode );
+
+            bNode.Type.Should().Be( StateMachineNodeType.Default );
+            bNode.Transitions.Should().HaveCount( 2 );
+            bNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
+            bNode.Transitions[_0].Destination.Should().BeSameAs( bNode );
+            bNode.Transitions[_1].Destination.Should().BeSameAs( bNode );
+
+            cNode.Type.Should().Be( StateMachineNodeType.Accept );
+            cNode.Transitions.Should().HaveCount( 2 );
+            cNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
+            cNode.Transitions[_0].Destination.Should().BeSameAs( cNode );
+            cNode.Transitions[_1].Destination.Should().BeSameAs( cNode );
+        }
+    }
+
+    [Fact]
+    public void
+        Build_ShouldReturnCorrectResult_WhenMinimizationIsEnabledAndTwoStatesCouldBeMergedButOneHasHandlerOnAnyOfItsTransitionsAndOtherDoesNot()
+    {
+        var defaultResult = Fixture.Create<string>();
+        var (a, b, c) = ("a", "b", "c");
+        var (_0, _1) = (0, 1);
+
+        var handler = Substitute.For<IStateTransitionHandler<string, int, string>>();
+
+        var sut = new StateMachineBuilder<string, int, string>( defaultResult )
+            .SetOptimization(
+                StateMachineOptimizationParams<string>.Minimize( (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) )
+            .AddTransition( a, c, _0 )
+            .AddTransition( a, b, _1 )
+            .AddTransition( b, _0 )
+            .AddTransition( b, _1, handler )
+            .AddTransition( c, _0 )
+            .AddTransition( c, _1 )
+            .MarkAsInitial( a )
+            .MarkAsAccept( b )
+            .MarkAsAccept( c );
+
+        var result = sut.Build();
+
+        using ( new AssertionScope() )
+        {
+            result.DefaultResult.Should().Be( defaultResult );
+            result.Optimization.Should().Be( sut.Optimization.Level );
+            result.StateComparer.Should().BeSameAs( sut.StateComparer );
+            result.InputComparer.Should().BeSameAs( sut.InputComparer );
+            result.States.Should().HaveCount( 3 );
+            result.States.Keys.Should().BeEquivalentTo( a, b, c );
+
+            var aNode = result.States[a];
+            var bNode = result.States[b];
+            var cNode = result.States[c];
+
+            aNode.Type.Should().Be( StateMachineNodeType.Initial );
+            aNode.Transitions.Should().HaveCount( 2 );
+            aNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
+            aNode.Transitions[_0].Destination.Should().BeSameAs( cNode );
+            aNode.Transitions[_1].Destination.Should().BeSameAs( bNode );
+
+            bNode.Type.Should().Be( StateMachineNodeType.Accept );
+            bNode.Transitions.Should().HaveCount( 2 );
+            bNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
+            bNode.Transitions[_0].Destination.Should().BeSameAs( bNode );
+            bNode.Transitions[_1].Destination.Should().BeSameAs( bNode );
+            bNode.Transitions[_1].Handler.Should().BeSameAs( handler );
+
+            cNode.Type.Should().Be( StateMachineNodeType.Accept );
+            cNode.Transitions.Should().HaveCount( 2 );
+            cNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
+            cNode.Transitions[_0].Destination.Should().BeSameAs( cNode );
+            cNode.Transitions[_1].Destination.Should().BeSameAs( cNode );
+        }
+    }
+
+    [Fact]
+    public void
+        Build_ShouldReturnCorrectResult_WhenMinimizationIsEnabledAndTwoStatesCouldBeMergedButTheyHaveDifferentHandlerOnTheSameTransition()
+    {
+        var defaultResult = Fixture.Create<string>();
+        var (a, b, c) = ("a", "b", "c");
+        var (_0, _1) = (0, 1);
+
+        var handlerB = Substitute.For<IStateTransitionHandler<string, int, string>>();
+        var handlerC = Substitute.For<IStateTransitionHandler<string, int, string>>();
+
+        var sut = new StateMachineBuilder<string, int, string>( defaultResult )
+            .SetOptimization(
+                StateMachineOptimizationParams<string>.Minimize( (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) )
+            .AddTransition( a, c, _0 )
+            .AddTransition( a, b, _1 )
+            .AddTransition( b, _0 )
+            .AddTransition( b, _1, handlerB )
+            .AddTransition( c, _0 )
+            .AddTransition( c, _1, handlerC )
+            .MarkAsInitial( a )
+            .MarkAsAccept( b )
+            .MarkAsAccept( c );
+
+        var result = sut.Build();
+
+        using ( new AssertionScope() )
+        {
+            result.DefaultResult.Should().Be( defaultResult );
+            result.Optimization.Should().Be( sut.Optimization.Level );
+            result.StateComparer.Should().BeSameAs( sut.StateComparer );
+            result.InputComparer.Should().BeSameAs( sut.InputComparer );
+            result.States.Should().HaveCount( 3 );
+            result.States.Keys.Should().BeEquivalentTo( a, b, c );
+
+            var aNode = result.States[a];
+            var bNode = result.States[b];
+            var cNode = result.States[c];
+
+            aNode.Type.Should().Be( StateMachineNodeType.Initial );
+            aNode.Transitions.Should().HaveCount( 2 );
+            aNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
+            aNode.Transitions[_0].Destination.Should().BeSameAs( cNode );
+            aNode.Transitions[_1].Destination.Should().BeSameAs( bNode );
+
+            bNode.Type.Should().Be( StateMachineNodeType.Accept );
+            bNode.Transitions.Should().HaveCount( 2 );
+            bNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
+            bNode.Transitions[_0].Destination.Should().BeSameAs( bNode );
+            bNode.Transitions[_1].Destination.Should().BeSameAs( bNode );
+            bNode.Transitions[_1].Handler.Should().BeSameAs( handlerB );
+
+            cNode.Type.Should().Be( StateMachineNodeType.Accept );
+            cNode.Transitions.Should().HaveCount( 2 );
+            cNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
+            cNode.Transitions[_0].Destination.Should().BeSameAs( cNode );
+            cNode.Transitions[_1].Destination.Should().BeSameAs( cNode );
+            cNode.Transitions[_1].Handler.Should().BeSameAs( handlerC );
+        }
+    }
+
+    [Fact]
+    public void Build_ShouldReturnCorrectResult_WhenMinimizationIsEnabledAndTwoStatesHaveHandlerAndCanBeMerged()
+    {
+        var defaultResult = Fixture.Create<string>();
+        var (a, b, c) = ("a", "b", "c");
+        var (_0, _1) = (0, 1);
+
+        var handler = Substitute.For<IStateTransitionHandler<string, int, string>>();
+
+        var sut = new StateMachineBuilder<string, int, string>( defaultResult )
+            .SetOptimization(
+                StateMachineOptimizationParams<string>.Minimize( (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) )
+            .AddTransition( a, c, _0 )
+            .AddTransition( a, b, _1 )
+            .AddTransition( b, _0 )
+            .AddTransition( b, _1, handler )
+            .AddTransition( c, _0 )
+            .AddTransition( c, _1, handler )
+            .MarkAsInitial( a )
+            .MarkAsAccept( b )
+            .MarkAsAccept( c );
+
+        var result = sut.Build();
+
+        using ( new AssertionScope() )
+        {
+            result.DefaultResult.Should().Be( defaultResult );
+            result.Optimization.Should().Be( sut.Optimization.Level );
+            result.StateComparer.Should().BeSameAs( sut.StateComparer );
+            result.InputComparer.Should().BeSameAs( sut.InputComparer );
+            result.States.Should().HaveCount( 2 );
+            result.States.Keys.Should().BeEquivalentTo( a, b + c );
+
+            var aNode = result.States[a];
+            var bcNode = result.States[b + c];
+
+            aNode.Type.Should().Be( StateMachineNodeType.Initial );
+            aNode.Transitions.Should().HaveCount( 2 );
+            aNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
+            aNode.Transitions[_0].Destination.Should().BeSameAs( bcNode );
+            aNode.Transitions[_1].Destination.Should().BeSameAs( bcNode );
+
+            bcNode.Type.Should().Be( StateMachineNodeType.Accept );
+            bcNode.Transitions.Should().HaveCount( 2 );
+            bcNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
+            bcNode.Transitions[_0].Destination.Should().BeSameAs( bcNode );
+            bcNode.Transitions[_1].Destination.Should().BeSameAs( bcNode );
+            bcNode.Transitions[_1].Handler.Should().BeSameAs( handler );
+        }
+    }
+
+    [Fact]
+    public void Build_ShouldReturnCorrectResult_WhenStateMachineIsMinimizedAndIsIncompleteAndMinimizationIsEnabled()
+    {
+        var defaultResult = Fixture.Create<string>();
+        var (a, b, c, d) = ("a", "b", "c", "d");
+        var (_0, _1) = (0, 1);
+
+        var sut = new StateMachineBuilder<string, int, string>( defaultResult )
+            .SetOptimization(
+                StateMachineOptimizationParams<string>.Minimize( (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) )
+            .AddTransition( a, c, _0 )
+            .AddTransition( a, b, _1 )
+            .AddTransition( b, d, _1 )
+            .AddTransition( c, d, _0 )
+            .AddTransition( d, _0 )
+            .AddTransition( d, _1 )
+            .MarkAsInitial( a )
+            .MarkAsAccept( d );
+
+        var result = sut.Build();
+
+        using ( new AssertionScope() )
+        {
+            result.DefaultResult.Should().Be( defaultResult );
+            result.Optimization.Should().Be( sut.Optimization.Level );
+            result.StateComparer.Should().BeSameAs( sut.StateComparer );
+            result.InputComparer.Should().BeSameAs( sut.InputComparer );
+            result.States.Should().HaveCount( 4 );
+            result.States.Keys.Should().BeEquivalentTo( a, b, c, d );
+
+            var aNode = result.States[a];
+            var bNode = result.States[b];
+            var cNode = result.States[c];
+            var dNode = result.States[d];
+
+            aNode.Type.Should().Be( StateMachineNodeType.Initial );
+            aNode.Transitions.Should().HaveCount( 2 );
+            aNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
+            aNode.Transitions[_0].Destination.Should().BeSameAs( cNode );
+            aNode.Transitions[_1].Destination.Should().BeSameAs( bNode );
+
+            bNode.Type.Should().Be( StateMachineNodeType.Default );
+            bNode.Transitions.Should().HaveCount( 1 );
+            bNode.Transitions.Keys.Should().BeEquivalentTo( _1 );
+            bNode.Transitions[_1].Destination.Should().BeSameAs( dNode );
+
+            cNode.Type.Should().Be( StateMachineNodeType.Default );
+            cNode.Transitions.Should().HaveCount( 1 );
+            cNode.Transitions.Keys.Should().BeEquivalentTo( _0 );
+            cNode.Transitions[_0].Destination.Should().BeSameAs( dNode );
+
+            dNode.Type.Should().Be( StateMachineNodeType.Accept );
+            dNode.Transitions.Should().HaveCount( 2 );
+            dNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
+            dNode.Transitions[_0].Destination.Should().BeSameAs( dNode );
+            dNode.Transitions[_1].Destination.Should().BeSameAs( dNode );
+        }
+    }
+
+    [Fact]
+    public void Build_ShouldReturnCorrectResult_WhenStateMachineCanBeMinimizedAndIsIncompleteAndMinimizationIsEnabled()
+    {
+        var defaultResult = Fixture.Create<string>();
+        var (a, b, c, d) = ("a", "b", "c", "d");
+        var (_0, _1) = (0, 1);
+
+        var sut = new StateMachineBuilder<string, int, string>( defaultResult )
+            .SetOptimization(
+                StateMachineOptimizationParams<string>.Minimize( (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) )
+            .AddTransition( a, b, _0 )
+            .AddTransition( a, c, _1 )
+            .AddTransition( c, d, _0 )
+            .MarkAsInitial( a )
+            .MarkAsAccept( a );
+
+        var result = sut.Build();
+
+        using ( new AssertionScope() )
+        {
+            result.DefaultResult.Should().Be( defaultResult );
+            result.Optimization.Should().Be( sut.Optimization.Level );
+            result.StateComparer.Should().BeSameAs( sut.StateComparer );
+            result.InputComparer.Should().BeSameAs( sut.InputComparer );
+            result.States.Should().HaveCount( 2 );
+            result.States.Keys.Should().BeEquivalentTo( a, b + c + d );
+
+            var aNode = result.States[a];
+            var bcdNode = result.States[b + c + d];
+
+            aNode.Type.Should().Be( StateMachineNodeType.Initial | StateMachineNodeType.Accept );
+            aNode.Transitions.Should().HaveCount( 2 );
+            aNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
+            aNode.Transitions[_0].Destination.Should().BeSameAs( bcdNode );
+            aNode.Transitions[_1].Destination.Should().BeSameAs( bcdNode );
+
+            bcdNode.Type.Should().Be( StateMachineNodeType.Default );
+            bcdNode.Transitions.Should().HaveCount( 1 );
+            bcdNode.Transitions.Keys.Should().BeEquivalentTo( _0 );
+            bcdNode.Transitions[_0].Destination.Should().BeSameAs( bcdNode );
+        }
+    }
+
+    [Fact]
+    public void
+        Build_ShouldReturnCorrectResult_WhenStateMachineCanBeMinimizedAndIsIncompleteAndCandidateStateForMergingHasHandlerOnOneOfItsTransitionsAndMinimizationIsEnabled()
+    {
+        var defaultResult = Fixture.Create<string>();
+        var (a, b, c, d) = ("a", "b", "c", "d");
+        var (_0, _1) = (0, 1);
+
+        var handler = Substitute.For<IStateTransitionHandler<string, int, string>>();
+
+        var sut = new StateMachineBuilder<string, int, string>( defaultResult )
+            .SetOptimization(
+                StateMachineOptimizationParams<string>.Minimize( (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) )
+            .AddTransition( a, b, _0 )
+            .AddTransition( a, c, _1 )
+            .AddTransition( c, d, _0, handler )
+            .MarkAsInitial( a )
+            .MarkAsAccept( a );
+
+        var result = sut.Build();
+
+        using ( new AssertionScope() )
+        {
+            result.DefaultResult.Should().Be( defaultResult );
+            result.Optimization.Should().Be( sut.Optimization.Level );
+            result.StateComparer.Should().BeSameAs( sut.StateComparer );
+            result.InputComparer.Should().BeSameAs( sut.InputComparer );
+            result.States.Should().HaveCount( 3 );
+            result.States.Keys.Should().BeEquivalentTo( a, c, b + d );
+
+            var aNode = result.States[a];
+            var cNode = result.States[c];
+            var bdNode = result.States[b + d];
+
+            aNode.Type.Should().Be( StateMachineNodeType.Initial | StateMachineNodeType.Accept );
+            aNode.Transitions.Should().HaveCount( 2 );
+            aNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
+            aNode.Transitions[_0].Destination.Should().BeSameAs( bdNode );
+            aNode.Transitions[_1].Destination.Should().BeSameAs( cNode );
+
+            cNode.Type.Should().Be( StateMachineNodeType.Default );
+            cNode.Transitions.Should().HaveCount( 1 );
+            cNode.Transitions.Keys.Should().BeEquivalentTo( _0 );
+            cNode.Transitions[_0].Destination.Should().BeSameAs( bdNode );
+            cNode.Transitions[_0].Handler.Should().BeSameAs( handler );
+
+            bdNode.Type.Should().Be( StateMachineNodeType.Default );
+            bdNode.Transitions.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void Build_ShouldReturnCorrectResult_WhenAllStatesAreEquivalentAndMinimizationIsEnabled()
+    {
+        var defaultResult = Fixture.Create<string>();
+        var (a, b, c, d, e) = ("a", "b", "c", "d", "e");
+
+        var sut = new StateMachineBuilder<string, int, string>( defaultResult )
+            .SetOptimization(
+                StateMachineOptimizationParams<string>.Minimize( (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) )
+            .AddTransition( a, b, 0 )
+            .AddTransition( b, c, 0 )
+            .AddTransition( c, d, 0 )
+            .AddTransition( d, e, 0 )
+            .AddTransition( e, a, 0 )
+            .MarkAsInitial( a )
+            .MarkAsAccept( a )
+            .MarkAsAccept( b )
+            .MarkAsAccept( c )
+            .MarkAsAccept( d )
+            .MarkAsAccept( e );
+
+        var result = sut.Build();
+
+        using ( new AssertionScope() )
+        {
+            result.DefaultResult.Should().Be( defaultResult );
+            result.Optimization.Should().Be( sut.Optimization.Level );
+            result.StateComparer.Should().BeSameAs( sut.StateComparer );
+            result.InputComparer.Should().BeSameAs( sut.InputComparer );
+            result.States.Should().HaveCount( 1 );
+            result.States.Keys.Should().BeEquivalentTo( a + b + c + d + e );
+
+            var abcdeNode = result.States[a + b + c + d + e];
+
+            abcdeNode.Type.Should().Be( StateMachineNodeType.Initial | StateMachineNodeType.Accept );
+            abcdeNode.Transitions.Should().HaveCount( 1 );
+            abcdeNode.Transitions.Keys.Should().BeEquivalentTo( 0 );
+            abcdeNode.Transitions[0].Destination.Should().BeSameAs( abcdeNode );
+        }
+    }
+
+    [Fact]
+    public void Build_ShouldReturnCorrectResult_ForMoreComplexStateMachineWithEnabledMinimization()
+    {
+        var defaultResult = Fixture.Create<string>();
+        var (a, b, c, d, e, f) = ("a", "b", "c", "d", "e", "f");
+        var (_0, _1) = (0, 1);
+
+        var sut = new StateMachineBuilder<string, int, string>( defaultResult )
+            .SetOptimization(
+                StateMachineOptimizationParams<string>.Minimize( (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) )
+            .AddTransition( a, b, _0 )
+            .AddTransition( a, c, _1 )
+            .AddTransition( b, a, _0 )
+            .AddTransition( b, d, _1 )
+            .AddTransition( c, e, _0 )
+            .AddTransition( c, f, _1 )
+            .AddTransition( d, e, _0 )
+            .AddTransition( d, f, _1 )
+            .AddTransition( e, _0 )
+            .AddTransition( e, f, _1 )
+            .AddTransition( f, _0 )
+            .AddTransition( f, _1 )
+            .MarkAsInitial( a )
+            .MarkAsAccept( c )
+            .MarkAsAccept( d )
+            .MarkAsAccept( e );
+
+        var result = sut.Build();
+
+        using ( new AssertionScope() )
+        {
+            result.DefaultResult.Should().Be( defaultResult );
+            result.Optimization.Should().Be( sut.Optimization.Level );
+            result.StateComparer.Should().BeSameAs( sut.StateComparer );
+            result.InputComparer.Should().BeSameAs( sut.InputComparer );
+            result.States.Should().HaveCount( 3 );
+            result.States.Keys.Should().BeEquivalentTo( a + b, c + d + e, f );
+
+            var abNode = result.States[a + b];
+            var cdeNode = result.States[c + d + e];
+            var fNode = result.States[f];
+
+            result.InitialState.Should().BeSameAs( abNode );
+
+            abNode.Type.Should().Be( StateMachineNodeType.Initial );
+            abNode.Transitions.Should().HaveCount( 2 );
+            abNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
+            abNode.Transitions[_0].Destination.Should().BeSameAs( abNode );
+            abNode.Transitions[_1].Destination.Should().BeSameAs( cdeNode );
+
+            cdeNode.Type.Should().Be( StateMachineNodeType.Accept );
+            cdeNode.Transitions.Should().HaveCount( 2 );
+            cdeNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
+            cdeNode.Transitions[_0].Destination.Should().BeSameAs( cdeNode );
+            cdeNode.Transitions[_1].Destination.Should().BeSameAs( fNode );
+
+            fNode.Type.Should().Be( StateMachineNodeType.Default );
+            fNode.Transitions.Should().HaveCount( 2 );
+            fNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
+            fNode.Transitions[_0].Destination.Should().BeSameAs( fNode );
+            fNode.Transitions[_1].Destination.Should().BeSameAs( fNode );
         }
     }
 }

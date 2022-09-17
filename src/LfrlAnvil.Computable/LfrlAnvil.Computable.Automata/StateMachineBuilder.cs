@@ -19,14 +19,14 @@ public sealed class StateMachineBuilder<TState, TInput, TResult>
     public StateMachineBuilder(TResult defaultResult, IEqualityComparer<TState> stateComparer, IEqualityComparer<TInput> inputComparer)
     {
         DefaultResult = defaultResult;
-        Optimization = StateMachineOptimization.None;
+        Optimization = StateMachineOptimizationParams<TState>.None();
         InputComparer = inputComparer;
         _states = new Dictionary<TState, State>( stateComparer );
         _initialState = null;
     }
 
     public TResult DefaultResult { get; private set; }
-    public StateMachineOptimization Optimization { get; private set; }
+    public StateMachineOptimizationParams<TState> Optimization { get; private set; }
     public IEqualityComparer<TInput> InputComparer { get; }
     public IEqualityComparer<TState> StateComparer => _states.Comparer;
 
@@ -50,9 +50,8 @@ public sealed class StateMachineBuilder<TState, TInput, TResult>
         return this;
     }
 
-    public StateMachineBuilder<TState, TInput, TResult> SetOptimization(StateMachineOptimization value)
+    public StateMachineBuilder<TState, TInput, TResult> SetOptimization(StateMachineOptimizationParams<TState> value)
     {
-        Ensure.IsDefined( value, nameof( value ) );
         Optimization = value;
         return this;
     }
@@ -156,10 +155,18 @@ public sealed class StateMachineBuilder<TState, TInput, TResult>
 
         var initialStateNode = states[_initialState.Value.Value];
 
-        if ( Optimization == StateMachineOptimization.RemoveUnreachableStates )
+        if ( Optimization.Level >= StateMachineOptimization.RemoveUnreachableStates )
             StateMachineOptimizer.RemoveUnreachableStates( states, initialStateNode );
 
-        return new StateMachine<TState, TInput, TResult>( states, initialStateNode, InputComparer, DefaultResult, Optimization );
+        if ( Optimization.Level == StateMachineOptimization.Minimize )
+            StateMachineOptimizer.Minimize( states, ref initialStateNode, Optimization.StateMerger!, InputComparer );
+
+        return new StateMachine<TState, TInput, TResult>(
+            states,
+            initialStateNode,
+            InputComparer,
+            DefaultResult,
+            Optimization.Level );
     }
 
     private State AddState(TState state, StateMachineNodeType type)
