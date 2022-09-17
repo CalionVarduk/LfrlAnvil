@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using LfrlAnvil.Extensions;
+using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.ExtensionsTests.CollectionTests;
 
@@ -226,5 +227,24 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
         var sut = Fixture.CreateMany<T>( sourceCount ).ToList();
         var result = sut.ContainsExactly( count );
         result.Should().Be( expected );
+    }
+
+    [Fact]
+    public void ToArray_ShouldReturnEmptyArray_WhenCollectionIsEmpty()
+    {
+        var sut = new List<Ref<T>>();
+        var result = sut.ToArray( r => r.Value );
+        result.Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData( 1 )]
+    [InlineData( 2 )]
+    [InlineData( 10 )]
+    public void ToArray_ShouldReturnArrayWithCorrectElements_WhenCollectionIsNotEmpty(int count)
+    {
+        var sut = Fixture.CreateMany<T>( count ).Select( Ref.Create ).ToList();
+        var result = sut.ToArray( r => r.Value );
+        result.Should().BeSequentiallyEqualTo( sut.Select( r => r.Value ) );
     }
 }
