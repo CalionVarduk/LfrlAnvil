@@ -45,6 +45,23 @@ public class StateMachineExtensionsTests : TestsBase
     }
 
     [Fact]
+    public void FindDeadStates_ShouldReturnAllStatesMarkedAsDead()
+    {
+        var (a, b) = ("a", "b");
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
+            .SetOptimization( StateMachineOptimizationParams<string>.Minimize( (s1, s2) => s1 + s2 ) )
+            .AddTransition( a, b, 0 )
+            .MarkAsAccept( a )
+            .MarkAsInitial( a );
+
+        var sut = builder.Build();
+
+        var result = sut.FindDeadStates();
+
+        result.Should().BeEquivalentTo( sut.States[b] );
+    }
+
+    [Fact]
     public void CanTransitionTo_ShouldReturnTrue_WhenAnyTransitionFromSourceToDestinationExists()
     {
         var (a, b, c) = ("a", "b", "c");

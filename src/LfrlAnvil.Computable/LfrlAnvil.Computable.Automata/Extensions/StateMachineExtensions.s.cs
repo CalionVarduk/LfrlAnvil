@@ -28,6 +28,15 @@ public static class StateMachineExtensions
     }
 
     [Pure]
+    public static IEnumerable<IStateMachineNode<TState, TInput, TResult>> FindDeadStates<TState, TInput, TResult>(
+        this IStateMachine<TState, TInput, TResult> machine)
+        where TState : notnull
+        where TInput : notnull
+    {
+        return machine.States.Select( kv => kv.Value ).Where( s => s.IsDead() );
+    }
+
+    [Pure]
     public static bool CanTransitionTo<TState, TInput, TResult>(
         this IStateMachine<TState, TInput, TResult> machine,
         TState source,

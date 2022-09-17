@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Computable.Automata.Extensions;
 using LfrlAnvil.Extensions;
@@ -11,174 +10,348 @@ namespace LfrlAnvil.Computable.Automata.Internal;
 
 internal static class StateMachineOptimizer
 {
-    internal static void RemoveUnreachableStates<TState, TInput, TResult>(
-        Dictionary<TState, IStateMachineNode<TState, TInput, TResult>> states,
-        IStateMachineNode<TState, TInput, TResult> initialState)
+    internal readonly struct Result<TState, TInput, TResult>
         where TState : notnull
         where TInput : notnull
     {
-        var reachedStates = new HashSet<TState>( states.Comparer ) { initialState.Value };
-        var remainingDestinations = new Stack<IStateMachineNode<TState, TInput, TResult>>(
-            initialState.Transitions.Select( kv => kv.Value.Destination ).Where( d => ! ReferenceEquals( d, initialState ) ) );
+        internal readonly Dictionary<TState, IStateMachineNode<TState, TInput, TResult>> States;
+        internal readonly IStateMachineNode<TState, TInput, TResult> InitialState;
 
-        while ( remainingDestinations.TryPop( out var destination ) )
+        public Result(
+            Dictionary<TState, IStateMachineNode<TState, TInput, TResult>> states,
+            IStateMachineNode<TState, TInput, TResult> initialState)
         {
-            // TODO: move this to the inner foreach
-            // if a state has already been marked as reached, then transition to that state no longer need to be added to the stack
-            // optimize that for the initial state as well
-            if ( ! reachedStates.Add( destination.Value ) )
-                continue;
+            States = states;
+            InitialState = initialState;
+        }
+    }
 
-            foreach ( var (_, transition) in destination.Transitions )
+    internal static Result<TState, TInput, TResult> OptimizeNew<TState, TInput, TResult>(
+        Dictionary<TState, IStateMachineNode<TState, TInput, TResult>> states,
+        IStateMachineNode<TState, TInput, TResult> initialState,
+        StateMachineOptimizationParams<TState> @params,
+        IEqualityComparer<TInput> inputComparer)
+        where TState : notnull
+        where TInput : notnull
+    {
+        switch ( @params.Level )
+        {
+            case StateMachineOptimization.RemoveUnreachableStates:
             {
-                if ( ReferenceEquals( destination, transition.Destination ) )
+                var reachableStates = FindReachableStates( initialState, states.Comparer );
+                var unreachableStates = CreateUnreachableStatesCollection( states, reachableStates );
+
+                if ( unreachableStates.Length == 0 )
+                    break;
+
+                foreach ( var state in unreachableStates )
+                    states.Remove( state );
+
+                states.TrimExcess();
+                break;
+            }
+            case StateMachineOptimization.Minimize:
+            {
+                var reachableStates = FindReachableStates( initialState, states.Comparer );
+                var unreachableStates = CreateUnreachableStatesCollection( states, reachableStates );
+
+                foreach ( var state in unreachableStates )
+                    states.Remove( state );
+
+                var stateNodes = states.ToArray( kv => kv.Value );
+                var equivalency = FindInitialEquivalentStatePairCandidates( stateNodes, states.Comparer );
+                var deadStates = RemoveNonEquivalentStatePairCandidatesAndFindDeadStates( equivalency, states.Comparer );
+
+                if ( equivalency.StatePairs.Count == 0 )
+                {
+                    if ( unreachableStates.Length > 0 )
+                        states.TrimExcess();
+
+                    MarkDeadStates( states, deadStates );
+                    break;
+                }
+
+                var stateMappings = CreateEquivalentStateMappings( equivalency, @params.StateMerger!, states.Comparer );
+                initialState = RecreateMinimizedStatesAndGetInitialState( states, stateNodes, stateMappings, deadStates, inputComparer );
+                break;
+            }
+        }
+
+        return new Result<TState, TInput, TResult>( states, initialState );
+    }
+
+    [Pure]
+    internal static Result<TState, TInput, TResult> OptimizeExisting<TState, TInput, TResult>(
+        StateMachineOptimization currentOptimization,
+        Dictionary<TState, IStateMachineNode<TState, TInput, TResult>> states,
+        IStateMachineNode<TState, TInput, TResult> initialState,
+        StateMachineOptimizationParams<TState> @params,
+        IEqualityComparer<TInput> inputComparer)
+        where TState : notnull
+        where TInput : notnull
+    {
+        Assume.IsLessThan( currentOptimization, @params.Level, nameof( currentOptimization ) );
+
+        switch ( @params.Level )
+        {
+            case StateMachineOptimization.RemoveUnreachableStates:
+            {
+                var reachableStates = FindReachableStates( initialState, states.Comparer );
+                states = CreateReachableStatesDictionary( states, reachableStates, states.Comparer );
+                break;
+            }
+            case StateMachineOptimization.Minimize:
+            {
+                var originalStates = states;
+                if ( currentOptimization == StateMachineOptimization.None )
+                {
+                    var reachableStates = FindReachableStates( initialState, states.Comparer );
+                    states = CreateReachableStatesDictionary( states, reachableStates, states.Comparer );
+                }
+
+                var stateNodes = states.ToArray( kv => kv.Value );
+                var equivalency = FindInitialEquivalentStatePairCandidates( stateNodes, states.Comparer );
+                var deadStates = RemoveNonEquivalentStatePairCandidatesAndFindDeadStates( equivalency, states.Comparer );
+
+                if ( equivalency.StatePairs.Count == 0 && deadStates.Count == 0 )
+                {
+                    if ( ReferenceEquals( originalStates, states ) )
+                        states = new Dictionary<TState, IStateMachineNode<TState, TInput, TResult>>( states, states.Comparer );
+
+                    break;
+                }
+
+                if ( ReferenceEquals( originalStates, states ) )
+                    states = new Dictionary<TState, IStateMachineNode<TState, TInput, TResult>>( states.Comparer );
+
+                var stateMappings = CreateEquivalentStateMappings( equivalency, @params.StateMerger!, states.Comparer );
+                initialState = RecreateMinimizedStatesAndGetInitialState( states, stateNodes, stateMappings, deadStates, inputComparer );
+                break;
+            }
+        }
+
+        return new Result<TState, TInput, TResult>( states, initialState );
+    }
+
+    [Pure]
+    private static HashSet<TState> FindReachableStates<TState, TInput, TResult>(
+        IStateMachineNode<TState, TInput, TResult> initialState,
+        IEqualityComparer<TState> stateComparer)
+        where TState : notnull
+        where TInput : notnull
+    {
+        var currentState = initialState;
+        var reachableStates = new HashSet<TState>( stateComparer ) { currentState.Value };
+        var remainingDestinations = new Stack<IStateMachineNode<TState, TInput, TResult>>();
+
+        do
+        {
+            foreach ( var (_, transition) in currentState.Transitions )
+            {
+                if ( ReferenceEquals( currentState, transition.Destination ) )
+                    continue;
+
+                if ( ! reachableStates.Add( transition.Destination.Value ) )
                     continue;
 
                 remainingDestinations.Push( transition.Destination );
             }
         }
+        while ( remainingDestinations.TryPop( out currentState ) );
 
-        if ( reachedStates.Count == states.Count )
-            return;
+        return reachableStates;
+    }
+
+    [Pure]
+    private static TState[] CreateUnreachableStatesCollection<TState, TInput, TResult>(
+        IReadOnlyDictionary<TState, IStateMachineNode<TState, TInput, TResult>> states,
+        IReadOnlySet<TState> reachableStates)
+        where TState : notnull
+        where TInput : notnull
+    {
+        if ( reachableStates.Count == states.Count )
+            return Array.Empty<TState>();
 
         var index = 0;
-        var unreachableStates = new TState[states.Count - reachedStates.Count];
+        var unreachableStates = new TState[states.Count - reachableStates.Count];
         foreach ( var (state, _) in states )
         {
-            if ( reachedStates.Contains( state ) )
+            if ( reachableStates.Contains( state ) )
                 continue;
 
             unreachableStates[index++] = state;
         }
 
-        foreach ( var state in unreachableStates )
-            states.Remove( state );
-
-        states.TrimExcess();
+        return unreachableStates;
     }
 
-    internal static void Minimize<TState, TInput, TResult>(
-        Dictionary<TState, IStateMachineNode<TState, TInput, TResult>> states,
-        ref IStateMachineNode<TState, TInput, TResult> initialState,
-        Func<TState, TState, TState> stateMerger,
-        IEqualityComparer<TInput> inputComparer)
+    [Pure]
+    private static Dictionary<TState, IStateMachineNode<TState, TInput, TResult>> CreateReachableStatesDictionary<TState, TInput, TResult>(
+        IReadOnlyDictionary<TState, IStateMachineNode<TState, TInput, TResult>> states,
+        IReadOnlySet<TState> reachableStates,
+        IEqualityComparer<TState> stateComparer)
         where TState : notnull
         where TInput : notnull
     {
-        var stateNodes = states.ToArray( kv => kv.Value );
-        var statePairs = new Dictionary<StatePair<TState>, List<StatePair<TState>>>( StatePair<TState>.GetComparer( states.Comparer ) );
+        if ( reachableStates.Count == states.Count )
+            return new Dictionary<TState, IStateMachineNode<TState, TInput, TResult>>( states, stateComparer );
 
-        // this loop gets the initial equivalency candidate state pairs
-        for ( var i = 0; i < stateNodes.Length - 1; ++i )
+        var result = new Dictionary<TState, IStateMachineNode<TState, TInput, TResult>>( stateComparer );
+        foreach ( var (state, node) in states )
         {
-            var a = stateNodes[i];
+            if ( ! reachableStates.Contains( state ) )
+                continue;
+
+            result.Add( state, node );
+        }
+
+        return result;
+    }
+
+    [Pure]
+    private static StatePairEquivalencyResult<TState> FindInitialEquivalentStatePairCandidates<TState, TInput, TResult>(
+        IStateMachineNode<TState, TInput, TResult>[] stateNodes,
+        IEqualityComparer<TState> stateComparer)
+        where TState : notnull
+        where TInput : notnull
+    {
+        var transitionsBuffer = new List<StatePair<TState>>();
+        var statePairs = new Dictionary<StatePair<TState>, (int StartIndex, int TransitionCount)>(
+            StatePair<TState>.GetComparer( stateComparer ) );
+
+        var nodeCountMinusOne = stateNodes.Length - 1;
+        for ( var i = 0; i < nodeCountMinusOne; ++i )
+        {
+            var first = stateNodes[i];
 
             for ( var j = i + 1; j < stateNodes.Length; ++j )
             {
-                var b = stateNodes[j];
-
-                if ( a.IsAccept() != b.IsAccept() )
+                var second = stateNodes[j];
+                if ( first.IsAccept() != second.IsAccept() )
                     continue;
 
-                var omit = false;
-                var pair = StatePair<TState>.Create( a.Value, b.Value );
-                var transitionPairs = new List<StatePair<TState>>();
+                var candidateResult = FindInitialTransitionsForEquivalentStatePairCandidate(
+                    first,
+                    second,
+                    transitionsBuffer,
+                    stateComparer,
+                    statePairs.Comparer );
 
-                foreach ( var (input, aTransition) in a.Transitions )
-                {
-                    if ( ! b.Transitions.TryGetValue( input, out var bTransition ) )
-                    {
-                        if ( aTransition.Handler is not null )
-                        {
-                            omit = true;
-                            break;
-                        }
-
-                        transitionPairs.Add( StatePair<TState>.CreateWithSink( aTransition.Destination.Value ) );
-                        continue;
-                    }
-
-                    if ( ! ReferenceEquals( aTransition.Handler, bTransition.Handler ) )
-                    {
-                        omit = true;
-                        break;
-                    }
-
-                    if ( states.Comparer.Equals( aTransition.Destination.Value, bTransition.Destination.Value ) )
-                        continue;
-
-                    var transitionPair = StatePair<TState>.Create( aTransition.Destination.Value, bTransition.Destination.Value );
-                    if ( statePairs.Comparer.Equals( pair, transitionPair ) )
-                        continue;
-
-                    transitionPairs.Add( transitionPair );
-                }
-
-                if ( omit )
-                    continue;
-
-                foreach ( var (input, bTransition) in b.Transitions )
-                {
-                    if ( a.Transitions.ContainsKey( input ) )
-                        continue;
-
-                    if ( bTransition.Handler is not null )
-                    {
-                        omit = true;
-                        break;
-                    }
-
-                    transitionPairs.Add( StatePair<TState>.CreateWithSink( bTransition.Destination.Value ) );
-                }
-
-                if ( omit )
-                    continue;
-
-                statePairs.Add( pair, transitionPairs );
+                if ( candidateResult.IsValid )
+                    statePairs.Add( candidateResult.StatePair, candidateResult.TransitionRange );
             }
         }
 
-        // this loop adds possible equivalency to sink state, for each actual state
         foreach ( var state in stateNodes )
         {
             if ( state.IsAccept() )
                 continue;
 
-            var omit = false;
-            var pair = StatePair<TState>.CreateWithSink( state.Value );
-            var transitionPairs = new List<StatePair<TState>>();
-
-            foreach ( var (_, transition) in state.Transitions )
-            {
-                if ( transition.Handler is not null )
-                {
-                    omit = true;
-                    break;
-                }
-
-                if ( states.Comparer.Equals( state.Value, transition.Destination.Value ) )
-                    continue;
-
-                transitionPairs.Add( StatePair<TState>.CreateWithSink( transition.Destination.Value ) );
-            }
-
-            if ( omit )
-                continue;
-
-            statePairs.Add( pair, transitionPairs );
+            var candidateResult = FindInitialTransitionsForEquivalentStatePairWithSinkCandidate( state, transitionsBuffer, stateComparer );
+            if ( candidateResult.IsValid )
+                statePairs.Add( candidateResult.StatePair, candidateResult.TransitionRange );
         }
 
-        // this loop removes non-equivalent state pairs by checking their transition pairs
+        return new StatePairEquivalencyResult<TState>( statePairs, transitionsBuffer );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static StatePairCandidateResult<TState> FindInitialTransitionsForEquivalentStatePairCandidate<TState, TInput, TResult>(
+        IStateMachineNode<TState, TInput, TResult> first,
+        IStateMachineNode<TState, TInput, TResult> second,
+        List<StatePair<TState>> transitionsBuffer,
+        IEqualityComparer<TState> stateComparer,
+        IEqualityComparer<StatePair<TState>> statePairComparer)
+        where TState : notnull
+        where TInput : notnull
+    {
+        var startIndex = transitionsBuffer.Count;
+        var pair = StatePair<TState>.Create( first.Value, second.Value );
+
+        foreach ( var (input, firstStateTransition) in first.Transitions )
+        {
+            if ( ! second.Transitions.TryGetValue( input, out var secondStateTransition ) )
+            {
+                if ( firstStateTransition.Handler is not null )
+                    return StatePairCandidateResult<TState>.CreateInvalid( pair, startIndex, transitionsBuffer );
+
+                transitionsBuffer.Add( StatePair<TState>.CreateWithSink( firstStateTransition.Destination.Value ) );
+                continue;
+            }
+
+            if ( ! ReferenceEquals( firstStateTransition.Handler, secondStateTransition.Handler ) )
+                return StatePairCandidateResult<TState>.CreateInvalid( pair, startIndex, transitionsBuffer );
+
+            if ( stateComparer.Equals( firstStateTransition.Destination.Value, secondStateTransition.Destination.Value ) )
+                continue;
+
+            var transitionPair = StatePair<TState>.Create(
+                firstStateTransition.Destination.Value,
+                secondStateTransition.Destination.Value );
+
+            if ( statePairComparer.Equals( pair, transitionPair ) )
+                continue;
+
+            transitionsBuffer.Add( transitionPair );
+        }
+
+        foreach ( var (input, secondStateTransition) in second.Transitions )
+        {
+            if ( first.Transitions.ContainsKey( input ) )
+                continue;
+
+            if ( secondStateTransition.Handler is not null )
+                return StatePairCandidateResult<TState>.CreateInvalid( pair, startIndex, transitionsBuffer );
+
+            transitionsBuffer.Add( StatePair<TState>.CreateWithSink( secondStateTransition.Destination.Value ) );
+        }
+
+        return StatePairCandidateResult<TState>.CreateValid( pair, startIndex, transitionsBuffer );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static StatePairCandidateResult<TState> FindInitialTransitionsForEquivalentStatePairWithSinkCandidate<TState, TInput, TResult>(
+        IStateMachineNode<TState, TInput, TResult> state,
+        List<StatePair<TState>> transitionsBuffer,
+        IEqualityComparer<TState> stateComparer)
+        where TState : notnull
+        where TInput : notnull
+    {
+        var startIndex = transitionsBuffer.Count;
+        var pair = StatePair<TState>.CreateWithSink( state.Value );
+
+        foreach ( var (_, transition) in state.Transitions )
+        {
+            if ( transition.Handler is not null )
+                return StatePairCandidateResult<TState>.CreateInvalid( pair, startIndex, transitionsBuffer );
+
+            if ( stateComparer.Equals( state.Value, transition.Destination.Value ) )
+                continue;
+
+            transitionsBuffer.Add( StatePair<TState>.CreateWithSink( transition.Destination.Value ) );
+        }
+
+        return StatePairCandidateResult<TState>.CreateValid( pair, startIndex, transitionsBuffer );
+    }
+
+    private static HashSet<TState> RemoveNonEquivalentStatePairCandidatesAndFindDeadStates<TState>(
+        StatePairEquivalencyResult<TState> equivalency,
+        IEqualityComparer<TState> stateComparer)
+        where TState : notnull
+    {
         var removedPairs = new List<StatePair<TState>>();
+        var deadStates = new HashSet<TState>( stateComparer );
+
         do
         {
             removedPairs.Clear();
 
-            foreach ( var (pair, transitions) in statePairs )
+            foreach ( var (pair, transitionRange) in equivalency.StatePairs )
             {
-                foreach ( var transition in transitions )
+                for ( var i = transitionRange.StartIndex; i < transitionRange.EndIndex; ++i )
                 {
-                    if ( statePairs.ContainsKey( transition ) )
+                    var transition = equivalency.TransitionsBuffer[i];
+                    if ( equivalency.StatePairs.ContainsKey( transition ) )
                         continue;
 
                     removedPairs.Add( pair );
@@ -187,29 +360,53 @@ internal static class StateMachineOptimizer
             }
 
             foreach ( var pair in removedPairs )
-                statePairs.Remove( pair );
+                equivalency.StatePairs.Remove( pair );
         }
         while ( removedPairs.Count > 0 );
 
-        // this & the next loop remove equivalent state pairs when one of the states is a sink (this won't change anything)
-        // these states could actually be marked as Dead (no combination of transitions can lead from these states to any accept state)
         removedPairs.Clear();
-        foreach ( var (pair, _) in statePairs )
+
+        foreach ( var (pair, _) in equivalency.StatePairs )
         {
-            if ( ! pair.HasSecond )
-                removedPairs.Add( pair );
+            if ( pair.HasSecond )
+                continue;
+
+            removedPairs.Add( pair );
+            deadStates.Add( pair.First );
         }
 
         foreach ( var pair in removedPairs )
-            statePairs.Remove( pair );
+            equivalency.StatePairs.Remove( pair );
 
-        // if none of the state pairs are equivalent, then don't change the state dictionary
-        if ( statePairs.Count == 0 )
+        return deadStates;
+    }
+
+    private static void MarkDeadStates<TState, TInput, TResult>(
+        Dictionary<TState, IStateMachineNode<TState, TInput, TResult>> states,
+        HashSet<TState> deadStates)
+        where TState : notnull
+        where TInput : notnull
+    {
+        if ( deadStates.Count == 0 )
             return;
 
-        // this loop constructs state symbol mappings for equivalent states
-        var stateMappings = new Dictionary<TState, Ref<TState>>( states.Comparer );
-        foreach ( var (pair, _) in statePairs )
+        foreach ( var state in deadStates )
+        {
+            var node = states[state];
+            var mutableNode = ReinterpretCast.To<StateMachineNode<TState, TInput, TResult>>( node );
+            mutableNode.Type |= StateMachineNodeType.Dead;
+        }
+    }
+
+    [Pure]
+    private static Dictionary<TState, Ref<TState>> CreateEquivalentStateMappings<TState>(
+        StatePairEquivalencyResult<TState> equivalency,
+        Func<TState, TState, TState> stateMerger,
+        IEqualityComparer<TState> stateComparer)
+        where TState : notnull
+    {
+        var stateMappings = new Dictionary<TState, Ref<TState>>( stateComparer );
+        foreach ( var (pair, _) in equivalency.StatePairs )
         {
             Assume.Equals( pair.HasSecond, true, nameof( pair.HasSecond ) );
 
@@ -235,64 +432,89 @@ internal static class StateMachineOptimizer
             stateMappings.Add( pair.Second!, mapping );
         }
 
-        // this loop constructs new states
-        // TODO: move initial state assignment to this loop, since it will be faster than iterating over a dictionary
+        return stateMappings;
+    }
+
+    private static IStateMachineNode<TState, TInput, TResult> RecreateMinimizedStatesAndGetInitialState<TState, TInput, TResult>(
+        Dictionary<TState, IStateMachineNode<TState, TInput, TResult>> states,
+        IStateMachineNode<TState, TInput, TResult>[] originalStateNodes,
+        Dictionary<TState, Ref<TState>> equivalentStateMappings,
+        HashSet<TState> deadStates,
+        IEqualityComparer<TInput> inputComparer)
+        where TState : notnull
+        where TInput : notnull
+    {
+        IStateMachineNode<TState, TInput, TResult>? initialState = null;
         states.Clear();
-        foreach ( var oldNode in stateNodes )
+
+        foreach ( var originalNode in originalStateNodes )
         {
-            if ( stateMappings.TryGetValue( oldNode.Value, out var mapping ) )
+            if ( ! equivalentStateMappings.TryGetValue( originalNode.Value, out var mapping ) )
             {
-                if ( states.TryGetValue( mapping.Value, out var node ) )
-                {
-                    // TODO: refactor, there is no need to create a whole new object, simply adjust its type
-                    states[mapping.Value] = new StateMachineNode<TState, TInput, TResult>(
-                        mapping.Value,
-                        oldNode.Type | node.Type,
-                        new Dictionary<TInput, IStateMachineTransition<TState, TInput, TResult>>( inputComparer ) );
-
-                    continue;
-                }
-
-                states.Add(
-                    mapping.Value,
-                    new StateMachineNode<TState, TInput, TResult>(
-                        mapping.Value,
-                        oldNode.Type,
-                        new Dictionary<TInput, IStateMachineTransition<TState, TInput, TResult>>( inputComparer ) ) );
-
+                var newNode = RecreateStateMachineNode( originalNode, originalNode.Value, deadStates, inputComparer );
+                states.Add( originalNode.Value, newNode );
                 continue;
             }
 
-            states.Add(
-                oldNode.Value,
-                new StateMachineNode<TState, TInput, TResult>(
-                    oldNode.Value,
-                    oldNode.Type,
-                    new Dictionary<TInput, IStateMachineTransition<TState, TInput, TResult>>( inputComparer ) ) );
+            if ( ! states.TryGetValue( mapping.Value, out var node ) )
+            {
+                var newNode = RecreateStateMachineNode( originalNode, mapping.Value, deadStates, inputComparer );
+                states.Add( mapping.Value, newNode );
+                continue;
+            }
+
+            var mutableNode = ReinterpretCast.To<StateMachineNode<TState, TInput, TResult>>( node );
+            mutableNode.Type |= originalNode.Type;
         }
 
-        // this loop reconstructs state transitions for new states
-        foreach ( var oldNode in stateNodes )
+        foreach ( var originalNode in originalStateNodes )
         {
-            var node = stateMappings.TryGetValue( oldNode.Value, out var mapping ) ? states[mapping.Value] : states[oldNode.Value];
-            foreach ( var (input, oldTransition) in oldNode.Transitions )
+            var node = equivalentStateMappings.TryGetValue( originalNode.Value, out var mapping )
+                ? states[mapping.Value]
+                : states[originalNode.Value];
+
+            if ( node.IsInitial() )
+                initialState = node;
+
+            foreach ( var (input, originalTransition) in originalNode.Transitions )
             {
                 if ( node.Transitions.ContainsKey( input ) )
                     continue;
 
-                var destination = stateMappings.TryGetValue( oldTransition.Destination.Value, out var destMapping )
-                    ? states[destMapping.Value]
-                    : states[oldTransition.Destination.Value];
+                var destination = equivalentStateMappings.TryGetValue( originalTransition.Destination.Value, out mapping )
+                    ? states[mapping.Value]
+                    : states[originalTransition.Destination.Value];
 
-                var transition = new StateMachineTransition<TState, TInput, TResult>( destination, oldTransition.Handler );
-                var mutTransitions = ReinterpretCast.To<Dictionary<TInput, IStateMachineTransition<TState, TInput, TResult>>>(
+                var transition = new StateMachineTransition<TState, TInput, TResult>( destination, originalTransition.Handler );
+                var nodeTransitions = ReinterpretCast.To<Dictionary<TInput, IStateMachineTransition<TState, TInput, TResult>>>(
                     node.Transitions );
 
-                mutTransitions.Add( input, transition );
+                nodeTransitions.Add( input, transition );
             }
         }
 
-        initialState = states.First( kv => kv.Value.IsInitial() ).Value;
+        Assume.IsNotNull( initialState, nameof( initialState ) );
+        return initialState;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static StateMachineNode<TState, TInput, TResult> RecreateStateMachineNode<TState, TInput, TResult>(
+        IStateMachineNode<TState, TInput, TResult> originalNode,
+        TState state,
+        HashSet<TState> deadStates,
+        IEqualityComparer<TInput> inputComparer)
+        where TState : notnull
+        where TInput : notnull
+    {
+        var deadStateMask = deadStates.Contains( originalNode.Value ) ? StateMachineNodeType.Dead : StateMachineNodeType.Default;
+
+        var result = new StateMachineNode<TState, TInput, TResult>(
+            state,
+            originalNode.Type | deadStateMask,
+            new Dictionary<TInput, IStateMachineTransition<TState, TInput, TResult>>( inputComparer ) );
+
+        return result;
     }
 
     private readonly struct StatePair<TState>
@@ -368,6 +590,57 @@ internal static class StateMachineOptimizer
                 return unchecked( _stateComparer.GetHashCode( obj.First ) +
                     (obj.HasSecond ? _stateComparer.GetHashCode( obj.Second ) : 0) );
             }
+        }
+    }
+
+    private readonly struct StatePairEquivalencyResult<TState>
+        where TState : notnull
+    {
+        internal readonly Dictionary<StatePair<TState>, (int StartIndex, int EndIndex)> StatePairs;
+        internal readonly List<StatePair<TState>> TransitionsBuffer;
+
+        internal StatePairEquivalencyResult(
+            Dictionary<StatePair<TState>, (int StartIndex, int EndIndex)> statePairs,
+            List<StatePair<TState>> transitionsBuffer)
+        {
+            StatePairs = statePairs;
+            TransitionsBuffer = transitionsBuffer;
+        }
+    }
+
+    private readonly struct StatePairCandidateResult<TState>
+        where TState : notnull
+    {
+        internal readonly StatePair<TState> StatePair;
+        internal readonly (int StartIndex, int EndIndex) TransitionRange;
+        internal readonly bool IsValid;
+
+        private StatePairCandidateResult(StatePair<TState> statePair, int startIndex, int endIndex, bool isValid)
+        {
+            StatePair = statePair;
+            TransitionRange = (startIndex, endIndex);
+            IsValid = isValid;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static StatePairCandidateResult<TState> CreateValid(
+            StatePair<TState> statePair,
+            int startIndex,
+            IReadOnlyCollection<StatePair<TState>> transitionsBuffer)
+        {
+            return new StatePairCandidateResult<TState>( statePair, startIndex, transitionsBuffer.Count, isValid: true );
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static StatePairCandidateResult<TState> CreateInvalid(
+            StatePair<TState> statePair,
+            int startIndex,
+            List<StatePair<TState>> transitionsBuffer)
+        {
+            var transitionCount = transitionsBuffer.Count - startIndex;
+            transitionsBuffer.RemoveRange( startIndex, transitionCount );
+            return new StatePairCandidateResult<TState>( statePair, startIndex, transitionsBuffer.Count, isValid: false );
         }
     }
 }

@@ -25,6 +25,22 @@ public class StateMachineInstanceExtensionsTests : TestsBase
     }
 
     [Fact]
+    public void IsAccepted_ShouldReturnFalse_WhenCurrentStateIsMarkedAsDeadAndInitial()
+    {
+        var a = "a";
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
+            .SetOptimization( StateMachineOptimizationParams<string>.Minimize( (s1, s2) => s1 + s2 ) )
+            .MarkAsInitial( a );
+
+        var machine = builder.Build();
+        var sut = machine.CreateInstance( a );
+
+        var result = sut.IsAccepted();
+
+        result.Should().BeFalse();
+    }
+
+    [Fact]
     public void IsAccepted_ShouldReturnTrue_WhenCurrentStateIsMarkedAsAccept()
     {
         var (a, b) = ("a", "b");
@@ -67,6 +83,121 @@ public class StateMachineInstanceExtensionsTests : TestsBase
         var sut = machine.CreateInstance( b );
 
         var result = sut.IsAccepted();
+
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public void IsAccepted_ShouldReturnFalse_WhenCurrentStateIsMarkedAsDead()
+    {
+        var (a, b) = ("a", "b");
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
+            .SetOptimization( StateMachineOptimizationParams<string>.Minimize( (s1, s2) => s1 + s2 ) )
+            .AddTransition( a, b, 0 )
+            .MarkAsInitial( a )
+            .MarkAsAccept( a );
+
+        var machine = builder.Build();
+        var sut = machine.CreateInstance( b );
+
+        var result = sut.IsAccepted();
+
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public void CanAccept_ShouldReturnTrue_WhenCurrentStateIsMarkedAsAcceptAndInitial()
+    {
+        var a = "a";
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
+            .MarkAsAccept( a )
+            .MarkAsInitial( a );
+
+        var machine = builder.Build();
+        var sut = machine.CreateInstance( a );
+
+        var result = sut.CanAccept();
+
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public void CanAccept_ShouldReturnFalse_WhenCurrentStateIsMarkedAsDeadAndInitial()
+    {
+        var a = "a";
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
+            .SetOptimization( StateMachineOptimizationParams<string>.Minimize( (s1, s2) => s1 + s2 ) )
+            .MarkAsInitial( a );
+
+        var machine = builder.Build();
+        var sut = machine.CreateInstance( a );
+
+        var result = sut.CanAccept();
+
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public void CanAccept_ShouldReturnTrue_WhenCurrentStateIsMarkedAsAccept()
+    {
+        var (a, b) = ("a", "b");
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
+            .MarkAsAccept( b )
+            .MarkAsInitial( a );
+
+        var machine = builder.Build();
+        var sut = machine.CreateInstance( b );
+
+        var result = sut.CanAccept();
+
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public void CanAccept_ShouldReturnTrue_WhenCurrentStateIsMarkedAsInitial()
+    {
+        var a = "a";
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
+            .MarkAsInitial( a );
+
+        var machine = builder.Build();
+        var sut = machine.CreateInstance( a );
+
+        var result = sut.CanAccept();
+
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public void CanAccept_ShouldReturnTrue_WhenCurrentStateIsMarkedAsDefault()
+    {
+        var (a, b) = ("a", "b");
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
+            .MarkAsDefault( b )
+            .MarkAsInitial( a );
+
+        var machine = builder.Build();
+        var sut = machine.CreateInstance( b );
+
+        var result = sut.CanAccept();
+
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public void CanAccept_ShouldReturnFalse_WhenCurrentStateIsMarkedAsDead()
+    {
+        var (a, b) = ("a", "b");
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
+            .SetOptimization( StateMachineOptimizationParams<string>.Minimize( (s1, s2) => s1 + s2 ) )
+            .AddTransition( a, b, 0 )
+            .MarkAsInitial( a )
+            .MarkAsAccept( a );
+
+        var machine = builder.Build();
+        var sut = machine.CreateInstance( b );
+
+        var result = sut.CanAccept();
 
         result.Should().BeFalse();
     }

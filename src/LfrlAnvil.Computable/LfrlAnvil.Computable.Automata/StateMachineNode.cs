@@ -18,7 +18,7 @@ public sealed class StateMachineNode<TState, TInput, TResult> : IStateMachineNod
     }
 
     public TState Value { get; }
-    public StateMachineNodeType Type { get; }
+    public StateMachineNodeType Type { get; internal set; }
     public IReadOnlyDictionary<TInput, IStateMachineTransition<TState, TInput, TResult>> Transitions { get; }
 
     [Pure]

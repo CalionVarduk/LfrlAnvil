@@ -154,16 +154,11 @@ public sealed class StateMachineBuilder<TState, TInput, TResult>
         }
 
         var initialStateNode = states[_initialState.Value.Value];
-
-        if ( Optimization.Level >= StateMachineOptimization.RemoveUnreachableStates )
-            StateMachineOptimizer.RemoveUnreachableStates( states, initialStateNode );
-
-        if ( Optimization.Level == StateMachineOptimization.Minimize )
-            StateMachineOptimizer.Minimize( states, ref initialStateNode, Optimization.StateMerger!, InputComparer );
+        var optimizationResult = StateMachineOptimizer.OptimizeNew( states, initialStateNode, Optimization, InputComparer );
 
         return new StateMachine<TState, TInput, TResult>(
-            states,
-            initialStateNode,
+            optimizationResult.States,
+            optimizationResult.InitialState,
             InputComparer,
             DefaultResult,
             Optimization.Level );

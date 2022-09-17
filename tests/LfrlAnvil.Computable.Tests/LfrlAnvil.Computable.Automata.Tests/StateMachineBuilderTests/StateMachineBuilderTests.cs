@@ -918,6 +918,53 @@ public class StateMachineBuilderTests : TestsBase
     }
 
     [Fact]
+    public void Build_ShouldReturnCorrectResult_WhenStateMachineIsMinimizedButContainsUnreachableStatesAndMinimizationIsEnabled()
+    {
+        var defaultResult = Fixture.Create<string>();
+        var (a, b, c) = ("a", "b", "c");
+        var (_0, _1) = (0, 1);
+
+        var sut = new StateMachineBuilder<string, int, string>( defaultResult )
+            .SetOptimization(
+                StateMachineOptimizationParams<string>.Minimize( (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) )
+            .AddTransition( a, _0 )
+            .AddTransition( a, b, _1 )
+            .AddTransition( b, _0 )
+            .AddTransition( b, _1 )
+            .AddTransition( c, b, _0 )
+            .AddTransition( c, _1 )
+            .MarkAsInitial( a )
+            .MarkAsAccept( b );
+
+        var result = sut.Build();
+
+        using ( new AssertionScope() )
+        {
+            result.DefaultResult.Should().Be( defaultResult );
+            result.Optimization.Should().Be( sut.Optimization.Level );
+            result.StateComparer.Should().BeSameAs( sut.StateComparer );
+            result.InputComparer.Should().BeSameAs( sut.InputComparer );
+            result.States.Should().HaveCount( 2 );
+            result.States.Keys.Should().BeEquivalentTo( a, b );
+
+            var aNode = result.States[a];
+            var bNode = result.States[b];
+
+            aNode.Type.Should().Be( StateMachineNodeType.Initial );
+            aNode.Transitions.Should().HaveCount( 2 );
+            aNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
+            aNode.Transitions[_0].Destination.Should().BeSameAs( aNode );
+            aNode.Transitions[_1].Destination.Should().BeSameAs( bNode );
+
+            bNode.Type.Should().Be( StateMachineNodeType.Accept );
+            bNode.Transitions.Should().HaveCount( 2 );
+            bNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
+            bNode.Transitions[_0].Destination.Should().BeSameAs( bNode );
+            bNode.Transitions[_1].Destination.Should().BeSameAs( bNode );
+        }
+    }
+
+    [Fact]
     public void Build_ShouldReturnCorrectResult_WhenMinimizationIsEnabledAndTwoStatesCouldBeMergedButHaveDifferentAcceptFlag()
     {
         var defaultResult = Fixture.Create<string>();
@@ -958,7 +1005,7 @@ public class StateMachineBuilderTests : TestsBase
             aNode.Transitions[_0].Destination.Should().BeSameAs( cNode );
             aNode.Transitions[_1].Destination.Should().BeSameAs( bNode );
 
-            bNode.Type.Should().Be( StateMachineNodeType.Default );
+            bNode.Type.Should().Be( StateMachineNodeType.Dead );
             bNode.Transitions.Should().HaveCount( 2 );
             bNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
             bNode.Transitions[_0].Destination.Should().BeSameAs( bNode );
@@ -1238,7 +1285,7 @@ public class StateMachineBuilderTests : TestsBase
             aNode.Transitions[_0].Destination.Should().BeSameAs( bcdNode );
             aNode.Transitions[_1].Destination.Should().BeSameAs( bcdNode );
 
-            bcdNode.Type.Should().Be( StateMachineNodeType.Default );
+            bcdNode.Type.Should().Be( StateMachineNodeType.Dead );
             bcdNode.Transitions.Should().HaveCount( 1 );
             bcdNode.Transitions.Keys.Should().BeEquivalentTo( _0 );
             bcdNode.Transitions[_0].Destination.Should().BeSameAs( bcdNode );
@@ -1291,7 +1338,7 @@ public class StateMachineBuilderTests : TestsBase
             cNode.Transitions[_0].Destination.Should().BeSameAs( bdNode );
             cNode.Transitions[_0].Handler.Should().BeSameAs( handler );
 
-            bdNode.Type.Should().Be( StateMachineNodeType.Default );
+            bdNode.Type.Should().Be( StateMachineNodeType.Dead );
             bdNode.Transitions.Should().BeEmpty();
         }
     }
@@ -1393,7 +1440,7 @@ public class StateMachineBuilderTests : TestsBase
             cdeNode.Transitions[_0].Destination.Should().BeSameAs( cdeNode );
             cdeNode.Transitions[_1].Destination.Should().BeSameAs( fNode );
 
-            fNode.Type.Should().Be( StateMachineNodeType.Default );
+            fNode.Type.Should().Be( StateMachineNodeType.Dead );
             fNode.Transitions.Should().HaveCount( 2 );
             fNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
             fNode.Transitions[_0].Destination.Should().BeSameAs( fNode );

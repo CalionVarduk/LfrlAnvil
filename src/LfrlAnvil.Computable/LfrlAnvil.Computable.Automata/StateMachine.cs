@@ -63,19 +63,13 @@ public sealed class StateMachine<TState, TInput, TResult> : IStateMachine<TState
         if ( Optimization >= optimization.Level )
             return this;
 
-        // TODO:
-        // if nothing actually changes due to optimization level change, then return this with updated Optimization
-        // and don't create new states dictionary
-        var states = new Dictionary<TState, IStateMachineNode<TState, TInput, TResult>>( _states, StateComparer );
-        var initialState = InitialState;
-
-        if ( Optimization == StateMachineOptimization.None )
-            StateMachineOptimizer.RemoveUnreachableStates( states, InitialState );
-
-        if ( optimization.Level == StateMachineOptimization.Minimize )
-            StateMachineOptimizer.Minimize( states, ref initialState, optimization.StateMerger!, InputComparer );
-
-        return new StateMachine<TState, TInput, TResult>( states, initialState, InputComparer, DefaultResult, optimization.Level );
+        var optimizationResult = StateMachineOptimizer.OptimizeExisting( Optimization, _states, InitialState, optimization, InputComparer );
+        return new StateMachine<TState, TInput, TResult>(
+            optimizationResult.States,
+            optimizationResult.InitialState,
+            InputComparer,
+            DefaultResult,
+            optimization.Level );
     }
 
     [Pure]

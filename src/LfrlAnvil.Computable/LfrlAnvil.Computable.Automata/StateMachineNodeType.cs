@@ -7,5 +7,6 @@ public enum StateMachineNodeType : byte
 {
     Default = 0,
     Initial = 1,
-    Accept = 2
+    Accept = 2,
+    Dead = 4
 }

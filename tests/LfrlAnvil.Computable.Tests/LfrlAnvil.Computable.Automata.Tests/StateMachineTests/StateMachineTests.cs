@@ -317,6 +317,107 @@ public class StateMachineTests : TestsBase
     }
 
     [Fact]
+    public void
+        WithOptimization_ShouldReturnNewStateMachine_WhenStateMachineIsMinimizedAndCurrentOptimizationHasRemovedUnreachableStatesDuringMinimization()
+    {
+        var (a, b) = ("a", "b");
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
+            .SetOptimization( StateMachineOptimizationParams<string>.RemoveUnreachableStates() )
+            .AddTransition( a, b, 0 )
+            .AddTransition( b, 0 )
+            .MarkAsInitial( a )
+            .MarkAsAccept( b );
+
+        var sut = builder.Build();
+
+        var result = sut.WithOptimization(
+            StateMachineOptimizationParams<string>.Minimize(
+                (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().NotBeSameAs( sut );
+            result.States.Should().NotBeSameAs( sut.States );
+            result.Optimization.Should().Be( StateMachineOptimization.Minimize );
+            result.DefaultResult.Should().Be( sut.DefaultResult );
+            result.StateComparer.Should().BeSameAs( sut.StateComparer );
+            result.InputComparer.Should().BeSameAs( sut.InputComparer );
+            result.InitialState.Should().BeSameAs( sut.InitialState );
+            result.States.Should().HaveCount( 2 );
+            result.States.Keys.Should().BeEquivalentTo( a, b );
+            result.States[a].Should().BeSameAs( result.InitialState );
+            result.States[b].Should().BeSameAs( sut.States[b] );
+        }
+    }
+
+    [Fact]
+    public void WithOptimization_ShouldReturnNewStateMachine_WhenStateMachineIsMinimizedAndAllStatesAreReachableDuringMinimization()
+    {
+        var (a, b) = ("a", "b");
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
+            .SetOptimization( StateMachineOptimizationParams<string>.None() )
+            .AddTransition( a, b, 0 )
+            .AddTransition( b, 0 )
+            .MarkAsInitial( a )
+            .MarkAsAccept( b );
+
+        var sut = builder.Build();
+
+        var result = sut.WithOptimization(
+            StateMachineOptimizationParams<string>.Minimize(
+                (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().NotBeSameAs( sut );
+            result.States.Should().NotBeSameAs( sut.States );
+            result.Optimization.Should().Be( StateMachineOptimization.Minimize );
+            result.DefaultResult.Should().Be( sut.DefaultResult );
+            result.StateComparer.Should().BeSameAs( sut.StateComparer );
+            result.InputComparer.Should().BeSameAs( sut.InputComparer );
+            result.InitialState.Should().BeSameAs( sut.InitialState );
+            result.States.Should().HaveCount( 2 );
+            result.States.Keys.Should().BeEquivalentTo( a, b );
+            result.States[a].Should().BeSameAs( result.InitialState );
+            result.States[b].Should().BeSameAs( sut.States[b] );
+        }
+    }
+
+    [Fact]
+    public void WithOptimization_ShouldReturnNewStateMachine_WhenStateMachineIsMinimizedButSomeStatesAreNotReachableDuringMinimization()
+    {
+        var (a, b, c) = ("a", "b", "c");
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
+            .SetOptimization( StateMachineOptimizationParams<string>.None() )
+            .AddTransition( a, b, 0 )
+            .AddTransition( b, 0 )
+            .MarkAsDefault( c )
+            .MarkAsInitial( a )
+            .MarkAsAccept( b );
+
+        var sut = builder.Build();
+
+        var result = sut.WithOptimization(
+            StateMachineOptimizationParams<string>.Minimize(
+                (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().NotBeSameAs( sut );
+            result.States.Should().NotBeSameAs( sut.States );
+            result.Optimization.Should().Be( StateMachineOptimization.Minimize );
+            result.DefaultResult.Should().Be( sut.DefaultResult );
+            result.StateComparer.Should().BeSameAs( sut.StateComparer );
+            result.InputComparer.Should().BeSameAs( sut.InputComparer );
+            result.InitialState.Should().BeSameAs( sut.InitialState );
+            result.States.Should().HaveCount( 2 );
+            result.States.Keys.Should().BeEquivalentTo( a, b );
+            result.States[a].Should().BeSameAs( result.InitialState );
+            result.States[b].Should().BeSameAs( sut.States[b] );
+        }
+    }
+
+    [Fact]
     public void IStateMachineCreateInstance_ShouldBeEquivalentToCreateInstance()
     {
         var a = "a";

@@ -27,6 +27,15 @@ public static class StateMachineNodeExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static bool IsDead<TState, TInput, TResult>(this IStateMachineNode<TState, TInput, TResult> node)
+        where TState : notnull
+        where TInput : notnull
+    {
+        return (node.Type & StateMachineNodeType.Dead) != StateMachineNodeType.Default;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool CanTransition<TState, TInput, TResult>(this IStateMachineNode<TState, TInput, TResult> node)
         where TState : notnull
         where TInput : notnull

@@ -19,6 +19,15 @@ public static class StateMachineInstanceExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static bool CanAccept<TState, TInput, TResult>(this IStateMachineInstance<TState, TInput, TResult> instance)
+        where TState : notnull
+        where TInput : notnull
+    {
+        return ! instance.CurrentState.IsDead();
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool CanTransition<TState, TInput, TResult>(this IStateMachineInstance<TState, TInput, TResult> instance)
         where TState : notnull
         where TInput : notnull
