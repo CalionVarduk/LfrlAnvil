@@ -23,6 +23,13 @@ public static class Chain
     }
 
     [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static Chain<T> Create<T>(Chain<T> other)
+    {
+        return new Chain<T>( other );
+    }
+
+    [Pure]
     public static Type? GetUnderlyingType(Type? type)
     {
         var result = UnderlyingType.GetForType( type, typeof( Chain<> ) );

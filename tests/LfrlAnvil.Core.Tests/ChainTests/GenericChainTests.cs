@@ -64,6 +64,24 @@ public abstract class GenericChainTests<T> : TestsBase
     }
 
     [Fact]
+    public void Create_WithOtherChain_ShouldReturnCorrectChain()
+    {
+        var values = Fixture.CreateDistinctCollection<T>( count: 3 );
+        var other = Chain.Create( values.AsEnumerable() );
+        var sut = Chain.Create( other );
+
+        using ( new AssertionScope() )
+        {
+            sut.Count.Should().Be( other.Count );
+            sut.IsAttached.Should().BeFalse();
+            sut.IsExtendable.Should().BeTrue();
+            sut.Should().BeSequentiallyEqualTo( other );
+            other.IsAttached.Should().BeFalse();
+            other.IsExtendable.Should().BeTrue();
+        }
+    }
+
+    [Fact]
     public void Ctor_WithOneValue_ShouldReturnCorrectChain()
     {
         var value = Fixture.Create<T>();
@@ -97,6 +115,38 @@ public abstract class GenericChainTests<T> : TestsBase
     public void Ctor_WithEmptyEnumerable_ShouldReturnEmptyChain()
     {
         var sut = new Chain<T>( Enumerable.Empty<T>() );
+
+        using ( new AssertionScope() )
+        {
+            sut.Count.Should().Be( 0 );
+            sut.IsAttached.Should().BeFalse();
+            sut.IsExtendable.Should().BeTrue();
+            sut.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void Ctor_WithOtherChain_ShouldReturnCorrectChain()
+    {
+        var values = Fixture.CreateDistinctCollection<T>( count: 3 );
+        var other = new Chain<T>( values.AsEnumerable() );
+        var sut = new Chain<T>( other );
+
+        using ( new AssertionScope() )
+        {
+            sut.Count.Should().Be( other.Count );
+            sut.IsAttached.Should().BeFalse();
+            sut.IsExtendable.Should().BeTrue();
+            sut.Should().BeSequentiallyEqualTo( other );
+            other.IsAttached.Should().BeFalse();
+            other.IsExtendable.Should().BeTrue();
+        }
+    }
+
+    [Fact]
+    public void Ctor_WithEmptyOtherChain_ShouldReturnEmptyChain()
+    {
+        var sut = new Chain<T>( Chain<T>.Empty );
 
         using ( new AssertionScope() )
         {
@@ -541,5 +591,33 @@ public abstract class GenericChainTests<T> : TestsBase
 
         var action = Lambda.Of( () => sut.Extend( Chain.Create( values.Skip( 2 ) ) ) );
         action.Should().ThrowExactly<InvalidOperationException>();
+    }
+
+    [Fact]
+    public void ToExtendable_ShouldReturnThis_WhenChainIsExtendable()
+    {
+        var values = Fixture.CreateDistinctCollection<T>( count: 3 );
+        var sut = Chain.Create( values.AsEnumerable() );
+
+        var result = sut.ToExtendable();
+
+        result.Should().BeEquivalentTo( sut );
+    }
+
+    [Fact]
+    public void ToExtendable_ShouldReturnCopy_WhenChainIsNotExtendable()
+    {
+        var values = Fixture.CreateDistinctCollection<T>( count: 3 );
+        var sut = Chain.Create( values.AsEnumerable() );
+        var _ = Chain.Create( Fixture.Create<T>() ).Extend( sut );
+
+        var result = sut.ToExtendable();
+
+        using ( new AssertionScope() )
+        {
+            sut.IsExtendable.Should().BeFalse();
+            result.Should().BeSequentiallyEqualTo( sut );
+            result.IsExtendable.Should().BeTrue();
+        }
     }
 }

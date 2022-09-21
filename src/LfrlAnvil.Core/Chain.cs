@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 using LfrlAnvil.Exceptions;
 
 namespace LfrlAnvil;
@@ -40,6 +41,29 @@ public readonly struct Chain<T> : IReadOnlyCollection<T>
             _tail.Next = node;
             _tail = node;
             ++Count;
+        }
+    }
+
+    public Chain(Chain<T> other)
+    {
+        if ( other._head is null )
+        {
+            _tail = _head = null;
+            Count = 0;
+            return;
+        }
+
+        _head = new HeadNode( other._head.Value );
+        _tail = _head;
+        Count = other.Count;
+
+        var otherNode = other._head.Next;
+        while ( otherNode is not null )
+        {
+            var node = new Node( otherNode.Value );
+            _tail.Next = node;
+            _tail = node;
+            otherNode = otherNode.Next;
         }
     }
 
@@ -140,6 +164,13 @@ public readonly struct Chain<T> : IReadOnlyCollection<T>
         _tail.Next = other._head;
         other._head.HasPrev = true;
         return new Chain<T>( _head, other._tail, Count + other.Count );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public Chain<T> ToExtendable()
+    {
+        return IsExtendable ? this : new Chain<T>( this );
     }
 
     [Pure]
