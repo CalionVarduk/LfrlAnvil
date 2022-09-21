@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <PackageTags>LfrlAnvil Validation</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\LfrlAnvil.Core\LfrlAnvil.Core.csproj" />
+    </ItemGroup>
+
+</Project>
