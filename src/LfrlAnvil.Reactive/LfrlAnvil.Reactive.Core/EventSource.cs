@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using LfrlAnvil.Reactive.Exceptions;
 using LfrlAnvil.Reactive.Internal;
@@ -10,16 +10,15 @@ namespace LfrlAnvil.Reactive;
 
 public abstract class EventSource<TEvent> : IEventSource<TEvent>
 {
-    private static IEventSource<TEvent>? _disposed;
-    public static IEventSource<TEvent> Disposed => _disposed ??= CreateDisposed();
-
     private readonly List<EventSubscriber<TEvent>> _subscribers;
+    private SubscriberPool _subscriberPool;
     private int _state;
 
     protected EventSource()
     {
         _state = 0;
         _subscribers = new List<EventSubscriber<TEvent>>();
+        _subscriberPool = SubscriberPool.Create();
     }
 
     public bool IsDisposed => _state == 1;
@@ -31,14 +30,12 @@ public abstract class EventSource<TEvent> : IEventSource<TEvent>
         if ( Interlocked.Exchange( ref _state, 1 ) == 1 )
             return;
 
-        var subscriberCount = _subscribers.Count;
-        var subscribers = ArrayPool<EventSubscriber<TEvent>>.Shared.Rent( subscriberCount );
-        _subscribers.CopyTo( subscribers );
+        var (subscribers, count) = _subscriberPool.Rent( _subscribers );
         _subscribers.Clear();
 
         try
         {
-            for ( var i = 0; i < subscriberCount; ++i )
+            for ( var i = 0; i < count; ++i )
             {
                 var subscriber = subscribers[i];
                 if ( subscriber.IsDisposed )
@@ -50,7 +47,7 @@ public abstract class EventSource<TEvent> : IEventSource<TEvent>
         }
         finally
         {
-            ArrayPool<EventSubscriber<TEvent>>.Shared.Return( subscribers, clearArray: true );
+            _subscriberPool.Return( count );
         }
 
         OnDispose();
@@ -77,13 +74,11 @@ public abstract class EventSource<TEvent> : IEventSource<TEvent>
 
     protected void NotifyListeners(TEvent @event)
     {
-        var subscriberCount = _subscribers.Count;
-        var subscribers = ArrayPool<EventSubscriber<TEvent>>.Shared.Rent( subscriberCount );
-        _subscribers.CopyTo( subscribers );
+        var (subscribers, count) = _subscriberPool.Rent( _subscribers );
 
         try
         {
-            for ( var i = 0; i < subscriberCount; ++i )
+            for ( var i = 0; i < count; ++i )
             {
                 var subscriber = subscribers[i];
                 if ( subscriber.IsDisposed )
@@ -94,7 +89,7 @@ public abstract class EventSource<TEvent> : IEventSource<TEvent>
         }
         finally
         {
-            ArrayPool<EventSubscriber<TEvent>>.Shared.Return( subscribers, clearArray: true );
+            _subscriberPool.Return( count );
         }
     }
 
@@ -145,11 +140,53 @@ public abstract class EventSource<TEvent> : IEventSource<TEvent>
         return subscriber;
     }
 
-    private static IEventSource<TEvent> CreateDisposed()
+    private struct SubscriberPool
     {
-        var result = new EventPublisher<TEvent>();
-        result.Dispose();
-        return result;
+        private EventSubscriber<TEvent>[][] _buffer;
+        private int _level;
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal static SubscriberPool Create()
+        {
+            return new SubscriberPool
+            {
+                _buffer = Array.Empty<EventSubscriber<TEvent>[]>(),
+                _level = -1
+            };
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal (EventSubscriber<TEvent>[] Buffer, int Count) Rent(List<EventSubscriber<TEvent>> subscribers)
+        {
+            if ( ++_level >= _buffer.Length )
+            {
+                var newBuffer = new EventSubscriber<TEvent>[_level + 1][];
+                for ( var i = 0; i < _buffer.Length; ++i )
+                    newBuffer[i] = _buffer[i];
+
+                newBuffer[^1] = Array.Empty<EventSubscriber<TEvent>>();
+                _buffer = newBuffer;
+            }
+
+            var count = subscribers.Count;
+            var result = _buffer[_level];
+            if ( count > result.Length )
+            {
+                result = new EventSubscriber<TEvent>[count];
+                _buffer[_level] = result;
+            }
+
+            subscribers.CopyTo( result );
+            return (result, count);
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal void Return(int count)
+        {
+            var buffer = _buffer[_level--];
+            Array.Clear( buffer, 0, count );
+        }
     }
 
     IEventSubscriber IEventStream.Listen(IEventListener listener)

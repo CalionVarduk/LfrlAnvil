@@ -43,14 +43,14 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
     public TreeDictionaryNode<TKey, TValue>? Root => _root;
     public int Count => _map.Count;
     public IEqualityComparer<TKey> Comparer => _map.Comparer;
-    public IEnumerable<TKey> Keys => _map.Select( kv => kv.Key );
+    public IEnumerable<TKey> Keys => _map.Keys;
     public IEnumerable<TValue> Values => _map.Select( kv => kv.Value.Value );
     public IEnumerable<TreeDictionaryNode<TKey, TValue>> Nodes => (Root?.VisitManyWithSelf( n => n.Children )).EmptyIfNull();
 
     ITreeDictionaryNode<TKey, TValue>? IReadOnlyTreeDictionary<TKey, TValue>.Root => Root;
     IEnumerable<ITreeDictionaryNode<TKey, TValue>> IReadOnlyTreeDictionary<TKey, TValue>.Nodes => Nodes;
 
-    ICollection<TKey> IDictionary<TKey, TValue>.Keys => Keys.ToList();
+    ICollection<TKey> IDictionary<TKey, TValue>.Keys => _map.Keys;
     ICollection<TValue> IDictionary<TKey, TValue>.Values => Values.ToList();
 
     bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly =>

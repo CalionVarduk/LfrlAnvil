@@ -846,6 +846,38 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     }
 
     [Fact]
+    public void IReadOnlyDictionaryKeys_ShouldReturnCorrectResult()
+    {
+        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
+        var values = Fixture.CreateDistinctCollection<TValue>( 3 );
+        var source = new MultiDictionary<TKey, TValue>();
+        IReadOnlyDictionary<TKey, IReadOnlyList<TValue>> sut = source;
+        source.Add( keys[0], values[0] );
+        source.Add( keys[1], values[1] );
+        source.Add( keys[2], values[2] );
+
+        var result = sut.Keys;
+
+        result.Should().BeEquivalentTo( keys );
+    }
+
+    [Fact]
+    public void IReadOnlyDictionaryValues_ShouldReturnCorrectResult()
+    {
+        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
+        var values = Fixture.CreateDistinctCollection<TValue>( 3 );
+        var source = new MultiDictionary<TKey, TValue>();
+        IReadOnlyDictionary<TKey, IReadOnlyList<TValue>> sut = source;
+        source.Add( keys[0], values[0] );
+        source.Add( keys[1], values[1] );
+        source.Add( keys[2], values[2] );
+
+        var result = sut.Values;
+
+        result.SelectMany( v => v ).Should().BeEquivalentTo( values );
+    }
+
+    [Fact]
     public void IDictionaryAdd_ShouldBeEquivalentToAddRange()
     {
         var key = Fixture.Create<TKey>();

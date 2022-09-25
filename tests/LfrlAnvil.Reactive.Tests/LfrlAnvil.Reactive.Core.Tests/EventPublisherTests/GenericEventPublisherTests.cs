@@ -160,6 +160,31 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
     }
 
     [Fact]
+    public void Publish_ShouldListenerCorrectAmountOfTimes_WhenListenerCausesThePublisherToPublish()
+    {
+        var (firstEvent, secondEvent) = Fixture.CreateDistinctCollection<TEvent>( count: 2 );
+        var sut = new EventPublisher<TEvent>();
+        var listener1 = EventListener.Create(
+            (TEvent e) =>
+            {
+                if ( e!.Equals( firstEvent ) )
+                    sut.Publish( secondEvent );
+            } );
+
+        var listener2 = Substitute.For<IEventListener<TEvent>>();
+        sut.Listen( listener1 );
+        sut.Listen( listener2 );
+
+        sut.Publish( firstEvent );
+
+        using ( new AssertionScope() )
+        {
+            listener2.VerifyCalls().Received( x => x.React( firstEvent ) );
+            listener2.VerifyCalls().Received( x => x.React( secondEvent ) );
+        }
+    }
+
+    [Fact]
     public void Publish_ShouldThrowObjectDisposedException_WhenDisposed()
     {
         var @event = Fixture.Create<TEvent>();

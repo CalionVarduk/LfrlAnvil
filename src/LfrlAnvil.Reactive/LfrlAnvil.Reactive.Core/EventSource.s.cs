@@ -122,4 +122,23 @@ public static class EventSource
     {
         return new TaskEventSource<TEvent>( taskFactory, schedulerCapture );
     }
+
+    [Pure]
+    public static IEventSource<TEvent> Disposed<TEvent>()
+    {
+        return DisposedStore<TEvent>.Instance;
+    }
+
+    private static class DisposedStore<TEvent>
+    {
+        internal static readonly IEventSource<TEvent> Instance = CreateDisposed();
+
+        [Pure]
+        private static IEventSource<TEvent> CreateDisposed()
+        {
+            var result = new EventPublisher<TEvent>();
+            result.Dispose();
+            return result;
+        }
+    }
 }

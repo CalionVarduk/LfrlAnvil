@@ -10,6 +10,8 @@ public interface IReadOnlyMultiDictionary<TKey, TValue> : IReadOnlyDictionary<TK
     new int Count { get; }
     new IReadOnlyList<TValue> this[TKey key] { get; }
     IEqualityComparer<TKey> Comparer { get; }
+    new IReadOnlyCollection<TKey> Keys { get; }
+    new IReadOnlyCollection<IReadOnlyList<TValue>> Values { get; }
 
     [Pure]
     int GetCount(TKey key);

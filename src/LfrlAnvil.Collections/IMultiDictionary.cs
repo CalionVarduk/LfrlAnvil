@@ -9,8 +9,8 @@ public interface IMultiDictionary<TKey, TValue> : IDictionary<TKey, IReadOnlyLis
     where TKey : notnull
 {
     new int Count { get; }
-    new IEnumerable<TKey> Keys { get; }
-    new IEnumerable<IReadOnlyList<TValue>> Values { get; }
+    new IReadOnlyCollection<TKey> Keys { get; }
+    new IReadOnlyCollection<IReadOnlyList<TValue>> Values { get; }
     new IReadOnlyList<TValue> this[TKey key] { get; set; }
 
     void Add(TKey key, TValue value);

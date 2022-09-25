@@ -29,13 +29,16 @@ public class MultiDictionary<TKey, TValue> : IMultiDictionary<TKey, TValue>
 
     public int Count => _map.Count;
     public IEqualityComparer<TKey> Comparer => _map.Comparer;
-    public IEnumerable<TKey> Keys => _map.Select( kv => kv.Key );
-    public IEnumerable<IReadOnlyList<TValue>> Values => _map.Select( kv => kv.Value );
+    public IReadOnlyCollection<TKey> Keys => _map.Keys;
+    public IReadOnlyCollection<IReadOnlyList<TValue>> Values => _map.Values;
 
     IEnumerable<TValue> ILookup<TKey, TValue>.this[TKey key] => this[key];
 
-    ICollection<TKey> IDictionary<TKey, IReadOnlyList<TValue>>.Keys => Keys.ToList();
+    ICollection<TKey> IDictionary<TKey, IReadOnlyList<TValue>>.Keys => _map.Keys;
     ICollection<IReadOnlyList<TValue>> IDictionary<TKey, IReadOnlyList<TValue>>.Values => Values.ToList();
+
+    IEnumerable<TKey> IReadOnlyDictionary<TKey, IReadOnlyList<TValue>>.Keys => _map.Keys;
+    IEnumerable<IReadOnlyList<TValue>> IReadOnlyDictionary<TKey, IReadOnlyList<TValue>>.Values => _map.Values;
 
     bool ICollection<KeyValuePair<TKey, IReadOnlyList<TValue>>>.IsReadOnly =>
         ((ICollection<KeyValuePair<TKey, ValuesCollection>>)_map).IsReadOnly;
