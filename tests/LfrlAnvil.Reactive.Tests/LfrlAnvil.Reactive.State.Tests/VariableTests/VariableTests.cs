@@ -19,6 +19,7 @@ public class VariableTests : TestsBase
 
         using ( new AssertionScope() )
         {
+            sut.Parent.Should().BeNull();
             sut.OriginalValue.Should().Be( originalValue );
             sut.Value.Should().Be( value );
             sut.Comparer.Should().BeSameAs( comparer );
@@ -38,6 +39,9 @@ public class VariableTests : TestsBase
             ((IReadOnlyVariable)sut).Warnings.Should().BeSequentiallyEqualTo( sut.Warnings );
             ((IReadOnlyVariable)sut).OnValidate.Should().Be( sut.OnValidate );
             ((IReadOnlyVariable)sut).OnChange.Should().Be( sut.OnChange );
+            ((IVariableNode)sut).OnValidate.Should().Be( sut.OnValidate );
+            ((IVariableNode)sut).OnChange.Should().Be( sut.OnChange );
+            ((IVariableNode)sut).GetChildren().Should().BeEmpty();
         }
     }
 
@@ -82,7 +86,7 @@ public class VariableTests : TestsBase
         var (originalValue, value) = Fixture.CreateDistinctCollection<int>( count: 2 );
         var sut = Variable.WithoutValidators<string>.Create( originalValue, value );
 
-        var onChange = sut.OnChange.Listen( Substitute.For<IEventListener<VariableValueChangedEvent<int, string>>>() );
+        var onChange = sut.OnChange.Listen( Substitute.For<IEventListener<VariableValueChangeEvent<int, string>>>() );
         var onValidate = sut.OnValidate.Listen( Substitute.For<IEventListener<VariableValidationEvent<int, string>>>() );
 
         sut.Dispose();
@@ -101,9 +105,9 @@ public class VariableTests : TestsBase
         var (value, changeValue) = Fixture.CreateDistinctCollection<int>( count: 2 );
         var sut = Variable.WithoutValidators<string>.Create( value );
 
-        var onChangeEvents = new List<VariableValueChangedEvent<int, string>>();
+        var onChangeEvents = new List<VariableValueChangeEvent<int, string>>();
         var onValidateEvents = new List<VariableValidationEvent<int, string>>();
-        sut.OnChange.Listen( EventListener.Create<VariableValueChangedEvent<int, string>>( onChangeEvents.Add ) );
+        sut.OnChange.Listen( EventListener.Create<VariableValueChangeEvent<int, string>>( onChangeEvents.Add ) );
         sut.OnValidate.Listen( EventListener.Create<VariableValidationEvent<int, string>>( onValidateEvents.Add ) );
 
         var result = sut.Change( changeValue );
@@ -149,9 +153,9 @@ public class VariableTests : TestsBase
         var error = Fixture.Create<string>();
         var sut = Variable.Create( value, Validators<string>.IfTrue( v => v == changeValue, Validators<string>.Fail<int>( error ) ) );
 
-        var onChangeEvents = new List<VariableValueChangedEvent<int, string>>();
+        var onChangeEvents = new List<VariableValueChangeEvent<int, string>>();
         var onValidateEvents = new List<VariableValidationEvent<int, string>>();
-        sut.OnChange.Listen( EventListener.Create<VariableValueChangedEvent<int, string>>( onChangeEvents.Add ) );
+        sut.OnChange.Listen( EventListener.Create<VariableValueChangeEvent<int, string>>( onChangeEvents.Add ) );
         sut.OnValidate.Listen( EventListener.Create<VariableValidationEvent<int, string>>( onValidateEvents.Add ) );
 
         var result = sut.Change( changeValue );
@@ -200,9 +204,9 @@ public class VariableTests : TestsBase
             Validators<string>.Pass<int>(),
             Validators<string>.IfTrue( v => v == changeValue, Validators<string>.Fail<int>( warning ) ) );
 
-        var onChangeEvents = new List<VariableValueChangedEvent<int, string>>();
+        var onChangeEvents = new List<VariableValueChangeEvent<int, string>>();
         var onValidateEvents = new List<VariableValidationEvent<int, string>>();
-        sut.OnChange.Listen( EventListener.Create<VariableValueChangedEvent<int, string>>( onChangeEvents.Add ) );
+        sut.OnChange.Listen( EventListener.Create<VariableValueChangeEvent<int, string>>( onChangeEvents.Add ) );
         sut.OnValidate.Listen( EventListener.Create<VariableValidationEvent<int, string>>( onValidateEvents.Add ) );
 
         var result = sut.Change( changeValue );
@@ -244,9 +248,9 @@ public class VariableTests : TestsBase
         var sut = Variable.WithoutValidators<string>.Create( value );
         sut.SetReadOnly( true );
 
-        var onChangeEvents = new List<VariableValueChangedEvent<int, string>>();
+        var onChangeEvents = new List<VariableValueChangeEvent<int, string>>();
         var onValidateEvents = new List<VariableValidationEvent<int, string>>();
-        sut.OnChange.Listen( EventListener.Create<VariableValueChangedEvent<int, string>>( onChangeEvents.Add ) );
+        sut.OnChange.Listen( EventListener.Create<VariableValueChangeEvent<int, string>>( onChangeEvents.Add ) );
         sut.OnValidate.Listen( EventListener.Create<VariableValidationEvent<int, string>>( onValidateEvents.Add ) );
 
         var result = sut.Change( changeValue );
@@ -269,9 +273,9 @@ public class VariableTests : TestsBase
         var (value, changeValue) = Fixture.CreateDistinctCollection<int>( count: 2 );
         var sut = Variable.WithoutValidators<string>.Create( value );
 
-        var onChangeEvents = new List<VariableValueChangedEvent<int, string>>();
+        var onChangeEvents = new List<VariableValueChangeEvent<int, string>>();
         var onValidateEvents = new List<VariableValidationEvent<int, string>>();
-        sut.OnChange.Listen( EventListener.Create<VariableValueChangedEvent<int, string>>( onChangeEvents.Add ) );
+        sut.OnChange.Listen( EventListener.Create<VariableValueChangeEvent<int, string>>( onChangeEvents.Add ) );
         sut.OnValidate.Listen( EventListener.Create<VariableValidationEvent<int, string>>( onValidateEvents.Add ) );
 
         var result = sut.TryChange( changeValue );
@@ -313,9 +317,9 @@ public class VariableTests : TestsBase
         var error = Fixture.Create<string>();
         var sut = Variable.Create( value, Validators<string>.IfTrue( v => v == changeValue, Validators<string>.Fail<int>( error ) ) );
 
-        var onChangeEvents = new List<VariableValueChangedEvent<int, string>>();
+        var onChangeEvents = new List<VariableValueChangeEvent<int, string>>();
         var onValidateEvents = new List<VariableValidationEvent<int, string>>();
-        sut.OnChange.Listen( EventListener.Create<VariableValueChangedEvent<int, string>>( onChangeEvents.Add ) );
+        sut.OnChange.Listen( EventListener.Create<VariableValueChangeEvent<int, string>>( onChangeEvents.Add ) );
         sut.OnValidate.Listen( EventListener.Create<VariableValidationEvent<int, string>>( onValidateEvents.Add ) );
 
         var result = sut.TryChange( changeValue );
@@ -360,9 +364,9 @@ public class VariableTests : TestsBase
             Validators<string>.Pass<int>(),
             Validators<string>.IfTrue( v => v == changeValue, Validators<string>.Fail<int>( warning ) ) );
 
-        var onChangeEvents = new List<VariableValueChangedEvent<int, string>>();
+        var onChangeEvents = new List<VariableValueChangeEvent<int, string>>();
         var onValidateEvents = new List<VariableValidationEvent<int, string>>();
-        sut.OnChange.Listen( EventListener.Create<VariableValueChangedEvent<int, string>>( onChangeEvents.Add ) );
+        sut.OnChange.Listen( EventListener.Create<VariableValueChangeEvent<int, string>>( onChangeEvents.Add ) );
         sut.OnValidate.Listen( EventListener.Create<VariableValidationEvent<int, string>>( onValidateEvents.Add ) );
 
         var result = sut.TryChange( changeValue );
@@ -403,9 +407,9 @@ public class VariableTests : TestsBase
         var value = Fixture.Create<int>();
         var sut = Variable.WithoutValidators<string>.Create( value );
 
-        var onChangeEvents = new List<VariableValueChangedEvent<int, string>>();
+        var onChangeEvents = new List<VariableValueChangeEvent<int, string>>();
         var onValidateEvents = new List<VariableValidationEvent<int, string>>();
-        sut.OnChange.Listen( EventListener.Create<VariableValueChangedEvent<int, string>>( onChangeEvents.Add ) );
+        sut.OnChange.Listen( EventListener.Create<VariableValueChangeEvent<int, string>>( onChangeEvents.Add ) );
         sut.OnValidate.Listen( EventListener.Create<VariableValidationEvent<int, string>>( onValidateEvents.Add ) );
 
         var result = sut.TryChange( value );
@@ -429,9 +433,9 @@ public class VariableTests : TestsBase
         var sut = Variable.WithoutValidators<string>.Create( value );
         sut.SetReadOnly( true );
 
-        var onChangeEvents = new List<VariableValueChangedEvent<int, string>>();
+        var onChangeEvents = new List<VariableValueChangeEvent<int, string>>();
         var onValidateEvents = new List<VariableValidationEvent<int, string>>();
-        sut.OnChange.Listen( EventListener.Create<VariableValueChangedEvent<int, string>>( onChangeEvents.Add ) );
+        sut.OnChange.Listen( EventListener.Create<VariableValueChangeEvent<int, string>>( onChangeEvents.Add ) );
         sut.OnValidate.Listen( EventListener.Create<VariableValidationEvent<int, string>>( onValidateEvents.Add ) );
 
         var result = sut.TryChange( changeValue );
@@ -458,9 +462,9 @@ public class VariableTests : TestsBase
         var warningsValidator = Validators<string>.Empty<int>( warning );
         var sut = Variable.Create( new List<int>(), value, comparer, errorsValidator, warningsValidator );
 
-        var onChangeEvents = new List<VariableValueChangedEvent<List<int>, string>>();
+        var onChangeEvents = new List<VariableValueChangeEvent<List<int>, string>>();
         var onValidateEvents = new List<VariableValidationEvent<List<int>, string>>();
-        sut.OnChange.Listen( EventListener.Create<VariableValueChangedEvent<List<int>, string>>( onChangeEvents.Add ) );
+        sut.OnChange.Listen( EventListener.Create<VariableValueChangeEvent<List<int>, string>>( onChangeEvents.Add ) );
         sut.OnValidate.Listen( EventListener.Create<VariableValidationEvent<List<int>, string>>( onValidateEvents.Add ) );
 
         value.Add( Fixture.Create<int>() );
@@ -502,9 +506,9 @@ public class VariableTests : TestsBase
         var sut = Variable.WithoutValidators<string>.Create( value );
         sut.SetReadOnly( true );
 
-        var onChangeEvents = new List<VariableValueChangedEvent<int, string>>();
+        var onChangeEvents = new List<VariableValueChangeEvent<int, string>>();
         var onValidateEvents = new List<VariableValidationEvent<int, string>>();
-        sut.OnChange.Listen( EventListener.Create<VariableValueChangedEvent<int, string>>( onChangeEvents.Add ) );
+        sut.OnChange.Listen( EventListener.Create<VariableValueChangeEvent<int, string>>( onChangeEvents.Add ) );
         sut.OnValidate.Listen( EventListener.Create<VariableValidationEvent<int, string>>( onValidateEvents.Add ) );
 
         sut.Refresh();
@@ -544,9 +548,9 @@ public class VariableTests : TestsBase
         var value = Fixture.Create<int>();
         var sut = Variable.WithoutValidators<string>.Create( value );
 
-        var onChangeEvents = new List<VariableValueChangedEvent<int, string>>();
+        var onChangeEvents = new List<VariableValueChangeEvent<int, string>>();
         var onValidateEvents = new List<VariableValidationEvent<int, string>>();
-        sut.OnChange.Listen( EventListener.Create<VariableValueChangedEvent<int, string>>( onChangeEvents.Add ) );
+        sut.OnChange.Listen( EventListener.Create<VariableValueChangeEvent<int, string>>( onChangeEvents.Add ) );
         sut.OnValidate.Listen( EventListener.Create<VariableValidationEvent<int, string>>( onValidateEvents.Add ) );
 
         sut.Dispose();
@@ -559,6 +563,97 @@ public class VariableTests : TestsBase
             sut.Errors.Should().BeEmpty();
             sut.Warnings.Should().BeEmpty();
             onChangeEvents.Should().BeEmpty();
+            onValidateEvents.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void RefreshValidation_ShouldUpdateErrorsAndWarningsForCurrentValue()
+    {
+        var value = Fixture.Create<int>();
+        var (error, warning) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var errorsValidator = Validators<string>.Fail<int>( error );
+        var warningsValidator = Validators<string>.Fail<int>( warning );
+        var sut = Variable.Create( value, errorsValidator, warningsValidator );
+
+        var onValidateEvents = new List<VariableValidationEvent<int, string>>();
+        sut.OnValidate.Listen( EventListener.Create<VariableValidationEvent<int, string>>( onValidateEvents.Add ) );
+
+        sut.RefreshValidation();
+
+        using ( new AssertionScope() )
+        {
+            sut.State.Should().Be( VariableState.Invalid | VariableState.Warning );
+            sut.Value.Should().Be( value );
+            sut.Errors.Should().BeSequentiallyEqualTo( error );
+            sut.Warnings.Should().BeSequentiallyEqualTo( warning );
+            onValidateEvents.Should().HaveCount( 1 );
+
+            var validateEvent = onValidateEvents[0];
+            validateEvent.Variable.Should().BeSameAs( sut );
+            validateEvent.AssociatedChange.Should().BeNull();
+            validateEvent.PreviousState.Should().Be( VariableState.Default );
+            validateEvent.NewState.Should().Be( sut.State );
+            validateEvent.PreviousWarnings.Should().BeEmpty();
+            validateEvent.NewWarnings.Should().BeSequentiallyEqualTo( sut.Warnings );
+            validateEvent.PreviousErrors.Should().BeEmpty();
+            validateEvent.NewErrors.Should().BeSequentiallyEqualTo( sut.Errors );
+        }
+    }
+
+    [Fact]
+    public void RefreshValidation_ShouldUpdateErrorsAndWarningsForCurrentValue_EvenWhenReadOnlyFlagIsSet()
+    {
+        var value = Fixture.Create<int>();
+        var (error, warning) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var errorsValidator = Validators<string>.Fail<int>( error );
+        var warningsValidator = Validators<string>.Fail<int>( warning );
+        var sut = Variable.Create( value, errorsValidator, warningsValidator );
+        sut.SetReadOnly( true );
+
+        var onValidateEvents = new List<VariableValidationEvent<int, string>>();
+        sut.OnValidate.Listen( EventListener.Create<VariableValidationEvent<int, string>>( onValidateEvents.Add ) );
+
+        sut.RefreshValidation();
+
+        using ( new AssertionScope() )
+        {
+            sut.State.Should().Be( VariableState.Invalid | VariableState.Warning | VariableState.ReadOnly );
+            sut.Value.Should().Be( value );
+            sut.Errors.Should().BeSequentiallyEqualTo( error );
+            sut.Warnings.Should().BeSequentiallyEqualTo( warning );
+            onValidateEvents.Should().HaveCount( 1 );
+
+            var validateEvent = onValidateEvents[0];
+            validateEvent.Variable.Should().BeSameAs( sut );
+            validateEvent.AssociatedChange.Should().BeNull();
+            validateEvent.PreviousState.Should().Be( VariableState.ReadOnly );
+            validateEvent.NewState.Should().Be( sut.State );
+            validateEvent.PreviousWarnings.Should().BeEmpty();
+            validateEvent.NewWarnings.Should().BeSequentiallyEqualTo( sut.Warnings );
+            validateEvent.PreviousErrors.Should().BeEmpty();
+            validateEvent.NewErrors.Should().BeSequentiallyEqualTo( sut.Errors );
+        }
+    }
+
+    [Fact]
+    public void RefreshValidation_ShouldDoNothing_WhenVariableIsDisposed()
+    {
+        var value = Fixture.Create<int>();
+        var sut = Variable.WithoutValidators<string>.Create( value );
+
+        var onValidateEvents = new List<VariableValidationEvent<int, string>>();
+        sut.OnValidate.Listen( EventListener.Create<VariableValidationEvent<int, string>>( onValidateEvents.Add ) );
+
+        sut.Dispose();
+        sut.RefreshValidation();
+
+        using ( new AssertionScope() )
+        {
+            sut.State.Should().Be( VariableState.ReadOnly | VariableState.Disposed );
+            sut.Value.Should().Be( value );
+            sut.Errors.Should().BeEmpty();
+            sut.Warnings.Should().BeEmpty();
             onValidateEvents.Should().BeEmpty();
         }
     }
@@ -651,9 +746,9 @@ public class VariableTests : TestsBase
         var sut = Variable.Create( originalValue, value, errorsValidator, warningsValidator );
         sut.Refresh();
 
-        var onChangeEvents = new List<VariableValueChangedEvent<int, string>>();
+        var onChangeEvents = new List<VariableValueChangeEvent<int, string>>();
         var onValidateEvents = new List<VariableValidationEvent<int, string>>();
-        sut.OnChange.Listen( EventListener.Create<VariableValueChangedEvent<int, string>>( onChangeEvents.Add ) );
+        sut.OnChange.Listen( EventListener.Create<VariableValueChangeEvent<int, string>>( onChangeEvents.Add ) );
         sut.OnValidate.Listen( EventListener.Create<VariableValidationEvent<int, string>>( onValidateEvents.Add ) );
 
         sut.Reset( newOriginalValue, newValue );
@@ -702,9 +797,9 @@ public class VariableTests : TestsBase
         var sut = Variable.Create( originalValue, value, errorsValidator, warningsValidator );
         sut.Refresh();
 
-        var onChangeEvents = new List<VariableValueChangedEvent<int, string>>();
+        var onChangeEvents = new List<VariableValueChangeEvent<int, string>>();
         var onValidateEvents = new List<VariableValidationEvent<int, string>>();
-        sut.OnChange.Listen( EventListener.Create<VariableValueChangedEvent<int, string>>( onChangeEvents.Add ) );
+        sut.OnChange.Listen( EventListener.Create<VariableValueChangeEvent<int, string>>( onChangeEvents.Add ) );
         sut.OnValidate.Listen( EventListener.Create<VariableValidationEvent<int, string>>( onValidateEvents.Add ) );
 
         sut.Reset( newValue, newValue );
@@ -766,9 +861,9 @@ public class VariableTests : TestsBase
         var (value, newOriginalValue, newValue) = Fixture.CreateDistinctCollection<int>( count: 3 );
         var sut = Variable.WithoutValidators<string>.Create( value );
 
-        var onChangeEvents = new List<VariableValueChangedEvent<int, string>>();
+        var onChangeEvents = new List<VariableValueChangeEvent<int, string>>();
         var onValidateEvents = new List<VariableValidationEvent<int, string>>();
-        sut.OnChange.Listen( EventListener.Create<VariableValueChangedEvent<int, string>>( onChangeEvents.Add ) );
+        sut.OnChange.Listen( EventListener.Create<VariableValueChangeEvent<int, string>>( onChangeEvents.Add ) );
         sut.OnValidate.Listen( EventListener.Create<VariableValidationEvent<int, string>>( onValidateEvents.Add ) );
 
         sut.Dispose();
@@ -792,9 +887,24 @@ public class VariableTests : TestsBase
         var value = Fixture.Create<int>();
         var sut = Variable.WithoutValidators<string>.Create( value );
 
+        var onChangeEvents = new List<VariableValueChangeEvent<int, string>>();
+        sut.OnChange.Listen( EventListener.Create<VariableValueChangeEvent<int, string>>( onChangeEvents.Add ) );
+
         sut.SetReadOnly( true );
 
-        sut.State.Should().Be( VariableState.ReadOnly );
+        using ( new AssertionScope() )
+        {
+            sut.State.Should().Be( VariableState.ReadOnly );
+            onChangeEvents.Should().HaveCount( 1 );
+
+            var changeEvent = onChangeEvents[0];
+            changeEvent.Variable.Should().BeSameAs( sut );
+            changeEvent.PreviousState.Should().Be( VariableState.Default );
+            changeEvent.NewState.Should().Be( sut.State );
+            changeEvent.PreviousValue.Should().Be( value );
+            changeEvent.NewValue.Should().Be( value );
+            changeEvent.Source.Should().Be( VariableChangeSource.SetReadOnly );
+        }
     }
 
     [Fact]
@@ -804,9 +914,24 @@ public class VariableTests : TestsBase
         var sut = Variable.WithoutValidators<string>.Create( value );
         sut.SetReadOnly( true );
 
+        var onChangeEvents = new List<VariableValueChangeEvent<int, string>>();
+        sut.OnChange.Listen( EventListener.Create<VariableValueChangeEvent<int, string>>( onChangeEvents.Add ) );
+
         sut.SetReadOnly( false );
 
-        sut.State.Should().Be( VariableState.Default );
+        using ( new AssertionScope() )
+        {
+            sut.State.Should().Be( VariableState.Default );
+            onChangeEvents.Should().HaveCount( 1 );
+
+            var changeEvent = onChangeEvents[0];
+            changeEvent.Variable.Should().BeSameAs( sut );
+            changeEvent.PreviousState.Should().Be( VariableState.ReadOnly );
+            changeEvent.NewState.Should().Be( sut.State );
+            changeEvent.PreviousValue.Should().Be( value );
+            changeEvent.NewValue.Should().Be( value );
+            changeEvent.Source.Should().Be( VariableChangeSource.SetReadOnly );
+        }
     }
 
     [Theory]
@@ -818,9 +943,16 @@ public class VariableTests : TestsBase
         var sut = Variable.WithoutValidators<string>.Create( value );
         sut.SetReadOnly( enabled );
 
+        var onChangeEvents = new List<VariableValueChangeEvent<int, string>>();
+        sut.OnChange.Listen( EventListener.Create<VariableValueChangeEvent<int, string>>( onChangeEvents.Add ) );
+
         sut.SetReadOnly( enabled );
 
-        sut.State.Should().Be( enabled ? VariableState.ReadOnly : VariableState.Default );
+        using ( new AssertionScope() )
+        {
+            sut.State.Should().Be( enabled ? VariableState.ReadOnly : VariableState.Default );
+            onChangeEvents.Should().BeEmpty();
+        }
     }
 
     [Theory]
@@ -831,9 +963,16 @@ public class VariableTests : TestsBase
         var value = Fixture.Create<int>();
         var sut = Variable.WithoutValidators<string>.Create( value );
 
+        var onChangeEvents = new List<VariableValueChangeEvent<int, string>>();
+        sut.OnChange.Listen( EventListener.Create<VariableValueChangeEvent<int, string>>( onChangeEvents.Add ) );
+
         sut.Dispose();
         sut.SetReadOnly( enabled );
 
-        sut.State.Should().Be( VariableState.ReadOnly | VariableState.Disposed );
+        using ( new AssertionScope() )
+        {
+            sut.State.Should().Be( VariableState.ReadOnly | VariableState.Disposed );
+            onChangeEvents.Should().BeEmpty();
+        }
     }
 }

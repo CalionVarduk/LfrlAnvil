@@ -2,19 +2,17 @@
 
 namespace LfrlAnvil.Reactive.State.Events;
 
-public interface IVariableValueChangedEvent
+public interface IVariableValueChangeEvent : IVariableNodeEvent
 {
     Type ValueType { get; }
     Type ValidationResultType { get; }
-    IReadOnlyVariable Variable { get; }
-    VariableState PreviousState { get; }
-    VariableState NewState { get; }
+    new IReadOnlyVariable Variable { get; }
     object? PreviousValue { get; }
     object? NewValue { get; }
     VariableChangeSource Source { get; }
 }
 
-public interface IVariableValueChangedEvent<TValue> : IVariableValueChangedEvent
+public interface IVariableValueChangeEvent<TValue> : IVariableValueChangeEvent
 {
     new IReadOnlyVariable<TValue> Variable { get; }
     new TValue PreviousValue { get; }

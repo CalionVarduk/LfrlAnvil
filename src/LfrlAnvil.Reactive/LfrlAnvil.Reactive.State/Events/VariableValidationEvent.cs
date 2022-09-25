@@ -10,7 +10,7 @@ public class VariableValidationEvent<TValue, TValidationResult> : IVariableValid
         Chain<TValidationResult> previousErrors,
         Chain<TValidationResult> previousWarnings,
         VariableState previousState,
-        VariableValueChangedEvent<TValue, TValidationResult>? associatedChange)
+        VariableValueChangeEvent<TValue, TValidationResult>? associatedChange)
     {
         AssociatedChange = associatedChange;
         Variable = variable;
@@ -22,7 +22,7 @@ public class VariableValidationEvent<TValue, TValidationResult> : IVariableValid
         NewWarnings = Variable.Warnings;
     }
 
-    public VariableValueChangedEvent<TValue, TValidationResult>? AssociatedChange { get; }
+    public VariableValueChangeEvent<TValue, TValidationResult>? AssociatedChange { get; }
     public IReadOnlyVariable<TValue, TValidationResult> Variable { get; }
     public VariableState PreviousState { get; }
     public VariableState NewState { get; }
@@ -33,8 +33,9 @@ public class VariableValidationEvent<TValue, TValidationResult> : IVariableValid
 
     Type IVariableValidationEvent.ValueType => typeof( TValue );
     Type IVariableValidationEvent.ValidationResultType => typeof( TValidationResult );
-    IVariableValueChangedEvent? IVariableValidationEvent.AssociatedChange => AssociatedChange;
+    IVariableValueChangeEvent? IVariableValidationEvent.AssociatedChange => AssociatedChange;
     IReadOnlyVariable IVariableValidationEvent.Variable => Variable;
+    IVariableNode IVariableNodeEvent.Variable => Variable;
 
     IReadOnlyCollection<object?> IVariableValidationEvent.PreviousErrors =>
         (IReadOnlyCollection<object?>)(IReadOnlyCollection<TValidationResult>)PreviousErrors;

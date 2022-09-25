@@ -2,9 +2,9 @@
 
 namespace LfrlAnvil.Reactive.State.Events;
 
-public class VariableValueChangedEvent<TValue, TValidationResult> : IVariableValueChangedEvent<TValue>
+public class VariableValueChangeEvent<TValue, TValidationResult> : IVariableValueChangeEvent<TValue>
 {
-    public VariableValueChangedEvent(
+    public VariableValueChangeEvent(
         IReadOnlyVariable<TValue, TValidationResult> variable,
         TValue previousValue,
         VariableState previousState,
@@ -25,10 +25,11 @@ public class VariableValueChangedEvent<TValue, TValidationResult> : IVariableVal
     public TValue NewValue { get; }
     public VariableChangeSource Source { get; }
 
-    IReadOnlyVariable<TValue> IVariableValueChangedEvent<TValue>.Variable => Variable;
-    Type IVariableValueChangedEvent.ValueType => typeof( TValue );
-    Type IVariableValueChangedEvent.ValidationResultType => typeof( TValidationResult );
-    IReadOnlyVariable IVariableValueChangedEvent.Variable => Variable;
-    object? IVariableValueChangedEvent.PreviousValue => PreviousValue;
-    object? IVariableValueChangedEvent.NewValue => NewValue;
+    IReadOnlyVariable<TValue> IVariableValueChangeEvent<TValue>.Variable => Variable;
+    Type IVariableValueChangeEvent.ValueType => typeof( TValue );
+    Type IVariableValueChangeEvent.ValidationResultType => typeof( TValidationResult );
+    IReadOnlyVariable IVariableValueChangeEvent.Variable => Variable;
+    object? IVariableValueChangeEvent.PreviousValue => PreviousValue;
+    object? IVariableValueChangeEvent.NewValue => NewValue;
+    IVariableNode IVariableNodeEvent.Variable => Variable;
 }

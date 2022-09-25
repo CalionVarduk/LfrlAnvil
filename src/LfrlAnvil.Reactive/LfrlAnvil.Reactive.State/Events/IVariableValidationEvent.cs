@@ -3,14 +3,12 @@ using System.Collections.Generic;
 
 namespace LfrlAnvil.Reactive.State.Events;
 
-public interface IVariableValidationEvent
+public interface IVariableValidationEvent : IVariableNodeEvent
 {
     Type ValueType { get; }
     Type ValidationResultType { get; }
-    IVariableValueChangedEvent? AssociatedChange { get; }
-    IReadOnlyVariable Variable { get; }
-    VariableState PreviousState { get; }
-    VariableState NewState { get; }
+    IVariableValueChangeEvent? AssociatedChange { get; }
+    new IReadOnlyVariable Variable { get; }
     IReadOnlyCollection<object?> PreviousErrors { get; }
     IReadOnlyCollection<object?> NewErrors { get; }
     IReadOnlyCollection<object?> PreviousWarnings { get; }
