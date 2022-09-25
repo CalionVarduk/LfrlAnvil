@@ -5,6 +5,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\LfrlAnvil.Validation\LfrlAnvil.Validation.csproj" />
         <ProjectReference Include="..\LfrlAnvil.Reactive.Core\LfrlAnvil.Reactive.Core.csproj" />
     </ItemGroup>
 
