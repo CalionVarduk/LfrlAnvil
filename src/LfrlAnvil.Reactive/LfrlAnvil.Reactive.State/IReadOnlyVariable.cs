@@ -10,7 +10,7 @@ public interface IReadOnlyVariable : IVariableNode
     Type ValueType { get; }
     Type ValidationResultType { get; }
     object? Value { get; }
-    object? OriginalValue { get; }
+    object? InitialValue { get; }
     IReadOnlyCollection<object?> Errors { get; }
     IReadOnlyCollection<object?> Warnings { get; }
     new IEventStream<IVariableValueChangeEvent> OnChange { get; }
@@ -20,7 +20,7 @@ public interface IReadOnlyVariable : IVariableNode
 public interface IReadOnlyVariable<TValue> : IReadOnlyVariable
 {
     new TValue Value { get; }
-    new TValue OriginalValue { get; }
+    new TValue InitialValue { get; }
     IEqualityComparer<TValue> Comparer { get; }
     new IEventStream<IVariableValueChangeEvent<TValue>> OnChange { get; }
 }

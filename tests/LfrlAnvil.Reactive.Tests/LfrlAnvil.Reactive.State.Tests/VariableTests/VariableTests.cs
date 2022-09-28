@@ -11,16 +11,16 @@ public class VariableTests : TestsBase
     [Fact]
     public void Ctor_ShouldReturnCorrectResult()
     {
-        var (originalValue, value) = Fixture.CreateDistinctCollection<int>( count: 2 );
+        var (initialValue, value) = Fixture.CreateDistinctCollection<int>( count: 2 );
         var comparer = EqualityComparerFactory<int>.Create( (a, b) => a == b );
         var errorsValidator = Substitute.For<IValidator<int, string>>();
         var warningsValidator = Substitute.For<IValidator<int, string>>();
-        var sut = new Variable<int, string>( originalValue, value, comparer, errorsValidator, warningsValidator );
+        var sut = new Variable<int, string>( initialValue, value, comparer, errorsValidator, warningsValidator );
 
         using ( new AssertionScope() )
         {
             sut.Parent.Should().BeNull();
-            sut.OriginalValue.Should().Be( originalValue );
+            sut.InitialValue.Should().Be( initialValue );
             sut.Value.Should().Be( value );
             sut.Comparer.Should().BeSameAs( comparer );
             sut.Errors.Should().BeEmpty();
@@ -33,7 +33,7 @@ public class VariableTests : TestsBase
             ((IReadOnlyVariable<int>)sut).OnChange.Should().BeSameAs( sut.OnChange );
             ((IReadOnlyVariable)sut).ValueType.Should().Be( typeof( int ) );
             ((IReadOnlyVariable)sut).ValidationResultType.Should().Be( typeof( string ) );
-            ((IReadOnlyVariable)sut).OriginalValue.Should().Be( sut.OriginalValue );
+            ((IReadOnlyVariable)sut).InitialValue.Should().Be( sut.InitialValue );
             ((IReadOnlyVariable)sut).Value.Should().Be( sut.Value );
             ((IReadOnlyVariable)sut).Errors.Should().BeSequentiallyEqualTo( sut.Errors );
             ((IReadOnlyVariable)sut).Warnings.Should().BeSequentiallyEqualTo( sut.Warnings );
@@ -43,6 +43,14 @@ public class VariableTests : TestsBase
             ((IVariableNode)sut).OnChange.Should().Be( sut.OnChange );
             ((IVariableNode)sut).GetChildren().Should().BeEmpty();
         }
+    }
+
+    [Fact]
+    public void Ctor_ShouldSetStateToDefault_WhenInitialValueEqualsValue()
+    {
+        var value = Fixture.Create<int>();
+        var sut = Variable.WithoutValidators<string>.Create( value );
+        sut.State.Should().Be( VariableState.Default );
     }
 
     [Fact]
@@ -70,9 +78,9 @@ public class VariableTests : TestsBase
     [Fact]
     public void ToString_ShouldReturnInformationAboutValueAndState()
     {
-        var (originalValue, value) = Fixture.CreateDistinctCollection<int>( count: 2 );
+        var (initialValue, value) = Fixture.CreateDistinctCollection<int>( count: 2 );
         var expected = $"Value: '{value}', State: Changed, ReadOnly";
-        var sut = Variable.WithoutValidators<string>.Create( originalValue, value );
+        var sut = Variable.WithoutValidators<string>.Create( initialValue, value );
         sut.SetReadOnly( true );
 
         var result = sut.ToString();
@@ -83,8 +91,8 @@ public class VariableTests : TestsBase
     [Fact]
     public void Dispose_ShouldDisposeUnderlyingOnChangeAndOnValidateEventPublishersAndAddReadOnlyAndDisposedState()
     {
-        var (originalValue, value) = Fixture.CreateDistinctCollection<int>( count: 2 );
-        var sut = Variable.WithoutValidators<string>.Create( originalValue, value );
+        var (initialValue, value) = Fixture.CreateDistinctCollection<int>( count: 2 );
+        var sut = Variable.WithoutValidators<string>.Create( initialValue, value );
 
         var onChange = sut.OnChange.Listen( Substitute.For<IEventListener<VariableValueChangeEvent<int, string>>>() );
         var onValidate = sut.OnValidate.Listen( Substitute.For<IEventListener<VariableValidationEvent<int, string>>>() );
@@ -737,13 +745,13 @@ public class VariableTests : TestsBase
     }
 
     [Fact]
-    public void Reset_ShouldUpdateOriginalValueAndValueAndResetFlagsAndValidation_WhenNewOriginalValueIsNotEqualToNewValue()
+    public void Reset_ShouldUpdateInitialValueAndValueAndResetFlagsAndValidation_WhenNewInitialValueIsNotEqualToNewValue()
     {
-        var (originalValue, value, newOriginalValue, newValue) = Fixture.CreateDistinctCollection<int>( count: 4 );
+        var (initialValue, value, newInitialValue, newValue) = Fixture.CreateDistinctCollection<int>( count: 4 );
         var (error, warning) = Fixture.CreateDistinctCollection<string>( count: 2 );
         var errorsValidator = Validators<string>.Fail<int>( error );
         var warningsValidator = Validators<string>.Fail<int>( warning );
-        var sut = Variable.Create( originalValue, value, errorsValidator, warningsValidator );
+        var sut = Variable.Create( initialValue, value, errorsValidator, warningsValidator );
         sut.Refresh();
 
         var onChangeEvents = new List<VariableValueChangeEvent<int, string>>();
@@ -751,12 +759,12 @@ public class VariableTests : TestsBase
         sut.OnChange.Listen( EventListener.Create<VariableValueChangeEvent<int, string>>( onChangeEvents.Add ) );
         sut.OnValidate.Listen( EventListener.Create<VariableValidationEvent<int, string>>( onValidateEvents.Add ) );
 
-        sut.Reset( newOriginalValue, newValue );
+        sut.Reset( newInitialValue, newValue );
 
         using ( new AssertionScope() )
         {
             sut.State.Should().Be( VariableState.Changed );
-            sut.OriginalValue.Should().Be( newOriginalValue );
+            sut.InitialValue.Should().Be( newInitialValue );
             sut.Value.Should().Be( newValue );
             sut.Errors.Should().BeEmpty();
             sut.Warnings.Should().BeEmpty();
@@ -788,13 +796,13 @@ public class VariableTests : TestsBase
     }
 
     [Fact]
-    public void Reset_ShouldUpdateOriginalValueAndValueAndResetFlagsAndValidation_WhenNewOriginalValueIsEqualToNewValue()
+    public void Reset_ShouldUpdateInitialValueAndValueAndResetFlagsAndValidation_WhenNewInitialValueIsEqualToNewValue()
     {
-        var (originalValue, value, newValue) = Fixture.CreateDistinctCollection<int>( count: 3 );
+        var (initialValue, value, newValue) = Fixture.CreateDistinctCollection<int>( count: 3 );
         var (error, warning) = Fixture.CreateDistinctCollection<string>( count: 2 );
         var errorsValidator = Validators<string>.Fail<int>( error );
         var warningsValidator = Validators<string>.Fail<int>( warning );
-        var sut = Variable.Create( originalValue, value, errorsValidator, warningsValidator );
+        var sut = Variable.Create( initialValue, value, errorsValidator, warningsValidator );
         sut.Refresh();
 
         var onChangeEvents = new List<VariableValueChangeEvent<int, string>>();
@@ -807,7 +815,7 @@ public class VariableTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.State.Should().Be( VariableState.Default );
-            sut.OriginalValue.Should().Be( newValue );
+            sut.InitialValue.Should().Be( newValue );
             sut.Value.Should().Be( newValue );
             sut.Errors.Should().BeEmpty();
             sut.Warnings.Should().BeEmpty();
@@ -841,8 +849,8 @@ public class VariableTests : TestsBase
     [Fact]
     public void Reset_ShouldPreserveReadOnlyFlag_WhenItIsEnabled()
     {
-        var (originalValue, value, newValue) = Fixture.CreateDistinctCollection<int>( count: 3 );
-        var sut = Variable.WithoutValidators<string>.Create( originalValue, value );
+        var (initialValue, value, newValue) = Fixture.CreateDistinctCollection<int>( count: 3 );
+        var sut = Variable.WithoutValidators<string>.Create( initialValue, value );
         sut.SetReadOnly( true );
 
         sut.Reset( newValue, newValue );
@@ -850,7 +858,7 @@ public class VariableTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.State.Should().Be( VariableState.ReadOnly );
-            sut.OriginalValue.Should().Be( newValue );
+            sut.InitialValue.Should().Be( newValue );
             sut.Value.Should().Be( newValue );
         }
     }
@@ -858,7 +866,7 @@ public class VariableTests : TestsBase
     [Fact]
     public void Reset_ShouldDoNothing_WhenVariableIsDisposed()
     {
-        var (value, newOriginalValue, newValue) = Fixture.CreateDistinctCollection<int>( count: 3 );
+        var (value, newInitialValue, newValue) = Fixture.CreateDistinctCollection<int>( count: 3 );
         var sut = Variable.WithoutValidators<string>.Create( value );
 
         var onChangeEvents = new List<VariableValueChangeEvent<int, string>>();
@@ -867,12 +875,12 @@ public class VariableTests : TestsBase
         sut.OnValidate.Listen( EventListener.Create<VariableValidationEvent<int, string>>( onValidateEvents.Add ) );
 
         sut.Dispose();
-        sut.Reset( newOriginalValue, newValue );
+        sut.Reset( newInitialValue, newValue );
 
         using ( new AssertionScope() )
         {
             sut.State.Should().Be( VariableState.ReadOnly | VariableState.Disposed );
-            sut.OriginalValue.Should().Be( value );
+            sut.InitialValue.Should().Be( value );
             sut.Value.Should().Be( value );
             sut.Errors.Should().BeEmpty();
             sut.Warnings.Should().BeEmpty();

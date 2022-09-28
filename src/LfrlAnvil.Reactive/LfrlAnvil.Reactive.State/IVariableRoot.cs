@@ -1,18 +1,9 @@
-﻿using LfrlAnvil.Reactive.State.Events;
+﻿namespace LfrlAnvil.Reactive.State;
 
-namespace LfrlAnvil.Reactive.State;
-
-public interface IVariableRoot : IVariableNode
-{
-    IVariableNodeCollection Nodes { get; }
-    new IEventStream<IVariableRootEvent> OnChange { get; }
-    new IEventStream<IVariableRootEvent> OnValidate { get; }
-}
-
-public interface IVariableRoot<TKey> : IVariableRoot
+public interface IVariableRoot<TKey> : IReadOnlyVariableRoot<TKey>
     where TKey : notnull
 {
-    new IVariableNodeCollection<TKey> Nodes { get; }
-    new IEventStream<IVariableRootEvent<TKey>> OnChange { get; }
-    new IEventStream<IVariableRootEvent<TKey>> OnValidate { get; }
+    void Refresh();
+    void RefreshValidation();
+    void ClearValidation();
 }

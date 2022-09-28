@@ -11,48 +11,48 @@ public static class Variable
     {
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static Variable<TValue, TValidationResult> Create<TValue>(TValue originalValue)
+        public static Variable<TValue, TValidationResult> Create<TValue>(TValue initialValue)
         {
-            return Create( originalValue, originalValue, EqualityComparer<TValue>.Default );
+            return Create( initialValue, initialValue, EqualityComparer<TValue>.Default );
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static Variable<TValue, TValidationResult> Create<TValue>(
-            TValue originalValue,
+            TValue initialValue,
             IEqualityComparer<TValue> comparer)
         {
-            return Create( originalValue, originalValue, comparer );
+            return Create( initialValue, initialValue, comparer );
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public static Variable<TValue, TValidationResult> Create<TValue>(TValue originalValue, TValue value)
+        public static Variable<TValue, TValidationResult> Create<TValue>(TValue initialValue, TValue value)
         {
-            return Create( originalValue, value, EqualityComparer<TValue>.Default );
+            return Create( initialValue, value, EqualityComparer<TValue>.Default );
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static Variable<TValue, TValidationResult> Create<TValue>(
-            TValue originalValue,
+            TValue initialValue,
             TValue value,
             IEqualityComparer<TValue> comparer)
         {
             var validator = Validators<TValidationResult>.Pass<TValue>();
-            return Variable.Create( originalValue, value, comparer, validator, validator );
+            return Variable.Create( initialValue, value, comparer, validator, validator );
         }
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Variable<TValue, TValidationResult> Create<TValue, TValidationResult>(
-        TValue originalValue,
+        TValue initialValue,
         IValidator<TValue, TValidationResult> errorsValidator)
     {
         return Create(
-            originalValue,
-            originalValue,
+            initialValue,
+            initialValue,
             EqualityComparer<TValue>.Default,
             errorsValidator,
             Validators<TValidationResult>.Pass<TValue>() );
@@ -61,22 +61,22 @@ public static class Variable
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Variable<TValue, TValidationResult> Create<TValue, TValidationResult>(
-        TValue originalValue,
+        TValue initialValue,
         IEqualityComparer<TValue> comparer,
         IValidator<TValue, TValidationResult> errorsValidator)
     {
-        return Create( originalValue, originalValue, comparer, errorsValidator, Validators<TValidationResult>.Pass<TValue>() );
+        return Create( initialValue, initialValue, comparer, errorsValidator, Validators<TValidationResult>.Pass<TValue>() );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Variable<TValue, TValidationResult> Create<TValue, TValidationResult>(
-        TValue originalValue,
+        TValue initialValue,
         TValue value,
         IValidator<TValue, TValidationResult> errorsValidator)
     {
         return Create(
-            originalValue,
+            initialValue,
             value,
             EqualityComparer<TValue>.Default,
             errorsValidator,
@@ -86,55 +86,55 @@ public static class Variable
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Variable<TValue, TValidationResult> Create<TValue, TValidationResult>(
-        TValue originalValue,
+        TValue initialValue,
         IValidator<TValue, TValidationResult> errorsValidator,
         IValidator<TValue, TValidationResult> warningsValidator)
     {
-        return Create( originalValue, originalValue, EqualityComparer<TValue>.Default, errorsValidator, warningsValidator );
+        return Create( initialValue, initialValue, EqualityComparer<TValue>.Default, errorsValidator, warningsValidator );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Variable<TValue, TValidationResult> Create<TValue, TValidationResult>(
-        TValue originalValue,
+        TValue initialValue,
         TValue value,
         IEqualityComparer<TValue> comparer,
         IValidator<TValue, TValidationResult> errorsValidator)
     {
-        return Create( originalValue, value, comparer, errorsValidator, Validators<TValidationResult>.Pass<TValue>() );
+        return Create( initialValue, value, comparer, errorsValidator, Validators<TValidationResult>.Pass<TValue>() );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Variable<TValue, TValidationResult> Create<TValue, TValidationResult>(
-        TValue originalValue,
+        TValue initialValue,
         IEqualityComparer<TValue> comparer,
         IValidator<TValue, TValidationResult> errorsValidator,
         IValidator<TValue, TValidationResult> warningsValidator)
     {
-        return Create( originalValue, originalValue, comparer, errorsValidator, warningsValidator );
+        return Create( initialValue, initialValue, comparer, errorsValidator, warningsValidator );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Variable<TValue, TValidationResult> Create<TValue, TValidationResult>(
-        TValue originalValue,
+        TValue initialValue,
         TValue value,
         IValidator<TValue, TValidationResult> errorsValidator,
         IValidator<TValue, TValidationResult> warningsValidator)
     {
-        return Create( originalValue, value, EqualityComparer<TValue>.Default, errorsValidator, warningsValidator );
+        return Create( initialValue, value, EqualityComparer<TValue>.Default, errorsValidator, warningsValidator );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Variable<TValue, TValidationResult> Create<TValue, TValidationResult>(
-        TValue originalValue,
+        TValue initialValue,
         TValue value,
         IEqualityComparer<TValue> comparer,
         IValidator<TValue, TValidationResult> errorsValidator,
         IValidator<TValue, TValidationResult> warningsValidator)
     {
-        return new Variable<TValue, TValidationResult>( originalValue, value, comparer, errorsValidator, warningsValidator );
+        return new Variable<TValue, TValidationResult>( initialValue, value, comparer, errorsValidator, warningsValidator );
     }
 }

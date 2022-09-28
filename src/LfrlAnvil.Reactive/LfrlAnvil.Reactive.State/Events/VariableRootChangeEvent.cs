@@ -3,7 +3,11 @@
 public class VariableRootChangeEvent<TKey> : IVariableRootEvent<TKey>
     where TKey : notnull
 {
-    public VariableRootChangeEvent(IVariableRoot<TKey> root, TKey nodeKey, IVariableNodeEvent sourceEvent, VariableState previousState)
+    public VariableRootChangeEvent(
+        IReadOnlyVariableRoot<TKey> root,
+        TKey nodeKey,
+        IVariableNodeEvent sourceEvent,
+        VariableState previousState)
     {
         Variable = root;
         NodeKey = nodeKey;
@@ -12,13 +16,13 @@ public class VariableRootChangeEvent<TKey> : IVariableRootEvent<TKey>
         NewState = Variable.State;
     }
 
-    public IVariableRoot<TKey> Variable { get; }
+    public IReadOnlyVariableRoot<TKey> Variable { get; }
     public TKey NodeKey { get; }
     public IVariableNodeEvent SourceEvent { get; }
     public VariableState PreviousState { get; }
     public VariableState NewState { get; }
 
-    IVariableRoot IVariableRootEvent.Variable => Variable;
+    IReadOnlyVariableRoot IVariableRootEvent.Variable => Variable;
     object IVariableRootEvent.NodeKey => NodeKey;
     IVariableNode IVariableNodeEvent.Variable => Variable;
 }

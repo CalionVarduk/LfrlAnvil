@@ -15,13 +15,13 @@ public class Variable<TValue, TValidationResult> : VariableNode, IVariable<TValu
     private VariableState _state;
 
     public Variable(
-        TValue originalValue,
+        TValue initialValue,
         TValue value,
         IEqualityComparer<TValue> comparer,
         IValidator<TValue, TValidationResult> errorsValidator,
         IValidator<TValue, TValidationResult> warningsValidator)
     {
-        OriginalValue = originalValue;
+        InitialValue = initialValue;
         Value = value;
         Comparer = comparer;
         ErrorsValidator = errorsValidator;
@@ -30,11 +30,11 @@ public class Variable<TValue, TValidationResult> : VariableNode, IVariable<TValu
         Warnings = Chain<TValidationResult>.Empty;
         _onChange = new EventPublisher<VariableValueChangeEvent<TValue, TValidationResult>>();
         _onValidate = new EventPublisher<VariableValidationEvent<TValue, TValidationResult>>();
-        _state = UpdateState( VariableState.Default, VariableState.Changed, ! Comparer.Equals( OriginalValue, Value ) );
+        _state = UpdateState( VariableState.Default, VariableState.Changed, ! Comparer.Equals( InitialValue, Value ) );
     }
 
     public TValue Value { get; private set; }
-    public TValue OriginalValue { get; private set; }
+    public TValue InitialValue { get; private set; }
     public IEqualityComparer<TValue> Comparer { get; }
     public Chain<TValidationResult> Errors { get; private set; }
     public Chain<TValidationResult> Warnings { get; private set; }
@@ -49,7 +49,7 @@ public class Variable<TValue, TValidationResult> : VariableNode, IVariable<TValu
     Type IReadOnlyVariable.ValueType => typeof( TValue );
     Type IReadOnlyVariable.ValidationResultType => typeof( TValidationResult );
     object? IReadOnlyVariable.Value => Value;
-    object? IReadOnlyVariable.OriginalValue => OriginalValue;
+    object? IReadOnlyVariable.InitialValue => InitialValue;
 
     IReadOnlyCollection<object?> IReadOnlyVariable.Errors => (IReadOnlyCollection<object?>)(IReadOnlyCollection<TValidationResult>)Errors;
 
@@ -152,7 +152,7 @@ public class Variable<TValue, TValidationResult> : VariableNode, IVariable<TValu
         OnPublishValidationEvent( validationEvent );
     }
 
-    public void Reset(TValue originalValue, TValue value)
+    public void Reset(TValue initialValue, TValue value)
     {
         if ( (_state & VariableState.Disposed) != VariableState.Default )
             return;
@@ -162,11 +162,11 @@ public class Variable<TValue, TValidationResult> : VariableNode, IVariable<TValu
         var previousWarnings = Warnings;
         var previousState = _state;
 
-        OriginalValue = originalValue;
+        InitialValue = initialValue;
         Value = value;
         Errors = Chain<TValidationResult>.Empty;
         Warnings = Chain<TValidationResult>.Empty;
-        _state = UpdateState( _state & VariableState.ReadOnly, VariableState.Changed, ! Comparer.Equals( OriginalValue, Value ) );
+        _state = UpdateState( _state & VariableState.ReadOnly, VariableState.Changed, ! Comparer.Equals( InitialValue, Value ) );
 
         PublishEvents( previousState, previousValue, previousErrors, previousWarnings, VariableChangeSource.Reset );
     }
@@ -192,7 +192,7 @@ public class Variable<TValue, TValidationResult> : VariableNode, IVariable<TValu
     }
 
     [Pure]
-    public sealed override IEnumerable<IVariableNode> GetChildren()
+    public override IEnumerable<IVariableNode> GetChildren()
     {
         return Array.Empty<IVariableNode>();
     }
@@ -212,9 +212,10 @@ public class Variable<TValue, TValidationResult> : VariableNode, IVariable<TValu
         Value = value;
         Errors = ErrorsValidator.Validate( Value );
         Warnings = WarningsValidator.Validate( Value );
-        _state = UpdateState( _state, VariableState.Changed, ! Comparer.Equals( OriginalValue, Value ) );
+        _state = UpdateState( _state, VariableState.Changed, ! Comparer.Equals( InitialValue, Value ) );
         _state = UpdateState( _state, VariableState.Invalid, Errors.Count > 0 );
         _state = UpdateState( _state, VariableState.Warning, Warnings.Count > 0 );
+        _state |= VariableState.Dirty;
     }
 
     protected virtual void UpdateReadOnly(bool enabled)
@@ -230,8 +231,6 @@ public class Variable<TValue, TValidationResult> : VariableNode, IVariable<TValu
         var previousState = _state;
 
         Update( value );
-        _state |= VariableState.Dirty;
-
         PublishEvents( previousState, previousValue, previousErrors, previousWarnings, changeSource );
     }
 

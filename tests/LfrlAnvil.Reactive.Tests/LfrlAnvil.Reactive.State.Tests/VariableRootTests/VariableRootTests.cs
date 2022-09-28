@@ -42,12 +42,12 @@ public class VariableRootTests : TestsBase
             ((IReadOnlyDictionary<string, IVariableNode>)sut.Nodes).Keys.Should().BeSameAs( sut.Nodes.Keys );
             ((IReadOnlyDictionary<string, IVariableNode>)sut.Nodes).Values.Should().BeSameAs( sut.Nodes.Values );
 
-            ((IVariableRoot<string>)sut).OnChange.Should().BeSameAs( sut.OnChange );
-            ((IVariableRoot<string>)sut).OnValidate.Should().BeSameAs( sut.OnValidate );
+            ((IReadOnlyVariableRoot<string>)sut).OnChange.Should().BeSameAs( sut.OnChange );
+            ((IReadOnlyVariableRoot<string>)sut).OnValidate.Should().BeSameAs( sut.OnValidate );
 
-            ((object)((IVariableRoot)sut).Nodes).Should().BeSameAs( sut.Nodes );
-            ((IVariableRoot)sut).OnChange.Should().BeSameAs( sut.OnChange );
-            ((IVariableRoot)sut).OnValidate.Should().BeSameAs( sut.OnValidate );
+            ((object)((IReadOnlyVariableRoot)sut).Nodes).Should().BeSameAs( sut.Nodes );
+            ((IReadOnlyVariableRoot)sut).OnChange.Should().BeSameAs( sut.OnChange );
+            ((IReadOnlyVariableRoot)sut).OnValidate.Should().BeSameAs( sut.OnValidate );
             ((IVariableNode)sut).OnChange.Should().BeSameAs( sut.OnChange );
             ((IVariableNode)sut).OnValidate.Should().BeSameAs( sut.OnValidate );
             ((IVariableNode)sut).GetChildren().Should().BeEmpty();
@@ -173,11 +173,27 @@ public class VariableRootTests : TestsBase
     }
 
     [Fact]
-    public void RegisterVariableRoot_ShouldThrowVariableNodeRegistrationException_WhenAttemptingToRegisterSelf()
+    public void RegisterNode_ShouldThrowVariableNodeRegistrationException_WhenAttemptingToRegisterSelf()
     {
         var sut = new VariableRootMock();
         var action = Lambda.Of( () => sut.ExposedRegisterNode( Fixture.Create<string>(), sut ) );
         action.Should().ThrowExactly<VariableNodeRegistrationException>().AndMatch( e => e.Parent == sut && e.Child == sut );
+    }
+
+    [Fact]
+    public void RegisterNode_ShouldThrowArgumentException_WhenNodeKeyAlreadyExists()
+    {
+        var value = Fixture.Create<int>();
+        var variable1 = Variable.WithoutValidators<string>.Create( value );
+        var variable2 = Variable.WithoutValidators<string>.Create( value );
+
+        var key = Fixture.Create<string>();
+        var sut = new VariableRootMock();
+        sut.ExposedRegisterNode( key, variable1 );
+
+        var action = Lambda.Of( () => sut.ExposedRegisterNode( key, variable2 ) );
+
+        action.Should().ThrowExactly<ArgumentException>();
     }
 
     [Fact]
@@ -205,8 +221,8 @@ public class VariableRootTests : TestsBase
     public void RegisterNode_ShouldAddFirstVariableNode_WhenVariableIsInChangedState()
     {
         var key = Fixture.Create<string>();
-        var (originalValue, value) = Fixture.CreateDistinctCollection<int>( count: 2 );
-        var variable = Variable.WithoutValidators<string>.Create( originalValue, value );
+        var (initialValue, value) = Fixture.CreateDistinctCollection<int>( count: 2 );
+        var variable = Variable.WithoutValidators<string>.Create( initialValue, value );
         var sut = new VariableRootMock();
 
         sut.ExposedRegisterNode( key, variable );
@@ -340,9 +356,9 @@ public class VariableRootTests : TestsBase
     public void RegisterNode_ShouldAddNextVariableNodeWithTheSameStateAsTheFirstVariable_WhenFirstVariableIsInChangedState()
     {
         var (key, nextKey) = Fixture.CreateDistinctCollection<string>( count: 2 );
-        var (originalValue, value, nextOriginalValue, nextValue) = Fixture.CreateDistinctCollection<int>( count: 4 );
-        var variable = Variable.WithoutValidators<string>.Create( originalValue, value );
-        var nextVariable = Variable.WithoutValidators<string>.Create( nextOriginalValue, nextValue );
+        var (initialValue, value, nextInitialValue, nextValue) = Fixture.CreateDistinctCollection<int>( count: 4 );
+        var variable = Variable.WithoutValidators<string>.Create( initialValue, value );
+        var nextVariable = Variable.WithoutValidators<string>.Create( nextInitialValue, nextValue );
         var sut = new VariableRootMock();
         sut.ExposedRegisterNode( key, variable );
 
@@ -466,8 +482,8 @@ public class VariableRootTests : TestsBase
     public void RegisterNode_ShouldAddNextVariableNodeWithDifferentState_WhenFirstVariableIsInChangedState()
     {
         var (key, nextKey) = Fixture.CreateDistinctCollection<string>( count: 2 );
-        var (originalValue, value, nextValue) = Fixture.CreateDistinctCollection<int>( count: 3 );
-        var variable = Variable.WithoutValidators<string>.Create( originalValue, value );
+        var (initialValue, value, nextValue) = Fixture.CreateDistinctCollection<int>( count: 3 );
+        var variable = Variable.WithoutValidators<string>.Create( initialValue, value );
         var nextVariable = Variable.WithoutValidators<string>.Create( nextValue );
         nextVariable.SetReadOnly( true );
         var sut = new VariableRootMock();
@@ -490,11 +506,11 @@ public class VariableRootTests : TestsBase
     public void RegisterNode_ShouldAddNextVariableNodeWithDifferentState_WhenFirstVariableIsInInvalidState()
     {
         var (key, nextKey) = Fixture.CreateDistinctCollection<string>( count: 2 );
-        var (value, nextOriginalValue, nextValue) = Fixture.CreateDistinctCollection<int>( count: 3 );
+        var (value, nextInitialValue, nextValue) = Fixture.CreateDistinctCollection<int>( count: 3 );
         var errorsValidator = Validators<string>.Fail<int>( Fixture.Create<string>() );
         var variable = Variable.Create( value, errorsValidator );
         variable.RefreshValidation();
-        var nextVariable = Variable.WithoutValidators<string>.Create( nextOriginalValue, nextValue );
+        var nextVariable = Variable.WithoutValidators<string>.Create( nextInitialValue, nextValue );
         var sut = new VariableRootMock();
         sut.ExposedRegisterNode( key, variable );
 
@@ -515,12 +531,12 @@ public class VariableRootTests : TestsBase
     public void RegisterNode_ShouldAddNextVariableNodeWithDifferentState_WhenFirstVariableIsInWarningState()
     {
         var (key, nextKey) = Fixture.CreateDistinctCollection<string>( count: 2 );
-        var (value, nextOriginalValue, nextValue) = Fixture.CreateDistinctCollection<int>( count: 3 );
+        var (value, nextInitialValue, nextValue) = Fixture.CreateDistinctCollection<int>( count: 3 );
         var errorsValidator = Validators<string>.Pass<int>();
         var warningsValidator = Validators<string>.Fail<int>( Fixture.Create<string>() );
         var variable = Variable.Create( value, errorsValidator, warningsValidator );
         variable.RefreshValidation();
-        var nextVariable = Variable.WithoutValidators<string>.Create( nextOriginalValue, nextValue );
+        var nextVariable = Variable.WithoutValidators<string>.Create( nextInitialValue, nextValue );
         var sut = new VariableRootMock();
         sut.ExposedRegisterNode( key, variable );
 
@@ -541,10 +557,10 @@ public class VariableRootTests : TestsBase
     public void RegisterNode_ShouldAddNextVariableNodeWithDifferentState_WhenFirstVariableIsInReadOnlyState()
     {
         var (key, nextKey) = Fixture.CreateDistinctCollection<string>( count: 2 );
-        var (value, nextOriginalValue, nextValue) = Fixture.CreateDistinctCollection<int>( count: 3 );
+        var (value, nextInitialValue, nextValue) = Fixture.CreateDistinctCollection<int>( count: 3 );
         var variable = Variable.WithoutValidators<string>.Create( value );
         variable.SetReadOnly( true );
-        var nextVariable = Variable.WithoutValidators<string>.Create( nextOriginalValue, nextValue );
+        var nextVariable = Variable.WithoutValidators<string>.Create( nextInitialValue, nextValue );
         var sut = new VariableRootMock();
         sut.ExposedRegisterNode( key, variable );
 
@@ -565,10 +581,10 @@ public class VariableRootTests : TestsBase
     public void RegisterNode_ShouldAddNextVariableNodeWithDifferentState_WhenFirstVariableIsInDirtyState()
     {
         var (key, nextKey) = Fixture.CreateDistinctCollection<string>( count: 2 );
-        var (value, nextOriginalValue, nextValue) = Fixture.CreateDistinctCollection<int>( count: 3 );
+        var (value, nextInitialValue, nextValue) = Fixture.CreateDistinctCollection<int>( count: 3 );
         var variable = Variable.WithoutValidators<string>.Create( value );
         variable.Refresh();
-        var nextVariable = Variable.WithoutValidators<string>.Create( nextOriginalValue, nextValue );
+        var nextVariable = Variable.WithoutValidators<string>.Create( nextInitialValue, nextValue );
         var sut = new VariableRootMock();
         sut.ExposedRegisterNode( key, variable );
 

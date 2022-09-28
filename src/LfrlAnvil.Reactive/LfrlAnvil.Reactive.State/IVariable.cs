@@ -5,5 +5,6 @@ public interface IVariable<TValue, TValidationResult> : IReadOnlyVariable<TValue
     VariableChangeResult TryChange(TValue value);
     VariableChangeResult Change(TValue value);
     void Refresh();
+    void RefreshValidation();
     void ClearValidation();
 }

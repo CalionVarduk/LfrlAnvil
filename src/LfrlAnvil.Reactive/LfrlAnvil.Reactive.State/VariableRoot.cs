@@ -34,12 +34,12 @@ public abstract class VariableRoot<TKey> : VariableNode, IVariableRoot<TKey>, IM
     public sealed override IEventStream<VariableRootChangeEvent<TKey>> OnChange => _onChange;
     public sealed override IEventStream<VariableRootValidationEvent<TKey>> OnValidate => _onValidate;
 
-    IEventStream<IVariableRootEvent<TKey>> IVariableRoot<TKey>.OnChange => _onChange;
-    IEventStream<IVariableRootEvent<TKey>> IVariableRoot<TKey>.OnValidate => _onValidate;
+    IEventStream<IVariableRootEvent<TKey>> IReadOnlyVariableRoot<TKey>.OnChange => _onChange;
+    IEventStream<IVariableRootEvent<TKey>> IReadOnlyVariableRoot<TKey>.OnValidate => _onValidate;
 
-    IVariableNodeCollection IVariableRoot.Nodes => _nodes;
-    IEventStream<IVariableRootEvent> IVariableRoot.OnChange => _onChange;
-    IEventStream<IVariableRootEvent> IVariableRoot.OnValidate => _onValidate;
+    IVariableNodeCollection IReadOnlyVariableRoot.Nodes => _nodes;
+    IEventStream<IVariableRootEvent> IReadOnlyVariableRoot.OnChange => _onChange;
+    IEventStream<IVariableRootEvent> IReadOnlyVariableRoot.OnValidate => _onValidate;
 
     IEventStream<IVariableNodeEvent> IVariableNode.OnChange => _onChange;
     IEventStream<IVariableNodeEvent> IVariableNode.OnValidate => _onValidate;
@@ -110,7 +110,7 @@ public abstract class VariableRoot<TKey> : VariableNode, IVariableRoot<TKey>, IM
     }
 
     [Pure]
-    public sealed override IEnumerable<IVariableNode> GetChildren()
+    public override IEnumerable<IVariableNode> GetChildren()
     {
         return _nodes.Values;
     }
