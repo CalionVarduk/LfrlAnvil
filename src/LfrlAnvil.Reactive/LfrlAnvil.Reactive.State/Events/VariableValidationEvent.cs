@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections;
 
 namespace LfrlAnvil.Reactive.State.Events;
 
@@ -36,16 +36,8 @@ public class VariableValidationEvent<TValue, TValidationResult> : IVariableValid
     IVariableValueChangeEvent? IVariableValidationEvent.AssociatedChange => AssociatedChange;
     IReadOnlyVariable IVariableValidationEvent.Variable => Variable;
     IVariableNode IVariableNodeEvent.Variable => Variable;
-
-    IReadOnlyCollection<object?> IVariableValidationEvent.PreviousErrors =>
-        (IReadOnlyCollection<object?>)(IReadOnlyCollection<TValidationResult>)PreviousErrors;
-
-    IReadOnlyCollection<object?> IVariableValidationEvent.NewErrors =>
-        (IReadOnlyCollection<object?>)(IReadOnlyCollection<TValidationResult>)NewErrors;
-
-    IReadOnlyCollection<object?> IVariableValidationEvent.PreviousWarnings =>
-        (IReadOnlyCollection<object?>)(IReadOnlyCollection<TValidationResult>)PreviousWarnings;
-
-    IReadOnlyCollection<object?> IVariableValidationEvent.NewWarnings =>
-        (IReadOnlyCollection<object?>)(IReadOnlyCollection<TValidationResult>)NewWarnings;
+    IEnumerable IVariableValidationEvent.PreviousErrors => PreviousErrors;
+    IEnumerable IVariableValidationEvent.NewErrors => NewErrors;
+    IEnumerable IVariableValidationEvent.PreviousWarnings => PreviousWarnings;
+    IEnumerable IVariableValidationEvent.NewWarnings => NewWarnings;
 }

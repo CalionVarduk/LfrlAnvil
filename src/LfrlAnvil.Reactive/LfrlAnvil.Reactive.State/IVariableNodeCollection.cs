@@ -6,13 +6,13 @@ namespace LfrlAnvil.Reactive.State;
 public interface IVariableNodeCollection : IEnumerable
 {
     int Count { get; }
-    IReadOnlyCollection<object> Keys { get; }
+    IEnumerable Keys { get; }
     IReadOnlyCollection<IVariableNode> Values { get; }
-    IReadOnlyCollection<object> ChangedNodeKeys { get; }
-    IReadOnlyCollection<object> InvalidNodeKeys { get; }
-    IReadOnlyCollection<object> WarningNodeKeys { get; }
-    IReadOnlyCollection<object> ReadOnlyNodeKeys { get; }
-    IReadOnlyCollection<object> DirtyNodeKeys { get; }
+    IEnumerable ChangedNodeKeys { get; }
+    IEnumerable InvalidNodeKeys { get; }
+    IEnumerable WarningNodeKeys { get; }
+    IEnumerable ReadOnlyNodeKeys { get; }
+    IEnumerable DirtyNodeKeys { get; }
 }
 
 public interface IVariableNodeCollection<TKey> : IReadOnlyDictionary<TKey, IVariableNode>, IVariableNodeCollection

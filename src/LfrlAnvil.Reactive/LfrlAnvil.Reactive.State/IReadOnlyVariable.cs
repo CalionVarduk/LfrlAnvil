@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using LfrlAnvil.Reactive.State.Events;
 using LfrlAnvil.Validation;
@@ -11,8 +12,8 @@ public interface IReadOnlyVariable : IVariableNode
     Type ValidationResultType { get; }
     object? Value { get; }
     object? InitialValue { get; }
-    IReadOnlyCollection<object?> Errors { get; }
-    IReadOnlyCollection<object?> Warnings { get; }
+    IEnumerable Errors { get; }
+    IEnumerable Warnings { get; }
     new IEventStream<IVariableValueChangeEvent> OnChange { get; }
     new IEventStream<IVariableValidationEvent> OnValidate { get; }
 }

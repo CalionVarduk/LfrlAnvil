@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using System.Runtime.CompilerServices;
 using LfrlAnvil.Reactive.State.Events;
 using LfrlAnvil.Reactive.State.Internal;
 using LfrlAnvil.Validation;
@@ -17,21 +17,28 @@ public class Variable<TValue, TValidationResult> : VariableNode, IVariable<TValu
     public Variable(
         TValue initialValue,
         TValue value,
-        IEqualityComparer<TValue> comparer,
-        IValidator<TValue, TValidationResult> errorsValidator,
-        IValidator<TValue, TValidationResult> warningsValidator)
+        IEqualityComparer<TValue>? comparer = null,
+        IValidator<TValue, TValidationResult>? errorsValidator = null,
+        IValidator<TValue, TValidationResult>? warningsValidator = null)
     {
         InitialValue = initialValue;
         Value = value;
-        Comparer = comparer;
-        ErrorsValidator = errorsValidator;
-        WarningsValidator = warningsValidator;
+        Comparer = comparer ?? EqualityComparer<TValue>.Default;
+        ErrorsValidator = errorsValidator ?? Validators<TValidationResult>.Pass<TValue>();
+        WarningsValidator = warningsValidator ?? Validators<TValidationResult>.Pass<TValue>();
         Errors = Chain<TValidationResult>.Empty;
         Warnings = Chain<TValidationResult>.Empty;
         _onChange = new EventPublisher<VariableValueChangeEvent<TValue, TValidationResult>>();
         _onValidate = new EventPublisher<VariableValidationEvent<TValue, TValidationResult>>();
-        _state = UpdateState( VariableState.Default, VariableState.Changed, ! Comparer.Equals( InitialValue, Value ) );
+        _state = CreateState( VariableState.Default, VariableState.Changed, ! Comparer.Equals( InitialValue, Value ) );
     }
+
+    public Variable(
+        TValue initialValue,
+        IEqualityComparer<TValue>? comparer = null,
+        IValidator<TValue, TValidationResult>? errorsValidator = null,
+        IValidator<TValue, TValidationResult>? warningsValidator = null)
+        : this( initialValue, initialValue, comparer, errorsValidator, warningsValidator ) { }
 
     public TValue Value { get; private set; }
     public TValue InitialValue { get; private set; }
@@ -50,11 +57,8 @@ public class Variable<TValue, TValidationResult> : VariableNode, IVariable<TValu
     Type IReadOnlyVariable.ValidationResultType => typeof( TValidationResult );
     object? IReadOnlyVariable.Value => Value;
     object? IReadOnlyVariable.InitialValue => InitialValue;
-
-    IReadOnlyCollection<object?> IReadOnlyVariable.Errors => (IReadOnlyCollection<object?>)(IReadOnlyCollection<TValidationResult>)Errors;
-
-    IReadOnlyCollection<object?> IReadOnlyVariable.Warnings =>
-        (IReadOnlyCollection<object?>)(IReadOnlyCollection<TValidationResult>)Warnings;
+    IEnumerable IReadOnlyVariable.Errors => Errors;
+    IEnumerable IReadOnlyVariable.Warnings => Warnings;
 
     IEventStream<IVariableValueChangeEvent> IReadOnlyVariable.OnChange => _onChange;
     IEventStream<IVariableValidationEvent> IReadOnlyVariable.OnValidate => _onValidate;
@@ -114,8 +118,8 @@ public class Variable<TValue, TValidationResult> : VariableNode, IVariable<TValu
         var previousState = _state;
         Errors = ErrorsValidator.Validate( Value );
         Warnings = WarningsValidator.Validate( Value );
-        _state = UpdateState( _state, VariableState.Invalid, Errors.Count > 0 );
-        _state = UpdateState( _state, VariableState.Warning, Warnings.Count > 0 );
+        _state = CreateState( _state, VariableState.Invalid, Errors.Count > 0 );
+        _state = CreateState( _state, VariableState.Warning, Warnings.Count > 0 );
 
         var validationEvent = new VariableValidationEvent<TValue, TValidationResult>(
             this,
@@ -166,7 +170,7 @@ public class Variable<TValue, TValidationResult> : VariableNode, IVariable<TValu
         Value = value;
         Errors = Chain<TValidationResult>.Empty;
         Warnings = Chain<TValidationResult>.Empty;
-        _state = UpdateState( _state & VariableState.ReadOnly, VariableState.Changed, ! Comparer.Equals( InitialValue, Value ) );
+        _state = CreateState( _state & VariableState.ReadOnly, VariableState.Changed, ! Comparer.Equals( InitialValue, Value ) );
 
         PublishEvents( previousState, previousValue, previousErrors, previousWarnings, VariableChangeSource.Reset );
     }
@@ -212,15 +216,15 @@ public class Variable<TValue, TValidationResult> : VariableNode, IVariable<TValu
         Value = value;
         Errors = ErrorsValidator.Validate( Value );
         Warnings = WarningsValidator.Validate( Value );
-        _state = UpdateState( _state, VariableState.Changed, ! Comparer.Equals( InitialValue, Value ) );
-        _state = UpdateState( _state, VariableState.Invalid, Errors.Count > 0 );
-        _state = UpdateState( _state, VariableState.Warning, Warnings.Count > 0 );
+        _state = CreateState( _state, VariableState.Changed, ! Comparer.Equals( InitialValue, Value ) );
+        _state = CreateState( _state, VariableState.Invalid, Errors.Count > 0 );
+        _state = CreateState( _state, VariableState.Warning, Warnings.Count > 0 );
         _state |= VariableState.Dirty;
     }
 
     protected virtual void UpdateReadOnly(bool enabled)
     {
-        _state = UpdateState( _state, VariableState.ReadOnly, enabled );
+        _state = CreateState( _state, VariableState.ReadOnly, enabled );
     }
 
     private void ChangeInternal(TValue value, VariableChangeSource changeSource)
@@ -252,12 +256,5 @@ public class Variable<TValue, TValidationResult> : VariableNode, IVariable<TValu
             changeEvent );
 
         OnPublishValidationEvent( validationEvent );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static VariableState UpdateState(VariableState current, VariableState value, bool enabled)
-    {
-        return enabled ? current | value : current & ~value;
     }
 }

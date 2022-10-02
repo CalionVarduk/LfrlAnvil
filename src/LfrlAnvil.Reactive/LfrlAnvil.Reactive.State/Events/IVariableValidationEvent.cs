@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections;
 
 namespace LfrlAnvil.Reactive.State.Events;
 
@@ -9,10 +9,10 @@ public interface IVariableValidationEvent : IVariableNodeEvent
     Type ValidationResultType { get; }
     IVariableValueChangeEvent? AssociatedChange { get; }
     new IReadOnlyVariable Variable { get; }
-    IReadOnlyCollection<object?> PreviousErrors { get; }
-    IReadOnlyCollection<object?> NewErrors { get; }
-    IReadOnlyCollection<object?> PreviousWarnings { get; }
-    IReadOnlyCollection<object?> NewWarnings { get; }
+    IEnumerable PreviousErrors { get; }
+    IEnumerable NewErrors { get; }
+    IEnumerable PreviousWarnings { get; }
+    IEnumerable NewWarnings { get; }
 }
 
 public interface IVariableValidationEvent<TValidationResult> : IVariableValidationEvent

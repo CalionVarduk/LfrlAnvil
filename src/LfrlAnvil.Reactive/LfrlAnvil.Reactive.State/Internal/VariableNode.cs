@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 using LfrlAnvil.Reactive.State.Events;
 
 namespace LfrlAnvil.Reactive.State.Internal;
@@ -24,5 +25,12 @@ public abstract class VariableNode : IVariableNode
         Ensure.IsNull( other.Parent, nameof( other ) + '.' + nameof( Parent ) );
         Ensure.NotRefEquals( this, other, "this" );
         other.Parent = this;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    protected static VariableState CreateState(VariableState current, VariableState value, bool enabled)
+    {
+        return enabled ? current | value : current & ~value;
     }
 }

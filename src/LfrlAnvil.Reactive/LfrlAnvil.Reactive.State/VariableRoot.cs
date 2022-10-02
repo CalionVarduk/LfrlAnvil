@@ -227,12 +227,12 @@ public abstract class VariableRoot<TKey> : VariableNode, IVariableRoot<TKey>, IM
         public IReadOnlySet<TKey> DirtyNodeKeys => DirtyNodes;
 
         IReadOnlyCollection<IVariableNode> IVariableNodeCollection.Values => Nodes.Values;
-        IReadOnlyCollection<object> IVariableNodeCollection.Keys => (IReadOnlyCollection<object>)Keys;
-        IReadOnlyCollection<object> IVariableNodeCollection.ChangedNodeKeys => (IReadOnlyCollection<object>)ChangedNodeKeys;
-        IReadOnlyCollection<object> IVariableNodeCollection.InvalidNodeKeys => (IReadOnlyCollection<object>)InvalidNodeKeys;
-        IReadOnlyCollection<object> IVariableNodeCollection.WarningNodeKeys => (IReadOnlyCollection<object>)WarningNodeKeys;
-        IReadOnlyCollection<object> IVariableNodeCollection.ReadOnlyNodeKeys => (IReadOnlyCollection<object>)ReadOnlyNodeKeys;
-        IReadOnlyCollection<object> IVariableNodeCollection.DirtyNodeKeys => (IReadOnlyCollection<object>)DirtyNodeKeys;
+        IEnumerable IVariableNodeCollection.Keys => Keys;
+        IEnumerable IVariableNodeCollection.ChangedNodeKeys => ChangedNodeKeys;
+        IEnumerable IVariableNodeCollection.InvalidNodeKeys => InvalidNodeKeys;
+        IEnumerable IVariableNodeCollection.WarningNodeKeys => WarningNodeKeys;
+        IEnumerable IVariableNodeCollection.ReadOnlyNodeKeys => ReadOnlyNodeKeys;
+        IEnumerable IVariableNodeCollection.DirtyNodeKeys => DirtyNodeKeys;
 
         IEnumerable<TKey> IReadOnlyDictionary<TKey, IVariableNode>.Keys => Keys;
         IEnumerable<IVariableNode> IReadOnlyDictionary<TKey, IVariableNode>.Values => Values;
