@@ -1,7 +1,10 @@
-﻿namespace LfrlAnvil.Reactive.State.Events;
+﻿using System;
+
+namespace LfrlAnvil.Reactive.State.Events;
 
 public interface IVariableRootEvent : IVariableNodeEvent
 {
+    Type KeyType { get; }
     new IReadOnlyVariableRoot Variable { get; }
     object NodeKey { get; }
     IVariableNodeEvent SourceEvent { get; }

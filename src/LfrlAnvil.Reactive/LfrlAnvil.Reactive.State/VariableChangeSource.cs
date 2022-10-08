@@ -6,5 +6,6 @@ public enum VariableChangeSource : byte
     TryChange = 1,
     Refresh = 2,
     Reset = 3,
-    SetReadOnly = 4
+    SetReadOnly = 4,
+    ChildNode = 5
 }

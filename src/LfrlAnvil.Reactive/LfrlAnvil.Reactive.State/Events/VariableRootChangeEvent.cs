@@ -1,4 +1,6 @@
-﻿namespace LfrlAnvil.Reactive.State.Events;
+﻿using System;
+
+namespace LfrlAnvil.Reactive.State.Events;
 
 public class VariableRootChangeEvent<TKey> : IVariableRootEvent<TKey>
     where TKey : notnull
@@ -22,6 +24,7 @@ public class VariableRootChangeEvent<TKey> : IVariableRootEvent<TKey>
     public VariableState PreviousState { get; }
     public VariableState NewState { get; }
 
+    Type IVariableRootEvent.KeyType => typeof( TKey );
     IReadOnlyVariableRoot IVariableRootEvent.Variable => Variable;
     object IVariableRootEvent.NodeKey => NodeKey;
     IVariableNode IVariableNodeEvent.Variable => Variable;

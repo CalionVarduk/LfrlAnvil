@@ -117,6 +117,12 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
     IEventStream<ICollectionVariableChangeEvent> IReadOnlyCollectionVariable.OnChange => _onChange;
     IEventStream<ICollectionVariableValidationEvent> IReadOnlyCollectionVariable.OnValidate => _onValidate;
 
+    [Pure]
+    public override string ToString()
+    {
+        return $"{nameof( Elements )}: {_elements.Count}, {nameof( State )}: {_state}";
+    }
+
     public virtual void Dispose()
     {
         _state |= VariableState.ReadOnly | VariableState.Disposed;
@@ -563,21 +569,25 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         return Array.Empty<IVariableNode>();
     }
 
+    [Pure]
     protected virtual bool ContinueElementAddition(TElement element)
     {
         return true;
     }
 
+    [Pure]
     protected virtual bool ContinueElementRemoval(TElement element)
     {
         return true;
     }
 
+    [Pure]
     protected virtual bool ContinueElementReplacement(TElement element, TElement replacement)
     {
         return true;
     }
 
+    [Pure]
     protected virtual IEnumerable<TElement> ModifyChangeInput(IEnumerable<TElement> elements)
     {
         return elements;
@@ -755,8 +765,11 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         {
             element = enumerator.Current;
             key = KeySelector( element );
-            if ( handledKeys.Add( key ) && CanAdd( key, element ) )
+            if ( ! handledKeys.Contains( key ) && CanAdd( key, element ) )
+            {
+                handledKeys.Add( key );
                 result.Add( (key, element) );
+            }
         }
 
         return result;
@@ -801,8 +814,11 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         while ( enumerator.MoveNext() )
         {
             key = enumerator.Current;
-            if ( handledKeys.Add( key ) && CanRemove( key, out element ) )
+            if ( ! handledKeys.Contains( key ) && CanRemove( key, out element ) )
+            {
+                handledKeys.Add( key );
                 result.Add( (key, element) );
+            }
         }
 
         return result;
@@ -852,8 +868,11 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         {
             element = enumerator.Current;
             key = KeySelector( element );
-            if ( handledKeys.Add( key ) && CanReplace( key, element, out replacedElement ) )
+            if ( ! handledKeys.Contains( key ) && CanReplace( key, element, out replacedElement ) )
+            {
+                handledKeys.Add( key );
                 result.Add( (key, element, replacedElement) );
+            }
         }
 
         return result;
@@ -903,8 +922,11 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         {
             element = enumerator.Current;
             key = KeySelector( element );
-            if ( handledKeys.Add( key ) && CanTryReplace( key, element, out replacedElement ) )
+            if ( ! handledKeys.Contains( key ) && CanTryReplace( key, element, out replacedElement ) )
+            {
+                handledKeys.Add( key );
                 result.Add( (key, element, replacedElement) );
+            }
         }
 
         return result;
@@ -949,8 +971,11 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         {
             var element = enumerator.Current;
             var key = KeySelector( element );
-            if ( handledKeys.Add( key ) && CanAddOrReplace( key, element, out changeDto ) )
+            if ( ! handledKeys.Contains( key ) && CanAddOrReplace( key, element, out changeDto ) )
+            {
+                handledKeys.Add( key );
                 result.Add( changeDto );
+            }
         }
 
         return result;
@@ -997,8 +1022,11 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         {
             var element = enumerator.Current;
             var key = KeySelector( element );
-            if ( handledKeys.Add( key ) && CanAddOrTryReplace( key, element, out changeDto ) )
+            if ( ! handledKeys.Contains( key ) && CanAddOrTryReplace( key, element, out changeDto ) )
+            {
+                handledKeys.Add( key );
                 result.Add( changeDto );
+            }
         }
 
         return result;
@@ -1130,8 +1158,11 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         while ( enumerator.MoveNext() )
         {
             key = enumerator.Current;
-            if ( handledKeys.Add( key ) && CanRefresh( key, out element ) )
+            if ( ! handledKeys.Contains( key ) && CanRefresh( key, out element ) )
+            {
+                handledKeys.Add( key );
                 result.Add( (key, element) );
+            }
         }
 
         return result;
@@ -1176,8 +1207,11 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         while ( enumerator.MoveNext() )
         {
             key = enumerator.Current;
-            if ( handledKeys.Add( key ) && CanClearValidation( key, out element ) )
+            if ( ! handledKeys.Contains( key ) && CanClearValidation( key, out element ) )
+            {
+                handledKeys.Add( key );
                 result.Add( (key, element) );
+            }
         }
 
         return result;
@@ -1765,10 +1799,10 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
             WarningsValidator = warningsValidator ?? Validators<TValidationResult>.Pass<TElement>();
 
             Elements = new Dictionary<TKey, TElement>( keyComparer );
-            Info = new Dictionary<TKey, ElementInfo>( keyComparer );
-            Invalid = new HashSet<TKey>( keyComparer );
-            Warning = new HashSet<TKey>( keyComparer );
-            Modified = new HashSet<TKey>( keyComparer );
+            Info = new Dictionary<TKey, ElementInfo>( Elements.Comparer );
+            Invalid = new HashSet<TKey>( Elements.Comparer );
+            Warning = new HashSet<TKey>( Elements.Comparer );
+            Modified = new HashSet<TKey>( Elements.Comparer );
 
             foreach ( var (key, element) in initialElements )
             {
@@ -1799,10 +1833,10 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
             WarningsValidator = warningsValidator ?? Validators<TValidationResult>.Pass<TElement>();
 
             Elements = new Dictionary<TKey, TElement>( keyComparer );
-            Info = new Dictionary<TKey, ElementInfo>( keyComparer );
-            Invalid = new HashSet<TKey>( keyComparer );
-            Warning = new HashSet<TKey>( keyComparer );
-            Modified = new HashSet<TKey>( keyComparer );
+            Info = new Dictionary<TKey, ElementInfo>( Elements.Comparer );
+            Invalid = new HashSet<TKey>( Elements.Comparer );
+            Warning = new HashSet<TKey>( Elements.Comparer );
+            Modified = new HashSet<TKey>( Elements.Comparer );
 
             foreach ( var element in elements )
             {

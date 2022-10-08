@@ -53,6 +53,20 @@ public partial class VariableRootTests : TestsBase
     }
 
     [Fact]
+    public void ToString_ShouldReturnInformationAboutNodeCountAndState()
+    {
+        var variable = Variable.WithoutValidators<string>.Create( Fixture.Create<int>(), Fixture.Create<int>() );
+        var expected = "Nodes: 1, State: Changed, ReadOnly";
+        var sut = new VariableRootMock();
+        sut.ExposedRegisterNode( Fixture.Create<string>(), variable );
+        sut.SetReadOnly( true );
+
+        var result = sut.ToString();
+
+        result.Should().Be( expected );
+    }
+
+    [Fact]
     public void Refresh_ShouldRefreshForAllRegisteredNodes()
     {
         var (key1, key2, key3, key4) = Fixture.CreateDistinctCollection<string>( count: 4 );

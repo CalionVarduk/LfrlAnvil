@@ -22,9 +22,12 @@ public abstract class VariableNode : IVariableNode
 
     protected void SetAsParentOf(VariableNode other)
     {
-        Ensure.IsNull( other.Parent, nameof( other ) + '.' + nameof( Parent ) );
-        Ensure.NotRefEquals( this, other, "this" );
-        other.Parent = this;
+        if ( ! ReferenceEquals( other.Parent, this ) )
+        {
+            Ensure.IsNull( other.Parent, nameof( other ) + '.' + nameof( Parent ) );
+            Ensure.NotRefEquals( this, other, "this" );
+            other.Parent = this;
+        }
     }
 
     [Pure]

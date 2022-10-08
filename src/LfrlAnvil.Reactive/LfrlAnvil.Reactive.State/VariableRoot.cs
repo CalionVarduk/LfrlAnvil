@@ -44,6 +44,12 @@ public abstract class VariableRoot<TKey> : VariableNode, IVariableRoot<TKey>, IM
     IEventStream<IVariableNodeEvent> IVariableNode.OnChange => _onChange;
     IEventStream<IVariableNodeEvent> IVariableNode.OnValidate => _onValidate;
 
+    [Pure]
+    public override string ToString()
+    {
+        return $"{nameof( Nodes )}: {_nodes.Count}, {nameof( State )}: {_state}";
+    }
+
     public virtual void Dispose()
     {
         if ( (_state & VariableState.Disposed) != VariableState.Default )
@@ -196,6 +202,37 @@ public abstract class VariableRoot<TKey> : VariableNode, IVariableRoot<TKey>, IM
         _state &= ~VariableState.ReadOnly;
     }
 
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private void OnNodeChanged(TKey nodeKey, IVariableNodeEvent @event)
+    {
+        var previousState = _state;
+
+        UpdateState( _nodes.ChangedNodes, nodeKey, @event.NewState, VariableState.Changed );
+        UpdateState( _nodes.DirtyNodes, nodeKey, @event.NewState, VariableState.Dirty );
+        UpdateReadOnlyState( nodeKey, @event.NewState );
+
+        var changeEvent = new VariableRootChangeEvent<TKey>( this, nodeKey, @event, previousState );
+        OnPublishChangeEvent( changeEvent );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private void OnNodeValidated(TKey nodeKey, IVariableNodeEvent @event)
+    {
+        var previousState = _state;
+
+        UpdateState( _nodes.InvalidNodes, nodeKey, @event.NewState, VariableState.Invalid );
+        UpdateState( _nodes.WarningNodes, nodeKey, @event.NewState, VariableState.Warning );
+
+        var validationEvent = new VariableRootValidationEvent<TKey>( this, nodeKey, @event, previousState );
+        OnPublishValidationEvent( validationEvent );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private void OnNodeDisposed(TKey nodeKey)
+    {
+        UpdateReadOnlyState( nodeKey, VariableState.ReadOnly );
+    }
+
     private sealed class NodeCollection : IVariableNodeCollection<TKey>
     {
         internal readonly Dictionary<TKey, IVariableNode> Nodes;
@@ -208,11 +245,11 @@ public abstract class VariableRoot<TKey> : VariableNode, IVariableRoot<TKey>, IM
         internal NodeCollection(IEqualityComparer<TKey> comparer)
         {
             Nodes = new Dictionary<TKey, IVariableNode>( comparer );
-            ChangedNodes = new HashSet<TKey>( comparer );
-            InvalidNodes = new HashSet<TKey>( comparer );
-            WarningNodes = new HashSet<TKey>( comparer );
-            ReadOnlyNodes = new HashSet<TKey>( comparer );
-            DirtyNodes = new HashSet<TKey>( comparer );
+            ChangedNodes = new HashSet<TKey>( Nodes.Comparer );
+            InvalidNodes = new HashSet<TKey>( Nodes.Comparer );
+            WarningNodes = new HashSet<TKey>( Nodes.Comparer );
+            ReadOnlyNodes = new HashSet<TKey>( Nodes.Comparer );
+            DirtyNodes = new HashSet<TKey>( Nodes.Comparer );
         }
 
         public int Count => Nodes.Count;
@@ -274,19 +311,12 @@ public abstract class VariableRoot<TKey> : VariableNode, IVariableRoot<TKey>, IM
 
         public override void React(IVariableNodeEvent @event)
         {
-            var previousState = _root._state;
-
-            _root.UpdateState( _root._nodes.ChangedNodes, _nodeKey, @event.NewState, VariableState.Changed );
-            _root.UpdateState( _root._nodes.DirtyNodes, _nodeKey, @event.NewState, VariableState.Dirty );
-            _root.UpdateReadOnlyState( _nodeKey, @event.NewState );
-
-            var rootEvent = new VariableRootChangeEvent<TKey>( _root, _nodeKey, @event, previousState );
-            _root.OnPublishChangeEvent( rootEvent );
+            _root.OnNodeChanged( _nodeKey, @event );
         }
 
         public override void OnDispose(DisposalSource source)
         {
-            _root.UpdateReadOnlyState( _nodeKey, VariableState.ReadOnly );
+            _root.OnNodeDisposed( _nodeKey );
         }
     }
 
@@ -303,13 +333,7 @@ public abstract class VariableRoot<TKey> : VariableNode, IVariableRoot<TKey>, IM
 
         public override void React(IVariableNodeEvent @event)
         {
-            var previousState = _root._state;
-
-            _root.UpdateState( _root._nodes.InvalidNodes, _nodeKey, @event.NewState, VariableState.Invalid );
-            _root.UpdateState( _root._nodes.WarningNodes, _nodeKey, @event.NewState, VariableState.Warning );
-
-            var rootEvent = new VariableRootValidationEvent<TKey>( _root, _nodeKey, @event, previousState );
-            _root.OnPublishValidationEvent( rootEvent );
+            _root.OnNodeValidated( _nodeKey, @event );
         }
 
         public override void OnDispose(DisposalSource source) { }

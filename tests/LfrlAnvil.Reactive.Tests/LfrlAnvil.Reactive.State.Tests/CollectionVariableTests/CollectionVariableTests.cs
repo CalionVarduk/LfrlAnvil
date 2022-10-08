@@ -9,6 +9,20 @@ namespace LfrlAnvil.Reactive.State.Tests.CollectionVariableTests;
 public partial class CollectionVariableTests : TestsBase
 {
     [Fact]
+    public void ToString_ShouldReturnInformationAboutElementCountAndState()
+    {
+        var (initialValue, value) = Fixture.CreateDistinctCollection<TestElement>( count: 2 );
+        var expected = "Elements: 1, State: Changed, ReadOnly";
+        var keySelector = Lambda.Of( (TestElement e) => e.Key );
+        var sut = CollectionVariable.WithoutValidators<string>.Create( new[] { initialValue }, new[] { value }, keySelector );
+        sut.SetReadOnly( true );
+
+        var result = sut.ToString();
+
+        result.Should().Be( expected );
+    }
+
+    [Fact]
     public void Dispose_ShouldDisposeUnderlyingOnChangeAndOnValidateEventPublishersAndAddReadOnlyAndDisposedState()
     {
         var (initialValue, value) = Fixture.CreateDistinctCollection<TestElement>( count: 2 );
