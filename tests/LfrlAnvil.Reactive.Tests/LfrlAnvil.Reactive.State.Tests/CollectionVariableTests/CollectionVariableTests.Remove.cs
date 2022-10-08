@@ -30,7 +30,7 @@ public partial class CollectionVariableTests
             result.Should().Be( VariableChangeResult.Changed );
             sut.State.Should().Be( VariableState.Changed | VariableState.Dirty );
             sut.Elements.Values.Should().BeEmpty();
-            sut.Elements.ModifiedKeys.Should().BeEquivalentTo( element.Key );
+            sut.Elements.ModifiedElementKeys.Should().BeEquivalentTo( element.Key );
             sut.Elements.GetState( element.Key ).Should().Be( CollectionVariableElementState.Removed );
             sut.Elements.GetErrors( element.Key ).Should().BeEmpty();
             sut.Elements.GetWarnings( element.Key ).Should().BeEmpty();
@@ -105,9 +105,9 @@ public partial class CollectionVariableTests
             sut.Errors.Should().BeSequentiallyEqualTo( error );
             sut.Warnings.Should().BeSequentiallyEqualTo( warning );
             sut.Elements.Values.Should().BeEmpty();
-            sut.Elements.ModifiedKeys.Should().BeEmpty();
-            sut.Elements.InvalidKeys.Should().BeEmpty();
-            sut.Elements.WarningKeys.Should().BeEmpty();
+            sut.Elements.ModifiedElementKeys.Should().BeEmpty();
+            sut.Elements.InvalidElementKeys.Should().BeEmpty();
+            sut.Elements.WarningElementKeys.Should().BeEmpty();
             sut.Elements.GetState( element.Key ).Should().Be( CollectionVariableElementState.NotFound );
             sut.Elements.GetErrors( element.Key ).Should().BeEmpty();
             sut.Elements.GetWarnings( element.Key ).Should().BeEmpty();
@@ -239,7 +239,7 @@ public partial class CollectionVariableTests
             result.Should().Be( VariableChangeResult.Changed );
             sut.State.Should().Be( VariableState.Changed | VariableState.Dirty );
             sut.Elements.Values.Should().BeEquivalentTo( allElements[0] );
-            sut.Elements.ModifiedKeys.Should().BeEquivalentTo( allElements[1].Key );
+            sut.Elements.ModifiedElementKeys.Should().BeEquivalentTo( allElements[1].Key );
             sut.Elements.GetState( allElements[0].Key ).Should().Be( CollectionVariableElementState.Default );
             sut.Elements.GetState( allElements[1].Key ).Should().Be( CollectionVariableElementState.Removed );
             sut.Elements.GetState( allElements[2].Key ).Should().Be( CollectionVariableElementState.NotFound );

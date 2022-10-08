@@ -1877,17 +1877,17 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         public int Count => Elements.Count;
         public IReadOnlyCollection<TKey> Keys => Elements.Keys;
         public IReadOnlyCollection<TElement> Values => Elements.Values;
-        public IReadOnlySet<TKey> InvalidKeys => Invalid;
-        public IReadOnlySet<TKey> WarningKeys => Warning;
-        public IReadOnlySet<TKey> ModifiedKeys => Modified;
+        public IReadOnlySet<TKey> InvalidElementKeys => Invalid;
+        public IReadOnlySet<TKey> WarningElementKeys => Warning;
+        public IReadOnlySet<TKey> ModifiedElementKeys => Modified;
         public IEqualityComparer<TKey> KeyComparer => Elements.Comparer;
         public TElement this[TKey key] => Elements[key];
 
         IEnumerable ICollectionVariableElements.Keys => Keys;
         IEnumerable ICollectionVariableElements.Values => Values;
-        IEnumerable ICollectionVariableElements.InvalidKeys => Invalid;
-        IEnumerable ICollectionVariableElements.WarningKeys => Warning;
-        IEnumerable ICollectionVariableElements.ModifiedKeys => Modified;
+        IEnumerable ICollectionVariableElements.InvalidElementKeys => Invalid;
+        IEnumerable ICollectionVariableElements.WarningElementKeys => Warning;
+        IEnumerable ICollectionVariableElements.ModifiedElementKeys => Modified;
         IEnumerable<TKey> IReadOnlyDictionary<TKey, TElement>.Keys => Keys;
         IEnumerable<TElement> IReadOnlyDictionary<TKey, TElement>.Values => Values;
 

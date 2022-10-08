@@ -44,7 +44,7 @@ public partial class CollectionVariableTests
             result.Should().Be( VariableChangeResult.Changed );
             sut.State.Should().Be( VariableState.Changed | VariableState.Dirty );
             sut.Elements.Values.Should().BeEquivalentTo( elements[0], elements[1], elements[2], elements[3], elements[7] );
-            sut.Elements.ModifiedKeys.Should().BeEquivalentTo( allElements[1].Key, allElements[3].Key, allElements[6].Key );
+            sut.Elements.ModifiedElementKeys.Should().BeEquivalentTo( allElements[1].Key, allElements[3].Key, allElements[6].Key );
             sut.Elements.GetState( allElements[0].Key ).Should().Be( CollectionVariableElementState.Default );
             sut.Elements.GetState( allElements[1].Key ).Should().Be( CollectionVariableElementState.Removed );
             sut.Elements.GetState( allElements[2].Key ).Should().Be( CollectionVariableElementState.Default );

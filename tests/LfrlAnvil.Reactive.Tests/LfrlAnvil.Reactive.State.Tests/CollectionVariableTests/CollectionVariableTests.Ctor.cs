@@ -41,9 +41,9 @@ public partial class CollectionVariableTests
             sut.Elements.KeyComparer.Should().BeSameAs( keyComparer );
             sut.Elements.Keys.Should().BeEmpty();
             sut.Elements.Values.Should().BeEmpty();
-            sut.Elements.InvalidKeys.Should().BeEmpty();
-            sut.Elements.WarningKeys.Should().BeEmpty();
-            sut.Elements.ModifiedKeys.Should().BeEmpty();
+            sut.Elements.InvalidElementKeys.Should().BeEmpty();
+            sut.Elements.WarningElementKeys.Should().BeEmpty();
+            sut.Elements.ModifiedElementKeys.Should().BeEmpty();
             sut.Elements.ErrorsValidator.Should().BeSameAs( elementErrorsValidator );
             sut.Elements.WarningsValidator.Should().BeSameAs( elementWarningsValidator );
             sut.KeySelector.Should().BeSameAs( keySelector );
@@ -74,9 +74,9 @@ public partial class CollectionVariableTests
             ((ICollectionVariableElements)sut.Elements).Count.Should().Be( sut.Elements.Count );
             ((ICollectionVariableElements)sut.Elements).Keys.Should().BeSameAs( sut.Elements.Keys );
             ((ICollectionVariableElements)sut.Elements).Values.Should().BeSameAs( sut.Elements.Values );
-            ((ICollectionVariableElements)sut.Elements).InvalidKeys.Should().BeSameAs( sut.Elements.InvalidKeys );
-            ((ICollectionVariableElements)sut.Elements).WarningKeys.Should().BeSameAs( sut.Elements.WarningKeys );
-            ((ICollectionVariableElements)sut.Elements).ModifiedKeys.Should().BeSameAs( sut.Elements.ModifiedKeys );
+            ((ICollectionVariableElements)sut.Elements).InvalidElementKeys.Should().BeSameAs( sut.Elements.InvalidElementKeys );
+            ((ICollectionVariableElements)sut.Elements).WarningElementKeys.Should().BeSameAs( sut.Elements.WarningElementKeys );
+            ((ICollectionVariableElements)sut.Elements).ModifiedElementKeys.Should().BeSameAs( sut.Elements.ModifiedElementKeys );
 
             ((IReadOnlyCollectionVariable<int, TestElement>)sut).Elements.Should().BeSameAs( sut.Elements );
             ((IReadOnlyCollectionVariable<int, TestElement>)sut).OnChange.Should().BeSameAs( sut.OnChange );
@@ -127,9 +127,9 @@ public partial class CollectionVariableTests
             sut.Elements.KeyComparer.Should().BeSameAs( keyComparer );
             sut.Elements.Keys.Should().BeEquivalentTo( elements.Select( e => e.Key ) );
             sut.Elements.Values.Should().BeEquivalentTo( elements );
-            sut.Elements.InvalidKeys.Should().BeEmpty();
-            sut.Elements.WarningKeys.Should().BeEmpty();
-            sut.Elements.ModifiedKeys.Should().BeEmpty();
+            sut.Elements.InvalidElementKeys.Should().BeEmpty();
+            sut.Elements.WarningElementKeys.Should().BeEmpty();
+            sut.Elements.ModifiedElementKeys.Should().BeEmpty();
             sut.Elements.ErrorsValidator.Should().BeSameAs( elementErrorsValidator );
             sut.Elements.WarningsValidator.Should().BeSameAs( elementWarningsValidator );
             sut.KeySelector.Should().BeSameAs( keySelector );
@@ -195,9 +195,9 @@ public partial class CollectionVariableTests
             sut.Elements.KeyComparer.Should().BeSameAs( keyComparer );
             sut.Elements.Keys.Should().BeEquivalentTo( element.Key );
             sut.Elements.Values.Should().BeEquivalentTo( element );
-            sut.Elements.InvalidKeys.Should().BeEmpty();
-            sut.Elements.WarningKeys.Should().BeEmpty();
-            sut.Elements.ModifiedKeys.Should().BeEquivalentTo( element.Key );
+            sut.Elements.InvalidElementKeys.Should().BeEmpty();
+            sut.Elements.WarningElementKeys.Should().BeEmpty();
+            sut.Elements.ModifiedElementKeys.Should().BeEquivalentTo( element.Key );
             sut.Elements.ErrorsValidator.Should().BeSameAs( elementErrorsValidator );
             sut.Elements.WarningsValidator.Should().BeSameAs( elementWarningsValidator );
             sut.KeySelector.Should().BeSameAs( keySelector );
@@ -253,9 +253,9 @@ public partial class CollectionVariableTests
             sut.Elements.KeyComparer.Should().BeSameAs( keyComparer );
             sut.Elements.Keys.Should().BeEquivalentTo( elements.Select( e => e.Key ) );
             sut.Elements.Values.Should().BeEquivalentTo( elements.AsEnumerable() );
-            sut.Elements.InvalidKeys.Should().BeEmpty();
-            sut.Elements.WarningKeys.Should().BeEmpty();
-            sut.Elements.ModifiedKeys.Should().BeEquivalentTo( elements[0].Key, elements[2].Key, initialElements[2].Key );
+            sut.Elements.InvalidElementKeys.Should().BeEmpty();
+            sut.Elements.WarningElementKeys.Should().BeEmpty();
+            sut.Elements.ModifiedElementKeys.Should().BeEquivalentTo( elements[0].Key, elements[2].Key, initialElements[2].Key );
             sut.Elements.ErrorsValidator.Should().BeSameAs( elementErrorsValidator );
             sut.Elements.WarningsValidator.Should().BeSameAs( elementWarningsValidator );
             sut.KeySelector.Should().BeSameAs( keySelector );
@@ -359,7 +359,7 @@ public partial class CollectionVariableTests
         {
             sut.Errors.Should().BeEmpty();
             sut.Elements.GetErrors( element.Key ).Should().BeEmpty();
-            sut.Elements.InvalidKeys.Should().BeEmpty();
+            sut.Elements.InvalidElementKeys.Should().BeEmpty();
             sut.Elements.GetState( element.Key ).Should().Be( CollectionVariableElementState.Default );
         }
     }
@@ -382,7 +382,7 @@ public partial class CollectionVariableTests
         {
             sut.Warnings.Should().BeEmpty();
             sut.Elements.GetWarnings( element.Key ).Should().BeEmpty();
-            sut.Elements.WarningKeys.Should().BeEmpty();
+            sut.Elements.WarningElementKeys.Should().BeEmpty();
             sut.Elements.GetState( element.Key ).Should().Be( CollectionVariableElementState.Default );
         }
     }

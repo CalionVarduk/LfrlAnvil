@@ -33,7 +33,7 @@ public partial class CollectionVariableTests
             result.Should().Be( VariableChangeResult.Changed );
             sut.State.Should().Be( VariableState.Changed | VariableState.Dirty );
             sut.Elements.Values.Should().BeEquivalentTo( element );
-            sut.Elements.ModifiedKeys.Should().BeEquivalentTo( element.Key );
+            sut.Elements.ModifiedElementKeys.Should().BeEquivalentTo( element.Key );
             sut.Elements.GetState( element.Key ).Should().Be( CollectionVariableElementState.Changed );
             sut.Elements.GetErrors( element.Key ).Should().BeEmpty();
             sut.Elements.GetWarnings( element.Key ).Should().BeEmpty();
@@ -136,9 +136,9 @@ public partial class CollectionVariableTests
             sut.Errors.Should().BeSequentiallyEqualTo( error );
             sut.Warnings.Should().BeSequentiallyEqualTo( warning );
             sut.Elements.Values.Should().BeEquivalentTo( element );
-            sut.Elements.ModifiedKeys.Should().BeEquivalentTo( element.Key );
-            sut.Elements.InvalidKeys.Should().BeEquivalentTo( element.Key );
-            sut.Elements.WarningKeys.Should().BeEquivalentTo( element.Key );
+            sut.Elements.ModifiedElementKeys.Should().BeEquivalentTo( element.Key );
+            sut.Elements.InvalidElementKeys.Should().BeEquivalentTo( element.Key );
+            sut.Elements.WarningElementKeys.Should().BeEquivalentTo( element.Key );
             sut.Elements.GetState( element.Key )
                 .Should()
                 .Be(
@@ -210,7 +210,7 @@ public partial class CollectionVariableTests
             result.Should().Be( VariableChangeResult.Changed );
             sut.State.Should().Be( VariableState.Changed | VariableState.Dirty );
             sut.Elements.Values.Should().BeEquivalentTo( element );
-            sut.Elements.ModifiedKeys.Should().BeEquivalentTo( element.Key );
+            sut.Elements.ModifiedElementKeys.Should().BeEquivalentTo( element.Key );
             sut.Elements.GetState( element.Key ).Should().Be( CollectionVariableElementState.Added );
             onChangeEvents.Should().HaveCount( 1 );
             onValidateEvents.Should().HaveCount( 1 );
@@ -345,7 +345,7 @@ public partial class CollectionVariableTests
             sut.Elements.Values.Should()
                 .BeEquivalentTo( allElements[0], allElements[1], elements[2], allElements[4], allElements[5], elements[8] );
 
-            sut.Elements.ModifiedKeys.Should()
+            sut.Elements.ModifiedElementKeys.Should()
                 .BeEquivalentTo( allElements[2].Key, allElements[3].Key, allElements[4].Key, allElements[5].Key, allElements[6].Key );
 
             sut.Elements.GetState( allElements[0].Key ).Should().Be( CollectionVariableElementState.Default );

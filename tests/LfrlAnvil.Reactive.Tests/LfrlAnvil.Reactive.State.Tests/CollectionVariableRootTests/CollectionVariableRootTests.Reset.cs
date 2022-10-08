@@ -151,8 +151,8 @@ public partial class CollectionVariableRootTests
 
             sut.State.Should().Be( VariableState.Changed | VariableState.ReadOnly );
             sut.Elements.Values.Should().BeEquivalentTo( elements[3], elements[5] );
-            sut.Elements.AddedElementKeys.Should().BeEquivalentTo(elements[5].Key);
-            sut.Elements.RemovedElementKeys.Should().BeEquivalentTo(elements[4].Key);
+            sut.Elements.AddedElementKeys.Should().BeEquivalentTo( elements[5].Key );
+            sut.Elements.RemovedElementKeys.Should().BeEquivalentTo( elements[4].Key );
             onChange.Should().HaveCount( 1 );
             onValidate.Should().HaveCount( 1 );
 

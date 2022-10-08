@@ -10,9 +10,9 @@ public interface ICollectionVariableElements : IEnumerable
     int Count { get; }
     IEnumerable Keys { get; }
     IEnumerable Values { get; }
-    IEnumerable InvalidKeys { get; }
-    IEnumerable WarningKeys { get; }
-    IEnumerable ModifiedKeys { get; }
+    IEnumerable InvalidElementKeys { get; }
+    IEnumerable WarningElementKeys { get; }
+    IEnumerable ModifiedElementKeys { get; }
 }
 
 public interface ICollectionVariableElements<TKey, TElement> : ICollectionVariableElements, IReadOnlyDictionary<TKey, TElement>
@@ -22,9 +22,9 @@ public interface ICollectionVariableElements<TKey, TElement> : ICollectionVariab
     new int Count { get; }
     new IReadOnlyCollection<TKey> Keys { get; }
     new IReadOnlyCollection<TElement> Values { get; }
-    new IReadOnlySet<TKey> InvalidKeys { get; }
-    new IReadOnlySet<TKey> WarningKeys { get; }
-    new IReadOnlySet<TKey> ModifiedKeys { get; }
+    new IReadOnlySet<TKey> InvalidElementKeys { get; }
+    new IReadOnlySet<TKey> WarningElementKeys { get; }
+    new IReadOnlySet<TKey> ModifiedElementKeys { get; }
     IEqualityComparer<TKey> KeyComparer { get; }
     IEqualityComparer<TElement> ElementComparer { get; }
 
