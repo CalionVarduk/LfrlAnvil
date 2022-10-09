@@ -1,5 +1,6 @@
 ﻿using FluentAssertions.Execution;
 using LfrlAnvil.Functional;
+using LfrlAnvil.Numerics;
 using LfrlAnvil.TestExtensions.Attributes;
 
 namespace LfrlAnvil.Chrono.Tests.DurationTests;
@@ -744,6 +745,82 @@ public class DurationTests : TestsBase
     {
         var sut = new Duration( ticks );
         var result = sut / divisor;
+        result.Ticks.Should().Be( expectedTicks );
+    }
+
+    [Theory]
+    [InlineData( 200, 60, 320 )]
+    [InlineData( 200, 120, 440 )]
+    [InlineData( 200, -60, 80 )]
+    [InlineData( 200, -120, -40 )]
+    [InlineData( -200, 60, -320 )]
+    [InlineData( -200, 120, -440 )]
+    [InlineData( -200, -60, -80 )]
+    [InlineData( -200, -120, 40 )]
+    public void AddOperator_ForTimeSpan_ShouldReturnCorrectResult(long ticks, int right, long expectedTicks)
+    {
+        var a = Duration.FromTicks( ticks );
+        var b = Percent.Create( right );
+
+        var result = a + b;
+
+        result.Ticks.Should().Be( expectedTicks );
+    }
+
+    [Theory]
+    [InlineData( 200, 60, 80 )]
+    [InlineData( 200, 120, -40 )]
+    [InlineData( 200, -60, 320 )]
+    [InlineData( 200, -120, 440 )]
+    [InlineData( -200, 60, -80 )]
+    [InlineData( -200, 120, 40 )]
+    [InlineData( -200, -60, -320 )]
+    [InlineData( -200, -120, -440 )]
+    public void SubtractOperator_ForTimeSpan_ShouldReturnCorrectResult(long ticks, int right, long expectedTicks)
+    {
+        var a = Duration.FromTicks( ticks );
+        var b = Percent.Create( right );
+
+        var result = a - b;
+
+        result.Ticks.Should().Be( expectedTicks );
+    }
+
+    [Theory]
+    [InlineData( 200, 60, 120 )]
+    [InlineData( 200, 120, 240 )]
+    [InlineData( 200, -60, -120 )]
+    [InlineData( 200, -120, -240 )]
+    [InlineData( -200, 60, -120 )]
+    [InlineData( -200, 120, -240 )]
+    [InlineData( -200, -60, 120 )]
+    [InlineData( -200, -120, 240 )]
+    public void MultiplyOperator_ForTimeSpan_ShouldReturnCorrectResult(long ticks, int right, long expectedTicks)
+    {
+        var a = Duration.FromTicks( ticks );
+        var b = Percent.Create( right );
+
+        var result = a * b;
+
+        result.Ticks.Should().Be( expectedTicks );
+    }
+
+    [Theory]
+    [InlineData( 180, 60, 300 )]
+    [InlineData( 240, 120, 200 )]
+    [InlineData( 180, -60, -300 )]
+    [InlineData( 240, -120, -200 )]
+    [InlineData( -180, 60, -300 )]
+    [InlineData( -240, 120, -200 )]
+    [InlineData( -180, -60, 300 )]
+    [InlineData( -240, -120, 200 )]
+    public void DivideOperator_ForTimeSpan_ShouldReturnCorrectResult(long ticks, int right, long expectedTicks)
+    {
+        var a = Duration.FromTicks( ticks );
+        var b = Percent.Create( right );
+
+        var result = a / b;
+
         result.Ticks.Should().Be( expectedTicks );
     }
 

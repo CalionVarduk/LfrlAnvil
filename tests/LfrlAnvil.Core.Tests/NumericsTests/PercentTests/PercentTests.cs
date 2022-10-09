@@ -462,6 +462,146 @@ public class PercentTests : TestsBase
     }
 
     [Theory]
+    [InlineData( 200, 60, 320 )]
+    [InlineData( 200, 120, 440 )]
+    [InlineData( 200, -60, 80 )]
+    [InlineData( 200, -120, -40 )]
+    [InlineData( -200, 60, -320 )]
+    [InlineData( -200, 120, -440 )]
+    [InlineData( -200, -60, -80 )]
+    [InlineData( -200, -120, 40 )]
+    public void AddOperator_ForInt64_ShouldReturnCorrectResult(long left, int right, long expected)
+    {
+        var b = Percent.Create( right );
+        var result = left + b;
+        result.Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( 200, 60, 80 )]
+    [InlineData( 200, 120, -40 )]
+    [InlineData( 200, -60, 320 )]
+    [InlineData( 200, -120, 440 )]
+    [InlineData( -200, 60, -80 )]
+    [InlineData( -200, 120, 40 )]
+    [InlineData( -200, -60, -320 )]
+    [InlineData( -200, -120, -440 )]
+    public void SubtractOperator_ForInt64_ShouldReturnCorrectResult(long left, int right, long expected)
+    {
+        var b = Percent.Create( right );
+        var result = left - b;
+        result.Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( 200, 60, 120 )]
+    [InlineData( 200, 120, 240 )]
+    [InlineData( 200, -60, -120 )]
+    [InlineData( 200, -120, -240 )]
+    [InlineData( -200, 60, -120 )]
+    [InlineData( -200, 120, -240 )]
+    [InlineData( -200, -60, 120 )]
+    [InlineData( -200, -120, 240 )]
+    public void MultiplyOperator_ForInt64_ShouldReturnCorrectResult(long left, int right, long expected)
+    {
+        var b = Percent.Create( right );
+        var result = left * b;
+        result.Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( 180, 60, 300 )]
+    [InlineData( 240, 120, 200 )]
+    [InlineData( 180, -60, -300 )]
+    [InlineData( 240, -120, -200 )]
+    [InlineData( -180, 60, -300 )]
+    [InlineData( -240, 120, -200 )]
+    [InlineData( -180, -60, 300 )]
+    [InlineData( -240, -120, 200 )]
+    public void DivideOperator_ForInt64_ShouldReturnCorrectResult(long left, int right, long expected)
+    {
+        var b = Percent.Create( right );
+        var result = left / b;
+        result.Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( 200, 60, 320 )]
+    [InlineData( 200, 120, 440 )]
+    [InlineData( 200, -60, 80 )]
+    [InlineData( 200, -120, -40 )]
+    [InlineData( -200, 60, -320 )]
+    [InlineData( -200, 120, -440 )]
+    [InlineData( -200, -60, -80 )]
+    [InlineData( -200, -120, 40 )]
+    public void AddOperator_ForTimeSpan_ShouldReturnCorrectResult(long left, int right, long expected)
+    {
+        var a = TimeSpan.FromTicks( left );
+        var b = Percent.Create( right );
+
+        var result = a + b;
+
+        result.Ticks.Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( 200, 60, 80 )]
+    [InlineData( 200, 120, -40 )]
+    [InlineData( 200, -60, 320 )]
+    [InlineData( 200, -120, 440 )]
+    [InlineData( -200, 60, -80 )]
+    [InlineData( -200, 120, 40 )]
+    [InlineData( -200, -60, -320 )]
+    [InlineData( -200, -120, -440 )]
+    public void SubtractOperator_ForTimeSpan_ShouldReturnCorrectResult(long left, int right, long expected)
+    {
+        var a = TimeSpan.FromTicks( left );
+        var b = Percent.Create( right );
+
+        var result = a - b;
+
+        result.Ticks.Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( 200, 60, 120 )]
+    [InlineData( 200, 120, 240 )]
+    [InlineData( 200, -60, -120 )]
+    [InlineData( 200, -120, -240 )]
+    [InlineData( -200, 60, -120 )]
+    [InlineData( -200, 120, -240 )]
+    [InlineData( -200, -60, 120 )]
+    [InlineData( -200, -120, 240 )]
+    public void MultiplyOperator_ForTimeSpan_ShouldReturnCorrectResult(long left, int right, long expected)
+    {
+        var a = TimeSpan.FromTicks( left );
+        var b = Percent.Create( right );
+
+        var result = a * b;
+
+        result.Ticks.Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( 180, 60, 300 )]
+    [InlineData( 240, 120, 200 )]
+    [InlineData( 180, -60, -300 )]
+    [InlineData( 240, -120, -200 )]
+    [InlineData( -180, 60, -300 )]
+    [InlineData( -240, 120, -200 )]
+    [InlineData( -180, -60, 300 )]
+    [InlineData( -240, -120, 200 )]
+    public void DivideOperator_ForTimeSpan_ShouldReturnCorrectResult(long left, int right, long expected)
+    {
+        var a = TimeSpan.FromTicks( left );
+        var b = Percent.Create( right );
+
+        var result = a / b;
+
+        result.Ticks.Should().Be( expected );
+    }
+
+    [Theory]
     [InlineData( 1, 1, true )]
     [InlineData( 1, 2, false )]
     [InlineData( 2, 1, false )]

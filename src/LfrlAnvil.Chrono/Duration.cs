@@ -3,6 +3,7 @@ using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Exceptions;
+using LfrlAnvil.Numerics;
 
 namespace LfrlAnvil.Chrono;
 
@@ -454,6 +455,30 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     public static Duration operator /(Duration a, double b)
     {
         return a.Divide( b );
+    }
+
+    [Pure]
+    public static Duration operator +(Duration left, Percent right)
+    {
+        return new Duration( left.Ticks + right );
+    }
+
+    [Pure]
+    public static Duration operator -(Duration left, Percent right)
+    {
+        return new Duration( left.Ticks - right );
+    }
+
+    [Pure]
+    public static Duration operator *(Duration left, Percent right)
+    {
+        return new Duration( left.Ticks * right );
+    }
+
+    [Pure]
+    public static Duration operator /(Duration left, Percent right)
+    {
+        return new Duration( left.Ticks / right );
     }
 
     [Pure]

@@ -252,6 +252,54 @@ public readonly struct Percent : IEquatable<Percent>, IComparable<Percent>, ICom
     }
 
     [Pure]
+    public static long operator +(long left, Percent right)
+    {
+        return (long)Math.Round( (decimal)left + right, 0, MidpointRounding.AwayFromZero );
+    }
+
+    [Pure]
+    public static long operator -(long left, Percent right)
+    {
+        return (long)Math.Round( (decimal)left - right, 0, MidpointRounding.AwayFromZero );
+    }
+
+    [Pure]
+    public static long operator *(long left, Percent right)
+    {
+        return (long)Math.Round( (decimal)left * right, 0, MidpointRounding.AwayFromZero );
+    }
+
+    [Pure]
+    public static long operator /(long left, Percent right)
+    {
+        return (long)Math.Round( (decimal)left / right, 0, MidpointRounding.AwayFromZero );
+    }
+
+    [Pure]
+    public static TimeSpan operator +(TimeSpan left, Percent right)
+    {
+        return new TimeSpan( left.Ticks + right );
+    }
+
+    [Pure]
+    public static TimeSpan operator -(TimeSpan left, Percent right)
+    {
+        return new TimeSpan( left.Ticks - right );
+    }
+
+    [Pure]
+    public static TimeSpan operator *(TimeSpan left, Percent right)
+    {
+        return new TimeSpan( left.Ticks * right );
+    }
+
+    [Pure]
+    public static TimeSpan operator /(TimeSpan left, Percent right)
+    {
+        return new TimeSpan( left.Ticks / right );
+    }
+
+    [Pure]
     public static bool operator ==(Percent left, Percent right)
     {
         return left.Equals( right );
