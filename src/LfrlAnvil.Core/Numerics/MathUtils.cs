@@ -135,6 +135,7 @@ public static class MathUtils
     [Pure]
     public static (ulong QuotientHigh, ulong QuotientLow, ulong Remainder) BigDivU128(ulong leftHigh, ulong leftLow, ulong right)
     {
+        // NOTE: adapted from System.Numerics.BigInteger division implementation
         var right1 = unchecked( (uint)(right >> 32) );
 
         if ( right1 == 0 )

@@ -7,7 +7,7 @@ using LfrlAnvil.Extensions;
 
 void ModifyBenchmarksToRun(CommandLineBenchmarkOptions options)
 {
-    options.StructEquality = true;
+    options.Fixed = true;
 }
 
 {

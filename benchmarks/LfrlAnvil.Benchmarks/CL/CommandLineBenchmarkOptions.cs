@@ -23,4 +23,8 @@ public class CommandLineBenchmarkOptions
     [CommandLineBenchmark( typeof( RequestDispatcherBenchmark ) )]
     [Option( "request-dispatcher", Default = false, Required = false, HelpText = "Run request dispatcher benchmark." )]
     public bool RequestDispatcher { get; set; }
+
+    [CommandLineBenchmark( typeof( FixedBenchmark ) )]
+    [Option( "fixed", Default = false, Required = false, HelpText = "Run fixed benchmark." )]
+    public bool Fixed { get; set; }
 }
