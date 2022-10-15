@@ -4,8 +4,6 @@
 
 // TODO:
 // ideas for other LfrlAnvil.Computable projects:
-// FixedDecimal struct
-// Percent struct
 // Complex struct
 // Structures representing values with units
 // ^ values can be generic (.NET7 static interface members would be very useful, so that the structures can have math operators)
