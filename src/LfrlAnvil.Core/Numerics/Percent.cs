@@ -44,7 +44,13 @@ public readonly struct Percent : IEquatable<Percent>, IComparable<Percent>, ICom
     [Pure]
     public override string ToString()
     {
-        return ToString( "P2", NumberFormatInfo.CurrentInfo );
+        return ToString( NumberFormatInfo.CurrentInfo );
+    }
+
+    [Pure]
+    public string ToString(IFormatProvider? formatProvider)
+    {
+        return ToString( "P2", formatProvider );
     }
 
     [Pure]
