@@ -42,17 +42,6 @@ public static class MathUtils
     }
 
     [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static (ulong High, ulong Low, int Sign) BigMul128(long left, long right)
-    {
-        var sign = 1;
-        var l = ToUnsigned( left, ref sign );
-        var r = ToUnsigned( right, ref sign );
-        var high = Math.BigMul( l, r, out var low );
-        return (high, low, sign);
-    }
-
-    [Pure]
     public static (ulong QuotientHigh, ulong QuotientLow, ulong Remainder) BigDivU128(ulong leftHigh, ulong leftLow, uint right)
     {
         if ( right == 0 )

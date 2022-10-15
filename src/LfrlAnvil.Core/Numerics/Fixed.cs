@@ -610,16 +610,26 @@ public readonly struct Fixed : IEquatable<Fixed>, IComparable<Fixed>, IComparabl
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static Fixed MultiplyInternal(long rawLeft, long rawRight, byte precision)
     {
-        var (preciseResultHigh, preciseResultLow, sign) = MathUtils.BigMul128( rawLeft, rawRight );
-        var (resultHigh, resultLow, remainder) = MathUtils.BigDivU128( preciseResultHigh, preciseResultLow, (ulong)PowersOfTen[precision] );
+        var sign = 1;
+        var left = MathUtils.ToUnsigned( rawLeft, ref sign );
+        var right = MathUtils.ToUnsigned( rawRight, ref sign );
+
+        ulong unsignedResult, remainder;
+        var (resultHigh, resultLow) = MathUtils.BigMulU128( left, right );
 
         if ( resultHigh > 0 )
-            ExceptionThrower.Throw( new OverflowException() );
+        {
+            (var resultOverflow, unsignedResult, remainder) = MathUtils.BigDivU128( resultHigh, resultLow, (ulong)PowersOfTen[precision] );
+            if ( resultOverflow > 0 )
+                ExceptionThrower.Throw( new OverflowException() );
+        }
+        else
+            (unsignedResult, remainder) = Math.DivRem( resultLow, (ulong)PowersOfTen[precision] );
 
         if ( remainder > 0 && remainder >= (ulong)PowersOfTen[precision] >> 1 )
-            resultLow = checked( resultLow + 1 );
+            unsignedResult = checked( unsignedResult + 1 );
 
-        var result = MathUtils.ToSigned( resultLow, sign );
+        var result = MathUtils.ToSigned( unsignedResult, sign );
         return new Fixed( result, precision );
     }
 
@@ -629,18 +639,24 @@ public readonly struct Fixed : IEquatable<Fixed>, IComparable<Fixed>, IComparabl
     {
         var sign = 1;
         var left = MathUtils.ToUnsigned( rawLeft, ref sign );
+        var right = MathUtils.ToUnsigned( rawRight, ref sign );
+
+        ulong unsignedResult, remainder;
         var (leftHigh, leftLow) = MathUtils.BigMulU128( left, (ulong)PowersOfTen[precision] );
 
-        var right = MathUtils.ToUnsigned( rawRight, ref sign );
-        var (resultHigh, resultLow, remainder) = MathUtils.BigDivU128( leftHigh, leftLow, right );
-
-        if ( resultHigh > 0 )
-            ExceptionThrower.Throw( new OverflowException() );
+        if ( leftHigh > 0 )
+        {
+            (var resultOverflow, unsignedResult, remainder) = MathUtils.BigDivU128( leftHigh, leftLow, right );
+            if ( resultOverflow > 0 )
+                ExceptionThrower.Throw( new OverflowException() );
+        }
+        else
+            (unsignedResult, remainder) = Math.DivRem( leftLow, right );
 
         if ( remainder >= (right.IsEven() ? right >> 1 : (right >> 1) + 1) )
-            resultLow = checked( resultLow + 1 );
+            unsignedResult = checked( unsignedResult + 1 );
 
-        var result = MathUtils.ToSigned( resultLow, sign );
+        var result = MathUtils.ToSigned( unsignedResult, sign );
         return new Fixed( result, precision );
     }
 }

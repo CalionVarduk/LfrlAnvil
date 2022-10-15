@@ -97,32 +97,6 @@ public class MathUtilsTests : TestsBase
     }
 
     [Theory]
-    [InlineData( 0, 0, 0, 0, 1 )]
-    [InlineData( 100, 200, 0, 20000, 1 )]
-    [InlineData( -100, 200, 0, 20000, -1 )]
-    [InlineData( 100, -200, 0, 20000, -1 )]
-    [InlineData( -100, -200, 0, 20000, 1 )]
-    [InlineData( long.MaxValue, 1, 0, (ulong)long.MaxValue, 1 )]
-    [InlineData( long.MinValue, 1, 0, (ulong)long.MaxValue + 1, -1 )]
-    [InlineData( -1, long.MaxValue, 0, (ulong)long.MaxValue, -1 )]
-    [InlineData( -1, long.MinValue, 0, (ulong)long.MaxValue + 1, 1 )]
-    [InlineData( 3, 6148914691236517205, 0, ulong.MaxValue, 1 )]
-    [InlineData( 1L << 62, 4, 1, 0, 1 )]
-    [InlineData( long.MaxValue, long.MaxValue, 4611686018427387903UL, 1, 1 )]
-    [InlineData( long.MinValue, long.MinValue, 4611686018427387904UL, 0, 1 )]
-    public void BigMul128_ShouldReturnCorrectResult(long a, long b, ulong expectedHigh, ulong expectedLow, int expectedSign)
-    {
-        var (high, low, sign) = MathUtils.BigMul128( a, b );
-
-        using ( new AssertionScope() )
-        {
-            high.Should().Be( expectedHigh );
-            low.Should().Be( expectedLow );
-            sign.Should().Be( expectedSign );
-        }
-    }
-
-    [Theory]
     [InlineData( 0, 0, 1, 0, 0, 0 )]
     [InlineData( 0, 0, ulong.MaxValue, 0, 0, 0 )]
     [InlineData( 0, 6, 2, 0, 3, 0 )]
