@@ -1,9 +1,12 @@
 ﻿using FluentAssertions.Execution;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Numerics;
+using LfrlAnvil.TestExtensions.Attributes;
+using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.NumericsTests.MathUtilsTests;
 
+[TestClass( typeof( MathUtilsTestsData ) )]
 public class MathUtilsTests : TestsBase
 {
     [Theory]
@@ -134,5 +137,27 @@ public class MathUtilsTests : TestsBase
     {
         var action = Lambda.Of( () => MathUtils.BigDivU128( Fixture.Create<ulong>(), Fixture.Create<ulong>(), 0 ) );
         action.Should().ThrowExactly<DivideByZeroException>();
+    }
+
+    [Theory]
+    [MethodData( nameof( MathUtilsTestsData.GetPartitionData ) )]
+    public void Partition_ShouldReturnCorrectResult_WhenPartCountIsGreaterThanZero(ulong value, int partCount, ulong[] expected)
+    {
+        var result = MathUtils.Partition( value, partCount );
+        result.Should().BeSequentiallyEqualTo( expected );
+    }
+
+    [Fact]
+    public void Partition_ShouldReturnEmptyResult_WhenPartCountEqualsZero()
+    {
+        var result = MathUtils.Partition( Fixture.Create<ulong>(), partCount: 0 );
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Partition_ShouldThrowArgumentOutOfRangeException_WhenPartCountIsLessThanZero()
+    {
+        var action = Lambda.Of( () => MathUtils.Partition( Fixture.Create<ulong>(), partCount: -1 ) );
+        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
 }

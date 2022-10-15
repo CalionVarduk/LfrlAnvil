@@ -1151,14 +1151,12 @@ public class ReactiveTimerTests : TestsBase
         await Task.Delay( 1 );
         var result = sut.Stop();
         var isRunning = sut.IsRunning;
-        var canBeStarted = sut.CanBeStarted;
         await task;
 
         using ( new AssertionScope() )
         {
             result.Should().BeTrue();
             isRunning.Should().BeFalse();
-            canBeStarted.Should().BeFalse();
             sut.IsRunning.Should().BeFalse();
             sut.CanBeStarted.Should().BeTrue();
             sut.IsDisposed.Should().BeFalse();
