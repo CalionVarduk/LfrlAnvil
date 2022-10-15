@@ -63,7 +63,7 @@ public class PercentTests : TestsBase
     [Fact]
     public void ToString_ShouldReturnCorrectResult()
     {
-        var expected = 123.4567m.ToString( "N2", NumberFormatInfo.CurrentInfo ) + "%";
+        var expected = 1.234567m.ToString( "P2", NumberFormatInfo.CurrentInfo );
         var sut = Percent.Create( 123.4567m );
         var result = sut.ToString();
         result.Should().Be( expected );

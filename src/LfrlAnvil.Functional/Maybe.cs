@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Exceptions;
 using LfrlAnvil.Functional.Exceptions;
 using LfrlAnvil.Internal;
 
@@ -60,10 +61,10 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IReadOnlyCollection<T>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public T GetValue()
     {
-        if ( HasValue )
-            return Value;
+        if ( ! HasValue )
+            ExceptionThrower.Throw( new ValueAccessException( Resources.MissingMaybeValue<T>(), nameof( Value ) ) );
 
-        throw new ValueAccessException( Resources.MissingMaybeValue<T>(), nameof( Value ) );
+        return Value;
     }
 
     [Pure]

@@ -3,6 +3,7 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Exceptions;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Generators;
 using LfrlAnvil.Identifiers.Exceptions;
@@ -118,12 +119,12 @@ public sealed class IdentifierGenerator : IIdentifierGenerator
     public Identifier Generate()
     {
         if ( ! TryGenerate( out var id ) )
-            throw new IdentifierGenerationException();
+            ExceptionThrower.Throw( new IdentifierGenerationException() );
 
         return id;
     }
 
-    public bool TryGenerate(out Identifier id)
+    public bool TryGenerate(out Identifier result)
     {
         var highValue = GetCurrentHighValue();
 
@@ -131,17 +132,17 @@ public sealed class IdentifierGenerator : IIdentifierGenerator
         {
             if ( highValue > _maxHighValue )
             {
-                id = default;
+                result = default;
                 return false;
             }
 
-            id = CreateNextId( highValue );
+            result = CreateNextId( highValue );
             return true;
         }
 
         if ( LastLowValue < LowValueBounds.Max )
         {
-            id = CreateNextId();
+            result = CreateNextId();
             return true;
         }
 
@@ -155,11 +156,11 @@ public sealed class IdentifierGenerator : IIdentifierGenerator
 
         if ( highValue > _maxHighValue )
         {
-            id = default;
+            result = default;
             return false;
         }
 
-        id = CreateNextId( highValue );
+        result = CreateNextId( highValue );
         return true;
     }
 

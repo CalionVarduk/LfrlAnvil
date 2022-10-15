@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Exceptions;
 using LfrlAnvil.Functional.Exceptions;
 using LfrlAnvil.Internal;
 
@@ -72,10 +73,10 @@ public readonly struct Unsafe<T> : IUnsafe, IEquatable<Unsafe<T>>, IReadOnlyColl
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public T GetValue()
     {
-        if ( IsOk )
-            return Value;
+        if ( ! IsOk )
+            ExceptionThrower.Throw( new ValueAccessException( Resources.MissingUnsafeValue<T>(), nameof( Value ) ) );
 
-        throw new ValueAccessException( Resources.MissingUnsafeValue<T>(), nameof( Value ) );
+        return Value;
     }
 
     [Pure]
@@ -96,10 +97,10 @@ public readonly struct Unsafe<T> : IUnsafe, IEquatable<Unsafe<T>>, IReadOnlyColl
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Exception GetError()
     {
-        if ( HasError )
-            return Error;
+        if ( ! HasError )
+            ExceptionThrower.Throw( new ValueAccessException( Resources.MissingUnsafeError<T>(), nameof( Error ) ) );
 
-        throw new ValueAccessException( Resources.MissingUnsafeError<T>(), nameof( Error ) );
+        return Error;
     }
 
     [Pure]

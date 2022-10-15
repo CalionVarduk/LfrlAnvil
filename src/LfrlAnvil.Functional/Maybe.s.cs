@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Exceptions;
 using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.Functional;
@@ -15,7 +16,7 @@ public static class Maybe
         where T : notnull
     {
         if ( Generic<T>.IsNull( value ) )
-            throw new ArgumentNullException( nameof( value ) );
+            ExceptionThrower.Throw( new ArgumentNullException( nameof( value ) ) );
 
         return new Maybe<T>( value );
     }

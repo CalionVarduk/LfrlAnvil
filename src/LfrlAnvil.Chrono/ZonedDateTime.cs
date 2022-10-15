@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using LfrlAnvil.Chrono.Exceptions;
 using LfrlAnvil.Chrono.Extensions;
 using LfrlAnvil.Chrono.Internal;
+using LfrlAnvil.Exceptions;
 
 namespace LfrlAnvil.Chrono;
 
@@ -40,7 +41,7 @@ public readonly struct ZonedDateTime : IEquatable<ZonedDateTime>, IComparable<Zo
     {
         var result = TryCreate( dateTime, timeZone );
         if ( result is null )
-            throw new InvalidZonedDateTimeException( dateTime, timeZone );
+            ExceptionThrower.Throw( new InvalidZonedDateTimeException( dateTime, timeZone ) );
 
         return result.Value;
     }

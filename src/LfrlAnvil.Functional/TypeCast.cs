@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Exceptions;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional.Exceptions;
 using LfrlAnvil.Internal;
@@ -76,10 +77,13 @@ public readonly struct TypeCast<TSource, TDestination> : ITypeCast<TDestination>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public TDestination GetResult()
     {
-        if ( IsValid )
-            return Result;
+        if ( ! IsValid )
+        {
+            ExceptionThrower.Throw(
+                new ValueAccessException( Resources.MissingTypeCastResult<TSource, TDestination>(), nameof( Result ) ) );
+        }
 
-        throw new ValueAccessException( Resources.MissingTypeCastResult<TSource, TDestination>(), nameof( Result ) );
+        return Result;
     }
 
     [Pure]

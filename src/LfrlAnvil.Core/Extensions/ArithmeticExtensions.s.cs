@@ -12,7 +12,7 @@ public static class ArithmeticExtensions
     public static float EuclidModulo(this float a, float b)
     {
         if ( b == 0 )
-            throw new DivideByZeroException( ExceptionResources.DividedByZero );
+            ExceptionThrower.Throw( new DivideByZeroException( ExceptionResources.DividedByZero ) );
 
         var r = a % b;
         return r < 0 ? r + b : r;
@@ -23,7 +23,7 @@ public static class ArithmeticExtensions
     public static double EuclidModulo(this double a, double b)
     {
         if ( b == 0 )
-            throw new DivideByZeroException( ExceptionResources.DividedByZero );
+            ExceptionThrower.Throw( new DivideByZeroException( ExceptionResources.DividedByZero ) );
 
         var r = a % b;
         return r < 0 ? r + b : r;

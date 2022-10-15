@@ -111,10 +111,10 @@ internal static class ExpressionHelpers
         IReadOnlyList<Expression> parameters)
     {
         if ( ! operand.Type.IsAssignableTo( typeof( Delegate ) ) )
-            throw new ParsedExpressionNonInvocableTypeExpression( operand.Type );
+            ExceptionThrower.Throw( new ParsedExpressionNonInvocableTypeExpression( operand.Type ) );
 
         if ( operand.Value is null )
-            throw new TargetException( ExceptionResources.NonStaticMethodRequiresTarget );
+            ExceptionThrower.Throw( new TargetException( ExceptionResources.NonStaticMethodRequiresTarget ) );
 
         var @delegate = DynamicCast.To<Delegate>( operand.Value );
         var method = @delegate.GetType().GetMethod( nameof( Action.Invoke ) )!;

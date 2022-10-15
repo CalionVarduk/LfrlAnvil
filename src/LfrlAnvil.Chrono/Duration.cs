@@ -322,7 +322,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     public Duration Divide(double divisor)
     {
         if ( divisor == 0 )
-            throw new DivideByZeroException( ExceptionResources.DividedByZero );
+            ExceptionThrower.Throw( new DivideByZeroException( ExceptionResources.DividedByZero ) );
 
         return FromTicks( (long)Math.Round( Ticks / divisor, MidpointRounding.AwayFromZero ) );
     }

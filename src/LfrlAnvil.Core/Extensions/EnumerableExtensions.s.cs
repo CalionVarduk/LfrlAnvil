@@ -228,7 +228,7 @@ public static class EnumerableExtensions
     {
         var result = source.TryMinMax( comparer );
         if ( result is null )
-            throw new InvalidOperationException( ExceptionResources.SequenceContainsNoElements );
+            ExceptionThrower.Throw( new InvalidOperationException( ExceptionResources.SequenceContainsNoElements ) );
 
         return result.Value;
     }
@@ -467,7 +467,7 @@ public static class EnumerableExtensions
     {
         var result = source.TryMinMaxBy( minSelector, maxSelector, minComparer, maxComparer );
         if ( result is null )
-            throw new InvalidOperationException( ExceptionResources.SequenceContainsNoElements );
+            ExceptionThrower.Throw( new InvalidOperationException( ExceptionResources.SequenceContainsNoElements ) );
 
         return result.Value;
     }

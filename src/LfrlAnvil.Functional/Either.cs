@@ -2,6 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Exceptions;
 using LfrlAnvil.Functional.Exceptions;
 using LfrlAnvil.Internal;
 
@@ -69,10 +70,10 @@ public readonly struct Either<T1, T2> : IEquatable<Either<T1, T2>>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public T1 GetFirst()
     {
-        if ( HasFirst )
-            return First;
+        if ( ! HasFirst )
+            ExceptionThrower.Throw( new ValueAccessException( Resources.MissingFirstEitherValue<T1, T2>(), nameof( First ) ) );
 
-        throw new ValueAccessException( Resources.MissingFirstEitherValue<T1, T2>(), nameof( First ) );
+        return First;
     }
 
     [Pure]
@@ -93,10 +94,10 @@ public readonly struct Either<T1, T2> : IEquatable<Either<T1, T2>>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public T2 GetSecond()
     {
-        if ( HasSecond )
-            return Second;
+        if ( ! HasSecond )
+            ExceptionThrower.Throw( new ValueAccessException( Resources.MissingSecondEitherValue<T1, T2>(), nameof( Second ) ) );
 
-        throw new ValueAccessException( Resources.MissingSecondEitherValue<T1, T2>(), nameof( Second ) );
+        return Second;
     }
 
     [Pure]

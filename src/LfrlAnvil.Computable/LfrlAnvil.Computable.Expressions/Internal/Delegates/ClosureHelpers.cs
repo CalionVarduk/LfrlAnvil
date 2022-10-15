@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Computable.Expressions.Exceptions;
+using LfrlAnvil.Exceptions;
 
 namespace LfrlAnvil.Computable.Expressions.Internal.Delegates;
 
@@ -27,7 +28,7 @@ internal static class ClosureHelpers
 
         var bindMethodIndex = parameters.Length - 1;
         if ( bindMethodIndex >= OpenGenericBindMethods.Length )
-            throw new UnsupportedDelegateParameterCountException( bindMethodIndex );
+            ExceptionThrower.Throw( new UnsupportedDelegateParameterCountException( bindMethodIndex ) );
 
         var genericArgs = new Type[parameters.Length];
         for ( var i = 1; i < parameters.Length; ++i )
