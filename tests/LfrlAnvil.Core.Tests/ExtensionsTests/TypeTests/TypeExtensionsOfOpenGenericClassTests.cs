@@ -199,7 +199,7 @@ public class OpenGenericClassTests : TypeTestsBase
     }
 
     [Fact]
-    public void Extends_ShouldReturnFalse_WhenInterfaceIsOpenGeneric()
+    public void Extends_ShouldReturnFalse_WhenTypeIsOpenGeneric()
     {
         var sut = typeof( GenericClass<> );
         var result = sut.Extends( typeof( BaseGenericClass<> ) );

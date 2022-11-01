@@ -12,6 +12,13 @@ public static class TypeExtensions
 {
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static bool IsConstructable(this Type type)
+    {
+        return ! type.IsAbstract && ! type.IsGenericTypeDefinition;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Type? GetImplementation(this Type type, Type interfaceType)
     {
         return type

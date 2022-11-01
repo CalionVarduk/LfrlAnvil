@@ -7,6 +7,62 @@ namespace LfrlAnvil.Tests.ExtensionsTests.TypeTests;
 public class TypeExtensionsBasicTests : TestsBase
 {
     [Fact]
+    public void IsConstructable_ShouldReturnTrue_WhenTypeIsStruct()
+    {
+        var type = typeof( int );
+        var result = type.IsConstructable();
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public void IsConstructable_ShouldReturnTrue_WhenTypeIsClosedGenericStruct()
+    {
+        var type = typeof( KeyValuePair<string, int> );
+        var result = type.IsConstructable();
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public void IsConstructable_ShouldReturnFalse_WhenTypeIsOpenGenericStruct()
+    {
+        var type = typeof( KeyValuePair<,> );
+        var result = type.IsConstructable();
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public void IsConstructable_ShouldReturnTrue_WhenTypeIsClass()
+    {
+        var type = typeof( string );
+        var result = type.IsConstructable();
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public void IsConstructable_ShouldReturnTrue_WhenTypeIsClosedGenericClass()
+    {
+        var type = typeof( Dictionary<string, int> );
+        var result = type.IsConstructable();
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public void IsConstructable_ShouldReturnFalse_WhenTypeIsOpenGenericClass()
+    {
+        var type = typeof( Dictionary<,> );
+        var result = type.IsConstructable();
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public void IsConstructable_ShouldReturnFalse_WhenTypeIsInterface()
+    {
+        var type = typeof( IEnumerable );
+        var result = type.IsConstructable();
+        result.Should().BeFalse();
+    }
+
+    [Fact]
     public void GetDebugString_ShouldReturnCorrectResult_ForNonNestedNonGenericType()
     {
         var type = typeof( IEnumerable );
