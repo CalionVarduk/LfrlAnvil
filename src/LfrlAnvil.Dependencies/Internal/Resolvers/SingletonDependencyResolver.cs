@@ -7,8 +7,12 @@ internal sealed class SingletonDependencyResolver : DependencyResolver
     private readonly Func<IDependencyScope, object> _factory;
     private object? _instance;
 
-    internal SingletonDependencyResolver(ulong id, Type implementorType, Func<IDependencyScope, object> factory)
-        : base( id, implementorType )
+    internal SingletonDependencyResolver(
+        ulong id,
+        Type implementorType,
+        DependencyImplementorDisposalStrategy disposalStrategy,
+        Func<IDependencyScope, object> factory)
+        : base( id, implementorType, disposalStrategy )
     {
         _factory = factory;
         _instance = null;
@@ -20,13 +24,7 @@ internal sealed class SingletonDependencyResolver : DependencyResolver
             return _instance;
 
         _instance = _factory( scope );
-
-        if ( _instance is IDisposable disposable )
-        {
-            var rootLocator = scope.InternalContainer.InternalRootScope.InternalLocator;
-            rootLocator.InternalDisposers.Add( new DependencyDisposer( disposable ) );
-        }
-
+        SetupDisposalStrategy( scope.InternalContainer.InternalRootScope, _instance );
         return _instance;
     }
 }

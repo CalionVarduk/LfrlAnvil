@@ -31,7 +31,7 @@ internal sealed class DependencyBuilder : IDependencyBuilder
         return this;
     }
 
-    public IDependencyBuilder FromFactory(Func<IDependencyScope, object> factory)
+    public IDependencyImplementorBuilder FromFactory(Func<IDependencyScope, object> factory)
     {
         if ( Implementor is null )
         {
@@ -40,6 +40,6 @@ internal sealed class DependencyBuilder : IDependencyBuilder
         }
 
         Implementor.FromFactory( factory );
-        return this;
+        return Implementor;
     }
 }

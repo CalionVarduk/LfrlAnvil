@@ -4,18 +4,23 @@ namespace LfrlAnvil.Dependencies.Internal;
 
 internal readonly struct DependencyDisposer
 {
-    internal readonly IDisposable Dependency;
+    internal readonly object Dependency;
+    internal readonly Action<object>? Callback;
 
-    internal DependencyDisposer(IDisposable dependency)
+    internal DependencyDisposer(object dependency, Action<object>? callback)
     {
         Dependency = dependency;
+        Callback = callback;
     }
 
     internal Exception? TryDispose()
     {
         try
         {
-            Dependency.Dispose();
+            if ( Callback is not null )
+                Callback( Dependency );
+            else
+                ReinterpretCast.To<IDisposable>( Dependency ).Dispose();
         }
         catch ( Exception exc )
         {

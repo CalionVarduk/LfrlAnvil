@@ -222,7 +222,7 @@ public class DependencyScopeTests : DependencyTestsBase
         var factory = Substitute.For<Func<IDependencyScope, IDisposable>>();
         factory.WithAnyArgs( _ => Substitute.For<IDisposable>() );
         var builder = new DependencyContainerBuilder();
-        builder.Add<IDisposable>().FromFactory( factory ).SetLifetime( DependencyLifetime.Transient );
+        builder.Add<IDisposable>().SetLifetime( DependencyLifetime.Transient ).FromFactory( factory );
         var container = builder.Build();
         var sut = container.RootScope.BeginScope();
 
@@ -244,7 +244,7 @@ public class DependencyScopeTests : DependencyTestsBase
         var factory = Substitute.For<Func<IDependencyScope, IDisposable>>();
         factory.WithAnyArgs( _ => Substitute.For<IDisposable>() );
         var builder = new DependencyContainerBuilder();
-        builder.Add<IDisposable>().FromFactory( factory ).SetLifetime( DependencyLifetime.Transient );
+        builder.Add<IDisposable>().SetLifetime( DependencyLifetime.Transient ).FromFactory( factory );
         var container = builder.Build();
         var parent = container.RootScope.BeginScope();
         var sut = parent.BeginScope();
@@ -262,7 +262,7 @@ public class DependencyScopeTests : DependencyTestsBase
         var factory = Substitute.For<Func<IDependencyScope, IDisposable>>();
         factory.WithAnyArgs( _ => Substitute.For<IDisposable>() );
         var builder = new DependencyContainerBuilder();
-        builder.Add<IDisposable>().FromFactory( factory ).SetLifetime( DependencyLifetime.Singleton );
+        builder.Add<IDisposable>().SetLifetime( DependencyLifetime.Singleton ).FromFactory( factory );
         var container = builder.Build();
         var sut = container.RootScope.BeginScope();
 
@@ -279,7 +279,7 @@ public class DependencyScopeTests : DependencyTestsBase
         var factory = Substitute.For<Func<IDependencyScope, IDisposable>>();
         factory.WithAnyArgs( _ => Substitute.For<IDisposable>() );
         var builder = new DependencyContainerBuilder();
-        builder.Add<IDisposable>().FromFactory( factory ).SetLifetime( DependencyLifetime.Singleton );
+        builder.Add<IDisposable>().SetLifetime( DependencyLifetime.Singleton ).FromFactory( factory );
         var container = builder.Build();
         var sut = container.RootScope.BeginScope();
 
@@ -296,7 +296,7 @@ public class DependencyScopeTests : DependencyTestsBase
         var factory = Substitute.For<Func<IDependencyScope, IDisposable>>();
         factory.WithAnyArgs( _ => Substitute.For<IDisposable>() );
         var builder = new DependencyContainerBuilder();
-        builder.Add<IDisposable>().FromFactory( factory ).SetLifetime( DependencyLifetime.ScopedSingleton );
+        builder.Add<IDisposable>().SetLifetime( DependencyLifetime.ScopedSingleton ).FromFactory( factory );
         var container = builder.Build();
         var sut = container.RootScope.BeginScope();
 
@@ -313,7 +313,7 @@ public class DependencyScopeTests : DependencyTestsBase
         var factory = Substitute.For<Func<IDependencyScope, IDisposable>>();
         factory.WithAnyArgs( _ => Substitute.For<IDisposable>() );
         var builder = new DependencyContainerBuilder();
-        builder.Add<IDisposable>().FromFactory( factory ).SetLifetime( DependencyLifetime.ScopedSingleton );
+        builder.Add<IDisposable>().SetLifetime( DependencyLifetime.ScopedSingleton ).FromFactory( factory );
         var container = builder.Build();
         var parent = container.RootScope.BeginScope();
         var sut = parent.BeginScope();
@@ -332,7 +332,7 @@ public class DependencyScopeTests : DependencyTestsBase
         var factory = Substitute.For<Func<IDependencyScope, IDisposable>>();
         factory.WithAnyArgs( _ => Substitute.For<IDisposable>() );
         var builder = new DependencyContainerBuilder();
-        builder.Add<IDisposable>().FromFactory( factory ).SetLifetime( DependencyLifetime.Scoped );
+        builder.Add<IDisposable>().SetLifetime( DependencyLifetime.Scoped ).FromFactory( factory );
         var container = builder.Build();
         var sut = container.RootScope.BeginScope();
 
@@ -349,7 +349,7 @@ public class DependencyScopeTests : DependencyTestsBase
         var factory = Substitute.For<Func<IDependencyScope, IDisposable>>();
         factory.WithAnyArgs( _ => Substitute.For<IDisposable>() );
         var builder = new DependencyContainerBuilder();
-        builder.Add<IDisposable>().FromFactory( factory ).SetLifetime( DependencyLifetime.Scoped );
+        builder.Add<IDisposable>().SetLifetime( DependencyLifetime.Scoped ).FromFactory( factory );
         var container = builder.Build();
         var parent = container.RootScope.BeginScope();
         var sut = parent.BeginScope();
@@ -493,6 +493,48 @@ public class DependencyScopeTests : DependencyTestsBase
             childException?.InnerException.Should().BeSameAs( exception );
             grandchildException.Should().NotBeNull();
             grandchildException?.InnerException.Should().BeSameAs( exception );
+        }
+    }
+
+    [Fact]
+    public void Dispose_ShouldNotDisposeDisposableDependencies_WhenTheirDisposalStrategyIsSetToRenounceOwnership()
+    {
+        var factory = Substitute.For<Func<IDependencyScope, IDisposable>>();
+        factory.WithAnyArgs( _ => Substitute.For<IDisposable>() );
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IDisposable>().FromFactory( factory ).SetDisposalStrategy( DependencyImplementorDisposalStrategy.RenounceOwnership() );
+        var container = builder.Build();
+
+        var resolved = container.RootScope.Locator.Resolve<IDisposable>();
+
+        container.Dispose();
+
+        resolved.VerifyCalls().DidNotReceive( x => x.Dispose() );
+    }
+
+    [Fact]
+    public void Dispose_ShouldCallCustomDisposableCallback_WhenTheirDisposalStrategyIsSetToUseCallback()
+    {
+        var factory = Substitute.For<Func<IDependencyScope, IDisposable>>();
+        factory.WithAnyArgs( _ => Substitute.For<IDisposable>() );
+        var callback = Substitute.For<Action<object>>();
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IDisposable>()
+            .FromFactory( factory )
+            .SetDisposalStrategy( DependencyImplementorDisposalStrategy.UseCallback( callback ) );
+
+        var container = builder.Build();
+
+        var resolved = container.RootScope.Locator.Resolve<IDisposable>();
+
+        container.Dispose();
+
+        using ( new AssertionScope() )
+        {
+            resolved.VerifyCalls().DidNotReceive( x => x.Dispose() );
+            callback.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( resolved );
         }
     }
 }

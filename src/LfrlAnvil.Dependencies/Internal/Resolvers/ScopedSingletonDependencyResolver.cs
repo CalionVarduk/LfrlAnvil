@@ -6,8 +6,12 @@ internal sealed class ScopedSingletonDependencyResolver : DependencyResolver
 {
     private readonly Func<IDependencyScope, object> _factory;
 
-    internal ScopedSingletonDependencyResolver(ulong id, Type implementorType, Func<IDependencyScope, object> factory)
-        : base( id, implementorType )
+    internal ScopedSingletonDependencyResolver(
+        ulong id,
+        Type implementorType,
+        DependencyImplementorDisposalStrategy disposalStrategy,
+        Func<IDependencyScope, object> factory)
+        : base( id, implementorType, disposalStrategy )
     {
         _factory = factory;
     }
@@ -33,9 +37,7 @@ internal sealed class ScopedSingletonDependencyResolver : DependencyResolver
         result = _factory( scope );
 
         locator.ScopedInstancesByResolverId.Add( Id, result );
-        if ( result is IDisposable disposable )
-            locator.InternalDisposers.Add( new DependencyDisposer( disposable ) );
-
+        SetupDisposalStrategy( scope, result );
         return result;
     }
 }

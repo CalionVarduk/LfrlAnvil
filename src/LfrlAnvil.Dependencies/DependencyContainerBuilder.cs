@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 using LfrlAnvil.Dependencies.Exceptions;
 using LfrlAnvil.Dependencies.Internal;
 using LfrlAnvil.Dependencies.Internal.Resolvers;
@@ -59,8 +60,6 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
 
         foreach ( var (type, builder) in _locatorBuilder.Dependencies )
         {
-            var resolverId = resolverIdGenerator.Generate();
-
             if ( builder.SharedImplementorType is not null )
             {
                 if ( ! sharedImplementors.TryGetValue( (builder.SharedImplementorType, builder.Lifetime), out var sharedResolver ) )
@@ -79,23 +78,7 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
                         continue;
                     }
 
-                    sharedResolver = builder.Lifetime switch
-                    {
-                        DependencyLifetime.Singleton => new SingletonDependencyResolver(
-                            resolverId,
-                            builder.SharedImplementorType,
-                            implementorBuilder.Factory ),
-                        DependencyLifetime.ScopedSingleton => new ScopedSingletonDependencyResolver(
-                            resolverId,
-                            builder.SharedImplementorType,
-                            implementorBuilder.Factory ),
-                        DependencyLifetime.Scoped => new ScopedDependencyResolver(
-                            resolverId,
-                            builder.SharedImplementorType,
-                            implementorBuilder.Factory ),
-                        _ => new TransientDependencyResolver( resolverId, builder.SharedImplementorType, implementorBuilder.Factory )
-                    };
-
+                    sharedResolver = CreateDependencyResolver( resolverIdGenerator, implementorBuilder, builder.Lifetime );
                     sharedImplementors.Add( (builder.SharedImplementorType, builder.Lifetime), sharedResolver );
                 }
 
@@ -106,17 +89,7 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
             if ( builder.Implementor?.Factory is null ) // TODO: treat this as Self with auto-discovered ctor in the future
                 throw new NotImplementedException();
 
-            DependencyResolver resolver = builder.Lifetime switch
-            {
-                DependencyLifetime.Singleton => new SingletonDependencyResolver( resolverId, type, builder.Implementor.Factory ),
-                DependencyLifetime.ScopedSingleton => new ScopedSingletonDependencyResolver(
-                    resolverId,
-                    type,
-                    builder.Implementor.Factory ),
-                DependencyLifetime.Scoped => new ScopedDependencyResolver( resolverId, type, builder.Implementor.Factory ),
-                _ => new TransientDependencyResolver( resolverId, type, builder.Implementor.Factory )
-            };
-
+            var resolver = CreateDependencyResolver( resolverIdGenerator, builder.Implementor, builder.Lifetime );
             resolvers.Add( type, resolver );
         }
 
@@ -146,5 +119,38 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
     IDependencyLocatorBuilder IDependencyLocatorBuilder.SetDefaultLifetime(DependencyLifetime lifetime)
     {
         return ReinterpretCast.To<IDependencyContainerBuilder>( this ).SetDefaultLifetime( lifetime );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static DependencyResolver CreateDependencyResolver(
+        UlongSequenceGenerator idGenerator,
+        IDependencyImplementorBuilder builder,
+        DependencyLifetime lifetime)
+    {
+        Assume.IsNotNull( builder.Factory, nameof( builder.Factory ) );
+
+        var id = idGenerator.Generate();
+
+        DependencyResolver result = lifetime switch
+        {
+            DependencyLifetime.Singleton => new SingletonDependencyResolver(
+                id,
+                builder.ImplementorType,
+                builder.DisposalStrategy,
+                builder.Factory ),
+            DependencyLifetime.ScopedSingleton => new ScopedSingletonDependencyResolver(
+                id,
+                builder.ImplementorType,
+                builder.DisposalStrategy,
+                builder.Factory ),
+            DependencyLifetime.Scoped => new ScopedDependencyResolver(
+                id,
+                builder.ImplementorType,
+                builder.DisposalStrategy,
+                builder.Factory ),
+            _ => new TransientDependencyResolver( id, builder.ImplementorType, builder.DisposalStrategy, builder.Factory )
+        };
+
+        return result;
     }
 }

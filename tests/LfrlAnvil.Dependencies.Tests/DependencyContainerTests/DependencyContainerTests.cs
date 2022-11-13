@@ -89,7 +89,7 @@ public class DependencyContainerTests : DependencyTestsBase
         factory.WithAnyArgs( _ => Substitute.For<IFoo>() );
 
         var builder = new DependencyContainerBuilder();
-        builder.Add<IFoo>().FromFactory( factory ).SetLifetime( DependencyLifetime.Transient );
+        builder.Add<IFoo>().SetLifetime( DependencyLifetime.Transient ).FromFactory( factory );
         var sut = builder.Build();
         var rootScope = sut.RootScope;
         var childScope = rootScope.BeginScope();
@@ -117,7 +117,7 @@ public class DependencyContainerTests : DependencyTestsBase
         factory.WithAnyArgs( _ => Substitute.For<IFoo>() );
 
         var builder = new DependencyContainerBuilder();
-        builder.Add<IFoo>().FromFactory( factory ).SetLifetime( DependencyLifetime.Transient );
+        builder.Add<IFoo>().SetLifetime( DependencyLifetime.Transient ).FromFactory( factory );
         var sut = builder.Build();
         var rootScope = sut.RootScope;
         var childScope = rootScope.BeginScope();
@@ -145,7 +145,7 @@ public class DependencyContainerTests : DependencyTestsBase
         factory.WithAnyArgs( _ => Substitute.For<IFoo>() );
 
         var builder = new DependencyContainerBuilder();
-        builder.Add<IFoo>().FromFactory( factory ).SetLifetime( DependencyLifetime.Transient );
+        builder.Add<IFoo>().SetLifetime( DependencyLifetime.Transient ).FromFactory( factory );
         var sut = builder.Build();
         var parentScope = sut.RootScope.BeginScope();
         var childScope = parentScope.BeginScope();
@@ -173,7 +173,7 @@ public class DependencyContainerTests : DependencyTestsBase
         factory.WithAnyArgs( _ => Substitute.For<IFoo>() );
 
         var builder = new DependencyContainerBuilder();
-        builder.Add<IFoo>().FromFactory( factory ).SetLifetime( DependencyLifetime.Transient );
+        builder.Add<IFoo>().SetLifetime( DependencyLifetime.Transient ).FromFactory( factory );
         var sut = builder.Build();
         var parentScope = sut.RootScope.BeginScope();
         var childScope = parentScope.BeginScope();
@@ -201,7 +201,7 @@ public class DependencyContainerTests : DependencyTestsBase
         factory.WithAnyArgs( _ => Substitute.For<IFoo>() );
 
         var builder = new DependencyContainerBuilder();
-        builder.Add<IFoo>().FromFactory( factory ).SetLifetime( DependencyLifetime.Singleton );
+        builder.Add<IFoo>().SetLifetime( DependencyLifetime.Singleton ).FromFactory( factory );
         var sut = builder.Build();
         var rootScope = sut.RootScope;
         var childScope = rootScope.BeginScope();
@@ -226,7 +226,7 @@ public class DependencyContainerTests : DependencyTestsBase
         factory.WithAnyArgs( _ => Substitute.For<IFoo>() );
 
         var builder = new DependencyContainerBuilder();
-        builder.Add<IFoo>().FromFactory( factory ).SetLifetime( DependencyLifetime.Singleton );
+        builder.Add<IFoo>().SetLifetime( DependencyLifetime.Singleton ).FromFactory( factory );
         var sut = builder.Build();
         var rootScope = sut.RootScope;
         var childScope = rootScope.BeginScope();
@@ -251,7 +251,7 @@ public class DependencyContainerTests : DependencyTestsBase
         factory.WithAnyArgs( _ => Substitute.For<IFoo>() );
 
         var builder = new DependencyContainerBuilder();
-        builder.Add<IFoo>().FromFactory( factory ).SetLifetime( DependencyLifetime.Singleton );
+        builder.Add<IFoo>().SetLifetime( DependencyLifetime.Singleton ).FromFactory( factory );
         var sut = builder.Build();
         var parentScope = sut.RootScope.BeginScope();
         var childScope = parentScope.BeginScope();
@@ -276,7 +276,7 @@ public class DependencyContainerTests : DependencyTestsBase
         factory.WithAnyArgs( _ => Substitute.For<IFoo>() );
 
         var builder = new DependencyContainerBuilder();
-        builder.Add<IFoo>().FromFactory( factory ).SetLifetime( DependencyLifetime.Singleton );
+        builder.Add<IFoo>().SetLifetime( DependencyLifetime.Singleton ).FromFactory( factory );
         var sut = builder.Build();
         var parentScope = sut.RootScope.BeginScope();
         var childScope = parentScope.BeginScope();
@@ -301,7 +301,7 @@ public class DependencyContainerTests : DependencyTestsBase
         factory.WithAnyArgs( _ => Substitute.For<IFoo>() );
 
         var builder = new DependencyContainerBuilder();
-        builder.Add<IFoo>().FromFactory( factory ).SetLifetime( DependencyLifetime.Scoped );
+        builder.Add<IFoo>().SetLifetime( DependencyLifetime.Scoped ).FromFactory( factory );
         var sut = builder.Build();
         var rootScope = sut.RootScope;
         var childScope = rootScope.BeginScope();
@@ -329,7 +329,7 @@ public class DependencyContainerTests : DependencyTestsBase
         factory.WithAnyArgs( _ => Substitute.For<IFoo>() );
 
         var builder = new DependencyContainerBuilder();
-        builder.Add<IFoo>().FromFactory( factory ).SetLifetime( DependencyLifetime.Scoped );
+        builder.Add<IFoo>().SetLifetime( DependencyLifetime.Scoped ).FromFactory( factory );
         var sut = builder.Build();
         var rootScope = sut.RootScope;
         var childScope = rootScope.BeginScope();
@@ -357,7 +357,7 @@ public class DependencyContainerTests : DependencyTestsBase
         factory.WithAnyArgs( _ => Substitute.For<IFoo>() );
 
         var builder = new DependencyContainerBuilder();
-        builder.Add<IFoo>().FromFactory( factory ).SetLifetime( DependencyLifetime.Scoped );
+        builder.Add<IFoo>().SetLifetime( DependencyLifetime.Scoped ).FromFactory( factory );
         var sut = builder.Build();
         var parentScope = sut.RootScope.BeginScope();
         var childScope = parentScope.BeginScope();
@@ -385,7 +385,7 @@ public class DependencyContainerTests : DependencyTestsBase
         factory.WithAnyArgs( _ => Substitute.For<IFoo>() );
 
         var builder = new DependencyContainerBuilder();
-        builder.Add<IFoo>().FromFactory( factory ).SetLifetime( DependencyLifetime.Scoped );
+        builder.Add<IFoo>().SetLifetime( DependencyLifetime.Scoped ).FromFactory( factory );
         var sut = builder.Build();
         var parentScope = sut.RootScope.BeginScope();
         var childScope = parentScope.BeginScope();
@@ -413,7 +413,7 @@ public class DependencyContainerTests : DependencyTestsBase
         factory.WithAnyArgs( _ => Substitute.For<IFoo>() );
 
         var builder = new DependencyContainerBuilder();
-        builder.Add<IFoo>().FromFactory( factory ).SetLifetime( DependencyLifetime.ScopedSingleton );
+        builder.Add<IFoo>().SetLifetime( DependencyLifetime.ScopedSingleton ).FromFactory( factory );
         var sut = builder.Build();
         var rootScope = sut.RootScope;
         var childScope = rootScope.BeginScope();
@@ -438,7 +438,7 @@ public class DependencyContainerTests : DependencyTestsBase
         factory.WithAnyArgs( _ => Substitute.For<IFoo>() );
 
         var builder = new DependencyContainerBuilder();
-        builder.Add<IFoo>().FromFactory( factory ).SetLifetime( DependencyLifetime.ScopedSingleton );
+        builder.Add<IFoo>().SetLifetime( DependencyLifetime.ScopedSingleton ).FromFactory( factory );
         var sut = builder.Build();
         var rootScope = sut.RootScope;
         var childScope = rootScope.BeginScope();
@@ -466,7 +466,7 @@ public class DependencyContainerTests : DependencyTestsBase
         factory.WithAnyArgs( _ => Substitute.For<IFoo>() );
 
         var builder = new DependencyContainerBuilder();
-        builder.Add<IFoo>().FromFactory( factory ).SetLifetime( DependencyLifetime.ScopedSingleton );
+        builder.Add<IFoo>().SetLifetime( DependencyLifetime.ScopedSingleton ).FromFactory( factory );
         var sut = builder.Build();
         var parentScope = sut.RootScope.BeginScope();
         var childScope = parentScope.BeginScope();
@@ -491,7 +491,7 @@ public class DependencyContainerTests : DependencyTestsBase
         factory.WithAnyArgs( _ => Substitute.For<IFoo>() );
 
         var builder = new DependencyContainerBuilder();
-        builder.Add<IFoo>().FromFactory( factory ).SetLifetime( DependencyLifetime.ScopedSingleton );
+        builder.Add<IFoo>().SetLifetime( DependencyLifetime.ScopedSingleton ).FromFactory( factory );
         var sut = builder.Build();
         var parentScope = sut.RootScope.BeginScope();
         var childScope = parentScope.BeginScope();

@@ -7,11 +7,6 @@
 // ^ OnResolving => called right after circular dependency check, ignores lifetime
 // ^ OnCreated => called right after dependency instance has been created by a factory & type checked, depends on lifetime
 //
-// Add custom dependency instance disposal handling:
-// ^ RenounceOwnership => does not dispose in any way
-// ^ UseDisposableInterface => calls Dispose method, if instance implements IDisposable interface (default behavior)
-// ^ UseCallback => calls provided custom Action<object> (or Action<T>, if possible) callback
-//
 // Four different ways to configure dependency builders:
 // ^ auto-discovered ctor => provide the type, the builder will attempt to discover a most valid ctor for it automatically (default)
 // ^ explicit ctor => provide the ctor to use directly
@@ -22,6 +17,11 @@
 //
 // give up on AggregateExceptions, their messages are not verbose enough
 //
+// dedicated generic builder types for generic extension methods:
+// ^ this would allow to provide a factory that returns T instead of object
+// ^ also, this would possibly allow to set callback for disposal strategy that accepts T instead of object
+// ^ simple QoL & DevExp improvements
+//
 // configuration:
 // ^ treat captive dependencies as errors => by default its a warning (works only for ctor based dependency builders)
 // ^ attribute for optional dependencies => ctor based only, attribute for marking dependencies as optional/nullable,
@@ -29,6 +29,8 @@
 // ^ type for property based dependencies => must be an open generic constructable type with one generic type argument
 //    ^ and ctor (can be non-public) accepting exactly one parameter of that generic type
 //    ^ equal to Dependency<> struct by default (TBD)
+// ^ DefaultDisposalStrategy => for now it's hardcoded to UseDisposableInterface, could be configurable
+//    ^ DependencyBuilder would need a ref to container builder
 //
 // add query methods:
 // is type registered? what is its lifetime? etc.

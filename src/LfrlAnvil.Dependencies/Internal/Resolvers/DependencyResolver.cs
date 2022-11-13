@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using LfrlAnvil.Dependencies.Exceptions;
 
 namespace LfrlAnvil.Dependencies.Internal.Resolvers;
@@ -7,15 +8,17 @@ internal abstract class DependencyResolver
 {
     private bool _isResolving;
 
-    protected DependencyResolver(ulong id, Type implementorType)
+    protected DependencyResolver(ulong id, Type implementorType, DependencyImplementorDisposalStrategy disposalStrategy)
     {
         Id = id;
         ImplementorType = implementorType;
+        DisposalStrategy = disposalStrategy;
         _isResolving = false;
     }
 
     internal ulong Id { get; }
-    public Type ImplementorType { get; }
+    internal Type ImplementorType { get; }
+    internal DependencyImplementorDisposalStrategy DisposalStrategy { get; }
 
     internal object Create(DependencyScope scope, Type dependencyType)
     {
@@ -38,4 +41,25 @@ internal abstract class DependencyResolver
     }
 
     protected abstract object CreateInternal(DependencyScope scope);
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    protected void SetupDisposalStrategy(DependencyScope scope, object instance)
+    {
+        switch ( DisposalStrategy.Type )
+        {
+            case DependencyImplementorDisposalStrategyType.UseDisposableInterface:
+            {
+                if ( instance is IDisposable disposable )
+                    scope.InternalLocator.InternalDisposers.Add( new DependencyDisposer( disposable, callback: null ) );
+
+                break;
+            }
+            case DependencyImplementorDisposalStrategyType.UseCallback:
+            {
+                Assume.IsNotNull( DisposalStrategy.Callback, nameof( DisposalStrategy.Callback ) );
+                scope.InternalLocator.InternalDisposers.Add( new DependencyDisposer( instance, DisposalStrategy.Callback ) );
+                break;
+            }
+        }
+    }
 }

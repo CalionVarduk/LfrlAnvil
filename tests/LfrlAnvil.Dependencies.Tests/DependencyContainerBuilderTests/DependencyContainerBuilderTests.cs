@@ -71,14 +71,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         using ( new AssertionScope() )
         {
-            result.Should().BeSameAs( builder );
-            result.SharedImplementorType.Should().BeNull();
-            result.Implementor.Should().NotBeNull();
-            if ( result.Implementor is null )
-                return;
-
-            result.Implementor.ImplementorType.Should().Be( typeof( IFoo ) );
-            result.Implementor.Factory.Should().BeSameAs( factory );
+            result.Should().BeSameAs( builder.Implementor );
+            builder.SharedImplementorType.Should().BeNull();
+            result.ImplementorType.Should().Be( typeof( IFoo ) );
+            result.Factory.Should().BeSameAs( factory );
+            result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
+            result.DisposalStrategy.Callback.Should().BeNull();
         }
     }
 
@@ -141,6 +139,8 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         {
             result.ImplementorType.Should().Be( typeof( Implementor ) );
             result.Factory.Should().BeNull();
+            result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
+            result.DisposalStrategy.Callback.Should().BeNull();
         }
     }
 
@@ -169,6 +169,55 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
             result.Should().BeSameAs( builder );
             result.ImplementorType.Should().Be( typeof( Implementor ) );
             result.Factory.Should().BeSameAs( factory );
+        }
+    }
+
+    [Fact]
+    public void AddSharedImplementor_SetDisposalStrategy_ShouldUpdateDisposalStrategyToUseDisposableInterfaceCorrectly()
+    {
+        var sut = new DependencyContainerBuilder();
+        var builder = sut.AddSharedImplementor( typeof( Implementor ) );
+
+        var result = builder.SetDisposalStrategy( DependencyImplementorDisposalStrategy.UseDisposableInterface() );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( builder );
+            result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
+            result.DisposalStrategy.Callback.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void AddSharedImplementor_SetDisposalStrategy_ShouldUpdateDisposalStrategyToRenounceOwnershipCorrectly()
+    {
+        var sut = new DependencyContainerBuilder();
+        var builder = sut.AddSharedImplementor( typeof( Implementor ) );
+
+        var result = builder.SetDisposalStrategy( DependencyImplementorDisposalStrategy.RenounceOwnership() );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( builder );
+            result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.RenounceOwnership );
+            result.DisposalStrategy.Callback.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void AddSharedImplementor_SetDisposalStrategy_ShouldUpdateDisposalStrategyToUseCallbackCorrectly()
+    {
+        var callback = Substitute.For<Action<object>>();
+        var sut = new DependencyContainerBuilder();
+        var builder = sut.AddSharedImplementor( typeof( Implementor ) );
+
+        var result = builder.SetDisposalStrategy( DependencyImplementorDisposalStrategy.UseCallback( callback ) );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( builder );
+            result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseCallback );
+            result.DisposalStrategy.Callback.Should().BeSameAs( callback );
         }
     }
 

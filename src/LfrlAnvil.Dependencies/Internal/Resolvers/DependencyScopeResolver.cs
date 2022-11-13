@@ -5,7 +5,7 @@ namespace LfrlAnvil.Dependencies.Internal.Resolvers;
 internal sealed class DependencyScopeResolver : DependencyResolver
 {
     internal DependencyScopeResolver(ulong id)
-        : base( id, typeof( IDependencyScope ) ) { }
+        : base( id, typeof( IDependencyScope ), DependencyImplementorDisposalStrategy.RenounceOwnership() ) { }
 
     [Pure]
     protected override object CreateInternal(DependencyScope scope)
