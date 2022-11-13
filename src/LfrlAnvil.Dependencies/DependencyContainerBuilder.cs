@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Reflection;
@@ -7,6 +8,7 @@ using System.Runtime.CompilerServices;
 using LfrlAnvil.Dependencies.Exceptions;
 using LfrlAnvil.Dependencies.Internal;
 using LfrlAnvil.Dependencies.Internal.Resolvers;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.Generators;
 
 namespace LfrlAnvil.Dependencies;
@@ -19,9 +21,11 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
     {
         _locatorBuilder = new DependencyLocatorBuilder();
         InjectablePropertyType = typeof( Injected<> );
+        OptionalDependencyAttributeType = typeof( AllowNullAttribute );
     }
 
     public Type InjectablePropertyType { get; private set; }
+    public Type OptionalDependencyAttributeType { get; private set; }
     public DependencyLifetime DefaultLifetime => _locatorBuilder.DefaultLifetime;
     public DependencyImplementorDisposalStrategy DefaultDisposalStrategy => _locatorBuilder.DefaultDisposalStrategy;
 
@@ -50,9 +54,26 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
     public DependencyContainerBuilder SetInjectablePropertyType(Type openGenericType)
     {
         if ( ! IsInjectablePropertyTypeCorrect( openGenericType ) )
-            throw new InvalidInjectablePropertyTypeException( openGenericType, nameof( openGenericType ) );
+        {
+            throw new DependencyContainerBuilderConfigurationException(
+                Resources.InvalidInjectablePropertyType( openGenericType ),
+                nameof( openGenericType ) );
+        }
 
         InjectablePropertyType = openGenericType;
+        return this;
+    }
+
+    public DependencyContainerBuilder SetOptionalDependencyAttributeType(Type attributeType)
+    {
+        if ( ! IsOptionalDependencyAttributeTypeCorrect( attributeType ) )
+        {
+            throw new DependencyContainerBuilderConfigurationException(
+                Resources.InvalidOptionalDependencyAttributeType( attributeType ),
+                nameof( attributeType ) );
+        }
+
+        OptionalDependencyAttributeType = attributeType;
         return this;
     }
 
@@ -156,6 +177,11 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
         return SetInjectablePropertyType( openGenericType );
     }
 
+    IDependencyContainerBuilder IDependencyContainerBuilder.SetOptionalDependencyAttributeType(Type attributeType)
+    {
+        return SetOptionalDependencyAttributeType( attributeType );
+    }
+
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static DependencyResolver CreateDependencyResolver(
         UlongSequenceGenerator idGenerator,
@@ -217,5 +243,22 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
                 } );
 
         return ctor is not null;
+    }
+
+    [Pure]
+    private static bool IsOptionalDependencyAttributeTypeCorrect(Type type)
+    {
+        if ( type.IsGenericTypeDefinition )
+            return false;
+
+        if ( type.Visit( t => t.BaseType ).All( t => t != typeof( Attribute ) ) )
+            return false;
+
+        var attributeUsage = type.Visit( t => t.BaseType )
+            .Prepend( type )
+            .Select( t => t.GetAttribute<AttributeUsageAttribute>( inherit: false ) )
+            .FirstOrDefault( a => a is not null );
+
+        return attributeUsage is not null && (attributeUsage.ValidOn & AttributeTargets.Parameter) == AttributeTargets.Parameter;
     }
 }

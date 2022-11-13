@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using FluentAssertions.Execution;
 using LfrlAnvil.Dependencies.Exceptions;
 using LfrlAnvil.Dependencies.Extensions;
@@ -16,6 +17,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         sut.DefaultDisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
         sut.DefaultDisposalStrategy.Callback.Should().BeNull();
         sut.InjectablePropertyType.Should().BeSameAs( typeof( Injected<> ) );
+        sut.OptionalDependencyAttributeType.Should().BeSameAs( typeof( AllowNullAttribute ) );
     }
 
     [Theory]
@@ -106,6 +108,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
     }
 
     [Theory]
+    [InlineData( typeof( Injected<> ) )]
     [InlineData( typeof( InjectedWithPublicCtor<> ) )]
     [InlineData( typeof( InjectedWithPrivateCtor<> ) )]
     public void SetInjectablePropertyType_ShouldUpdateTheTypeIfItIsValid(Type type)
@@ -128,11 +131,40 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
     [InlineData( typeof( InvalidInjectedWithParameterlessCtor<> ) )]
     [InlineData( typeof( InvalidInjectedWithIncorrectCtorParamType<> ) )]
     [InlineData( typeof( InvalidInjectedWithTooManyCtorParams<> ) )]
-    public void SetInjectablePropertyType_ShouldThrowInvalidInjectablePropertyTypeException_WhenTypeIsNotValid(Type type)
+    public void SetInjectablePropertyType_ShouldThrowDependencyContainerBuilderConfigurationException_WhenTypeIsNotValid(Type type)
     {
         var sut = new DependencyContainerBuilder();
         var action = Lambda.Of( () => sut.SetInjectablePropertyType( type ) );
-        action.Should().ThrowExactly<InvalidInjectablePropertyTypeException>();
+        action.Should().ThrowExactly<DependencyContainerBuilderConfigurationException>();
+    }
+
+    [Theory]
+    [InlineData( typeof( AllowNullAttribute ) )]
+    [InlineData( typeof( OptionalAttribute ) )]
+    [InlineData( typeof( ExtendedOptionalAttribute ) )]
+    public void SetOptionalDependencyAttributeType_ShouldUpdateTheTypeIfItIsValid(Type type)
+    {
+        IDependencyContainerBuilder sut = new DependencyContainerBuilder();
+
+        var result = sut.SetOptionalDependencyAttributeType( type );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.OptionalDependencyAttributeType.Should().BeSameAs( type );
+        }
+    }
+
+    [Theory]
+    [InlineData( typeof( object ) )]
+    [InlineData( typeof( Injected<> ) )]
+    [InlineData( typeof( Injected<string> ) )]
+    [InlineData( typeof( NonParameterAttribute ) )]
+    public void SetOptionalDependencyAttributeType_ShouldThrowDependencyContainerBuilderConfigurationException_WhenTypeIsNotValid(Type type)
+    {
+        var sut = new DependencyContainerBuilder();
+        var action = Lambda.Of( () => sut.SetOptionalDependencyAttributeType( type ) );
+        action.Should().ThrowExactly<DependencyContainerBuilderConfigurationException>();
     }
 
     [Fact]
@@ -461,3 +493,11 @@ public class InvalidInjectedWithTooManyCtorParams<T>
 {
     public InvalidInjectedWithTooManyCtorParams(T value1, T value2) { }
 }
+
+[AttributeUsage( AttributeTargets.Parameter | AttributeTargets.Class )]
+public class OptionalAttribute : Attribute { }
+
+public class ExtendedOptionalAttribute : OptionalAttribute { }
+
+[AttributeUsage( AttributeTargets.Class )]
+public class NonParameterAttribute : Attribute { }

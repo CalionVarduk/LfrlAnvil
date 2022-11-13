@@ -86,10 +86,21 @@ internal static class Resources
     internal static string InvalidInjectablePropertyType(Type type)
     {
         return
-            $@"Type '{type.GetDebugString()}' is not a valid injectable property type because it doesn't satisfy at least one of the following requirements:
+            $@"Type '{type.GetDebugString()}' is not a valid injectable property type because it doesn't satisfy the following requirements:
 - Type must be an open generic definition,
 - Type must have exactly one generic argument,
 - Type must contain a constructor that accepts exactly one parameter of type equal to the generic argument.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidOptionalDependencyAttributeType(Type type)
+    {
+        return
+            $@"Type '{type.GetDebugString()}' is not a valid optional dependency attribute type because it doesn't satisfy the following requirements:
+- Type cannot be an open generic definition,
+- Type must extend a {typeof( Attribute ).GetDebugString()} class,
+- Type must have a {typeof( AttributeUsageAttribute ).GetDebugString()} attribute with '{AttributeTargets.Parameter}' target.";
     }
 
     [Pure]

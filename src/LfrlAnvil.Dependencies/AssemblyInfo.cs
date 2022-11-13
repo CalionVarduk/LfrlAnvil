@@ -11,6 +11,8 @@
 // ctor versions will validate circular dependencies and dependency resolutions during container building
 // ctor versions will allow to specify injections per parameter, by default will try to resolve through scope, can be overriden with a delegate
 // ctor versions will accept an optional OnCreated callback
+// ctor versions respect InjectablePropertyType & OptionalDependencyAttributeType configurations
+// ctor versions treat Nullable<> as optional by default
 //
 // give up on AggregateExceptions, their messages are not verbose enough
 //
@@ -21,8 +23,6 @@
 //
 // configuration:
 // ^ treat captive dependencies as errors => by default its a warning (works only for ctor based dependency builders)
-// ^ attribute for optional dependencies => ctor based only, attribute for marking dependencies as optional/nullable,
-//    ^ Nullable<> struct supported by default, attribute type equal to System.Diagnostics.CodeAnalysis.AllowNullAttribute by default
 //
 // add query methods:
 // is type registered? what is its lifetime? etc.
