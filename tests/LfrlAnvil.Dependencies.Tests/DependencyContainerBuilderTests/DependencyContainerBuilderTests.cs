@@ -9,10 +9,12 @@ namespace LfrlAnvil.Dependencies.Tests.DependencyContainerBuilderTests;
 public class DependencyContainerBuilderTests : DependencyTestsBase
 {
     [Fact]
-    public void Ctor_ShouldCreateWithDefaultTransientLifetime()
+    public void Ctor_ShouldCreateWithDefaultTransientLifetimeAndUseDisposableInterfaceStrategy()
     {
         var sut = new DependencyContainerBuilder();
         sut.DefaultLifetime.Should().Be( DependencyLifetime.Transient );
+        sut.DefaultDisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
+        sut.DefaultDisposalStrategy.Callback.Should().BeNull();
     }
 
     [Theory]
@@ -41,6 +43,65 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         var sut = new DependencyContainerBuilder();
         var action = Lambda.Of( () => { sut.SetDefaultLifetime( (DependencyLifetime)4 ); } );
         action.Should().ThrowExactly<ArgumentException>();
+    }
+
+    [Fact]
+    public void
+        SetDefaultDisposalStrategy_ShouldUpdateDisposalStrategyToUseDisposableInterfaceAndCauseNewImplementorsToStartWithThatStrategy()
+    {
+        var sut = new DependencyContainerBuilder();
+
+        var result = sut.SetDefaultDisposalStrategy( DependencyImplementorDisposalStrategy.UseDisposableInterface() );
+        var implementor = sut.Add<Implementor>().FromFactory( _ => new object() );
+        var sharedImplementor = sut.AddSharedImplementor<Implementor>();
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.DefaultDisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
+            sut.DefaultDisposalStrategy.Callback.Should().BeNull();
+            implementor.DisposalStrategy.Should().BeEquivalentTo( sut.DefaultDisposalStrategy );
+            sharedImplementor.DisposalStrategy.Should().BeEquivalentTo( sut.DefaultDisposalStrategy );
+        }
+    }
+
+    [Fact]
+    public void SetDefaultDisposalStrategy_ShouldUpdateDisposalStrategyToRenounceOwnershipAndCauseNewImplementorsToStartWithThatStrategy()
+    {
+        var sut = new DependencyContainerBuilder();
+
+        var result = sut.SetDefaultDisposalStrategy( DependencyImplementorDisposalStrategy.RenounceOwnership() );
+        var implementor = sut.Add<Implementor>().FromFactory( _ => new object() );
+        var sharedImplementor = sut.AddSharedImplementor<Implementor>();
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.DefaultDisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.RenounceOwnership );
+            sut.DefaultDisposalStrategy.Callback.Should().BeNull();
+            implementor.DisposalStrategy.Should().BeEquivalentTo( sut.DefaultDisposalStrategy );
+            sharedImplementor.DisposalStrategy.Should().BeEquivalentTo( sut.DefaultDisposalStrategy );
+        }
+    }
+
+    [Fact]
+    public void SetDefaultDisposalStrategy_ShouldUpdateDisposalStrategyToUseCallbackAndCauseNewImplementorsToStartWithThatStrategy()
+    {
+        var callback = Substitute.For<Action<object>>();
+        var sut = new DependencyContainerBuilder();
+
+        var result = sut.SetDefaultDisposalStrategy( DependencyImplementorDisposalStrategy.UseCallback( callback ) );
+        var implementor = sut.Add<Implementor>().FromFactory( _ => new object() );
+        var sharedImplementor = sut.AddSharedImplementor<Implementor>();
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.DefaultDisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseCallback );
+            sut.DefaultDisposalStrategy.Callback.Should().BeSameAs( callback );
+            implementor.DisposalStrategy.Should().BeEquivalentTo( sut.DefaultDisposalStrategy );
+            sharedImplementor.DisposalStrategy.Should().BeEquivalentTo( sut.DefaultDisposalStrategy );
+        }
     }
 
     [Fact]
@@ -314,6 +375,21 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         {
             result.Should().BeSameAs( sut );
             result.DefaultLifetime.Should().Be( DependencyLifetime.Singleton );
+        }
+    }
+
+    [Fact]
+    public void IDependencyLocatorBuilder_SetDefaultDisposalStrategy_ShouldBeEquivalentToSetDefaultDisposalStrategy()
+    {
+        IDependencyLocatorBuilder sut = new DependencyContainerBuilder();
+
+        var result = sut.SetDefaultDisposalStrategy( DependencyImplementorDisposalStrategy.RenounceOwnership() );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            result.DefaultDisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.RenounceOwnership );
+            result.DefaultDisposalStrategy.Callback.Should().BeNull();
         }
     }
 }

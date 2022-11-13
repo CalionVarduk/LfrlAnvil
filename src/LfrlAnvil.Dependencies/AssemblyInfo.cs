@@ -29,8 +29,6 @@
 // ^ type for property based dependencies => must be an open generic constructable type with one generic type argument
 //    ^ and ctor (can be non-public) accepting exactly one parameter of that generic type
 //    ^ equal to Dependency<> struct by default (TBD)
-// ^ DefaultDisposalStrategy => for now it's hardcoded to UseDisposableInterface, could be configurable
-//    ^ DependencyBuilder would need a ref to container builder
 //
 // add query methods:
 // is type registered? what is its lifetime? etc.

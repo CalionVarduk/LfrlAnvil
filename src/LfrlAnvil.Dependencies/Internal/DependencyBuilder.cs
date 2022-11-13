@@ -4,8 +4,11 @@ namespace LfrlAnvil.Dependencies.Internal;
 
 internal sealed class DependencyBuilder : IDependencyBuilder
 {
-    internal DependencyBuilder(Type dependencyType, DependencyLifetime lifetime)
+    internal readonly DependencyLocatorBuilder LocatorBuilder;
+
+    internal DependencyBuilder(DependencyLocatorBuilder locatorBuilder, Type dependencyType, DependencyLifetime lifetime)
     {
+        LocatorBuilder = locatorBuilder;
         DependencyType = dependencyType;
         Lifetime = lifetime;
         SharedImplementorType = null;
@@ -36,7 +39,7 @@ internal sealed class DependencyBuilder : IDependencyBuilder
         if ( Implementor is null )
         {
             SharedImplementorType = null;
-            Implementor = new DependencyImplementorBuilder( DependencyType );
+            Implementor = new DependencyImplementorBuilder( DependencyType, LocatorBuilder.DefaultDisposalStrategy );
         }
 
         Implementor.FromFactory( factory );

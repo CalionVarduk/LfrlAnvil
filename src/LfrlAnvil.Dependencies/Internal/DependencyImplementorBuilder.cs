@@ -4,11 +4,11 @@ namespace LfrlAnvil.Dependencies.Internal;
 
 internal sealed class DependencyImplementorBuilder : IDependencyImplementorBuilder
 {
-    internal DependencyImplementorBuilder(Type implementorType)
+    internal DependencyImplementorBuilder(Type implementorType, DependencyImplementorDisposalStrategy disposalStrategy)
     {
         ImplementorType = implementorType;
+        DisposalStrategy = disposalStrategy;
         Factory = null;
-        DisposalStrategy = DependencyImplementorDisposalStrategy.UseDisposableInterface();
     }
 
     public Type ImplementorType { get; }

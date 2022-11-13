@@ -9,11 +9,13 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
     internal DependencyLocatorBuilder()
     {
         DefaultLifetime = DependencyLifetime.Transient;
+        DefaultDisposalStrategy = DependencyImplementorDisposalStrategy.UseDisposableInterface();
         SharedImplementors = new Dictionary<Type, DependencyImplementorBuilder>();
         Dependencies = new Dictionary<Type, DependencyBuilder>();
     }
 
     public DependencyLifetime DefaultLifetime { get; private set; }
+    public DependencyImplementorDisposalStrategy DefaultDisposalStrategy { get; private set; }
     internal Dictionary<Type, DependencyImplementorBuilder> SharedImplementors { get; }
     internal Dictionary<Type, DependencyBuilder> Dependencies { get; }
 
@@ -22,7 +24,7 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
         if ( ! SharedImplementors.TryGetValue( type, out var result ) )
         {
             Ensure.Equals( type.IsGenericTypeDefinition, false, nameof( type ) + '.' + nameof( type.IsGenericTypeDefinition ) );
-            result = new DependencyImplementorBuilder( type );
+            result = new DependencyImplementorBuilder( type, DefaultDisposalStrategy );
             SharedImplementors.Add( type, result );
         }
 
@@ -32,7 +34,7 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
     public IDependencyBuilder Add(Type type)
     {
         Ensure.Equals( type.IsGenericTypeDefinition, false, nameof( type ) + '.' + nameof( type.IsGenericTypeDefinition ) );
-        var dependency = new DependencyBuilder( type, DefaultLifetime );
+        var dependency = new DependencyBuilder( this, type, DefaultLifetime );
         Dependencies[type] = dependency;
         return dependency;
     }
@@ -41,6 +43,12 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
     {
         Ensure.IsDefined( lifetime, nameof( lifetime ) );
         DefaultLifetime = lifetime;
+        return this;
+    }
+
+    public IDependencyLocatorBuilder SetDefaultDisposalStrategy(DependencyImplementorDisposalStrategy strategy)
+    {
+        DefaultDisposalStrategy = strategy;
         return this;
     }
 

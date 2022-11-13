@@ -19,6 +19,7 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
     }
 
     public DependencyLifetime DefaultLifetime => _locatorBuilder.DefaultLifetime;
+    public DependencyImplementorDisposalStrategy DefaultDisposalStrategy => _locatorBuilder.DefaultDisposalStrategy;
 
     public IDependencyImplementorBuilder AddSharedImplementor(Type type)
     {
@@ -33,6 +34,12 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
     public DependencyContainerBuilder SetDefaultLifetime(DependencyLifetime lifetime)
     {
         _locatorBuilder.SetDefaultLifetime( lifetime );
+        return this;
+    }
+
+    public DependencyContainerBuilder SetDefaultDisposalStrategy(DependencyImplementorDisposalStrategy strategy)
+    {
+        _locatorBuilder.SetDefaultDisposalStrategy( strategy );
         return this;
     }
 
@@ -119,6 +126,16 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
     IDependencyLocatorBuilder IDependencyLocatorBuilder.SetDefaultLifetime(DependencyLifetime lifetime)
     {
         return ReinterpretCast.To<IDependencyContainerBuilder>( this ).SetDefaultLifetime( lifetime );
+    }
+
+    IDependencyContainerBuilder IDependencyContainerBuilder.SetDefaultDisposalStrategy(DependencyImplementorDisposalStrategy strategy)
+    {
+        return SetDefaultDisposalStrategy( strategy );
+    }
+
+    IDependencyLocatorBuilder IDependencyLocatorBuilder.SetDefaultDisposalStrategy(DependencyImplementorDisposalStrategy strategy)
+    {
+        return ReinterpretCast.To<IDependencyContainerBuilder>( this ).SetDefaultDisposalStrategy( strategy );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
