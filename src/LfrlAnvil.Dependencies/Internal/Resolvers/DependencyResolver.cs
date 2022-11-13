@@ -8,24 +8,32 @@ internal abstract class DependencyResolver
 {
     private bool _isResolving;
 
-    protected DependencyResolver(ulong id, Type implementorType, DependencyImplementorDisposalStrategy disposalStrategy)
+    protected DependencyResolver(
+        ulong id,
+        Type implementorType,
+        DependencyImplementorDisposalStrategy disposalStrategy,
+        Action<Type, IDependencyScope>? onResolvingCallback)
     {
         Id = id;
         ImplementorType = implementorType;
         DisposalStrategy = disposalStrategy;
+        OnResolvingCallback = onResolvingCallback;
         _isResolving = false;
     }
 
     internal ulong Id { get; }
     internal Type ImplementorType { get; }
     internal DependencyImplementorDisposalStrategy DisposalStrategy { get; }
+    internal Action<Type, IDependencyScope>? OnResolvingCallback { get; }
 
     internal object Create(DependencyScope scope, Type dependencyType)
     {
         if ( _isResolving )
             throw new CircularDependencyReferenceException( dependencyType, ImplementorType );
 
+        OnResolvingCallback?.Invoke( dependencyType, scope );
         _isResolving = true;
+
         try
         {
             return CreateInternal( scope );

@@ -610,6 +610,34 @@ public class DependencyContainerTests : DependencyTestsBase
     }
 
     [Fact]
+    public void ResolvingDependency_ShouldInvokeOnResolvingCallbackEveryTime()
+    {
+        var factory = Substitute.For<Func<IDependencyScope, Implementor>>();
+        factory.WithAnyArgs( _ => new Implementor() );
+
+        var onResolvingCallback = Substitute.For<Action<Type, IDependencyScope>>();
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IFoo>()
+            .SetLifetime( DependencyLifetime.Singleton )
+            .FromFactory( factory )
+            .SetOnResolvingCallback( onResolvingCallback );
+
+        var sut = builder.Build();
+        var scope = sut.RootScope.BeginScope();
+
+        var _ = scope.Locator.Resolve<IFoo>();
+        var __ = scope.Locator.Resolve<IFoo>();
+
+        using ( new AssertionScope() )
+        {
+            onResolvingCallback.Verify().CallCount.Should().Be( 2 );
+            onResolvingCallback.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( typeof( IFoo ), scope );
+            onResolvingCallback.Verify().CallAt( 1 ).Arguments.Should().BeSequentiallyEqualTo( typeof( IFoo ), scope );
+        }
+    }
+
+    [Fact]
     public void ResolvingDependency_WithSharedImplementor_ShouldGroupSharedImplementorsByDependencyLifetimes()
     {
         var factory = Substitute.For<Func<IDependencyScope, Implementor>>();

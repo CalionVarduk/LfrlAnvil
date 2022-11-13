@@ -10,8 +10,9 @@ internal sealed class ScopedSingletonDependencyResolver : DependencyResolver
         ulong id,
         Type implementorType,
         DependencyImplementorDisposalStrategy disposalStrategy,
+        Action<Type, IDependencyScope>? onResolvingCallback,
         Func<IDependencyScope, object> factory)
-        : base( id, implementorType, disposalStrategy )
+        : base( id, implementorType, disposalStrategy, onResolvingCallback )
     {
         _factory = factory;
     }

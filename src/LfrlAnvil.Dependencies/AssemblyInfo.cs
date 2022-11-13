@@ -3,10 +3,6 @@
 [assembly: InternalsVisibleTo( "LfrlAnvil.Dependencies.Tests" )]
 
 // TODO:
-// optional handlers for dependency builders: OnResolving & OnCreated
-// ^ OnResolving => called right after circular dependency check, ignores lifetime
-// ^ OnCreated => called right after dependency instance has been created by a factory & type checked, depends on lifetime
-//
 // Four different ways to configure dependency builders:
 // ^ auto-discovered ctor => provide the type, the builder will attempt to discover a most valid ctor for it automatically (default)
 // ^ explicit ctor => provide the ctor to use directly
@@ -14,6 +10,7 @@
 // ^ shared implementor key => dependency only, uses shared dependency resolver associated with the provided implementor key
 // ctor versions will validate circular dependencies and dependency resolutions during container building
 // ctor versions will allow to specify injections per parameter, by default will try to resolve through scope, can be overriden with a delegate
+// ctor versions will accept an optional OnCreated callback
 //
 // give up on AggregateExceptions, their messages are not verbose enough
 //

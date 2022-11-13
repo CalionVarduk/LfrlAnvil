@@ -154,18 +154,26 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
                 id,
                 builder.ImplementorType,
                 builder.DisposalStrategy,
+                builder.OnResolvingCallback,
                 builder.Factory ),
             DependencyLifetime.ScopedSingleton => new ScopedSingletonDependencyResolver(
                 id,
                 builder.ImplementorType,
                 builder.DisposalStrategy,
+                builder.OnResolvingCallback,
                 builder.Factory ),
             DependencyLifetime.Scoped => new ScopedDependencyResolver(
                 id,
                 builder.ImplementorType,
                 builder.DisposalStrategy,
+                builder.OnResolvingCallback,
                 builder.Factory ),
-            _ => new TransientDependencyResolver( id, builder.ImplementorType, builder.DisposalStrategy, builder.Factory )
+            _ => new TransientDependencyResolver(
+                id,
+                builder.ImplementorType,
+                builder.DisposalStrategy,
+                builder.OnResolvingCallback,
+                builder.Factory )
         };
 
         return result;

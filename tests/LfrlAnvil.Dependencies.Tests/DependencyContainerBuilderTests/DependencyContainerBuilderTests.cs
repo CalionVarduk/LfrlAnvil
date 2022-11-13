@@ -138,6 +138,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
             result.Factory.Should().BeSameAs( factory );
             result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
             result.DisposalStrategy.Callback.Should().BeNull();
+            result.OnResolvingCallback.Should().BeNull();
         }
     }
 
@@ -202,6 +203,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
             result.Factory.Should().BeNull();
             result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
             result.DisposalStrategy.Callback.Should().BeNull();
+            result.OnResolvingCallback.Should().BeNull();
         }
     }
 

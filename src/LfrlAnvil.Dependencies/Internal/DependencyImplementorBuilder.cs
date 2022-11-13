@@ -9,11 +9,13 @@ internal sealed class DependencyImplementorBuilder : IDependencyImplementorBuild
         ImplementorType = implementorType;
         DisposalStrategy = disposalStrategy;
         Factory = null;
+        OnResolvingCallback = null;
     }
 
     public Type ImplementorType { get; }
     public Func<IDependencyScope, object>? Factory { get; private set; }
     public DependencyImplementorDisposalStrategy DisposalStrategy { get; private set; }
+    public Action<Type, IDependencyScope>? OnResolvingCallback { get; private set; }
 
     public IDependencyImplementorBuilder FromFactory(Func<IDependencyScope, object> factory)
     {
@@ -24,6 +26,12 @@ internal sealed class DependencyImplementorBuilder : IDependencyImplementorBuild
     public IDependencyImplementorBuilder SetDisposalStrategy(DependencyImplementorDisposalStrategy strategy)
     {
         DisposalStrategy = strategy;
+        return this;
+    }
+
+    public IDependencyImplementorBuilder SetOnResolvingCallback(Action<Type, IDependencyScope>? callback)
+    {
+        OnResolvingCallback = callback;
         return this;
     }
 }
