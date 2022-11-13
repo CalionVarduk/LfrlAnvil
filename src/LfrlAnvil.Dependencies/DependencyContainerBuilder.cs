@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Dependencies.Exceptions;
 using LfrlAnvil.Dependencies.Internal;
@@ -16,8 +18,10 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
     public DependencyContainerBuilder()
     {
         _locatorBuilder = new DependencyLocatorBuilder();
+        InjectablePropertyType = typeof( Injected<> );
     }
 
+    public Type InjectablePropertyType { get; private set; }
     public DependencyLifetime DefaultLifetime => _locatorBuilder.DefaultLifetime;
     public DependencyImplementorDisposalStrategy DefaultDisposalStrategy => _locatorBuilder.DefaultDisposalStrategy;
 
@@ -40,6 +44,15 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
     public DependencyContainerBuilder SetDefaultDisposalStrategy(DependencyImplementorDisposalStrategy strategy)
     {
         _locatorBuilder.SetDefaultDisposalStrategy( strategy );
+        return this;
+    }
+
+    public DependencyContainerBuilder SetInjectablePropertyType(Type openGenericType)
+    {
+        if ( ! IsInjectablePropertyTypeCorrect( openGenericType ) )
+            throw new InvalidInjectablePropertyTypeException( openGenericType, nameof( openGenericType ) );
+
+        InjectablePropertyType = openGenericType;
         return this;
     }
 
@@ -138,6 +151,11 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
         return ReinterpretCast.To<IDependencyContainerBuilder>( this ).SetDefaultDisposalStrategy( strategy );
     }
 
+    IDependencyContainerBuilder IDependencyContainerBuilder.SetInjectablePropertyType(Type openGenericType)
+    {
+        return SetInjectablePropertyType( openGenericType );
+    }
+
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static DependencyResolver CreateDependencyResolver(
         UlongSequenceGenerator idGenerator,
@@ -177,5 +195,27 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
         };
 
         return result;
+    }
+
+    [Pure]
+    private static bool IsInjectablePropertyTypeCorrect(Type type)
+    {
+        if ( ! type.IsGenericTypeDefinition )
+            return false;
+
+        var genericArgs = type.GetGenericArguments();
+        if ( genericArgs.Length != 1 )
+            return false;
+
+        var instanceType = genericArgs[0];
+        var ctor = type.GetConstructors( BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic )
+            .FirstOrDefault(
+                c =>
+                {
+                    var parameters = c.GetParameters();
+                    return parameters.Length == 1 && parameters[0].ParameterType == instanceType;
+                } );
+
+        return ctor is not null;
     }
 }

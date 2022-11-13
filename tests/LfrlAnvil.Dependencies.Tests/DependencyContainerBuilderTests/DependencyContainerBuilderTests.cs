@@ -15,6 +15,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         sut.DefaultLifetime.Should().Be( DependencyLifetime.Transient );
         sut.DefaultDisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
         sut.DefaultDisposalStrategy.Callback.Should().BeNull();
+        sut.InjectablePropertyType.Should().BeSameAs( typeof( Injected<> ) );
     }
 
     [Theory]
@@ -102,6 +103,36 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
             implementor.DisposalStrategy.Should().BeEquivalentTo( sut.DefaultDisposalStrategy );
             sharedImplementor.DisposalStrategy.Should().BeEquivalentTo( sut.DefaultDisposalStrategy );
         }
+    }
+
+    [Theory]
+    [InlineData( typeof( InjectedWithPublicCtor<> ) )]
+    [InlineData( typeof( InjectedWithPrivateCtor<> ) )]
+    public void SetInjectablePropertyType_ShouldUpdateTheTypeIfItIsValid(Type type)
+    {
+        IDependencyContainerBuilder sut = new DependencyContainerBuilder();
+
+        var result = sut.SetInjectablePropertyType( type );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.InjectablePropertyType.Should().BeSameAs( type );
+        }
+    }
+
+    [Theory]
+    [InlineData( typeof( InjectedWithPublicCtor<string> ) )]
+    [InlineData( typeof( InvalidNonGenericInjected ) )]
+    [InlineData( typeof( InvalidInjectedWithTooManyArgs<,> ) )]
+    [InlineData( typeof( InvalidInjectedWithParameterlessCtor<> ) )]
+    [InlineData( typeof( InvalidInjectedWithIncorrectCtorParamType<> ) )]
+    [InlineData( typeof( InvalidInjectedWithTooManyCtorParams<> ) )]
+    public void SetInjectablePropertyType_ShouldThrowInvalidInjectablePropertyTypeException_WhenTypeIsNotValid(Type type)
+    {
+        var sut = new DependencyContainerBuilder();
+        var action = Lambda.Of( () => sut.SetInjectablePropertyType( type ) );
+        action.Should().ThrowExactly<InvalidInjectablePropertyTypeException>();
     }
 
     [Fact]
@@ -394,4 +425,39 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
             result.DefaultDisposalStrategy.Callback.Should().BeNull();
         }
     }
+}
+
+public class InjectedWithPublicCtor<T>
+{
+    public InjectedWithPublicCtor(T value) { }
+}
+
+public class InjectedWithPrivateCtor<T>
+{
+    private InjectedWithPrivateCtor(T value) { }
+}
+
+public class InvalidNonGenericInjected
+{
+    public InvalidNonGenericInjected(string value) { }
+}
+
+public class InvalidInjectedWithTooManyArgs<T1, T2>
+{
+    public InvalidInjectedWithTooManyArgs(T1 value) { }
+}
+
+public class InvalidInjectedWithParameterlessCtor<T>
+{
+    public InvalidInjectedWithParameterlessCtor() { }
+}
+
+public class InvalidInjectedWithIncorrectCtorParamType<T>
+{
+    public InvalidInjectedWithIncorrectCtorParamType(string value) { }
+}
+
+public class InvalidInjectedWithTooManyCtorParams<T>
+{
+    public InvalidInjectedWithTooManyCtorParams(T value1, T value2) { }
 }

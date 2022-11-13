@@ -23,9 +23,6 @@
 // ^ treat captive dependencies as errors => by default its a warning (works only for ctor based dependency builders)
 // ^ attribute for optional dependencies => ctor based only, attribute for marking dependencies as optional/nullable,
 //    ^ Nullable<> struct supported by default, attribute type equal to System.Diagnostics.CodeAnalysis.AllowNullAttribute by default
-// ^ type for property based dependencies => must be an open generic constructable type with one generic type argument
-//    ^ and ctor (can be non-public) accepting exactly one parameter of that generic type
-//    ^ equal to Dependency<> struct by default (TBD)
 //
 // add query methods:
 // is type registered? what is its lifetime? etc.

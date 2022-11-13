@@ -83,7 +83,18 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string GetScopeString(IDependencyScope scope, bool capitalize)
+    internal static string InvalidInjectablePropertyType(Type type)
+    {
+        return
+            $@"Type '{type.GetDebugString()}' is not a valid injectable property type because it doesn't satisfy at least one of the following requirements:
+- Type must be an open generic definition,
+- Type must have exactly one generic argument,
+- Type must contain a constructor that accepts exactly one parameter of type equal to the generic argument.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static string GetScopeString(IDependencyScope scope, bool capitalize)
     {
         if ( capitalize )
             return scope.IsRoot ? "Scope [root]" : $"Scope [level: {scope.Level}, thread: {scope.ThreadId}]";
