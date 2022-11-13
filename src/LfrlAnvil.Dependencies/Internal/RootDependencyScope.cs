@@ -6,7 +6,7 @@ namespace LfrlAnvil.Dependencies.Internal;
 internal sealed class RootDependencyScope : DependencyScope
 {
     internal RootDependencyScope(DependencyContainer container)
-        : base( container: container, parentScope: null, threadId: null )
+        : base( container: container, parentScope: null, threadId: null, name: null )
     {
         ChildrenByThreadId = new Dictionary<int, ChildDependencyScope>();
     }

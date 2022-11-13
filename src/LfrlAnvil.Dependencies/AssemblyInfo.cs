@@ -27,12 +27,6 @@
 // add query methods:
 // is type registered? what is its lifetime? etc.
 //
-// named scopes:
-// ^ scopes can have an optional string name
-// ^ this name can be used to get scope's instance, even if it was created by another thread
-// ^ it cannot be easily disposable
-// ^ DependencyScope methods: UseScope(name) and EndScope(name) => EndName will only work if named scope is being disposed by the correct thread
-//
 // keyed dependencies:
 // ^ add possibility to register dependencies under custom keys
 //

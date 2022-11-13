@@ -9,6 +9,7 @@ public interface IDependencyScope
     [MemberNotNullWhen( false, nameof( ThreadId ) )]
     bool IsRoot { get; }
 
+    string? Name { get; }
     int? ThreadId { get; }
     bool IsActive { get; }
     int Level { get; }
@@ -18,5 +19,10 @@ public interface IDependencyScope
     IDependencyLocator Locator { get; }
 
     [Pure]
-    IChildDependencyScope BeginScope();
+    IChildDependencyScope BeginScope(string? name = null);
+
+    [Pure]
+    IDependencyScope? UseScope(string name);
+
+    bool EndScope(string name);
 }

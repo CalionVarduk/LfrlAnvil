@@ -14,11 +14,13 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
     private readonly object _sync = new object();
     private readonly IReadOnlyDictionary<Type, DependencyResolver> _resolvers;
     private readonly Dictionary<int, ChildDependencyScope> _activeScopesPerThread;
+    private readonly Dictionary<string, ChildDependencyScope> _namedScopes;
 
     internal DependencyContainer(IReadOnlyDictionary<Type, DependencyResolver> resolvers)
     {
         _resolvers = resolvers;
         _activeScopesPerThread = new Dictionary<int, ChildDependencyScope>();
+        _namedScopes = new Dictionary<string, ChildDependencyScope>();
         InternalRootScope = new RootDependencyScope( this );
     }
 
@@ -62,7 +64,7 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
         }
     }
 
-    internal ChildDependencyScope CreateChildScope(DependencyScope parentScope)
+    internal ChildDependencyScope CreateChildScope(DependencyScope parentScope, string? name)
     {
         lock ( _sync )
         {
@@ -75,9 +77,37 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
             if ( ! ReferenceEquals( activeScope, parentScope ) )
                 throw new DependencyScopeCreationException( parentScope, activeScope, threadId );
 
-            var result = new ChildDependencyScope( this, parentScope, threadId );
+            if ( name is not null && _namedScopes.ContainsKey( name ) )
+                throw new NamedDependencyScopeCreationException( parentScope, name );
+
+            var result = new ChildDependencyScope( this, parentScope, threadId, name );
             LinkChildScope( parentScope, result );
+
+            if ( name is not null )
+                _namedScopes.Add( name, result );
+
             return result;
+        }
+    }
+
+    [Pure]
+    internal DependencyScope? GetScope(string name)
+    {
+        lock ( _sync )
+        {
+            return _namedScopes.TryGetValue( name, out var scope ) ? scope : null;
+        }
+    }
+
+    internal bool EndScope(string name)
+    {
+        lock ( _sync )
+        {
+            if ( ! _namedScopes.TryGetValue( name, out var scope ) )
+                return false;
+
+            DisposeScopeInternal( scope );
+            return true;
         }
     }
 
@@ -85,13 +115,7 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
     {
         lock ( _sync )
         {
-            if ( scope.IsDisposed )
-                return;
-
-            if ( ReferenceEquals( scope, InternalRootScope ) )
-                DisposeRootScope();
-            else
-                DisposeChildScope( ReinterpretCast.To<ChildDependencyScope>( scope ) );
+            DisposeScopeInternal( scope );
         }
     }
 
@@ -137,6 +161,17 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
         _activeScopesPerThread[childScope.ThreadId.Value] = parentChildScope;
     }
 
+    private void DisposeScopeInternal(DependencyScope scope)
+    {
+        if ( scope.IsDisposed )
+            return;
+
+        if ( ReferenceEquals( scope, InternalRootScope ) )
+            DisposeRootScope();
+        else
+            DisposeChildScope( ReinterpretCast.To<ChildDependencyScope>( scope ) );
+    }
+
     private void DisposeChildScope(ChildDependencyScope scope)
     {
         Assume.IsNotNull( scope.ThreadId, nameof( scope.ThreadId ) );
@@ -174,7 +209,7 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
             throw new OwnedDependenciesDisposalAggregateException( InternalRootScope, exceptions );
     }
 
-    private static Chain<OwnedDependencyDisposalException> DisposeChildScopeInternal(
+    private Chain<OwnedDependencyDisposalException> DisposeChildScopeInternal(
         ChildDependencyScope scope,
         Chain<OwnedDependencyDisposalException> exceptions)
     {
@@ -187,6 +222,10 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
         var scopeExceptions = scope.InternalLocator.DisposeInstances();
         exceptions = exceptions.Extend( scopeExceptions );
         scope.IsDisposed = true;
+
+        if ( scope.Name is not null )
+            _namedScopes.Remove( scope.Name );
+
         return exceptions;
     }
 

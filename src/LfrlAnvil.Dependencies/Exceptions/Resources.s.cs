@@ -28,6 +28,14 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string NamedScopeAlreadyExists(IDependencyScope parentScope, string name)
+    {
+        var scopeText = GetScopeString( parentScope, capitalize: false );
+        return $"Could not begin a named scope from {scopeText} because scope with name '{name}' already exists.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string CannotDisposeScopeFromThisThread(IDependencyScope scope, int actualThreadId)
     {
         var scopeText = GetScopeString( scope, capitalize: false );

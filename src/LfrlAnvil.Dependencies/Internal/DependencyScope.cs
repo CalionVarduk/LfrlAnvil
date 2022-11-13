@@ -1,18 +1,21 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Dependencies.Internal;
 
 internal class DependencyScope : IDependencyScope, IDisposable
 {
-    protected DependencyScope(DependencyContainer container, DependencyScope? parentScope, int? threadId)
+    protected DependencyScope(DependencyContainer container, DependencyScope? parentScope, int? threadId, string? name)
     {
         ThreadId = threadId;
+        Name = name;
         InternalContainer = container;
         InternalParentScope = parentScope;
         IsDisposed = false;
         InternalLocator = new DependencyLocator( this );
     }
 
+    public string? Name { get; }
     public int? ThreadId { get; }
     public bool IsDisposed { get; internal set; }
     public IDependencyContainer Container => InternalContainer;
@@ -30,13 +33,30 @@ internal class DependencyScope : IDependencyScope, IDisposable
         InternalContainer.DisposeScope( this );
     }
 
-    public ChildDependencyScope BeginScope()
+    internal ChildDependencyScope BeginScope(string? name = null)
     {
-        return InternalContainer.CreateChildScope( this );
+        return InternalContainer.CreateChildScope( this, name );
     }
 
-    IChildDependencyScope IDependencyScope.BeginScope()
+    [Pure]
+    internal DependencyScope? UseScope(string name)
     {
-        return BeginScope();
+        return InternalContainer.GetScope( name );
+    }
+
+    public bool EndScope(string name)
+    {
+        return InternalContainer.EndScope( name );
+    }
+
+    IChildDependencyScope IDependencyScope.BeginScope(string? name)
+    {
+        return BeginScope( name );
+    }
+
+    [Pure]
+    IDependencyScope? IDependencyScope.UseScope(string name)
+    {
+        return UseScope( name );
     }
 }
