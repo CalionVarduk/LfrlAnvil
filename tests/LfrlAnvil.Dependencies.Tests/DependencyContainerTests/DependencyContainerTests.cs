@@ -742,11 +742,10 @@ public class DependencyContainerTests : DependencyTestsBase
         var builder = new DependencyContainerBuilder();
         builder.GetKeyedLocator( 1 ).AddSharedImplementor<Implementor>().FromFactory( _ => new Implementor() );
         builder.GetKeyedLocator( 1 ).Add<IFoo>().FromSharedImplementor<Implementor>().SetLifetime( DependencyLifetime.Singleton );
-        builder.Add<IBar>().FromSharedImplementor<Implementor>().Keyed( 1 ).SetLifetime( DependencyLifetime.Singleton );
+        builder.Add<IBar>().FromSharedImplementor<Implementor>( o => o.Keyed( 1 ) ).SetLifetime( DependencyLifetime.Singleton );
         builder.GetKeyedLocator( "foo" )
             .Add<IQux>()
-            .FromSharedImplementor<Implementor>()
-            .Keyed( 1 )
+            .FromSharedImplementor<Implementor>( o => o.Keyed( 1 ) )
             .SetLifetime( DependencyLifetime.Singleton );
 
         var sut = builder.Build();

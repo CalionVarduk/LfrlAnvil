@@ -279,8 +279,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         using ( new AssertionScope() )
         {
-            result.DependencyType.Should().Be( builder.DependencyType );
-            result.Lifetime.Should().Be( builder.Lifetime );
+            result.Should().BeSameAs( builder );
             result.Implementor.Should().BeNull();
             result.SharedImplementorKey.Should().NotBeNull();
             if ( result.SharedImplementorKey is null )
@@ -301,7 +300,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         var builder = sut.Add( typeof( IFoo ) );
         builder.FromFactory( factory );
 
-        var result = builder.FromSharedImplementor( typeof( Implementor ) ).Keyed( 1 );
+        var result = builder.FromSharedImplementor<Implementor>( o => o.Keyed( 1 ) );
 
         using ( new AssertionScope() )
         {
@@ -319,68 +318,6 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
     }
 
     [Fact]
-    public void Add_FromSharedImplementor_SetLifetime_ShouldBeEquivalentToBuilderSetLifetime()
-    {
-        var factory = Substitute.For<Func<IDependencyScope, IFoo>>();
-        var sut = new DependencyContainerBuilder();
-        var builder = sut.Add( typeof( IFoo ) );
-        builder.FromFactory( factory );
-
-        var result = builder.FromSharedImplementor( typeof( Implementor ) ).SetLifetime( DependencyLifetime.Singleton );
-
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder );
-            result.Implementor.Should().BeNull();
-            result.SharedImplementorKey.Should().NotBeNull();
-            result.Lifetime.Should().Be( DependencyLifetime.Singleton );
-        }
-    }
-
-    [Fact]
-    public void Add_FromSharedImplementor_FromFactory_ShouldBeEquivalentToBuilderFromFactory()
-    {
-        var factory = Substitute.For<Func<IDependencyScope, IFoo>>();
-        var sut = new DependencyContainerBuilder();
-        var builder = sut.Add( typeof( IFoo ) );
-        builder.FromFactory( factory );
-
-        var result = builder.FromSharedImplementor( typeof( Implementor ) ).FromFactory( factory );
-
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder.Implementor );
-            builder.SharedImplementorKey.Should().BeNull();
-            result.ImplementorType.Should().Be( typeof( IFoo ) );
-            result.Factory.Should().BeSameAs( factory );
-            result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
-            result.DisposalStrategy.Callback.Should().BeNull();
-            result.OnResolvingCallback.Should().BeNull();
-        }
-    }
-
-    [Fact]
-    public void Add_FromSharedImplementor_FromSharedImplementor_ShouldBeEquivalentToBuilderFromSharedImplementor()
-    {
-        var factory = Substitute.For<Func<IDependencyScope, IFoo>>();
-        var sut = new DependencyContainerBuilder();
-        var builder = sut.Add( typeof( IFoo ) );
-        builder.FromFactory( factory );
-
-        var result = builder.FromSharedImplementor( typeof( Implementor ) ).FromSharedImplementor( typeof( IBar ) );
-
-        using ( new AssertionScope() )
-        {
-            result.Implementor.Should().BeNull();
-            result.SharedImplementorKey.Should().NotBeNull();
-            if ( result.SharedImplementorKey is null )
-                return;
-
-            result.SharedImplementorKey.Type.Should().Be( typeof( IBar ) );
-        }
-    }
-
-    [Fact]
     public void Add_FromSharedImplementor_ShouldSetProvidedSharedImplementorTypeAndLocatorKeyAsCreationDetail_WhenLocatorIsKeyed()
     {
         var factory = Substitute.For<Func<IDependencyScope, IFoo>>();
@@ -392,6 +329,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         using ( new AssertionScope() )
         {
+            result.Should().BeSameAs( builder );
             result.Implementor.Should().BeNull();
             result.SharedImplementorKey.Should().NotBeNull();
             if ( result.SharedImplementorKey is null )
@@ -412,7 +350,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         var builder = sut.GetKeyedLocator( 1 ).Add( typeof( IFoo ) );
         builder.FromFactory( factory );
 
-        var result = builder.FromSharedImplementor( typeof( Implementor ) ).NotKeyed();
+        var result = builder.FromSharedImplementor<Implementor>( o => o.NotKeyed() );
 
         using ( new AssertionScope() )
         {
@@ -589,7 +527,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
     public void TryBuild_ShouldReturnFailureResult_WhenDependencyIsImplementedByNonExistingKeyedSharedImplementorAndNonCachedKeyType()
     {
         var sut = new DependencyContainerBuilder();
-        var builder = sut.Add<IFoo>().FromSharedImplementor<Implementor>().Keyed( 1 );
+        var builder = sut.Add<IFoo>().FromSharedImplementor<Implementor>( o => o.Keyed( 1 ) );
 
         var result = sut.TryBuild();
 
@@ -614,7 +552,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
     {
         var sut = new DependencyContainerBuilder();
         var _ = sut.GetKeyedLocator( 1 );
-        var builder = sut.Add<IFoo>().FromSharedImplementor<Implementor>().Keyed( 2 );
+        var builder = sut.Add<IFoo>().FromSharedImplementor<Implementor>( o => o.Keyed( 2 ) );
 
         var result = sut.TryBuild();
 

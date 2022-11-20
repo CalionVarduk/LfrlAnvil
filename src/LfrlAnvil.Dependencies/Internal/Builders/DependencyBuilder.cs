@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Dependencies.Internal.Builders;
 
@@ -28,11 +29,11 @@ internal sealed class DependencyBuilder : IDependencyBuilder
         return this;
     }
 
-    public IDependencyFromSharedImplementorBuilder FromSharedImplementor(Type type)
+    public IDependencyBuilder FromSharedImplementor(Type type, Action<ISharedDependencyImplementorOptions>? configuration = null)
     {
-        InternalSharedImplementorKey = LocatorBuilder.CreateImplementorKey( type );
+        InternalSharedImplementorKey = CreateSharedImplementorKey( type, configuration );
         Implementor = null;
-        return new DependencyFromSharedImplementorBuilder( this );
+        return this;
     }
 
     public IDependencyImplementorBuilder FromFactory(Func<IDependencyScope, object> factory)
@@ -45,5 +46,22 @@ internal sealed class DependencyBuilder : IDependencyBuilder
 
         Implementor.FromFactory( factory );
         return Implementor;
+    }
+
+    [Pure]
+    private IInternalSharedDependencyImplementorKey CreateSharedImplementorKey(
+        Type type,
+        Action<ISharedDependencyImplementorOptions>? configuration)
+    {
+        var defaultKey = LocatorBuilder.CreateImplementorKey( type );
+        if ( configuration is null )
+            return defaultKey;
+
+        var options = new SharedDependencyImplementorOptions( defaultKey );
+        configuration( options );
+
+        var sharedImplementorKey = options.Key as IInternalSharedDependencyImplementorKey;
+        Ensure.IsNotNull( sharedImplementorKey, nameof( sharedImplementorKey ) );
+        return sharedImplementorKey;
     }
 }

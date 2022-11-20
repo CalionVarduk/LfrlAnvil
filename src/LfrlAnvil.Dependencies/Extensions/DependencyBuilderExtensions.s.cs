@@ -1,12 +1,15 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Dependencies.Extensions;
 
 public static class DependencyBuilderExtensions
 {
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static IDependencyFromSharedImplementorBuilder FromSharedImplementor<T>(this IDependencyBuilder builder)
+    public static IDependencyBuilder FromSharedImplementor<T>(
+        this IDependencyBuilder builder,
+        Action<ISharedDependencyImplementorOptions>? configuration = null)
     {
-        return builder.FromSharedImplementor( typeof( T ) );
+        return builder.FromSharedImplementor( typeof( T ), configuration );
     }
 }

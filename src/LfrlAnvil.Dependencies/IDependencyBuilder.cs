@@ -10,7 +10,8 @@ public interface IDependencyBuilder
     IDependencyImplementorBuilder? Implementor { get; }
 
     IDependencyBuilder SetLifetime(DependencyLifetime lifetime);
-    IDependencyFromSharedImplementorBuilder FromSharedImplementor(Type type);
+
+    IDependencyBuilder FromSharedImplementor(Type type, Action<ISharedDependencyImplementorOptions>? configuration = null);
 
     IDependencyImplementorBuilder FromFactory(Func<IDependencyScope, object> factory);
     // TODO: extend, must support factories, explicit ctors, explicit shared implementor keys, explicit implementor types (ctor auto-discovery) & self
