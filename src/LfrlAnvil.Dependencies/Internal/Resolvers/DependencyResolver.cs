@@ -58,14 +58,14 @@ internal abstract class DependencyResolver
             case DependencyImplementorDisposalStrategyType.UseDisposableInterface:
             {
                 if ( instance is IDisposable disposable )
-                    scope.InternalLocator.InternalDisposers.Add( new DependencyDisposer( disposable, callback: null ) );
+                    scope.InternalDisposers.Add( new DependencyDisposer( disposable, callback: null ) );
 
                 break;
             }
             case DependencyImplementorDisposalStrategyType.UseCallback:
             {
                 Assume.IsNotNull( DisposalStrategy.Callback, nameof( DisposalStrategy.Callback ) );
-                scope.InternalLocator.InternalDisposers.Add( new DependencyDisposer( instance, DisposalStrategy.Callback ) );
+                scope.InternalDisposers.Add( new DependencyDisposer( instance, DisposalStrategy.Callback ) );
                 break;
             }
         }

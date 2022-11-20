@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace LfrlAnvil.Dependencies.Internal;
+namespace LfrlAnvil.Dependencies.Internal.Builders;
 
 internal sealed class DependencyImplementorBuilder : IDependencyImplementorBuilder
 {

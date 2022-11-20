@@ -1,22 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using LfrlAnvil.Dependencies.Exceptions;
+using LfrlAnvil.Dependencies.Internal.Resolvers;
 
 namespace LfrlAnvil.Dependencies.Internal;
 
-internal sealed class DependencyLocator : IDependencyLocator
+internal class DependencyLocator : IDependencyLocator
 {
-    internal DependencyLocator(DependencyScope attachedScope)
+    internal DependencyLocator(DependencyScope attachedScope, Dictionary<Type, DependencyResolver> resolvers)
     {
         InternalAttachedScope = attachedScope;
-        ScopedInstancesByResolverId = new Dictionary<ulong, object>();
-        InternalDisposers = new List<DependencyDisposer>();
+        Resolvers = resolvers;
     }
 
     public IDependencyScope AttachedScope => InternalAttachedScope;
     internal DependencyScope InternalAttachedScope { get; }
-    internal Dictionary<ulong, object> ScopedInstancesByResolverId { get; }
-    internal List<DependencyDisposer> InternalDisposers { get; }
+    internal Dictionary<Type, DependencyResolver> Resolvers { get; }
+
+    Type? IDependencyLocator.KeyType => null;
+    object? IDependencyLocator.Key => null;
+    bool IDependencyLocator.IsKeyed => false;
 
     public object Resolve(Type type)
     {
@@ -61,20 +64,20 @@ internal sealed class DependencyLocator : IDependencyLocator
 
         throw new InvalidDependencyCastException( typeof( T ), result.GetType() );
     }
+}
 
-    internal Chain<OwnedDependencyDisposalException> DisposeInstances()
+internal sealed class DependencyLocator<TKey> : DependencyLocator, IDependencyLocator<TKey>
+    where TKey : notnull
+{
+    internal DependencyLocator(TKey key, DependencyScope attachedScope, Dictionary<Type, DependencyResolver> resolvers)
+        : base( attachedScope, resolvers )
     {
-        var exceptions = Chain<OwnedDependencyDisposalException>.Empty;
-
-        foreach ( var disposer in InternalDisposers )
-        {
-            var exception = disposer.TryDispose();
-            if ( exception is not null )
-                exceptions = exceptions.Extend( new OwnedDependencyDisposalException( InternalAttachedScope, exception ) );
-        }
-
-        InternalDisposers.Clear();
-        ScopedInstancesByResolverId.Clear();
-        return exceptions;
+        Key = key;
     }
+
+    public TKey Key { get; }
+
+    Type IDependencyLocator.KeyType => typeof( TKey );
+    object IDependencyLocator.Key => Key;
+    bool IDependencyLocator.IsKeyed => true;
 }

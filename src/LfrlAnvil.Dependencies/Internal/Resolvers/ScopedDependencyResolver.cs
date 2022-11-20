@@ -19,13 +19,12 @@ internal sealed class ScopedDependencyResolver : DependencyResolver
 
     protected override object CreateInternal(DependencyScope scope)
     {
-        var locator = scope.InternalLocator;
-        if ( locator.ScopedInstancesByResolverId.TryGetValue( Id, out var result ) )
+        if ( scope.ScopedInstancesByResolverId.TryGetValue( Id, out var result ) )
             return result;
 
         result = _factory( scope );
 
-        locator.ScopedInstancesByResolverId.Add( Id, result );
+        scope.ScopedInstancesByResolverId.Add( Id, result );
         SetupDisposalStrategy( scope, result );
         return result;
     }

@@ -7,6 +7,9 @@ public interface IDependencyLocatorBuilder
 {
     DependencyLifetime DefaultLifetime { get; }
     DependencyImplementorDisposalStrategy DefaultDisposalStrategy { get; }
+    Type? KeyType { get; }
+    object? Key { get; }
+    bool IsKeyed { get; }
 
     IDependencyImplementorBuilder AddSharedImplementor(Type type);
     IDependencyBuilder Add(Type type);
@@ -18,4 +21,10 @@ public interface IDependencyLocatorBuilder
 
     [Pure]
     IDependencyBuilder? TryGetDependency(Type type);
+}
+
+public interface IDependencyLocatorBuilder<out TKey> : IDependencyLocatorBuilder
+    where TKey : notnull
+{
+    new TKey Key { get; }
 }

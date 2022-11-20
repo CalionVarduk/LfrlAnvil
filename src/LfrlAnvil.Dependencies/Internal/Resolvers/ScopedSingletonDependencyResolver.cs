@@ -19,16 +19,15 @@ internal sealed class ScopedSingletonDependencyResolver : DependencyResolver
 
     protected override object CreateInternal(DependencyScope scope)
     {
-        var locator = scope.InternalLocator;
-        if ( locator.ScopedInstancesByResolverId.TryGetValue( Id, out var result ) )
+        if ( scope.ScopedInstancesByResolverId.TryGetValue( Id, out var result ) )
             return result;
 
         var parentScope = scope.InternalParentScope;
         while ( parentScope is not null )
         {
-            if ( parentScope.InternalLocator.ScopedInstancesByResolverId.TryGetValue( Id, out result ) )
+            if ( parentScope.ScopedInstancesByResolverId.TryGetValue( Id, out result ) )
             {
-                locator.ScopedInstancesByResolverId.Add( Id, result );
+                scope.ScopedInstancesByResolverId.Add( Id, result );
                 return result;
             }
 
@@ -37,7 +36,7 @@ internal sealed class ScopedSingletonDependencyResolver : DependencyResolver
 
         result = _factory( scope );
 
-        locator.ScopedInstancesByResolverId.Add( Id, result );
+        scope.ScopedInstancesByResolverId.Add( Id, result );
         SetupDisposalStrategy( scope, result );
         return result;
     }

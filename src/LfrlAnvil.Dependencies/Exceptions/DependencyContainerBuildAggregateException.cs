@@ -9,5 +9,5 @@ public class DependencyContainerBuildAggregateException : AggregateException
         : base(
             Resources.ContainerIsNotConfiguredCorrectly,
             messages.SelectMany(
-                m => m.Errors.Select( e => new DependencyTypeConfigurationException( m.DependencyType, m.ImplementorType, e ) ) ) ) { }
+                m => m.Errors.Select( e => new DependencyTypeConfigurationException( m.DependencyType, m.ImplementorKey, e ) ) ) ) { }
 }

@@ -71,6 +71,9 @@ public class DependencyScopeTests : DependencyTestsBase
             sut.Container.Should().BeSameAs( container );
             sut.Level.Should().Be( 0 );
             sut.Locator.AttachedScope.Should().BeSameAs( sut );
+            sut.Locator.Key.Should().BeNull();
+            sut.Locator.KeyType.Should().BeNull();
+            sut.Locator.IsKeyed.Should().BeFalse();
             sut.IsActive.Should().BeTrue();
             sut.IsDisposed.Should().BeFalse();
             sut.IsRoot.Should().BeTrue();
@@ -78,6 +81,51 @@ public class DependencyScopeTests : DependencyTestsBase
             sut.ThreadId.Should().BeNull();
             sut.Name.Should().BeNull();
         }
+    }
+
+    [Theory]
+    [InlineData( 1 )]
+    [InlineData( 2 )]
+    [InlineData( 3 )]
+    public void GetKeyedLocator_ShouldReturnLocatorWithCorrectKey(int key)
+    {
+        var container = new DependencyContainerBuilder().Build();
+        var sut = container.RootScope;
+
+        var result = sut.GetKeyedLocator( key );
+
+        using ( new AssertionScope() )
+        {
+            result.Key.Should().Be( key );
+            ((IDependencyLocator)result).Key.Should().Be( key );
+            result.KeyType.Should().Be( typeof( int ) );
+            result.IsKeyed.Should().BeTrue();
+            result.AttachedScope.Should().BeSameAs( sut );
+        }
+    }
+
+    [Fact]
+    public void GetKeyedLocator_ShouldReturnCorrectCachedLocator_WhenCalledMoreThanOnceWithTheSameKey()
+    {
+        var container = new DependencyContainerBuilder().Build();
+        var sut = container.RootScope;
+
+        var result1 = sut.GetKeyedLocator( 1 );
+        var result2 = sut.GetKeyedLocator( 1 );
+
+        result1.Should().Be( result2 );
+    }
+
+    [Fact]
+    public void GetKeyedLocator_ShouldThrowObjectDisposedException_WhenScopeIsDisposed()
+    {
+        var container = new DependencyContainerBuilder().Build();
+        var sut = container.RootScope;
+        container.Dispose();
+
+        var action = Lambda.Of( () => sut.GetKeyedLocator( 1 ) );
+
+        action.Should().ThrowExactly<ObjectDisposedException>();
     }
 
     [Fact]
@@ -92,6 +140,9 @@ public class DependencyScopeTests : DependencyTestsBase
             sut.Container.Should().BeSameAs( container );
             sut.Level.Should().Be( 1 );
             sut.Locator.AttachedScope.Should().BeSameAs( sut );
+            sut.Locator.Key.Should().BeNull();
+            sut.Locator.KeyType.Should().BeNull();
+            sut.Locator.IsKeyed.Should().BeFalse();
             sut.IsActive.Should().BeTrue();
             sut.IsDisposed.Should().BeFalse();
             sut.IsRoot.Should().BeFalse();

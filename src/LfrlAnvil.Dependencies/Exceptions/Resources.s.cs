@@ -83,10 +83,10 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string ImplementorDoesNotExist(Type dependencyType, Type implementorType)
+    internal static string ImplementorDoesNotExist(Type dependencyType, ISharedDependencyImplementorKey implementorKey)
     {
         return
-            $"Dependency type '{dependencyType.GetDebugString()}' was configured to use a shared implementor of type '{implementorType.GetDebugString()}' but an implementor of that type wasn't registered.";
+            $"Dependency type '{dependencyType.GetDebugString()}' was configured to use a shared implementor '{implementorKey.ToString()}' but such an implementor wasn't registered.";
     }
 
     [Pure]

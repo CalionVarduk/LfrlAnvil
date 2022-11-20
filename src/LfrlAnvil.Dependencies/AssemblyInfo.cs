@@ -27,8 +27,7 @@
 // add query methods:
 // is type registered? what is its lifetime? etc.
 //
-// keyed dependencies:
-// ^ add possibility to register dependencies under custom keys
+// container builder modules - allow to 'add' a builder to another builder, so that they can be modularized
 //
 // automatic IEnumerable<> resolvers:
 // ^ along with 'normal' dependency registrations, a transient 'IEnumerable' version of them will be generated automatically

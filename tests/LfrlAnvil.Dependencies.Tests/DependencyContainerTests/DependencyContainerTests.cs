@@ -59,27 +59,51 @@ public class DependencyContainerTests : DependencyTestsBase
     }
 
     [Fact]
-    public void ResolvingDependencyLocator_ThroughRootScope_ShouldReturnRootScopeLocator()
+    public void ResolvingDependencyContainer_ThroughUnregisteredKeyedLocator_ShouldReturnContainerItself()
     {
         var builder = new DependencyContainerBuilder();
         var sut = builder.Build();
-        var scope = sut.RootScope;
 
-        var result = scope.Locator.Resolve<IDependencyLocator>();
+        var result = sut.RootScope.GetKeyedLocator( 1 ).Resolve<IDependencyContainer>();
 
-        result.Should().Be( scope.Locator );
+        result.Should().Be( sut );
     }
 
     [Fact]
-    public void ResolvingDependencyLocator_ThroughChildScope_ShouldReturnChildScopeLocator()
+    public void ResolvingDependencyScope_ThroughUnregisteredKeyedLocator_ShouldReturnScopeItself()
     {
         var builder = new DependencyContainerBuilder();
         var sut = builder.Build();
         var scope = sut.RootScope.BeginScope();
 
-        var result = scope.Locator.Resolve<IDependencyLocator>();
+        var result = scope.GetKeyedLocator( 1 ).Resolve<IDependencyScope>();
 
-        result.Should().Be( scope.Locator );
+        result.Should().Be( scope );
+    }
+
+    [Fact]
+    public void ResolvingDependencyContainer_ThroughRegisteredKeyedLocator_ShouldReturnContainerItself()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.GetKeyedLocator( 1 ).Add<IFoo>().FromFactory( _ => new Implementor() );
+        var sut = builder.Build();
+
+        var result = sut.RootScope.GetKeyedLocator( 1 ).Resolve<IDependencyContainer>();
+
+        result.Should().Be( sut );
+    }
+
+    [Fact]
+    public void ResolvingDependencyScope_ThroughRegisteredKeyedLocator_ShouldReturnScopeItself()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.GetKeyedLocator( 1 ).Add<IFoo>().FromFactory( _ => new Implementor() );
+        var sut = builder.Build();
+        var scope = sut.RootScope.BeginScope();
+
+        var result = scope.GetKeyedLocator( 1 ).Resolve<IDependencyScope>();
+
+        result.Should().Be( scope );
     }
 
     [Fact]
@@ -661,6 +685,80 @@ public class DependencyContainerTests : DependencyTestsBase
             factory.Verify().CallCount.Should().Be( 2 );
             result1.Should().BeSameAs( result2 );
             result1.Should().NotBeSameAs( result3 );
+        }
+    }
+
+    [Fact]
+    public void KeyedDependencyResolutionAttempt_ThroughGlobalLocator_ShouldReturnNull()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.GetKeyedLocator( 1 ).Add<IFoo>().FromFactory( _ => new Implementor() );
+        var sut = builder.Build();
+
+        var result = sut.RootScope.Locator.TryResolve<IFoo>();
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public void KeyedDependencyResolutionAttempt_ThroughKeyedLocatorWithCorrectKeyTypeButDifferentKey_ShouldReturnNull()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.GetKeyedLocator( 1 ).Add<IFoo>().FromFactory( _ => new Implementor() );
+        var sut = builder.Build();
+
+        var result = sut.RootScope.GetKeyedLocator( 2 ).TryResolve<IFoo>();
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public void KeyedDependencyResolutionAttempt_ThroughKeyedLocatorWithIncorrectKeyType_ShouldReturnNull()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.GetKeyedLocator( 1 ).Add<IFoo>().FromFactory( _ => new Implementor() );
+        var sut = builder.Build();
+
+        var result = sut.RootScope.GetKeyedLocator( "foo" ).TryResolve<IFoo>();
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public void KeyedDependencyResolutionAttempt_ThroughKeyedLocatorWithCorrectKey_ShouldReturnCorrectInstance()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.GetKeyedLocator( 1 ).Add<IFoo>().FromFactory( _ => new Implementor() );
+        var sut = builder.Build();
+
+        var result = sut.RootScope.GetKeyedLocator( 1 ).TryResolve<IFoo>();
+
+        result.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void ResolvingDependency_WithSharedKeyedImplementor_ShouldReturnCorrectInstances()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.GetKeyedLocator( 1 ).AddSharedImplementor<Implementor>().FromFactory( _ => new Implementor() );
+        builder.GetKeyedLocator( 1 ).Add<IFoo>().FromSharedImplementor<Implementor>().SetLifetime( DependencyLifetime.Singleton );
+        builder.Add<IBar>().FromSharedImplementor<Implementor>().Keyed( 1 ).SetLifetime( DependencyLifetime.Singleton );
+        builder.GetKeyedLocator( "foo" )
+            .Add<IQux>()
+            .FromSharedImplementor<Implementor>()
+            .Keyed( 1 )
+            .SetLifetime( DependencyLifetime.Singleton );
+
+        var sut = builder.Build();
+
+        var result1 = sut.RootScope.Locator.Resolve<IBar>();
+        var result2 = sut.RootScope.GetKeyedLocator( 1 ).Resolve<IFoo>();
+        var result3 = sut.RootScope.GetKeyedLocator( "foo" ).Resolve<IQux>();
+
+        using ( new AssertionScope() )
+        {
+            result1.Should().BeSameAs( result2 );
+            result2.Should().BeSameAs( result3 );
         }
     }
 

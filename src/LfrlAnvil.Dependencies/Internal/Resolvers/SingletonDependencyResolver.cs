@@ -25,7 +25,9 @@ internal sealed class SingletonDependencyResolver : DependencyResolver
             return _instance;
 
         _instance = _factory( scope );
-        SetupDisposalStrategy( scope.InternalContainer.InternalRootScope, _instance );
+
+        var rootScope = scope.InternalContainer.InternalRootScope;
+        SetupDisposalStrategy( rootScope, _instance );
         return _instance;
     }
 }

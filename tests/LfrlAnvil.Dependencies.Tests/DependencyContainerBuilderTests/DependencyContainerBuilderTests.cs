@@ -18,6 +18,9 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         sut.DefaultDisposalStrategy.Callback.Should().BeNull();
         sut.InjectablePropertyType.Should().BeSameAs( typeof( Injected<> ) );
         sut.OptionalDependencyAttributeType.Should().BeSameAs( typeof( AllowNullAttribute ) );
+        ((IDependencyLocatorBuilder)sut).KeyType.Should().BeNull();
+        ((IDependencyLocatorBuilder)sut).Key.Should().BeNull();
+        ((IDependencyLocatorBuilder)sut).IsKeyed.Should().BeFalse();
     }
 
     [Theory]
@@ -167,6 +170,35 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         action.Should().ThrowExactly<DependencyContainerBuilderConfigurationException>();
     }
 
+    [Theory]
+    [InlineData( 1 )]
+    [InlineData( 2 )]
+    [InlineData( 3 )]
+    public void GetKeyedLocator_ShouldReturnLocatorBuilderWithCorrectKey(int key)
+    {
+        var sut = new DependencyContainerBuilder();
+        var result = sut.GetKeyedLocator( key );
+
+        using ( new AssertionScope() )
+        {
+            result.Key.Should().Be( key );
+            ((IDependencyLocatorBuilder)result).Key.Should().Be( key );
+            result.KeyType.Should().Be( typeof( int ) );
+            result.IsKeyed.Should().BeTrue();
+        }
+    }
+
+    [Fact]
+    public void GetKeyedLocator_ShouldReturnCorrectCachedLocatorBuilder_WhenCalledMoreThanOnceWithTheSameKey()
+    {
+        var sut = new DependencyContainerBuilder();
+
+        var result1 = sut.GetKeyedLocator( 1 );
+        var result2 = sut.GetKeyedLocator( 1 );
+
+        result1.Should().Be( result2 );
+    }
+
     [Fact]
     public void Add_ShouldAddNewDependencyWithoutImplementationDetailsAndWithDefaultLifetime()
     {
@@ -179,7 +211,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
             result.DependencyType.Should().Be( typeof( IFoo ) );
             result.Lifetime.Should().Be( sut.DefaultLifetime );
             result.Implementor.Should().BeNull();
-            result.SharedImplementorType.Should().BeNull();
+            result.SharedImplementorKey.Should().BeNull();
         }
     }
 
@@ -196,7 +228,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( builder.Implementor );
-            builder.SharedImplementorType.Should().BeNull();
+            builder.SharedImplementorKey.Should().BeNull();
             result.ImplementorType.Should().Be( typeof( IFoo ) );
             result.Factory.Should().BeSameAs( factory );
             result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
@@ -247,9 +279,153 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         using ( new AssertionScope() )
         {
+            result.DependencyType.Should().Be( builder.DependencyType );
+            result.Lifetime.Should().Be( builder.Lifetime );
+            result.Implementor.Should().BeNull();
+            result.SharedImplementorKey.Should().NotBeNull();
+            if ( result.SharedImplementorKey is null )
+                return;
+
+            result.SharedImplementorKey.Type.Should().Be( typeof( Implementor ) );
+            result.SharedImplementorKey.Key.Should().BeNull();
+            result.SharedImplementorKey.KeyType.Should().BeNull();
+            result.SharedImplementorKey.IsKeyed.Should().BeFalse();
+        }
+    }
+
+    [Fact]
+    public void Add_FromSharedImplementor_Keyed_ShouldSetProvidedSharedImplementorTypeAndKeyAsCreationDetail()
+    {
+        var factory = Substitute.For<Func<IDependencyScope, IFoo>>();
+        var sut = new DependencyContainerBuilder();
+        var builder = sut.Add( typeof( IFoo ) );
+        builder.FromFactory( factory );
+
+        var result = builder.FromSharedImplementor( typeof( Implementor ) ).Keyed( 1 );
+
+        using ( new AssertionScope() )
+        {
             result.Should().BeSameAs( builder );
             result.Implementor.Should().BeNull();
-            result.SharedImplementorType.Should().Be( typeof( Implementor ) );
+            result.SharedImplementorKey.Should().NotBeNull();
+            if ( result.SharedImplementorKey is null )
+                return;
+
+            result.SharedImplementorKey.Type.Should().Be( typeof( Implementor ) );
+            result.SharedImplementorKey.Key.Should().Be( 1 );
+            result.SharedImplementorKey.KeyType.Should().Be( typeof( int ) );
+            result.SharedImplementorKey.IsKeyed.Should().BeTrue();
+        }
+    }
+
+    [Fact]
+    public void Add_FromSharedImplementor_SetLifetime_ShouldBeEquivalentToBuilderSetLifetime()
+    {
+        var factory = Substitute.For<Func<IDependencyScope, IFoo>>();
+        var sut = new DependencyContainerBuilder();
+        var builder = sut.Add( typeof( IFoo ) );
+        builder.FromFactory( factory );
+
+        var result = builder.FromSharedImplementor( typeof( Implementor ) ).SetLifetime( DependencyLifetime.Singleton );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( builder );
+            result.Implementor.Should().BeNull();
+            result.SharedImplementorKey.Should().NotBeNull();
+            result.Lifetime.Should().Be( DependencyLifetime.Singleton );
+        }
+    }
+
+    [Fact]
+    public void Add_FromSharedImplementor_FromFactory_ShouldBeEquivalentToBuilderFromFactory()
+    {
+        var factory = Substitute.For<Func<IDependencyScope, IFoo>>();
+        var sut = new DependencyContainerBuilder();
+        var builder = sut.Add( typeof( IFoo ) );
+        builder.FromFactory( factory );
+
+        var result = builder.FromSharedImplementor( typeof( Implementor ) ).FromFactory( factory );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( builder.Implementor );
+            builder.SharedImplementorKey.Should().BeNull();
+            result.ImplementorType.Should().Be( typeof( IFoo ) );
+            result.Factory.Should().BeSameAs( factory );
+            result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
+            result.DisposalStrategy.Callback.Should().BeNull();
+            result.OnResolvingCallback.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void Add_FromSharedImplementor_FromSharedImplementor_ShouldBeEquivalentToBuilderFromSharedImplementor()
+    {
+        var factory = Substitute.For<Func<IDependencyScope, IFoo>>();
+        var sut = new DependencyContainerBuilder();
+        var builder = sut.Add( typeof( IFoo ) );
+        builder.FromFactory( factory );
+
+        var result = builder.FromSharedImplementor( typeof( Implementor ) ).FromSharedImplementor( typeof( IBar ) );
+
+        using ( new AssertionScope() )
+        {
+            result.Implementor.Should().BeNull();
+            result.SharedImplementorKey.Should().NotBeNull();
+            if ( result.SharedImplementorKey is null )
+                return;
+
+            result.SharedImplementorKey.Type.Should().Be( typeof( IBar ) );
+        }
+    }
+
+    [Fact]
+    public void Add_FromSharedImplementor_ShouldSetProvidedSharedImplementorTypeAndLocatorKeyAsCreationDetail_WhenLocatorIsKeyed()
+    {
+        var factory = Substitute.For<Func<IDependencyScope, IFoo>>();
+        var sut = new DependencyContainerBuilder();
+        var builder = sut.GetKeyedLocator( 1 ).Add( typeof( IFoo ) );
+        builder.FromFactory( factory );
+
+        var result = builder.FromSharedImplementor( typeof( Implementor ) );
+
+        using ( new AssertionScope() )
+        {
+            result.Implementor.Should().BeNull();
+            result.SharedImplementorKey.Should().NotBeNull();
+            if ( result.SharedImplementorKey is null )
+                return;
+
+            result.SharedImplementorKey.Type.Should().Be( typeof( Implementor ) );
+            result.SharedImplementorKey.Key.Should().Be( 1 );
+            result.SharedImplementorKey.KeyType.Should().Be( typeof( int ) );
+            result.SharedImplementorKey.IsKeyed.Should().BeTrue();
+        }
+    }
+
+    [Fact]
+    public void Add_FromSharedImplementor_NotKeyed_ShouldSetProvidedSharedImplementorTypeWithoutKeyAsCreationDetail()
+    {
+        var factory = Substitute.For<Func<IDependencyScope, IFoo>>();
+        var sut = new DependencyContainerBuilder();
+        var builder = sut.GetKeyedLocator( 1 ).Add( typeof( IFoo ) );
+        builder.FromFactory( factory );
+
+        var result = builder.FromSharedImplementor( typeof( Implementor ) ).NotKeyed();
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( builder );
+            result.Implementor.Should().BeNull();
+            result.SharedImplementorKey.Should().NotBeNull();
+            if ( result.SharedImplementorKey is null )
+                return;
+
+            result.SharedImplementorKey.Type.Should().Be( typeof( Implementor ) );
+            result.SharedImplementorKey.Key.Should().BeNull();
+            result.SharedImplementorKey.KeyType.Should().BeNull();
+            result.SharedImplementorKey.IsKeyed.Should().BeFalse();
         }
     }
 
@@ -389,7 +565,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
     public void TryBuild_ShouldReturnFailureResult_WhenDependencyIsImplementedByNonExistingSharedImplementor()
     {
         var sut = new DependencyContainerBuilder();
-        sut.Add<IFoo>().FromSharedImplementor<Implementor>();
+        var builder = sut.Add<IFoo>().FromSharedImplementor<Implementor>();
 
         var result = sut.TryBuild();
 
@@ -402,8 +578,57 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
                 return;
 
             var message = result.Messages.First();
-            message.DependencyType.Should().Be( typeof( IFoo ) );
-            message.ImplementorType.Should().Be( typeof( Implementor ) );
+            message.DependencyType.Should().Be( builder.DependencyType );
+            message.ImplementorKey.Should().BeSameAs( builder.SharedImplementorKey );
+            message.Warnings.Should().BeEmpty();
+            message.Errors.Should().HaveCount( 1 );
+        }
+    }
+
+    [Fact]
+    public void TryBuild_ShouldReturnFailureResult_WhenDependencyIsImplementedByNonExistingKeyedSharedImplementorAndNonCachedKeyType()
+    {
+        var sut = new DependencyContainerBuilder();
+        var builder = sut.Add<IFoo>().FromSharedImplementor<Implementor>().Keyed( 1 );
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeFalse();
+            result.Container.Should().BeNull();
+            result.Messages.Should().HaveCount( 1 );
+            if ( result.Messages.Count < 1 )
+                return;
+
+            var message = result.Messages.First();
+            message.DependencyType.Should().Be( builder.DependencyType );
+            message.ImplementorKey.Should().BeSameAs( builder.SharedImplementorKey );
+            message.Warnings.Should().BeEmpty();
+            message.Errors.Should().HaveCount( 1 );
+        }
+    }
+
+    [Fact]
+    public void TryBuild_ShouldReturnFailureResult_WhenDependencyIsImplementedByNonExistingKeyedSharedImplementorAndCachedKeyType()
+    {
+        var sut = new DependencyContainerBuilder();
+        var _ = sut.GetKeyedLocator( 1 );
+        var builder = sut.Add<IFoo>().FromSharedImplementor<Implementor>().Keyed( 2 );
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeFalse();
+            result.Container.Should().BeNull();
+            result.Messages.Should().HaveCount( 1 );
+            if ( result.Messages.Count < 1 )
+                return;
+
+            var message = result.Messages.First();
+            message.DependencyType.Should().Be( builder.DependencyType );
+            message.ImplementorKey.Should().BeSameAs( builder.SharedImplementorKey );
             message.Warnings.Should().BeEmpty();
             message.Errors.Should().HaveCount( 1 );
         }

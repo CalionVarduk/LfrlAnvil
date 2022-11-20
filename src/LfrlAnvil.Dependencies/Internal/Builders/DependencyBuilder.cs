@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace LfrlAnvil.Dependencies.Internal;
+namespace LfrlAnvil.Dependencies.Internal.Builders;
 
 internal sealed class DependencyBuilder : IDependencyBuilder
 {
@@ -11,14 +11,15 @@ internal sealed class DependencyBuilder : IDependencyBuilder
         LocatorBuilder = locatorBuilder;
         DependencyType = dependencyType;
         Lifetime = lifetime;
-        SharedImplementorType = null;
+        InternalSharedImplementorKey = null;
         Implementor = null;
     }
 
     public Type DependencyType { get; }
     public DependencyLifetime Lifetime { get; private set; }
-    public Type? SharedImplementorType { get; private set; }
     public IDependencyImplementorBuilder? Implementor { get; private set; }
+    public ISharedDependencyImplementorKey? SharedImplementorKey => InternalSharedImplementorKey;
+    internal IInternalSharedDependencyImplementorKey? InternalSharedImplementorKey { get; set; }
 
     public IDependencyBuilder SetLifetime(DependencyLifetime lifetime)
     {
@@ -27,18 +28,18 @@ internal sealed class DependencyBuilder : IDependencyBuilder
         return this;
     }
 
-    public IDependencyBuilder FromSharedImplementor(Type type)
+    public IDependencyFromSharedImplementorBuilder FromSharedImplementor(Type type)
     {
-        SharedImplementorType = type;
+        InternalSharedImplementorKey = LocatorBuilder.CreateImplementorKey( type );
         Implementor = null;
-        return this;
+        return new DependencyFromSharedImplementorBuilder( this );
     }
 
     public IDependencyImplementorBuilder FromFactory(Func<IDependencyScope, object> factory)
     {
         if ( Implementor is null )
         {
-            SharedImplementorType = null;
+            InternalSharedImplementorKey = null;
             Implementor = new DependencyImplementorBuilder( DependencyType, LocatorBuilder.DefaultDisposalStrategy );
         }
 

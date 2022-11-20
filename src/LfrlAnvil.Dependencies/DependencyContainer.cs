@@ -12,13 +12,15 @@ namespace LfrlAnvil.Dependencies;
 public sealed class DependencyContainer : IDisposableDependencyContainer
 {
     private readonly object _sync = new object();
-    private readonly IReadOnlyDictionary<Type, DependencyResolver> _resolvers;
     private readonly Dictionary<int, ChildDependencyScope> _activeScopesPerThread;
     private readonly Dictionary<string, ChildDependencyScope> _namedScopes;
 
-    internal DependencyContainer(IReadOnlyDictionary<Type, DependencyResolver> resolvers)
+    internal DependencyContainer(
+        Dictionary<Type, DependencyResolver> globalResolvers,
+        KeyedDependencyResolversStore keyedResolversStore)
     {
-        _resolvers = resolvers;
+        GlobalResolvers = globalResolvers;
+        KeyedResolversStore = keyedResolversStore;
         _activeScopesPerThread = new Dictionary<int, ChildDependencyScope>();
         _namedScopes = new Dictionary<string, ChildDependencyScope>();
         InternalRootScope = new RootDependencyScope( this );
@@ -38,6 +40,8 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
     }
 
     internal RootDependencyScope InternalRootScope { get; }
+    internal Dictionary<Type, DependencyResolver> GlobalResolvers { get; }
+    internal KeyedDependencyResolversStore KeyedResolversStore { get; }
 
     public void Dispose()
     {
@@ -58,9 +62,22 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
             if ( locator.InternalAttachedScope.IsDisposed )
                 ExceptionThrower.Throw( new ObjectDisposedException( Resources.ScopeIsDisposed( locator.InternalAttachedScope ) ) );
 
-            return _resolvers.TryGetValue( dependencyType, out var resolver )
+            return locator.Resolvers.TryGetValue( dependencyType, out var resolver )
                 ? resolver.Create( locator.InternalAttachedScope, dependencyType )
                 : null;
+        }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal DependencyLocator<TKey> GetOrCreateKeyedLocator<TKey>(DependencyScope scope, TKey key)
+        where TKey : notnull
+    {
+        lock ( _sync )
+        {
+            if ( scope.IsDisposed )
+                ExceptionThrower.Throw( new ObjectDisposedException( Resources.ScopeIsDisposed( scope ) ) );
+
+            return scope.InternalLocatorStore.GetOrCreate( key );
         }
     }
 
@@ -198,7 +215,7 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
                 exceptions = exceptions.Extend( childExceptions );
         }
 
-        var rootExceptions = InternalRootScope.InternalLocator.DisposeInstances();
+        var rootExceptions = InternalRootScope.DisposeInstances();
         exceptions = exceptions.Extend( rootExceptions );
         InternalRootScope.ChildrenByThreadId.Clear();
         InternalRootScope.IsDisposed = true;
@@ -219,7 +236,7 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
             scope.Child = null;
         }
 
-        var scopeExceptions = scope.InternalLocator.DisposeInstances();
+        var scopeExceptions = scope.DisposeInstances();
         exceptions = exceptions.Extend( scopeExceptions );
         scope.IsDisposed = true;
 

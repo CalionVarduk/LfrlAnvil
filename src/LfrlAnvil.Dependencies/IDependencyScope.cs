@@ -19,6 +19,10 @@ public interface IDependencyScope
     IDependencyLocator Locator { get; }
 
     [Pure]
+    IDependencyLocator<TKey> GetKeyedLocator<TKey>(TKey key)
+        where TKey : notnull;
+
+    [Pure]
     IChildDependencyScope BeginScope(string? name = null);
 
     [Pure]

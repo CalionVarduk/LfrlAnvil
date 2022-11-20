@@ -15,5 +15,9 @@ public interface IDependencyContainerBuilder : IDependencyLocatorBuilder
     IDependencyContainerBuilder SetOptionalDependencyAttributeType(Type attributeType);
 
     [Pure]
+    IDependencyLocatorBuilder<TKey> GetKeyedLocator<TKey>(TKey key)
+        where TKey : notnull;
+
+    [Pure]
     DependencyContainerBuildResult<IDisposableDependencyContainer> TryBuild();
 }
