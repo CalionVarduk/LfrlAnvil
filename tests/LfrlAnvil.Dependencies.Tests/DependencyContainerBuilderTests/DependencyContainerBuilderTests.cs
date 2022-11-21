@@ -1,8 +1,10 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Reflection;
 using FluentAssertions.Execution;
 using LfrlAnvil.Dependencies.Exceptions;
 using LfrlAnvil.Dependencies.Extensions;
+using LfrlAnvil.Dependencies.Internal;
 using LfrlAnvil.Functional;
 
 namespace LfrlAnvil.Dependencies.Tests.DependencyContainerBuilderTests;
@@ -230,10 +232,156 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
             result.Should().BeSameAs( builder.Implementor );
             builder.SharedImplementorKey.Should().BeNull();
             result.ImplementorType.Should().Be( typeof( IFoo ) );
+            result.Constructor.Should().BeNull();
             result.Factory.Should().BeSameAs( factory );
             result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
             result.DisposalStrategy.Callback.Should().BeNull();
             result.OnResolvingCallback.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void Add_FromConstructor_ShouldSetDefaultAutomaticConstructorAsCreationDetail()
+    {
+        var sut = new DependencyContainerBuilder();
+        var builder = sut.Add( typeof( IFoo ) );
+        builder.FromSharedImplementor( typeof( Implementor ) );
+
+        var result = builder.FromConstructor();
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( builder.Implementor );
+            builder.SharedImplementorKey.Should().BeNull();
+            result.ImplementorType.Should().Be( typeof( IFoo ) );
+            result.Factory.Should().BeNull();
+            result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
+            result.DisposalStrategy.Callback.Should().BeNull();
+            result.OnResolvingCallback.Should().BeNull();
+            result.Constructor.Should().NotBeNull();
+            if ( result.Constructor is null )
+                return;
+
+            result.Constructor.Info.Should().BeNull();
+            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
+            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void Add_FromConstructor_WithConfiguration_ShouldSetDefaultAutomaticConstructorAsCreationDetail()
+    {
+        var onCreatedCallback = Substitute.For<Action<object, Type, IDependencyScope>>();
+        var sut = new DependencyContainerBuilder();
+        var builder = sut.Add( typeof( IFoo ) );
+        builder.FromSharedImplementor( typeof( Implementor ) );
+
+        var result = builder.FromConstructor( o => o.SetOnCreatedCallback( onCreatedCallback ) );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( builder.Implementor );
+            builder.SharedImplementorKey.Should().BeNull();
+            result.ImplementorType.Should().Be( typeof( IFoo ) );
+            result.Factory.Should().BeNull();
+            result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
+            result.DisposalStrategy.Callback.Should().BeNull();
+            result.OnResolvingCallback.Should().BeNull();
+            result.Constructor.Should().NotBeNull();
+            if ( result.Constructor is null )
+                return;
+
+            result.Constructor.Info.Should().BeNull();
+            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeSameAs( onCreatedCallback );
+            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void Add_FromConstructor_WithInfo_ShouldSetConstructorAsCreationDetail()
+    {
+        var ctor = typeof( Implementor ).GetConstructor( Type.EmptyTypes )!;
+        var sut = new DependencyContainerBuilder();
+        var builder = sut.Add( typeof( IFoo ) );
+        builder.FromSharedImplementor( typeof( Implementor ) );
+
+        var result = builder.FromConstructor( ctor );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( builder.Implementor );
+            builder.SharedImplementorKey.Should().BeNull();
+            result.ImplementorType.Should().Be( typeof( IFoo ) );
+            result.Factory.Should().BeNull();
+            result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
+            result.DisposalStrategy.Callback.Should().BeNull();
+            result.OnResolvingCallback.Should().BeNull();
+            result.Constructor.Should().NotBeNull();
+            if ( result.Constructor is null )
+                return;
+
+            result.Constructor.Info.Should().BeSameAs( ctor );
+            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
+            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void Add_FromConstructor_WithInfoAndConfiguration_ShouldSetConstructorAsCreationDetail()
+    {
+        var ctor = typeof( Implementor ).GetConstructor( Type.EmptyTypes )!;
+        var onCreatedCallback = Substitute.For<Action<object, Type, IDependencyScope>>();
+        var sut = new DependencyContainerBuilder();
+        var builder = sut.Add( typeof( IFoo ) );
+        builder.FromSharedImplementor( typeof( Implementor ) );
+
+        var result = builder.FromConstructor( ctor, o => o.SetOnCreatedCallback( onCreatedCallback ) );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( builder.Implementor );
+            builder.SharedImplementorKey.Should().BeNull();
+            result.ImplementorType.Should().Be( typeof( IFoo ) );
+            result.Factory.Should().BeNull();
+            result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
+            result.DisposalStrategy.Callback.Should().BeNull();
+            result.OnResolvingCallback.Should().BeNull();
+            result.Constructor.Should().NotBeNull();
+            if ( result.Constructor is null )
+                return;
+
+            result.Constructor.Info.Should().BeSameAs( ctor );
+            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeSameAs( onCreatedCallback );
+            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void Add_FromConstructor_ShouldUpdateConstructorInfoAsCreationDetail_WhenCalledMultipleTimes()
+    {
+        var ctor = typeof( Implementor ).GetConstructor( Type.EmptyTypes )!;
+        var sut = new DependencyContainerBuilder();
+        var builder = sut.Add( typeof( IFoo ) );
+        builder.FromConstructor();
+
+        var result = builder.FromConstructor( ctor );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( builder.Implementor );
+            builder.SharedImplementorKey.Should().BeNull();
+            result.ImplementorType.Should().Be( typeof( IFoo ) );
+            result.Factory.Should().BeNull();
+            result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
+            result.DisposalStrategy.Callback.Should().BeNull();
+            result.OnResolvingCallback.Should().BeNull();
+            result.Constructor.Should().NotBeNull();
+            if ( result.Constructor is null )
+                return;
+
+            result.Constructor.Info.Should().BeSameAs( ctor );
+            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
+            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
         }
     }
 
@@ -409,6 +557,172 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
             result.Should().BeSameAs( builder );
             result.ImplementorType.Should().Be( typeof( Implementor ) );
             result.Factory.Should().BeSameAs( factory );
+            result.Constructor.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void AddSharedImplementor_FromConstructor_ShouldSetDefaultAutomaticConstructorAsCreationDetail()
+    {
+        var sut = new DependencyContainerBuilder();
+        var builder = sut.AddSharedImplementor( typeof( Implementor ) );
+
+        var result = builder.FromConstructor();
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( builder );
+            result.ImplementorType.Should().Be( typeof( Implementor ) );
+            result.Factory.Should().BeNull();
+            result.Constructor.Should().NotBeNull();
+            if ( result.Constructor is null )
+                return;
+
+            result.Constructor.Info.Should().BeNull();
+            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
+            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void AddSharedImplementor_FromConstructor_WithConfiguration_ShouldSetDefaultAutomaticConstructorAsCreationDetail()
+    {
+        var onCreatedCallback = Substitute.For<Action<object, Type, IDependencyScope>>();
+        var sut = new DependencyContainerBuilder();
+        var builder = sut.AddSharedImplementor( typeof( Implementor ) );
+
+        var result = builder.FromConstructor( o => o.SetOnCreatedCallback( onCreatedCallback ) );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( builder );
+            result.ImplementorType.Should().Be( typeof( Implementor ) );
+            result.Factory.Should().BeNull();
+            result.Constructor.Should().NotBeNull();
+            if ( result.Constructor is null )
+                return;
+
+            result.Constructor.Info.Should().BeNull();
+            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeSameAs( onCreatedCallback );
+            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void AddSharedImplementor_FromConstructor_WithInfo_ShouldSetConstructorAsCreationDetail()
+    {
+        var ctor = typeof( Implementor ).GetConstructor( Type.EmptyTypes )!;
+        var sut = new DependencyContainerBuilder();
+        var builder = sut.AddSharedImplementor( typeof( Implementor ) );
+
+        var result = builder.FromConstructor( ctor );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( builder );
+            result.ImplementorType.Should().Be( typeof( Implementor ) );
+            result.Factory.Should().BeNull();
+            result.Constructor.Should().NotBeNull();
+            if ( result.Constructor is null )
+                return;
+
+            result.Constructor.Info.Should().BeSameAs( ctor );
+            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
+            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void AddSharedImplementor_FromConstructor_WithInfoAndConfiguration_ShouldSetConstructorAsCreationDetail()
+    {
+        var ctor = typeof( Implementor ).GetConstructor( Type.EmptyTypes )!;
+        var onCreatedCallback = Substitute.For<Action<object, Type, IDependencyScope>>();
+        var sut = new DependencyContainerBuilder();
+        var builder = sut.AddSharedImplementor( typeof( Implementor ) );
+
+        var result = builder.FromConstructor( ctor, o => o.SetOnCreatedCallback( onCreatedCallback ) );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( builder );
+            result.ImplementorType.Should().Be( typeof( Implementor ) );
+            result.Factory.Should().BeNull();
+            result.Constructor.Should().NotBeNull();
+            if ( result.Constructor is null )
+                return;
+
+            result.Constructor.Info.Should().BeSameAs( ctor );
+            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeSameAs( onCreatedCallback );
+            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void AddSharedImplementor_FromConstructor_WithParameterResolutions_ShouldAddConstructorParameterResolutionsAsCreationDetail()
+    {
+        var predicate1 = Substitute.For<Func<ParameterInfo, bool>>();
+        var predicate2 = Substitute.For<Func<ParameterInfo, bool>>();
+        var predicate3 = Substitute.For<Func<ParameterInfo, bool>>();
+        var factory = Lambda.ExpressionOf( (IDependencyScope s) => Substitute.For<Func<IDependencyScope, object>>()( s ) );
+        var sut = new DependencyContainerBuilder();
+        var builder = sut.AddSharedImplementor( typeof( Implementor ) );
+
+        var result = builder.FromConstructor(
+            o => o.AddParameterResolution( predicate1, _ => { } )
+                .AddParameterResolution( predicate2, p => p.FromFactory( factory ) )
+                .AddParameterResolution( predicate3, p => p.FromImplementor( typeof( IFoo ), i => i.Keyed( 1 ) ) ) );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( builder );
+            result.ImplementorType.Should().Be( typeof( Implementor ) );
+            result.Factory.Should().BeNull();
+            result.Constructor.Should().NotBeNull();
+            if ( result.Constructor is null )
+                return;
+
+            result.Constructor.Info.Should().BeNull();
+            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
+            result.Constructor.InvocationOptions.ParameterResolutions.Should().HaveCount( 3 );
+
+            result.Constructor.InvocationOptions.ParameterResolutions.ElementAtOrDefault( 0 )
+                .Should()
+                .BeEquivalentTo( DependencyConstructorParameterResolution.Unspecified( predicate1 ) );
+
+            result.Constructor.InvocationOptions.ParameterResolutions.ElementAtOrDefault( 1 )
+                .Should()
+                .BeEquivalentTo( DependencyConstructorParameterResolution.FromFactory( predicate2, factory ) );
+
+            result.Constructor.InvocationOptions.ParameterResolutions.ElementAtOrDefault( 2 )
+                .Should()
+                .BeEquivalentTo(
+                    DependencyConstructorParameterResolution.FromImplementorKey(
+                        predicate3,
+                        new DependencyImplementorKey<int>( typeof( IFoo ), 1 ) ) );
+        }
+    }
+
+    [Fact]
+    public void AddSharedImplementor_FromConstructor_WithClearedParameterResolutions_ShouldClearConstructorParameterResolutions()
+    {
+        var predicate = Substitute.For<Func<ParameterInfo, bool>>();
+        var sut = new DependencyContainerBuilder();
+        var builder = sut.AddSharedImplementor( typeof( Implementor ) );
+
+        var result = builder.FromConstructor( o => o.AddParameterResolution( predicate, _ => { } ).ClearParameterResolutions() );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( builder );
+            result.ImplementorType.Should().Be( typeof( Implementor ) );
+            result.Factory.Should().BeNull();
+            result.Constructor.Should().NotBeNull();
+            if ( result.Constructor is null )
+                return;
+
+            result.Constructor.Info.Should().BeNull();
+            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
+            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
         }
     }
 

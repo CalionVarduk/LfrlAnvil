@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace LfrlAnvil.Dependencies;
 
-public interface ISharedDependencyImplementorKey : IEquatable<ISharedDependencyImplementorKey>
+public interface IDependencyImplementorKey : IEquatable<IDependencyImplementorKey>
 {
     Type Type { get; }
     Type? KeyType { get; }
@@ -14,7 +14,7 @@ public interface ISharedDependencyImplementorKey : IEquatable<ISharedDependencyI
     public bool IsKeyed { get; }
 }
 
-public interface ISharedDependencyImplementorKey<out TKey> : ISharedDependencyImplementorKey
+public interface IDependencyImplementorKey<out TKey> : IDependencyImplementorKey
     where TKey : notnull
 {
     new TKey Key { get; }

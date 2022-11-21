@@ -7,9 +7,9 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Dependencies.Internal;
 
-internal sealed class SharedDependencyImplementorKey : IInternalSharedDependencyImplementorKey
+internal sealed class DependencyImplementorKey : IInternalDependencyImplementorKey
 {
-    internal SharedDependencyImplementorKey(Type type)
+    internal DependencyImplementorKey(Type type)
     {
         Type = type;
     }
@@ -34,13 +34,13 @@ internal sealed class SharedDependencyImplementorKey : IInternalSharedDependency
     [Pure]
     public override bool Equals(object? obj)
     {
-        return IsEqualTo( obj as SharedDependencyImplementorKey );
+        return IsEqualTo( obj as DependencyImplementorKey );
     }
 
     [Pure]
-    public bool Equals(ISharedDependencyImplementorKey? other)
+    public bool Equals(IDependencyImplementorKey? other)
     {
-        return IsEqualTo( other as SharedDependencyImplementorKey );
+        return IsEqualTo( other as DependencyImplementorKey );
     }
 
     [Pure]
@@ -51,18 +51,18 @@ internal sealed class SharedDependencyImplementorKey : IInternalSharedDependency
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private bool IsEqualTo(SharedDependencyImplementorKey? other)
+    private bool IsEqualTo(DependencyImplementorKey? other)
     {
         return other is not null && Type == other.Type;
     }
 }
 
-internal sealed class SharedDependencyImplementorKey<TKey> : IInternalSharedDependencyImplementorKey, ISharedDependencyImplementorKey<TKey>
+internal sealed class DependencyImplementorKey<TKey> : IInternalDependencyImplementorKey, IDependencyImplementorKey<TKey>
     where TKey : notnull
 {
     private static readonly IEqualityComparer<TKey> KeyComparer = EqualityComparer<TKey>.Default;
 
-    internal SharedDependencyImplementorKey(Type type, TKey key)
+    internal DependencyImplementorKey(Type type, TKey key)
     {
         Type = type;
         Key = key;
@@ -73,7 +73,7 @@ internal sealed class SharedDependencyImplementorKey<TKey> : IInternalSharedDepe
     public Type KeyType => typeof( TKey );
     public bool IsKeyed => true;
 
-    object ISharedDependencyImplementorKey.Key => Key;
+    object IDependencyImplementorKey.Key => Key;
 
     [Pure]
     public override string ToString()
@@ -90,13 +90,13 @@ internal sealed class SharedDependencyImplementorKey<TKey> : IInternalSharedDepe
     [Pure]
     public override bool Equals(object? obj)
     {
-        return IsEqualTo( obj as SharedDependencyImplementorKey<TKey> );
+        return IsEqualTo( obj as DependencyImplementorKey<TKey> );
     }
 
     [Pure]
-    public bool Equals(ISharedDependencyImplementorKey? other)
+    public bool Equals(IDependencyImplementorKey? other)
     {
-        return IsEqualTo( other as SharedDependencyImplementorKey<TKey> );
+        return IsEqualTo( other as DependencyImplementorKey<TKey> );
     }
 
     [Pure]
@@ -108,7 +108,7 @@ internal sealed class SharedDependencyImplementorKey<TKey> : IInternalSharedDepe
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private bool IsEqualTo(SharedDependencyImplementorKey<TKey>? other)
+    private bool IsEqualTo(DependencyImplementorKey<TKey>? other)
     {
         return other is not null && Type == other.Type && KeyComparer.Equals( Key, other.Key );
     }

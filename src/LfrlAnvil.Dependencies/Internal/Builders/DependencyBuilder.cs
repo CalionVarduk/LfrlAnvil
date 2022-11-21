@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Diagnostics.Contracts;
+using System.Reflection;
 
 namespace LfrlAnvil.Dependencies.Internal.Builders;
 
 internal sealed class DependencyBuilder : IDependencyBuilder
 {
-    internal readonly DependencyLocatorBuilder LocatorBuilder;
-
     internal DependencyBuilder(DependencyLocatorBuilder locatorBuilder, Type dependencyType, DependencyLifetime lifetime)
     {
         LocatorBuilder = locatorBuilder;
@@ -19,8 +17,9 @@ internal sealed class DependencyBuilder : IDependencyBuilder
     public Type DependencyType { get; }
     public DependencyLifetime Lifetime { get; private set; }
     public IDependencyImplementorBuilder? Implementor { get; private set; }
-    public ISharedDependencyImplementorKey? SharedImplementorKey => InternalSharedImplementorKey;
-    internal IInternalSharedDependencyImplementorKey? InternalSharedImplementorKey { get; set; }
+    public IDependencyImplementorKey? SharedImplementorKey => InternalSharedImplementorKey;
+    internal DependencyLocatorBuilder LocatorBuilder { get; }
+    internal IInternalDependencyImplementorKey? InternalSharedImplementorKey { get; set; }
 
     public IDependencyBuilder SetLifetime(DependencyLifetime lifetime)
     {
@@ -29,39 +28,40 @@ internal sealed class DependencyBuilder : IDependencyBuilder
         return this;
     }
 
-    public IDependencyBuilder FromSharedImplementor(Type type, Action<ISharedDependencyImplementorOptions>? configuration = null)
+    public IDependencyBuilder FromSharedImplementor(Type type, Action<IDependencyImplementorOptions>? configuration = null)
     {
-        InternalSharedImplementorKey = CreateSharedImplementorKey( type, configuration );
+        InternalSharedImplementorKey = DependencyImplementorOptions.CreateImplementorKey(
+            LocatorBuilder.CreateImplementorKey( type ),
+            configuration );
+
         Implementor = null;
         return this;
     }
 
-    public IDependencyImplementorBuilder FromFactory(Func<IDependencyScope, object> factory)
+    public IDependencyImplementorBuilder FromConstructor(Action<IDependencyConstructorInvocationOptions>? configuration = null)
     {
-        if ( Implementor is null )
-        {
-            InternalSharedImplementorKey = null;
-            Implementor = new DependencyImplementorBuilder( DependencyType, LocatorBuilder.DefaultDisposalStrategy );
-        }
-
-        Implementor.FromFactory( factory );
-        return Implementor;
+        return GetOrCreateImplementor().FromConstructor( configuration );
     }
 
-    [Pure]
-    private IInternalSharedDependencyImplementorKey CreateSharedImplementorKey(
-        Type type,
-        Action<ISharedDependencyImplementorOptions>? configuration)
+    public IDependencyImplementorBuilder FromConstructor(
+        ConstructorInfo info,
+        Action<IDependencyConstructorInvocationOptions>? configuration = null)
     {
-        var defaultKey = LocatorBuilder.CreateImplementorKey( type );
-        if ( configuration is null )
-            return defaultKey;
+        return GetOrCreateImplementor().FromConstructor( info, configuration );
+    }
 
-        var options = new SharedDependencyImplementorOptions( defaultKey );
-        configuration( options );
+    public IDependencyImplementorBuilder FromFactory(Func<IDependencyScope, object> factory)
+    {
+        return GetOrCreateImplementor().FromFactory( factory );
+    }
 
-        var sharedImplementorKey = options.Key as IInternalSharedDependencyImplementorKey;
-        Ensure.IsNotNull( sharedImplementorKey, nameof( sharedImplementorKey ) );
-        return sharedImplementorKey;
+    private IDependencyImplementorBuilder GetOrCreateImplementor()
+    {
+        if ( Implementor is not null )
+            return Implementor;
+
+        InternalSharedImplementorKey = null;
+        Implementor = new DependencyImplementorBuilder( LocatorBuilder, DependencyType );
+        return Implementor;
     }
 }

@@ -8,7 +8,7 @@ public static class DependencyBuilderExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IDependencyBuilder FromSharedImplementor<T>(
         this IDependencyBuilder builder,
-        Action<ISharedDependencyImplementorOptions>? configuration = null)
+        Action<IDependencyImplementorOptions>? configuration = null)
     {
         return builder.FromSharedImplementor( typeof( T ), configuration );
     }

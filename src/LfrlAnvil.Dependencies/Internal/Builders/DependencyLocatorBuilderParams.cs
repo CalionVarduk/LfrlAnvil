@@ -13,14 +13,14 @@ internal readonly struct DependencyLocatorBuilderParams
     internal readonly KeyedDependencyResolversStore KeyedResolversStore;
 
     private readonly Dictionary<Type, DependencyResolver> _defaultResolvers;
-    private readonly Dictionary<(ISharedDependencyImplementorKey, DependencyLifetime), DependencyResolver> _sharedResolvers;
+    private readonly Dictionary<(IDependencyImplementorKey, DependencyLifetime), DependencyResolver> _sharedResolvers;
     private readonly UlongSequenceGenerator _resolverIdGenerator;
 
     private DependencyLocatorBuilderParams(DependencyLocatorBuilderStore locatorBuilderStore)
     {
         LocatorBuilderStore = locatorBuilderStore;
         _resolverIdGenerator = new UlongSequenceGenerator();
-        _sharedResolvers = new Dictionary<(ISharedDependencyImplementorKey, DependencyLifetime), DependencyResolver>();
+        _sharedResolvers = new Dictionary<(IDependencyImplementorKey, DependencyLifetime), DependencyResolver>();
 
         _defaultResolvers = new Dictionary<Type, DependencyResolver>
         {
@@ -39,13 +39,13 @@ internal readonly struct DependencyLocatorBuilderParams
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal DependencyResolver? GetSharedResolver(ISharedDependencyImplementorKey key, DependencyLifetime lifetime)
+    internal DependencyResolver? GetSharedResolver(IDependencyImplementorKey key, DependencyLifetime lifetime)
     {
         return _sharedResolvers.GetValueOrDefault( (key, lifetime) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void AddSharedResolver(ISharedDependencyImplementorKey key, DependencyLifetime lifetime, DependencyResolver resolver)
+    internal void AddSharedResolver(IDependencyImplementorKey key, DependencyLifetime lifetime, DependencyResolver resolver)
     {
         _sharedResolvers.Add( (key, lifetime), resolver );
     }

@@ -4,7 +4,7 @@ namespace LfrlAnvil.Dependencies.Exceptions;
 
 public class DependencyTypeConfigurationException : InvalidOperationException
 {
-    public DependencyTypeConfigurationException(Type dependencyType, ISharedDependencyImplementorKey implementorKey, string message)
+    public DependencyTypeConfigurationException(Type dependencyType, IDependencyImplementorKey implementorKey, string message)
         : base( message )
     {
         DependencyType = dependencyType;
@@ -12,5 +12,5 @@ public class DependencyTypeConfigurationException : InvalidOperationException
     }
 
     public Type DependencyType { get; }
-    public ISharedDependencyImplementorKey ImplementorKey { get; }
+    public IDependencyImplementorKey ImplementorKey { get; }
 }

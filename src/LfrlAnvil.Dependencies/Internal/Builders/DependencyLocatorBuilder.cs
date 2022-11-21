@@ -31,7 +31,7 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
         if ( ! SharedImplementors.TryGetValue( type, out var result ) )
         {
             Ensure.Equals( type.IsGenericTypeDefinition, false, nameof( type ) + '.' + nameof( type.IsGenericTypeDefinition ) );
-            result = new DependencyImplementorBuilder( type, DefaultDisposalStrategy );
+            result = new DependencyImplementorBuilder( this, type );
             SharedImplementors.Add( type, result );
         }
 
@@ -72,9 +72,9 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
     }
 
     [Pure]
-    internal virtual IInternalSharedDependencyImplementorKey CreateImplementorKey(Type implementorType)
+    internal virtual IInternalDependencyImplementorKey CreateImplementorKey(Type implementorType)
     {
-        return new SharedDependencyImplementorKey( implementorType );
+        return new DependencyImplementorKey( implementorType );
     }
 
     internal DependencyLocatorBuilderResult Build(DependencyLocatorBuilderParams @params)
@@ -110,6 +110,7 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
                 continue;
             }
 
+            // TODO: add Constructor handling
             if ( builder.Implementor?.Factory is null ) // TODO: treat this as Self with auto-discovered ctor in the future
                 throw new NotImplementedException();
 
@@ -177,9 +178,9 @@ internal sealed class DependencyLocatorBuilder<TKey>
     bool IDependencyLocatorBuilder.IsKeyed => true;
 
     [Pure]
-    internal override IInternalSharedDependencyImplementorKey CreateImplementorKey(Type implementorType)
+    internal override IInternalDependencyImplementorKey CreateImplementorKey(Type implementorType)
     {
-        return new SharedDependencyImplementorKey<TKey>( implementorType, Key );
+        return new DependencyImplementorKey<TKey>( implementorType, Key );
     }
 
     public Chain<DependencyContainerBuildMessages> BuildKeyed(DependencyLocatorBuilderParams @params)

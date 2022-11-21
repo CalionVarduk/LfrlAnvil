@@ -1,8 +1,8 @@
 ﻿namespace LfrlAnvil.Dependencies;
 
-public interface ISharedDependencyImplementorOptions
+public interface IDependencyImplementorOptions
 {
-    ISharedDependencyImplementorKey Key { get; }
+    IDependencyImplementorKey Key { get; }
 
     void Keyed<TKey>(TKey key)
         where TKey : notnull;

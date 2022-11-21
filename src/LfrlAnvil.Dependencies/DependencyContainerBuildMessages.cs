@@ -8,7 +8,7 @@ public readonly struct DependencyContainerBuildMessages
 {
     private DependencyContainerBuildMessages(
         Type dependencyType,
-        ISharedDependencyImplementorKey implementorKey,
+        IDependencyImplementorKey implementorKey,
         Chain<string> errors,
         Chain<string> warnings)
     {
@@ -19,7 +19,7 @@ public readonly struct DependencyContainerBuildMessages
     }
 
     public Type DependencyType { get; }
-    public ISharedDependencyImplementorKey ImplementorKey { get; }
+    public IDependencyImplementorKey ImplementorKey { get; }
     public Chain<string> Errors { get; }
     public Chain<string> Warnings { get; }
 
@@ -27,7 +27,7 @@ public readonly struct DependencyContainerBuildMessages
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static DependencyContainerBuildMessages Create(
         Type dependencyType,
-        ISharedDependencyImplementorKey implementorKey,
+        IDependencyImplementorKey implementorKey,
         Chain<string> errors,
         Chain<string> warnings)
     {
