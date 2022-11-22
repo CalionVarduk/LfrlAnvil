@@ -39,11 +39,4 @@ public readonly struct DependencyConstructorParameterResolution
     {
         return new DependencyConstructorParameterResolution( predicate, null, implementorKey );
     }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static DependencyConstructorParameterResolution Unspecified(Func<ParameterInfo, bool> predicate)
-    {
-        return new DependencyConstructorParameterResolution( predicate, null, null );
-    }
 }

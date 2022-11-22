@@ -662,15 +662,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
     {
         var predicate1 = Substitute.For<Func<ParameterInfo, bool>>();
         var predicate2 = Substitute.For<Func<ParameterInfo, bool>>();
-        var predicate3 = Substitute.For<Func<ParameterInfo, bool>>();
         var factory = Lambda.ExpressionOf( (IDependencyScope s) => Substitute.For<Func<IDependencyScope, object>>()( s ) );
         var sut = new DependencyContainerBuilder();
         var builder = sut.AddSharedImplementor( typeof( Implementor ) );
 
         var result = builder.FromConstructor(
-            o => o.AddParameterResolution( predicate1, _ => { } )
-                .AddParameterResolution( predicate2, p => p.FromFactory( factory ) )
-                .AddParameterResolution( predicate3, p => p.FromImplementor( typeof( IFoo ), i => i.Keyed( 1 ) ) ) );
+            o => o.ResolveParameter( predicate1, factory ).ResolveParameter( predicate2, typeof( IFoo ), i => i.Keyed( 1 ) ) );
 
         using ( new AssertionScope() )
         {
@@ -683,21 +680,17 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
             result.Constructor.Info.Should().BeNull();
             result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
-            result.Constructor.InvocationOptions.ParameterResolutions.Should().HaveCount( 3 );
+            result.Constructor.InvocationOptions.ParameterResolutions.Should().HaveCount( 2 );
 
             result.Constructor.InvocationOptions.ParameterResolutions.ElementAtOrDefault( 0 )
                 .Should()
-                .BeEquivalentTo( DependencyConstructorParameterResolution.Unspecified( predicate1 ) );
+                .BeEquivalentTo( DependencyConstructorParameterResolution.FromFactory( predicate1, factory ) );
 
             result.Constructor.InvocationOptions.ParameterResolutions.ElementAtOrDefault( 1 )
                 .Should()
-                .BeEquivalentTo( DependencyConstructorParameterResolution.FromFactory( predicate2, factory ) );
-
-            result.Constructor.InvocationOptions.ParameterResolutions.ElementAtOrDefault( 2 )
-                .Should()
                 .BeEquivalentTo(
                     DependencyConstructorParameterResolution.FromImplementorKey(
-                        predicate3,
+                        predicate2,
                         new DependencyImplementorKey<int>( typeof( IFoo ), 1 ) ) );
         }
     }
@@ -709,7 +702,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         var sut = new DependencyContainerBuilder();
         var builder = sut.AddSharedImplementor( typeof( Implementor ) );
 
-        var result = builder.FromConstructor( o => o.AddParameterResolution( predicate, _ => { } ).ClearParameterResolutions() );
+        var result = builder.FromConstructor( o => o.ResolveParameter( predicate, typeof( IFoo ) ).ClearParameterResolutions() );
 
         using ( new AssertionScope() )
         {

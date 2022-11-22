@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace LfrlAnvil.Dependencies.Internal.Builders;
@@ -25,13 +26,26 @@ internal sealed class DependencyConstructorInvocationOptions : IDependencyConstr
         return this;
     }
 
-    public IDependencyConstructorInvocationOptions AddParameterResolution(
+    public IDependencyConstructorInvocationOptions ResolveParameter(
         Func<ParameterInfo, bool> predicate,
-        Action<IDependencyConstructorParameterResolutionOptions> configuration)
+        Expression<Func<IDependencyScope, object>> factory)
     {
-        var options = new DependencyConstructorParameterResolutionOptions( LocatorBuilder, predicate );
-        configuration( options );
-        _parameterResolutions.Add( options.CreateResolution() );
+        var resolution = DependencyConstructorParameterResolution.FromFactory( predicate, factory );
+        _parameterResolutions.Add( resolution );
+        return this;
+    }
+
+    public IDependencyConstructorInvocationOptions ResolveParameter(
+        Func<ParameterInfo, bool> predicate,
+        Type implementorType,
+        Action<IDependencyImplementorOptions>? configuration = null)
+    {
+        var key = DependencyImplementorOptions.CreateImplementorKey(
+            LocatorBuilder.CreateImplementorKey( implementorType ),
+            configuration );
+
+        var resolution = DependencyConstructorParameterResolution.FromImplementorKey( predicate, key );
+        _parameterResolutions.Add( resolution );
         return this;
     }
 
