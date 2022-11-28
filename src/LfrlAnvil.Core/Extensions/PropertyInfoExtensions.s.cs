@@ -12,7 +12,7 @@ public static class PropertyInfoExtensions
         var backingFieldName = $"<{source.Name}>k__BackingField";
 
         var result = source.DeclaringType?
-            .GetField( backingFieldName, BindingFlags.Instance | BindingFlags.NonPublic );
+            .GetField( backingFieldName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic );
 
         return result;
     }

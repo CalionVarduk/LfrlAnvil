@@ -567,6 +567,14 @@ public class AssumeTests : TestsBase
 
     [Fact]
     [Conditional( "DEBUG" )]
+    public void Unreachable_ShouldFail()
+    {
+        var action = Lambda.Of( () => Assume.Unreachable() );
+        action.Should().Throw<Exception>();
+    }
+
+    [Fact]
+    [Conditional( "DEBUG" )]
     public void True_ShouldPass_WhenConditionIsTrue()
     {
         var action = Lambda.Of( () => Assume.True( true, string.Empty ) );

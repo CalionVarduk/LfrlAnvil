@@ -142,6 +142,13 @@ public static class Assume
     }
 
     [Conditional( "DEBUG" )]
+    [DoesNotReturn]
+    public static void Unreachable(string? description = null)
+    {
+        Debug.Fail( description ?? ExceptionResources.AssumedCodeToBeUnreachable );
+    }
+
+    [Conditional( "DEBUG" )]
     public static void True(bool condition, string description)
     {
         Debug.Assert( condition, description );
