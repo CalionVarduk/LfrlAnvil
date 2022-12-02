@@ -18,6 +18,7 @@ public static class ExceptionResources
     internal const string ExpectedIndexToBeZero = "Expected index to be equal to 0.";
     internal const string LazyDisposableCannotAssign = "Lazy disposable cannot assign an inner disposable.";
     internal const string ChainHasAlreadyBeenExtended = "Chain has already been extended.";
+    internal const string MeasurableHasAlreadyBeenInvoked = "Measurable has already been invoked.";
 
     internal const string ChainCannotBeExtendedBecauseItIsAttachedToAnotherChain =
         "Chain cannot be extended because it is attached to another chain.";
