@@ -160,4 +160,20 @@ public class MathUtilsTests : TestsBase
         var action = Lambda.Of( () => MathUtils.Partition( Fixture.Create<ulong>(), partCount: -1 ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
+
+    [Theory]
+    [MethodData( nameof( MathUtilsTestsData.GetGcdData ) )]
+    public void Gcd_ShouldReturnGreatestCommonDivisor(ulong a, ulong b, ulong expected)
+    {
+        var result = MathUtils.Gcd( a, b );
+        result.Should().Be( expected );
+    }
+
+    [Theory]
+    [MethodData( nameof( MathUtilsTestsData.GetLcmData ) )]
+    public void Lcm_ShouldReturnLeastCommonMultiple(ulong a, ulong b, ulong expected)
+    {
+        var result = MathUtils.Lcm( a, b );
+        result.Should().Be( expected );
+    }
 }

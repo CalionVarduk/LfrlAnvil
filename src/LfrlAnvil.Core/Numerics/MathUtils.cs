@@ -232,6 +232,26 @@ public static class MathUtils
     }
 
     [Pure]
+    public static ulong Gcd(ulong a, ulong b)
+    {
+        while ( b != 0 )
+        {
+            var t = a % b;
+            a = b;
+            b = t;
+        }
+
+        return a;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static ulong Lcm(ulong a, ulong b)
+    {
+        return a * (b / Gcd( a, b ));
+    }
+
+    [Pure]
     public static ulong[] Partition(ulong value, int partCount)
     {
         Ensure.IsGreaterThanOrEqualTo( partCount, 0, nameof( partCount ) );
