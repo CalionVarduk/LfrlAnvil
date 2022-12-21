@@ -672,6 +672,24 @@ public static class EnumerableExtensions
     }
 
     [Pure]
+    public static IEnumerable<T> Slice<T>(this IEnumerable<T> source, int startIndex, int length)
+    {
+        if ( length <= 0 )
+            return Enumerable.Empty<T>();
+
+        if ( startIndex < 0 )
+        {
+            length += startIndex;
+            if ( length <= 0 )
+                return Enumerable.Empty<T>();
+
+            startIndex = 0;
+        }
+
+        return SliceIterator( source, startIndex, length );
+    }
+
+    [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool IsOrdered<T>(this IEnumerable<T> source)
     {
@@ -737,5 +755,33 @@ public static class EnumerableExtensions
         }
 
         return true;
+    }
+
+    [Pure]
+    private static IEnumerable<T> SliceIterator<T>(IEnumerable<T> source, int startIndex, int length)
+    {
+        Assume.IsGreaterThanOrEqualTo( startIndex, 0, nameof( startIndex ) );
+        Assume.IsGreaterThanOrEqualTo( length, 1, nameof( length ) );
+
+        using var enumerator = source.GetEnumerator();
+
+        if ( ! enumerator.MoveNext() )
+            yield break;
+
+        var skipped = 0;
+        while ( skipped < startIndex && enumerator.MoveNext() )
+            ++skipped;
+
+        if ( skipped != startIndex )
+            yield break;
+
+        yield return enumerator.Current;
+
+        var taken = 1;
+        while ( taken < length && enumerator.MoveNext() )
+        {
+            ++taken;
+            yield return enumerator.Current;
+        }
     }
 }

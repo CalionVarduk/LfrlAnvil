@@ -1007,6 +1007,14 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
         result.Should().BeEquivalentTo( expected );
     }
 
+    [Theory]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetSliceData ) )]
+    public void Slice_ShouldReturnCorrectResult(IEnumerable<T> values, int startIndex, int length, T[] expected)
+    {
+        var result = values.Slice( startIndex, length );
+        result.Should().BeSequentiallyEqualTo( expected );
+    }
+
     [Fact]
     public void IsOrdered_ShouldReturnTrue_WhenSourceIsEmpty()
     {

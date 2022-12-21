@@ -354,6 +354,47 @@ public class GenericEnumerableExtensionsTestsData<T>
         };
     }
 
+    public static TheoryData<IEnumerable<T>, int, int, T[]> GetSliceData(IFixture fixture)
+    {
+        var items = fixture.CreateDistinctCollection<T>( count: 3 );
+        var (_1, _2, _3) = items;
+
+        return new TheoryData<IEnumerable<T>, int, int, T[]>
+        {
+            { Array.Empty<T>(), 0, 0, Array.Empty<T>() },
+            { Array.Empty<T>(), 0, 1, Array.Empty<T>() },
+            { Array.Empty<T>(), 1, 1, Array.Empty<T>() },
+            { items, 0, -1, Array.Empty<T>() },
+            { items, -1, -1, Array.Empty<T>() },
+            { items, -2, 1, Array.Empty<T>() },
+            { items, -2, 2, Array.Empty<T>() },
+            { items, -2, 3, new[] { _1 } },
+            { items, -2, 4, new[] { _1, _2 } },
+            { items, -2, 5, new[] { _1, _2, _3 } },
+            { items, -2, 6, new[] { _1, _2, _3 } },
+            { items, -1, 0, Array.Empty<T>() },
+            { items, -1, 1, Array.Empty<T>() },
+            { items, -1, 2, new[] { _1 } },
+            { items, -1, 3, new[] { _1, _2 } },
+            { items, -1, 4, new[] { _1, _2, _3 } },
+            { items, -1, 5, new[] { _1, _2, _3 } },
+            { items, 0, 0, Array.Empty<T>() },
+            { items, 0, 1, new[] { _1 } },
+            { items, 0, 2, new[] { _1, _2 } },
+            { items, 0, 3, new[] { _1, _2, _3 } },
+            { items, 0, 4, new[] { _1, _2, _3 } },
+            { items, 1, 0, Array.Empty<T>() },
+            { items, 1, 1, new[] { _2 } },
+            { items, 1, 2, new[] { _2, _3 } },
+            { items, 1, 3, new[] { _2, _3 } },
+            { items, 2, 0, Array.Empty<T>() },
+            { items, 2, 1, new[] { _3 } },
+            { items, 2, 2, new[] { _3 } },
+            { items, 3, 0, Array.Empty<T>() },
+            { items, 3, 1, Array.Empty<T>() }
+        };
+    }
+
     public static TheoryData<IEnumerable<T>, bool> GetIsOrderedData(IFixture fixture)
     {
         var (_1, _2, _3) = fixture.CreateDistinctSortedCollection<T>( 3 );
