@@ -42,6 +42,28 @@ public class MeasurableTests : TestsBase
     }
 
     [Fact]
+    public void Invoke_ShouldPerformActionsInCorrectOrderWithCorrectInformation_EvenWhenRunImplementationThrows()
+    {
+        var sut = new MeasurableThrowingMock();
+
+        var action = Lambda.Of( () => sut.Invoke() );
+
+        using ( new AssertionScope() )
+        {
+            action.Should().Throw<Exception>();
+            sut.State.Should().Be( MeasurableState.Done );
+            sut.Measurement.Should().NotBeEquivalentTo( TimeMeasurement.Zero );
+            sut.Actions.Should()
+                .BeEquivalentTo(
+                    ("Prepare", MeasurableState.Preparing, TimeMeasurement.Zero),
+                    ("Run", MeasurableState.Running, new TimeMeasurement( sut.Measurement.Preparation, TimeSpan.Zero, TimeSpan.Zero )),
+                    ("Teardown", MeasurableState.TearingDown,
+                     new TimeMeasurement( sut.Measurement.Preparation, sut.Measurement.Invocation, TimeSpan.Zero )),
+                    ("Done", MeasurableState.Done, sut.Measurement) );
+        }
+    }
+
+    [Fact]
     public void Invoke_ShouldThrowInvalidOperationException_WhenMeasurableHasAlreadyBeenInvoked()
     {
         var sut = new MeasurableMock();
@@ -53,12 +75,12 @@ public class MeasurableTests : TestsBase
     }
 }
 
-public sealed class MeasurableMock : Measurable
+public class MeasurableMock : Measurable
 {
     public readonly List<(string Name, MeasurableState State, TimeMeasurement Measurement)> Actions =
         new List<(string, MeasurableState, TimeMeasurement)>();
 
-    protected override void Prepare()
+    protected sealed override void Prepare()
     {
         base.Prepare();
         Actions.Add( (nameof( Prepare ), State, Measurement) );
@@ -71,16 +93,25 @@ public sealed class MeasurableMock : Measurable
         Thread.Sleep( 1 );
     }
 
-    protected override void Teardown()
+    protected sealed override void Teardown()
     {
         base.Teardown();
         Actions.Add( (nameof( Teardown ), State, Measurement) );
         Thread.Sleep( 1 );
     }
 
-    protected override void Done()
+    protected sealed override void Done()
     {
         base.Done();
         Actions.Add( (nameof( Done ), State, Measurement) );
+    }
+}
+
+public sealed class MeasurableThrowingMock : MeasurableMock
+{
+    protected override void Run()
+    {
+        base.Run();
+        throw new Exception();
     }
 }

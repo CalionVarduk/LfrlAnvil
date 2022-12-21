@@ -20,29 +20,33 @@ public abstract class Measurable
         if ( State != MeasurableState.Ready )
             throw new InvalidOperationException( ExceptionResources.MeasurableHasAlreadyBeenInvoked );
 
-        var stopwatch = new Stopwatch();
+        State = MeasurableState.Preparing;
+        var start = Stopwatch.GetTimestamp();
+        Prepare();
+        var end = Stopwatch.GetTimestamp();
+        Measurement = new TimeMeasurement( TimeSpan.FromTicks( end - start ), Measurement.Invocation, Measurement.Teardown );
 
         try
         {
-            State = MeasurableState.Preparing;
-            stopwatch.Start();
-            Prepare();
-            stopwatch.Stop();
-            Measurement = new TimeMeasurement( stopwatch.Elapsed, Measurement.Invocation, Measurement.Teardown );
-
             State = MeasurableState.Running;
-            stopwatch.Restart();
+            start = Stopwatch.GetTimestamp();
             Run();
-            stopwatch.Stop();
-            Measurement = new TimeMeasurement( Measurement.Preparation, stopwatch.Elapsed, Measurement.Teardown );
+            end = Stopwatch.GetTimestamp();
+            Measurement = new TimeMeasurement( Measurement.Preparation, TimeSpan.FromTicks( end - start ), Measurement.Teardown );
+        }
+        catch
+        {
+            end = Stopwatch.GetTimestamp();
+            Measurement = new TimeMeasurement( Measurement.Preparation, TimeSpan.FromTicks( end - start ), Measurement.Teardown );
+            throw;
         }
         finally
         {
             State = MeasurableState.TearingDown;
-            stopwatch.Restart();
+            start = Stopwatch.GetTimestamp();
             Teardown();
-            stopwatch.Stop();
-            Measurement = new TimeMeasurement( Measurement.Preparation, Measurement.Invocation, stopwatch.Elapsed );
+            end = Stopwatch.GetTimestamp();
+            Measurement = new TimeMeasurement( Measurement.Preparation, Measurement.Invocation, TimeSpan.FromTicks( end - start ) );
 
             State = MeasurableState.Done;
             Done();
