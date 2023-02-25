@@ -1,10 +1,10 @@
 ﻿using System;
+using System.Linq.Expressions;
 
 namespace LfrlAnvil.Dependencies.Internal.Resolvers;
 
-internal sealed class SingletonDependencyResolver : DependencyResolver
+internal sealed class SingletonDependencyResolver : FactoryDependencyResolver
 {
-    private readonly Func<IDependencyScope, object> _factory;
     private object? _instance;
 
     internal SingletonDependencyResolver(
@@ -13,9 +13,19 @@ internal sealed class SingletonDependencyResolver : DependencyResolver
         DependencyImplementorDisposalStrategy disposalStrategy,
         Action<Type, IDependencyScope>? onResolvingCallback,
         Func<IDependencyScope, object> factory)
-        : base( id, implementorType, disposalStrategy, onResolvingCallback )
+        : base( id, implementorType, disposalStrategy, onResolvingCallback, factory )
     {
-        _factory = factory;
+        _instance = null;
+    }
+
+    internal SingletonDependencyResolver(
+        ulong id,
+        Type implementorType,
+        DependencyImplementorDisposalStrategy disposalStrategy,
+        Action<Type, IDependencyScope>? onResolvingCallback,
+        Expression<Func<DependencyScope, object>> expression)
+        : base( id, implementorType, disposalStrategy, onResolvingCallback, expression )
+    {
         _instance = null;
     }
 
@@ -24,7 +34,7 @@ internal sealed class SingletonDependencyResolver : DependencyResolver
         if ( _instance is not null )
             return _instance;
 
-        _instance = _factory( scope );
+        _instance = Factory( scope );
 
         var rootScope = scope.InternalContainer.InternalRootScope;
         SetupDisposalStrategy( rootScope, _instance );

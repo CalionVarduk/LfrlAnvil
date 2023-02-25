@@ -17,9 +17,9 @@ internal sealed class DependencyBuilder : IDependencyBuilder
     public Type DependencyType { get; }
     public DependencyLifetime Lifetime { get; private set; }
     public IDependencyImplementorBuilder? Implementor { get; private set; }
-    public IDependencyImplementorKey? SharedImplementorKey => InternalSharedImplementorKey;
+    public IDependencyKey? SharedImplementorKey => InternalSharedImplementorKey;
     internal DependencyLocatorBuilder LocatorBuilder { get; }
-    internal IInternalDependencyImplementorKey? InternalSharedImplementorKey { get; set; }
+    internal IInternalDependencyKey? InternalSharedImplementorKey { get; set; }
 
     public IDependencyBuilder SetLifetime(DependencyLifetime lifetime)
     {

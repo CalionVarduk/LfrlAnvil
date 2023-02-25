@@ -1,21 +1,25 @@
 ﻿using System;
+using System.Linq.Expressions;
 
 namespace LfrlAnvil.Dependencies.Internal.Resolvers;
 
-internal sealed class ScopedSingletonDependencyResolver : DependencyResolver
+internal sealed class ScopedSingletonDependencyResolver : FactoryDependencyResolver
 {
-    private readonly Func<IDependencyScope, object> _factory;
-
     internal ScopedSingletonDependencyResolver(
         ulong id,
         Type implementorType,
         DependencyImplementorDisposalStrategy disposalStrategy,
         Action<Type, IDependencyScope>? onResolvingCallback,
         Func<IDependencyScope, object> factory)
-        : base( id, implementorType, disposalStrategy, onResolvingCallback )
-    {
-        _factory = factory;
-    }
+        : base( id, implementorType, disposalStrategy, onResolvingCallback, factory ) { }
+
+    internal ScopedSingletonDependencyResolver(
+        ulong id,
+        Type implementorType,
+        DependencyImplementorDisposalStrategy disposalStrategy,
+        Action<Type, IDependencyScope>? onResolvingCallback,
+        Expression<Func<DependencyScope, object>> expression)
+        : base( id, implementorType, disposalStrategy, onResolvingCallback, expression ) { }
 
     protected override object CreateInternal(DependencyScope scope)
     {
@@ -34,7 +38,7 @@ internal sealed class ScopedSingletonDependencyResolver : DependencyResolver
             parentScope = parentScope.InternalParentScope;
         }
 
-        result = _factory( scope );
+        result = Factory( scope );
 
         scope.ScopedInstancesByResolverId.Add( Id, result );
         SetupDisposalStrategy( scope, result );

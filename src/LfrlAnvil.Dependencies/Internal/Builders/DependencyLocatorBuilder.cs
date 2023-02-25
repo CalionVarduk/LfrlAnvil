@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using System.Runtime.CompilerServices;
 using LfrlAnvil.Dependencies.Exceptions;
-using LfrlAnvil.Dependencies.Internal.Resolvers;
+using LfrlAnvil.Dependencies.Internal.Resolvers.Factories;
 
 namespace LfrlAnvil.Dependencies.Internal.Builders;
 
@@ -72,98 +71,58 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
     }
 
     [Pure]
-    internal virtual IInternalDependencyImplementorKey CreateImplementorKey(Type implementorType)
+    internal virtual IInternalDependencyKey CreateImplementorKey(Type implementorType)
     {
-        return new DependencyImplementorKey( implementorType );
+        return new DependencyKey( implementorType );
     }
 
-    internal DependencyLocatorBuilderResult Build(DependencyLocatorBuilderParams @params)
+    internal Chain<DependencyContainerBuildMessages> ExtractResolverFactories(
+        DependencyLocatorBuilderStore locatorBuilderStore,
+        DependencyLocatorBuilderExtractionParams @params)
     {
-        var resolvers = new Dictionary<Type, DependencyResolver>();
         var messages = Chain<DependencyContainerBuildMessages>.Empty;
 
-        foreach ( var (type, builder) in Dependencies )
+        foreach ( var builder in Dependencies.Values )
         {
+            var dependencyKey = ImplementorKey.Create( CreateImplementorKey( builder.DependencyType ) );
+
             if ( builder.InternalSharedImplementorKey is not null )
             {
-                var sharedResolver = @params.GetSharedResolver( builder.InternalSharedImplementorKey, builder.Lifetime );
-                if ( sharedResolver is null )
+                var sharedFactory = @params.GetSharedResolverFactory( builder.InternalSharedImplementorKey, builder.Lifetime );
+                if ( sharedFactory is null )
                 {
-                    var implementorBuilder = builder.InternalSharedImplementorKey.GetSharedImplementor( @params.LocatorBuilderStore );
-                    if ( implementorBuilder?.Factory is null )
+                    var implementorBuilder = builder.InternalSharedImplementorKey.GetSharedImplementor( locatorBuilderStore );
+                    if ( implementorBuilder is null )
                     {
+                        var errorMessage = Resources.SharedImplementorIsMissing( builder.InternalSharedImplementorKey );
                         messages = messages.Extend(
-                            DependencyContainerBuildMessages.Create(
-                                type,
-                                builder.InternalSharedImplementorKey,
-                                Chain.Create( Resources.ImplementorDoesNotExist( type, builder.InternalSharedImplementorKey ) ),
-                                Chain<string>.Empty ) );
+                            DependencyContainerBuildMessages.CreateErrors( dependencyKey, Chain.Create( errorMessage ) ) );
 
                         continue;
                     }
 
-                    sharedResolver = CreateDependencyResolver( @params.GetResolverId(), implementorBuilder, builder.Lifetime );
-                    @params.AddSharedResolver( builder.InternalSharedImplementorKey, builder.Lifetime, sharedResolver );
+                    sharedFactory = DependencyResolverFactory.Create(
+                        ImplementorKey.CreateShared( builder.InternalSharedImplementorKey ),
+                        implementorBuilder,
+                        builder.Lifetime );
+
+                    @params.AddSharedResolverFactory( builder.InternalSharedImplementorKey, builder.Lifetime, sharedFactory );
                 }
 
-                resolvers.Add( type, sharedResolver );
+                @params.ResolverFactories.Add( dependencyKey.Value, sharedFactory );
                 continue;
             }
 
-            // TODO: add Constructor handling
-            if ( builder.Implementor?.Factory is null ) // TODO: treat this as Self with auto-discovered ctor in the future
-                throw new NotImplementedException();
-
-            var resolver = CreateDependencyResolver( @params.GetResolverId(), builder.Implementor, builder.Lifetime );
-            resolvers.Add( type, resolver );
+            var factory = DependencyResolverFactory.Create( dependencyKey, builder.Implementor, builder.Lifetime );
+            @params.ResolverFactories.Add( dependencyKey.Value, factory );
         }
 
-        foreach ( var (type, resolver) in @params.GetDefaultResolvers() )
-            resolvers.Add( type, resolver );
-
-        return new DependencyLocatorBuilderResult( resolvers, messages );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static DependencyResolver CreateDependencyResolver(ulong id, IDependencyImplementorBuilder builder, DependencyLifetime lifetime)
-    {
-        Assume.IsNotNull( builder.Factory, nameof( builder.Factory ) );
-
-        DependencyResolver result = lifetime switch
-        {
-            DependencyLifetime.Singleton => new SingletonDependencyResolver(
-                id,
-                builder.ImplementorType,
-                builder.DisposalStrategy,
-                builder.OnResolvingCallback,
-                builder.Factory ),
-            DependencyLifetime.ScopedSingleton => new ScopedSingletonDependencyResolver(
-                id,
-                builder.ImplementorType,
-                builder.DisposalStrategy,
-                builder.OnResolvingCallback,
-                builder.Factory ),
-            DependencyLifetime.Scoped => new ScopedDependencyResolver(
-                id,
-                builder.ImplementorType,
-                builder.DisposalStrategy,
-                builder.OnResolvingCallback,
-                builder.Factory ),
-            _ => new TransientDependencyResolver(
-                id,
-                builder.ImplementorType,
-                builder.DisposalStrategy,
-                builder.OnResolvingCallback,
-                builder.Factory )
-        };
-
-        return result;
+        @params.AddDefaultResolverFactories( this );
+        return messages;
     }
 }
 
-internal sealed class DependencyLocatorBuilder<TKey>
-    : DependencyLocatorBuilder, IDependencyLocatorBuilder<TKey>, IKeyedDependencyLocatorBuilder
+internal sealed class DependencyLocatorBuilder<TKey> : DependencyLocatorBuilder, IDependencyLocatorBuilder<TKey>
     where TKey : notnull
 {
     internal DependencyLocatorBuilder(TKey key)
@@ -178,15 +137,8 @@ internal sealed class DependencyLocatorBuilder<TKey>
     bool IDependencyLocatorBuilder.IsKeyed => true;
 
     [Pure]
-    internal override IInternalDependencyImplementorKey CreateImplementorKey(Type implementorType)
+    internal override IInternalDependencyKey CreateImplementorKey(Type implementorType)
     {
-        return new DependencyImplementorKey<TKey>( implementorType, Key );
-    }
-
-    public Chain<DependencyContainerBuildMessages> BuildKeyed(DependencyLocatorBuilderParams @params)
-    {
-        var result = Build( @params );
-        @params.KeyedResolversStore.AddResolvers( Key, result.Resolvers );
-        return result.Messages;
+        return new DependencyKey<TKey>( implementorType, Key );
     }
 }

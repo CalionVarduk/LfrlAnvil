@@ -255,7 +255,7 @@ public class DependencyScopeTests : DependencyTestsBase
     [Fact]
     public async Task BeginScope_ShouldThrowDependencyScopeCreationException_WhenScopeIsAttachedToAnotherThread()
     {
-        using var context = new DedicatedThreadSynchronizationContext();
+        var context = new DedicatedThreadSynchronizationContext();
         var taskFactory = new TaskFactory( TaskSchedulerCapture.FromSynchronizationContext( context ) );
         var container = new DependencyContainerBuilder().Build();
         var sut = await taskFactory.StartNew( () => container.RootScope.BeginScope() );
@@ -402,7 +402,7 @@ public class DependencyScopeTests : DependencyTestsBase
     [Fact]
     public async Task Dispose_ShouldThrowDependencyScopeDisposalException_WhenScopeIsAttachedToAnotherThread()
     {
-        using var context = new DedicatedThreadSynchronizationContext();
+        var context = new DedicatedThreadSynchronizationContext();
         var taskFactory = new TaskFactory( TaskSchedulerCapture.FromSynchronizationContext( context ) );
         var container = new DependencyContainerBuilder().Build();
         var sut = await taskFactory.StartNew( () => container.RootScope.BeginScope() );

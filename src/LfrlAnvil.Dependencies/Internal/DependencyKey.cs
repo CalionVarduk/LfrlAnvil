@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Dependencies.Internal.Builders;
+using LfrlAnvil.Dependencies.Internal.Resolvers;
 using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Dependencies.Internal;
 
-internal sealed class DependencyImplementorKey : IInternalDependencyImplementorKey
+internal sealed class DependencyKey : IInternalDependencyKey
 {
-    internal DependencyImplementorKey(Type type)
+    internal DependencyKey(Type type)
     {
         Type = type;
     }
@@ -22,7 +23,7 @@ internal sealed class DependencyImplementorKey : IInternalDependencyImplementorK
     [Pure]
     public override string ToString()
     {
-        return Type.GetDebugString();
+        return $"'{Type.GetDebugString()}'";
     }
 
     [Pure]
@@ -34,13 +35,13 @@ internal sealed class DependencyImplementorKey : IInternalDependencyImplementorK
     [Pure]
     public override bool Equals(object? obj)
     {
-        return IsEqualTo( obj as DependencyImplementorKey );
+        return IsEqualTo( obj as DependencyKey );
     }
 
     [Pure]
-    public bool Equals(IDependencyImplementorKey? other)
+    public bool Equals(IDependencyKey? other)
     {
-        return IsEqualTo( other as DependencyImplementorKey );
+        return IsEqualTo( other as DependencyKey );
     }
 
     [Pure]
@@ -50,19 +51,33 @@ internal sealed class DependencyImplementorKey : IInternalDependencyImplementorK
     }
 
     [Pure]
+    public Dictionary<Type, DependencyResolver> GetTargetResolvers(
+        Dictionary<Type, DependencyResolver> globalResolvers,
+        KeyedDependencyResolversStore keyedResolversStore)
+    {
+        return globalResolvers;
+    }
+
+    [Pure]
+    public IInternalDependencyKey WithType(Type type)
+    {
+        return new DependencyKey( type );
+    }
+
+    [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private bool IsEqualTo(DependencyImplementorKey? other)
+    private bool IsEqualTo(DependencyKey? other)
     {
         return other is not null && Type == other.Type;
     }
 }
 
-internal sealed class DependencyImplementorKey<TKey> : IInternalDependencyImplementorKey, IDependencyImplementorKey<TKey>
+internal sealed class DependencyKey<TKey> : IInternalDependencyKey, IDependencyKey<TKey>
     where TKey : notnull
 {
     private static readonly IEqualityComparer<TKey> KeyComparer = EqualityComparer<TKey>.Default;
 
-    internal DependencyImplementorKey(Type type, TKey key)
+    internal DependencyKey(Type type, TKey key)
     {
         Type = type;
         Key = key;
@@ -73,12 +88,12 @@ internal sealed class DependencyImplementorKey<TKey> : IInternalDependencyImplem
     public Type KeyType => typeof( TKey );
     public bool IsKeyed => true;
 
-    object IDependencyImplementorKey.Key => Key;
+    object IDependencyKey.Key => Key;
 
     [Pure]
     public override string ToString()
     {
-        return $"{Type.GetDebugString()} [{nameof( Key )}: '{Key}']";
+        return $"'{Type.GetDebugString()}' [{nameof( Key )}: '{Key}']";
     }
 
     [Pure]
@@ -90,13 +105,13 @@ internal sealed class DependencyImplementorKey<TKey> : IInternalDependencyImplem
     [Pure]
     public override bool Equals(object? obj)
     {
-        return IsEqualTo( obj as DependencyImplementorKey<TKey> );
+        return IsEqualTo( obj as DependencyKey<TKey> );
     }
 
     [Pure]
-    public bool Equals(IDependencyImplementorKey? other)
+    public bool Equals(IDependencyKey? other)
     {
-        return IsEqualTo( other as DependencyImplementorKey<TKey> );
+        return IsEqualTo( other as DependencyKey<TKey> );
     }
 
     [Pure]
@@ -107,8 +122,22 @@ internal sealed class DependencyImplementorKey<TKey> : IInternalDependencyImplem
     }
 
     [Pure]
+    public Dictionary<Type, DependencyResolver> GetTargetResolvers(
+        Dictionary<Type, DependencyResolver> globalResolvers,
+        KeyedDependencyResolversStore keyedResolversStore)
+    {
+        return keyedResolversStore.GetOrAddResolvers( Key );
+    }
+
+    [Pure]
+    public IInternalDependencyKey WithType(Type type)
+    {
+        return new DependencyKey<TKey>( type, Key );
+    }
+
+    [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private bool IsEqualTo(DependencyImplementorKey<TKey>? other)
+    private bool IsEqualTo(DependencyKey<TKey>? other)
     {
         return other is not null && Type == other.Type && KeyComparer.Equals( Key, other.Key );
     }

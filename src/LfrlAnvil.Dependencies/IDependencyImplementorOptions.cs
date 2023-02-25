@@ -2,7 +2,7 @@
 
 public interface IDependencyImplementorOptions
 {
-    IDependencyImplementorKey Key { get; }
+    IDependencyKey Key { get; }
 
     void Keyed<TKey>(TKey key)
         where TKey : notnull;

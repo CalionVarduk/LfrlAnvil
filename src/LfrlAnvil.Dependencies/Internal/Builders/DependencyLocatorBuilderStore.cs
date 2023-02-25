@@ -59,15 +59,15 @@ internal readonly struct DependencyLocatorBuilderStore
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal IEnumerable<IKeyedDependencyLocatorBuilder> GetAllKeyed()
+    internal IEnumerable<DependencyLocatorBuilder> GetAll()
     {
-        return _cachesByKeyType.Values.SelectMany( f => f.GetAll() );
+        return _cachesByKeyType.Values.SelectMany( f => f.GetAll() ).Prepend( Global );
     }
 
     private abstract class KeyedCache
     {
         [Pure]
-        internal abstract IEnumerable<IKeyedDependencyLocatorBuilder> GetAll();
+        internal abstract IEnumerable<DependencyLocatorBuilder> GetAll();
     }
 
     private sealed class KeyedCache<TKey> : KeyedCache
@@ -81,7 +81,7 @@ internal readonly struct DependencyLocatorBuilderStore
         }
 
         [Pure]
-        internal override IEnumerable<IKeyedDependencyLocatorBuilder> GetAll()
+        internal override IEnumerable<DependencyLocatorBuilder> GetAll()
         {
             return Locators.Values.Where( b => b.Dependencies.Count > 0 );
         }

@@ -795,7 +795,7 @@ public class DependencyContainerTests : DependencyTestsBase
     }
 
     [Fact]
-    public void ResolvingDependency_ShouldThrowMissingDependencyException_WhenCreatedObjectIsOfInvalidType()
+    public void ResolvingDependency_ShouldThrowInvalidDependencyCastException_WhenCreatedObjectIsOfInvalidType()
     {
         var factory = Substitute.For<Func<IDependencyScope, object>>();
         factory.WithAnyArgs( _ => "foo" );
@@ -812,7 +812,7 @@ public class DependencyContainerTests : DependencyTestsBase
     }
 
     [Fact]
-    public void ResolvingDependency_ThroughNonGenericMethod_ShouldThrowMissingDependencyException_WhenCreatedObjectIsOfInvalidType()
+    public void ResolvingDependency_ThroughNonGenericMethod_ShouldThrowInvalidDependencyCastException_WhenCreatedObjectIsOfInvalidType()
     {
         var factory = Substitute.For<Func<IDependencyScope, object>>();
         factory.WithAnyArgs( _ => "foo" );
@@ -891,6 +891,575 @@ public class DependencyContainerTests : DependencyTestsBase
                     inner4.DependencyType == typeof( Implementor ) &&
                     inner4.ImplementorType == typeof( Implementor ) &&
                     inner4.InnerException is null );
+    }
+
+    [Theory]
+    [InlineData( DependencyLifetime.Transient )]
+    [InlineData( DependencyLifetime.Scoped )]
+    [InlineData( DependencyLifetime.ScopedSingleton )]
+    [InlineData( DependencyLifetime.Singleton )]
+    public void ResolvingDependency_WithCtor_ShouldReturnCorrectInstance(DependencyLifetime lifetime)
+    {
+        var ctor = typeof( ExplicitCtorImplementor ).GetConstructors().First();
+        var value = Fixture.Create<string>();
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<string>().SetLifetime( lifetime ).FromFactory( _ => value );
+        builder.Add<IWithText>().SetLifetime( lifetime ).FromConstructor( ctor );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+
+        using ( new AssertionScope() )
+        {
+            result.GetType().Should().Be( typeof( ExplicitCtorImplementor ) );
+            result.Text.Should().BeSameAs( value );
+        }
+    }
+
+    [Theory]
+    [InlineData( DependencyLifetime.Transient )]
+    [InlineData( DependencyLifetime.Scoped )]
+    [InlineData( DependencyLifetime.ScopedSingleton )]
+    [InlineData( DependencyLifetime.Singleton )]
+    public void ResolvingDependency_WithCtor_ShouldReturnCorrectInstanceForKeyedLocator(DependencyLifetime lifetime)
+    {
+        var ctor = typeof( ExplicitCtorImplementor ).GetConstructors().First();
+        var value = Fixture.Create<string>();
+
+        var builder = new DependencyContainerBuilder();
+        builder.GetKeyedLocator( 1 ).Add<string>().SetLifetime( lifetime ).FromFactory( _ => value );
+        builder.GetKeyedLocator( 1 ).Add<IWithText>().SetLifetime( lifetime ).FromConstructor( ctor );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.GetKeyedLocator( 1 ).Resolve<IWithText>();
+
+        using ( new AssertionScope() )
+        {
+            result.GetType().Should().Be( typeof( ExplicitCtorImplementor ) );
+            result.Text.Should().BeSameAs( value );
+        }
+    }
+
+    [Fact]
+    public void ResolvingDependency_WithParameterlessCtor_ShouldReturnCorrectInstance()
+    {
+        var ctor = typeof( Implementor ).GetConstructors().First();
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IFoo>().FromConstructor( ctor );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IFoo>();
+
+        result.GetType().Should().Be( typeof( Implementor ) );
+    }
+
+    [Fact]
+    public void ResolvingDependency_WithCtor_ShouldReturnCorrectInstance_WhenParametersAreBuiltIn()
+    {
+        var ctor = typeof( BuiltInCtorParamImplementor ).GetConstructors().First();
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IBuiltIn>().FromConstructor( ctor );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IBuiltIn>();
+
+        using ( new AssertionScope() )
+        {
+            result.GetType().Should().Be( typeof( BuiltInCtorParamImplementor ) );
+            result.Container.Should().BeSameAs( sut );
+            result.Scope.Should().BeSameAs( sut.ActiveScope );
+        }
+    }
+
+    [Fact]
+    public void ResolvingDependency_WithCtorAndDefaultParameter_ShouldReturnCorrectInstance_WhenParameterIsNotResolvable()
+    {
+        var ctor = typeof( DefaultCtorParamImplementor ).GetConstructors().First();
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IWithText>().FromConstructor( ctor );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+
+        using ( new AssertionScope() )
+        {
+            result.GetType().Should().Be( typeof( DefaultCtorParamImplementor ) );
+            result.Text.Should().Be( "foo" );
+        }
+    }
+
+    [Fact]
+    public void ResolvingDependency_WithCtorAndDefaultParameter_ShouldReturnCorrectInstance_WhenParameterIsResolvable()
+    {
+        var ctor = typeof( DefaultCtorParamImplementor ).GetConstructors().First();
+        var value = Fixture.Create<string>();
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<string>().FromFactory( _ => value );
+        builder.Add<IWithText>().FromConstructor( ctor );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+
+        using ( new AssertionScope() )
+        {
+            result.GetType().Should().Be( typeof( DefaultCtorParamImplementor ) );
+            result.Text.Should().BeSameAs( value );
+        }
+    }
+
+    [Fact]
+    public void ResolvingDependency_WithCtorAndOptionalParameter_ShouldReturnCorrectInstance_WhenParameterIsNotResolvable()
+    {
+        var ctor = typeof( OptionalCtorParamImplementor ).GetConstructors().First();
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IWithText>().FromConstructor( ctor );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+
+        using ( new AssertionScope() )
+        {
+            result.GetType().Should().Be( typeof( OptionalCtorParamImplementor ) );
+            result.Text.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void ResolvingDependency_WithCtorAndOptionalParameter_ShouldReturnCorrectInstance_WhenParameterIsResolvable()
+    {
+        var ctor = typeof( OptionalCtorParamImplementor ).GetConstructors().First();
+        var value = Fixture.Create<string>();
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<string>().FromFactory( _ => value );
+        builder.Add<IWithText>().FromConstructor( ctor );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+
+        using ( new AssertionScope() )
+        {
+            result.GetType().Should().Be( typeof( OptionalCtorParamImplementor ) );
+            result.Text.Should().BeSameAs( value );
+        }
+    }
+
+    [Fact]
+    public void ResolvingDependency_WithCtor_ShouldReturnCorrectInstance_WhenParameterHasExplicitResolutionFromFactory()
+    {
+        var ctor = typeof( ExplicitCtorImplementor ).GetConstructors().First();
+        var value = Fixture.Create<string>();
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IWithText>().FromConstructor( ctor, o => o.ResolveParameter( p => p.Name == "text", _ => value ) );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+
+        using ( new AssertionScope() )
+        {
+            result.GetType().Should().Be( typeof( ExplicitCtorImplementor ) );
+            result.Text.Should().BeSameAs( value );
+        }
+    }
+
+    [Fact]
+    public void ResolvingDependency_WithCtor_ShouldReturnCorrectInstance_WhenParameterHasExplicitResolutionFromImplementorType()
+    {
+        var ctor = typeof( ExplicitCtorImplementor ).GetConstructors().First();
+        var value = Fixture.Create<string>();
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<string>().FromFactory( _ => value );
+        builder.Add<IWithText>().FromConstructor( ctor, o => o.ResolveParameter( p => p.Name == "text", typeof( string ) ) );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+
+        using ( new AssertionScope() )
+        {
+            result.GetType().Should().Be( typeof( ExplicitCtorImplementor ) );
+            result.Text.Should().BeSameAs( value );
+        }
+    }
+
+    [Fact]
+    public void ResolvingDependency_WithCtor_ShouldReturnCorrectInstance_WhenParameterHasExplicitResolutionFromKeyedImplementorType()
+    {
+        var ctor = typeof( ExplicitCtorImplementor ).GetConstructors().First();
+        var value = Fixture.Create<string>();
+
+        var builder = new DependencyContainerBuilder();
+        builder.GetKeyedLocator( 1 ).Add<string>().FromFactory( _ => value );
+        builder.Add<IWithText>()
+            .FromConstructor(
+                ctor,
+                o => o.ResolveParameter( p => p.Name == "text", typeof( string ), c => c.Keyed( 1 ) ) );
+
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+
+        using ( new AssertionScope() )
+        {
+            result.GetType().Should().Be( typeof( ExplicitCtorImplementor ) );
+            result.Text.Should().BeSameAs( value );
+        }
+    }
+
+    [Theory]
+    [InlineData( typeof( FieldImplementor ) )]
+    [InlineData( typeof( BackedPropertyImplementor ) )]
+    [InlineData( typeof( BackedReadOnlyPropertyImplementor ) )]
+    [InlineData( typeof( CustomPropertyImplementor ) )]
+    public void ResolvingDependency_WithCtorAndMember_ShouldReturnCorrectInstance(Type implementorType)
+    {
+        var ctor = implementorType.GetConstructors().First();
+        var value = Fixture.Create<string>();
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<string>().FromFactory( _ => value );
+        builder.Add<IWithText>().FromConstructor( ctor );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+
+        using ( new AssertionScope() )
+        {
+            result.GetType().Should().Be( implementorType );
+            result.Text.Should().BeSameAs( value );
+        }
+    }
+
+    [Theory]
+    [InlineData( typeof( OptionalFieldImplementor ) )]
+    [InlineData( typeof( OptionalBackedPropertyImplementor ) )]
+    [InlineData( typeof( OptionalBackedReadOnlyPropertyImplementor ) )]
+    [InlineData( typeof( OptionalCustomPropertyImplementor ) )]
+    public void ResolvingDependency_WithCtorAndOptionalMember_ShouldReturnCorrectInstance_WhenMemberIsNotResolvable(Type implementorType)
+    {
+        var ctor = implementorType.GetConstructors().First();
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IWithText>().FromConstructor( ctor );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+
+        using ( new AssertionScope() )
+        {
+            result.GetType().Should().Be( implementorType );
+            result.Text.Should().BeNull();
+        }
+    }
+
+    [Theory]
+    [InlineData( typeof( OptionalFieldImplementor ) )]
+    [InlineData( typeof( OptionalBackedPropertyImplementor ) )]
+    [InlineData( typeof( OptionalBackedReadOnlyPropertyImplementor ) )]
+    [InlineData( typeof( OptionalCustomPropertyImplementor ) )]
+    public void ResolvingDependency_WithCtorAndOptionalMember_ShouldReturnCorrectInstance_WhenMemberIsResolvable(Type implementorType)
+    {
+        var ctor = implementorType.GetConstructors().First();
+        var value = Fixture.Create<string>();
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<string>().FromFactory( _ => value );
+        builder.Add<IWithText>().FromConstructor( ctor );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+
+        using ( new AssertionScope() )
+        {
+            result.GetType().Should().Be( implementorType );
+            result.Text.Should().BeSameAs( value );
+        }
+    }
+
+    [Theory]
+    [InlineData( typeof( FieldImplementor ) )]
+    [InlineData( typeof( BackedPropertyImplementor ) )]
+    [InlineData( typeof( BackedReadOnlyPropertyImplementor ) )]
+    [InlineData( typeof( CustomPropertyImplementor ) )]
+    public void ResolvingDependency_WithCtorAndMember_ShouldReturnCorrectInstance_WhenMemberHasExplicitResolutionFromFactory(
+        Type implementorType)
+    {
+        var ctor = implementorType.GetConstructors().First();
+        var value = Fixture.Create<string>();
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IWithText>().FromConstructor( ctor, o => o.ResolveMember( m => m.Name.Contains( "_text" ), _ => value ) );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+
+        using ( new AssertionScope() )
+        {
+            result.GetType().Should().Be( implementorType );
+            result.Text.Should().BeSameAs( value );
+        }
+    }
+
+    [Theory]
+    [InlineData( typeof( FieldImplementor ) )]
+    [InlineData( typeof( BackedPropertyImplementor ) )]
+    [InlineData( typeof( BackedReadOnlyPropertyImplementor ) )]
+    [InlineData( typeof( CustomPropertyImplementor ) )]
+    public void ResolvingDependency_WithCtorAndMember_ShouldReturnCorrectInstance_WhenMemberHasExplicitResolutionFromImplementorType(
+        Type implementorType)
+    {
+        var ctor = implementorType.GetConstructors().First();
+        var value = Fixture.Create<string>();
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<string>().FromFactory( _ => value );
+        builder.Add<IWithText>().FromConstructor( ctor, o => o.ResolveMember( m => m.Name.Contains( "_text" ), typeof( string ) ) );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+
+        using ( new AssertionScope() )
+        {
+            result.GetType().Should().Be( implementorType );
+            result.Text.Should().BeSameAs( value );
+        }
+    }
+
+    [Theory]
+    [InlineData( typeof( FieldImplementor ) )]
+    [InlineData( typeof( BackedPropertyImplementor ) )]
+    [InlineData( typeof( BackedReadOnlyPropertyImplementor ) )]
+    [InlineData( typeof( CustomPropertyImplementor ) )]
+    public void ResolvingDependency_WithCtorAndMember_ShouldReturnCorrectInstance_WhenMemberHasExplicitResolutionFromKeyedImplementorType(
+        Type implementorType)
+    {
+        var ctor = implementorType.GetConstructors().First();
+        var value = Fixture.Create<string>();
+
+        var builder = new DependencyContainerBuilder();
+        builder.GetKeyedLocator( 1 ).Add<string>().FromFactory( _ => value );
+        builder.Add<IWithText>()
+            .FromConstructor(
+                ctor,
+                o => o.ResolveMember( m => m.Name.Contains( "_text" ), typeof( string ), c => c.Keyed( 1 ) ) );
+
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+
+        using ( new AssertionScope() )
+        {
+            result.GetType().Should().Be( implementorType );
+            result.Text.Should().BeSameAs( value );
+        }
+    }
+
+    [Fact]
+    public void ResolvingDependency_WithCtor_ShouldReturnCorrectInstance_WhenMembersAreBuiltIn()
+    {
+        var ctor = typeof( BuiltInCtorMemberImplementor ).GetConstructors().First();
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IBuiltIn>().FromConstructor( ctor );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IBuiltIn>();
+
+        using ( new AssertionScope() )
+        {
+            result.GetType().Should().Be( typeof( BuiltInCtorMemberImplementor ) );
+            result.Container.Should().BeSameAs( sut );
+            result.Scope.Should().BeSameAs( sut.ActiveScope );
+        }
+    }
+
+    [Fact]
+    public void ResolvingDependency_WithCtor_ShouldReturnCorrectInstance_WhenResolvingChainOfDependencies()
+    {
+        var fooCtor = typeof( ChainableFoo ).GetConstructors().First();
+        var barCtor = typeof( ChainableBar ).GetConstructors().First();
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IFoo>().FromConstructor( fooCtor );
+        builder.Add<IBar>().FromConstructor( barCtor );
+        builder.Add<IQux>().FromFactory( _ => new Implementor() );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IFoo>();
+
+        using ( new AssertionScope() )
+        {
+            result.GetType().Should().Be( typeof( ChainableFoo ) );
+            if ( result is not ChainableFoo foo )
+                return;
+
+            foo.Bar.GetType().Should().Be( typeof( ChainableBar ) );
+            if ( foo.Bar is not ChainableBar bar )
+                return;
+
+            bar.Qux.GetType().Should().Be( typeof( Implementor ) );
+        }
+    }
+
+    [Fact]
+    public void ResolvingDependency_WithCtorAndMember_ShouldReturnCorrectInstance_WhenResolvingChainOfDependencies()
+    {
+        var fooCtor = typeof( ChainableFieldFoo ).GetConstructors().First();
+        var barCtor = typeof( ChainableFieldBar ).GetConstructors().First();
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IFoo>().FromConstructor( fooCtor );
+        builder.Add<IBar>().FromConstructor( barCtor );
+        builder.Add<IQux>().FromFactory( _ => new Implementor() );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IFoo>();
+
+        using ( new AssertionScope() )
+        {
+            result.GetType().Should().Be( typeof( ChainableFieldFoo ) );
+            if ( result is not ChainableFieldFoo foo )
+                return;
+
+            foo.Bar.GetType().Should().Be( typeof( ChainableFieldBar ) );
+            if ( foo.Bar is not ChainableFieldBar bar )
+                return;
+
+            bar.Qux.GetType().Should().Be( typeof( Implementor ) );
+        }
+    }
+
+    [Fact]
+    public void ResolvingDependency_WithCtor_ShouldReturnCorrectInstance_WhenParameterAndMemberAreInjectable()
+    {
+        var ctor = typeof( CtorAndRefMemberImplementor ).GetConstructors().First();
+        var stringValue = Fixture.Create<string>();
+        var intValue = Fixture.Create<int>();
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<string>().FromFactory( _ => stringValue );
+        builder.Add<int>().FromFactory( _ => intValue );
+        builder.Add<IWithText>().FromConstructor( ctor );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+
+        using ( new AssertionScope() )
+        {
+            result.GetType().Should().Be( typeof( CtorAndRefMemberImplementor ) );
+            result.Text.Should().Be( $"{stringValue}{intValue}" );
+        }
+    }
+
+    [Fact]
+    public void ResolvingDependency_WithCtor_ShouldReturnCorrectInstance_WhenParameterAndMemberAreInjectableWithExplicitResolution()
+    {
+        var ctor = typeof( CtorAndRefMemberImplementor ).GetConstructors().First();
+        var stringValue = Fixture.Create<string>();
+        var intValue = Fixture.Create<int>();
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IWithText>()
+            .FromConstructor(
+                ctor,
+                o => o.ResolveParameter( p => p.Name == "value", _ => intValue )
+                    .ResolveMember( m => m.Name == "_member", _ => stringValue ) );
+
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+
+        using ( new AssertionScope() )
+        {
+            result.GetType().Should().Be( typeof( CtorAndRefMemberImplementor ) );
+            result.Text.Should().Be( $"{stringValue}{intValue}" );
+        }
+    }
+
+    [Fact]
+    public void ResolvingDependency_WithCtor_ShouldReturnCorrectInstance_WhenParameterAndMemberAreInjectableWithNullableType()
+    {
+        var ctor = typeof( CtorAndValueMemberImplementor ).GetConstructors().First();
+        var byteValue = Fixture.Create<byte>();
+        var intValue = Fixture.Create<int>();
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<byte?>().FromFactory( _ => byteValue );
+        builder.Add<int>().FromFactory( _ => intValue );
+        builder.Add<IWithText>().FromConstructor( ctor );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+
+        using ( new AssertionScope() )
+        {
+            result.GetType().Should().Be( typeof( CtorAndValueMemberImplementor ) );
+            result.Text.Should().Be( $"{intValue}{byteValue}" );
+        }
+    }
+
+    [Fact]
+    public void ResolvingDependency_ShouldThrowInvalidDependencyCastException_WhenRefTypeDependencyIsOfIncorrectType()
+    {
+        var ctor = typeof( CtorAndRefMemberImplementor ).GetConstructors().First();
+        var intValue = Fixture.Create<int>();
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<string>().FromFactory( _ => new object() );
+        builder.Add<int>().FromFactory( _ => intValue );
+        builder.Add<IWithText>().FromConstructor( ctor );
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.ActiveScope.Locator.Resolve<IWithText>() );
+
+        action.Should()
+            .ThrowExactly<InvalidDependencyCastException>()
+            .AndMatch( e => e.DependencyType == typeof( string ) && e.ResultType is null );
+    }
+
+    [Fact]
+    public void ResolvingDependency_ShouldThrowInvalidDependencyCastException_WhenValueTypeDependencyIsOfIncorrectType()
+    {
+        var ctor = typeof( CtorAndRefMemberImplementor ).GetConstructors().First();
+        var stringValue = Fixture.Create<string>();
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<string>().FromFactory( _ => stringValue );
+        builder.Add<int>().FromFactory( _ => new object() );
+        builder.Add<IWithText>().FromConstructor( ctor );
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.ActiveScope.Locator.Resolve<IWithText>() );
+
+        action.Should()
+            .ThrowExactly<InvalidDependencyCastException>()
+            .AndMatch( e => e.DependencyType == typeof( int ) && e.ResultType is null );
+    }
+
+    [Fact]
+    public void ResolvingDependency_ShouldThrowInvalidDependencyCastException_WhenNullableValueTypeDependencyIsOfIncorrectType()
+    {
+        var ctor = typeof( CtorAndValueMemberImplementor ).GetConstructors().First();
+        var intValue = Fixture.Create<int>();
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<byte?>().FromFactory( _ => new object() );
+        builder.Add<int>().FromFactory( _ => intValue );
+        builder.Add<IWithText>().FromConstructor( ctor );
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.ActiveScope.Locator.Resolve<IWithText>() );
+
+        action.Should()
+            .ThrowExactly<InvalidDependencyCastException>()
+            .AndMatch( e => e.DependencyType == typeof( byte? ) && e.ResultType is null );
     }
 
     [Fact]

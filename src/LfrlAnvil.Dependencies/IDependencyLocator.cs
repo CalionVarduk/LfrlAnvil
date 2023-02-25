@@ -28,5 +28,5 @@ public interface IDependencyLocator
 public interface IDependencyLocator<out TKey> : IDependencyLocator
     where TKey : notnull
 {
-    TKey Key { get; }
+    new TKey Key { get; }
 }

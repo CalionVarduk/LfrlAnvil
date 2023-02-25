@@ -1,36 +1,32 @@
-﻿using System;
-using System.Diagnostics.Contracts;
+﻿using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Dependencies;
 
 public readonly struct DependencyContainerBuildMessages
 {
-    private DependencyContainerBuildMessages(
-        Type dependencyType,
-        IDependencyImplementorKey implementorKey,
-        Chain<string> errors,
-        Chain<string> warnings)
+    public DependencyContainerBuildMessages(ImplementorKey implementorKey, Chain<string> errors, Chain<string> warnings)
     {
-        DependencyType = dependencyType;
         ImplementorKey = implementorKey;
         Errors = errors;
         Warnings = warnings;
     }
 
-    public Type DependencyType { get; }
-    public IDependencyImplementorKey ImplementorKey { get; }
+    public ImplementorKey ImplementorKey { get; }
     public Chain<string> Errors { get; }
     public Chain<string> Warnings { get; }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static DependencyContainerBuildMessages Create(
-        Type dependencyType,
-        IDependencyImplementorKey implementorKey,
-        Chain<string> errors,
-        Chain<string> warnings)
+    public static DependencyContainerBuildMessages CreateErrors(ImplementorKey implementorKey, Chain<string> messages)
     {
-        return new DependencyContainerBuildMessages( dependencyType, implementorKey, errors, warnings );
+        return new DependencyContainerBuildMessages( implementorKey, messages, Chain<string>.Empty );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static DependencyContainerBuildMessages CreateWarnings(ImplementorKey implementorKey, Chain<string> messages)
+    {
+        return new DependencyContainerBuildMessages( implementorKey, Chain<string>.Empty, messages );
     }
 }

@@ -25,6 +25,6 @@ public readonly struct DependencyContainerBuildResult<TContainer>
         if ( IsOk )
             return Container;
 
-        throw new DependencyContainerBuildAggregateException( Messages );
+        throw new DependencyContainerBuildException( Messages );
     }
 }

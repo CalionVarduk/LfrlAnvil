@@ -25,7 +25,7 @@ internal readonly struct KeyedDependencyResolversStore
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void AddResolvers<TKey>(TKey key, Dictionary<Type, DependencyResolver> resolvers)
+    internal Dictionary<Type, DependencyResolver> GetOrAddResolvers<TKey>(TKey key)
         where TKey : notnull
     {
         if ( ! _cachesByKeyType.TryGetValue( typeof( TKey ), out var cacheRef ) )
@@ -35,7 +35,13 @@ internal readonly struct KeyedDependencyResolversStore
         }
 
         var cache = ReinterpretCast.To<Cache<TKey>>( cacheRef );
-        cache.Resolvers.Add( key, resolvers );
+        if ( ! cache.Resolvers.TryGetValue( key, out var result ) )
+        {
+            result = new Dictionary<Type, DependencyResolver>( _defaultResolvers );
+            cache.Resolvers.Add( key, result );
+        }
+
+        return result;
     }
 
     [Pure]

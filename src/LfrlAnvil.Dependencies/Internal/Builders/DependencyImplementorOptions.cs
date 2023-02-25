@@ -5,29 +5,29 @@ namespace LfrlAnvil.Dependencies.Internal.Builders;
 
 internal sealed class DependencyImplementorOptions : IDependencyImplementorOptions
 {
-    private IInternalDependencyImplementorKey _key;
+    private IInternalDependencyKey _key;
 
-    internal DependencyImplementorOptions(IInternalDependencyImplementorKey key)
+    internal DependencyImplementorOptions(IInternalDependencyKey key)
     {
         _key = key;
     }
 
-    public IDependencyImplementorKey Key => _key;
+    public IDependencyKey Key => _key;
 
     public void Keyed<TKey>(TKey key)
         where TKey : notnull
     {
-        _key = new DependencyImplementorKey<TKey>( _key.Type, key );
+        _key = new DependencyKey<TKey>( _key.Type, key );
     }
 
     public void NotKeyed()
     {
-        _key = new DependencyImplementorKey( _key.Type );
+        _key = new DependencyKey( _key.Type );
     }
 
     [Pure]
-    internal static IInternalDependencyImplementorKey CreateImplementorKey(
-        IInternalDependencyImplementorKey defaultKey,
+    internal static IInternalDependencyKey CreateImplementorKey(
+        IInternalDependencyKey defaultKey,
         Action<IDependencyImplementorOptions>? configuration)
     {
         if ( configuration is null )
@@ -36,7 +36,7 @@ internal sealed class DependencyImplementorOptions : IDependencyImplementorOptio
         var options = new DependencyImplementorOptions( defaultKey );
         configuration( options );
 
-        var sharedImplementorKey = options.Key as IInternalDependencyImplementorKey;
+        var sharedImplementorKey = options.Key as IInternalDependencyKey;
         Ensure.IsNotNull( sharedImplementorKey, nameof( sharedImplementorKey ) );
         return sharedImplementorKey;
     }

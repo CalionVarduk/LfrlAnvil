@@ -11,6 +11,13 @@ public class InvalidDependencyCastException : InvalidCastException
         ResultType = resultType;
     }
 
+    public InvalidDependencyCastException(Type dependencyType)
+        : base( Resources.InvalidDependencyType( dependencyType, null ) )
+    {
+        DependencyType = dependencyType;
+        ResultType = null;
+    }
+
     public Type DependencyType { get; }
-    public Type ResultType { get; }
+    public Type? ResultType { get; }
 }

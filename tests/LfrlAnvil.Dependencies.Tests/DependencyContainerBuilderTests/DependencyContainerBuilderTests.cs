@@ -1,11 +1,11 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Linq;
+﻿using System.Linq;
 using System.Reflection;
 using FluentAssertions.Execution;
 using LfrlAnvil.Dependencies.Exceptions;
 using LfrlAnvil.Dependencies.Extensions;
 using LfrlAnvil.Dependencies.Internal;
 using LfrlAnvil.Functional;
+using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Dependencies.Tests.DependencyContainerBuilderTests;
 
@@ -18,8 +18,9 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         sut.DefaultLifetime.Should().Be( DependencyLifetime.Transient );
         sut.DefaultDisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
         sut.DefaultDisposalStrategy.Callback.Should().BeNull();
-        sut.InjectablePropertyType.Should().BeSameAs( typeof( Injected<> ) );
-        sut.OptionalDependencyAttributeType.Should().BeSameAs( typeof( AllowNullAttribute ) );
+        sut.Configuration.InjectablePropertyType.Should().BeSameAs( typeof( Injected<> ) );
+        sut.Configuration.OptionalDependencyAttributeType.Should().BeSameAs( typeof( OptionalDependencyAttribute ) );
+        sut.Configuration.TreatCaptiveDependenciesAsErrors.Should().BeFalse();
         ((IDependencyLocatorBuilder)sut).KeyType.Should().BeNull();
         ((IDependencyLocatorBuilder)sut).Key.Should().BeNull();
         ((IDependencyLocatorBuilder)sut).IsKeyed.Should().BeFalse();
@@ -116,16 +117,16 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
     [InlineData( typeof( Injected<> ) )]
     [InlineData( typeof( InjectedWithPublicCtor<> ) )]
     [InlineData( typeof( InjectedWithPrivateCtor<> ) )]
-    public void SetInjectablePropertyType_ShouldUpdateTheTypeIfItIsValid(Type type)
+    public void Configuration_SetInjectablePropertyType_ShouldUpdateTheTypeIfItIsValid(Type type)
     {
         IDependencyContainerBuilder sut = new DependencyContainerBuilder();
 
-        var result = sut.SetInjectablePropertyType( type );
+        var result = sut.Configuration.SetInjectablePropertyType( type );
 
         using ( new AssertionScope() )
         {
-            result.Should().BeSameAs( sut );
-            sut.InjectablePropertyType.Should().BeSameAs( type );
+            result.Should().BeSameAs( sut.Configuration );
+            sut.Configuration.InjectablePropertyType.Should().BeSameAs( type );
         }
     }
 
@@ -136,27 +137,28 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
     [InlineData( typeof( InvalidInjectedWithParameterlessCtor<> ) )]
     [InlineData( typeof( InvalidInjectedWithIncorrectCtorParamType<> ) )]
     [InlineData( typeof( InvalidInjectedWithTooManyCtorParams<> ) )]
-    public void SetInjectablePropertyType_ShouldThrowDependencyContainerBuilderConfigurationException_WhenTypeIsNotValid(Type type)
+    public void Configuration_SetInjectablePropertyType_ShouldThrowDependencyContainerBuilderConfigurationException_WhenTypeIsNotValid(
+        Type type)
     {
         var sut = new DependencyContainerBuilder();
-        var action = Lambda.Of( () => sut.SetInjectablePropertyType( type ) );
+        var action = Lambda.Of( () => sut.Configuration.SetInjectablePropertyType( type ) );
         action.Should().ThrowExactly<DependencyContainerBuilderConfigurationException>();
     }
 
     [Theory]
-    [InlineData( typeof( AllowNullAttribute ) )]
+    [InlineData( typeof( OptionalDependencyAttribute ) )]
     [InlineData( typeof( OptionalAttribute ) )]
     [InlineData( typeof( ExtendedOptionalAttribute ) )]
-    public void SetOptionalDependencyAttributeType_ShouldUpdateTheTypeIfItIsValid(Type type)
+    public void Configuration_SetOptionalDependencyAttributeType_ShouldUpdateTheTypeIfItIsValid(Type type)
     {
         IDependencyContainerBuilder sut = new DependencyContainerBuilder();
 
-        var result = sut.SetOptionalDependencyAttributeType( type );
+        var result = sut.Configuration.SetOptionalDependencyAttributeType( type );
 
         using ( new AssertionScope() )
         {
-            result.Should().BeSameAs( sut );
-            sut.OptionalDependencyAttributeType.Should().BeSameAs( type );
+            result.Should().BeSameAs( sut.Configuration );
+            sut.Configuration.OptionalDependencyAttributeType.Should().BeSameAs( type );
         }
     }
 
@@ -165,11 +167,29 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
     [InlineData( typeof( Injected<> ) )]
     [InlineData( typeof( Injected<string> ) )]
     [InlineData( typeof( NonParameterAttribute ) )]
-    public void SetOptionalDependencyAttributeType_ShouldThrowDependencyContainerBuilderConfigurationException_WhenTypeIsNotValid(Type type)
+    public void
+        Configuration_SetOptionalDependencyAttributeType_ShouldThrowDependencyContainerBuilderConfigurationException_WhenTypeIsNotValid(
+            Type type)
     {
         var sut = new DependencyContainerBuilder();
-        var action = Lambda.Of( () => sut.SetOptionalDependencyAttributeType( type ) );
+        var action = Lambda.Of( () => sut.Configuration.SetOptionalDependencyAttributeType( type ) );
         action.Should().ThrowExactly<DependencyContainerBuilderConfigurationException>();
+    }
+
+    [Theory]
+    [InlineData( true )]
+    [InlineData( false )]
+    public void Configuration_SetInjectablePropertyType_ShouldUpdateTheOptions(bool enabled)
+    {
+        IDependencyContainerBuilder sut = new DependencyContainerBuilder();
+
+        var result = sut.Configuration.EnableTreatingCaptiveDependenciesAsErrors( enabled );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut.Configuration );
+            sut.Configuration.TreatCaptiveDependenciesAsErrors.Should().Be( enabled );
+        }
     }
 
     [Theory]
@@ -265,6 +285,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
             result.Constructor.Info.Should().BeNull();
             result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
             result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
+            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
         }
     }
 
@@ -294,6 +315,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
             result.Constructor.Info.Should().BeNull();
             result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeSameAs( onCreatedCallback );
             result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
+            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
         }
     }
 
@@ -323,6 +345,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
             result.Constructor.Info.Should().BeSameAs( ctor );
             result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
             result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
+            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
         }
     }
 
@@ -353,6 +376,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
             result.Constructor.Info.Should().BeSameAs( ctor );
             result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeSameAs( onCreatedCallback );
             result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
+            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
         }
     }
 
@@ -382,6 +406,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
             result.Constructor.Info.Should().BeSameAs( ctor );
             result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
             result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
+            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
         }
     }
 
@@ -581,6 +606,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
             result.Constructor.Info.Should().BeNull();
             result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
             result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
+            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
         }
     }
 
@@ -605,6 +631,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
             result.Constructor.Info.Should().BeNull();
             result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeSameAs( onCreatedCallback );
             result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
+            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
         }
     }
 
@@ -629,6 +656,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
             result.Constructor.Info.Should().BeSameAs( ctor );
             result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
             result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
+            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
         }
     }
 
@@ -654,6 +682,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
             result.Constructor.Info.Should().BeSameAs( ctor );
             result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeSameAs( onCreatedCallback );
             result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
+            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
         }
     }
 
@@ -680,29 +709,33 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
             result.Constructor.Info.Should().BeNull();
             result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
+            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
             result.Constructor.InvocationOptions.ParameterResolutions.Should().HaveCount( 2 );
 
             result.Constructor.InvocationOptions.ParameterResolutions.ElementAtOrDefault( 0 )
                 .Should()
-                .BeEquivalentTo( DependencyConstructorParameterResolution.FromFactory( predicate1, factory ) );
+                .BeEquivalentTo( InjectableDependencyResolution<ParameterInfo>.FromFactory( predicate1, factory ) );
 
             result.Constructor.InvocationOptions.ParameterResolutions.ElementAtOrDefault( 1 )
                 .Should()
                 .BeEquivalentTo(
-                    DependencyConstructorParameterResolution.FromImplementorKey(
+                    InjectableDependencyResolution<ParameterInfo>.FromImplementorKey(
                         predicate2,
-                        new DependencyImplementorKey<int>( typeof( IFoo ), 1 ) ) );
+                        new DependencyKey<int>( typeof( IFoo ), 1 ) ) );
         }
     }
 
     [Fact]
-    public void AddSharedImplementor_FromConstructor_WithClearedParameterResolutions_ShouldClearConstructorParameterResolutions()
+    public void AddSharedImplementor_FromConstructor_WithMemberResolutions_ShouldAddConstructorMemberResolutionsAsCreationDetail()
     {
-        var predicate = Substitute.For<Func<ParameterInfo, bool>>();
+        var predicate1 = Substitute.For<Func<MemberInfo, bool>>();
+        var predicate2 = Substitute.For<Func<MemberInfo, bool>>();
+        var factory = Lambda.ExpressionOf( (IDependencyScope s) => Substitute.For<Func<IDependencyScope, object>>()( s ) );
         var sut = new DependencyContainerBuilder();
         var builder = sut.AddSharedImplementor( typeof( Implementor ) );
 
-        var result = builder.FromConstructor( o => o.ResolveParameter( predicate, typeof( IFoo ) ).ClearParameterResolutions() );
+        var result = builder.FromConstructor(
+            o => o.ResolveMember( predicate1, factory ).ResolveMember( predicate2, typeof( IFoo ), i => i.Keyed( 1 ) ) );
 
         using ( new AssertionScope() )
         {
@@ -716,6 +749,70 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
             result.Constructor.Info.Should().BeNull();
             result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
             result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
+            result.Constructor.InvocationOptions.MemberResolutions.Should().HaveCount( 2 );
+
+            result.Constructor.InvocationOptions.MemberResolutions.ElementAtOrDefault( 0 )
+                .Should()
+                .BeEquivalentTo( InjectableDependencyResolution<MemberInfo>.FromFactory( predicate1, factory ) );
+
+            result.Constructor.InvocationOptions.MemberResolutions.ElementAtOrDefault( 1 )
+                .Should()
+                .BeEquivalentTo(
+                    InjectableDependencyResolution<MemberInfo>.FromImplementorKey(
+                        predicate2,
+                        new DependencyKey<int>( typeof( IFoo ), 1 ) ) );
+        }
+    }
+
+    [Fact]
+    public void AddSharedImplementor_FromConstructor_WithClearedParameterResolutions_ShouldClearConstructorParameterResolutions()
+    {
+        var predicate = Substitute.For<Func<ParameterInfo, bool>>();
+        var sut = new DependencyContainerBuilder();
+        var builder = sut.AddSharedImplementor( typeof( Implementor ) );
+
+        var result = builder.FromConstructor(
+            o => o.ResolveParameter( predicate, typeof( IFoo ) ).ResolveMember( _ => true, typeof( IFoo ) ).ClearParameterResolutions() );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( builder );
+            result.ImplementorType.Should().Be( typeof( Implementor ) );
+            result.Factory.Should().BeNull();
+            result.Constructor.Should().NotBeNull();
+            if ( result.Constructor is null )
+                return;
+
+            result.Constructor.Info.Should().BeNull();
+            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
+            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
+            result.Constructor.InvocationOptions.MemberResolutions.Should().HaveCount( 1 );
+        }
+    }
+
+    [Fact]
+    public void AddSharedImplementor_FromConstructor_WithClearedMemberResolutions_ShouldClearConstructorMemberResolutions()
+    {
+        var predicate = Substitute.For<Func<MemberInfo, bool>>();
+        var sut = new DependencyContainerBuilder();
+        var builder = sut.AddSharedImplementor( typeof( Implementor ) );
+
+        var result = builder.FromConstructor(
+            o => o.ResolveParameter( _ => true, typeof( IFoo ) ).ResolveMember( predicate, typeof( IFoo ) ).ClearMemberResolutions() );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( builder );
+            result.ImplementorType.Should().Be( typeof( Implementor ) );
+            result.Factory.Should().BeNull();
+            result.Constructor.Should().NotBeNull();
+            if ( result.Constructor is null )
+                return;
+
+            result.Constructor.Info.Should().BeNull();
+            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
+            result.Constructor.InvocationOptions.ParameterResolutions.Should().HaveCount( 1 );
+            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
         }
     }
 
@@ -810,7 +907,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
     public void TryBuild_ShouldReturnFailureResult_WhenDependencyIsImplementedByNonExistingSharedImplementor()
     {
         var sut = new DependencyContainerBuilder();
-        var builder = sut.Add<IFoo>().FromSharedImplementor<Implementor>();
+        sut.Add<IFoo>().FromSharedImplementor<Implementor>();
 
         var result = sut.TryBuild();
 
@@ -823,8 +920,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
                 return;
 
             var message = result.Messages.First();
-            message.DependencyType.Should().Be( builder.DependencyType );
-            message.ImplementorKey.Should().BeSameAs( builder.SharedImplementorKey );
+            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
             message.Warnings.Should().BeEmpty();
             message.Errors.Should().HaveCount( 1 );
         }
@@ -834,7 +930,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
     public void TryBuild_ShouldReturnFailureResult_WhenDependencyIsImplementedByNonExistingKeyedSharedImplementorAndNonCachedKeyType()
     {
         var sut = new DependencyContainerBuilder();
-        var builder = sut.Add<IFoo>().FromSharedImplementor<Implementor>( o => o.Keyed( 1 ) );
+        sut.Add<IFoo>().FromSharedImplementor<Implementor>( o => o.Keyed( 1 ) );
 
         var result = sut.TryBuild();
 
@@ -847,8 +943,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
                 return;
 
             var message = result.Messages.First();
-            message.DependencyType.Should().Be( builder.DependencyType );
-            message.ImplementorKey.Should().BeSameAs( builder.SharedImplementorKey );
+            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
             message.Warnings.Should().BeEmpty();
             message.Errors.Should().HaveCount( 1 );
         }
@@ -859,7 +954,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
     {
         var sut = new DependencyContainerBuilder();
         var _ = sut.GetKeyedLocator( 1 );
-        var builder = sut.Add<IFoo>().FromSharedImplementor<Implementor>( o => o.Keyed( 2 ) );
+        sut.Add<IFoo>().FromSharedImplementor<Implementor>( o => o.Keyed( 2 ) );
 
         var result = sut.TryBuild();
 
@@ -872,15 +967,488 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
                 return;
 
             var message = result.Messages.First();
-            message.DependencyType.Should().Be( builder.DependencyType );
-            message.ImplementorKey.Should().BeSameAs( builder.SharedImplementorKey );
+            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
             message.Warnings.Should().BeEmpty();
             message.Errors.Should().HaveCount( 1 );
         }
     }
 
     [Fact]
-    public void Build_ShouldThrowDependencyContainerBuildAggregateException_WhenDependencyContainerCouldNotBeBuilt()
+    public void TryBuild_ShouldReturnFailureResult_WhenCtorParamDependencyCannotBeResolved()
+    {
+        var ctor = typeof( ExplicitCtorImplementor ).GetConstructors().First();
+
+        var sut = new DependencyContainerBuilder();
+        sut.Add<IWithText>().FromConstructor( ctor );
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeFalse();
+            result.Container.Should().BeNull();
+            result.Messages.Should().HaveCount( 1 );
+            if ( result.Messages.Count < 1 )
+                return;
+
+            var message = result.Messages.First();
+            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) );
+            message.Warnings.Should().BeEmpty();
+            message.Errors.Should().HaveCount( 1 );
+        }
+    }
+
+    [Fact]
+    public void TryBuild_ShouldReturnFailureResult_WhenMemberDependencyCannotBeResolved()
+    {
+        var ctor = typeof( FieldImplementor ).GetConstructors().First();
+
+        var sut = new DependencyContainerBuilder();
+        sut.Add<IWithText>().FromConstructor( ctor );
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeFalse();
+            result.Container.Should().BeNull();
+            result.Messages.Should().HaveCount( 1 );
+            if ( result.Messages.Count < 1 )
+                return;
+
+            var message = result.Messages.First();
+            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) );
+            message.Warnings.Should().BeEmpty();
+            message.Errors.Should().HaveCount( 1 );
+        }
+    }
+
+    [Fact]
+    public void TryBuild_ShouldReturnResultWithWarnings_WhenExplicitResolutionsAreUnused()
+    {
+        var ctor = typeof( CtorAndRefMemberImplementor ).GetConstructors().First();
+
+        var sut = new DependencyContainerBuilder();
+        sut.Add<int>().FromFactory( _ => 0 );
+        sut.Add<string>().FromFactory( _ => string.Empty );
+        sut.Add<IWithText>()
+            .FromConstructor(
+                ctor,
+                o => o.ResolveParameter( _ => false, typeof( int ) )
+                    .ResolveMember( _ => false, _ => new object() ) );
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeTrue();
+            result.Container.Should().NotBeNull();
+            result.Messages.Should().HaveCount( 1 );
+            if ( result.Messages.Count < 1 )
+                return;
+
+            var message = result.Messages.First();
+            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) );
+            message.Warnings.Should().HaveCount( 2 );
+            message.Errors.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void TryBuild_ShouldReturnFailureResult_WhenExplicitTypedResolutionsHaveInvalidType()
+    {
+        var ctor = typeof( CtorAndRefMemberImplementor ).GetConstructors().First();
+
+        var sut = new DependencyContainerBuilder();
+        sut.Add<int>().FromFactory( _ => 0 );
+        sut.Add<string>().FromFactory( _ => string.Empty );
+        sut.Add<IWithText>()
+            .FromConstructor(
+                ctor,
+                o => o.ResolveParameter( _ => true, typeof( string ) )
+                    .ResolveMember( _ => true, typeof( int ) ) );
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeFalse();
+            result.Container.Should().BeNull();
+            result.Messages.Should().HaveCount( 1 );
+            if ( result.Messages.Count < 1 )
+                return;
+
+            var message = result.Messages.First();
+            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) );
+            message.Warnings.Should().BeEmpty();
+            message.Errors.Should().HaveCount( 2 );
+        }
+    }
+
+    [Fact]
+    public void TryBuild_ShouldReturnFailureResult_WhenExplicitCtorDoesNotCreateInstancesOfCorrectType()
+    {
+        var ctor = typeof( ExplicitCtorImplementor ).GetConstructors().First();
+
+        var sut = new DependencyContainerBuilder();
+        sut.Add<IFoo>().FromConstructor( ctor );
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeFalse();
+            result.Container.Should().BeNull();
+            result.Messages.Should().HaveCount( 1 );
+            if ( result.Messages.Count < 1 )
+                return;
+
+            var message = result.Messages.First();
+            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
+            message.Warnings.Should().BeEmpty();
+            message.Errors.Should().HaveCount( 1 );
+        }
+    }
+
+    [Fact]
+    public void TryBuild_ShouldReturnFailureResult_WhenExplicitCtorCreatesAbstractInstances()
+    {
+        var ctor = typeof( AbstractFoo ).GetConstructors( BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic ).First();
+
+        var sut = new DependencyContainerBuilder();
+        sut.Add<IFoo>().FromConstructor( ctor );
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeFalse();
+            result.Container.Should().BeNull();
+            result.Messages.Should().HaveCount( 1 );
+            if ( result.Messages.Count < 1 )
+                return;
+
+            var message = result.Messages.First();
+            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
+            message.Warnings.Should().BeEmpty();
+            message.Errors.Should().HaveCount( 1 );
+        }
+    }
+
+    [Theory]
+    [InlineData( typeof( IFoo ) )]
+    [InlineData( typeof( AbstractFoo ) )]
+    public void TryBuild_ShouldReturnFailureResult_WhenImplicitCtorCannotBeFoundBecauseDependencyIsAbstract(Type dependencyType)
+    {
+        var sut = new DependencyContainerBuilder();
+        sut.Add( dependencyType ).FromConstructor();
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeFalse();
+            result.Container.Should().BeNull();
+            result.Messages.Should().HaveCount( 1 );
+            if ( result.Messages.Count < 1 )
+                return;
+
+            var message = result.Messages.First();
+            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( dependencyType ) ) );
+            message.Warnings.Should().BeEmpty();
+            message.Errors.Should().HaveCount( 1 );
+        }
+    }
+
+    [Fact]
+    public void TryBuild_ShouldReturnFailureResult_WithOnlyOneEntryWhenTwoDependenciesUseTheSameInvalidSharedImplementor()
+    {
+        var ctor = typeof( ExplicitCtorImplementor ).GetConstructors().First();
+
+        var sut = new DependencyContainerBuilder();
+        sut.AddSharedImplementor<Implementor>().FromConstructor( ctor );
+        sut.Add<IFoo>().FromSharedImplementor<Implementor>();
+        sut.Add<IBar>().FromSharedImplementor<Implementor>();
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeFalse();
+            result.Container.Should().BeNull();
+            result.Messages.Should().HaveCount( 1 );
+            if ( result.Messages.Count < 1 )
+                return;
+
+            var message = result.Messages.First();
+            message.ImplementorKey.Should().Be( ImplementorKey.CreateShared( new DependencyKey( typeof( Implementor ) ) ) );
+            message.Warnings.Should().BeEmpty();
+            message.Errors.Should().HaveCount( 1 );
+        }
+    }
+
+    [Fact]
+    public void TryBuild_ShouldReturnFailureResult_WhenCircularDependencyThroughCtorParamsIsDetected()
+    {
+        var fooCtor = typeof( ChainableFoo ).GetConstructors().First();
+        var barCtor = typeof( ChainableBar ).GetConstructors().First();
+        var quxCtor = typeof( ChainableQux ).GetConstructors().First();
+
+        var sut = new DependencyContainerBuilder();
+        sut.Add<IFoo>().FromConstructor( fooCtor );
+        sut.Add<IBar>().FromConstructor( barCtor );
+        sut.Add<IQux>().FromConstructor( quxCtor );
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeFalse();
+            result.Container.Should().BeNull();
+            result.Messages.Should().HaveCount( 1 );
+            if ( result.Messages.Count < 1 )
+                return;
+
+            var message = result.Messages.First();
+            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
+            message.Warnings.Should().BeEmpty();
+            message.Errors.Should().HaveCount( 1 );
+        }
+    }
+
+    [Fact]
+    public void TryBuild_ShouldReturnFailureResult_WhenCircularDependencyThroughFieldsIsDetected()
+    {
+        var fooCtor = typeof( ChainableFieldFoo ).GetConstructors().First();
+        var barCtor = typeof( ChainableFieldBar ).GetConstructors().First();
+        var quxCtor = typeof( ChainableFieldQux ).GetConstructors().First();
+
+        var sut = new DependencyContainerBuilder();
+        sut.Add<IFoo>().FromConstructor( fooCtor );
+        sut.Add<IBar>().FromConstructor( barCtor );
+        sut.Add<IQux>().FromConstructor( quxCtor );
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeFalse();
+            result.Container.Should().BeNull();
+            result.Messages.Should().HaveCount( 1 );
+            if ( result.Messages.Count < 1 )
+                return;
+
+            var message = result.Messages.First();
+            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
+            message.Warnings.Should().BeEmpty();
+            message.Errors.Should().HaveCount( 1 );
+        }
+    }
+
+    [Fact]
+    public void TryBuild_ShouldReturnFailureResult_WhenCircularDependencyThroughPropertiesIsDetected()
+    {
+        var fooCtor = typeof( ChainablePropertyFoo ).GetConstructors().First();
+        var barCtor = typeof( ChainablePropertyBar ).GetConstructors().First();
+        var quxCtor = typeof( ChainablePropertyQux ).GetConstructors().First();
+
+        var sut = new DependencyContainerBuilder();
+        sut.Add<IFoo>().FromConstructor( fooCtor );
+        sut.Add<IBar>().FromConstructor( barCtor );
+        sut.Add<IQux>().FromConstructor( quxCtor );
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeFalse();
+            result.Container.Should().BeNull();
+            result.Messages.Should().HaveCount( 1 );
+            if ( result.Messages.Count < 1 )
+                return;
+
+            var message = result.Messages.First();
+            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
+            message.Warnings.Should().BeEmpty();
+            message.Errors.Should().HaveCount( 1 );
+        }
+    }
+
+    [Fact]
+    public void TryBuild_ShouldReturnFailureResult_WhenSelfDependencyIsDetected()
+    {
+        var ctor = typeof( DecoratorWithText ).GetConstructors().First();
+
+        var sut = new DependencyContainerBuilder();
+        sut.Add<IWithText>().FromConstructor( ctor );
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeFalse();
+            result.Container.Should().BeNull();
+            result.Messages.Should().HaveCount( 1 );
+            if ( result.Messages.Count < 1 )
+                return;
+
+            var message = result.Messages.First();
+            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) );
+            message.Warnings.Should().BeEmpty();
+            message.Errors.Should().HaveCount( 1 );
+        }
+    }
+
+    [Fact]
+    public void TryBuild_ShouldReturnFailureResult_WhenMultipleCircularDependenciesAreDetected()
+    {
+        var fooCtor = typeof( ComplexFoo ).GetConstructors().First();
+        var barCtor = typeof( ChainableBar ).GetConstructors().First();
+        var otherBarCtor = typeof( ComplexBar ).GetConstructors().First();
+        var quxCtor = typeof( ComplexQux ).GetConstructors().First();
+        var textCtor = typeof( DecoratorWithText ).GetConstructors().First();
+
+        var sut = new DependencyContainerBuilder();
+        sut.Add<IFoo>()
+            .FromConstructor(
+                fooCtor,
+                o => o.ResolveParameter( p => p.Name == "otherBar", typeof( IBar ), c => c.Keyed( 1 ) ) );
+
+        sut.Add<IBar>().FromConstructor( barCtor );
+        sut.Add<IQux>().FromConstructor( quxCtor );
+        sut.Add<IWithText>().FromConstructor( textCtor );
+
+        sut.GetKeyedLocator( 1 )
+            .Add<IBar>()
+            .FromConstructor(
+                otherBarCtor,
+                o => o.ResolveParameter( p => p.ParameterType == typeof( IFoo ), typeof( IFoo ), c => c.NotKeyed() ) );
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeFalse();
+            result.Container.Should().BeNull();
+            result.Messages.Should().HaveCount( 2 );
+            if ( result.Messages.Count < 2 )
+                return;
+
+            var message = result.Messages.First();
+            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
+            message.Warnings.Should().BeEmpty();
+            message.Errors.Should().HaveCount( 2 );
+
+            message = result.Messages.ElementAt( 1 );
+            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) );
+            message.Warnings.Should().BeEmpty();
+            message.Errors.Should().HaveCount( 1 );
+        }
+    }
+
+    [Theory]
+    [InlineData( DependencyLifetime.Transient, DependencyLifetime.Transient )]
+    [InlineData( DependencyLifetime.Transient, DependencyLifetime.Scoped )]
+    [InlineData( DependencyLifetime.Transient, DependencyLifetime.ScopedSingleton )]
+    [InlineData( DependencyLifetime.Transient, DependencyLifetime.Singleton )]
+    [InlineData( DependencyLifetime.Scoped, DependencyLifetime.Scoped )]
+    [InlineData( DependencyLifetime.Scoped, DependencyLifetime.ScopedSingleton )]
+    [InlineData( DependencyLifetime.Scoped, DependencyLifetime.Singleton )]
+    [InlineData( DependencyLifetime.ScopedSingleton, DependencyLifetime.ScopedSingleton )]
+    [InlineData( DependencyLifetime.ScopedSingleton, DependencyLifetime.Singleton )]
+    [InlineData( DependencyLifetime.Singleton, DependencyLifetime.Singleton )]
+    public void TryBuild_ShouldReturnResultWithoutWarnings_WhenThereAreNotCaptiveDependencies(
+        DependencyLifetime parentLifetime,
+        DependencyLifetime dependencyLifetime)
+    {
+        var ctor = typeof( ExplicitCtorImplementor ).GetConstructors().First();
+
+        var sut = new DependencyContainerBuilder();
+        sut.Add<string>().SetLifetime( dependencyLifetime ).FromFactory( _ => string.Empty );
+        sut.Add<IWithText>().SetLifetime( parentLifetime ).FromConstructor( ctor );
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeTrue();
+            result.Container.Should().NotBeNull();
+            result.Messages.Should().BeEmpty();
+        }
+    }
+
+    [Theory]
+    [InlineData( DependencyLifetime.Scoped, DependencyLifetime.Transient )]
+    [InlineData( DependencyLifetime.ScopedSingleton, DependencyLifetime.Transient )]
+    [InlineData( DependencyLifetime.ScopedSingleton, DependencyLifetime.Scoped )]
+    [InlineData( DependencyLifetime.Singleton, DependencyLifetime.Transient )]
+    [InlineData( DependencyLifetime.Singleton, DependencyLifetime.Scoped )]
+    [InlineData( DependencyLifetime.Singleton, DependencyLifetime.ScopedSingleton )]
+    public void TryBuild_ShouldReturnResultWithWarnings_WhenCaptiveDependencyIsDetectedAndTheyAreTreatedAsWarnings(
+        DependencyLifetime parentLifetime,
+        DependencyLifetime dependencyLifetime)
+    {
+        var ctor = typeof( ExplicitCtorImplementor ).GetConstructors().First();
+
+        var sut = new DependencyContainerBuilder();
+        sut.Configuration.EnableTreatingCaptiveDependenciesAsErrors( false );
+        sut.Add<string>().SetLifetime( dependencyLifetime ).FromFactory( _ => string.Empty );
+        sut.Add<IWithText>().SetLifetime( parentLifetime ).FromConstructor( ctor );
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeTrue();
+            result.Container.Should().NotBeNull();
+            result.Messages.Should().HaveCount( 1 );
+            if ( result.Messages.Count < 1 )
+                return;
+
+            var message = result.Messages.First();
+            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) );
+            message.Warnings.Should().HaveCount( 1 );
+            message.Errors.Should().BeEmpty();
+        }
+    }
+
+    [Theory]
+    [InlineData( DependencyLifetime.Scoped, DependencyLifetime.Transient )]
+    [InlineData( DependencyLifetime.ScopedSingleton, DependencyLifetime.Transient )]
+    [InlineData( DependencyLifetime.ScopedSingleton, DependencyLifetime.Scoped )]
+    [InlineData( DependencyLifetime.Singleton, DependencyLifetime.Transient )]
+    [InlineData( DependencyLifetime.Singleton, DependencyLifetime.Scoped )]
+    [InlineData( DependencyLifetime.Singleton, DependencyLifetime.ScopedSingleton )]
+    public void TryBuild_ShouldReturnFailureResult_WhenCaptiveDependencyIsDetectedAndTheyAreTreatedAsErrors(
+        DependencyLifetime parentLifetime,
+        DependencyLifetime dependencyLifetime)
+    {
+        var ctor = typeof( FieldImplementor ).GetConstructors().First();
+
+        var sut = new DependencyContainerBuilder();
+        sut.Configuration.EnableTreatingCaptiveDependenciesAsErrors();
+        sut.Add<string>().SetLifetime( dependencyLifetime ).FromFactory( _ => string.Empty );
+        sut.Add<IWithText>().SetLifetime( parentLifetime ).FromConstructor( ctor );
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeFalse();
+            result.Container.Should().BeNull();
+            result.Messages.Should().HaveCount( 1 );
+            if ( result.Messages.Count < 1 )
+                return;
+
+            var message = result.Messages.First();
+            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) );
+            message.Warnings.Should().BeEmpty();
+            message.Errors.Should().HaveCount( 1 );
+        }
+    }
+
+    [Fact]
+    public void Build_ShouldThrowDependencyContainerBuildException_WhenDependencyContainerCouldNotBeBuilt()
     {
         var sut = new DependencyContainerBuilder();
         sut.Add<IFoo>().FromSharedImplementor<Implementor>();
@@ -888,7 +1456,27 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.Build() );
 
-        action.Should().ThrowExactly<DependencyContainerBuildAggregateException>();
+        action.Should()
+            .ThrowExactly<DependencyContainerBuildException>()
+            .AndMatch( e => e.Messages.SelectMany( m => m.Errors ).Any() );
+    }
+
+    [Fact]
+    public void Build_ShouldThrowDependencyContainerBuildException_WhenThereAreWarningsAndErrors()
+    {
+        var ctor = typeof( FieldImplementor ).GetConstructors().First();
+
+        var sut = new DependencyContainerBuilder();
+        sut.Configuration.EnableTreatingCaptiveDependenciesAsErrors( false );
+        sut.Add<string>().SetLifetime( DependencyLifetime.Transient ).FromFactory( _ => string.Empty );
+        sut.Add<IWithText>().SetLifetime( DependencyLifetime.Singleton ).FromConstructor( ctor );
+        sut.Add<IFoo>().FromSharedImplementor<Implementor>();
+
+        var action = Lambda.Of( () => sut.Build() );
+
+        action.Should()
+            .ThrowExactly<DependencyContainerBuildException>()
+            .AndMatch( e => e.Messages.SelectMany( m => m.Errors ).Any() );
     }
 
     [Fact]
@@ -964,7 +1552,7 @@ public class InvalidInjectedWithTooManyCtorParams<T>
     public InvalidInjectedWithTooManyCtorParams(T value1, T value2) { }
 }
 
-[AttributeUsage( AttributeTargets.Parameter | AttributeTargets.Class )]
+[AttributeUsage( AttributeTargets.Parameter | AttributeTargets.Class | AttributeTargets.Field | AttributeTargets.Property )]
 public class OptionalAttribute : Attribute { }
 
 public class ExtendedOptionalAttribute : OptionalAttribute { }

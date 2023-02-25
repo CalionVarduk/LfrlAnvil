@@ -9,12 +9,12 @@ namespace LfrlAnvil.Computable.Expressions.Tests.ParsedExpressionNumberParserTes
 public class ParsedExpressionNumberParserTests : TestsBase
 {
     [Theory]
-    [InlineData( "0", true, true, 0 )]
-    [InlineData( "1_234_567", true, true, 1234567 )]
+    [InlineData( "0", true, true, 0.0 )]
+    [InlineData( "1_234_567", true, true, 1234567.0 )]
     [InlineData( "1234x5", true, true, 1234.5 )]
     [InlineData( "1_234x5", true, true, 1234.5 )]
     [InlineData( "1_2_3_4x5", true, true, 1234.5 )]
-    [InlineData( "1_234x5e2", true, true, 123450 )]
+    [InlineData( "1_234x5e2", true, true, 123450.0 )]
     [InlineData( "50_0E-3", true, true, 0.5 )]
     [InlineData( "foo", true, true, null )]
     [InlineData( "1234x5", false, true, null )]
@@ -38,12 +38,12 @@ public class ParsedExpressionNumberParserTests : TestsBase
     }
 
     [Theory]
-    [InlineData( "0", true, true, 0 )]
-    [InlineData( "1_234_567", true, true, 1234567 )]
+    [InlineData( "0", true, true, 0.0 )]
+    [InlineData( "1_234_567", true, true, 1234567.0 )]
     [InlineData( "1234x5", true, true, 1234.5 )]
     [InlineData( "1_234x5", true, true, 1234.5 )]
     [InlineData( "1_2_3_4x5", true, true, 1234.5 )]
-    [InlineData( "1_234x5e2", true, true, 123450 )]
+    [InlineData( "1_234x5e2", true, true, 123450.0 )]
     [InlineData( "50_0E-3", true, true, 0.5 )]
     [InlineData( "foo", true, true, null )]
     [InlineData( "1234x5", false, true, null )]
@@ -121,10 +121,10 @@ public class ParsedExpressionNumberParserTests : TestsBase
     }
 
     [Theory]
-    [InlineData( "0", true, true, 0 )]
-    [InlineData( "1_234_567", true, true, 1234567 )]
-    [InlineData( "1_234e2", true, true, 123400 )]
-    [InlineData( "50_0E-2", true, true, 5 )]
+    [InlineData( "0", true, true, 0L )]
+    [InlineData( "1_234_567", true, true, 1234567L )]
+    [InlineData( "1_234e2", true, true, 123400L )]
+    [InlineData( "50_0E-2", true, true, 5L )]
     [InlineData( "foo", true, true, null )]
     [InlineData( "1234x5", true, true, null )]
     [InlineData( "1234x5", false, true, null )]
@@ -147,10 +147,10 @@ public class ParsedExpressionNumberParserTests : TestsBase
     }
 
     [Theory]
-    [InlineData( "0", true, true, 0 )]
-    [InlineData( "1_234_567", true, true, 1234567 )]
-    [InlineData( "1_234e2", true, true, 123400 )]
-    [InlineData( "50_0E-2", true, true, 5 )]
+    [InlineData( "0", true, true, 0L )]
+    [InlineData( "1_234_567", true, true, 1234567L )]
+    [InlineData( "1_234e2", true, true, 123400L )]
+    [InlineData( "50_0E-2", true, true, 5L )]
     [InlineData( "foo", true, true, null )]
     [InlineData( "1234x5", true, true, null )]
     [InlineData( "1234x5", false, true, null )]

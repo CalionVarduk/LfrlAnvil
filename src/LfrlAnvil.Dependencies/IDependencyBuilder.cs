@@ -7,7 +7,7 @@ public interface IDependencyBuilder
 {
     Type DependencyType { get; }
     DependencyLifetime Lifetime { get; }
-    IDependencyImplementorKey? SharedImplementorKey { get; }
+    IDependencyKey? SharedImplementorKey { get; }
     IDependencyImplementorBuilder? Implementor { get; }
 
     IDependencyBuilder SetLifetime(DependencyLifetime lifetime);
