@@ -83,7 +83,7 @@ public sealed class TestFieldClass
     }
 
     public int TestField;
-    private string? TestPrivateField;
+    private string? TestPrivateField = null;
 
     public int TestProperty { get; set; }
     private string? TestPrivateProperty { get; set; }

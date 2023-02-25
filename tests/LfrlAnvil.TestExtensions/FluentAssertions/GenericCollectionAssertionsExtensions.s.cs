@@ -11,7 +11,7 @@ public static class GenericCollectionAssertionsExtensions
         this GenericCollectionAssertions<T> source,
         params T[] expected)
     {
-        return source.HaveSameCount( expected ).And.ContainInOrder( expected );
+        return source.BeSequentiallyEqualTo( expected.AsEnumerable() );
     }
 
     public static AndConstraint<GenericCollectionAssertions<T>> BeSequentiallyEqualTo<T>(

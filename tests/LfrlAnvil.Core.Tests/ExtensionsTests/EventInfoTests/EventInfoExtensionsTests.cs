@@ -26,5 +26,5 @@ public class EventInfoExtensionsTests : TestsBase
 
 public sealed class TestEventClass
 {
-    public event EventHandler<EventArgs> Foo;
+    public event EventHandler<EventArgs>? Foo;
 }

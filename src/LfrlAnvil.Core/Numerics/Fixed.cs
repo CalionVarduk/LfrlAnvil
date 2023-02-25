@@ -7,6 +7,7 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Numerics;
 
+// TODO: add Partition method & Partition by providing range of percentages?
 public readonly struct Fixed : IEquatable<Fixed>, IComparable<Fixed>, IComparable, IFormattable
 {
     public const byte MinPrecision = 0;

@@ -145,13 +145,13 @@ public partial class CollectionVariableTests : TestsBase
 
 public sealed record TestElement(int Key)
 {
-    public TestElement(int key, string value)
+    public TestElement(int key, string? value)
         : this( key )
     {
         Value = value;
     }
 
-    public string Value { get; set; }
+    public string? Value { get; set; }
 }
 
 internal sealed class CollectionVariableMock : CollectionVariable<int, TestElement, string>
