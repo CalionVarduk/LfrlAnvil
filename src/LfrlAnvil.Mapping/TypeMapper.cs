@@ -16,7 +16,7 @@ public sealed class TypeMapper : ITypeMapper
     internal TypeMapper(IEnumerable<ITypeMappingConfiguration> configurations)
     {
         _stores = new Dictionary<TypeMappingKey, TypeMappingStore>();
-        var stores = configurations.SelectMany( c => c.GetMappingStores() );
+        var stores = configurations.SelectMany( static c => c.GetMappingStores() );
         foreach ( var (key, value) in stores )
             _stores[key] = value;
     }
@@ -216,13 +216,13 @@ public sealed class TypeMapper : ITypeMapper
     [Pure]
     public IEnumerable<Type> GetConfiguredSourceTypes()
     {
-        return _stores.Select( kv => kv.Key.SourceType! ).Distinct();
+        return _stores.Select( static kv => kv.Key.SourceType! ).Distinct();
     }
 
     [Pure]
     public IEnumerable<Type> GetConfiguredDestinationTypes()
     {
-        return _stores.Select( kv => kv.Key.DestinationType! ).Distinct();
+        return _stores.Select( static kv => kv.Key.DestinationType! ).Distinct();
     }
 
     [Pure]

@@ -223,7 +223,7 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
     [Pure]
     public IEnumerator<TValue> GetEnumerator()
     {
-        return _items.Select( n => n.Value ).GetEnumerator();
+        return _items.Select( static n => n.Value ).GetEnumerator();
     }
 
     [Pure]

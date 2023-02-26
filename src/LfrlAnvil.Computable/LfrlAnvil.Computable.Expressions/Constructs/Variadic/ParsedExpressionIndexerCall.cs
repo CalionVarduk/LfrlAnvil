@@ -37,7 +37,7 @@ public sealed class ParsedExpressionIndexerCall : ParsedExpressionVariadicFuncti
 
         return FoldConstantsWhenPossible &&
             target is ConstantExpression constantTarget &&
-            callParameters.All( p => p is ConstantExpression )
+            callParameters.All( static p => p is ConstantExpression )
                 ? ExpressionHelpers.CreateConstantIndexer( constantTarget, indexer, callParameters )
                 : CreateVariableIndexer( target, indexer, callParameters );
     }

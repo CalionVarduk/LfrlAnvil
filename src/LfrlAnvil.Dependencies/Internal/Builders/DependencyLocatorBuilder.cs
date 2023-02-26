@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Runtime.InteropServices;
 using LfrlAnvil.Dependencies.Exceptions;
 using LfrlAnvil.Dependencies.Internal.Resolvers.Factories;
 
@@ -27,11 +28,11 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
 
     public IDependencyImplementorBuilder AddSharedImplementor(Type type)
     {
-        if ( ! SharedImplementors.TryGetValue( type, out var result ) )
+        ref var result = ref CollectionsMarshal.GetValueRefOrAddDefault( SharedImplementors, type, out var exists )!;
+        if ( ! exists )
         {
             Ensure.Equals( type.IsGenericTypeDefinition, false, nameof( type ) + '.' + nameof( type.IsGenericTypeDefinition ) );
             result = new DependencyImplementorBuilder( this, type );
-            SharedImplementors.Add( type, result );
         }
 
         return result;

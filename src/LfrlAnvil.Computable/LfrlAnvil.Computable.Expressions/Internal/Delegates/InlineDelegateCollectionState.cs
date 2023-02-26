@@ -6,6 +6,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Internal.Delegates;
@@ -65,14 +66,15 @@ internal sealed class InlineDelegateCollectionState
         Assume.IsNotEmpty( _registeredStates, nameof( _registeredStates ) );
         Assume.Equals( _isLastStateActive, true, nameof( _isLastStateActive ) );
 
-        if ( _parametersMap.ContainsKey( name ) )
+        ref var parameterExpression = ref CollectionsMarshal.GetValueRefOrAddDefault( _parametersMap, name, out var exists )!;
+        if ( exists )
             return false;
 
         var state = _registeredStates.Peek();
         _registeredStates.Replace( state.IncrementParameterCount() );
 
         var parameter = Expression.Parameter( type, name.ToString() );
-        _parametersMap.Add( name, new OwnedParameterExpression( parameter, state.Id ) );
+        parameterExpression = new OwnedParameterExpression( parameter, state.Id );
         _parameters.Push( parameter );
         return true;
     }
@@ -223,7 +225,7 @@ internal sealed class InlineDelegateCollectionState
 
         if ( ! _capturedParametersByState.TryGetValue( state.Id, out var capturedParameters ) )
         {
-            if ( nestedFinalization.All( f => f.IsStatic ) )
+            if ( nestedFinalization.All( static f => f.IsStatic ) )
                 return FinalizeStaticDelegate( state, body, compileWhenStatic );
 
             capturedParameters = new ClosureInfo( state.Id );
@@ -234,7 +236,7 @@ internal sealed class InlineDelegateCollectionState
         capturedParameterUsageValidator.ApplyChanges( _capturedParametersByState );
 
         if ( capturedParameters.IsEmpty )
-            return FinalizeStaticDelegate( state, body, compileWhenStatic && nestedFinalization.All( f => f.IsCompiled ) );
+            return FinalizeStaticDelegate( state, body, compileWhenStatic && nestedFinalization.All( static f => f.IsCompiled ) );
 
         _capturedParametersByState.TryAdd( state.Id, capturedParameters );
         return FinalizeDelegateWithClosure( state, body, capturedParameters );
@@ -276,11 +278,9 @@ internal sealed class InlineDelegateCollectionState
 
     private void AddParameterCapture(int stateId, ParameterExpression expression, int ownerStateId, int argumentIndex = -1)
     {
-        if ( ! _capturedParametersByState.TryGetValue( stateId, out var captures ) )
-        {
+        ref var captures = ref CollectionsMarshal.GetValueRefOrAddDefault( _capturedParametersByState, stateId, out var exists );
+        if ( ! exists )
             captures = new ClosureInfo( stateId );
-            _capturedParametersByState.Add( stateId, captures );
-        }
 
         if ( argumentIndex >= 0 )
             captures.ArgumentIndexes.Add( argumentIndex );

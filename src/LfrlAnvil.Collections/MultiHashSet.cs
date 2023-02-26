@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using LfrlAnvil.Collections.Internal;
 using LfrlAnvil.Extensions;
 
@@ -72,19 +73,25 @@ public class MultiHashSet<T> : IMultiSet<T>
     {
         Ensure.IsGreaterThanOrEqualTo( value, 0, nameof( value ) );
 
-        if ( _map.TryGetValue( item, out var multiplicity ) )
+        if ( value == 0 )
         {
-            if ( value == 0 )
-                return RemoveAllImpl( item, multiplicity );
+            if ( _map.TryGetValue( item, out var multiplicity ) )
+                RemoveAllImpl( item, multiplicity );
 
-            FullCount += value - multiplicity;
-            _map[item] = value;
             return multiplicity;
         }
 
-        if ( value > 0 )
-            AddNewImpl( item, value );
+        ref var multiplicityRef = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, item, out var exists );
+        if ( exists )
+        {
+            var oldMultiplicity = multiplicityRef;
+            FullCount += value - oldMultiplicity;
+            multiplicityRef = value;
+            return oldMultiplicity;
+        }
 
+        FullCount += value;
+        multiplicityRef = value;
         return 0;
     }
 
@@ -336,41 +343,37 @@ public class MultiHashSet<T> : IMultiSet<T>
     [Pure]
     public IEnumerator<Pair<T, int>> GetEnumerator()
     {
-        return _map.Select( v => Pair.Create( v.Key, v.Value ) ).GetEnumerator();
+        return _map.Select( static v => Pair.Create( v.Key, v.Value ) ).GetEnumerator();
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private int AddImpl(T item, int count)
     {
-        if ( ! _map.TryGetValue( item, out var multiplicity ) )
-            return AddNewImpl( item, count );
-
-        multiplicity = checked( multiplicity + count );
-        _map[item] = multiplicity;
+        ref var multiplicity = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, item, out var exists );
+        multiplicity = exists ? checked( multiplicity + count ) : count;
         FullCount += count;
         return multiplicity;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private int AddNewImpl(T item, int count)
+    private void AddNewImpl(T item, int count)
     {
         FullCount += count;
-        _map.Add( item, Ref.Create( count ) );
-        return count;
+        _map.Add( item, count );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private int RemoveImpl(T item, int count)
     {
-        if ( ! _map.TryGetValue( item, out var multiplicity ) )
+        ref var multiplicity = ref CollectionsMarshal.GetValueRefOrNullRef( _map, item );
+        if ( Unsafe.IsNullRef( ref multiplicity ) )
             return -1;
 
         if ( multiplicity > count )
         {
-            var newMultiplicity = multiplicity - count;
+            multiplicity -= count;
             FullCount -= count;
-            _map[item] = newMultiplicity;
-            return newMultiplicity;
+            return multiplicity;
         }
 
         FullCount -= multiplicity;

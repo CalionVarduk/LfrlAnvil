@@ -44,8 +44,8 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
     public int Count => _map.Count;
     public IEqualityComparer<TKey> Comparer => _map.Comparer;
     public IEnumerable<TKey> Keys => _map.Keys;
-    public IEnumerable<TValue> Values => _map.Select( kv => kv.Value.Value );
-    public IEnumerable<TreeDictionaryNode<TKey, TValue>> Nodes => (Root?.VisitManyWithSelf( n => n.Children )).EmptyIfNull();
+    public IEnumerable<TValue> Values => _map.Select( static kv => kv.Value.Value );
+    public IEnumerable<TreeDictionaryNode<TKey, TValue>> Nodes => (Root?.VisitManyWithSelf( static n => n.Children )).EmptyIfNull();
 
     ITreeDictionaryNode<TKey, TValue>? IReadOnlyTreeDictionary<TKey, TValue>.Root => Root;
     IEnumerable<ITreeDictionaryNode<TKey, TValue>> IReadOnlyTreeDictionary<TKey, TValue>.Nodes => Nodes;
@@ -285,7 +285,7 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
     public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
     {
         return _map
-            .Select( kv => KeyValuePair.Create( kv.Key, kv.Value.Value ) )
+            .Select( static kv => KeyValuePair.Create( kv.Key, kv.Value.Value ) )
             .GetEnumerator();
     }
 

@@ -267,7 +267,7 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
         Assume.IsNotEmpty( LocalTerms.ArgumentIndexes, nameof( LocalTerms.ArgumentIndexes ) );
         Assume.ContainsExactly( LocalTerms.ArgumentIndexes, usage.Length, nameof( LocalTerms.ArgumentIndexes ) );
 
-        var argumentNames = LocalTerms.ArgumentIndexes.ToDictionary( kv => kv.Value, kv => kv.Key );
+        var argumentNames = LocalTerms.ArgumentIndexes.ToDictionary( static kv => kv.Value, static kv => kv.Key );
         var argumentAccessExpressions = new Dictionary<int, Expression>();
         var discardedArguments = new HashSet<StringSlice>();
         LocalTerms.ArgumentIndexes.Clear();

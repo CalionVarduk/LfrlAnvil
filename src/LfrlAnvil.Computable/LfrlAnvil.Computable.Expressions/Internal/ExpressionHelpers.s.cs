@@ -235,8 +235,8 @@ internal static class ExpressionHelpers
         if ( assignments.Count == 0 )
             return expression;
 
-        var variables = assignments.Select( a => a.Variable ).DistinctBy( v => v.Name );
-        var expressions = assignments.Select( a => a.Expression ).Append( expression );
+        var variables = assignments.Select( static a => a.Variable ).DistinctBy( static v => v.Name );
+        var expressions = assignments.Select( static a => a.Expression ).Append( expression );
         var result = Expression.Block( variables, expressions );
         return result;
     }

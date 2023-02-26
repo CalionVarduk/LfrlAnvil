@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Runtime.InteropServices;
 using LfrlAnvil.Reactive.Composites;
 using LfrlAnvil.Reactive.Internal;
 
@@ -43,11 +44,9 @@ public sealed class EventListenerGroupByDecorator<TEvent, TKey> : IEventListener
         {
             var key = _keySelector( @event );
 
-            if ( ! _groups.TryGetValue( key, out var group ) )
-            {
+            ref var group = ref CollectionsMarshal.GetValueRefOrAddDefault( _groups, key, out var exists )!;
+            if ( ! exists )
                 group = new GrowingBuffer<TEvent>();
-                _groups.Add( key, group );
-            }
 
             group.Add( @event );
 

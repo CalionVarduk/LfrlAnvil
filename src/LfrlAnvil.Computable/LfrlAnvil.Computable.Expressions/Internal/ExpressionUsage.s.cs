@@ -121,7 +121,7 @@ internal static class ExpressionUsage
 
         var index = 0;
         var result = new CompilableInlineDelegate[count];
-        foreach ( var @delegate in assignments.SelectMany( a => a.Delegates ) )
+        foreach ( var @delegate in assignments.SelectMany( static a => a.Delegates ) )
             result[index++] = @delegate.Delegate;
 
         foreach ( var @delegate in rootDelegates )
@@ -135,10 +135,10 @@ internal static class ExpressionUsage
         IReadOnlyList<InlineDelegateCollectionState.Result> rootDelegates,
         IReadOnlyList<VariableAssignment> assignments)
     {
-        foreach ( var index in assignments.SelectMany( a => a.Delegates ).SelectMany( d => d.UsedArgumentIndexes ) )
+        foreach ( var index in assignments.SelectMany( static a => a.Delegates ).SelectMany( static d => d.UsedArgumentIndexes ) )
             usage[index] = true;
 
-        foreach ( var index in rootDelegates.SelectMany( d => d.UsedArgumentIndexes ) )
+        foreach ( var index in rootDelegates.SelectMany( static d => d.UsedArgumentIndexes ) )
             usage[index] = true;
     }
 

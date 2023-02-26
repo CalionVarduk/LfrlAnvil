@@ -27,7 +27,7 @@ public static class TreeDictionaryNodeExtensions
     public static IEnumerable<ITreeDictionaryNode<TKey, TValue>> VisitAncestors<TKey, TValue>(
         this ITreeDictionaryNode<TKey, TValue> node)
     {
-        return node.Visit( n => n.Parent );
+        return node.Visit( static n => n.Parent );
     }
 
     [Pure]
@@ -35,7 +35,7 @@ public static class TreeDictionaryNodeExtensions
     public static IEnumerable<ITreeDictionaryNode<TKey, TValue>> VisitDescendants<TKey, TValue>(
         this ITreeDictionaryNode<TKey, TValue> node)
     {
-        return node.VisitMany( n => n.Children );
+        return node.VisitMany( static n => n.Children );
     }
 
     [Pure]
@@ -44,7 +44,7 @@ public static class TreeDictionaryNodeExtensions
         this ITreeDictionaryNode<TKey, TValue> node,
         Func<ITreeDictionaryNode<TKey, TValue>, bool> stopPredicate)
     {
-        return node.VisitMany( n => n.Children, stopPredicate );
+        return node.VisitMany( static n => n.Children, stopPredicate );
     }
 
     [Pure]
@@ -68,7 +68,7 @@ public static class TreeDictionaryNodeExtensions
         this TreeDictionaryNode<TKey, TValue> node)
         where TKey : notnull
     {
-        return node.Visit( n => n.Parent );
+        return node.Visit( static n => n.Parent );
     }
 
     [Pure]
@@ -77,7 +77,7 @@ public static class TreeDictionaryNodeExtensions
         this TreeDictionaryNode<TKey, TValue> node)
         where TKey : notnull
     {
-        return node.VisitMany( n => n.Children );
+        return node.VisitMany( static n => n.Children );
     }
 
     [Pure]
@@ -87,7 +87,7 @@ public static class TreeDictionaryNodeExtensions
         Func<TreeDictionaryNode<TKey, TValue>, bool> stopPredicate)
         where TKey : notnull
     {
-        return node.VisitMany( n => n.Children, stopPredicate );
+        return node.VisitMany( static n => n.Children, stopPredicate );
     }
 
     [Pure]

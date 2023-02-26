@@ -70,12 +70,12 @@ public sealed class ParsedExpressionSwitch : ParsedExpressionVariadicFunction
         var cases = new SwitchCase[variableCaseCount];
         foreach ( var @case in switchCases )
         {
-            if ( @case.TestValues.All( t => t is ConstantExpression ) )
+            if ( @case.TestValues.All( static t => t is ConstantExpression ) )
                 continue;
 
-            cases[caseIndex++] = @case.TestValues.All( t => t is not ConstantExpression )
+            cases[caseIndex++] = @case.TestValues.All( static t => t is not ConstantExpression )
                 ? @case
-                : Expression.SwitchCase( @case.Body, @case.TestValues.Where( t => t is not ConstantExpression ) );
+                : Expression.SwitchCase( @case.Body, @case.TestValues.Where( static t => t is not ConstantExpression ) );
         }
 
         var result = Expression.Switch( switchValue, defaultBody, cases );

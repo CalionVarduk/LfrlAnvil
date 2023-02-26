@@ -16,6 +16,6 @@ public readonly struct OrValidatorResult<TResult>
     [Pure]
     public override string ToString()
     {
-        return string.Join( $" or{Environment.NewLine}", Result.Select( r => $"'{r}'" ) );
+        return string.Join( $" or{Environment.NewLine}", Result.Select( static r => $"'{r}'" ) );
     }
 }

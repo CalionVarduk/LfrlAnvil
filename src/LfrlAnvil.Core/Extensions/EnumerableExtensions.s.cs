@@ -23,7 +23,7 @@ public static class EnumerableExtensions
     public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> source)
         where T : class
     {
-        return source.Where( e => e is not null )!;
+        return source.Where( static e => e is not null )!;
     }
 
     [Pure]
@@ -31,7 +31,7 @@ public static class EnumerableExtensions
     public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> source)
         where T : struct
     {
-        return source.Where( e => e.HasValue ).Select( e => e!.Value );
+        return source.Where( static e => e.HasValue ).Select( static e => e!.Value );
     }
 
     [Pure]
@@ -49,7 +49,7 @@ public static class EnumerableExtensions
     public static bool ContainsNull<T>(this IEnumerable<T?> source)
         where T : class
     {
-        return source.Any( e => e is null );
+        return source.Any( static e => e is null );
     }
 
     [Pure]
@@ -57,7 +57,7 @@ public static class EnumerableExtensions
     public static bool ContainsNull<T>(this IEnumerable<T?> source)
         where T : struct
     {
-        return source.Any( e => ! e.HasValue );
+        return source.Any( static e => ! e.HasValue );
     }
 
     [Pure]
@@ -164,7 +164,7 @@ public static class EnumerableExtensions
     public static IEnumerable<T?> AsNullable<T>(this IEnumerable<T> source)
         where T : struct
     {
-        return source.Select( e => (T?)e );
+        return source.Select( static e => (T?)e );
     }
 
     [Pure]
@@ -181,14 +181,18 @@ public static class EnumerableExtensions
         Func<T1, IEnumerable<T2>> selector,
         Func<T1, T2, TResult> resultMapper)
     {
-        return source.SelectMany( p => selector( p ).Select( c => resultMapper( p, c ) ) );
+        foreach ( var p in source )
+        {
+            foreach ( var c in selector( p ) )
+                yield return resultMapper( p, c );
+        }
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IEnumerable<T> Flatten<T>(this IEnumerable<IEnumerable<T>> source)
     {
-        return source.SelectMany( x => x );
+        return source.SelectMany( static x => x );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -594,7 +598,7 @@ public static class EnumerableExtensions
                 inner,
                 outerKeySelector,
                 innerKeySelector,
-                (o, i) => (Outer: o, Inner: i),
+                static (o, i) => (Outer: o, Inner: i),
                 keyComparer );
 
         foreach ( var (outerElement, innerElementRange) in groups )

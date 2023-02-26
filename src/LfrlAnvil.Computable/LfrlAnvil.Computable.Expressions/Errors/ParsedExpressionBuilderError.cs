@@ -321,7 +321,7 @@ public class ParsedExpressionBuilderError
         return new ParsedExpressionBuilderMissingFunctionError(
             ParsedExpressionBuilderErrorType.FunctionCouldNotBeResolved,
             token.Symbol,
-            parameters.Select( e => e.Type ).ToList() );
+            parameters.Select( static e => e.Type ).ToList() );
     }
 
     [Pure]

@@ -15,8 +15,8 @@ internal static class ClosureHelpers
 
     private static readonly MethodInfo[] OpenGenericBindMethods = typeof( ClosureHelpers )
         .GetMethods( BindingFlags.Static | BindingFlags.NonPublic )
-        .Where( m => m.IsGenericMethodDefinition && m.Name == nameof( BindClosure ) )
-        .OrderBy( m => m.GetGenericArguments().Length )
+        .Where( static m => m.IsGenericMethodDefinition && m.Name == nameof( BindClosure ) )
+        .OrderBy( static m => m.GetGenericArguments().Length )
         .ToArray();
 
     [Pure]

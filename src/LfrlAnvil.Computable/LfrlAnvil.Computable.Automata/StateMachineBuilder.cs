@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Runtime.InteropServices;
 using LfrlAnvil.Computable.Automata.Exceptions;
 using LfrlAnvil.Computable.Automata.Internal;
 
@@ -33,14 +34,14 @@ public sealed class StateMachineBuilder<TState, TInput, TResult>
     [Pure]
     public IEnumerable<KeyValuePair<TState, StateMachineNodeType>> GetStates()
     {
-        return _states.Select( kv => KeyValuePair.Create( kv.Key, kv.Value.Type ) );
+        return _states.Select( static kv => KeyValuePair.Create( kv.Key, kv.Value.Type ) );
     }
 
     [Pure]
     public IEnumerable<KeyValuePair<TInput, TState>> GetTransitions(TState source)
     {
         return _states.TryGetValue( source, out var state )
-            ? state.Transitions.Select( kv => KeyValuePair.Create( kv.Key, kv.Value.Destination ) )
+            ? state.Transitions.Select( static kv => KeyValuePair.Create( kv.Key, kv.Value.Destination ) )
             : Enumerable.Empty<KeyValuePair<TInput, TState>>();
     }
 
@@ -70,40 +71,41 @@ public sealed class StateMachineBuilder<TState, TInput, TResult>
         TInput input,
         IStateTransitionHandler<TState, TInput, TResult>? handler = null)
     {
-        if ( ! _states.TryGetValue( source, out var sourceState ) )
-            sourceState = AddState( source, StateMachineNodeType.Default );
+        ref var sourceState = ref CollectionsMarshal.GetValueRefOrAddDefault( _states, source, out var exists )!;
+        if ( ! exists )
+            sourceState = new State( StateMachineNodeType.Default, InputComparer );
 
-        if ( sourceState.Transitions.ContainsKey( input ) )
+        ref var transition = ref CollectionsMarshal.GetValueRefOrAddDefault( sourceState.Transitions, input, out exists );
+        if ( exists )
             throw new StateMachineTransitionException( Resources.TransitionAlreadyExists( source, input ), nameof( input ) );
 
-        if ( ! _states.ContainsKey( destination ) )
-            AddState( destination, StateMachineNodeType.Default );
+        ref var destinationState = ref CollectionsMarshal.GetValueRefOrAddDefault( _states, destination, out exists )!;
+        if ( ! exists )
+            destinationState = new State( StateMachineNodeType.Default, InputComparer );
 
-        sourceState.Transitions.Add( input, (destination, handler) );
+        transition = (destination, handler);
         return this;
     }
 
     public StateMachineBuilder<TState, TInput, TResult> MarkAsAccept(TState state)
     {
-        if ( _states.TryGetValue( state, out var data ) )
-        {
+        ref var data = ref CollectionsMarshal.GetValueRefOrAddDefault( _states, state, out var exists )!;
+        if ( exists )
             data.Type |= StateMachineNodeType.Accept;
-            return this;
-        }
+        else
+            data = new State( StateMachineNodeType.Accept, InputComparer );
 
-        AddState( state, StateMachineNodeType.Accept );
         return this;
     }
 
     public StateMachineBuilder<TState, TInput, TResult> MarkAsDefault(TState state)
     {
-        if ( _states.TryGetValue( state, out var data ) )
-        {
+        ref var data = ref CollectionsMarshal.GetValueRefOrAddDefault( _states, state, out var exists )!;
+        if ( exists )
             data.Type &= ~StateMachineNodeType.Accept;
-            return this;
-        }
+        else
+            data = new State( StateMachineNodeType.Default, InputComparer );
 
-        AddState( state, StateMachineNodeType.Default );
         return this;
     }
 
@@ -112,10 +114,11 @@ public sealed class StateMachineBuilder<TState, TInput, TResult>
         if ( _initialState is not null )
             _initialState.Value.Data.Type &= ~StateMachineNodeType.Initial;
 
-        if ( _states.TryGetValue( state, out var data ) )
+        ref var data = ref CollectionsMarshal.GetValueRefOrAddDefault( _states, state, out var exists )!;
+        if ( exists )
             data.Type |= StateMachineNodeType.Initial;
         else
-            data = AddState( state, StateMachineNodeType.Initial );
+            data = new State( StateMachineNodeType.Initial, InputComparer );
 
         _initialState = (state, data);
         return this;
@@ -128,7 +131,7 @@ public sealed class StateMachineBuilder<TState, TInput, TResult>
             throw new StateMachineCreationException( Resources.InitialStateIsMissing );
 
         var states = _states.ToDictionary(
-            s => s.Key,
+            static s => s.Key,
             s =>
             {
                 IStateMachineNode<TState, TInput, TResult> node = new StateMachineNode<TState, TInput, TResult>(
@@ -162,13 +165,6 @@ public sealed class StateMachineBuilder<TState, TInput, TResult>
             InputComparer,
             DefaultResult,
             Optimization.Level );
-    }
-
-    private State AddState(TState state, StateMachineNodeType type)
-    {
-        var result = new State( type, InputComparer );
-        _states.Add( state, result );
-        return result;
     }
 
     private sealed class State

@@ -142,7 +142,7 @@ public readonly struct Period : IEquatable<Period>
             Ticks != 0 ? $"{Ticks} tick(s)" : string.Empty
         };
 
-        var result = string.Join( ", ", texts.Where( t => t.Length > 0 ) );
+        var result = string.Join( ", ", texts.Where( static t => t.Length > 0 ) );
         return result.Length != 0 ? result : "0 day(s)";
     }
 

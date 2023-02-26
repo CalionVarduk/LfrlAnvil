@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using LfrlAnvil.Computable.Expressions.Errors;
 using LfrlAnvil.Computable.Expressions.Internal.Delegates;
 
@@ -64,13 +65,6 @@ internal sealed class LocalTermsCollection
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal int GetNextArgumentIndex()
-    {
-        return ArgumentIndexes.Count;
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal bool ContainsArgument(StringSlice name)
     {
         return ArgumentIndexes.ContainsKey( name );
@@ -121,13 +115,13 @@ internal sealed class LocalTermsCollection
         if ( _boundArguments is not null && _boundArguments.TryGetValue( name, out var constant ) )
             return (constant, null);
 
-        if ( ArgumentIndexes.TryGetValue( name, out var index ) )
+        ref var index = ref CollectionsMarshal.GetValueRefOrAddDefault( ArgumentIndexes, name, out var exists );
+        if ( exists )
             return (GetArgumentAccess( index ), index);
 
-        index = GetNextArgumentIndex();
+        index = ArgumentIndexes.Count - 1;
         var result = ParameterExpression.CreateArgumentAccess( index );
 
-        ArgumentIndexes.Add( name, index );
         _argumentAccessExpressions.Add( result );
         return (result, index);
     }

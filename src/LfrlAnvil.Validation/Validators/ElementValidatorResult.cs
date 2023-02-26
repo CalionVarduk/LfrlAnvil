@@ -18,7 +18,7 @@ public readonly struct ElementValidatorResult<TElement, TElementResult>
     [Pure]
     public override string ToString()
     {
-        var resultText = string.Join( Environment.NewLine, Result.Select( (r, i) => $"{i + 1}. '{r}'" ) );
+        var resultText = string.Join( Environment.NewLine, Result.Select( static (r, i) => $"{i + 1}. '{r}'" ) );
         return $"{nameof( Element )}: '{Element}', {nameof( Result )}:{Environment.NewLine}{resultText}";
     }
 }

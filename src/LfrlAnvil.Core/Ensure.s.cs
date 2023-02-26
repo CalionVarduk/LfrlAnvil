@@ -404,7 +404,7 @@ public static class Ensure
     public static void ContainsNull<T>(IEnumerable<T?> param, string paramName = DefaultParamName)
         where T : class
     {
-        if ( param.All( e => e is not null ) )
+        if ( param.All( static e => e is not null ) )
             ExceptionThrower.Throw( Exceptions.NotContainsNull( paramName ) );
     }
 
@@ -412,7 +412,7 @@ public static class Ensure
     public static void ContainsNull<T>(IEnumerable<T?> param, string paramName = DefaultParamName)
         where T : struct
     {
-        if ( param.All( e => e.HasValue ) )
+        if ( param.All( static e => e.HasValue ) )
             ExceptionThrower.Throw( Exceptions.NotContainsNull( paramName ) );
     }
 
@@ -430,7 +430,7 @@ public static class Ensure
     public static void NotContainsNull<T>(IEnumerable<T?> param, string paramName = DefaultParamName)
         where T : class
     {
-        if ( param.Any( e => e is null ) )
+        if ( param.Any( static e => e is null ) )
             ExceptionThrower.Throw( Exceptions.ContainsNull( paramName ) );
     }
 
@@ -438,7 +438,7 @@ public static class Ensure
     public static void NotContainsNull<T>(IEnumerable<T?> param, string paramName = DefaultParamName)
         where T : struct
     {
-        if ( param.Any( e => ! e.HasValue ) )
+        if ( param.Any( static e => ! e.HasValue ) )
             ExceptionThrower.Throw( Exceptions.ContainsNull( paramName ) );
     }
 

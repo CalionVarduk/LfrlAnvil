@@ -34,7 +34,7 @@ public sealed class ParsedExpressionConstructorCall : ParsedExpressionVariadicFu
         if ( ctor is null )
             throw new ParsedExpressionUnresolvableMemberException( type, ".ctor", parameterTypes );
 
-        return FoldConstantsWhenPossible && callParameters.All( p => p is ConstantExpression )
+        return FoldConstantsWhenPossible && callParameters.All( static p => p is ConstantExpression )
             ? ExpressionHelpers.CreateConstantCtorCall( ctor, callParameters )
             : Expression.New( ctor, callParameters );
     }

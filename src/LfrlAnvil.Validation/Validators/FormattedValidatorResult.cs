@@ -20,7 +20,7 @@ public readonly struct FormattedValidatorResult<TResource>
     [Pure]
     public override string ToString()
     {
-        var messagesText = string.Join( Environment.NewLine, Messages.Select( (m, i) => $"{i + 1}. '{m}'" ) );
+        var messagesText = string.Join( Environment.NewLine, Messages.Select( static (m, i) => $"{i + 1}. '{m}'" ) );
         return $"{nameof( Result )}: '{Result}', {nameof( Messages )}:{Environment.NewLine}{messagesText}";
     }
 }

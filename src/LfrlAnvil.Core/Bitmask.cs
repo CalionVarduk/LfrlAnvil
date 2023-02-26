@@ -44,9 +44,9 @@ public readonly struct Bitmask<T> : IEquatable<Bitmask<T>>, IComparable<Bitmask<
             return;
 
         var availableValues = All
-            .Where( v => Enum.IsDefined( typeof( T ), v ) )
+            .Where( static v => Enum.IsDefined( typeof( T ), v ) )
             .Select( ToLongValue )
-            .Aggregate( 0UL, (p, c) => p | c );
+            .Aggregate( 0UL, static (p, c) => p | c );
 
         All = new Bitmask<T>( FromLongValue( availableValues ) );
     }
@@ -237,11 +237,12 @@ public readonly struct Bitmask<T> : IEquatable<Bitmask<T>>, IComparable<Bitmask<
     [Pure]
     public IEnumerator<T> GetEnumerator()
     {
+        // TODO: this struct could use a dedicated struct, non-allocating Enumerator
         var longValue = ToLongValue( Value );
 
         return Enumerable.Range( 0, BitCount )
             .Where( i => ((longValue >> i) & 1) == 1 )
-            .Select( i => FromLongValue( 1UL << i ) )
+            .Select( static i => FromLongValue( 1UL << i ) )
             .GetEnumerator();
     }
 
@@ -386,7 +387,7 @@ public readonly struct Bitmask<T> : IEquatable<Bitmask<T>>, IComparable<Bitmask<
             throw new BitmaskTypeInitializationException( typeof( T ), ExceptionResources.MissingEnumFlagsAttribute<T>() );
 
         var values = Enum.GetValues( typeof( T ) ).Cast<object>();
-        if ( ! values.Any( v => v.Equals( FromLongValue( 0 ) ) ) )
+        if ( ! values.Any( static v => v.Equals( FromLongValue( 0 ) ) ) )
             throw new BitmaskTypeInitializationException( typeof( T ), ExceptionResources.MissingEnumZeroValueMember<T>() );
     }
 

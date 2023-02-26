@@ -147,7 +147,7 @@ public class TwoWayDictionary<T1, T2> : ITwoWayDictionary<T1, T2>
     [Pure]
     public IEnumerator<Pair<T1, T2>> GetEnumerator()
     {
-        return _forward.Select( kv => Pair.Create( kv.Key, kv.Value ) ).GetEnumerator();
+        return _forward.Select( static kv => Pair.Create( kv.Key, kv.Value ) ).GetEnumerator();
     }
 
     [Pure]

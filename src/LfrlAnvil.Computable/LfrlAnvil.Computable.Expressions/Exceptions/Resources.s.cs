@@ -307,7 +307,7 @@ internal static class Resources
         StringSlice symbol,
         IReadOnlyList<Expression> parameters)
     {
-        var parameterTypesText = string.Join( ", ", parameters.Select( e => e.Type.GetDebugString() ) );
+        var parameterTypesText = string.Join( ", ", parameters.Select( static e => e.Type.GetDebugString() ) );
         return $"Found duplicate function signature for symbol '{symbol}' (parameter types: [{parameterTypesText}])";
     }
 
@@ -329,7 +329,7 @@ internal static class Resources
     internal static string InvalidExpressionArguments(Chain<StringSlice> argumentNames)
     {
         var headerText = $"Expression doesn't contain following arguments:{Environment.NewLine}";
-        var allArgumentsText = string.Join( Environment.NewLine, argumentNames.Select( (n, i) => $"{i + 1}. {n}" ) );
+        var allArgumentsText = string.Join( Environment.NewLine, argumentNames.Select( static (n, i) => $"{i + 1}. {n}" ) );
         return $"{headerText}{allArgumentsText}";
     }
 
@@ -338,7 +338,7 @@ internal static class Resources
     {
         var headerText = $"Failed to create an expression:{Environment.NewLine}{input}{Environment.NewLine}{Environment.NewLine}";
         var errorsHeaderText = $"Encountered {errors.Count} error(s):{Environment.NewLine}";
-        var allErrorsText = string.Join( Environment.NewLine, errors.Select( (e, i) => $"{i + 1}. {e}" ) );
+        var allErrorsText = string.Join( Environment.NewLine, errors.Select( static (e, i) => $"{i + 1}. {e}" ) );
         return $"{headerText}{errorsHeaderText}{allErrorsText}";
     }
 
@@ -346,7 +346,7 @@ internal static class Resources
     internal static string FailedExpressionFactoryCreation(Chain<string> messages)
     {
         var headerText = $"Builder has encountered {messages.Count} error(s):";
-        var allMessagesText = string.Join( Environment.NewLine, messages.Select( (m, i) => $"{i + 1}. {m}" ) );
+        var allMessagesText = string.Join( Environment.NewLine, messages.Select( static (m, i) => $"{i + 1}. {m}" ) );
         return $"{headerText}{Environment.NewLine}{allMessagesText}";
     }
 
@@ -399,13 +399,13 @@ internal static class Resources
     {
         var distinctMemberTypes = Enumerable.Range( 0, 8 )
             .Where( i => (((int)memberType >> i) & 1) == 1 )
-            .Select( i => (MemberTypes)(1 << i) );
+            .Select( static i => (MemberTypes)(1 << i) );
 
         var memberTypeText = string.Join( " or ", distinctMemberTypes );
 
         var parametersText = parameterTypes is null
             ? string.Empty
-            : $" (parameter types: [{string.Join( ", ", parameterTypes.Select( p => p.GetDebugString() ) )}])";
+            : $" (parameter types: [{string.Join( ", ", parameterTypes.Select( static p => p.GetDebugString() ) )}])";
 
         return $"{memberTypeText} member '{memberName}'{parametersText} could not be resolved for {targetType.GetDebugString()} type.";
     }
@@ -414,7 +414,7 @@ internal static class Resources
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string UnresolvableIndexer(Type targetType, IReadOnlyList<Type> parameterTypes)
     {
-        var parametersText = $"(parameter types: [{string.Join( ", ", parameterTypes.Select( p => p.GetDebugString() ) )}])";
+        var parametersText = $"(parameter types: [{string.Join( ", ", parameterTypes.Select( static p => p.GetDebugString() ) )}])";
         return $"Indexer member {parametersText} could not be resolved for {targetType.GetDebugString()} type.";
     }
 
@@ -426,7 +426,7 @@ internal static class Resources
         var membersText = string.Join(
             Environment.NewLine,
             members.Select(
-                (member, i) =>
+                static (member, i) =>
                 {
                     var memberText = member switch
                     {

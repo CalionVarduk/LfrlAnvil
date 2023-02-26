@@ -939,14 +939,14 @@ public static class ParsedExpressionFactoryBuilderExtensions
         int defaultPrecedence = ParsedExpressionConstructDefaults.DefaultUnaryPrecedence)
     {
         var unaryConstructs = builder.GetConstructs()
-            .Where( i => (i.Type & ParsedExpressionConstructType.UnaryConstruct) != ParsedExpressionConstructType.None );
+            .Where( static i => (i.Type & ParsedExpressionConstructType.UnaryConstruct) != ParsedExpressionConstructType.None );
 
         var prefixPrecedences = builder.GetPrefixUnaryConstructPrecedences()
-            .Select( kv => kv.Key )
+            .Select( static kv => kv.Key )
             .ToHashSet();
 
         var postfixPrecedences = builder.GetPostfixUnaryConstructPrecedences()
-            .Select( kv => kv.Key )
+            .Select( static kv => kv.Key )
             .ToHashSet();
 
         foreach ( var info in unaryConstructs )

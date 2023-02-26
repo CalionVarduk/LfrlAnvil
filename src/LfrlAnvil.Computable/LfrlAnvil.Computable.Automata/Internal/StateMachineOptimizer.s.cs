@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using LfrlAnvil.Computable.Automata.Extensions;
 using LfrlAnvil.Extensions;
 
@@ -456,10 +457,10 @@ internal static class StateMachineOptimizer
                 continue;
             }
 
-            if ( ! states.TryGetValue( mapping.Value, out var node ) )
+            ref var node = ref CollectionsMarshal.GetValueRefOrAddDefault( states, mapping.Value, out var exists )!;
+            if ( ! exists )
             {
-                var newNode = RecreateStateMachineNode( originalNode, mapping.Value, deadStates, inputComparer );
-                states.Add( mapping.Value, newNode );
+                node = RecreateStateMachineNode( originalNode, mapping.Value, deadStates, inputComparer );
                 continue;
             }
 
@@ -478,18 +479,19 @@ internal static class StateMachineOptimizer
 
             foreach ( var (input, originalTransition) in originalNode.Transitions )
             {
-                if ( node.Transitions.ContainsKey( input ) )
+                ref var transition = ref CollectionsMarshal.GetValueRefOrAddDefault(
+                    ReinterpretCast.To<Dictionary<TInput, IStateMachineTransition<TState, TInput, TResult>>>( node.Transitions ),
+                    input,
+                    out var exists );
+
+                if ( exists )
                     continue;
 
                 var destination = equivalentStateMappings.TryGetValue( originalTransition.Destination.Value, out mapping )
                     ? states[mapping.Value]
                     : states[originalTransition.Destination.Value];
 
-                var transition = new StateMachineTransition<TState, TInput, TResult>( destination, originalTransition.Handler );
-                var nodeTransitions = ReinterpretCast.To<Dictionary<TInput, IStateMachineTransition<TState, TInput, TResult>>>(
-                    node.Transitions );
-
-                nodeTransitions.Add( input, transition );
+                transition = new StateMachineTransition<TState, TInput, TResult>( destination, originalTransition.Handler );
             }
         }
 

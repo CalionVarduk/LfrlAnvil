@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using LfrlAnvil.Dependencies.Internal.Resolvers;
 
 namespace LfrlAnvil.Dependencies.Internal;
@@ -28,18 +29,14 @@ internal readonly struct KeyedDependencyResolversStore
     internal Dictionary<Type, DependencyResolver> GetOrAddResolvers<TKey>(TKey key)
         where TKey : notnull
     {
-        if ( ! _cachesByKeyType.TryGetValue( typeof( TKey ), out var cacheRef ) )
-        {
+        ref var cacheRef = ref CollectionsMarshal.GetValueRefOrAddDefault( _cachesByKeyType, typeof( TKey ), out var exists )!;
+        if ( ! exists )
             cacheRef = new Cache<TKey>();
-            _cachesByKeyType.Add( typeof( TKey ), cacheRef );
-        }
 
         var cache = ReinterpretCast.To<Cache<TKey>>( cacheRef );
-        if ( ! cache.Resolvers.TryGetValue( key, out var result ) )
-        {
+        ref var result = ref CollectionsMarshal.GetValueRefOrAddDefault( cache.Resolvers, key, out exists )!;
+        if ( ! exists )
             result = new Dictionary<Type, DependencyResolver>( _defaultResolvers );
-            cache.Resolvers.Add( key, result );
-        }
 
         return result;
     }

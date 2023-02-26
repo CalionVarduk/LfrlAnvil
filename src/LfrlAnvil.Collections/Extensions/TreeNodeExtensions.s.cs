@@ -125,20 +125,20 @@ public static class TreeNodeExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IEnumerable<ITreeNode<T>> VisitAncestors<T>(this ITreeNode<T> node)
     {
-        return node.Visit( n => n.Parent );
+        return node.Visit( static n => n.Parent );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IEnumerable<ITreeNode<T>> VisitDescendants<T>(this ITreeNode<T> node)
     {
-        return node.VisitMany( n => n.Children );
+        return node.VisitMany( static n => n.Children );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IEnumerable<ITreeNode<T>> VisitDescendants<T>(this ITreeNode<T> node, Func<ITreeNode<T>, bool> stopPredicate)
     {
-        return node.VisitMany( n => n.Children, stopPredicate );
+        return node.VisitMany( static n => n.Children, stopPredicate );
     }
 }

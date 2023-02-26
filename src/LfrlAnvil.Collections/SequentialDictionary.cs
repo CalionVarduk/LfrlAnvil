@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Runtime.InteropServices;
 using LfrlAnvil.Collections.Internal;
 
 namespace LfrlAnvil.Collections;
@@ -27,19 +28,20 @@ public class SequentialDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IRe
         get => _map[key].Value.Value;
         set
         {
-            if ( _map.TryGetValue( key, out var node ) )
-            {
+            ref var node = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, key, out var exists )!;
+            if ( exists )
                 node.Value = KeyValuePair.Create( key, value );
-                return;
+            else
+            {
+                node = new LinkedListNode<KeyValuePair<TKey, TValue>>( KeyValuePair.Create( key, value ) );
+                _order.AddLast( node );
             }
-
-            Add( key, value );
         }
     }
 
     public int Count => _map.Count;
-    public IEnumerable<TKey> Keys => _order.Select( kv => kv.Key );
-    public IEnumerable<TValue> Values => _order.Select( kv => kv.Value );
+    public IEnumerable<TKey> Keys => _order.Select( static kv => kv.Key );
+    public IEnumerable<TValue> Values => _order.Select( static kv => kv.Value );
     public IEqualityComparer<TKey> Comparer => _map.Comparer;
     public KeyValuePair<TKey, TValue>? First => _order.First?.Value;
     public KeyValuePair<TKey, TValue>? Last => _order.Last?.Value;

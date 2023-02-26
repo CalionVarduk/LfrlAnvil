@@ -19,7 +19,7 @@ internal readonly struct FunctionSignatureKey : IEquatable<FunctionSignatureKey>
     [Pure]
     public override string ToString()
     {
-        return $"[{string.Join( ", ", Parameters.Select( e => e.Type.GetDebugString() ) )}]";
+        return $"[{string.Join( ", ", Parameters.Select( static e => e.Type.GetDebugString() ) )}]";
     }
 
     [Pure]

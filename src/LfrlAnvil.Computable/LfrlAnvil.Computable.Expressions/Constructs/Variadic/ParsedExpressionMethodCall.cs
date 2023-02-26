@@ -43,7 +43,7 @@ public sealed class ParsedExpressionMethodCall : ParsedExpressionVariadicFunctio
 
         return FoldConstantsWhenPossible &&
             target is ConstantExpression constantTarget &&
-            callParameters.All( p => p is ConstantExpression )
+            callParameters.All( static p => p is ConstantExpression )
                 ? ExpressionHelpers.CreateConstantMethodCall( constantTarget, method, callParameters )
                 : Expression.Call( target, method, callParameters );
     }

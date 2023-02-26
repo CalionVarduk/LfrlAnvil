@@ -69,8 +69,8 @@ public static class TypeExtensions
     public static IEnumerable<Type> GetAllImplementedGenericDefinitions(this Type type)
     {
         return type.GetInterfaces()
-            .Where( i => i.IsGenericType )
-            .Select( i => i.GetGenericTypeDefinition() )
+            .Where( static i => i.IsGenericType )
+            .Select( static i => i.GetGenericTypeDefinition() )
             .Distinct();
     }
 
@@ -79,7 +79,7 @@ public static class TypeExtensions
     public static Type? GetExtension(this Type type, Type baseType)
     {
         return type
-            .Visit( t => t.BaseType )
+            .Visit( static t => t.BaseType )
             .FirstOrDefault( t => t == baseType );
     }
 
@@ -109,7 +109,7 @@ public static class TypeExtensions
     public static Type? GetOpenGenericExtension(this Type type, Type openGenericBaseTypeDefinition)
     {
         return type
-            .Visit( t => t.BaseType )
+            .Visit( static t => t.BaseType )
             .FirstOrDefault( t => t.IsGenericType && t.GetGenericTypeDefinition() == openGenericBaseTypeDefinition );
     }
 
@@ -125,9 +125,9 @@ public static class TypeExtensions
     public static IEnumerable<Type> GetAllExtendedGenericDefinitions(this Type type)
     {
         return type
-            .Visit( t => t.BaseType )
-            .Where( t => t.IsGenericType )
-            .Select( t => t.GetGenericTypeDefinition() )
+            .Visit( static t => t.BaseType )
+            .Where( static t => t.IsGenericType )
+            .Select( static t => t.GetGenericTypeDefinition() )
             .Distinct();
     }
 

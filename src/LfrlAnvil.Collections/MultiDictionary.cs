@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Runtime.InteropServices;
 using LfrlAnvil.Collections.Internal;
 
 namespace LfrlAnvil.Collections;
@@ -69,11 +70,9 @@ public class MultiDictionary<TKey, TValue> : IMultiDictionary<TKey, TValue>
 
     public void Add(TKey key, TValue value)
     {
-        if ( ! _map.TryGetValue( key, out var list ) )
-        {
+        ref var list = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, key, out var exists )!;
+        if ( ! exists )
             list = new ValuesCollection( key );
-            _map.Add( key, list );
-        }
 
         list.Add( value );
     }
@@ -84,11 +83,9 @@ public class MultiDictionary<TKey, TValue> : IMultiDictionary<TKey, TValue>
         if ( ! enumerator.MoveNext() )
             return;
 
-        if ( ! _map.TryGetValue( key, out var list ) )
-        {
+        ref var list = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, key, out var exists )!;
+        if ( ! exists )
             list = new ValuesCollection( key );
-            _map.Add( key, list );
-        }
 
         list.Add( enumerator.Current );
         while ( enumerator.MoveNext() )
@@ -104,13 +101,11 @@ public class MultiDictionary<TKey, TValue> : IMultiDictionary<TKey, TValue>
             return;
         }
 
-        if ( _map.TryGetValue( key, out var list ) )
+        ref var list = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, key, out var exists )!;
+        if ( exists )
             list.Clear();
         else
-        {
             list = new ValuesCollection( key );
-            _map.Add( key, list );
-        }
 
         list.Add( enumerator.Current );
         while ( enumerator.MoveNext() )
@@ -178,7 +173,7 @@ public class MultiDictionary<TKey, TValue> : IMultiDictionary<TKey, TValue>
     [Pure]
     public IEnumerator<KeyValuePair<TKey, IReadOnlyList<TValue>>> GetEnumerator()
     {
-        return _map.Select( kv => KeyValuePair.Create( kv.Key, (IReadOnlyList<TValue>)kv.Value ) ).GetEnumerator();
+        return _map.Select( static kv => KeyValuePair.Create( kv.Key, (IReadOnlyList<TValue>)kv.Value ) ).GetEnumerator();
     }
 
     [Pure]
@@ -221,7 +216,7 @@ public class MultiDictionary<TKey, TValue> : IMultiDictionary<TKey, TValue>
     [Pure]
     IEnumerator<IGrouping<TKey, TValue>> IEnumerable<IGrouping<TKey, TValue>>.GetEnumerator()
     {
-        return _map.Select( kv => (IGrouping<TKey, TValue>)kv.Value ).GetEnumerator();
+        return _map.Select( static kv => (IGrouping<TKey, TValue>)kv.Value ).GetEnumerator();
     }
 
     [Pure]

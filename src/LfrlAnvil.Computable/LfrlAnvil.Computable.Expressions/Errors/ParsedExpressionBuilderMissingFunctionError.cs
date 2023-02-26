@@ -22,6 +22,6 @@ public sealed class ParsedExpressionBuilderMissingFunctionError : ParsedExpressi
     [Pure]
     public override string ToString()
     {
-        return $"{base.ToString()}, parameter types: [{string.Join( ", ", ParameterTypes.Select( p => p.GetDebugString() ) )}]";
+        return $"{base.ToString()}, parameter types: [{string.Join( ", ", ParameterTypes.Select( static p => p.GetDebugString() ) )}]";
     }
 }

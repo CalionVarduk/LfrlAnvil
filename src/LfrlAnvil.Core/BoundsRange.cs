@@ -46,7 +46,7 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
     [Pure]
     public override string ToString()
     {
-        var rangeText = string.Join( " & ", this.Select( r => $"[{r.Min} : {r.Max}]" ) );
+        var rangeText = string.Join( " & ", this.Select( static r => $"[{r.Min} : {r.Max}]" ) );
         return $"{nameof( BoundsRange )}({rangeText})";
     }
 

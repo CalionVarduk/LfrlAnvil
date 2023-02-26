@@ -35,7 +35,7 @@ public static class ObjectExtensions
     public static IEnumerable<T> Visit<T>(this T? source, Func<T, T?> nodeSelector)
         where T : class
     {
-        return source.Visit( nodeSelector!, e => e is null )!;
+        return source.Visit( nodeSelector!, static e => e is null )!;
     }
 
     [Pure]
@@ -76,7 +76,7 @@ public static class ObjectExtensions
     public static IEnumerable<T> VisitWithSelf<T>(this T? source, Func<T, T?> nodeSelector)
         where T : class
     {
-        return source.VisitWithSelf( nodeSelector!, e => e is null )!;
+        return source.VisitWithSelf( nodeSelector!, static e => e is null )!;
     }
 
     [Pure]

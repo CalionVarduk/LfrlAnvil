@@ -41,7 +41,7 @@ public class TypeMappingConfigurationModule : ITypeMappingConfiguration
     [Pure]
     public IEnumerable<KeyValuePair<TypeMappingKey, TypeMappingStore>> GetMappingStores()
     {
-        return _configurations.SelectMany( c => c.GetMappingStores() );
+        return _configurations.SelectMany( static c => c.GetMappingStores() );
     }
 
     [Pure]

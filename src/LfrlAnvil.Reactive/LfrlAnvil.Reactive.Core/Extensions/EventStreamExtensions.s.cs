@@ -27,7 +27,7 @@ public static class EventStreamExtensions
     public static IEventStream<TEvent> WhereNotNull<TEvent>(this IEventStream<TEvent?> source)
         where TEvent : class
     {
-        return source.Where( e => e is not null )!;
+        return source.Where( static e => e is not null )!;
     }
 
     [Pure]
@@ -35,7 +35,7 @@ public static class EventStreamExtensions
     public static IEventStream<TEvent> WhereNotNull<TEvent>(this IEventStream<TEvent?> source)
         where TEvent : struct
     {
-        return source.Where( e => e.HasValue ).Select( e => e!.Value );
+        return source.Where( static e => e.HasValue ).Select( static e => e!.Value );
     }
 
     [Pure]
@@ -91,7 +91,7 @@ public static class EventStreamExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IEventStream<TEvent> Flatten<TEvent>(this IEventStream<IEnumerable<TEvent>> source)
     {
-        return source.SelectMany( x => x );
+        return source.SelectMany( static x => x );
     }
 
     [Pure]
@@ -111,7 +111,7 @@ public static class EventStreamExtensions
         this IEventStream<TSourceEvent> source,
         IEventStream<TTargetEvent> target)
     {
-        return source.Zip( target, (a, b) => (a, b) );
+        return source.Zip( target, static (a, b) => (a, b) );
     }
 
     [Pure]
@@ -249,14 +249,14 @@ public static class EventStreamExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IEventStream<TEvent> Distinct<TEvent>(this IEventStream<TEvent> source)
     {
-        return source.DistinctBy( e => e );
+        return source.DistinctBy( static e => e );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IEventStream<TEvent> Distinct<TEvent>(this IEventStream<TEvent> source, IEqualityComparer<TEvent> equalityComparer)
     {
-        return source.DistinctBy( e => e, equalityComparer );
+        return source.DistinctBy( static e => e, equalityComparer );
     }
 
     [Pure]
@@ -281,7 +281,7 @@ public static class EventStreamExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IEventStream<TEvent> DistinctUntilChanged<TEvent>(this IEventStream<TEvent> source)
     {
-        return source.DistinctByUntilChanged( e => e );
+        return source.DistinctByUntilChanged( static e => e );
     }
 
     [Pure]
@@ -290,7 +290,7 @@ public static class EventStreamExtensions
         this IEventStream<TEvent> source,
         IEqualityComparer<TEvent> equalityComparer)
     {
-        return source.DistinctByUntilChanged( e => e, equalityComparer );
+        return source.DistinctByUntilChanged( static e => e, equalityComparer );
     }
 
     [Pure]
@@ -319,7 +319,7 @@ public static class EventStreamExtensions
         this IEventStream<TEvent> source,
         IEventStream<TTargetEvent> target)
     {
-        return source.DistinctByUntil( e => e, target );
+        return source.DistinctByUntil( static e => e, target );
     }
 
     [Pure]
@@ -329,7 +329,7 @@ public static class EventStreamExtensions
         IEqualityComparer<TEvent> equalityComparer,
         IEventStream<TTargetEvent> target)
     {
-        return source.DistinctByUntil( e => e, equalityComparer, target );
+        return source.DistinctByUntil( static e => e, equalityComparer, target );
     }
 
     [Pure]

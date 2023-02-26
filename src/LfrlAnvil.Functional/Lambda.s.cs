@@ -8,12 +8,12 @@ namespace LfrlAnvil.Functional;
 
 public static class Lambda<T>
 {
-    public static readonly Func<T, T> Identity = x => x;
+    public static readonly Func<T, T> Identity = static x => x;
 }
 
 public static class Lambda
 {
-    public static readonly Action NoOp = () => { };
+    public static readonly Action NoOp = static () => { };
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

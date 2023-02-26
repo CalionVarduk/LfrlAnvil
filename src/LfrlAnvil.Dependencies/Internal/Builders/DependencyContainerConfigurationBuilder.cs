@@ -80,13 +80,13 @@ internal sealed class DependencyContainerConfigurationBuilder : IDependencyConta
         if ( type.IsGenericTypeDefinition )
             return false;
 
-        if ( type.Visit( t => t.BaseType ).All( t => t != typeof( Attribute ) ) )
+        if ( type.Visit( static t => t.BaseType ).All( static t => t != typeof( Attribute ) ) )
             return false;
 
-        var attributeUsage = type.Visit( t => t.BaseType )
+        var attributeUsage = type.Visit( static t => t.BaseType )
             .Prepend( type )
-            .Select( t => t.GetAttribute<AttributeUsageAttribute>( inherit: false ) )
-            .FirstOrDefault( a => a is not null );
+            .Select( static t => t.GetAttribute<AttributeUsageAttribute>( inherit: false ) )
+            .FirstOrDefault( static a => a is not null );
 
         const AttributeTargets expectedTargets = AttributeTargets.Parameter | AttributeTargets.Field | AttributeTargets.Property;
         return attributeUsage is not null && (attributeUsage.ValidOn & expectedTargets) == expectedTargets;

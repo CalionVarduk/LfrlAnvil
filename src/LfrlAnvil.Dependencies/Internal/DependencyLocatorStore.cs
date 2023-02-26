@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using LfrlAnvil.Dependencies.Internal.Resolvers;
 
 namespace LfrlAnvil.Dependencies.Internal;
@@ -36,18 +37,16 @@ internal readonly struct DependencyLocatorStore
     internal DependencyLocator<TKey> GetOrCreate<TKey>(TKey key)
         where TKey : notnull
     {
-        if ( ! _cachesByKeyType.TryGetValue( typeof( TKey ), out var cacheRef ) )
-        {
+        ref var cacheRef = ref CollectionsMarshal.GetValueRefOrAddDefault( _cachesByKeyType, typeof( TKey ), out var exists )!;
+        if ( ! exists )
             cacheRef = new KeyedCache<TKey>();
-            _cachesByKeyType.Add( typeof( TKey ), cacheRef );
-        }
 
         var cache = ReinterpretCast.To<KeyedCache<TKey>>( cacheRef );
-        if ( ! cache.Locators.TryGetValue( key, out var locator ) )
+        ref var locator = ref CollectionsMarshal.GetValueRefOrAddDefault( cache.Locators, key, out exists )!;
+        if ( ! exists )
         {
             var resolvers = ResolversStore.GetResolvers( key );
             locator = new DependencyLocator<TKey>( key, Global.InternalAttachedScope, resolvers );
-            cache.Locators.Add( key, locator );
         }
 
         return locator;

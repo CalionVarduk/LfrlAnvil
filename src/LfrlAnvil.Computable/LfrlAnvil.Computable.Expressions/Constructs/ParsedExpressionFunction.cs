@@ -18,7 +18,7 @@ public class ParsedExpressionFunction
             EqualityComparer<Type>.Default,
             nameof( lambda ) + '.' + nameof( lambda.ReturnType ) );
 
-        IsInlined = inlineIfPossible && lambda.Parameters.All( p => p.Name is not null );
+        IsInlined = inlineIfPossible && lambda.Parameters.All( static p => p.Name is not null );
         Lambda = lambda;
     }
 

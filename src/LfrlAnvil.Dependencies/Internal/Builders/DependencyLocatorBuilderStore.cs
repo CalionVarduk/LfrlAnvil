@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace LfrlAnvil.Dependencies.Internal.Builders;
 
@@ -41,18 +42,14 @@ internal readonly struct DependencyLocatorBuilderStore
     internal DependencyLocatorBuilder<TKey> GetOrAddKeyed<TKey>(TKey key)
         where TKey : notnull
     {
-        if ( ! _cachesByKeyType.TryGetValue( typeof( TKey ), out var cacheRef ) )
-        {
+        ref var cacheRef = ref CollectionsMarshal.GetValueRefOrAddDefault( _cachesByKeyType, typeof( TKey ), out var exists )!;
+        if ( ! exists )
             cacheRef = new KeyedCache<TKey>();
-            _cachesByKeyType.Add( typeof( TKey ), cacheRef );
-        }
 
         var cache = ReinterpretCast.To<KeyedCache<TKey>>( cacheRef );
-        if ( ! cache.Locators.TryGetValue( key, out var builder ) )
-        {
+        ref var builder = ref CollectionsMarshal.GetValueRefOrAddDefault( cache.Locators, key, out exists )!;
+        if ( ! exists )
             builder = new DependencyLocatorBuilder<TKey>( key );
-            cache.Locators.Add( key, builder );
-        }
 
         return builder;
     }
@@ -61,7 +58,7 @@ internal readonly struct DependencyLocatorBuilderStore
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal IEnumerable<DependencyLocatorBuilder> GetAll()
     {
-        return _cachesByKeyType.Values.SelectMany( f => f.GetAll() ).Prepend( Global );
+        return _cachesByKeyType.Values.SelectMany( static f => f.GetAll() ).Prepend( Global );
     }
 
     private abstract class KeyedCache
@@ -83,7 +80,7 @@ internal readonly struct DependencyLocatorBuilderStore
         [Pure]
         internal override IEnumerable<DependencyLocatorBuilder> GetAll()
         {
-            return Locators.Values.Where( b => b.Dependencies.Count > 0 );
+            return Locators.Values.Where( static b => b.Dependencies.Count > 0 );
         }
     }
 }
