@@ -740,7 +740,7 @@ public class DependencyContainerTests : DependencyTestsBase
     public void ResolvingDependency_WithSharedKeyedImplementor_ShouldReturnCorrectInstances()
     {
         var builder = new DependencyContainerBuilder();
-        builder.GetKeyedLocator( 1 ).AddSharedImplementor<Implementor>().FromFactory( _ => new Implementor() );
+        builder.GetKeyedLocator( 1 ).AddSharedImplementor<Implementor>().FromType<Implementor>();
         builder.GetKeyedLocator( 1 ).Add<IFoo>().FromSharedImplementor<Implementor>().SetLifetime( DependencyLifetime.Singleton );
         builder.Add<IBar>().FromSharedImplementor<Implementor>( o => o.Keyed( 1 ) ).SetLifetime( DependencyLifetime.Singleton );
         builder.GetKeyedLocator( "foo" )
@@ -1460,6 +1460,176 @@ public class DependencyContainerTests : DependencyTestsBase
         action.Should()
             .ThrowExactly<InvalidDependencyCastException>()
             .AndMatch( e => e.DependencyType == typeof( byte? ) && e.ResultType is null );
+    }
+
+    [Fact]
+    public void ResolvingDependency_WithDefaultSetup_ShouldReturnCorrectInstance()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IBar>().FromType<Implementor>();
+        builder.Add<ChainableFoo>();
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<ChainableFoo>();
+
+        result.Bar.Should().BeOfType( typeof( Implementor ) );
+    }
+
+    [Fact]
+    public void ResolvingDependency_ShouldReturnCorrectInstance_WhenCtorWithOptionalParameterIsResolvable()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<MultiCtorImplementor>().FromConstructor();
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<MultiCtorImplementor>();
+
+        using ( new AssertionScope() )
+        {
+            result.Bar.Should().BeNull();
+            result.Qux.Should().BeOfType( typeof( Implementor ) );
+        }
+    }
+
+    [Fact]
+    public void ResolvingDependency_ShouldReturnCorrectInstance_WhenCtorWithNonOptionalParameterIsResolvable()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IBar>().FromType<Implementor>();
+        builder.Add<MultiCtorImplementor>().FromConstructor();
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<MultiCtorImplementor>();
+
+        using ( new AssertionScope() )
+        {
+            result.Bar.Should().BeOfType( typeof( Implementor ) );
+            result.Qux.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void ResolvingDependency_ShouldReturnCorrectInstance_WhenCtorWithExplicitFactoryIsChosenOverCtorWithNormallyInjectedDependency()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IQux>().FromType<Implementor>();
+        builder.Add<MultiCtorImplementor>()
+            .FromConstructor(
+                o => o.ResolveParameter( p => p.ParameterType == typeof( IBar ), _ => new Implementor() ) );
+
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<MultiCtorImplementor>();
+
+        using ( new AssertionScope() )
+        {
+            result.Bar.Should().BeOfType( typeof( Implementor ) );
+            result.Qux.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void
+        ResolvingDependency_ShouldReturnCorrectInstance_WhenCtorWithExplicitInjectionIsChosenOverCtorWithNormallyInjectedDependency()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IQux>().FromType<Implementor>();
+        builder.Add<Implementor>();
+        builder.Add<MultiCtorImplementor>()
+            .FromConstructor(
+                o => o.ResolveParameter( p => p.ParameterType == typeof( IBar ), typeof( Implementor ) ) );
+
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<MultiCtorImplementor>();
+
+        using ( new AssertionScope() )
+        {
+            result.Bar.Should().BeOfType( typeof( Implementor ) );
+            result.Qux.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void ResolvingDependency_ShouldReturnCorrectInstance_WhenCtorWithExplicitInjectionIsInvalidAndOtherCtorIsChosen()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IQux>().FromType<Implementor>();
+        builder.Add<MultiCtorImplementor>()
+            .FromConstructor(
+                o => o.ResolveParameter( p => p.ParameterType == typeof( IBar ), typeof( ChainableFoo ) ) );
+
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<MultiCtorImplementor>();
+
+        using ( new AssertionScope() )
+        {
+            result.Bar.Should().BeNull();
+            result.Qux.Should().BeOfType( typeof( Implementor ) );
+        }
+    }
+
+    [Fact]
+    public void ResolvingDependency_ShouldReturnCorrectInstance_WhenCtorWithInjectedDependencyIsChosenOverCtorWithCaptiveDependency()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IQux>().SetLifetime( DependencyLifetime.Transient ).FromType<Implementor>();
+        builder.Add<IBar>().SetLifetime( DependencyLifetime.Singleton ).FromType<Implementor>();
+        builder.Add<MultiCtorImplementor>().SetLifetime( DependencyLifetime.Scoped ).FromConstructor();
+
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<MultiCtorImplementor>();
+
+        using ( new AssertionScope() )
+        {
+            result.Bar.Should().BeOfType( typeof( Implementor ) );
+            result.Qux.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void ResolvingDependency_ShouldReturnCorrectInstance_WhenCtorWithInjectedCaptiveDependencyIsChosen()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IQux>().SetLifetime( DependencyLifetime.Transient ).FromType<Implementor>();
+        builder.Add<MultiCtorImplementor>().SetLifetime( DependencyLifetime.Scoped ).FromConstructor();
+
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<MultiCtorImplementor>();
+
+        using ( new AssertionScope() )
+        {
+            result.Bar.Should().BeNull();
+            result.Qux.Should().BeOfType( typeof( Implementor ) );
+        }
+    }
+
+    [Fact]
+    public void ResolvingDependency_ShouldReturnCorrectInstance_WhenCtorWithMostParametersIsChosenWhenManyWithTheSameScoreExist()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<string>().FromFactory( _ => string.Empty );
+        builder.Add<IBar>().FromType<Implementor>();
+        builder.Add<IQux>().FromType<Implementor>();
+        builder.Add<IWithText>().FromType<ExplicitCtorImplementor>();
+        builder.Add<SameCtorScoreImplementor>()
+            .FromConstructor(
+                o => o.ResolveParameter( p => p.Name == "bar1", typeof( IBar ) )
+                    .ResolveParameter( p => p.Name == "qux1", typeof( IQux ) ) );
+
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<SameCtorScoreImplementor>();
+
+        using ( new AssertionScope() )
+        {
+            result.Bar.Should().BeOfType( typeof( Implementor ) );
+            result.Qux.Should().BeOfType( typeof( Implementor ) );
+            result.Text.Should().NotBeNull();
+        }
     }
 
     [Fact]

@@ -285,4 +285,43 @@ public abstract class DependencyTestsBase : TestsBase
         public IDependencyContainer Container => _container.Instance;
         public IDependencyScope Scope => _scope.Instance;
     }
+
+    public class MultiCtorImplementor : IFoo
+    {
+        public MultiCtorImplementor(IBar bar)
+        {
+            Bar = bar;
+            Qux = null;
+        }
+
+        public MultiCtorImplementor([OptionalDependency] IQux? qux)
+        {
+            Bar = null;
+            Qux = qux ?? new Implementor();
+        }
+
+        public IBar? Bar { get; }
+        public IQux? Qux { get; }
+    }
+
+    public class SameCtorScoreImplementor : IFoo
+    {
+        public SameCtorScoreImplementor(IBar bar1, IQux qux1)
+        {
+            Bar = bar1;
+            Qux = qux1;
+            Text = null;
+        }
+
+        public SameCtorScoreImplementor(IBar bar2, IQux qux2, IWithText text2)
+        {
+            Bar = bar2;
+            Qux = qux2;
+            Text = text2;
+        }
+
+        public IBar Bar { get; }
+        public IQux Qux { get; }
+        public IWithText? Text { get; }
+    }
 }

@@ -6,7 +6,7 @@ namespace LfrlAnvil.Dependencies.Internal.Resolvers.Factories;
 
 internal sealed class ScopedDependencyResolverFactory : ImplementorBasedDependencyResolverFactory
 {
-    internal ScopedDependencyResolverFactory(ImplementorKey implementorKey, IDependencyImplementorBuilder? implementorBuilder)
+    internal ScopedDependencyResolverFactory(ImplementorKey implementorKey, IDependencyImplementorBuilder implementorBuilder)
         : base( implementorKey, implementorBuilder, DependencyLifetime.Scoped ) { }
 
     protected override DependencyResolver CreateFromExpression(

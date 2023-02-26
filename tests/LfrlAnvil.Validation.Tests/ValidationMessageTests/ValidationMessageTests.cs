@@ -47,7 +47,7 @@ public class ValidationMessageTests : TestsBase
 
         result.Should().Be( expected );
     }
-    
+
     [Fact]
     public void GetUnderlyingType_ShouldReturnNull_WhenTypeIsNull()
     {

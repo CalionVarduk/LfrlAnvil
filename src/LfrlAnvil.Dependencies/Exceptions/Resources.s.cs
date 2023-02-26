@@ -115,7 +115,14 @@ internal static class Resources
     internal static string ProvidedConstructorDoesNotCreateInstancesOfCorrectType(ConstructorInfo ctor)
     {
         return
-            $"Constructor '{ctor.GetDebugString( includeDeclaringType: true )}' provided as a creation detail does not create instances of correct type.";
+            $"Constructor '{ctor.GetDebugString( includeDeclaringType: true )}' provided as a creation detail does not create instances assignable to expected type.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ProvidedTypeIsIncorrect(Type type)
+    {
+        return $"Type '{type.GetDebugString()}' provided as a creation detail is not assignable to expected type.";
     }
 
     [Pure]

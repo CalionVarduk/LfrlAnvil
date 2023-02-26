@@ -30,7 +30,7 @@ internal abstract class DependencyResolverFactory
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static DependencyResolverFactory Create(
         ImplementorKey implementorKey,
-        IDependencyImplementorBuilder? implementorBuilder,
+        IDependencyImplementorBuilder implementorBuilder,
         DependencyLifetime lifetime)
     {
         DependencyResolverFactory result = lifetime switch

@@ -29,7 +29,7 @@ internal abstract class ImplementorBasedDependencyResolverFactory : DependencyRe
 
     protected ImplementorBasedDependencyResolverFactory(
         ImplementorKey implementorKey,
-        IDependencyImplementorBuilder? implementorBuilder,
+        IDependencyImplementorBuilder implementorBuilder,
         DependencyLifetime lifetime)
         : base( lifetime )
     {
@@ -43,7 +43,7 @@ internal abstract class ImplementorBasedDependencyResolverFactory : DependencyRe
     }
 
     internal ImplementorKey ImplementorKey { get; }
-    internal IDependencyImplementorBuilder? ImplementorBuilder { get; }
+    internal IDependencyImplementorBuilder ImplementorBuilder { get; }
     internal IInternalDependencyKey InternalImplementorKey => ReinterpretCast.To<IInternalDependencyKey>( ImplementorKey.Value );
 
     [Pure]
@@ -63,19 +63,20 @@ internal abstract class ImplementorBasedDependencyResolverFactory : DependencyRe
 
     internal void PrepareCreationMethod(
         UlongSequenceGenerator idGenerator,
-        IReadOnlyDictionary<IDependencyKey, DependencyResolverFactory> availableDependencies)
+        IReadOnlyDictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
+        IDependencyContainerConfigurationBuilder configuration)
     {
         if ( State != DependencyResolverFactoryState.Created )
             return;
 
-        if ( ImplementorBuilder?.Factory is not null )
+        if ( ImplementorBuilder.Factory is not null )
         {
             var resolver = CreateFromFactory( idGenerator );
             Finish( resolver );
             return;
         }
 
-        var result = FindValidConstructor( availableDependencies );
+        var result = FindValidConstructor( availableDependencies, configuration );
         if ( result.Errors.Count > 0 )
         {
             _errors = _errors.Extend( result.Errors );
@@ -98,7 +99,7 @@ internal abstract class ImplementorBasedDependencyResolverFactory : DependencyRe
         Assume.IsNotNull( _constructorInfo, nameof( _constructorInfo ) );
 
         var captiveDependencies = Chain<string>.Empty;
-        var invocationOptions = ImplementorBuilder?.Constructor?.InvocationOptions;
+        var invocationOptions = ImplementorBuilder.Constructor?.InvocationOptions;
 
         var parameters = _constructorInfo.GetParameters();
         var explicitParameterResolutions = invocationOptions?.ParameterResolutions;
@@ -247,10 +248,9 @@ internal abstract class ImplementorBasedDependencyResolverFactory : DependencyRe
         T target)
         where T : class, ICustomAttributeProvider
     {
-        Assume.IsNotNull( resolutions, nameof( resolutions ) );
-
         for ( var i = 0; i < resolutionsLength; ++i )
         {
+            Assume.IsNotNull( resolutions, nameof( resolutions ) );
             if ( resolutions[i].Predicate( target ) )
                 return i;
         }
@@ -395,35 +395,44 @@ internal abstract class ImplementorBasedDependencyResolverFactory : DependencyRe
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private (ConstructorInfo? Info, Chain<string> Errors) FindValidConstructor(
-        IReadOnlyDictionary<IDependencyKey, DependencyResolverFactory> availableDependencies)
+        IReadOnlyDictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
+        IDependencyContainerConfigurationBuilder configuration)
     {
-        Assume.IsNull( ImplementorBuilder?.Factory, nameof( ImplementorBuilder.Factory ) );
+        Assume.IsNull( ImplementorBuilder.Factory, nameof( ImplementorBuilder.Factory ) );
 
         var errors = Chain<string>.Empty;
-        var ctor = ImplementorBuilder?.Constructor?.Info;
+        var ctor = ImplementorBuilder.Constructor?.Info;
 
-        if ( ctor is null )
-        {
-            var explicitType = ImplementorBuilder?.Constructor?.Type;
-            var type = explicitType ?? ImplementorKey.Value.Type;
-
-            if ( ! type.IsConstructable() )
-                errors = errors.Extend( Resources.ProvidedTypeIsNonConstructable( explicitType ) );
-            else
-            {
-                // TODO: try to find best possible ctor for Type
-
-                if ( ctor is null )
-                    errors = errors.Extend( Resources.FailedToFindValidCtorForType( explicitType ) );
-            }
-        }
-        else
+        if ( ctor is not null )
         {
             if ( ctor.DeclaringType?.IsAssignableTo( ImplementorKey.Value.Type ) != true )
                 errors = errors.Extend( Resources.ProvidedConstructorDoesNotCreateInstancesOfCorrectType( ctor ) );
 
             if ( ctor.DeclaringType?.IsConstructable() != true )
                 errors = errors.Extend( Resources.ProvidedConstructorBelongsToNonConstructableType( ctor ) );
+        }
+        else
+        {
+            Type type;
+            var explicitType = ImplementorBuilder.Constructor?.Type;
+            if ( explicitType is not null )
+            {
+                type = explicitType;
+                if ( ! explicitType.IsAssignableTo( ImplementorKey.Value.Type ) )
+                    errors = errors.Extend( Resources.ProvidedTypeIsIncorrect( explicitType ) );
+            }
+            else
+                type = ImplementorKey.Value.Type;
+
+            if ( ! type.IsConstructable() )
+                errors = errors.Extend( Resources.ProvidedTypeIsNonConstructable( explicitType ) );
+
+            if ( errors.Count == 0 )
+            {
+                ctor = FindCtor( type, availableDependencies, configuration );
+                if ( ctor is null )
+                    errors = errors.Extend( Resources.FailedToFindValidCtorForType( explicitType ) );
+            }
         }
 
         return (ctor, errors);
@@ -434,6 +443,8 @@ internal abstract class ImplementorBasedDependencyResolverFactory : DependencyRe
         if ( HasAnyState( DependencyResolverFactoryState.CanRegisterCircularDependency ) )
         {
             Assume.ContainsAtLeast( path, 2, nameof( path ) );
+            Assume.True( ReferenceEquals( this, path[^1].Node ), "This and last node in the path must be the same." );
+
             var pathSpan = CollectionsMarshal.AsSpan( path );
 
             var startIndex = pathSpan.Length - 2;
@@ -700,9 +711,95 @@ internal abstract class ImplementorBasedDependencyResolverFactory : DependencyRe
         var resolver = factory.GetResolver();
 
         return Expression.Call(
-            Expression.Constant( resolver, typeof( DependencyResolver ) ),
+            Expression.Constant( resolver ),
             ResolverCreateMethod,
             scopeParameter,
             Expression.Constant( dependencyType, typeof( Type ) ) );
+    }
+
+    private ConstructorInfo? FindCtor(
+        Type type,
+        IReadOnlyDictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
+        IDependencyContainerConfigurationBuilder configuration)
+    {
+        const int notEligibleScore = -1;
+        const int defaultScore = 1;
+
+        var invocationOptions = ImplementorBuilder.Constructor?.InvocationOptions;
+        var explicitParameterResolutions = invocationOptions?.ParameterResolutions;
+        var explicitResolutionsLength = explicitParameterResolutions?.Count ?? 0;
+
+        var constructors = type.GetConstructors( BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic );
+        var scoredConstructors = new (ConstructorInfo Info, int Score, int ParameterCount)[constructors.Length];
+
+        for ( var i = 0; i < constructors.Length; ++i )
+        {
+            var ctor = constructors[i];
+            var parameters = ctor.GetParameters();
+            var score = ctor.IsPublic ? defaultScore : 0;
+
+            for ( var j = 0; j < parameters.Length; ++j )
+            {
+                var parameter = parameters[j];
+                var customResolutionIndex = FindCustomResolutionIndex( explicitParameterResolutions, explicitResolutionsLength, parameter );
+
+                IDependencyKey implementorKey;
+                if ( customResolutionIndex == -1 )
+                    implementorKey = InternalImplementorKey.WithType( parameter.ParameterType );
+                else
+                {
+                    var resolution = explicitParameterResolutions![customResolutionIndex];
+                    if ( resolution.Factory is not null )
+                    {
+                        score += defaultScore * 3;
+                        continue;
+                    }
+
+                    Assume.IsNotNull( resolution.ImplementorKey, nameof( resolution.ImplementorKey ) );
+                    if ( ! resolution.ImplementorKey.Type.IsAssignableTo( parameter.ParameterType ) )
+                    {
+                        score = notEligibleScore;
+                        break;
+                    }
+
+                    score += defaultScore;
+                    implementorKey = resolution.ImplementorKey;
+                }
+
+                if ( availableDependencies.TryGetValue( implementorKey, out var parameterFactory ) )
+                {
+                    if ( ! parameterFactory.IsCaptiveDependencyOf( Lifetime ) )
+                        score += defaultScore * 2;
+
+                    continue;
+                }
+
+                if ( ! parameter.HasDefaultValue &&
+                    ! parameter.HasAttribute( configuration.OptionalDependencyAttributeType, inherit: false ) )
+                {
+                    score = notEligibleScore;
+                    break;
+                }
+
+                score += defaultScore;
+            }
+
+            scoredConstructors[i] = (ctor, score, parameters.Length);
+        }
+
+        (ConstructorInfo Info, int Score, int ParameterCount)? result = null;
+        for ( var i = 0; i < scoredConstructors.Length; ++i )
+        {
+            var other = scoredConstructors[i];
+            if ( other.Score == notEligibleScore )
+                continue;
+
+            if ( result is null ||
+                other.Score > result.Value.Score ||
+                (other.Score == result.Value.Score && other.ParameterCount > result.Value.ParameterCount) )
+                result = other;
+        }
+
+        return result?.Info;
     }
 }

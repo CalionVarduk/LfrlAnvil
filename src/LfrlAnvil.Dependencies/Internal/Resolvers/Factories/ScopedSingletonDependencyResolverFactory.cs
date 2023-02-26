@@ -8,7 +8,7 @@ internal sealed class ScopedSingletonDependencyResolverFactory : ImplementorBase
 {
     internal ScopedSingletonDependencyResolverFactory(
         ImplementorKey implementorKey,
-        IDependencyImplementorBuilder? implementorBuilder)
+        IDependencyImplementorBuilder implementorBuilder)
         : base( implementorKey, implementorBuilder, DependencyLifetime.ScopedSingleton ) { }
 
     protected override DependencyResolver CreateFromExpression(

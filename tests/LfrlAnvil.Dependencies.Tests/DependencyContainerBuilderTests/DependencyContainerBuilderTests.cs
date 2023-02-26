@@ -1258,6 +1258,98 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         }
     }
 
+    [Fact]
+    public void TryBuild_ShouldReturnFailureResult_WhenExplicitTypeIsNotOfCorrectType()
+    {
+        var sut = new DependencyContainerBuilder();
+        sut.Add<IFoo>().FromType<ExplicitCtorImplementor>();
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeFalse();
+            result.Container.Should().BeNull();
+            result.Messages.Should().HaveCount( 1 );
+            if ( result.Messages.Count < 1 )
+                return;
+
+            var message = result.Messages.First();
+            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
+            message.Warnings.Should().BeEmpty();
+            message.Errors.Should().HaveCount( 1 );
+        }
+    }
+
+    [Fact]
+    public void TryBuild_ShouldReturnFailureResult_WhenExplicitTypeIsAbstract()
+    {
+        var sut = new DependencyContainerBuilder();
+        sut.Add<IFoo>().FromType<AbstractFoo>();
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeFalse();
+            result.Container.Should().BeNull();
+            result.Messages.Should().HaveCount( 1 );
+            if ( result.Messages.Count < 1 )
+                return;
+
+            var message = result.Messages.First();
+            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
+            message.Warnings.Should().BeEmpty();
+            message.Errors.Should().HaveCount( 1 );
+        }
+    }
+
+    [Fact]
+    public void TryBuild_ShouldReturnFailureResult_WhenCtorForTypeCouldNotBeFound()
+    {
+        var sut = new DependencyContainerBuilder();
+        sut.Add<ChainableFoo>().FromConstructor();
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeFalse();
+            result.Container.Should().BeNull();
+            result.Messages.Should().HaveCount( 1 );
+            if ( result.Messages.Count < 1 )
+                return;
+
+            var message = result.Messages.First();
+            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( ChainableFoo ) ) ) );
+            message.Warnings.Should().BeEmpty();
+            message.Errors.Should().HaveCount( 1 );
+        }
+    }
+
+    [Fact]
+    public void TryBuild_ShouldReturnFailureResult_WhenCtorForExplicitTypeCouldNotBeFound()
+    {
+        var sut = new DependencyContainerBuilder();
+        sut.Add<IFoo>().FromType<ChainableFoo>();
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeFalse();
+            result.Container.Should().BeNull();
+            result.Messages.Should().HaveCount( 1 );
+            if ( result.Messages.Count < 1 )
+                return;
+
+            var message = result.Messages.First();
+            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
+            message.Warnings.Should().BeEmpty();
+            message.Errors.Should().HaveCount( 1 );
+        }
+    }
+
     [Theory]
     [InlineData( typeof( IFoo ) )]
     [InlineData( typeof( AbstractFoo ) )]

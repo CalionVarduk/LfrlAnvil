@@ -6,7 +6,7 @@ namespace LfrlAnvil.Dependencies.Internal.Resolvers.Factories;
 
 internal sealed class TransientDependencyResolverFactory : ImplementorBasedDependencyResolverFactory
 {
-    internal TransientDependencyResolverFactory(ImplementorKey implementorKey, IDependencyImplementorBuilder? implementorBuilder)
+    internal TransientDependencyResolverFactory(ImplementorKey implementorKey, IDependencyImplementorBuilder implementorBuilder)
         : base( implementorKey, implementorBuilder, DependencyLifetime.Transient ) { }
 
     protected override DependencyResolver CreateFromExpression(

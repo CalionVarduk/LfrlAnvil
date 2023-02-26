@@ -113,7 +113,11 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
                 continue;
             }
 
-            var factory = DependencyResolverFactory.Create( dependencyKey, builder.Implementor, builder.Lifetime );
+            var factory = DependencyResolverFactory.Create(
+                dependencyKey,
+                builder.Implementor ?? new DependencyImplementorBuilder( this, builder.DependencyType ),
+                builder.Lifetime );
+
             @params.ResolverFactories.Add( dependencyKey.Value, factory );
         }
 

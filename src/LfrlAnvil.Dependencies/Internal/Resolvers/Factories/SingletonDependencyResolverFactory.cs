@@ -6,7 +6,7 @@ namespace LfrlAnvil.Dependencies.Internal.Resolvers.Factories;
 
 internal sealed class SingletonDependencyResolverFactory : ImplementorBasedDependencyResolverFactory
 {
-    internal SingletonDependencyResolverFactory(ImplementorKey implementorKey, IDependencyImplementorBuilder? implementorBuilder)
+    internal SingletonDependencyResolverFactory(ImplementorKey implementorKey, IDependencyImplementorBuilder implementorBuilder)
         : base( implementorKey, implementorBuilder, DependencyLifetime.Singleton ) { }
 
     protected override DependencyResolver CreateFromExpression(

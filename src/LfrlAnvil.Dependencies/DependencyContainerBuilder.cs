@@ -85,7 +85,7 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
                 continue;
 
             ReinterpretCast.To<ImplementorBasedDependencyResolverFactory>( factory )
-                .PrepareCreationMethod( idGenerator, extractionParams.ResolverFactories );
+                .PrepareCreationMethod( idGenerator, extractionParams.ResolverFactories, Configuration );
         }
 
         foreach ( var factory in resolverFactories )
