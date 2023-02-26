@@ -57,7 +57,18 @@ public readonly struct Bitmask<T> : IEquatable<Bitmask<T>>, IComparable<Bitmask<
     }
 
     public T Value { get; }
-    public int Count => this.Count();
+
+    public int Count
+    {
+        get
+        {
+            var result = 0;
+            foreach ( var _ in this )
+                ++result;
+
+            return result;
+        }
+    }
 
     [Pure]
     public override string ToString()
@@ -235,15 +246,15 @@ public readonly struct Bitmask<T> : IEquatable<Bitmask<T>>, IComparable<Bitmask<
     }
 
     [Pure]
-    public IEnumerator<T> GetEnumerator()
+    public Enumerator GetEnumerator()
     {
-        // TODO: this struct could use a dedicated struct, non-allocating Enumerator
-        var longValue = ToLongValue( Value );
+        return new Enumerator( Value );
+    }
 
-        return Enumerable.Range( 0, BitCount )
-            .Where( i => ((longValue >> i) & 1) == 1 )
-            .Select( static i => FromLongValue( 1UL << i ) )
-            .GetEnumerator();
+    [Pure]
+    IEnumerator<T> IEnumerable<T>.GetEnumerator()
+    {
+        return GetEnumerator();
     }
 
     [Pure]
@@ -376,6 +387,48 @@ public readonly struct Bitmask<T> : IEquatable<Bitmask<T>>, IComparable<Bitmask<
     public static Bitmask<T> operator ~(Bitmask<T> a)
     {
         return a.Negate();
+    }
+
+    public struct Enumerator : IEnumerator<T>
+    {
+        private readonly ulong _value;
+        private int _index;
+
+        internal Enumerator(T value)
+        {
+            _value = ToLongValue( value );
+            _index = -1;
+        }
+
+        public T Current => FromLongValue( 1UL << _index );
+        object IEnumerator.Current => Current;
+
+        public void Dispose() { }
+
+        public bool MoveNext()
+        {
+            ++_index;
+            while ( true )
+            {
+                if ( _index >= BitCount )
+                {
+                    _index = BitCount;
+                    return false;
+                }
+
+                if ( ((_value >> _index) & 1UL) == 1UL )
+                    break;
+
+                ++_index;
+            }
+
+            return true;
+        }
+
+        void IEnumerator.Reset()
+        {
+            _index = -1;
+        }
     }
 
     private static void TryAssertEnumType()
