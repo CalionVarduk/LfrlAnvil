@@ -1517,4 +1517,49 @@ public class DependencyContainerTests : DependencyTestsBase
 
         result.Should().BeSameAs( expected );
     }
+
+    [Fact]
+    public void DependencyLocator_ResolvableTypes_ShouldReturnAllResolvableTypesWithinThatLocator()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IFoo>().FromFactory( _ => new Implementor() );
+        builder.Add<IBar>().FromFactory( _ => new Implementor() );
+        builder.Add<IQux>().FromFactory( _ => new Implementor() );
+        builder.GetKeyedLocator( 1 ).Add<IWithText>().FromFactory( _ => new ExplicitCtorImplementor( string.Empty ) );
+        var container = builder.Build();
+
+        var sut = container.ActiveScope.Locator;
+
+        var result = sut.ResolvableTypes;
+
+        result.Should()
+            .BeEquivalentTo( typeof( IFoo ), typeof( IBar ), typeof( IQux ), typeof( IDependencyContainer ), typeof( IDependencyScope ) );
+    }
+
+    [Theory]
+    [InlineData( typeof( IDependencyContainer ), DependencyLifetime.Singleton )]
+    [InlineData( typeof( IDependencyScope ), DependencyLifetime.Singleton )]
+    [InlineData( typeof( IFoo ), DependencyLifetime.Transient )]
+    [InlineData( typeof( IBar ), DependencyLifetime.Scoped )]
+    [InlineData( typeof( IQux ), DependencyLifetime.ScopedSingleton )]
+    [InlineData( typeof( IWithText ), DependencyLifetime.Singleton )]
+    [InlineData( typeof( string ), null )]
+    public void DependencyLocator_TryGetLifetime_ShouldReturnCorrectResult(Type type, DependencyLifetime? expected)
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IFoo>().SetLifetime( DependencyLifetime.Transient ).FromFactory( _ => new Implementor() );
+        builder.Add<IBar>().SetLifetime( DependencyLifetime.Scoped ).FromFactory( _ => new Implementor() );
+        builder.Add<IQux>().SetLifetime( DependencyLifetime.ScopedSingleton ).FromFactory( _ => new Implementor() );
+        builder.Add<IWithText>()
+            .SetLifetime( DependencyLifetime.Singleton )
+            .FromFactory( _ => new ExplicitCtorImplementor( string.Empty ) );
+
+        var container = builder.Build();
+
+        var sut = container.ActiveScope.Locator;
+
+        var result = sut.TryGetLifetime( type );
+
+        result.Should().Be( expected );
+    }
 }

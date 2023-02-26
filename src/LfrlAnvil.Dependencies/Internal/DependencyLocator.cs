@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 using LfrlAnvil.Dependencies.Exceptions;
 using LfrlAnvil.Dependencies.Internal.Resolvers;
 
@@ -14,6 +16,7 @@ internal class DependencyLocator : IDependencyLocator
     }
 
     public IDependencyScope AttachedScope => InternalAttachedScope;
+    public IEnumerable<Type> ResolvableTypes => Resolvers.Keys;
     internal DependencyScope InternalAttachedScope { get; }
     internal Dictionary<Type, DependencyResolver> Resolvers { get; }
 
@@ -63,6 +66,25 @@ internal class DependencyLocator : IDependencyLocator
             return dependency;
 
         throw new InvalidDependencyCastException( typeof( T ), result.GetType() );
+    }
+
+    [Pure]
+    public DependencyLifetime? TryGetLifetime(Type type)
+    {
+        return Resolvers.TryGetValue( type, out var resolver ) ? GetLifetime( resolver ) : null;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static DependencyLifetime GetLifetime(DependencyResolver resolver)
+    {
+        return resolver switch
+        {
+            TransientDependencyResolver => DependencyLifetime.Transient,
+            ScopedDependencyResolver => DependencyLifetime.Scoped,
+            ScopedSingletonDependencyResolver => DependencyLifetime.ScopedSingleton,
+            _ => DependencyLifetime.Singleton
+        };
     }
 }
 

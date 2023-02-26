@@ -36,6 +36,14 @@ internal sealed class DependencyImplementorBuilder : IDependencyImplementorBuild
         return FromConstructorInternal( info, configuration );
     }
 
+    public IDependencyImplementorBuilder FromType(Type type, Action<IDependencyConstructorInvocationOptions>? configuration = null)
+    {
+        Factory = null;
+        InternalConstructor = new DependencyConstructor( LocatorBuilder, type );
+        configuration?.Invoke( InternalConstructor.InternalInvocationOptions );
+        return this;
+    }
+
     public IDependencyImplementorBuilder FromFactory(Func<IDependencyScope, object> factory)
     {
         Factory = factory;

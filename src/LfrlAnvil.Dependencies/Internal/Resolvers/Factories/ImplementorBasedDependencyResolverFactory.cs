@@ -404,14 +404,17 @@ internal abstract class ImplementorBasedDependencyResolverFactory : DependencyRe
 
         if ( ctor is null )
         {
-            if ( ! ImplementorKey.Value.Type.IsConstructable() )
-                errors = errors.Extend( Resources.FailedToFindValidCtor );
+            var explicitType = ImplementorBuilder?.Constructor?.Type;
+            var type = explicitType ?? ImplementorKey.Value.Type;
+
+            if ( ! type.IsConstructable() )
+                errors = errors.Extend( Resources.ProvidedTypeIsNonConstructable( explicitType ) );
             else
             {
                 // TODO: try to find best possible ctor for Type
 
                 if ( ctor is null )
-                    errors = errors.Extend( Resources.FailedToFindValidCtor );
+                    errors = errors.Extend( Resources.FailedToFindValidCtorForType( explicitType ) );
             }
         }
         else

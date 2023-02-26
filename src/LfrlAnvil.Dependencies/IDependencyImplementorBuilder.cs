@@ -17,6 +17,8 @@ public interface IDependencyImplementorBuilder
         ConstructorInfo info,
         Action<IDependencyConstructorInvocationOptions>? configuration = null);
 
+    IDependencyImplementorBuilder FromType(Type type, Action<IDependencyConstructorInvocationOptions>? configuration = null);
+
     IDependencyImplementorBuilder FromFactory(Func<IDependencyScope, object> factory);
     IDependencyImplementorBuilder SetDisposalStrategy(DependencyImplementorDisposalStrategy strategy);
     IDependencyImplementorBuilder SetOnResolvingCallback(Action<Type, IDependencyScope>? callback);

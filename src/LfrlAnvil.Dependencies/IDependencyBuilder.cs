@@ -20,5 +20,7 @@ public interface IDependencyBuilder
         ConstructorInfo info,
         Action<IDependencyConstructorInvocationOptions>? configuration = null);
 
+    IDependencyImplementorBuilder FromType(Type type, Action<IDependencyConstructorInvocationOptions>? configuration = null);
+
     IDependencyImplementorBuilder FromFactory(Func<IDependencyScope, object> factory);
 }

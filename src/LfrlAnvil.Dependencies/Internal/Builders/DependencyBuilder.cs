@@ -50,6 +50,11 @@ internal sealed class DependencyBuilder : IDependencyBuilder
         return GetOrCreateImplementor().FromConstructor( info, configuration );
     }
 
+    public IDependencyImplementorBuilder FromType(Type type, Action<IDependencyConstructorInvocationOptions>? configuration = null)
+    {
+        return GetOrCreateImplementor().FromType( type, configuration );
+    }
+
     public IDependencyImplementorBuilder FromFactory(Func<IDependencyScope, object> factory)
     {
         return GetOrCreateImplementor().FromFactory( factory );

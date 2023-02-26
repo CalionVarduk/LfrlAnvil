@@ -283,6 +283,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
                 return;
 
             result.Constructor.Info.Should().BeNull();
+            result.Constructor.Type.Should().BeNull();
             result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
             result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
             result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
@@ -313,6 +314,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
                 return;
 
             result.Constructor.Info.Should().BeNull();
+            result.Constructor.Type.Should().BeNull();
             result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeSameAs( onCreatedCallback );
             result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
             result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
@@ -343,6 +345,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
                 return;
 
             result.Constructor.Info.Should().BeSameAs( ctor );
+            result.Constructor.Type.Should().BeSameAs( ctor.DeclaringType );
             result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
             result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
             result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
@@ -374,6 +377,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
                 return;
 
             result.Constructor.Info.Should().BeSameAs( ctor );
+            result.Constructor.Type.Should().BeSameAs( ctor.DeclaringType );
             result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeSameAs( onCreatedCallback );
             result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
             result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
@@ -404,7 +408,67 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
                 return;
 
             result.Constructor.Info.Should().BeSameAs( ctor );
+            result.Constructor.Type.Should().BeSameAs( ctor.DeclaringType );
             result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
+            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
+            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void Add_FromType_ShouldSetTypeAsCreationDetail()
+    {
+        var sut = new DependencyContainerBuilder();
+        var builder = sut.Add( typeof( IFoo ) );
+
+        var result = builder.FromType( typeof( Implementor ) );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( builder.Implementor );
+            builder.SharedImplementorKey.Should().BeNull();
+            result.ImplementorType.Should().Be( typeof( IFoo ) );
+            result.Factory.Should().BeNull();
+            result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
+            result.DisposalStrategy.Callback.Should().BeNull();
+            result.OnResolvingCallback.Should().BeNull();
+            result.Constructor.Should().NotBeNull();
+            if ( result.Constructor is null )
+                return;
+
+            result.Constructor.Info.Should().BeNull();
+            result.Constructor.Type.Should().BeSameAs( typeof( Implementor ) );
+            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
+            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
+            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void Add_FromType_WithConfiguration_ShouldSetTypeAsCreationDetail()
+    {
+        var onCreatedCallback = Substitute.For<Action<object, Type, IDependencyScope>>();
+        var sut = new DependencyContainerBuilder();
+        var builder = sut.Add( typeof( IFoo ) );
+
+        var result = builder.FromType( typeof( Implementor ), o => o.SetOnCreatedCallback( onCreatedCallback ) );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( builder.Implementor );
+            builder.SharedImplementorKey.Should().BeNull();
+            result.ImplementorType.Should().Be( typeof( IFoo ) );
+            result.Factory.Should().BeNull();
+            result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
+            result.DisposalStrategy.Callback.Should().BeNull();
+            result.OnResolvingCallback.Should().BeNull();
+            result.Constructor.Should().NotBeNull();
+            if ( result.Constructor is null )
+                return;
+
+            result.Constructor.Info.Should().BeNull();
+            result.Constructor.Type.Should().BeSameAs( typeof( Implementor ) );
+            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeSameAs( onCreatedCallback );
             result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
             result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
         }
@@ -604,6 +668,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
                 return;
 
             result.Constructor.Info.Should().BeNull();
+            result.Constructor.Type.Should().BeNull();
             result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
             result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
             result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
@@ -629,6 +694,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
                 return;
 
             result.Constructor.Info.Should().BeNull();
+            result.Constructor.Type.Should().BeNull();
             result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeSameAs( onCreatedCallback );
             result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
             result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
@@ -654,6 +720,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
                 return;
 
             result.Constructor.Info.Should().BeSameAs( ctor );
+            result.Constructor.Type.Should().BeSameAs( ctor.DeclaringType );
             result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
             result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
             result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
@@ -680,6 +747,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
                 return;
 
             result.Constructor.Info.Should().BeSameAs( ctor );
+            result.Constructor.Type.Should().BeSameAs( ctor.DeclaringType );
             result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeSameAs( onCreatedCallback );
             result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
             result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
@@ -708,6 +776,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
                 return;
 
             result.Constructor.Info.Should().BeNull();
+            result.Constructor.Type.Should().BeNull();
             result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
             result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
             result.Constructor.InvocationOptions.ParameterResolutions.Should().HaveCount( 2 );
@@ -747,6 +816,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
                 return;
 
             result.Constructor.Info.Should().BeNull();
+            result.Constructor.Type.Should().BeNull();
             result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
             result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
             result.Constructor.InvocationOptions.MemberResolutions.Should().HaveCount( 2 );
@@ -784,6 +854,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
                 return;
 
             result.Constructor.Info.Should().BeNull();
+            result.Constructor.Type.Should().BeNull();
             result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
             result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
             result.Constructor.InvocationOptions.MemberResolutions.Should().HaveCount( 1 );
@@ -810,8 +881,60 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
                 return;
 
             result.Constructor.Info.Should().BeNull();
+            result.Constructor.Type.Should().BeNull();
             result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
             result.Constructor.InvocationOptions.ParameterResolutions.Should().HaveCount( 1 );
+            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void AddSharedImplementor_FromType_ShouldSetTypeAsCreationDetail()
+    {
+        var sut = new DependencyContainerBuilder();
+        var builder = sut.AddSharedImplementor( typeof( IFoo ) );
+
+        var result = builder.FromType( typeof( Implementor ) );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( builder );
+            result.ImplementorType.Should().Be( typeof( IFoo ) );
+            result.Factory.Should().BeNull();
+            result.Constructor.Should().NotBeNull();
+            if ( result.Constructor is null )
+                return;
+
+            result.Constructor.Info.Should().BeNull();
+            result.Constructor.Type.Should().BeSameAs( typeof( Implementor ) );
+            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
+            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
+            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void AddSharedImplementor_FromType_WithConfiguration_ShouldSetTypeAsCreationDetail()
+    {
+        var onCreatedCallback = Substitute.For<Action<object, Type, IDependencyScope>>();
+        var sut = new DependencyContainerBuilder();
+        var builder = sut.AddSharedImplementor( typeof( IFoo ) );
+
+        var result = builder.FromType( typeof( Implementor ), o => o.SetOnCreatedCallback( onCreatedCallback ) );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( builder );
+            result.ImplementorType.Should().Be( typeof( IFoo ) );
+            result.Factory.Should().BeNull();
+            result.Constructor.Should().NotBeNull();
+            if ( result.Constructor is null )
+                return;
+
+            result.Constructor.Info.Should().BeNull();
+            result.Constructor.Type.Should().BeSameAs( typeof( Implementor ) );
+            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeSameAs( onCreatedCallback );
+            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
             result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
         }
     }
@@ -1155,6 +1278,31 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
             var message = result.Messages.First();
             message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( dependencyType ) ) );
+            message.Warnings.Should().BeEmpty();
+            message.Errors.Should().HaveCount( 1 );
+        }
+    }
+
+    [Theory]
+    [InlineData( typeof( IFoo ) )]
+    [InlineData( typeof( AbstractFoo ) )]
+    public void TryBuild_ShouldReturnFailureResult_WhenImplicitCtorCannotBeFoundBecauseExplicitTypeIsAbstract(Type type)
+    {
+        var sut = new DependencyContainerBuilder();
+        sut.Add<IFoo>().FromType( type );
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeFalse();
+            result.Container.Should().BeNull();
+            result.Messages.Should().HaveCount( 1 );
+            if ( result.Messages.Count < 1 )
+                return;
+
+            var message = result.Messages.First();
+            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
             message.Warnings.Should().BeEmpty();
             message.Errors.Should().HaveCount( 1 );
         }

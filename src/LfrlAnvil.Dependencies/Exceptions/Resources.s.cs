@@ -10,8 +10,6 @@ namespace LfrlAnvil.Dependencies.Exceptions;
 
 internal static class Resources
 {
-    internal const string FailedToFindValidCtor = "Failed to find a valid constructor.";
-
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string ScopeIsDisposed(IDependencyScope scope)
@@ -92,6 +90,24 @@ internal static class Resources
     internal static string SharedImplementorIsMissing(IDependencyKey implementorKey)
     {
         return $"Expected shared implementor {implementorKey} does not exist.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ProvidedTypeIsNonConstructable(Type? type)
+    {
+        return type is null
+            ? "Type is not constructable."
+            : $"Type '{type.GetDebugString()}' provided as a creation detail is not constructable.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string FailedToFindValidCtorForType(Type? type)
+    {
+        return type is null
+            ? "Failed to find a valid constructor."
+            : $"Failed to find a valid constructor for type '{type.GetDebugString()}' provided as a creation detail.";
     }
 
     [Pure]
