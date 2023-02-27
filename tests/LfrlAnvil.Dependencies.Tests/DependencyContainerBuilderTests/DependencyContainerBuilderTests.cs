@@ -234,6 +234,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
             result.Lifetime.Should().Be( sut.DefaultLifetime );
             result.Implementor.Should().BeNull();
             result.SharedImplementorKey.Should().BeNull();
+            result.IsIncludedInRange.Should().BeTrue();
         }
     }
 
@@ -502,6 +503,23 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         var action = Lambda.Of( () => { builder.SetLifetime( (DependencyLifetime)4 ); } );
 
         action.Should().ThrowExactly<ArgumentException>();
+    }
+
+    [Theory]
+    [InlineData( true )]
+    [InlineData( false )]
+    public void Add_IncludeInRange_ShouldUpdateIsIncludedInRangeCorrectly(bool included)
+    {
+        var sut = new DependencyContainerBuilder();
+        var builder = sut.Add( typeof( IFoo ) );
+
+        var result = builder.IncludeInRange( included );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( builder );
+            result.IsIncludedInRange.Should().Be( included );
+        }
     }
 
     [Fact]
@@ -989,22 +1007,35 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
     }
 
     [Fact]
-    public void TryGetDependency_ShouldReturnNull_WhenDependencyTypeWasNotRegistered()
+    public void GetDependencyRange_ShouldReturnNewlyCreatedEmptyRange_WhenDependencyTypeWasNotRegistered()
     {
         var sut = new DependencyContainerBuilder();
-        var result = sut.TryGetDependency( typeof( IFoo ) );
-        result.Should().BeNull();
+
+        var result = sut.GetDependencyRange( typeof( IFoo ) );
+
+        using ( new AssertionScope() )
+        {
+            result.DependencyType.Should().Be( typeof( IFoo ) );
+            result.Count.Should().Be( 0 );
+            result.Should().BeEmpty();
+        }
     }
 
     [Fact]
-    public void TryGetDependency_ShouldReturnCorrectBuilder_WhenDependencyTypeWasRegistered()
+    public void GetDependencyRange_ShouldReturnCorrectBuilder_WhenDependencyTypeWasRegistered()
     {
         var sut = new DependencyContainerBuilder();
         var expected = sut.Add<IFoo>();
 
-        var result = sut.TryGetDependency( typeof( IFoo ) );
+        var result = sut.GetDependencyRange( typeof( IFoo ) );
 
-        result.Should().BeSameAs( expected );
+        using ( new AssertionScope() )
+        {
+            result.DependencyType.Should().Be( typeof( IFoo ) );
+            result.Count.Should().Be( 1 );
+            result[0].Should().BeSameAs( expected );
+            result.Should().BeSequentiallyEqualTo( expected );
+        }
     }
 
     [Fact]

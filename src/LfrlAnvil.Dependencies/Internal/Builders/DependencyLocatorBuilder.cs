@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Runtime.InteropServices;
 using LfrlAnvil.Dependencies.Exceptions;
 using LfrlAnvil.Dependencies.Internal.Resolvers.Factories;
@@ -14,13 +15,13 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
         DefaultLifetime = DependencyLifetime.Transient;
         DefaultDisposalStrategy = DependencyImplementorDisposalStrategy.UseDisposableInterface();
         SharedImplementors = new Dictionary<Type, DependencyImplementorBuilder>();
-        Dependencies = new Dictionary<Type, DependencyBuilder>();
+        Dependencies = new Dictionary<Type, DependencyRangeBuilder>();
     }
 
     public DependencyLifetime DefaultLifetime { get; private set; }
     public DependencyImplementorDisposalStrategy DefaultDisposalStrategy { get; private set; }
     internal Dictionary<Type, DependencyImplementorBuilder> SharedImplementors { get; }
-    internal Dictionary<Type, DependencyBuilder> Dependencies { get; }
+    internal Dictionary<Type, DependencyRangeBuilder> Dependencies { get; }
 
     Type? IDependencyLocatorBuilder.KeyType => null;
     object? IDependencyLocatorBuilder.Key => null;
@@ -40,10 +41,8 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
 
     public IDependencyBuilder Add(Type type)
     {
-        Ensure.Equals( type.IsGenericTypeDefinition, false, nameof( type ) + '.' + nameof( type.IsGenericTypeDefinition ) );
-        var dependency = new DependencyBuilder( this, type, DefaultLifetime );
-        Dependencies[type] = dependency;
-        return dependency;
+        var range = GetDependencyRange( type );
+        return range.Add();
     }
 
     public IDependencyLocatorBuilder SetDefaultLifetime(DependencyLifetime lifetime)
@@ -65,10 +64,16 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
         return SharedImplementors.GetValueOrDefault( type );
     }
 
-    [Pure]
-    public IDependencyBuilder? TryGetDependency(Type type)
+    public IDependencyRangeBuilder GetDependencyRange(Type type)
     {
-        return Dependencies.GetValueOrDefault( type );
+        ref var range = ref CollectionsMarshal.GetValueRefOrAddDefault( Dependencies, type, out var exists )!;
+        if ( ! exists )
+        {
+            Ensure.Equals( type.IsGenericTypeDefinition, false, nameof( type ) + '.' + nameof( type.IsGenericTypeDefinition ) );
+            range = new DependencyRangeBuilder( this, type );
+        }
+
+        return range;
     }
 
     [Pure]
@@ -81,9 +86,10 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
         DependencyLocatorBuilderStore locatorBuilderStore,
         DependencyLocatorBuilderExtractionParams @params)
     {
+        // TODO: include range builder changes
         var messages = Chain<DependencyContainerBuildMessages>.Empty;
 
-        foreach ( var builder in Dependencies.Values )
+        foreach ( var builder in Dependencies.Values.SelectMany( d => d.Elements ) )
         {
             var dependencyKey = ImplementorKey.Create( CreateImplementorKey( builder.DependencyType ) );
 

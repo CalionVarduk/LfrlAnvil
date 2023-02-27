@@ -56,9 +56,9 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
     }
 
     [Pure]
-    public IDependencyBuilder? TryGetDependency(Type type)
+    public IDependencyRangeBuilder GetDependencyRange(Type type)
     {
-        return _locatorBuilderStore.Global.TryGetDependency( type );
+        return _locatorBuilderStore.Global.GetDependencyRange( type );
     }
 
     public IDependencyLocatorBuilder<TKey> GetKeyedLocator<TKey>(TKey key)

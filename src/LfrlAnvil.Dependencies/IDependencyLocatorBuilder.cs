@@ -20,7 +20,7 @@ public interface IDependencyLocatorBuilder
     IDependencyImplementorBuilder? TryGetSharedImplementor(Type type);
 
     [Pure]
-    IDependencyBuilder? TryGetDependency(Type type);
+    IDependencyRangeBuilder GetDependencyRange(Type type);
 }
 
 public interface IDependencyLocatorBuilder<out TKey> : IDependencyLocatorBuilder
