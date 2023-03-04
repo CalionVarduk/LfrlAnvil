@@ -250,41 +250,4 @@ public static class MathUtils
     {
         return a * (b / Gcd( a, b ));
     }
-
-    [Pure]
-    public static ulong[] Partition(ulong value, int partCount)
-    {
-        Ensure.IsGreaterThanOrEqualTo( partCount, 0, nameof( partCount ) );
-        var buffer = partCount == 0 ? Array.Empty<ulong>() : new ulong[partCount];
-        Partition( value, buffer );
-        return buffer;
-    }
-
-    public static void Partition(ulong value, ulong[] buffer)
-    {
-        if ( buffer.Length == 0 )
-            return;
-
-        var length = (ulong)buffer.Length;
-        var (q, r) = Math.DivRem( value, length );
-        if ( r == 0 )
-        {
-            Array.Fill( buffer, q );
-            return;
-        }
-
-        var offset = 0UL;
-        for ( var i = 0; i < buffer.Length; ++i )
-        {
-            buffer[i] = q;
-            offset += r;
-            if ( offset < length )
-                continue;
-
-            ++buffer[i];
-            offset -= length;
-        }
-
-        Assume.Equals( offset, 0UL, nameof( offset ) );
-    }
 }

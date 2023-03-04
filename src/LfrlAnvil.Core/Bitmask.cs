@@ -24,14 +24,8 @@ public readonly struct Bitmask<T> : IEquatable<Bitmask<T>>, IComparable<Bitmask<
     public static readonly Func<T, ulong> ToLongValue;
     public static readonly Func<ulong, T> FromLongValue;
 
-    private static readonly IEqualityComparer<T> EqualityComparer;
-    private static readonly IComparer<T> Comparer;
-
     static Bitmask()
     {
-        EqualityComparer = EqualityComparer<T>.Default;
-        Comparer = Comparer<T>.Default;
-
         var toLongValueExpr = BuildToLongValueExpr();
         var fromLongValueExpr = BuildFromLongValueExpr();
         ToLongValue = toLongValueExpr.Compile();
@@ -93,7 +87,7 @@ public readonly struct Bitmask<T> : IEquatable<Bitmask<T>>, IComparable<Bitmask<
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public bool Equals(Bitmask<T> other)
     {
-        return EqualityComparer.Equals( Value, other.Value );
+        return EqualityComparer<T>.Default.Equals( Value, other.Value );
     }
 
     [Pure]
@@ -106,7 +100,7 @@ public readonly struct Bitmask<T> : IEquatable<Bitmask<T>>, IComparable<Bitmask<
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public int CompareTo(Bitmask<T> other)
     {
-        return Comparer.Compare( Value, other.Value );
+        return Comparer<T>.Default.Compare( Value, other.Value );
     }
 
     [Pure]
