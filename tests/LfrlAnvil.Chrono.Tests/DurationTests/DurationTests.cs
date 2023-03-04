@@ -749,39 +749,20 @@ public class DurationTests : TestsBase
     }
 
     [Theory]
-    [InlineData( 200, 60, 320 )]
-    [InlineData( 200, 120, 440 )]
-    [InlineData( 200, -60, 80 )]
-    [InlineData( 200, -120, -40 )]
-    [InlineData( -200, 60, -320 )]
-    [InlineData( -200, 120, -440 )]
-    [InlineData( -200, -60, -80 )]
-    [InlineData( -200, -120, 40 )]
-    public void AddOperator_ForTimeSpan_ShouldReturnCorrectResult(long ticks, int right, long expectedTicks)
+    [InlineData( 200, 60, 120 )]
+    [InlineData( 200, 120, 240 )]
+    [InlineData( 200, -60, -120 )]
+    [InlineData( 200, -120, -240 )]
+    [InlineData( -200, 60, -120 )]
+    [InlineData( -200, 120, -240 )]
+    [InlineData( -200, -60, 120 )]
+    [InlineData( -200, -120, 240 )]
+    public void MultiplyOperator_ForPercentRight_ShouldReturnCorrectResult(long ticks, int right, long expectedTicks)
     {
         var a = Duration.FromTicks( ticks );
-        var b = Percent.Create( right );
+        var b = Percent.Normalize( right );
 
-        var result = a + b;
-
-        result.Ticks.Should().Be( expectedTicks );
-    }
-
-    [Theory]
-    [InlineData( 200, 60, 80 )]
-    [InlineData( 200, 120, -40 )]
-    [InlineData( 200, -60, 320 )]
-    [InlineData( 200, -120, 440 )]
-    [InlineData( -200, 60, -80 )]
-    [InlineData( -200, 120, 40 )]
-    [InlineData( -200, -60, -320 )]
-    [InlineData( -200, -120, -440 )]
-    public void SubtractOperator_ForTimeSpan_ShouldReturnCorrectResult(long ticks, int right, long expectedTicks)
-    {
-        var a = Duration.FromTicks( ticks );
-        var b = Percent.Create( right );
-
-        var result = a - b;
+        var result = a * b;
 
         result.Ticks.Should().Be( expectedTicks );
     }
@@ -795,31 +776,12 @@ public class DurationTests : TestsBase
     [InlineData( -200, 120, -240 )]
     [InlineData( -200, -60, 120 )]
     [InlineData( -200, -120, 240 )]
-    public void MultiplyOperator_ForTimeSpan_ShouldReturnCorrectResult(long ticks, int right, long expectedTicks)
+    public void MultiplyOperator_ForPercentLeft_ShouldReturnCorrectResult(long ticks, int right, long expectedTicks)
     {
         var a = Duration.FromTicks( ticks );
-        var b = Percent.Create( right );
+        var b = Percent.Normalize( right );
 
-        var result = a * b;
-
-        result.Ticks.Should().Be( expectedTicks );
-    }
-
-    [Theory]
-    [InlineData( 180, 60, 300 )]
-    [InlineData( 240, 120, 200 )]
-    [InlineData( 180, -60, -300 )]
-    [InlineData( 240, -120, -200 )]
-    [InlineData( -180, 60, -300 )]
-    [InlineData( -240, 120, -200 )]
-    [InlineData( -180, -60, 300 )]
-    [InlineData( -240, -120, 200 )]
-    public void DivideOperator_ForTimeSpan_ShouldReturnCorrectResult(long ticks, int right, long expectedTicks)
-    {
-        var a = Duration.FromTicks( ticks );
-        var b = Percent.Create( right );
-
-        var result = a / b;
+        var result = b * a;
 
         result.Ticks.Should().Be( expectedTicks );
     }

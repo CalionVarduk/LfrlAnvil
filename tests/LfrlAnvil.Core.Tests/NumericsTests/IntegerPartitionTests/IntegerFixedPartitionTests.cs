@@ -1,4 +1,5 @@
-﻿using LfrlAnvil.Numerics;
+﻿using LfrlAnvil.Functional;
+using LfrlAnvil.Numerics;
 using LfrlAnvil.TestExtensions.Attributes;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
@@ -9,7 +10,7 @@ public class IntegerFixedPartitionTests : TestsBase
 {
     [Theory]
     [MethodData( nameof( IntegerPartitionTestsData.GetFixedData ) )]
-    public void GetEnumerator_ShouldReturnCorrectResult_WhenPartCountIsGreaterThanZero(ulong value, ulong partCount, ulong[] expected)
+    public void GetEnumerator_ShouldReturnCorrectResult_WhenPartCountIsGreaterThanZero(ulong value, int partCount, ulong[] expected)
     {
         var result = new IntegerFixedPartition( value, partCount );
         result.Should().BeSequentiallyEqualTo( expected );
@@ -27,5 +28,12 @@ public class IntegerFixedPartitionTests : TestsBase
     {
         var result = default( IntegerFixedPartition );
         result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenPartCountIsLessThanZero()
+    {
+        var action = Lambda.Of( () => new IntegerFixedPartition( Fixture.Create<ulong>(), partCount: -1 ) );
+        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
 }

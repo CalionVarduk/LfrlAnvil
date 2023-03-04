@@ -4,23 +4,24 @@ using System.Collections.Generic;
 
 namespace LfrlAnvil.Numerics;
 
-public readonly struct IntegerFixedPartition : IEnumerable<ulong>
+public readonly struct IntegerFixedPartition : IReadOnlyCollection<ulong>
 {
-    public IntegerFixedPartition(ulong value, ulong partCount)
+    public IntegerFixedPartition(ulong value, int partCount)
     {
+        Ensure.IsGreaterThanOrEqualTo( partCount, 0, nameof( partCount ) );
         Value = value;
-        PartCount = partCount;
-        (Quotient, Remainder) = PartCount > 0 ? Math.DivRem( Value, PartCount ) : (0, 0);
+        Count = partCount;
+        (Quotient, Remainder) = Count > 0 ? Math.DivRem( Value, unchecked( (ulong)Count ) ) : (0, 0);
     }
 
     public ulong Value { get; }
-    public ulong PartCount { get; }
+    public int Count { get; }
     public ulong Quotient { get; }
     public ulong Remainder { get; }
 
     public Enumerator GetEnumerator()
     {
-        return new Enumerator( Quotient, Remainder, PartCount );
+        return new Enumerator( Quotient, Remainder, unchecked( (ulong)Count ) );
     }
 
     IEnumerator<ulong> IEnumerable<ulong>.GetEnumerator()

@@ -9,42 +9,56 @@ public class PercentTests : TestsBase
     public void Zero_ShouldReturnCorrectResult()
     {
         var sut = Percent.Zero;
-        sut.NormalizedValue.Should().Be( 0m );
+        sut.Ratio.Should().Be( 0m );
+    }
+
+    [Fact]
+    public void One_ShouldReturnCorrectResult()
+    {
+        var sut = Percent.One;
+        sut.Ratio.Should().Be( 0.01m );
     }
 
     [Fact]
     public void OneHundred_ShouldReturnCorrectResult()
     {
         var sut = Percent.OneHundred;
-        sut.NormalizedValue.Should().Be( 1m );
+        sut.Ratio.Should().Be( 1m );
     }
 
     [Fact]
-    public void Create_WithInt64_ShouldReturnCorrectResult()
+    public void Ctor_ShouldAssignCorrectRatio()
     {
-        var sut = Percent.Create( 1234L );
-        sut.NormalizedValue.Should().Be( 12.34m );
+        var sut = new Percent( 1234.567m );
+        sut.Ratio.Should().Be( 1234.567m );
     }
 
     [Fact]
-    public void Create_WithDouble_ShouldReturnCorrectResult()
+    public void Normalize_WithInt64_ShouldReturnCorrectResult()
     {
-        var sut = Percent.Create( 1234.567 );
-        sut.NormalizedValue.Should().Be( 12.34567m );
+        var sut = Percent.Normalize( 1234L );
+        sut.Ratio.Should().Be( 12.34m );
     }
 
     [Fact]
-    public void Create_WithDecimal_ShouldReturnCorrectResult()
+    public void Normalize_WithDouble_ShouldReturnCorrectResult()
+    {
+        var sut = Percent.Normalize( 1234.567 );
+        sut.Ratio.Should().Be( 12.34567m );
+    }
+
+    [Fact]
+    public void Normalize_WithDecimal_ShouldReturnCorrectResult()
+    {
+        var sut = Percent.Normalize( 1234.567m );
+        sut.Ratio.Should().Be( 12.34567m );
+    }
+
+    [Fact]
+    public void Create_ShouldReturnCorrectResult()
     {
         var sut = Percent.Create( 1234.567m );
-        sut.NormalizedValue.Should().Be( 12.34567m );
-    }
-
-    [Fact]
-    public void CreateNormalized_ShouldReturnCorrectResult()
-    {
-        var sut = Percent.CreateNormalized( 1234.567m );
-        sut.NormalizedValue.Should().Be( 1234.567m );
+        sut.Ratio.Should().Be( 1234.567m );
     }
 
     [Theory]
@@ -54,9 +68,9 @@ public class PercentTests : TestsBase
     [InlineData( 99 )]
     [InlineData( 123 )]
     [InlineData( -123 )]
-    public void Value_ShouldReturnNormalizedValueMultipliedByOneHundred(int value)
+    public void Value_ShouldReturnRatioMultipliedByOneHundred(int value)
     {
-        var sut = Percent.Create( value );
+        var sut = Percent.Normalize( value );
         sut.Value.Should().Be( value );
     }
 
@@ -64,7 +78,7 @@ public class PercentTests : TestsBase
     public void ToString_ShouldReturnCorrectResult()
     {
         var expected = 1.234567m.ToString( "P2", NumberFormatInfo.CurrentInfo );
-        var sut = Percent.Create( 123.4567m );
+        var sut = Percent.Normalize( 123.4567m );
         var result = sut.ToString();
         result.Should().Be( expected );
     }
@@ -72,7 +86,7 @@ public class PercentTests : TestsBase
     [Fact]
     public void GetHashCode_ShouldReturnCorrectResult()
     {
-        var sut = Percent.Create( 123 );
+        var sut = Percent.Normalize( 123 );
         var result = sut.GetHashCode();
         result.Should().Be( 1.23m.GetHashCode() );
     }
@@ -83,7 +97,7 @@ public class PercentTests : TestsBase
     [InlineData( -123, 123 )]
     public void Abs_ShouldReturnCorrectResult(int value, int expected)
     {
-        var sut = Percent.Create( value );
+        var sut = Percent.Normalize( value );
         var result = sut.Abs();
         result.Value.Should().Be( expected );
     }
@@ -96,8 +110,34 @@ public class PercentTests : TestsBase
     [InlineData( -123.456, -123 )]
     public void Truncate_ShouldReturnCorrectResult(double value, double expected)
     {
-        var sut = Percent.Create( value );
+        var sut = Percent.Normalize( value );
         var result = sut.Truncate();
+        result.Value.Should().Be( (decimal)expected );
+    }
+
+    [Theory]
+    [InlineData( 0, 0 )]
+    [InlineData( 123, 123 )]
+    [InlineData( 123.456, 123 )]
+    [InlineData( -123, -123 )]
+    [InlineData( -123.456, -124 )]
+    public void Floor_ShouldReturnCorrectResult(double value, double expected)
+    {
+        var sut = Percent.Normalize( value );
+        var result = sut.Floor();
+        result.Value.Should().Be( (decimal)expected );
+    }
+
+    [Theory]
+    [InlineData( 0, 0 )]
+    [InlineData( 123, 123 )]
+    [InlineData( 123.456, 124 )]
+    [InlineData( -123, -123 )]
+    [InlineData( -123.456, -123 )]
+    public void Ceiling_ShouldReturnCorrectResult(double value, double expected)
+    {
+        var sut = Percent.Normalize( value );
+        var result = sut.Ceiling();
         result.Value.Should().Be( (decimal)expected );
     }
 
@@ -108,24 +148,31 @@ public class PercentTests : TestsBase
     [InlineData( 123.4618, 2, 123.46 )]
     public void Round_ShouldReturnCorrectResult(double value, int decimals, double expected)
     {
-        var sut = Percent.Create( value );
+        var sut = Percent.Normalize( value );
         var result = sut.Round( decimals );
         result.Value.Should().Be( (decimal)expected );
     }
 
     [Theory]
-    [InlineData( 123, 45, 168 )]
-    [InlineData( -123, 45, -78 )]
-    [InlineData( 123, -45, 78 )]
-    [InlineData( -123, -45, -168 )]
-    public void Offset_ShouldReturnCorrectResult(int left, int right, int expected)
+    [InlineData( 0 )]
+    [InlineData( 123 )]
+    [InlineData( -123 )]
+    public void DecimalConversionOperator_ShouldReturnCorrectResult(int value)
     {
-        var a = Percent.Create( left );
-        var b = Percent.Create( right );
+        var sut = Percent.Normalize( value );
+        var result = (decimal)sut;
+        result.Should().Be( sut.Ratio );
+    }
 
-        var result = a.Offset( b );
-
-        result.Value.Should().Be( expected );
+    [Theory]
+    [InlineData( 0 )]
+    [InlineData( 123 )]
+    [InlineData( -123 )]
+    public void DoubleConversionOperator_ShouldReturnCorrectResult(int value)
+    {
+        var sut = Percent.Normalize( value );
+        var result = (double)sut;
+        result.Should().Be( (double)sut.Ratio );
     }
 
     [Theory]
@@ -133,24 +180,44 @@ public class PercentTests : TestsBase
     [InlineData( -123, 123 )]
     public void NegateOperator_ShouldReturnCorrectResult(int value, int expected)
     {
-        var sut = Percent.Create( value );
+        var sut = Percent.Normalize( value );
         var result = -sut;
         result.Value.Should().Be( expected );
     }
 
     [Theory]
-    [InlineData( 200, 60, 320 )]
-    [InlineData( 200, 120, 440 )]
-    [InlineData( 200, -60, 80 )]
-    [InlineData( 200, -120, -40 )]
-    [InlineData( -200, 60, -320 )]
-    [InlineData( -200, 120, -440 )]
-    [InlineData( -200, -60, -80 )]
-    [InlineData( -200, -120, 40 )]
+    [InlineData( 123, 124 )]
+    [InlineData( -123, -122 )]
+    public void IncrementOperator_ShouldReturnCorrectResult(int value, int expected)
+    {
+        var sut = Percent.Normalize( value );
+        var result = ++sut;
+        result.Value.Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( 123, 122 )]
+    [InlineData( -123, -124 )]
+    public void DecrementOperator_ShouldReturnCorrectResult(int value, int expected)
+    {
+        var sut = Percent.Normalize( value );
+        var result = --sut;
+        result.Value.Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( 200, 60, 260 )]
+    [InlineData( 200, 120, 320 )]
+    [InlineData( 200, -60, 140 )]
+    [InlineData( 200, -120, 80 )]
+    [InlineData( -200, 60, -140 )]
+    [InlineData( -200, 120, -80 )]
+    [InlineData( -200, -60, -260 )]
+    [InlineData( -200, -120, -320 )]
     public void AddOperator_ShouldReturnCorrectResult(int left, int right, int expected)
     {
-        var a = Percent.Create( left );
-        var b = Percent.Create( right );
+        var a = Percent.Normalize( left );
+        var b = Percent.Normalize( right );
 
         var result = a + b;
 
@@ -158,18 +225,18 @@ public class PercentTests : TestsBase
     }
 
     [Theory]
-    [InlineData( 200, 60, 80 )]
-    [InlineData( 200, 120, -40 )]
-    [InlineData( 200, -60, 320 )]
-    [InlineData( 200, -120, 440 )]
-    [InlineData( -200, 60, -80 )]
-    [InlineData( -200, 120, 40 )]
-    [InlineData( -200, -60, -320 )]
-    [InlineData( -200, -120, -440 )]
+    [InlineData( 200, 60, 140 )]
+    [InlineData( 200, 120, 80 )]
+    [InlineData( 200, -60, 260 )]
+    [InlineData( 200, -120, 320 )]
+    [InlineData( -200, 60, -260 )]
+    [InlineData( -200, 120, -320 )]
+    [InlineData( -200, -60, -140 )]
+    [InlineData( -200, -120, -80 )]
     public void SubtractOperator_ShouldReturnCorrectResult(int left, int right, int expected)
     {
-        var a = Percent.Create( left );
-        var b = Percent.Create( right );
+        var a = Percent.Normalize( left );
+        var b = Percent.Normalize( right );
 
         var result = a - b;
 
@@ -187,8 +254,8 @@ public class PercentTests : TestsBase
     [InlineData( -200, -120, 240 )]
     public void MultiplyOperator_ShouldReturnCorrectResult(int left, int right, int expected)
     {
-        var a = Percent.Create( left );
-        var b = Percent.Create( right );
+        var a = Percent.Normalize( left );
+        var b = Percent.Normalize( right );
 
         var result = a * b;
 
@@ -206,8 +273,8 @@ public class PercentTests : TestsBase
     [InlineData( -240, -120, 200 )]
     public void DivideOperator_ShouldReturnCorrectResult(int left, int right, int expected)
     {
-        var a = Percent.Create( left );
-        var b = Percent.Create( right );
+        var a = Percent.Normalize( left );
+        var b = Percent.Normalize( right );
 
         var result = a / b;
 
@@ -225,8 +292,8 @@ public class PercentTests : TestsBase
     [InlineData( -200, -120, -80 )]
     public void ModuloOperator_ShouldReturnCorrectResult(int left, int right, int expected)
     {
-        var a = Percent.Create( left );
-        var b = Percent.Create( right );
+        var a = Percent.Normalize( left );
+        var b = Percent.Normalize( right );
 
         var result = a % b;
 
@@ -234,44 +301,6 @@ public class PercentTests : TestsBase
     }
 
     [Theory]
-    [InlineData( 200, 60, 320 )]
-    [InlineData( 200, 120, 440 )]
-    [InlineData( 200, -60, 80 )]
-    [InlineData( 200, -120, -40 )]
-    [InlineData( -200, 60, -320 )]
-    [InlineData( -200, 120, -440 )]
-    [InlineData( -200, -60, -80 )]
-    [InlineData( -200, -120, 40 )]
-    public void AddOperator_ForDecimal_ShouldReturnCorrectResult(int left, int right, int expected)
-    {
-        var a = (decimal)left;
-        var b = Percent.Create( right );
-
-        var result = a + b;
-
-        result.Should().Be( expected );
-    }
-
-    [Theory]
-    [InlineData( 200, 60, 80 )]
-    [InlineData( 200, 120, -40 )]
-    [InlineData( 200, -60, 320 )]
-    [InlineData( 200, -120, 440 )]
-    [InlineData( -200, 60, -80 )]
-    [InlineData( -200, 120, 40 )]
-    [InlineData( -200, -60, -320 )]
-    [InlineData( -200, -120, -440 )]
-    public void SubtractOperator_ForDecimal_ShouldReturnCorrectResult(int left, int right, int expected)
-    {
-        var a = (decimal)left;
-        var b = Percent.Create( right );
-
-        var result = a - b;
-
-        result.Should().Be( expected );
-    }
-
-    [Theory]
     [InlineData( 200, 60, 120 )]
     [InlineData( 200, 120, 240 )]
     [InlineData( 200, -60, -120 )]
@@ -280,10 +309,10 @@ public class PercentTests : TestsBase
     [InlineData( -200, 120, -240 )]
     [InlineData( -200, -60, 120 )]
     [InlineData( -200, -120, 240 )]
-    public void MultiplyOperator_ForDecimal_ShouldReturnCorrectResult(int left, int right, int expected)
+    public void MultiplyOperator_ForDecimalLeft_ShouldReturnCorrectResult(int left, int right, int expected)
     {
         var a = (decimal)left;
-        var b = Percent.Create( right );
+        var b = Percent.Normalize( right );
 
         var result = a * b;
 
@@ -291,60 +320,22 @@ public class PercentTests : TestsBase
     }
 
     [Theory]
-    [InlineData( 180, 60, 300 )]
-    [InlineData( 240, 120, 200 )]
-    [InlineData( 180, -60, -300 )]
-    [InlineData( 240, -120, -200 )]
-    [InlineData( -180, 60, -300 )]
-    [InlineData( -240, 120, -200 )]
-    [InlineData( -180, -60, 300 )]
-    [InlineData( -240, -120, 200 )]
-    public void DivideOperator_ForDecimal_ShouldReturnCorrectResult(int left, int right, int expected)
+    [InlineData( 200, 60, 120 )]
+    [InlineData( 200, 120, 240 )]
+    [InlineData( 200, -60, -120 )]
+    [InlineData( 200, -120, -240 )]
+    [InlineData( -200, 60, -120 )]
+    [InlineData( -200, 120, -240 )]
+    [InlineData( -200, -60, 120 )]
+    [InlineData( -200, -120, 240 )]
+    public void MultiplyOperator_ForDecimalRight_ShouldReturnCorrectResult(int left, int right, int expected)
     {
-        var a = (decimal)left;
-        var b = Percent.Create( right );
+        var a = (decimal)right;
+        var b = Percent.Normalize( left );
 
-        var result = a / b;
+        var result = b * a;
 
         result.Should().Be( expected );
-    }
-
-    [Theory]
-    [InlineData( 200, 60, 320 )]
-    [InlineData( 200, 120, 440 )]
-    [InlineData( 200, -60, 80 )]
-    [InlineData( 200, -120, -40 )]
-    [InlineData( -200, 60, -320 )]
-    [InlineData( -200, 120, -440 )]
-    [InlineData( -200, -60, -80 )]
-    [InlineData( -200, -120, 40 )]
-    public void AddOperator_ForDouble_ShouldReturnCorrectResult(int left, int right, int expected)
-    {
-        var a = (double)left;
-        var b = Percent.Create( right );
-
-        var result = a + b;
-
-        result.Should().BeApproximately( expected, 0.0000001 );
-    }
-
-    [Theory]
-    [InlineData( 200, 60, 80 )]
-    [InlineData( 200, 120, -40 )]
-    [InlineData( 200, -60, 320 )]
-    [InlineData( 200, -120, 440 )]
-    [InlineData( -200, 60, -80 )]
-    [InlineData( -200, 120, 40 )]
-    [InlineData( -200, -60, -320 )]
-    [InlineData( -200, -120, -440 )]
-    public void SubtractOperator_ForDouble_ShouldReturnCorrectResult(int left, int right, int expected)
-    {
-        var a = (double)left;
-        var b = Percent.Create( right );
-
-        var result = a - b;
-
-        result.Should().BeApproximately( expected, 0.0000001 );
     }
 
     [Theory]
@@ -356,10 +347,10 @@ public class PercentTests : TestsBase
     [InlineData( -200, 120, -240 )]
     [InlineData( -200, -60, 120 )]
     [InlineData( -200, -120, 240 )]
-    public void MultiplyOperator_ForDouble_ShouldReturnCorrectResult(int left, int right, int expected)
+    public void MultiplyOperator_ForDoubleLeft_ShouldReturnCorrectResult(int left, int right, int expected)
     {
         var a = (double)left;
-        var b = Percent.Create( right );
+        var b = Percent.Normalize( right );
 
         var result = a * b;
 
@@ -367,63 +358,25 @@ public class PercentTests : TestsBase
     }
 
     [Theory]
-    [InlineData( 180, 60, 300 )]
-    [InlineData( 240, 120, 200 )]
-    [InlineData( 180, -60, -300 )]
-    [InlineData( 240, -120, -200 )]
-    [InlineData( -180, 60, -300 )]
-    [InlineData( -240, 120, -200 )]
-    [InlineData( -180, -60, 300 )]
-    [InlineData( -240, -120, 200 )]
-    public void DivideOperator_ForDouble_ShouldReturnCorrectResult(int left, int right, int expected)
+    [InlineData( 200, 60, 120 )]
+    [InlineData( 200, 120, 240 )]
+    [InlineData( 200, -60, -120 )]
+    [InlineData( 200, -120, -240 )]
+    [InlineData( -200, 60, -120 )]
+    [InlineData( -200, 120, -240 )]
+    [InlineData( -200, -60, 120 )]
+    [InlineData( -200, -120, 240 )]
+    public void MultiplyOperator_ForDoubleRight_ShouldReturnCorrectResult(int left, int right, int expected)
     {
-        var a = (double)left;
-        var b = Percent.Create( right );
+        var a = (double)right;
+        var b = Percent.Normalize( left );
 
-        var result = a / b;
+        var result = b * a;
 
         result.Should().BeApproximately( expected, 0.0000001 );
     }
 
     [Theory]
-    [InlineData( 200, 60, 320 )]
-    [InlineData( 200, 120, 440 )]
-    [InlineData( 200, -60, 80 )]
-    [InlineData( 200, -120, -40 )]
-    [InlineData( -200, 60, -320 )]
-    [InlineData( -200, 120, -440 )]
-    [InlineData( -200, -60, -80 )]
-    [InlineData( -200, -120, 40 )]
-    public void AddOperator_ForFloat_ShouldReturnCorrectResult(int left, int right, int expected)
-    {
-        var a = (float)left;
-        var b = Percent.Create( right );
-
-        var result = a + b;
-
-        result.Should().BeApproximately( expected, 0.0001 );
-    }
-
-    [Theory]
-    [InlineData( 200, 60, 80 )]
-    [InlineData( 200, 120, -40 )]
-    [InlineData( 200, -60, 320 )]
-    [InlineData( 200, -120, 440 )]
-    [InlineData( -200, 60, -80 )]
-    [InlineData( -200, 120, 40 )]
-    [InlineData( -200, -60, -320 )]
-    [InlineData( -200, -120, -440 )]
-    public void SubtractOperator_ForFloat_ShouldReturnCorrectResult(int left, int right, int expected)
-    {
-        var a = (float)left;
-        var b = Percent.Create( right );
-
-        var result = a - b;
-
-        result.Should().BeApproximately( expected, 0.0001 );
-    }
-
-    [Theory]
     [InlineData( 200, 60, 120 )]
     [InlineData( 200, 120, 240 )]
     [InlineData( 200, -60, -120 )]
@@ -432,65 +385,14 @@ public class PercentTests : TestsBase
     [InlineData( -200, 120, -240 )]
     [InlineData( -200, -60, 120 )]
     [InlineData( -200, -120, 240 )]
-    public void MultiplyOperator_ForFloat_ShouldReturnCorrectResult(int left, int right, int expected)
+    public void MultiplyOperator_ForFloatLeft_ShouldReturnCorrectResult(int left, int right, int expected)
     {
         var a = (float)left;
-        var b = Percent.Create( right );
+        var b = Percent.Normalize( right );
 
         var result = a * b;
 
-        result.Should().BeApproximately( expected, 0.0001 );
-    }
-
-    [Theory]
-    [InlineData( 180, 60, 300 )]
-    [InlineData( 240, 120, 200 )]
-    [InlineData( 180, -60, -300 )]
-    [InlineData( 240, -120, -200 )]
-    [InlineData( -180, 60, -300 )]
-    [InlineData( -240, 120, -200 )]
-    [InlineData( -180, -60, 300 )]
-    [InlineData( -240, -120, 200 )]
-    public void DivideOperator_ForFloat_ShouldReturnCorrectResult(int left, int right, int expected)
-    {
-        var a = (float)left;
-        var b = Percent.Create( right );
-
-        var result = a / b;
-
-        result.Should().BeApproximately( expected, 0.0001 );
-    }
-
-    [Theory]
-    [InlineData( 200, 60, 320 )]
-    [InlineData( 200, 120, 440 )]
-    [InlineData( 200, -60, 80 )]
-    [InlineData( 200, -120, -40 )]
-    [InlineData( -200, 60, -320 )]
-    [InlineData( -200, 120, -440 )]
-    [InlineData( -200, -60, -80 )]
-    [InlineData( -200, -120, 40 )]
-    public void AddOperator_ForInt64_ShouldReturnCorrectResult(long left, int right, long expected)
-    {
-        var b = Percent.Create( right );
-        var result = left + b;
-        result.Should().Be( expected );
-    }
-
-    [Theory]
-    [InlineData( 200, 60, 80 )]
-    [InlineData( 200, 120, -40 )]
-    [InlineData( 200, -60, 320 )]
-    [InlineData( 200, -120, 440 )]
-    [InlineData( -200, 60, -80 )]
-    [InlineData( -200, 120, 40 )]
-    [InlineData( -200, -60, -320 )]
-    [InlineData( -200, -120, -440 )]
-    public void SubtractOperator_ForInt64_ShouldReturnCorrectResult(long left, int right, long expected)
-    {
-        var b = Percent.Create( right );
-        var result = left - b;
-        result.Should().Be( expected );
+        result.Should().BeApproximately( expected, 0.0001f );
     }
 
     [Theory]
@@ -502,63 +404,63 @@ public class PercentTests : TestsBase
     [InlineData( -200, 120, -240 )]
     [InlineData( -200, -60, 120 )]
     [InlineData( -200, -120, 240 )]
-    public void MultiplyOperator_ForInt64_ShouldReturnCorrectResult(long left, int right, long expected)
+    public void MultiplyOperator_ForFloatRight_ShouldReturnCorrectResult(int left, int right, int expected)
     {
-        var b = Percent.Create( right );
+        var a = (float)right;
+        var b = Percent.Normalize( left );
+
+        var result = b * a;
+
+        result.Should().BeApproximately( expected, 0.0001f );
+    }
+
+    [Theory]
+    [InlineData( 200, 60, 120 )]
+    [InlineData( 200, 120, 240 )]
+    [InlineData( 200, -60, -120 )]
+    [InlineData( 200, -120, -240 )]
+    [InlineData( -200, 60, -120 )]
+    [InlineData( -200, 120, -240 )]
+    [InlineData( -200, -60, 120 )]
+    [InlineData( -200, -120, 240 )]
+    public void MultiplyOperator_ForInt64Left_ShouldReturnCorrectResult(long left, int right, long expected)
+    {
+        var b = Percent.Normalize( right );
         var result = left * b;
         result.Should().Be( expected );
     }
 
     [Theory]
-    [InlineData( 180, 60, 300 )]
-    [InlineData( 240, 120, 200 )]
-    [InlineData( 180, -60, -300 )]
-    [InlineData( 240, -120, -200 )]
-    [InlineData( -180, 60, -300 )]
-    [InlineData( -240, 120, -200 )]
-    [InlineData( -180, -60, 300 )]
-    [InlineData( -240, -120, 200 )]
-    public void DivideOperator_ForInt64_ShouldReturnCorrectResult(long left, int right, long expected)
+    [InlineData( 200, 60, 120 )]
+    [InlineData( 200, 120, 240 )]
+    [InlineData( 200, -60, -120 )]
+    [InlineData( 200, -120, -240 )]
+    [InlineData( -200, 60, -120 )]
+    [InlineData( -200, 120, -240 )]
+    [InlineData( -200, -60, 120 )]
+    [InlineData( -200, -120, 240 )]
+    public void MultiplyOperator_ForInt64Right_ShouldReturnCorrectResult(int left, long right, long expected)
     {
-        var b = Percent.Create( right );
-        var result = left / b;
+        var b = Percent.Normalize( left );
+        var result = b * right;
         result.Should().Be( expected );
     }
 
     [Theory]
-    [InlineData( 200, 60, 320 )]
-    [InlineData( 200, 120, 440 )]
-    [InlineData( 200, -60, 80 )]
-    [InlineData( 200, -120, -40 )]
-    [InlineData( -200, 60, -320 )]
-    [InlineData( -200, 120, -440 )]
-    [InlineData( -200, -60, -80 )]
-    [InlineData( -200, -120, 40 )]
-    public void AddOperator_ForTimeSpan_ShouldReturnCorrectResult(long left, int right, long expected)
+    [InlineData( 200, 60, 120 )]
+    [InlineData( 200, 120, 240 )]
+    [InlineData( 200, -60, -120 )]
+    [InlineData( 200, -120, -240 )]
+    [InlineData( -200, 60, -120 )]
+    [InlineData( -200, 120, -240 )]
+    [InlineData( -200, -60, 120 )]
+    [InlineData( -200, -120, 240 )]
+    public void MultiplyOperator_ForTimeSpanLeft_ShouldReturnCorrectResult(long left, int right, long expected)
     {
         var a = TimeSpan.FromTicks( left );
-        var b = Percent.Create( right );
+        var b = Percent.Normalize( right );
 
-        var result = a + b;
-
-        result.Ticks.Should().Be( expected );
-    }
-
-    [Theory]
-    [InlineData( 200, 60, 80 )]
-    [InlineData( 200, 120, -40 )]
-    [InlineData( 200, -60, 320 )]
-    [InlineData( 200, -120, 440 )]
-    [InlineData( -200, 60, -80 )]
-    [InlineData( -200, 120, 40 )]
-    [InlineData( -200, -60, -320 )]
-    [InlineData( -200, -120, -440 )]
-    public void SubtractOperator_ForTimeSpan_ShouldReturnCorrectResult(long left, int right, long expected)
-    {
-        var a = TimeSpan.FromTicks( left );
-        var b = Percent.Create( right );
-
-        var result = a - b;
+        var result = a * b;
 
         result.Ticks.Should().Be( expected );
     }
@@ -572,31 +474,12 @@ public class PercentTests : TestsBase
     [InlineData( -200, 120, -240 )]
     [InlineData( -200, -60, 120 )]
     [InlineData( -200, -120, 240 )]
-    public void MultiplyOperator_ForTimeSpan_ShouldReturnCorrectResult(long left, int right, long expected)
+    public void MultiplyOperator_ForTimeSpanRight_ShouldReturnCorrectResult(int left, long right, long expected)
     {
-        var a = TimeSpan.FromTicks( left );
-        var b = Percent.Create( right );
+        var a = TimeSpan.FromTicks( right );
+        var b = Percent.Normalize( left );
 
-        var result = a * b;
-
-        result.Ticks.Should().Be( expected );
-    }
-
-    [Theory]
-    [InlineData( 180, 60, 300 )]
-    [InlineData( 240, 120, 200 )]
-    [InlineData( 180, -60, -300 )]
-    [InlineData( 240, -120, -200 )]
-    [InlineData( -180, 60, -300 )]
-    [InlineData( -240, 120, -200 )]
-    [InlineData( -180, -60, 300 )]
-    [InlineData( -240, -120, 200 )]
-    public void DivideOperator_ForTimeSpan_ShouldReturnCorrectResult(long left, int right, long expected)
-    {
-        var a = TimeSpan.FromTicks( left );
-        var b = Percent.Create( right );
-
-        var result = a / b;
+        var result = b * a;
 
         result.Ticks.Should().Be( expected );
     }
@@ -607,8 +490,8 @@ public class PercentTests : TestsBase
     [InlineData( 2, 1, false )]
     public void EqualityOperator_ShouldReturnCorrectResult(int aValue, int bValue, bool expected)
     {
-        var a = Percent.Create( aValue );
-        var b = Percent.Create( bValue );
+        var a = Percent.Normalize( aValue );
+        var b = Percent.Normalize( bValue );
 
         var result = a == b;
 
@@ -621,8 +504,8 @@ public class PercentTests : TestsBase
     [InlineData( 2, 1, true )]
     public void InequalityOperator_ShouldReturnCorrectResult(int aValue, int bValue, bool expected)
     {
-        var a = Percent.Create( aValue );
-        var b = Percent.Create( bValue );
+        var a = Percent.Normalize( aValue );
+        var b = Percent.Normalize( bValue );
 
         var result = a != b;
 
@@ -635,8 +518,8 @@ public class PercentTests : TestsBase
     [InlineData( 2, 1, false )]
     public void LessThanOperator_ShouldReturnCorrectResult(int aValue, int bValue, bool expected)
     {
-        var a = Percent.Create( aValue );
-        var b = Percent.Create( bValue );
+        var a = Percent.Normalize( aValue );
+        var b = Percent.Normalize( bValue );
 
         var result = a < b;
 
@@ -649,8 +532,8 @@ public class PercentTests : TestsBase
     [InlineData( 2, 1, false )]
     public void LessThanOrEqualToOperator_ShouldReturnCorrectResult(int aValue, int bValue, bool expected)
     {
-        var a = Percent.Create( aValue );
-        var b = Percent.Create( bValue );
+        var a = Percent.Normalize( aValue );
+        var b = Percent.Normalize( bValue );
 
         var result = a <= b;
 
@@ -663,8 +546,8 @@ public class PercentTests : TestsBase
     [InlineData( 2, 1, true )]
     public void GreaterThanOperator_ShouldReturnCorrectResult(int aValue, int bValue, bool expected)
     {
-        var a = Percent.Create( aValue );
-        var b = Percent.Create( bValue );
+        var a = Percent.Normalize( aValue );
+        var b = Percent.Normalize( bValue );
 
         var result = a > b;
 
@@ -677,8 +560,8 @@ public class PercentTests : TestsBase
     [InlineData( 2, 1, true )]
     public void GreaterThanOrEqualToOperator_ShouldReturnCorrectResult(int aValue, int bValue, bool expected)
     {
-        var a = Percent.Create( aValue );
-        var b = Percent.Create( bValue );
+        var a = Percent.Normalize( aValue );
+        var b = Percent.Normalize( bValue );
 
         var result = a >= b;
 

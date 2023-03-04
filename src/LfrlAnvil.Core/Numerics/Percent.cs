@@ -1,44 +1,46 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Numerics;
 
 public readonly struct Percent : IEquatable<Percent>, IComparable<Percent>, IComparable, IFormattable
 {
     public static readonly Percent Zero = new Percent( 0 );
+    public static readonly Percent One = new Percent( 0.01m );
     public static readonly Percent OneHundred = new Percent( 1 );
 
-    private Percent(decimal normalizedValue)
+    public Percent(decimal ratio)
     {
-        NormalizedValue = normalizedValue;
+        Ratio = ratio;
     }
 
-    public decimal Value => NormalizedValue * 100m;
-    public decimal NormalizedValue { get; }
+    public decimal Value => Ratio * 100m;
+    public decimal Ratio { get; }
 
     [Pure]
-    public static Percent Create(long value)
+    public static Percent Normalize(long value)
     {
-        return Create( (decimal)value );
-    }
-
-    [Pure]
-    public static Percent Create(double value)
-    {
-        return Create( (decimal)value );
+        return Normalize( (decimal)value );
     }
 
     [Pure]
-    public static Percent Create(decimal value)
+    public static Percent Normalize(double value)
     {
-        return CreateNormalized( value * 0.01m );
+        return Normalize( (decimal)value );
     }
 
     [Pure]
-    public static Percent CreateNormalized(decimal normalizedValue)
+    public static Percent Normalize(decimal value)
     {
-        return new Percent( normalizedValue );
+        return Create( value * 0.01m );
+    }
+
+    [Pure]
+    public static Percent Create(decimal ratio)
+    {
+        return new Percent( ratio );
     }
 
     [Pure]
@@ -56,13 +58,13 @@ public readonly struct Percent : IEquatable<Percent>, IComparable<Percent>, ICom
     [Pure]
     public string ToString(string? format, IFormatProvider? formatProvider)
     {
-        return NormalizedValue.ToString( format, formatProvider );
+        return Ratio.ToString( format, formatProvider );
     }
 
     [Pure]
     public override int GetHashCode()
     {
-        return NormalizedValue.GetHashCode();
+        return Ratio.GetHashCode();
     }
 
     [Pure]
@@ -80,79 +82,123 @@ public readonly struct Percent : IEquatable<Percent>, IComparable<Percent>, ICom
     [Pure]
     public bool Equals(Percent other)
     {
-        return NormalizedValue == other.NormalizedValue;
+        return Ratio == other.Ratio;
     }
 
     [Pure]
     public int CompareTo(Percent other)
     {
-        return NormalizedValue.CompareTo( other.NormalizedValue );
+        return Ratio.CompareTo( other.Ratio );
     }
 
     [Pure]
     public Percent Abs()
     {
-        return new Percent( Math.Abs( NormalizedValue ) );
+        return new Percent( Math.Abs( Ratio ) );
     }
 
     [Pure]
     public Percent Truncate()
     {
-        return Create( Math.Truncate( Value ) );
+        return Normalize( Math.Truncate( Value ) );
+    }
+
+    [Pure]
+    public Percent Floor()
+    {
+        return Normalize( Math.Floor( Value ) );
+    }
+
+    [Pure]
+    public Percent Ceiling()
+    {
+        return Normalize( Math.Ceiling( Value ) );
     }
 
     [Pure]
     public Percent Round(int decimals, MidpointRounding mode = MidpointRounding.ToEven)
     {
-        return Create( Math.Round( Value, decimals, mode ) );
+        return Normalize( Math.Round( Value, decimals, mode ) );
     }
 
     [Pure]
     public Percent Negate()
     {
-        return new Percent( -NormalizedValue );
+        return new Percent( -Ratio );
     }
 
     [Pure]
-    public Percent Offset(Percent other)
+    public Percent Increment()
     {
-        return new Percent( NormalizedValue + other.NormalizedValue );
+        return Add( One );
+    }
+
+    [Pure]
+    public Percent Decrement()
+    {
+        return Subtract( One );
     }
 
     [Pure]
     public Percent Add(Percent other)
     {
-        return new Percent( NormalizedValue * (other.NormalizedValue + 1) );
+        return new Percent( Ratio + other.Ratio );
     }
 
     [Pure]
     public Percent Subtract(Percent other)
     {
-        return new Percent( NormalizedValue - NormalizedValue * other.NormalizedValue );
+        return new Percent( Ratio - other.Ratio );
     }
 
     [Pure]
     public Percent Multiply(Percent other)
     {
-        return new Percent( NormalizedValue * other.NormalizedValue );
+        return new Percent( Ratio * other.Ratio );
     }
 
     [Pure]
     public Percent Divide(Percent other)
     {
-        return new Percent( NormalizedValue / other.NormalizedValue );
+        return new Percent( Ratio / other.Ratio );
     }
 
     [Pure]
     public Percent Modulo(Percent other)
     {
-        return new Percent( NormalizedValue % other.NormalizedValue );
+        return new Percent( Ratio % other.Ratio );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static implicit operator decimal(Percent percent)
+    {
+        return percent.Ratio;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static explicit operator double(Percent percent)
+    {
+        return (double)percent.Ratio;
     }
 
     [Pure]
     public static Percent operator -(Percent percent)
     {
         return percent.Negate();
+    }
+
+    [Pure]
+    public static Percent operator ++(Percent percent)
+    {
+        return percent.Increment();
+    }
+
+    [Pure]
+    public static Percent operator --(Percent percent)
+    {
+        return percent.Decrement();
     }
 
     [Pure]
@@ -186,123 +232,63 @@ public readonly struct Percent : IEquatable<Percent>, IComparable<Percent>, ICom
     }
 
     [Pure]
-    public static decimal operator +(decimal left, Percent right)
+    public static decimal operator *(Percent left, decimal right)
     {
-        return left * (right.NormalizedValue + 1);
-    }
-
-    [Pure]
-    public static decimal operator -(decimal left, Percent right)
-    {
-        return left - left * right.NormalizedValue;
+        return left.Ratio * right;
     }
 
     [Pure]
     public static decimal operator *(decimal left, Percent right)
     {
-        return left * right.NormalizedValue;
+        return left * right.Ratio;
     }
 
     [Pure]
-    public static decimal operator /(decimal left, Percent right)
+    public static double operator *(Percent left, double right)
     {
-        return left / right.NormalizedValue;
-    }
-
-    [Pure]
-    public static double operator +(double left, Percent right)
-    {
-        return left * (double)(right.NormalizedValue + 1);
-    }
-
-    [Pure]
-    public static double operator -(double left, Percent right)
-    {
-        return left - left * (double)right.NormalizedValue;
+        return (double)left.Ratio * right;
     }
 
     [Pure]
     public static double operator *(double left, Percent right)
     {
-        return left * (double)right.NormalizedValue;
+        return left * (double)right.Ratio;
     }
 
     [Pure]
-    public static double operator /(double left, Percent right)
+    public static float operator *(Percent left, float right)
     {
-        return left / (double)right.NormalizedValue;
+        return (float)left.Ratio * right;
     }
 
     [Pure]
-    public static double operator +(float left, Percent right)
+    public static float operator *(float left, Percent right)
     {
-        return left * (float)(right.NormalizedValue + 1);
+        return left * (float)right.Ratio;
     }
 
     [Pure]
-    public static double operator -(float left, Percent right)
+    public static long operator *(Percent left, long right)
     {
-        return left - left * (float)right.NormalizedValue;
-    }
-
-    [Pure]
-    public static double operator *(float left, Percent right)
-    {
-        return left * (float)right.NormalizedValue;
-    }
-
-    [Pure]
-    public static double operator /(float left, Percent right)
-    {
-        return left / (float)right.NormalizedValue;
-    }
-
-    [Pure]
-    public static long operator +(long left, Percent right)
-    {
-        return (long)Math.Round( (decimal)left + right, 0, MidpointRounding.AwayFromZero );
-    }
-
-    [Pure]
-    public static long operator -(long left, Percent right)
-    {
-        return (long)Math.Round( (decimal)left - right, 0, MidpointRounding.AwayFromZero );
+        return (long)Math.Round( left.Ratio * right, 0, MidpointRounding.AwayFromZero );
     }
 
     [Pure]
     public static long operator *(long left, Percent right)
     {
-        return (long)Math.Round( (decimal)left * right, 0, MidpointRounding.AwayFromZero );
+        return (long)Math.Round( left * right.Ratio, 0, MidpointRounding.AwayFromZero );
     }
 
     [Pure]
-    public static long operator /(long left, Percent right)
+    public static TimeSpan operator *(Percent left, TimeSpan right)
     {
-        return (long)Math.Round( (decimal)left / right, 0, MidpointRounding.AwayFromZero );
-    }
-
-    [Pure]
-    public static TimeSpan operator +(TimeSpan left, Percent right)
-    {
-        return new TimeSpan( left.Ticks + right );
-    }
-
-    [Pure]
-    public static TimeSpan operator -(TimeSpan left, Percent right)
-    {
-        return new TimeSpan( left.Ticks - right );
+        return new TimeSpan( left * right.Ticks );
     }
 
     [Pure]
     public static TimeSpan operator *(TimeSpan left, Percent right)
     {
         return new TimeSpan( left.Ticks * right );
-    }
-
-    [Pure]
-    public static TimeSpan operator /(TimeSpan left, Percent right)
-    {
-        return new TimeSpan( left.Ticks / right );
     }
 
     [Pure]

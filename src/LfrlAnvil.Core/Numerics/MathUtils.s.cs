@@ -8,6 +8,16 @@ namespace LfrlAnvil.Numerics;
 
 public static class MathUtils
 {
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static ulong UnsignedAbs(long value)
+    {
+        if ( value < 0 )
+            value = unchecked( -value );
+
+        return unchecked( (ulong)value );
+    }
+
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ulong ToUnsigned(long value, ref int sign)
     {

@@ -367,6 +367,12 @@ public readonly struct Fixed : IEquatable<Fixed>, IComparable<Fixed>, IComparabl
     }
 
     [Pure]
+    public Fixed Multiply(Percent percent)
+    {
+        return new Fixed( RawValue * percent, Precision );
+    }
+
+    [Pure]
     public Fixed Divide(Fixed other)
     {
         if ( Precision == other.Precision )
@@ -458,27 +464,15 @@ public readonly struct Fixed : IEquatable<Fixed>, IComparable<Fixed>, IComparabl
     }
 
     [Pure]
-    public static Fixed operator +(Fixed left, Percent right)
-    {
-        return new Fixed( left.RawValue + right, left.Precision );
-    }
-
-    [Pure]
-    public static Fixed operator -(Fixed left, Percent right)
-    {
-        return new Fixed( left.RawValue - right, left.Precision );
-    }
-
-    [Pure]
     public static Fixed operator *(Fixed left, Percent right)
     {
-        return new Fixed( left.RawValue * right, left.Precision );
+        return left.Multiply( right );
     }
 
     [Pure]
-    public static Fixed operator /(Fixed left, Percent right)
+    public static Fixed operator *(Percent left, Fixed right)
     {
-        return new Fixed( left.RawValue / right, left.Precision );
+        return right.Multiply( left );
     }
 
     [Pure]

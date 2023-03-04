@@ -2,9 +2,9 @@
 
 public class IntegerPartitionTestsData
 {
-    public static TheoryData<ulong, ulong, ulong[]> GetFixedData(IFixture fixture)
+    public static TheoryData<ulong, int, ulong[]> GetFixedData(IFixture fixture)
     {
-        return new TheoryData<ulong, ulong, ulong[]>
+        return new TheoryData<ulong, int, ulong[]>
         {
             { 0, 1, new[] { 0UL } },
             { 999, 1, new[] { 999UL } },

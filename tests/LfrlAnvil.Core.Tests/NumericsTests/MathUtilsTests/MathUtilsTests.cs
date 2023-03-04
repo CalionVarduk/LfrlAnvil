@@ -9,6 +9,20 @@ namespace LfrlAnvil.Tests.NumericsTests.MathUtilsTests;
 public class MathUtilsTests : TestsBase
 {
     [Theory]
+    [InlineData( 0, 0 )]
+    [InlineData( 1, 1 )]
+    [InlineData( uint.MaxValue, uint.MaxValue )]
+    [InlineData( long.MaxValue, long.MaxValue )]
+    [InlineData( -1, 1 )]
+    [InlineData( int.MinValue, (ulong)int.MaxValue + 1 )]
+    [InlineData( long.MinValue, (ulong)long.MaxValue + 1 )]
+    public void UnsignedAbs_ShouldReturnCorrectResult(long value, ulong expected)
+    {
+        var result = MathUtils.UnsignedAbs( value );
+        result.Should().Be( expected );
+    }
+
+    [Theory]
     [InlineData( 0 )]
     [InlineData( 1 )]
     [InlineData( uint.MaxValue )]

@@ -1093,47 +1093,22 @@ public class FixedTests : TestsBase
     }
 
     [Theory]
-    [InlineData( 200, 0, 60, 320 )]
-    [InlineData( 200, 1, 120, 440 )]
-    [InlineData( 200, 2, -60, 80 )]
-    [InlineData( 200, 3, -120, -40 )]
-    [InlineData( -200, 4, 60, -320 )]
-    [InlineData( -200, 5, 120, -440 )]
-    [InlineData( -200, 6, -60, -80 )]
-    [InlineData( -200, 7, -120, 40 )]
-    [InlineData( 3, 1, 50, 5 )]
-    [InlineData( 3, 2, 49, 4 )]
-    public void AddOperator_ForPercent_ShouldReturnCorrectResult(long rawValue, byte precision, int right, long expected)
-    {
-        var a = Fixed.CreateRaw( rawValue, precision );
-        var b = Percent.Create( right );
-
-        var result = a + b;
-
-        using ( new AssertionScope() )
-        {
-            result.RawValue.Should().Be( expected );
-            result.Precision.Should().Be( precision );
-        }
-    }
-
-    [Theory]
-    [InlineData( 200, 0, 60, 80 )]
-    [InlineData( 200, 1, 120, -40 )]
-    [InlineData( 200, 2, -60, 320 )]
-    [InlineData( 200, 3, -120, 440 )]
-    [InlineData( -200, 4, 60, -80 )]
-    [InlineData( -200, 5, 120, 40 )]
-    [InlineData( -200, 6, -60, -320 )]
-    [InlineData( -200, 7, -120, -440 )]
+    [InlineData( 200, 0, 60, 120 )]
+    [InlineData( 200, 1, 120, 240 )]
+    [InlineData( 200, 2, -60, -120 )]
+    [InlineData( 200, 3, -120, -240 )]
+    [InlineData( -200, 4, 60, -120 )]
+    [InlineData( -200, 5, 120, -240 )]
+    [InlineData( -200, 6, -60, 120 )]
+    [InlineData( -200, 7, -120, 240 )]
     [InlineData( 3, 1, 50, 2 )]
-    [InlineData( 3, 2, 51, 1 )]
-    public void SubtractOperator_ForPercent_ShouldReturnCorrectResult(long rawValue, byte precision, int right, long expected)
+    [InlineData( 3, 2, 49, 1 )]
+    public void MultiplyOperator_ForPercentRight_ShouldReturnCorrectResult(long rawValue, byte precision, int right, long expected)
     {
         var a = Fixed.CreateRaw( rawValue, precision );
-        var b = Percent.Create( right );
+        var b = Percent.Normalize( right );
 
-        var result = a - b;
+        var result = a * b;
 
         using ( new AssertionScope() )
         {
@@ -1153,37 +1128,12 @@ public class FixedTests : TestsBase
     [InlineData( -200, 7, -120, 240 )]
     [InlineData( 3, 1, 50, 2 )]
     [InlineData( 3, 2, 49, 1 )]
-    public void MultiplyOperator_ForPercent_ShouldReturnCorrectResult(long rawValue, byte precision, int right, long expected)
+    public void MultiplyOperator_ForLeft_ShouldReturnCorrectResult(long rawValue, byte precision, int right, long expected)
     {
         var a = Fixed.CreateRaw( rawValue, precision );
-        var b = Percent.Create( right );
+        var b = Percent.Normalize( right );
 
-        var result = a * b;
-
-        using ( new AssertionScope() )
-        {
-            result.RawValue.Should().Be( expected );
-            result.Precision.Should().Be( precision );
-        }
-    }
-
-    [Theory]
-    [InlineData( 180, 0, 60, 300 )]
-    [InlineData( 240, 1, 120, 200 )]
-    [InlineData( 180, 2, -60, -300 )]
-    [InlineData( 240, 3, -120, -200 )]
-    [InlineData( -180, 4, 60, -300 )]
-    [InlineData( -240, 5, 120, -200 )]
-    [InlineData( -180, 6, -60, 300 )]
-    [InlineData( -240, 7, -120, 200 )]
-    [InlineData( 3, 1, 66, 5 )]
-    [InlineData( 3, 2, 67, 4 )]
-    public void DivideOperator_ForPercent_ShouldReturnCorrectResult(long rawValue, byte precision, int right, long expected)
-    {
-        var a = Fixed.CreateRaw( rawValue, precision );
-        var b = Percent.Create( right );
-
-        var result = a / b;
+        var result = b * a;
 
         using ( new AssertionScope() )
         {

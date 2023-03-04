@@ -312,6 +312,13 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public Duration Multiply(Percent percent)
+    {
+        return new Duration( Ticks * percent );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration Multiply(double multiplier)
     {
         return FromTicks( (long)Math.Round( Ticks * multiplier, MidpointRounding.AwayFromZero ) );
@@ -458,27 +465,15 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     }
 
     [Pure]
-    public static Duration operator +(Duration left, Percent right)
-    {
-        return new Duration( left.Ticks + right );
-    }
-
-    [Pure]
-    public static Duration operator -(Duration left, Percent right)
-    {
-        return new Duration( left.Ticks - right );
-    }
-
-    [Pure]
     public static Duration operator *(Duration left, Percent right)
     {
-        return new Duration( left.Ticks * right );
+        return left.Multiply( right );
     }
 
     [Pure]
-    public static Duration operator /(Duration left, Percent right)
+    public static Duration operator *(Percent left, Duration right)
     {
-        return new Duration( left.Ticks / right );
+        return right.Multiply( left );
     }
 
     [Pure]
