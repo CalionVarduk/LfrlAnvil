@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Dependencies;
@@ -10,21 +9,10 @@ public interface IDependencyLocator
     Type? KeyType { get; }
     object? Key { get; }
     bool IsKeyed { get; }
-    IEnumerable<Type> ResolvableTypes { get; }
+    Type[] ResolvableTypes { get; }
 
     [Pure]
-    object Resolve(Type type);
-
-    [Pure]
-    T Resolve<T>()
-        where T : class;
-
-    [Pure]
-    object? TryResolve(Type type);
-
-    [Pure]
-    T? TryResolve<T>()
-        where T : class;
+    object? TryResolveUnsafe(Type type);
 
     [Pure]
     DependencyLifetime? TryGetLifetime(Type type);

@@ -15,4 +15,10 @@ public static class DependencyLocatorBuilderExtensions
     {
         return builder.Add( typeof( T ) );
     }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static IDependencyRangeBuilder GetDependencyRange<T>(this IDependencyLocatorBuilder builder)
+    {
+        return builder.GetDependencyRange( typeof( T ) );
+    }
 }

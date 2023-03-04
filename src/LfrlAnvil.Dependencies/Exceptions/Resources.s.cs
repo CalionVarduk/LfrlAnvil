@@ -94,6 +94,13 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ProvidedSharedImplementorTypeIsIncorrect(Type type)
+    {
+        return $"Shared implementor type '{type.GetDebugString()}' provided as a creation detail is not assignable to expected type.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string ProvidedTypeIsNonConstructable(Type? type)
     {
         return type is null
@@ -182,15 +189,18 @@ internal static class Resources
         T target,
         DependencyLifetime implementorLifetime,
         IDependencyKey implementorKey,
-        DependencyLifetime caughtLifetime)
+        DependencyLifetime caughtLifetime,
+        int? rangeIndex)
         where T : notnull
     {
+        var rangeText = rangeIndex is null ? string.Empty : $" (position in range: {rangeIndex.Value})";
+
         if ( typeof( T ) == typeof( ParameterInfo ) )
         {
             var parameter = ReinterpretCast.To<ParameterInfo>( target );
             var ctor = ReinterpretCast.To<ConstructorInfo>( parameter.Member );
             return
-                $"Parameter '{parameter.Name}' of '{ctor.GetDebugString( includeDeclaringType: true )}' constructor resolved with implementor {implementorKey} ({caughtLifetime}) is a captive dependency of {implementorLifetime} dependency.";
+                $"Parameter '{parameter.Name}' of '{ctor.GetDebugString( includeDeclaringType: true )}' constructor resolved with implementor {implementorKey}{rangeText} ({caughtLifetime}) is a captive dependency of {implementorLifetime} dependency.";
         }
 
         var member = ReinterpretCast.To<MemberInfo>( target );
@@ -199,7 +209,7 @@ internal static class Resources
             : ReinterpretCast.To<PropertyInfo>( member ).GetDebugString( includeDeclaringType: true );
 
         return
-            $"Member '{memberText}' resolved with implementor {implementorKey} ({caughtLifetime}) is a captive dependency of {implementorLifetime} dependency.";
+            $"Member '{memberText}' resolved with implementor {implementorKey}{rangeText} ({caughtLifetime}) is a captive dependency of {implementorLifetime} dependency.";
     }
 
     [Pure]
@@ -284,8 +294,7 @@ internal static class Resources
     }
 
     [Pure]
-    internal static string CircularDependenciesDetected(
-        ReadOnlySpan<(object? ReachedFrom, ImplementorBasedDependencyResolverFactory Node)> path)
+    internal static string CircularDependenciesDetected(ReadOnlySpan<DependencyGraphNode> path)
     {
         var builder = new StringBuilder( "Circular dependency detected:" ).AppendLine();
 
@@ -298,7 +307,7 @@ internal static class Resources
                 .Append( "    " )
                 .Append( i + 1 )
                 .Append( ". " )
-                .Append( pathNode.Node.ImplementorKey.ToString() )
+                .Append( pathNode.Factory.ImplementorKey.ToString() )
                 .Append( " resolved through '" );
 
             if ( pathNode.ReachedFrom is ParameterInfo parameter )

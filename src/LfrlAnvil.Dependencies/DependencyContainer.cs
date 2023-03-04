@@ -6,6 +6,7 @@ using LfrlAnvil.Dependencies.Exceptions;
 using LfrlAnvil.Dependencies.Internal;
 using LfrlAnvil.Dependencies.Internal.Resolvers;
 using LfrlAnvil.Exceptions;
+using LfrlAnvil.Generators;
 
 namespace LfrlAnvil.Dependencies;
 
@@ -14,13 +15,16 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
     private readonly object _sync = new object();
     private readonly Dictionary<int, ChildDependencyScope> _activeScopesPerThread;
     private readonly Dictionary<string, ChildDependencyScope> _namedScopes;
+    private readonly UlongSequenceGenerator _idGenerator;
 
     internal DependencyContainer(
+        UlongSequenceGenerator idGenerator,
         Dictionary<Type, DependencyResolver> globalResolvers,
         KeyedDependencyResolversStore keyedResolversStore)
     {
         GlobalResolvers = globalResolvers;
         KeyedResolversStore = keyedResolversStore;
+        _idGenerator = idGenerator;
         _activeScopesPerThread = new Dictionary<int, ChildDependencyScope>();
         _namedScopes = new Dictionary<string, ChildDependencyScope>();
         InternalRootScope = new RootDependencyScope( this );
@@ -64,7 +68,7 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
 
             return locator.Resolvers.TryGetValue( dependencyType, out var resolver )
                 ? resolver.Create( locator.InternalAttachedScope, dependencyType )
-                : null;
+                : TryResolveDynamicDependency( locator.Resolvers, dependencyType );
         }
     }
 
@@ -133,6 +137,29 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
         lock ( _sync )
         {
             DisposeScopeInternal( scope );
+        }
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal Type[] GetResolvableTypes(Dictionary<Type, DependencyResolver> resolvers)
+    {
+        lock ( _sync )
+        {
+            Assume.ContainsAtLeast( resolvers, 1, nameof( resolvers ) );
+            var result = new Type[resolvers.Count];
+            resolvers.Keys.CopyTo( result, 0 );
+            return result;
+        }
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal DependencyLifetime? TryGetLifetime(Dictionary<Type, DependencyResolver> resolvers, Type dependencyType)
+    {
+        lock ( _sync )
+        {
+            return resolvers.TryGetValue( dependencyType, out var resolver ) ? GetLifetime( resolver ) : null;
         }
     }
 
@@ -251,5 +278,40 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
     private DependencyScope GetActiveScope(int threadId)
     {
         return _activeScopesPerThread.TryGetValue( threadId, out var scope ) ? scope : InternalRootScope;
+    }
+
+    private object? TryResolveDynamicDependency(Dictionary<Type, DependencyResolver> resolvers, Type dependencyType)
+    {
+        if ( dependencyType.IsGenericType && dependencyType.GetGenericTypeDefinition() == typeof( IEnumerable<> ) )
+        {
+            var underlyingType = dependencyType.GetGenericArguments()[0];
+            var emptyArrayMethod = ExpressionBuilder.GetClosedArrayEmptyMethod( underlyingType );
+            var emptyArray = emptyArrayMethod.Invoke( null, null )!;
+
+            var resolver = new TransientDependencyResolver(
+                id: _idGenerator.Generate(),
+                implementorType: dependencyType,
+                disposalStrategy: DependencyImplementorDisposalStrategy.RenounceOwnership(),
+                onResolvingCallback: null,
+                factory: _ => emptyArray );
+
+            resolvers.Add( dependencyType, resolver );
+            return emptyArray;
+        }
+
+        return null;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static DependencyLifetime GetLifetime(DependencyResolver resolver)
+    {
+        return resolver switch
+        {
+            TransientDependencyResolver => DependencyLifetime.Transient,
+            ScopedDependencyResolver => DependencyLifetime.Scoped,
+            ScopedSingletonDependencyResolver => DependencyLifetime.ScopedSingleton,
+            _ => DependencyLifetime.Singleton
+        };
     }
 }

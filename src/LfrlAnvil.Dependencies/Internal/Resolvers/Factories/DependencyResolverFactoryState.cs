@@ -13,6 +13,5 @@ internal enum DependencyResolverFactoryState : byte
     Finished = 16,
     Invalid = 32,
     CircularDependenciesDetected = 64,
-    Internal = 128,
     CanRegisterCircularDependency = ValidatingCircularDependencies | CircularDependenciesDetected
 }

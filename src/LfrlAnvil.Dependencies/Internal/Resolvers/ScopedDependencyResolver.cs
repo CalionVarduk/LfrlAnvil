@@ -26,6 +26,7 @@ internal sealed class ScopedDependencyResolver : FactoryDependencyResolver
         if ( scope.ScopedInstancesByResolverId.TryGetValue( Id, out var result ) )
             return result;
 
+        Assume.IsNotNull( Factory, nameof( Factory ) );
         result = Factory( scope );
 
         scope.ScopedInstancesByResolverId.Add( Id, result );

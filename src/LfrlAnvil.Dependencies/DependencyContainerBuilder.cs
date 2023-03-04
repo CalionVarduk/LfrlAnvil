@@ -80,39 +80,19 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
 
         var resolverFactories = extractionParams.ResolverFactories.Values;
         foreach ( var factory in resolverFactories )
-        {
-            if ( factory.IsInternal )
-                continue;
-
-            ReinterpretCast.To<ImplementorBasedDependencyResolverFactory>( factory )
-                .PrepareCreationMethod( idGenerator, extractionParams.ResolverFactories, Configuration );
-        }
+            factory.PrepareCreationMethod( idGenerator, extractionParams.ResolverFactories, Configuration );
 
         foreach ( var factory in resolverFactories )
-        {
-            if ( factory.IsInternal )
-                continue;
+            factory.ValidateRequiredDependencies( extractionParams.ResolverFactories, Configuration );
 
-            ReinterpretCast.To<ImplementorBasedDependencyResolverFactory>( factory )
-                .ValidateRequiredDependencies( extractionParams.ResolverFactories, Configuration );
-        }
-
-        var pathBuffer = new List<(object?, ImplementorBasedDependencyResolverFactory)>();
+        var pathBuffer = new List<DependencyGraphNode>();
         foreach ( var factory in resolverFactories )
-        {
-            if ( factory.IsInternal )
-                continue;
+            factory.ValidateCircularDependencies( pathBuffer );
 
-            ReinterpretCast.To<ImplementorBasedDependencyResolverFactory>( factory )
-                .ValidateCircularDependencies( pathBuffer );
-        }
-
-        var handledImplementorMessages = new HashSet<ImplementorKey>();
         foreach ( var factory in resolverFactories )
         {
             var factoryMessages = factory.GetMessages();
-            if ( factoryMessages is not null && handledImplementorMessages.Add( factoryMessages.Value.ImplementorKey ) )
-                messages = messages.Extend( factoryMessages.Value );
+            messages = messages.Extend( factoryMessages );
         }
 
         foreach ( var message in messages )
@@ -122,10 +102,7 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
         }
 
         foreach ( var factory in resolverFactories )
-        {
-            if ( ! factory.IsInternal )
-                ReinterpretCast.To<ImplementorBasedDependencyResolverFactory>( factory ).Build( idGenerator );
-        }
+            factory.Build( idGenerator );
 
         var defaultResolvers = extractionParams.GetDefaultResolvers();
         var globalDependencyResolvers = new Dictionary<Type, DependencyResolver>( defaultResolvers );
@@ -133,16 +110,13 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
 
         foreach ( var (dependencyKey, factory) in extractionParams.ResolverFactories )
         {
-            if ( factory.IsInternal )
-                continue;
-
             var resolvers = ReinterpretCast.To<IInternalDependencyKey>( dependencyKey )
                 .GetTargetResolvers( globalDependencyResolvers, keyedDependencyResolvers );
 
-            resolvers.Add( dependencyKey.Type, factory.GetResolver() );
+            resolvers.TryAdd( dependencyKey.Type, factory.GetResolver() );
         }
 
-        var result = new DependencyContainer( globalDependencyResolvers, keyedDependencyResolvers );
+        var result = new DependencyContainer( idGenerator, globalDependencyResolvers, keyedDependencyResolvers );
         return new DependencyContainerBuildResult<DependencyContainer>( result, messages );
     }
 

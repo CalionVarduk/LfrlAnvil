@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using FluentAssertions.Execution;
 using LfrlAnvil.Dependencies.Exceptions;
 using LfrlAnvil.Dependencies.Extensions;
@@ -1633,6 +1634,349 @@ public class DependencyContainerTests : DependencyTestsBase
     }
 
     [Fact]
+    public void ResolvingDependency_ShouldCallOnCreatedCallback_WhenThereAreNoDependencies()
+    {
+        var callback = Substitute.For<Action<object, Type, IDependencyScope>>();
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IFoo>()
+            .SetLifetime( DependencyLifetime.Singleton )
+            .FromType<Implementor>( o => o.SetOnCreatedCallback( callback ) );
+
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IFoo>();
+        var _ = sut.ActiveScope.Locator.Resolve<IFoo>();
+
+        using ( new AssertionScope() )
+        {
+            callback.Verify().CallCount.Should().Be( 1 );
+            callback.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( result, typeof( IFoo ), sut.ActiveScope );
+        }
+    }
+
+    [Fact]
+    public void ResolvingDependency_ShouldCallOnCreatedCallback_WhenNoDependencyIsOfRequiredValueType()
+    {
+        var callback = Substitute.For<Action<object, Type, IDependencyScope>>();
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IBar>().SetLifetime( DependencyLifetime.Singleton ).FromType<Implementor>();
+
+        builder.Add<IFoo>()
+            .SetLifetime( DependencyLifetime.Singleton )
+            .FromType<ChainableFoo>( o => o.SetOnCreatedCallback( callback ) );
+
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IFoo>();
+        var _ = sut.ActiveScope.Locator.Resolve<IFoo>();
+
+        using ( new AssertionScope() )
+        {
+            callback.Verify().CallCount.Should().Be( 1 );
+            callback.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( result, typeof( IFoo ), sut.ActiveScope );
+        }
+    }
+
+    [Fact]
+    public void ResolvingDependency_ShouldCallOnCreatedCallback_WhenSomeDependenciesAreOfRequiredValueType()
+    {
+        var callback = Substitute.For<Action<object, Type, IDependencyScope>>();
+        var builder = new DependencyContainerBuilder();
+        builder.Add<int>().SetLifetime( DependencyLifetime.Singleton ).FromFactory( _ => 0 );
+        builder.Add<byte?>().SetLifetime( DependencyLifetime.Singleton ).FromFactory( _ => (byte?)0 );
+
+        builder.Add<IWithText>()
+            .SetLifetime( DependencyLifetime.Singleton )
+            .FromType<CtorAndValueMemberImplementor>( o => o.SetOnCreatedCallback( callback ) );
+
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+        var _ = sut.ActiveScope.Locator.Resolve<IWithText>();
+
+        using ( new AssertionScope() )
+        {
+            callback.Verify().CallCount.Should().Be( 1 );
+            callback.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( result, typeof( IWithText ), sut.ActiveScope );
+        }
+    }
+
+    [Fact]
+    public void ResolvingRangeDependency_ShouldInvokeOnResolvingCallbackEveryTime()
+    {
+        var onResolvingCallback = Substitute.For<Action<Type, IDependencyScope>>();
+
+        var builder = new DependencyContainerBuilder();
+        builder.GetDependencyRange<IFoo>()
+            .SetOnResolvingCallback( onResolvingCallback )
+            .Add()
+            .SetLifetime( DependencyLifetime.Singleton )
+            .FromFactory( _ => new Implementor() );
+
+        var sut = builder.Build();
+
+        var _ = sut.ActiveScope.Locator.Resolve<IEnumerable<IFoo>>();
+        var __ = sut.ActiveScope.Locator.Resolve<IEnumerable<IFoo>>();
+
+        using ( new AssertionScope() )
+        {
+            onResolvingCallback.Verify().CallCount.Should().Be( 2 );
+
+            onResolvingCallback.Verify()
+                .CallAt( 0 )
+                .Arguments.Should()
+                .BeSequentiallyEqualTo( typeof( IEnumerable<IFoo> ), sut.ActiveScope );
+
+            onResolvingCallback.Verify()
+                .CallAt( 1 )
+                .Arguments.Should()
+                .BeSequentiallyEqualTo( typeof( IEnumerable<IFoo> ), sut.ActiveScope );
+        }
+    }
+
+    [Fact]
+    public void ResolvingUnregisteredRangeDependency_ShouldReturnEmptyCollection_WhenDoingItForTheFirstTime()
+    {
+        var sut = new DependencyContainerBuilder().Build();
+        var result = sut.ActiveScope.Locator.Resolve<IEnumerable<IFoo>>();
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ResolvingUnregisteredRangeDependency_ShouldReturnEmptyCollection_WhenDoingItForTheSecondTime()
+    {
+        var sut = new DependencyContainerBuilder().Build();
+        var first = sut.ActiveScope.Locator.Resolve<IEnumerable<IFoo>>();
+
+        var result = sut.ActiveScope.Locator.Resolve<IEnumerable<IFoo>>();
+
+        result.Should().BeSameAs( first );
+    }
+
+    [Fact]
+    public void ResolvingDependency_ShouldReturnCorrectInstance_WhenCtorRequiresUnregisteredRange()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<RangeFoo>();
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<RangeFoo>();
+
+        result.Texts.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ResolvingDependency_ShouldReturnCorrectInstance_WhenCtorRequiresEmptyRegisteredRange()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.GetDependencyRange<string>();
+        builder.Add<RangeFoo>();
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<RangeFoo>();
+
+        result.Texts.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ResolvingDependency_ShouldReturnCorrectInstance_WhenMemberRequiresUnregisteredRange()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<RangeBar>();
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<RangeBar>();
+
+        result.Texts.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ResolvingRangeDependency_ShouldReturnCorrectInstance_WhenRangeDoesNotContainsAnyElements()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.GetDependencyRange<IFoo>();
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IEnumerable<IFoo>>();
+
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ResolvingRangeDependency_ShouldReturnCorrectInstance_WhenRangeOnlyContainsElementsExcludedFromRange()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IFoo>().IncludeInRange( false ).FromType<Implementor>();
+        builder.Add<IFoo>().IncludeInRange( false ).FromType<Implementor>();
+        builder.Add<IFoo>().IncludeInRange( false ).FromType<Implementor>();
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IEnumerable<IFoo>>();
+
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ResolvingRangeDependency_ShouldReturnCorrectInstance_WhenRangeIsOfRefType()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<string>().FromFactory( _ => "foo" );
+        builder.Add<string>().FromFactory( _ => "bar" );
+        builder.Add<string>().FromFactory( _ => "qux" );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IEnumerable<string>>();
+
+        result.Should().BeSequentiallyEqualTo( "foo", "bar", "qux" );
+    }
+
+    [Fact]
+    public void ResolvingRangeDependency_ShouldReturnCorrectInstance_WhenRangeIsOfNullableValueType()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<int?>().FromFactory( _ => (int?)1 );
+        builder.Add<int?>().FromFactory( _ => (int?)2 );
+        builder.Add<int?>().FromFactory( _ => (int?)3 );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IEnumerable<int?>>();
+
+        result.Should().BeSequentiallyEqualTo( 1, 2, 3 );
+    }
+
+    [Fact]
+    public void ResolvingRangeDependency_ShouldReturnCorrectInstance_WhenRangeIsOfRequiredValueType()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<int>().FromFactory( _ => 1 );
+        builder.Add<int>().FromFactory( _ => 2 );
+        builder.Add<int>().FromFactory( _ => 3 );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IEnumerable<int>>();
+
+        result.Should().BeSequentiallyEqualTo( 1, 2, 3 );
+    }
+
+    [Fact]
+    public void ResolvingDependency_ShouldReturnLastRegisteredInstance_WhenMoreThanOneElementIsRegisteredInRange()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<string>().FromFactory( _ => "foo" );
+        builder.Add<string>().FromFactory( _ => "bar" );
+        builder.Add<string>().FromFactory( _ => "qux" );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<string>();
+
+        result.Should().Be( "qux" );
+    }
+
+    [Fact]
+    public void ResolvingDependency_ShouldReturnCorrectInstance_WhenDependencyIsDecoratedRangeExcludingSelf()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IWithText>().FromFactory( _ => new ExplicitCtorImplementor( "foo" ) );
+        builder.Add<IWithText>().FromFactory( _ => new ExplicitCtorImplementor( "bar" ) );
+        builder.Add<IWithText>().IncludeInRange( false ).FromType<RangeDecorator>();
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+
+        result.Text.Should().Be( "foo|bar" );
+    }
+
+    [Fact]
+    public void ResolvingRangeDependency_ShouldReturnCorrectInstance_WhenFirstElementIsExcluded()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<string>().IncludeInRange( false ).FromFactory( _ => "foo" );
+        builder.Add<string>().FromFactory( _ => "bar" );
+        builder.Add<string>().FromFactory( _ => "qux" );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IEnumerable<string>>();
+
+        result.Should().BeSequentiallyEqualTo( "bar", "qux" );
+    }
+
+    [Fact]
+    public void ResolvingRangeDependency_ShouldReturnCorrectInstance_WhenSecondElementIsExcluded()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<string>().FromFactory( _ => "foo" );
+        builder.Add<string>().IncludeInRange( false ).FromFactory( _ => "bar" );
+        builder.Add<string>().FromFactory( _ => "qux" );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IEnumerable<string>>();
+
+        result.Should().BeSequentiallyEqualTo( "foo", "qux" );
+    }
+
+    [Fact]
+    public void ResolvingRangeDependency_ShouldReturnCorrectInstance_WhenRangeDependencyIsRegisteredExplicitly()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<string>().FromFactory( _ => "foo" );
+        builder.Add<string>().FromFactory( _ => "bar" );
+        builder.Add<string>().FromFactory( _ => "qux" );
+        builder.Add<IEnumerable<string>>().FromFactory( _ => new[] { "lorem", "ipsum" } );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IEnumerable<string>>();
+
+        result.Should().BeSequentiallyEqualTo( "lorem", "ipsum" );
+    }
+
+    [Fact]
+    public void ResolvingRangeOfRangeDependency_ShouldReturnEmptyCollection_WhenRangeDependencyIsCreatedAutomatically()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<string>().FromFactory( _ => "foo" );
+        builder.Add<string>().FromFactory( _ => "bar" );
+        builder.Add<string>().FromFactory( _ => "qux" );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IEnumerable<IEnumerable<string>>>();
+
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ResolvingRangeOfRangeDependency_ShouldReturnCorrectInstance_WhenRangeDependencyIsRegisteredExplicitly()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IEnumerable<string>>().FromFactory( _ => new[] { "foo", "bar" } );
+        builder.Add<IEnumerable<string>>().FromFactory( _ => new[] { "qux", "baz" } );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IEnumerable<IEnumerable<string>>>();
+
+        result.SelectMany( t => t ).Should().BeSequentiallyEqualTo( "foo", "bar", "qux", "baz" );
+    }
+
+    [Fact]
+    public void ResolvingRangeDependency_ShouldReturnCorrectInstance_WhenSomeElementsAreRegisteredAsKeyed()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<string>().FromFactory( _ => "foo" );
+        builder.Add<string>().FromFactory( _ => "bar" );
+        builder.GetKeyedLocator( 1 ).Add<string>().FromFactory( _ => "qux" );
+        builder.GetKeyedLocator( 1 ).Add<string>().FromFactory( _ => "baz" );
+        var sut = builder.Build();
+
+        var result = sut.ActiveScope.Locator.Resolve<IEnumerable<string>>();
+        var keyedResult = sut.ActiveScope.GetKeyedLocator( 1 ).Resolve<IEnumerable<string>>();
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSequentiallyEqualTo( "foo", "bar" );
+            keyedResult.Should().BeSequentiallyEqualTo( "qux", "baz" );
+        }
+    }
+
+    [Fact]
     public void Dispose_ShouldDisposeAllActiveScopes()
     {
         var builder = new DependencyContainerBuilder();
@@ -1703,7 +2047,15 @@ public class DependencyContainerTests : DependencyTestsBase
         var result = sut.ResolvableTypes;
 
         result.Should()
-            .BeEquivalentTo( typeof( IFoo ), typeof( IBar ), typeof( IQux ), typeof( IDependencyContainer ), typeof( IDependencyScope ) );
+            .BeEquivalentTo(
+                typeof( IFoo ),
+                typeof( IBar ),
+                typeof( IQux ),
+                typeof( IDependencyContainer ),
+                typeof( IDependencyScope ),
+                typeof( IEnumerable<IFoo> ),
+                typeof( IEnumerable<IBar> ),
+                typeof( IEnumerable<IQux> ) );
     }
 
     [Theory]

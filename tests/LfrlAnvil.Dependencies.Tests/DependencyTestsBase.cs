@@ -1,4 +1,7 @@
-﻿namespace LfrlAnvil.Dependencies.Tests;
+﻿using System.Collections.Generic;
+using System.Linq;
+
+namespace LfrlAnvil.Dependencies.Tests;
 
 public abstract class DependencyTestsBase : TestsBase
 {
@@ -323,5 +326,53 @@ public abstract class DependencyTestsBase : TestsBase
         public IBar Bar { get; }
         public IQux Qux { get; }
         public IWithText? Text { get; }
+    }
+
+    public class RangeFoo : IFoo
+    {
+        public RangeFoo(IEnumerable<string> texts)
+        {
+            Texts = texts;
+        }
+
+        public IEnumerable<string> Texts { get; }
+    }
+
+    public class RangeBar : IBar
+    {
+        private readonly Injected<IEnumerable<string>> _texts = default;
+        public IEnumerable<string> Texts => _texts.Instance;
+    }
+
+    public class RangeDecorator : IWithText
+    {
+        public RangeDecorator(IEnumerable<IWithText> range)
+        {
+            Range = range;
+        }
+
+        public IEnumerable<IWithText> Range { get; }
+        public string Text => string.Join( '|', Range.Select( e => e.Text ) );
+    }
+    
+    public class ChainableRange : IWithText
+    {
+        public ChainableRange(IFoo foo)
+        {
+            Foo = foo;
+        }
+
+        public IFoo Foo { get; }
+        public string Text => string.Empty;
+    }
+
+    public class TextFoo : IFoo
+    {
+        public TextFoo(IEnumerable<IWithText> texts)
+        {
+            Texts = texts;
+        }
+        
+        public IEnumerable<IWithText> Texts { get; }
     }
 }

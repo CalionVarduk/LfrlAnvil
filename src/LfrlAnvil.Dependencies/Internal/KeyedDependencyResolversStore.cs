@@ -10,9 +10,9 @@ namespace LfrlAnvil.Dependencies.Internal;
 internal readonly struct KeyedDependencyResolversStore
 {
     private readonly Dictionary<Type, object> _cachesByKeyType;
-    private readonly Dictionary<Type, DependencyResolver> _defaultResolvers;
+    private readonly IReadOnlyDictionary<Type, DependencyResolver> _defaultResolvers;
 
-    private KeyedDependencyResolversStore(Dictionary<Type, DependencyResolver> defaultResolvers)
+    private KeyedDependencyResolversStore(IReadOnlyDictionary<Type, DependencyResolver> defaultResolvers)
     {
         _defaultResolvers = defaultResolvers;
         _cachesByKeyType = new Dictionary<Type, object>();
@@ -20,7 +20,7 @@ internal readonly struct KeyedDependencyResolversStore
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static KeyedDependencyResolversStore Create(Dictionary<Type, DependencyResolver> defaultResolvers)
+    internal static KeyedDependencyResolversStore Create(IReadOnlyDictionary<Type, DependencyResolver> defaultResolvers)
     {
         return new KeyedDependencyResolversStore( defaultResolvers );
     }
@@ -47,10 +47,12 @@ internal readonly struct KeyedDependencyResolversStore
         where TKey : notnull
     {
         if ( ! _cachesByKeyType.TryGetValue( typeof( TKey ), out var cacheRef ) )
-            return _defaultResolvers;
+            return new Dictionary<Type, DependencyResolver>( _defaultResolvers );
 
         var cache = ReinterpretCast.To<Cache<TKey>>( cacheRef );
-        return cache.Resolvers.TryGetValue( key, out var resolvers ) ? resolvers : _defaultResolvers;
+        return cache.Resolvers.TryGetValue( key, out var resolvers )
+            ? resolvers
+            : new Dictionary<Type, DependencyResolver>( _defaultResolvers );
     }
 
     private sealed class Cache<TKey>

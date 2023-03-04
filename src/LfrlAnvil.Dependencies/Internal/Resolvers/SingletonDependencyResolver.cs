@@ -34,7 +34,9 @@ internal sealed class SingletonDependencyResolver : FactoryDependencyResolver
         if ( _instance is not null )
             return _instance;
 
+        Assume.IsNotNull( Factory, nameof( Factory ) );
         _instance = Factory( scope );
+        ClearFactory();
 
         var rootScope = scope.InternalContainer.InternalRootScope;
         SetupDisposalStrategy( rootScope, _instance );

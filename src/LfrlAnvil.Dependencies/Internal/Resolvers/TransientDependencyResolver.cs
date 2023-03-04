@@ -23,6 +23,7 @@ internal sealed class TransientDependencyResolver : FactoryDependencyResolver
 
     protected override object CreateInternal(DependencyScope scope)
     {
+        Assume.IsNotNull( Factory, nameof( Factory ) );
         var result = Factory( scope );
         SetupDisposalStrategy( scope, result );
         return result;

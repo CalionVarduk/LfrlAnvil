@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using System.Runtime.CompilerServices;
-using LfrlAnvil.Dependencies.Exceptions;
 using LfrlAnvil.Dependencies.Internal.Resolvers;
 
 namespace LfrlAnvil.Dependencies.Internal;
@@ -16,7 +14,7 @@ internal class DependencyLocator : IDependencyLocator
     }
 
     public IDependencyScope AttachedScope => InternalAttachedScope;
-    public IEnumerable<Type> ResolvableTypes => Resolvers.Keys;
+    public Type[] ResolvableTypes => InternalAttachedScope.InternalContainer.GetResolvableTypes( Resolvers );
     internal DependencyScope InternalAttachedScope { get; }
     internal Dictionary<Type, DependencyResolver> Resolvers { get; }
 
@@ -24,67 +22,15 @@ internal class DependencyLocator : IDependencyLocator
     object? IDependencyLocator.Key => null;
     bool IDependencyLocator.IsKeyed => false;
 
-    public object Resolve(Type type)
+    public object? TryResolveUnsafe(Type type)
     {
-        var result = TryResolve( type );
-        if ( result is null )
-            throw new MissingDependencyException( type );
-
-        return result;
-    }
-
-    public T Resolve<T>()
-        where T : class
-    {
-        var result = TryResolve<T>();
-        if ( result is null )
-            throw new MissingDependencyException( typeof( T ) );
-
-        return result;
-    }
-
-    public object? TryResolve(Type type)
-    {
-        var result = InternalAttachedScope.InternalContainer.TryResolveDependency( this, type );
-        if ( result is null )
-            return null;
-
-        if ( type.IsInstanceOfType( result ) )
-            return result;
-
-        throw new InvalidDependencyCastException( type, result.GetType() );
-    }
-
-    public T? TryResolve<T>()
-        where T : class
-    {
-        var result = InternalAttachedScope.InternalContainer.TryResolveDependency( this, typeof( T ) );
-        if ( result is null )
-            return null;
-
-        if ( result is T dependency )
-            return dependency;
-
-        throw new InvalidDependencyCastException( typeof( T ), result.GetType() );
+        return InternalAttachedScope.InternalContainer.TryResolveDependency( this, type );
     }
 
     [Pure]
     public DependencyLifetime? TryGetLifetime(Type type)
     {
-        return Resolvers.TryGetValue( type, out var resolver ) ? GetLifetime( resolver ) : null;
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static DependencyLifetime GetLifetime(DependencyResolver resolver)
-    {
-        return resolver switch
-        {
-            TransientDependencyResolver => DependencyLifetime.Transient,
-            ScopedDependencyResolver => DependencyLifetime.Scoped,
-            ScopedSingletonDependencyResolver => DependencyLifetime.ScopedSingleton,
-            _ => DependencyLifetime.Singleton
-        };
+        return InternalAttachedScope.InternalContainer.TryGetLifetime( Resolvers, type );
     }
 }
 

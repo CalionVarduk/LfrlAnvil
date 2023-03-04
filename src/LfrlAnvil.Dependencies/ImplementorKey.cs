@@ -6,39 +6,43 @@ namespace LfrlAnvil.Dependencies;
 
 public readonly struct ImplementorKey : IEquatable<ImplementorKey>
 {
-    public ImplementorKey(IDependencyKey value, bool isShared)
+    private readonly int _data;
+
+    private ImplementorKey(IDependencyKey value, int data)
     {
         Value = value;
-        IsShared = isShared;
+        _data = data;
     }
 
     public IDependencyKey Value { get; }
-    public bool IsShared { get; }
+    public bool IsShared => _data == -1;
+    public int? RangeIndex => _data >= 0 ? _data : null;
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static ImplementorKey Create(IDependencyKey value)
+    public static ImplementorKey Create(IDependencyKey value, int? rangeIndex = null)
     {
-        return new ImplementorKey( value, isShared: false );
+        Assume.Conditional( rangeIndex is not null, () => Assume.IsGreaterThanOrEqualTo( rangeIndex!.Value, 0, nameof( rangeIndex ) ) );
+        return new ImplementorKey( value, rangeIndex ?? int.MinValue );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ImplementorKey CreateShared(IDependencyKey value)
     {
-        return new ImplementorKey( value, isShared: true );
+        return new ImplementorKey( value, -1 );
     }
 
     [Pure]
     public override string ToString()
     {
-        return IsShared ? $"{Value} (shared)" : Value.ToString() ?? string.Empty;
+        return IsShared ? $"{Value} (shared)" : $"{Value}{GetRangeIndexText( RangeIndex )}";
     }
 
     [Pure]
     public override int GetHashCode()
     {
-        return HashCode.Combine( Value, IsShared );
+        return HashCode.Combine( Value, _data );
     }
 
     public override bool Equals(object? obj)
@@ -48,6 +52,24 @@ public readonly struct ImplementorKey : IEquatable<ImplementorKey>
 
     public bool Equals(ImplementorKey other)
     {
-        return Value.Equals( other.Value ) && IsShared == other.IsShared;
+        return Value.Equals( other.Value ) && _data == other._data;
+    }
+
+    [Pure]
+    public static bool operator ==(ImplementorKey a, ImplementorKey b)
+    {
+        return a.Equals( b );
+    }
+
+    [Pure]
+    public static bool operator !=(ImplementorKey a, ImplementorKey b)
+    {
+        return ! a.Equals( b );
+    }
+
+    [Pure]
+    private static string GetRangeIndexText(int? index)
+    {
+        return index is null ? string.Empty : $" (position in range: {index.Value})";
     }
 }

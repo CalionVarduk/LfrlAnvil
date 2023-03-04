@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Dependencies.Internal.Resolvers;
 
@@ -32,5 +33,12 @@ internal abstract class FactoryDependencyResolver : DependencyResolver
         };
     }
 
-    protected Func<DependencyScope, object> Factory { get; private set; }
+    protected Func<DependencyScope, object>? Factory { get; private set; }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    protected void ClearFactory()
+    {
+        Assume.IsNotNull( Factory, nameof( Factory ) );
+        Factory = null;
+    }
 }

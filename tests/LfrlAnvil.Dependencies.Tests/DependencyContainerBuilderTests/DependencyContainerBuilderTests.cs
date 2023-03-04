@@ -1017,6 +1017,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         {
             result.DependencyType.Should().Be( typeof( IFoo ) );
             result.Count.Should().Be( 0 );
+            result.TryGetLast().Should().BeNull();
             result.Should().BeEmpty();
         }
     }
@@ -1025,17 +1026,31 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
     public void GetDependencyRange_ShouldReturnCorrectBuilder_WhenDependencyTypeWasRegistered()
     {
         var sut = new DependencyContainerBuilder();
-        var expected = sut.Add<IFoo>();
+        var expected1 = sut.Add<IFoo>();
+        var expected2 = sut.Add<IFoo>();
 
         var result = sut.GetDependencyRange( typeof( IFoo ) );
 
         using ( new AssertionScope() )
         {
             result.DependencyType.Should().Be( typeof( IFoo ) );
-            result.Count.Should().Be( 1 );
-            result[0].Should().BeSameAs( expected );
-            result.Should().BeSequentiallyEqualTo( expected );
+            result.Count.Should().Be( 2 );
+            result.TryGetLast().Should().BeSameAs( expected2 );
+            result[0].Should().BeSameAs( expected1 );
+            result[1].Should().BeSameAs( expected2 );
+            result.Should().BeSequentiallyEqualTo( expected1, expected2 );
         }
+    }
+
+    [Fact]
+    public void GetDependencyRange_SetOnResolvingCallback_ShouldUpdateCallback()
+    {
+        var callback = Substitute.For<Action<Type, IDependencyScope>>();
+        var sut = new DependencyContainerBuilder();
+
+        var result = sut.GetDependencyRange<IFoo>().SetOnResolvingCallback( callback );
+
+        result.OnResolvingCallback.Should().BeSameAs( callback );
     }
 
     [Fact]
@@ -1459,6 +1474,31 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
     }
 
     [Fact]
+    public void TryBuild_ShouldReturnFailureResult_WhenDependencyUsesSharedImplementorWithInvalidType()
+    {
+        var sut = new DependencyContainerBuilder();
+        sut.Add<string>().FromFactory( _ => "foo" );
+        sut.AddSharedImplementor<ExplicitCtorImplementor>();
+        sut.Add<IFoo>().FromSharedImplementor<ExplicitCtorImplementor>();
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeFalse();
+            result.Container.Should().BeNull();
+            result.Messages.Should().HaveCount( 1 );
+            if ( result.Messages.Count < 1 )
+                return;
+
+            var message = result.Messages.First();
+            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
+            message.Warnings.Should().BeEmpty();
+            message.Errors.Should().HaveCount( 1 );
+        }
+    }
+
+    [Fact]
     public void TryBuild_ShouldReturnFailureResult_WhenCircularDependencyThroughCtorParamsIsDetected()
     {
         var fooCtor = typeof( ChainableFoo ).GetConstructors().First();
@@ -1715,6 +1755,194 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
             message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) );
             message.Warnings.Should().BeEmpty();
             message.Errors.Should().HaveCount( 1 );
+        }
+    }
+
+    [Fact]
+    public void TryBuild_ShouldReturnFailureResult_WhenFirstRangeDependencyElementIsInvalid()
+    {
+        var sut = new DependencyContainerBuilder();
+        sut.Add<IBar>().FromType<Implementor>();
+        sut.Add<IFoo>().FromSharedImplementor<ChainableBar>();
+        sut.Add<IFoo>().FromType<Implementor>();
+        sut.Add<IFoo>().FromType<ChainableFoo>();
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeFalse();
+            result.Container.Should().BeNull();
+            result.Messages.Should().HaveCount( 1 );
+            if ( result.Messages.Count < 1 )
+                return;
+
+            var message = result.Messages.First();
+            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ), 0 ) );
+            message.Warnings.Should().BeEmpty();
+            message.Errors.Should().HaveCount( 2 );
+        }
+    }
+
+    [Fact]
+    public void TryBuild_ShouldReturnFailureResult_WhenSecondRangeDependencyElementIsInvalid()
+    {
+        var sut = new DependencyContainerBuilder();
+        sut.Add<IFoo>().FromType<Implementor>();
+        sut.Add<IFoo>().FromType<ChainableFoo>();
+        sut.Add<IFoo>().FromType<MultiCtorImplementor>();
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeFalse();
+            result.Container.Should().BeNull();
+            result.Messages.Should().HaveCount( 1 );
+            if ( result.Messages.Count < 1 )
+                return;
+
+            var message = result.Messages.First();
+            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ), 1 ) );
+            message.Warnings.Should().BeEmpty();
+            message.Errors.Should().HaveCount( 1 );
+        }
+    }
+
+    [Theory]
+    [InlineData( DependencyLifetime.Scoped, DependencyLifetime.Transient )]
+    [InlineData( DependencyLifetime.ScopedSingleton, DependencyLifetime.Transient )]
+    [InlineData( DependencyLifetime.ScopedSingleton, DependencyLifetime.Scoped )]
+    [InlineData( DependencyLifetime.Singleton, DependencyLifetime.Transient )]
+    [InlineData( DependencyLifetime.Singleton, DependencyLifetime.Scoped )]
+    [InlineData( DependencyLifetime.Singleton, DependencyLifetime.ScopedSingleton )]
+    public void TryBuild_ShouldReturnResultWithWarnings_WhenCaptiveDependencyIsDetectedInRangeElementAndTheyAreTreatedAsWarnings(
+        DependencyLifetime parentLifetime,
+        DependencyLifetime dependencyLifetime)
+    {
+        var sut = new DependencyContainerBuilder();
+        sut.Configuration.EnableTreatingCaptiveDependenciesAsErrors( false );
+        sut.Add<string>().SetLifetime( parentLifetime ).FromFactory( _ => string.Empty );
+        sut.Add<string>().SetLifetime( dependencyLifetime ).FromFactory( _ => string.Empty );
+        sut.Add<string>().SetLifetime( parentLifetime ).FromFactory( _ => string.Empty );
+        sut.Add<IFoo>().SetLifetime( parentLifetime ).FromType<RangeFoo>();
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeTrue();
+            result.Container.Should().NotBeNull();
+            result.Messages.Should().HaveCount( 1 );
+            if ( result.Messages.Count < 1 )
+                return;
+
+            var message = result.Messages.First();
+            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
+            message.Warnings.Should().HaveCount( 1 );
+            message.Errors.Should().BeEmpty();
+        }
+    }
+
+    [Theory]
+    [InlineData( DependencyLifetime.Scoped, DependencyLifetime.Transient )]
+    [InlineData( DependencyLifetime.ScopedSingleton, DependencyLifetime.Transient )]
+    [InlineData( DependencyLifetime.ScopedSingleton, DependencyLifetime.Scoped )]
+    [InlineData( DependencyLifetime.Singleton, DependencyLifetime.Transient )]
+    [InlineData( DependencyLifetime.Singleton, DependencyLifetime.Scoped )]
+    [InlineData( DependencyLifetime.Singleton, DependencyLifetime.ScopedSingleton )]
+    public void TryBuild_ShouldReturnFailureResult_WhenCaptiveDependencyIsDetectedInRangeElementAndTheyAreTreatedAsErrors(
+        DependencyLifetime parentLifetime,
+        DependencyLifetime dependencyLifetime)
+    {
+        var sut = new DependencyContainerBuilder();
+        sut.Configuration.EnableTreatingCaptiveDependenciesAsErrors();
+        sut.Add<string>().SetLifetime( parentLifetime ).FromFactory( _ => string.Empty );
+        sut.Add<string>().SetLifetime( dependencyLifetime ).FromFactory( _ => string.Empty );
+        sut.Add<string>().SetLifetime( parentLifetime ).FromFactory( _ => string.Empty );
+        sut.Add<IFoo>().SetLifetime( parentLifetime ).FromType<RangeFoo>();
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeFalse();
+            result.Container.Should().BeNull();
+            result.Messages.Should().HaveCount( 1 );
+            if ( result.Messages.Count < 1 )
+                return;
+
+            var message = result.Messages.First();
+            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
+            message.Warnings.Should().BeEmpty();
+            message.Errors.Should().HaveCount( 1 );
+        }
+    }
+
+    [Fact]
+    public void TryBuild_ShouldReturnFailureResult_WhenCircularDependencyForSelfRangeIsDetected()
+    {
+        var sut = new DependencyContainerBuilder();
+        sut.Add<IWithText>().FromType<RangeDecorator>();
+        sut.Add<IWithText>().FromType<RangeDecorator>();
+        sut.Add<IWithText>().FromType<RangeDecorator>();
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeFalse();
+            result.Container.Should().BeNull();
+            result.Messages.Should().HaveCount( 3 );
+            if ( result.Messages.Count < 3 )
+                return;
+
+            var firstMessage = result.Messages.First();
+            firstMessage.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) );
+            firstMessage.Warnings.Should().BeEmpty();
+            firstMessage.Errors.Should().HaveCount( 3 );
+
+            var secondMessage = result.Messages.ElementAt( 1 );
+            secondMessage.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ), 0 ) );
+            secondMessage.Warnings.Should().BeEmpty();
+            secondMessage.Errors.Should().HaveCount( 2 );
+
+            var thirdMessage = result.Messages.Last();
+            thirdMessage.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ), 1 ) );
+            thirdMessage.Warnings.Should().BeEmpty();
+            thirdMessage.Errors.Should().HaveCount( 1 );
+        }
+    }
+
+    [Fact]
+    public void TryBuild_ShouldReturnFailureResult_WhenCircularDependencyForNestedRangeIsDetected()
+    {
+        var sut = new DependencyContainerBuilder();
+        sut.Add<string>().FromFactory( _ => string.Empty );
+        sut.Add<IFoo>().FromType<TextFoo>();
+        sut.Add<IWithText>().FromType<RangeDecorator>();
+        sut.Add<IWithText>().FromType<ChainableRange>();
+        sut.Add<IWithText>().FromType<ExplicitCtorImplementor>();
+
+        var result = sut.TryBuild();
+
+        using ( new AssertionScope() )
+        {
+            result.IsOk.Should().BeFalse();
+            result.Container.Should().BeNull();
+            result.Messages.Should().HaveCount( 2 );
+            if ( result.Messages.Count < 2 )
+                return;
+
+            var firstMessage = result.Messages.First();
+            firstMessage.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
+            firstMessage.Warnings.Should().BeEmpty();
+            firstMessage.Errors.Should().HaveCount( 1 );
+
+            var secondMessage = result.Messages.Last(  );
+            secondMessage.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ), 0 ) );
+            secondMessage.Warnings.Should().BeEmpty();
+            secondMessage.Errors.Should().HaveCount( 1 );
         }
     }
 
