@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Exceptions;
@@ -258,6 +260,72 @@ public static class MathUtils
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ulong Lcm(ulong a, ulong b)
     {
-        return a * (b / Gcd( a, b ));
+        return checked( a * (b / Gcd( a, b )) );
+    }
+
+    [Pure]
+    public static Fraction[] ConvertToFractions(IEnumerable<Percent> percentages, Fraction targetSum)
+    {
+        Ensure.IsGreaterThanOrEqualTo( targetSum, Fraction.Zero, nameof( targetSum ) );
+
+        var materializedPercentages = percentages as IReadOnlyList<Percent> ?? percentages.ToList();
+        if ( materializedPercentages.Count == 0 )
+            return Array.Empty<Fraction>();
+
+        var percentageSum = Percent.Zero;
+        foreach ( var percent in materializedPercentages )
+        {
+            Ensure.IsGreaterThan( percent, Percent.Zero, nameof( percent ) );
+            percentageSum += percent;
+        }
+
+        var fractions = new Fraction[materializedPercentages.Count];
+        if ( targetSum.Numerator == 0 )
+        {
+            Array.Fill( fractions, targetSum );
+            return fractions;
+        }
+
+        var index = 0;
+        var numeratorSum = 0L;
+        var ratioMultiplier = (decimal)targetSum / percentageSum.Ratio;
+
+        foreach ( var percent in materializedPercentages )
+        {
+            fractions[index] = Fraction.Create( percent.Ratio * ratioMultiplier, targetSum.Denominator );
+            numeratorSum = checked( numeratorSum + fractions[index++].Numerator );
+        }
+
+        var roundingError = unchecked( targetSum.Numerator - numeratorSum );
+        if ( roundingError < 0 )
+        {
+            for ( var i = 0; i < fractions.Length; ++i )
+            {
+                var numerator = fractions[i].Numerator;
+                if ( numerator > 0 )
+                {
+                    fractions[i] = fractions[i].SetNumerator( numerator - 1 );
+                    ++roundingError;
+                }
+            }
+        }
+
+        Assume.IsGreaterThanOrEqualTo( roundingError, 0, nameof( roundingError ) );
+        if ( roundingError > 0 )
+        {
+            index = 0;
+            var fixedPartition = new IntegerFixedPartition( unchecked( (ulong)roundingError ), fractions.Length );
+            foreach ( var part in fixedPartition )
+            {
+                var signedPartition = unchecked( (long)part );
+                var numerator = fractions[index].Numerator;
+                numerator = checked( numerator + signedPartition );
+                fractions[index] = fractions[index].SetNumerator( numerator );
+                ++index;
+            }
+        }
+
+        Assume.Equals( targetSum, fractions.Aggregate( Fraction.Zero, (a, b) => a + b ), nameof( targetSum ) );
+        return fractions;
     }
 }

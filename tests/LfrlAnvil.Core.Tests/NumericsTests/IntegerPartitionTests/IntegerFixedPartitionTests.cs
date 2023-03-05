@@ -42,6 +42,6 @@ public class IntegerFixedPartitionTests : TestsBase
     {
         var sut = new IntegerFixedPartition( 123, 7 );
         var result = sut.ToString();
-        result.Should().Be( "123 into 7 part(s)" );
+        result.Should().Be( "123 into 7 fixed part(s)" );
     }
 }

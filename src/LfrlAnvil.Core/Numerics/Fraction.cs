@@ -117,9 +117,9 @@ public readonly struct Fraction : IEquatable<Fraction>, IComparable<Fraction>, I
 
         var hiCmp = hi1.CompareTo( hi2 );
         if ( hiCmp != 0 )
-            return sign == 1 ? hiCmp : -hiCmp;
+            return sign > 0 ? hiCmp : -hiCmp;
 
-        return sign == 1 ? lo1.CompareTo( lo2 ) : -lo1.CompareTo( lo2 );
+        return sign > 0 ? lo1.CompareTo( lo2 ) : -lo1.CompareTo( lo2 );
     }
 
     [Pure]

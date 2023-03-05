@@ -6,6 +6,7 @@ public class IntegerPartitionTestsData
     {
         return new TheoryData<ulong, int, ulong[]>
         {
+            { 100, 0, Array.Empty<ulong>() },
             { 0, 1, new[] { 0UL } },
             { 999, 1, new[] { 999UL } },
             { 7, 3, new[] { 2UL, 2UL, 3UL } },

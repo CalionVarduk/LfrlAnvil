@@ -2,6 +2,7 @@
 using LfrlAnvil.Functional;
 using LfrlAnvil.Numerics;
 using LfrlAnvil.TestExtensions.Attributes;
+using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.NumericsTests.MathUtilsTests;
 
@@ -166,5 +167,45 @@ public class MathUtilsTests : TestsBase
     {
         var result = MathUtils.Lcm( a, b );
         result.Should().Be( expected );
+    }
+
+    [Fact]
+    public void Lcm_ShouldThrowOverflowException_WhenValueIsTooLarge()
+    {
+        var action = Lambda.Of( () => MathUtils.Lcm( ulong.MaxValue, 2 ) );
+        action.Should().ThrowExactly<OverflowException>();
+    }
+
+    [Theory]
+    [MethodData( nameof( MathUtilsTestsData.GetConvertToFractionsData ) )]
+    public void ConvertToFractions_ShouldReturnCorrectResult(Percent[] percentages, Fraction targetSum, Fraction[] expected)
+    {
+        var result = MathUtils.ConvertToFractions( percentages, targetSum );
+        result.Should().BeSequentiallyEqualTo( expected );
+    }
+
+    [Fact]
+    public void ConvertToFractions_ShouldThrowArgumentOutOfRangeException_WhenTargetSumIsLessThanZero()
+    {
+        var action = Lambda.Of( () => MathUtils.ConvertToFractions( Array.Empty<Percent>(), -Fraction.Epsilon ) );
+        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+    }
+
+    [Theory]
+    [InlineData( 0 )]
+    [InlineData( -1 )]
+    public void ConvertToFractions_ShouldThrowArgumentOutOfRangeException_WhenAtLeastOnePercentIsNotPositive(long value)
+    {
+        var action = Lambda.Of(
+            () => MathUtils.ConvertToFractions(
+                new[]
+                {
+                    Percent.One,
+                    Percent.One,
+                    Percent.Normalize( value )
+                },
+                new Fraction( 1, 1 ) ) );
+
+        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
 }
