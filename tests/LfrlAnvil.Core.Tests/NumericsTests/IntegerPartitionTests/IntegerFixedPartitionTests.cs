@@ -12,22 +12,22 @@ public class IntegerFixedPartitionTests : TestsBase
     [MethodData( nameof( IntegerPartitionTestsData.GetFixedData ) )]
     public void GetEnumerator_ShouldReturnCorrectResult_WhenPartCountIsGreaterThanZero(ulong value, int partCount, ulong[] expected)
     {
-        var result = new IntegerFixedPartition( value, partCount );
-        result.Should().BeSequentiallyEqualTo( expected );
+        var sut = new IntegerFixedPartition( value, partCount );
+        sut.Should().BeSequentiallyEqualTo( expected );
     }
 
     [Fact]
     public void GetEnumerator_ShouldReturnEmptyResult_WhenPartCountEqualsZero()
     {
-        var result = new IntegerFixedPartition( Fixture.Create<ulong>(), partCount: 0 );
-        result.Should().BeEmpty();
+        var sut = new IntegerFixedPartition( Fixture.Create<ulong>(), partCount: 0 );
+        sut.Should().BeEmpty();
     }
 
     [Fact]
     public void GetEnumerator_ShouldReturnEmptyResult_ForDefault()
     {
-        var result = default( IntegerFixedPartition );
-        result.Should().BeEmpty();
+        var sut = default( IntegerFixedPartition );
+        sut.Should().BeEmpty();
     }
 
     [Fact]
@@ -35,5 +35,13 @@ public class IntegerFixedPartitionTests : TestsBase
     {
         var action = Lambda.Of( () => new IntegerFixedPartition( Fixture.Create<ulong>(), partCount: -1 ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+    }
+
+    [Fact]
+    public void ToString_ShouldReturnCorrectResult()
+    {
+        var sut = new IntegerFixedPartition( 123, 7 );
+        var result = sut.ToString();
+        result.Should().Be( "123 into 7 part(s)" );
     }
 }

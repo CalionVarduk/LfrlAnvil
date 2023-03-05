@@ -313,7 +313,7 @@ public class FixedTests : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( rawValue.GetHashCode() );
+        result.Should().Be( ((decimal)sut).GetHashCode() );
     }
 
     [Theory]

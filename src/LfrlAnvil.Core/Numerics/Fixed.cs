@@ -131,7 +131,7 @@ public readonly struct Fixed : IEquatable<Fixed>, IComparable<Fixed>, IComparabl
     [Pure]
     public override int GetHashCode()
     {
-        return RawValue.GetHashCode();
+        return ((decimal)this).GetHashCode();
     }
 
     [Pure]

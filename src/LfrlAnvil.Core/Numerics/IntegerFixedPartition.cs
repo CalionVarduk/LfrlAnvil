@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Numerics;
 
@@ -18,6 +19,12 @@ public readonly struct IntegerFixedPartition : IReadOnlyCollection<ulong>
     public int Count { get; }
     public ulong Quotient { get; }
     public ulong Remainder { get; }
+
+    [Pure]
+    public override string ToString()
+    {
+        return $"{Value} into {Count} part(s)";
+    }
 
     public Enumerator GetEnumerator()
     {
