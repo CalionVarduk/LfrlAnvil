@@ -5,6 +5,7 @@ using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Exceptions;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Numerics;
 
@@ -268,7 +269,7 @@ public static class MathUtils
     {
         Ensure.IsGreaterThanOrEqualTo( targetSum, Fraction.Zero, nameof( targetSum ) );
 
-        var materializedPercentages = percentages as IReadOnlyList<Percent> ?? percentages.ToList();
+        var materializedPercentages = percentages.Materialize();
         if ( materializedPercentages.Count == 0 )
             return Array.Empty<Fraction>();
 

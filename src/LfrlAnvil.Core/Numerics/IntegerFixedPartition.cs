@@ -23,7 +23,7 @@ public readonly struct IntegerFixedPartition : IReadOnlyCollection<ulong>
     [Pure]
     public override string ToString()
     {
-        return $"{Value} into {Count} fixed part(s)";
+        return $"Partition {Value} into {Count} fixed part(s)";
     }
 
     public Enumerator GetEnumerator()

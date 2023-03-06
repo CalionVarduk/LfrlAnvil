@@ -246,14 +246,17 @@ public class FractionTests : TestsBase
 
     [Theory]
     [InlineData( 0, 10, 0 )]
-    [InlineData( 20, 10, 20 )]
-    [InlineData( -20, 10, -20 )]
-    [InlineData( 123, 90, 90 )]
-    [InlineData( 185, 80, 160 )]
-    [InlineData( -123, 90, -90 )]
-    [InlineData( -185, 80, -160 )]
+    [InlineData( 20, 10, 2 )]
+    [InlineData( -20, 10, -2 )]
+    [InlineData( 123, 90, 1 )]
+    [InlineData( 185, 80, 2 )]
+    [InlineData( -123, 90, -1 )]
+    [InlineData( -185, 80, -2 )]
+    [InlineData( 0, ulong.MaxValue, 0 )]
     [InlineData( long.MaxValue, 1, long.MaxValue )]
     [InlineData( long.MinValue, 1, long.MinValue )]
+    [InlineData( long.MaxValue, ulong.MaxValue, 0 )]
+    [InlineData( long.MinValue, ulong.MaxValue, 0 )]
     public void Truncate_ShouldReturnCorrectResult(long numerator, ulong denominator, long expectedNumerator)
     {
         var sut = new Fraction( numerator, denominator );
@@ -262,20 +265,23 @@ public class FractionTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Numerator.Should().Be( expectedNumerator );
-            result.Denominator.Should().Be( sut.Denominator );
+            result.Denominator.Should().Be( 1 );
         }
     }
 
     [Theory]
     [InlineData( 0, 10, 0 )]
-    [InlineData( 20, 10, 20 )]
-    [InlineData( -20, 10, -20 )]
-    [InlineData( 123, 90, 90 )]
-    [InlineData( 185, 80, 160 )]
-    [InlineData( -123, 90, -180 )]
-    [InlineData( -185, 80, -240 )]
+    [InlineData( 20, 10, 2 )]
+    [InlineData( -20, 10, -2 )]
+    [InlineData( 123, 90, 1 )]
+    [InlineData( 185, 80, 2 )]
+    [InlineData( -123, 90, -2 )]
+    [InlineData( -185, 80, -3 )]
+    [InlineData( 0, ulong.MaxValue, 0 )]
     [InlineData( long.MaxValue, 1, long.MaxValue )]
     [InlineData( long.MinValue, 1, long.MinValue )]
+    [InlineData( long.MaxValue, ulong.MaxValue, 0 )]
+    [InlineData( long.MinValue + 2, long.MaxValue, -1 )]
     public void Floor_ShouldReturnCorrectResult(long numerator, ulong denominator, long expectedNumerator)
     {
         var sut = new Fraction( numerator, denominator );
@@ -284,7 +290,7 @@ public class FractionTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Numerator.Should().Be( expectedNumerator );
-            result.Denominator.Should().Be( sut.Denominator );
+            result.Denominator.Should().Be( 1 );
         }
     }
 
@@ -298,14 +304,17 @@ public class FractionTests : TestsBase
 
     [Theory]
     [InlineData( 0, 10, 0 )]
-    [InlineData( 20, 10, 20 )]
-    [InlineData( -20, 10, -20 )]
-    [InlineData( 123, 90, 180 )]
-    [InlineData( 185, 80, 240 )]
-    [InlineData( -123, 90, -90 )]
-    [InlineData( -185, 80, -160 )]
+    [InlineData( 20, 10, 2 )]
+    [InlineData( -20, 10, -2 )]
+    [InlineData( 123, 90, 2 )]
+    [InlineData( 185, 80, 3 )]
+    [InlineData( -123, 90, -1 )]
+    [InlineData( -185, 80, -2 )]
+    [InlineData( 0, ulong.MaxValue, 0 )]
     [InlineData( long.MaxValue, 1, long.MaxValue )]
     [InlineData( long.MinValue, 1, long.MinValue )]
+    [InlineData( long.MaxValue - 1, long.MaxValue, 1 )]
+    [InlineData( long.MinValue, ulong.MaxValue, 0 )]
     public void Ceiling_ShouldReturnCorrectResult(long numerator, ulong denominator, long expectedNumerator)
     {
         var sut = new Fraction( numerator, denominator );
@@ -314,7 +323,7 @@ public class FractionTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Numerator.Should().Be( expectedNumerator );
-            result.Denominator.Should().Be( sut.Denominator );
+            result.Denominator.Should().Be( 1 );
         }
     }
 
@@ -488,6 +497,19 @@ public class FractionTests : TestsBase
         var sut = new Fraction( long.MaxValue / 2 + 1, 1 );
         var action = Lambda.Of( () => sut.Round( 2 ) );
         action.Should().ThrowExactly<OverflowException>();
+    }
+
+    [Fact]
+    public void FromFixedConversionOperator_ShouldReturnCorrectResult()
+    {
+        var value = Fixed.CreateRaw( 1234, 5 );
+        var result = (Fraction)value;
+
+        using ( new AssertionScope() )
+        {
+            result.Numerator.Should().Be( value.RawValue );
+            result.Denominator.Should().Be( 100000 );
+        }
     }
 
     [Fact]

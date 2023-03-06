@@ -125,13 +125,13 @@ public readonly struct Fraction : IEquatable<Fraction>, IComparable<Fraction>, I
     [Pure]
     public Fraction Negate()
     {
-        return new Fraction( checked( -Numerator ), _denominator );
+        return new Fraction( checked( -Numerator ), Denominator );
     }
 
     [Pure]
     public Fraction Abs()
     {
-        return new Fraction( Math.Abs( Numerator ), _denominator );
+        return new Fraction( Math.Abs( Numerator ), Denominator );
     }
 
     [Pure]
@@ -141,7 +141,7 @@ public readonly struct Fraction : IEquatable<Fraction>, IComparable<Fraction>, I
         var numerator = MathUtils.ToUnsigned( Numerator, ref sign );
         var denominator = Denominator;
         var fractionalPart = numerator % denominator;
-        return new Fraction( unchecked( (long)(numerator - fractionalPart) * sign ), denominator );
+        return new Fraction( unchecked( (long)(numerator - fractionalPart) * sign ) / unchecked( (long)denominator ) );
     }
 
     [Pure]
@@ -154,10 +154,10 @@ public readonly struct Fraction : IEquatable<Fraction>, IComparable<Fraction>, I
         var denominator = Denominator;
         var fractionalPart = absNumerator % denominator;
         if ( fractionalPart == 0 )
-            return this;
+            return new Fraction( Numerator / unchecked( (long)denominator ) );
 
         var absIntegerPart = unchecked( absNumerator - fractionalPart );
-        return new Fraction( checked( -(long)(absIntegerPart + denominator) ), denominator );
+        return new Fraction( checked( -(long)(absIntegerPart + denominator) ) / unchecked( (long)denominator ) );
     }
 
     [Pure]
@@ -169,10 +169,10 @@ public readonly struct Fraction : IEquatable<Fraction>, IComparable<Fraction>, I
         var denominator = Denominator;
         var fractionalPart = unchecked( (ulong)Numerator ) % denominator;
         if ( fractionalPart == 0 )
-            return this;
+            return new Fraction( Numerator / unchecked( (long)denominator ) );
 
         var integerPart = unchecked( (ulong)Numerator - fractionalPart );
-        return new Fraction( checked( (long)(integerPart + denominator) ), denominator );
+        return new Fraction( checked( (long)(integerPart + denominator) ) / unchecked( (long)denominator ) );
     }
 
     [Pure]
@@ -271,6 +271,12 @@ public readonly struct Fraction : IEquatable<Fraction>, IComparable<Fraction>, I
 
         var q = Divide( other ).Floor();
         return Subtract( other.Multiply( q ) );
+    }
+
+    [Pure]
+    public static implicit operator Fraction(Fixed f)
+    {
+        return Create( f );
     }
 
     [Pure]

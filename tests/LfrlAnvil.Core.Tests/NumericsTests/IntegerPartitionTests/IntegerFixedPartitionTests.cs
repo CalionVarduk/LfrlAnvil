@@ -1,4 +1,6 @@
-﻿using LfrlAnvil.Functional;
+﻿using System.Linq;
+using FluentAssertions.Execution;
+using LfrlAnvil.Functional;
 using LfrlAnvil.Numerics;
 using LfrlAnvil.TestExtensions.Attributes;
 using LfrlAnvil.TestExtensions.FluentAssertions;
@@ -13,7 +15,12 @@ public class IntegerFixedPartitionTests : TestsBase
     public void GetEnumerator_ShouldReturnCorrectResult_WhenPartCountIsGreaterThanZero(ulong value, int partCount, ulong[] expected)
     {
         var sut = new IntegerFixedPartition( value, partCount );
-        sut.Should().BeSequentiallyEqualTo( expected );
+        using ( new AssertionScope() )
+        {
+            var sum = sut.Aggregate( 0UL, (a, b) => a + b );
+            sut.Should().BeSequentiallyEqualTo( expected );
+            sum.Should().Be( value );
+        }
     }
 
     [Fact]
@@ -42,6 +49,6 @@ public class IntegerFixedPartitionTests : TestsBase
     {
         var sut = new IntegerFixedPartition( 123, 7 );
         var result = sut.ToString();
-        result.Should().Be( "123 into 7 fixed part(s)" );
+        result.Should().Be( "Partition 123 into 7 fixed part(s)" );
     }
 }

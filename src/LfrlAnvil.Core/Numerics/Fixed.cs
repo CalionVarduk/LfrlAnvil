@@ -395,7 +395,7 @@ public readonly struct Fixed : IEquatable<Fixed>, IComparable<Fixed>, IComparabl
     }
 
     [Pure]
-    public static explicit operator decimal(Fixed f)
+    public static implicit operator decimal(Fixed f)
     {
         var result = (decimal)f.RawValue / PowersOfTen[f.Precision];
         return result;
