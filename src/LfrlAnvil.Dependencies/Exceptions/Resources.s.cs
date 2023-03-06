@@ -10,6 +10,9 @@ namespace LfrlAnvil.Dependencies.Exceptions;
 
 internal static class Resources
 {
+    internal const string BootstrapperInvokedBeforeItCouldFinish =
+        "Bootstrapper has been invoked before its previous invocation has been finished.";
+
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string ScopeIsDisposed(IDependencyScope scope)
