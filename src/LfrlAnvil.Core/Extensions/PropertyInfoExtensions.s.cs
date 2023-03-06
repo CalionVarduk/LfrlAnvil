@@ -26,7 +26,13 @@ public static class PropertyInfoExtensions
         if ( includeDeclaringType && property.DeclaringType is not null )
             TypeExtensions.AppendDebugString( builder, property.DeclaringType ).Append( '.' );
 
-        builder.Append( property.Name ).Append( ' ' );
+        builder.Append( property.Name );
+
+        var indexParameters = property.GetIndexParameters();
+        if ( indexParameters.Length > 0 )
+            MethodInfoExtensions.AppendParametersString( builder, indexParameters, '[', ']' );
+
+        builder.Append( ' ' );
 
         if ( property.CanRead )
             builder.Append( "[get]" );

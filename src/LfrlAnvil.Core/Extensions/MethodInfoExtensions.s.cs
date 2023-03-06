@@ -46,9 +46,13 @@ public static class MethodInfoExtensions
         return AppendParametersString( builder, method.GetParameters() ).ToString();
     }
 
-    internal static StringBuilder AppendParametersString(StringBuilder builder, ParameterInfo[] parameters)
+    internal static StringBuilder AppendParametersString(
+        StringBuilder builder,
+        ParameterInfo[] parameters,
+        char open = '(',
+        char close = ')')
     {
-        builder.Append( '(' );
+        builder.Append( open );
 
         foreach ( var parameter in parameters )
             ParameterInfoExtensions.AppendDebugString( builder, parameter ).Append( ", " );
@@ -56,7 +60,7 @@ public static class MethodInfoExtensions
         if ( parameters.Length > 0 )
             builder.Length -= 2;
 
-        builder.Append( ')' );
+        builder.Append( close );
         return builder;
     }
 }

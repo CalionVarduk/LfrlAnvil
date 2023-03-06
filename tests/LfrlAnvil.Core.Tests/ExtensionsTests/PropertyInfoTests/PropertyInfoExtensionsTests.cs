@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Extensions;
 
@@ -118,6 +119,14 @@ public class PropertyInfoExtensionsTests : TestsBase
         result.Should().Be( "System.Int32 PublicExplicitWriteOnlyProperty [set]" );
     }
 
+    [Fact]
+    public void GetDebugString_ShouldReturnCorrectResult_ForIndexerProperty()
+    {
+        var property = TestClass.GetIndexerInfo();
+        var result = property.GetDebugString( includeDeclaringType: false );
+        result.Should().Be("System.Decimal Item[System.Int32 index] [get]");
+    }
+
     private static bool MatchBackingField(PropertyInfo property, FieldInfo? info)
     {
         return info != null &&
@@ -129,6 +138,12 @@ public class PropertyInfoExtensionsTests : TestsBase
 
 public class TestClass
 {
+    public static PropertyInfo GetIndexerInfo()
+    {
+        return typeof( TestClass ).GetProperties( BindingFlags.Instance | BindingFlags.Public )
+            .First( p => p.GetIndexParameters().Length > 0 );
+    }
+
     public static PropertyInfo GetPublicExplicitWritableInfo()
     {
         return typeof( TestClass ).GetProperty(
@@ -238,4 +253,6 @@ public class TestClass
 
     private int PrivateAutoWritableProperty { get; set; }
     private int PrivateAutoReadOnlyProperty { get; }
+
+    public decimal this[int index] => 0;
 }
