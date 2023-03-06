@@ -80,7 +80,7 @@ public readonly struct Bitmask<T> : IEquatable<Bitmask<T>>, IComparable<Bitmask<
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public override int GetHashCode()
     {
-        return Value.GetHashCode();
+        return EqualityComparer<T>.Default.GetHashCode( Value );
     }
 
     [Pure]

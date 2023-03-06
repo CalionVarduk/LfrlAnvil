@@ -19,7 +19,7 @@ public static class Generic<T>
         if ( IsReferenceType )
             return ReferenceEquals( obj, null );
 
-        return IsNullableType && obj!.Equals( default );
+        return IsNullableType && EqualityComparer<T>.Default.Equals( obj, default );
     }
 
     [Pure]
@@ -71,6 +71,6 @@ public static class Generic<T>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static int CreateHashCode(T? obj)
     {
-        return IsNull( obj ) ? 0 : obj.GetHashCode();
+        return IsNull( obj ) ? 0 : EqualityComparer<T>.Default.GetHashCode( obj );
     }
 }

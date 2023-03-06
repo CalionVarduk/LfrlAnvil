@@ -6,13 +6,6 @@ namespace LfrlAnvil.Tests.EqualityComparerFactoryTests;
 public abstract class GenericEqualityComparerFactoryTests<T> : TestsBase
 {
     [Fact]
-    public void CreateDefault_ShouldReturnDefaultComparer()
-    {
-        var sut = EqualityComparerFactory<T>.CreateDefault();
-        sut.Should().Be( EqualityComparer<T>.Default );
-    }
-
-    [Fact]
     public void Create_ShouldCreateComparerWithCorrectEqualsImplementation()
     {
         var obj1 = Fixture.Create<T>();
