@@ -21,3 +21,6 @@
 // ^ e.g. Implementor<T, U> : IDependency<T>, T will be filled in automatically, but U cannot be resolved based on the interface alone
 // ^ the functionality could allow to provide a concrete type to use as a substitution for the U type
 //
+// reader/writer lock for dependency container, instead of lock:
+// ^ there should be a lot more reading (resolving dependencies) then writing (creating scopes)
+//

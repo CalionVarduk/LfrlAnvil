@@ -159,7 +159,7 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
     {
         lock ( _sync )
         {
-            return resolvers.TryGetValue( dependencyType, out var resolver ) ? GetLifetime( resolver ) : null;
+            return resolvers.TryGetValue( dependencyType, out var resolver ) ? resolver.Lifetime : null;
         }
     }
 
@@ -300,18 +300,5 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
         }
 
         return null;
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static DependencyLifetime GetLifetime(DependencyResolver resolver)
-    {
-        return resolver switch
-        {
-            TransientDependencyResolver => DependencyLifetime.Transient,
-            ScopedDependencyResolver => DependencyLifetime.Scoped,
-            ScopedSingletonDependencyResolver => DependencyLifetime.ScopedSingleton,
-            _ => DependencyLifetime.Singleton
-        };
     }
 }

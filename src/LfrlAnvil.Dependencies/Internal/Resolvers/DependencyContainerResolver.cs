@@ -7,6 +7,8 @@ internal sealed class DependencyContainerResolver : DependencyResolver
     internal DependencyContainerResolver(ulong id)
         : base( id, typeof( IDependencyContainer ), DependencyImplementorDisposalStrategy.RenounceOwnership(), null ) { }
 
+    internal override DependencyLifetime Lifetime => DependencyLifetime.Singleton;
+
     [Pure]
     protected override object CreateInternal(DependencyScope scope)
     {

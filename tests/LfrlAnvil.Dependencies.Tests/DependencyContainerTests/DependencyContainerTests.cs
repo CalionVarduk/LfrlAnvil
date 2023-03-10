@@ -2060,7 +2060,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
     [Theory]
     [InlineData( typeof( IDependencyContainer ), DependencyLifetime.Singleton )]
-    [InlineData( typeof( IDependencyScope ), DependencyLifetime.Singleton )]
+    [InlineData( typeof( IDependencyScope ), DependencyLifetime.ScopedSingleton )]
     [InlineData( typeof( IFoo ), DependencyLifetime.Transient )]
     [InlineData( typeof( IBar ), DependencyLifetime.Scoped )]
     [InlineData( typeof( IQux ), DependencyLifetime.ScopedSingleton )]

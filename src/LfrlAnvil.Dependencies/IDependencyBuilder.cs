@@ -9,6 +9,7 @@ public interface IDependencyBuilder
     DependencyLifetime Lifetime { get; }
     IDependencyKey? SharedImplementorKey { get; }
     IDependencyImplementorBuilder? Implementor { get; }
+    IDependencyRangeBuilder RangeBuilder { get; }
     bool IsIncludedInRange { get; }
 
     IDependencyBuilder IncludeInRange(bool included = true);

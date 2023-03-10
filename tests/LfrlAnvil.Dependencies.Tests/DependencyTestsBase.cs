@@ -354,7 +354,7 @@ public abstract class DependencyTestsBase : TestsBase
         public IEnumerable<IWithText> Range { get; }
         public string Text => string.Join( '|', Range.Select( e => e.Text ) );
     }
-    
+
     public class ChainableRange : IWithText
     {
         public ChainableRange(IFoo foo)
@@ -372,7 +372,7 @@ public abstract class DependencyTestsBase : TestsBase
         {
             Texts = texts;
         }
-        
+
         public IEnumerable<IWithText> Texts { get; }
     }
 }

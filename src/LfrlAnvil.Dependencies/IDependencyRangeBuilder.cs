@@ -4,10 +4,11 @@ using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Dependencies;
 
-public interface IDependencyRangeBuilder : IReadOnlyList<IDependencyBuilder>
+public interface IDependencyRangeBuilder
 {
     Type DependencyType { get; }
     Action<Type, IDependencyScope>? OnResolvingCallback { get; }
+    IReadOnlyList<IDependencyBuilder> Elements { get; }
 
     IDependencyBuilder Add();
 

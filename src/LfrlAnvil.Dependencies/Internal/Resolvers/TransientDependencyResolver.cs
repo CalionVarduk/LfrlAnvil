@@ -21,6 +21,8 @@ internal sealed class TransientDependencyResolver : FactoryDependencyResolver
         Expression<Func<DependencyScope, object>> expression)
         : base( id, implementorType, disposalStrategy, onResolvingCallback, expression ) { }
 
+    internal override DependencyLifetime Lifetime => DependencyLifetime.Transient;
+
     protected override object CreateInternal(DependencyScope scope)
     {
         Assume.IsNotNull( Factory, nameof( Factory ) );

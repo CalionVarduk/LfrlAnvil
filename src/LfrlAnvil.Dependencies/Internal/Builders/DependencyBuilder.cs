@@ -7,7 +7,7 @@ internal sealed class DependencyBuilder : IDependencyBuilder
 {
     internal DependencyBuilder(DependencyRangeBuilder rangeBuilder)
     {
-        RangeBuilder = rangeBuilder;
+        InternalRangeBuilder = rangeBuilder;
         Lifetime = rangeBuilder.LocatorBuilder.DefaultLifetime;
         InternalSharedImplementorKey = null;
         Implementor = null;
@@ -17,9 +17,10 @@ internal sealed class DependencyBuilder : IDependencyBuilder
     public DependencyLifetime Lifetime { get; private set; }
     public IDependencyImplementorBuilder? Implementor { get; private set; }
     public bool IsIncludedInRange { get; private set; }
-    public Type DependencyType => RangeBuilder.DependencyType;
+    public Type DependencyType => InternalRangeBuilder.DependencyType;
     public IDependencyKey? SharedImplementorKey => InternalSharedImplementorKey;
-    internal DependencyRangeBuilder RangeBuilder { get; }
+    public IDependencyRangeBuilder RangeBuilder => InternalRangeBuilder;
+    internal DependencyRangeBuilder InternalRangeBuilder { get; }
     internal IInternalDependencyKey? InternalSharedImplementorKey { get; private set; }
 
     public IDependencyBuilder IncludeInRange(bool included = true)
@@ -38,7 +39,7 @@ internal sealed class DependencyBuilder : IDependencyBuilder
     public IDependencyBuilder FromSharedImplementor(Type type, Action<IDependencyImplementorOptions>? configuration = null)
     {
         InternalSharedImplementorKey = DependencyImplementorOptions.CreateImplementorKey(
-            RangeBuilder.LocatorBuilder.CreateImplementorKey( type ),
+            InternalRangeBuilder.LocatorBuilder.CreateImplementorKey( type ),
             configuration );
 
         Implementor = null;
@@ -73,7 +74,7 @@ internal sealed class DependencyBuilder : IDependencyBuilder
             return Implementor;
 
         InternalSharedImplementorKey = null;
-        Implementor = new DependencyImplementorBuilder( RangeBuilder.LocatorBuilder, DependencyType );
+        Implementor = new DependencyImplementorBuilder( InternalRangeBuilder.LocatorBuilder, DependencyType );
         return Implementor;
     }
 }

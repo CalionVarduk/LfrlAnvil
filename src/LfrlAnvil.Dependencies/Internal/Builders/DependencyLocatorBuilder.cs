@@ -90,7 +90,7 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
         foreach ( var rangeBuilder in Dependencies.Values )
         {
             var dependencyKey = CreateImplementorKey( rangeBuilder.DependencyType );
-            var builderSpan = CollectionsMarshal.AsSpan( rangeBuilder.Elements );
+            var builderSpan = CollectionsMarshal.AsSpan( rangeBuilder.InternalElements );
             var builder = builderSpan.Length > 0 ? builderSpan[^1] : null;
             DependencyResolverFactory? builderFactory = null;
 

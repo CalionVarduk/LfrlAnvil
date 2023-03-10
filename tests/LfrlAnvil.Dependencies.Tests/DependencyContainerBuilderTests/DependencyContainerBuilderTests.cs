@@ -1016,9 +1016,8 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         using ( new AssertionScope() )
         {
             result.DependencyType.Should().Be( typeof( IFoo ) );
-            result.Count.Should().Be( 0 );
+            result.Elements.Should().BeEmpty();
             result.TryGetLast().Should().BeNull();
-            result.Should().BeEmpty();
         }
     }
 
@@ -1034,11 +1033,10 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         using ( new AssertionScope() )
         {
             result.DependencyType.Should().Be( typeof( IFoo ) );
-            result.Count.Should().Be( 2 );
+            result.Elements.Should().BeSequentiallyEqualTo( expected1, expected2 );
             result.TryGetLast().Should().BeSameAs( expected2 );
-            result[0].Should().BeSameAs( expected1 );
-            result[1].Should().BeSameAs( expected2 );
-            result.Should().BeSequentiallyEqualTo( expected1, expected2 );
+            expected1.RangeBuilder.Should().BeSameAs( result );
+            expected2.RangeBuilder.Should().BeSameAs( result );
         }
     }
 
@@ -1939,7 +1937,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
             firstMessage.Warnings.Should().BeEmpty();
             firstMessage.Errors.Should().HaveCount( 1 );
 
-            var secondMessage = result.Messages.Last(  );
+            var secondMessage = result.Messages.Last();
             secondMessage.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ), 0 ) );
             secondMessage.Warnings.Should().BeEmpty();
             secondMessage.Errors.Should().HaveCount( 1 );

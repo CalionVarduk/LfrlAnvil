@@ -4,7 +4,7 @@ using LfrlAnvil.Generators;
 
 namespace LfrlAnvil.Dependencies.Internal.Resolvers.Factories;
 
-internal sealed class TransientDependencyResolverFactory : ImplementorBasedDependencyResolverFactory
+internal sealed class TransientDependencyResolverFactory : RegisteredDependencyResolverFactory
 {
     internal TransientDependencyResolverFactory(ImplementorKey implementorKey, IDependencyImplementorBuilder implementorBuilder)
         : base( implementorKey, implementorBuilder, DependencyLifetime.Transient ) { }

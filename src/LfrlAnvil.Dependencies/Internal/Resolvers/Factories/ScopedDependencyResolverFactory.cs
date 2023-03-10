@@ -4,7 +4,7 @@ using LfrlAnvil.Generators;
 
 namespace LfrlAnvil.Dependencies.Internal.Resolvers.Factories;
 
-internal sealed class ScopedDependencyResolverFactory : ImplementorBasedDependencyResolverFactory
+internal sealed class ScopedDependencyResolverFactory : RegisteredDependencyResolverFactory
 {
     internal ScopedDependencyResolverFactory(ImplementorKey implementorKey, IDependencyImplementorBuilder implementorBuilder)
         : base( implementorKey, implementorBuilder, DependencyLifetime.Scoped ) { }

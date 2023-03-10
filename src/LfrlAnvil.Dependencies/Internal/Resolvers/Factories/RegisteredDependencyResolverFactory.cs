@@ -13,7 +13,7 @@ using LfrlAnvil.Generators;
 
 namespace LfrlAnvil.Dependencies.Internal.Resolvers.Factories;
 
-internal abstract class ImplementorBasedDependencyResolverFactory : DependencyResolverFactory
+internal abstract class RegisteredDependencyResolverFactory : DependencyResolverFactory
 {
     private ConstructorInfo? _constructorInfo;
     private KeyValuePair<ParameterInfo, object?>[]? _parameterResolutions;
@@ -21,7 +21,7 @@ internal abstract class ImplementorBasedDependencyResolverFactory : DependencyRe
     private Chain<string> _errors;
     private Chain<string> _warnings;
 
-    protected ImplementorBasedDependencyResolverFactory(
+    protected RegisteredDependencyResolverFactory(
         ImplementorKey implementorKey,
         IDependencyImplementorBuilder implementorBuilder,
         DependencyLifetime lifetime)
@@ -423,6 +423,7 @@ internal abstract class ImplementorBasedDependencyResolverFactory : DependencyRe
                         property.PropertyType.IsGenericType &&
                         property.PropertyType.GetGenericTypeDefinition() == injectablePropertyType &&
                         property.GetSetMethod( nonPublic: true ) is not null &&
+                        ! property.IsIndexer() &&
                         property.GetBackingField() is null;
                 },
                 configuration.InjectablePropertyType ) ??

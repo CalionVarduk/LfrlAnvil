@@ -23,6 +23,7 @@ internal abstract class DependencyResolver
 
     internal ulong Id { get; }
     internal Type ImplementorType { get; }
+    internal abstract DependencyLifetime Lifetime { get; }
     internal DependencyImplementorDisposalStrategy DisposalStrategy { get; }
     internal Action<Type, IDependencyScope>? OnResolvingCallback { get; }
 

@@ -21,6 +21,8 @@ internal sealed class ScopedDependencyResolver : FactoryDependencyResolver
         Expression<Func<DependencyScope, object>> expression)
         : base( id, implementorType, disposalStrategy, onResolvingCallback, expression ) { }
 
+    internal override DependencyLifetime Lifetime => DependencyLifetime.Scoped;
+
     protected override object CreateInternal(DependencyScope scope)
     {
         if ( scope.ScopedInstancesByResolverId.TryGetValue( Id, out var result ) )
