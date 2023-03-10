@@ -345,6 +345,13 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidTypeRegistration(Type type)
+    {
+        return $"'{type.GetDebugString()}' is not a valid type.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static string GetScopeString(IDependencyScope scope, bool capitalize)
     {
         if ( capitalize )

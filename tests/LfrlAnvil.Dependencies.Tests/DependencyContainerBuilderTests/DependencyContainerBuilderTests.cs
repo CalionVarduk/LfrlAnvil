@@ -1,9 +1,11 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using FluentAssertions.Execution;
 using LfrlAnvil.Dependencies.Exceptions;
 using LfrlAnvil.Dependencies.Extensions;
 using LfrlAnvil.Dependencies.Internal;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
@@ -1007,6 +1009,23 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
     }
 
     [Fact]
+    public void AddSharedImplementor_ShouldThrowInvalidTypeRegistrationException_WhenTypeIsOpenGeneric()
+    {
+        var sut = new DependencyContainerBuilder();
+        var action = Lambda.Of( () => sut.AddSharedImplementor( typeof( IList<> ) ) );
+        action.Should().ThrowExactly<InvalidTypeRegistrationException>().AndMatch( e => e.Type == typeof( IList<> ) );
+    }
+
+    [Fact]
+    public void AddSharedImplementor_ShouldThrowInvalidTypeRegistrationException_WhenTypeIsClosedGenericWithGenericParameters()
+    {
+        var sut = new DependencyContainerBuilder();
+        var type = typeof( List<> ).GetOpenGenericImplementations( typeof( IList<> ) ).Single();
+        var action = Lambda.Of( () => sut.AddSharedImplementor( type ) );
+        action.Should().ThrowExactly<InvalidTypeRegistrationException>().AndMatch( e => e.Type == type );
+    }
+
+    [Fact]
     public void GetDependencyRange_ShouldReturnNewlyCreatedEmptyRange_WhenDependencyTypeWasNotRegistered()
     {
         var sut = new DependencyContainerBuilder();
@@ -1049,6 +1068,23 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         var result = sut.GetDependencyRange<IFoo>().SetOnResolvingCallback( callback );
 
         result.OnResolvingCallback.Should().BeSameAs( callback );
+    }
+
+    [Fact]
+    public void GetDependencyRange_ShouldThrowInvalidTypeRegistrationException_WhenTypeIsOpenGeneric()
+    {
+        var sut = new DependencyContainerBuilder();
+        var action = Lambda.Of( () => sut.GetDependencyRange( typeof( IList<> ) ) );
+        action.Should().ThrowExactly<InvalidTypeRegistrationException>().AndMatch( e => e.Type == typeof( IList<> ) );
+    }
+
+    [Fact]
+    public void GetDependencyRange_ShouldThrowInvalidTypeRegistrationException_WhenTypeIsClosedGenericWithGenericParameters()
+    {
+        var sut = new DependencyContainerBuilder();
+        var type = typeof( List<> ).GetOpenGenericImplementations( typeof( IList<> ) ).Single();
+        var action = Lambda.Of( () => sut.GetDependencyRange( type ) );
+        action.Should().ThrowExactly<InvalidTypeRegistrationException>().AndMatch( e => e.Type == type );
     }
 
     [Fact]

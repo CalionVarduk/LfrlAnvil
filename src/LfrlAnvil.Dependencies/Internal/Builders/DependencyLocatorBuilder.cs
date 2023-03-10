@@ -28,12 +28,11 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
 
     public IDependencyImplementorBuilder AddSharedImplementor(Type type)
     {
+        AssertRegisteredType( type );
+
         ref var result = ref CollectionsMarshal.GetValueRefOrAddDefault( SharedImplementors, type, out var exists )!;
         if ( ! exists )
-        {
-            Ensure.Equals( type.IsGenericTypeDefinition, false, nameof( type ) + '.' + nameof( type.IsGenericTypeDefinition ) );
             result = new DependencyImplementorBuilder( this, type );
-        }
 
         return result;
     }
@@ -65,12 +64,11 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
 
     public IDependencyRangeBuilder GetDependencyRange(Type type)
     {
+        AssertRegisteredType( type );
+
         ref var range = ref CollectionsMarshal.GetValueRefOrAddDefault( Dependencies, type, out var exists )!;
         if ( ! exists )
-        {
-            Ensure.Equals( type.IsGenericTypeDefinition, false, nameof( type ) + '.' + nameof( type.IsGenericTypeDefinition ) );
             range = new DependencyRangeBuilder( this, type );
-        }
 
         return range;
     }
@@ -199,6 +197,12 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
             : Chain<DependencyContainerBuildMessages>.Empty;
 
         return sharedFactory;
+    }
+
+    private static void AssertRegisteredType(Type type)
+    {
+        if ( type.IsGenericTypeDefinition || type.ContainsGenericParameters )
+            throw new InvalidTypeRegistrationException( type, nameof( type ) );
     }
 }
 
