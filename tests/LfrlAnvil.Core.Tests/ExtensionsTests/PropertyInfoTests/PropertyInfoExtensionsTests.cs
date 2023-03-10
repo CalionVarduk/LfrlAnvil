@@ -88,6 +88,22 @@ public class PropertyInfoExtensionsTests : TestsBase
     }
 
     [Fact]
+    public void IsIndexer_ShouldReturnTrue_WhenPropertyContainsIndexParameters()
+    {
+        var sut = TestClass.GetIndexerInfo();
+        var result = sut.IsIndexer();
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public void IsIndexer_ShouldReturnFalse_WhenPropertyDoesNotContainIndexParameters()
+    {
+        var sut = TestClass.GetPublicAutoWritableInfo();
+        var result = sut.IsIndexer();
+        result.Should().BeFalse();
+    }
+
+    [Fact]
     public void GetDebugString_ShouldReturnCorrectResult_WithoutIncludedDeclaringType()
     {
         var property = typeof( string ).GetProperty( nameof( string.Length ) )!;
@@ -124,7 +140,7 @@ public class PropertyInfoExtensionsTests : TestsBase
     {
         var property = TestClass.GetIndexerInfo();
         var result = property.GetDebugString( includeDeclaringType: false );
-        result.Should().Be("System.Decimal Item[System.Int32 index] [get]");
+        result.Should().Be( "System.Decimal Item[System.Int32 index] [get]" );
     }
 
     private static bool MatchBackingField(PropertyInfo property, FieldInfo? info)

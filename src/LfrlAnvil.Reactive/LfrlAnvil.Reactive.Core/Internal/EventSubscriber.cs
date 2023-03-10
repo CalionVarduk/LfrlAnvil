@@ -6,7 +6,7 @@ namespace LfrlAnvil.Reactive.Internal;
 internal sealed class EventSubscriber<TEvent> : IEventSubscriber
 {
     private Action<EventSubscriber<TEvent>>? _disposer;
-    private int _state;
+    private volatile int _state;
 
     internal EventSubscriber(Action<EventSubscriber<TEvent>> disposer, IEventListener<TEvent> listener)
     {

@@ -7,8 +7,8 @@ namespace LfrlAnvil;
 public sealed class LazyDisposable<T> : IDisposable
     where T : IDisposable
 {
-    private int _hasInner;
-    private int _state;
+    private volatile int _hasInner;
+    private volatile int _state;
 
     public LazyDisposable()
     {

@@ -11,7 +11,7 @@ namespace LfrlAnvil.Reactive.Exchanges;
 public sealed class EventExchange : IMutableEventExchange
 {
     private readonly Dictionary<Type, IEventPublisher> _publishers;
-    private int _state;
+    private volatile int _state;
 
     public EventExchange()
     {

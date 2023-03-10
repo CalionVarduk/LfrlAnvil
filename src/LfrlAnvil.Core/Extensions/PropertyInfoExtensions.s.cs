@@ -18,6 +18,12 @@ public static class PropertyInfoExtensions
     }
 
     [Pure]
+    public static bool IsIndexer(this PropertyInfo property)
+    {
+        return property.GetIndexParameters().Length > 0;
+    }
+
+    [Pure]
     public static string GetDebugString(this PropertyInfo property, bool includeDeclaringType = false)
     {
         var builder = new StringBuilder();

@@ -6,7 +6,7 @@ namespace LfrlAnvil.Dependencies.Bootstrapping;
 
 public abstract class DependencyContainerBootstrapper : IDependencyContainerBootstrapper<DependencyContainerBuilder>
 {
-    private int _state;
+    private volatile int _state;
 
     public void Bootstrap(DependencyContainerBuilder builder)
     {

@@ -12,7 +12,7 @@ public abstract class EventSource<TEvent> : IEventSource<TEvent>
 {
     private readonly List<EventSubscriber<TEvent>> _subscribers;
     private SubscriberPool _subscriberPool;
-    private int _state;
+    private volatile int _state;
 
     protected EventSource()
     {
