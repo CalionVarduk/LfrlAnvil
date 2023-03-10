@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Tests.ExtensionsTests.TypeTests;
@@ -50,6 +51,14 @@ public class TypeExtensionsBasicTests : TestsBase
     public void IsConstructable_ShouldReturnFalse_WhenTypeIsOpenGenericClass()
     {
         var type = typeof( Dictionary<,> );
+        var result = type.IsConstructable();
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public void IsConstructable_ShouldReturnFalse_WhenTypeContainsGenericParameters()
+    {
+        var type = typeof( Dictionary<,> ).GetOpenGenericImplementations( typeof( IDictionary<,> ) ).Single();
         var result = type.IsConstructable();
         result.Should().BeFalse();
     }

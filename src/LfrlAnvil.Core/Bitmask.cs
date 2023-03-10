@@ -433,8 +433,7 @@ public readonly struct Bitmask<T> : IEquatable<Bitmask<T>>, IComparable<Bitmask<
         if ( ! typeof( T ).HasAttribute<FlagsAttribute>() )
             throw new BitmaskTypeInitializationException( typeof( T ), ExceptionResources.MissingEnumFlagsAttribute<T>() );
 
-        var values = Enum.GetValues( typeof( T ) ).Cast<object>();
-        if ( ! values.Any( static v => v.Equals( FromLongValue( 0 ) ) ) )
+        if ( ! Enum.IsDefined( typeof( T ), FromLongValue( 0 ) ) )
             throw new BitmaskTypeInitializationException( typeof( T ), ExceptionResources.MissingEnumZeroValueMember<T>() );
     }
 

@@ -14,7 +14,7 @@ public static class TypeExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool IsConstructable(this Type type)
     {
-        return ! type.IsAbstract && ! type.IsGenericTypeDefinition;
+        return ! type.IsAbstract && ! type.IsGenericTypeDefinition && ! type.ContainsGenericParameters;
     }
 
     [Pure]
