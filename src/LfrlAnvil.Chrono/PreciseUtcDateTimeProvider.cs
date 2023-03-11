@@ -6,31 +6,35 @@ namespace LfrlAnvil.Chrono;
 
 public sealed class PreciseUtcDateTimeProvider : DateTimeProviderBase
 {
+    private readonly long _maxPreciseMeasurementDuration;
     private DateTime _utcStart = DateTime.UtcNow;
-    private double _startTimestamp = Stopwatch.GetTimestamp();
+    private long _preciseMeasurementStart = Stopwatch.GetTimestamp();
 
     public PreciseUtcDateTimeProvider()
-        : this( ChronoConstants.TicksPerSecond ) { }
+        : this( Duration.FromMinutes( 1 ) ) { }
 
-    public PreciseUtcDateTimeProvider(long maxIdleTimeInTicks)
+    public PreciseUtcDateTimeProvider(Duration precisionResetTimeout)
         : base( DateTimeKind.Utc )
     {
-        Ensure.IsGreaterThan( maxIdleTimeInTicks, 0, nameof( maxIdleTimeInTicks ) );
-        MaxIdleTimeInTicks = maxIdleTimeInTicks;
+        _maxPreciseMeasurementDuration = StopwatchTicks.GetStopwatchTicksOrThrow( precisionResetTimeout, nameof( precisionResetTimeout ) );
+        PrecisionResetTimeout = precisionResetTimeout;
     }
 
-    public double MaxIdleTimeInTicks { get; }
+    public Duration PrecisionResetTimeout { get; }
 
     public override DateTime GetNow()
     {
-        var endTimestamp = Stopwatch.GetTimestamp();
-        var idleTimeInTicks = (endTimestamp - _startTimestamp) / Stopwatch.Frequency * TimeSpan.TicksPerSecond;
+        var currentTimestamp = Stopwatch.GetTimestamp();
+        var preciseMeasurementDuration = currentTimestamp - _preciseMeasurementStart;
 
-        if ( idleTimeInTicks < MaxIdleTimeInTicks )
-            return _utcStart.AddTicks( (long)idleTimeInTicks );
+        if ( preciseMeasurementDuration > _maxPreciseMeasurementDuration )
+        {
+            _preciseMeasurementStart = currentTimestamp;
+            _utcStart = DateTime.UtcNow;
+            return _utcStart;
+        }
 
-        _startTimestamp = Stopwatch.GetTimestamp();
-        _utcStart = DateTime.UtcNow;
-        return _utcStart;
+        var ticksDelta = StopwatchTicks.GetDurationTicks( _preciseMeasurementStart, currentTimestamp );
+        return _utcStart.AddTicks( ticksDelta );
     }
 }

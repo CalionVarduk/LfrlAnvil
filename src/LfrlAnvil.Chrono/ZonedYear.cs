@@ -25,7 +25,7 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
     public bool IsLeap => DateTime.IsLeapYear( Year );
     public int DayCount => IsLeap ? ChronoConstants.DaysInLeapYear : ChronoConstants.DaysInYear;
     public TimeZoneInfo TimeZone => Start.TimeZone;
-    public Duration Duration => _duration ?? Duration.FromHours( ChronoConstants.HoursPerDay * ChronoConstants.DaysInYear );
+    public Duration Duration => _duration ?? Duration.FromHours( ChronoConstants.HoursPerStandardDay * ChronoConstants.DaysInYear );
     public bool IsUtc => Start.IsUtc;
     public bool IsLocal => Start.IsLocal;
 
@@ -536,7 +536,7 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
 
         for ( var week = 2; week <= weekCount; ++week )
         {
-            startOfWeek = startOfWeek.AddTicks( ChronoConstants.TicksPerWeek );
+            startOfWeek = startOfWeek.AddTicks( ChronoConstants.TicksPerStandardWeek );
             yield return ZonedWeek.Create( startOfWeek, timeZone, weekStart );
         }
     }

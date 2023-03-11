@@ -26,7 +26,7 @@ public readonly struct ZonedDay : IEquatable<ZonedDay>, IComparable<ZonedDay>, I
     public int DayOfYear => Start.DayOfYear;
     public IsoDayOfWeek DayOfWeek => Start.DayOfWeek;
     public TimeZoneInfo TimeZone => Start.TimeZone;
-    public Duration Duration => _duration ?? Duration.FromHours( ChronoConstants.HoursPerDay );
+    public Duration Duration => _duration ?? Duration.FromHours( ChronoConstants.HoursPerStandardDay );
     public bool IsUtc => Start.IsUtc;
     public bool IsLocal => Start.IsLocal;
 
@@ -63,7 +63,7 @@ public readonly struct ZonedDay : IEquatable<ZonedDay>, IComparable<ZonedDay>, I
     {
         var start = ZonedDateTime.CreateUtc( utcDateTime.GetStartOfDay() );
         var end = ZonedDateTime.CreateUtc( utcDateTime.GetEndOfDay() );
-        return new ZonedDay( start, end, Duration.FromHours( ChronoConstants.HoursPerDay ) );
+        return new ZonedDay( start, end, Duration.FromHours( ChronoConstants.HoursPerStandardDay ) );
     }
 
     [Pure]
@@ -168,7 +168,7 @@ public readonly struct ZonedDay : IEquatable<ZonedDay>, IComparable<ZonedDay>, I
     public ZonedDay AddDays(int days)
     {
         var start = Start;
-        var value = start.Value.AddTicks( ChronoConstants.TicksPerDay * days );
+        var value = start.Value.AddTicks( ChronoConstants.TicksPerStandardDay * days );
         return Create( value, start.TimeZone );
     }
 

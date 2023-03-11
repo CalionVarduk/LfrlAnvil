@@ -138,10 +138,10 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
             if ( _state != StoppedState || _prevIndex == _expectedLastIndex )
                 return null;
 
+            _reset.Reset();
             _state = RunningState;
             _prevStartTimestamp = _timestampProvider.GetNow();
             _expectedNextTimestamp = _prevStartTimestamp + delay;
-            _reset.Reset();
         }
 
         if ( taskFactory is not null )

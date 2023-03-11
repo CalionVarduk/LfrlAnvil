@@ -9,9 +9,10 @@ public class PreciseTimestampProviderTests : TestsBase
     [InlineData( 0 )]
     [InlineData( -1 )]
     [InlineData( -2 )]
-    public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenMaxIdleTimeInTicksIsLessThanOne(long value)
+    [InlineData( ChronoConstants.DaysInYear * ChronoConstants.TicksPerStandardDay )]
+    public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenPrecisionResetTimeoutIsInvalid(long value)
     {
-        var action = Lambda.Of( () => new PreciseTimestampProvider( value ) );
+        var action = Lambda.Of( () => new PreciseTimestampProvider( Duration.FromTicks( value ) ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
 
@@ -21,22 +22,22 @@ public class PreciseTimestampProviderTests : TestsBase
     [InlineData( 12345 )]
     public void Ctor_ShouldReturnCorrectResult(long value)
     {
-        var sut = new PreciseTimestampProvider( value );
-        sut.MaxIdleTimeInTicks.Should().Be( value );
+        var sut = new PreciseTimestampProvider( Duration.FromTicks( value ) );
+        sut.PrecisionResetTimeout.Should().Be( Duration.FromTicks( value ) );
     }
 
     [Fact]
     public void DefaultCtor_ShouldReturnCorrectResult()
     {
         var sut = new PreciseTimestampProvider();
-        sut.MaxIdleTimeInTicks.Should().Be( ChronoConstants.TicksPerSecond );
+        sut.PrecisionResetTimeout.Should().Be( Duration.FromMinutes( 1 ) );
     }
 
     [Fact]
     public void GetNow_ShouldReturnCorrectResult()
     {
         var expectedMin = DateTime.UtcNow;
-        var sut = new PreciseTimestampProvider( ChronoConstants.TicksPerDay );
+        var sut = new PreciseTimestampProvider( Duration.FromHours( 24 ) );
 
         var result = sut.GetNow();
         var expectedMax = DateTime.UtcNow;
@@ -45,9 +46,9 @@ public class PreciseTimestampProviderTests : TestsBase
     }
 
     [Fact]
-    public void GetNow_ShouldReturnCorrectResult_WhenMaxIdleTimeInTicksIsExceeded()
+    public void GetNow_ShouldReturnCorrectResult_WhenPrecisionResetTimeoutIsExceeded()
     {
-        var sut = new PreciseTimestampProvider( maxIdleTimeInTicks: 1 );
+        var sut = new PreciseTimestampProvider( Duration.FromTicks( 1 ) );
 
         Task.Delay( TimeSpan.FromMilliseconds( 1 ) ).Wait();
 

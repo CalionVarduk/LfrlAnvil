@@ -25,7 +25,7 @@ public readonly struct ZonedMonth : IEquatable<ZonedMonth>, IComparable<ZonedMon
     public IsoMonthOfYear Month => Start.Month;
     public int DayCount => DateTime.DaysInMonth( Year, (int)Month );
     public TimeZoneInfo TimeZone => Start.TimeZone;
-    public Duration Duration => _duration ?? Duration.FromHours( ChronoConstants.HoursPerDay * ChronoConstants.DaysInJanuary );
+    public Duration Duration => _duration ?? Duration.FromHours( ChronoConstants.HoursPerStandardDay * ChronoConstants.DaysInJanuary );
     public bool IsUtc => Start.IsUtc;
     public bool IsLocal => Start.IsLocal;
 
@@ -417,7 +417,7 @@ public readonly struct ZonedMonth : IEquatable<ZonedMonth>, IComparable<ZonedMon
     private ZonedWeek GetWeekOfMonthUnsafe(int weekOfMonth, IsoDayOfWeek weekStart)
     {
         var startOfFirstWeek = Start.Value.GetStartOfWeek( weekStart.ToBcl() );
-        var startOfTargetWeek = startOfFirstWeek.AddTicks( ChronoConstants.TicksPerWeek * (weekOfMonth - 1) );
+        var startOfTargetWeek = startOfFirstWeek.AddTicks( ChronoConstants.TicksPerStandardWeek * (weekOfMonth - 1) );
         return ZonedWeek.Create( startOfTargetWeek, TimeZone, weekStart );
     }
 
@@ -432,7 +432,7 @@ public readonly struct ZonedMonth : IEquatable<ZonedMonth>, IComparable<ZonedMon
 
         for ( var week = 2; week <= weekCount; ++week )
         {
-            startOfWeek = startOfWeek.AddTicks( ChronoConstants.TicksPerWeek );
+            startOfWeek = startOfWeek.AddTicks( ChronoConstants.TicksPerStandardWeek );
             yield return ZonedWeek.Create( startOfWeek, timeZone, weekStart );
         }
     }

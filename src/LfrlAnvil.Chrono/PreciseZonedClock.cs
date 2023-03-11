@@ -9,31 +9,35 @@ public sealed class PreciseZonedClock : ZonedClockBase
     public static readonly PreciseZonedClock Utc = new PreciseZonedClock( TimeZoneInfo.Utc );
     public static readonly PreciseZonedClock Local = new PreciseZonedClock( TimeZoneInfo.Local );
 
-    private DateTime _utcStart = DateTime.UtcNow;
-    private double _startTimestamp = Stopwatch.GetTimestamp();
+    private readonly long _maxPreciseMeasurementDuration;
+    private Timestamp _timestampStart = new Timestamp( DateTime.UtcNow.Ticks - DateTime.UnixEpoch.Ticks );
+    private long _preciseMeasurementStart = Stopwatch.GetTimestamp();
 
     public PreciseZonedClock(TimeZoneInfo timeZone)
-        : this( timeZone, ChronoConstants.TicksPerSecond ) { }
+        : this( timeZone, Duration.FromMinutes( 1 ) ) { }
 
-    public PreciseZonedClock(TimeZoneInfo timeZone, long maxIdleTimeInTicks)
+    public PreciseZonedClock(TimeZoneInfo timeZone, Duration precisionResetTimeout)
         : base( timeZone )
     {
-        Ensure.IsGreaterThan( maxIdleTimeInTicks, 0, nameof( maxIdleTimeInTicks ) );
-        MaxIdleTimeInTicks = maxIdleTimeInTicks;
+        _maxPreciseMeasurementDuration = StopwatchTicks.GetStopwatchTicksOrThrow( precisionResetTimeout, nameof( precisionResetTimeout ) );
+        PrecisionResetTimeout = precisionResetTimeout;
     }
 
-    public double MaxIdleTimeInTicks { get; }
+    public Duration PrecisionResetTimeout { get; }
 
     public override ZonedDateTime GetNow()
     {
-        var endTimestamp = Stopwatch.GetTimestamp();
-        var idleTimeInTicks = (endTimestamp - _startTimestamp) / Stopwatch.Frequency * TimeSpan.TicksPerSecond;
+        var currentTimestamp = Stopwatch.GetTimestamp();
+        var preciseMeasurementDuration = currentTimestamp - _preciseMeasurementStart;
 
-        if ( idleTimeInTicks < MaxIdleTimeInTicks )
-            return ZonedDateTime.CreateUtc( _utcStart.AddTicks( (long)idleTimeInTicks ) ).ToTimeZone( TimeZone );
+        if ( preciseMeasurementDuration > _maxPreciseMeasurementDuration )
+        {
+            _preciseMeasurementStart = currentTimestamp;
+            _timestampStart = new Timestamp( DateTime.UtcNow.Ticks - DateTime.UnixEpoch.Ticks );
+            return ZonedDateTime.CreateUtc( _timestampStart ).ToTimeZone( TimeZone );
+        }
 
-        _startTimestamp = Stopwatch.GetTimestamp();
-        _utcStart = DateTime.UtcNow;
-        return ZonedDateTime.CreateUtc( _utcStart ).ToTimeZone( TimeZone );
+        var ticksDelta = StopwatchTicks.GetDurationTicks( _preciseMeasurementStart, currentTimestamp );
+        return ZonedDateTime.CreateUtc( _timestampStart.Add( Duration.FromTicks( ticksDelta ) ) ).ToTimeZone( TimeZone );
     }
 }

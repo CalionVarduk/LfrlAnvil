@@ -20,11 +20,11 @@ public readonly struct ZonedWeek : IEquatable<ZonedWeek>, IComparable<ZonedWeek>
     }
 
     public ZonedDateTime Start { get; }
-    public ZonedDateTime End => _end ?? ZonedDateTime.CreateUtc( DateTime.UnixEpoch.AddTicks( ChronoConstants.TicksPerWeek - 1 ) );
+    public ZonedDateTime End => _end ?? ZonedDateTime.CreateUtc( DateTime.UnixEpoch.AddTicks( ChronoConstants.TicksPerStandardWeek - 1 ) );
     public int Year => WeekCalculator.GetYearInWeekFormat( Start.Value );
     public int WeekOfYear => WeekCalculator.GetWeekOfYear( Start.Value );
     public TimeZoneInfo TimeZone => Start.TimeZone;
-    public Duration Duration => _duration ?? Duration.FromTicks( ChronoConstants.TicksPerWeek );
+    public Duration Duration => _duration ?? Duration.FromTicks( ChronoConstants.TicksPerStandardWeek );
     public bool IsUtc => Start.IsUtc;
     public bool IsLocal => Start.IsLocal;
 
@@ -102,7 +102,7 @@ public readonly struct ZonedWeek : IEquatable<ZonedWeek>, IComparable<ZonedWeek>
         var start = ZonedDateTime.CreateUtc( utcDateTime.GetStartOfWeek( bclStartDay ) );
         var end = ZonedDateTime.CreateUtc( utcDateTime.GetEndOfWeek( bclStartDay ) );
 
-        return new ZonedWeek( start, end, Duration.FromTicks( ChronoConstants.TicksPerWeek ) );
+        return new ZonedWeek( start, end, Duration.FromTicks( ChronoConstants.TicksPerStandardWeek ) );
     }
 
     [Pure]
@@ -247,7 +247,7 @@ public readonly struct ZonedWeek : IEquatable<ZonedWeek>, IComparable<ZonedWeek>
     public ZonedWeek AddWeeks(int weeks)
     {
         var start = Start;
-        var value = start.Value.AddTicks( weeks * ChronoConstants.TicksPerWeek );
+        var value = start.Value.AddTicks( weeks * ChronoConstants.TicksPerStandardWeek );
         return Create( value, start.TimeZone, start.DayOfWeek );
     }
 
@@ -344,7 +344,7 @@ public readonly struct ZonedWeek : IEquatable<ZonedWeek>, IComparable<ZonedWeek>
         if ( offsetInDays < 0 )
             offsetInDays += ChronoConstants.DaysPerWeek;
 
-        var dayValue = start.Value.AddTicks( ChronoConstants.TicksPerDay * offsetInDays );
+        var dayValue = start.Value.AddTicks( ChronoConstants.TicksPerStandardDay * offsetInDays );
         return ZonedDay.Create( dayValue, start.TimeZone );
     }
 
@@ -411,7 +411,7 @@ public readonly struct ZonedWeek : IEquatable<ZonedWeek>, IComparable<ZonedWeek>
         var timeZone = start.TimeZone;
 
         for ( var dayOffset = 0; dayOffset < ChronoConstants.DaysPerWeek; ++dayOffset )
-            yield return ZonedDay.Create( start.Value.AddTicks( ChronoConstants.TicksPerDay * dayOffset ), timeZone );
+            yield return ZonedDay.Create( start.Value.AddTicks( ChronoConstants.TicksPerStandardDay * dayOffset ), timeZone );
     }
 
     [Pure]
@@ -490,7 +490,7 @@ public readonly struct ZonedWeek : IEquatable<ZonedWeek>, IComparable<ZonedWeek>
         var bclWeekStart = weekStart.ToBcl();
         var dayInFirstWeekOfYear = WeekCalculator.GetDayInFirstWeekOfYear( year, bclWeekStart );
         var startOfFirstWeekOfYear = dayInFirstWeekOfYear.GetStartOfWeek( bclWeekStart );
-        var startOfTargetWeek = startOfFirstWeekOfYear.AddTicks( ChronoConstants.TicksPerWeek * (weekOfYear - 1) );
+        var startOfTargetWeek = startOfFirstWeekOfYear.AddTicks( ChronoConstants.TicksPerStandardWeek * (weekOfYear - 1) );
         return Create( startOfTargetWeek, timeZone, weekStart );
     }
 }

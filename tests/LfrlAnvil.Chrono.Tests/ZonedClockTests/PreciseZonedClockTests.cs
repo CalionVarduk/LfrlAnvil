@@ -14,7 +14,7 @@ public class PreciseZonedClockTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.TimeZone.Should().Be( TimeZoneInfo.Utc );
-            sut.MaxIdleTimeInTicks.Should().Be( ChronoConstants.TicksPerSecond );
+            sut.PrecisionResetTimeout.Should().Be( Duration.FromMinutes( 1 ) );
         }
     }
 
@@ -26,7 +26,7 @@ public class PreciseZonedClockTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.TimeZone.Should().Be( TimeZoneInfo.Local );
-            sut.MaxIdleTimeInTicks.Should().Be( ChronoConstants.TicksPerSecond );
+            sut.PrecisionResetTimeout.Should().Be( Duration.FromMinutes( 1 ) );
         }
     }
 
@@ -34,10 +34,11 @@ public class PreciseZonedClockTests : TestsBase
     [InlineData( 0 )]
     [InlineData( -1 )]
     [InlineData( -2 )]
-    public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenMaxIdleTimeInTicksIsLessThanOne(long value)
+    [InlineData( ChronoConstants.DaysInYear * ChronoConstants.TicksPerStandardDay )]
+    public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenPrecisionResetTimeoutIsInvalid(long value)
     {
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
-        var action = Lambda.Of( () => new PreciseZonedClock( timeZone, value ) );
+        var action = Lambda.Of( () => new PreciseZonedClock( timeZone, Duration.FromTicks( value ) ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
 
@@ -48,12 +49,12 @@ public class PreciseZonedClockTests : TestsBase
     public void Ctor_ShouldReturnCorrectResult(long value)
     {
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
-        var sut = new PreciseZonedClock( timeZone, value );
+        var sut = new PreciseZonedClock( timeZone, Duration.FromTicks( value ) );
 
         using ( new AssertionScope() )
         {
             sut.TimeZone.Should().Be( timeZone );
-            sut.MaxIdleTimeInTicks.Should().Be( value );
+            sut.PrecisionResetTimeout.Should().Be( Duration.FromTicks( value ) );
         }
     }
 
@@ -66,7 +67,7 @@ public class PreciseZonedClockTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.TimeZone.Should().Be( timeZone );
-            sut.MaxIdleTimeInTicks.Should().Be( ChronoConstants.TicksPerSecond );
+            sut.PrecisionResetTimeout.Should().Be( Duration.FromMinutes( 1 ) );
         }
     }
 
@@ -75,7 +76,7 @@ public class PreciseZonedClockTests : TestsBase
     {
         var expectedMinTimestamp = new Timestamp( DateTime.UtcNow );
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
-        var sut = new PreciseZonedClock( timeZone, ChronoConstants.TicksPerDay );
+        var sut = new PreciseZonedClock( timeZone, Duration.FromHours( 24 ) );
 
         var result = sut.GetNow();
         var expectedMaxTimestamp = new Timestamp( DateTime.UtcNow );
@@ -88,10 +89,10 @@ public class PreciseZonedClockTests : TestsBase
     }
 
     [Fact]
-    public void GetNow_ShouldReturnCorrectResult_WhenMaxIdleTimeInTicksIsExceeded()
+    public void GetNow_ShouldReturnCorrectResult_WhenPrecisionResetTimeoutIsExceeded()
     {
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
-        var sut = new PreciseZonedClock( timeZone, maxIdleTimeInTicks: 1 );
+        var sut = new PreciseZonedClock( timeZone, Duration.FromTicks( 1 ) );
 
         Task.Delay( TimeSpan.FromMilliseconds( 1 ) ).Wait();
 

@@ -8,12 +8,12 @@ public static class ChronoConstants
     public const long TicksPerSecond = TimeSpan.TicksPerSecond;
     public const long TicksPerMinute = TimeSpan.TicksPerMinute;
     public const long TicksPerHour = TimeSpan.TicksPerHour;
-    public const long TicksPerDay = TimeSpan.TicksPerDay;
-    public const long TicksPerWeek = TicksPerDay * DaysPerWeek;
+    public const long TicksPerStandardDay = TimeSpan.TicksPerDay;
+    public const long TicksPerStandardWeek = TicksPerStandardDay * DaysPerWeek;
     public const int MillisecondsPerSecond = 1000;
     public const int SecondsPerMinute = 60;
     public const int MinutesPerHour = 60;
-    public const int HoursPerDay = 24;
+    public const int HoursPerStandardDay = 24;
     public const int DaysPerWeek = 7;
     public const int MonthsPerYear = 12;
     public const int DaysInJanuary = 31;

@@ -94,8 +94,8 @@ public static class DateTimeExtensions
         var normalizedMonths = period.Years * ChronoConstants.MonthsPerYear + period.Months;
 
         var normalizedTicks =
-            period.Weeks * ChronoConstants.DaysPerWeek * ChronoConstants.TicksPerDay +
-            period.Days * ChronoConstants.TicksPerDay +
+            period.Weeks * ChronoConstants.TicksPerStandardWeek +
+            period.Days * ChronoConstants.TicksPerStandardDay +
             period.Hours * ChronoConstants.TicksPerHour +
             period.Minutes * ChronoConstants.TicksPerMinute +
             period.Seconds * ChronoConstants.TicksPerSecond +

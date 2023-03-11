@@ -6,31 +6,35 @@ namespace LfrlAnvil.Chrono;
 
 public sealed class PreciseLocalDateTimeProvider : DateTimeProviderBase
 {
-    private DateTime _start = DateTime.Now;
-    private double _startTimestamp = Stopwatch.GetTimestamp();
+    private readonly long _maxPreciseMeasurementDuration;
+    private DateTime _localStart = DateTime.Now;
+    private long _preciseMeasurementStart = Stopwatch.GetTimestamp();
 
     public PreciseLocalDateTimeProvider()
-        : this( ChronoConstants.TicksPerSecond ) { }
+        : this( Duration.FromMinutes( 1 ) ) { }
 
-    public PreciseLocalDateTimeProvider(long maxIdleTimeInTicks)
+    public PreciseLocalDateTimeProvider(Duration precisionResetTimeout)
         : base( DateTimeKind.Local )
     {
-        Ensure.IsGreaterThan( maxIdleTimeInTicks, 0, nameof( maxIdleTimeInTicks ) );
-        MaxIdleTimeInTicks = maxIdleTimeInTicks;
+        _maxPreciseMeasurementDuration = StopwatchTicks.GetStopwatchTicksOrThrow( precisionResetTimeout, nameof( precisionResetTimeout ) );
+        PrecisionResetTimeout = precisionResetTimeout;
     }
 
-    public double MaxIdleTimeInTicks { get; }
+    public Duration PrecisionResetTimeout { get; }
 
     public override DateTime GetNow()
     {
-        var endTimestamp = Stopwatch.GetTimestamp();
-        var idleTimeInTicks = (endTimestamp - _startTimestamp) / Stopwatch.Frequency * TimeSpan.TicksPerSecond;
+        var currentTimestamp = Stopwatch.GetTimestamp();
+        var preciseMeasurementDuration = currentTimestamp - _preciseMeasurementStart;
 
-        if ( idleTimeInTicks < MaxIdleTimeInTicks )
-            return _start.AddTicks( (long)idleTimeInTicks );
+        if ( preciseMeasurementDuration > _maxPreciseMeasurementDuration )
+        {
+            _preciseMeasurementStart = currentTimestamp;
+            _localStart = DateTime.Now;
+            return _localStart;
+        }
 
-        _startTimestamp = Stopwatch.GetTimestamp();
-        _start = DateTime.Now;
-        return _start;
+        var ticksDelta = StopwatchTicks.GetDurationTicks( _preciseMeasurementStart, currentTimestamp );
+        return _localStart.AddTicks( ticksDelta );
     }
 }

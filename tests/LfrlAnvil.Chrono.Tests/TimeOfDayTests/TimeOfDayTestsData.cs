@@ -382,8 +382,8 @@ public class TimeOfDayTestsData
             15671234,
             971234567,
             475398765432,
-            ChronoConstants.TicksPerDay - 2,
-            ChronoConstants.TicksPerDay - 1
+            ChronoConstants.TicksPerStandardDay - 2,
+            ChronoConstants.TicksPerStandardDay - 1
         };
     }
 
@@ -393,8 +393,8 @@ public class TimeOfDayTestsData
         {
             -2,
             -1,
-            ChronoConstants.TicksPerDay,
-            ChronoConstants.TicksPerDay + 1
+            ChronoConstants.TicksPerStandardDay,
+            ChronoConstants.TicksPerStandardDay + 1
         };
     }
 
@@ -407,8 +407,8 @@ public class TimeOfDayTestsData
             { 15671234, "00h 00m 01.5671234s" },
             { 971234567, "00h 01m 37.1234567s" },
             { 475398765432, "13h 12m 19.8765432s" },
-            { ChronoConstants.TicksPerDay - 2, "23h 59m 59.9999998s" },
-            { ChronoConstants.TicksPerDay - 1, "23h 59m 59.9999999s" }
+            { ChronoConstants.TicksPerStandardDay - 2, "23h 59m 59.9999998s" },
+            { ChronoConstants.TicksPerStandardDay - 1, "23h 59m 59.9999999s" }
         };
     }
 
@@ -421,8 +421,8 @@ public class TimeOfDayTestsData
             15671234,
             971234567,
             475398765432,
-            ChronoConstants.TicksPerDay - 2,
-            ChronoConstants.TicksPerDay - 1
+            ChronoConstants.TicksPerStandardDay - 2,
+            ChronoConstants.TicksPerStandardDay - 1
         };
     }
 
@@ -450,12 +450,12 @@ public class TimeOfDayTestsData
     {
         return new TheoryData<long, long>
         {
-            { 1, ChronoConstants.TicksPerDay - 1 },
-            { 15671234, ChronoConstants.TicksPerDay - 15671234 },
-            { 971234567, ChronoConstants.TicksPerDay - 971234567 },
-            { 475398765432, ChronoConstants.TicksPerDay - 475398765432 },
-            { ChronoConstants.TicksPerDay - 2, 2 },
-            { ChronoConstants.TicksPerDay - 1, 1 }
+            { 1, ChronoConstants.TicksPerStandardDay - 1 },
+            { 15671234, ChronoConstants.TicksPerStandardDay - 15671234 },
+            { 971234567, ChronoConstants.TicksPerStandardDay - 971234567 },
+            { 475398765432, ChronoConstants.TicksPerStandardDay - 475398765432 },
+            { ChronoConstants.TicksPerStandardDay - 2, 2 },
+            { ChronoConstants.TicksPerStandardDay - 1, 1 }
         };
     }
 
@@ -631,9 +631,9 @@ public class TimeOfDayTestsData
         {
             -1,
             -2,
-            ChronoConstants.HoursPerDay,
-            ChronoConstants.HoursPerDay + 1,
-            ChronoConstants.HoursPerDay + 2
+            ChronoConstants.HoursPerStandardDay,
+            ChronoConstants.HoursPerStandardDay + 1,
+            ChronoConstants.HoursPerStandardDay + 2
         };
     }
 
@@ -660,8 +660,8 @@ public class TimeOfDayTestsData
             15671234,
             971234567,
             475398765432,
-            ChronoConstants.TicksPerDay - 2,
-            ChronoConstants.TicksPerDay - 1
+            ChronoConstants.TicksPerStandardDay - 2,
+            ChronoConstants.TicksPerStandardDay - 1
         };
     }
 

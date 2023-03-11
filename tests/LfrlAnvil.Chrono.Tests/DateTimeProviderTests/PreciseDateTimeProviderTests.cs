@@ -24,9 +24,10 @@ public class PreciseDateTimeProviderTests : TestsBase
     [InlineData( 0 )]
     [InlineData( -1 )]
     [InlineData( -2 )]
-    public void Ctor_ForUtc_ShouldThrowArgumentOutOfRangeException_WhenMaxIdleTimeInTicksIsLessThanOne(long value)
+    [InlineData( ChronoConstants.DaysInYear * ChronoConstants.TicksPerStandardDay )]
+    public void Ctor_ForUtc_ShouldThrowArgumentOutOfRangeException_WhenPrecisionResetTimeoutIsInvalid(long value)
     {
-        var action = Lambda.Of( () => new PreciseUtcDateTimeProvider( value ) );
+        var action = Lambda.Of( () => new PreciseUtcDateTimeProvider( Duration.FromTicks( value ) ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
 
@@ -34,9 +35,10 @@ public class PreciseDateTimeProviderTests : TestsBase
     [InlineData( 0 )]
     [InlineData( -1 )]
     [InlineData( -2 )]
-    public void Ctor_ForLocal_ShouldThrowArgumentOutOfRangeException_WhenMaxIdleTimeInTicksIsLessThanOne(long value)
+    [InlineData( ChronoConstants.DaysInYear * ChronoConstants.TicksPerStandardDay )]
+    public void Ctor_ForLocal_ShouldThrowArgumentOutOfRangeException_WhenPrecisionResetTimeoutIsInvalid(long value)
     {
-        var action = Lambda.Of( () => new PreciseLocalDateTimeProvider( value ) );
+        var action = Lambda.Of( () => new PreciseLocalDateTimeProvider( Duration.FromTicks( value ) ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
 
@@ -46,12 +48,12 @@ public class PreciseDateTimeProviderTests : TestsBase
     [InlineData( 12345 )]
     public void Ctor_ForUtc_ShouldReturnCorrectResult(long value)
     {
-        var sut = new PreciseUtcDateTimeProvider( value );
+        var sut = new PreciseUtcDateTimeProvider( Duration.FromTicks( value ) );
 
         using ( new AssertionScope() )
         {
             sut.Kind.Should().Be( DateTimeKind.Utc );
-            sut.MaxIdleTimeInTicks.Should().Be( value );
+            sut.PrecisionResetTimeout.Should().Be( Duration.FromTicks( value ) );
         }
     }
 
@@ -61,12 +63,12 @@ public class PreciseDateTimeProviderTests : TestsBase
     [InlineData( 12345 )]
     public void Ctor_ForLocal_ShouldReturnCorrectResult(long value)
     {
-        var sut = new PreciseLocalDateTimeProvider( value );
+        var sut = new PreciseLocalDateTimeProvider( Duration.FromTicks( value ) );
 
         using ( new AssertionScope() )
         {
             sut.Kind.Should().Be( DateTimeKind.Local );
-            sut.MaxIdleTimeInTicks.Should().Be( value );
+            sut.PrecisionResetTimeout.Should().Be( Duration.FromTicks( value ) );
         }
     }
 
@@ -78,7 +80,7 @@ public class PreciseDateTimeProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.Kind.Should().Be( DateTimeKind.Utc );
-            sut.MaxIdleTimeInTicks.Should().Be( ChronoConstants.TicksPerSecond );
+            sut.PrecisionResetTimeout.Should().Be( Duration.FromMinutes( 1 ) );
         }
     }
 
@@ -90,7 +92,7 @@ public class PreciseDateTimeProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.Kind.Should().Be( DateTimeKind.Local );
-            sut.MaxIdleTimeInTicks.Should().Be( ChronoConstants.TicksPerSecond );
+            sut.PrecisionResetTimeout.Should().Be( Duration.FromMinutes( 1 ) );
         }
     }
 
@@ -98,7 +100,7 @@ public class PreciseDateTimeProviderTests : TestsBase
     public void GetNow_ForUtc_ShouldReturnCorrectResult()
     {
         var expectedMin = DateTime.UtcNow;
-        var sut = new PreciseUtcDateTimeProvider( ChronoConstants.TicksPerDay );
+        var sut = new PreciseUtcDateTimeProvider( Duration.FromHours( 24 ) );
 
         var result = sut.GetNow();
         var expectedMax = DateTime.UtcNow;
@@ -114,7 +116,7 @@ public class PreciseDateTimeProviderTests : TestsBase
     public void GetNow_ForLocal_ShouldReturnCorrectResult()
     {
         var expectedMin = DateTime.Now;
-        var sut = new PreciseLocalDateTimeProvider( ChronoConstants.TicksPerDay );
+        var sut = new PreciseLocalDateTimeProvider( Duration.FromHours( 24 ) );
 
         var result = sut.GetNow();
         var expectedMax = DateTime.Now;
@@ -127,9 +129,9 @@ public class PreciseDateTimeProviderTests : TestsBase
     }
 
     [Fact]
-    public void GetNow_ForUtc_ShouldReturnCorrectResult_WhenMaxIdleTimeInTicksIsExceeded()
+    public void GetNow_ForUtc_ShouldReturnCorrectResult_WhenPrecisionResetTimeoutIsExceeded()
     {
-        var sut = new PreciseUtcDateTimeProvider( maxIdleTimeInTicks: 1 );
+        var sut = new PreciseUtcDateTimeProvider( Duration.FromTicks( 1 ) );
 
         Task.Delay( TimeSpan.FromMilliseconds( 1 ) ).Wait();
 
@@ -145,9 +147,9 @@ public class PreciseDateTimeProviderTests : TestsBase
     }
 
     [Fact]
-    public void GetNow_ForLocal_ShouldReturnCorrectResult_WhenMaxIdleTimeInTicksIsExceeded()
+    public void GetNow_ForLocal_ShouldReturnCorrectResult_WhenPrecisionResetTimeoutIsExceeded()
     {
-        var sut = new PreciseLocalDateTimeProvider( maxIdleTimeInTicks: 1 );
+        var sut = new PreciseLocalDateTimeProvider( Duration.FromTicks( 1 ) );
 
         Task.Delay( TimeSpan.FromMilliseconds( 1 ) ).Wait();
 

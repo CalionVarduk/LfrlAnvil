@@ -7,8 +7,8 @@ namespace LfrlAnvil.Chrono;
 public readonly struct TimeOfDay : IEquatable<TimeOfDay>, IComparable<TimeOfDay>, IComparable
 {
     public static readonly TimeOfDay Start = new TimeOfDay( 0 );
-    public static readonly TimeOfDay Mid = new TimeOfDay( (ChronoConstants.HoursPerDay >> 1) * ChronoConstants.TicksPerHour );
-    public static readonly TimeOfDay End = new TimeOfDay( ChronoConstants.TicksPerDay - 1 );
+    public static readonly TimeOfDay Mid = new TimeOfDay( (ChronoConstants.HoursPerStandardDay >> 1) * ChronoConstants.TicksPerHour );
+    public static readonly TimeOfDay End = new TimeOfDay( ChronoConstants.TicksPerStandardDay - 1 );
 
     private readonly long _value;
 
@@ -26,7 +26,7 @@ public readonly struct TimeOfDay : IEquatable<TimeOfDay>, IComparable<TimeOfDay>
 
     public TimeOfDay(int hour, int minute, int second, int millisecond, int tick)
     {
-        Ensure.IsInRange( hour, 0, ChronoConstants.HoursPerDay - 1, nameof( hour ) );
+        Ensure.IsInRange( hour, 0, ChronoConstants.HoursPerStandardDay - 1, nameof( hour ) );
         Ensure.IsInRange( minute, 0, ChronoConstants.MinutesPerHour - 1, nameof( minute ) );
         Ensure.IsInRange( second, 0, ChronoConstants.SecondsPerMinute - 1, nameof( second ) );
         Ensure.IsInRange( millisecond, 0, ChronoConstants.MillisecondsPerSecond - 1, nameof( millisecond ) );
@@ -101,7 +101,7 @@ public readonly struct TimeOfDay : IEquatable<TimeOfDay>, IComparable<TimeOfDay>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public TimeOfDay Invert()
     {
-        return _value == 0 ? this : new TimeOfDay( ChronoConstants.TicksPerDay - _value );
+        return _value == 0 ? this : new TimeOfDay( ChronoConstants.TicksPerStandardDay - _value );
     }
 
     [Pure]
@@ -175,7 +175,7 @@ public readonly struct TimeOfDay : IEquatable<TimeOfDay>, IComparable<TimeOfDay>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public TimeOfDay SetHour(int value)
     {
-        Ensure.IsInRange( value, 0, ChronoConstants.HoursPerDay - 1, nameof( value ) );
+        Ensure.IsInRange( value, 0, ChronoConstants.HoursPerStandardDay - 1, nameof( value ) );
         return new TimeOfDay( _value + (value - Hour) * ChronoConstants.TicksPerHour );
     }
 

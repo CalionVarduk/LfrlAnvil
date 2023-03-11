@@ -13,7 +13,7 @@ using LfrlAnvil.Reactive.Extensions;
     var simDuration = Duration.FromSeconds( 30 );
 
     var timestampProvider = new PreciseTimestampProvider();
-    var timer = new ReactiveTimer( timestampProvider, interval, Duration.FromMilliseconds( 1 ), long.MaxValue );
+    var timer = new ReactiveTimer( timestampProvider, interval, Duration.FromMilliseconds( 16 ), long.MaxValue );
     await RunTimer( timer, () => timer.StartAsync(), simDuration, "Chrono" );
 }
 
