@@ -149,22 +149,22 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
 
     public bool TryRemove(TKey key, [MaybeNullWhen( false )] out TValue removed)
     {
-        if ( _map.Remove( key, out var node ) )
+        if ( ! _map.Remove( key, out var node ) )
         {
-            var lastNode = _items[^1];
-            _items[node.Index] = lastNode;
-            lastNode.AssignIndexFrom( node );
-            _items.RemoveLast();
-
-            if ( node.Index < _items.Count )
-                FixRelative( lastNode, node.Value );
-
-            removed = node.Value;
-            return true;
+            removed = default;
+            return false;
         }
 
-        removed = default;
-        return false;
+        var lastNode = _items[^1];
+        _items[node.Index] = lastNode;
+        lastNode.AssignIndexFrom( node );
+        _items.RemoveLast();
+
+        if ( node.Index < _items.Count )
+            FixRelative( lastNode, node.Value );
+
+        removed = node.Value;
+        return true;
     }
 
     public void Pop()

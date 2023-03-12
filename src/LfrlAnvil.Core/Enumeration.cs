@@ -101,13 +101,13 @@ public abstract class Enumeration<T, TValue> : IEquatable<T>, IComparable<T>, IC
     }
 
     [Pure]
-    protected static IReadOnlyDictionary<TValue, T> GetValueDictionary()
+    protected static Dictionary<TValue, T> GetValueDictionary()
     {
         return GetAllMembers().ToDictionary( e => e.Value );
     }
 
     [Pure]
-    protected static IReadOnlyDictionary<string, T> GetNameDictionary()
+    protected static Dictionary<string, T> GetNameDictionary()
     {
         return GetAllMembers().ToDictionary( e => e.Name );
     }

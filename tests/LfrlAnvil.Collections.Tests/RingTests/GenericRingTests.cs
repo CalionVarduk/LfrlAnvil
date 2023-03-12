@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Linq;
 using FluentAssertions.Execution;
-using LfrlAnvil.Collections.Internal;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Internal;
@@ -236,9 +235,9 @@ public abstract class GenericRingTests<T> : TestsBase
         var items = Fixture.CreateDistinctCollection<T>( 3 );
         var expected = new[]
         {
+            items[(0 + writeIndex) % 3],
             items[(1 + writeIndex) % 3],
-            items[(2 + writeIndex) % 3],
-            items[(0 + writeIndex) % 3]
+            items[(2 + writeIndex) % 3]
         }.Select( x => (T?)x );
 
         var sut = new Ring<T>( items ) { WriteIndex = writeIndex };
@@ -263,19 +262,19 @@ public abstract class GenericRingTests<T> : TestsBase
     {
         var items = Fixture.CreateDistinctCollection<T>( 3 ).ToArray();
 
-        using var sut = new RingEnumerator<T>( items, startIndex );
-        IEnumerator enumerator = sut;
+        var ring = new Ring<T>( items ) { WriteIndex = startIndex };
+        IEnumerator sut = ring.GetEnumerator();
 
         for ( var i = 0; i < iterationCount; ++i )
             sut.MoveNext();
 
-        enumerator.Reset();
+        sut.Reset();
         sut.MoveNext();
 
-        var firstItemAfterReset = enumerator.Current;
+        var firstItemAfterReset = sut.Current;
 
         var availableSteps = 1;
-        while ( enumerator.MoveNext() )
+        while ( sut.MoveNext() )
             ++availableSteps;
 
         using ( new AssertionScope() )
