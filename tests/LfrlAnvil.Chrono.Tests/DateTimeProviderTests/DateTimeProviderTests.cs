@@ -1,6 +1,4 @@
-﻿using FluentAssertions.Execution;
-
-namespace LfrlAnvil.Chrono.Tests.DateTimeProviderTests;
+﻿namespace LfrlAnvil.Chrono.Tests.DateTimeProviderTests;
 
 public class DateTimeProviderTests : TestsBase
 {

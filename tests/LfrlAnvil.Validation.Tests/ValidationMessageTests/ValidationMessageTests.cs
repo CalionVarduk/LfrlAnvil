@@ -1,5 +1,4 @@
-﻿using FluentAssertions.Execution;
-using LfrlAnvil.TestExtensions.FluentAssertions;
+﻿using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Validation.Tests.ValidationMessageTests;
 

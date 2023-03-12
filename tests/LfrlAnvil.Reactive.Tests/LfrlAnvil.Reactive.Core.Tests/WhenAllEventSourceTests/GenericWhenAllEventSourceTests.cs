@@ -1,5 +1,4 @@
-﻿using FluentAssertions.Execution;
-using LfrlAnvil.Reactive.Internal;
+﻿using LfrlAnvil.Reactive.Internal;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.WhenAllEventSourceTests;

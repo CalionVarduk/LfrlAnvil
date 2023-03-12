@@ -1,5 +1,4 @@
-﻿using FluentAssertions.Execution;
-using LfrlAnvil.Chrono.Exceptions;
+﻿using LfrlAnvil.Chrono.Exceptions;
 using LfrlAnvil.Chrono.Extensions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions.Attributes;

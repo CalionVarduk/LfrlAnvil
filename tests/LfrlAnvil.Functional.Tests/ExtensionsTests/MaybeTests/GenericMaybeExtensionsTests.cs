@@ -1,5 +1,4 @@
-﻿using FluentAssertions.Execution;
-using LfrlAnvil.Functional.Extensions;
+﻿using LfrlAnvil.Functional.Extensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 

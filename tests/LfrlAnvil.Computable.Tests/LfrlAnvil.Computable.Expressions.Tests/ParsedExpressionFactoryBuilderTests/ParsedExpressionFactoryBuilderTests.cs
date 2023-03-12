@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using FluentAssertions.Execution;
 using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Computable.Expressions.Constructs.Boolean;
 using LfrlAnvil.Computable.Expressions.Constructs.Decimal;

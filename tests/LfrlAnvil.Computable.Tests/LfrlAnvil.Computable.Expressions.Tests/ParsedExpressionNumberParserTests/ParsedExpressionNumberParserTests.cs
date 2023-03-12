@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Numerics;
-using FluentAssertions.Execution;
 using LfrlAnvil.Computable.Expressions.Internal;
 using LfrlAnvil.Extensions;
 

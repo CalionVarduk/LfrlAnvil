@@ -1,5 +1,4 @@
-﻿using FluentAssertions.Execution;
-using LfrlAnvil.Functional;
+﻿using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions.Attributes;
 
 namespace LfrlAnvil.Tests.BoundsTests;

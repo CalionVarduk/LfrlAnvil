@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using System.Linq.Expressions;
-using FluentAssertions.Execution;
 using LfrlAnvil.Functional.Delegates;
 using LfrlAnvil.Functional.Extensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;

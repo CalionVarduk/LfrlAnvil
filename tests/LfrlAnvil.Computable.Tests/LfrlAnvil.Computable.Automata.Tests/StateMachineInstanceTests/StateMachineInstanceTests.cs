@@ -1,5 +1,4 @@
-﻿using FluentAssertions.Execution;
-using LfrlAnvil.Computable.Automata.Exceptions;
+﻿using LfrlAnvil.Computable.Automata.Exceptions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 

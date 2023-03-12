@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using FluentAssertions.Execution;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.State.Tests.VariableRootTests;
 using LfrlAnvil.Validation;

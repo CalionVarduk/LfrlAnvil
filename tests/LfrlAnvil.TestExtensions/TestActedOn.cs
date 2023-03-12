@@ -1,6 +1,4 @@
-﻿using FluentAssertions.Execution;
-
-namespace LfrlAnvil.TestExtensions;
+﻿namespace LfrlAnvil.TestExtensions;
 
 public sealed class TestActedOn<T>
 {

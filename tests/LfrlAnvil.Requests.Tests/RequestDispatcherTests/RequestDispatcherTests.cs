@@ -1,5 +1,4 @@
 ﻿using System.Threading.Tasks;
-using FluentAssertions.Execution;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Requests.Exceptions;
 using LfrlAnvil.TestExtensions.FluentAssertions;

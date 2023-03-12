@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
-using FluentAssertions.Execution;
 using LfrlAnvil.Diagnostics;
 using LfrlAnvil.Functional;
 

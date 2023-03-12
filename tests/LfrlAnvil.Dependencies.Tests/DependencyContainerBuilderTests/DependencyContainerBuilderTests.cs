@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using FluentAssertions.Execution;
 using LfrlAnvil.Dependencies.Exceptions;
 using LfrlAnvil.Dependencies.Extensions;
 using LfrlAnvil.Dependencies.Internal;

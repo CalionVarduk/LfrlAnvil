@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using System.Linq.Expressions;
-using FluentAssertions.Execution;
 using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Computable.Expressions.Exceptions;
 

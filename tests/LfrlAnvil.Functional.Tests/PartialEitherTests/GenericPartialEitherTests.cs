@@ -1,6 +1,4 @@
-﻿using FluentAssertions.Execution;
-
-namespace LfrlAnvil.Functional.Tests.PartialEitherTests;
+﻿namespace LfrlAnvil.Functional.Tests.PartialEitherTests;
 
 public abstract class GenericPartialEitherTests<T1, T2> : TestsBase
 {

@@ -1,5 +1,4 @@
 ﻿using System.Threading;
-using FluentAssertions.Execution;
 using LfrlAnvil.Async;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Decorators;

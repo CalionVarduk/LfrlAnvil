@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using FluentAssertions.Execution;
 using LfrlAnvil.Chrono.Extensions;
 
 namespace LfrlAnvil.Chrono.Tests.ExtensionsTests.TimestampProviderTests;

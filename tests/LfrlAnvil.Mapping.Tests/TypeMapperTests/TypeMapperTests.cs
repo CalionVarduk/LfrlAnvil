@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using FluentAssertions.Execution;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Mapping.Exceptions;
 using LfrlAnvil.Mapping.Internal;

@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using FluentAssertions.Execution;
 using LfrlAnvil.Chrono.Extensions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions.Attributes;

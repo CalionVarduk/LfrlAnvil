@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using FluentAssertions.Execution;
 using LfrlAnvil.Functional.Extensions;
 
 namespace LfrlAnvil.Functional.Tests.ExtensionsTests.DictionaryTests;

@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
-using FluentAssertions.Execution;
 using LfrlAnvil.Async;
 using LfrlAnvil.Dependencies.Exceptions;
 using LfrlAnvil.Dependencies.Extensions;

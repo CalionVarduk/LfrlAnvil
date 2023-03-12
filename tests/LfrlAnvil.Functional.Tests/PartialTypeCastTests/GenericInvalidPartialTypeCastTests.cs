@@ -1,6 +1,4 @@
-﻿using FluentAssertions.Execution;
-
-namespace LfrlAnvil.Functional.Tests.PartialTypeCastTests;
+﻿namespace LfrlAnvil.Functional.Tests.PartialTypeCastTests;
 
 public abstract class GenericInvalidPartialTypeCastTests<TSource, TDestination> : GenericPartialTypeCastTests<TSource>
 {

@@ -1,5 +1,4 @@
 ﻿using System.Threading;
-using FluentAssertions.Execution;
 using LfrlAnvil.Async;
 
 namespace LfrlAnvil.Tests.AsyncTests.CancellableTests;

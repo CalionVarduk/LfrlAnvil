@@ -1,5 +1,4 @@
-﻿using FluentAssertions.Execution;
-using LfrlAnvil.Functional;
+﻿using LfrlAnvil.Functional;
 using LfrlAnvil.Numerics;
 using LfrlAnvil.TestExtensions.Attributes;
 

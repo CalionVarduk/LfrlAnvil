@@ -1,5 +1,4 @@
-﻿using FluentAssertions.Execution;
-using LfrlAnvil.Mapping.Internal;
+﻿using LfrlAnvil.Mapping.Internal;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Mapping.Tests.TypeMapperBuilderTests;

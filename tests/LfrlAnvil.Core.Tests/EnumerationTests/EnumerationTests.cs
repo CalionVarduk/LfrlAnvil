@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using FluentAssertions.Execution;
 using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions.Attributes;
 

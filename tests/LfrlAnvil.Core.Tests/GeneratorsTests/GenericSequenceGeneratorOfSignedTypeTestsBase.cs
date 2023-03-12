@@ -1,5 +1,4 @@
-﻿using FluentAssertions.Execution;
-using LfrlAnvil.Exceptions;
+﻿using LfrlAnvil.Exceptions;
 using LfrlAnvil.Functional;
 
 namespace LfrlAnvil.Tests.GeneratorsTests;

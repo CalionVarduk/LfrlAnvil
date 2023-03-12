@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using FluentAssertions.Execution;
 using LfrlAnvil.Computable.Automata.Exceptions;
 using LfrlAnvil.Computable.Automata.Extensions;
 using LfrlAnvil.Functional;

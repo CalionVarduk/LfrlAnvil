@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using System.Text;
-using FluentAssertions.Execution;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 using LfrlAnvil.Validation.Extensions;

@@ -1,5 +1,4 @@
-﻿using FluentAssertions.Execution;
-using LfrlAnvil.Functional;
+﻿using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.State.Exceptions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.Validation;

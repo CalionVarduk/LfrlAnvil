@@ -1,5 +1,4 @@
 ﻿using System.Threading;
-using FluentAssertions.Execution;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Exceptions;
 using LfrlAnvil.Reactive.Internal;

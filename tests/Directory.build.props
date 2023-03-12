@@ -10,6 +10,7 @@
         <Using Include="System"/>
         <Using Include="AutoFixture"/>
         <Using Include="FluentAssertions"/>
+        <Using Include="FluentAssertions.Execution"/>
         <Using Include="LfrlAnvil.TestExtensions"/>
         <Using Include="NSubstitute"/>
         <Using Include="Xunit"/>

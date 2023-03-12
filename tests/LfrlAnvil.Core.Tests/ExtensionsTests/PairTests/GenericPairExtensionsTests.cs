@@ -1,5 +1,4 @@
-﻿using FluentAssertions.Execution;
-using LfrlAnvil.Extensions;
+﻿using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Tests.ExtensionsTests.PairTests;
 

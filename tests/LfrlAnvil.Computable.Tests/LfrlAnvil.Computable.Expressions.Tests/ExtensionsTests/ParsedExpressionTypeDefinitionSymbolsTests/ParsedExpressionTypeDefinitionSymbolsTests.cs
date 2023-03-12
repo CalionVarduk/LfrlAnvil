@@ -1,5 +1,4 @@
-﻿using FluentAssertions.Execution;
-using LfrlAnvil.Computable.Expressions.Extensions;
+﻿using LfrlAnvil.Computable.Expressions.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Tests.ExtensionsTests.ParsedExpressionTypeDefinitionSymbolsTests;
 

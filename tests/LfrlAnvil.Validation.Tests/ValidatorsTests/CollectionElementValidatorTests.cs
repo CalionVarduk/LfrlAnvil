@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using FluentAssertions.Execution;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.Validation.Extensions;
 

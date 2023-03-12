@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using FluentAssertions.Execution;
 using LfrlAnvil.Reactive.Composites;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 

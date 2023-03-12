@@ -1,5 +1,4 @@
 ﻿using System.Linq.Expressions;
-using FluentAssertions.Execution;
 using LfrlAnvil.Computable.Expressions.Constructs.Variadic;
 using LfrlAnvil.Computable.Expressions.Exceptions;
 using LfrlAnvil.Functional;

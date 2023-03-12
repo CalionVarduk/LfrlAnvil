@@ -1,6 +1,4 @@
-﻿using FluentAssertions.Execution;
-
-namespace LfrlAnvil.Chrono.Tests.ZonedClockTests;
+﻿namespace LfrlAnvil.Chrono.Tests.ZonedClockTests;
 
 public class ZonedClockTests : TestsBase
 {

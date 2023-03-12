@@ -1,6 +1,4 @@
-﻿using FluentAssertions.Execution;
-
-namespace LfrlAnvil.Functional.Tests.TypeCastTests;
+﻿namespace LfrlAnvil.Functional.Tests.TypeCastTests;
 
 public abstract class GenericTypeCastTests<TSource, TDestination> : TestsBase
 {

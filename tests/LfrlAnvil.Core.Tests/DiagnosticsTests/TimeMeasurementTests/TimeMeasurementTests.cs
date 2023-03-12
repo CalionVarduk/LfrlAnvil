@@ -1,5 +1,4 @@
-﻿using FluentAssertions.Execution;
-using LfrlAnvil.Diagnostics;
+﻿using LfrlAnvil.Diagnostics;
 
 namespace LfrlAnvil.Tests.DiagnosticsTests.TimeMeasurementTests;
 

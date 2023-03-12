@@ -1,6 +1,5 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using FluentAssertions.Execution;
 using LfrlAnvil.Async;
 
 namespace LfrlAnvil.Tests.AsyncTests.TaskSchedulerCaptureTests;

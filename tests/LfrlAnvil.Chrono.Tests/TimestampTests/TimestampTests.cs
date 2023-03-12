@@ -1,5 +1,4 @@
-﻿using FluentAssertions.Execution;
-using LfrlAnvil.TestExtensions.Attributes;
+﻿using LfrlAnvil.TestExtensions.Attributes;
 
 namespace LfrlAnvil.Chrono.Tests.TimestampTests;
 

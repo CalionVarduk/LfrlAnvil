@@ -1,5 +1,4 @@
-﻿using FluentAssertions.Execution;
-using LfrlAnvil.Dependencies.Bootstrapping;
+﻿using LfrlAnvil.Dependencies.Bootstrapping;
 using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 

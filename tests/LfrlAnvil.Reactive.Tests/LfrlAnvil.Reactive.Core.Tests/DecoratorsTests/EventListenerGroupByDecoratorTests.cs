@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using FluentAssertions.Execution;
 using LfrlAnvil.Reactive.Composites;
 using LfrlAnvil.Reactive.Decorators;
 using LfrlAnvil.Reactive.Extensions;

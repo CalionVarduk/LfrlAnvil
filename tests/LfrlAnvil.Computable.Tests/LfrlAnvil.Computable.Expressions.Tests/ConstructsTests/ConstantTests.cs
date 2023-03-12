@@ -1,5 +1,4 @@
-﻿using FluentAssertions.Execution;
-using LfrlAnvil.Computable.Expressions.Constructs;
+﻿using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Functional;
 
 namespace LfrlAnvil.Computable.Expressions.Tests.ConstructsTests;

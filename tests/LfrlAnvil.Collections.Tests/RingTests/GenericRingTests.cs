@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Linq;
-using FluentAssertions.Execution;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Internal;

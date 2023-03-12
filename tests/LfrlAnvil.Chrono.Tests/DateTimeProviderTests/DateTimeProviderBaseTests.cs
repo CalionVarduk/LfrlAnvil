@@ -1,5 +1,4 @@
-﻿using FluentAssertions.Execution;
-using LfrlAnvil.Chrono.Internal;
+﻿using LfrlAnvil.Chrono.Internal;
 using LfrlAnvil.Generators;
 
 namespace LfrlAnvil.Chrono.Tests.DateTimeProviderTests;
