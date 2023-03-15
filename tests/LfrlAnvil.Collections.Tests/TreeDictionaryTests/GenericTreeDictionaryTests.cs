@@ -3407,6 +3407,20 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     }
 
     [Fact]
+    public void TreeDictionaryNode_ToString_ShouldReturnCorrectResult()
+    {
+        var key = Fixture.Create<TKey>();
+        var value = Fixture.Create<TValue>();
+        var sut = new TreeDictionary<TKey, TValue>();
+        var node = sut.SetRoot( key, value );
+        var expected = $"{key} => {value}";
+
+        var result = node.ToString();
+
+        result.Should().Be( expected );
+    }
+
+    [Fact]
     public void IReadOnlyTreeDictionaryGetNode_ShouldBeEquivalentToGetNode()
     {
         var key = Fixture.Create<TKey>();

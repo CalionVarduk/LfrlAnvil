@@ -4,8 +4,10 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using LfrlAnvil.Collections.Exceptions;
 using LfrlAnvil.Collections.Extensions;
 using LfrlAnvil.Collections.Internal;
+using LfrlAnvil.Exceptions;
 using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Collections;
@@ -467,7 +469,7 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
             return;
 
         if ( ReferenceEquals( parent, node ) )
-            throw new InvalidOperationException( "Cannot move tree dictionary node to itself." );
+            ExceptionThrower.Throw( new InvalidOperationException( Resources.NodeCannotBeMovedToItself ) );
 
         if ( ReferenceEquals( node, _root ) )
         {
@@ -498,16 +500,16 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
         oldParent.InheritChildrenFrom( node );
     }
 
-    private void MoveSubtreeToImpl(TreeDictionaryNode<TKey, TValue> parent, TreeDictionaryNode<TKey, TValue> node)
+    private static void MoveSubtreeToImpl(TreeDictionaryNode<TKey, TValue> parent, TreeDictionaryNode<TKey, TValue> node)
     {
         if ( ReferenceEquals( parent, node.Parent ) )
             return;
 
         if ( ReferenceEquals( parent, node ) )
-            throw new InvalidOperationException( "Cannot move subtree root node to itself." );
+            ExceptionThrower.Throw( new InvalidOperationException( Resources.SubtreeCannotBeMovedToItself ) );
 
         if ( parent.IsDescendantOf( node ) )
-            throw new InvalidOperationException( "Cannot move subtree root node to one of its descendant nodes." );
+            ExceptionThrower.Throw( new InvalidOperationException( Resources.SubtreeCannotBeMovedToOneOfItsNodes ) );
 
         node.RemoveFromParent();
         node.SetParent( parent );
@@ -519,28 +521,29 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
         if ( node is TreeDictionaryNode<TKey, TValue> result )
             return result;
 
-        throw new ArgumentException( "The tree dictionary node is of incorrect type." );
+        ExceptionThrower.Throw( new ArgumentException( Resources.NodeIsOfIncorrectType, nameof( node ) ) );
+        return default!;
     }
 
     private void AssertNode(TreeDictionaryNode<TKey, TValue> node)
     {
         if ( ! ReferenceEquals( node.Tree, this ) )
-            throw new InvalidOperationException( "The tree dictionary node does not belong to current tree dictionary." );
+            ExceptionThrower.Throw( new InvalidOperationException( Resources.NodeDoesNotBelongToTree ) );
     }
 
     private static void AssertNewNode(TreeDictionaryNode<TKey, TValue> node)
     {
         if ( ! ReferenceEquals( node.Tree, null ) )
-            throw new InvalidOperationException( "The tree dictionary node already belongs to a tree dictionary." );
+            ExceptionThrower.Throw( new InvalidOperationException( Resources.NodeAlreadyBelongsToTree ) );
     }
 
     private void AssertSubtreeAddition(ITreeDictionaryNode<TKey, TValue> node)
     {
         if ( node is TreeDictionaryNode<TKey, TValue> typedNode && ReferenceEquals( typedNode.Tree, this ) )
-            throw new InvalidOperationException( "The subtree cannot be added to the tree dictionary that contains it." );
+            ExceptionThrower.Throw( new InvalidOperationException( Resources.SubtreeAlreadyBelongsToTree ) );
 
         if ( node.VisitDescendants().Any( n => ContainsKey( n.Key ) ) )
-            throw new ArgumentException( "Cannot add the subtree to the tree dictionary because of duplicated keys." );
+            ExceptionThrower.Throw( new ArgumentException( Resources.SomeSubtreeNodeKeysAlreadyExistInTree, nameof( node ) ) );
     }
 
     [Pure]

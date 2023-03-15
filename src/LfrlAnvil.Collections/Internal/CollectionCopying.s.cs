@@ -7,8 +7,8 @@ internal static class CollectionCopying
 {
     internal static void CopyTo<T>(ICollection<T> source, T[] array, int arrayIndex)
     {
-        var count = Math.Min( source.Count, array.Length - arrayIndex );
-        var maxArrayIndex = arrayIndex + count - 1;
+        var count = Math.Min( source.Count, checked( array.Length - arrayIndex ) );
+        var maxArrayIndex = checked( arrayIndex + count - 1 );
 
         if ( maxArrayIndex < 0 )
             return;
