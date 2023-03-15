@@ -238,13 +238,14 @@ public sealed class EventExchange : IMutableEventExchange
 
         public override void OnDispose(DisposalSource source)
         {
-            if ( _exchange!.IsDisposed )
+            Assume.IsNotNull( _exchange, nameof( _exchange ) );
+            if ( _exchange.IsDisposed )
                 return;
 
             if ( source == DisposalSource.Subscriber )
                 throw new InvalidEventPublisherDisposalException();
 
-            _exchange!.RemovePublisher( typeof( TEvent ) );
+            _exchange.RemovePublisher( typeof( TEvent ) );
             _exchange = null;
         }
     }

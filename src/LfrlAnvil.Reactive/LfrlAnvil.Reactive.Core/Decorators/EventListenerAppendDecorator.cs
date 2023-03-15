@@ -34,7 +34,8 @@ public sealed class EventListenerAppendDecorator<TEvent> : IEventListenerDecorat
 
         public override void OnDispose(DisposalSource source)
         {
-            foreach ( var value in _values! )
+            Assume.IsNotNull( _values, nameof( _values ) );
+            foreach ( var value in _values )
                 Next.React( value );
 
             _values = null;

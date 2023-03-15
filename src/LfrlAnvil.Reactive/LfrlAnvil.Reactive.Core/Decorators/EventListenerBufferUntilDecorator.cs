@@ -76,13 +76,15 @@ public sealed class EventListenerBufferUntilDecorator<TEvent, TTargetEvent> : IE
 
         public override void React(TTargetEvent _)
         {
-            _sourceListener!.OnTargetEvent();
+            Assume.IsNotNull( _sourceListener, nameof( _sourceListener ) );
+            _sourceListener.OnTargetEvent();
         }
 
         public override void OnDispose(DisposalSource _)
         {
-            _sourceListener!.OnTargetEvent();
-            _sourceListener!.DisposeSubscriber();
+            Assume.IsNotNull( _sourceListener, nameof( _sourceListener ) );
+            _sourceListener.OnTargetEvent();
+            _sourceListener.DisposeSubscriber();
             _sourceListener = null;
         }
     }

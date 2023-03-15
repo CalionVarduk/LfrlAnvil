@@ -41,7 +41,7 @@ public static class EnumerableExtensions
         if ( ! Generic<T>.IsReferenceType && ! Generic<T>.IsNullableType )
             return source!;
 
-        return source.Where( e => ! comparer.Equals( e!, default! ) )!;
+        return source.Where( e => ! comparer.Equals( e, default ) )!;
     }
 
     [Pure]

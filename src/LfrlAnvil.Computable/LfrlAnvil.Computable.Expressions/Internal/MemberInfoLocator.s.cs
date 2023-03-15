@@ -34,7 +34,8 @@ internal static class MemberInfoLocator
             bindingAttr: BindingFlags.Public | BindingFlags.Static,
             types: new[] { typeof( string ), typeof( string ), typeof( StringComparison ) } );
 
-        return result!;
+        Assume.IsNotNull( result, nameof( result ) );
+        return result;
     }
 
     [Pure]
@@ -45,7 +46,8 @@ internal static class MemberInfoLocator
             bindingAttr: BindingFlags.Public | BindingFlags.Static,
             types: new[] { typeof( string ), typeof( string ) } );
 
-        return result!;
+        Assume.IsNotNull( result, nameof( result ) );
+        return result;
     }
 
     [Pure]
@@ -56,7 +58,8 @@ internal static class MemberInfoLocator
             bindingAttr: BindingFlags.Public | BindingFlags.Instance,
             types: Type.EmptyTypes );
 
-        return result!;
+        Assume.IsNotNull( result, nameof( result ) );
+        return result;
     }
 
     [Pure]
@@ -67,15 +70,17 @@ internal static class MemberInfoLocator
             bindingAttr: BindingFlags.Public | BindingFlags.Instance,
             types: new[] { typeof( IFormatProvider ) } );
 
-        return result!;
+        Assume.IsNotNull( result, nameof( result ) );
+        return result;
     }
 
     [Pure]
     internal static ConstructorInfo FindInvocationExceptionCtor()
     {
         var result = typeof( ParsedExpressionInvocationException )
-            .GetConstructor( new[] { typeof( string ), typeof( object?[] ) } )!;
+            .GetConstructor( new[] { typeof( string ), typeof( object?[] ) } );
 
+        Assume.IsNotNull( result, nameof( result ) );
         return result;
     }
 
@@ -85,8 +90,9 @@ internal static class MemberInfoLocator
         var genericMethod = typeof( Array ).GetMethod(
             name: nameof( Array.Empty ),
             bindingAttr: BindingFlags.Public | BindingFlags.Static,
-            types: Type.EmptyTypes )!;
+            types: Type.EmptyTypes );
 
+        Assume.IsNotNull( genericMethod, nameof( genericMethod ) );
         var result = genericMethod.MakeGenericMethod( elementType );
         return result;
     }
@@ -94,14 +100,16 @@ internal static class MemberInfoLocator
     [Pure]
     internal static ConstructorInfo FindArrayCtor(Type arrayType)
     {
-        var result = arrayType.GetConstructor( new[] { typeof( int ) } )!;
+        var result = arrayType.GetConstructor( new[] { typeof( int ) } );
+        Assume.IsNotNull( result, nameof( result ) );
         return result;
     }
 
     [Pure]
     internal static MethodInfo FindArraySetMethod(Type arrayType)
     {
-        var result = arrayType.GetMethod( "Set" )!;
+        var result = arrayType.GetMethod( "Set" );
+        Assume.IsNotNull( result, nameof( result ) );
         return result;
     }
 
@@ -124,7 +132,8 @@ internal static class MemberInfoLocator
     {
         if ( type.IsArray )
         {
-            var getMethod = type.GetMethod( "Get" )!;
+            var getMethod = type.GetMethod( "Get" );
+            Assume.IsNotNull( getMethod, nameof( getMethod ) );
             var parameters = getMethod.GetParameters();
 
             if ( parameters.Length == parameterTypes.Length && AreParametersMatching( parameters, parameterTypes ) )
@@ -174,7 +183,8 @@ internal static class MemberInfoLocator
 
         for ( var i = 0; i < methods.Length; ++i )
         {
-            var method = methods[i]!;
+            var method = methods[i];
+            Assume.IsNotNull( method, nameof( method ) );
             nonGenericParameterCount[i] = -1;
 
             if ( ! filter( method, null ) )

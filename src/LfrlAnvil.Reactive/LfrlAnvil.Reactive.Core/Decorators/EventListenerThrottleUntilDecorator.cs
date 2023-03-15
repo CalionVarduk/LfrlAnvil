@@ -40,9 +40,10 @@ public sealed class EventListenerThrottleUntilDecorator<TEvent, TTargetEvent> : 
             if ( _targetSubscriber is not null )
                 return;
 
+            Assume.IsNotNull( _target, nameof( _target ) );
             _targetSubscriber = new LazyDisposable<IEventSubscriber>();
             var targetListener = new TargetEventListener( this, @event );
-            var actualTargetSubscriber = _target!.Listen( targetListener );
+            var actualTargetSubscriber = _target.Listen( targetListener );
             _targetSubscriber?.Assign( actualTargetSubscriber );
         }
 
@@ -57,8 +58,9 @@ public sealed class EventListenerThrottleUntilDecorator<TEvent, TTargetEvent> : 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void OnTargetEvent(TEvent @event)
         {
+            Assume.IsNotNull( _targetSubscriber, nameof( _targetSubscriber ) );
             Next.React( @event );
-            _targetSubscriber!.Dispose();
+            _targetSubscriber.Dispose();
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -87,16 +89,18 @@ public sealed class EventListenerThrottleUntilDecorator<TEvent, TTargetEvent> : 
 
         public override void React(TTargetEvent _)
         {
-            _sourceListener!.OnTargetEvent( _sourceEvent! );
+            Assume.IsNotNull( _sourceListener, nameof( _sourceListener ) );
+            _sourceListener.OnTargetEvent( _sourceEvent! );
         }
 
         public override void OnDispose(DisposalSource source)
         {
+            Assume.IsNotNull( _sourceListener, nameof( _sourceListener ) );
             _sourceEvent = default;
-            _sourceListener!.ClearTargetReferences();
+            _sourceListener.ClearTargetReferences();
 
             if ( source == DisposalSource.EventSource )
-                _sourceListener!.DisposeSubscriber();
+                _sourceListener.DisposeSubscriber();
 
             _sourceListener = null;
         }

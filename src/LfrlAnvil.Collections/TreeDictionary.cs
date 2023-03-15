@@ -331,7 +331,8 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
             if ( ContainsKey( descendant.Key ) )
                 continue;
 
-            AddTo( descendant.Parent!.Key, descendant.Key, descendant.Value );
+            Assume.IsNotNull( descendant.Parent, nameof( descendant.Parent ) );
+            AddTo( descendant.Parent.Key, descendant.Key, descendant.Value );
         }
 
         return subtreeRoot;
@@ -359,7 +360,8 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
             return;
         }
 
-        var oldRoot = _root!;
+        Assume.IsNotNull( _root, nameof( _root ) );
+        var oldRoot = _root;
         _root = oldRoot.Children[0];
         _root.ClearParent();
 
@@ -372,7 +374,10 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
         node.RemoveFromParent();
 
         for ( var i = 0; i < node.Children.Count; ++i )
+        {
+            Assume.IsNotNull( node.Parent, nameof( node.Parent ) );
             node.Children[i].SetParent( node.Parent! );
+        }
     }
 
     private int RemoveSubtreeImpl(TKey key)
@@ -431,10 +436,12 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
 
     private void SwapWithRoot(TreeDictionaryNode<TKey, TValue> node)
     {
-        var oldRoot = _root!;
-        var nodeIndex = node.Parent!.GetChildIndex( node );
+        Assume.IsNotNull( _root, nameof( _root ) );
+        Assume.IsNotNull( node.Parent, nameof( node.Parent ) );
+        var oldRoot = _root;
+        var nodeIndex = node.Parent.GetChildIndex( node );
 
-        node.Parent!.ReplaceChildAt( nodeIndex, oldRoot );
+        node.Parent.ReplaceChildAt( nodeIndex, oldRoot );
         node.SwapParentWith( oldRoot );
         node.SwapChildrenWith( oldRoot );
 
@@ -443,7 +450,8 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
 
     private static void SwapWithSameParent(TreeDictionaryNode<TKey, TValue> first, TreeDictionaryNode<TKey, TValue> second)
     {
-        var parent = first.Parent!;
+        Assume.IsNotNull( first.Parent, nameof( first.Parent ) );
+        var parent = first.Parent;
         var firstNodeIndex = parent.GetChildIndex( first );
         var secondNodeIndex = parent.GetChildIndex( second );
 
@@ -454,11 +462,13 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
 
     private static void SwapWithDifferentParents(TreeDictionaryNode<TKey, TValue> first, TreeDictionaryNode<TKey, TValue> second)
     {
-        var firstNodeIndex = first.Parent!.GetChildIndex( first );
-        var secondNodeIndex = second.Parent!.GetChildIndex( second );
+        Assume.IsNotNull( first.Parent, nameof( first.Parent ) );
+        Assume.IsNotNull( second.Parent, nameof( second.Parent ) );
+        var firstNodeIndex = first.Parent.GetChildIndex( first );
+        var secondNodeIndex = second.Parent.GetChildIndex( second );
 
-        first.Parent!.ReplaceChildAt( firstNodeIndex, second );
-        second.Parent!.ReplaceChildAt( secondNodeIndex, first );
+        first.Parent.ReplaceChildAt( firstNodeIndex, second );
+        second.Parent.ReplaceChildAt( secondNodeIndex, first );
         first.SwapParentWith( second );
         first.SwapChildrenWith( second );
     }
@@ -482,7 +492,8 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
 
     private void MoveRootTo(TreeDictionaryNode<TKey, TValue> parent)
     {
-        var oldRoot = _root!;
+        Assume.IsNotNull( _root, nameof( _root ) );
+        var oldRoot = _root;
         oldRoot.SetParent( parent );
 
         _root = ReferenceEquals( parent.Parent, _root ) ? parent : oldRoot.Children[0];
@@ -494,7 +505,8 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
 
     private static void MoveNodeWithParentTo(TreeDictionaryNode<TKey, TValue> parent, TreeDictionaryNode<TKey, TValue> node)
     {
-        var oldParent = node.Parent!;
+        Assume.IsNotNull( node.Parent, nameof( node.Parent ) );
+        var oldParent = node.Parent;
         node.RemoveFromParent();
         node.SetParent( parent );
         oldParent.InheritChildrenFrom( node );

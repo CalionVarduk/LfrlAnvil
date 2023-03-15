@@ -341,7 +341,8 @@ public readonly struct ZonedDateTime : IEquatable<ZonedDateTime>, IComparable<Zo
         var value = Value;
         var timeZone = TimeZone;
         var activeAdjustmentRule = timeZone.GetActiveAdjustmentRule( value );
-        var daylightDelta = new Duration( activeAdjustmentRule!.DaylightDelta );
+        Assume.IsNotNull( activeAdjustmentRule, nameof( activeAdjustmentRule ) );
+        var daylightDelta = new Duration( activeAdjustmentRule.DaylightDelta );
 
         return IsInDaylightSavingTime
             ? new ZonedDateTime( Timestamp.Add( daylightDelta ), value, timeZone )

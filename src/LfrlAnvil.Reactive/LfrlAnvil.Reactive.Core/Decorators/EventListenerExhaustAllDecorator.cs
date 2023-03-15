@@ -61,12 +61,14 @@ public sealed class EventListenerExhaustAllDecorator<TEvent> : IEventListenerDec
 
         public override void React(TEvent @event)
         {
-            _outerListener!.OnInnerEvent( @event );
+            Assume.IsNotNull( _outerListener, nameof( _outerListener ) );
+            _outerListener.OnInnerEvent( @event );
         }
 
         public override void OnDispose(DisposalSource _)
         {
-            _outerListener!.OnInnerDisposed();
+            Assume.IsNotNull( _outerListener, nameof( _outerListener ) );
+            _outerListener.OnInnerDisposed();
             _outerListener = null;
         }
 

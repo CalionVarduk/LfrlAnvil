@@ -27,7 +27,10 @@ public sealed class LazyDisposable<T> : IDisposable
             return;
 
         if ( _hasInner != 0 )
-            Inner!.Dispose();
+        {
+            Assume.IsNotNull( Inner, nameof( Inner ) );
+            Inner.Dispose();
+        }
     }
 
     public void Assign(T inner)

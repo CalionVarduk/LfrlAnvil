@@ -23,7 +23,8 @@ internal sealed class EventSubscriber<TEvent> : IEventSubscriber
         if ( Interlocked.Exchange( ref _state, 1 ) == 1 )
             return;
 
-        _disposer!( this );
+        Assume.IsNotNull( _disposer, nameof( _disposer ) );
+        _disposer( this );
         _disposer = null;
 
         Listener.OnDispose( DisposalSource.Subscriber );

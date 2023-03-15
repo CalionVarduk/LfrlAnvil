@@ -35,7 +35,7 @@ public static class Ensure
         if ( ! Generic<T>.IsReferenceType && ! Generic<T>.IsNullableType )
             ExceptionThrower.Throw( Exceptions.NotNull( param, paramName ) );
 
-        if ( ! comparer.Equals( param!, default! ) )
+        if ( ! comparer.Equals( param, default ) )
             ExceptionThrower.Throw( Exceptions.NotNull( param, paramName ) );
     }
 
@@ -422,7 +422,7 @@ public static class Ensure
         if ( ! Generic<T>.IsReferenceType && ! Generic<T>.IsNullableType )
             ExceptionThrower.Throw( Exceptions.NotContainsNull( paramName ) );
 
-        if ( param.All( e => ! comparer.Equals( e!, default! ) ) )
+        if ( param.All( e => ! comparer.Equals( e, default ) ) )
             ExceptionThrower.Throw( Exceptions.NotContainsNull( paramName ) );
     }
 
@@ -448,7 +448,7 @@ public static class Ensure
         if ( ! Generic<T>.IsReferenceType && ! Generic<T>.IsNullableType )
             return;
 
-        if ( param.Any( e => comparer.Equals( e!, default! ) ) )
+        if ( param.Any( e => comparer.Equals( e, default ) ) )
             ExceptionThrower.Throw( Exceptions.ContainsNull( paramName ) );
     }
 

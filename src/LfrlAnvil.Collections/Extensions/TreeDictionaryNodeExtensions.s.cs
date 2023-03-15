@@ -98,7 +98,10 @@ public static class TreeDictionaryNodeExtensions
 
         result.SetRoot( node.Key, node.Value );
         foreach ( var descendant in node.VisitDescendants() )
-            result.AddTo( descendant.Parent!.Key, descendant.Key, descendant.Value );
+        {
+            Assume.IsNotNull( descendant.Parent, nameof( descendant.Parent ) );
+            result.AddTo( descendant.Parent.Key, descendant.Key, descendant.Value );
+        }
 
         return result;
     }

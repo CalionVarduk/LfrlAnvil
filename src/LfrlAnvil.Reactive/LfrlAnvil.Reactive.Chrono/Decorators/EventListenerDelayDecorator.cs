@@ -46,13 +46,15 @@ public sealed class EventListenerDelayDecorator<TEvent> : IEventListenerDecorato
 
         public override void React(TEvent @event)
         {
+            Assume.IsNotNull( _timeout, nameof( _timeout ) );
             var timerListener = new TimerListener( this, @event );
-            _timeout!.Listen( timerListener );
+            _timeout.Listen( timerListener );
         }
 
         public override void OnDispose(DisposalSource source)
         {
-            _timeout!.Dispose();
+            Assume.IsNotNull( _timeout, nameof( _timeout ) );
+            _timeout.Dispose();
             _timeout = null;
             base.OnDispose( source );
         }
@@ -78,7 +80,8 @@ public sealed class EventListenerDelayDecorator<TEvent> : IEventListenerDecorato
 
         public override void React(WithInterval<long> @event)
         {
-            _mainListener!.OnTimerReact( _event!, @event );
+            Assume.IsNotNull( _mainListener, nameof( _mainListener ) );
+            _mainListener.OnTimerReact( _event!, @event );
         }
 
         public override void OnDispose(DisposalSource source)

@@ -335,8 +335,9 @@ internal sealed class InlineDelegateCollectionState
                 var ownerStateId = _capturedParameters.FindOwnerStateId( parameter );
                 if ( ownerStateId > 0 || (ownerStateId == 0 && ! ReferenceEquals( parameter, _localTerms.ParameterExpression )) )
                 {
+                    Assume.IsNotNull( parameter.Name, nameof( parameter.Name ) );
                     _usedParameters.Add( new OwnedParameterExpression( parameter, ownerStateId ) );
-                    _usedVariables.Add( parameter.Name!.AsSlice() );
+                    _usedVariables.Add( parameter.Name.AsSlice() );
                 }
             }
             else

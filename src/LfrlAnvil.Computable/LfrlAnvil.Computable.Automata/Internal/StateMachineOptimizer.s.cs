@@ -72,7 +72,8 @@ internal static class StateMachineOptimizer
                     break;
                 }
 
-                var stateMappings = CreateEquivalentStateMappings( equivalency, @params.StateMerger!, states.Comparer );
+                Assume.IsNotNull( @params.StateMerger, nameof( @params.StateMerger ) );
+                var stateMappings = CreateEquivalentStateMappings( equivalency, @params.StateMerger, states.Comparer );
                 initialState = RecreateMinimizedStatesAndGetInitialState( states, stateNodes, stateMappings, deadStates, inputComparer );
                 break;
             }
@@ -125,6 +126,7 @@ internal static class StateMachineOptimizer
                 if ( ReferenceEquals( originalStates, states ) )
                     states = new Dictionary<TState, IStateMachineNode<TState, TInput, TResult>>( states.Comparer );
 
+                Assume.IsNotNull( @params.StateMerger, nameof( @params.StateMerger ) );
                 var stateMappings = CreateEquivalentStateMappings( equivalency, @params.StateMerger!, states.Comparer );
                 initialState = RecreateMinimizedStatesAndGetInitialState( states, stateNodes, stateMappings, deadStates, inputComparer );
                 break;
@@ -410,27 +412,28 @@ internal static class StateMachineOptimizer
         foreach ( var (pair, _) in equivalency.StatePairs )
         {
             Assume.Equals( pair.HasSecond, true, nameof( pair.HasSecond ) );
+            Assume.IsNotNull( pair.Second, nameof( pair.Second ) );
 
             if ( stateMappings.TryGetValue( pair.First, out var mapping ) )
             {
-                if ( stateMappings.ContainsKey( pair.Second! ) )
+                if ( stateMappings.ContainsKey( pair.Second ) )
                     continue;
 
-                mapping.Value = stateMerger( mapping.Value, pair.Second! );
-                stateMappings.Add( pair.Second!, mapping );
+                mapping.Value = stateMerger( mapping.Value, pair.Second );
+                stateMappings.Add( pair.Second, mapping );
                 continue;
             }
 
-            if ( stateMappings.TryGetValue( pair.Second!, out mapping ) )
+            if ( stateMappings.TryGetValue( pair.Second, out mapping ) )
             {
                 mapping.Value = stateMerger( mapping.Value, pair.First );
                 stateMappings.Add( pair.First, mapping );
                 continue;
             }
 
-            mapping = Ref.Create( stateMerger( pair.First, pair.Second! ) );
+            mapping = Ref.Create( stateMerger( pair.First, pair.Second ) );
             stateMappings.Add( pair.First, mapping );
-            stateMappings.Add( pair.Second!, mapping );
+            stateMappings.Add( pair.Second, mapping );
         }
 
         return stateMappings;

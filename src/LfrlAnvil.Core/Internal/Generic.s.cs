@@ -64,7 +64,7 @@ public static class Generic<T>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string ToString(T? obj)
     {
-        return IsNull( obj ) ? string.Empty : obj.ToString()!;
+        return IsNull( obj ) ? string.Empty : obj.ToString() ?? string.Empty;
     }
 
     [Pure]

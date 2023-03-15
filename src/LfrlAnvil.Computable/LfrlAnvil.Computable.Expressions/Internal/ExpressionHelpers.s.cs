@@ -117,7 +117,8 @@ internal static class ExpressionHelpers
             ExceptionThrower.Throw( new TargetException( ExceptionResources.NonStaticMethodRequiresTarget ) );
 
         var @delegate = DynamicCast.To<Delegate>( operand.Value );
-        var method = @delegate.GetType().GetMethod( nameof( Action.Invoke ) )!;
+        var method = @delegate.GetType().GetMethod( nameof( Action.Invoke ) );
+        Assume.IsNotNull( method, nameof( method ) );
         var @params = parameters.GetConstantValues();
         return Expression.Constant( @delegate.DynamicInvoke( @params ), method.ReturnType );
     }

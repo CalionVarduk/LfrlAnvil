@@ -98,7 +98,10 @@ public class ParsedExpressionFunction
 
         var parametersToReplace = new Dictionary<string, Expression>();
         foreach ( var (parameter, value) in Lambda.Parameters.Zip( parameters ) )
-            parametersToReplace.Add( parameter.Name!, value );
+        {
+            Assume.IsNotNull( parameter.Name, nameof( parameter.Name ) );
+            parametersToReplace.Add( parameter.Name, value );
+        }
 
         var result = Lambda.Body.ReplaceParameters( parametersToReplace );
         return result;

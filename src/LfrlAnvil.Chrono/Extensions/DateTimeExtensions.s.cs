@@ -199,7 +199,8 @@ public static class DateTimeExtensions
         if ( ambiguousResult is null )
             return (result, Duration.Zero);
 
-        var activeRule = timeZone.GetActiveAdjustmentRule( minStartValue )!;
+        var activeRule = timeZone.GetActiveAdjustmentRule( minStartValue );
+        Assume.IsNotNull( activeRule, nameof( activeRule ) );
         var transitionTime = activeRule.GetTransitionTimeWithAmbiguity();
 
         var durationOffset = new Duration( transitionTime.TimeOfDay.TimeOfDay )
@@ -225,7 +226,8 @@ public static class DateTimeExtensions
         if ( ambiguousResult is null )
             return (result, Duration.Zero);
 
-        var activeRule = timeZone.GetActiveAdjustmentRule( maxEndValue )!;
+        var activeRule = timeZone.GetActiveAdjustmentRule( maxEndValue );
+        Assume.IsNotNull( activeRule, nameof( activeRule ) );
         var transitionTime = activeRule.GetTransitionTimeWithAmbiguity();
 
         var durationOffset = new Duration( -transitionTime.TimeOfDay.TimeOfDay );

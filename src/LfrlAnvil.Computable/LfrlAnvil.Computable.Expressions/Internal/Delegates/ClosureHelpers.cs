@@ -172,7 +172,8 @@ internal static class ClosureHelpers
     private static MemberExpression CreateClosureParameterMemberAccess(Expression target, int parameterIndex)
     {
         var memberName = GetParameterMemberAccessName( parameterIndex );
-        var field = target.Type.GetField( memberName )!;
+        var field = target.Type.GetField( memberName );
+        Assume.IsNotNull( field, nameof( field ) );
         var result = Expression.MakeMemberAccess( target, field );
         return result;
     }
@@ -218,7 +219,8 @@ internal static class ClosureHelpers
             types[i] = parameters[i].Original.Type;
 
         var closedClosureType = openClosureType.MakeGenericType( types );
-        var ctor = closedClosureType.GetConstructor( BindingFlags.Instance | BindingFlags.NonPublic, types )!;
+        var ctor = closedClosureType.GetConstructor( BindingFlags.Instance | BindingFlags.NonPublic, types );
+        Assume.IsNotNull( ctor, nameof( ctor ) );
         return ctor;
     }
 

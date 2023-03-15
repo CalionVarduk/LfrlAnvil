@@ -45,7 +45,7 @@ public static class EventStreamExtensions
         if ( ! Generic<TEvent>.IsReferenceType && ! Generic<TEvent>.IsNullableType )
             return source!;
 
-        return source.Where( e => ! comparer.Equals( e!, default! ) )!;
+        return source.Where( e => ! comparer.Equals( e, default ) )!;
     }
 
     [Pure]

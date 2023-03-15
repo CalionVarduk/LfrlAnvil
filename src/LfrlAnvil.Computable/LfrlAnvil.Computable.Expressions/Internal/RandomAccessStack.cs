@@ -56,8 +56,9 @@ internal sealed class RandomAccessStack<T> : IReadOnlyList<T>
         Assume.IsGreaterThan( Count, 0, nameof( Count ) );
 
         var index = Count-- - 1;
-        var result = _objects[index]!;
+        var result = _objects[index];
         _objects[index] = default;
+        Assume.IsNotNull( result, nameof( result ) );
         return result;
     }
 

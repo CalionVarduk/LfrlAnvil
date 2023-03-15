@@ -286,7 +286,8 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
         {
             var underlyingType = dependencyType.GetGenericArguments()[0];
             var emptyArrayMethod = ExpressionBuilder.GetClosedArrayEmptyMethod( underlyingType );
-            var emptyArray = emptyArrayMethod.Invoke( null, null )!;
+            var emptyArray = emptyArrayMethod.Invoke( null, null );
+            Assume.IsNotNull( emptyArray, nameof( emptyArray ) );
 
             var resolver = new TransientDependencyResolver(
                 id: _idGenerator.Generate(),

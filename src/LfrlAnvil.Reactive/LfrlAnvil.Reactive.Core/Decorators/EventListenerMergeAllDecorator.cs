@@ -97,12 +97,14 @@ public sealed class EventListenerMergeAllDecorator<TEvent> : IEventListenerDecor
 
         public override void React(TEvent @event)
         {
-            _outerListener!.OnInnerEvent( @event );
+            Assume.IsNotNull( _outerListener, nameof( _outerListener ) );
+            _outerListener.OnInnerEvent( @event );
         }
 
         public override void OnDispose(DisposalSource _)
         {
-            _outerListener!.OnInnerDisposed( _subscriberNode );
+            Assume.IsNotNull( _outerListener, nameof( _outerListener ) );
+            _outerListener.OnInnerDisposed( _subscriberNode );
             _outerListener = null;
         }
     }

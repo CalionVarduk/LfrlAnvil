@@ -31,7 +31,8 @@ public class FiniteCache<TKey, TValue> : IFiniteCache<TKey, TValue>
             if ( Count <= Capacity )
                 return;
 
-            Remove( Oldest!.Value.Key );
+            Assume.IsNotNull( Oldest, nameof( Oldest ) );
+            Remove( Oldest.Value.Key );
         }
     }
 
@@ -54,7 +55,8 @@ public class FiniteCache<TKey, TValue> : IFiniteCache<TKey, TValue>
         if ( Count <= Capacity )
             return;
 
-        _map.Remove( Oldest!.Value.Key );
+        Assume.IsNotNull( Oldest, nameof( Oldest ) );
+        _map.Remove( Oldest.Value.Key );
     }
 
     public bool Remove(TKey key)

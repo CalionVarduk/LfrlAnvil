@@ -72,7 +72,8 @@ public sealed class IntervalEventSource : EventSource<WithInterval<long>>
 
         public override void OnDispose(DisposalSource source)
         {
-            _timer!.Dispose();
+            Assume.IsNotNull( _timer, nameof( _timer ) );
+            _timer.Dispose();
             _timer = null;
             base.OnDispose( source );
         }
@@ -91,12 +92,14 @@ public sealed class IntervalEventSource : EventSource<WithInterval<long>>
 
         public override void React(WithInterval<long> @event)
         {
-            _mainListener!.React( @event );
+            Assume.IsNotNull( _mainListener, nameof( _mainListener ) );
+            _mainListener.React( @event );
         }
 
         public override void OnDispose(DisposalSource _)
         {
-            _mainSubscriber!.Dispose();
+            Assume.IsNotNull( _mainSubscriber, nameof( _mainSubscriber ) );
+            _mainSubscriber.Dispose();
             _mainSubscriber = null;
             _mainListener = null;
         }

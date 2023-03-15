@@ -70,14 +70,16 @@ public sealed class EventListenerSampleWhenDecorator<TEvent, TTargetEvent> : IEv
 
         public override void React(TTargetEvent _)
         {
-            _sourceListener!.OnTargetEvent( _sample );
+            Assume.IsNotNull( _sourceListener, nameof( _sourceListener ) );
+            _sourceListener.OnTargetEvent( _sample );
             _sample = Optional<TEvent>.Empty;
         }
 
         public override void OnDispose(DisposalSource _)
         {
+            Assume.IsNotNull( _sourceListener, nameof( _sourceListener ) );
             _sample = Optional<TEvent>.Empty;
-            _sourceListener!.DisposeSubscriber();
+            _sourceListener.DisposeSubscriber();
             _sourceListener = null;
         }
 
