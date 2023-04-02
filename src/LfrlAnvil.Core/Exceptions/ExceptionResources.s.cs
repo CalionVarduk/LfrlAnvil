@@ -13,6 +13,7 @@ public static class ExceptionResources
     public const string ExpectedConditionToBeTrue = "Expected condition to be true.";
     public const string ExpectedConditionToBeFalse = "Expected condition to be false.";
     public const string AssumedCodeToBeUnreachable = "Assumed the code to be unreachable.";
+    public const string FixedSizeCollection = "Collection was of a fixed size.";
 
     internal const string FailedToGenerateNextValue = "Failed to generate next value.";
     internal const string ExpectedIndexToBeZero = "Expected index to be equal to 0.";
