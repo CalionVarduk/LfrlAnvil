@@ -9,16 +9,16 @@ public readonly struct ParsedExpressionBranchingVariadicFunctionSymbols
     public static readonly ParsedExpressionBranchingVariadicFunctionSymbols Default =
         new ParsedExpressionBranchingVariadicFunctionSymbols();
 
-    private readonly StringSlice? _if;
-    private readonly StringSlice? _switchCase;
-    private readonly StringSlice? _switch;
-    private readonly StringSlice? _throw;
+    private readonly StringSegment? _if;
+    private readonly StringSegment? _switchCase;
+    private readonly StringSegment? _switch;
+    private readonly StringSegment? _throw;
 
     private ParsedExpressionBranchingVariadicFunctionSymbols(
-        StringSlice? @if,
-        StringSlice? switchCase,
-        StringSlice? @switch,
-        StringSlice? @throw)
+        StringSegment? @if,
+        StringSegment? switchCase,
+        StringSegment? @switch,
+        StringSegment? @throw)
     {
         _if = @if;
         _switchCase = switchCase;
@@ -26,10 +26,10 @@ public readonly struct ParsedExpressionBranchingVariadicFunctionSymbols
         _throw = @throw;
     }
 
-    public StringSlice If => _if ?? ParsedExpressionConstructDefaults.IfSymbol.AsSlice();
-    public StringSlice SwitchCase => _switchCase ?? ParsedExpressionConstructDefaults.SwitchCaseSymbol.AsSlice();
-    public StringSlice Switch => _switch ?? ParsedExpressionConstructDefaults.SwitchSymbol.AsSlice();
-    public StringSlice Throw => _throw ?? ParsedExpressionConstructDefaults.ThrowSymbol.AsSlice();
+    public StringSegment If => _if ?? ParsedExpressionConstructDefaults.IfSymbol.AsSegment();
+    public StringSegment SwitchCase => _switchCase ?? ParsedExpressionConstructDefaults.SwitchCaseSymbol.AsSegment();
+    public StringSegment Switch => _switch ?? ParsedExpressionConstructDefaults.SwitchSymbol.AsSegment();
+    public StringSegment Throw => _throw ?? ParsedExpressionConstructDefaults.ThrowSymbol.AsSegment();
 
     [Pure]
     public override string ToString()
@@ -41,11 +41,11 @@ public readonly struct ParsedExpressionBranchingVariadicFunctionSymbols
     [Pure]
     public ParsedExpressionBranchingVariadicFunctionSymbols SetIf(string symbol)
     {
-        return SetIf( symbol.AsSlice() );
+        return SetIf( symbol.AsSegment() );
     }
 
     [Pure]
-    public ParsedExpressionBranchingVariadicFunctionSymbols SetIf(StringSlice symbol)
+    public ParsedExpressionBranchingVariadicFunctionSymbols SetIf(StringSegment symbol)
     {
         return new ParsedExpressionBranchingVariadicFunctionSymbols( symbol, _switchCase, _switch, _throw );
     }
@@ -53,11 +53,11 @@ public readonly struct ParsedExpressionBranchingVariadicFunctionSymbols
     [Pure]
     public ParsedExpressionBranchingVariadicFunctionSymbols SetSwitchCase(string symbol)
     {
-        return SetSwitchCase( symbol.AsSlice() );
+        return SetSwitchCase( symbol.AsSegment() );
     }
 
     [Pure]
-    public ParsedExpressionBranchingVariadicFunctionSymbols SetSwitchCase(StringSlice symbol)
+    public ParsedExpressionBranchingVariadicFunctionSymbols SetSwitchCase(StringSegment symbol)
     {
         return new ParsedExpressionBranchingVariadicFunctionSymbols( _if, symbol, _switch, _throw );
     }
@@ -65,11 +65,11 @@ public readonly struct ParsedExpressionBranchingVariadicFunctionSymbols
     [Pure]
     public ParsedExpressionBranchingVariadicFunctionSymbols SetSwitch(string symbol)
     {
-        return SetSwitch( symbol.AsSlice() );
+        return SetSwitch( symbol.AsSegment() );
     }
 
     [Pure]
-    public ParsedExpressionBranchingVariadicFunctionSymbols SetSwitch(StringSlice symbol)
+    public ParsedExpressionBranchingVariadicFunctionSymbols SetSwitch(StringSegment symbol)
     {
         return new ParsedExpressionBranchingVariadicFunctionSymbols( _if, _switchCase, symbol, _throw );
     }
@@ -77,11 +77,11 @@ public readonly struct ParsedExpressionBranchingVariadicFunctionSymbols
     [Pure]
     public ParsedExpressionBranchingVariadicFunctionSymbols SetThrow(string symbol)
     {
-        return SetThrow( symbol.AsSlice() );
+        return SetThrow( symbol.AsSegment() );
     }
 
     [Pure]
-    public ParsedExpressionBranchingVariadicFunctionSymbols SetThrow(StringSlice symbol)
+    public ParsedExpressionBranchingVariadicFunctionSymbols SetThrow(StringSegment symbol)
     {
         return new ParsedExpressionBranchingVariadicFunctionSymbols( _if, _switchCase, _switch, symbol );
     }

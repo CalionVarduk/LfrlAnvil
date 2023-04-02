@@ -122,9 +122,9 @@ public class ParsedExpressionTests : TestsBase
         var sut = factory.Create<decimal, decimal>( input );
 
         var result = sut.BindArguments(
-            KeyValuePair.Create( "b".AsSlice(), bValue ),
-            KeyValuePair.Create( "c".AsSlice(), cValue ),
-            KeyValuePair.Create( "e".AsSlice(), eValue ) );
+            KeyValuePair.Create( "b".AsSegment(), bValue ),
+            KeyValuePair.Create( "c".AsSegment(), cValue ),
+            KeyValuePair.Create( "e".AsSegment(), eValue ) );
 
         using ( new AssertionScope() )
         {
@@ -420,7 +420,7 @@ public class ParsedExpressionTests : TestsBase
         var factory = builder.Build();
         IParsedExpression<decimal, decimal> sut = factory.Create<decimal, decimal>( input );
 
-        var result = sut.BindArguments( new[] { KeyValuePair.Create( "a".AsSlice(), aValue ) }.AsEnumerable() );
+        var result = sut.BindArguments( new[] { KeyValuePair.Create( "a".AsSegment(), aValue ) }.AsEnumerable() );
         var @delegate = result.Compile();
         var resultValue = @delegate.Invoke( bValue );
 
@@ -441,7 +441,7 @@ public class ParsedExpressionTests : TestsBase
         var factory = builder.Build();
         IParsedExpression<decimal, decimal> sut = factory.Create<decimal, decimal>( input );
 
-        var result = sut.BindArguments( KeyValuePair.Create( "a".AsSlice(), aValue ) );
+        var result = sut.BindArguments( KeyValuePair.Create( "a".AsSegment(), aValue ) );
         var @delegate = result.Compile();
         var resultValue = @delegate.Invoke( bValue );
 

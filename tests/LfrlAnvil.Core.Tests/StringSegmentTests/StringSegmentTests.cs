@@ -2,14 +2,14 @@
 using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
-namespace LfrlAnvil.Tests.StringSliceTests;
+namespace LfrlAnvil.Tests.StringSegmentTests;
 
-public class StringSliceTests : TestsBase
+public class StringSegmentTests : TestsBase
 {
     [Fact]
-    public void Default_ShouldReturnEmptySlice()
+    public void Default_ShouldReturnEmptySegment()
     {
-        var sut = default( StringSlice );
+        var sut = default( StringSegment );
 
         using ( new AssertionScope() )
         {
@@ -21,9 +21,9 @@ public class StringSliceTests : TestsBase
     }
 
     [Fact]
-    public void Empty_ShouldReturnEmptySlice()
+    public void Empty_ShouldReturnEmptySegment()
     {
-        var sut = StringSlice.Empty;
+        var sut = StringSegment.Empty;
 
         using ( new AssertionScope() )
         {
@@ -40,7 +40,7 @@ public class StringSliceTests : TestsBase
     [InlineData( "foobar" )]
     public void Ctor_WithSource_ShouldReturnCorrectResult(string source)
     {
-        var sut = new StringSlice( source );
+        var sut = new StringSegment( source );
 
         using ( new AssertionScope() )
         {
@@ -66,7 +66,7 @@ public class StringSliceTests : TestsBase
         int expectedEndIndex,
         int expectedLength)
     {
-        var sut = new StringSlice( source, startIndex );
+        var sut = new StringSegment( source, startIndex );
 
         using ( new AssertionScope() )
         {
@@ -80,7 +80,7 @@ public class StringSliceTests : TestsBase
     [Fact]
     public void Ctor_WithSourceAndStartIndex_ShouldThrowArgumentOutOfRangeException_WhenStartIndexIsLessThanZero()
     {
-        var action = Lambda.Of( () => new StringSlice( Fixture.Create<string>(), startIndex: -1 ) );
+        var action = Lambda.Of( () => new StringSegment( Fixture.Create<string>(), startIndex: -1 ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
 
@@ -115,7 +115,7 @@ public class StringSliceTests : TestsBase
         int expectedEndIndex,
         int expectedLength)
     {
-        var sut = new StringSlice( source, startIndex, length );
+        var sut = new StringSegment( source, startIndex, length );
 
         using ( new AssertionScope() )
         {
@@ -129,14 +129,14 @@ public class StringSliceTests : TestsBase
     [Fact]
     public void Ctor_WithSourceAndStartIndexAndLength_ShouldThrowArgumentOutOfRangeException_WhenStartIndexIsLessThanZero()
     {
-        var action = Lambda.Of( () => new StringSlice( Fixture.Create<string>(), startIndex: -1, length: 0 ) );
+        var action = Lambda.Of( () => new StringSegment( Fixture.Create<string>(), startIndex: -1, length: 0 ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
 
     [Fact]
     public void Ctor_WithSourceAndStartIndexAndLength_ShouldThrowArgumentOutOfRangeException_WhenLengthIsLessThanZero()
     {
-        var action = Lambda.Of( () => new StringSlice( Fixture.Create<string>(), startIndex: 0, length: -1 ) );
+        var action = Lambda.Of( () => new StringSegment( Fixture.Create<string>(), startIndex: 0, length: -1 ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
 
@@ -147,7 +147,7 @@ public class StringSliceTests : TestsBase
     public void FromMemory_ShouldReturnCorrectResult_WhenUnderlyingObjectIsString(string source, int startIndex, int length)
     {
         var memory = source.AsMemory( startIndex, length );
-        var sut = StringSlice.FromMemory( memory );
+        var sut = StringSegment.FromMemory( memory );
 
         using ( new AssertionScope() )
         {
@@ -169,7 +169,7 @@ public class StringSliceTests : TestsBase
     {
         var source = new[] { 'f', 'o', 'o', 'b', 'a', 'r' };
         var memory = source.AsMemory( startIndex, length );
-        var sut = StringSlice.FromMemory( memory );
+        var sut = StringSegment.FromMemory( memory );
 
         using ( new AssertionScope() )
         {
@@ -187,7 +187,7 @@ public class StringSliceTests : TestsBase
     [InlineData( "foobar", 2, 2, "ob" )]
     public void ToString_ShouldReturnCorrectResult(string source, int startIndex, int length, string expected)
     {
-        var sut = new StringSlice( source, startIndex, length );
+        var sut = new StringSegment( source, startIndex, length );
         var result = sut.ToString();
         result.Should().Be( expected );
     }
@@ -195,7 +195,7 @@ public class StringSliceTests : TestsBase
     [Fact]
     public void GetHashCode_ShouldReturnCorrectResult()
     {
-        var sut = new StringSlice( "foobar", 2, 2 );
+        var sut = new StringSegment( "foobar", 2, 2 );
         var expected = string.GetHashCode( sut.ToString().AsSpan() );
         var result = sut.GetHashCode();
         result.Should().Be( expected );
@@ -217,8 +217,8 @@ public class StringSliceTests : TestsBase
         int otherLength,
         bool expected)
     {
-        var sut = new StringSlice( source, startIndex, length );
-        var other = new StringSlice( otherSource, otherStartIndex, otherLength );
+        var sut = new StringSegment( source, startIndex, length );
+        var other = new StringSegment( otherSource, otherStartIndex, otherLength );
 
         var result = sut.Equals( other );
 
@@ -243,8 +243,8 @@ public class StringSliceTests : TestsBase
         int otherLength,
         int expectedSign)
     {
-        var sut = new StringSlice( source, startIndex, length );
-        var other = new StringSlice( otherSource, otherStartIndex, otherLength );
+        var sut = new StringSegment( source, startIndex, length );
+        var other = new StringSegment( otherSource, otherStartIndex, otherLength );
 
         var result = sut.CompareTo( other );
 
@@ -264,7 +264,7 @@ public class StringSliceTests : TestsBase
         int expectedEndIndex,
         int expectedLength)
     {
-        var sut = new StringSlice( "foobar", 1, 4 );
+        var sut = new StringSegment( "foobar", 1, 4 );
         var result = sut.Slice( startIndex );
 
         using ( new AssertionScope() )
@@ -279,7 +279,7 @@ public class StringSliceTests : TestsBase
     [Fact]
     public void Slice_WithStartIndex_ShouldThrowArgumentOutOfRangeException_WhenStartIndexIsLessThanZero()
     {
-        var sut = new StringSlice( "foobar", 1, 4 );
+        var sut = new StringSegment( "foobar", 1, 4 );
         var action = Lambda.Of( () => sut.Slice( startIndex: -1 ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
@@ -314,7 +314,7 @@ public class StringSliceTests : TestsBase
         int expectedEndIndex,
         int expectedLength)
     {
-        var sut = new StringSlice( "foobar", 1, 4 );
+        var sut = new StringSegment( "foobar", 1, 4 );
         var result = sut.Slice( startIndex, length );
 
         using ( new AssertionScope() )
@@ -329,7 +329,7 @@ public class StringSliceTests : TestsBase
     [Fact]
     public void Slice_WithStartIndexAndLength_ShouldThrowArgumentOutOfRangeException_WhenStartIndexIsLessThanZero()
     {
-        var sut = new StringSlice( "foobar", 1, 4 );
+        var sut = new StringSegment( "foobar", 1, 4 );
         var action = Lambda.Of( () => sut.Slice( startIndex: -1, length: 0 ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
@@ -337,7 +337,7 @@ public class StringSliceTests : TestsBase
     [Fact]
     public void Slice_WithStartIndexAndLength_ShouldThrowArgumentOutOfRangeException_WhenLengthIsLessThanZero()
     {
-        var sut = new StringSlice( "foobar", 1, 4 );
+        var sut = new StringSegment( "foobar", 1, 4 );
         var action = Lambda.Of( () => sut.Slice( startIndex: 0, length: -1 ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
@@ -353,7 +353,7 @@ public class StringSliceTests : TestsBase
     [InlineData( 7, 6, 6, 0 )]
     public void SetStartIndex_ShouldReturnCorrectResult(int value, int expectedStartIndex, int expectedEndIndex, int expectedLength)
     {
-        var sut = new StringSlice( "foobar", 1, 3 );
+        var sut = new StringSegment( "foobar", 1, 3 );
         var result = sut.SetStartIndex( value );
 
         using ( new AssertionScope() )
@@ -368,7 +368,7 @@ public class StringSliceTests : TestsBase
     [Fact]
     public void SetStartIndex_ShouldThrowArgumentOutOfRangeException_WhenValueIsLessThanZero()
     {
-        var sut = new StringSlice( "foobar", 1, 4 );
+        var sut = new StringSegment( "foobar", 1, 4 );
         var action = Lambda.Of( () => sut.SetStartIndex( value: -1 ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
@@ -387,7 +387,7 @@ public class StringSliceTests : TestsBase
     [InlineData( 10, 6, 6, 0 )]
     public void SetEndIndex_ShouldReturnCorrectResult(int value, int expectedStartIndex, int expectedEndIndex, int expectedLength)
     {
-        var sut = new StringSlice( "foobar", 1, 3 );
+        var sut = new StringSegment( "foobar", 1, 3 );
         var result = sut.SetEndIndex( value );
 
         using ( new AssertionScope() )
@@ -402,7 +402,7 @@ public class StringSliceTests : TestsBase
     [Fact]
     public void SetEndIndex_ShouldThrowArgumentOutOfRangeException_WhenValueIsLessThanZero()
     {
-        var sut = new StringSlice( "foobar", 1, 4 );
+        var sut = new StringSegment( "foobar", 1, 4 );
         var action = Lambda.Of( () => sut.SetEndIndex( value: -1 ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
@@ -417,7 +417,7 @@ public class StringSliceTests : TestsBase
     [InlineData( 6, 1, 6, 5 )]
     public void SetLength_ShouldReturnCorrectResult(int value, int expectedStartIndex, int expectedEndIndex, int expectedLength)
     {
-        var sut = new StringSlice( "foobar", 1, 3 );
+        var sut = new StringSegment( "foobar", 1, 3 );
         var result = sut.SetLength( value );
 
         using ( new AssertionScope() )
@@ -432,7 +432,7 @@ public class StringSliceTests : TestsBase
     [Fact]
     public void SetLength_ShouldThrowArgumentOutOfRangeException_WhenValueIsLessThanZero()
     {
-        var sut = new StringSlice( "foobar", 1, 4 );
+        var sut = new StringSegment( "foobar", 1, 4 );
         var action = Lambda.Of( () => sut.SetLength( value: -1 ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
@@ -452,7 +452,7 @@ public class StringSliceTests : TestsBase
     [InlineData( 5, 6, 6, 0 )]
     public void Offset_ShouldReturnCorrectResult(int offset, int expectedStartIndex, int expectedEndIndex, int expectedLength)
     {
-        var sut = new StringSlice( "foobar", 2, 3 );
+        var sut = new StringSegment( "foobar", 2, 3 );
         var result = sut.Offset( offset );
 
         using ( new AssertionScope() )
@@ -482,7 +482,7 @@ public class StringSliceTests : TestsBase
         int expectedEndIndex,
         int expectedLength)
     {
-        var sut = new StringSlice( "foobar", 3, startLength );
+        var sut = new StringSegment( "foobar", 3, startLength );
         var result = sut.Expand( count );
 
         using ( new AssertionScope() )
@@ -497,7 +497,7 @@ public class StringSliceTests : TestsBase
     [Fact]
     public void Expand_ShouldThrowArgumentOutOfRangeException_WhenCountIsLessThanZero()
     {
-        var sut = new StringSlice( "foobar", 1, 4 );
+        var sut = new StringSegment( "foobar", 1, 4 );
         var action = Lambda.Of( () => sut.Expand( count: -1 ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
@@ -522,7 +522,7 @@ public class StringSliceTests : TestsBase
         int expectedEndIndex,
         int expectedLength)
     {
-        var sut = new StringSlice( "foobar", 0, startLength );
+        var sut = new StringSegment( "foobar", 0, startLength );
         var result = sut.Shrink( count );
 
         using ( new AssertionScope() )
@@ -537,7 +537,7 @@ public class StringSliceTests : TestsBase
     [Fact]
     public void Shrink_ShouldThrowArgumentOutOfRangeException_WhenCountIsLessThanZero()
     {
-        var sut = new StringSlice( "foobar", 1, 4 );
+        var sut = new StringSegment( "foobar", 1, 4 );
         var action = Lambda.Of( () => sut.Shrink( count: -1 ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
@@ -549,7 +549,7 @@ public class StringSliceTests : TestsBase
     public void AsMemory_ShouldReturnCorrectResult(int startIndex, int length)
     {
         var source = "foobar";
-        var sut = new StringSlice( source, startIndex, length );
+        var sut = new StringSegment( source, startIndex, length );
         var expected = source.AsMemory( startIndex, length );
 
         var result = sut.AsMemory();
@@ -564,7 +564,7 @@ public class StringSliceTests : TestsBase
     public void AsSpan_ShouldReturnCorrectResult(int startIndex, int length)
     {
         var source = "foobar";
-        var sut = new StringSlice( source, startIndex, length );
+        var sut = new StringSegment( source, startIndex, length );
         var expected = source.AsSpan( startIndex, length );
 
         var result = sut.AsSpan();
@@ -581,7 +581,7 @@ public class StringSliceTests : TestsBase
     [InlineData( 4, 'r' )]
     public void GetIndexer_ShouldReturnCorrectResult(int index, char expected)
     {
-        var sut = new StringSlice( "foobar", 1, 4 );
+        var sut = new StringSegment( "foobar", 1, 4 );
         var result = sut[index];
         result.Should().Be( expected );
     }
@@ -589,8 +589,22 @@ public class StringSliceTests : TestsBase
     [Fact]
     public void GetEnumerator_ShouldReturnCorrectResult()
     {
-        IEnumerable<char> sut = new StringSlice( "foobar", 1, 4 );
+        IEnumerable<char> sut = new StringSegment( "foobar", 1, 4 );
         sut.Should().BeSequentiallyEqualTo( 'o', 'o', 'b', 'a' );
+    }
+
+    [Fact]
+    public void StringSegmentConversionOperator_ShouldReturnCorrectResult()
+    {
+        var source = Fixture.Create<string>();
+        var result = (StringSegment)source;
+
+        using ( new AssertionScope() )
+        {
+            result.Source.Should().BeSameAs( source );
+            result.StartIndex.Should().Be( 0 );
+            result.Length.Should().Be( source.Length );
+        }
     }
 
     [Theory]
@@ -609,8 +623,8 @@ public class StringSliceTests : TestsBase
         int otherLength,
         bool expected)
     {
-        var sut = new StringSlice( source, startIndex, length );
-        var other = new StringSlice( otherSource, otherStartIndex, otherLength );
+        var sut = new StringSegment( source, startIndex, length );
+        var other = new StringSegment( otherSource, otherStartIndex, otherLength );
 
         var result = sut == other;
 
@@ -633,8 +647,8 @@ public class StringSliceTests : TestsBase
         int otherLength,
         bool expected)
     {
-        var sut = new StringSlice( source, startIndex, length );
-        var other = new StringSlice( otherSource, otherStartIndex, otherLength );
+        var sut = new StringSegment( source, startIndex, length );
+        var other = new StringSegment( otherSource, otherStartIndex, otherLength );
 
         var result = sut != other;
 
@@ -659,8 +673,8 @@ public class StringSliceTests : TestsBase
         int otherLength,
         bool expected)
     {
-        var sut = new StringSlice( source, startIndex, length );
-        var other = new StringSlice( otherSource, otherStartIndex, otherLength );
+        var sut = new StringSegment( source, startIndex, length );
+        var other = new StringSegment( otherSource, otherStartIndex, otherLength );
 
         var result = sut > other;
 
@@ -685,8 +699,8 @@ public class StringSliceTests : TestsBase
         int otherLength,
         bool expected)
     {
-        var sut = new StringSlice( source, startIndex, length );
-        var other = new StringSlice( otherSource, otherStartIndex, otherLength );
+        var sut = new StringSegment( source, startIndex, length );
+        var other = new StringSegment( otherSource, otherStartIndex, otherLength );
 
         var result = sut < other;
 
@@ -711,8 +725,8 @@ public class StringSliceTests : TestsBase
         int otherLength,
         bool expected)
     {
-        var sut = new StringSlice( source, startIndex, length );
-        var other = new StringSlice( otherSource, otherStartIndex, otherLength );
+        var sut = new StringSegment( source, startIndex, length );
+        var other = new StringSegment( otherSource, otherStartIndex, otherLength );
 
         var result = sut >= other;
 
@@ -737,8 +751,8 @@ public class StringSliceTests : TestsBase
         int otherLength,
         bool expected)
     {
-        var sut = new StringSlice( source, startIndex, length );
-        var other = new StringSlice( otherSource, otherStartIndex, otherLength );
+        var sut = new StringSegment( source, startIndex, length );
+        var other = new StringSegment( otherSource, otherStartIndex, otherLength );
 
         var result = sut <= other;
 

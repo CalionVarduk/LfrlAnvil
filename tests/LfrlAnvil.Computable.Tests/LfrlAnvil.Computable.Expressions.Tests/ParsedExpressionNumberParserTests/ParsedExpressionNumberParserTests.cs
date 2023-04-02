@@ -27,7 +27,7 @@ public class ParsedExpressionNumberParserTests : TestsBase
         var parser = ParsedExpressionNumberParser.CreateDefaultDecimal(
             GetConfiguration( allowNonIntegerNumbers, allowScientificNotation ) );
 
-        var result = parser.TryParse( input.AsSlice(), out var outResult );
+        var result = parser.TryParse( input.AsSegment(), out var outResult );
 
         using ( new AssertionScope() )
         {
@@ -56,7 +56,7 @@ public class ParsedExpressionNumberParserTests : TestsBase
         var parser = ParsedExpressionNumberParser.CreateDefaultDouble(
             GetConfiguration( allowNonIntegerNumbers, allowScientificNotation ) );
 
-        var result = parser.TryParse( input.AsSlice(), out var outResult );
+        var result = parser.TryParse( input.AsSegment(), out var outResult );
 
         using ( new AssertionScope() )
         {
@@ -84,7 +84,7 @@ public class ParsedExpressionNumberParserTests : TestsBase
     {
         var parser = ParsedExpressionNumberParser.CreateDefaultFloat( GetConfiguration( allowNonIntegerNumbers, allowScientificNotation ) );
 
-        var result = parser.TryParse( input.AsSlice(), out var outResult );
+        var result = parser.TryParse( input.AsSegment(), out var outResult );
 
         using ( new AssertionScope() )
         {
@@ -110,7 +110,7 @@ public class ParsedExpressionNumberParserTests : TestsBase
     {
         var parser = ParsedExpressionNumberParser.CreateDefaultInt32( GetConfiguration( allowNonIntegerNumbers, allowScientificNotation ) );
 
-        var result = parser.TryParse( input.AsSlice(), out var outResult );
+        var result = parser.TryParse( input.AsSegment(), out var outResult );
 
         using ( new AssertionScope() )
         {
@@ -136,7 +136,7 @@ public class ParsedExpressionNumberParserTests : TestsBase
     {
         var parser = ParsedExpressionNumberParser.CreateDefaultInt64( GetConfiguration( allowNonIntegerNumbers, allowScientificNotation ) );
 
-        var result = parser.TryParse( input.AsSlice(), out var outResult );
+        var result = parser.TryParse( input.AsSegment(), out var outResult );
 
         using ( new AssertionScope() )
         {
@@ -163,7 +163,7 @@ public class ParsedExpressionNumberParserTests : TestsBase
         var parser = ParsedExpressionNumberParser.CreateDefaultBigInteger(
             GetConfiguration( allowNonIntegerNumbers, allowScientificNotation ) );
 
-        var result = parser.TryParse( input.AsSlice(), out var outResult );
+        var result = parser.TryParse( input.AsSegment(), out var outResult );
 
         using ( new AssertionScope() )
         {
@@ -184,7 +184,7 @@ public class ParsedExpressionNumberParserTests : TestsBase
         configuration.ConvertResultToOutputTypeAutomatically.Returns( true );
 
         return new ParsedExpressionFactoryInternalConfiguration(
-            new Dictionary<StringSlice, ConstructTokenDefinition>(),
+            new Dictionary<StringSegment, ConstructTokenDefinition>(),
             configuration );
     }
 }

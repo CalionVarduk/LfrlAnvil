@@ -5,18 +5,19 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions;
 
-public sealed class ParsedExpressionDiscardedArguments : IReadOnlyCollection<StringSlice>
+public sealed class ParsedExpressionDiscardedArguments : IReadOnlyCollection<StringSegment>
 {
-    public static readonly ParsedExpressionDiscardedArguments Empty = new ParsedExpressionDiscardedArguments( new HashSet<StringSlice>() );
+    public static readonly ParsedExpressionDiscardedArguments
+        Empty = new ParsedExpressionDiscardedArguments( new HashSet<StringSegment>() );
 
-    private readonly IReadOnlySet<StringSlice> _set;
+    private readonly IReadOnlySet<StringSegment> _set;
 
-    public ParsedExpressionDiscardedArguments(IEnumerable<StringSlice> set)
+    public ParsedExpressionDiscardedArguments(IEnumerable<StringSegment> set)
     {
-        _set = new HashSet<StringSlice>( set );
+        _set = new HashSet<StringSegment>( set );
     }
 
-    internal ParsedExpressionDiscardedArguments(IReadOnlySet<StringSlice> set)
+    internal ParsedExpressionDiscardedArguments(IReadOnlySet<StringSegment> set)
     {
         _set = set;
     }
@@ -26,23 +27,23 @@ public sealed class ParsedExpressionDiscardedArguments : IReadOnlyCollection<Str
     [Pure]
     public bool Contains(string name)
     {
-        return Contains( name.AsSlice() );
+        return Contains( name.AsSegment() );
     }
 
     [Pure]
-    public bool Contains(StringSlice name)
+    public bool Contains(StringSegment name)
     {
         return _set.Contains( name );
     }
 
     [Pure]
-    public IEnumerator<StringSlice> GetEnumerator()
+    public IEnumerator<StringSegment> GetEnumerator()
     {
         return _set.GetEnumerator();
     }
 
     [Pure]
-    internal ParsedExpressionDiscardedArguments AddTo(HashSet<StringSlice> other)
+    internal ParsedExpressionDiscardedArguments AddTo(HashSet<StringSegment> other)
     {
         foreach ( var name in _set )
             other.Add( name );

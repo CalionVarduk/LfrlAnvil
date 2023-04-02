@@ -27,13 +27,7 @@ internal sealed class RandomAccessStack<T> : IReadOnlyList<T>
     internal void Push(T value)
     {
         if ( Count == _objects.Length )
-        {
-            var newObjects = new T?[(_objects.Length << 1) + 1];
-            for ( var i = 0; i < Count; ++i )
-                newObjects[i] = _objects[i];
-
-            _objects = newObjects;
-        }
+            Array.Resize( ref _objects, (_objects.Length << 1) + 1 );
 
         _objects[Count++] = value;
     }

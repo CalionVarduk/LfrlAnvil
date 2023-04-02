@@ -13,10 +13,10 @@ namespace LfrlAnvil.Computable.Expressions.Internal;
 internal static class ExpressionUsage
 {
     private static readonly BitArray EmptyBitUsage = new BitArray( 0 );
-    private static readonly IReadOnlySet<StringSlice> EmptyVariableUsage = new HashSet<StringSlice>();
+    private static readonly IReadOnlySet<StringSegment> EmptyVariableUsage = new HashSet<StringSegment>();
 
     [Pure]
-    internal static (BitArray DelegateUsage, IReadOnlySet<StringSlice> VariableUsage) FindDelegateAndVariableUsage(
+    internal static (BitArray DelegateUsage, IReadOnlySet<StringSegment> VariableUsage) FindDelegateAndVariableUsage(
         Expression expression,
         IReadOnlyList<InlineDelegateCollectionState.Result> delegates,
         LocalTermsCollection localTerms)
@@ -90,7 +90,7 @@ internal static class ExpressionUsage
     }
 
     [Pure]
-    internal static VariableAssignment[] GetUsedVariables(LocalTermsCollection localTerms, IReadOnlySet<StringSlice> usage)
+    internal static VariableAssignment[] GetUsedVariables(LocalTermsCollection localTerms, IReadOnlySet<StringSegment> usage)
     {
         if ( usage.Count == 0 )
             return Array.Empty<VariableAssignment>();
@@ -154,11 +154,11 @@ internal static class ExpressionUsage
             _delegates = delegates;
             _localTerms = localTerms;
             DelegateUsage = new BitArray( delegates.Count );
-            VariableUsage = new HashSet<StringSlice>();
+            VariableUsage = new HashSet<StringSegment>();
         }
 
         internal BitArray DelegateUsage { get; }
-        internal HashSet<StringSlice> VariableUsage { get; }
+        internal HashSet<StringSegment> VariableUsage { get; }
 
         [return: NotNullIfNotNull( "node" )]
         public override Expression? Visit(Expression? node)
@@ -220,10 +220,10 @@ internal static class ExpressionUsage
         {
             Assume.IsNotEmpty( localTerms.VariableAssignments, nameof( localTerms.VariableAssignments ) );
             _localTerms = localTerms;
-            Usage = new HashSet<StringSlice>();
+            Usage = new HashSet<StringSegment>();
         }
 
-        internal HashSet<StringSlice> Usage { get; }
+        internal HashSet<StringSegment> Usage { get; }
 
         [return: NotNullIfNotNull( "node" )]
         public override Expression? Visit(Expression? node)
@@ -232,12 +232,12 @@ internal static class ExpressionUsage
             return base.Visit( node );
         }
 
-        internal static void TryFindVariableUsage(Expression? node, LocalTermsCollection localTerms, HashSet<StringSlice> usage)
+        internal static void TryFindVariableUsage(Expression? node, LocalTermsCollection localTerms, HashSet<StringSegment> usage)
         {
             if ( node is not ParameterExpression parameter || parameter.Name is null )
                 return;
 
-            var variableName = parameter.Name.AsSlice();
+            var variableName = parameter.Name.AsSegment();
             if ( ! localTerms.TryGetVariable( variableName, out var assignment ) )
                 return;
 

@@ -303,7 +303,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
         var sut = new ParsedExpressionFactoryBuilder();
         var @operator = new ParsedExpressionAddOperator();
 
-        var result = sut.AddBinaryOperator( symbol.AsSlice(), @operator );
+        var result = sut.AddBinaryOperator( symbol.AsSegment(), @operator );
 
         using ( new AssertionScope() )
         {
@@ -341,7 +341,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
         var sut = new ParsedExpressionFactoryBuilder();
         var @operator = new ParsedExpressionNegateOperator();
 
-        var result = sut.AddPrefixUnaryOperator( symbol.AsSlice(), @operator );
+        var result = sut.AddPrefixUnaryOperator( symbol.AsSegment(), @operator );
 
         using ( new AssertionScope() )
         {
@@ -379,7 +379,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
         var sut = new ParsedExpressionFactoryBuilder();
         var @operator = new ParsedExpressionNegateOperator();
 
-        var result = sut.AddPostfixUnaryOperator( symbol.AsSlice(), @operator );
+        var result = sut.AddPostfixUnaryOperator( symbol.AsSegment(), @operator );
 
         using ( new AssertionScope() )
         {
@@ -417,7 +417,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
         var sut = new ParsedExpressionFactoryBuilder();
         var converter = new ParsedExpressionTypeConverter<int>();
 
-        var result = sut.AddPrefixTypeConverter( symbol.AsSlice(), converter );
+        var result = sut.AddPrefixTypeConverter( symbol.AsSegment(), converter );
 
         using ( new AssertionScope() )
         {
@@ -455,7 +455,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
         var sut = new ParsedExpressionFactoryBuilder();
         var converter = new ParsedExpressionTypeConverter<int>();
 
-        var result = sut.AddPostfixTypeConverter( symbol.AsSlice(), converter );
+        var result = sut.AddPostfixTypeConverter( symbol.AsSegment(), converter );
 
         using ( new AssertionScope() )
         {
@@ -493,7 +493,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
         var sut = new ParsedExpressionFactoryBuilder();
         var constant = new ParsedExpressionConstant<int>( Fixture.Create<int>() );
 
-        var result = sut.AddConstant( symbol.AsSlice(), constant );
+        var result = sut.AddConstant( symbol.AsSegment(), constant );
 
         using ( new AssertionScope() )
         {
@@ -529,7 +529,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
         var symbol = Fixture.Create<string>();
         var sut = new ParsedExpressionFactoryBuilder();
 
-        var result = sut.AddTypeDeclaration<int>( symbol.AsSlice() );
+        var result = sut.AddTypeDeclaration<int>( symbol.AsSegment() );
 
         using ( new AssertionScope() )
         {
@@ -567,7 +567,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
         var sut = new ParsedExpressionFactoryBuilder();
         var function = new ParsedExpressionFunction<int>( () => Fixture.Create<int>() );
 
-        var result = sut.AddFunction( symbol.AsSlice(), function );
+        var result = sut.AddFunction( symbol.AsSegment(), function );
 
         using ( new AssertionScope() )
         {
@@ -605,7 +605,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
         var sut = new ParsedExpressionFactoryBuilder();
         var function = Substitute.ForPartsOf<ParsedExpressionVariadicFunction>();
 
-        var result = sut.AddVariadicFunction( symbol.AsSlice(), function );
+        var result = sut.AddVariadicFunction( symbol.AsSegment(), function );
 
         using ( new AssertionScope() )
         {
@@ -642,7 +642,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
         var sut = new ParsedExpressionFactoryBuilder();
         var value = Fixture.Create<int>();
 
-        var result = sut.SetBinaryOperatorPrecedence( symbol.AsSlice(), value );
+        var result = sut.SetBinaryOperatorPrecedence( symbol.AsSegment(), value );
 
         using ( new AssertionScope() )
         {
@@ -678,7 +678,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
         var sut = new ParsedExpressionFactoryBuilder();
         var value = Fixture.Create<int>();
 
-        var result = sut.SetPrefixUnaryConstructPrecedence( symbol.AsSlice(), value );
+        var result = sut.SetPrefixUnaryConstructPrecedence( symbol.AsSegment(), value );
 
         using ( new AssertionScope() )
         {
@@ -714,7 +714,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
         var sut = new ParsedExpressionFactoryBuilder();
         var value = Fixture.Create<int>();
 
-        var result = sut.SetPostfixUnaryConstructPrecedence( symbol.AsSlice(), value );
+        var result = sut.SetPostfixUnaryConstructPrecedence( symbol.AsSegment(), value );
 
         using ( new AssertionScope() )
         {

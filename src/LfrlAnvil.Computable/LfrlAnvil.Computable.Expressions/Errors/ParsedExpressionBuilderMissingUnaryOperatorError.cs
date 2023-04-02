@@ -6,7 +6,7 @@ namespace LfrlAnvil.Computable.Expressions.Errors;
 
 public sealed class ParsedExpressionBuilderMissingUnaryOperatorError : ParsedExpressionBuilderError
 {
-    internal ParsedExpressionBuilderMissingUnaryOperatorError(ParsedExpressionBuilderErrorType type, StringSlice token, Type argumentType)
+    internal ParsedExpressionBuilderMissingUnaryOperatorError(ParsedExpressionBuilderErrorType type, StringSegment token, Type argumentType)
         : base( type, token )
     {
         ArgumentType = argumentType;

@@ -5,14 +5,14 @@ namespace LfrlAnvil.Computable.Expressions.Internal;
 
 public readonly struct ParsedExpressionConstructInfo
 {
-    internal ParsedExpressionConstructInfo(StringSlice symbol, ParsedExpressionConstructType type, object construct)
+    internal ParsedExpressionConstructInfo(StringSegment symbol, ParsedExpressionConstructType type, object construct)
     {
         Symbol = symbol;
         Type = type;
         Construct = construct;
     }
 
-    public StringSlice Symbol { get; }
+    public StringSegment Symbol { get; }
     public ParsedExpressionConstructType Type { get; }
     public object Construct { get; }
 

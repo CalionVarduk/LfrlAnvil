@@ -52,7 +52,7 @@ public sealed class ParsedExpression<TArg, TResult> : IParsedExpression<TArg, TR
     [Pure]
     public ParsedExpression<TArg, TResult> BindArguments(IEnumerable<KeyValuePair<string, TArg?>> arguments)
     {
-        return BindArguments( arguments.Select( kv => KeyValuePair.Create( kv.Key.AsSlice(), kv.Value ) ) );
+        return BindArguments( arguments.Select( kv => KeyValuePair.Create( kv.Key.AsSegment(), kv.Value ) ) );
     }
 
     [Pure]
@@ -62,12 +62,12 @@ public sealed class ParsedExpression<TArg, TResult> : IParsedExpression<TArg, TR
     }
 
     [Pure]
-    public ParsedExpression<TArg, TResult> BindArguments(IEnumerable<KeyValuePair<StringSlice, TArg?>> arguments)
+    public ParsedExpression<TArg, TResult> BindArguments(IEnumerable<KeyValuePair<StringSegment, TArg?>> arguments)
     {
         if ( arguments.TryGetNonEnumeratedCount( out var count ) && count == 0 )
             return this;
 
-        var argumentsToBind = new Dictionary<StringSlice, TArg?>( BoundArguments );
+        var argumentsToBind = new Dictionary<StringSegment, TArg?>( BoundArguments );
 
         foreach ( var (name, value) in arguments )
         {
@@ -88,7 +88,7 @@ public sealed class ParsedExpression<TArg, TResult> : IParsedExpression<TArg, TR
     }
 
     [Pure]
-    public ParsedExpression<TArg, TResult> BindArguments(params KeyValuePair<StringSlice, TArg?>[] arguments)
+    public ParsedExpression<TArg, TResult> BindArguments(params KeyValuePair<StringSegment, TArg?>[] arguments)
     {
         return BindArguments( arguments.AsEnumerable() );
     }
@@ -163,14 +163,14 @@ public sealed class ParsedExpression<TArg, TResult> : IParsedExpression<TArg, TR
 
     [Pure]
     IParsedExpression<TArg, TResult> IParsedExpression<TArg, TResult>.BindArguments(
-        IEnumerable<KeyValuePair<StringSlice, TArg?>> arguments)
+        IEnumerable<KeyValuePair<StringSegment, TArg?>> arguments)
     {
         return BindArguments( arguments );
     }
 
     [Pure]
     IParsedExpression<TArg, TResult> IParsedExpression<TArg, TResult>.BindArguments(
-        params KeyValuePair<StringSlice, TArg?>[] arguments)
+        params KeyValuePair<StringSegment, TArg?>[] arguments)
     {
         return BindArguments( arguments );
     }

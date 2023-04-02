@@ -6,7 +6,7 @@ public sealed class ParsedExpressionBuilderParameterCountError : ParsedExpressio
 {
     internal ParsedExpressionBuilderParameterCountError(
         ParsedExpressionBuilderErrorType type,
-        StringSlice token,
+        StringSegment token,
         int actual,
         int expected)
         : base( type, token )

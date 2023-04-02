@@ -8,9 +8,9 @@ namespace LfrlAnvil.Computable.Expressions.Internal;
 internal sealed class MacroDeclaration
 {
     private readonly List<Token> _tokens;
-    private readonly Dictionary<StringSlice, int>? _parameterIndexes;
+    private readonly Dictionary<StringSegment, int>? _parameterIndexes;
 
-    internal MacroDeclaration(Dictionary<StringSlice, int>? parameterIndexes)
+    internal MacroDeclaration(Dictionary<StringSegment, int>? parameterIndexes)
     {
         _tokens = new List<Token>();
         _parameterIndexes = parameterIndexes;

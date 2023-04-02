@@ -19,7 +19,7 @@ internal static class TokenConstants
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static bool IsBooleanTrue(StringSlice text)
+    internal static bool IsBooleanTrue(StringSegment text)
     {
         if ( text.Length != 4 )
             return false;
@@ -43,7 +43,7 @@ internal static class TokenConstants
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static bool IsBooleanFalse(StringSlice text)
+    internal static bool IsBooleanFalse(StringSegment text)
     {
         if ( text.Length != 5 )
             return false;
@@ -80,7 +80,7 @@ internal static class TokenConstants
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static bool IsSquareBrackets(StringSlice text)
+    internal static bool IsSquareBrackets(StringSegment text)
     {
         if ( text.Length != 2 )
             return false;
@@ -93,7 +93,7 @@ internal static class TokenConstants
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static bool IsVariableDeclaration(StringSlice text)
+    internal static bool IsVariableDeclaration(StringSegment text)
     {
         if ( text.Length != 3 )
             return false;
@@ -117,7 +117,7 @@ internal static class TokenConstants
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static bool IsMacroDeclaration(StringSlice text)
+    internal static bool IsMacroDeclaration(StringSegment text)
     {
         if ( text.Length != 5 )
             return false;
@@ -164,7 +164,7 @@ internal static class TokenConstants
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static bool AreEqual(StringSlice a, char b)
+    internal static bool AreEqual(StringSegment a, char b)
     {
         return a.Length == 1 && a.Source[a.StartIndex] == b;
     }

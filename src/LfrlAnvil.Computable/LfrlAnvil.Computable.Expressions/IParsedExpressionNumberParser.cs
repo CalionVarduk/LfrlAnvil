@@ -4,5 +4,5 @@ namespace LfrlAnvil.Computable.Expressions;
 
 public interface IParsedExpressionNumberParser
 {
-    bool TryParse(StringSlice text, [MaybeNullWhen( false )] out object result);
+    bool TryParse(StringSegment text, [MaybeNullWhen( false )] out object result);
 }

@@ -7,22 +7,22 @@ public static class StringExtensions
 {
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static StringSlice AsSlice(this string source)
+    public static StringSegment AsSegment(this string source)
     {
-        return new StringSlice( source );
+        return new StringSegment( source );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static StringSlice AsSlice(this string source, int startIndex)
+    public static StringSegment AsSegment(this string source, int startIndex)
     {
-        return new StringSlice( source, startIndex );
+        return new StringSegment( source, startIndex );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static StringSlice AsSlice(this string source, int startIndex, int length)
+    public static StringSegment AsSegment(this string source, int startIndex, int length)
     {
-        return new StringSlice( source, startIndex, length );
+        return new StringSegment( source, startIndex, length );
     }
 }

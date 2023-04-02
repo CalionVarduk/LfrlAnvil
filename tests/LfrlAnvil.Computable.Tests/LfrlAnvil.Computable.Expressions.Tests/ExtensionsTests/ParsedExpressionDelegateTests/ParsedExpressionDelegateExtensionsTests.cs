@@ -48,9 +48,9 @@ public class ParsedExpressionDelegateExtensionsTests : TestsBase
         var sut = expression.Compile();
 
         var result = sut.MapArguments(
-            KeyValuePair.Create( "a".AsSlice(), aValue ),
-            KeyValuePair.Create( "b".AsSlice(), bValue ),
-            KeyValuePair.Create( "d".AsSlice(), dValue ) );
+            KeyValuePair.Create( "a".AsSegment(), aValue ),
+            KeyValuePair.Create( "b".AsSegment(), bValue ),
+            KeyValuePair.Create( "d".AsSegment(), dValue ) );
 
         result.Should().BeSequentiallyEqualTo( aValue, bValue, default, dValue );
     }
@@ -96,9 +96,9 @@ public class ParsedExpressionDelegateExtensionsTests : TestsBase
 
         sut.MapArguments(
             buffer,
-            KeyValuePair.Create( "a".AsSlice(), aValue ),
-            KeyValuePair.Create( "b".AsSlice(), bValue ),
-            KeyValuePair.Create( "d".AsSlice(), dValue ) );
+            KeyValuePair.Create( "a".AsSegment(), aValue ),
+            KeyValuePair.Create( "b".AsSegment(), bValue ),
+            KeyValuePair.Create( "d".AsSegment(), dValue ) );
 
         buffer.Should().BeSequentiallyEqualTo( aValue, bValue, default, dValue );
     }

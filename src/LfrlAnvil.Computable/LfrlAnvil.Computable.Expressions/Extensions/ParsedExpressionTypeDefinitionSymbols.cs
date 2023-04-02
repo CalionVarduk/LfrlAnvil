@@ -9,18 +9,18 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
 
     private readonly bool _isPrefixTypeConverterDisabled;
     private readonly bool _isConstantDisabled;
-    private readonly StringSlice? _name;
-    private readonly StringSlice? _customPrefixTypeConverter;
-    private readonly StringSlice? _postfixTypeConverter;
-    private readonly StringSlice? _customConstant;
+    private readonly StringSegment? _name;
+    private readonly StringSegment? _customPrefixTypeConverter;
+    private readonly StringSegment? _postfixTypeConverter;
+    private readonly StringSegment? _customConstant;
 
     private ParsedExpressionTypeDefinitionSymbols(
         bool isPrefixTypeConverterDisabled,
         bool isConstantDisabled,
-        StringSlice? name,
-        StringSlice? customPrefixTypeConverter,
-        StringSlice? postfixTypeConverter,
-        StringSlice? customConstant)
+        StringSegment? name,
+        StringSegment? customPrefixTypeConverter,
+        StringSegment? postfixTypeConverter,
+        StringSegment? customConstant)
     {
         _isPrefixTypeConverterDisabled = isPrefixTypeConverterDisabled;
         _isConstantDisabled = isConstantDisabled;
@@ -30,10 +30,10 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
         _customConstant = customConstant;
     }
 
-    public StringSlice Name => _name ?? StringSlice.Empty;
-    public StringSlice? PrefixTypeConverter => _customPrefixTypeConverter ?? GetDefaultPrefixTypeConverter();
-    public StringSlice? PostfixTypeConverter => _postfixTypeConverter;
-    public StringSlice? Constant => _customConstant ?? GetDefaultConstant();
+    public StringSegment Name => _name ?? StringSegment.Empty;
+    public StringSegment? PrefixTypeConverter => _customPrefixTypeConverter ?? GetDefaultPrefixTypeConverter();
+    public StringSegment? PostfixTypeConverter => _postfixTypeConverter;
+    public StringSegment? Constant => _customConstant ?? GetDefaultConstant();
 
     [Pure]
     public override string ToString()
@@ -50,11 +50,11 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
     [Pure]
     public ParsedExpressionTypeDefinitionSymbols SetName(string name)
     {
-        return SetName( name.AsSlice() );
+        return SetName( name.AsSegment() );
     }
 
     [Pure]
-    public ParsedExpressionTypeDefinitionSymbols SetName(StringSlice name)
+    public ParsedExpressionTypeDefinitionSymbols SetName(StringSegment name)
     {
         return new ParsedExpressionTypeDefinitionSymbols(
             _isPrefixTypeConverterDisabled,
@@ -68,11 +68,11 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
     [Pure]
     public ParsedExpressionTypeDefinitionSymbols SetPrefixTypeConverter(string symbol)
     {
-        return SetPrefixTypeConverter( symbol.AsSlice() );
+        return SetPrefixTypeConverter( symbol.AsSegment() );
     }
 
     [Pure]
-    public ParsedExpressionTypeDefinitionSymbols SetPrefixTypeConverter(StringSlice symbol)
+    public ParsedExpressionTypeDefinitionSymbols SetPrefixTypeConverter(StringSegment symbol)
     {
         return new ParsedExpressionTypeDefinitionSymbols(
             isPrefixTypeConverterDisabled: false,
@@ -110,11 +110,11 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
     [Pure]
     public ParsedExpressionTypeDefinitionSymbols SetPostfixTypeConverter(string symbol)
     {
-        return SetPostfixTypeConverter( symbol.AsSlice() );
+        return SetPostfixTypeConverter( symbol.AsSegment() );
     }
 
     [Pure]
-    public ParsedExpressionTypeDefinitionSymbols SetPostfixTypeConverter(StringSlice symbol)
+    public ParsedExpressionTypeDefinitionSymbols SetPostfixTypeConverter(StringSegment symbol)
     {
         return new ParsedExpressionTypeDefinitionSymbols(
             _isPrefixTypeConverterDisabled,
@@ -140,11 +140,11 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
     [Pure]
     public ParsedExpressionTypeDefinitionSymbols SetConstant(string symbol)
     {
-        return SetConstant( symbol.AsSlice() );
+        return SetConstant( symbol.AsSegment() );
     }
 
     [Pure]
-    public ParsedExpressionTypeDefinitionSymbols SetConstant(StringSlice symbol)
+    public ParsedExpressionTypeDefinitionSymbols SetConstant(StringSegment symbol)
     {
         return new ParsedExpressionTypeDefinitionSymbols(
             _isPrefixTypeConverterDisabled,
@@ -180,22 +180,22 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
     }
 
     [Pure]
-    private StringSlice? GetDefaultPrefixTypeConverter()
+    private StringSegment? GetDefaultPrefixTypeConverter()
     {
         if ( _isPrefixTypeConverterDisabled )
             return null;
 
-        var name = _name ?? new StringSlice( string.Empty );
-        return $"[{name}]".AsSlice();
+        var name = _name ?? new StringSegment( string.Empty );
+        return $"[{name}]".AsSegment();
     }
 
     [Pure]
-    private StringSlice? GetDefaultConstant()
+    private StringSegment? GetDefaultConstant()
     {
         if ( _isConstantDisabled )
             return null;
 
-        var name = _name ?? new StringSlice( string.Empty );
-        return name.ToString().ToUpperInvariant().AsSlice();
+        var name = _name ?? new StringSegment( string.Empty );
+        return name.ToString().ToUpperInvariant().AsSegment();
     }
 }

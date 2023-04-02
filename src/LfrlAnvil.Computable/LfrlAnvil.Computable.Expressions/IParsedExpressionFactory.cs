@@ -13,97 +13,97 @@ public interface IParsedExpressionFactory
     IParsedExpressionFactoryConfiguration Configuration { get; }
 
     [Pure]
-    IEnumerable<StringSlice> GetConstructSymbols();
+    IEnumerable<StringSegment> GetConstructSymbols();
 
     [Pure]
     ParsedExpressionConstructType GetConstructType(string symbol);
 
     [Pure]
-    ParsedExpressionConstructType GetConstructType(StringSlice symbol);
+    ParsedExpressionConstructType GetConstructType(StringSegment symbol);
 
     [Pure]
     Type? GetGenericBinaryOperatorType(string symbol);
 
     [Pure]
-    Type? GetGenericBinaryOperatorType(StringSlice symbol);
+    Type? GetGenericBinaryOperatorType(StringSegment symbol);
 
     [Pure]
     IEnumerable<ParsedExpressionBinaryOperatorInfo> GetSpecializedBinaryOperators(string symbol);
 
     [Pure]
-    IEnumerable<ParsedExpressionBinaryOperatorInfo> GetSpecializedBinaryOperators(StringSlice symbol);
+    IEnumerable<ParsedExpressionBinaryOperatorInfo> GetSpecializedBinaryOperators(StringSegment symbol);
 
     [Pure]
     Type? GetGenericPrefixUnaryConstructType(string symbol);
 
     [Pure]
-    Type? GetGenericPrefixUnaryConstructType(StringSlice symbol);
+    Type? GetGenericPrefixUnaryConstructType(StringSegment symbol);
 
     [Pure]
     IEnumerable<ParsedExpressionUnaryConstructInfo> GetSpecializedPrefixUnaryConstructs(string symbol);
 
     [Pure]
-    IEnumerable<ParsedExpressionUnaryConstructInfo> GetSpecializedPrefixUnaryConstructs(StringSlice symbol);
+    IEnumerable<ParsedExpressionUnaryConstructInfo> GetSpecializedPrefixUnaryConstructs(StringSegment symbol);
 
     [Pure]
     Type? GetGenericPostfixUnaryConstructType(string symbol);
 
     [Pure]
-    Type? GetGenericPostfixUnaryConstructType(StringSlice symbol);
+    Type? GetGenericPostfixUnaryConstructType(StringSegment symbol);
 
     [Pure]
     IEnumerable<ParsedExpressionUnaryConstructInfo> GetSpecializedPostfixUnaryConstructs(string symbol);
 
     [Pure]
-    IEnumerable<ParsedExpressionUnaryConstructInfo> GetSpecializedPostfixUnaryConstructs(StringSlice symbol);
+    IEnumerable<ParsedExpressionUnaryConstructInfo> GetSpecializedPostfixUnaryConstructs(StringSegment symbol);
 
     [Pure]
     Type? GetTypeConverterTargetType(string symbol);
 
     [Pure]
-    Type? GetTypeConverterTargetType(StringSlice symbol);
+    Type? GetTypeConverterTargetType(StringSegment symbol);
 
     [Pure]
     Type? GetTypeDeclarationType(string symbol);
 
     [Pure]
-    Type? GetTypeDeclarationType(StringSlice symbol);
+    Type? GetTypeDeclarationType(StringSegment symbol);
 
     [Pure]
     ConstantExpression? GetConstantExpression(string symbol);
 
     [Pure]
-    ConstantExpression? GetConstantExpression(StringSlice symbol);
+    ConstantExpression? GetConstantExpression(StringSegment symbol);
 
     [Pure]
     IEnumerable<LambdaExpression> GetFunctionExpressions(string symbol);
 
     [Pure]
-    IEnumerable<LambdaExpression> GetFunctionExpressions(StringSlice symbol);
+    IEnumerable<LambdaExpression> GetFunctionExpressions(StringSegment symbol);
 
     [Pure]
     Type? GetVariadicFunctionType(string symbol);
 
     [Pure]
-    Type? GetVariadicFunctionType(StringSlice symbol);
+    Type? GetVariadicFunctionType(StringSegment symbol);
 
     [Pure]
     int? GetBinaryOperatorPrecedence(string symbol);
 
     [Pure]
-    int? GetBinaryOperatorPrecedence(StringSlice symbol);
+    int? GetBinaryOperatorPrecedence(StringSegment symbol);
 
     [Pure]
     int? GetPrefixUnaryConstructPrecedence(string symbol);
 
     [Pure]
-    int? GetPrefixUnaryConstructPrecedence(StringSlice symbol);
+    int? GetPrefixUnaryConstructPrecedence(StringSegment symbol);
 
     [Pure]
     int? GetPostfixUnaryConstructPrecedence(string symbol);
 
     [Pure]
-    int? GetPostfixUnaryConstructPrecedence(StringSlice symbol);
+    int? GetPostfixUnaryConstructPrecedence(StringSegment symbol);
 
     [Pure]
     IParsedExpression<TArg, TResult> Create<TArg, TResult>(string input);

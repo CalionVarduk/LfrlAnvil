@@ -99,14 +99,14 @@ public class ParsedExpressionBufferedDelegateTests : TestsBase
         var @delegate = expression.Compile();
         var sut = @delegate.ToBuffered();
 
-        sut.SetArgumentValue( "a".AsSlice(), aValue );
-        var result = sut.SetArgumentValue( "b".AsSlice(), bValue );
+        sut.SetArgumentValue( "a".AsSegment(), aValue );
+        var result = sut.SetArgumentValue( "b".AsSegment(), bValue );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            sut.GetArgumentValue( "a".AsSlice() ).Should().Be( aValue );
-            sut.GetArgumentValue( "b".AsSlice() ).Should().Be( bValue );
+            sut.GetArgumentValue( "a".AsSegment() ).Should().Be( aValue );
+            sut.GetArgumentValue( "b".AsSegment() ).Should().Be( bValue );
         }
     }
 
@@ -169,7 +169,7 @@ public class ParsedExpressionBufferedDelegateTests : TestsBase
         var @delegate = expression.Compile();
         var sut = @delegate.ToBuffered();
 
-        var action = Lambda.Of( () => sut.SetArgumentValue( "c".AsSlice(), value ) );
+        var action = Lambda.Of( () => sut.SetArgumentValue( "c".AsSegment(), value ) );
 
         action.Should()
             .ThrowExactly<InvalidParsedExpressionArgumentsException>()
@@ -229,7 +229,7 @@ public class ParsedExpressionBufferedDelegateTests : TestsBase
         var @delegate = expression.Compile();
         var sut = @delegate.ToBuffered();
 
-        var action = Lambda.Of( () => sut.GetArgumentValue( "c".AsSlice() ) );
+        var action = Lambda.Of( () => sut.GetArgumentValue( "c".AsSegment() ) );
 
         action.Should()
             .ThrowExactly<InvalidParsedExpressionArgumentsException>()

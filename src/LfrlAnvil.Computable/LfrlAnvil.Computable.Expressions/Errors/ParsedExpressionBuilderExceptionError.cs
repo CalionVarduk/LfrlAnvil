@@ -10,7 +10,7 @@ public sealed class ParsedExpressionBuilderExceptionError : ParsedExpressionBuil
         Exception = exception;
     }
 
-    internal ParsedExpressionBuilderExceptionError(Exception exception, ParsedExpressionBuilderErrorType type, StringSlice? token)
+    internal ParsedExpressionBuilderExceptionError(Exception exception, ParsedExpressionBuilderErrorType type, StringSegment? token)
         : base( type, token )
     {
         Exception = exception;

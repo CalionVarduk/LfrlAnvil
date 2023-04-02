@@ -29,7 +29,7 @@ internal class ExpressionBuilderState
         ParameterExpression parameterExpression,
         ParsedExpressionFactoryInternalConfiguration configuration,
         IParsedExpressionNumberParser numberParser,
-        IReadOnlyDictionary<StringSlice, ConstantExpression>? boundArguments)
+        IReadOnlyDictionary<StringSegment, ConstantExpression>? boundArguments)
     {
         Id = 0;
         _tokenStack = new RandomAccessStack<(IntermediateToken, Expectation)>();
@@ -1872,7 +1872,7 @@ internal class ExpressionBuilderState
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private ParsedExpressionVariadicFunction GetInternalVariadicFunction(string symbol)
     {
-        var constructs = Configuration.Constructs[symbol.AsSlice()];
+        var constructs = Configuration.Constructs[symbol.AsSegment()];
         Assume.IsNotNull( constructs.VariadicFunction, nameof( constructs.VariadicFunction ) );
         return constructs.VariadicFunction;
     }

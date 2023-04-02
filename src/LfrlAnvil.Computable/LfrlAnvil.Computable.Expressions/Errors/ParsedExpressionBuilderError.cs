@@ -13,14 +13,14 @@ public class ParsedExpressionBuilderError
     public ParsedExpressionBuilderError()
         : this( ParsedExpressionBuilderErrorType.Error ) { }
 
-    internal ParsedExpressionBuilderError(ParsedExpressionBuilderErrorType type, StringSlice? token = null)
+    internal ParsedExpressionBuilderError(ParsedExpressionBuilderErrorType type, StringSegment? token = null)
     {
         Token = token;
         Type = type;
     }
 
     public ParsedExpressionBuilderErrorType Type { get; }
-    public StringSlice? Token { get; }
+    public StringSegment? Token { get; }
 
     [Pure]
     public override string ToString()
@@ -43,7 +43,7 @@ public class ParsedExpressionBuilderError
     }
 
     [Pure]
-    internal static ParsedExpressionBuilderError CreateMacroMustContainAtLeastOneToken(StringSlice macroName)
+    internal static ParsedExpressionBuilderError CreateMacroMustContainAtLeastOneToken(StringSegment macroName)
     {
         return new ParsedExpressionBuilderError( ParsedExpressionBuilderErrorType.MacroMustContainAtLeastOneToken, macroName );
     }
@@ -256,7 +256,7 @@ public class ParsedExpressionBuilderError
     }
 
     [Pure]
-    internal static ParsedExpressionBuilderError CreateLocalTermHasThrownException(StringSlice name, Exception exception)
+    internal static ParsedExpressionBuilderError CreateLocalTermHasThrownException(StringSegment name, Exception exception)
     {
         return new ParsedExpressionBuilderExceptionError(
             exception,

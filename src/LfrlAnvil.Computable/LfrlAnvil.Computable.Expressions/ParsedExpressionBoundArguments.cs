@@ -5,19 +5,19 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions;
 
-public sealed class ParsedExpressionBoundArguments<TArg> : IReadOnlyCollection<KeyValuePair<StringSlice, TArg?>>
+public sealed class ParsedExpressionBoundArguments<TArg> : IReadOnlyCollection<KeyValuePair<StringSegment, TArg?>>
 {
     public static readonly ParsedExpressionBoundArguments<TArg> Empty = new ParsedExpressionBoundArguments<TArg>(
-        new Dictionary<StringSlice, TArg?>() );
+        new Dictionary<StringSegment, TArg?>() );
 
-    private readonly IReadOnlyDictionary<StringSlice, TArg?> _map;
+    private readonly IReadOnlyDictionary<StringSegment, TArg?> _map;
 
-    public ParsedExpressionBoundArguments(IEnumerable<KeyValuePair<StringSlice, TArg?>> map)
+    public ParsedExpressionBoundArguments(IEnumerable<KeyValuePair<StringSegment, TArg?>> map)
     {
-        _map = new Dictionary<StringSlice, TArg?>( map );
+        _map = new Dictionary<StringSegment, TArg?>( map );
     }
 
-    internal ParsedExpressionBoundArguments(IReadOnlyDictionary<StringSlice, TArg?> map)
+    internal ParsedExpressionBoundArguments(IReadOnlyDictionary<StringSegment, TArg?> map)
     {
         _map = map;
     }
@@ -27,11 +27,11 @@ public sealed class ParsedExpressionBoundArguments<TArg> : IReadOnlyCollection<K
     [Pure]
     public bool Contains(string name)
     {
-        return Contains( name.AsSlice() );
+        return Contains( name.AsSegment() );
     }
 
     [Pure]
-    public bool Contains(StringSlice name)
+    public bool Contains(StringSegment name)
     {
         return _map.ContainsKey( name );
     }
@@ -39,17 +39,17 @@ public sealed class ParsedExpressionBoundArguments<TArg> : IReadOnlyCollection<K
     [Pure]
     public bool TryGetValue(string name, out TArg? result)
     {
-        return TryGetValue( name.AsSlice(), out result );
+        return TryGetValue( name.AsSegment(), out result );
     }
 
     [Pure]
-    public bool TryGetValue(StringSlice name, out TArg? result)
+    public bool TryGetValue(StringSegment name, out TArg? result)
     {
         return _map.TryGetValue( name, out result );
     }
 
     [Pure]
-    public IEnumerator<KeyValuePair<StringSlice, TArg?>> GetEnumerator()
+    public IEnumerator<KeyValuePair<StringSegment, TArg?>> GetEnumerator()
     {
         return _map.GetEnumerator();
     }

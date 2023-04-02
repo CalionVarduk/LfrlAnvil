@@ -15,7 +15,7 @@ internal sealed class InlineDelegateCollectionState
 {
     private readonly LocalTermsCollection _localTerms;
     private readonly Dictionary<int, ClosureInfo> _capturedParametersByState;
-    private readonly Dictionary<StringSlice, OwnedParameterExpression> _parametersMap;
+    private readonly Dictionary<StringSegment, OwnedParameterExpression> _parametersMap;
     private readonly RandomAccessStack<ParameterExpression> _parameters;
     private readonly RandomAccessStack<StateRegistration> _registeredStates;
     private readonly List<FinalizedDelegate> _nestedStateFinalization;
@@ -28,7 +28,7 @@ internal sealed class InlineDelegateCollectionState
         _parentStateIdOfLastFinalizedState = null;
         _localTerms = state.LocalTerms;
         _capturedParametersByState = new Dictionary<int, ClosureInfo>();
-        _parametersMap = new Dictionary<StringSlice, OwnedParameterExpression>();
+        _parametersMap = new Dictionary<StringSegment, OwnedParameterExpression>();
         _parameters = new RandomAccessStack<ParameterExpression>();
         _registeredStates = new RandomAccessStack<StateRegistration>();
         _registeredStates.Push( new StateRegistration( state.Id ) );
@@ -61,7 +61,7 @@ internal sealed class InlineDelegateCollectionState
         _isLastStateActive = true;
     }
 
-    internal bool TryAddParameter(Type type, StringSlice name)
+    internal bool TryAddParameter(Type type, StringSegment name)
     {
         Assume.IsNotEmpty( _registeredStates, nameof( _registeredStates ) );
         Assume.Equals( _isLastStateActive, true, nameof( _isLastStateActive ) );
@@ -80,7 +80,7 @@ internal sealed class InlineDelegateCollectionState
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ParameterExpression? TryGetParameter(ExpressionBuilderState state, StringSlice name)
+    internal ParameterExpression? TryGetParameter(ExpressionBuilderState state, StringSegment name)
     {
         Assume.Equals( _isLastStateActive, false, nameof( _isLastStateActive ) );
 
@@ -141,14 +141,14 @@ internal sealed class InlineDelegateCollectionState
             return null;
 
         var usedArgumentIndexes = new HashSet<int>();
-        var usedVariables = new HashSet<StringSlice>();
+        var usedVariables = new HashSet<StringSegment>();
         var result = CreateCompilableInlineDelegate( usedArgumentIndexes, usedVariables, rootFinalization, parent: null );
         return new Result( result, usedArgumentIndexes, usedVariables );
     }
 
     private static CompilableInlineDelegate CreateCompilableInlineDelegate(
         HashSet<int> usedArgumentIndexes,
-        HashSet<StringSlice> usedVariables,
+        HashSet<StringSegment> usedVariables,
         FinalizedDelegate finalization,
         (FinalizedDelegate Finalization, ClosureExpressionFactory? Closure)? parent)
     {
@@ -273,7 +273,7 @@ internal sealed class InlineDelegateCollectionState
         _parameters.PopInto( count, buffer, bufferStartIndex );
 
         for ( var i = bufferStartIndex; i < buffer.Length; ++i )
-            _parametersMap.Remove( new StringSlice( buffer[i].Name! ) );
+            _parametersMap.Remove( new StringSegment( buffer[i].Name! ) );
     }
 
     private void AddParameterCapture(int stateId, ParameterExpression expression, int ownerStateId, int argumentIndex = -1)
@@ -295,7 +295,7 @@ internal sealed class InlineDelegateCollectionState
         private readonly IReadOnlyList<FinalizedDelegate> _nestedFinalization;
         private readonly int _usableArgumentCount;
         private readonly HashSet<int> _usedArgumentIndexes;
-        private readonly HashSet<StringSlice> _usedVariables;
+        private readonly HashSet<StringSegment> _usedVariables;
         private readonly List<OwnedParameterExpression> _usedParameters;
         private readonly List<FinalizedDelegate> _usedNestedFinalization;
         private bool _usesRootParameter;
@@ -306,7 +306,7 @@ internal sealed class InlineDelegateCollectionState
             IReadOnlyList<FinalizedDelegate> nestedFinalization)
         {
             _usedArgumentIndexes = new HashSet<int>();
-            _usedVariables = new HashSet<StringSlice>();
+            _usedVariables = new HashSet<StringSegment>();
             _usedParameters = new List<OwnedParameterExpression>();
             _usedNestedFinalization = new List<FinalizedDelegate>();
             _capturedParameters = capturedParameters;
@@ -337,7 +337,7 @@ internal sealed class InlineDelegateCollectionState
                 {
                     Assume.IsNotNull( parameter.Name, nameof( parameter.Name ) );
                     _usedParameters.Add( new OwnedParameterExpression( parameter, ownerStateId ) );
-                    _usedVariables.Add( parameter.Name.AsSlice() );
+                    _usedVariables.Add( parameter.Name.AsSegment() );
                 }
             }
             else
@@ -396,9 +396,12 @@ internal sealed class InlineDelegateCollectionState
     {
         internal readonly CompilableInlineDelegate Delegate;
         internal readonly IReadOnlySet<int> UsedArgumentIndexes;
-        internal readonly IReadOnlySet<StringSlice> UsedVariables;
+        internal readonly IReadOnlySet<StringSegment> UsedVariables;
 
-        internal Result(CompilableInlineDelegate @delegate, IReadOnlySet<int> usedArgumentIndexes, IReadOnlySet<StringSlice> usedVariables)
+        internal Result(
+            CompilableInlineDelegate @delegate,
+            IReadOnlySet<int> usedArgumentIndexes,
+            IReadOnlySet<StringSegment> usedVariables)
         {
             Delegate = @delegate;
             UsedArgumentIndexes = usedArgumentIndexes;
@@ -525,14 +528,14 @@ internal sealed class InlineDelegateCollectionState
         internal readonly int StateId;
         internal readonly List<OwnedParameterExpression> Parameters;
         internal readonly HashSet<int> ArgumentIndexes;
-        internal readonly HashSet<StringSlice> Variables;
+        internal readonly HashSet<StringSegment> Variables;
 
         internal ClosureInfo(int stateId)
         {
             StateId = stateId;
             Parameters = new List<OwnedParameterExpression>();
             ArgumentIndexes = new HashSet<int>();
-            Variables = new HashSet<StringSlice>();
+            Variables = new HashSet<StringSegment>();
         }
 
         internal bool IsEmpty => Parameters.Count == 0 && ArgumentIndexes.Count == 0 && Variables.Count == 0;

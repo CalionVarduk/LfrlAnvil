@@ -19,13 +19,7 @@ internal sealed class GrowingBuffer<T>
     public void Add(T item)
     {
         if ( _count == _data.Length )
-        {
-            var newData = new T[_data.Length * 2 + 1];
-            for ( var i = 0; i < _count; ++i )
-                newData[i] = _data[i];
-
-            _data = newData;
-        }
+            Array.Resize( ref _data, (_data.Length << 1) + 1 );
 
         _data[_count++] = item;
     }

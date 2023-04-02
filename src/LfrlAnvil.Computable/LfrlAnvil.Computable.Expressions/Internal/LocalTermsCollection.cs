@@ -13,30 +13,30 @@ namespace LfrlAnvil.Computable.Expressions.Internal;
 internal sealed class LocalTermsCollection
 {
     private readonly List<Expression> _argumentAccessExpressions;
-    private readonly IReadOnlyDictionary<StringSlice, ConstantExpression>? _boundArguments;
-    private readonly Dictionary<StringSlice, VariableAssignment> _variables;
+    private readonly IReadOnlyDictionary<StringSegment, ConstantExpression>? _boundArguments;
+    private readonly Dictionary<StringSegment, VariableAssignment> _variables;
     private readonly List<VariableAssignment> _variableAssignments;
-    private readonly Dictionary<StringSlice, MacroDeclaration> _macros;
-    private StringSlice? _activeNewLocalTerm;
-    private Dictionary<StringSlice, int>? _macroParameters;
+    private readonly Dictionary<StringSegment, MacroDeclaration> _macros;
+    private StringSegment? _activeNewLocalTerm;
+    private Dictionary<StringSegment, int>? _macroParameters;
 
     internal LocalTermsCollection(
         ParameterExpression parameterExpression,
-        IReadOnlyDictionary<StringSlice, ConstantExpression>? boundArguments)
+        IReadOnlyDictionary<StringSegment, ConstantExpression>? boundArguments)
     {
         ParameterExpression = parameterExpression;
         _boundArguments = boundArguments;
-        ArgumentIndexes = new Dictionary<StringSlice, int>();
+        ArgumentIndexes = new Dictionary<StringSegment, int>();
         _argumentAccessExpressions = new List<Expression>();
-        _variables = new Dictionary<StringSlice, VariableAssignment>();
+        _variables = new Dictionary<StringSegment, VariableAssignment>();
         _variableAssignments = new List<VariableAssignment>();
-        _macros = new Dictionary<StringSlice, MacroDeclaration>();
+        _macros = new Dictionary<StringSegment, MacroDeclaration>();
         _activeNewLocalTerm = null;
         _macroParameters = null;
     }
 
     internal ParameterExpression ParameterExpression { get; }
-    internal Dictionary<StringSlice, int> ArgumentIndexes { get; }
+    internal Dictionary<StringSegment, int> ArgumentIndexes { get; }
     internal IReadOnlyList<VariableAssignment> VariableAssignments => _variableAssignments;
 
     [Pure]
@@ -65,28 +65,28 @@ internal sealed class LocalTermsCollection
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool ContainsArgument(StringSlice name)
+    internal bool ContainsArgument(StringSegment name)
     {
         return ArgumentIndexes.ContainsKey( name );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool ContainsVariable(StringSlice name)
+    internal bool ContainsVariable(StringSegment name)
     {
         return _variables.ContainsKey( name );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool ContainsMacro(StringSlice name)
+    internal bool ContainsMacro(StringSegment name)
     {
         return _macros.ContainsKey( name );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool IsTermStarted(StringSlice name)
+    internal bool IsTermStarted(StringSegment name)
     {
         return _activeNewLocalTerm == name;
     }
@@ -99,18 +99,18 @@ internal sealed class LocalTermsCollection
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool TryGetVariable(StringSlice name, [MaybeNullWhen( false )] out VariableAssignment result)
+    internal bool TryGetVariable(StringSegment name, [MaybeNullWhen( false )] out VariableAssignment result)
     {
         return _variables.TryGetValue( name, out result );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool TryGetMacro(StringSlice name, [MaybeNullWhen( false )] out MacroDeclaration result)
+    internal bool TryGetMacro(StringSegment name, [MaybeNullWhen( false )] out MacroDeclaration result)
     {
         return _macros.TryGetValue( name, out result );
     }
 
-    internal (Expression Result, int? Index) GetOrAddArgumentAccess(StringSlice name)
+    internal (Expression Result, int? Index) GetOrAddArgumentAccess(StringSegment name)
     {
         if ( _boundArguments is not null && _boundArguments.TryGetValue( name, out var constant ) )
             return (constant, null);
@@ -127,7 +127,7 @@ internal sealed class LocalTermsCollection
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void StartVariable(StringSlice name)
+    internal void StartVariable(StringSegment name)
     {
         Assume.IsNull( _activeNewLocalTerm, nameof( _activeNewLocalTerm ) );
         _activeNewLocalTerm = name;
@@ -179,7 +179,7 @@ internal sealed class LocalTermsCollection
     {
         Assume.IsNull( _activeNewLocalTerm, nameof( _activeNewLocalTerm ) );
 
-        _macroParameters ??= new Dictionary<StringSlice, int>();
+        _macroParameters ??= new Dictionary<StringSegment, int>();
         var index = _macroParameters.Count;
         return _macroParameters.TryAdd( token.Symbol, index )
             ? Chain<ParsedExpressionBuilderError>.Empty
@@ -200,7 +200,7 @@ internal sealed class LocalTermsCollection
     }
 
     private Chain<ParsedExpressionBuilderError> FinalizeFirstVariableAssignment(
-        StringSlice name,
+        StringSegment name,
         Expression expression,
         VariableAssignment[] usedVariables,
         InlineDelegateCollectionState.Result[] usedDelegates)
@@ -216,7 +216,7 @@ internal sealed class LocalTermsCollection
     }
 
     private Chain<ParsedExpressionBuilderError> FinalizeNextVariableAssignment(
-        StringSlice name,
+        StringSegment name,
         Expression expression,
         VariableAssignment[] usedVariables,
         InlineDelegateCollectionState.Result[] usedDelegates,

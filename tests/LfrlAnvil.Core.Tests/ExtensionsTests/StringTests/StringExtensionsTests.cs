@@ -9,9 +9,9 @@ public class StringExtensionsTests : TestsBase
     [InlineData( "" )]
     [InlineData( "foo" )]
     [InlineData( "foobar" )]
-    public void AsSlice_WithSource_ShouldReturnCorrectResult(string source)
+    public void AsSegment_WithSource_ShouldReturnCorrectResult(string source)
     {
-        var sut = source.AsSlice();
+        var sut = source.AsSegment();
 
         using ( new AssertionScope() )
         {
@@ -30,14 +30,14 @@ public class StringExtensionsTests : TestsBase
     [InlineData( "foobar", 3, 3, 6, 3 )]
     [InlineData( "foobar", 6, 6, 6, 0 )]
     [InlineData( "foobar", 7, 6, 6, 0 )]
-    public void AsSlice_WithSourceAndStartIndex_ShouldReturnCorrectResult(
+    public void AsSegment_WithSourceAndStartIndex_ShouldReturnCorrectResult(
         string source,
         int startIndex,
         int expectedStartIndex,
         int expectedEndIndex,
         int expectedLength)
     {
-        var sut = source.AsSlice( startIndex );
+        var sut = source.AsSegment( startIndex );
 
         using ( new AssertionScope() )
         {
@@ -49,9 +49,9 @@ public class StringExtensionsTests : TestsBase
     }
 
     [Fact]
-    public void AsSlice_WithSourceAndStartIndex_ShouldThrowArgumentOutOfRangeException_WhenStartIndexIsLessThanZero()
+    public void AsSegment_WithSourceAndStartIndex_ShouldThrowArgumentOutOfRangeException_WhenStartIndexIsLessThanZero()
     {
-        var action = Lambda.Of( () => Fixture.Create<string>().AsSlice( startIndex: -1 ) );
+        var action = Lambda.Of( () => Fixture.Create<string>().AsSegment( startIndex: -1 ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
 
@@ -78,7 +78,7 @@ public class StringExtensionsTests : TestsBase
     [InlineData( "foobar", 6, 1, 6, 6, 0 )]
     [InlineData( "foobar", 7, 0, 6, 6, 0 )]
     [InlineData( "foobar", 7, 1, 6, 6, 0 )]
-    public void AsSlice_WithSourceAndStartIndexAndLength_ShouldReturnCorrectResult(
+    public void AsSegment_WithSourceAndStartIndexAndLength_ShouldReturnCorrectResult(
         string source,
         int startIndex,
         int length,
@@ -86,7 +86,7 @@ public class StringExtensionsTests : TestsBase
         int expectedEndIndex,
         int expectedLength)
     {
-        var sut = source.AsSlice( startIndex, length );
+        var sut = source.AsSegment( startIndex, length );
 
         using ( new AssertionScope() )
         {
@@ -98,16 +98,16 @@ public class StringExtensionsTests : TestsBase
     }
 
     [Fact]
-    public void AsSlice_WithSourceAndStartIndexAndLength_ShouldThrowArgumentOutOfRangeException_WhenStartIndexIsLessThanZero()
+    public void AsSegment_WithSourceAndStartIndexAndLength_ShouldThrowArgumentOutOfRangeException_WhenStartIndexIsLessThanZero()
     {
-        var action = Lambda.Of( () => Fixture.Create<string>().AsSlice( startIndex: -1, length: 0 ) );
+        var action = Lambda.Of( () => Fixture.Create<string>().AsSegment( startIndex: -1, length: 0 ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
 
     [Fact]
-    public void AsSlice_WithSourceAndStartIndexAndLength_ShouldThrowArgumentOutOfRangeException_WhenLengthIsLessThanZero()
+    public void AsSegment_WithSourceAndStartIndexAndLength_ShouldThrowArgumentOutOfRangeException_WhenLengthIsLessThanZero()
     {
-        var action = Lambda.Of( () => Fixture.Create<string>().AsSlice( startIndex: 0, length: -1 ) );
+        var action = Lambda.Of( () => Fixture.Create<string>().AsSegment( startIndex: 0, length: -1 ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
 }

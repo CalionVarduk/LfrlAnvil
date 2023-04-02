@@ -26,10 +26,10 @@ public sealed class ParsedExpressionBufferedDelegate<TArg, TResult>
 
     public ParsedExpressionBufferedDelegate<TArg, TResult> SetArgumentValue(string argumentName, TArg? value)
     {
-        return SetArgumentValue( argumentName.AsSlice(), value );
+        return SetArgumentValue( argumentName.AsSegment(), value );
     }
 
-    public ParsedExpressionBufferedDelegate<TArg, TResult> SetArgumentValue(StringSlice argumentName, TArg? value)
+    public ParsedExpressionBufferedDelegate<TArg, TResult> SetArgumentValue(StringSegment argumentName, TArg? value)
     {
         var index = Base.Arguments.GetIndex( argumentName );
         if ( index < 0 )
@@ -48,11 +48,11 @@ public sealed class ParsedExpressionBufferedDelegate<TArg, TResult>
     [Pure]
     public TArg? GetArgumentValue(string argumentName)
     {
-        return GetArgumentValue( argumentName.AsSlice() );
+        return GetArgumentValue( argumentName.AsSegment() );
     }
 
     [Pure]
-    public TArg? GetArgumentValue(StringSlice argumentName)
+    public TArg? GetArgumentValue(StringSegment argumentName)
     {
         var index = Base.Arguments.GetIndex( argumentName );
         if ( index < 0 )

@@ -40,7 +40,7 @@ public static class ParsedExpressionDelegateExtensions
     [Pure]
     public static TArg?[] MapArguments<TArg, TResult>(
         this IParsedExpressionDelegate<TArg, TResult> source,
-        IEnumerable<KeyValuePair<StringSlice, TArg?>> arguments)
+        IEnumerable<KeyValuePair<StringSegment, TArg?>> arguments)
     {
         var argumentCount = source.Arguments.Count;
         var buffer = argumentCount == 0 ? Array.Empty<TArg?>() : new TArg?[argumentCount];
@@ -51,7 +51,7 @@ public static class ParsedExpressionDelegateExtensions
     [Pure]
     public static TArg?[] MapArguments<TArg, TResult>(
         this IParsedExpressionDelegate<TArg, TResult> source,
-        params KeyValuePair<StringSlice, TArg?>[] arguments)
+        params KeyValuePair<StringSegment, TArg?>[] arguments)
     {
         return source.MapArguments( arguments.AsEnumerable() );
     }
@@ -61,7 +61,7 @@ public static class ParsedExpressionDelegateExtensions
         TArg?[] buffer,
         IEnumerable<KeyValuePair<string, TArg?>> arguments)
     {
-        MapArguments( source, buffer, arguments.Select( static kv => KeyValuePair.Create( kv.Key.AsSlice(), kv.Value ) ) );
+        MapArguments( source, buffer, arguments.Select( static kv => KeyValuePair.Create( kv.Key.AsSegment(), kv.Value ) ) );
     }
 
     public static void MapArguments<TArg, TResult>(
@@ -75,7 +75,7 @@ public static class ParsedExpressionDelegateExtensions
     public static void MapArguments<TArg, TResult>(
         this IParsedExpressionDelegate<TArg, TResult> source,
         TArg?[] buffer,
-        IEnumerable<KeyValuePair<StringSlice, TArg?>> arguments)
+        IEnumerable<KeyValuePair<StringSegment, TArg?>> arguments)
     {
         var argumentCount = source.Arguments.Count;
         if ( argumentCount == 0 )
@@ -84,7 +84,7 @@ public static class ParsedExpressionDelegateExtensions
         if ( buffer.Length < argumentCount )
             throw new ParsedExpressionArgumentBufferTooSmallException( buffer.Length, argumentCount, nameof( buffer ) );
 
-        var invalidArgumentNames = Chain<StringSlice>.Empty;
+        var invalidArgumentNames = Chain<StringSegment>.Empty;
 
         foreach ( var (name, value) in arguments )
         {
@@ -105,7 +105,7 @@ public static class ParsedExpressionDelegateExtensions
     public static void MapArguments<TArg, TResult>(
         this IParsedExpressionDelegate<TArg, TResult> source,
         TArg?[] buffer,
-        params KeyValuePair<StringSlice, TArg?>[] arguments)
+        params KeyValuePair<StringSegment, TArg?>[] arguments)
     {
         source.MapArguments( buffer, arguments.AsEnumerable() );
     }

@@ -10,7 +10,7 @@ internal static class ExpressionTokenReader
     internal static IntermediateToken ReadOpenedParenthesis(string input, int index)
     {
         Assume.IsLessThan( index, input.Length, nameof( index ) );
-        var result = IntermediateToken.CreateOpenedParenthesis( new StringSlice( input, index, length: 1 ) );
+        var result = IntermediateToken.CreateOpenedParenthesis( new StringSegment( input, index, length: 1 ) );
         return result;
     }
 
@@ -19,7 +19,7 @@ internal static class ExpressionTokenReader
     internal static IntermediateToken ReadClosedParenthesis(string input, int index)
     {
         Assume.IsLessThan( index, input.Length, nameof( index ) );
-        var result = IntermediateToken.CreateClosedParenthesis( new StringSlice( input, index, length: 1 ) );
+        var result = IntermediateToken.CreateClosedParenthesis( new StringSegment( input, index, length: 1 ) );
         return result;
     }
 
@@ -28,7 +28,7 @@ internal static class ExpressionTokenReader
     internal static IntermediateToken ReadOpenedSquareBracket(string input, int index)
     {
         Assume.IsLessThan( index, input.Length, nameof( index ) );
-        var result = IntermediateToken.CreateOpenedSquareBracket( new StringSlice( input, index, length: 1 ) );
+        var result = IntermediateToken.CreateOpenedSquareBracket( new StringSegment( input, index, length: 1 ) );
         return result;
     }
 
@@ -37,7 +37,7 @@ internal static class ExpressionTokenReader
     internal static IntermediateToken ReadClosedSquareBracket(string input, int index)
     {
         Assume.IsLessThan( index, input.Length, nameof( index ) );
-        var result = IntermediateToken.CreateClosedSquareBracket( new StringSlice( input, index, length: 1 ) );
+        var result = IntermediateToken.CreateClosedSquareBracket( new StringSegment( input, index, length: 1 ) );
         return result;
     }
 
@@ -46,7 +46,7 @@ internal static class ExpressionTokenReader
     internal static IntermediateToken ReadAssignment(string input, int index)
     {
         Assume.IsLessThan( index, input.Length, nameof( index ) );
-        var result = IntermediateToken.CreateAssignment( new StringSlice( input, index, length: 1 ) );
+        var result = IntermediateToken.CreateAssignment( new StringSegment( input, index, length: 1 ) );
         return result;
     }
 
@@ -55,7 +55,7 @@ internal static class ExpressionTokenReader
     internal static IntermediateToken ReadElementSeparator(string input, int index)
     {
         Assume.IsLessThan( index, input.Length, nameof( index ) );
-        var result = IntermediateToken.CreateElementSeparator( new StringSlice( input, index, length: 1 ) );
+        var result = IntermediateToken.CreateElementSeparator( new StringSegment( input, index, length: 1 ) );
         return result;
     }
 
@@ -64,7 +64,7 @@ internal static class ExpressionTokenReader
     internal static IntermediateToken ReadLineSeparator(string input, int index)
     {
         Assume.IsLessThan( index, input.Length, nameof( index ) );
-        var result = IntermediateToken.CreateLineSeparator( new StringSlice( input, index, length: 1 ) );
+        var result = IntermediateToken.CreateLineSeparator( new StringSegment( input, index, length: 1 ) );
         return result;
     }
 
@@ -73,7 +73,7 @@ internal static class ExpressionTokenReader
     internal static IntermediateToken ReadMemberAccess(string input, int index)
     {
         Assume.IsLessThan( index, input.Length, nameof( index ) );
-        var result = IntermediateToken.CreateMemberAccess( new StringSlice( input, index, length: 1 ) );
+        var result = IntermediateToken.CreateMemberAccess( new StringSegment( input, index, length: 1 ) );
         return result;
     }
 
@@ -105,14 +105,14 @@ internal static class ExpressionTokenReader
         }
 
         var result = IntermediateToken.CreateStringConstant(
-            new StringSlice( input, startIndex, length: index - startIndex ) );
+            new StringSegment( input, startIndex, length: index - startIndex ) );
 
         return result;
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static IntermediateToken? TryReadBoolean(StringSlice input)
+    internal static IntermediateToken? TryReadBoolean(StringSegment input)
     {
         if ( TokenConstants.IsBooleanTrue( input ) || TokenConstants.IsBooleanFalse( input ) )
             return IntermediateToken.CreateBooleanConstant( input );
@@ -122,7 +122,7 @@ internal static class ExpressionTokenReader
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static IntermediateToken? TryReadVariableDeclaration(StringSlice input)
+    internal static IntermediateToken? TryReadVariableDeclaration(StringSegment input)
     {
         if ( TokenConstants.IsVariableDeclaration( input ) )
             return IntermediateToken.CreateVariableDeclaration( input );
@@ -132,7 +132,7 @@ internal static class ExpressionTokenReader
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static IntermediateToken? TryReadMacroDeclaration(StringSlice input)
+    internal static IntermediateToken? TryReadMacroDeclaration(StringSegment input)
     {
         if ( TokenConstants.IsMacroDeclaration( input ) )
             return IntermediateToken.CreateMacroDeclaration( input );
@@ -142,7 +142,7 @@ internal static class ExpressionTokenReader
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static IntermediateToken? TryReadConstructs(StringSlice input, ParsedExpressionFactoryInternalConfiguration configuration)
+    internal static IntermediateToken? TryReadConstructs(StringSegment input, ParsedExpressionFactoryInternalConfiguration configuration)
     {
         if ( ! configuration.Constructs.TryGetValue( input, out var constructs ) )
             return null;
@@ -183,7 +183,7 @@ internal static class ExpressionTokenReader
         }
 
         var result = IntermediateToken.CreateNumberConstant(
-            new StringSlice( input, startIndex, length: index - startIndex ) );
+            new StringSegment( input, startIndex, length: index - startIndex ) );
 
         return result;
     }

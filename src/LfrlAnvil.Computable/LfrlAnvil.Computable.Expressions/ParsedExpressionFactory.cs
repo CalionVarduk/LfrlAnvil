@@ -27,7 +27,7 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     public IParsedExpressionFactoryConfiguration Configuration => _configuration;
 
     [Pure]
-    public IEnumerable<StringSlice> GetConstructSymbols()
+    public IEnumerable<StringSegment> GetConstructSymbols()
     {
         return _configuration.Constructs.Select( kv => kv.Key );
     }
@@ -35,11 +35,11 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     [Pure]
     public ParsedExpressionConstructType GetConstructType(string symbol)
     {
-        return GetConstructType( symbol.AsSlice() );
+        return GetConstructType( symbol.AsSegment() );
     }
 
     [Pure]
-    public ParsedExpressionConstructType GetConstructType(StringSlice symbol)
+    public ParsedExpressionConstructType GetConstructType(StringSegment symbol)
     {
         return _configuration.Constructs.TryGetValue( symbol, out var definition )
             ? definition.Type
@@ -49,11 +49,11 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     [Pure]
     public Type? GetGenericBinaryOperatorType(string symbol)
     {
-        return GetGenericBinaryOperatorType( symbol.AsSlice() );
+        return GetGenericBinaryOperatorType( symbol.AsSegment() );
     }
 
     [Pure]
-    public Type? GetGenericBinaryOperatorType(StringSlice symbol)
+    public Type? GetGenericBinaryOperatorType(StringSegment symbol)
     {
         return _configuration.Constructs.GetValueOrDefault( symbol )?.BinaryOperators.GenericConstruct?.GetType();
     }
@@ -61,11 +61,11 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     [Pure]
     public IEnumerable<ParsedExpressionBinaryOperatorInfo> GetSpecializedBinaryOperators(string symbol)
     {
-        return GetSpecializedBinaryOperators( symbol.AsSlice() );
+        return GetSpecializedBinaryOperators( symbol.AsSegment() );
     }
 
     [Pure]
-    public IEnumerable<ParsedExpressionBinaryOperatorInfo> GetSpecializedBinaryOperators(StringSlice symbol)
+    public IEnumerable<ParsedExpressionBinaryOperatorInfo> GetSpecializedBinaryOperators(StringSegment symbol)
     {
         return _configuration.Constructs.GetValueOrDefault( symbol )
                 ?.BinaryOperators.SpecializedConstructs?.Select(
@@ -76,11 +76,11 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     [Pure]
     public Type? GetGenericPrefixUnaryConstructType(string symbol)
     {
-        return GetGenericPrefixUnaryConstructType( symbol.AsSlice() );
+        return GetGenericPrefixUnaryConstructType( symbol.AsSegment() );
     }
 
     [Pure]
-    public Type? GetGenericPrefixUnaryConstructType(StringSlice symbol)
+    public Type? GetGenericPrefixUnaryConstructType(StringSegment symbol)
     {
         return _configuration.Constructs.TryGetValue( symbol, out var definition )
             ? definition.PrefixUnaryOperators.GenericConstruct?.GetType() ?? definition.PrefixTypeConverters.GenericConstruct?.GetType()
@@ -90,11 +90,11 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     [Pure]
     public IEnumerable<ParsedExpressionUnaryConstructInfo> GetSpecializedPrefixUnaryConstructs(string symbol)
     {
-        return GetSpecializedPrefixUnaryConstructs( symbol.AsSlice() );
+        return GetSpecializedPrefixUnaryConstructs( symbol.AsSegment() );
     }
 
     [Pure]
-    public IEnumerable<ParsedExpressionUnaryConstructInfo> GetSpecializedPrefixUnaryConstructs(StringSlice symbol)
+    public IEnumerable<ParsedExpressionUnaryConstructInfo> GetSpecializedPrefixUnaryConstructs(StringSegment symbol)
     {
         return _configuration.Constructs.TryGetValue( symbol, out var definition )
             ? (definition.PrefixUnaryOperators.SpecializedConstructs?.Select(
@@ -110,11 +110,11 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     [Pure]
     public Type? GetGenericPostfixUnaryConstructType(string symbol)
     {
-        return GetGenericPostfixUnaryConstructType( symbol.AsSlice() );
+        return GetGenericPostfixUnaryConstructType( symbol.AsSegment() );
     }
 
     [Pure]
-    public Type? GetGenericPostfixUnaryConstructType(StringSlice symbol)
+    public Type? GetGenericPostfixUnaryConstructType(StringSegment symbol)
     {
         return _configuration.Constructs.TryGetValue( symbol, out var definition )
             ? definition.PostfixUnaryOperators.GenericConstruct?.GetType() ?? definition.PostfixTypeConverters.GenericConstruct?.GetType()
@@ -124,11 +124,11 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     [Pure]
     public IEnumerable<ParsedExpressionUnaryConstructInfo> GetSpecializedPostfixUnaryConstructs(string symbol)
     {
-        return GetSpecializedPostfixUnaryConstructs( symbol.AsSlice() );
+        return GetSpecializedPostfixUnaryConstructs( symbol.AsSegment() );
     }
 
     [Pure]
-    public IEnumerable<ParsedExpressionUnaryConstructInfo> GetSpecializedPostfixUnaryConstructs(StringSlice symbol)
+    public IEnumerable<ParsedExpressionUnaryConstructInfo> GetSpecializedPostfixUnaryConstructs(StringSegment symbol)
     {
         return _configuration.Constructs.TryGetValue( symbol, out var definition )
             ? (definition.PostfixUnaryOperators.SpecializedConstructs?.Select(
@@ -144,11 +144,11 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     [Pure]
     public Type? GetTypeConverterTargetType(string symbol)
     {
-        return GetTypeConverterTargetType( symbol.AsSlice() );
+        return GetTypeConverterTargetType( symbol.AsSegment() );
     }
 
     [Pure]
-    public Type? GetTypeConverterTargetType(StringSlice symbol)
+    public Type? GetTypeConverterTargetType(StringSegment symbol)
     {
         return _configuration.Constructs.TryGetValue( symbol, out var definition )
             ? definition.PrefixTypeConverters.TargetType ?? definition.PostfixTypeConverters.TargetType
@@ -158,11 +158,11 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     [Pure]
     public Type? GetTypeDeclarationType(string symbol)
     {
-        return GetTypeDeclarationType( symbol.AsSlice() );
+        return GetTypeDeclarationType( symbol.AsSegment() );
     }
 
     [Pure]
-    public Type? GetTypeDeclarationType(StringSlice symbol)
+    public Type? GetTypeDeclarationType(StringSegment symbol)
     {
         return _configuration.Constructs.GetValueOrDefault( symbol )?.TypeDeclaration;
     }
@@ -170,11 +170,11 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     [Pure]
     public ConstantExpression? GetConstantExpression(string symbol)
     {
-        return GetConstantExpression( symbol.AsSlice() );
+        return GetConstantExpression( symbol.AsSegment() );
     }
 
     [Pure]
-    public ConstantExpression? GetConstantExpression(StringSlice symbol)
+    public ConstantExpression? GetConstantExpression(StringSegment symbol)
     {
         return _configuration.Constructs.GetValueOrDefault( symbol )?.Constant;
     }
@@ -182,11 +182,11 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     [Pure]
     public IEnumerable<LambdaExpression> GetFunctionExpressions(string symbol)
     {
-        return GetFunctionExpressions( symbol.AsSlice() );
+        return GetFunctionExpressions( symbol.AsSegment() );
     }
 
     [Pure]
-    public IEnumerable<LambdaExpression> GetFunctionExpressions(StringSlice symbol)
+    public IEnumerable<LambdaExpression> GetFunctionExpressions(StringSegment symbol)
     {
         return _configuration.Constructs.GetValueOrDefault( symbol )
                 ?.Functions.Functions.Select( kv => kv.Value.Lambda ) ??
@@ -196,11 +196,11 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     [Pure]
     public Type? GetVariadicFunctionType(string symbol)
     {
-        return GetVariadicFunctionType( symbol.AsSlice() );
+        return GetVariadicFunctionType( symbol.AsSegment() );
     }
 
     [Pure]
-    public Type? GetVariadicFunctionType(StringSlice symbol)
+    public Type? GetVariadicFunctionType(StringSegment symbol)
     {
         return _configuration.Constructs.GetValueOrDefault( symbol )?.VariadicFunction?.GetType();
     }
@@ -208,11 +208,11 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     [Pure]
     public int? GetBinaryOperatorPrecedence(string symbol)
     {
-        return GetBinaryOperatorPrecedence( symbol.AsSlice() );
+        return GetBinaryOperatorPrecedence( symbol.AsSegment() );
     }
 
     [Pure]
-    public int? GetBinaryOperatorPrecedence(StringSlice symbol)
+    public int? GetBinaryOperatorPrecedence(StringSegment symbol)
     {
         var constructs = _configuration.Constructs.GetValueOrDefault( symbol )?.BinaryOperators;
         return constructs?.IsEmpty == false ? constructs.Precedence : null;
@@ -221,11 +221,11 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     [Pure]
     public int? GetPrefixUnaryConstructPrecedence(string symbol)
     {
-        return GetPrefixUnaryConstructPrecedence( symbol.AsSlice() );
+        return GetPrefixUnaryConstructPrecedence( symbol.AsSegment() );
     }
 
     [Pure]
-    public int? GetPrefixUnaryConstructPrecedence(StringSlice symbol)
+    public int? GetPrefixUnaryConstructPrecedence(StringSegment symbol)
     {
         var definition = _configuration.Constructs.GetValueOrDefault( symbol );
         if ( definition is null )
@@ -240,11 +240,11 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     [Pure]
     public int? GetPostfixUnaryConstructPrecedence(string symbol)
     {
-        return GetPostfixUnaryConstructPrecedence( symbol.AsSlice() );
+        return GetPostfixUnaryConstructPrecedence( symbol.AsSegment() );
     }
 
     [Pure]
-    public int? GetPostfixUnaryConstructPrecedence(StringSlice symbol)
+    public int? GetPostfixUnaryConstructPrecedence(StringSegment symbol)
     {
         var definition = _configuration.Constructs.GetValueOrDefault( symbol );
         if ( definition is null )
@@ -284,7 +284,7 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
 
     internal bool TryCreateInternal<TArg, TResult>(
         string input,
-        (ParsedExpression<TArg, TResult> Expression, Dictionary<StringSlice, TArg?> Arguments)? bindingInfo,
+        (ParsedExpression<TArg, TResult> Expression, Dictionary<StringSegment, TArg?> Arguments)? bindingInfo,
         [MaybeNullWhen( false )] out ParsedExpression<TArg, TResult> result,
         out Chain<ParsedExpressionBuilderError> errors)
     {

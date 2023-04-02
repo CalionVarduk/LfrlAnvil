@@ -7,21 +7,21 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions;
 
-public sealed class ParsedExpressionUnboundArguments : IReadOnlyCollection<KeyValuePair<StringSlice, int>>
+public sealed class ParsedExpressionUnboundArguments : IReadOnlyCollection<KeyValuePair<StringSegment, int>>
 {
     public static readonly ParsedExpressionUnboundArguments Empty = new ParsedExpressionUnboundArguments(
-        new Dictionary<StringSlice, int>() );
+        new Dictionary<StringSegment, int>() );
 
-    private readonly IReadOnlyDictionary<StringSlice, int> _indexes;
-    private readonly StringSlice[] _names;
+    private readonly IReadOnlyDictionary<StringSegment, int> _indexes;
+    private readonly StringSegment[] _names;
 
-    public ParsedExpressionUnboundArguments(IEnumerable<KeyValuePair<StringSlice, int>> map)
+    public ParsedExpressionUnboundArguments(IEnumerable<KeyValuePair<StringSegment, int>> map)
     {
-        _indexes = new Dictionary<StringSlice, int>( map );
+        _indexes = new Dictionary<StringSegment, int>( map );
         _names = CreateNames( _indexes );
     }
 
-    internal ParsedExpressionUnboundArguments(IReadOnlyDictionary<StringSlice, int> indexes)
+    internal ParsedExpressionUnboundArguments(IReadOnlyDictionary<StringSegment, int> indexes)
     {
         _indexes = indexes;
         _names = CreateNames( _indexes );
@@ -32,11 +32,11 @@ public sealed class ParsedExpressionUnboundArguments : IReadOnlyCollection<KeyVa
     [Pure]
     public bool Contains(string name)
     {
-        return Contains( name.AsSlice() );
+        return Contains( name.AsSegment() );
     }
 
     [Pure]
-    public bool Contains(StringSlice name)
+    public bool Contains(StringSegment name)
     {
         return _indexes.ContainsKey( name );
     }
@@ -44,32 +44,32 @@ public sealed class ParsedExpressionUnboundArguments : IReadOnlyCollection<KeyVa
     [Pure]
     public int GetIndex(string name)
     {
-        return GetIndex( name.AsSlice() );
+        return GetIndex( name.AsSegment() );
     }
 
     [Pure]
-    public int GetIndex(StringSlice name)
+    public int GetIndex(StringSegment name)
     {
         return _indexes.TryGetValue( name, out var index ) ? index : -1;
     }
 
     [Pure]
-    public StringSlice GetName(int index)
+    public StringSegment GetName(int index)
     {
         return _names[index];
     }
 
     [Pure]
-    public IEnumerator<KeyValuePair<StringSlice, int>> GetEnumerator()
+    public IEnumerator<KeyValuePair<StringSegment, int>> GetEnumerator()
     {
         return _indexes.GetEnumerator();
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static StringSlice[] CreateNames(IReadOnlyDictionary<StringSlice, int> indexes)
+    private static StringSegment[] CreateNames(IReadOnlyDictionary<StringSegment, int> indexes)
     {
-        var result = indexes.Count == 0 ? Array.Empty<StringSlice>() : new StringSlice[indexes.Count];
+        var result = indexes.Count == 0 ? Array.Empty<StringSegment>() : new StringSegment[indexes.Count];
         foreach ( var (name, index) in indexes )
             result[index] = name;
 

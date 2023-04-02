@@ -15,7 +15,7 @@ public class ParsedExpressionDiscardedArgumentsTests : TestsBase
     [Fact]
     public void Ctor_ShouldReturnCorrectResult()
     {
-        var sut = new ParsedExpressionDiscardedArguments( new[] { "a".AsSlice(), "b".AsSlice(), "c".AsSlice() } );
+        var sut = new ParsedExpressionDiscardedArguments( new[] { "a".AsSegment(), "b".AsSegment(), "c".AsSegment() } );
 
         using ( new AssertionScope() )
         {
@@ -30,7 +30,7 @@ public class ParsedExpressionDiscardedArgumentsTests : TestsBase
     [InlineData( "c" )]
     public void Contains_ShouldReturnTrue_WhenNameExists(string name)
     {
-        var sut = new ParsedExpressionDiscardedArguments( new[] { "a".AsSlice(), "b".AsSlice(), "c".AsSlice() } );
+        var sut = new ParsedExpressionDiscardedArguments( new[] { "a".AsSegment(), "b".AsSegment(), "c".AsSegment() } );
         var result = sut.Contains( name );
         result.Should().BeTrue();
     }
@@ -38,7 +38,7 @@ public class ParsedExpressionDiscardedArgumentsTests : TestsBase
     [Fact]
     public void Contains_ShouldReturnFalse_WhenNameDoesNotExist()
     {
-        var sut = new ParsedExpressionDiscardedArguments( new[] { "a".AsSlice() } );
+        var sut = new ParsedExpressionDiscardedArguments( new[] { "a".AsSegment() } );
         var result = sut.Contains( "b" );
         result.Should().BeFalse();
     }

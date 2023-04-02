@@ -10,7 +10,7 @@ public sealed class ParsedExpressionBuilderMissingFunctionError : ParsedExpressi
 {
     internal ParsedExpressionBuilderMissingFunctionError(
         ParsedExpressionBuilderErrorType type,
-        StringSlice token,
+        StringSegment token,
         IReadOnlyList<Type> parameterTypes)
         : base( type, token )
     {

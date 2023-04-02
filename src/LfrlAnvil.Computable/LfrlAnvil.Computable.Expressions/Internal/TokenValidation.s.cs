@@ -5,7 +5,7 @@ namespace LfrlAnvil.Computable.Expressions.Internal;
 internal static class TokenValidation
 {
     [Pure]
-    internal static bool IsValidLocalTermName(StringSlice token, char stringDelimiter)
+    internal static bool IsValidLocalTermName(StringSegment token, char stringDelimiter)
     {
         if ( token.Length == 0 )
             return false;
@@ -40,7 +40,7 @@ internal static class TokenValidation
     }
 
     [Pure]
-    internal static bool IsValidConstructSymbol(StringSlice token, char stringDelimiter)
+    internal static bool IsValidConstructSymbol(StringSegment token, char stringDelimiter)
     {
         if ( token.Length == 0 )
             return false;

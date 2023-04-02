@@ -8,20 +8,20 @@ using System.Runtime.InteropServices;
 
 namespace LfrlAnvil;
 
-public readonly struct StringSlice : IEquatable<StringSlice>, IComparable<StringSlice>, IComparable, IReadOnlyList<char>
+public readonly struct StringSegment : IEquatable<StringSegment>, IComparable<StringSegment>, IComparable, IReadOnlyList<char>
 {
-    public static readonly StringSlice Empty = new StringSlice( string.Empty );
+    public static readonly StringSegment Empty = new StringSegment( string.Empty );
 
     private readonly string? _source;
 
-    public StringSlice(string source)
+    public StringSegment(string source)
     {
         _source = source;
         StartIndex = 0;
         Length = source.Length;
     }
 
-    public StringSlice(string source, int startIndex)
+    public StringSegment(string source, int startIndex)
     {
         Ensure.IsGreaterThanOrEqualTo( startIndex, 0, nameof( startIndex ) );
 
@@ -30,7 +30,7 @@ public readonly struct StringSlice : IEquatable<StringSlice>, IComparable<String
         Length = source.Length - StartIndex;
     }
 
-    public StringSlice(string source, int startIndex, int length)
+    public StringSegment(string source, int startIndex, int length)
     {
         Ensure.IsGreaterThanOrEqualTo( startIndex, 0, nameof( startIndex ) );
         Ensure.IsGreaterThanOrEqualTo( length, 0, nameof( length ) );
@@ -49,11 +49,11 @@ public readonly struct StringSlice : IEquatable<StringSlice>, IComparable<String
     int IReadOnlyCollection<char>.Count => Length;
 
     [Pure]
-    public static StringSlice FromMemory(ReadOnlyMemory<char> source)
+    public static StringSegment FromMemory(ReadOnlyMemory<char> source)
     {
         return MemoryMarshal.TryGetString( source, out var text, out var startIndex, out var length )
-            ? new StringSlice( text, startIndex, length )
-            : new StringSlice( source.ToString() );
+            ? new StringSegment( text, startIndex, length )
+            : new StringSegment( source.ToString() );
     }
 
     [Pure]
@@ -71,19 +71,19 @@ public readonly struct StringSlice : IEquatable<StringSlice>, IComparable<String
     [Pure]
     public override bool Equals(object? obj)
     {
-        return obj is StringSlice s && Equals( s );
+        return obj is StringSegment s && Equals( s );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public bool Equals(StringSlice other)
+    public bool Equals(StringSegment other)
     {
         return Equals( other, StringComparison.Ordinal );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public bool Equals(StringSlice other, StringComparison comparisonType)
+    public bool Equals(StringSegment other, StringComparison comparisonType)
     {
         return AsSpan().Equals( other.AsSpan(), comparisonType );
     }
@@ -91,37 +91,37 @@ public readonly struct StringSlice : IEquatable<StringSlice>, IComparable<String
     [Pure]
     public int CompareTo(object? obj)
     {
-        return obj is StringSlice s ? CompareTo( s ) : 1;
+        return obj is StringSegment s ? CompareTo( s ) : 1;
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public int CompareTo(StringSlice other)
+    public int CompareTo(StringSegment other)
     {
         return CompareTo( other, StringComparison.CurrentCulture );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public int CompareTo(StringSlice other, StringComparison comparisonType)
+    public int CompareTo(StringSegment other, StringComparison comparisonType)
     {
         return AsSpan().CompareTo( other.AsSpan(), comparisonType );
     }
 
     [Pure]
-    public StringSlice Slice(int startIndex)
+    public StringSegment Slice(int startIndex)
     {
         Ensure.IsGreaterThanOrEqualTo( startIndex, 0, nameof( startIndex ) );
 
         var endIndex = EndIndex;
 
         return startIndex >= endIndex
-            ? new StringSlice( Source, endIndex, 0 )
-            : new StringSlice( Source, StartIndex + startIndex, Length - startIndex );
+            ? new StringSegment( Source, endIndex, 0 )
+            : new StringSegment( Source, StartIndex + startIndex, Length - startIndex );
     }
 
     [Pure]
-    public StringSlice Slice(int startIndex, int length)
+    public StringSegment Slice(int startIndex, int length)
     {
         Ensure.IsGreaterThanOrEqualTo( startIndex, 0, nameof( startIndex ) );
         Ensure.IsGreaterThanOrEqualTo( length, 0, nameof( length ) );
@@ -129,31 +129,31 @@ public readonly struct StringSlice : IEquatable<StringSlice>, IComparable<String
         var endIndex = EndIndex;
 
         return startIndex >= endIndex
-            ? new StringSlice( Source, endIndex, 0 )
-            : new StringSlice( Source, StartIndex + startIndex, Math.Min( length, Length - startIndex ) );
+            ? new StringSegment( Source, endIndex, 0 )
+            : new StringSegment( Source, StartIndex + startIndex, Math.Min( length, Length - startIndex ) );
     }
 
     [Pure]
-    public StringSlice SetStartIndex(int value)
+    public StringSegment SetStartIndex(int value)
     {
-        return new StringSlice( Source, value, Length );
+        return new StringSegment( Source, value, Length );
     }
 
     [Pure]
-    public StringSlice SetEndIndex(int value)
+    public StringSegment SetEndIndex(int value)
     {
         Ensure.IsGreaterThanOrEqualTo( value, 0, nameof( value ) );
         return Offset( value - EndIndex );
     }
 
     [Pure]
-    public StringSlice SetLength(int value)
+    public StringSegment SetLength(int value)
     {
-        return new StringSlice( Source, StartIndex, value );
+        return new StringSegment( Source, StartIndex, value );
     }
 
     [Pure]
-    public StringSlice Offset(int offset)
+    public StringSegment Offset(int offset)
     {
         var startIndex = StartIndex + offset;
         var length = Length;
@@ -164,11 +164,11 @@ public readonly struct StringSlice : IEquatable<StringSlice>, IComparable<String
             startIndex = 0;
         }
 
-        return new StringSlice( Source, startIndex, length );
+        return new StringSegment( Source, startIndex, length );
     }
 
     [Pure]
-    public StringSlice Expand(int count)
+    public StringSegment Expand(int count)
     {
         Ensure.IsGreaterThanOrEqualTo( count, 0, nameof( count ) );
 
@@ -181,11 +181,11 @@ public readonly struct StringSlice : IEquatable<StringSlice>, IComparable<String
             startIndex = 0;
         }
 
-        return new StringSlice( Source, startIndex, length );
+        return new StringSegment( Source, startIndex, length );
     }
 
     [Pure]
-    public StringSlice Shrink(int count)
+    public StringSegment Shrink(int count)
     {
         Ensure.IsGreaterThanOrEqualTo( count, 0, nameof( count ) );
 
@@ -198,7 +198,7 @@ public readonly struct StringSlice : IEquatable<StringSlice>, IComparable<String
             length = 0;
         }
 
-        return new StringSlice( Source, startIndex, length );
+        return new StringSegment( Source, startIndex, length );
     }
 
     [Pure]
@@ -222,37 +222,44 @@ public readonly struct StringSlice : IEquatable<StringSlice>, IComparable<String
     }
 
     [Pure]
-    public static bool operator ==(StringSlice a, StringSlice b)
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static implicit operator StringSegment(string s)
+    {
+        return new StringSegment( s );
+    }
+
+    [Pure]
+    public static bool operator ==(StringSegment a, StringSegment b)
     {
         return a.Equals( b );
     }
 
     [Pure]
-    public static bool operator !=(StringSlice a, StringSlice b)
+    public static bool operator !=(StringSegment a, StringSegment b)
     {
         return ! a.Equals( b );
     }
 
     [Pure]
-    public static bool operator >(StringSlice a, StringSlice b)
+    public static bool operator >(StringSegment a, StringSegment b)
     {
         return a.CompareTo( b ) > 0;
     }
 
     [Pure]
-    public static bool operator <(StringSlice a, StringSlice b)
+    public static bool operator <(StringSegment a, StringSegment b)
     {
         return a.CompareTo( b ) < 0;
     }
 
     [Pure]
-    public static bool operator >=(StringSlice a, StringSlice b)
+    public static bool operator >=(StringSegment a, StringSegment b)
     {
         return a.CompareTo( b ) >= 0;
     }
 
     [Pure]
-    public static bool operator <=(StringSlice a, StringSlice b)
+    public static bool operator <=(StringSegment a, StringSegment b)
     {
         return a.CompareTo( b ) <= 0;
     }

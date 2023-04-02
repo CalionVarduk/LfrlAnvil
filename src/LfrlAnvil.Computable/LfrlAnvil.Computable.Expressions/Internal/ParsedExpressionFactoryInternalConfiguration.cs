@@ -14,7 +14,7 @@ namespace LfrlAnvil.Computable.Expressions.Internal;
 public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpressionFactoryConfiguration
 {
     internal ParsedExpressionFactoryInternalConfiguration(
-        IReadOnlyDictionary<StringSlice, ConstructTokenDefinition> constructs,
+        IReadOnlyDictionary<StringSegment, ConstructTokenDefinition> constructs,
         IParsedExpressionFactoryConfiguration configuration)
     {
         Constructs = constructs;
@@ -59,12 +59,12 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
     public NumberStyles NumberStyles { get; }
     public BindingFlags MemberBindingFlags { get; }
     public IFormatProvider NumberFormatProvider { get; }
-    internal IReadOnlyDictionary<StringSlice, ConstructTokenDefinition> Constructs { get; }
+    internal IReadOnlyDictionary<StringSegment, ConstructTokenDefinition> Constructs { get; }
 
     [Pure]
     public MemberInfo[] FindTypeFieldsAndProperties(Type type, string name)
     {
-        var result = MemberInfoLocator.FindFieldsAndProperties( type, MemberBindingFlags, GetAccessibleMemberFilter( name.AsSlice() ) );
+        var result = MemberInfoLocator.FindFieldsAndProperties( type, MemberBindingFlags, GetAccessibleMemberFilter( name.AsSegment() ) );
         return result;
     }
 
@@ -85,20 +85,25 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
     [Pure]
     public MethodInfo[] FindTypeMethods(Type type, string name, Type[] parameterTypes)
     {
-        var result = MemberInfoLocator.FindMethods( type, parameterTypes, MemberBindingFlags, GetAccessibleMemberFilter( name.AsSlice() ) );
+        var result = MemberInfoLocator.FindMethods(
+            type,
+            parameterTypes,
+            MemberBindingFlags,
+            GetAccessibleMemberFilter( name.AsSegment() ) );
+
         return result;
     }
 
     [Pure]
-    public MemberFilter GetAccessibleMemberFilter(StringSlice symbol)
+    public MemberFilter GetAccessibleMemberFilter(StringSegment symbol)
     {
         return IgnoreMemberNameCase
-            ? (m, _) => symbol.Equals( m.Name.AsSlice(), StringComparison.OrdinalIgnoreCase ) && IsMemberAccessible( m )
-            : (m, _) => symbol.Equals( m.Name.AsSlice() ) && IsMemberAccessible( m );
+            ? (m, _) => symbol.Equals( m.Name.AsSegment(), StringComparison.OrdinalIgnoreCase ) && IsMemberAccessible( m )
+            : (m, _) => symbol.Equals( m.Name.AsSegment() ) && IsMemberAccessible( m );
     }
 
     [Pure]
-    internal bool TypeContainsMethod(Type type, StringSlice symbol)
+    internal bool TypeContainsMethod(Type type, StringSegment symbol)
     {
         var methods = type.GetMethods( MemberBindingFlags );
         var filter = GetAccessibleMemberFilter( symbol );
@@ -201,13 +206,13 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
         {
             _info = CultureInfo.InvariantCulture.NumberFormat;
 
-            if ( ! TokenConstants.AreEqual( _info.NumberDecimalSeparator.AsSlice(), configuration.DecimalPoint ) )
+            if ( ! TokenConstants.AreEqual( _info.NumberDecimalSeparator.AsSegment(), configuration.DecimalPoint ) )
             {
                 _info = ReinterpretCast.To<NumberFormatInfo>( _info.Clone() );
                 _info.NumberDecimalSeparator = configuration.DecimalPoint.ToString();
             }
 
-            if ( ! TokenConstants.AreEqual( _info.NumberGroupSeparator.AsSlice(), configuration.IntegerDigitSeparator ) )
+            if ( ! TokenConstants.AreEqual( _info.NumberGroupSeparator.AsSegment(), configuration.IntegerDigitSeparator ) )
             {
                 if ( _info.IsReadOnly )
                     _info = ReinterpretCast.To<NumberFormatInfo>( _info.Clone() );
