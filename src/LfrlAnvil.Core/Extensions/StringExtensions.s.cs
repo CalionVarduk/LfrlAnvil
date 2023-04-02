@@ -7,13 +7,6 @@ public static class StringExtensions
 {
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static StringSegment AsSegment(this string source)
-    {
-        return new StringSegment( source );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static StringSegment AsSegment(this string source, int startIndex)
     {
         return new StringSegment( source, startIndex );

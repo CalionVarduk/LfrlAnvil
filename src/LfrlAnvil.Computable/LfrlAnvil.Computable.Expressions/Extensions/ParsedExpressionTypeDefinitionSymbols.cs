@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics.Contracts;
-using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Extensions;
 
@@ -48,12 +47,6 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
     }
 
     [Pure]
-    public ParsedExpressionTypeDefinitionSymbols SetName(string name)
-    {
-        return SetName( name.AsSegment() );
-    }
-
-    [Pure]
     public ParsedExpressionTypeDefinitionSymbols SetName(StringSegment name)
     {
         return new ParsedExpressionTypeDefinitionSymbols(
@@ -63,12 +56,6 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
             _customPrefixTypeConverter,
             _postfixTypeConverter,
             _customConstant );
-    }
-
-    [Pure]
-    public ParsedExpressionTypeDefinitionSymbols SetPrefixTypeConverter(string symbol)
-    {
-        return SetPrefixTypeConverter( symbol.AsSegment() );
     }
 
     [Pure]
@@ -108,12 +95,6 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
     }
 
     [Pure]
-    public ParsedExpressionTypeDefinitionSymbols SetPostfixTypeConverter(string symbol)
-    {
-        return SetPostfixTypeConverter( symbol.AsSegment() );
-    }
-
-    [Pure]
     public ParsedExpressionTypeDefinitionSymbols SetPostfixTypeConverter(StringSegment symbol)
     {
         return new ParsedExpressionTypeDefinitionSymbols(
@@ -135,12 +116,6 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
             _customPrefixTypeConverter,
             postfixTypeConverter: null,
             _customConstant );
-    }
-
-    [Pure]
-    public ParsedExpressionTypeDefinitionSymbols SetConstant(string symbol)
-    {
-        return SetConstant( symbol.AsSegment() );
     }
 
     [Pure]
@@ -186,7 +161,7 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
             return null;
 
         var name = _name ?? new StringSegment( string.Empty );
-        return $"[{name}]".AsSegment();
+        return $"[{name}]";
     }
 
     [Pure]
@@ -196,6 +171,6 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
             return null;
 
         var name = _name ?? new StringSegment( string.Empty );
-        return name.ToString().ToUpperInvariant().AsSegment();
+        return name.ToString().ToUpperInvariant();
     }
 }

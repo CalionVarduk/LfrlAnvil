@@ -5,7 +5,6 @@ using LfrlAnvil.Computable.Expressions.Constructs.Decimal;
 using LfrlAnvil.Computable.Expressions.Constructs.Variadic;
 using LfrlAnvil.Computable.Expressions.Exceptions;
 using LfrlAnvil.Computable.Expressions.Internal;
-using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
@@ -278,7 +277,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     }
 
     [Fact]
-    public void AddBinaryOperator_WithString_ShouldAddNewConstruct()
+    public void AddBinaryOperator_ShouldAddNewConstruct()
     {
         var symbol = Fixture.Create<string>();
         var sut = new ParsedExpressionFactoryBuilder();
@@ -297,26 +296,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     }
 
     [Fact]
-    public void AddBinaryOperator_WithStringSlice_ShouldAddNewConstruct()
-    {
-        var symbol = Fixture.Create<string>();
-        var sut = new ParsedExpressionFactoryBuilder();
-        var @operator = new ParsedExpressionAddOperator();
-
-        var result = sut.AddBinaryOperator( symbol.AsSegment(), @operator );
-
-        using ( new AssertionScope() )
-        {
-            var entry = sut.GetConstructs().Should().HaveCount( 1 ).And.Subject.First();
-            entry.Symbol.ToString().Should().Be( symbol );
-            entry.Type.Should().Be( ParsedExpressionConstructType.BinaryOperator );
-            entry.Construct.Should().BeSameAs( @operator );
-            result.Should().BeSameAs( sut );
-        }
-    }
-
-    [Fact]
-    public void AddPrefixUnaryOperator_WithString_ShouldAddNewConstruct()
+    public void AddPrefixUnaryOperator_ShouldAddNewConstruct()
     {
         var symbol = Fixture.Create<string>();
         var sut = new ParsedExpressionFactoryBuilder();
@@ -335,26 +315,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     }
 
     [Fact]
-    public void AddPrefixUnaryOperator_WithStringSlice_ShouldAddNewConstruct()
-    {
-        var symbol = Fixture.Create<string>();
-        var sut = new ParsedExpressionFactoryBuilder();
-        var @operator = new ParsedExpressionNegateOperator();
-
-        var result = sut.AddPrefixUnaryOperator( symbol.AsSegment(), @operator );
-
-        using ( new AssertionScope() )
-        {
-            var entry = sut.GetConstructs().Should().HaveCount( 1 ).And.Subject.First();
-            entry.Symbol.ToString().Should().Be( symbol );
-            entry.Type.Should().Be( ParsedExpressionConstructType.PrefixUnaryOperator );
-            entry.Construct.Should().BeSameAs( @operator );
-            result.Should().BeSameAs( sut );
-        }
-    }
-
-    [Fact]
-    public void AddPostfixUnaryOperator_WithString_ShouldAddNewConstruct()
+    public void AddPostfixUnaryOperator_ShouldAddNewConstruct()
     {
         var symbol = Fixture.Create<string>();
         var sut = new ParsedExpressionFactoryBuilder();
@@ -373,26 +334,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     }
 
     [Fact]
-    public void AddPostfixUnaryOperator_WithStringSlice_ShouldAddNewConstruct()
-    {
-        var symbol = Fixture.Create<string>();
-        var sut = new ParsedExpressionFactoryBuilder();
-        var @operator = new ParsedExpressionNegateOperator();
-
-        var result = sut.AddPostfixUnaryOperator( symbol.AsSegment(), @operator );
-
-        using ( new AssertionScope() )
-        {
-            var entry = sut.GetConstructs().Should().HaveCount( 1 ).And.Subject.First();
-            entry.Symbol.ToString().Should().Be( symbol );
-            entry.Type.Should().Be( ParsedExpressionConstructType.PostfixUnaryOperator );
-            entry.Construct.Should().BeSameAs( @operator );
-            result.Should().BeSameAs( sut );
-        }
-    }
-
-    [Fact]
-    public void AddPrefixTypeConverter_WithString_ShouldAddNewConstruct()
+    public void AddPrefixTypeConverter_ShouldAddNewConstruct()
     {
         var symbol = Fixture.Create<string>();
         var sut = new ParsedExpressionFactoryBuilder();
@@ -411,26 +353,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     }
 
     [Fact]
-    public void AddPrefixTypeConverter_WithStringSlice_ShouldAddNewConstruct()
-    {
-        var symbol = Fixture.Create<string>();
-        var sut = new ParsedExpressionFactoryBuilder();
-        var converter = new ParsedExpressionTypeConverter<int>();
-
-        var result = sut.AddPrefixTypeConverter( symbol.AsSegment(), converter );
-
-        using ( new AssertionScope() )
-        {
-            var entry = sut.GetConstructs().Should().HaveCount( 1 ).And.Subject.First();
-            entry.Symbol.ToString().Should().Be( symbol );
-            entry.Type.Should().Be( ParsedExpressionConstructType.PrefixTypeConverter );
-            entry.Construct.Should().BeSameAs( converter );
-            result.Should().BeSameAs( sut );
-        }
-    }
-
-    [Fact]
-    public void AddPostfixTypeConverter_WithString_ShouldAddNewConstruct()
+    public void AddPostfixTypeConverter_ShouldAddNewConstruct()
     {
         var symbol = Fixture.Create<string>();
         var sut = new ParsedExpressionFactoryBuilder();
@@ -449,26 +372,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     }
 
     [Fact]
-    public void AddPostfixTypeConverter_WithStringSlice_ShouldAddNewConstruct()
-    {
-        var symbol = Fixture.Create<string>();
-        var sut = new ParsedExpressionFactoryBuilder();
-        var converter = new ParsedExpressionTypeConverter<int>();
-
-        var result = sut.AddPostfixTypeConverter( symbol.AsSegment(), converter );
-
-        using ( new AssertionScope() )
-        {
-            var entry = sut.GetConstructs().Should().HaveCount( 1 ).And.Subject.First();
-            entry.Symbol.ToString().Should().Be( symbol );
-            entry.Type.Should().Be( ParsedExpressionConstructType.PostfixTypeConverter );
-            entry.Construct.Should().BeSameAs( converter );
-            result.Should().BeSameAs( sut );
-        }
-    }
-
-    [Fact]
-    public void AddConstant_WithString_ShouldAddNewConstant()
+    public void AddConstant_ShouldAddNewConstant()
     {
         var symbol = Fixture.Create<string>();
         var sut = new ParsedExpressionFactoryBuilder();
@@ -487,26 +391,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     }
 
     [Fact]
-    public void AddConstant_WithStringSlice_ShouldAddNewConstant()
-    {
-        var symbol = Fixture.Create<string>();
-        var sut = new ParsedExpressionFactoryBuilder();
-        var constant = new ParsedExpressionConstant<int>( Fixture.Create<int>() );
-
-        var result = sut.AddConstant( symbol.AsSegment(), constant );
-
-        using ( new AssertionScope() )
-        {
-            var entry = sut.GetConstructs().Should().HaveCount( 1 ).And.Subject.First();
-            entry.Symbol.ToString().Should().Be( symbol );
-            entry.Type.Should().Be( ParsedExpressionConstructType.Constant );
-            entry.Construct.Should().BeSameAs( constant );
-            result.Should().BeSameAs( sut );
-        }
-    }
-
-    [Fact]
-    public void AddTypeDeclaration_WithString_ShouldAddNewTypeDeclaration()
+    public void AddTypeDeclaration_ShouldAddNewTypeDeclaration()
     {
         var symbol = Fixture.Create<string>();
         var sut = new ParsedExpressionFactoryBuilder();
@@ -524,25 +409,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     }
 
     [Fact]
-    public void AddTypeDeclaration_WithStringSlice_ShouldAddNewTypeDeclaration()
-    {
-        var symbol = Fixture.Create<string>();
-        var sut = new ParsedExpressionFactoryBuilder();
-
-        var result = sut.AddTypeDeclaration<int>( symbol.AsSegment() );
-
-        using ( new AssertionScope() )
-        {
-            var entry = sut.GetConstructs().Should().HaveCount( 1 ).And.Subject.First();
-            entry.Symbol.ToString().Should().Be( symbol );
-            entry.Type.Should().Be( ParsedExpressionConstructType.TypeDeclaration );
-            entry.Construct.Should().BeSameAs( typeof( int ) );
-            result.Should().BeSameAs( sut );
-        }
-    }
-
-    [Fact]
-    public void AddFunction_WithString_ShouldAddNewConstruct()
+    public void AddFunction_ShouldAddNewConstruct()
     {
         var symbol = Fixture.Create<string>();
         var sut = new ParsedExpressionFactoryBuilder();
@@ -561,26 +428,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     }
 
     [Fact]
-    public void AddFunction_WithStringSlice_ShouldAddNewConstruct()
-    {
-        var symbol = Fixture.Create<string>();
-        var sut = new ParsedExpressionFactoryBuilder();
-        var function = new ParsedExpressionFunction<int>( () => Fixture.Create<int>() );
-
-        var result = sut.AddFunction( symbol.AsSegment(), function );
-
-        using ( new AssertionScope() )
-        {
-            var entry = sut.GetConstructs().Should().HaveCount( 1 ).And.Subject.First();
-            entry.Symbol.ToString().Should().Be( symbol );
-            entry.Type.Should().Be( ParsedExpressionConstructType.Function );
-            entry.Construct.Should().BeSameAs( function );
-            result.Should().BeSameAs( sut );
-        }
-    }
-
-    [Fact]
-    public void AddVariadicFunction_WithString_ShouldAddNewConstruct()
+    public void AddVariadicFunction_ShouldAddNewConstruct()
     {
         var symbol = Fixture.Create<string>();
         var sut = new ParsedExpressionFactoryBuilder();
@@ -599,26 +447,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     }
 
     [Fact]
-    public void AddVariadicFunction_WithStringSlice_ShouldAddNewConstruct()
-    {
-        var symbol = Fixture.Create<string>();
-        var sut = new ParsedExpressionFactoryBuilder();
-        var function = Substitute.ForPartsOf<ParsedExpressionVariadicFunction>();
-
-        var result = sut.AddVariadicFunction( symbol.AsSegment(), function );
-
-        using ( new AssertionScope() )
-        {
-            var entry = sut.GetConstructs().Should().HaveCount( 1 ).And.Subject.First();
-            entry.Symbol.ToString().Should().Be( symbol );
-            entry.Type.Should().Be( ParsedExpressionConstructType.VariadicFunction );
-            entry.Construct.Should().BeSameAs( function );
-            result.Should().BeSameAs( sut );
-        }
-    }
-
-    [Fact]
-    public void SetBinaryOperatorPrecedence_WithString_ShouldRegisterPrecedence()
+    public void SetBinaryOperatorPrecedence_ShouldRegisterPrecedence()
     {
         var symbol = Fixture.Create<string>();
         var sut = new ParsedExpressionFactoryBuilder();
@@ -636,25 +465,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     }
 
     [Fact]
-    public void SetBinaryOperatorPrecedence_WithStringSlice_ShouldRegisterPrecedence()
-    {
-        var symbol = Fixture.Create<string>();
-        var sut = new ParsedExpressionFactoryBuilder();
-        var value = Fixture.Create<int>();
-
-        var result = sut.SetBinaryOperatorPrecedence( symbol.AsSegment(), value );
-
-        using ( new AssertionScope() )
-        {
-            var entry = sut.GetBinaryOperatorPrecedences().Should().HaveCount( 1 ).And.Subject.First();
-            entry.Key.ToString().Should().Be( symbol );
-            entry.Value.Should().Be( value );
-            result.Should().BeSameAs( sut );
-        }
-    }
-
-    [Fact]
-    public void SetPrefixUnaryConstructPrecedence_WithString_ShouldRegisterPrecedence()
+    public void SetPrefixUnaryConstructPrecedence_ShouldRegisterPrecedence()
     {
         var symbol = Fixture.Create<string>();
         var sut = new ParsedExpressionFactoryBuilder();
@@ -672,49 +483,13 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     }
 
     [Fact]
-    public void SetPrefixUnaryConstructPrecedence_WithStringSlice_ShouldRegisterPrecedence()
-    {
-        var symbol = Fixture.Create<string>();
-        var sut = new ParsedExpressionFactoryBuilder();
-        var value = Fixture.Create<int>();
-
-        var result = sut.SetPrefixUnaryConstructPrecedence( symbol.AsSegment(), value );
-
-        using ( new AssertionScope() )
-        {
-            var entry = sut.GetPrefixUnaryConstructPrecedences().Should().HaveCount( 1 ).And.Subject.First();
-            entry.Key.ToString().Should().Be( symbol );
-            entry.Value.Should().Be( value );
-            result.Should().BeSameAs( sut );
-        }
-    }
-
-    [Fact]
-    public void SetPostfixUnaryConstructPrecedence_WithString_ShouldRegisterPrecedence()
+    public void SetPostfixUnaryConstructPrecedence_ShouldRegisterPrecedence()
     {
         var symbol = Fixture.Create<string>();
         var sut = new ParsedExpressionFactoryBuilder();
         var value = Fixture.Create<int>();
 
         var result = sut.SetPostfixUnaryConstructPrecedence( symbol, value );
-
-        using ( new AssertionScope() )
-        {
-            var entry = sut.GetPostfixUnaryConstructPrecedences().Should().HaveCount( 1 ).And.Subject.First();
-            entry.Key.ToString().Should().Be( symbol );
-            entry.Value.Should().Be( value );
-            result.Should().BeSameAs( sut );
-        }
-    }
-
-    [Fact]
-    public void SetPostfixUnaryConstructPrecedence_WithStringSlice_ShouldRegisterPrecedence()
-    {
-        var symbol = Fixture.Create<string>();
-        var sut = new ParsedExpressionFactoryBuilder();
-        var value = Fixture.Create<int>();
-
-        var result = sut.SetPostfixUnaryConstructPrecedence( symbol.AsSegment(), value );
 
         using ( new AssertionScope() )
         {

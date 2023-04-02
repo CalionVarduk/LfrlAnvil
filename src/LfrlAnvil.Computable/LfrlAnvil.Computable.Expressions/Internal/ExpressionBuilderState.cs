@@ -1872,7 +1872,7 @@ internal class ExpressionBuilderState
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private ParsedExpressionVariadicFunction GetInternalVariadicFunction(string symbol)
     {
-        var constructs = Configuration.Constructs[symbol.AsSegment()];
+        var constructs = Configuration.Constructs[symbol];
         Assume.IsNotNull( constructs.VariadicFunction, nameof( constructs.VariadicFunction ) );
         return constructs.VariadicFunction;
     }

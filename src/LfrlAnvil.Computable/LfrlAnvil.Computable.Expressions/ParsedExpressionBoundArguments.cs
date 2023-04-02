@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions;
 
@@ -25,21 +24,9 @@ public sealed class ParsedExpressionBoundArguments<TArg> : IReadOnlyCollection<K
     public int Count => _map.Count;
 
     [Pure]
-    public bool Contains(string name)
-    {
-        return Contains( name.AsSegment() );
-    }
-
-    [Pure]
     public bool Contains(StringSegment name)
     {
         return _map.ContainsKey( name );
-    }
-
-    [Pure]
-    public bool TryGetValue(string name, out TArg? result)
-    {
-        return TryGetValue( name.AsSegment(), out result );
     }
 
     [Pure]

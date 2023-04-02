@@ -52,7 +52,7 @@ public sealed class ParsedExpression<TArg, TResult> : IParsedExpression<TArg, TR
     [Pure]
     public ParsedExpression<TArg, TResult> BindArguments(IEnumerable<KeyValuePair<string, TArg?>> arguments)
     {
-        return BindArguments( arguments.Select( kv => KeyValuePair.Create( kv.Key.AsSegment(), kv.Value ) ) );
+        return BindArguments( arguments.Select( kv => KeyValuePair.Create( (StringSegment)kv.Key, kv.Value ) ) );
     }
 
     [Pure]

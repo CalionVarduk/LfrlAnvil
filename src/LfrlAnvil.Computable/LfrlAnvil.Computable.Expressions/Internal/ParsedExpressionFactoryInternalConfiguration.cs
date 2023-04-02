@@ -7,7 +7,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Computable.Expressions.Exceptions;
-using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
 
@@ -64,7 +63,7 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
     [Pure]
     public MemberInfo[] FindTypeFieldsAndProperties(Type type, string name)
     {
-        var result = MemberInfoLocator.FindFieldsAndProperties( type, MemberBindingFlags, GetAccessibleMemberFilter( name.AsSegment() ) );
+        var result = MemberInfoLocator.FindFieldsAndProperties( type, MemberBindingFlags, GetAccessibleMemberFilter( name ) );
         return result;
     }
 
@@ -89,7 +88,7 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
             type,
             parameterTypes,
             MemberBindingFlags,
-            GetAccessibleMemberFilter( name.AsSegment() ) );
+            GetAccessibleMemberFilter( name ) );
 
         return result;
     }
@@ -98,8 +97,8 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
     public MemberFilter GetAccessibleMemberFilter(StringSegment symbol)
     {
         return IgnoreMemberNameCase
-            ? (m, _) => symbol.Equals( m.Name.AsSegment(), StringComparison.OrdinalIgnoreCase ) && IsMemberAccessible( m )
-            : (m, _) => symbol.Equals( m.Name.AsSegment() ) && IsMemberAccessible( m );
+            ? (m, _) => symbol.Equals( m.Name, StringComparison.OrdinalIgnoreCase ) && IsMemberAccessible( m )
+            : (m, _) => symbol.Equals( m.Name ) && IsMemberAccessible( m );
     }
 
     [Pure]
@@ -206,13 +205,13 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
         {
             _info = CultureInfo.InvariantCulture.NumberFormat;
 
-            if ( ! TokenConstants.AreEqual( _info.NumberDecimalSeparator.AsSegment(), configuration.DecimalPoint ) )
+            if ( ! TokenConstants.AreEqual( _info.NumberDecimalSeparator, configuration.DecimalPoint ) )
             {
                 _info = ReinterpretCast.To<NumberFormatInfo>( _info.Clone() );
                 _info.NumberDecimalSeparator = configuration.DecimalPoint.ToString();
             }
 
-            if ( ! TokenConstants.AreEqual( _info.NumberGroupSeparator.AsSegment(), configuration.IntegerDigitSeparator ) )
+            if ( ! TokenConstants.AreEqual( _info.NumberGroupSeparator, configuration.IntegerDigitSeparator ) )
             {
                 if ( _info.IsReadOnly )
                     _info = ReinterpretCast.To<NumberFormatInfo>( _info.Clone() );

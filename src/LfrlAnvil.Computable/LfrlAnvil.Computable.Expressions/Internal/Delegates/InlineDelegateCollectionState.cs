@@ -337,7 +337,7 @@ internal sealed class InlineDelegateCollectionState
                 {
                     Assume.IsNotNull( parameter.Name, nameof( parameter.Name ) );
                     _usedParameters.Add( new OwnedParameterExpression( parameter, ownerStateId ) );
-                    _usedVariables.Add( parameter.Name.AsSegment() );
+                    _usedVariables.Add( parameter.Name );
                 }
             }
             else

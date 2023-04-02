@@ -2,7 +2,6 @@
 using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Computable.Expressions.Exceptions;
 using LfrlAnvil.Computable.Expressions.Extensions;
-using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
@@ -59,7 +58,7 @@ public class ParsedExpressionBufferedDelegateTests : TestsBase
     }
 
     [Fact]
-    public void SetArgumentValue_WithStringKey_ShouldUpdateUnderlyingBufferCorrectly()
+    public void SetArgumentValue_ShouldUpdateUnderlyingBufferCorrectly()
     {
         var (aValue, bValue) = Fixture.CreateDistinctCollection<decimal>( count: 2 );
 
@@ -81,32 +80,6 @@ public class ParsedExpressionBufferedDelegateTests : TestsBase
             result.Should().BeSameAs( sut );
             sut.GetArgumentValue( "a" ).Should().Be( aValue );
             sut.GetArgumentValue( "b" ).Should().Be( bValue );
-        }
-    }
-
-    [Fact]
-    public void SetArgumentValue_WithStringSliceKey_ShouldUpdateUnderlyingBufferCorrectly()
-    {
-        var (aValue, bValue) = Fixture.CreateDistinctCollection<decimal>( count: 2 );
-
-        var input = "a + b";
-        var builder = new ParsedExpressionFactoryBuilder()
-            .AddBinaryOperator( "+", new ParsedExpressionAddOperator() )
-            .SetBinaryOperatorPrecedence( "+", 1 );
-
-        var factory = builder.Build();
-        var expression = factory.Create<decimal, decimal>( input );
-        var @delegate = expression.Compile();
-        var sut = @delegate.ToBuffered();
-
-        sut.SetArgumentValue( "a".AsSegment(), aValue );
-        var result = sut.SetArgumentValue( "b".AsSegment(), bValue );
-
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.GetArgumentValue( "a".AsSegment() ).Should().Be( aValue );
-            sut.GetArgumentValue( "b".AsSegment() ).Should().Be( bValue );
         }
     }
 
@@ -133,7 +106,7 @@ public class ParsedExpressionBufferedDelegateTests : TestsBase
     }
 
     [Fact]
-    public void SetArgumentValue_WithStringKey_ShouldThrowInvalidMathExpressionArgumentsException_WhenArgumentNameDoesNotExist()
+    public void SetArgumentValue_ShouldThrowInvalidMathExpressionArgumentsException_WhenArgumentNameDoesNotExist()
     {
         var value = Fixture.Create<decimal>();
 
@@ -148,28 +121,6 @@ public class ParsedExpressionBufferedDelegateTests : TestsBase
         var sut = @delegate.ToBuffered();
 
         var action = Lambda.Of( () => sut.SetArgumentValue( "c", value ) );
-
-        action.Should()
-            .ThrowExactly<InvalidParsedExpressionArgumentsException>()
-            .AndMatch( e => e.ArgumentNames.Select( n => n.ToString() ).SequenceEqual( new[] { "c" } ) );
-    }
-
-    [Fact]
-    public void SetArgumentValue_WithStringSliceKey_ShouldThrowInvalidMathExpressionArgumentsException_WhenArgumentNameDoesNotExist()
-    {
-        var value = Fixture.Create<decimal>();
-
-        var input = "a + b";
-        var builder = new ParsedExpressionFactoryBuilder()
-            .AddBinaryOperator( "+", new ParsedExpressionAddOperator() )
-            .SetBinaryOperatorPrecedence( "+", 1 );
-
-        var factory = builder.Build();
-        var expression = factory.Create<decimal, decimal>( input );
-        var @delegate = expression.Compile();
-        var sut = @delegate.ToBuffered();
-
-        var action = Lambda.Of( () => sut.SetArgumentValue( "c".AsSegment(), value ) );
 
         action.Should()
             .ThrowExactly<InvalidParsedExpressionArgumentsException>()
@@ -197,7 +148,7 @@ public class ParsedExpressionBufferedDelegateTests : TestsBase
     }
 
     [Fact]
-    public void GetArgumentValue_WithStringKey_ShouldThrowInvalidMathExpressionArgumentsException_WhenArgumentNameDoesNotExist()
+    public void GetArgumentValue_ShouldThrowInvalidMathExpressionArgumentsException_WhenArgumentNameDoesNotExist()
     {
         var input = "a + b";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -210,26 +161,6 @@ public class ParsedExpressionBufferedDelegateTests : TestsBase
         var sut = @delegate.ToBuffered();
 
         var action = Lambda.Of( () => sut.GetArgumentValue( "c" ) );
-
-        action.Should()
-            .ThrowExactly<InvalidParsedExpressionArgumentsException>()
-            .AndMatch( e => e.ArgumentNames.Select( n => n.ToString() ).SequenceEqual( new[] { "c" } ) );
-    }
-
-    [Fact]
-    public void GetArgumentValue_WithStringSliceKey_ShouldThrowInvalidMathExpressionArgumentsException_WhenArgumentNameDoesNotExist()
-    {
-        var input = "a + b";
-        var builder = new ParsedExpressionFactoryBuilder()
-            .AddBinaryOperator( "+", new ParsedExpressionAddOperator() )
-            .SetBinaryOperatorPrecedence( "+", 1 );
-
-        var factory = builder.Build();
-        var expression = factory.Create<decimal, decimal>( input );
-        var @delegate = expression.Compile();
-        var sut = @delegate.ToBuffered();
-
-        var action = Lambda.Of( () => sut.GetArgumentValue( "c".AsSegment() ) );
 
         action.Should()
             .ThrowExactly<InvalidParsedExpressionArgumentsException>()

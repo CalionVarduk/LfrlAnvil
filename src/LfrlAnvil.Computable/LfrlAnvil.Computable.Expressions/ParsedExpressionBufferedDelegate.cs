@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Computable.Expressions.Exceptions;
-using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions;
 
@@ -24,11 +23,6 @@ public sealed class ParsedExpressionBufferedDelegate<TArg, TResult>
         return this;
     }
 
-    public ParsedExpressionBufferedDelegate<TArg, TResult> SetArgumentValue(string argumentName, TArg? value)
-    {
-        return SetArgumentValue( argumentName.AsSegment(), value );
-    }
-
     public ParsedExpressionBufferedDelegate<TArg, TResult> SetArgumentValue(StringSegment argumentName, TArg? value)
     {
         var index = Base.Arguments.GetIndex( argumentName );
@@ -43,12 +37,6 @@ public sealed class ParsedExpressionBufferedDelegate<TArg, TResult>
     public TArg? GetArgumentValue(int index)
     {
         return _buffer[index];
-    }
-
-    [Pure]
-    public TArg? GetArgumentValue(string argumentName)
-    {
-        return GetArgumentValue( argumentName.AsSegment() );
     }
 
     [Pure]

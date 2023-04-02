@@ -6,23 +6,6 @@ namespace LfrlAnvil.Tests.ExtensionsTests.StringTests;
 public class StringExtensionsTests : TestsBase
 {
     [Theory]
-    [InlineData( "" )]
-    [InlineData( "foo" )]
-    [InlineData( "foobar" )]
-    public void AsSegment_WithSource_ShouldReturnCorrectResult(string source)
-    {
-        var sut = source.AsSegment();
-
-        using ( new AssertionScope() )
-        {
-            sut.StartIndex.Should().Be( 0 );
-            sut.Length.Should().Be( source.Length );
-            sut.EndIndex.Should().Be( source.Length );
-            sut.Source.Should().BeSameAs( source );
-        }
-    }
-
-    [Theory]
     [InlineData( "", 0, 0, 0, 0 )]
     [InlineData( "", 1, 0, 0, 0 )]
     [InlineData( "foobar", 0, 0, 6, 6 )]

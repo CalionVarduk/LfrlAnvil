@@ -3,7 +3,6 @@ using System.Linq;
 using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Computable.Expressions.Constructs.Decimal;
 using LfrlAnvil.Computable.Expressions.Exceptions;
-using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
 
 namespace LfrlAnvil.Computable.Expressions.Tests.ParsedExpressionTests;
@@ -109,7 +108,7 @@ public class ParsedExpressionTests : TestsBase
     }
 
     [Fact]
-    public void BindArguments_WithStringSliceKey_ShouldBindExpressionArgumentsCorrectly()
+    public void BindArguments_WithStringSegmentKey_ShouldBindExpressionArgumentsCorrectly()
     {
         var (bValue, cValue, eValue) = Fixture.CreateDistinctCollection<decimal>( count: 3 );
 
@@ -122,9 +121,9 @@ public class ParsedExpressionTests : TestsBase
         var sut = factory.Create<decimal, decimal>( input );
 
         var result = sut.BindArguments(
-            KeyValuePair.Create( "b".AsSegment(), bValue ),
-            KeyValuePair.Create( "c".AsSegment(), cValue ),
-            KeyValuePair.Create( "e".AsSegment(), eValue ) );
+            KeyValuePair.Create( (StringSegment)"b", bValue ),
+            KeyValuePair.Create( (StringSegment)"c", cValue ),
+            KeyValuePair.Create( (StringSegment)"e", eValue ) );
 
         using ( new AssertionScope() )
         {
@@ -407,7 +406,7 @@ public class ParsedExpressionTests : TestsBase
     }
 
     [Fact]
-    public void IMathExpressionBindArguments_WithEnumerableStringSliceKey_ShouldBeEquivalentToBindArguments()
+    public void IMathExpressionBindArguments_WithEnumerableStringSegmentKey_ShouldBeEquivalentToBindArguments()
     {
         var (aValue, bValue) = Fixture.CreateDistinctCollection<decimal>( count: 2 );
         var expected = aValue + bValue;
@@ -420,7 +419,7 @@ public class ParsedExpressionTests : TestsBase
         var factory = builder.Build();
         IParsedExpression<decimal, decimal> sut = factory.Create<decimal, decimal>( input );
 
-        var result = sut.BindArguments( new[] { KeyValuePair.Create( "a".AsSegment(), aValue ) }.AsEnumerable() );
+        var result = sut.BindArguments( new[] { KeyValuePair.Create( (StringSegment)"a", aValue ) }.AsEnumerable() );
         var @delegate = result.Compile();
         var resultValue = @delegate.Invoke( bValue );
 
@@ -428,7 +427,7 @@ public class ParsedExpressionTests : TestsBase
     }
 
     [Fact]
-    public void IMathExpressionBindArguments_WithParamsStringSliceKey_ShouldBeEquivalentToBindArguments()
+    public void IMathExpressionBindArguments_WithParamsStringSegmentKey_ShouldBeEquivalentToBindArguments()
     {
         var (aValue, bValue) = Fixture.CreateDistinctCollection<decimal>( count: 2 );
         var expected = aValue + bValue;
@@ -441,7 +440,7 @@ public class ParsedExpressionTests : TestsBase
         var factory = builder.Build();
         IParsedExpression<decimal, decimal> sut = factory.Create<decimal, decimal>( input );
 
-        var result = sut.BindArguments( KeyValuePair.Create( "a".AsSegment(), aValue ) );
+        var result = sut.BindArguments( KeyValuePair.Create( (StringSegment)"a", aValue ) );
         var @delegate = result.Compile();
         var resultValue = @delegate.Invoke( bValue );
 

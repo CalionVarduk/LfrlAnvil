@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Tests.ParsedExpressionDiscardedArgumentsTests;
 
@@ -15,7 +14,7 @@ public class ParsedExpressionDiscardedArgumentsTests : TestsBase
     [Fact]
     public void Ctor_ShouldReturnCorrectResult()
     {
-        var sut = new ParsedExpressionDiscardedArguments( new[] { "a".AsSegment(), "b".AsSegment(), "c".AsSegment() } );
+        var sut = new ParsedExpressionDiscardedArguments( new StringSegment[] { "a", "b", "c" } );
 
         using ( new AssertionScope() )
         {
@@ -30,7 +29,7 @@ public class ParsedExpressionDiscardedArgumentsTests : TestsBase
     [InlineData( "c" )]
     public void Contains_ShouldReturnTrue_WhenNameExists(string name)
     {
-        var sut = new ParsedExpressionDiscardedArguments( new[] { "a".AsSegment(), "b".AsSegment(), "c".AsSegment() } );
+        var sut = new ParsedExpressionDiscardedArguments( new StringSegment[] { "a", "b", "c" } );
         var result = sut.Contains( name );
         result.Should().BeTrue();
     }
@@ -38,7 +37,7 @@ public class ParsedExpressionDiscardedArgumentsTests : TestsBase
     [Fact]
     public void Contains_ShouldReturnFalse_WhenNameDoesNotExist()
     {
-        var sut = new ParsedExpressionDiscardedArguments( new[] { "a".AsSegment() } );
+        var sut = new ParsedExpressionDiscardedArguments( new StringSegment[] { "a" } );
         var result = sut.Contains( "b" );
         result.Should().BeFalse();
     }

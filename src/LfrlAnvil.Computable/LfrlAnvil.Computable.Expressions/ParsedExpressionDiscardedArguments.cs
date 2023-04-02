@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions;
 
@@ -23,12 +22,6 @@ public sealed class ParsedExpressionDiscardedArguments : IReadOnlyCollection<Str
     }
 
     public int Count => _set.Count;
-
-    [Pure]
-    public bool Contains(string name)
-    {
-        return Contains( name.AsSegment() );
-    }
 
     [Pure]
     public bool Contains(StringSegment name)

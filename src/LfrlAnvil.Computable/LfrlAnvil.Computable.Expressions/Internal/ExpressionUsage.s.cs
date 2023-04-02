@@ -6,7 +6,6 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
 using LfrlAnvil.Computable.Expressions.Internal.Delegates;
-using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
 
@@ -237,7 +236,7 @@ internal static class ExpressionUsage
             if ( node is not ParameterExpression parameter || parameter.Name is null )
                 return;
 
-            var variableName = parameter.Name.AsSegment();
+            var variableName = parameter.Name;
             if ( ! localTerms.TryGetVariable( variableName, out var assignment ) )
                 return;
 

@@ -4,7 +4,6 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Computable.Expressions.Exceptions;
-using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Extensions;
 
@@ -61,7 +60,7 @@ public static class ParsedExpressionDelegateExtensions
         TArg?[] buffer,
         IEnumerable<KeyValuePair<string, TArg?>> arguments)
     {
-        MapArguments( source, buffer, arguments.Select( static kv => KeyValuePair.Create( kv.Key.AsSegment(), kv.Value ) ) );
+        MapArguments( source, buffer, arguments.Select( static kv => KeyValuePair.Create( (StringSegment)kv.Key, kv.Value ) ) );
     }
 
     public static void MapArguments<TArg, TResult>(
