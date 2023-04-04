@@ -712,6 +712,77 @@ public class RentedMemorySequenceTests : TestsBase
     }
 
     [Fact]
+    public void Sort_ShouldSortSequenceCorrectly()
+    {
+        var pool = new MemorySequencePool<int>( 4 );
+        var a = pool.Rent( 3 );
+        var sut = pool.Rent( 8 );
+        var b = pool.Rent( 5 );
+        sut.CopyFrom( new[] { 10, 7, 5, 8, 7, 2, 3, 9 } );
+
+        sut.Sort();
+
+        using ( new AssertionScope() )
+        {
+            a.Should().AllBeEquivalentTo( 0 );
+            b.Should().AllBeEquivalentTo( 0 );
+            sut.Should().BeSequentiallyEqualTo( 2, 3, 5, 7, 7, 8, 9, 10 );
+        }
+    }
+
+    [Fact]
+    public void Sort_ShouldDoNothing_WhenLengthIsLessThanTwo()
+    {
+        var pool = new MemorySequencePool<int>( 4 );
+        var a = pool.Rent( 3 );
+        var sut = pool.Rent( 1 );
+        sut[0] = 1;
+        var b = pool.Rent( 5 );
+
+        sut.Sort();
+
+        using ( new AssertionScope() )
+        {
+            a.Should().AllBeEquivalentTo( 0 );
+            b.Should().AllBeEquivalentTo( 0 );
+            sut.Should().BeSequentiallyEqualTo( 1 );
+        }
+    }
+
+    [Fact]
+    public void Sort_ShouldDoNothing_WhenTailSequenceIsDisposed()
+    {
+        var pool = new MemorySequencePool<int>( 8 ) { ClearReturnedSequences = false };
+        var sut = pool.Rent( 8 );
+        pool.Rent( 8 );
+        for ( var i = 0; i < sut.Length; ++i )
+            sut[i] = sut.Length - i;
+
+        sut.Dispose();
+
+        sut.Sort();
+        var other = pool.Rent( 8 );
+
+        other.Should().BeSequentiallyEqualTo( 8, 7, 6, 5, 4, 3, 2, 1 );
+    }
+
+    [Fact]
+    public void Sort_ShouldDoNothing_WhenNonTailSequenceIsDisposed()
+    {
+        var pool = new MemorySequencePool<int>( 8 ) { ClearReturnedSequences = false };
+        var sut = pool.Rent( 8 );
+        for ( var i = 0; i < sut.Length; ++i )
+            sut[i] = sut.Length - i;
+
+        sut.Dispose();
+
+        sut.Sort();
+        var other = pool.Rent( 8 );
+
+        other.Should().BeSequentiallyEqualTo( 8, 7, 6, 5, 4, 3, 2, 1 );
+    }
+
+    [Fact]
     public void GetEnumerator_ShouldReturnCorrectCollection()
     {
         var pool = new MemorySequencePool<int>( 4 );

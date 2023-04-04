@@ -659,4 +659,79 @@ public class MemorySequencePoolTests : TestsBase
             result.Should().AllBeEquivalentTo( default( int ) );
         }
     }
+
+    [Fact]
+    public void ReportInfo_Default_ShouldReturnCorrectData()
+    {
+        var sut = default( MemorySequencePool<int>.ReportInfo );
+
+        using ( new AssertionScope() )
+        {
+            sut.AllocatedSegments.Should().Be( 0 );
+            sut.ActiveSegments.Should().Be( 0 );
+            sut.CachedNodes.Should().Be( 0 );
+            sut.ActiveNodes.Should().Be( 0 );
+            sut.FragmentedNodes.Should().Be( 0 );
+            sut.ActiveElements.Should().Be( 0 );
+            sut.FragmentedElements.Should().Be( 0 );
+            sut.GetFragmentedNodeSizes().Should().BeEmpty();
+            sut.GetActiveNodes().Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void ReportInfo_ForEmptyPool_ShouldReturnCorrectData()
+    {
+        var sut = new MemorySequencePool<int>( 16 ).Report;
+
+        using ( new AssertionScope() )
+        {
+            sut.AllocatedSegments.Should().Be( 0 );
+            sut.ActiveSegments.Should().Be( 0 );
+            sut.CachedNodes.Should().Be( 0 );
+            sut.ActiveNodes.Should().Be( 0 );
+            sut.FragmentedNodes.Should().Be( 0 );
+            sut.ActiveElements.Should().Be( 0 );
+            sut.FragmentedElements.Should().Be( 0 );
+            sut.GetFragmentedNodeSizes().Should().BeEmpty();
+            sut.GetActiveNodes().Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void ReportInfo_ForPoolInUse_ShouldReturnCorrectData()
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+        var a = pool.Rent( 5 );
+        var b = pool.Rent( 17 );
+        var c = pool.Rent( 9 );
+        var d = pool.Rent( 6 );
+        var e = pool.Rent( 14 );
+        var f = pool.Rent( 20 );
+        var g = pool.Rent( 2 );
+        var h = pool.Rent( 8 );
+        var i = pool.Rent( 18 );
+        var j = pool.Rent( 3 );
+
+        a.Dispose();
+        c.Dispose();
+        e.Dispose();
+        i.Dispose();
+        j.Dispose();
+
+        var sut = pool.Report;
+
+        using ( new AssertionScope() )
+        {
+            sut.AllocatedSegments.Should().Be( 13 );
+            sut.ActiveSegments.Should().Be( 11 );
+            sut.CachedNodes.Should().Be( 2 );
+            sut.ActiveNodes.Should().Be( 8 );
+            sut.FragmentedNodes.Should().Be( 3 );
+            sut.ActiveElements.Should().Be( 81 );
+            sut.FragmentedElements.Should().Be( 28 );
+            sut.GetFragmentedNodeSizes().Should().BeSequentiallyEqualTo( 14, 5, 9 );
+            sut.GetActiveNodes().Should().BeSequentiallyEqualTo( h, g, f, d, b );
+        }
+    }
 }

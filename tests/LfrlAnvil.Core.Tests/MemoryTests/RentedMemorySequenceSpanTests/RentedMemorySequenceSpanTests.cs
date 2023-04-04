@@ -790,6 +790,85 @@ public class RentedMemorySequenceSpanTests : TestsBase
     }
 
     [Fact]
+    public void Sort_ShouldSortSequenceCorrectly()
+    {
+        var pool = new MemorySequencePool<int>( 4 );
+        var a = pool.Rent( 1 );
+        var seq = pool.Rent( 12 );
+        var sut = seq.Slice( 2, 8 );
+        var b = pool.Rent( 3 );
+        seq.CopyFrom( new[] { -1, -1, 10, 7, 5, 8, 7, 2, 3, 9, -1, -1 } );
+
+        sut.Sort();
+
+        using ( new AssertionScope() )
+        {
+            a.Should().AllBeEquivalentTo( 0 );
+            b.Should().AllBeEquivalentTo( 0 );
+            seq.Should().BeSequentiallyEqualTo( -1, -1, 2, 3, 5, 7, 7, 8, 9, 10, -1, -1 );
+        }
+    }
+
+    [Theory]
+    [InlineData( 0 )]
+    [InlineData( 1 )]
+    public void Sort_ShouldDoNothing_WhenLengthIsLessThanTwo(int length)
+    {
+        var pool = new MemorySequencePool<int>( 4 );
+        var a = pool.Rent( 1 );
+        var seq = pool.Rent( 8 );
+        for ( var i = 0; i < seq.Length; ++i )
+            seq[i] = seq.Length - i;
+
+        var sut = seq.Slice( 2, length );
+        var b = pool.Rent( 3 );
+
+        sut.Sort();
+
+        using ( new AssertionScope() )
+        {
+            a.Should().AllBeEquivalentTo( 0 );
+            b.Should().AllBeEquivalentTo( 0 );
+            seq.Should().BeSequentiallyEqualTo( 8, 7, 6, 5, 4, 3, 2, 1 );
+        }
+    }
+
+    [Fact]
+    public void Sort_ShouldDoNothing_WhenTailSequenceIsDisposed()
+    {
+        var pool = new MemorySequencePool<int>( 8 ) { ClearReturnedSequences = false };
+        var seq = pool.Rent( 12 );
+        var sut = seq.Slice( 2, 8 );
+        pool.Rent( 8 );
+        for ( var i = 0; i < seq.Length; ++i )
+            seq[i] = seq.Length - i;
+
+        seq.Dispose();
+
+        sut.Sort();
+        var other = pool.Rent( 12 );
+
+        other.Should().BeSequentiallyEqualTo( 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 );
+    }
+
+    [Fact]
+    public void Sort_ShouldDoNothing_WhenNonTailSequenceIsDisposed()
+    {
+        var pool = new MemorySequencePool<int>( 8 ) { ClearReturnedSequences = false };
+        var seq = pool.Rent( 12 );
+        var sut = seq.Slice( 2, 8 );
+        for ( var i = 0; i < seq.Length; ++i )
+            seq[i] = seq.Length - i;
+
+        seq.Dispose();
+
+        sut.Sort();
+        var other = pool.Rent( 12 );
+
+        other.Should().BeSequentiallyEqualTo( 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 );
+    }
+
+    [Fact]
     public void GetEnumerator_ShouldReturnCorrectCollection()
     {
         var pool = new MemorySequencePool<int>( 4 );

@@ -32,7 +32,7 @@ public struct MemorySequenceEnumerator<T> : IEnumerator<T>
             return false;
 
         Assume.IsNotNull( _node, nameof( _node ) );
-        Assume.Equals( _node.IsFree, false, nameof( _node.IsFree ) );
+        Assume.Equals( _node.IsReusable, false, nameof( _node.IsReusable ) );
 
         --_remaining;
         var elementIndex = _index.Element + 1;

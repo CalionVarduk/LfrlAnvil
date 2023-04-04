@@ -30,7 +30,7 @@ public readonly struct RentedMemorySequenceSpan<T> : IReadOnlyList<T>, ICollecti
     public int Length { get; }
 
     public RentedMemorySequenceSegmentCollection<T> Segments =>
-        _node is null || _node.IsFree || Length == 0
+        _node is null || _node.IsReusable || Length == 0
             ? RentedMemorySequenceSegmentCollection<T>.Empty
             : new RentedMemorySequenceSegmentCollection<T>( _node, StartIndex, Length );
 
@@ -79,12 +79,12 @@ public readonly struct RentedMemorySequenceSpan<T> : IReadOnlyList<T>, ICollecti
     [Pure]
     public bool Contains(T item)
     {
-        return _node is not null && ! _node.IsFree && _node.IndexOf( item, StartIndex, Length ) != -1;
+        return _node is not null && ! _node.IsReusable && _node.IndexOf( item, StartIndex, Length ) != -1;
     }
 
     public void Clear()
     {
-        if ( _node is not null && ! _node.IsFree )
+        if ( _node is not null && ! _node.IsReusable )
             _node.ClearSegments( StartIndex, Length );
     }
 
@@ -96,7 +96,7 @@ public readonly struct RentedMemorySequenceSpan<T> : IReadOnlyList<T>, ICollecti
 
     public void CopyTo(Span<T> span)
     {
-        if ( _node is null || _node.IsFree )
+        if ( _node is null || _node.IsReusable )
             return;
 
         Ensure.IsGreaterThanOrEqualTo( span.Length, Length, nameof( span ) + '.' + nameof( span.Length ) );
@@ -105,7 +105,7 @@ public readonly struct RentedMemorySequenceSpan<T> : IReadOnlyList<T>, ICollecti
 
     public void CopyTo(RentedMemorySequenceSpan<T> span)
     {
-        if ( _node is null || _node.IsFree )
+        if ( _node is null || _node.IsReusable )
             return;
 
         Ensure.IsGreaterThanOrEqualTo( span.Length, Length, nameof( span ) + '.' + nameof( span.Length ) );
@@ -121,7 +121,7 @@ public readonly struct RentedMemorySequenceSpan<T> : IReadOnlyList<T>, ICollecti
 
     public void CopyFrom(ReadOnlySpan<T> span)
     {
-        if ( _node is null || _node.IsFree )
+        if ( _node is null || _node.IsReusable )
             return;
 
         Ensure.IsGreaterThanOrEqualTo( Length, span.Length, nameof( Length ) );
@@ -131,12 +131,23 @@ public readonly struct RentedMemorySequenceSpan<T> : IReadOnlyList<T>, ICollecti
     [Pure]
     public T[] ToArray()
     {
-        if ( _node is null || _node.IsFree || Length == 0 )
+        if ( _node is null || _node.IsReusable || Length == 0 )
             return Array.Empty<T>();
 
         var result = new T[Length];
         _node.CopyTo( result, StartIndex, Length );
         return result;
+    }
+
+    public void Sort(Comparer<T>? comparer = null)
+    {
+        Sort( (comparer ?? Comparer<T>.Default).Compare );
+    }
+
+    public void Sort(Comparison<T> comparer)
+    {
+        if ( _node is not null && ! _node.IsReusable )
+            _node.Sort( StartIndex, Length, comparer );
     }
 
     [Pure]

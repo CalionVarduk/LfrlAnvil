@@ -35,11 +35,4 @@ internal readonly struct ArraySequenceIndex
         var nextElement = Element + offset;
         return new ArraySequenceIndex( Segment + (nextElement >> segmentLengthLog2), nextElement & ((1 << segmentLengthLog2) - 1) );
     }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ArraySequenceIndex Increment(int segmentLengthLog2)
-    {
-        return Add( 1, segmentLengthLog2 );
-    }
 }
