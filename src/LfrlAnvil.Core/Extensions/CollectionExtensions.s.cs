@@ -3,11 +3,19 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Memory;
 
 namespace LfrlAnvil.Extensions;
 
 public static class CollectionExtensions
 {
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static IReadOnlyCollection<T> EmptyIfNull<T>(this IReadOnlyCollection<T>? source)
+    {
+        return source ?? Array.Empty<T>();
+    }
+
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool IsNullOrEmpty<T>([NotNullWhen( false )] this IReadOnlyCollection<T>? source)
@@ -50,18 +58,12 @@ public static class CollectionExtensions
         return source.Count == count;
     }
 
-    [Pure]
-    public static TResult[] ToArray<TSource, TResult>(this IReadOnlyCollection<TSource> source, Func<TSource, TResult> selector)
+    public static void CopyTo<T>(this IReadOnlyCollection<T> source, RentedMemorySequenceSpan<T> span)
     {
-        var count = source.Count;
-        if ( count == 0 )
-            return Array.Empty<TResult>();
+        Ensure.ContainsAtMost( source, span.Length, nameof( source ) );
 
         var index = 0;
-        var result = new TResult[count];
         foreach ( var e in source )
-            result[index++] = selector( e );
-
-        return result;
+            span[index++] = e;
     }
 }

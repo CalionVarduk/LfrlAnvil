@@ -738,6 +738,13 @@ public static class EnumerableExtensions
     }
 
     [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static TResult[] ToArray<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector)
+    {
+        return source.Select( selector ).ToArray();
+    }
+
+    [Pure]
     private static IReadOnlySet<T> GetSet<T>(IEnumerable<T> source, IEqualityComparer<T> comparer)
     {
         if ( source is HashSet<T> hashSet && hashSet.Comparer.Equals( comparer ) )

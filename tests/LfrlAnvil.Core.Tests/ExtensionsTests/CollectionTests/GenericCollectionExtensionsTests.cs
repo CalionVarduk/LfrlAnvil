@@ -1,12 +1,30 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using LfrlAnvil.Extensions;
+using LfrlAnvil.Functional;
+using LfrlAnvil.Memory;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.ExtensionsTests.CollectionTests;
 
 public abstract class GenericCollectionExtensionsTests<T> : TestsBase
 {
+    [Fact]
+    public void EmptyIfNull_ShouldReturnSource_WhenSourceIsNotNull()
+    {
+        var sut = Fixture.CreateMany<T>( count: 3 ).ToList();
+        var result = sut.EmptyIfNull();
+        result.Should().BeSameAs( sut );
+    }
+
+    [Fact]
+    public void EmptyIfNull_ShouldReturnEmptyArray_WhenSourceIsNull()
+    {
+        IReadOnlyCollection<T>? sut = null;
+        var result = sut.EmptyIfNull();
+        result.Should().BeSameAs( Array.Empty<T>() );
+    }
+
     [Fact]
     public void IsNullOrEmpty_ShouldReturnTrueWhenSourceIsNull()
     {
@@ -230,21 +248,40 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
     }
 
     [Fact]
-    public void ToArray_ShouldReturnEmptyArray_WhenCollectionIsEmpty()
+    public void CopyTo_ShouldCopyElementsFromSourceToSpan_WhenSourceAndSpanHaveTheSameLength()
     {
-        var sut = new List<Ref<T>>();
-        var result = sut.ToArray( r => r.Value );
-        result.Should().BeEmpty();
+        var pool = new MemorySequencePool<T>( 8 );
+        var span = pool.Rent( 3 );
+        var sut = Fixture.CreateMany<T>( count: 3 ).ToList();
+
+        sut.CopyTo( span );
+
+        span.Should().BeSequentiallyEqualTo( sut );
     }
 
-    [Theory]
-    [InlineData( 1 )]
-    [InlineData( 2 )]
-    [InlineData( 10 )]
-    public void ToArray_ShouldReturnArrayWithCorrectElements_WhenCollectionIsNotEmpty(int count)
+    [Fact]
+    public void CopyTo_ShouldCopyElementsFromSourceToSpan_WhenSpanIsLargerThanSource()
     {
-        var sut = Fixture.CreateMany<T>( count ).Select( Ref.Create ).ToList();
-        var result = sut.ToArray( r => r.Value );
-        result.Should().BeSequentiallyEqualTo( sut.Select( r => r.Value ) );
+        var elements = Fixture.CreateDistinctCollection<T>( count: 4 );
+        var pool = new MemorySequencePool<T>( 8 );
+        var span = pool.Rent( 4 );
+        span[^1] = elements[^1];
+        var sut = elements.Take( 3 ).ToList();
+
+        sut.CopyTo( span );
+
+        span.Should().BeSequentiallyEqualTo( elements );
+    }
+
+    [Fact]
+    public void CopyTo_ShouldThrowArgumentException_WhenSourceIsLargerThanSpan()
+    {
+        var pool = new MemorySequencePool<T>( 8 );
+        var span = pool.Rent( 2 );
+        var sut = Fixture.CreateMany<T>( count: 3 ).ToList();
+
+        var action = Lambda.Of( () => sut.CopyTo( span ) );
+
+        action.Should().ThrowExactly<ArgumentException>();
     }
 }
