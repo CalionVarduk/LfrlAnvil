@@ -9,7 +9,7 @@ public sealed class ParsedExpressionLessThanInt64Operator : ParsedExpressionBina
     protected override Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
         return TryGetArgumentValue( left, out var leftValue ) && TryGetArgumentValue( right, out var rightValue )
-            ? Expression.Constant( leftValue < rightValue )
+            ? Expression.Constant( Boxed.GetBool( leftValue < rightValue ) )
             : null;
     }
 

@@ -9,7 +9,7 @@ public sealed class ParsedExpressionNotOperator : ParsedExpressionUnaryOperator<
     protected override Expression? TryCreateFromConstant(ConstantExpression operand)
     {
         return TryGetArgumentValue( operand, out var value )
-            ? Expression.Constant( ! value )
+            ? Expression.Constant( Boxed.GetBool( ! value ) )
             : null;
     }
 
