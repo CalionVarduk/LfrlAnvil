@@ -4,14 +4,15 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Exceptions;
+using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.Memory;
 
-public readonly struct RentedMemorySequence<T> : IReadOnlyList<T>, ICollection<T>, IDisposable
+public struct RentedMemorySequence<T> : IReadOnlyList<T>, ICollection<T>, IDisposable
 {
     public static readonly RentedMemorySequence<T> Empty = new RentedMemorySequence<T>();
 
-    private readonly MemorySequencePool<T>.Node? _node;
+    private MemorySequencePool<T>.Node? _node;
 
     internal RentedMemorySequence(MemorySequencePool<T>.Node node)
     {
@@ -20,11 +21,11 @@ public readonly struct RentedMemorySequence<T> : IReadOnlyList<T>, ICollection<T
         Length = _node.Length;
     }
 
-    public int Length { get; }
+    public int Length { get; private set; }
     public MemorySequencePool<T>? Owner => _node?.Pool;
 
     public RentedMemorySequenceSegmentCollection<T> Segments =>
-        _node is null || _node.IsReusable
+        _node is null || _node.IsReusable || Length == 0
             ? RentedMemorySequenceSegmentCollection<T>.Empty
             : new RentedMemorySequenceSegmentCollection<T>( _node );
 
@@ -70,9 +71,32 @@ public readonly struct RentedMemorySequence<T> : IReadOnlyList<T>, ICollection<T
         return new RentedMemorySequenceSpan<T>( _node, startIndex, length );
     }
 
+    public void Push(T item)
+    {
+        if ( _node is null || _node.IsReusable )
+            return;
+
+        _node = _node.Push( item );
+        Length = _node.Length;
+    }
+
+    public void Expand(int length)
+    {
+        if ( length <= 0 || _node is null || _node.IsReusable )
+            return;
+
+        _node = _node.Expand( length );
+        Length = _node.Length;
+    }
+
     public void Dispose()
     {
-        _node?.Free();
+        if ( _node is null )
+            return;
+
+        _node.Free();
+        _node = null;
+        Length = 0;
     }
 
     [Pure]
@@ -120,7 +144,7 @@ public readonly struct RentedMemorySequence<T> : IReadOnlyList<T>, ICollection<T
     [Pure]
     public T[] ToArray()
     {
-        if ( _node is null || _node.IsReusable )
+        if ( _node is null || _node.IsReusable || Length == 0 )
             return Array.Empty<T>();
 
         var result = new T[Length];
@@ -139,9 +163,9 @@ public readonly struct RentedMemorySequence<T> : IReadOnlyList<T>, ICollection<T
     }
 
     [Pure]
-    public MemorySequenceEnumerator<T> GetEnumerator()
+    public Enumerator GetEnumerator()
     {
-        return new MemorySequenceEnumerator<T>( _node, 0, Length );
+        return new Enumerator( _node, 0, Length );
     }
 
     [Pure]
@@ -151,6 +175,86 @@ public readonly struct RentedMemorySequence<T> : IReadOnlyList<T>, ICollection<T
         return s._node is null || s._node.IsReusable
             ? RentedMemorySequenceSpan<T>.Empty
             : new RentedMemorySequenceSpan<T>( s._node, 0, s.Length );
+    }
+
+    public struct Enumerator : IEnumerator<T>
+    {
+        private readonly int _offset;
+        private int _length;
+        private MemorySequencePool<T>.Node? _node;
+        private ArraySequenceIndex _index;
+        private T[] _currentSegment;
+        private int _remaining;
+
+        internal Enumerator(MemorySequencePool<T>.Node? node, int offset, int length)
+        {
+            _node = node;
+            _offset = offset;
+            _length = length;
+            _remaining = length;
+            Initialize( _node, _offset, out _index, out _currentSegment );
+        }
+
+        public T Current => _currentSegment[_index.Element];
+        object? IEnumerator.Current => Current;
+
+        public bool MoveNext()
+        {
+            if ( _remaining == 0 )
+                return false;
+
+            Assume.IsNotNull( _node, nameof( _node ) );
+            Assume.Equals( _node.IsReusable, false, nameof( _node.IsReusable ) );
+
+            --_remaining;
+            var elementIndex = _index.Element + 1;
+            if ( elementIndex < _node.Pool.SegmentLength )
+                _index = new ArraySequenceIndex( _index.Segment, elementIndex );
+            else
+            {
+                _index = new ArraySequenceIndex( _index.Segment + 1, 0 );
+                _currentSegment = _node.GetAbsoluteSegment( _index.Segment );
+            }
+
+            return true;
+        }
+
+        public void Dispose()
+        {
+            _node = null;
+            _length = 0;
+            _index = ArraySequenceIndex.Zero;
+            _currentSegment = Array.Empty<T>();
+            _remaining = 0;
+        }
+
+        void IEnumerator.Reset()
+        {
+            _remaining = _length;
+            Initialize( _node, _offset, out _index, out _currentSegment );
+        }
+
+        private static void Initialize(MemorySequencePool<T>.Node? node, int offset, out ArraySequenceIndex index, out T[] currentSegment)
+        {
+            if ( node is null )
+            {
+                index = ArraySequenceIndex.Zero;
+                currentSegment = Array.Empty<T>();
+                return;
+            }
+
+            var startIndex = node.OffsetFirstIndex( offset );
+            if ( startIndex.Element > 0 )
+            {
+                index = new ArraySequenceIndex( startIndex.Segment, startIndex.Element - 1 );
+                currentSegment = node.GetAbsoluteSegment( index.Segment );
+            }
+            else
+            {
+                index = new ArraySequenceIndex( startIndex.Segment - 1, node.Pool.SegmentLength - 1 );
+                currentSegment = Array.Empty<T>();
+            }
+        }
     }
 
     [Pure]

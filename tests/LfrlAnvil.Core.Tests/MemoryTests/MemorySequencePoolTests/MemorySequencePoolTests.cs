@@ -74,7 +74,7 @@ public class MemorySequencePoolTests : TestsBase
         {
             result.Length.Should().Be( length );
             result.Segments.Length.Should().Be( expectedSegmentCountRange.Length );
-            result.Segments.Select( s => s.Count ).Should().BeSequentiallyEqualTo( expectedSegmentCountRange );
+            result.Segments.ToArray().Select( s => s.Count ).Should().BeSequentiallyEqualTo( expectedSegmentCountRange );
             result.Owner.Should().BeSameAs( sut );
         }
     }
@@ -95,7 +95,7 @@ public class MemorySequencePoolTests : TestsBase
         {
             result.Length.Should().Be( length );
             result.Segments.Length.Should().Be( expectedSegmentCountRange.Length );
-            result.Segments.Select( s => s.Count ).Should().BeSequentiallyEqualTo( expectedSegmentCountRange );
+            result.Segments.ToArray().Select( s => s.Count ).Should().BeSequentiallyEqualTo( expectedSegmentCountRange );
             result.Should().AllBeEquivalentTo( default( int ) );
         }
     }
@@ -516,6 +516,54 @@ public class MemorySequencePoolTests : TestsBase
         }
     }
 
+    [Theory]
+    [InlineData( 0 )]
+    [InlineData( 1 )]
+    [InlineData( 3 )]
+    [InlineData( 10 )]
+    [InlineData( 16 )]
+    public void GreedyRent_ShouldReturnCorrectFirstSequence(int length)
+    {
+        var sut = new MemorySequencePool<int>( 8 );
+        using var result = sut.GreedyRent( length );
+
+        using ( new AssertionScope() )
+        {
+            result.Length.Should().Be( length );
+            result.Owner.Should().BeSameAs( sut );
+        }
+    }
+
+    [Theory]
+    [InlineData( 0 )]
+    [InlineData( 1 )]
+    [InlineData( 4 )]
+    [InlineData( 7 )]
+    [InlineData( 8 )]
+    public void GreedyRent_ShouldAllocateAtTail_WhenValidFragmentedSegmentExists(int length)
+    {
+        var sut = new MemorySequencePool<int>( 8 ) { ClearReturnedSequences = false };
+
+        var first = sut.Rent( 8 );
+        for ( var i = 0; i < first.Length; ++i )
+            first[i] = i + 1;
+
+        var second = sut.Rent( 1 );
+        second[0] = -1;
+        first.Dispose();
+
+        using var result = sut.GreedyRent( length );
+        var other = sut.Rent( 8 );
+
+        using ( new AssertionScope() )
+        {
+            result.Length.Should().Be( length );
+            result.Should().AllBeEquivalentTo( 0 );
+            other.Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8 );
+            second.Should().AllBeEquivalentTo( -1 );
+        }
+    }
+
     [Fact]
     public void SequenceDispose_ShouldReturnSegmentsToThePool()
     {
@@ -543,6 +591,171 @@ public class MemorySequencePoolTests : TestsBase
         using var next = sut.Rent( 16 );
 
         arr.Should().BeSameAs( next.Segments[0].Array );
+    }
+
+    [Fact]
+    public void SequenceDispose_ShouldReturnEmptyOnlyNodeToThePool()
+    {
+        var sut = new MemorySequencePool<int>( 16 );
+        var result = sut.GreedyRent();
+
+        result.Dispose();
+
+        using ( new AssertionScope() )
+        {
+            sut.Report.CachedNodes.Should().Be( 1 );
+            sut.Report.GetRentedNodes().Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void SequenceDispose_ShouldReturnEmptyTailNodePrecededByFragmentedNodeToThePool()
+    {
+        var sut = new MemorySequencePool<int>( 16 );
+        var a = sut.Rent( 8 );
+        var b = sut.Rent( 1 );
+        var result = sut.GreedyRent();
+
+        a.Dispose();
+        b.Dispose();
+        result.Dispose();
+
+        using ( new AssertionScope() )
+        {
+            sut.Report.CachedNodes.Should().Be( 3 );
+            sut.Report.FragmentedNodes.Should().Be( 0 );
+            sut.Report.GetRentedNodes().Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void SequenceDispose_ShouldReturnEmptyTailNodePrecededByActiveNodeToThePool()
+    {
+        var sut = new MemorySequencePool<int>( 16 );
+        var a = sut.Rent( 8 );
+        var result = sut.GreedyRent();
+
+        result.Dispose();
+
+        using ( new AssertionScope() )
+        {
+            sut.Report.CachedNodes.Should().Be( 1 );
+            sut.Report.GetRentedNodes().Should().BeSequentiallyEqualTo( a );
+        }
+    }
+
+    [Fact]
+    public void SequenceDispose_ShouldReturnEmptyHeadNodeSucceededByActiveNodeToThePool()
+    {
+        var sut = new MemorySequencePool<int>( 16 );
+        var result = sut.GreedyRent();
+        var a = sut.Rent( 8 );
+
+        result.Dispose();
+
+        using ( new AssertionScope() )
+        {
+            sut.Report.CachedNodes.Should().Be( 1 );
+            sut.Report.FragmentedNodes.Should().Be( 0 );
+            sut.Report.GetRentedNodes().Should().BeSequentiallyEqualTo( a );
+        }
+    }
+
+    [Fact]
+    public void SequenceDispose_ShouldReturnEmptyHeadNodeSucceededByFragmentedNodeToThePool()
+    {
+        var sut = new MemorySequencePool<int>( 16 );
+        var result = sut.GreedyRent();
+        var a = sut.Rent( 8 );
+        var b = sut.Rent( 1 );
+
+        a.Dispose();
+        result.Dispose();
+
+        using ( new AssertionScope() )
+        {
+            sut.Report.CachedNodes.Should().Be( 1 );
+            sut.Report.GetFragmentedNodeSizes().Should().BeSequentiallyEqualTo( 8 );
+            sut.Report.GetRentedNodes().Should().BeSequentiallyEqualTo( b );
+        }
+    }
+
+    [Fact]
+    public void SequenceDispose_ShouldReturnEmptyIntermediateNodeBetweenFragmentedNodesToThePool()
+    {
+        var sut = new MemorySequencePool<int>( 16 );
+        var a = sut.Rent( 4 );
+        var result = sut.GreedyRent();
+        var b = sut.Rent( 8 );
+        var c = sut.Rent( 1 );
+
+        a.Dispose();
+        b.Dispose();
+        result.Dispose();
+
+        using ( new AssertionScope() )
+        {
+            sut.Report.CachedNodes.Should().Be( 2 );
+            sut.Report.GetFragmentedNodeSizes().Should().BeSequentiallyEqualTo( 12 );
+            sut.Report.GetRentedNodes().Should().BeSequentiallyEqualTo( c );
+        }
+    }
+
+    [Fact]
+    public void SequenceDispose_ShouldReturnEmptyIntermediateNodeBetweenActiveNodesToThePool()
+    {
+        var sut = new MemorySequencePool<int>( 16 );
+        var a = sut.Rent( 4 );
+        var result = sut.GreedyRent();
+        var b = sut.Rent( 8 );
+
+        result.Dispose();
+
+        using ( new AssertionScope() )
+        {
+            sut.Report.CachedNodes.Should().Be( 1 );
+            sut.Report.FragmentedNodes.Should().Be( 0 );
+            sut.Report.GetRentedNodes().Should().BeSequentiallyEqualTo( b, a );
+        }
+    }
+
+    [Fact]
+    public void SequenceDispose_ShouldReturnEmptyIntermediateNodeBetweenFragmentedAndActiveNodesToThePool()
+    {
+        var sut = new MemorySequencePool<int>( 16 );
+        var a = sut.Rent( 4 );
+        var result = sut.GreedyRent();
+        var b = sut.Rent( 8 );
+
+        a.Dispose();
+        result.Dispose();
+
+        using ( new AssertionScope() )
+        {
+            sut.Report.CachedNodes.Should().Be( 1 );
+            sut.Report.GetFragmentedNodeSizes().Should().BeSequentiallyEqualTo( 4 );
+            sut.Report.GetRentedNodes().Should().BeSequentiallyEqualTo( b );
+        }
+    }
+
+    [Fact]
+    public void SequenceDispose_ShouldReturnEmptyIntermediateNodeBetweenActiveAndFragmentedNodesToThePool()
+    {
+        var sut = new MemorySequencePool<int>( 16 );
+        var a = sut.Rent( 4 );
+        var result = sut.GreedyRent();
+        var b = sut.Rent( 8 );
+        var c = sut.Rent( 1 );
+
+        b.Dispose();
+        result.Dispose();
+
+        using ( new AssertionScope() )
+        {
+            sut.Report.CachedNodes.Should().Be( 1 );
+            sut.Report.GetFragmentedNodeSizes().Should().BeSequentiallyEqualTo( 8 );
+            sut.Report.GetRentedNodes().Should().BeSequentiallyEqualTo( c, a );
+        }
     }
 
     [Theory]
@@ -675,7 +888,7 @@ public class MemorySequencePoolTests : TestsBase
             sut.ActiveElements.Should().Be( 0 );
             sut.FragmentedElements.Should().Be( 0 );
             sut.GetFragmentedNodeSizes().Should().BeEmpty();
-            sut.GetActiveNodes().Should().BeEmpty();
+            sut.GetRentedNodes().Should().BeEmpty();
         }
     }
 
@@ -694,7 +907,7 @@ public class MemorySequencePoolTests : TestsBase
             sut.ActiveElements.Should().Be( 0 );
             sut.FragmentedElements.Should().Be( 0 );
             sut.GetFragmentedNodeSizes().Should().BeEmpty();
-            sut.GetActiveNodes().Should().BeEmpty();
+            sut.GetRentedNodes().Should().BeEmpty();
         }
     }
 
@@ -731,7 +944,7 @@ public class MemorySequencePoolTests : TestsBase
             sut.ActiveElements.Should().Be( 81 );
             sut.FragmentedElements.Should().Be( 28 );
             sut.GetFragmentedNodeSizes().Should().BeSequentiallyEqualTo( 14, 5, 9 );
-            sut.GetActiveNodes().Should().BeSequentiallyEqualTo( h, g, f, d, b );
+            sut.GetRentedNodes().Should().BeSequentiallyEqualTo( h, g, f, d, b );
         }
     }
 }

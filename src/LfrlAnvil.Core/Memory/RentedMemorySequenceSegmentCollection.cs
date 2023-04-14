@@ -1,14 +1,12 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.Memory;
 
-public readonly struct RentedMemorySequenceSegmentCollection<T> : IReadOnlyList<ArraySegment<T>>
+public readonly ref struct RentedMemorySequenceSegmentCollection<T>
 {
-    public static readonly RentedMemorySequenceSegmentCollection<T> Empty = default;
+    public static RentedMemorySequenceSegmentCollection<T> Empty => default;
 
     private readonly MemorySequencePool<T>.Node? _node;
     private readonly ArraySequenceIndex _first;
@@ -31,7 +29,6 @@ public readonly struct RentedMemorySequenceSegmentCollection<T> : IReadOnlyList<
     }
 
     public int Length { get; }
-    int IReadOnlyCollection<ArraySegment<T>>.Count => Length;
 
     public ArraySegment<T> this[int index]
     {
@@ -64,30 +61,32 @@ public readonly struct RentedMemorySequenceSegmentCollection<T> : IReadOnlyList<
     }
 
     [Pure]
+    public ArraySegment<T>[] ToArray()
+    {
+        if ( Length == 0 )
+            return Array.Empty<ArraySegment<T>>();
+
+        var index = 0;
+        var result = new ArraySegment<T>[Length];
+        foreach ( var segment in this )
+            result[index++] = segment;
+
+        return result;
+    }
+
+    [Pure]
     public Enumerator GetEnumerator()
     {
         return new Enumerator( _node, _first, _last, Length );
     }
 
-    [Pure]
-    IEnumerator<ArraySegment<T>> IEnumerable<ArraySegment<T>>.GetEnumerator()
-    {
-        return GetEnumerator();
-    }
-
-    [Pure]
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return GetEnumerator();
-    }
-
-    public struct Enumerator : IEnumerator<ArraySegment<T>>
+    public ref struct Enumerator
     {
         private const byte FirstSegmentState = 0;
         private const byte NextSegmentState = 1;
         private const byte DoneState = 2;
 
-        private MemorySequencePool<T>.Node? _node;
+        private readonly MemorySequencePool<T>.Node? _node;
         private readonly ArraySequenceIndex _first;
         private readonly ArraySequenceIndex _last;
         private int _nextIndex;
@@ -104,7 +103,6 @@ public readonly struct RentedMemorySequenceSegmentCollection<T> : IReadOnlyList<
         }
 
         public ArraySegment<T> Current { get; private set; }
-        object IEnumerator.Current => Current;
 
         public bool MoveNext()
         {
@@ -149,20 +147,6 @@ public readonly struct RentedMemorySequenceSegmentCollection<T> : IReadOnlyList<
 
             ++_nextIndex;
             return true;
-        }
-
-        public void Dispose()
-        {
-            _node = null;
-            _state = DoneState;
-            Current = ArraySegment<T>.Empty;
-        }
-
-        void IEnumerator.Reset()
-        {
-            _nextIndex = _first.Segment;
-            _state = _node is null || _last.Segment - _first.Segment == -1 ? DoneState : FirstSegmentState;
-            Current = ArraySegment<T>.Empty;
         }
     }
 }

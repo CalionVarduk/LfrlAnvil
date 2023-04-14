@@ -17,7 +17,7 @@ public class RentedMemorySequenceTests : TestsBase
         {
             sut.Owner.Should().BeNull();
             sut.Length.Should().Be( 0 );
-            sut.Segments.Should().BeEmpty();
+            sut.Segments.ToArray().Should().BeEmpty();
             sut.Should().BeEmpty();
         }
     }
@@ -31,7 +31,7 @@ public class RentedMemorySequenceTests : TestsBase
         {
             sut.Owner.Should().BeNull();
             sut.Length.Should().Be( 0 );
-            sut.Segments.Should().BeEmpty();
+            sut.Segments.ToArray().Should().BeEmpty();
             sut.Should().BeEmpty();
         }
     }
@@ -113,9 +113,8 @@ public class RentedMemorySequenceTests : TestsBase
             result[1].Should().BeSequentiallyEqualTo( 6, 7, 8, 9, 10, 11, 12, 13 );
             result[2].Should().BeSequentiallyEqualTo( 14, 15, 16, 17, 18, 19, 20, 21 );
             result[3].Should().BeSequentiallyEqualTo( 22, 23, 24, 25, 26, 27, 28 );
-            result.Should().BeSequentiallyEqualTo( result[0], result[1], result[2], result[3] );
-            result.SelectMany( s => s ).Should().BeSequentiallyEqualTo( sut );
-            ((IReadOnlyCollection<ArraySegment<int>>)result).Count.Should().Be( result.Length );
+            result.ToArray().Should().BeSequentiallyEqualTo( result[0], result[1], result[2], result[3] );
+            result.ToArray().SelectMany( s => s ).Should().BeSequentiallyEqualTo( sut );
             result.ToString().Should().Be( "RentedMemorySequenceSegmentCollection<Int32>[4]" );
         }
     }
@@ -152,7 +151,11 @@ public class RentedMemorySequenceTests : TestsBase
         var pool = new MemorySequencePool<int>( 4 );
         var sut = pool.Rent( 8 );
 
-        var action = Lambda.Of( () => sut.Slice( startIndex ) );
+        var action = Lambda.Of(
+            () =>
+            {
+                var _ = sut.Slice( startIndex );
+            } );
 
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
@@ -223,9 +226,295 @@ public class RentedMemorySequenceTests : TestsBase
         var pool = new MemorySequencePool<int>( 4 );
         var sut = pool.Rent( 8 );
 
-        var action = Lambda.Of( () => sut.Slice( startIndex, length ) );
+        var action = Lambda.Of(
+            () =>
+            {
+                var _ = sut.Slice( startIndex, length );
+            } );
 
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+    }
+
+    [Fact]
+    public void Push_ShouldExtendSequenceByOneAndSetLastItem_WhenAllocatedNodeIsGreedyEmpty()
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+        var sut = pool.GreedyRent();
+
+        sut.Push( 1 );
+
+        using ( new AssertionScope() )
+        {
+            sut.Should().BeSequentiallyEqualTo( 1 );
+            sut.Length.Should().Be( 1 );
+        }
+    }
+
+    [Fact]
+    public void Push_ShouldExtendSequenceByOneAndSetLastItem_WhenAllocatedNodeIsNotEmptyTail()
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+        var sut = pool.Rent( 8 );
+
+        sut.Push( 1 );
+
+        using ( new AssertionScope() )
+        {
+            sut.Should().BeSequentiallyEqualTo( 0, 0, 0, 0, 0, 0, 0, 0, 1 );
+            sut.Length.Should().Be( 9 );
+        }
+    }
+
+    [Theory]
+    [InlineData( 1 )]
+    [InlineData( 2 )]
+    [InlineData( 3 )]
+    public void Push_ShouldExtendSequenceByOneAndSetLastItem_WhenAllocatedNodeIsNotEmptyAndSucceededByLargeEnoughFragmentedNode(
+        int fragmentedLength)
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+        var sut = pool.Rent( 8 );
+        var f = pool.Rent( fragmentedLength );
+        var tail = pool.Rent( 1 );
+        f.Dispose();
+
+        sut.Push( 1 );
+
+        using ( new AssertionScope() )
+        {
+            pool.Report.FragmentedElements.Should().Be( fragmentedLength - 1 );
+            pool.Report.GetRentedNodes().Should().BeSequentiallyEqualTo( tail, sut );
+            sut.Should().BeSequentiallyEqualTo( 0, 0, 0, 0, 0, 0, 0, 0, 1 );
+            sut.Length.Should().Be( 9 );
+        }
+    }
+
+    [Fact]
+    public void Push_ShouldReallocateSequence_WhenAllocatedNodeIsNotEmptyAndSucceededByActiveNode()
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+
+        var sut = pool.Rent( 8 );
+        for ( var i = 0; i < sut.Length; ++i )
+            sut[i] = i + 1;
+
+        var other = pool.Rent( 1 );
+
+        sut.Push( 9 );
+
+        using ( new AssertionScope() )
+        {
+            pool.Report.GetFragmentedNodeSizes().Should().BeSequentiallyEqualTo( 8 );
+            pool.Report.GetRentedNodes().Should().BeSequentiallyEqualTo( sut, other );
+            sut.Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 9 );
+            sut.Length.Should().Be( 9 );
+            other.Should().AllBeEquivalentTo( 0 );
+        }
+    }
+
+    [Fact]
+    public void Push_ShouldDoNothing_WhenTailSequenceIsDisposed()
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+        var sut = pool.Rent( 8 );
+        sut.Dispose();
+
+        sut.Push( 1 );
+
+        sut.Length.Should().Be( 0 );
+    }
+
+    [Fact]
+    public void Push_ShouldDoNothing_WhenNonTailSequenceIsDisposed()
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+        var sut = pool.Rent( 8 );
+        pool.Rent( 8 );
+        sut.Dispose();
+
+        sut.Push( 1 );
+
+        sut.Length.Should().Be( 0 );
+    }
+
+    [Fact]
+    public void Push_ShouldDoNothing_WhenAllocatedNodeIsDefaultEmpty()
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+        var sut = pool.Rent( 0 );
+
+        sut.Push( 1 );
+
+        sut.Length.Should().Be( 0 );
+    }
+
+    [Theory]
+    [InlineData( 1 )]
+    [InlineData( 2 )]
+    [InlineData( 3 )]
+    public void Expand_ShouldExtendSequence_WhenAllocatedNodeIsGreedyEmpty(int length)
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+        var sut = pool.GreedyRent();
+
+        sut.Expand( length );
+
+        using ( new AssertionScope() )
+        {
+            sut.Should().BeSequentiallyEqualTo( Enumerable.Repeat( 0, length ) );
+            sut.Length.Should().Be( length );
+        }
+    }
+
+    [Theory]
+    [InlineData( 1 )]
+    [InlineData( 2 )]
+    [InlineData( 3 )]
+    public void Expand_ShouldExtendSequence_WhenAllocatedNodeIsNotEmptyTail(int length)
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+        var sut = pool.Rent( 8 );
+        for ( var i = 0; i < sut.Length; ++i )
+            sut[i] = i + 1;
+
+        sut.Expand( length );
+
+        using ( new AssertionScope() )
+        {
+            sut.Should().BeSequentiallyEqualTo( Enumerable.Range( 1, 8 ).Concat( Enumerable.Repeat( 0, length ) ) );
+            sut.Length.Should().Be( 8 + length );
+        }
+    }
+
+    [Theory]
+    [InlineData( 1, 1 )]
+    [InlineData( 1, 2 )]
+    [InlineData( 2, 2 )]
+    [InlineData( 1, 3 )]
+    [InlineData( 2, 3 )]
+    [InlineData( 3, 3 )]
+    public void Expand_ShouldExtendSequence_WhenAllocatedNodeIsNotEmptyAndSucceededByLargeEnoughFragmentedNode(
+        int length,
+        int fragmentedLength)
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+
+        var sut = pool.Rent( 8 );
+        for ( var i = 0; i < sut.Length; ++i )
+            sut[i] = i + 1;
+
+        var f = pool.Rent( fragmentedLength );
+        var tail = pool.Rent( 1 );
+        f.Dispose();
+
+        sut.Expand( length );
+
+        using ( new AssertionScope() )
+        {
+            pool.Report.FragmentedElements.Should().Be( fragmentedLength - length );
+            pool.Report.GetRentedNodes().Should().BeSequentiallyEqualTo( tail, sut );
+            sut.Should().BeSequentiallyEqualTo( Enumerable.Range( 1, 8 ).Concat( Enumerable.Repeat( 0, length ) ) );
+            sut.Length.Should().Be( 8 + length );
+        }
+    }
+
+    [Fact]
+    public void Expand_ShouldReallocateSequence_WhenAllocatedNodeIsNotEmptyAndSucceededByActiveNode()
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+
+        var sut = pool.Rent( 8 );
+        for ( var i = 0; i < sut.Length; ++i )
+            sut[i] = i + 1;
+
+        var other = pool.Rent( 1 );
+        other[0] = -1;
+
+        sut.Expand( 1 );
+
+        using ( new AssertionScope() )
+        {
+            pool.Report.GetFragmentedNodeSizes().Should().BeSequentiallyEqualTo( 8 );
+            pool.Report.GetRentedNodes().Should().BeSequentiallyEqualTo( sut, other );
+            sut.Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 0 );
+            sut.Length.Should().Be( 9 );
+            other.Should().AllBeEquivalentTo( -1 );
+        }
+    }
+
+    [Fact]
+    public void Expand_ShouldReallocateSequence_WhenAllocatedNodeIsNotEmptyAndSucceededByTooSmallFragmentedNode()
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+
+        var sut = pool.Rent( 8 );
+        for ( var i = 0; i < sut.Length; ++i )
+            sut[i] = i + 1;
+
+        var f = pool.Rent( 1 );
+        var other = pool.Rent( 1 );
+        other[0] = -1;
+
+        f.Dispose();
+        sut.Expand( 2 );
+
+        using ( new AssertionScope() )
+        {
+            pool.Report.GetFragmentedNodeSizes().Should().BeSequentiallyEqualTo( 9 );
+            pool.Report.GetRentedNodes().Should().BeSequentiallyEqualTo( sut, other );
+            sut.Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 0, 0 );
+            sut.Length.Should().Be( 10 );
+            other.Should().AllBeEquivalentTo( -1 );
+        }
+    }
+
+    [Fact]
+    public void Expand_ShouldDoNothing_WhenTailSequenceIsDisposed()
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+        var sut = pool.Rent( 8 );
+        sut.Dispose();
+
+        sut.Expand( 1 );
+
+        sut.Length.Should().Be( 0 );
+    }
+
+    [Fact]
+    public void Expand_ShouldDoNothing_WhenNonTailSequenceIsDisposed()
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+        var sut = pool.Rent( 8 );
+        pool.Rent( 8 );
+        sut.Dispose();
+
+        sut.Expand( 1 );
+
+        sut.Length.Should().Be( 0 );
+    }
+
+    [Fact]
+    public void Expand_ShouldDoNothing_WhenAllocatedNodeIsDefaultEmpty()
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+        var sut = pool.Rent( 0 );
+
+        sut.Expand( 1 );
+
+        sut.Length.Should().Be( 0 );
+    }
+
+    [Theory]
+    [InlineData( -1 )]
+    [InlineData( 0 )]
+    public void Expand_ShouldDoNothing_WhenLengthIsLessThanOne(int length)
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+        var sut = pool.Rent( 8 );
+
+        sut.Expand( length );
+
+        sut.Length.Should().Be( 8 );
     }
 
     [Fact]
@@ -318,6 +607,18 @@ public class RentedMemorySequenceTests : TestsBase
         result.Should().BeFalse();
     }
 
+    [Fact]
+    public void Contains_ShouldReturnFalse_WhenAllocatedNodeIsEmpty()
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+        var sut = pool.GreedyRent();
+        pool.Rent( 8 );
+
+        var result = sut.Contains( default );
+
+        result.Should().BeFalse();
+    }
+
     [Theory]
     [InlineData( 1 )]
     [InlineData( 2 )]
@@ -378,6 +679,30 @@ public class RentedMemorySequenceTests : TestsBase
         sut.Clear();
 
         pool.Rent( 8 ).Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8 );
+    }
+
+    [Fact]
+    public void Clear_ShouldDoNothing_WhenAllocatedNodeIsEmpty()
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+
+        var first = pool.Rent( 3 );
+        for ( var i = 0; i < first.Length; ++i )
+            first[i] = -1;
+
+        var sut = pool.GreedyRent();
+
+        var second = pool.Rent( 3 );
+        for ( var i = 0; i < second.Length; ++i )
+            second[i] = -2;
+
+        sut.Clear();
+
+        using ( new AssertionScope() )
+        {
+            first.Should().AllBeEquivalentTo( -1 );
+            second.Should().AllBeEquivalentTo( -2 );
+        }
     }
 
     [Theory]
@@ -447,6 +772,23 @@ public class RentedMemorySequenceTests : TestsBase
         sut.Dispose();
 
         var array = new int[4];
+
+        sut.CopyTo( array, 0 );
+
+        array.Should().AllBeEquivalentTo( 0 );
+    }
+
+    [Fact]
+    public void CopyTo_ShouldDoNothing_WhenAllocatedNodeIsEmpty()
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+        var sut = pool.GreedyRent();
+
+        var other = pool.Rent( 8 );
+        for ( var i = 0; i < other.Length; ++i )
+            other[i] = -1;
+
+        var array = new int[8];
 
         sut.CopyTo( array, 0 );
 
@@ -533,6 +875,18 @@ public class RentedMemorySequenceTests : TestsBase
 
         var other = pool.Rent( 8 );
         sut.Dispose();
+
+        sut.CopyTo( other );
+
+        other.Should().AllBeEquivalentTo( 0 );
+    }
+
+    [Fact]
+    public void CopyTo_SequenceSpan_ShouldDoNothing_WhenAllocatedNodeIsEmpty()
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+        var sut = pool.GreedyRent();
+        var other = pool.Rent( 8 );
 
         sut.CopyTo( other );
 
@@ -638,7 +992,20 @@ public class RentedMemorySequenceTests : TestsBase
         }
     }
 
+    [Fact]
+    public void CopyFrom_ShouldDoNothing_WhenAllocatedNodeIsEmpty()
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+        var sut = pool.GreedyRent();
+        var tail = pool.Rent( 8 );
+
+        sut.CopyFrom( ReadOnlySpan<int>.Empty );
+
+        tail.Should().AllBeEquivalentTo( 0 );
+    }
+
     [Theory]
+    [InlineData( 0, 1 )]
     [InlineData( 1, 2 )]
     [InlineData( 2, 3 )]
     [InlineData( 2, 4 )]
@@ -649,7 +1016,7 @@ public class RentedMemorySequenceTests : TestsBase
     public void CopyFrom_ShouldThrowArgumentOutOfRangeException_WhenTargetSpanIsTooLong(int length, int spanLength)
     {
         var pool = new MemorySequencePool<int>( 8 );
-        var sut = pool.Rent( length );
+        var sut = pool.GreedyRent( length );
         var array = new int[spanLength];
 
         var action = Lambda.Of( () => sut.CopyFrom( array ) );
@@ -705,6 +1072,18 @@ public class RentedMemorySequenceTests : TestsBase
             sut[i] = i + 1;
 
         sut.Dispose();
+
+        var result = sut.ToArray();
+
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ToArray_ShouldReturnEmptyArray_WhenAllocatedNodeIsEmpty()
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+        var sut = pool.GreedyRent();
+        pool.Rent( 8 );
 
         var result = sut.ToArray();
 
@@ -793,6 +1172,17 @@ public class RentedMemorySequenceTests : TestsBase
         var result = sut.Where( i => i > 0 );
 
         result.Should().BeSequentiallyEqualTo( sut );
+    }
+
+    [Fact]
+    public void GetEnumerator_ShouldReturnEmptyCollection_WhenAllocatedNodeIsEmpty()
+    {
+        var pool = new MemorySequencePool<int>( 4 );
+        var sut = pool.GreedyRent();
+
+        var result = sut.Where( i => i >= 0 );
+
+        result.Should().BeEmpty();
     }
 
     [Fact]

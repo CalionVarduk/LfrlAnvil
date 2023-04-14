@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using LfrlAnvil.Functional;
 using LfrlAnvil.Memory;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
@@ -17,8 +16,8 @@ public class RentedMemorySequenceSpanTests : TestsBase
         {
             sut.StartIndex.Should().Be( 0 );
             sut.Length.Should().Be( 0 );
-            sut.Segments.Should().BeEmpty();
-            sut.Should().BeEmpty();
+            sut.Segments.ToArray().Should().BeEmpty();
+            sut.ToArray().Should().BeEmpty();
         }
     }
 
@@ -31,8 +30,8 @@ public class RentedMemorySequenceSpanTests : TestsBase
         {
             sut.StartIndex.Should().Be( 0 );
             sut.Length.Should().Be( 0 );
-            sut.Segments.Should().BeEmpty();
-            sut.Should().BeEmpty();
+            sut.Segments.ToArray().Should().BeEmpty();
+            sut.ToArray().Should().BeEmpty();
         }
     }
 
@@ -62,9 +61,17 @@ public class RentedMemorySequenceSpanTests : TestsBase
         var seq = pool.Rent( 16 );
         var sut = seq.Slice( 2, 12 );
 
-        var action = Lambda.Of( () => sut[index] );
+        ArgumentOutOfRangeException? exception = null;
+        try
+        {
+            var _ = sut[index];
+        }
+        catch ( ArgumentOutOfRangeException e )
+        {
+            exception = e;
+        }
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        exception.Should().NotBeNull();
     }
 
     [Fact]
@@ -93,9 +100,17 @@ public class RentedMemorySequenceSpanTests : TestsBase
         var seq = pool.Rent( 16 );
         var sut = seq.Slice( 2, 12 );
 
-        var action = Lambda.Of( () => sut[index] = Fixture.Create<int>() );
+        ArgumentOutOfRangeException? exception = null;
+        try
+        {
+            sut[index] = Fixture.Create<int>();
+        }
+        catch ( ArgumentOutOfRangeException e )
+        {
+            exception = e;
+        }
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        exception.Should().NotBeNull();
     }
 
     [Fact]
@@ -118,9 +133,8 @@ public class RentedMemorySequenceSpanTests : TestsBase
             result[1].Should().BeSequentiallyEqualTo( 8, 9, 10, 11, 12, 13, 14, 15 );
             result[2].Should().BeSequentiallyEqualTo( 16, 17, 18, 19, 20, 21, 22, 23 );
             result[3].Should().BeSequentiallyEqualTo( 24, 25, 26, 27, 28, 29, 30 );
-            result.Should().BeSequentiallyEqualTo( result[0], result[1], result[2], result[3] );
-            result.SelectMany( s => s ).Should().BeSequentiallyEqualTo( sut );
-            ((IReadOnlyCollection<ArraySegment<int>>)result).Count.Should().Be( result.Length );
+            result.ToArray().Should().BeSequentiallyEqualTo( result[0], result[1], result[2], result[3] );
+            result.ToArray().SelectMany( s => s ).Should().BeSequentiallyEqualTo( sut.ToArray() );
             result.ToString().Should().Be( "RentedMemorySequenceSegmentCollection<Int32>[4]" );
         }
     }
@@ -161,9 +175,17 @@ public class RentedMemorySequenceSpanTests : TestsBase
         var seq = pool.Rent( 12 );
         var sut = seq.Slice( 2, 8 );
 
-        var action = Lambda.Of( () => sut.Slice( startIndex ) );
+        ArgumentOutOfRangeException? exception = null;
+        try
+        {
+            var _ = sut.Slice( startIndex );
+        }
+        catch ( ArgumentOutOfRangeException e )
+        {
+            exception = e;
+        }
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        exception.Should().NotBeNull();
     }
 
     [Theory]
@@ -248,9 +270,17 @@ public class RentedMemorySequenceSpanTests : TestsBase
         var seq = pool.Rent( 12 );
         var sut = seq.Slice( 2, 8 );
 
-        var action = Lambda.Of( () => sut.Slice( startIndex, length ) );
+        ArgumentOutOfRangeException? exception = null;
+        try
+        {
+            var _ = sut.Slice( startIndex, length );
+        }
+        catch ( ArgumentOutOfRangeException e )
+        {
+            exception = e;
+        }
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        exception.Should().NotBeNull();
     }
 
     [Fact]
@@ -356,6 +386,19 @@ public class RentedMemorySequenceSpanTests : TestsBase
         result.Should().BeFalse();
     }
 
+    [Fact]
+    public void Contains_ShouldReturnFalse_WhenSequenceIsEmpty()
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+        var seq = pool.Rent( 8 );
+        var sut = seq.Slice( 4, 0 );
+        pool.Rent( 8 );
+
+        var result = sut.Contains( default );
+
+        result.Should().BeFalse();
+    }
+
     [Theory]
     [InlineData( 1 )]
     [InlineData( 2 )]
@@ -388,7 +431,7 @@ public class RentedMemorySequenceSpanTests : TestsBase
         {
             first.Should().AllBeEquivalentTo( -1 );
             third.Should().AllBeEquivalentTo( -2 );
-            sut.Should().AllBeEquivalentTo( default( int ) );
+            sut.ToArray().Should().AllBeEquivalentTo( default( int ) );
             seq.Take( 2 ).Should().BeSequentiallyEqualTo( 1, 2 );
             seq.TakeLast( 2 ).Should().BeSequentiallyEqualTo( length + 3, length + 4 );
         }
@@ -421,6 +464,35 @@ public class RentedMemorySequenceSpanTests : TestsBase
         sut.Clear();
 
         pool.Rent( 12 ).Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 );
+    }
+
+    [Fact]
+    public void Clear_ShouldDoNothing_WhenSequenceIsEmpty()
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+
+        var first = pool.Rent( 3 );
+        for ( var i = 0; i < first.Length; ++i )
+            first[i] = -1;
+
+        var seq = pool.Rent( 8 );
+        for ( var i = 0; i < seq.Length; ++i )
+            seq[i] = -2;
+
+        var sut = seq.Slice( 4, 0 );
+
+        var second = pool.Rent( 3 );
+        for ( var i = 0; i < second.Length; ++i )
+            second[i] = -3;
+
+        sut.Clear();
+
+        using ( new AssertionScope() )
+        {
+            first.Should().AllBeEquivalentTo( -1 );
+            seq.Should().AllBeEquivalentTo( -2 );
+            second.Should().AllBeEquivalentTo( -3 );
+        }
     }
 
     [Theory]
@@ -457,7 +529,7 @@ public class RentedMemorySequenceSpanTests : TestsBase
         using ( new AssertionScope() )
         {
             array.Take( arrayIndex ).Should().AllBeEquivalentTo( -1 );
-            array.Skip( arrayIndex ).Take( sut.Length ).Should().BeSequentiallyEqualTo( sut );
+            array.Skip( arrayIndex ).Take( sut.Length ).Should().BeSequentiallyEqualTo( sut.ToArray() );
             array.Skip( arrayIndex + sut.Length ).Should().AllBeEquivalentTo( -1 );
         }
     }
@@ -499,6 +571,26 @@ public class RentedMemorySequenceSpanTests : TestsBase
         array.Should().AllBeEquivalentTo( 0 );
     }
 
+    [Fact]
+    public void CopyTo_ShouldDoNothing_WhenSequenceIsEmpty()
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+        var seq = pool.Rent( 8 );
+        seq.CopyFrom( Enumerable.Range( 1, 8 ).ToArray() );
+
+        var sut = seq.Slice( 4, 0 );
+
+        var other = pool.Rent( 8 );
+        for ( var i = 0; i < other.Length; ++i )
+            other[i] = -1;
+
+        var array = new int[8];
+
+        sut.CopyTo( array, 0 );
+
+        array.Should().AllBeEquivalentTo( 0 );
+    }
+
     [Theory]
     [InlineData( 1, 0 )]
     [InlineData( 2, 1 )]
@@ -514,9 +606,17 @@ public class RentedMemorySequenceSpanTests : TestsBase
         var sut = seq.Slice( 2, length );
         var array = new int[spanLength];
 
-        var action = Lambda.Of( () => sut.CopyTo( array, 0 ) );
+        ArgumentOutOfRangeException? exception = null;
+        try
+        {
+            sut.CopyTo( array, 0 );
+        }
+        catch ( ArgumentOutOfRangeException e )
+        {
+            exception = e;
+        }
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        exception.Should().NotBeNull();
     }
 
     [Theory]
@@ -551,8 +651,8 @@ public class RentedMemorySequenceSpanTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            span.Take( sut.Length ).Should().BeSequentiallyEqualTo( sut );
-            span.Skip( sut.Length ).Should().AllBeEquivalentTo( -1 );
+            span.ToArray().Take( sut.Length ).Should().BeSequentiallyEqualTo( sut.ToArray() );
+            span.ToArray().Skip( sut.Length ).Should().AllBeEquivalentTo( -1 );
             spanSeq.Take( 2 ).Concat( spanSeq.TakeLast( 2 ) ).Should().AllBeEquivalentTo( -1 );
         }
     }
@@ -572,7 +672,7 @@ public class RentedMemorySequenceSpanTests : TestsBase
 
         sut.CopyTo( other );
 
-        other.Should().AllBeEquivalentTo( 0 );
+        other.ToArray().Should().AllBeEquivalentTo( 0 );
     }
 
     [Fact]
@@ -587,6 +687,20 @@ public class RentedMemorySequenceSpanTests : TestsBase
         var otherSeq = pool.Rent( 12 );
         var other = otherSeq.Slice( 2, 8 );
         seq.Dispose();
+
+        sut.CopyTo( other );
+
+        other.ToArray().Should().AllBeEquivalentTo( 0 );
+    }
+
+    [Fact]
+    public void CopyTo_SequenceSpan_ShouldDoNothing_WhenSequenceIsEmpty()
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+        var seq = pool.Rent( 8 );
+        seq.CopyFrom( Enumerable.Range( 1, 8 ).ToArray() );
+        var sut = seq.Slice( 4, 0 );
+        var other = pool.Rent( 8 );
 
         sut.CopyTo( other );
 
@@ -609,9 +723,17 @@ public class RentedMemorySequenceSpanTests : TestsBase
         var otherSeq = pool.Rent( spanLength + 4 );
         var other = otherSeq.Slice( 2, spanLength );
 
-        var action = Lambda.Of( () => sut.CopyTo( other ) );
+        ArgumentOutOfRangeException? exception = null;
+        try
+        {
+            sut.CopyTo( other );
+        }
+        catch ( ArgumentOutOfRangeException e )
+        {
+            exception = e;
+        }
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        exception.Should().NotBeNull();
     }
 
     [Theory]
@@ -652,8 +774,8 @@ public class RentedMemorySequenceSpanTests : TestsBase
         {
             first.Should().AllBeEquivalentTo( -1 );
             second.Should().AllBeEquivalentTo( -2 );
-            sut.Take( spanLength ).Should().BeSequentiallyEqualTo( array );
-            sut.Skip( spanLength ).Should().AllBeEquivalentTo( -3 );
+            sut.ToArray().Take( spanLength ).Should().BeSequentiallyEqualTo( array );
+            sut.ToArray().Skip( spanLength ).Should().AllBeEquivalentTo( -3 );
             seq.Take( 2 ).Concat( seq.TakeLast( 2 ) ).Should().AllBeEquivalentTo( -3 );
         }
     }
@@ -698,7 +820,26 @@ public class RentedMemorySequenceSpanTests : TestsBase
         }
     }
 
+    [Fact]
+    public void CopyFrom_ShouldDoNothing_WhenSequenceIsEmpty()
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+        var seq = pool.Rent( 8 );
+        seq.CopyFrom( Enumerable.Range( 1, 8 ).ToArray() );
+        var sut = seq.Slice( 4, 0 );
+        var tail = pool.Rent( 8 );
+
+        sut.CopyFrom( ReadOnlySpan<int>.Empty );
+
+        using ( new AssertionScope() )
+        {
+            seq.Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8 );
+            tail.Should().AllBeEquivalentTo( 0 );
+        }
+    }
+
     [Theory]
+    [InlineData( 0, 1 )]
     [InlineData( 1, 2 )]
     [InlineData( 2, 3 )]
     [InlineData( 2, 4 )]
@@ -713,9 +854,17 @@ public class RentedMemorySequenceSpanTests : TestsBase
         var sut = seq.Slice( 2, length );
         var array = new int[spanLength];
 
-        var action = Lambda.Of( () => sut.CopyFrom( array ) );
+        ArgumentOutOfRangeException? exception = null;
+        try
+        {
+            sut.CopyFrom( array );
+        }
+        catch ( ArgumentOutOfRangeException e )
+        {
+            exception = e;
+        }
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        exception.Should().NotBeNull();
     }
 
     [Theory]
@@ -733,13 +882,17 @@ public class RentedMemorySequenceSpanTests : TestsBase
         var seq = pool.Rent( length + 4 );
         var sut = seq.Slice( 2, length );
         pool.Rent( 5 );
+        var expected = new int[sut.Length];
 
         for ( var i = 0; i < seq.Length; ++i )
             seq[i] = i + 1;
 
+        for ( var i = 0; i < sut.Length; ++i )
+            expected[i] = sut[i];
+
         var result = sut.ToArray();
 
-        result.Should().BeSequentiallyEqualTo( sut );
+        result.Should().BeSequentiallyEqualTo( expected );
     }
 
     [Fact]
@@ -877,47 +1030,39 @@ public class RentedMemorySequenceSpanTests : TestsBase
         for ( var i = 0; i < seq.Length; ++i )
             seq[i] = i + 1;
 
-        var result = sut.Where( i => i > 0 );
+        var result = new List<int>();
+        foreach ( var v in sut )
+            result.Add( v );
 
-        result.Should().BeSequentiallyEqualTo( sut );
+        result.Should().BeSequentiallyEqualTo( sut.ToArray() );
     }
 
     [Fact]
-    public void ICollectionProperties_ShouldReturnCorrectResult()
+    public void GetEnumerator_ShouldReturnEmptyCollection_WhenSequenceIsEmpty()
     {
-        var pool = new MemorySequencePool<int>( 8 );
-        var seq = pool.Rent( 16 );
-        var sut = seq.Slice( 2, 10 );
-
-        using ( new AssertionScope() )
-        {
-            ((ICollection<int>)sut).IsReadOnly.Should().BeFalse();
-            ((ICollection<int>)sut).Count.Should().Be( sut.Length );
-            ((IReadOnlyCollection<int>)sut).Count.Should().Be( sut.Length );
-        }
-    }
-
-    [Fact]
-    public void ICollectionAdd_ShouldThrowNotSupportedException()
-    {
-        var pool = new MemorySequencePool<int>( 8 );
+        var pool = new MemorySequencePool<int>( 4 );
         var seq = pool.Rent( 8 );
-        var sut = seq.Slice( 2, 4 );
+        var sut = seq.Slice( 4, 0 );
+        for ( var i = 0; i < seq.Length; ++i )
+            seq[i] = i + 1;
 
-        var action = Lambda.Of( () => ((ICollection<int>)sut).Add( Fixture.Create<int>() ) );
+        var result = new List<int>();
+        foreach ( var v in sut )
+            result.Add( v );
 
-        action.Should().ThrowExactly<NotSupportedException>();
+        result.Should().BeEmpty();
     }
 
     [Fact]
-    public void ICollectionRemove_ShouldThrowNotSupportedException()
+    public void GetEnumerator_ShouldReturnEmptyCollection_WhenSequenceIsDefaultEmpty()
     {
-        var pool = new MemorySequencePool<int>( 8 );
-        var seq = pool.Rent( 8 );
-        var sut = seq.Slice( 2, 4 );
+        var pool = new MemorySequencePool<int>( 4 );
+        var sut = pool.Rent( 0 ).Slice( 0 );
 
-        var action = Lambda.Of( () => ((ICollection<int>)sut).Remove( Fixture.Create<int>() ) );
+        var result = new List<int>();
+        foreach ( var v in sut )
+            result.Add( v );
 
-        action.Should().ThrowExactly<NotSupportedException>();
+        result.Should().BeEmpty();
     }
 }

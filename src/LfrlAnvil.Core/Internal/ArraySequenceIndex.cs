@@ -6,7 +6,6 @@ namespace LfrlAnvil.Internal;
 internal readonly struct ArraySequenceIndex
 {
     internal static readonly ArraySequenceIndex Zero = new ArraySequenceIndex( 0, 0 );
-    internal static readonly ArraySequenceIndex MinusOne = new ArraySequenceIndex( -1, 0 );
     internal readonly int Segment;
     internal readonly int Element;
 
@@ -16,6 +15,14 @@ internal readonly struct ArraySequenceIndex
         Assume.IsGreaterThanOrEqualTo( element, 0, nameof( element ) );
         Segment = segment;
         Element = element;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static ArraySequenceIndex MinusOne(int segmentLength)
+    {
+        Assume.IsGreaterThan( segmentLength, 0, nameof( segmentLength ) );
+        return new ArraySequenceIndex( -1, segmentLength - 1 );
     }
 
     [Pure]
@@ -34,5 +41,14 @@ internal readonly struct ArraySequenceIndex
 
         var nextElement = Element + offset;
         return new ArraySequenceIndex( Segment + (nextElement >> segmentLengthLog2), nextElement & ((1 << segmentLengthLog2) - 1) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal ArraySequenceIndex Decrement(int segmentLength)
+    {
+        Assume.IsGreaterThan( segmentLength, 0, nameof( segmentLength ) );
+        Assume.IsLessThan( Element, segmentLength, nameof( Element ) );
+        return Element == 0 ? new ArraySequenceIndex( Segment - 1, segmentLength - 1 ) : new ArraySequenceIndex( Segment, Element - 1 );
     }
 }

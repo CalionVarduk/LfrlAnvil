@@ -1,15 +1,14 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Exceptions;
+using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.Memory;
 
-public readonly struct RentedMemorySequenceSpan<T> : IReadOnlyList<T>, ICollection<T>
+public readonly ref struct RentedMemorySequenceSpan<T>
 {
-    public static readonly RentedMemorySequenceSpan<T> Empty = new RentedMemorySequenceSpan<T>( null, 0, 0 );
+    public static RentedMemorySequenceSpan<T> Empty => default;
 
     private readonly MemorySequencePool<T>.Node? _node;
 
@@ -33,10 +32,6 @@ public readonly struct RentedMemorySequenceSpan<T> : IReadOnlyList<T>, ICollecti
         _node is null || _node.IsReusable || Length == 0
             ? RentedMemorySequenceSegmentCollection<T>.Empty
             : new RentedMemorySequenceSegmentCollection<T>( _node, StartIndex, Length );
-
-    bool ICollection<T>.IsReadOnly => false;
-    int ICollection<T>.Count => Length;
-    int IReadOnlyCollection<T>.Count => Length;
 
     public T this[int index]
     {
@@ -151,30 +146,65 @@ public readonly struct RentedMemorySequenceSpan<T> : IReadOnlyList<T>, ICollecti
     }
 
     [Pure]
-    public MemorySequenceEnumerator<T> GetEnumerator()
+    public Enumerator GetEnumerator()
     {
-        return new MemorySequenceEnumerator<T>( _node, StartIndex, Length );
+        return new Enumerator( _node, StartIndex, Length );
     }
 
-    [Pure]
-    IEnumerator<T> IEnumerable<T>.GetEnumerator()
+    public ref struct Enumerator
     {
-        return GetEnumerator();
-    }
+        private readonly MemorySequencePool<T>.Node? _node;
+        private ArraySequenceIndex _index;
+        private T[] _currentSegment;
+        private int _remaining;
 
-    [Pure]
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return GetEnumerator();
-    }
+        internal Enumerator(MemorySequencePool<T>.Node? node, int offset, int length)
+        {
+            _node = node;
+            _remaining = length;
 
-    void ICollection<T>.Add(T item)
-    {
-        throw new NotSupportedException( ExceptionResources.FixedSizeCollection );
-    }
+            if ( node is null )
+            {
+                _index = ArraySequenceIndex.Zero;
+                _currentSegment = Array.Empty<T>();
+            }
+            else
+            {
+                var startIndex = node.OffsetFirstIndex( offset );
+                if ( startIndex.Element > 0 )
+                {
+                    _index = new ArraySequenceIndex( startIndex.Segment, startIndex.Element - 1 );
+                    _currentSegment = node.GetAbsoluteSegment( _index.Segment );
+                }
+                else
+                {
+                    _index = new ArraySequenceIndex( startIndex.Segment - 1, node.Pool.SegmentLength - 1 );
+                    _currentSegment = Array.Empty<T>();
+                }
+            }
+        }
 
-    bool ICollection<T>.Remove(T item)
-    {
-        throw new NotSupportedException( ExceptionResources.FixedSizeCollection );
+        public ref readonly T Current => ref _currentSegment[_index.Element];
+
+        public bool MoveNext()
+        {
+            if ( _remaining == 0 )
+                return false;
+
+            Assume.IsNotNull( _node, nameof( _node ) );
+            Assume.Equals( _node.IsReusable, false, nameof( _node.IsReusable ) );
+
+            --_remaining;
+            var elementIndex = _index.Element + 1;
+            if ( elementIndex < _node.Pool.SegmentLength )
+                _index = new ArraySequenceIndex( _index.Segment, elementIndex );
+            else
+            {
+                _index = new ArraySequenceIndex( _index.Segment + 1, 0 );
+                _currentSegment = _node.GetAbsoluteSegment( _index.Segment );
+            }
+
+            return true;
+        }
     }
 }
