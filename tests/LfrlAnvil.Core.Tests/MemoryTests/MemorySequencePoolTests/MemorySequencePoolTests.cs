@@ -594,6 +594,22 @@ public class MemorySequencePoolTests : TestsBase
     }
 
     [Fact]
+    public void SequenceDispose_ShouldDoNothing_WhenCalledSecondTimeFromAnotherInstance()
+    {
+        var sut = new MemorySequencePool<int>( 16 );
+        var result = sut.Rent( 16 );
+        var other = result;
+        var arr = result.Segments[0].Array;
+
+        result.Dispose();
+        other.Dispose();
+
+        using var next = sut.Rent( 16 );
+
+        arr.Should().BeSameAs( next.Segments[0].Array );
+    }
+
+    [Fact]
     public void SequenceDispose_ShouldReturnEmptyOnlyNodeToThePool()
     {
         var sut = new MemorySequencePool<int>( 16 );

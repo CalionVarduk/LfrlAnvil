@@ -518,6 +518,58 @@ public class RentedMemorySequenceTests : TestsBase
     }
 
     [Fact]
+    public void Refresh_ShouldUpdateLength_WhenSequenceHasBeenModifiedFromAnotherInstance()
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+        var sut = pool.Rent( 8 );
+        var other = sut;
+        other.Expand( 3 );
+
+        sut.Refresh();
+
+        sut.Length.Should().Be( 11 );
+    }
+
+    [Fact]
+    public void Refresh_ShouldUpdateLengthToZero_WhenSequenceIsDisposed()
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+        var sut = pool.Rent( 8 );
+        sut.Dispose();
+
+        sut.Refresh();
+
+        sut.Length.Should().Be( 0 );
+    }
+
+    [Fact]
+    public void Refresh_ShouldUpdateLengthToZero_WhenTailSequenceIsDisposedFromAnotherInstance()
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+        var sut = pool.Rent( 8 );
+        var other = sut;
+        other.Dispose();
+
+        sut.Refresh();
+
+        sut.Length.Should().Be( 0 );
+    }
+
+    [Fact]
+    public void Refresh_ShouldUpdateLengthToZero_WhenNonTailSequenceIsDisposedFromAnotherInstance()
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+        var sut = pool.Rent( 8 );
+        var other = sut;
+        pool.Rent( 8 );
+        other.Dispose();
+
+        sut.Refresh();
+
+        sut.Length.Should().Be( 0 );
+    }
+
+    [Fact]
     public void ToString_ShouldReturnTypeAndLengthInfo()
     {
         var pool = new MemorySequencePool<int>( 8 );

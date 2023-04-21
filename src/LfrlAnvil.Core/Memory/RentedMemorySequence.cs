@@ -89,6 +89,21 @@ public struct RentedMemorySequence<T> : IReadOnlyList<T>, ICollection<T>, IDispo
         Length = _node.Length;
     }
 
+    public void Refresh()
+    {
+        if ( _node is null )
+            return;
+
+        if ( ! _node.IsReusable )
+        {
+            Length = _node.Length;
+            return;
+        }
+
+        _node = null;
+        Length = 0;
+    }
+
     public void Dispose()
     {
         if ( _node is null )
