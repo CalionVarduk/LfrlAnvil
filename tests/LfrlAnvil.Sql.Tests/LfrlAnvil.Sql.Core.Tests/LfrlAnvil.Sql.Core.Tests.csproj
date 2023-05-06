@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>LfrlAnvil.Sql.Tests</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\src\LfrlAnvil.Sql\LfrlAnvil.Sql.Core\LfrlAnvil.Sql.Core.csproj" />
+        <ProjectReference Include="..\..\..\src\LfrlAnvil.Functional\LfrlAnvil.Functional.csproj" />
+        <ProjectReference Include="..\..\LfrlAnvil.TestExtensions\LfrlAnvil.TestExtensions.csproj" />
+    </ItemGroup>
+
+</Project>

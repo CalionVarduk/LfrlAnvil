@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <PackageTags>LfrlAnvil Sql Sqlite</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\LfrlAnvil.Sql.Core\LfrlAnvil.Sql.Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.Data.Sqlite" Version="7.0.4" />
+    </ItemGroup>
+
+</Project>

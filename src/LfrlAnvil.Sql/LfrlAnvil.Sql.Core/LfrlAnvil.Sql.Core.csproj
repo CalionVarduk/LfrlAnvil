@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <PackageTags>LfrlAnvil Sql Core</PackageTags>
+        <RootNamespace>LfrlAnvil.Sql</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\LfrlAnvil.Core\LfrlAnvil.Core.csproj" />
+    </ItemGroup>
+
+</Project>
