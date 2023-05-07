@@ -97,15 +97,15 @@ internal sealed class SqliteAlterTableBuffer
         ColumnIdsByCurrentName.Clear();
     }
 
-    internal record struct ParseResult(bool HasChanged, bool RequiresReconstruction, bool IsTableRenamed);
+    internal readonly record struct ParseResult(bool HasChanged, bool RequiresReconstruction, bool IsTableRenamed);
 
-    internal record struct ChangeKey(ulong ObjectId, SqliteObjectChangeDescriptor Descriptor);
+    internal readonly record struct ChangeKey(ulong ObjectId, SqliteObjectChangeDescriptor Descriptor);
 
-    internal record struct ChangeValue(object? OldValue, object? NewValue);
+    internal readonly record struct ChangeValue(object? OldValue, object? NewValue);
 
-    internal record struct ObjectData(SqliteObjectStatus Status, SqliteObjectBuilder Object);
+    internal readonly record struct ObjectData(SqliteObjectStatus Status, SqliteObjectBuilder Object);
 
-    internal record struct ColumnRename(string OldName, string NewName, bool IsPending);
+    internal readonly record struct ColumnRename(string OldName, string NewName, bool IsPending);
 
     private void PopulateObjectsAndPropertyChanges(ReadOnlySpan<SqliteDatabasePropertyChange> changes)
     {

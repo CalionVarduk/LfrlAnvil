@@ -9,9 +9,14 @@ public interface ISqlDatabaseBuilder
     ISqlDataTypeProvider DataTypes { get; }
     ISqlColumnTypeDefinitionProvider TypeDefinitions { get; }
     ISqlSchemaBuilderCollection Schemas { get; }
+    SqlDatabaseCreateMode Mode { get; }
+    bool IsAttached { get; }
 
     [Pure]
     ReadOnlySpan<string> GetPendingStatements();
 
     void AddRawStatement(string statement);
+
+    ISqlDatabaseBuilder SetAttachedMode(bool enabled = true);
+    ISqlDatabaseBuilder SetDetachedMode(bool enabled = true);
 }

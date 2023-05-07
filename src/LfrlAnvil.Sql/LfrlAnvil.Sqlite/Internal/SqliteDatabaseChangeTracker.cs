@@ -14,21 +14,31 @@ namespace LfrlAnvil.Sqlite.Internal;
 
 internal sealed class SqliteDatabaseChangeTracker
 {
+    private const byte IsDetachedBit = 1 << 0;
+    private const byte ModeMask = (1 << 8) - 2;
+
     private readonly List<string> _pendingStatements;
     private readonly List<SqliteDatabasePropertyChange> _ongoing;
     private readonly StringBuilder _ongoingStatement;
     private SqliteAlterTableBuffer? _alterTableBuffer;
+    private byte _mode;
 
-    internal SqliteDatabaseChangeTracker()
+    internal SqliteDatabaseChangeTracker(SqlDatabaseCreateMode mode)
     {
+        Assume.IsDefined( mode, nameof( mode ) );
+
         _pendingStatements = new List<string>();
         _ongoing = new List<SqliteDatabasePropertyChange>();
         _ongoingStatement = new StringBuilder();
-        CurrentTable = null;
         _alterTableBuffer = null;
+        CurrentTable = null;
+        _mode = (byte)((int)mode << 1);
     }
 
     internal SqliteTableBuilder? CurrentTable { get; private set; }
+    internal SqlDatabaseCreateMode Mode => (SqlDatabaseCreateMode)((_mode & ModeMask) >> 1);
+    internal bool IsAttached => (_mode & IsDetachedBit) == 0;
+    internal bool IsPreparingStatements => _mode > 0 && IsAttached;
 
     internal ReadOnlySpan<string> GetPendingStatements()
     {
@@ -43,11 +53,32 @@ internal sealed class SqliteDatabaseChangeTracker
         if ( _ongoing.Count > 0 )
             CompletePendingStatement();
 
-        _pendingStatements.Add( statement );
+        if ( IsPreparingStatements )
+            _pendingStatements.Add( statement );
+    }
+
+    internal void SetAttachedMode(bool enabled)
+    {
+        if ( IsAttached == enabled )
+            return;
+
+        if ( enabled )
+        {
+            _mode &= ModeMask;
+            return;
+        }
+
+        if ( _ongoing.Count > 0 )
+            CompletePendingStatement();
+
+        _mode |= IsDetachedBit;
     }
 
     internal void ObjectCreated(SqliteTableBuilder table, SqliteObjectBuilder obj)
     {
+        if ( ! IsPreparingStatements )
+            return;
+
         var change = new SqliteDatabasePropertyChange(
             obj,
             SqliteObjectChangeDescriptor.Exists,
@@ -60,6 +91,9 @@ internal sealed class SqliteDatabaseChangeTracker
 
     internal void ObjectRemoved(SqliteTableBuilder table, SqliteObjectBuilder obj)
     {
+        if ( ! IsPreparingStatements )
+            return;
+
         var change = new SqliteDatabasePropertyChange(
             obj,
             SqliteObjectChangeDescriptor.Exists,
@@ -72,6 +106,9 @@ internal sealed class SqliteDatabaseChangeTracker
 
     internal void NameUpdated(SqliteTableBuilder table, SqliteObjectBuilder obj, string oldValue)
     {
+        if ( ! IsPreparingStatements )
+            return;
+
         var change = new SqliteDatabasePropertyChange(
             obj,
             SqliteObjectChangeDescriptor.Name,
@@ -84,6 +121,9 @@ internal sealed class SqliteDatabaseChangeTracker
 
     internal void FullNameUpdated(SqliteTableBuilder table, SqliteObjectBuilder obj, string oldValue)
     {
+        if ( ! IsPreparingStatements )
+            return;
+
         var change = new SqliteDatabasePropertyChange(
             obj,
             SqliteObjectChangeDescriptor.Name,
@@ -96,6 +136,9 @@ internal sealed class SqliteDatabaseChangeTracker
 
     internal void TypeDefinitionUpdated(SqliteColumnBuilder column, SqliteColumnTypeDefinition oldValue)
     {
+        if ( ! IsPreparingStatements )
+            return;
+
         var change = new SqliteDatabasePropertyChange(
             column,
             SqliteObjectChangeDescriptor.DataType,
@@ -108,6 +151,9 @@ internal sealed class SqliteDatabaseChangeTracker
 
     internal void IsNullableUpdated(SqliteColumnBuilder column)
     {
+        if ( ! IsPreparingStatements )
+            return;
+
         var change = new SqliteDatabasePropertyChange(
             column,
             SqliteObjectChangeDescriptor.IsNullable,
@@ -120,6 +166,9 @@ internal sealed class SqliteDatabaseChangeTracker
 
     internal void DefaultValueUpdated(SqliteColumnBuilder column, object? oldValue)
     {
+        if ( ! IsPreparingStatements )
+            return;
+
         var change = new SqliteDatabasePropertyChange(
             column,
             SqliteObjectChangeDescriptor.DefaultValue,
@@ -132,6 +181,9 @@ internal sealed class SqliteDatabaseChangeTracker
 
     internal void OnDeleteBehaviorUpdated(SqliteForeignKeyBuilder foreignKey, ReferenceBehavior oldValue)
     {
+        if ( ! IsPreparingStatements )
+            return;
+
         var change = new SqliteDatabasePropertyChange(
             foreignKey,
             SqliteObjectChangeDescriptor.OnDeleteBehavior,
@@ -144,6 +196,9 @@ internal sealed class SqliteDatabaseChangeTracker
 
     internal void OnUpdateBehaviorUpdated(SqliteForeignKeyBuilder foreignKey, ReferenceBehavior oldValue)
     {
+        if ( ! IsPreparingStatements )
+            return;
+
         var change = new SqliteDatabasePropertyChange(
             foreignKey,
             SqliteObjectChangeDescriptor.OnUpdateBehavior,
@@ -156,6 +211,9 @@ internal sealed class SqliteDatabaseChangeTracker
 
     internal void IsUniqueUpdated(SqliteIndexBuilder index)
     {
+        if ( ! IsPreparingStatements )
+            return;
+
         var change = new SqliteDatabasePropertyChange(
             index,
             SqliteObjectChangeDescriptor.IsUnique,
@@ -168,6 +226,9 @@ internal sealed class SqliteDatabaseChangeTracker
 
     internal void PrimaryKeyUpdated(SqliteIndexBuilder index, SqlitePrimaryKeyBuilder? oldValue)
     {
+        if ( ! IsPreparingStatements )
+            return;
+
         var change = new SqliteDatabasePropertyChange(
             index,
             SqliteObjectChangeDescriptor.PrimaryKey,
@@ -180,6 +241,9 @@ internal sealed class SqliteDatabaseChangeTracker
 
     internal void PrimaryKeyUpdated(SqliteTableBuilder table, SqlitePrimaryKeyBuilder? oldValue)
     {
+        if ( ! IsPreparingStatements )
+            return;
+
         var change = new SqliteDatabasePropertyChange(
             table,
             SqliteObjectChangeDescriptor.PrimaryKey,
@@ -192,6 +256,9 @@ internal sealed class SqliteDatabaseChangeTracker
 
     internal void ReconstructionRequested(SqliteTableBuilder table)
     {
+        if ( ! IsPreparingStatements )
+            return;
+
         var change = new SqliteDatabasePropertyChange(
             table,
             SqliteObjectChangeDescriptor.Reconstruct,
@@ -204,6 +271,8 @@ internal sealed class SqliteDatabaseChangeTracker
 
     private void AddChange(SqliteTableBuilder table, SqliteDatabasePropertyChange change)
     {
+        Assume.Equals( IsPreparingStatements, true, nameof( IsPreparingStatements ) );
+
         if ( ! ReferenceEquals( CurrentTable, table ) )
         {
             if ( CurrentTable is not null )

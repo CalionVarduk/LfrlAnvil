@@ -12,13 +12,13 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
 {
     private readonly UlongSequenceGenerator _idGenerator;
 
-    public SqliteDatabaseBuilder()
+    internal SqliteDatabaseBuilder(SqlDatabaseCreateMode mode = SqlDatabaseCreateMode.DryRun)
     {
         _idGenerator = new UlongSequenceGenerator();
         DataTypes = new SqliteDataTypeProvider();
         TypeDefinitions = new SqliteColumnTypeDefinitionProvider();
         Schemas = new SqliteSchemaBuilderCollection( this );
-        ChangeTracker = new SqliteDatabaseChangeTracker();
+        ChangeTracker = new SqliteDatabaseChangeTracker( mode );
         ObjectPool = new MemorySequencePool<SqliteObjectBuilder>( minSegmentLength: 32 );
     }
 
@@ -26,6 +26,8 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
     public SqliteColumnTypeDefinitionProvider TypeDefinitions { get; }
     public SqliteSchemaBuilderCollection Schemas { get; }
     public SqlDialect Dialect => SqliteDialect.Instance;
+    public SqlDatabaseCreateMode Mode => ChangeTracker.Mode;
+    public bool IsAttached => ChangeTracker.IsAttached;
     internal SqliteDatabaseChangeTracker ChangeTracker { get; }
     internal MemorySequencePool<SqliteObjectBuilder> ObjectPool { get; }
 
@@ -41,6 +43,18 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
     public void AddRawStatement(string statement)
     {
         ChangeTracker.AddRawStatement( statement );
+    }
+
+    public SqliteDatabaseBuilder SetAttachedMode(bool enabled = true)
+    {
+        ChangeTracker.SetAttachedMode( enabled );
+        return this;
+    }
+
+    public SqliteDatabaseBuilder SetDetachedMode(bool enabled = true)
+    {
+        ChangeTracker.SetAttachedMode( ! enabled );
+        return this;
     }
 
     internal ulong GetNextId()
@@ -106,5 +120,15 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
                 var fk2 = ReinterpretCast.To<SqliteForeignKeyBuilder>( b );
                 return fk1.Index.Table.Id.CompareTo( fk2.Index.Table.Id );
             } );
+    }
+
+    ISqlDatabaseBuilder ISqlDatabaseBuilder.SetDetachedMode(bool enabled)
+    {
+        return SetDetachedMode( enabled );
+    }
+
+    ISqlDatabaseBuilder ISqlDatabaseBuilder.SetAttachedMode(bool enabled)
+    {
+        return SetAttachedMode( enabled );
     }
 }
