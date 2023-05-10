@@ -24,7 +24,7 @@ public abstract class Measurable
         var start = Stopwatch.GetTimestamp();
         Prepare();
         var end = Stopwatch.GetTimestamp();
-        Measurement = new TimeMeasurement( TimeSpan.FromTicks( end - start ), Measurement.Invocation, Measurement.Teardown );
+        Measurement = Measurement.SetPreparation( StopwatchTimestamp.GetTimeSpan( start, end ) );
 
         try
         {
@@ -32,12 +32,13 @@ public abstract class Measurable
             start = Stopwatch.GetTimestamp();
             Run();
             end = Stopwatch.GetTimestamp();
-            Measurement = new TimeMeasurement( Measurement.Preparation, TimeSpan.FromTicks( end - start ), Measurement.Teardown );
+            Measurement = Measurement.SetInvocation( StopwatchTimestamp.GetTimeSpan( start, end ) );
         }
         catch
         {
             end = Stopwatch.GetTimestamp();
-            Measurement = new TimeMeasurement( Measurement.Preparation, TimeSpan.FromTicks( end - start ), Measurement.Teardown );
+            Measurement = Measurement.SetInvocation( StopwatchTimestamp.GetTimeSpan( start, end ) );
+
             throw;
         }
         finally
@@ -46,8 +47,7 @@ public abstract class Measurable
             start = Stopwatch.GetTimestamp();
             Teardown();
             end = Stopwatch.GetTimestamp();
-            Measurement = new TimeMeasurement( Measurement.Preparation, Measurement.Invocation, TimeSpan.FromTicks( end - start ) );
-
+            Measurement = Measurement.SetTeardown( StopwatchTimestamp.GetTimeSpan( start, end ) );
             State = MeasurableState.Done;
             Done();
         }

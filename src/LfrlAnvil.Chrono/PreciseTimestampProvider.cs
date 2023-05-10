@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using LfrlAnvil.Chrono.Internal;
+using LfrlAnvil.Diagnostics;
 
 namespace LfrlAnvil.Chrono;
 
@@ -33,7 +34,7 @@ public sealed class PreciseTimestampProvider : TimestampProviderBase
             return new Timestamp( _utcStartTicks );
         }
 
-        var ticksDelta = StopwatchTicks.GetDurationTicks( _preciseMeasurementStart, currentTimestamp );
+        var ticksDelta = StopwatchTimestamp.GetTicks( _preciseMeasurementStart, currentTimestamp );
         return new Timestamp( _utcStartTicks + ticksDelta );
     }
 }

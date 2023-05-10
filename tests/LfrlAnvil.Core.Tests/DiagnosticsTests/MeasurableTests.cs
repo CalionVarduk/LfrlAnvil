@@ -3,7 +3,7 @@ using System.Threading;
 using LfrlAnvil.Diagnostics;
 using LfrlAnvil.Functional;
 
-namespace LfrlAnvil.Tests.DiagnosticsTests.MeasurableTests;
+namespace LfrlAnvil.Tests.DiagnosticsTests;
 
 public class MeasurableTests : TestsBase
 {

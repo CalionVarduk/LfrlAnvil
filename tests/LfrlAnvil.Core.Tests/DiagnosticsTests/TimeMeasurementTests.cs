@@ -1,6 +1,6 @@
 ﻿using LfrlAnvil.Diagnostics;
 
-namespace LfrlAnvil.Tests.DiagnosticsTests.TimeMeasurementTests;
+namespace LfrlAnvil.Tests.DiagnosticsTests;
 
 public class TimeMeasurementTests : TestsBase
 {
@@ -60,5 +60,53 @@ public class TimeMeasurementTests : TestsBase
         var result = sut.ToString();
 
         result.Should().Be( "Preparation: 0.1234567s, Invocation: 1.2345678s, Teardown: 123.4567890s (Total: 124.8148135s)" );
+    }
+
+    [Fact]
+    public void SetPreparation_ShouldUpdatePreparationPropertyOnly()
+    {
+        var (oldPreparation, newPreparation, invocation, teardown) = Fixture.CreateDistinctCollection<TimeSpan>( count: 4 );
+        var sut = new TimeMeasurement( oldPreparation, invocation, teardown );
+
+        var result = sut.SetPreparation( newPreparation );
+
+        using ( new AssertionScope() )
+        {
+            result.Preparation.Should().Be( newPreparation );
+            result.Invocation.Should().Be( invocation );
+            result.Teardown.Should().Be( teardown );
+        }
+    }
+
+    [Fact]
+    public void SetInvocation_ShouldUpdateInvocationPropertyOnly()
+    {
+        var (preparation, oldInvocation, newInvocation, teardown) = Fixture.CreateDistinctCollection<TimeSpan>( count: 4 );
+        var sut = new TimeMeasurement( preparation, oldInvocation, teardown );
+
+        var result = sut.SetInvocation( newInvocation );
+
+        using ( new AssertionScope() )
+        {
+            result.Preparation.Should().Be( preparation );
+            result.Invocation.Should().Be( newInvocation );
+            result.Teardown.Should().Be( teardown );
+        }
+    }
+
+    [Fact]
+    public void SetTeardown_ShouldUpdateTeardownPropertyOnly()
+    {
+        var (preparation, invocation, oldTeardown, newTeardown) = Fixture.CreateDistinctCollection<TimeSpan>( count: 4 );
+        var sut = new TimeMeasurement( preparation, invocation, oldTeardown );
+
+        var result = sut.SetTeardown( newTeardown );
+
+        using ( new AssertionScope() )
+        {
+            result.Preparation.Should().Be( preparation );
+            result.Invocation.Should().Be( invocation );
+            result.Teardown.Should().Be( newTeardown );
+        }
     }
 }

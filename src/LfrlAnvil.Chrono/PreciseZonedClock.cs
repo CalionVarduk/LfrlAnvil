@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using LfrlAnvil.Chrono.Internal;
+using LfrlAnvil.Diagnostics;
 
 namespace LfrlAnvil.Chrono;
 
@@ -37,7 +38,7 @@ public sealed class PreciseZonedClock : ZonedClockBase
             return ZonedDateTime.CreateUtc( _timestampStart ).ToTimeZone( TimeZone );
         }
 
-        var ticksDelta = StopwatchTicks.GetDurationTicks( _preciseMeasurementStart, currentTimestamp );
+        var ticksDelta = StopwatchTimestamp.GetTicks( _preciseMeasurementStart, currentTimestamp );
         return ZonedDateTime.CreateUtc( _timestampStart.Add( Duration.FromTicks( ticksDelta ) ) ).ToTimeZone( TimeZone );
     }
 }

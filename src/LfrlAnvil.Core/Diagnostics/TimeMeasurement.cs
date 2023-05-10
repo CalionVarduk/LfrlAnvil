@@ -33,6 +33,27 @@ public readonly struct TimeMeasurement
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public TimeMeasurement SetPreparation(TimeSpan preparation)
+    {
+        return new TimeMeasurement( preparation, Invocation, Teardown );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public TimeMeasurement SetInvocation(TimeSpan invocation)
+    {
+        return new TimeMeasurement( Preparation, invocation, Teardown );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public TimeMeasurement SetTeardown(TimeSpan teardown)
+    {
+        return new TimeMeasurement( Preparation, Invocation, teardown );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static string Stringify(TimeSpan timeSpan)
     {
         return $"{timeSpan.TotalSeconds.ToString( "N7", CultureInfo.InvariantCulture )}s";

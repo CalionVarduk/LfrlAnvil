@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using LfrlAnvil.Chrono.Internal;
+using LfrlAnvil.Diagnostics;
 
 namespace LfrlAnvil.Chrono;
 
@@ -34,7 +35,7 @@ public sealed class PreciseUtcDateTimeProvider : DateTimeProviderBase
             return _utcStart;
         }
 
-        var ticksDelta = StopwatchTicks.GetDurationTicks( _preciseMeasurementStart, currentTimestamp );
+        var ticksDelta = StopwatchTimestamp.GetTicks( _preciseMeasurementStart, currentTimestamp );
         return _utcStart.AddTicks( ticksDelta );
     }
 }
