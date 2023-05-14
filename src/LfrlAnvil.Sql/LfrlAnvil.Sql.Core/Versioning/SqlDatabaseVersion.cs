@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
-using LfrlAnvil.Sql.Builders;
+using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.Sql.Versioning;
 

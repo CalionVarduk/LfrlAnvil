@@ -6,9 +6,9 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using LfrlAnvil.Exceptions;
 using LfrlAnvil.Sql;
-using LfrlAnvil.Sql.Builders;
-using LfrlAnvil.Sqlite.Builders;
+using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
+using LfrlAnvil.Sqlite.Objects.Builders;
 using ExceptionResources = LfrlAnvil.Sql.Exceptions.ExceptionResources;
 
 namespace LfrlAnvil.Sqlite.Internal;

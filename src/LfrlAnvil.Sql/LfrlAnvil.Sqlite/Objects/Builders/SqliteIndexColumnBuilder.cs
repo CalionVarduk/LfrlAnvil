@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql;
-using LfrlAnvil.Sql.Builders;
+using LfrlAnvil.Sql.Objects.Builders;
 
-namespace LfrlAnvil.Sqlite.Builders;
+namespace LfrlAnvil.Sqlite.Objects.Builders;
 
 public sealed class SqliteIndexColumnBuilder : ISqlIndexColumnBuilder, IEquatable<SqliteIndexColumnBuilder>
 {

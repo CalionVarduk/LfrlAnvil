@@ -1,8 +1,8 @@
 ﻿using LfrlAnvil.Sql;
-using LfrlAnvil.Sql.Builders;
+using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Internal;
 
-namespace LfrlAnvil.Sqlite.Builders;
+namespace LfrlAnvil.Sqlite.Objects.Builders;
 
 public sealed class SqlitePrimaryKeyBuilder : SqliteObjectBuilder, ISqlPrimaryKeyBuilder
 {

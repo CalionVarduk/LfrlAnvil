@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
-using LfrlAnvil.Sql.Builders;
-using LfrlAnvil.Sqlite.Builders;
+using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Extensions;
+using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sqlite.Tests.BuildersTests;

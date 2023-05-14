@@ -1,7 +1,7 @@
 ﻿using System.Linq;
 using LfrlAnvil.Functional;
-using LfrlAnvil.Sql.Builders;
 using LfrlAnvil.Sql.Exceptions;
+using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Versioning;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 

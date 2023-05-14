@@ -2,11 +2,11 @@
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Exceptions;
 using LfrlAnvil.Sql;
-using LfrlAnvil.Sql.Builders;
+using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
 using ExceptionResources = LfrlAnvil.Sql.Exceptions.ExceptionResources;
 
-namespace LfrlAnvil.Sqlite.Builders;
+namespace LfrlAnvil.Sqlite.Objects.Builders;
 
 public abstract class SqliteObjectBuilder : ISqlObjectBuilder
 {

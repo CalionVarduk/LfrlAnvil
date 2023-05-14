@@ -1,10 +1,10 @@
 ﻿using System.Linq;
 using LfrlAnvil.Functional;
-using LfrlAnvil.Sql.Builders;
 using LfrlAnvil.Sql.Extensions;
-using LfrlAnvil.Sqlite.Builders;
+using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Extensions;
+using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 

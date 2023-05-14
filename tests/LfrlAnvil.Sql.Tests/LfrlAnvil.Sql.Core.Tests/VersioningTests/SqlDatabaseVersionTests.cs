@@ -1,4 +1,4 @@
-﻿using LfrlAnvil.Sql.Builders;
+﻿using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Versioning;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 

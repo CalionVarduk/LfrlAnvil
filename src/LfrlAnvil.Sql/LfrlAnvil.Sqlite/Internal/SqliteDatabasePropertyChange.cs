@@ -1,5 +1,5 @@
 ﻿using System.Diagnostics.Contracts;
-using LfrlAnvil.Sqlite.Builders;
+using LfrlAnvil.Sqlite.Objects.Builders;
 
 namespace LfrlAnvil.Sqlite.Internal;
 

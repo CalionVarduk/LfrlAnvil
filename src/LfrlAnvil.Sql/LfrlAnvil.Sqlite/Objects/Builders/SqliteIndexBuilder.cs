@@ -4,13 +4,13 @@ using System.Diagnostics.Contracts;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Memory;
 using LfrlAnvil.Sql;
-using LfrlAnvil.Sql.Builders;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Extensions;
+using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Internal;
 
-namespace LfrlAnvil.Sqlite.Builders;
+namespace LfrlAnvil.Sqlite.Objects.Builders;
 
 public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
 {

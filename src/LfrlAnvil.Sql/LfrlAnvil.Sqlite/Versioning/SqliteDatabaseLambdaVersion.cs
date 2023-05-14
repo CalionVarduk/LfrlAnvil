@@ -1,5 +1,5 @@
 ﻿using System;
-using LfrlAnvil.Sqlite.Builders;
+using LfrlAnvil.Sqlite.Objects.Builders;
 
 namespace LfrlAnvil.Sqlite.Versioning;
 

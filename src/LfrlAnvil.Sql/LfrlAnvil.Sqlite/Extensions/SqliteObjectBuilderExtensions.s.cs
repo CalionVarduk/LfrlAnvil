@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Sql.Builders;
-using LfrlAnvil.Sqlite.Builders;
+using LfrlAnvil.Sql.Objects.Builders;
+using LfrlAnvil.Sqlite.Objects.Builders;
 
 namespace LfrlAnvil.Sqlite.Extensions;
 

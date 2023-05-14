@@ -1,5 +1,5 @@
 ﻿using System;
-using LfrlAnvil.Sql.Builders;
+using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.Sql.Versioning;
 

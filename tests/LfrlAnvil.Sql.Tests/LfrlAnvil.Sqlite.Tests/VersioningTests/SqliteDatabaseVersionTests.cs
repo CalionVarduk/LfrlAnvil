@@ -1,7 +1,7 @@
 ﻿using LfrlAnvil.Functional;
-using LfrlAnvil.Sql.Builders;
-using LfrlAnvil.Sqlite.Builders;
+using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
+using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Versioning;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 

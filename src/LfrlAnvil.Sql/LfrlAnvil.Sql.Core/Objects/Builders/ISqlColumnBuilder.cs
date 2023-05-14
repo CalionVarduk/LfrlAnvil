@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 
-namespace LfrlAnvil.Sql.Builders;
+namespace LfrlAnvil.Sql.Objects.Builders;
 
 public interface ISqlColumnBuilder : ISqlObjectBuilder
 {

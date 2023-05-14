@@ -7,8 +7,8 @@ using System.Runtime.InteropServices;
 using System.Text;
 using LfrlAnvil.Exceptions;
 using LfrlAnvil.Sql;
-using LfrlAnvil.Sqlite.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
+using LfrlAnvil.Sqlite.Objects.Builders;
 using ExceptionResources = LfrlAnvil.Sql.Exceptions.ExceptionResources;
 
 namespace LfrlAnvil.Sqlite.Internal;

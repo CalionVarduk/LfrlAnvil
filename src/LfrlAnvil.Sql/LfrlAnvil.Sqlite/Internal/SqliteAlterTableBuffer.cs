@@ -4,7 +4,7 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using LfrlAnvil.Sql;
-using LfrlAnvil.Sqlite.Builders;
+using LfrlAnvil.Sqlite.Objects.Builders;
 
 namespace LfrlAnvil.Sqlite.Internal;
 

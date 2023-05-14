@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace LfrlAnvil.Sql.Builders;
+namespace LfrlAnvil.Sql.Objects.Builders;
 
 public interface ISqlTableBuilder : ISqlObjectBuilder
 {
