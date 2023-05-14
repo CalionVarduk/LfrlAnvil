@@ -15,5 +15,4 @@ public sealed class SqliteDataType : Enumeration<SqliteDataType, SqliteType>, IS
         : base( name, value ) { }
 
     public SqlDialect Dialect => SqliteDialect.Instance;
-    ISqlDataType? ISqlDataType.ParentType => null;
 }

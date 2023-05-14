@@ -1,9 +1,9 @@
-﻿using System.Text;
-using LfrlAnvil.Functional;
+﻿using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Extensions;
+using LfrlAnvil.Sqlite.Internal.TypeDefinitions;
 
 namespace LfrlAnvil.Sqlite.Tests.SqliteColumnTypeDefinitionTests;
 
@@ -397,68 +397,62 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
     [Fact]
     public void RegisterDefinition_ShouldAddNewTypeDefinition()
     {
-        var sut = (SqliteColumnTypeDefinitionProvider)_sut;
-        var baseDefinition = sut.GetByType<string>();
-        var result = sut.RegisterDefinition<Code, string>( b => b.Extend( c => c.Value, new Code( string.Empty ) ) );
-        var definition = sut.GetByType<Code>();
+        var baseDefinition = _sut.GetByType<string>();
+        var definition = baseDefinition.Extend( c => c.Value, new Code( string.Empty ) );
+        var result = _sut.RegisterDefinition( definition );
 
         using ( new AssertionScope() )
         {
-            result.Should().BeSameAs( sut );
+            result.Should().BeSameAs( _sut );
             definition.DbType.Should().BeSameAs( baseDefinition.DbType );
             definition.RuntimeType.Should().Be( typeof( Code ) );
             definition.DefaultValue.Should().Be( new Code( string.Empty ) );
+            _sut.GetByType( typeof( Code ) ).Should().BeSameAs( definition );
         }
     }
 
     [Fact]
     public void RegisterDefinition_ShouldOverrideExistingTypeDefinition()
     {
-        var sut = (SqliteColumnTypeDefinitionProvider)_sut;
-        var baseDefinition = sut.GetByType<double>();
-        var oldDefinition = sut.GetByType<decimal>();
-        var result = _sut.RegisterDefinition<decimal, double>( b => b.Extend( v => (double)v, 1m ) );
-        var definition = sut.GetByType<decimal>();
+        var baseDefinition = _sut.GetByType<double>();
+        var definition = baseDefinition.Extend( v => (double)v, 1m );
+        var result = _sut.RegisterDefinition( definition );
 
         using ( new AssertionScope() )
         {
-            result.Should().BeSameAs( sut );
-            definition.Should().NotBeSameAs( oldDefinition );
+            result.Should().BeSameAs( _sut );
             definition.DbType.Should().BeSameAs( baseDefinition.DbType );
             definition.RuntimeType.Should().Be( typeof( decimal ) );
             definition.DefaultValue.Should().Be( 1m );
+            _sut.GetByType( typeof( decimal ) ).Should().BeSameAs( definition );
         }
     }
 
     [Fact]
     public void RegisterDefinition_ShouldThrowInvalidOperationException_WhenAttemptingToOverrideInt64()
     {
-        var action = Lambda.Of( () => _sut.RegisterDefinition<long, string>( b => b.Extend( v => v.ToString(), 0L ) ) );
+        var action = Lambda.Of( () => _sut.RegisterDefinition( new SqliteColumnTypeDefinitionInt64() ) );
         action.Should().ThrowExactly<InvalidOperationException>();
     }
 
     [Fact]
     public void RegisterDefinition_ShouldThrowInvalidOperationException_WhenAttemptingToOverrideDouble()
     {
-        var action = Lambda.Of( () => _sut.RegisterDefinition<double, string>( b => b.Extend( v => v.ToString(), 0.0 ) ) );
+        var action = Lambda.Of( () => _sut.RegisterDefinition( new SqliteColumnTypeDefinitionDouble() ) );
         action.Should().ThrowExactly<InvalidOperationException>();
     }
 
     [Fact]
     public void RegisterDefinition_ShouldThrowInvalidOperationException_WhenAttemptingToOverrideString()
     {
-        var action = Lambda.Of(
-            () => _sut.RegisterDefinition<string, byte[]>( b => b.Extend( v => Encoding.UTF8.GetBytes( v ), string.Empty ) ) );
-
+        var action = Lambda.Of( () => _sut.RegisterDefinition( new SqliteColumnTypeDefinitionString() ) );
         action.Should().ThrowExactly<InvalidOperationException>();
     }
 
     [Fact]
     public void RegisterDefinition_ShouldThrowInvalidOperationException_WhenAttemptingToOverrideByteArray()
     {
-        var action = Lambda.Of(
-            () => _sut.RegisterDefinition<byte[], string>( b => b.Extend( BitConverter.ToString, Array.Empty<byte>() ) ) );
-
+        var action = Lambda.Of( () => _sut.RegisterDefinition( new SqliteColumnTypeDefinitionByteArray() ) );
         action.Should().ThrowExactly<InvalidOperationException>();
     }
 
@@ -466,7 +460,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
     public void RegisterDefinition_ShouldThrowInvalidOperationException_WhenAttemptingToOverrideObject()
     {
         var action = Lambda.Of(
-            () => _sut.RegisterDefinition<object, string>( b => b.Extend( v => v.ToString() ?? string.Empty, (object)string.Empty ) ) );
+            () => _sut.RegisterDefinition( new SqliteColumnTypeDefinitionObject( (SqliteColumnTypeDefinitionProvider)_sut ) ) );
 
         action.Should().ThrowExactly<InvalidOperationException>();
     }
@@ -474,27 +468,9 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
     [Fact]
     public void RegisterDefinition_ShouldThrowSqliteObjectCastException_WhenTypeDefinitionTypeIsInvalid()
     {
-        var action = Lambda.Of( () => _sut.RegisterDefinition<Code, string>( _ => Substitute.For<ISqlColumnTypeDefinition<Code>>() ) );
+        var action = Lambda.Of( () => _sut.RegisterDefinition( Substitute.For<ISqlColumnTypeDefinition<Code>>() ) );
         action.Should().ThrowExactly<SqliteObjectCastException>();
-    }
-
-    [Fact]
-    public void RegisterDefinition_ShouldThrowInvalidOperationException_WhenTypeDefinitionDbTypeIsDifferentFromBaseDbType()
-    {
-        var action = Lambda.Of( () => _sut.RegisterDefinition<Code, string>( _ => new InvalidTypeDef() ) );
-        action.Should().ThrowExactly<InvalidOperationException>();
     }
 }
 
 public readonly record struct Code(string Value);
-
-public sealed class InvalidTypeDef : SqliteColumnTypeDefinition<Code>
-{
-    public InvalidTypeDef()
-        : base( SqliteDataType.Integer, new Code( string.Empty ) ) { }
-
-    public override string ToDbLiteral(Code value)
-    {
-        return value.Value;
-    }
-}

@@ -1,17 +1,24 @@
 ﻿using System;
+using System.Data;
 using System.Diagnostics.Contracts;
 using System.Globalization;
 
 namespace LfrlAnvil.Sqlite.Internal.TypeDefinitions;
 
-internal sealed class SqliteColumnTypeDefinitionDateTime : SqliteColumnTypeDefinition<DateTime, string>
+internal sealed class SqliteColumnTypeDefinitionDateTime : SqliteColumnTypeDefinition<DateTime>
 {
-    internal SqliteColumnTypeDefinitionDateTime(SqliteColumnTypeDefinitionString @base)
-        : base( @base, DateTime.UnixEpoch ) { }
+    internal SqliteColumnTypeDefinitionDateTime()
+        : base( SqliteDataType.Text, DateTime.UnixEpoch ) { }
 
     [Pure]
-    protected override string MapToBaseType(DateTime value)
+    public override string ToDbLiteral(DateTime value)
     {
-        return value.ToString( "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture );
+        return value.ToString( "\\'yyyy-MM-dd HH:mm:ss.fffffff\\'", CultureInfo.InvariantCulture );
+    }
+
+    public override void SetParameter(IDbDataParameter parameter, DateTime value)
+    {
+        parameter.DbType = System.Data.DbType.String;
+        parameter.Value = value.ToString( "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture );
     }
 }

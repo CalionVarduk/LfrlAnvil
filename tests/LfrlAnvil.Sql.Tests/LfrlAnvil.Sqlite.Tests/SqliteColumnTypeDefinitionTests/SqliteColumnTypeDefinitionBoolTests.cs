@@ -1,5 +1,7 @@
-﻿using LfrlAnvil.Sql;
+﻿using System.Data;
+using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Extensions;
+using Microsoft.Data.Sqlite;
 
 namespace LfrlAnvil.Sqlite.Tests.SqliteColumnTypeDefinitionTests;
 
@@ -23,5 +25,34 @@ public class SqliteColumnTypeDefinitionBoolTests : TestsBase
         var sut = _provider.GetByType<bool>();
         var result = sut.TryToDbLiteral( 0L );
         result.Should().BeNull();
+    }
+
+    [Theory]
+    [InlineData( true, 1L )]
+    [InlineData( false, 0L )]
+    public void TrySetParameter_ShouldUpdateParameterCorrectly(bool value, long expectedValue)
+    {
+        var parameter = new SqliteParameter();
+        var sut = _provider.GetByType<bool>();
+
+        var result = sut.TrySetParameter( parameter, value );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeTrue();
+            parameter.DbType.Should().Be( DbType.Int64 );
+            parameter.Value.Should().Be( expectedValue );
+        }
+    }
+
+    [Fact]
+    public void TrySetParameter_ShouldReturnFalse_WhenValueIsNotOfBoolType()
+    {
+        var parameter = new SqliteParameter();
+        var sut = _provider.GetByType<bool>();
+
+        var result = sut.TrySetParameter( parameter, 0L );
+
+        result.Should().BeFalse();
     }
 }

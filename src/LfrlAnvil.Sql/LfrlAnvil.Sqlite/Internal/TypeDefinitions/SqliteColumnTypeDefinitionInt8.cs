@@ -1,15 +1,22 @@
-﻿using System.Diagnostics.Contracts;
+﻿using System.Data;
+using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Sqlite.Internal.TypeDefinitions;
 
-internal sealed class SqliteColumnTypeDefinitionInt8 : SqliteColumnTypeDefinition<sbyte, long>
+internal sealed class SqliteColumnTypeDefinitionInt8 : SqliteColumnTypeDefinition<sbyte>
 {
-    internal SqliteColumnTypeDefinitionInt8(SqliteColumnTypeDefinitionInt64 @base)
-        : base( @base, (sbyte)@base.DefaultValue ) { }
+    internal SqliteColumnTypeDefinitionInt8()
+        : base( SqliteDataType.Integer, 0 ) { }
 
     [Pure]
-    protected override long MapToBaseType(sbyte value)
+    public override string ToDbLiteral(sbyte value)
     {
-        return value;
+        return SqliteHelpers.GetDbLiteral( value );
+    }
+
+    public override void SetParameter(IDbDataParameter parameter, sbyte value)
+    {
+        parameter.DbType = System.Data.DbType.Int64;
+        parameter.Value = (long)value;
     }
 }

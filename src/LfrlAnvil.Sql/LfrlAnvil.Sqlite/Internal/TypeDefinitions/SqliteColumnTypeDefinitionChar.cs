@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.Contracts;
+﻿using System.Data;
+using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Sqlite.Internal.TypeDefinitions;
 
@@ -11,5 +12,11 @@ internal sealed class SqliteColumnTypeDefinitionChar : SqliteColumnTypeDefinitio
     public override string ToDbLiteral(char value)
     {
         return $"'{value}'";
+    }
+
+    public override void SetParameter(IDbDataParameter parameter, char value)
+    {
+        parameter.DbType = System.Data.DbType.String;
+        parameter.Value = value.ToString();
     }
 }

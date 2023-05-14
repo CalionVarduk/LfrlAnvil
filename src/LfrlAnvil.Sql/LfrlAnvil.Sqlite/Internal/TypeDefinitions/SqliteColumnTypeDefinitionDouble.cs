@@ -1,5 +1,5 @@
-﻿using System.Diagnostics.Contracts;
-using System.Globalization;
+﻿using System.Data;
+using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Sqlite.Internal.TypeDefinitions;
 
@@ -11,19 +11,12 @@ internal sealed class SqliteColumnTypeDefinitionDouble : SqliteColumnTypeDefinit
     [Pure]
     public override string ToDbLiteral(double value)
     {
-        var result = value.ToString( "G17", CultureInfo.InvariantCulture );
-        return IsFloatingPoint( result ) ? result : $"{result}.0";
+        return SqliteHelpers.GetDbLiteral( value );
     }
 
-    [Pure]
-    private static bool IsFloatingPoint(string value)
+    public override void SetParameter(IDbDataParameter parameter, double value)
     {
-        foreach ( var c in value )
-        {
-            if ( c == '.' || char.ToLower( c ) == 'e' )
-                return true;
-        }
-
-        return false;
+        parameter.DbType = System.Data.DbType.Double;
+        parameter.Value = value;
     }
 }

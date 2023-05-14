@@ -4,7 +4,6 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
-using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sqlite.Internal;
 using LfrlAnvil.Sqlite.Internal.TypeDefinitions;
 using Microsoft.Data.Sqlite;
@@ -32,36 +31,36 @@ public sealed class SqliteColumnTypeDefinitionProvider : ISqlColumnTypeDefinitio
         _definitionsByType = new Dictionary<Type, SqliteColumnTypeDefinition>
         {
             { typeof( bool ), new SqliteColumnTypeDefinitionBool() },
-            { typeof( byte ), new SqliteColumnTypeDefinitionUInt8( _defaultInteger ) },
-            { typeof( sbyte ), new SqliteColumnTypeDefinitionInt8( _defaultInteger ) },
-            { typeof( ushort ), new SqliteColumnTypeDefinitionUInt16( _defaultInteger ) },
-            { typeof( short ), new SqliteColumnTypeDefinitionInt16( _defaultInteger ) },
-            { typeof( uint ), new SqliteColumnTypeDefinitionUInt32( _defaultInteger ) },
-            { typeof( int ), new SqliteColumnTypeDefinitionInt32( _defaultInteger ) },
-            { typeof( ulong ), new SqliteColumnTypeDefinitionUInt64( _defaultInteger ) },
-            { typeof( TimeSpan ), new SqliteColumnTypeDefinitionTimeSpan( _defaultInteger ) },
+            { typeof( byte ), new SqliteColumnTypeDefinitionUInt8() },
+            { typeof( sbyte ), new SqliteColumnTypeDefinitionInt8() },
+            { typeof( ushort ), new SqliteColumnTypeDefinitionUInt16() },
+            { typeof( short ), new SqliteColumnTypeDefinitionInt16() },
+            { typeof( uint ), new SqliteColumnTypeDefinitionUInt32() },
+            { typeof( int ), new SqliteColumnTypeDefinitionInt32() },
+            { typeof( ulong ), new SqliteColumnTypeDefinitionUInt64() },
+            { typeof( TimeSpan ), new SqliteColumnTypeDefinitionTimeSpan() },
             { typeof( long ), _defaultInteger },
-            { typeof( float ), new SqliteColumnTypeDefinitionFloat( _defaultReal ) },
+            { typeof( float ), new SqliteColumnTypeDefinitionFloat() },
             { typeof( double ), _defaultReal },
-            { typeof( DateTime ), new SqliteColumnTypeDefinitionDateTime( _defaultText ) },
-            { typeof( DateTimeOffset ), new SqliteColumnTypeDefinitionDateTimeOffset( _defaultText ) },
-            { typeof( DateOnly ), new SqliteColumnTypeDefinitionDateOnly( _defaultText ) },
-            { typeof( TimeOnly ), new SqliteColumnTypeDefinitionTimeOnly( _defaultText ) },
-            { typeof( decimal ), new SqliteColumnTypeDefinitionDecimal( _defaultText ) },
+            { typeof( DateTime ), new SqliteColumnTypeDefinitionDateTime() },
+            { typeof( DateTimeOffset ), new SqliteColumnTypeDefinitionDateTimeOffset() },
+            { typeof( DateOnly ), new SqliteColumnTypeDefinitionDateOnly() },
+            { typeof( TimeOnly ), new SqliteColumnTypeDefinitionTimeOnly() },
+            { typeof( decimal ), new SqliteColumnTypeDefinitionDecimal() },
             { typeof( char ), new SqliteColumnTypeDefinitionChar() },
             { typeof( string ), _defaultText },
-            { typeof( Guid ), new SqliteColumnTypeDefinitionGuid( _defaultBlob ) },
+            { typeof( Guid ), new SqliteColumnTypeDefinitionGuid() },
             { typeof( byte[] ), _defaultBlob },
             { typeof( object ), _defaultAny }
         };
     }
 
-    public SqliteColumnTypeDefinitionProvider RegisterDefinition<T, TBase>(
-        Func<SqliteColumnTypeDefinition<TBase>, SqliteColumnTypeDefinition<T>> factory)
-        where TBase : notnull
+    public SqliteColumnTypeDefinitionProvider RegisterDefinition<T>(SqliteColumnTypeDefinition<T> definition)
         where T : notnull
     {
-        return RegisterDefinitionCore( factory );
+        EnsureTypeMutability( typeof( T ) );
+        _definitionsByType[typeof( T )] = definition;
+        return this;
     }
 
     [Pure]
@@ -95,29 +94,6 @@ public sealed class SqliteColumnTypeDefinitionProvider : ISqlColumnTypeDefinitio
         return _definitionsByType.GetValueOrDefault( type );
     }
 
-    private SqliteColumnTypeDefinitionProvider RegisterDefinitionCore<T, TBase>(
-        Func<SqliteColumnTypeDefinition<TBase>, ISqlColumnTypeDefinition<T>> factory)
-        where T : notnull
-        where TBase : notnull
-    {
-        EnsureTypeMutability( typeof( T ) );
-        var @base = (SqliteColumnTypeDefinition<TBase>)GetByType( typeof( TBase ) );
-
-        var result = SqliteHelpers.CastOrThrow<SqliteColumnTypeDefinition<T>>( factory( @base ) );
-        if ( ! result.DbType.IsCompatibleWith( @base.DbType ) )
-        {
-            throw new InvalidOperationException(
-                ExceptionResources.ExtendedTypeDefinitionIsIncompatibleWithBase(
-                    typeof( TBase ),
-                    @base.DbType,
-                    typeof( T ),
-                    result.DbType ) );
-        }
-
-        _definitionsByType[result.RuntimeType] = result;
-        return this;
-    }
-
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void EnsureTypeMutability(Type type)
     {
@@ -138,7 +114,7 @@ public sealed class SqliteColumnTypeDefinitionProvider : ISqlColumnTypeDefinitio
     [Pure]
     ISqlColumnTypeDefinition ISqlColumnTypeDefinitionProvider.GetDefaultForDataType(ISqlDataType dataType)
     {
-        return GetDefaultForDataType( (SqliteDataType)dataType );
+        return GetDefaultForDataType( SqliteHelpers.CastOrThrow<SqliteDataType>( dataType ) );
     }
 
     [Pure]
@@ -147,9 +123,8 @@ public sealed class SqliteColumnTypeDefinitionProvider : ISqlColumnTypeDefinitio
         return GetByType( type );
     }
 
-    ISqlColumnTypeDefinitionProvider ISqlColumnTypeDefinitionProvider.RegisterDefinition<T, TBase>(
-        Func<ISqlColumnTypeDefinition<TBase>, ISqlColumnTypeDefinition<T>> factory)
+    ISqlColumnTypeDefinitionProvider ISqlColumnTypeDefinitionProvider.RegisterDefinition<T>(ISqlColumnTypeDefinition<T> definition)
     {
-        return RegisterDefinitionCore( factory );
+        return RegisterDefinition( SqliteHelpers.CastOrThrow<SqliteColumnTypeDefinition<T>>( definition ) );
     }
 }

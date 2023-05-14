@@ -1,5 +1,7 @@
-﻿using LfrlAnvil.Sql;
+﻿using System.Data;
+using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Extensions;
+using Microsoft.Data.Sqlite;
 
 namespace LfrlAnvil.Sqlite.Tests.SqliteColumnTypeDefinitionTests;
 
@@ -27,5 +29,38 @@ public class SqliteColumnTypeDefinitionFloatTests : TestsBase
         var sut = _provider.GetByType<float>();
         var result = sut.TryToDbLiteral( 0.0 );
         result.Should().BeNull();
+    }
+
+    [Theory]
+    [InlineData( 123.625 )]
+    [InlineData( 123 )]
+    [InlineData( 0 )]
+    [InlineData( -123.625 )]
+    [InlineData( -123 )]
+    [InlineData( float.Epsilon )]
+    public void TrySetParameter_ShouldUpdateParameterCorrectly(float value)
+    {
+        var parameter = new SqliteParameter();
+        var sut = _provider.GetByType<float>();
+
+        var result = sut.TrySetParameter( parameter, value );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeTrue();
+            parameter.DbType.Should().Be( DbType.Double );
+            parameter.Value.Should().Be( (double)value );
+        }
+    }
+
+    [Fact]
+    public void TrySetParameter_ShouldReturnFalse_WhenValueIsNotOfFloatType()
+    {
+        var parameter = new SqliteParameter();
+        var sut = _provider.GetByType<float>();
+
+        var result = sut.TrySetParameter( parameter, 0.0 );
+
+        result.Should().BeFalse();
     }
 }

@@ -1,16 +1,22 @@
-﻿using System.Diagnostics.Contracts;
-using System.Globalization;
+﻿using System.Data;
+using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Sqlite.Internal.TypeDefinitions;
 
 internal sealed class SqliteColumnTypeDefinitionInt64 : SqliteColumnTypeDefinition<long>
 {
     internal SqliteColumnTypeDefinitionInt64()
-        : base( SqliteDataType.Integer, 0L ) { }
+        : base( SqliteDataType.Integer, 0 ) { }
 
     [Pure]
     public override string ToDbLiteral(long value)
     {
-        return value.ToString( CultureInfo.InvariantCulture );
+        return SqliteHelpers.GetDbLiteral( value );
+    }
+
+    public override void SetParameter(IDbDataParameter parameter, long value)
+    {
+        parameter.DbType = System.Data.DbType.Int64;
+        parameter.Value = value;
     }
 }

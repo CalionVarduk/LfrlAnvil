@@ -1,21 +1,39 @@
-﻿using System.Diagnostics.Contracts;
+﻿using System.Data;
+using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Sqlite.Internal.TypeDefinitions;
 
-internal sealed class SqliteColumnTypeDefinitionUInt64 : SqliteColumnTypeDefinition<ulong, long>
+internal sealed class SqliteColumnTypeDefinitionUInt64 : SqliteColumnTypeDefinition<ulong>
 {
-    internal SqliteColumnTypeDefinitionUInt64(SqliteColumnTypeDefinitionInt64 @base)
-        : base( @base, (ulong)@base.DefaultValue ) { }
+    internal SqliteColumnTypeDefinitionUInt64()
+        : base( SqliteDataType.Integer, 0 ) { }
+
+    [Pure]
+    public override string ToDbLiteral(ulong value)
+    {
+        return SqliteHelpers.GetDbLiteral( checked( (long)value ) );
+    }
 
     [Pure]
     public override string? TryToDbLiteral(object value)
     {
-        return value is ulong v && v <= long.MaxValue ? Base.ToDbLiteral( unchecked( (long)v ) ) : null;
+        return value is ulong v && v <= long.MaxValue ? SqliteHelpers.GetDbLiteral( unchecked( (long)v ) ) : null;
     }
 
-    [Pure]
-    protected override long MapToBaseType(ulong value)
+    public override void SetParameter(IDbDataParameter parameter, ulong value)
     {
-        return checked( (long)value );
+        var v = checked( (long)value );
+        parameter.DbType = System.Data.DbType.Int64;
+        parameter.Value = v;
+    }
+
+    public override bool TrySetParameter(IDbDataParameter parameter, object value)
+    {
+        if ( value is not ulong v || v > long.MaxValue )
+            return false;
+
+        parameter.DbType = System.Data.DbType.Int64;
+        parameter.Value = unchecked( (long)v );
+        return true;
     }
 }

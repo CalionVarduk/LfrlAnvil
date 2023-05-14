@@ -15,8 +15,6 @@ public interface ISqlColumnTypeDefinitionProvider
     [Pure]
     ISqlColumnTypeDefinition GetByType(Type type);
 
-    ISqlColumnTypeDefinitionProvider RegisterDefinition<T, TBase>(
-        Func<ISqlColumnTypeDefinition<TBase>, ISqlColumnTypeDefinition<T>> factory)
-        where TBase : notnull
+    ISqlColumnTypeDefinitionProvider RegisterDefinition<T>(ISqlColumnTypeDefinition<T> definition)
         where T : notnull;
 }

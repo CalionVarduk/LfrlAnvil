@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql.Exceptions;
 
@@ -28,5 +29,17 @@ internal sealed class SqliteColumnTypeDefinitionObject : SqliteColumnTypeDefinit
     {
         var definition = _provider.TryGetByType( value.GetType() );
         return definition is not null && definition.RuntimeType != typeof( object ) ? definition.TryToDbLiteral( value ) : null;
+    }
+
+    public override void SetParameter(IDbDataParameter parameter, object value)
+    {
+        if ( ! TrySetParameter( parameter, value ) )
+            throw new ArgumentException( ExceptionResources.ValueCannotBeUsedInParameter( typeof( object ) ), nameof( value ) );
+    }
+
+    public override bool TrySetParameter(IDbDataParameter parameter, object value)
+    {
+        var definition = _provider.TryGetByType( value.GetType() );
+        return definition is not null && definition.RuntimeType != typeof( object ) && definition.TrySetParameter( parameter, value );
     }
 }

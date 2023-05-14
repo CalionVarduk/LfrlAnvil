@@ -1,16 +1,25 @@
-﻿using System.Diagnostics.Contracts;
+﻿using System.Data;
+using System.Diagnostics.Contracts;
 using System.Globalization;
 
 namespace LfrlAnvil.Sqlite.Internal.TypeDefinitions;
 
-internal sealed class SqliteColumnTypeDefinitionDecimal : SqliteColumnTypeDefinition<decimal, string>
+internal sealed class SqliteColumnTypeDefinitionDecimal : SqliteColumnTypeDefinition<decimal>
 {
-    internal SqliteColumnTypeDefinitionDecimal(SqliteColumnTypeDefinitionString @base)
-        : base( @base, 0m ) { }
+    internal SqliteColumnTypeDefinitionDecimal()
+        : base( SqliteDataType.Text, 0m ) { }
 
     [Pure]
-    protected override string MapToBaseType(decimal value)
+    public override string ToDbLiteral(decimal value)
     {
-        return value.ToString( "0.0###########################", CultureInfo.InvariantCulture );
+        return value >= 0
+            ? value.ToString( "\\'0.0###########################\\'", CultureInfo.InvariantCulture )
+            : (-value).ToString( "\\'-0.0###########################\\'", CultureInfo.InvariantCulture );
+    }
+
+    public override void SetParameter(IDbDataParameter parameter, decimal value)
+    {
+        parameter.DbType = System.Data.DbType.String;
+        parameter.Value = value.ToString( "0.0###########################", CultureInfo.InvariantCulture );
     }
 }

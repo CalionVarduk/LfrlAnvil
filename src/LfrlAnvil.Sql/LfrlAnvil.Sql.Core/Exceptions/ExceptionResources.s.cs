@@ -144,19 +144,6 @@ public static class ExceptionResources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string ExtendedTypeDefinitionIsIncompatibleWithBase(
-        Type baseType,
-        ISqlDataType baseDbType,
-        Type extensionType,
-        ISqlDataType extensionDbType)
-    {
-        var baseText = $"'{baseType.GetDebugString()}' type using '{baseDbType}' SQL type";
-        var extensionText = $"'{extensionType.GetDebugString()}' type using '{extensionDbType}' SQL type";
-        return $"{extensionText} is incompatible with base {baseText}.";
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string DefaultTypeDefinitionCannotBeOverriden(Type type)
     {
         return $"Default registration for type '{type.GetDebugString()}' cannot be overriden.";
@@ -167,6 +154,13 @@ public static class ExceptionResources
     public static string ValueCannotBeConvertedToDbLiteral(Type type)
     {
         return $"Value cannot be converted to database literal through definition of '{type.GetDebugString()}' type.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string ValueCannotBeUsedInParameter(Type type)
+    {
+        return $"Value cannot be used in database parameter through definition of '{type.GetDebugString()}' type.";
     }
 
     [Pure]

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql;
@@ -26,6 +27,8 @@ public abstract class SqliteColumnTypeDefinition : ISqlColumnTypeDefinition
 
     [Pure]
     public abstract string? TryToDbLiteral(object value);
+
+    public abstract bool TrySetParameter(IDbDataParameter parameter, object value);
 }
 
 public abstract class SqliteColumnTypeDefinition<T> : SqliteColumnTypeDefinition, ISqlColumnTypeDefinition<T>
@@ -47,10 +50,21 @@ public abstract class SqliteColumnTypeDefinition<T> : SqliteColumnTypeDefinition
     [Pure]
     public abstract string ToDbLiteral(T value);
 
+    public abstract void SetParameter(IDbDataParameter parameter, T value);
+
     [Pure]
     public override string? TryToDbLiteral(object value)
     {
         return value is T t ? ToDbLiteral( t ) : null;
+    }
+
+    public override bool TrySetParameter(IDbDataParameter parameter, object value)
+    {
+        if ( value is not T t )
+            return false;
+
+        SetParameter( parameter, t );
+        return true;
     }
 
     [Pure]
@@ -77,6 +91,12 @@ public abstract class SqliteColumnTypeDefinition<T, TBase> : SqliteColumnTypeDef
     {
         var baseValue = MapToBaseType( value );
         return Base.ToDbLiteral( baseValue );
+    }
+
+    public sealed override void SetParameter(IDbDataParameter parameter, T value)
+    {
+        var baseValue = MapToBaseType( value );
+        Base.SetParameter( parameter, baseValue );
     }
 
     [Pure]
