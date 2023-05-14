@@ -205,6 +205,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
     [InlineData( "" )]
     [InlineData( " " )]
     [InlineData( "\"" )]
+    [InlineData( "'" )]
     [InlineData( "f\"oo" )]
     public void SetName_ShouldThrowSqliteObjectBuilderException_WhenNameIsInvalid(string name)
     {

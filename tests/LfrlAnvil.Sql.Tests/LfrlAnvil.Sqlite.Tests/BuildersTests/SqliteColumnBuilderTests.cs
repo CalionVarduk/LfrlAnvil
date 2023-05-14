@@ -295,6 +295,7 @@ public class SqliteColumnBuilderTests : TestsBase
     [InlineData( "" )]
     [InlineData( " " )]
     [InlineData( "\"" )]
+    [InlineData( "'" )]
     [InlineData( "f\"oo" )]
     public void SetName_ShouldThrowSqliteObjectBuilderException_WhenNameIsInvalid(string name)
     {

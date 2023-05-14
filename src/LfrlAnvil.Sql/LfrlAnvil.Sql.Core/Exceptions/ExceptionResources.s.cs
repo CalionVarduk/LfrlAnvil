@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Builders;
+using LfrlAnvil.Sql.Versioning;
 
 namespace LfrlAnvil.Sql.Exceptions;
 
@@ -165,7 +166,55 @@ public static class ExceptionResources
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string ValueCannotBeConvertedToDbLiteral(Type type)
     {
-        return $"Value cannot be converted to db literal through definition of '{type.GetDebugString()}' type.";
+        return $"Value cannot be converted to database literal through definition of '{type.GetDebugString()}' type.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string VersionIsPrecededByVersionWithGreaterOrEqualValue(
+        int index,
+        SqlDatabaseVersion previous,
+        SqlDatabaseVersion current)
+    {
+        return $"Version {current} at position {index} is preceded by version {previous} with greater or equal value.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string FirstVersionHasValueEqualToInitialValue(SqlDatabaseVersion version)
+    {
+        return $"First version {version} has value equal to the initial value.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string DatabaseVersionDoesNotExistInHistory(Version version)
+    {
+        return $"Database version {version} does not exist in the provided version history.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string VersionCountDoesNotMatch(int dbCount, int historyCount, Version dbVersion)
+    {
+        return
+            $"Database version count ({dbCount}) & version count ({historyCount}) from the provided version history do not match for database version {dbVersion}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string PersistedVersionCountDoesNotMatch(int dbCount, int historyCount, Version dbVersion)
+    {
+        return
+            $"Persisted database version count ({dbCount}) & version count ({historyCount}) from the provided version history do not match for database version {dbVersion}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string DatabaseAndHistoryVersionDoNotMatch(SqlDatabaseVersionRecord record, Version historyVersion)
+    {
+        return
+            $"Database version {record.Version} with ordinal {record.Ordinal} & version {historyVersion} from the provided version history do not match.";
     }
 
     [Pure]
@@ -185,5 +234,17 @@ public static class ExceptionResources
     internal static string GetObjectCastMessage(SqlDialect dialect, Type expected, Type actual)
     {
         return $"Expected {dialect} object of type {expected.GetDebugString()} but found object of type {actual.GetDebugString()}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string GetVersionHistoryErrors(Chain<string> errors)
+    {
+        if ( errors.Count == 0 )
+            return $"An unexpected error has occurred during version history validation.";
+
+        var headerText = $"Encountered {errors.Count} version history validation error(s):";
+        var errorsText = string.Join( Environment.NewLine, errors.Select( (e, i) => $"{i + 1}. {e}" ) );
+        return $"{headerText}{Environment.NewLine}{errorsText}";
     }
 }

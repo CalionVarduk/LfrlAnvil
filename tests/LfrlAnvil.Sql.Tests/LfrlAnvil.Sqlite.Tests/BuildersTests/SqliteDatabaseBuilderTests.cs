@@ -42,21 +42,6 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
         }
     }
 
-    [Theory]
-    [InlineData( SqlDatabaseCreateMode.NoChanges )]
-    [InlineData( SqlDatabaseCreateMode.DryRun )]
-    [InlineData( SqlDatabaseCreateMode.Commit )]
-    public void Ctor_ShouldSetCorrectMode(SqlDatabaseCreateMode mode)
-    {
-        var sut = new SqliteDatabaseBuilder( mode );
-
-        using ( new AssertionScope() )
-        {
-            sut.Mode.Should().Be( mode );
-            sut.IsAttached.Should().BeTrue();
-        }
-    }
-
     [Fact]
     public void AddRawStatement_ShouldAddNewStatement_WhenThereAreNoPendingChanges()
     {
@@ -73,7 +58,8 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
     public void AddRawStatement_ShouldAddNewStatement_WhenThereAreSomePendingChanges()
     {
         var statement = Fixture.Create<string>();
-        var sut = new SqliteDatabaseBuilder( SqlDatabaseCreateMode.Commit );
+        var sut = new SqliteDatabaseBuilder();
+        sut.ChangeTracker.SetMode( SqlDatabaseCreateMode.Commit );
 
         var table = sut.Schemas.Default.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C" );
@@ -104,7 +90,8 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
     public void AddRawStatement_ShouldDoNothing_WhenBuilderIsInNoChangesMode()
     {
         var statement = Fixture.Create<string>();
-        var sut = new SqliteDatabaseBuilder( SqlDatabaseCreateMode.NoChanges );
+        var sut = new SqliteDatabaseBuilder();
+        sut.ChangeTracker.SetMode( SqlDatabaseCreateMode.NoChanges );
 
         sut.AddRawStatement( statement );
 
@@ -132,7 +119,8 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
     [Fact]
     public void ObjectCreation_ShouldDoNothing_WhenBuilderIsInNoChangesMode()
     {
-        var sut = new SqliteDatabaseBuilder( SqlDatabaseCreateMode.NoChanges );
+        var sut = new SqliteDatabaseBuilder();
+        sut.ChangeTracker.SetMode( SqlDatabaseCreateMode.NoChanges );
 
         var table = sut.Schemas.Default.Objects.CreateTable( "T" );
         var ix1 = table.Indexes.Create( table.Columns.Create( "D" ).Asc() ).MarkAsUnique();

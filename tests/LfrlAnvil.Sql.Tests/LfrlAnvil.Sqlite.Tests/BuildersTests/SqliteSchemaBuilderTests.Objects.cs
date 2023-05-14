@@ -52,6 +52,7 @@ public partial class SqliteSchemaBuilderTests
         [InlineData( "" )]
         [InlineData( " " )]
         [InlineData( "\"" )]
+        [InlineData( "'" )]
         [InlineData( "f\"oo" )]
         public void CreateTable_ShouldThrowSqliteObjectBuilderException_WhenNameIsInvalid(string name)
         {

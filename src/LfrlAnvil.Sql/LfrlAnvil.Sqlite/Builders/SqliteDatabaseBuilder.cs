@@ -12,13 +12,13 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
 {
     private readonly UlongSequenceGenerator _idGenerator;
 
-    internal SqliteDatabaseBuilder(SqlDatabaseCreateMode mode = SqlDatabaseCreateMode.DryRun)
+    internal SqliteDatabaseBuilder()
     {
         _idGenerator = new UlongSequenceGenerator();
         DataTypes = new SqliteDataTypeProvider();
         TypeDefinitions = new SqliteColumnTypeDefinitionProvider();
         Schemas = new SqliteSchemaBuilderCollection( this );
-        ChangeTracker = new SqliteDatabaseChangeTracker( mode );
+        ChangeTracker = new SqliteDatabaseChangeTracker();
         ObjectPool = new MemorySequencePool<SqliteObjectBuilder>( minSegmentLength: 32 );
     }
 

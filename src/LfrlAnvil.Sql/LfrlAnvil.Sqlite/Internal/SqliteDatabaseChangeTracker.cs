@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -20,25 +21,26 @@ internal sealed class SqliteDatabaseChangeTracker
     private readonly List<string> _pendingStatements;
     private readonly List<SqliteDatabasePropertyChange> _ongoing;
     private readonly StringBuilder _ongoingStatement;
+    private readonly Dictionary<ulong, SqliteTableBuilder> _modifiedTables;
     private SqliteAlterTableBuffer? _alterTableBuffer;
     private byte _mode;
 
-    internal SqliteDatabaseChangeTracker(SqlDatabaseCreateMode mode)
+    internal SqliteDatabaseChangeTracker()
     {
-        Assume.IsDefined( mode, nameof( mode ) );
-
         _pendingStatements = new List<string>();
         _ongoing = new List<SqliteDatabasePropertyChange>();
         _ongoingStatement = new StringBuilder();
+        _modifiedTables = new Dictionary<ulong, SqliteTableBuilder>();
         _alterTableBuffer = null;
         CurrentTable = null;
-        _mode = (byte)((int)mode << 1);
+        _mode = (byte)SqlDatabaseCreateMode.DryRun << 1;
     }
 
     internal SqliteTableBuilder? CurrentTable { get; private set; }
     internal SqlDatabaseCreateMode Mode => (SqlDatabaseCreateMode)((_mode & ModeMask) >> 1);
     internal bool IsAttached => (_mode & IsDetachedBit) == 0;
     internal bool IsPreparingStatements => _mode > 0 && IsAttached;
+    internal IEnumerable<string> ModifiedTableNames => _modifiedTables.Values.Select( t => t.FullName );
 
     internal ReadOnlySpan<string> GetPendingStatements()
     {
@@ -72,6 +74,20 @@ internal sealed class SqliteDatabaseChangeTracker
             CompletePendingStatement();
 
         _mode |= IsDetachedBit;
+    }
+
+    internal void SetMode(SqlDatabaseCreateMode mode)
+    {
+        Assume.IsDefined( mode, nameof( mode ) );
+        _mode = (byte)((int)mode << 1);
+    }
+
+    internal void ClearStatements()
+    {
+        CurrentTable = null;
+        _modifiedTables.Clear();
+        _ongoing.Clear();
+        _pendingStatements.Clear();
     }
 
     internal void ObjectCreated(SqliteTableBuilder table, SqliteObjectBuilder obj)
@@ -303,13 +319,19 @@ internal sealed class SqliteDatabaseChangeTracker
         else
             CompletePendingAlterTableStatement( changes );
 
-        CurrentTable = null;
         _ongoing.Clear();
         if ( _ongoingStatement.Length > 0 )
         {
+            if ( CurrentTable.IsRemoved )
+                _modifiedTables.Remove( CurrentTable.Id );
+            else
+                _modifiedTables.TryAdd( CurrentTable.Id, CurrentTable );
+
             _pendingStatements.Add( _ongoingStatement.AppendLine().ToString() );
             _ongoingStatement.Clear();
         }
+
+        CurrentTable = null;
     }
 
     private void CompletePendingCreateTableStatement()

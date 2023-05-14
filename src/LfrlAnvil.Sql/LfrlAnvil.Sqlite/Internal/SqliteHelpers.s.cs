@@ -67,8 +67,8 @@ public static class SqliteHelpers
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static void AssertName(string name)
     {
-        if ( string.IsNullOrWhiteSpace( name ) || name.Contains( '"' ) )
-            throw new SqliteObjectBuilderException( ExceptionResources.InvalidName( name ) );
+        if ( string.IsNullOrWhiteSpace( name ) || name.Contains( '"' ) || name.Contains( '\'' ) )
+            ExceptionThrower.Throw( new SqliteObjectBuilderException( ExceptionResources.InvalidName( name ) ) );
     }
 
     [Pure]
