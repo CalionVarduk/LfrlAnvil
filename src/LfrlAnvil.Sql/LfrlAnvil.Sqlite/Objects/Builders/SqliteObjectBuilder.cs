@@ -35,6 +35,12 @@ public abstract class SqliteObjectBuilder : ISqlObjectBuilder
         return $"[{Type}] {FullName}";
     }
 
+    [Pure]
+    public sealed override int GetHashCode()
+    {
+        return Id.GetHashCode();
+    }
+
     public void Remove()
     {
         if ( IsRemoved )

@@ -19,7 +19,8 @@ public sealed class SqliteIndexBuilderCollection : ISqlIndexBuilderCollection
     internal SqliteIndexBuilderCollection(SqliteTableBuilder table)
     {
         Table = table;
-        _map = new Dictionary<ReadOnlyMemory<ISqlIndexColumnBuilder>, SqliteIndexBuilder>( new ColumnComparer() );
+        _map = new Dictionary<ReadOnlyMemory<ISqlIndexColumnBuilder>, SqliteIndexBuilder>(
+            new MemoryElementWiseComparer<ISqlIndexColumnBuilder>() );
     }
 
     public SqliteTableBuilder Table { get; }
@@ -107,36 +108,6 @@ public sealed class SqliteIndexBuilderCollection : ISqlIndexBuilderCollection
         var result = Table.Schema.Objects.CreateIndex( Table, columns, isUnique: true );
         _map.Add( columns, result );
         return result;
-    }
-
-    private sealed class ColumnComparer : IEqualityComparer<ReadOnlyMemory<ISqlIndexColumnBuilder>>
-    {
-        [Pure]
-        public bool Equals(ReadOnlyMemory<ISqlIndexColumnBuilder> x, ReadOnlyMemory<ISqlIndexColumnBuilder> y)
-        {
-            if ( x.Length != y.Length )
-                return false;
-
-            var xSpan = x.Span;
-            var ySpan = y.Span;
-            for ( var i = 0; i < xSpan.Length; ++i )
-            {
-                if ( ! xSpan[i].Equals( ySpan[i] ) )
-                    return false;
-            }
-
-            return true;
-        }
-
-        [Pure]
-        public int GetHashCode(ReadOnlyMemory<ISqlIndexColumnBuilder> obj)
-        {
-            var result = Hash.Default;
-            foreach ( var c in obj.Span )
-                result = result.Add( c );
-
-            return result;
-        }
     }
 
     [Pure]

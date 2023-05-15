@@ -16,7 +16,7 @@ public sealed class SqliteForeignKeyBuilderCollection : ISqlForeignKeyBuilderCol
     internal SqliteForeignKeyBuilderCollection(SqliteTableBuilder table)
     {
         Table = table;
-        _map = new Dictionary<Pair<ISqlIndexBuilder, ISqlIndexBuilder>, SqliteForeignKeyBuilder>( new IndexPairComparer() );
+        _map = new Dictionary<Pair<ISqlIndexBuilder, ISqlIndexBuilder>, SqliteForeignKeyBuilder>();
     }
 
     public SqliteTableBuilder Table { get; }
@@ -99,27 +99,6 @@ public sealed class SqliteForeignKeyBuilderCollection : ISqlForeignKeyBuilderCol
     internal void Reactivate(SqliteForeignKeyBuilder foreignKey)
     {
         _map.Add( Pair.Create<ISqlIndexBuilder, ISqlIndexBuilder>( foreignKey.Index, foreignKey.ReferencedIndex ), foreignKey );
-    }
-
-    private sealed class IndexPairComparer : IEqualityComparer<Pair<ISqlIndexBuilder, ISqlIndexBuilder>>
-    {
-        public bool Equals(Pair<ISqlIndexBuilder, ISqlIndexBuilder> x, Pair<ISqlIndexBuilder, ISqlIndexBuilder> y)
-        {
-            return ReferenceEquals( x.First, y.First ) && ReferenceEquals( x.Second, y.Second );
-        }
-
-        public int GetHashCode(Pair<ISqlIndexBuilder, ISqlIndexBuilder> obj)
-        {
-            var result = Hash.Default;
-
-            if ( obj.First is SqliteIndexBuilder ix1 )
-                result = result.Add( ix1.Id );
-
-            if ( obj.First is SqliteIndexBuilder ix2 )
-                result = result.Add( ix2.Id );
-
-            return result.Value;
-        }
     }
 
     [Pure]
