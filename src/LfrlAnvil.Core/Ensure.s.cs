@@ -32,7 +32,7 @@ public static class Ensure
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static void IsNull<T>(T? param, IEqualityComparer<T> comparer, string paramName = DefaultParamName)
     {
-        if ( ! Generic<T>.IsReferenceType && ! Generic<T>.IsNullableType )
+        if ( typeof( T ).IsValueType && ! Generic<T>.IsNullableType )
             ExceptionThrower.Throw( Exceptions.NotNull( param, paramName ) );
 
         if ( ! comparer.Equals( param, default ) )
@@ -58,7 +58,7 @@ public static class Ensure
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static void IsNotNull<T>(T? param, IEqualityComparer<T> comparer, string paramName = DefaultParamName)
     {
-        if ( ! Generic<T>.IsReferenceType && ! Generic<T>.IsNullableType )
+        if ( typeof( T ).IsValueType && ! Generic<T>.IsNullableType )
             return;
 
         if ( comparer.Equals( param, default ) )
@@ -419,7 +419,7 @@ public static class Ensure
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static void ContainsNull<T>(IEnumerable<T?> param, IEqualityComparer<T> comparer, string paramName = DefaultParamName)
     {
-        if ( ! Generic<T>.IsReferenceType && ! Generic<T>.IsNullableType )
+        if ( typeof( T ).IsValueType && ! Generic<T>.IsNullableType )
             ExceptionThrower.Throw( Exceptions.NotContainsNull( paramName ) );
 
         if ( param.All( e => ! comparer.Equals( e, default ) ) )
@@ -445,7 +445,7 @@ public static class Ensure
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static void NotContainsNull<T>(IEnumerable<T?> param, IEqualityComparer<T> comparer, string paramName = DefaultParamName)
     {
-        if ( ! Generic<T>.IsReferenceType && ! Generic<T>.IsNullableType )
+        if ( typeof( T ).IsValueType && ! Generic<T>.IsNullableType )
             return;
 
         if ( param.Any( e => comparer.Equals( e, default ) ) )

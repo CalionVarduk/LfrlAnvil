@@ -42,7 +42,7 @@ public static class EventStreamExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IEventStream<TEvent> WhereNotNull<TEvent>(this IEventStream<TEvent?> source, IEqualityComparer<TEvent> comparer)
     {
-        if ( ! Generic<TEvent>.IsReferenceType && ! Generic<TEvent>.IsNullableType )
+        if ( typeof( TEvent ).IsValueType && ! Generic<TEvent>.IsNullableType )
             return source!;
 
         return source.Where( e => ! comparer.Equals( e, default ) )!;

@@ -38,7 +38,7 @@ public static class EnumerableExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> source, IEqualityComparer<T> comparer)
     {
-        if ( ! Generic<T>.IsReferenceType && ! Generic<T>.IsNullableType )
+        if ( typeof( T ).IsValueType && ! Generic<T>.IsNullableType )
             return source!;
 
         return source.Where( e => ! comparer.Equals( e, default ) )!;
@@ -64,7 +64,7 @@ public static class EnumerableExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool ContainsNull<T>(this IEnumerable<T> source, IEqualityComparer<T> comparer)
     {
-        if ( ! Generic<T>.IsReferenceType && ! Generic<T>.IsNullableType )
+        if ( typeof( T ).IsValueType && ! Generic<T>.IsNullableType )
             return false;
 
         return source.Any( e => comparer.Equals( e, default ) );

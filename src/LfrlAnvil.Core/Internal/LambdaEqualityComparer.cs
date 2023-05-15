@@ -13,7 +13,7 @@ internal sealed class LambdaEqualityComparer<T> : IEqualityComparer<T>
     internal LambdaEqualityComparer(Func<T?, T?, bool> equals)
     {
         _equals = equals;
-        _getHashCode = Generic<T>.CreateHashCode;
+        _getHashCode = Generic<T>.GetHashCode;
     }
 
     internal LambdaEqualityComparer(Func<T?, T?, bool> equals, Func<T, int> getHashCode)

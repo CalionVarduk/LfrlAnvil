@@ -8,18 +8,17 @@ namespace LfrlAnvil.Internal;
 
 public static class Generic<T>
 {
-    public static readonly bool IsReferenceType = ! typeof( T ).IsValueType;
-    public static readonly bool IsValueType = typeof( T ).IsValueType;
-    public static readonly bool IsNullableType = Nullable.GetUnderlyingType( typeof( T ) ) is not null;
+    public static readonly bool IsNullableType =
+        typeof( T ).IsValueType && Nullable.GetUnderlyingType( typeof( T ) ) is not null;
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool IsNull([NotNullWhen( false )] T? obj)
     {
-        if ( IsReferenceType )
-            return ReferenceEquals( obj, null );
+        if ( typeof( T ).IsValueType )
+            return IsNullableType && EqualityComparer<T>.Default.Equals( obj, default );
 
-        return IsNullableType && EqualityComparer<T>.Default.Equals( obj, default );
+        return ReferenceEquals( obj, null );
     }
 
     [Pure]
@@ -33,10 +32,9 @@ public static class Generic<T>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool IsDefault([NotNullWhen( false )] T? obj)
     {
-        if ( IsReferenceType )
-            return ReferenceEquals( obj, null );
-
-        return EqualityComparer<T>.Default.Equals( obj, default );
+        return typeof( T ).IsValueType
+            ? EqualityComparer<T>.Default.Equals( obj, default )
+            : ReferenceEquals( obj, null );
     }
 
     [Pure]
@@ -69,7 +67,7 @@ public static class Generic<T>
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static int CreateHashCode(T? obj)
+    public static int GetHashCode(T? obj)
     {
         return IsNull( obj ) ? 0 : EqualityComparer<T>.Default.GetHashCode( obj );
     }
