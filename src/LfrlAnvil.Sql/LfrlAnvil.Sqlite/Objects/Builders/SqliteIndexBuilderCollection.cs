@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Memory;
 using LfrlAnvil.Sql.Exceptions;
@@ -83,15 +84,39 @@ public sealed class SqliteIndexBuilderCollection : ISqlIndexBuilderCollection
     }
 
     [Pure]
-    public IReadOnlyCollection<SqliteIndexBuilder> AsCollection()
+    public Enumerator GetEnumerator()
     {
-        return _map.Values;
+        return new Enumerator( _map );
     }
 
-    [Pure]
-    public IEnumerator<SqliteIndexBuilder> GetEnumerator()
+    public struct Enumerator : IEnumerator<SqliteIndexBuilder>
     {
-        return AsCollection().GetEnumerator();
+        private Dictionary<ReadOnlyMemory<ISqlIndexColumnBuilder>, SqliteIndexBuilder>.ValueCollection.Enumerator _enumerator;
+
+        internal Enumerator(Dictionary<ReadOnlyMemory<ISqlIndexColumnBuilder>, SqliteIndexBuilder> source)
+        {
+            _enumerator = source.Values.GetEnumerator();
+        }
+
+        public SqliteIndexBuilder Current => _enumerator.Current;
+        object IEnumerator.Current => Current;
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public void Dispose()
+        {
+            _enumerator.Dispose();
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public bool MoveNext()
+        {
+            return _enumerator.MoveNext();
+        }
+
+        void IEnumerator.Reset()
+        {
+            ((IEnumerator)_enumerator).Reset();
+        }
     }
 
     internal void ClearInto(RentedMemorySequenceSpan<SqliteObjectBuilder> buffer)

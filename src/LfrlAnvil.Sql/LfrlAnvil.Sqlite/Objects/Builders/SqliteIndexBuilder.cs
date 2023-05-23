@@ -38,7 +38,7 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
     public SqliteTableBuilder Table { get; }
     public SqlitePrimaryKeyBuilder? PrimaryKey { get; private set; }
     public bool IsUnique { get; private set; }
-    public IReadOnlyList<SqliteIndexColumnBuilder> Columns => _columns;
+    public ReadOnlyMemory<SqliteIndexColumnBuilder> Columns => _columns;
     public IReadOnlyCollection<SqliteForeignKeyBuilder> ForeignKeys => (_foreignKeys?.Values).EmptyIfNull();
     public IReadOnlyCollection<SqliteForeignKeyBuilder> ReferencingForeignKeys => (_referencingForeignKeys?.Values).EmptyIfNull();
     public override SqliteDatabaseBuilder Database => Table.Database;
@@ -64,7 +64,7 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
     ISqlTableBuilder ISqlIndexBuilder.Table => Table;
     ISqlPrimaryKeyBuilder? ISqlIndexBuilder.PrimaryKey => PrimaryKey;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
-    IReadOnlyList<ISqlIndexColumnBuilder> ISqlIndexBuilder.Columns => Columns;
+    ReadOnlyMemory<ISqlIndexColumnBuilder> ISqlIndexBuilder.Columns => _columns;
     IReadOnlyCollection<ISqlForeignKeyBuilder> ISqlIndexBuilder.ForeignKeys => ForeignKeys;
     IReadOnlyCollection<ISqlForeignKeyBuilder> ISqlIndexBuilder.ReferencingForeignKeys => ReferencingForeignKeys;
 

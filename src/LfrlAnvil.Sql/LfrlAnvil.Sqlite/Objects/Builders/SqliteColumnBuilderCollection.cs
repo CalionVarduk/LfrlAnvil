@@ -1,7 +1,9 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Memory;
@@ -21,7 +23,7 @@ public sealed class SqliteColumnBuilderCollection : ISqlColumnBuilderCollection
     {
         Table = table;
         DefaultTypeDefinition = table.Database.TypeDefinitions.GetDefaultForDataType( SqliteDataType.Any );
-        _map = new Dictionary<string, SqliteColumnBuilder>();
+        _map = new Dictionary<string, SqliteColumnBuilder>( StringComparer.OrdinalIgnoreCase );
     }
 
     public SqliteTableBuilder Table { get; }
@@ -94,15 +96,39 @@ public sealed class SqliteColumnBuilderCollection : ISqlColumnBuilderCollection
     }
 
     [Pure]
-    public IReadOnlyCollection<SqliteColumnBuilder> AsCollection()
+    public Enumerator GetEnumerator()
     {
-        return _map.Values;
+        return new Enumerator( _map );
     }
 
-    [Pure]
-    public IEnumerator<SqliteColumnBuilder> GetEnumerator()
+    public struct Enumerator : IEnumerator<SqliteColumnBuilder>
     {
-        return AsCollection().GetEnumerator();
+        private Dictionary<string, SqliteColumnBuilder>.ValueCollection.Enumerator _enumerator;
+
+        internal Enumerator(Dictionary<string, SqliteColumnBuilder> source)
+        {
+            _enumerator = source.Values.GetEnumerator();
+        }
+
+        public SqliteColumnBuilder Current => _enumerator.Current;
+        object IEnumerator.Current => Current;
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public void Dispose()
+        {
+            _enumerator.Dispose();
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public bool MoveNext()
+        {
+            return _enumerator.MoveNext();
+        }
+
+        void IEnumerator.Reset()
+        {
+            ((IEnumerator)_enumerator).Reset();
+        }
     }
 
     [Pure]

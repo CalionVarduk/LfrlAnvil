@@ -1,7 +1,9 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using LfrlAnvil.Memory;
 using LfrlAnvil.Sql;
@@ -19,7 +21,7 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
     internal SqliteObjectBuilderCollection(SqliteSchemaBuilder schema)
     {
         Schema = schema;
-        _map = new Dictionary<string, SqliteObjectBuilder>();
+        _map = new Dictionary<string, SqliteObjectBuilder>( StringComparer.OrdinalIgnoreCase );
     }
 
     public SqliteSchemaBuilder Schema { get; }
@@ -132,15 +134,39 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
     }
 
     [Pure]
-    public IReadOnlyCollection<SqliteObjectBuilder> AsCollection()
+    public Enumerator GetEnumerator()
     {
-        return _map.Values;
+        return new Enumerator( _map );
     }
 
-    [Pure]
-    public IEnumerator<SqliteObjectBuilder> GetEnumerator()
+    public struct Enumerator : IEnumerator<SqliteObjectBuilder>
     {
-        return AsCollection().GetEnumerator();
+        private Dictionary<string, SqliteObjectBuilder>.ValueCollection.Enumerator _enumerator;
+
+        internal Enumerator(Dictionary<string, SqliteObjectBuilder> source)
+        {
+            _enumerator = source.Values.GetEnumerator();
+        }
+
+        public SqliteObjectBuilder Current => _enumerator.Current;
+        object IEnumerator.Current => Current;
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public void Dispose()
+        {
+            _enumerator.Dispose();
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public bool MoveNext()
+        {
+            return _enumerator.MoveNext();
+        }
+
+        void IEnumerator.Reset()
+        {
+            ((IEnumerator)_enumerator).Reset();
+        }
     }
 
     internal void ChangeName(SqliteObjectBuilder obj, string name)
@@ -289,7 +315,7 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
     [Pure]
     ISqlTableBuilder ISqlObjectBuilderCollection.GetTable(string name)
     {
-        return GetTypedObject<ISqlTableBuilder>( name, SqlObjectType.Table );
+        return GetTable( name );
     }
 
     bool ISqlObjectBuilderCollection.TryGetTable(string name, [MaybeNullWhen( false )] out ISqlTableBuilder result)
@@ -300,7 +326,7 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
     [Pure]
     ISqlIndexBuilder ISqlObjectBuilderCollection.GetIndex(string name)
     {
-        return GetTypedObject<ISqlIndexBuilder>( name, SqlObjectType.Index );
+        return GetIndex( name );
     }
 
     bool ISqlObjectBuilderCollection.TryGetIndex(string name, [MaybeNullWhen( false )] out ISqlIndexBuilder result)
@@ -311,7 +337,7 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
     [Pure]
     ISqlPrimaryKeyBuilder ISqlObjectBuilderCollection.GetPrimaryKey(string name)
     {
-        return GetTypedObject<ISqlPrimaryKeyBuilder>( name, SqlObjectType.PrimaryKey );
+        return GetPrimaryKey( name );
     }
 
     bool ISqlObjectBuilderCollection.TryGetPrimaryKey(string name, [MaybeNullWhen( false )] out ISqlPrimaryKeyBuilder result)
@@ -322,7 +348,7 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
     [Pure]
     ISqlForeignKeyBuilder ISqlObjectBuilderCollection.GetForeignKey(string name)
     {
-        return GetTypedObject<ISqlForeignKeyBuilder>( name, SqlObjectType.ForeignKey );
+        return GetForeignKey( name );
     }
 
     bool ISqlObjectBuilderCollection.TryGetForeignKey(string name, [MaybeNullWhen( false )] out ISqlForeignKeyBuilder result)

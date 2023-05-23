@@ -7,9 +7,9 @@ using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
-namespace LfrlAnvil.Sqlite.Tests.BuildersTests;
+namespace LfrlAnvil.Sqlite.Tests.ObjectsTests.BuildersTests;
 
-public class SqlitePrimaryKeyTests : TestsBase
+public class SqlitePrimaryKeyBuilderTests : TestsBase
 {
     [Fact]
     public void ToString_ShouldReturnCorrectResult()

@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Objects.Builders;
+using LfrlAnvil.Sqlite.Objects;
 using LfrlAnvil.Sqlite.Objects.Builders;
 
 namespace LfrlAnvil.Sqlite.Extensions;
 
-public static class SqliteObjectBuilderExtensions
+public static class SqliteObjectExtensions
 {
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -49,6 +51,13 @@ public static class SqliteObjectBuilderExtensions
     public static SqliteColumnBuilder SetType<T>(this SqliteColumnBuilder column)
     {
         return column.SetType( typeof( T ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqliteIndex Get(this SqliteIndexCollection indexes, params ISqlIndexColumn[] columns)
+    {
+        return indexes.Get( columns );
     }
 
     public static ISqlDatabaseBuilder ForSqlite(this ISqlDatabaseBuilder builder, Action<SqliteDatabaseBuilder> action)

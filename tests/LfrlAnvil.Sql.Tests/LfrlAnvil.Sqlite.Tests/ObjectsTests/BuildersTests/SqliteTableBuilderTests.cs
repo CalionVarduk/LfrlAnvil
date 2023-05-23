@@ -9,7 +9,7 @@ using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
-namespace LfrlAnvil.Sqlite.Tests.BuildersTests;
+namespace LfrlAnvil.Sqlite.Tests.ObjectsTests.BuildersTests;
 
 public partial class SqliteTableBuilderTests : TestsBase
 {
@@ -37,7 +37,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                       ""C3"" ANY NOT NULL,
                       ""C4"" ANY NOT NULL,
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C2"" ASC),
-                      CONSTRAINT ""foo_FK_T_C1_REF_foo_T"" FOREIGN KEY (""C1"") REFERENCES ""foo_T"" (""C2"") ON DELETE RESTRICT ON UPDATE RESTRICT
+                      CONSTRAINT ""foo_FK_T_C1_REF_T"" FOREIGN KEY (""C1"") REFERENCES ""foo_T"" (""C2"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     "CREATE INDEX \"foo_IX_T_C1A\" ON \"foo_T\" (\"C1\" ASC);",
                     "CREATE INDEX \"foo_IX_T_C3A_C4D\" ON \"foo_T\" (\"C3\" ASC, \"C4\" DESC);" );
@@ -187,7 +187,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                       ""C1"" ANY NOT NULL,
                       ""C2"" ANY NOT NULL,
                       CONSTRAINT ""s_PK_foo"" PRIMARY KEY (""C1"" ASC),
-                      CONSTRAINT ""s_FK_foo_C2_REF_s_foo"" FOREIGN KEY (""C2"") REFERENCES ""s_bar"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
+                      CONSTRAINT ""s_FK_foo_C2_REF_foo"" FOREIGN KEY (""C2"") REFERENCES ""s_bar"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__s_bar__{GUID}__"" (""C1"", ""C2"")
                     SELECT ""C1"", ""C2""
@@ -275,7 +275,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                     @"CREATE TABLE ""__foo_T2__{GUID}__"" (
                       ""C2"" ANY NOT NULL,
                       CONSTRAINT ""foo_PK_T2"" PRIMARY KEY (""C2"" ASC),
-                      CONSTRAINT ""foo_FK_T2_C2_REF_foo_T1"" FOREIGN KEY (""C2"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
+                      CONSTRAINT ""foo_FK_T2_C2_REF_T1"" FOREIGN KEY (""C2"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T2__{GUID}__"" (""C2"")
                     SELECT ""C2""
@@ -291,8 +291,8 @@ public partial class SqliteTableBuilderTests : TestsBase
                       ""C3"" ANY NOT NULL,
                       ""C4"" ANY NOT NULL,
                       CONSTRAINT ""foo_PK_T3"" PRIMARY KEY (""C3"" ASC),
-                      CONSTRAINT ""foo_FK_T3_C4_REF_foo_T1"" FOREIGN KEY (""C4"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT,
-                      CONSTRAINT ""foo_FK_T3_C3_REF_foo_T1"" FOREIGN KEY (""C3"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
+                      CONSTRAINT ""foo_FK_T3_C4_REF_T1"" FOREIGN KEY (""C4"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT,
+                      CONSTRAINT ""foo_FK_T3_C3_REF_T1"" FOREIGN KEY (""C3"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T3__{GUID}__"" (""C3"", ""C4"")
                     SELECT ""C3"", ""C4""
@@ -403,8 +403,8 @@ public partial class SqliteTableBuilderTests : TestsBase
                       ""C4"" ANY NOT NULL,
                       ""C6"" INTEGER NOT NULL DEFAULT (0),
                       CONSTRAINT ""foo_PK_T3"" PRIMARY KEY (""C3"" ASC),
-                      CONSTRAINT ""foo_FK_T3_C4_REF_foo_T1"" FOREIGN KEY (""C4"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT,
-                      CONSTRAINT ""foo_FK_T3_C3_REF_foo_T1"" FOREIGN KEY (""C3"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
+                      CONSTRAINT ""foo_FK_T3_C4_REF_T1"" FOREIGN KEY (""C4"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT,
+                      CONSTRAINT ""foo_FK_T3_C3_REF_T1"" FOREIGN KEY (""C3"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T3__{GUID}__"" (""C3"", ""C4"", ""C6"")
                     SELECT ""C3"", ""C4"", ""C6""
@@ -419,7 +419,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                     @"CREATE TABLE ""__foo_T2__{GUID}__"" (
                       ""C2"" ANY NOT NULL,
                       CONSTRAINT ""foo_PK_T2"" PRIMARY KEY (""C2"" ASC),
-                      CONSTRAINT ""foo_FK_T2_C2_REF_foo_T1"" FOREIGN KEY (""C2"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
+                      CONSTRAINT ""foo_FK_T2_C2_REF_T1"" FOREIGN KEY (""C2"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T2__{GUID}__"" (""C2"")
                     SELECT ""C2""
@@ -433,7 +433,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                     @"CREATE TABLE ""__foo_T4__{GUID}__"" (
                       ""C5"" ANY NOT NULL,
                       CONSTRAINT ""foo_PK_T4"" PRIMARY KEY (""C5"" ASC),
-                      CONSTRAINT ""foo_FK_T4_C5_REF_foo_T1"" FOREIGN KEY (""C5"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
+                      CONSTRAINT ""foo_FK_T4_C5_REF_T1"" FOREIGN KEY (""C5"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T4__{GUID}__"" (""C5"")
                     SELECT ""C5""
@@ -508,7 +508,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                     @"CREATE TABLE ""__foo_T2__{GUID}__"" (
                       ""C2"" ANY NOT NULL,
                       CONSTRAINT ""foo_PK_T2"" PRIMARY KEY (""C2"" ASC),
-                      CONSTRAINT ""foo_FK_T2_C2_REF_foo_T1"" FOREIGN KEY (""C2"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
+                      CONSTRAINT ""foo_FK_T2_C2_REF_T1"" FOREIGN KEY (""C2"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T2__{GUID}__"" (""C2"")
                     SELECT ""C2""
@@ -586,7 +586,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                     @"CREATE TABLE ""__foo_T2__{GUID}__"" (
                       ""C2"" ANY NOT NULL,
                       CONSTRAINT ""foo_PK_T2"" PRIMARY KEY (""C2"" ASC),
-                      CONSTRAINT ""foo_FK_T2_C2_REF_foo_T1"" FOREIGN KEY (""C2"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
+                      CONSTRAINT ""foo_FK_T2_C2_REF_T1"" FOREIGN KEY (""C2"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T2__{GUID}__"" (""C2"")
                     SELECT ""C2""
@@ -665,7 +665,7 @@ public partial class SqliteTableBuilderTests : TestsBase
             result.Index.FullName.Should().Be( "foo_UIX_T_CA" );
             result.Index.ForeignKeys.Should().BeEmpty();
             result.Index.ReferencingForeignKeys.Should().BeEmpty();
-            result.Index.Columns.Should().BeSequentiallyEqualTo( column.Asc() );
+            result.Index.Columns.ToArray().Should().BeSequentiallyEqualTo( column.Asc() );
             result.Index.PrimaryKey.Should().BeSameAs( result );
             result.Index.Type.Should().Be( SqlObjectType.Index );
             result.Index.Database.Should().BeSameAs( schema.Database );
@@ -718,7 +718,7 @@ public partial class SqliteTableBuilderTests : TestsBase
             result.Index.FullName.Should().Be( "foo_UIX_T_C1A" );
             result.Index.ForeignKeys.Should().BeEmpty();
             result.Index.ReferencingForeignKeys.Should().BeEmpty();
-            result.Index.Columns.Should().BeSequentiallyEqualTo( c1.Asc() );
+            result.Index.Columns.ToArray().Should().BeSequentiallyEqualTo( c1.Asc() );
             result.Index.PrimaryKey.Should().BeSameAs( result );
             result.Index.Type.Should().Be( SqlObjectType.Index );
             result.Index.Database.Should().BeSameAs( schema.Database );
@@ -771,7 +771,7 @@ public partial class SqliteTableBuilderTests : TestsBase
             result.Index.FullName.Should().Be( "foo_UIX_T_C1A_C2D" );
             result.Index.ForeignKeys.Should().BeEmpty();
             result.Index.ReferencingForeignKeys.Should().BeEmpty();
-            result.Index.Columns.Should().BeSequentiallyEqualTo( c1.Asc(), c2.Desc() );
+            result.Index.Columns.ToArray().Should().BeSequentiallyEqualTo( c1.Asc(), c2.Desc() );
             result.Index.PrimaryKey.Should().BeSameAs( result );
             result.Index.Type.Should().Be( SqlObjectType.Index );
             result.Index.Database.Should().BeSameAs( schema.Database );

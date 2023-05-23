@@ -7,7 +7,7 @@ using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
-namespace LfrlAnvil.Sqlite.Tests.BuildersTests;
+namespace LfrlAnvil.Sqlite.Tests.ObjectsTests.BuildersTests;
 
 public partial class SqliteTableBuilderTests
 {
@@ -28,8 +28,8 @@ public partial class SqliteTableBuilderTests
             {
                 result.Index.Should().BeSameAs( ix1 );
                 result.ReferencedIndex.Should().BeSameAs( ix2 );
-                result.Name.Should().Be( "FK_T_C1_REF_foo_T" );
-                result.FullName.Should().Be( "foo_FK_T_C1_REF_foo_T" );
+                result.Name.Should().Be( "FK_T_C1_REF_T" );
+                result.FullName.Should().Be( "foo_FK_T_C1_REF_T" );
                 result.Database.Should().BeSameAs( table.Database );
                 result.Type.Should().Be( SqlObjectType.ForeignKey );
                 result.OnUpdateBehavior.Should().Be( ReferenceBehavior.Restrict );
@@ -62,8 +62,8 @@ public partial class SqliteTableBuilderTests
             {
                 result.Index.Should().BeSameAs( ix1 );
                 result.ReferencedIndex.Should().BeSameAs( ix2 );
-                result.Name.Should().Be( "FK_T2_C2_REF_foo_T1" );
-                result.FullName.Should().Be( "foo_FK_T2_C2_REF_foo_T1" );
+                result.Name.Should().Be( "FK_T2_C2_REF_T1" );
+                result.FullName.Should().Be( "foo_FK_T2_C2_REF_T1" );
                 result.Database.Should().BeSameAs( t1.Database );
                 result.Type.Should().Be( SqlObjectType.ForeignKey );
                 result.OnUpdateBehavior.Should().Be( ReferenceBehavior.Restrict );
@@ -71,6 +71,42 @@ public partial class SqliteTableBuilderTests
                 sut.Count.Should().Be( 1 );
                 sut.Should().BeEquivalentTo( result );
                 schema.Objects.Contains( result.Name ).Should().BeTrue();
+
+                ((ISqlIndexBuilder)ix1).ForeignKeys.Should().BeSequentiallyEqualTo( result );
+                ix1.ReferencingForeignKeys.Should().BeEmpty();
+
+                ix2.ForeignKeys.Should().BeEmpty();
+                ((ISqlIndexBuilder)ix2).ReferencingForeignKeys.Should().BeSequentiallyEqualTo( result );
+            }
+        }
+
+        [Fact]
+        public void Create_ShouldCreateNewForeignKey_WhenIndexesDoNotBelongToTheSameSchema()
+        {
+            var db = new SqliteDatabaseBuilder();
+            var schema1 = db.Schemas.Create( "foo" );
+            var schema2 = db.Schemas.Create( "bar" );
+            var t1 = schema1.Objects.CreateTable( "T1" );
+            var ix2 = t1.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() ).Index;
+            var t2 = schema2.Objects.CreateTable( "T2" );
+            var sut = t2.ForeignKeys;
+            var ix1 = t2.Indexes.Create( t2.Columns.Create( "C2" ).Asc() );
+
+            var result = ((ISqlForeignKeyBuilderCollection)sut).Create( ix1, ix2 );
+
+            using ( new AssertionScope() )
+            {
+                result.Index.Should().BeSameAs( ix1 );
+                result.ReferencedIndex.Should().BeSameAs( ix2 );
+                result.Name.Should().Be( "FK_T2_C2_REF_foo_T1" );
+                result.FullName.Should().Be( "bar_FK_T2_C2_REF_foo_T1" );
+                result.Database.Should().BeSameAs( t1.Database );
+                result.Type.Should().Be( SqlObjectType.ForeignKey );
+                result.OnUpdateBehavior.Should().Be( ReferenceBehavior.Restrict );
+                result.OnDeleteBehavior.Should().Be( ReferenceBehavior.Restrict );
+                sut.Count.Should().Be( 1 );
+                sut.Should().BeEquivalentTo( result );
+                schema2.Objects.Contains( result.Name ).Should().BeTrue();
 
                 ((ISqlIndexBuilder)ix1).ForeignKeys.Should().BeSequentiallyEqualTo( result );
                 ix1.ReferencingForeignKeys.Should().BeEmpty();
@@ -120,7 +156,7 @@ public partial class SqliteTableBuilderTests
             var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
-            var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() ).SetName( "FK_T_C1_REF_foo_T" );
+            var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() ).SetName( "FK_T_C1_REF_T" );
             var ix2 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
 
             var action = Lambda.Of( () => sut.Create( ix1, ix2 ) );
@@ -335,8 +371,8 @@ public partial class SqliteTableBuilderTests
             {
                 result.Index.Should().BeSameAs( ix1 );
                 result.ReferencedIndex.Should().BeSameAs( ix2 );
-                result.Name.Should().Be( "FK_T_C1_REF_foo_T" );
-                result.FullName.Should().Be( "foo_FK_T_C1_REF_foo_T" );
+                result.Name.Should().Be( "FK_T_C1_REF_T" );
+                result.FullName.Should().Be( "foo_FK_T_C1_REF_T" );
                 result.Database.Should().BeSameAs( table.Database );
                 result.Type.Should().Be( SqlObjectType.ForeignKey );
                 result.OnUpdateBehavior.Should().Be( ReferenceBehavior.Restrict );

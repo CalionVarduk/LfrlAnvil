@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
@@ -31,7 +32,7 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
     public bool IsNullable { get; private set; }
     public object? DefaultValue { get; private set; }
     public override SqliteDatabaseBuilder Database => Table.Database;
-    public override string FullName => _fullName ??= $"{Table.FullName}.{Name}";
+    public override string FullName => _fullName ??= SqliteHelpers.GetFullColumnName( Table.FullName, Name );
     public IReadOnlyCollection<SqliteIndexBuilder> Indexes => (_indexes?.Values).EmptyIfNull();
     internal override bool CanRemove => _indexes is null || _indexes.Count == 0;
 
@@ -158,6 +159,13 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
     internal void ResetFullName()
     {
         _fullName = null;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal string? GetCachedFullName()
+    {
+        return _fullName;
     }
 
     private void EnsureMutable()

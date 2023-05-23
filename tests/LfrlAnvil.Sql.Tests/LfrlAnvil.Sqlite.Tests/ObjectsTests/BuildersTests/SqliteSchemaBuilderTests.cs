@@ -7,7 +7,7 @@ using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
-namespace LfrlAnvil.Sqlite.Tests.BuildersTests;
+namespace LfrlAnvil.Sqlite.Tests.ObjectsTests.BuildersTests;
 
 public partial class SqliteSchemaBuilderTests : TestsBase
 {
@@ -108,8 +108,8 @@ public partial class SqliteSchemaBuilderTests : TestsBase
             pk2.Index.FullName.Should().Be( "bar_UIX_T2_C3A" );
             pk3.Index.FullName.Should().Be( "bar_UIX_T3_C4A" );
             ix1.FullName.Should().Be( "bar_IX_T1_C2A" );
-            fk1.FullName.Should().Be( "bar_FK_T1_C2_REF_foo_T1" );
-            fk2.FullName.Should().Be( "bar_FK_T2_C3_REF_foo_T1" );
+            fk1.FullName.Should().Be( "bar_FK_T1_C2_REF_T1" );
+            fk2.FullName.Should().Be( "bar_FK_T2_C3_REF_T1" );
             statements.Should().Contain( s => s.Contains( "DROP INDEX \"foo_IX_T1_C2A\";" ) );
             statements.Should().Contain( s => s.Contains( "CREATE INDEX \"bar_IX_T1_C2A\" ON \"bar_T1\" (\"C2\" ASC);" ) );
             statements.Should().Contain( s => s.Contains( "ALTER TABLE \"foo_T1\" RENAME TO \"bar_T1\";" ) );
@@ -280,7 +280,7 @@ public partial class SqliteSchemaBuilderTests : TestsBase
                       ""C5"" ANY NOT NULL,
                       ""C6"" ANY NOT NULL,
                       CONSTRAINT ""foo_PK_T3"" PRIMARY KEY (""C5"" ASC),
-                      CONSTRAINT ""foo_FK_T3_C5_REF_foo_T2"" FOREIGN KEY (""C5"") REFERENCES ""foo_T2"" (""C3"") ON DELETE RESTRICT ON UPDATE RESTRICT
+                      CONSTRAINT ""foo_FK_T3_C5_REF_T2"" FOREIGN KEY (""C5"") REFERENCES ""foo_T2"" (""C3"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T3__{GUID}__"" (""C5"", ""C6"")
                     SELECT ""C5"", ""C6""

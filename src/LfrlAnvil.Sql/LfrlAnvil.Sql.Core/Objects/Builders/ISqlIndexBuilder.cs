@@ -1,11 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
 
 public interface ISqlIndexBuilder : ISqlObjectBuilder
 {
     ISqlTableBuilder Table { get; }
-    IReadOnlyList<ISqlIndexColumnBuilder> Columns { get; }
+    ReadOnlyMemory<ISqlIndexColumnBuilder> Columns { get; }
     IReadOnlyCollection<ISqlForeignKeyBuilder> ReferencingForeignKeys { get; }
     IReadOnlyCollection<ISqlForeignKeyBuilder> ForeignKeys { get; }
     ISqlPrimaryKeyBuilder? PrimaryKey { get; }

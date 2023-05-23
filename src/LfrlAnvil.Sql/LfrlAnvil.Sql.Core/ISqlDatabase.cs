@@ -6,9 +6,11 @@ using LfrlAnvil.Sql.Versioning;
 
 namespace LfrlAnvil.Sql;
 
-public interface ISqlDatabase
+public interface ISqlDatabase : IDisposable
 {
     ISqlSchemaCollection Schemas { get; }
+    ISqlDataTypeProvider DataTypes { get; }
+    ISqlColumnTypeDefinitionProvider TypeDefinitions { get; }
     Version Version { get; }
 
     [Pure]

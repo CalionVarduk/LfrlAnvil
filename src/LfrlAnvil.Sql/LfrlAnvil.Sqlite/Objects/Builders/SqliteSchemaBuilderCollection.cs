@@ -1,7 +1,9 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Objects.Builders;
@@ -18,7 +20,7 @@ public sealed class SqliteSchemaBuilderCollection : ISqlSchemaBuilderCollection
     {
         Database = database;
         Default = new SqliteSchemaBuilder( Database, string.Empty );
-        _map = new Dictionary<string, SqliteSchemaBuilder> { { Default.Name, Default } };
+        _map = new Dictionary<string, SqliteSchemaBuilder>( StringComparer.OrdinalIgnoreCase ) { { Default.Name, Default } };
     }
 
     public SqliteDatabaseBuilder Database { get; }
@@ -81,15 +83,39 @@ public sealed class SqliteSchemaBuilderCollection : ISqlSchemaBuilderCollection
     }
 
     [Pure]
-    public IReadOnlyCollection<SqliteSchemaBuilder> AsCollection()
+    public Enumerator GetEnumerator()
     {
-        return _map.Values;
+        return new Enumerator( _map );
     }
 
-    [Pure]
-    public IEnumerator<SqliteSchemaBuilder> GetEnumerator()
+    public struct Enumerator : IEnumerator<SqliteSchemaBuilder>
     {
-        return AsCollection().GetEnumerator();
+        private Dictionary<string, SqliteSchemaBuilder>.ValueCollection.Enumerator _enumerator;
+
+        internal Enumerator(Dictionary<string, SqliteSchemaBuilder> source)
+        {
+            _enumerator = source.Values.GetEnumerator();
+        }
+
+        public SqliteSchemaBuilder Current => _enumerator.Current;
+        object IEnumerator.Current => Current;
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public void Dispose()
+        {
+            _enumerator.Dispose();
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public bool MoveNext()
+        {
+            return _enumerator.MoveNext();
+        }
+
+        void IEnumerator.Reset()
+        {
+            ((IEnumerator)_enumerator).Reset();
+        }
     }
 
     internal void ChangeName(SqliteSchemaBuilder schema, string name)

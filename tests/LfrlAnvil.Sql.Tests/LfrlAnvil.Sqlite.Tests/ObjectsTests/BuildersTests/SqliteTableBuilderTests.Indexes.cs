@@ -8,7 +8,7 @@ using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
-namespace LfrlAnvil.Sqlite.Tests.BuildersTests;
+namespace LfrlAnvil.Sqlite.Tests.ObjectsTests.BuildersTests;
 
 public partial class SqliteTableBuilderTests
 {
@@ -27,7 +27,7 @@ public partial class SqliteTableBuilderTests
 
             using ( new AssertionScope() )
             {
-                result.Columns.Should().BeSequentiallyEqualTo( c1, c2 );
+                result.Columns.ToArray().Should().BeSequentiallyEqualTo( c1, c2 );
                 result.Name.Should().Be( "IX_T_C1A_C2D" );
                 result.FullName.Should().Be( "foo_IX_T_C1A_C2D" );
                 result.Table.Should().BeSameAs( table );
@@ -170,7 +170,7 @@ public partial class SqliteTableBuilderTests
 
             using ( new AssertionScope() )
             {
-                result.Columns.Should().BeSequentiallyEqualTo( c1, c2 );
+                result.Columns.ToArray().Should().BeSequentiallyEqualTo( c1, c2 );
                 result.Name.Should().Be( "IX_T_C1A_C2D" );
                 result.FullName.Should().Be( "foo_IX_T_C1A_C2D" );
                 result.Table.Should().BeSameAs( table );

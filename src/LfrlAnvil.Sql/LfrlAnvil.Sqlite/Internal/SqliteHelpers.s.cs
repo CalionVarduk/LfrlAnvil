@@ -41,6 +41,13 @@ public static class SqliteHelpers
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string GetFullColumnName(string fullTableName, string name)
+    {
+        return $"{fullTableName}.{name}";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string GetDefaultPrimaryKeyName(SqliteTableBuilder table)
     {
         return $"PK_{table.Name}";
@@ -52,10 +59,14 @@ public static class SqliteHelpers
         var builder = new StringBuilder( 32 );
         builder.Append( "FK_" ).Append( index.Table.Name );
 
-        foreach ( var c in index.Columns )
+        foreach ( var c in index.Columns.Span )
             builder.Append( '_' ).Append( c.Column.Name );
 
-        builder.Append( "_REF_" ).Append( referencedIndex.Table.FullName );
+        var refName = ReferenceEquals( index.Table.Schema, referencedIndex.Table.Schema )
+            ? referencedIndex.Table.Name
+            : referencedIndex.Table.FullName;
+
+        builder.Append( "_REF_" ).Append( refName );
         return builder.ToString();
     }
 
@@ -253,21 +264,20 @@ public static class SqliteHelpers
         if ( ! referencedIndex.IsUnique )
             errors = errors.Extend( ExceptionResources.IndexIsNotMarkedAsUnique( referencedIndex ) );
 
-        var indexColumns = index.Columns;
-        var referencedIndexColumns = referencedIndex.Columns;
+        var indexColumns = index.Columns.Span;
+        var referencedIndexColumns = referencedIndex.Columns.Span;
 
-        for ( var i = 0; i < referencedIndexColumns.Count; ++i )
+        foreach ( var c in referencedIndexColumns )
         {
-            var column = referencedIndexColumns[i].Column;
-            if ( column.IsNullable )
-                errors = errors.Extend( ExceptionResources.ColumnIsNullable( column ) );
+            if ( c.Column.IsNullable )
+                errors = errors.Extend( ExceptionResources.ColumnIsNullable( c.Column ) );
         }
 
-        if ( indexColumns.Count != referencedIndexColumns.Count )
+        if ( indexColumns.Length != referencedIndexColumns.Length )
             errors = errors.Extend( ExceptionResources.ForeignKeyIndexAndReferencedIndexMustHaveTheSameAmountOfColumns );
         else
         {
-            for ( var i = 0; i < indexColumns.Count; ++i )
+            for ( var i = 0; i < indexColumns.Length; ++i )
             {
                 var column = indexColumns[i].Column;
                 var refColumn = referencedIndexColumns[i].Column;

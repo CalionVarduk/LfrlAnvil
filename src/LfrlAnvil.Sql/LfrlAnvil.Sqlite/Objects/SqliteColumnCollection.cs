@@ -1,0 +1,112 @@
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
+using LfrlAnvil.Sql.Objects;
+using LfrlAnvil.Sqlite.Objects.Builders;
+
+namespace LfrlAnvil.Sqlite.Objects;
+
+public sealed class SqliteColumnCollection : ISqlColumnCollection
+{
+    private readonly Dictionary<string, SqliteColumn> _map;
+
+    internal SqliteColumnCollection(SqliteTable table, SqliteColumnBuilderCollection columns)
+    {
+        Table = table;
+
+        _map = new Dictionary<string, SqliteColumn>( capacity: columns.Count, comparer: StringComparer.OrdinalIgnoreCase );
+        foreach ( var b in columns )
+            _map.Add( b.Name, new SqliteColumn( table, b ) );
+    }
+
+    public SqliteTable Table { get; }
+    public int Count => _map.Count;
+
+    ISqlTable ISqlColumnCollection.Table => Table;
+
+    [Pure]
+    public bool Contains(string name)
+    {
+        return _map.ContainsKey( name );
+    }
+
+    [Pure]
+    public SqliteColumn Get(string name)
+    {
+        return _map[name];
+    }
+
+    public bool TryGet(string name, [MaybeNullWhen( false )] out SqliteColumn result)
+    {
+        return _map.TryGetValue( name, out result );
+    }
+
+    [Pure]
+    public Enumerator GetEnumerator()
+    {
+        return new Enumerator( _map );
+    }
+
+    public struct Enumerator : IEnumerator<SqliteColumn>
+    {
+        private Dictionary<string, SqliteColumn>.ValueCollection.Enumerator _enumerator;
+
+        internal Enumerator(Dictionary<string, SqliteColumn> source)
+        {
+            _enumerator = source.Values.GetEnumerator();
+        }
+
+        public SqliteColumn Current => _enumerator.Current;
+        object IEnumerator.Current => Current;
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public void Dispose()
+        {
+            _enumerator.Dispose();
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public bool MoveNext()
+        {
+            return _enumerator.MoveNext();
+        }
+
+        void IEnumerator.Reset()
+        {
+            ((IEnumerator)_enumerator).Reset();
+        }
+    }
+
+    [Pure]
+    ISqlColumn ISqlColumnCollection.Get(string name)
+    {
+        return Get( name );
+    }
+
+    bool ISqlColumnCollection.TryGet(string name, [MaybeNullWhen( false )] out ISqlColumn result)
+    {
+        if ( TryGet( name, out var column ) )
+        {
+            result = column;
+            return true;
+        }
+
+        result = null;
+        return false;
+    }
+
+    [Pure]
+    IEnumerator<ISqlColumn> IEnumerable<ISqlColumn>.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
+
+    [Pure]
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
+}

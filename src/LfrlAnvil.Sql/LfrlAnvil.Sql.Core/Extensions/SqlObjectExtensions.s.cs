@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.Sql.Extensions;
 
-public static class SqlObjectBuilderExtensions
+public static class SqlObjectExtensions
 {
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -63,8 +64,30 @@ public static class SqlObjectBuilderExtensions
         return column.SetType( typeof( T ) );
     }
 
+    [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool IsSelfReference(this ISqlForeignKeyBuilder foreignKey)
+    {
+        return ReferenceEquals( foreignKey.Index.Table, foreignKey.ReferencedIndex.Table );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static bool Contains(this ISqlIndexCollection indexes, params ISqlIndexColumn[] columns)
+    {
+        return indexes.Contains( columns );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static ISqlIndex Get(this ISqlIndexCollection indexes, params ISqlIndexColumn[] columns)
+    {
+        return indexes.Get( columns );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static bool IsSelfReference(this ISqlForeignKey foreignKey)
     {
         return ReferenceEquals( foreignKey.Index.Table, foreignKey.ReferencedIndex.Table );
     }

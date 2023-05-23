@@ -8,7 +8,7 @@ using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
-namespace LfrlAnvil.Sqlite.Tests.BuildersTests;
+namespace LfrlAnvil.Sqlite.Tests.ObjectsTests.BuildersTests;
 
 public class SqliteForeignKeyBuilderTests : TestsBase
 {
@@ -51,7 +51,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
                     @"CREATE TABLE ""__foo_T2__{GUID}__"" (
                       ""C2"" ANY NOT NULL,
                       CONSTRAINT ""foo_PK_T2"" PRIMARY KEY (""C2"" ASC),
-                      CONSTRAINT ""foo_FK_T2_C2_REF_foo_T1"" FOREIGN KEY (""C2"") REFERENCES ""foo_T1"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
+                      CONSTRAINT ""foo_FK_T2_C2_REF_T1"" FOREIGN KEY (""C2"") REFERENCES ""foo_T1"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T2__{GUID}__"" (""C2"")
                     SELECT ""C2""
@@ -102,7 +102,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
                       ""C2"" ANY NOT NULL,
                       ""C1"" ANY NOT NULL,
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC),
-                      CONSTRAINT ""foo_FK_T_C2_REF_foo_T"" FOREIGN KEY (""C2"") REFERENCES ""foo_T"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
+                      CONSTRAINT ""foo_FK_T_C2_REF_T"" FOREIGN KEY (""C2"") REFERENCES ""foo_T"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C2"", ""C1"")
                     SELECT ""C2"", ""C1""
@@ -317,9 +317,9 @@ public class SqliteForeignKeyBuilderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            sut.Name.Should().Be( "FK_T_C2_REF_foo_T" );
-            sut.FullName.Should().Be( "foo_FK_T_C2_REF_foo_T" );
-            schema.Objects.Get( "FK_T_C2_REF_foo_T" ).Should().BeSameAs( sut );
+            sut.Name.Should().Be( "FK_T_C2_REF_T" );
+            sut.FullName.Should().Be( "foo_FK_T_C2_REF_T" );
+            schema.Objects.Get( "FK_T_C2_REF_T" ).Should().BeSameAs( sut );
             schema.Objects.Contains( oldName ).Should().BeFalse();
 
             statements.Should().HaveCount( 1 );
@@ -331,7 +331,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
                       ""C2"" ANY NOT NULL,
                       ""C1"" ANY NOT NULL,
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC),
-                      CONSTRAINT ""foo_FK_T_C2_REF_foo_T"" FOREIGN KEY (""C2"") REFERENCES ""foo_T"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
+                      CONSTRAINT ""foo_FK_T_C2_REF_T"" FOREIGN KEY (""C2"") REFERENCES ""foo_T"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C2"", ""C1"")
                     SELECT ""C2"", ""C1""
@@ -367,7 +367,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
         var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
         var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var sut = table.ForeignKeys.Create( ix1, ix2 ).SetName( "bar" );
-        ix1.SetName( "FK_T_C2_REF_foo_T" );
+        ix1.SetName( "FK_T_C2_REF_T" );
 
         var action = Lambda.Of( () => ((ISqlForeignKeyBuilder)sut).SetDefaultName() );
 
@@ -404,7 +404,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
                       ""C2"" ANY NOT NULL,
                       ""C1"" ANY NOT NULL,
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC),
-                      CONSTRAINT ""foo_FK_T_C2_REF_foo_T"" FOREIGN KEY (""C2"") REFERENCES ""foo_T"" (""C1"") ON DELETE CASCADE ON UPDATE RESTRICT
+                      CONSTRAINT ""foo_FK_T_C2_REF_T"" FOREIGN KEY (""C2"") REFERENCES ""foo_T"" (""C1"") ON DELETE CASCADE ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C2"", ""C1"")
                     SELECT ""C2"", ""C1""
@@ -504,7 +504,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
                       ""C2"" ANY NOT NULL,
                       ""C1"" ANY NOT NULL,
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC),
-                      CONSTRAINT ""foo_FK_T_C2_REF_foo_T"" FOREIGN KEY (""C2"") REFERENCES ""foo_T"" (""C1"") ON DELETE RESTRICT ON UPDATE CASCADE
+                      CONSTRAINT ""foo_FK_T_C2_REF_T"" FOREIGN KEY (""C2"") REFERENCES ""foo_T"" (""C1"") ON DELETE RESTRICT ON UPDATE CASCADE
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C2"", ""C1"")
                     SELECT ""C2"", ""C1""

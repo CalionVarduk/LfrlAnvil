@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
@@ -80,15 +81,39 @@ public sealed class SqliteForeignKeyBuilderCollection : ISqlForeignKeyBuilderCol
     }
 
     [Pure]
-    public IReadOnlyCollection<SqliteForeignKeyBuilder> AsCollection()
+    public Enumerator GetEnumerator()
     {
-        return _map.Values;
+        return new Enumerator( _map );
     }
 
-    [Pure]
-    public IEnumerator<SqliteForeignKeyBuilder> GetEnumerator()
+    public struct Enumerator : IEnumerator<SqliteForeignKeyBuilder>
     {
-        return AsCollection().GetEnumerator();
+        private Dictionary<Pair<ISqlIndexBuilder, ISqlIndexBuilder>, SqliteForeignKeyBuilder>.ValueCollection.Enumerator _enumerator;
+
+        internal Enumerator(Dictionary<Pair<ISqlIndexBuilder, ISqlIndexBuilder>, SqliteForeignKeyBuilder> source)
+        {
+            _enumerator = source.Values.GetEnumerator();
+        }
+
+        public SqliteForeignKeyBuilder Current => _enumerator.Current;
+        object IEnumerator.Current => Current;
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public void Dispose()
+        {
+            _enumerator.Dispose();
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public bool MoveNext()
+        {
+            return _enumerator.MoveNext();
+        }
+
+        void IEnumerator.Reset()
+        {
+            ((IEnumerator)_enumerator).Reset();
+        }
     }
 
     internal void Clear()

@@ -1,4 +1,6 @@
-﻿namespace LfrlAnvil.Sql.Objects;
+﻿using System.Diagnostics.Contracts;
+
+namespace LfrlAnvil.Sql.Objects;
 
 public interface ISqlColumn : ISqlObject
 {
@@ -6,4 +8,10 @@ public interface ISqlColumn : ISqlObject
     ISqlColumnTypeDefinition TypeDefinition { get; }
     bool IsNullable { get; }
     object? DefaultValue { get; }
+
+    [Pure]
+    ISqlIndexColumn Asc();
+
+    [Pure]
+    ISqlIndexColumn Desc();
 }
