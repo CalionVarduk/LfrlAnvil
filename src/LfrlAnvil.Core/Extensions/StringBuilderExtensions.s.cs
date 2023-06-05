@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace LfrlAnvil.Extensions;
@@ -18,5 +19,11 @@ public static class StringBuilderExtensions
         }
 
         return builder;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static StringBuilder Indent(this StringBuilder builder, int count)
+    {
+        return builder.AppendLine().Append( ' ', count );
     }
 }

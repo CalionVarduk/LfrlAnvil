@@ -50,4 +50,35 @@ public class StringBuilderExtensionsTests : TestsBase
             result.ToString().Should().Be( expected );
         }
     }
+
+    [Fact]
+    public void Indent_ShouldAppendLine_WhenValueEqualsZero()
+    {
+        var sut = new StringBuilder();
+
+        var result = sut.Indent( 0 );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            result.ToString().Should().Be( Environment.NewLine );
+        }
+    }
+
+    [Theory]
+    [InlineData( 1 )]
+    [InlineData( 2 )]
+    [InlineData( 3 )]
+    public void Indent_ShouldAppendLineFollowedBySpaces_WhenValueIsGreaterThanZero(int value)
+    {
+        var sut = new StringBuilder();
+
+        var result = sut.Indent( value );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            result.ToString().Should().Be( Environment.NewLine + new string( ' ', value ) );
+        }
+    }
 }
