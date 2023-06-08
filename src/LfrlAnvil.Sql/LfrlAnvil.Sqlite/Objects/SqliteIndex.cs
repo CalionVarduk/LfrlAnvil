@@ -13,6 +13,7 @@ public sealed class SqliteIndex : SqliteObject, ISqlIndex
     {
         Table = table;
         IsUnique = builder.IsUnique;
+        FullName = builder.FullName;
 
         var i = 0;
         var builderColumns = builder.Columns.Span;
@@ -22,8 +23,6 @@ public sealed class SqliteIndex : SqliteObject, ISqlIndex
             var column = table.Columns.Get( c.Column.Name );
             _columns[i++] = new SqliteIndexColumn( column, c.Ordering );
         }
-
-        FullName = builder.FullName;
     }
 
     public SqliteTable Table { get; }

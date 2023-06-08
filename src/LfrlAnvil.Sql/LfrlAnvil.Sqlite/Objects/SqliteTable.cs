@@ -13,11 +13,11 @@ public sealed class SqliteTable : SqliteObject, ISqlTable
         : base( builder )
     {
         Schema = schema;
+        FullName = builder.FullName;
+        _primaryKey = null;
         Columns = new SqliteColumnCollection( this, builder.Columns );
         Indexes = new SqliteIndexCollection( this, builder.Indexes );
         ForeignKeys = new SqliteForeignKeyCollection( this, builder.ForeignKeys.Count );
-        FullName = builder.FullName;
-        _primaryKey = null;
     }
 
     public SqliteSchema Schema { get; }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using LfrlAnvil.Extensions;
+using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Versioning;
 
@@ -240,5 +241,12 @@ public static class ExceptionResources
         var headerText = $"Encountered {errors.Count} version history validation error(s):";
         var errorsText = string.Join( Environment.NewLine, errors.Select( (e, i) => $"{i + 1}. {e}" ) );
         return $"{headerText}{Environment.NewLine}{errorsText}";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string ExpressionTypesDoNotShareCommonType(SqlExpressionType a, SqlExpressionType b)
+    {
+        return $"Expression types '{a}' and '{b}' do not share a common type.";
     }
 }
