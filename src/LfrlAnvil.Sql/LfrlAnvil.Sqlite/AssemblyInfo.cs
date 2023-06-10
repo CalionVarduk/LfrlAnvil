@@ -18,9 +18,18 @@
 // - Add some events to database creation process, e.g. version statement begin, version statement end
 //   ^ so that e.g. loggers could be easily added
 // - For Sqlite, add possibility to setup connection with e.g. custom functions
+//   ^ just add an optional delegate for on connection created/connected
 // - Support for Sqlite COLLATION in added columns? let's see how other SQL providers handle that
 // - ON CONFLICT ROLLBACK instead of ABORT? https://www.sqlite.org/lang_conflict.html
 // - STRICT table option is supported in v3.37.0 (2021-11-27), disabled for now
 // - more ReferenceBehavior options?
 // - WITHOUT ROWID is supported in v3.8.2 (2013-12-06), this is the oldest supported version
 // - update: v3.8.3 (2014-02-03) is now the oldest supported version, unless CTEs aren't used (WITH clause)
+// - Add Aggregation & AggregationFilter node decorators (HIGH PRIORITY)
+// - Add With data source extension (CTEs) (separate thing for recursive?)
+// - Add function nodes (base => understood by every interpreter + possibility to register custom)
+// - Add compound operators (UNION etc.) & compound queries (HIGH PRIORITY)
+// - Add node tree interpreter
+//   ^ this interpreter must be customizable through DB builder
+// - Add CREATE/DROP (TEMP)TABLE/INDEX nodes
+// - Add INSERT/UPDATE/DELETE nodes

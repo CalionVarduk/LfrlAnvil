@@ -166,6 +166,13 @@ public static class ExceptionResources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string GivenRecordSetWasNotPresentInDataSource(string recordSetName)
+    {
+        return $"The given record set name '{recordSetName}' was not present in the data source.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string VersionIsPrecededByVersionWithGreaterOrEqualValue(
         int index,
         SqlDatabaseVersion previous,
@@ -245,8 +252,10 @@ public static class ExceptionResources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string ExpressionTypesDoNotShareCommonType(SqlExpressionType a, SqlExpressionType b)
+    internal static string ExpressionTypesDoNotShareCommonType(SqlExpressionType? a, SqlExpressionType? b)
     {
-        return $"Expression types '{a}' and '{b}' do not share a common type.";
+        Assume.IsNotNull( a, nameof( a ) );
+        Assume.IsNotNull( b, nameof( b ) );
+        return $"Expression types '{a.Value}' and '{b.Value}' do not share a common type.";
     }
 }
