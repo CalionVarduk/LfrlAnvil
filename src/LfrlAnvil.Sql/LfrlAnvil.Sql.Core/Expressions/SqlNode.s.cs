@@ -344,7 +344,7 @@ public static class SqlNode
         SqlConditionNode filter)
         where TDataSourceNode : SqlDataSourceNode
     {
-        return new SqlFilterDataSourceDecoratorNode<TDataSourceNode>( dataSource, filter, isConjunction: true );
+        return new SqlFilterDataSourceDecoratorNode<TDataSourceNode>( dataSource, filter );
     }
 
     [Pure]
@@ -401,6 +401,71 @@ public static class SqlNode
         where TDataSourceNode : SqlDataSourceNode
     {
         return new SqlSortDataSourceDecoratorNode<TDataSourceNode>( @base, ordering );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlAggregationDataSourceDecoratorNode<TDataSourceNode> Aggregated<TDataSourceNode>(
+        TDataSourceNode dataSource,
+        IEnumerable<SqlExpressionNode> expressions)
+        where TDataSourceNode : SqlDataSourceNode
+    {
+        return Aggregated( dataSource, expressions.ToArray() );
+    }
+
+    [Pure]
+    public static SqlAggregationDataSourceDecoratorNode<TDataSourceNode> Aggregated<TDataSourceNode>(
+        TDataSourceNode dataSource,
+        params SqlExpressionNode[] expressions)
+        where TDataSourceNode : SqlDataSourceNode
+    {
+        return new SqlAggregationDataSourceDecoratorNode<TDataSourceNode>( dataSource, expressions );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlAggregationDataSourceDecoratorNode<TDataSourceNode> Aggregated<TDataSourceNode>(
+        SqlDataSourceDecoratorNode<TDataSourceNode> @base,
+        IEnumerable<SqlExpressionNode> expressions)
+        where TDataSourceNode : SqlDataSourceNode
+    {
+        return Aggregated( @base, expressions.ToArray() );
+    }
+
+    [Pure]
+    public static SqlAggregationDataSourceDecoratorNode<TDataSourceNode> Aggregated<TDataSourceNode>(
+        SqlDataSourceDecoratorNode<TDataSourceNode> @base,
+        params SqlExpressionNode[] expressions)
+        where TDataSourceNode : SqlDataSourceNode
+    {
+        return new SqlAggregationDataSourceDecoratorNode<TDataSourceNode>( @base, expressions );
+    }
+
+    [Pure]
+    public static SqlAggregationFilterDataSourceDecoratorNode<TDataSourceNode> AggregationFiltered<TDataSourceNode>(
+        TDataSourceNode dataSource,
+        SqlConditionNode filter)
+        where TDataSourceNode : SqlDataSourceNode
+    {
+        return new SqlAggregationFilterDataSourceDecoratorNode<TDataSourceNode>( dataSource, filter );
+    }
+
+    [Pure]
+    public static SqlAggregationFilterDataSourceDecoratorNode<TDataSourceNode> AndAggregationFiltered<TDataSourceNode>(
+        SqlDataSourceDecoratorNode<TDataSourceNode> @base,
+        SqlConditionNode filter)
+        where TDataSourceNode : SqlDataSourceNode
+    {
+        return new SqlAggregationFilterDataSourceDecoratorNode<TDataSourceNode>( @base, filter, isConjunction: true );
+    }
+
+    [Pure]
+    public static SqlAggregationFilterDataSourceDecoratorNode<TDataSourceNode> OrAggregationFiltered<TDataSourceNode>(
+        SqlDataSourceDecoratorNode<TDataSourceNode> @base,
+        SqlConditionNode filter)
+        where TDataSourceNode : SqlDataSourceNode
+    {
+        return new SqlAggregationFilterDataSourceDecoratorNode<TDataSourceNode>( @base, filter, isConjunction: false );
     }
 
     [Pure]

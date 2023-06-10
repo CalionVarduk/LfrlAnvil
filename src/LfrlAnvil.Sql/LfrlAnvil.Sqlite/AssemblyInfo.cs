@@ -25,7 +25,6 @@
 // - more ReferenceBehavior options?
 // - WITHOUT ROWID is supported in v3.8.2 (2013-12-06), this is the oldest supported version
 // - update: v3.8.3 (2014-02-03) is now the oldest supported version, unless CTEs aren't used (WITH clause)
-// - Add Aggregation & AggregationFilter node decorators (HIGH PRIORITY)
 // - Add With data source extension (CTEs) (separate thing for recursive?)
 // - Add function nodes (base => understood by every interpreter + possibility to register custom)
 // - Add compound operators (UNION etc.) & compound queries (HIGH PRIORITY)

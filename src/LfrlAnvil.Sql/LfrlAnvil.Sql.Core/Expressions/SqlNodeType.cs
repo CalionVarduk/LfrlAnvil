@@ -19,6 +19,8 @@ public enum SqlNodeType : byte
     OffsetDecorator,
     FilterDecorator,
     SortDecorator,
+    AggregationDecorator,
+    AggregationFilterDecorator,
     EqualTo,
     NotEqualTo,
     GreaterThan,

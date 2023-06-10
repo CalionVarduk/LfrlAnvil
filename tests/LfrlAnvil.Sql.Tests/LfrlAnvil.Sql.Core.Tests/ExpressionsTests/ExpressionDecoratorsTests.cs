@@ -250,6 +250,212 @@ public class ExpressionDecoratorsTests : TestsBase
     }
 
     [Fact]
+    public void Aggregated_ShouldCreateAggregationDataSourceDecoratorNode_WithDataSourceAndExpressionsCollection()
+    {
+        var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
+        var expressions = new SqlExpressionNode[] { dataSource.From.GetField( "a" ), dataSource.From.GetField( "b" ) }.ToList();
+        var expr = Substitute.For<Func<SqlSingleDataSourceNode<SqlRawRecordSetNode>, IEnumerable<SqlExpressionNode>>>();
+        expr.WithAnyArgs( _ => expressions );
+        var sut = dataSource.GroupBy( expr );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            expr.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
+            sut.NodeType.Should().Be( SqlNodeType.AggregationDecorator );
+            sut.Base.Should().BeNull();
+            sut.Level.Should().Be( 1 );
+            sut.DataSource.Should().BeSameAs( dataSource );
+            sut.Expressions.ToArray().Should().BeSequentiallyEqualTo( expressions );
+            sut.Reduce().Should().BeSequentiallyEqualTo( sut );
+            text.Should()
+                .Be(
+                    @"GROUP BY
+    ([foo].[a] : ?),
+    ([foo].[b] : ?)" );
+        }
+    }
+
+    [Fact]
+    public void Aggregated_ShouldCreateAggregationDataSourceDecoratorNode_WithDataSourceAndExpressionsArray()
+    {
+        var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
+        var expressions = new SqlExpressionNode[] { dataSource.From.GetField( "a" ), dataSource.From.GetField( "b" ) };
+        var sut = dataSource.GroupBy( expressions );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregationDecorator );
+            sut.Base.Should().BeNull();
+            sut.Level.Should().Be( 1 );
+            sut.DataSource.Should().BeSameAs( dataSource );
+            sut.Expressions.ToArray().Should().BeSequentiallyEqualTo( expressions );
+            sut.Reduce().Should().BeSequentiallyEqualTo( sut );
+            text.Should()
+                .Be(
+                    @"GROUP BY
+    ([foo].[a] : ?),
+    ([foo].[b] : ?)" );
+        }
+    }
+
+    [Fact]
+    public void Aggregated_ShouldCreateAggregationDataSourceDecoratorNode_WithDecoratorAndExpressionsCollection()
+    {
+        var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
+        var decorator = dataSource.Limit( SqlNode.Literal( 10 ) );
+        var expressions = new SqlExpressionNode[] { dataSource.From.GetField( "a" ), dataSource.From.GetField( "b" ) }.ToList();
+        var expr = Substitute.For<Func<SqlSingleDataSourceNode<SqlRawRecordSetNode>, IEnumerable<SqlExpressionNode>>>();
+        expr.WithAnyArgs( _ => expressions );
+        var sut = decorator.GroupBy( expr );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            expr.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
+            sut.NodeType.Should().Be( SqlNodeType.AggregationDecorator );
+            sut.Base.Should().BeSameAs( decorator );
+            sut.Level.Should().Be( 2 );
+            sut.DataSource.Should().BeSameAs( dataSource );
+            sut.Expressions.ToArray().Should().BeSequentiallyEqualTo( expressions );
+            sut.Reduce().Should().BeSequentiallyEqualTo( decorator, sut );
+            text.Should()
+                .Be(
+                    @"GROUP BY
+    ([foo].[a] : ?),
+    ([foo].[b] : ?)" );
+        }
+    }
+
+    [Fact]
+    public void Aggregated_ShouldCreateAggregationDataSourceDecoratorNode_WithDecoratorAndExpressionsArray()
+    {
+        var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
+        var decorator = dataSource.Limit( SqlNode.Literal( 10 ) );
+        var expressions = new SqlExpressionNode[] { dataSource.From.GetField( "a" ), dataSource.From.GetField( "b" ) };
+        var sut = decorator.GroupBy( expressions );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregationDecorator );
+            sut.Base.Should().BeSameAs( decorator );
+            sut.Level.Should().Be( 2 );
+            sut.DataSource.Should().BeSameAs( dataSource );
+            sut.Expressions.ToArray().Should().BeSequentiallyEqualTo( expressions );
+            sut.Reduce().Should().BeSequentiallyEqualTo( decorator, sut );
+            text.Should()
+                .Be(
+                    @"GROUP BY
+    ([foo].[a] : ?),
+    ([foo].[b] : ?)" );
+        }
+    }
+
+    [Fact]
+    public void Aggregated_ShouldCreateAggregationDataSourceDecoratorNode_WithEmptyExpressions()
+    {
+        var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
+        var sut = dataSource.GroupBy();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregationDecorator );
+            sut.Base.Should().BeNull();
+            sut.Level.Should().Be( 1 );
+            sut.DataSource.Should().BeSameAs( dataSource );
+            sut.Expressions.ToArray().Should().BeEmpty();
+            sut.Reduce().Should().BeSequentiallyEqualTo( sut );
+            text.Should().Be( "GROUP BY" );
+        }
+    }
+
+    [Fact]
+    public void AggregationFiltered_ShouldCreateAggregationFilterDataSourceDecoratorNode_WithDataSource()
+    {
+        var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
+        var condition = SqlNode.RawCondition( "bar > 10" );
+        var filter = Substitute.For<Func<SqlSingleDataSourceNode<SqlRawRecordSetNode>, SqlConditionNode>>();
+        filter.WithAnyArgs( _ => condition );
+        var sut = dataSource.Having( filter );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            filter.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
+            sut.NodeType.Should().Be( SqlNodeType.AggregationFilterDecorator );
+            sut.Base.Should().BeNull();
+            sut.Level.Should().Be( 1 );
+            sut.DataSource.Should().BeSameAs( dataSource );
+            sut.Filter.Should().BeSameAs( condition );
+            sut.IsConjunction.Should().BeTrue();
+            sut.Reduce().Should().BeSequentiallyEqualTo( sut );
+            text.Should()
+                .Be(
+                    @"AND HAVING
+    (bar > 10)" );
+        }
+    }
+
+    [Fact]
+    public void AndAggregationFiltered_ShouldCreateAggregationFilterDataSourceDecoratorNode_WithDecorator()
+    {
+        var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
+        var decorator = dataSource.Limit( SqlNode.Literal( 10 ) );
+        var condition = SqlNode.RawCondition( "bar > 10" );
+        var filter = Substitute.For<Func<SqlSingleDataSourceNode<SqlRawRecordSetNode>, SqlConditionNode>>();
+        filter.WithAnyArgs( _ => condition );
+        var sut = decorator.AndHaving( filter );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            filter.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
+            sut.NodeType.Should().Be( SqlNodeType.AggregationFilterDecorator );
+            sut.Base.Should().BeSameAs( decorator );
+            sut.Level.Should().Be( 2 );
+            sut.DataSource.Should().BeSameAs( dataSource );
+            sut.Filter.Should().BeSameAs( condition );
+            sut.IsConjunction.Should().BeTrue();
+            sut.Reduce().Should().BeSequentiallyEqualTo( decorator, sut );
+            text.Should()
+                .Be(
+                    @"AND HAVING
+    (bar > 10)" );
+        }
+    }
+
+    [Fact]
+    public void OrAggregationFiltered_ShouldCreateAggregationFilterDataSourceDecoratorNode_WithDecorator()
+    {
+        var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
+        var decorator = dataSource.Limit( SqlNode.Literal( 10 ) );
+        var condition = SqlNode.RawCondition( "bar > 10" );
+        var filter = Substitute.For<Func<SqlSingleDataSourceNode<SqlRawRecordSetNode>, SqlConditionNode>>();
+        filter.WithAnyArgs( _ => condition );
+        var sut = decorator.OrHaving( filter );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            filter.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
+            sut.NodeType.Should().Be( SqlNodeType.AggregationFilterDecorator );
+            sut.Base.Should().BeSameAs( decorator );
+            sut.Level.Should().Be( 2 );
+            sut.DataSource.Should().BeSameAs( dataSource );
+            sut.Filter.Should().BeSameAs( condition );
+            sut.IsConjunction.Should().BeFalse();
+            sut.Reduce().Should().BeSequentiallyEqualTo( decorator, sut );
+            text.Should()
+                .Be(
+                    @"OR HAVING
+    (bar > 10)" );
+        }
+    }
+
+    [Fact]
     public void Distinct_ShouldCreateDistinctDataSourceDecoratorNode_WithDataSource()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();

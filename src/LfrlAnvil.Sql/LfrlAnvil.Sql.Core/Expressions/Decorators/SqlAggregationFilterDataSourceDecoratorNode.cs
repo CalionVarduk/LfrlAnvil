@@ -5,21 +5,21 @@ using LfrlAnvil.Sql.Expressions.Objects;
 
 namespace LfrlAnvil.Sql.Expressions.Decorators;
 
-public sealed class SqlFilterDataSourceDecoratorNode<TDataSourceNode> : SqlDataSourceDecoratorNode<TDataSourceNode>
+public sealed class SqlAggregationFilterDataSourceDecoratorNode<TDataSourceNode> : SqlDataSourceDecoratorNode<TDataSourceNode>
     where TDataSourceNode : SqlDataSourceNode
 {
-    internal SqlFilterDataSourceDecoratorNode(TDataSourceNode dataSource, SqlConditionNode filter)
-        : base( SqlNodeType.FilterDecorator, dataSource )
+    internal SqlAggregationFilterDataSourceDecoratorNode(TDataSourceNode dataSource, SqlConditionNode filter)
+        : base( SqlNodeType.AggregationFilterDecorator, dataSource )
     {
         Filter = filter;
         IsConjunction = true;
     }
 
-    internal SqlFilterDataSourceDecoratorNode(
+    internal SqlAggregationFilterDataSourceDecoratorNode(
         SqlDataSourceDecoratorNode<TDataSourceNode> @base,
         SqlConditionNode filter,
         bool isConjunction)
-        : base( SqlNodeType.FilterDecorator, @base )
+        : base( SqlNodeType.AggregationFilterDecorator, @base )
     {
         Filter = filter;
         IsConjunction = isConjunction;
@@ -31,7 +31,7 @@ public sealed class SqlFilterDataSourceDecoratorNode<TDataSourceNode> : SqlDataS
     protected override void ToString(StringBuilder builder, int indent)
     {
         var filterIndent = indent + DefaultIndent;
-        builder.Append( IsConjunction ? "AND" : "OR" ).Append( ' ' ).Append( "WHERE" ).Indent( filterIndent );
+        builder.Append( IsConjunction ? "AND" : "OR" ).Append( ' ' ).Append( "HAVING" ).Indent( filterIndent );
         AppendChildTo( builder, Filter, filterIndent );
     }
 }

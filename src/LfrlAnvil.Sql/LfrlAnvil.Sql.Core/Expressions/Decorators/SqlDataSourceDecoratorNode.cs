@@ -30,6 +30,7 @@ public abstract class SqlDataSourceDecoratorNode : SqlNodeBase
         }
         while ( next is not null );
 
+        Assume.Equals( index, -1, nameof( index ) );
         return result;
     }
 }

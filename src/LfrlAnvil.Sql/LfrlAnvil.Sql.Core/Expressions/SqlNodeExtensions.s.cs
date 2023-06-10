@@ -269,6 +269,126 @@ public static class SqlNodeExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlAggregationDataSourceDecoratorNode<TDataSourceNode> GroupBy<TDataSourceNode>(
+        this TDataSourceNode node,
+        Func<TDataSourceNode, IEnumerable<SqlExpressionNode>> expressions)
+        where TDataSourceNode : SqlDataSourceNode
+    {
+        return node.GroupBy( expressions( node ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlAggregationDataSourceDecoratorNode<TDataSourceNode> GroupBy<TDataSourceNode>(
+        this TDataSourceNode node,
+        IEnumerable<SqlExpressionNode> expressions)
+        where TDataSourceNode : SqlDataSourceNode
+    {
+        return SqlNode.Aggregated( node, expressions );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlAggregationDataSourceDecoratorNode<TDataSourceNode> GroupBy<TDataSourceNode>(
+        this TDataSourceNode node,
+        params SqlExpressionNode[] expressions)
+        where TDataSourceNode : SqlDataSourceNode
+    {
+        return SqlNode.Aggregated( node, expressions );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlAggregationDataSourceDecoratorNode<TDataSourceNode> GroupBy<TDataSourceNode>(
+        this SqlDataSourceDecoratorNode<TDataSourceNode> node,
+        Func<TDataSourceNode, IEnumerable<SqlExpressionNode>> expressions)
+        where TDataSourceNode : SqlDataSourceNode
+    {
+        return node.GroupBy( expressions( node.DataSource ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlAggregationDataSourceDecoratorNode<TDataSourceNode> GroupBy<TDataSourceNode>(
+        this SqlDataSourceDecoratorNode<TDataSourceNode> node,
+        IEnumerable<SqlExpressionNode> expressions)
+        where TDataSourceNode : SqlDataSourceNode
+    {
+        return SqlNode.Aggregated( node, expressions );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlAggregationDataSourceDecoratorNode<TDataSourceNode> GroupBy<TDataSourceNode>(
+        this SqlDataSourceDecoratorNode<TDataSourceNode> node,
+        params SqlExpressionNode[] expressions)
+        where TDataSourceNode : SqlDataSourceNode
+    {
+        return SqlNode.Aggregated( node, expressions );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlAggregationFilterDataSourceDecoratorNode<TDataSourceNode> Having<TDataSourceNode>(
+        this TDataSourceNode node,
+        Func<TDataSourceNode, SqlConditionNode> filter)
+        where TDataSourceNode : SqlDataSourceNode
+    {
+        return node.Having( filter( node ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlAggregationFilterDataSourceDecoratorNode<TDataSourceNode> Having<TDataSourceNode>(
+        this TDataSourceNode node,
+        SqlConditionNode filter)
+        where TDataSourceNode : SqlDataSourceNode
+    {
+        return SqlNode.AggregationFiltered( node, filter );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlAggregationFilterDataSourceDecoratorNode<TDataSourceNode> AndHaving<TDataSourceNode>(
+        this SqlDataSourceDecoratorNode<TDataSourceNode> node,
+        Func<TDataSourceNode, SqlConditionNode> filter)
+        where TDataSourceNode : SqlDataSourceNode
+    {
+        return node.AndHaving( filter( node.DataSource ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlAggregationFilterDataSourceDecoratorNode<TDataSourceNode> AndHaving<TDataSourceNode>(
+        this SqlDataSourceDecoratorNode<TDataSourceNode> node,
+        SqlConditionNode filter)
+        where TDataSourceNode : SqlDataSourceNode
+    {
+        return SqlNode.AndAggregationFiltered( node, filter );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlAggregationFilterDataSourceDecoratorNode<TDataSourceNode> OrHaving<TDataSourceNode>(
+        this SqlDataSourceDecoratorNode<TDataSourceNode> node,
+        Func<TDataSourceNode, SqlConditionNode> filter)
+        where TDataSourceNode : SqlDataSourceNode
+    {
+        return node.OrHaving( filter( node.DataSource ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlAggregationFilterDataSourceDecoratorNode<TDataSourceNode> OrHaving<TDataSourceNode>(
+        this SqlDataSourceDecoratorNode<TDataSourceNode> node,
+        SqlConditionNode filter)
+        where TDataSourceNode : SqlDataSourceNode
+    {
+        return SqlNode.OrAggregationFiltered( node, filter );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlDistinctDataSourceDecoratorNode<TDataSourceNode> Distinct<TDataSourceNode>(this TDataSourceNode node)
         where TDataSourceNode : SqlDataSourceNode
     {
