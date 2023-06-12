@@ -20,6 +20,12 @@ public sealed class SqlSelectRecordSetNode : SqlSelectNode
             initializer.AddField( field.Name, field.Type );
     }
 
+    public override void RegisterCompoundSelection(SqlCompoundQueryExpressionNode.SelectionInitializer initializer)
+    {
+        foreach ( var field in RecordSet.GetKnownFields() )
+            initializer.AddSelection( field.Name, field.Type );
+    }
+
     protected override void ToString(StringBuilder builder, int indent)
     {
         builder.Append( '[' ).Append( RecordSet.Name ).Append( ']' ).Append( '.' ).Append( '*' );

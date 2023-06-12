@@ -14,7 +14,6 @@ public sealed class SqlQueryRecordSetNode : SqlRecordSetNode
     internal SqlQueryRecordSetNode(SqlQueryExpressionNode query, string alias, bool isOptional)
         : base( isOptional )
     {
-        Ensure.IsGreaterThan( query.Selection.Length, 0, nameof( query.Selection ) + '.' + nameof( query.Selection.Length ) );
         Query = query;
         Name = alias;
         _fields = null;

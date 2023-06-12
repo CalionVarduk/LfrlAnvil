@@ -22,6 +22,11 @@ public sealed class SqlSelectFieldNode : SqlSelectNode
         initializer.AddField( FieldName, Type );
     }
 
+    public override void RegisterCompoundSelection(SqlCompoundQueryExpressionNode.SelectionInitializer initializer)
+    {
+        initializer.AddSelection( FieldName, Type );
+    }
+
     protected override void ToString(StringBuilder builder, int indent)
     {
         AppendChildTo( builder, Expression, indent );

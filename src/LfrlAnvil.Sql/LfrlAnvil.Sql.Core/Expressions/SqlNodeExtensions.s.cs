@@ -43,13 +43,6 @@ public static class SqlNodeExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlRawQueryRecordSetNode AsSet(this SqlRawQueryExpressionNode node, string alias)
-    {
-        return SqlNode.RawQueryRecordSet( node, alias );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlSingleDataSourceNode<TRecordSetNode> ToDataSource<TRecordSetNode>(this TRecordSetNode node)
         where TRecordSetNode : SqlRecordSetNode
     {
@@ -145,6 +138,59 @@ public static class SqlNodeExtensions
     public static SqlDataSourceJoinOnNode Cross(this SqlRecordSetNode node)
     {
         return SqlNode.CrossJoin( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlCompoundQueryComponentNode ToUnion(this SqlQueryExpressionNode node)
+    {
+        return SqlNode.UnionWith( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlCompoundQueryComponentNode ToUnionAll(this SqlQueryExpressionNode node)
+    {
+        return SqlNode.UnionAllWith( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlCompoundQueryComponentNode ToIntersect(this SqlQueryExpressionNode node)
+    {
+        return SqlNode.IntersectWith( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlCompoundQueryComponentNode ToExcept(this SqlQueryExpressionNode node)
+    {
+        return SqlNode.ExceptWith( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlCompoundQueryComponentNode ToCompound(this SqlQueryExpressionNode node, SqlCompoundQueryOperator @operator)
+    {
+        return SqlNode.CompoundWith( @operator, node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlQueryExpressionNode CompoundWith(
+        this SqlQueryExpressionNode node,
+        IEnumerable<SqlCompoundQueryComponentNode> followingQueries)
+    {
+        return SqlNode.CompoundQuery( node, followingQueries );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlQueryExpressionNode CompoundWith(
+        this SqlQueryExpressionNode node,
+        params SqlCompoundQueryComponentNode[] followingQueries)
+    {
+        return SqlNode.CompoundQuery( node, followingQueries );
     }
 
     [Pure]
@@ -460,7 +506,7 @@ public static class SqlNodeExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlQueryExpressionNode Select<TDataSourceNode>(
+    public static SqlDataSourceQueryExpressionNode Select<TDataSourceNode>(
         this TDataSourceNode node,
         Func<TDataSourceNode, IEnumerable<SqlSelectNode>> selector)
         where TDataSourceNode : SqlDataSourceNode
@@ -470,21 +516,21 @@ public static class SqlNodeExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlQueryExpressionNode Select(this SqlDataSourceNode node, IEnumerable<SqlSelectNode> selection)
+    public static SqlDataSourceQueryExpressionNode Select(this SqlDataSourceNode node, IEnumerable<SqlSelectNode> selection)
     {
         return SqlNode.Query( node, selection );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlQueryExpressionNode Select(this SqlDataSourceNode node, params SqlSelectNode[] selection)
+    public static SqlDataSourceQueryExpressionNode Select(this SqlDataSourceNode node, params SqlSelectNode[] selection)
     {
         return SqlNode.Query( node, selection );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlQueryExpressionNode Select<TDataSourceNode>(
+    public static SqlDataSourceQueryExpressionNode Select<TDataSourceNode>(
         this SqlDataSourceDecoratorNode<TDataSourceNode> node,
         Func<TDataSourceNode, IEnumerable<SqlSelectNode>> selector)
         where TDataSourceNode : SqlDataSourceNode
@@ -494,22 +540,22 @@ public static class SqlNodeExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlQueryExpressionNode Select(this SqlDataSourceDecoratorNode node, IEnumerable<SqlSelectNode> selection)
+    public static SqlDataSourceQueryExpressionNode Select(this SqlDataSourceDecoratorNode node, IEnumerable<SqlSelectNode> selection)
     {
         return SqlNode.Query( node, selection );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlQueryExpressionNode Select(this SqlDataSourceDecoratorNode node, params SqlSelectNode[] selection)
+    public static SqlDataSourceQueryExpressionNode Select(this SqlDataSourceDecoratorNode node, params SqlSelectNode[] selection)
     {
         return SqlNode.Query( node, selection );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlQueryExpressionNode AndSelect(
-        this SqlQueryExpressionNode node,
+    public static SqlDataSourceQueryExpressionNode AndSelect(
+        this SqlDataSourceQueryExpressionNode node,
         Func<SqlDataSourceNode, IEnumerable<SqlSelectNode>> selector)
     {
         return node.AndSelect( selector( node.DataSource ) );
@@ -517,13 +563,15 @@ public static class SqlNodeExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlQueryExpressionNode AndSelect(this SqlQueryExpressionNode node, IEnumerable<SqlSelectNode> selection)
+    public static SqlDataSourceQueryExpressionNode AndSelect(
+        this SqlDataSourceQueryExpressionNode node,
+        IEnumerable<SqlSelectNode> selection)
     {
         return node.AndSelect( selection.ToArray() );
     }
 
     [Pure]
-    public static SqlQueryExpressionNode AndSelect(this SqlQueryExpressionNode node, params SqlSelectNode[] selection)
+    public static SqlDataSourceQueryExpressionNode AndSelect(this SqlDataSourceQueryExpressionNode node, params SqlSelectNode[] selection)
     {
         if ( selection.Length == 0 )
             return node;

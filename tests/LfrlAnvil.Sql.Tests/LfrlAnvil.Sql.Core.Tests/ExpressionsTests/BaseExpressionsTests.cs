@@ -10,7 +10,7 @@ using LfrlAnvil.TestExtensions.NSubstitute;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
 
-public class BaseExpressionsTests : TestsBase
+public partial class BaseExpressionsTests : TestsBase
 {
     [Fact]
     public void BaseToString_ShouldReturnTypeInfo()
@@ -87,6 +87,60 @@ public class BaseExpressionsTests : TestsBase
             sut.Type.Should().BeNull();
             sut.Parameters.ToArray().Should().BeSequentiallyEqualTo( parameters );
             text.Should().Be( "foo(@a, @b, 10) + 15" );
+        }
+    }
+
+    [Fact]
+    public void RawSelect_ShouldCreateRawSelectFieldNode_WithAlias()
+    {
+        var sut = SqlNode.RawSelect( "foo", alias: "bar", SqlExpressionType.Create<int>() );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.RawSelectField );
+            sut.RecordSetName.Should().BeNull();
+            sut.Name.Should().Be( "foo" );
+            sut.Alias.Should().Be( "bar" );
+            sut.Type.Should().Be( SqlExpressionType.Create<int>() );
+            sut.FieldName.Should().Be( "bar" );
+            text.Should().Be( "([foo] : System.Int32) AS [bar]" );
+        }
+    }
+
+    [Fact]
+    public void RawSelect_ShouldCreateRawSelectFieldNode_WithoutAlias()
+    {
+        var sut = SqlNode.RawSelect( "foo" );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.RawSelectField );
+            sut.RecordSetName.Should().BeNull();
+            sut.Name.Should().Be( "foo" );
+            sut.Alias.Should().BeNull();
+            sut.Type.Should().BeNull();
+            sut.FieldName.Should().Be( "foo" );
+            text.Should().Be( "([foo] : ?)" );
+        }
+    }
+
+    [Fact]
+    public void RawSelect_ShouldCreateRawSelectFieldNode_WithRecordSetName()
+    {
+        var sut = SqlNode.RawSelect( "qux", "foo", alias: "bar", SqlExpressionType.Create<int>() );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.RawSelectField );
+            sut.RecordSetName.Should().Be( "qux" );
+            sut.Name.Should().Be( "foo" );
+            sut.Alias.Should().Be( "bar" );
+            sut.Type.Should().Be( SqlExpressionType.Create<int>() );
+            sut.FieldName.Should().Be( "bar" );
+            text.Should().Be( "([qux].[foo] : System.Int32) AS [bar]" );
         }
     }
 
@@ -177,7 +231,7 @@ public class BaseExpressionsTests : TestsBase
     }
 
     [Fact]
-    public void Query_ShouldCreateQueryExpressionNode_FromDataSourceNode_WithSelectionCollection()
+    public void Query_ShouldCreateDataSourceQueryExpressionNode_FromDataSourceNode_WithSelectionCollection()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
         var selection = new[] { dataSource.From.GetField( "bar" ).As( "x" ), dataSource.From.GetField( "qux" ).AsSelf() }.ToList();
@@ -204,7 +258,7 @@ SELECT
     }
 
     [Fact]
-    public void Query_ShouldCreateQueryExpressionNode_FromDataSourceNode_WithEmptySelection()
+    public void Query_ShouldCreateDataSourceQueryExpressionNode_FromDataSourceNode_WithEmptySelection()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
         var sut = dataSource.Select();
@@ -225,7 +279,7 @@ SELECT" );
     }
 
     [Fact]
-    public void Query_ShouldCreateQueryExpressionNode_FromDataSourceNode_WithSingleSelection()
+    public void Query_ShouldCreateDataSourceQueryExpressionNode_FromDataSourceNode_WithSingleSelection()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
         var selection = dataSource.From.GetRawField( "bar", SqlExpressionType.Create<int>() ).AsSelf();
@@ -248,7 +302,7 @@ SELECT
     }
 
     [Fact]
-    public void Query_ShouldCreateQueryExpressionNode_FromDataSourceDecoratorNode_WithSelectionCollection()
+    public void Query_ShouldCreateDataSourceQueryExpressionNode_FromDataSourceDecoratorNode_WithSelectionCollection()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
         var decorator = dataSource.Where( SqlNode.True() );
@@ -278,7 +332,7 @@ SELECT
     }
 
     [Fact]
-    public void Query_ShouldCreateQueryExpressionNode_FromDataSourceDecoratorNode_WithEmptySelection()
+    public void Query_ShouldCreateDataSourceQueryExpressionNode_FromDataSourceDecoratorNode_WithEmptySelection()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
         var decorator = dataSource.Where( SqlNode.True() );
@@ -302,7 +356,7 @@ SELECT" );
     }
 
     [Fact]
-    public void Query_ShouldCreateQueryExpressionNode_FromDataSourceDecoratorNode_WithSingleSelection()
+    public void Query_ShouldCreateDataSourceQueryExpressionNode_FromDataSourceDecoratorNode_WithSingleSelection()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
         var decorator = dataSource.Where( SqlNode.True() );
@@ -328,7 +382,7 @@ SELECT
     }
 
     [Fact]
-    public void Query_AndSelect_ShouldCreateQueryExpressionNode_WithExtendedSelection()
+    public void Query_AndSelect_ShouldCreateDataSourceQueryExpressionNode_WithExtendedSelection()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
         var oldSelection = dataSource.From.GetField( "bar" ).AsSelf();
@@ -357,7 +411,7 @@ SELECT
     }
 
     [Fact]
-    public void Query_AndSelect_WithDecorator_ShouldCreateQueryExpressionNode_WithExtendedSelection()
+    public void Query_AndSelect_WithDecorator_ShouldCreateDataSourceQueryExpressionNode_WithExtendedSelection()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
         var decorator = dataSource.Where( SqlNode.True() );
@@ -398,6 +452,121 @@ SELECT
         var sut = query.AndSelect();
 
         sut.Should().BeSameAs( query );
+    }
+
+    [Fact]
+    public void RawQuery_ShouldCreateRawQueryExpressionNode()
+    {
+        var sql = @"SELECT *
+FROM foo
+WHERE id = @a AND value > @b";
+
+        var parameters = new[] { SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) }.ToList();
+        var sut = SqlNode.RawQuery( sql, parameters );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.RawQuery );
+            sut.Type.Should().BeNull();
+            sut.Sql.Should().Be( sql );
+            sut.Parameters.ToArray().Should().BeSequentiallyEqualTo( parameters );
+            sut.Selection.ToArray().Should().BeEmpty();
+            text.Should().Be( sql );
+        }
+    }
+
+    [Fact]
+    public void CompoundQuery_ShouldCreateCompoundQueryExpressionNode_WithComponentCollection()
+    {
+        var query1 = SqlNode.RawQuery(
+            @"SELECT a, b
+FROM foo
+WHERE value > 10" );
+
+        var query2 = SqlNode.RawQuery(
+            @"SELECT a, c AS b
+FROM qux
+WHERE value < 10" );
+
+        var union = query2.ToUnion();
+        var sut = query1.CompoundWith( new[] { union }.ToList() );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.CompoundQuery );
+            sut.Type.Should().BeNull();
+            var compoundQuery = sut as SqlCompoundQueryExpressionNode;
+            (compoundQuery?.FirstQuery).Should().BeSameAs( query1 );
+            (compoundQuery?.FollowingQueries.ToArray()).Should().BeSequentiallyEqualTo( union );
+            text.Should()
+                .Be(
+                    @"(
+    SELECT a, b
+    FROM foo
+    WHERE value > 10
+)
+UNION
+(
+    SELECT a, c AS b
+    FROM qux
+    WHERE value < 10
+)" );
+        }
+    }
+
+    [Fact]
+    public void CompoundQuery_ShouldCreateCompoundQueryExpressionNode_WithComponentArray()
+    {
+        var query1 = SqlNode.RawQuery(
+            @"SELECT a, b
+FROM foo
+WHERE value > 10" );
+
+        var query2 = SqlNode.RawQuery(
+            @"SELECT a, c AS b
+FROM qux
+WHERE value < 10" );
+
+        var union = query2.ToUnion();
+        var sut = query1.CompoundWith( union );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.CompoundQuery );
+            sut.Type.Should().BeNull();
+            var compoundQuery = sut as SqlCompoundQueryExpressionNode;
+            (compoundQuery?.FirstQuery).Should().BeSameAs( query1 );
+            (compoundQuery?.FollowingQueries.ToArray()).Should().BeSequentiallyEqualTo( union );
+            text.Should()
+                .Be(
+                    @"(
+    SELECT a, b
+    FROM foo
+    WHERE value > 10
+)
+UNION
+(
+    SELECT a, c AS b
+    FROM qux
+    WHERE value < 10
+)" );
+        }
+    }
+
+    [Fact]
+    public void CompoundQuery_ShouldReturnFirstQuery_WhenComponentCollectionIsEmpty()
+    {
+        var query = SqlNode.RawQuery(
+            @"SELECT *
+FROM foo
+WHERE value > 10" );
+
+        var result = query.CompoundWith();
+
+        result.Should().BeSameAs( query );
     }
 
     [Fact]
@@ -515,6 +684,116 @@ END" );
             (sut.Cases.ToArray().ElementAtOrDefault( 0 )?.Condition).Should().BeSameAs( condition );
             (sut.Cases.ToArray().ElementAtOrDefault( 0 )?.Expression).Should().BeSameAs( whenTrue );
         }
+    }
+
+    [Fact]
+    public void UnionWith_ShouldCreateSqlCompoundQueryComponentNode()
+    {
+        var query = SqlNode.RawQuery( "SELECT * FROM foo" );
+        var sut = query.ToUnion();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.CompoundQueryComponent );
+            sut.Operator.Should().Be( SqlCompoundQueryOperator.Union );
+            sut.Query.Should().BeSameAs( query );
+            text.Should()
+                .Be(
+                    @"UNION
+(
+    SELECT * FROM foo
+)" );
+        }
+    }
+
+    [Fact]
+    public void UnionAllWith_ShouldCreateSqlCompoundQueryComponentNode()
+    {
+        var query = SqlNode.RawQuery( "SELECT * FROM foo" );
+        var sut = query.ToUnionAll();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.CompoundQueryComponent );
+            sut.Operator.Should().Be( SqlCompoundQueryOperator.UnionAll );
+            sut.Query.Should().BeSameAs( query );
+            text.Should()
+                .Be(
+                    @"UNIONALL
+(
+    SELECT * FROM foo
+)" );
+        }
+    }
+
+    [Fact]
+    public void IntersectWith_ShouldCreateSqlCompoundQueryComponentNode()
+    {
+        var query = SqlNode.RawQuery( "SELECT * FROM foo" );
+        var sut = query.ToIntersect();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.CompoundQueryComponent );
+            sut.Operator.Should().Be( SqlCompoundQueryOperator.Intersect );
+            sut.Query.Should().BeSameAs( query );
+            text.Should()
+                .Be(
+                    @"INTERSECT
+(
+    SELECT * FROM foo
+)" );
+        }
+    }
+
+    [Fact]
+    public void ExceptWith_ShouldCreateSqlCompoundQueryComponentNode()
+    {
+        var query = SqlNode.RawQuery( "SELECT * FROM foo" );
+        var sut = query.ToExcept();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.CompoundQueryComponent );
+            sut.Operator.Should().Be( SqlCompoundQueryOperator.Except );
+            sut.Query.Should().BeSameAs( query );
+            text.Should()
+                .Be(
+                    @"EXCEPT
+(
+    SELECT * FROM foo
+)" );
+        }
+    }
+
+    [Theory]
+    [InlineData( SqlCompoundQueryOperator.Union )]
+    [InlineData( SqlCompoundQueryOperator.UnionAll )]
+    [InlineData( SqlCompoundQueryOperator.Intersect )]
+    [InlineData( SqlCompoundQueryOperator.Except )]
+    public void CompoundWith_ShouldCreateSqlCompoundQueryComponentNode(SqlCompoundQueryOperator @operator)
+    {
+        var query = SqlNode.RawQuery( "SELECT * FROM foo" );
+        var sut = query.ToCompound( @operator );
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.CompoundQueryComponent );
+            sut.Operator.Should().Be( @operator );
+            sut.Query.Should().BeSameAs( query );
+        }
+    }
+
+    [Fact]
+    public void CompoundWith_ShouldThrowArgumentException_WhenOperatorIsUnrecognized()
+    {
+        var query = SqlNode.RawQuery( "SELECT * FROM foo" );
+        var action = Lambda.Of( () => query.ToCompound( (SqlCompoundQueryOperator)10 ) );
+        action.Should().ThrowExactly<ArgumentException>();
     }
 
     private sealed class NodeMock : SqlNodeBase

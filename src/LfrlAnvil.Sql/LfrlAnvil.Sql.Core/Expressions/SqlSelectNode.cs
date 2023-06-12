@@ -10,4 +10,5 @@ public abstract class SqlSelectNode : SqlNodeBase
     public abstract SqlExpressionType? Type { get; }
 
     public abstract void RegisterKnownFields(SqlQueryRecordSetNode.FieldInitializer initializer);
+    public abstract void RegisterCompoundSelection(SqlCompoundQueryExpressionNode.SelectionInitializer initializer);
 }

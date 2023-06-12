@@ -4,7 +4,7 @@ using LfrlAnvil.Sql.Expressions.Objects;
 
 namespace LfrlAnvil.Sql.Expressions;
 
-public sealed class SqlRawQueryExpressionNode : SqlExpressionNode
+public sealed class SqlRawQueryExpressionNode : SqlQueryExpressionNode
 {
     internal SqlRawQueryExpressionNode(string sql, SqlParameterNode[] parameters)
         : base( SqlNodeType.RawQuery )
@@ -15,6 +15,7 @@ public sealed class SqlRawQueryExpressionNode : SqlExpressionNode
 
     public string Sql { get; }
     public ReadOnlyMemory<SqlParameterNode> Parameters { get; }
+    public override ReadOnlyMemory<SqlSelectNode> Selection => ReadOnlyMemory<SqlSelectNode>.Empty;
     public override SqlExpressionType? Type => null;
 
     protected override void ToString(StringBuilder builder, int indent)

@@ -16,6 +16,6 @@ public sealed class SqlParameterNode : SqlExpressionNode
 
     protected override void ToString(StringBuilder builder, int indent)
     {
-        AppendTypeTo( builder.Append( '@' ).Append( Name ) );
+        AppendTypeTo( builder.Append( '@' ).Append( Name ), Type );
     }
 }

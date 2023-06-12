@@ -331,10 +331,11 @@ public class LogicalExpressionsTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.Exists );
-            sut.Query.Decorator.Should().BeNull();
-            sut.Query.DataSource.Joins.ToArray().Should().BeEmpty();
-            sut.Query.DataSource.From.Should().BeSameAs( recordSet );
-            sut.Query.DataSource.RecordSets.Should().BeSequentiallyEqualTo( recordSet );
+            var query = sut.Query as SqlDataSourceQueryExpressionNode;
+            (query?.Decorator).Should().BeNull();
+            (query?.DataSource.Joins.ToArray()).Should().BeEmpty();
+            (query?.DataSource.From).Should().BeSameAs( recordSet );
+            (query?.DataSource.RecordSets).Should().BeSequentiallyEqualTo( recordSet );
             sut.Query.Selection.ToArray().Should().HaveCount( 1 );
             (sut.Query.Selection.ToArray().ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SelectAll );
             sut.IsNegated.Should().BeFalse();
@@ -359,8 +360,9 @@ public class LogicalExpressionsTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.Exists );
-            sut.Query.Decorator.Should().BeNull();
-            sut.Query.DataSource.Should().BeSameAs( dataSource );
+            var query = sut.Query as SqlDataSourceQueryExpressionNode;
+            (query?.Decorator).Should().BeNull();
+            (query?.DataSource).Should().BeSameAs( dataSource );
             sut.Query.Selection.ToArray().Should().HaveCount( 1 );
             (sut.Query.Selection.ToArray().ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SelectAll );
             sut.IsNegated.Should().BeFalse();
@@ -386,8 +388,9 @@ public class LogicalExpressionsTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.Exists );
-            sut.Query.Decorator.Should().BeSameAs( decorator );
-            sut.Query.DataSource.Should().BeSameAs( dataSource );
+            var query = sut.Query as SqlDataSourceQueryExpressionNode;
+            (query?.Decorator).Should().BeSameAs( decorator );
+            (query?.DataSource).Should().BeSameAs( dataSource );
             sut.Query.Selection.ToArray().Should().HaveCount( 1 );
             (sut.Query.Selection.ToArray().ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SelectAll );
             sut.IsNegated.Should().BeFalse();
@@ -413,10 +416,11 @@ public class LogicalExpressionsTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.Exists );
-            sut.Query.Decorator.Should().BeNull();
-            sut.Query.DataSource.Joins.ToArray().Should().BeEmpty();
-            sut.Query.DataSource.From.Should().BeSameAs( recordSet );
-            sut.Query.DataSource.RecordSets.Should().BeSequentiallyEqualTo( recordSet );
+            var query = sut.Query as SqlDataSourceQueryExpressionNode;
+            (query?.Decorator).Should().BeNull();
+            (query?.DataSource.Joins.ToArray()).Should().BeEmpty();
+            (query?.DataSource.From).Should().BeSameAs( recordSet );
+            (query?.DataSource.RecordSets).Should().BeSequentiallyEqualTo( recordSet );
             sut.Query.Selection.ToArray().Should().HaveCount( 1 );
             (sut.Query.Selection.ToArray().ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SelectAll );
             sut.IsNegated.Should().BeTrue();
@@ -441,8 +445,9 @@ public class LogicalExpressionsTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.Exists );
-            sut.Query.Decorator.Should().BeNull();
-            sut.Query.DataSource.Should().BeSameAs( dataSource );
+            var query = sut.Query as SqlDataSourceQueryExpressionNode;
+            (query?.Decorator).Should().BeNull();
+            (query?.DataSource).Should().BeSameAs( dataSource );
             sut.Query.Selection.ToArray().Should().HaveCount( 1 );
             (sut.Query.Selection.ToArray().ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SelectAll );
             sut.IsNegated.Should().BeTrue();
@@ -468,8 +473,9 @@ public class LogicalExpressionsTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.Exists );
-            sut.Query.Decorator.Should().BeSameAs( decorator );
-            sut.Query.DataSource.Should().BeSameAs( dataSource );
+            var query = sut.Query as SqlDataSourceQueryExpressionNode;
+            (query?.Decorator).Should().BeSameAs( decorator );
+            (query?.DataSource).Should().BeSameAs( dataSource );
             sut.Query.Selection.ToArray().Should().HaveCount( 1 );
             (sut.Query.Selection.ToArray().ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SelectAll );
             sut.IsNegated.Should().BeTrue();

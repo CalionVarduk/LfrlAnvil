@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics.Contracts;
-using System.Text;
 using LfrlAnvil.Sql.Expressions.Arithmetic;
 using LfrlAnvil.Sql.Expressions.Logical;
 
@@ -108,14 +107,5 @@ public abstract class SqlExpressionNode : SqlNodeBase
     public static SqlConditionNode operator <=(SqlExpressionNode? left, SqlExpressionNode? right)
     {
         return left.IsLessThanOrEqualTo( right );
-    }
-
-    protected void AppendTypeTo(StringBuilder builder)
-    {
-        builder.Append( ' ' ).Append( ':' ).Append( ' ' );
-        if ( Type is null )
-            builder.Append( '?' );
-        else
-            builder.Append( Type.Value.ToString() );
     }
 }

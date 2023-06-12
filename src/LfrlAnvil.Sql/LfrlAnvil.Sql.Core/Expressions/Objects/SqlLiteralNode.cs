@@ -18,6 +18,6 @@ public sealed class SqlLiteralNode<T> : SqlExpressionNode
     protected override void ToString(StringBuilder builder, int indent)
     {
         builder.Append( '"' ).Append( Value ).Append( '"' );
-        AppendTypeTo( builder );
+        AppendTypeTo( builder, Type );
     }
 }

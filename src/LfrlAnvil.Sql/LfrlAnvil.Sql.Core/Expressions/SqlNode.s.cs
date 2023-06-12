@@ -520,6 +520,18 @@ public static class SqlNode
     }
 
     [Pure]
+    public static SqlRawSelectFieldNode RawSelect(string name, string? alias = null, SqlExpressionType? type = null)
+    {
+        return new SqlRawSelectFieldNode( recordSetName: null, name, alias, type );
+    }
+
+    [Pure]
+    public static SqlRawSelectFieldNode RawSelect(string recordSetName, string name, string? alias, SqlExpressionType? type = null)
+    {
+        return new SqlRawSelectFieldNode( recordSetName, name, alias, type );
+    }
+
+    [Pure]
     public static SqlSelectFieldNode Select(SqlExpressionNode expression, string alias)
     {
         return new SqlSelectFieldNode( expression, alias );
@@ -545,40 +557,51 @@ public static class SqlNode
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlQueryExpressionNode Query(SqlDataSourceNode dataSource, IEnumerable<SqlSelectNode> selection)
+    public static SqlDataSourceQueryExpressionNode Query(SqlDataSourceNode dataSource, IEnumerable<SqlSelectNode> selection)
     {
         return Query( dataSource, selection.ToArray() );
     }
 
     [Pure]
-    public static SqlQueryExpressionNode Query(SqlDataSourceNode dataSource, params SqlSelectNode[] selection)
+    public static SqlDataSourceQueryExpressionNode Query(SqlDataSourceNode dataSource, params SqlSelectNode[] selection)
     {
-        return new SqlQueryExpressionNode( dataSource, selection );
+        return new SqlDataSourceQueryExpressionNode( dataSource, selection );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlQueryExpressionNode Query(SqlDataSourceDecoratorNode decorator, IEnumerable<SqlSelectNode> selection)
+    public static SqlDataSourceQueryExpressionNode Query(SqlDataSourceDecoratorNode decorator, IEnumerable<SqlSelectNode> selection)
     {
         return Query( decorator, selection.ToArray() );
     }
 
     [Pure]
-    public static SqlQueryExpressionNode Query(SqlDataSourceDecoratorNode decorator, params SqlSelectNode[] selection)
+    public static SqlDataSourceQueryExpressionNode Query(SqlDataSourceDecoratorNode decorator, params SqlSelectNode[] selection)
     {
-        return new SqlQueryExpressionNode( decorator, selection );
+        return new SqlDataSourceQueryExpressionNode( decorator, selection );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlQueryExpressionNode CompoundQuery(
+        SqlQueryExpressionNode firstQuery,
+        IEnumerable<SqlCompoundQueryComponentNode> followingQueries)
+    {
+        return CompoundQuery( firstQuery, followingQueries.ToArray() );
+    }
+
+    [Pure]
+    public static SqlQueryExpressionNode CompoundQuery(
+        SqlQueryExpressionNode firstQuery,
+        params SqlCompoundQueryComponentNode[] followingQueries)
+    {
+        return followingQueries.Length == 0 ? firstQuery : new SqlCompoundQueryExpressionNode( firstQuery, followingQueries );
     }
 
     [Pure]
     public static SqlQueryRecordSetNode QueryRecordSet(SqlQueryExpressionNode query, string alias)
     {
         return new SqlQueryRecordSetNode( query, alias, isOptional: false );
-    }
-
-    [Pure]
-    public static SqlRawQueryRecordSetNode RawQueryRecordSet(SqlRawQueryExpressionNode query, string alias)
-    {
-        return new SqlRawQueryRecordSetNode( query, alias, isOptional: false );
     }
 
     [Pure]
@@ -688,6 +711,37 @@ public static class SqlNode
     public static SqlDataSourceJoinOnNode CrossJoin(SqlRecordSetNode innerRecordSet)
     {
         return new SqlDataSourceJoinOnNode( SqlJoinType.Cross, innerRecordSet, True() );
+    }
+
+    [Pure]
+    public static SqlCompoundQueryComponentNode UnionWith(SqlQueryExpressionNode query)
+    {
+        return new SqlCompoundQueryComponentNode( query, SqlCompoundQueryOperator.Union );
+    }
+
+    [Pure]
+    public static SqlCompoundQueryComponentNode UnionAllWith(SqlQueryExpressionNode query)
+    {
+        return new SqlCompoundQueryComponentNode( query, SqlCompoundQueryOperator.UnionAll );
+    }
+
+    [Pure]
+    public static SqlCompoundQueryComponentNode IntersectWith(SqlQueryExpressionNode query)
+    {
+        return new SqlCompoundQueryComponentNode( query, SqlCompoundQueryOperator.Intersect );
+    }
+
+    [Pure]
+    public static SqlCompoundQueryComponentNode ExceptWith(SqlQueryExpressionNode query)
+    {
+        return new SqlCompoundQueryComponentNode( query, SqlCompoundQueryOperator.Except );
+    }
+
+    [Pure]
+    public static SqlCompoundQueryComponentNode CompoundWith(SqlCompoundQueryOperator @operator, SqlQueryExpressionNode query)
+    {
+        Ensure.IsDefined( @operator, nameof( @operator ) );
+        return new SqlCompoundQueryComponentNode( query, @operator );
     }
 
     [Pure]

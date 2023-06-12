@@ -43,6 +43,15 @@ public abstract class SqlNodeBase
         node.ToString( builder, indent );
     }
 
+    protected static void AppendTypeTo(StringBuilder builder, SqlExpressionType? type)
+    {
+        builder.Append( ' ' ).Append( ':' ).Append( ' ' );
+        if ( type is null )
+            builder.Append( '?' );
+        else
+            builder.Append( type.Value.ToString() );
+    }
+
     protected static void AppendInfixBinaryTo(
         StringBuilder builder,
         SqlNodeBase left,

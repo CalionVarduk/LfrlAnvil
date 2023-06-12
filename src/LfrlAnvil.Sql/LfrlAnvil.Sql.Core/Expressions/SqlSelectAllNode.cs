@@ -23,6 +23,15 @@ public sealed class SqlSelectAllNode : SqlSelectNode
         }
     }
 
+    public override void RegisterCompoundSelection(SqlCompoundQueryExpressionNode.SelectionInitializer initializer)
+    {
+        foreach ( var recordSet in DataSource.RecordSets )
+        {
+            foreach ( var field in recordSet.GetKnownFields() )
+                initializer.AddSelection( field.Name, field.Type );
+        }
+    }
+
     protected override void ToString(StringBuilder builder, int indent)
     {
         builder.Append( '*' );

@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Objects;
@@ -254,28 +253,7 @@ public partial class ObjectExpressionsTests : TestsBase
     }
 
     [Fact]
-    public void RawQuery_ShouldCreateRawQueryExpressionNode()
-    {
-        var sql = @"SELECT *
-FROM foo
-WHERE id = @a AND value > @b";
-
-        var parameters = new[] { SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) }.ToList();
-        var sut = SqlNode.RawQuery( sql, parameters );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.RawQuery );
-            sut.Type.Should().BeNull();
-            sut.Sql.Should().Be( sql );
-            sut.Parameters.ToArray().Should().BeSequentiallyEqualTo( parameters );
-            text.Should().Be( sql );
-        }
-    }
-
-    [Fact]
-    public void QueryRecordSet_ShouldCreateQueryRecordSetNode()
+    public void QueryRecordSet_FromDataSourceQuery_ShouldCreateQueryRecordSetNode()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
         var query = dataSource.Select( dataSource.From.GetField( "bar" ).As( "x" ), dataSource.From.GetField( "qux" ).AsSelf() );
@@ -301,15 +279,7 @@ WHERE id = @a AND value > @b";
     }
 
     [Fact]
-    public void QueryRecordSet_ShouldThrowArgumentOutOfRangeException_WhenQuerySelectionIsEmpty()
-    {
-        var query = SqlNode.RawRecordSet( "foo" ).ToDataSource().Select();
-        var action = Lambda.Of( () => query.AsSet( "bar" ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
-    }
-
-    [Fact]
-    public void RawQueryRecordSet_ShouldCreateRawQueryRecordSetNode()
+    public void QueryRecordSet_FromRawQuery_ShouldCreateQueryRecordSetNode()
     {
         var query = SqlNode.RawQuery(
             @"SELECT *
@@ -332,6 +302,48 @@ WHERE value > 10" );
     SELECT *
     FROM foo
     WHERE value > 10
+) AS [bar]" );
+        }
+    }
+
+    [Fact]
+    public void QueryRecordSet_FromCompoundQuery_ShouldCreateQueryRecordSetNode()
+    {
+        var query1 = SqlNode.RawQuery(
+            @"SELECT a, b
+FROM foo
+WHERE value > 10" );
+
+        var query2 = SqlNode.RawQuery(
+            @"SELECT a, c AS b
+FROM qux
+WHERE value < 10" );
+
+        var query = query1.CompoundWith( query2.ToUnion() );
+        var sut = query.AsSet( "bar" );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.RecordSet );
+            sut.Name.Should().Be( "bar" );
+            sut.IsAliased.Should().BeTrue();
+            sut.IsOptional.Should().BeFalse();
+            sut.Query.Should().BeSameAs( query );
+            text.Should()
+                .Be(
+                    @"(
+    (
+        SELECT a, b
+        FROM foo
+        WHERE value > 10
+    )
+    UNION
+    (
+        SELECT a, c AS b
+        FROM qux
+        WHERE value < 10
+    )
 ) AS [bar]" );
         }
     }

@@ -52,15 +52,16 @@ public partial class ObjectExpressionsTests
             var sut = dataSource.Select(
                     dataSource["T1"]["a"].AsSelf(),
                     dataSource["T2"]["d"].AsSelf(),
-                    dataSource.From.GetUnsafeField( "e" ).AsSelf() )
+                    dataSource["T1"].GetUnsafeField( "e" ).AsSelf(),
+                    SqlNode.RawSelect( "T2", "f", alias: "g" ) )
                 .AsSet( "foo" );
 
             var result = sut.GetKnownFields();
 
             using ( new AssertionScope() )
             {
-                result.Should().HaveCount( 3 );
-                result.Should().BeEquivalentTo( sut.GetField( "a" ), sut.GetField( "d" ), sut.GetField( "e" ) );
+                result.Should().HaveCount( 4 );
+                result.Should().BeEquivalentTo( sut.GetField( "a" ), sut.GetField( "d" ), sut.GetField( "e" ), sut.GetField( "g" ) );
             }
         }
 
