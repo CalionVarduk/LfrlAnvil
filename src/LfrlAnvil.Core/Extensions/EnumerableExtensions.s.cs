@@ -745,6 +745,24 @@ public static class EnumerableExtensions
     }
 
     [Pure]
+    public static ReadOnlyMemory<T> ToMemory<T>(this IEnumerable<T> source)
+    {
+        if ( typeof( T ) == typeof( char ) )
+        {
+            if ( source is string str )
+                return (ReadOnlyMemory<T>)(object)str.AsMemory();
+        }
+
+        if ( source is T[] arr )
+            return arr.AsMemory();
+
+        if ( source.TryGetNonEnumeratedCount( out var count ) && count == 0 )
+            return ReadOnlyMemory<T>.Empty;
+
+        return source.ToArray().AsMemory();
+    }
+
+    [Pure]
     private static IReadOnlySet<T> GetSet<T>(IEnumerable<T> source, IEqualityComparer<T> comparer)
     {
         if ( source is HashSet<T> hashSet && hashSet.Comparer.Equals( comparer ) )

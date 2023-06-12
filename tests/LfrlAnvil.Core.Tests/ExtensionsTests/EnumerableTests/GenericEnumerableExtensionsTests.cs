@@ -1073,4 +1073,28 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
         var result = sut.ToArray( r => r.Value );
         result.Should().BeSequentiallyEqualTo( sut.Select( r => r.Value ) );
     }
+
+    [Fact]
+    public void ToMemory_ShouldReturnArrayAsMemory_WhenUnderlyingCollectionIsOfArrayType()
+    {
+        var sut = Fixture.CreateMany<T>( count: 3 ).ToArray();
+        var result = sut.ToMemory();
+        result.Should().Be( sut.AsMemory() );
+    }
+
+    [Fact]
+    public void ToMemory_ShouldCreateNewArrayAndReturnItAsMemory_WhenUnderlyingCollectionIsNotEmptyAndNotOfArrayType()
+    {
+        var sut = Fixture.CreateMany<T>( count: 3 ).ToList();
+        var result = sut.ToMemory();
+        result.ToArray().Should().BeSequentiallyEqualTo( sut );
+    }
+
+    [Fact]
+    public void ToMemory_ShouldReturnEmptyMemory_WhenUnderlyingCollectionIsEmpty()
+    {
+        var sut = Enumerable.Empty<T>();
+        var result = sut.ToMemory();
+        result.Should().Be( ReadOnlyMemory<T>.Empty );
+    }
 }
