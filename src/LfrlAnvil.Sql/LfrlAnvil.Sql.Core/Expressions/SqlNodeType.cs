@@ -48,6 +48,7 @@ public enum SqlNodeType : byte
     SelectField,
     SelectRecordSet,
     SelectAll,
+    SelectExpression,
     RawQuery,
     DataSourceQuery,
     CompoundQuery,

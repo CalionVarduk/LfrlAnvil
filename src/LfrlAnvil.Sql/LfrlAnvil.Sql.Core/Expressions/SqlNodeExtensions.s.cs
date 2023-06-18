@@ -36,6 +36,13 @@ public static class SqlNodeExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlSelectExpressionNode ToExpression(this SqlSelectNode node)
+    {
+        return SqlNode.SelectExpression( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlSingleDataSourceNode<TRecordSetNode> ToDataSource<TRecordSetNode>(this TRecordSetNode node)
         where TRecordSetNode : SqlRecordSetNode
     {
@@ -418,5 +425,19 @@ public static class SqlNodeExtensions
     public static SqlOrderByNode Desc(this SqlExpressionNode node)
     {
         return SqlNode.OrderByDesc( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlOrderByNode Asc(this SqlSelectNode node)
+    {
+        return SqlNode.OrderByAsc( node.ToExpression() );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlOrderByNode Desc(this SqlSelectNode node)
+    {
+        return SqlNode.OrderByDesc( node.ToExpression() );
     }
 }

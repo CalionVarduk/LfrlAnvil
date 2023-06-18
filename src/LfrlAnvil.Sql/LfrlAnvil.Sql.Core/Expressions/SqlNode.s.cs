@@ -398,6 +398,12 @@ public static class SqlNode
     }
 
     [Pure]
+    public static SqlSelectExpressionNode SelectExpression(SqlSelectNode selectNode)
+    {
+        return new SqlSelectExpressionNode( selectNode );
+    }
+
+    [Pure]
     public static SqlDataSourceQueryExpressionNode<TDataSourceNode> Query<TDataSourceNode>(
         TDataSourceNode dataSource,
         params SqlSelectNode[] selection)

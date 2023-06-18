@@ -602,6 +602,22 @@ END" );
         action.Should().ThrowExactly<ArgumentException>();
     }
 
+    [Fact]
+    public void SelectExpression_ShouldCreateSelectExpressionNode()
+    {
+        var selection = SqlNode.RawSelect( "foo", "bar", "qux" );
+        var sut = selection.ToExpression();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.SelectExpression );
+            sut.Selection.Should().BeSameAs( selection );
+            sut.Type.Should().Be( selection.Type );
+            text.Should().Be( selection.ToString() );
+        }
+    }
+
     private sealed class NodeMock : SqlNodeBase
     {
         public NodeMock()

@@ -32,4 +32,3 @@
 //   ^ this interpreter must be customizable through DB builder
 // - Add CREATE/DROP (TEMP)TABLE/INDEX nodes
 // - Add INSERT/UPDATE/DELETE nodes
-// - Change select nodes into expression nodes, so they can be used in query decorators e.g. compound order by <= NEXT

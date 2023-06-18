@@ -271,6 +271,38 @@ public class ExpressionDecoratorsTests : TestsBase
     }
 
     [Fact]
+    public void OrderByAsc_ShouldCreateOrderByNode_FromSelection()
+    {
+        var selection = SqlNode.RawSelect( "foo", "bar" );
+        var sut = selection.Asc();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.OrderBy );
+            sut.Expression.Should().BeEquivalentTo( selection.ToExpression() );
+            sut.Ordering.Should().BeSameAs( OrderBy.Asc );
+            text.Should().Be( "(([foo] : ?) AS [bar]) ASC" );
+        }
+    }
+
+    [Fact]
+    public void OrderByDesc_ShouldCreateOrderByNode_FromSelection()
+    {
+        var selection = SqlNode.RawSelect( "foo", "bar" );
+        var sut = selection.Desc();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.OrderBy );
+            sut.Expression.Should().BeEquivalentTo( selection.ToExpression() );
+            sut.Ordering.Should().BeSameAs( OrderBy.Desc );
+            text.Should().Be( "(([foo] : ?) AS [bar]) DESC" );
+        }
+    }
+
+    [Fact]
     public void Distinct_ForSingleDataSource_ShouldReturnDecoratedDataSource()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
