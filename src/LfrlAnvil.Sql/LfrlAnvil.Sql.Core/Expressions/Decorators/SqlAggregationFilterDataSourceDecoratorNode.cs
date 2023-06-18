@@ -1,25 +1,13 @@
 ﻿using System.Text;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Expressions.Logical;
-using LfrlAnvil.Sql.Expressions.Objects;
 
 namespace LfrlAnvil.Sql.Expressions.Decorators;
 
-public sealed class SqlAggregationFilterDataSourceDecoratorNode<TDataSourceNode> : SqlDataSourceDecoratorNode<TDataSourceNode>
-    where TDataSourceNode : SqlDataSourceNode
+public sealed class SqlAggregationFilterDataSourceDecoratorNode : SqlDataSourceDecoratorNode
 {
-    internal SqlAggregationFilterDataSourceDecoratorNode(TDataSourceNode dataSource, SqlConditionNode filter)
-        : base( SqlNodeType.AggregationFilterDecorator, dataSource )
-    {
-        Filter = filter;
-        IsConjunction = true;
-    }
-
-    internal SqlAggregationFilterDataSourceDecoratorNode(
-        SqlDataSourceDecoratorNode<TDataSourceNode> @base,
-        SqlConditionNode filter,
-        bool isConjunction)
-        : base( SqlNodeType.AggregationFilterDecorator, @base )
+    internal SqlAggregationFilterDataSourceDecoratorNode(SqlConditionNode filter, bool isConjunction)
+        : base( SqlNodeType.AggregationFilterDecorator )
     {
         Filter = filter;
         IsConjunction = isConjunction;

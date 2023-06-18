@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Tests.Helpers;
+using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
 
@@ -142,6 +143,61 @@ public partial class BaseExpressionsTests
                 result.ElementAtOrDefault( 1 )
                     .Should()
                     .BeEquivalentTo( SqlNode.RawSelect( "b", alias: null, SqlExpressionType.Create<int>() ) );
+            }
+        }
+
+        [Fact]
+        public void Decorate_ShouldCreateDecoratedCompoundQuery_WhenCalledForTheFirstTime()
+        {
+            var sut = SqlNode.RawQuery( "SELECT * FROM foo" ).CompoundWith( SqlNode.RawQuery( "SELECT * FROM bar" ).ToUnion() );
+            var decorator = SqlNode.LimitDecorator( SqlNode.Literal( 10 ) );
+            var result = sut.Decorate( decorator );
+            var text = result.ToString();
+
+            using ( new AssertionScope() )
+            {
+                result.Should().NotBeSameAs( sut );
+                result.Decorators.Should().BeSequentiallyEqualTo( decorator );
+                text.Should()
+                    .Be(
+                        @"(
+    SELECT * FROM foo
+)
+UNION
+(
+    SELECT * FROM bar
+)
+LIMIT (""10"" : System.Int32)" );
+            }
+        }
+
+        [Fact]
+        public void Decorate_ShouldCreateDecoratedCompoundQuery_WhenCalledForTheSecondTime()
+        {
+            var firstDecorator = SqlNode.LimitDecorator( SqlNode.Literal( 10 ) );
+            var sut = SqlNode.RawQuery( "SELECT * FROM foo" )
+                .CompoundWith( SqlNode.RawQuery( "SELECT * FROM bar" ).ToUnion() )
+                .Decorate( firstDecorator );
+
+            var secondDecorator = SqlNode.OffsetDecorator( SqlNode.Literal( 15 ) );
+            var result = sut.Decorate( secondDecorator );
+            var text = result.ToString();
+
+            using ( new AssertionScope() )
+            {
+                result.Should().NotBeSameAs( sut );
+                result.Decorators.Should().BeSequentiallyEqualTo( firstDecorator, secondDecorator );
+                text.Should()
+                    .Be(
+                        @"(
+    SELECT * FROM foo
+)
+UNION
+(
+    SELECT * FROM bar
+)
+LIMIT (""10"" : System.Int32)
+OFFSET (""15"" : System.Int32)" );
             }
         }
     }

@@ -1,14 +1,11 @@
-﻿using LfrlAnvil.Sql.Expressions.Objects;
-
-namespace LfrlAnvil.Sql.Expressions;
+﻿namespace LfrlAnvil.Sql.Expressions;
 
 public abstract class SqlSelectNode : SqlNodeBase
 {
-    protected SqlSelectNode(SqlNodeType nodeType)
+    internal SqlSelectNode(SqlNodeType nodeType)
         : base( nodeType ) { }
 
     public abstract SqlExpressionType? Type { get; }
 
-    public abstract void RegisterKnownFields(SqlQueryRecordSetNode.FieldInitializer initializer);
-    public abstract void RegisterCompoundSelection(SqlCompoundQueryExpressionNode.SelectionInitializer initializer);
+    internal abstract void Convert(ISqlSelectNodeConverter converter);
 }

@@ -17,14 +17,9 @@ public sealed class SqlSelectFieldNode : SqlSelectNode
     public override SqlExpressionType? Type => Expression.Type;
     public string FieldName => Alias ?? ReinterpretCast.To<SqlDataFieldNode>( Expression ).Name;
 
-    public override void RegisterKnownFields(SqlQueryRecordSetNode.FieldInitializer initializer)
+    internal override void Convert(ISqlSelectNodeConverter converter)
     {
-        initializer.AddField( FieldName, Type );
-    }
-
-    public override void RegisterCompoundSelection(SqlCompoundQueryExpressionNode.SelectionInitializer initializer)
-    {
-        initializer.AddSelection( FieldName, Type );
+        converter.Add( FieldName, Type );
     }
 
     protected override void ToString(StringBuilder builder, int indent)

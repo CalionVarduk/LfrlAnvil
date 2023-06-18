@@ -36,13 +36,6 @@ public static class SqlNodeExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlQueryRecordSetNode AsSet(this SqlQueryExpressionNode node, string alias)
-    {
-        return SqlNode.QueryRecordSet( node, alias );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlSingleDataSourceNode<TRecordSetNode> ToDataSource<TRecordSetNode>(this TRecordSetNode node)
         where TRecordSetNode : SqlRecordSetNode
     {
@@ -53,7 +46,7 @@ public static class SqlNodeExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlMultiDataSourceNode Join(this SqlRecordSetNode node, IEnumerable<SqlDataSourceJoinOnNode> joins)
     {
-        return SqlNode.Join( node, joins );
+        return node.Join( joins.ToArray() );
     }
 
     [Pure]
@@ -67,7 +60,7 @@ public static class SqlNodeExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlMultiDataSourceNode Join(this SqlRecordSetNode node, IEnumerable<SqlJoinDefinition> definitions)
     {
-        return SqlNode.Join( node, definitions );
+        return node.Join( definitions.ToArray() );
     }
 
     [Pure]
@@ -81,7 +74,7 @@ public static class SqlNodeExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlMultiDataSourceNode Join(this SqlDataSourceNode node, IEnumerable<SqlDataSourceJoinOnNode> joins)
     {
-        return SqlNode.Join( node, joins );
+        return node.Join( joins.ToArray() );
     }
 
     [Pure]
@@ -95,7 +88,7 @@ public static class SqlNodeExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlMultiDataSourceNode Join(this SqlDataSourceNode node, IEnumerable<SqlJoinDefinition> definitions)
     {
-        return SqlNode.Join( node, definitions );
+        return node.Join( definitions.ToArray() );
     }
 
     [Pure]
@@ -142,444 +135,9 @@ public static class SqlNodeExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlCompoundQueryComponentNode ToUnion(this SqlQueryExpressionNode node)
-    {
-        return SqlNode.UnionWith( node );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlCompoundQueryComponentNode ToUnionAll(this SqlQueryExpressionNode node)
-    {
-        return SqlNode.UnionAllWith( node );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlCompoundQueryComponentNode ToIntersect(this SqlQueryExpressionNode node)
-    {
-        return SqlNode.IntersectWith( node );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlCompoundQueryComponentNode ToExcept(this SqlQueryExpressionNode node)
-    {
-        return SqlNode.ExceptWith( node );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlCompoundQueryComponentNode ToCompound(this SqlQueryExpressionNode node, SqlCompoundQueryOperator @operator)
-    {
-        return SqlNode.CompoundWith( @operator, node );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlQueryExpressionNode CompoundWith(
-        this SqlQueryExpressionNode node,
-        IEnumerable<SqlCompoundQueryComponentNode> followingQueries)
-    {
-        return SqlNode.CompoundQuery( node, followingQueries );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlQueryExpressionNode CompoundWith(
-        this SqlQueryExpressionNode node,
-        params SqlCompoundQueryComponentNode[] followingQueries)
-    {
-        return SqlNode.CompoundQuery( node, followingQueries );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlFilterDataSourceDecoratorNode<TDataSourceNode> Where<TDataSourceNode>(
-        this TDataSourceNode node,
-        Func<TDataSourceNode, SqlConditionNode> filter)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return node.Where( filter( node ) );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlFilterDataSourceDecoratorNode<TDataSourceNode> Where<TDataSourceNode>(
-        this TDataSourceNode node,
-        SqlConditionNode filter)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return SqlNode.Filtered( node, filter );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlFilterDataSourceDecoratorNode<TDataSourceNode> AndWhere<TDataSourceNode>(
-        this SqlDataSourceDecoratorNode<TDataSourceNode> node,
-        Func<TDataSourceNode, SqlConditionNode> filter)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return node.AndWhere( filter( node.DataSource ) );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlFilterDataSourceDecoratorNode<TDataSourceNode> AndWhere<TDataSourceNode>(
-        this SqlDataSourceDecoratorNode<TDataSourceNode> node,
-        SqlConditionNode filter)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return SqlNode.AndFiltered( node, filter );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlFilterDataSourceDecoratorNode<TDataSourceNode> OrWhere<TDataSourceNode>(
-        this SqlDataSourceDecoratorNode<TDataSourceNode> node,
-        Func<TDataSourceNode, SqlConditionNode> filter)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return node.OrWhere( filter( node.DataSource ) );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlFilterDataSourceDecoratorNode<TDataSourceNode> OrWhere<TDataSourceNode>(
-        this SqlDataSourceDecoratorNode<TDataSourceNode> node,
-        SqlConditionNode filter)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return SqlNode.OrFiltered( node, filter );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlSortDataSourceDecoratorNode<TDataSourceNode> OrderBy<TDataSourceNode>(
-        this TDataSourceNode node,
-        Func<TDataSourceNode, IEnumerable<SqlOrderByNode>> ordering)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return node.OrderBy( ordering( node ) );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlSortDataSourceDecoratorNode<TDataSourceNode> OrderBy<TDataSourceNode>(
-        this TDataSourceNode node,
-        IEnumerable<SqlOrderByNode> ordering)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return SqlNode.Ordered( node, ordering );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlSortDataSourceDecoratorNode<TDataSourceNode> OrderBy<TDataSourceNode>(
-        this TDataSourceNode node,
-        params SqlOrderByNode[] ordering)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return SqlNode.Ordered( node, ordering );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlSortDataSourceDecoratorNode<TDataSourceNode> OrderBy<TDataSourceNode>(
-        this SqlDataSourceDecoratorNode<TDataSourceNode> node,
-        Func<TDataSourceNode, IEnumerable<SqlOrderByNode>> ordering)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return node.OrderBy( ordering( node.DataSource ) );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlSortDataSourceDecoratorNode<TDataSourceNode> OrderBy<TDataSourceNode>(
-        this SqlDataSourceDecoratorNode<TDataSourceNode> node,
-        IEnumerable<SqlOrderByNode> ordering)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return SqlNode.Ordered( node, ordering );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlSortDataSourceDecoratorNode<TDataSourceNode> OrderBy<TDataSourceNode>(
-        this SqlDataSourceDecoratorNode<TDataSourceNode> node,
-        params SqlOrderByNode[] ordering)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return SqlNode.Ordered( node, ordering );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlAggregationDataSourceDecoratorNode<TDataSourceNode> GroupBy<TDataSourceNode>(
-        this TDataSourceNode node,
-        Func<TDataSourceNode, IEnumerable<SqlExpressionNode>> expressions)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return node.GroupBy( expressions( node ) );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlAggregationDataSourceDecoratorNode<TDataSourceNode> GroupBy<TDataSourceNode>(
-        this TDataSourceNode node,
-        IEnumerable<SqlExpressionNode> expressions)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return SqlNode.Aggregated( node, expressions );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlAggregationDataSourceDecoratorNode<TDataSourceNode> GroupBy<TDataSourceNode>(
-        this TDataSourceNode node,
-        params SqlExpressionNode[] expressions)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return SqlNode.Aggregated( node, expressions );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlAggregationDataSourceDecoratorNode<TDataSourceNode> GroupBy<TDataSourceNode>(
-        this SqlDataSourceDecoratorNode<TDataSourceNode> node,
-        Func<TDataSourceNode, IEnumerable<SqlExpressionNode>> expressions)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return node.GroupBy( expressions( node.DataSource ) );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlAggregationDataSourceDecoratorNode<TDataSourceNode> GroupBy<TDataSourceNode>(
-        this SqlDataSourceDecoratorNode<TDataSourceNode> node,
-        IEnumerable<SqlExpressionNode> expressions)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return SqlNode.Aggregated( node, expressions );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlAggregationDataSourceDecoratorNode<TDataSourceNode> GroupBy<TDataSourceNode>(
-        this SqlDataSourceDecoratorNode<TDataSourceNode> node,
-        params SqlExpressionNode[] expressions)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return SqlNode.Aggregated( node, expressions );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlAggregationFilterDataSourceDecoratorNode<TDataSourceNode> Having<TDataSourceNode>(
-        this TDataSourceNode node,
-        Func<TDataSourceNode, SqlConditionNode> filter)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return node.Having( filter( node ) );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlAggregationFilterDataSourceDecoratorNode<TDataSourceNode> Having<TDataSourceNode>(
-        this TDataSourceNode node,
-        SqlConditionNode filter)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return SqlNode.AggregationFiltered( node, filter );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlAggregationFilterDataSourceDecoratorNode<TDataSourceNode> AndHaving<TDataSourceNode>(
-        this SqlDataSourceDecoratorNode<TDataSourceNode> node,
-        Func<TDataSourceNode, SqlConditionNode> filter)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return node.AndHaving( filter( node.DataSource ) );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlAggregationFilterDataSourceDecoratorNode<TDataSourceNode> AndHaving<TDataSourceNode>(
-        this SqlDataSourceDecoratorNode<TDataSourceNode> node,
-        SqlConditionNode filter)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return SqlNode.AndAggregationFiltered( node, filter );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlAggregationFilterDataSourceDecoratorNode<TDataSourceNode> OrHaving<TDataSourceNode>(
-        this SqlDataSourceDecoratorNode<TDataSourceNode> node,
-        Func<TDataSourceNode, SqlConditionNode> filter)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return node.OrHaving( filter( node.DataSource ) );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlAggregationFilterDataSourceDecoratorNode<TDataSourceNode> OrHaving<TDataSourceNode>(
-        this SqlDataSourceDecoratorNode<TDataSourceNode> node,
-        SqlConditionNode filter)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return SqlNode.OrAggregationFiltered( node, filter );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlDistinctDataSourceDecoratorNode<TDataSourceNode> Distinct<TDataSourceNode>(this TDataSourceNode node)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return SqlNode.Distinct( node );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlDistinctDataSourceDecoratorNode<TDataSourceNode> Distinct<TDataSourceNode>(
-        this SqlDataSourceDecoratorNode<TDataSourceNode> node)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return SqlNode.Distinct( node );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlLimitDataSourceDecoratorNode<TDataSourceNode> Limit<TDataSourceNode>(
-        this TDataSourceNode node,
-        SqlExpressionNode value)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return SqlNode.Limit( node, value );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlLimitDataSourceDecoratorNode<TDataSourceNode> Limit<TDataSourceNode>(
-        this SqlDataSourceDecoratorNode<TDataSourceNode> node,
-        SqlExpressionNode value)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return SqlNode.Limit( node, value );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlOffsetDataSourceDecoratorNode<TDataSourceNode> Offset<TDataSourceNode>(
-        this TDataSourceNode node,
-        SqlExpressionNode value)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return SqlNode.Offset( node, value );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlOffsetDataSourceDecoratorNode<TDataSourceNode> Offset<TDataSourceNode>(
-        this SqlDataSourceDecoratorNode<TDataSourceNode> node,
-        SqlExpressionNode value)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return SqlNode.Offset( node, value );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlSelectRecordSetNode GetAll(this SqlRecordSetNode node)
     {
         return SqlNode.SelectAll( node );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlSelectAllNode GetAll(this SqlDataSourceNode node)
-    {
-        return SqlNode.SelectAll( node );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlDataSourceQueryExpressionNode Select<TDataSourceNode>(
-        this TDataSourceNode node,
-        Func<TDataSourceNode, IEnumerable<SqlSelectNode>> selector)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return node.Select( selector( node ) );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlDataSourceQueryExpressionNode Select(this SqlDataSourceNode node, IEnumerable<SqlSelectNode> selection)
-    {
-        return SqlNode.Query( node, selection );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlDataSourceQueryExpressionNode Select(this SqlDataSourceNode node, params SqlSelectNode[] selection)
-    {
-        return SqlNode.Query( node, selection );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlDataSourceQueryExpressionNode Select<TDataSourceNode>(
-        this SqlDataSourceDecoratorNode<TDataSourceNode> node,
-        Func<TDataSourceNode, IEnumerable<SqlSelectNode>> selector)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return node.Select( selector( node.DataSource ) );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlDataSourceQueryExpressionNode Select(this SqlDataSourceDecoratorNode node, IEnumerable<SqlSelectNode> selection)
-    {
-        return SqlNode.Query( node, selection );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlDataSourceQueryExpressionNode Select(this SqlDataSourceDecoratorNode node, params SqlSelectNode[] selection)
-    {
-        return SqlNode.Query( node, selection );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlDataSourceQueryExpressionNode AndSelect(
-        this SqlDataSourceQueryExpressionNode node,
-        Func<SqlDataSourceNode, IEnumerable<SqlSelectNode>> selector)
-    {
-        return node.AndSelect( selector( node.DataSource ) );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlDataSourceQueryExpressionNode AndSelect(
-        this SqlDataSourceQueryExpressionNode node,
-        IEnumerable<SqlSelectNode> selection)
-    {
-        return node.AndSelect( selection.ToArray() );
-    }
-
-    [Pure]
-    public static SqlDataSourceQueryExpressionNode AndSelect(this SqlDataSourceQueryExpressionNode node, params SqlSelectNode[] selection)
-    {
-        if ( selection.Length == 0 )
-            return node;
-
-        var newSelection = new SqlSelectNode[node.Selection.Length + selection.Length];
-        node.Selection.CopyTo( newSelection );
-        selection.CopyTo( newSelection, node.Selection.Length );
-        return node.Decorator is not null ? node.Decorator.Select( newSelection ) : node.DataSource.Select( newSelection );
     }
 
     [Pure]
@@ -780,51 +338,9 @@ public static class SqlNodeExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlExistsConditionNode Exists(this SqlQueryExpressionNode node)
-    {
-        return SqlNode.Exists( node );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlExistsConditionNode Exists(this SqlDataSourceDecoratorNode node)
-    {
-        return node.Select( node.DataSource.GetAll() ).Exists();
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlExistsConditionNode Exists(this SqlDataSourceNode node)
-    {
-        return node.Select( node.GetAll() ).Exists();
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlExistsConditionNode Exists(this SqlRecordSetNode node)
     {
         return node.ToDataSource().Exists();
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlExistsConditionNode NotExists(this SqlQueryExpressionNode node)
-    {
-        return SqlNode.NotExists( node );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlExistsConditionNode NotExists(this SqlDataSourceDecoratorNode node)
-    {
-        return node.Select( node.DataSource.GetAll() ).NotExists();
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlExistsConditionNode NotExists(this SqlDataSourceNode node)
-    {
-        return node.Select( node.GetAll() ).NotExists();
     }
 
     [Pure]
@@ -838,7 +354,7 @@ public static class SqlNodeExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlConditionNode In(this SqlExpressionNode node, IEnumerable<SqlExpressionNode> expressions)
     {
-        return SqlNode.In( node, expressions );
+        return node.In( expressions.ToArray() );
     }
 
     [Pure]
@@ -852,7 +368,7 @@ public static class SqlNodeExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlConditionNode NotIn(this SqlExpressionNode node, IEnumerable<SqlExpressionNode> expressions)
     {
-        return SqlNode.NotIn( node, expressions );
+        return node.NotIn( expressions.ToArray() );
     }
 
     [Pure]

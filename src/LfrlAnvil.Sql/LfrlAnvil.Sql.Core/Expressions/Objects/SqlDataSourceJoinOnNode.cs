@@ -23,14 +23,13 @@ public sealed class SqlDataSourceJoinOnNode : SqlNodeBase
 
     protected override void ToString(StringBuilder builder, int indent)
     {
-        var onIndent = indent + DefaultIndent;
-
         builder.Append( JoinType.ToString().ToUpperInvariant() ).Append( ' ' ).Append( "JOIN" ).Append( ' ' );
         AppendTo( builder, InnerRecordSet, indent );
 
         if ( JoinType != SqlJoinType.Cross )
         {
-            builder.Indent( onIndent ).Append( "ON" ).Append( ' ' );
+            var onIndent = indent + DefaultIndent;
+            builder.Append( ' ' ).Append( "ON" ).Indent( onIndent );
             AppendChildTo( builder, OnExpression, onIndent );
         }
     }

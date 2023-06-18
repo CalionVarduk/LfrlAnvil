@@ -1,8 +1,10 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using LfrlAnvil.TestExtensions.NSubstitute;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
 
@@ -256,7 +258,7 @@ public partial class ObjectExpressionsTests : TestsBase
     public void QueryRecordSet_FromDataSourceQuery_ShouldCreateQueryRecordSetNode()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
-        var query = dataSource.Select( dataSource.From.GetField( "bar" ).As( "x" ), dataSource.From.GetField( "qux" ).AsSelf() );
+        var query = dataSource.Select( dataSource.From["bar"].As( "x" ), dataSource.From["qux"].AsSelf() );
         var sut = query.AsSet( "lorem" );
         var text = sut.ToString();
 
@@ -381,8 +383,8 @@ WHERE value < 10" );
             sut.OnExpression.Should().BeSameAs( condition );
             text.Should()
                 .Be(
-                    @"INNER JOIN [foo]
-    ON (TRUE)" );
+                    @"INNER JOIN [foo] ON
+    (TRUE)" );
         }
     }
 
@@ -402,8 +404,8 @@ WHERE value < 10" );
             sut.OnExpression.Should().BeSameAs( condition );
             text.Should()
                 .Be(
-                    @"LEFT JOIN [foo]
-    ON (TRUE)" );
+                    @"LEFT JOIN [foo] ON
+    (TRUE)" );
         }
     }
 
@@ -423,8 +425,8 @@ WHERE value < 10" );
             sut.OnExpression.Should().BeSameAs( condition );
             text.Should()
                 .Be(
-                    @"RIGHT JOIN [foo]
-    ON (TRUE)" );
+                    @"RIGHT JOIN [foo] ON
+    (TRUE)" );
         }
     }
 
@@ -444,8 +446,8 @@ WHERE value < 10" );
             sut.OnExpression.Should().BeSameAs( condition );
             text.Should()
                 .Be(
-                    @"FULL JOIN [foo]
-    ON (TRUE)" );
+                    @"FULL JOIN [foo] ON
+    (TRUE)" );
         }
     }
 
@@ -467,7 +469,7 @@ WHERE value < 10" );
     }
 
     [Fact]
-    public void Join_ShouldCreateMultiSetDataSourceNode_WithRecordSetAndNodeCollection()
+    public void Join_ShouldCreateMultiSetDataSourceNode_WithRecordSetAndNodes()
     {
         var recordSet = SqlNode.RawRecordSet( "foo" );
         var inner = SqlNode.RawRecordSet( "bar" ).As( "qux" );
@@ -485,37 +487,13 @@ WHERE value < 10" );
             text.Should()
                 .Be(
                     @"FROM [foo]
-INNER JOIN [bar] AS [qux]
-    ON (TRUE)" );
+INNER JOIN [bar] AS [qux] ON
+    (TRUE)" );
         }
     }
 
     [Fact]
-    public void Join_ShouldCreateMultiSetDataSourceNode_WithRecordSetAndNodeArray()
-    {
-        var recordSet = SqlNode.RawRecordSet( "foo" );
-        var inner = SqlNode.RawRecordSet( "bar" ).As( "qux" );
-        var joinOn = inner.InnerOn( SqlNode.True() );
-        var sut = recordSet.Join( joinOn );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( recordSet );
-            sut.RecordSets.Should().HaveCount( 2 );
-            sut.RecordSets.Should().BeEquivalentTo( recordSet, inner );
-            sut.Joins.ToArray().Should().BeSequentiallyEqualTo( joinOn );
-            text.Should()
-                .Be(
-                    @"FROM [foo]
-INNER JOIN [bar] AS [qux]
-    ON (TRUE)" );
-        }
-    }
-
-    [Fact]
-    public void Join_ShouldCreateMultiSetDataSourceNode_WithRecordSetAndDefinitionCollection()
+    public void Join_ShouldCreateMultiSetDataSourceNode_WithRecordSetAndDefinitions()
     {
         var recordSet = SqlNode.RawRecordSet( "foo" );
         var inner = SqlNode.RawRecordSet( "bar" ).As( "qux" );
@@ -533,37 +511,13 @@ INNER JOIN [bar] AS [qux]
             text.Should()
                 .Be(
                     @"FROM [foo]
-INNER JOIN [bar] AS [qux]
-    ON (TRUE)" );
+INNER JOIN [bar] AS [qux] ON
+    (TRUE)" );
         }
     }
 
     [Fact]
-    public void Join_ShouldCreateMultiSetDataSourceNode_WithRecordSetAndDefinitionArray()
-    {
-        var recordSet = SqlNode.RawRecordSet( "foo" );
-        var inner = SqlNode.RawRecordSet( "bar" ).As( "qux" );
-        var sut = recordSet.Join( SqlJoinDefinition.Inner( inner, _ => SqlNode.True() ) );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( recordSet );
-            sut.RecordSets.Should().HaveCount( 2 );
-            sut.RecordSets.Should().BeEquivalentTo( recordSet, inner );
-            sut.Joins.ToArray().Should().HaveCount( 1 );
-            sut.Joins.ToArray().ElementAtOrDefault( 0 ).Should().BeEquivalentTo( SqlNode.InnerJoinOn( inner, SqlNode.True() ) );
-            text.Should()
-                .Be(
-                    @"FROM [foo]
-INNER JOIN [bar] AS [qux]
-    ON (TRUE)" );
-        }
-    }
-
-    [Fact]
-    public void Join_ShouldCreateMultiSetDataSourceNode_WithRecordSetAndEmptyDefinitionArray()
+    public void Join_ShouldCreateMultiSetDataSourceNode_WithRecordSetAndEmptyDefinitions()
     {
         var recordSet = SqlNode.RawRecordSet( "foo" );
         var sut = recordSet.Join( Array.Empty<SqlJoinDefinition>() );
@@ -580,7 +534,7 @@ INNER JOIN [bar] AS [qux]
     }
 
     [Fact]
-    public void Join_ShouldCreateMultiSetDataSourceNode_WithDataSourceAndNodeCollection()
+    public void Join_ShouldCreateMultiSetDataSourceNode_WithDataSourceAndNodes()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
         var inner = SqlNode.RawRecordSet( "bar" ).As( "qux" );
@@ -598,32 +552,8 @@ INNER JOIN [bar] AS [qux]
             text.Should()
                 .Be(
                     @"FROM [foo]
-INNER JOIN [bar] AS [qux]
-    ON (TRUE)" );
-        }
-    }
-
-    [Fact]
-    public void Join_ShouldCreateMultiSetDataSourceNode_WithDataSourceAndNodeArray()
-    {
-        var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
-        var inner = SqlNode.RawRecordSet( "bar" ).As( "qux" );
-        var joinOn = inner.InnerOn( SqlNode.True() );
-        var sut = dataSource.Join( joinOn );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( dataSource.From );
-            sut.RecordSets.Should().HaveCount( 2 );
-            sut.RecordSets.Should().BeEquivalentTo( dataSource.From, inner );
-            sut.Joins.ToArray().Should().BeSequentiallyEqualTo( joinOn );
-            text.Should()
-                .Be(
-                    @"FROM [foo]
-INNER JOIN [bar] AS [qux]
-    ON (TRUE)" );
+INNER JOIN [bar] AS [qux] ON
+    (TRUE)" );
         }
     }
 
@@ -649,15 +579,15 @@ INNER JOIN [bar] AS [qux]
             text.Should()
                 .Be(
                     @"FROM [foo]
-INNER JOIN [bar]
-    ON (TRUE)
-INNER JOIN [qux]
-    ON (FALSE)" );
+INNER JOIN [bar] ON
+    (TRUE)
+INNER JOIN [qux] ON
+    (FALSE)" );
         }
     }
 
     [Fact]
-    public void Join_ShouldCreateMultiSetDataSourceNode_WithDataSourceAndDefinitionCollection()
+    public void Join_ShouldCreateMultiSetDataSourceNode_WithDataSourceAndDefinitions()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
         var inner = SqlNode.RawRecordSet( "bar" ).As( "qux" );
@@ -675,32 +605,8 @@ INNER JOIN [qux]
             text.Should()
                 .Be(
                     @"FROM [foo]
-INNER JOIN [bar] AS [qux]
-    ON (TRUE)" );
-        }
-    }
-
-    [Fact]
-    public void Join_ShouldCreateMultiSetDataSourceNode_WithDataSourceAndDefinitionArray()
-    {
-        var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
-        var inner = SqlNode.RawRecordSet( "bar" ).As( "qux" );
-        var sut = dataSource.Join( SqlJoinDefinition.Inner( inner, _ => SqlNode.True() ) );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.DataSource );
-            sut.From.Should().BeSameAs( dataSource.From );
-            sut.RecordSets.Should().HaveCount( 2 );
-            sut.RecordSets.Should().BeEquivalentTo( dataSource.From, inner );
-            sut.Joins.ToArray().Should().HaveCount( 1 );
-            sut.Joins.ToArray().ElementAtOrDefault( 0 ).Should().BeEquivalentTo( SqlNode.InnerJoinOn( inner, SqlNode.True() ) );
-            text.Should()
-                .Be(
-                    @"FROM [foo]
-INNER JOIN [bar] AS [qux]
-    ON (TRUE)" );
+INNER JOIN [bar] AS [qux] ON
+    (TRUE)" );
         }
     }
 
@@ -727,10 +633,10 @@ INNER JOIN [bar] AS [qux]
             text.Should()
                 .Be(
                     @"FROM [foo]
-INNER JOIN [bar]
-    ON (TRUE)
-INNER JOIN [qux]
-    ON (FALSE)" );
+INNER JOIN [bar] ON
+    (TRUE)
+INNER JOIN [qux] ON
+    (FALSE)" );
         }
     }
 
@@ -748,6 +654,73 @@ INNER JOIN [qux]
             sut.RecordSets.Should().BeSequentiallyEqualTo( dataSource.From );
             sut.Joins.ToArray().Should().BeEmpty();
             text.Should().Be( "FROM [foo]" );
+        }
+    }
+
+    [Fact]
+    public void OrdinalCommonTableExpression_ShouldCreateOrdinalCommonTableExpressionNode()
+    {
+        var query = SqlNode.RawQuery( "SELECT * FROM foo" );
+        var sut = query.ToCte( "A" );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.CommonTableExpression );
+            sut.Query.Should().BeSameAs( query );
+            sut.Name.Should().Be( "A" );
+            sut.IsRecursive.Should().BeFalse();
+            sut.RecordSet.NodeType.Should().Be( SqlNodeType.RecordSet );
+            sut.RecordSet.CommonTableExpression.Should().BeSameAs( sut );
+            sut.RecordSet.Name.Should().Be( sut.Name );
+            sut.RecordSet.Alias.Should().BeNull();
+            sut.RecordSet.IsAliased.Should().BeFalse();
+            text.Should()
+                .Be(
+                    @"ORDINAL [A] (
+    SELECT * FROM foo
+)" );
+        }
+    }
+
+    [Fact]
+    public void RecursiveCommonTableExpression_ShouldCreateRecursiveCommonTableExpressionNode()
+    {
+        var initialQuery = SqlNode.RawQuery( "SELECT * FROM foo" ).ToCte( "A" );
+        var components = new[] { initialQuery.RecordSet.ToDataSource().Select( initialQuery.RecordSet.GetAll() ).ToUnion() };
+        var selector = Substitute.For<Func<SqlCommonTableExpressionRecordSetNode, IEnumerable<SqlCompoundQueryComponentNode>>>();
+        selector.WithAnyArgs( _ => components );
+        var sut = initialQuery.ToRecursive( selector );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( initialQuery.RecordSet );
+            sut.NodeType.Should().Be( SqlNodeType.CommonTableExpression );
+            sut.Query.FirstQuery.Should().BeSameAs( initialQuery.Query );
+            sut.Query.FollowingQueries.ToArray().Should().BeSequentiallyEqualTo( components );
+            sut.Query.Decorators.Should().BeEmpty();
+            sut.Name.Should().Be( "A" );
+            sut.IsRecursive.Should().BeTrue();
+            sut.RecordSet.Should().NotBeSameAs( initialQuery.RecordSet );
+            sut.RecordSet.NodeType.Should().Be( SqlNodeType.RecordSet );
+            sut.RecordSet.CommonTableExpression.Should().BeSameAs( sut );
+            sut.RecordSet.Name.Should().Be( sut.Name );
+            sut.RecordSet.Alias.Should().BeNull();
+            sut.RecordSet.IsAliased.Should().BeFalse();
+            text.Should()
+                .Be(
+                    @"RECURSIVE [A] (
+    (
+        SELECT * FROM foo
+    )
+    UNION
+    (
+        FROM [A]
+        SELECT
+            [A].*
+    )
+)" );
         }
     }
 }

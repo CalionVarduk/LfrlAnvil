@@ -1,27 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Text;
-using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
 
-public sealed class SqlQueryRecordSetNode : SqlRecordSetNode
+public sealed class SqlCommonTableExpressionRecordSetNode : SqlRecordSetNode
 {
     private Dictionary<string, SqlRawDataFieldNode>? _fields;
 
-    internal SqlQueryRecordSetNode(SqlQueryExpressionNode query, string alias, bool isOptional)
+    internal SqlCommonTableExpressionRecordSetNode(SqlCommonTableExpressionNode commonTableExpression, string? alias, bool isOptional)
         : base( isOptional )
     {
-        Query = query;
-        Name = alias;
+        CommonTableExpression = commonTableExpression;
+        Alias = alias;
         _fields = null;
     }
 
-    public SqlQueryExpressionNode Query { get; }
-    public override string Name { get; }
-    public override bool IsAliased => true;
+    public string? Alias { get; }
+    public SqlCommonTableExpressionNode CommonTableExpression { get; }
+    public override string Name => Alias ?? CommonTableExpression.Name;
+
+    [MemberNotNullWhen( true, nameof( Alias ) )]
+    public override bool IsAliased => Alias is not null;
 
     [Pure]
     public override IReadOnlyCollection<SqlDataFieldNode> GetKnownFields()
@@ -45,36 +48,36 @@ public sealed class SqlQueryRecordSetNode : SqlRecordSetNode
     }
 
     [Pure]
-    public override SqlQueryRecordSetNode As(string alias)
+    public override SqlCommonTableExpressionRecordSetNode As(string alias)
     {
-        return new SqlQueryRecordSetNode( Query, alias, IsOptional );
+        return new SqlCommonTableExpressionRecordSetNode( CommonTableExpression, alias, IsOptional );
     }
 
     [Pure]
-    public override SqlQueryRecordSetNode AsSelf()
+    public override SqlCommonTableExpressionRecordSetNode AsSelf()
     {
-        return this;
+        return IsAliased ? new SqlCommonTableExpressionRecordSetNode( CommonTableExpression, alias: null, IsOptional ) : this;
     }
 
     [Pure]
-    public override SqlQueryRecordSetNode MarkAsOptional(bool optional = true)
+    public override SqlCommonTableExpressionRecordSetNode MarkAsOptional(bool optional = true)
     {
         return IsOptional != optional
-            ? new SqlQueryRecordSetNode( Query, Name, isOptional: optional )
+            ? new SqlCommonTableExpressionRecordSetNode( CommonTableExpression, Alias, optional )
             : this;
     }
 
     protected override void ToString(StringBuilder builder, int indent)
     {
-        var queryIndent = indent + DefaultIndent;
-        AppendTo( builder.Append( '(' ).Indent( queryIndent ), Query, queryIndent );
-        builder.Indent( indent ).Append( ')' ).Append( ' ' ).Append( "AS" ).Append( ' ' ).Append( '[' ).Append( Name ).Append( ']' );
+        builder.Append( '[' ).Append( CommonTableExpression.Name ).Append( ']' );
+        if ( IsAliased )
+            builder.Append( ' ' ).Append( "AS" ).Append( ' ' ).Append( '[' ).Append( Alias ).Append( ']' );
     }
 
     [Pure]
     private Dictionary<string, SqlRawDataFieldNode> CreateKnownFields()
     {
-        var selections = Query.Selection.Span;
+        var selections = CommonTableExpression.Query.Selection.Span;
         var converter = new FieldConverter( this, selections.Length );
 
         foreach ( var selection in selections )
@@ -85,9 +88,9 @@ public sealed class SqlQueryRecordSetNode : SqlRecordSetNode
 
     private sealed class FieldConverter : ISqlSelectNodeConverter
     {
-        private readonly SqlQueryRecordSetNode _recordSet;
+        private readonly SqlCommonTableExpressionRecordSetNode _recordSet;
 
-        internal FieldConverter(SqlQueryRecordSetNode recordSet, int capacity)
+        internal FieldConverter(SqlCommonTableExpressionRecordSetNode recordSet, int capacity)
         {
             _recordSet = recordSet;
             Fields = new Dictionary<string, SqlRawDataFieldNode>( capacity: capacity, comparer: StringComparer.OrdinalIgnoreCase );

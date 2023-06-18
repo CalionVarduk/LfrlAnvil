@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using LfrlAnvil.Sql.Expressions.Objects;
 
 namespace LfrlAnvil.Sql.Expressions;
 
@@ -20,14 +19,9 @@ public sealed class SqlRawSelectFieldNode : SqlSelectNode
     public override SqlExpressionType? Type { get; }
     public string FieldName => Alias ?? Name;
 
-    public override void RegisterKnownFields(SqlQueryRecordSetNode.FieldInitializer initializer)
+    internal override void Convert(ISqlSelectNodeConverter converter)
     {
-        initializer.AddField( FieldName, Type );
-    }
-
-    public override void RegisterCompoundSelection(SqlCompoundQueryExpressionNode.SelectionInitializer initializer)
-    {
-        initializer.AddSelection( FieldName, Type );
+        converter.Add( FieldName, Type );
     }
 
     protected override void ToString(StringBuilder builder, int indent)

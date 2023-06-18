@@ -49,7 +49,7 @@ public enum SqlNodeType : byte
     SelectRecordSet,
     SelectAll,
     RawQuery,
-    Query,
+    DataSourceQuery,
     CompoundQuery,
     CompoundQueryComponent,
     DistinctDecorator,
@@ -60,5 +60,7 @@ public enum SqlNodeType : byte
     SortDecorator,
     LimitDecorator,
     OffsetDecorator,
+    CommonTableExpression,
+    CommonTableExpressionDecorator,
     TypeCast
 }

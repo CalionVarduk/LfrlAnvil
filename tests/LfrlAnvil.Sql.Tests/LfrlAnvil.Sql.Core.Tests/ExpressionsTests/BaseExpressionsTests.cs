@@ -59,7 +59,7 @@ public partial class BaseExpressionsTests : TestsBase
     [Fact]
     public void RawExpression_ShouldCreateRawExpressionNode()
     {
-        var parameters = new[] { SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) }.ToList();
+        var parameters = new[] { SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) };
         var sut = SqlNode.RawExpression( "foo(@a, @b, 10) + 15", SqlExpressionType.Create<int>(), parameters );
         var text = sut.ToString();
 
@@ -231,10 +231,10 @@ public partial class BaseExpressionsTests : TestsBase
     }
 
     [Fact]
-    public void Query_ShouldCreateDataSourceQueryExpressionNode_FromDataSourceNode_WithSelectionCollection()
+    public void Query_ShouldCreateDataSourceQueryExpressionNode_FromDataSourceNode_WithNonEmptySelection()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
-        var selection = new[] { dataSource.From.GetField( "bar" ).As( "x" ), dataSource.From.GetField( "qux" ).AsSelf() }.ToList();
+        var selection = new[] { dataSource.From["bar"].As( "x" ), dataSource.From["qux"].AsSelf() }.ToList();
         var selector = Substitute.For<Func<SqlSingleDataSourceNode<SqlRawRecordSetNode>, IEnumerable<SqlSelectNode>>>();
         selector.WithAnyArgs( _ => selection );
         var sut = dataSource.Select( selector );
@@ -243,8 +243,8 @@ public partial class BaseExpressionsTests : TestsBase
         using ( new AssertionScope() )
         {
             selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.NodeType.Should().Be( SqlNodeType.Query );
-            sut.Decorator.Should().BeNull();
+            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
+            sut.Decorators.ToArray().Should().BeEmpty();
             sut.Type.Should().BeNull();
             sut.DataSource.Should().BeSameAs( dataSource );
             sut.Selection.ToArray().Should().BeSequentiallyEqualTo( selection );
@@ -266,8 +266,8 @@ SELECT
 
         using ( new AssertionScope() )
         {
-            sut.NodeType.Should().Be( SqlNodeType.Query );
-            sut.Decorator.Should().BeNull();
+            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
+            sut.Decorators.ToArray().Should().BeEmpty();
             sut.Type.Should().BeNull();
             sut.DataSource.Should().BeSameAs( dataSource );
             sut.Selection.ToArray().Should().BeEmpty();
@@ -288,8 +288,8 @@ SELECT" );
 
         using ( new AssertionScope() )
         {
-            sut.NodeType.Should().Be( SqlNodeType.Query );
-            sut.Decorator.Should().BeNull();
+            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
+            sut.Decorators.ToArray().Should().BeEmpty();
             sut.Type.Should().Be( SqlExpressionType.Create<int>( isNullable: true ) );
             sut.DataSource.Should().BeSameAs( dataSource );
             sut.Selection.ToArray().Should().BeSequentiallyEqualTo( selection );
@@ -299,159 +299,6 @@ SELECT" );
 SELECT
     ([foo].[bar] : System.Int32)" );
         }
-    }
-
-    [Fact]
-    public void Query_ShouldCreateDataSourceQueryExpressionNode_FromDataSourceDecoratorNode_WithSelectionCollection()
-    {
-        var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
-        var decorator = dataSource.Where( SqlNode.True() );
-        var selection = new[] { dataSource.From.GetField( "bar" ).As( "x" ), dataSource.From.GetField( "qux" ).AsSelf() }.ToList();
-        var selector = Substitute.For<Func<SqlSingleDataSourceNode<SqlRawRecordSetNode>, IEnumerable<SqlSelectNode>>>();
-        selector.WithAnyArgs( _ => selection );
-        var sut = decorator.Select( selector );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.NodeType.Should().Be( SqlNodeType.Query );
-            sut.Decorator.Should().BeSameAs( decorator );
-            sut.Type.Should().BeNull();
-            sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Selection.ToArray().Should().BeSequentiallyEqualTo( selection );
-            text.Should()
-                .Be(
-                    @"FROM [foo]
-AND WHERE
-    (TRUE)
-SELECT
-    ([foo].[bar] : ?) AS [x],
-    ([foo].[qux] : ?)" );
-        }
-    }
-
-    [Fact]
-    public void Query_ShouldCreateDataSourceQueryExpressionNode_FromDataSourceDecoratorNode_WithEmptySelection()
-    {
-        var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
-        var decorator = dataSource.Where( SqlNode.True() );
-        var sut = decorator.Select();
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Query );
-            sut.Decorator.Should().BeSameAs( decorator );
-            sut.Type.Should().BeNull();
-            sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Selection.ToArray().Should().BeEmpty();
-            text.Should()
-                .Be(
-                    @"FROM [foo]
-AND WHERE
-    (TRUE)
-SELECT" );
-        }
-    }
-
-    [Fact]
-    public void Query_ShouldCreateDataSourceQueryExpressionNode_FromDataSourceDecoratorNode_WithSingleSelection()
-    {
-        var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
-        var decorator = dataSource.Where( SqlNode.True() );
-        var selection = dataSource.From.GetRawField( "bar", SqlExpressionType.Create<int>() ).AsSelf();
-        var sut = decorator.Select( selection );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Query );
-            sut.Decorator.Should().BeSameAs( decorator );
-            sut.Type.Should().Be( SqlExpressionType.Create<int>( isNullable: true ) );
-            sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Selection.ToArray().Should().BeSequentiallyEqualTo( selection );
-            text.Should()
-                .Be(
-                    @"FROM [foo]
-AND WHERE
-    (TRUE)
-SELECT
-    ([foo].[bar] : System.Int32)" );
-        }
-    }
-
-    [Fact]
-    public void Query_AndSelect_ShouldCreateDataSourceQueryExpressionNode_WithExtendedSelection()
-    {
-        var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
-        var oldSelection = dataSource.From.GetField( "bar" ).AsSelf();
-        var newSelection = dataSource.From.GetField( "qux" ).As( "x" );
-        var query = dataSource.Select( oldSelection );
-        var selector = Substitute.For<Func<SqlDataSourceNode, IEnumerable<SqlSelectNode>>>();
-        selector.WithAnyArgs( _ => new[] { newSelection } );
-        var sut = query.AndSelect( selector );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.NodeType.Should().Be( SqlNodeType.Query );
-            sut.Decorator.Should().BeNull();
-            sut.Type.Should().BeNull();
-            sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Selection.ToArray().Should().BeSequentiallyEqualTo( oldSelection, newSelection );
-            text.Should()
-                .Be(
-                    @"FROM [foo]
-SELECT
-    ([foo].[bar] : ?),
-    ([foo].[qux] : ?) AS [x]" );
-        }
-    }
-
-    [Fact]
-    public void Query_AndSelect_WithDecorator_ShouldCreateDataSourceQueryExpressionNode_WithExtendedSelection()
-    {
-        var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
-        var decorator = dataSource.Where( SqlNode.True() );
-        var oldSelection = dataSource.From.GetField( "bar" ).AsSelf();
-        var newSelection = dataSource.From.GetField( "qux" ).As( "x" );
-        var query = decorator.Select( oldSelection );
-        var selector = Substitute.For<Func<SqlDataSourceNode, IEnumerable<SqlSelectNode>>>();
-        selector.WithAnyArgs( _ => new[] { newSelection } );
-        var sut = query.AndSelect( selector );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.NodeType.Should().Be( SqlNodeType.Query );
-            sut.Decorator.Should().BeSameAs( decorator );
-            sut.Type.Should().BeNull();
-            sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Selection.ToArray().Should().BeSequentiallyEqualTo( oldSelection, newSelection );
-            text.Should()
-                .Be(
-                    @"FROM [foo]
-AND WHERE
-    (TRUE)
-SELECT
-    ([foo].[bar] : ?),
-    ([foo].[qux] : ?) AS [x]" );
-        }
-    }
-
-    [Fact]
-    public void Query_AndSelect_ShouldReturnSelf_WhenNewSelectionIsEmpty()
-    {
-        var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
-        var oldSelection = dataSource.From.GetField( "bar" ).AsSelf();
-        var query = dataSource.Select( oldSelection );
-
-        var sut = query.AndSelect();
-
-        sut.Should().BeSameAs( query );
     }
 
     [Fact]
@@ -461,7 +308,7 @@ SELECT
 FROM foo
 WHERE id = @a AND value > @b";
 
-        var parameters = new[] { SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) }.ToList();
+        var parameters = new[] { SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) };
         var sut = SqlNode.RawQuery( sql, parameters );
         var text = sut.ToString();
 
@@ -477,7 +324,7 @@ WHERE id = @a AND value > @b";
     }
 
     [Fact]
-    public void CompoundQuery_ShouldCreateCompoundQueryExpressionNode_WithComponentCollection()
+    public void CompoundQuery_ShouldCreateCompoundQueryExpressionNode_WithNonEmptyComponents()
     {
         var query1 = SqlNode.RawQuery(
             @"SELECT a, b
@@ -497,9 +344,8 @@ WHERE value < 10" );
         {
             sut.NodeType.Should().Be( SqlNodeType.CompoundQuery );
             sut.Type.Should().BeNull();
-            var compoundQuery = sut as SqlCompoundQueryExpressionNode;
-            (compoundQuery?.FirstQuery).Should().BeSameAs( query1 );
-            (compoundQuery?.FollowingQueries.ToArray()).Should().BeSequentiallyEqualTo( union );
+            sut.FirstQuery.Should().BeSameAs( query1 );
+            sut.FollowingQueries.ToArray().Should().BeSequentiallyEqualTo( union );
             text.Should()
                 .Be(
                     @"(
@@ -517,56 +363,16 @@ UNION
     }
 
     [Fact]
-    public void CompoundQuery_ShouldCreateCompoundQueryExpressionNode_WithComponentArray()
-    {
-        var query1 = SqlNode.RawQuery(
-            @"SELECT a, b
-FROM foo
-WHERE value > 10" );
-
-        var query2 = SqlNode.RawQuery(
-            @"SELECT a, c AS b
-FROM qux
-WHERE value < 10" );
-
-        var union = query2.ToUnion();
-        var sut = query1.CompoundWith( union );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.CompoundQuery );
-            sut.Type.Should().BeNull();
-            var compoundQuery = sut as SqlCompoundQueryExpressionNode;
-            (compoundQuery?.FirstQuery).Should().BeSameAs( query1 );
-            (compoundQuery?.FollowingQueries.ToArray()).Should().BeSequentiallyEqualTo( union );
-            text.Should()
-                .Be(
-                    @"(
-    SELECT a, b
-    FROM foo
-    WHERE value > 10
-)
-UNION
-(
-    SELECT a, c AS b
-    FROM qux
-    WHERE value < 10
-)" );
-        }
-    }
-
-    [Fact]
-    public void CompoundQuery_ShouldReturnFirstQuery_WhenComponentCollectionIsEmpty()
+    public void CompoundQuery_ShouldThrowArgumentException_WhenComponentsAreEmpty()
     {
         var query = SqlNode.RawQuery(
             @"SELECT *
 FROM foo
 WHERE value > 10" );
 
-        var result = query.CompoundWith();
+        var action = Lambda.Of( () => query.CompoundWith() );
 
-        result.Should().BeSameAs( query );
+        action.Should().ThrowExactly<ArgumentException>();
     }
 
     [Fact]

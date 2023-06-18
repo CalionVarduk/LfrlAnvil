@@ -17,6 +17,7 @@ public static class SqlNode
     private static SqlNullNode? _null;
     private static SqlTrueNode? _true;
     private static SqlFalseNode? _false;
+    private static SqlDistinctDataSourceDecoratorNode? _distinct;
 
     [Pure]
     public static SqlExpressionNode Literal<T>(T? value)
@@ -136,13 +137,6 @@ public static class SqlNode
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlRawExpressionNode RawExpression(string sql, SqlExpressionType? type, IEnumerable<SqlParameterNode> parameters)
-    {
-        return RawExpression( sql, type, parameters.ToArray() );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlRawExpressionNode RawExpression(string sql, params SqlParameterNode[] parameters)
     {
         return RawExpression( sql, type: null, parameters );
@@ -227,23 +221,9 @@ public static class SqlNode
     }
 
     [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlConditionNode In(SqlExpressionNode value, IEnumerable<SqlExpressionNode> expressions)
-    {
-        return In( value, expressions.ToArray() );
-    }
-
-    [Pure]
     public static SqlConditionNode In(SqlExpressionNode value, params SqlExpressionNode[] expressions)
     {
         return expressions.Length == 0 ? False() : new SqlInConditionNode( value, expressions, isNegated: false );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlConditionNode NotIn(SqlExpressionNode value, IEnumerable<SqlExpressionNode> expressions)
-    {
-        return NotIn( value, expressions.ToArray() );
     }
 
     [Pure]
@@ -274,13 +254,6 @@ public static class SqlNode
     public static SqlFalseNode False()
     {
         return _false ??= new SqlFalseNode();
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlRawConditionNode RawCondition(string sql, IEnumerable<SqlParameterNode> parameters)
-    {
-        return RawCondition( sql, parameters.ToArray() );
     }
 
     [Pure]
@@ -326,207 +299,76 @@ public static class SqlNode
     }
 
     [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlRawQueryExpressionNode RawQuery(string sql, IEnumerable<SqlParameterNode> parameters)
-    {
-        return RawQuery( sql, parameters.ToArray() );
-    }
-
-    [Pure]
     public static SqlRawQueryExpressionNode RawQuery(string sql, params SqlParameterNode[] parameters)
     {
         return new SqlRawQueryExpressionNode( sql, parameters );
     }
 
     [Pure]
-    public static SqlFilterDataSourceDecoratorNode<TDataSourceNode> Filtered<TDataSourceNode>(
-        TDataSourceNode dataSource,
-        SqlConditionNode filter)
-        where TDataSourceNode : SqlDataSourceNode
+    public static SqlFilterDataSourceDecoratorNode FilterDecorator(SqlConditionNode filter, bool isConjunction)
     {
-        return new SqlFilterDataSourceDecoratorNode<TDataSourceNode>( dataSource, filter );
+        return new SqlFilterDataSourceDecoratorNode( filter, isConjunction );
     }
 
     [Pure]
-    public static SqlFilterDataSourceDecoratorNode<TDataSourceNode> AndFiltered<TDataSourceNode>(
-        SqlDataSourceDecoratorNode<TDataSourceNode> @base,
-        SqlConditionNode filter)
-        where TDataSourceNode : SqlDataSourceNode
+    public static SqlAggregationDataSourceDecoratorNode AggregationDecorator(params SqlExpressionNode[] expressions)
     {
-        return new SqlFilterDataSourceDecoratorNode<TDataSourceNode>( @base, filter, isConjunction: true );
+        return new SqlAggregationDataSourceDecoratorNode( expressions );
     }
 
     [Pure]
-    public static SqlFilterDataSourceDecoratorNode<TDataSourceNode> OrFiltered<TDataSourceNode>(
-        SqlDataSourceDecoratorNode<TDataSourceNode> @base,
-        SqlConditionNode filter)
-        where TDataSourceNode : SqlDataSourceNode
+    public static SqlAggregationFilterDataSourceDecoratorNode AggregationFilterDecorator(SqlConditionNode filter, bool isConjunction)
     {
-        return new SqlFilterDataSourceDecoratorNode<TDataSourceNode>( @base, filter, isConjunction: false );
+        return new SqlAggregationFilterDataSourceDecoratorNode( filter, isConjunction );
     }
 
     [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlSortDataSourceDecoratorNode<TDataSourceNode> Ordered<TDataSourceNode>(
-        TDataSourceNode dataSource,
-        IEnumerable<SqlOrderByNode> ordering)
-        where TDataSourceNode : SqlDataSourceNode
+    public static SqlDistinctDataSourceDecoratorNode DistinctDecorator()
     {
-        return Ordered( dataSource, ordering.ToArray() );
+        return _distinct ??= new SqlDistinctDataSourceDecoratorNode();
     }
 
     [Pure]
-    public static SqlSortDataSourceDecoratorNode<TDataSourceNode> Ordered<TDataSourceNode>(
-        TDataSourceNode dataSource,
-        params SqlOrderByNode[] ordering)
-        where TDataSourceNode : SqlDataSourceNode
+    public static SqlSortQueryDecoratorNode SortDecorator(params SqlOrderByNode[] ordering)
     {
-        return new SqlSortDataSourceDecoratorNode<TDataSourceNode>( dataSource, ordering );
+        return new SqlSortQueryDecoratorNode( ordering );
     }
 
     [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlSortDataSourceDecoratorNode<TDataSourceNode> Ordered<TDataSourceNode>(
-        SqlDataSourceDecoratorNode<TDataSourceNode> @base,
-        IEnumerable<SqlOrderByNode> ordering)
-        where TDataSourceNode : SqlDataSourceNode
+    public static SqlLimitQueryDecoratorNode LimitDecorator(SqlExpressionNode value)
     {
-        return Ordered( @base, ordering.ToArray() );
+        return new SqlLimitQueryDecoratorNode( value );
     }
 
     [Pure]
-    public static SqlSortDataSourceDecoratorNode<TDataSourceNode> Ordered<TDataSourceNode>(
-        SqlDataSourceDecoratorNode<TDataSourceNode> @base,
-        params SqlOrderByNode[] ordering)
-        where TDataSourceNode : SqlDataSourceNode
+    public static SqlOffsetQueryDecoratorNode OffsetDecorator(SqlExpressionNode value)
     {
-        return new SqlSortDataSourceDecoratorNode<TDataSourceNode>( @base, ordering );
+        return new SqlOffsetQueryDecoratorNode( value );
+    }
+
+    [Pure]
+    public static SqlCommonTableExpressionQueryDecoratorNode CommonTableExpressionDecorator(
+        params SqlCommonTableExpressionNode[] commonTableExpressions)
+    {
+        return new SqlCommonTableExpressionQueryDecoratorNode( commonTableExpressions );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlAggregationDataSourceDecoratorNode<TDataSourceNode> Aggregated<TDataSourceNode>(
-        TDataSourceNode dataSource,
-        IEnumerable<SqlExpressionNode> expressions)
-        where TDataSourceNode : SqlDataSourceNode
+    public static SqlRawSelectFieldNode RawSelect(string name, SqlExpressionType? type = null)
     {
-        return Aggregated( dataSource, expressions.ToArray() );
-    }
-
-    [Pure]
-    public static SqlAggregationDataSourceDecoratorNode<TDataSourceNode> Aggregated<TDataSourceNode>(
-        TDataSourceNode dataSource,
-        params SqlExpressionNode[] expressions)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return new SqlAggregationDataSourceDecoratorNode<TDataSourceNode>( dataSource, expressions );
+        return RawSelect( name, alias: null, type );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlAggregationDataSourceDecoratorNode<TDataSourceNode> Aggregated<TDataSourceNode>(
-        SqlDataSourceDecoratorNode<TDataSourceNode> @base,
-        IEnumerable<SqlExpressionNode> expressions)
-        where TDataSourceNode : SqlDataSourceNode
+    public static SqlRawSelectFieldNode RawSelect(string name, string? alias, SqlExpressionType? type = null)
     {
-        return Aggregated( @base, expressions.ToArray() );
+        return RawSelect( recordSetName: null, name, alias, type );
     }
 
     [Pure]
-    public static SqlAggregationDataSourceDecoratorNode<TDataSourceNode> Aggregated<TDataSourceNode>(
-        SqlDataSourceDecoratorNode<TDataSourceNode> @base,
-        params SqlExpressionNode[] expressions)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return new SqlAggregationDataSourceDecoratorNode<TDataSourceNode>( @base, expressions );
-    }
-
-    [Pure]
-    public static SqlAggregationFilterDataSourceDecoratorNode<TDataSourceNode> AggregationFiltered<TDataSourceNode>(
-        TDataSourceNode dataSource,
-        SqlConditionNode filter)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return new SqlAggregationFilterDataSourceDecoratorNode<TDataSourceNode>( dataSource, filter );
-    }
-
-    [Pure]
-    public static SqlAggregationFilterDataSourceDecoratorNode<TDataSourceNode> AndAggregationFiltered<TDataSourceNode>(
-        SqlDataSourceDecoratorNode<TDataSourceNode> @base,
-        SqlConditionNode filter)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return new SqlAggregationFilterDataSourceDecoratorNode<TDataSourceNode>( @base, filter, isConjunction: true );
-    }
-
-    [Pure]
-    public static SqlAggregationFilterDataSourceDecoratorNode<TDataSourceNode> OrAggregationFiltered<TDataSourceNode>(
-        SqlDataSourceDecoratorNode<TDataSourceNode> @base,
-        SqlConditionNode filter)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return new SqlAggregationFilterDataSourceDecoratorNode<TDataSourceNode>( @base, filter, isConjunction: false );
-    }
-
-    [Pure]
-    public static SqlDistinctDataSourceDecoratorNode<TDataSourceNode> Distinct<TDataSourceNode>(TDataSourceNode dataSource)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return new SqlDistinctDataSourceDecoratorNode<TDataSourceNode>( dataSource );
-    }
-
-    [Pure]
-    public static SqlDistinctDataSourceDecoratorNode<TDataSourceNode> Distinct<TDataSourceNode>(
-        SqlDataSourceDecoratorNode<TDataSourceNode> @base)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return new SqlDistinctDataSourceDecoratorNode<TDataSourceNode>( @base );
-    }
-
-    [Pure]
-    public static SqlLimitDataSourceDecoratorNode<TDataSourceNode> Limit<TDataSourceNode>(
-        TDataSourceNode dataSource,
-        SqlExpressionNode value)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return new SqlLimitDataSourceDecoratorNode<TDataSourceNode>( dataSource, value );
-    }
-
-    [Pure]
-    public static SqlLimitDataSourceDecoratorNode<TDataSourceNode> Limit<TDataSourceNode>(
-        SqlDataSourceDecoratorNode<TDataSourceNode> @base,
-        SqlExpressionNode value)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return new SqlLimitDataSourceDecoratorNode<TDataSourceNode>( @base, value );
-    }
-
-    [Pure]
-    public static SqlOffsetDataSourceDecoratorNode<TDataSourceNode> Offset<TDataSourceNode>(
-        TDataSourceNode dataSource,
-        SqlExpressionNode value)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return new SqlOffsetDataSourceDecoratorNode<TDataSourceNode>( dataSource, value );
-    }
-
-    [Pure]
-    public static SqlOffsetDataSourceDecoratorNode<TDataSourceNode> Offset<TDataSourceNode>(
-        SqlDataSourceDecoratorNode<TDataSourceNode> @base,
-        SqlExpressionNode value)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return new SqlOffsetDataSourceDecoratorNode<TDataSourceNode>( @base, value );
-    }
-
-    [Pure]
-    public static SqlRawSelectFieldNode RawSelect(string name, string? alias = null, SqlExpressionType? type = null)
-    {
-        return new SqlRawSelectFieldNode( recordSetName: null, name, alias, type );
-    }
-
-    [Pure]
-    public static SqlRawSelectFieldNode RawSelect(string recordSetName, string name, string? alias, SqlExpressionType? type = null)
+    public static SqlRawSelectFieldNode RawSelect(string? recordSetName, string name, string? alias, SqlExpressionType? type = null)
     {
         return new SqlRawSelectFieldNode( recordSetName, name, alias, type );
     }
@@ -556,52 +398,47 @@ public static class SqlNode
     }
 
     [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlDataSourceQueryExpressionNode Query(SqlDataSourceNode dataSource, IEnumerable<SqlSelectNode> selection)
+    public static SqlDataSourceQueryExpressionNode<TDataSourceNode> Query<TDataSourceNode>(
+        TDataSourceNode dataSource,
+        params SqlSelectNode[] selection)
+        where TDataSourceNode : SqlDataSourceNode
     {
-        return Query( dataSource, selection.ToArray() );
+        return new SqlDataSourceQueryExpressionNode<TDataSourceNode>( dataSource, selection );
     }
 
     [Pure]
-    public static SqlDataSourceQueryExpressionNode Query(SqlDataSourceNode dataSource, params SqlSelectNode[] selection)
+    public static SqlDataSourceQueryExpressionNode<TDataSourceNode> Query<TDataSourceNode>(
+        TDataSourceNode dataSource,
+        SqlQueryDecoratorNode decorator)
+        where TDataSourceNode : SqlDataSourceNode
     {
-        return new SqlDataSourceQueryExpressionNode( dataSource, selection );
+        return new SqlDataSourceQueryExpressionNode<TDataSourceNode>( dataSource, decorator );
     }
 
     [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlDataSourceQueryExpressionNode Query(SqlDataSourceDecoratorNode decorator, IEnumerable<SqlSelectNode> selection)
-    {
-        return Query( decorator, selection.ToArray() );
-    }
-
-    [Pure]
-    public static SqlDataSourceQueryExpressionNode Query(SqlDataSourceDecoratorNode decorator, params SqlSelectNode[] selection)
-    {
-        return new SqlDataSourceQueryExpressionNode( decorator, selection );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlQueryExpressionNode CompoundQuery(
-        SqlQueryExpressionNode firstQuery,
-        IEnumerable<SqlCompoundQueryComponentNode> followingQueries)
-    {
-        return CompoundQuery( firstQuery, followingQueries.ToArray() );
-    }
-
-    [Pure]
-    public static SqlQueryExpressionNode CompoundQuery(
+    public static SqlCompoundQueryExpressionNode CompoundQuery(
         SqlQueryExpressionNode firstQuery,
         params SqlCompoundQueryComponentNode[] followingQueries)
     {
-        return followingQueries.Length == 0 ? firstQuery : new SqlCompoundQueryExpressionNode( firstQuery, followingQueries );
+        return new SqlCompoundQueryExpressionNode( firstQuery, followingQueries );
     }
 
     [Pure]
     public static SqlQueryRecordSetNode QueryRecordSet(SqlQueryExpressionNode query, string alias)
     {
         return new SqlQueryRecordSetNode( query, alias, isOptional: false );
+    }
+
+    [Pure]
+    public static SqlOrdinalCommonTableExpressionNode OrdinalCommonTableExpression(SqlQueryExpressionNode query, string name)
+    {
+        return new SqlOrdinalCommonTableExpressionNode( query, name );
+    }
+
+    [Pure]
+    public static SqlRecursiveCommonTableExpressionNode RecursiveCommonTableExpression(SqlCompoundQueryExpressionNode query, string name)
+    {
+        return new SqlRecursiveCommonTableExpressionNode( query, name );
     }
 
     [Pure]
@@ -612,23 +449,9 @@ public static class SqlNode
     }
 
     [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlMultiDataSourceNode Join(SqlRecordSetNode from, IEnumerable<SqlDataSourceJoinOnNode> joins)
-    {
-        return Join( from, joins.ToArray() );
-    }
-
-    [Pure]
     public static SqlMultiDataSourceNode Join(SqlRecordSetNode from, params SqlDataSourceJoinOnNode[] joins)
     {
         return new SqlMultiDataSourceNode( from, joins );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlMultiDataSourceNode Join(SqlRecordSetNode from, IEnumerable<SqlJoinDefinition> definitions)
-    {
-        return Join( from, definitions.ToArray() );
     }
 
     [Pure]
@@ -638,23 +461,9 @@ public static class SqlNode
     }
 
     [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlMultiDataSourceNode Join(SqlDataSourceNode from, IEnumerable<SqlDataSourceJoinOnNode> joins)
-    {
-        return Join( from, joins.ToArray() );
-    }
-
-    [Pure]
     public static SqlMultiDataSourceNode Join(SqlDataSourceNode from, params SqlDataSourceJoinOnNode[] joins)
     {
         return new SqlMultiDataSourceNode( from, joins );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlMultiDataSourceNode Join(SqlDataSourceNode from, IEnumerable<SqlJoinDefinition> definitions)
-    {
-        return Join( from, definitions.ToArray() );
     }
 
     [Pure]

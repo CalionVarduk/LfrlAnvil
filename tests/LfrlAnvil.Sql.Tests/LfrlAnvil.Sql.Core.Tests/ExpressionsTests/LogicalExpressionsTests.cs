@@ -332,7 +332,7 @@ public class LogicalExpressionsTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.Exists );
             var query = sut.Query as SqlDataSourceQueryExpressionNode;
-            (query?.Decorator).Should().BeNull();
+            (query?.Decorators.ToArray()).Should().BeEmpty();
             (query?.DataSource.Joins.ToArray()).Should().BeEmpty();
             (query?.DataSource.From).Should().BeSameAs( recordSet );
             (query?.DataSource.RecordSets).Should().BeSequentiallyEqualTo( recordSet );
@@ -353,7 +353,7 @@ public class LogicalExpressionsTests : TestsBase
     public void Exists_ShouldReturnExistsConditionNode_WithDataSource()
     {
         var recordSet = SqlNode.RawRecordSet( "foo" );
-        var dataSource = SqlNode.SingleDataSource( recordSet );
+        var dataSource = SqlNode.SingleDataSource( recordSet ).AndWhere( SqlNode.True() );
         var sut = dataSource.Exists();
         var text = sut.ToString();
 
@@ -361,35 +361,7 @@ public class LogicalExpressionsTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.Exists );
             var query = sut.Query as SqlDataSourceQueryExpressionNode;
-            (query?.Decorator).Should().BeNull();
-            (query?.DataSource).Should().BeSameAs( dataSource );
-            sut.Query.Selection.ToArray().Should().HaveCount( 1 );
-            (sut.Query.Selection.ToArray().ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SelectAll );
-            sut.IsNegated.Should().BeFalse();
-            text.Should()
-                .Be(
-                    @"EXISTS (
-    FROM [foo]
-    SELECT
-        *
-)" );
-        }
-    }
-
-    [Fact]
-    public void Exists_ShouldReturnExistsConditionNode_WithDataSourceDecorator()
-    {
-        var recordSet = SqlNode.RawRecordSet( "foo" );
-        var dataSource = SqlNode.SingleDataSource( recordSet );
-        var decorator = SqlNode.Filtered( dataSource, SqlNode.True() );
-        var sut = decorator.Exists();
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Exists );
-            var query = sut.Query as SqlDataSourceQueryExpressionNode;
-            (query?.Decorator).Should().BeSameAs( decorator );
+            (query?.Decorators.ToArray()).Should().BeEmpty();
             (query?.DataSource).Should().BeSameAs( dataSource );
             sut.Query.Selection.ToArray().Should().HaveCount( 1 );
             (sut.Query.Selection.ToArray().ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SelectAll );
@@ -417,7 +389,7 @@ public class LogicalExpressionsTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.Exists );
             var query = sut.Query as SqlDataSourceQueryExpressionNode;
-            (query?.Decorator).Should().BeNull();
+            (query?.Decorators.ToArray()).Should().BeEmpty();
             (query?.DataSource.Joins.ToArray()).Should().BeEmpty();
             (query?.DataSource.From).Should().BeSameAs( recordSet );
             (query?.DataSource.RecordSets).Should().BeSequentiallyEqualTo( recordSet );
@@ -438,7 +410,7 @@ public class LogicalExpressionsTests : TestsBase
     public void NotExists_ShouldReturnExistsConditionNode_WithDataSource()
     {
         var recordSet = SqlNode.RawRecordSet( "foo" );
-        var dataSource = SqlNode.SingleDataSource( recordSet );
+        var dataSource = SqlNode.SingleDataSource( recordSet ).AndWhere( SqlNode.True() );
         var sut = dataSource.NotExists();
         var text = sut.ToString();
 
@@ -446,35 +418,7 @@ public class LogicalExpressionsTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.Exists );
             var query = sut.Query as SqlDataSourceQueryExpressionNode;
-            (query?.Decorator).Should().BeNull();
-            (query?.DataSource).Should().BeSameAs( dataSource );
-            sut.Query.Selection.ToArray().Should().HaveCount( 1 );
-            (sut.Query.Selection.ToArray().ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SelectAll );
-            sut.IsNegated.Should().BeTrue();
-            text.Should()
-                .Be(
-                    @"NOT EXISTS (
-    FROM [foo]
-    SELECT
-        *
-)" );
-        }
-    }
-
-    [Fact]
-    public void NotExists_ShouldReturnExistsConditionNode_WithDataSourceDecorator()
-    {
-        var recordSet = SqlNode.RawRecordSet( "foo" );
-        var dataSource = SqlNode.SingleDataSource( recordSet );
-        var decorator = SqlNode.Filtered( dataSource, SqlNode.True() );
-        var sut = decorator.NotExists();
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Exists );
-            var query = sut.Query as SqlDataSourceQueryExpressionNode;
-            (query?.Decorator).Should().BeSameAs( decorator );
+            (query?.Decorators.ToArray()).Should().BeEmpty();
             (query?.DataSource).Should().BeSameAs( dataSource );
             sut.Query.Selection.ToArray().Should().HaveCount( 1 );
             (sut.Query.Selection.ToArray().ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SelectAll );
@@ -492,7 +436,7 @@ public class LogicalExpressionsTests : TestsBase
     }
 
     [Fact]
-    public void In_ShouldReturnInConditionNode_WithNonEmptyCollection()
+    public void In_ShouldReturnInConditionNode_WithNonEmptyExpressions()
     {
         var value = SqlNode.Parameter<int>( "foo" );
         var expressions = new[] { SqlNode.Literal( 42 ), SqlNode.Literal( 123 ) }.ToList();
@@ -511,40 +455,7 @@ public class LogicalExpressionsTests : TestsBase
     }
 
     [Fact]
-    public void In_ShouldReturnInConditionNode_WithNonEmptyArray()
-    {
-        var value = SqlNode.Parameter<int>( "foo" );
-        var expressions = new[] { SqlNode.Literal( 42 ), SqlNode.Literal( 123 ) };
-        var sut = value.In( expressions );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.In );
-            var inNode = sut as SqlInConditionNode;
-            (inNode?.Value).Should().BeSameAs( value );
-            (inNode?.Expressions.ToArray()).Should().BeSequentiallyEqualTo( expressions );
-            (inNode?.IsNegated).Should().BeFalse();
-            text.Should().Be( $"({value}) IN (({expressions[0]}), ({expressions[1]}))" );
-        }
-    }
-
-    [Fact]
-    public void In_ShouldReturnFalseNode_WithEmptyCollection()
-    {
-        var value = SqlNode.Parameter<int>( "foo" );
-        var sut = value.In( Enumerable.Empty<SqlExpressionNode>() );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.False );
-            text.Should().Be( "FALSE" );
-        }
-    }
-
-    [Fact]
-    public void In_ShouldReturnFalseNode_WithEmptyArray()
+    public void In_ShouldReturnFalseNode_WithEmptyExpressions()
     {
         var value = SqlNode.Parameter<int>( "foo" );
         var sut = value.In();
@@ -558,7 +469,7 @@ public class LogicalExpressionsTests : TestsBase
     }
 
     [Fact]
-    public void NotIn_ShouldReturnInConditionNode_WithNonEmptyCollection()
+    public void NotIn_ShouldReturnInConditionNode_WithNonEmptyExpressions()
     {
         var value = SqlNode.Parameter<int>( "foo" );
         var expressions = new[] { SqlNode.Literal( 42 ), SqlNode.Literal( 123 ) }.ToList();
@@ -577,40 +488,7 @@ public class LogicalExpressionsTests : TestsBase
     }
 
     [Fact]
-    public void NotIn_ShouldReturnInConditionNode_WithNonEmptyArray()
-    {
-        var value = SqlNode.Parameter<int>( "foo" );
-        var expressions = new[] { SqlNode.Literal( 42 ), SqlNode.Literal( 123 ) };
-        var sut = value.NotIn( expressions );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.In );
-            var inNode = sut as SqlInConditionNode;
-            (inNode?.Value).Should().BeSameAs( value );
-            (inNode?.Expressions.ToArray()).Should().BeSequentiallyEqualTo( expressions );
-            (inNode?.IsNegated).Should().BeTrue();
-            text.Should().Be( $"({value}) NOT IN (({expressions[0]}), ({expressions[1]}))" );
-        }
-    }
-
-    [Fact]
-    public void NotIn_ShouldReturnTrueNode_WithEmptyCollection()
-    {
-        var value = SqlNode.Parameter<int>( "foo" );
-        var sut = value.NotIn( Enumerable.Empty<SqlExpressionNode>() );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.True );
-            text.Should().Be( "TRUE" );
-        }
-    }
-
-    [Fact]
-    public void NotIn_ShouldReturnTrueNode_WithEmptyArray()
+    public void NotIn_ShouldReturnTrueNode_WithEmptyExpressions()
     {
         var value = SqlNode.Parameter<int>( "foo" );
         var sut = value.NotIn();
@@ -702,7 +580,7 @@ public class LogicalExpressionsTests : TestsBase
     [Fact]
     public void RawCondition_ShouldReturnRawConditionNode()
     {
-        var parameters = new[] { SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) }.ToList();
+        var parameters = new[] { SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) };
         var sut = SqlNode.RawCondition( "@a = @b", parameters );
         var text = sut.ToString();
 

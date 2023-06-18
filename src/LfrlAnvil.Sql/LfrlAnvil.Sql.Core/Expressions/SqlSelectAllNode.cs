@@ -14,21 +14,12 @@ public sealed class SqlSelectAllNode : SqlSelectNode
     public SqlDataSourceNode DataSource { get; }
     public override SqlExpressionType? Type => null;
 
-    public override void RegisterKnownFields(SqlQueryRecordSetNode.FieldInitializer initializer)
+    internal override void Convert(ISqlSelectNodeConverter converter)
     {
         foreach ( var recordSet in DataSource.RecordSets )
         {
             foreach ( var field in recordSet.GetKnownFields() )
-                initializer.AddField( field.Name, field.Type );
-        }
-    }
-
-    public override void RegisterCompoundSelection(SqlCompoundQueryExpressionNode.SelectionInitializer initializer)
-    {
-        foreach ( var recordSet in DataSource.RecordSets )
-        {
-            foreach ( var field in recordSet.GetKnownFields() )
-                initializer.AddSelection( field.Name, field.Type );
+                converter.Add( field.Name, field.Type );
         }
     }
 

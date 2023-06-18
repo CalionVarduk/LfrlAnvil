@@ -4,6 +4,7 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Text;
 using LfrlAnvil.Extensions;
+using LfrlAnvil.Sql.Expressions.Decorators;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
 
@@ -12,6 +13,7 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
     private readonly Dictionary<string, SqlRecordSetNode> _recordSets;
 
     protected internal SqlMultiDataSourceNode(SqlRecordSetNode from, SqlDataSourceJoinOnNode[] joins)
+        : base( Chain<SqlDataSourceDecoratorNode>.Empty )
     {
         Joins = joins;
         from = from.MarkAsOptional( false );
@@ -27,6 +29,7 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
     }
 
     protected internal SqlMultiDataSourceNode(SqlRecordSetNode from, SqlJoinDefinition[] definitions)
+        : base( Chain<SqlDataSourceDecoratorNode>.Empty )
     {
         from = from.MarkAsOptional( false );
         _recordSets = CreateRecordSetDictionary( definitions.Length + 1 );
@@ -55,6 +58,7 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
     }
 
     internal SqlMultiDataSourceNode(SqlDataSourceNode source, SqlDataSourceJoinOnNode[] newJoins)
+        : base( source.Decorators )
     {
         var from = source.From;
         var sourceRecordSets = source.RecordSets;
@@ -83,6 +87,7 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
     }
 
     internal SqlMultiDataSourceNode(SqlDataSourceNode source, SqlJoinDefinition[] newDefinitions)
+        : base( source.Decorators )
     {
         var from = source.From;
         var sourceRecordSets = source.RecordSets;
@@ -122,6 +127,14 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
         Joins = joins;
     }
 
+    protected SqlMultiDataSourceNode(SqlMultiDataSourceNode @base, Chain<SqlDataSourceDecoratorNode> decorators)
+        : base( decorators )
+    {
+        From = @base.From;
+        Joins = @base.Joins;
+        _recordSets = @base._recordSets;
+    }
+
     public sealed override SqlRecordSetNode From { get; }
     public sealed override ReadOnlyMemory<SqlDataSourceJoinOnNode> Joins { get; }
     public sealed override IReadOnlyCollection<SqlRecordSetNode> RecordSets => _recordSets.Values;
@@ -132,11 +145,22 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
         return _recordSets[name];
     }
 
+    [Pure]
+    public override SqlMultiDataSourceNode Decorate(SqlDataSourceDecoratorNode decorator)
+    {
+        var decorators = Decorators.ToExtendable().Extend( decorator );
+        return new SqlMultiDataSourceNode( this, decorators );
+    }
+
     protected sealed override void ToString(StringBuilder builder, int indent)
     {
         AppendTo( builder.Append( "FROM" ).Append( ' ' ), From, indent );
+
         foreach ( var join in Joins.Span )
             AppendTo( builder.Indent( indent ), join, indent );
+
+        foreach ( var decorator in Decorators )
+            AppendTo( builder.Indent( indent ), decorator, indent );
     }
 
     [Pure]

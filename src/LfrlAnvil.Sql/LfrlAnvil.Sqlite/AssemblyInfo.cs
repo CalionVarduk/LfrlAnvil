@@ -25,11 +25,11 @@
 // - more ReferenceBehavior options?
 // - WITHOUT ROWID is supported in v3.8.2 (2013-12-06), this is the oldest supported version
 // - update: v3.8.3 (2014-02-03) is now the oldest supported version, unless CTEs aren't used (WITH clause)
-// - Add With data source extension (CTEs) (separate thing for recursive?) <= NEXT
 // - get rid of Type requirement in SqlExpression/SqlSelect nodes? let the interpreter actually manage that?
 //   ^ stuff like parameter, literal, data field etc. can still have it, as a hint for the interpreter
-// - Add function nodes (base => understood by every interpreter + possibility to register custom)
+// - Add function nodes (scalar, table & aggregate) (base => understood by every interpreter + possibility to register custom)
 // - Add node tree interpreter
 //   ^ this interpreter must be customizable through DB builder
 // - Add CREATE/DROP (TEMP)TABLE/INDEX nodes
 // - Add INSERT/UPDATE/DELETE nodes
+// - Change select nodes into expression nodes, so they can be used in query decorators e.g. compound order by <= NEXT

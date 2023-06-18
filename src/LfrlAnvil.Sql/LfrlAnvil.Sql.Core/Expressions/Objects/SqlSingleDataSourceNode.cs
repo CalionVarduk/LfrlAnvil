@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Text;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Exceptions;
+using LfrlAnvil.Sql.Expressions.Decorators;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
 
@@ -12,8 +14,15 @@ public sealed class SqlSingleDataSourceNode<TRecordSetNode> : SqlDataSourceNode
     private readonly TRecordSetNode[] _from;
 
     internal SqlSingleDataSourceNode(TRecordSetNode from)
+        : base( Chain<SqlDataSourceDecoratorNode>.Empty )
     {
         _from = new[] { from };
+    }
+
+    private SqlSingleDataSourceNode(SqlSingleDataSourceNode<TRecordSetNode> @base, Chain<SqlDataSourceDecoratorNode> decorators)
+        : base( decorators )
+    {
+        _from = @base._from;
     }
 
     public override TRecordSetNode From => _from[0];
@@ -29,8 +38,18 @@ public sealed class SqlSingleDataSourceNode<TRecordSetNode> : SqlDataSourceNode
             : throw new KeyNotFoundException( ExceptionResources.GivenRecordSetWasNotPresentInDataSource( name ) );
     }
 
+    [Pure]
+    public override SqlSingleDataSourceNode<TRecordSetNode> Decorate(SqlDataSourceDecoratorNode decorator)
+    {
+        var decorators = Decorators.ToExtendable().Extend( decorator );
+        return new SqlSingleDataSourceNode<TRecordSetNode>( this, decorators );
+    }
+
     protected override void ToString(StringBuilder builder, int indent)
     {
         AppendTo( builder.Append( "FROM" ).Append( ' ' ), From, indent );
+
+        foreach ( var decorator in Decorators )
+            AppendTo( builder.Indent( indent ), decorator, indent );
     }
 }

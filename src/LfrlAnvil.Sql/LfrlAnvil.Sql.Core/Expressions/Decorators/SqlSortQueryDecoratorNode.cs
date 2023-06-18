@@ -1,21 +1,13 @@
 ﻿using System;
 using System.Text;
 using LfrlAnvil.Extensions;
-using LfrlAnvil.Sql.Expressions.Objects;
 
 namespace LfrlAnvil.Sql.Expressions.Decorators;
 
-public sealed class SqlSortDataSourceDecoratorNode<TDataSourceNode> : SqlDataSourceDecoratorNode<TDataSourceNode>
-    where TDataSourceNode : SqlDataSourceNode
+public sealed class SqlSortQueryDecoratorNode : SqlQueryDecoratorNode
 {
-    internal SqlSortDataSourceDecoratorNode(TDataSourceNode dataSource, SqlOrderByNode[] ordering)
-        : base( SqlNodeType.SortDecorator, dataSource )
-    {
-        Ordering = ordering;
-    }
-
-    internal SqlSortDataSourceDecoratorNode(SqlDataSourceDecoratorNode<TDataSourceNode> @base, SqlOrderByNode[] ordering)
-        : base( SqlNodeType.SortDecorator, @base )
+    internal SqlSortQueryDecoratorNode(SqlOrderByNode[] ordering)
+        : base( SqlNodeType.SortDecorator )
     {
         Ordering = ordering;
     }
