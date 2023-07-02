@@ -2,7 +2,6 @@
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Extensions;
-using LfrlAnvil.Sql.Exceptions;
 
 namespace LfrlAnvil.Sql.Expressions;
 
@@ -44,13 +43,6 @@ public readonly struct SqlExpressionType : IEquatable<SqlExpressionType>
     public static SqlExpressionType? GetCommonType(SqlExpressionType? left, SqlExpressionType? right)
     {
         return left?.GetCommonTypeWith( right );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static bool HaveCommonType(SqlExpressionType? left, SqlExpressionType? right)
-    {
-        return left is null || left.Value.HasCommonTypeWith( right );
     }
 
     [Pure]
@@ -104,16 +96,7 @@ public readonly struct SqlExpressionType : IEquatable<SqlExpressionType>
         if ( other.Value.BaseType == typeof( DBNull ) )
             return IsNullable ? this : Create( BaseType, isNullable: true );
 
-        throw new SqlNodeException( ExceptionResources.ExpressionTypesDoNotShareCommonType( this, other.Value ) );
-    }
-
-    [Pure]
-    public bool HasCommonTypeWith(SqlExpressionType? other)
-    {
-        return other is null ||
-            BaseType == other.Value.BaseType ||
-            BaseType == typeof( DBNull ) ||
-            other.Value.BaseType == typeof( DBNull );
+        return null;
     }
 
     [Pure]

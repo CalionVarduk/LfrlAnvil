@@ -25,6 +25,19 @@ public class ExpressionDecoratorsTests : TestsBase
     }
 
     [Fact]
+    public void DistinctDecorator_ForAggregateFunction_ShouldCreateDistinctAggregateFunctionDecoratorNode()
+    {
+        var sut = SqlNode.AggregateFunctions.DistinctDecorator();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.DistinctDecorator );
+            text.Should().Be( "DISTINCT" );
+        }
+    }
+
+    [Fact]
     public void FilterDecorator_ShouldCreateFilterDataSourceDecoratorNode_AsConjunction()
     {
         var condition = SqlNode.RawCondition( "bar > 10" );
@@ -48,6 +61,44 @@ public class ExpressionDecoratorsTests : TestsBase
     {
         var condition = SqlNode.RawCondition( "bar > 10" );
         var sut = SqlNode.FilterDecorator( condition, isConjunction: false );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.FilterDecorator );
+            sut.Filter.Should().BeSameAs( condition );
+            sut.IsConjunction.Should().BeFalse();
+            text.Should()
+                .Be(
+                    @"OR WHERE
+    (bar > 10)" );
+        }
+    }
+
+    [Fact]
+    public void FilterDecorator_ForAggregateFunction_ShouldCreateFilterAggregateFunctionDecoratorNode_AsConjunction()
+    {
+        var condition = SqlNode.RawCondition( "bar > 10" );
+        var sut = SqlNode.AggregateFunctions.FilterDecorator( condition, isConjunction: true );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.FilterDecorator );
+            sut.Filter.Should().BeSameAs( condition );
+            sut.IsConjunction.Should().BeTrue();
+            text.Should()
+                .Be(
+                    @"AND WHERE
+    (bar > 10)" );
+        }
+    }
+
+    [Fact]
+    public void FilterDecorator_ForAggregateFunction_ShouldCreateFilterAggregateFunctionDecoratorNode_AsDisjunction()
+    {
+        var condition = SqlNode.RawCondition( "bar > 10" );
+        var sut = SqlNode.AggregateFunctions.FilterDecorator( condition, isConjunction: false );
         var text = sut.ToString();
 
         using ( new AssertionScope() )
@@ -351,6 +402,29 @@ DISTINCT" );
     }
 
     [Fact]
+    public void Distinct_ForAggregateFunction_ShouldReturnDecoratedAggregateFunction()
+    {
+        var function = SqlNode.AggregateFunctions.Count( SqlNode.RawExpression( "*" ) );
+        var sut = function.Distinct();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.Should().NotBeSameAs( function );
+            sut.NodeType.Should().Be( function.NodeType );
+            sut.FunctionType.Should().Be( function.FunctionType );
+            sut.Type.Should().Be( function.Type );
+            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( function.Arguments.ToArray() );
+            sut.Decorators.Should().HaveCount( 1 );
+            (sut.Decorators.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctDecorator );
+            text.Should()
+                .Be(
+                    @"AGG_COUNT((*))
+    DISTINCT" );
+        }
+    }
+
+    [Fact]
     public void AndWhere_ForSingleDataSource_ShouldReturnDecoratedDataSource()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
@@ -409,6 +483,31 @@ AND WHERE
     }
 
     [Fact]
+    public void AndWhere_ForAggregateFunction_ShouldReturnDecoratedAggregateFunction()
+    {
+        var function = SqlNode.AggregateFunctions.Count( SqlNode.RawExpression( "*" ) );
+        var filter = SqlNode.RawCondition( "a > 10" );
+        var sut = function.AndWhere( filter );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.Should().NotBeSameAs( function );
+            sut.NodeType.Should().Be( function.NodeType );
+            sut.FunctionType.Should().Be( function.FunctionType );
+            sut.Type.Should().Be( function.Type );
+            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( function.Arguments.ToArray() );
+            sut.Decorators.Should().HaveCount( 1 );
+            (sut.Decorators.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.FilterDecorator );
+            text.Should()
+                .Be(
+                    @"AGG_COUNT((*))
+    AND WHERE
+        (a > 10)" );
+        }
+    }
+
+    [Fact]
     public void OrWhere_ForSingleDataSource_ShouldReturnDecoratedDataSource()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
@@ -463,6 +562,31 @@ INNER JOIN [bar] ON
     (TRUE)
 OR WHERE
     (a > 10)" );
+        }
+    }
+
+    [Fact]
+    public void OrWhere_ForAggregateFunction_ShouldReturnDecoratedAggregateFunction()
+    {
+        var function = SqlNode.AggregateFunctions.Count( SqlNode.RawExpression( "*" ) );
+        var filter = SqlNode.RawCondition( "a > 10" );
+        var sut = function.OrWhere( filter );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.Should().NotBeSameAs( function );
+            sut.NodeType.Should().Be( function.NodeType );
+            sut.FunctionType.Should().Be( function.FunctionType );
+            sut.Type.Should().Be( function.Type );
+            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( function.Arguments.ToArray() );
+            sut.Decorators.Should().HaveCount( 1 );
+            (sut.Decorators.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.FilterDecorator );
+            text.Should()
+                .Be(
+                    @"AGG_COUNT((*))
+    OR WHERE
+        (a > 10)" );
         }
     }
 

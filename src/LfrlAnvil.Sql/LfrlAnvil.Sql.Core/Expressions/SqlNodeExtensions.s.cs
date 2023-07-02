@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Sql.Expressions.Arithmetic;
 using LfrlAnvil.Sql.Expressions.Decorators;
+using LfrlAnvil.Sql.Expressions.Functions;
 using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Objects;
@@ -439,5 +440,228 @@ public static class SqlNodeExtensions
     public static SqlOrderByNode Desc(this SqlSelectNode node)
     {
         return SqlNode.OrderByDesc( node.ToExpression() );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlCoalesceFunctionExpressionNode Coalesce(this SqlExpressionNode node, params SqlExpressionNode[] other)
+    {
+        var nodes = new SqlExpressionNode[other.Length + 1];
+        nodes[0] = node;
+        other.CopyTo( nodes, index: 1 );
+        return SqlNode.Functions.Coalesce( nodes );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlLengthFunctionExpressionNode Length(this SqlExpressionNode node)
+    {
+        return SqlNode.Functions.Length( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlToLowerFunctionExpressionNode ToLower(this SqlExpressionNode node)
+    {
+        return SqlNode.Functions.ToLower( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlToUpperFunctionExpressionNode ToUpper(this SqlExpressionNode node)
+    {
+        return SqlNode.Functions.ToUpper( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlTrimStartFunctionExpressionNode TrimStart(this SqlExpressionNode node, SqlExpressionNode? characters = null)
+    {
+        return SqlNode.Functions.TrimStart( node, characters );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlTrimEndFunctionExpressionNode TrimEnd(this SqlExpressionNode node, SqlExpressionNode? characters = null)
+    {
+        return SqlNode.Functions.TrimEnd( node, characters );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlTrimFunctionExpressionNode Trim(this SqlExpressionNode node, SqlExpressionNode? characters = null)
+    {
+        return SqlNode.Functions.Trim( node, characters );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlSubstringFunctionExpressionNode Substring(
+        this SqlExpressionNode node,
+        SqlExpressionNode startIndex,
+        SqlExpressionNode? length = null)
+    {
+        return SqlNode.Functions.Substring( node, startIndex, length );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlReplaceFunctionExpressionNode Replace(
+        this SqlExpressionNode node,
+        SqlExpressionNode oldValue,
+        SqlExpressionNode newValue)
+    {
+        return SqlNode.Functions.Replace( node, oldValue, newValue );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlIndexOfFunctionExpressionNode IndexOf(this SqlExpressionNode node, SqlExpressionNode value)
+    {
+        return SqlNode.Functions.IndexOf( node, value );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlLastIndexOfFunctionExpressionNode LastIndexOf(this SqlExpressionNode node, SqlExpressionNode value)
+    {
+        return SqlNode.Functions.LastIndexOf( node, value );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlSignFunctionExpressionNode Sign(this SqlExpressionNode node)
+    {
+        return SqlNode.Functions.Sign( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlAbsFunctionExpressionNode Abs(this SqlExpressionNode node)
+    {
+        return SqlNode.Functions.Abs( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlFloorFunctionExpressionNode Floor(this SqlExpressionNode node)
+    {
+        return SqlNode.Functions.Floor( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlCeilingFunctionExpressionNode Ceiling(this SqlExpressionNode node)
+    {
+        return SqlNode.Functions.Ceiling( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlTruncateFunctionExpressionNode Truncate(this SqlExpressionNode node)
+    {
+        return SqlNode.Functions.Truncate( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlPowerFunctionExpressionNode Power(this SqlExpressionNode node, SqlExpressionNode power)
+    {
+        return SqlNode.Functions.Power( node, power );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlSquareRootFunctionExpressionNode SquareRoot(this SqlExpressionNode node)
+    {
+        return SqlNode.Functions.SquareRoot( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlCountAggregateFunctionExpressionNode Count(this SqlExpressionNode node)
+    {
+        return SqlNode.AggregateFunctions.Count( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlMinAggregateFunctionExpressionNode Min(this SqlExpressionNode node)
+    {
+        return SqlNode.AggregateFunctions.Min( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlMinFunctionExpressionNode Min(this SqlExpressionNode node, params SqlExpressionNode[] other)
+    {
+        var nodes = new SqlExpressionNode[other.Length + 1];
+        nodes[0] = node;
+        other.CopyTo( nodes, index: 1 );
+        return SqlNode.Functions.Min( nodes );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlMaxAggregateFunctionExpressionNode Max(this SqlExpressionNode node)
+    {
+        return SqlNode.AggregateFunctions.Max( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlMaxFunctionExpressionNode Max(this SqlExpressionNode node, params SqlExpressionNode[] other)
+    {
+        var nodes = new SqlExpressionNode[other.Length + 1];
+        nodes[0] = node;
+        other.CopyTo( nodes, index: 1 );
+        return SqlNode.Functions.Max( nodes );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlSumAggregateFunctionExpressionNode Sum(this SqlExpressionNode node)
+    {
+        return SqlNode.AggregateFunctions.Sum( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlAverageAggregateFunctionExpressionNode Average(this SqlExpressionNode node)
+    {
+        return SqlNode.AggregateFunctions.Average( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlStringConcatAggregateFunctionExpressionNode StringConcat(
+        this SqlExpressionNode node,
+        SqlExpressionNode? separator = null)
+    {
+        return SqlNode.AggregateFunctions.StringConcat( node, separator );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static TAggregateFunctionNode Distinct<TAggregateFunctionNode>(this TAggregateFunctionNode node)
+        where TAggregateFunctionNode : SqlAggregateFunctionExpressionNode
+    {
+        return (TAggregateFunctionNode)node.Decorate( SqlNode.AggregateFunctions.DistinctDecorator() );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static TAggregateFunctionNode AndWhere<TAggregateFunctionNode>(this TAggregateFunctionNode node, SqlConditionNode filter)
+        where TAggregateFunctionNode : SqlAggregateFunctionExpressionNode
+    {
+        return (TAggregateFunctionNode)node.Decorate( SqlNode.AggregateFunctions.FilterDecorator( filter, isConjunction: true ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static TAggregateFunctionNode OrWhere<TAggregateFunctionNode>(this TAggregateFunctionNode node, SqlConditionNode filter)
+        where TAggregateFunctionNode : SqlAggregateFunctionExpressionNode
+    {
+        return (TAggregateFunctionNode)node.Decorate( SqlNode.AggregateFunctions.FilterDecorator( filter, isConjunction: false ) );
     }
 }

@@ -1,0 +1,35 @@
+﻿namespace LfrlAnvil.Sql.Expressions.Functions;
+
+public enum SqlFunctionType : byte
+{
+    Custom,
+    RecordsAffected,
+    Coalesce,
+    CurrentDate,
+    CurrentTime,
+    CurrentDateTime,
+    CurrentTimestamp,
+    Length,
+    ToLower,
+    ToUpper,
+    TrimStart,
+    TrimEnd,
+    Trim,
+    Substring,
+    Replace,
+    IndexOf,
+    LastIndexOf,
+    Sign,
+    Abs,
+    Ceiling,
+    Floor,
+    Truncate,
+    Power,
+    SquareRoot,
+    Min,
+    Max,
+    Average,
+    Sum,
+    Count,
+    StringConcat
+}

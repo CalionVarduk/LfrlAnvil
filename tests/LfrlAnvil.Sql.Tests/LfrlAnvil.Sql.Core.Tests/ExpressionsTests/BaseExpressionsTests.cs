@@ -2,7 +2,6 @@
 using System.Linq;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
-using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.TestExtensions.FluentAssertions;
@@ -463,14 +462,20 @@ END" );
     }
 
     [Fact]
-    public void Switch_ShouldThrowSqlNodeException_WhenTypesAreIncompatible()
+    public void Switch_ShouldCreateSwitchExpressionNode_WithNullType_WhenTypesAreIncompatible()
     {
         var defaultNode = SqlNode.Parameter<int>( "foo" );
         var @case = SqlNode.SwitchCase( SqlNode.RawCondition( "bar > 10" ), SqlNode.Literal( "x" ) );
 
-        var action = Lambda.Of( () => SqlNode.Switch( new[] { @case }, defaultNode ) );
+        var sut = SqlNode.Switch( new[] { @case }, defaultNode );
 
-        action.Should().ThrowExactly<SqlNodeException>();
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.Switch );
+            sut.Default.Should().BeSameAs( defaultNode );
+            sut.Type.Should().BeNull();
+            sut.Cases.ToArray().Should().BeSequentiallyEqualTo( @case );
+        }
     }
 
     [Fact]

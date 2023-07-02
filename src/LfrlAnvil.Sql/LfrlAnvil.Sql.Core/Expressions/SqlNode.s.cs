@@ -12,7 +12,7 @@ using LfrlAnvil.Sql.Objects;
 
 namespace LfrlAnvil.Sql.Expressions;
 
-public static class SqlNode
+public static partial class SqlNode
 {
     private static SqlNullNode? _null;
     private static SqlTrueNode? _true;

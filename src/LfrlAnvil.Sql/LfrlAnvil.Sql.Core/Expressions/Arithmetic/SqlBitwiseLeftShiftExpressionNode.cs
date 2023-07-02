@@ -7,7 +7,10 @@ public sealed class SqlBitwiseLeftShiftExpressionNode : SqlExpressionNode
     internal SqlBitwiseLeftShiftExpressionNode(SqlExpressionNode left, SqlExpressionNode right)
         : base( SqlNodeType.BitwiseLeftShift )
     {
-        Type = SqlExpressionType.GetCommonType( left.Type, right.Type );
+        Type = left.Type is null || right.Type is null
+            ? null
+            : SqlExpressionType.Create( left.Type.Value.BaseType, left.Type.Value.IsNullable || right.Type.Value.IsNullable );
+
         Left = left;
         Right = right;
     }

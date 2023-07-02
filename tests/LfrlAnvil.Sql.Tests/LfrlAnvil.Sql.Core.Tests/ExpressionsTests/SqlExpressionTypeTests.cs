@@ -1,6 +1,4 @@
-﻿using LfrlAnvil.Functional;
-using LfrlAnvil.Sql.Exceptions;
-using LfrlAnvil.Sql.Expressions;
+﻿using LfrlAnvil.Sql.Expressions;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
 
@@ -174,79 +172,14 @@ public class SqlExpressionTypeTests : TestsBase
     [InlineData( typeof( string ), false, typeof( int ), true )]
     [InlineData( typeof( string ), true, typeof( int ), false )]
     [InlineData( typeof( string ), true, typeof( int ), true )]
-    public void GetCommonType_ShouldThrowSqlNodeException_WhenTypesAreIncompatible(
-        Type aBaseType,
-        bool aIsNullable,
-        Type bBaseType,
-        bool bIsNullable)
+    public void GetCommonType_ReturnNull_WhenTypesAreIncompatible(Type aBaseType, bool aIsNullable, Type bBaseType, bool bIsNullable)
     {
         var a = SqlExpressionType.Create( aBaseType, aIsNullable );
         var b = SqlExpressionType.Create( bBaseType, bIsNullable );
 
-        var action = Lambda.Of( () => SqlExpressionType.GetCommonType( a, b ) );
+        var result = SqlExpressionType.GetCommonType( a, b );
 
-        action.Should().ThrowExactly<SqlNodeException>();
-    }
-
-    [Fact]
-    public void HaveCommonType_ShouldReturnTrue_WhenBothTypesAreNull()
-    {
-        var a = (SqlExpressionType?)null;
-        var b = (SqlExpressionType?)null;
-
-        var result = SqlExpressionType.HaveCommonType( a, b );
-
-        result.Should().BeTrue();
-    }
-
-    [Fact]
-    public void HaveCommonType_ShouldReturnTrue_WhenFirstTypeIsNull()
-    {
-        var a = (SqlExpressionType?)null;
-        var b = SqlExpressionType.Create<int>();
-
-        var result = SqlExpressionType.HaveCommonType( a, b );
-
-        result.Should().BeTrue();
-    }
-
-    [Fact]
-    public void HaveCommonType_ShouldReturnTrue_WhenSecondTypeIsNull()
-    {
-        var a = SqlExpressionType.Create<int>();
-        var b = (SqlExpressionType?)null;
-
-        var result = SqlExpressionType.HaveCommonType( a, b );
-
-        result.Should().BeTrue();
-    }
-
-    [Theory]
-    [InlineData( typeof( int ), false, typeof( int ), false, true )]
-    [InlineData( typeof( int ), false, typeof( int ), true, true )]
-    [InlineData( typeof( int ), true, typeof( int ), false, true )]
-    [InlineData( typeof( int ), true, typeof( int ), true, true )]
-    [InlineData( typeof( int ), false, typeof( DBNull ), false, true )]
-    [InlineData( typeof( int ), true, typeof( DBNull ), false, true )]
-    [InlineData( typeof( DBNull ), false, typeof( int ), false, true )]
-    [InlineData( typeof( DBNull ), false, typeof( int ), true, true )]
-    [InlineData( typeof( string ), false, typeof( int ), false, false )]
-    [InlineData( typeof( string ), false, typeof( int ), true, false )]
-    [InlineData( typeof( string ), true, typeof( int ), false, false )]
-    [InlineData( typeof( string ), true, typeof( int ), true, false )]
-    public void HaveCommonType_ShouldReturnTrue_WhenBothTypesHaveTheSameBaseTypeOrAreDBNull(
-        Type aBaseType,
-        bool aIsNullable,
-        Type bBaseType,
-        bool bIsNullable,
-        bool expected)
-    {
-        var a = SqlExpressionType.Create( aBaseType, aIsNullable );
-        var b = SqlExpressionType.Create( bBaseType, bIsNullable );
-
-        var result = SqlExpressionType.HaveCommonType( a, b );
-
-        result.Should().Be( expected );
+        result.Should().BeNull();
     }
 
     [Fact]

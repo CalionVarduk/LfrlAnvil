@@ -1,6 +1,4 @@
-﻿using LfrlAnvil.Functional;
-using LfrlAnvil.Sql.Exceptions;
-using LfrlAnvil.Sql.Expressions;
+﻿using LfrlAnvil.Sql.Expressions;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
 
@@ -57,14 +55,20 @@ public class ArithmeticExpressionsTests : TestsBase
     }
 
     [Fact]
-    public void Add_ShouldThrowSqlNodeException_WhenOperandTypesAreIncompatible()
+    public void Add_ShouldCreateAddExpressionNode_WithNullType_WhenOperandTypesAreIncompatible()
     {
         var left = SqlNode.Literal( 42 );
         var right = SqlNode.Parameter<string>( "foo" );
 
-        var action = Lambda.Of( () => left + right );
+        var sut = left + right;
 
-        action.Should().ThrowExactly<SqlNodeException>();
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.Add );
+            sut.Type.Should().BeNull();
+            sut.Left.Should().BeSameAs( left );
+            sut.Right.Should().BeSameAs( right );
+        }
     }
 
     [Fact]
@@ -86,14 +90,20 @@ public class ArithmeticExpressionsTests : TestsBase
     }
 
     [Fact]
-    public void Concat_ShouldThrowSqlNodeException_WhenOperandTypesAreIncompatible()
+    public void Concat_ShouldCreateConcatExpressionNode_WithNullType_WhenOperandTypesAreIncompatible()
     {
         var left = SqlNode.Literal( 42 );
         var right = SqlNode.Parameter<string>( "foo" );
 
-        var action = Lambda.Of( () => left.Concat( right ) );
+        var sut = left.Concat( right );
 
-        action.Should().ThrowExactly<SqlNodeException>();
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.Concat );
+            sut.Type.Should().BeNull();
+            sut.Left.Should().BeSameAs( left );
+            sut.Right.Should().BeSameAs( right );
+        }
     }
 
     [Fact]
@@ -115,14 +125,20 @@ public class ArithmeticExpressionsTests : TestsBase
     }
 
     [Fact]
-    public void Subtract_ShouldThrowSqlNodeException_WhenOperandTypesAreIncompatible()
+    public void Subtract_ShouldCreateSubtractExpressionNode_WithNullType_WhenOperandTypesAreIncompatible()
     {
         var left = SqlNode.Literal( 42 );
         var right = SqlNode.Parameter<string>( "foo" );
 
-        var action = Lambda.Of( () => left - right );
+        var sut = left - right;
 
-        action.Should().ThrowExactly<SqlNodeException>();
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.Subtract );
+            sut.Type.Should().BeNull();
+            sut.Left.Should().BeSameAs( left );
+            sut.Right.Should().BeSameAs( right );
+        }
     }
 
     [Fact]
@@ -144,14 +160,20 @@ public class ArithmeticExpressionsTests : TestsBase
     }
 
     [Fact]
-    public void Multiply_ShouldThrowSqlNodeException_WhenOperandTypesAreIncompatible()
+    public void Multiply_ShouldCreateMultiplyExpressionNode_WithNullType_WhenOperandTypesAreIncompatible()
     {
         var left = SqlNode.Literal( 42 );
         var right = SqlNode.Parameter<string>( "foo" );
 
-        var action = Lambda.Of( () => left * right );
+        var sut = left * right;
 
-        action.Should().ThrowExactly<SqlNodeException>();
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.Multiply );
+            sut.Type.Should().BeNull();
+            sut.Left.Should().BeSameAs( left );
+            sut.Right.Should().BeSameAs( right );
+        }
     }
 
     [Fact]
@@ -173,14 +195,20 @@ public class ArithmeticExpressionsTests : TestsBase
     }
 
     [Fact]
-    public void Divide_ShouldThrowSqlNodeException_WhenOperandTypesAreIncompatible()
+    public void Divide_ShouldCreateDivideExpressionNode_WithNullType_WhenOperandTypesAreIncompatible()
     {
         var left = SqlNode.Literal( 42 );
         var right = SqlNode.Parameter<string>( "foo" );
 
-        var action = Lambda.Of( () => left / right );
+        var sut = left / right;
 
-        action.Should().ThrowExactly<SqlNodeException>();
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.Divide );
+            sut.Type.Should().BeNull();
+            sut.Left.Should().BeSameAs( left );
+            sut.Right.Should().BeSameAs( right );
+        }
     }
 
     [Fact]
@@ -202,14 +230,20 @@ public class ArithmeticExpressionsTests : TestsBase
     }
 
     [Fact]
-    public void Modulo_ShouldThrowSqlNodeException_WhenOperandTypesAreIncompatible()
+    public void Modulo_ShouldCreateModuloExpressionNode_WithNullType_WhenOperandTypesAreIncompatible()
     {
         var left = SqlNode.Literal( 42 );
         var right = SqlNode.Parameter<string>( "foo" );
 
-        var action = Lambda.Of( () => left % right );
+        var sut = left % right;
 
-        action.Should().ThrowExactly<SqlNodeException>();
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.Modulo );
+            sut.Type.Should().BeNull();
+            sut.Left.Should().BeSameAs( left );
+            sut.Right.Should().BeSameAs( right );
+        }
     }
 
     [Fact]
@@ -231,14 +265,20 @@ public class ArithmeticExpressionsTests : TestsBase
     }
 
     [Fact]
-    public void bitwiseAnd_ShouldThrowSqlNodeException_WhenOperandTypesAreIncompatible()
+    public void bitwiseAnd_ShouldCreateBitwiseAndExpressionNode_WithNullType_WhenOperandTypesAreIncompatible()
     {
         var left = SqlNode.Literal( 42 );
         var right = SqlNode.Parameter<string>( "foo" );
 
-        var action = Lambda.Of( () => left & right );
+        var sut = left & right;
 
-        action.Should().ThrowExactly<SqlNodeException>();
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.BitwiseAnd );
+            sut.Type.Should().BeNull();
+            sut.Left.Should().BeSameAs( left );
+            sut.Right.Should().BeSameAs( right );
+        }
     }
 
     [Fact]
@@ -260,14 +300,20 @@ public class ArithmeticExpressionsTests : TestsBase
     }
 
     [Fact]
-    public void BitwiseOr_ShouldThrowSqlNodeException_WhenOperandTypesAreIncompatible()
+    public void BitwiseOr_ShouldCreateBitwiseOrExpressionNode_WithNullType_WhenOperandTypesAreIncompatible()
     {
         var left = SqlNode.Literal( 42 );
         var right = SqlNode.Parameter<string>( "foo" );
 
-        var action = Lambda.Of( () => left | right );
+        var sut = left | right;
 
-        action.Should().ThrowExactly<SqlNodeException>();
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.BitwiseOr );
+            sut.Type.Should().BeNull();
+            sut.Left.Should().BeSameAs( left );
+            sut.Right.Should().BeSameAs( right );
+        }
     }
 
     [Fact]
@@ -289,14 +335,20 @@ public class ArithmeticExpressionsTests : TestsBase
     }
 
     [Fact]
-    public void BitwiseXor_ShouldThrowSqlNodeException_WhenOperandTypesAreIncompatible()
+    public void BitwiseXor_ShouldCreateBitwiseXorExpressionNode_WithNullType_WhenOperandTypesAreIncompatible()
     {
         var left = SqlNode.Literal( 42 );
         var right = SqlNode.Parameter<string>( "foo" );
 
-        var action = Lambda.Of( () => left ^ right );
+        var sut = left ^ right;
 
-        action.Should().ThrowExactly<SqlNodeException>();
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.BitwiseXor );
+            sut.Type.Should().BeNull();
+            sut.Left.Should().BeSameAs( left );
+            sut.Right.Should().BeSameAs( right );
+        }
     }
 
     [Fact]
@@ -318,17 +370,6 @@ public class ArithmeticExpressionsTests : TestsBase
     }
 
     [Fact]
-    public void BitwiseLeftShift_ShouldThrowSqlNodeException_WhenOperandTypesAreIncompatible()
-    {
-        var left = SqlNode.Literal( 42 );
-        var right = SqlNode.Parameter<string>( "foo" );
-
-        var action = Lambda.Of( () => left.BitwiseLeftShift( right ) );
-
-        action.Should().ThrowExactly<SqlNodeException>();
-    }
-
-    [Fact]
     public void BitwiseRightShift_ShouldCreateBitwiseRightShiftExpressionNode()
     {
         var left = SqlNode.Literal( 42 );
@@ -344,16 +385,5 @@ public class ArithmeticExpressionsTests : TestsBase
             sut.Right.Should().BeSameAs( right );
             text.Should().Be( $"({left}) >> ({right})" );
         }
-    }
-
-    [Fact]
-    public void BitwiseRightShift_ShouldThrowSqlNodeException_WhenOperandTypesAreIncompatible()
-    {
-        var left = SqlNode.Literal( 42 );
-        var right = SqlNode.Parameter<string>( "foo" );
-
-        var action = Lambda.Of( () => left.BitwiseRightShift( right ) );
-
-        action.Should().ThrowExactly<SqlNodeException>();
     }
 }

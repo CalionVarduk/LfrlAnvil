@@ -24,6 +24,8 @@ public enum SqlNodeType : byte
     BitwiseRightShift,
     SwitchCase,
     Switch,
+    FunctionExpression,
+    AggregateFunctionExpression,
     RawCondition,
     True,
     False,

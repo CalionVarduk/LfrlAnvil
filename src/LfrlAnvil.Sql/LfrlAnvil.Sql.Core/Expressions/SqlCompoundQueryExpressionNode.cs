@@ -117,10 +117,7 @@ public sealed class SqlCompoundQueryExpressionNode : SqlExtendableQueryExpressio
                 return;
 
             var currentType = entry.Node.Type;
-            var newType = SqlExpressionType.HaveCommonType( currentType, type )
-                ? SqlExpressionType.GetCommonType( currentType, type )
-                : null;
-
+            var newType = SqlExpressionType.GetCommonType( currentType, type );
             if ( currentType == newType )
                 return;
 
