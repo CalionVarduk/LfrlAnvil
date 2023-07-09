@@ -9,7 +9,7 @@ namespace LfrlAnvil.Sql.Expressions.Objects;
 
 public sealed class SqlCommonTableExpressionRecordSetNode : SqlRecordSetNode
 {
-    private Dictionary<string, SqlRawDataFieldNode>? _fields;
+    private Dictionary<string, SqlQueryDataFieldNode>? _fields;
 
     internal SqlCommonTableExpressionRecordSetNode(SqlCommonTableExpressionNode commonTableExpression, string? alias, bool isOptional)
         : base( isOptional )
@@ -26,8 +26,10 @@ public sealed class SqlCommonTableExpressionRecordSetNode : SqlRecordSetNode
     [MemberNotNullWhen( true, nameof( Alias ) )]
     public override bool IsAliased => Alias is not null;
 
+    public new SqlQueryDataFieldNode this[string fieldName] => GetField( fieldName );
+
     [Pure]
-    public override IReadOnlyCollection<SqlDataFieldNode> GetKnownFields()
+    public override IReadOnlyCollection<SqlQueryDataFieldNode> GetKnownFields()
     {
         _fields ??= CreateKnownFields();
         return _fields.Values;
@@ -41,7 +43,7 @@ public sealed class SqlCommonTableExpressionRecordSetNode : SqlRecordSetNode
     }
 
     [Pure]
-    public override SqlDataFieldNode GetField(string name)
+    public override SqlQueryDataFieldNode GetField(string name)
     {
         _fields ??= CreateKnownFields();
         return _fields[name];
@@ -75,13 +77,16 @@ public sealed class SqlCommonTableExpressionRecordSetNode : SqlRecordSetNode
     }
 
     [Pure]
-    private Dictionary<string, SqlRawDataFieldNode> CreateKnownFields()
+    private Dictionary<string, SqlQueryDataFieldNode> CreateKnownFields()
     {
         var selections = CommonTableExpression.Query.Selection.Span;
         var converter = new FieldConverter( this, selections.Length );
 
         foreach ( var selection in selections )
+        {
+            converter.Selection = selection;
             selection.Convert( converter );
+        }
 
         return converter.Fields;
     }
@@ -93,26 +98,18 @@ public sealed class SqlCommonTableExpressionRecordSetNode : SqlRecordSetNode
         internal FieldConverter(SqlCommonTableExpressionRecordSetNode recordSet, int capacity)
         {
             _recordSet = recordSet;
-            Fields = new Dictionary<string, SqlRawDataFieldNode>( capacity: capacity, comparer: StringComparer.OrdinalIgnoreCase );
+            Fields = new Dictionary<string, SqlQueryDataFieldNode>( capacity: capacity, comparer: StringComparer.OrdinalIgnoreCase );
         }
 
-        internal Dictionary<string, SqlRawDataFieldNode> Fields { get; }
+        internal Dictionary<string, SqlQueryDataFieldNode> Fields { get; }
+        internal SqlSelectNode? Selection { get; set; }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public void Add(string name, SqlExpressionType? type)
+        public void Add(string name, SqlExpressionNode? expression)
         {
-            var field = new SqlRawDataFieldNode( _recordSet, name, GetType( type ) );
-            Fields.Add( field.Name, field );
-        }
-
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private SqlExpressionType? GetType(SqlExpressionType? type)
-        {
-            if ( type is null )
-                return null;
-
-            return _recordSet.IsOptional ? type.Value.MakeNullable() : type;
+            Assume.IsNotNull( Selection, nameof( Selection ) );
+            var field = new SqlQueryDataFieldNode( _recordSet, name, Selection, expression );
+            Fields.Add( name, field );
         }
     }
 }

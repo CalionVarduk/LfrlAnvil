@@ -12,14 +12,13 @@ public sealed class SqlSelectAllNode : SqlSelectNode
     }
 
     public SqlDataSourceNode DataSource { get; }
-    public override SqlExpressionType? Type => null;
 
     internal override void Convert(ISqlSelectNodeConverter converter)
     {
         foreach ( var recordSet in DataSource.RecordSets )
         {
             foreach ( var field in recordSet.GetKnownFields() )
-                converter.Add( field.Name, field.Type );
+                converter.Add( field.Name, field );
         }
     }
 

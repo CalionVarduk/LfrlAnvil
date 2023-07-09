@@ -9,12 +9,7 @@ public sealed class SqlSumAggregateFunctionExpressionNode : SqlAggregateFunction
     internal SqlSumAggregateFunctionExpressionNode(
         ReadOnlyMemory<SqlExpressionNode> arguments,
         Chain<SqlAggregateFunctionDecoratorNode> decorators)
-        : base( SqlFunctionType.Sum, arguments, decorators )
-    {
-        Type = arguments.Span[0].Type;
-    }
-
-    public override SqlExpressionType? Type { get; }
+        : base( SqlFunctionType.Sum, arguments, decorators ) { }
 
     [Pure]
     public override SqlSumAggregateFunctionExpressionNode Decorate(SqlAggregateFunctionDecoratorNode decorator)

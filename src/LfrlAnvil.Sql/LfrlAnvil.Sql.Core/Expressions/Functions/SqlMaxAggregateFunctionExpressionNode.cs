@@ -9,12 +9,7 @@ public sealed class SqlMaxAggregateFunctionExpressionNode : SqlAggregateFunction
     internal SqlMaxAggregateFunctionExpressionNode(
         ReadOnlyMemory<SqlExpressionNode> arguments,
         Chain<SqlAggregateFunctionDecoratorNode> decorators)
-        : base( SqlFunctionType.Max, arguments, decorators )
-    {
-        Type = arguments.Span[0].Type;
-    }
-
-    public override SqlExpressionType? Type { get; }
+        : base( SqlFunctionType.Max, arguments, decorators ) { }
 
     [Pure]
     public override SqlMaxAggregateFunctionExpressionNode Decorate(SqlAggregateFunctionDecoratorNode decorator)

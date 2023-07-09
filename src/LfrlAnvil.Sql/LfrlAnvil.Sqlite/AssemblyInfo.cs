@@ -29,5 +29,4 @@
 //   ^ this interpreter must be customizable through DB builder
 // - Add CREATE/DROP (TEMP)TABLE/INDEX nodes
 // - Add INSERT/UPDATE/DELETE nodes
-// - Add DummyDataSource node (SELECT without FROM)
-// - Refactor sql expression node types (leave most of it to interpreters)
+// - Add DummyDataSource node (SELECT without FROM) <= NEXT

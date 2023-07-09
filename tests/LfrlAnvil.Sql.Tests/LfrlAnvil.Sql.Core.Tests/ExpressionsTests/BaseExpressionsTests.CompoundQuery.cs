@@ -13,15 +13,18 @@ public partial class BaseExpressionsTests
         public void Selection_ShouldContainTypedSelections_WhenAllQueriesHaveSimilarSelections()
         {
             var set1 = SqlNode.RawRecordSet( "foo" ).ToDataSource();
+            var a1 = set1.From.GetRawField( "a", SqlExpressionType.Create<int>() );
+            var a1Select = a1.AsSelf();
+            var b1 = set1.From.GetRawField( "b", SqlExpressionType.Create<string>() );
+            var b1Select = b1.AsSelf();
+            var query1 = set1.Select( a1Select, b1Select );
+
             var set2 = SqlNode.RawRecordSet( "bar" ).ToDataSource();
-
-            var query1 = set1.Select(
-                set1.From.GetRawField( "a", SqlExpressionType.Create<int>() ).AsSelf(),
-                set1.From.GetRawField( "b", SqlExpressionType.Create<string>() ).AsSelf() );
-
-            var query2 = set2.Select(
-                set2.From.GetRawField( "a", SqlExpressionType.Create<int>( isNullable: true ) ).AsSelf(),
-                set2.From.GetRawField( "b", SqlExpressionType.Create<string>() ).AsSelf() );
+            var a2 = set2.From.GetRawField( "a", SqlExpressionType.Create<int>( isNullable: true ) );
+            var a2Select = a2.AsSelf();
+            var b2 = set2.From.GetRawField( "b", SqlExpressionType.Create<string>() );
+            var b2Select = b2.AsSelf();
+            var query2 = set2.Select( a2Select, b2Select );
 
             var sut = query1.CompoundWith( query2.ToUnion() );
 
@@ -31,89 +34,35 @@ public partial class BaseExpressionsTests
             {
                 result.Should().HaveCount( 2 );
 
-                result.ElementAtOrDefault( 0 )
-                    .Should()
-                    .BeEquivalentTo( SqlNode.RawSelect( "a", alias: null, SqlExpressionType.Create<int>( isNullable: true ) ) );
+                var element1 = result.ElementAtOrDefault( 0 ) as SqlSelectCompoundFieldNode;
+                (element1?.ToString()).Should().Be( "[a]" );
+                (element1?.NodeType).Should().Be( SqlNodeType.SelectCompoundField );
+                (element1?.Name).Should().Be( "a" );
+                (element1?.Origins.Length).Should().Be( 2 );
 
-                result.ElementAtOrDefault( 1 )
-                    .Should()
-                    .BeEquivalentTo( SqlNode.RawSelect( "b", alias: null, SqlExpressionType.Create<string>() ) );
-            }
-        }
+                var origin1 = element1?.Origins.Span[0];
+                (origin1?.QueryIndex).Should().Be( 0 );
+                (origin1?.Selection).Should().BeSameAs( a1Select );
+                (origin1?.Expression).Should().BeSameAs( a1 );
+                var origin2 = element1?.Origins.Span[1];
+                (origin2?.QueryIndex).Should().Be( 1 );
+                (origin2?.Selection).Should().BeSameAs( a2Select );
+                (origin2?.Expression).Should().BeSameAs( a2 );
 
-        [Fact]
-        public void Selection_ShouldContainUntypedSelections_WhenFirstQueryIsRaw()
-        {
-            var set2 = SqlNode.RawRecordSet( "bar" ).ToDataSource();
-            var query1 = SqlNode.RawQuery( "SELECT a, b FROM foo" );
+                var element2 = result.ElementAtOrDefault( 1 ) as SqlSelectCompoundFieldNode;
+                (element2?.ToString()).Should().Be( "[b]" );
+                (element2?.NodeType).Should().Be( SqlNodeType.SelectCompoundField );
+                (element2?.Name).Should().Be( "b" );
+                (element2?.Origins.Length).Should().Be( 2 );
 
-            var query2 = set2.Select(
-                set2.From.GetRawField( "a", SqlExpressionType.Create<int>( isNullable: true ) ).AsSelf(),
-                set2.From.GetRawField( "b", SqlExpressionType.Create<string>() ).AsSelf() );
-
-            var sut = query1.CompoundWith( query2.ToUnion() );
-
-            var result = sut.Selection.ToArray();
-
-            using ( new AssertionScope() )
-            {
-                result.Should().HaveCount( 2 );
-                result.ElementAtOrDefault( 0 ).Should().BeEquivalentTo( SqlNode.RawSelect( "a", alias: null, type: null ) );
-                result.ElementAtOrDefault( 1 ).Should().BeEquivalentTo( SqlNode.RawSelect( "b", alias: null, type: null ) );
-            }
-        }
-
-        [Fact]
-        public void Selection_ShouldContainUntypedSelections_WhenFollowingQueryIsRaw()
-        {
-            var set1 = SqlNode.RawRecordSet( "bar" ).ToDataSource();
-            var set3 = SqlNode.RawRecordSet( "qux" ).ToDataSource();
-
-            var query1 = set1.Select(
-                set1.From.GetRawField( "a", SqlExpressionType.Create<int>( isNullable: true ) ).AsSelf(),
-                set1.From.GetRawField( "b", SqlExpressionType.Create<string>() ).AsSelf() );
-
-            var query2 = SqlNode.RawQuery( "SELECT a, b FROM foo" );
-
-            var query3 = set3.Select(
-                set3.From.GetRawField( "a", SqlExpressionType.Create<int>() ).AsSelf(),
-                set3.From.GetRawField( "b", SqlExpressionType.Create<long>() ).AsSelf() );
-
-            var sut = query1.CompoundWith( query2.ToUnion(), query3.ToUnion() );
-
-            var result = sut.Selection.ToArray();
-
-            using ( new AssertionScope() )
-            {
-                result.Should().HaveCount( 2 );
-                result.ElementAtOrDefault( 0 ).Should().BeEquivalentTo( SqlNode.RawSelect( "a", alias: null, type: null ) );
-                result.ElementAtOrDefault( 1 ).Should().BeEquivalentTo( SqlNode.RawSelect( "b", alias: null, type: null ) );
-            }
-        }
-
-        [Fact]
-        public void Selection_ShouldContainUntypedSelections_WhenFieldTypesAreIncompatible()
-        {
-            var set1 = SqlNode.RawRecordSet( "bar" ).ToDataSource();
-            var set2 = SqlNode.RawRecordSet( "qux" ).ToDataSource();
-
-            var query1 = set1.Select(
-                set1.From.GetRawField( "a", SqlExpressionType.Create<int>( isNullable: true ) ).AsSelf(),
-                set1.From.GetRawField( "b", SqlExpressionType.Create<string>() ).AsSelf() );
-
-            var query2 = set2.Select(
-                set2.From.GetRawField( "a", SqlExpressionType.Create<string>() ).AsSelf(),
-                SqlNode.RawSelect( "b", alias: null, type: SqlExpressionType.Create<long>() ) );
-
-            var sut = query1.CompoundWith( query2.ToUnion() );
-
-            var result = sut.Selection.ToArray();
-
-            using ( new AssertionScope() )
-            {
-                result.Should().HaveCount( 2 );
-                result.ElementAtOrDefault( 0 ).Should().BeEquivalentTo( SqlNode.RawSelect( "a", alias: null, type: null ) );
-                result.ElementAtOrDefault( 1 ).Should().BeEquivalentTo( SqlNode.RawSelect( "b", alias: null, type: null ) );
+                var origin3 = element2?.Origins.Span[0];
+                (origin3?.QueryIndex).Should().Be( 0 );
+                (origin3?.Selection).Should().BeSameAs( b1Select );
+                (origin3?.Expression).Should().BeSameAs( b1 );
+                var origin4 = element2?.Origins.Span[1];
+                (origin4?.QueryIndex).Should().Be( 1 );
+                (origin4?.Selection).Should().BeSameAs( b2Select );
+                (origin4?.Expression).Should().BeSameAs( b2 );
             }
         }
 
@@ -125,8 +74,11 @@ public partial class BaseExpressionsTests
             var t3 = TableMock.Create( "T3", areColumnsNullable: false, "c" ).ToRecordSet();
             var set2 = t2.Join( t3.InnerOn( t2["a"] == t3["c"] ) );
 
-            var query1 = set1.Select( set1.GetAll() );
-            var query2 = set2.Select( set2["T2"].GetAll() );
+            var select1 = set1.GetAll();
+            var select2 = set2["T2"].GetAll();
+
+            var query1 = set1.Select( select1 );
+            var query2 = set2.Select( select2 );
 
             var sut = query1.CompoundWith( query2.ToUnion() );
 
@@ -136,13 +88,21 @@ public partial class BaseExpressionsTests
             {
                 result.Should().HaveCount( 2 );
 
-                result.ElementAtOrDefault( 0 )
-                    .Should()
-                    .BeEquivalentTo( SqlNode.RawSelect( "a", alias: null, SqlExpressionType.Create<int>() ) );
+                var element1 = result.ElementAtOrDefault( 0 ) as SqlSelectCompoundFieldNode;
+                (element1?.NodeType).Should().Be( SqlNodeType.SelectCompoundField );
+                (element1?.Name).Should().Be( "a" );
+                (element1?.Origins.ToArray()).Should()
+                    .BeSequentiallyEqualTo(
+                        new SqlSelectCompoundFieldNode.Origin( QueryIndex: 0, Selection: select1, Expression: set1["T1"]["a"] ),
+                        new SqlSelectCompoundFieldNode.Origin( QueryIndex: 1, Selection: select2, Expression: set2["T2"]["a"] ) );
 
-                result.ElementAtOrDefault( 1 )
-                    .Should()
-                    .BeEquivalentTo( SqlNode.RawSelect( "b", alias: null, SqlExpressionType.Create<int>() ) );
+                var element2 = result.ElementAtOrDefault( 1 ) as SqlSelectCompoundFieldNode;
+                (element2?.NodeType).Should().Be( SqlNodeType.SelectCompoundField );
+                (element2?.Name).Should().Be( "b" );
+                (element2?.Origins.ToArray()).Should()
+                    .BeSequentiallyEqualTo(
+                        new SqlSelectCompoundFieldNode.Origin( QueryIndex: 0, Selection: select1, Expression: set1["T1"]["b"] ),
+                        new SqlSelectCompoundFieldNode.Origin( QueryIndex: 1, Selection: select2, Expression: set2["T2"]["b"] ) );
             }
         }
 

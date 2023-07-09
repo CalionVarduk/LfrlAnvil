@@ -9,13 +9,7 @@ public sealed class SqlAverageAggregateFunctionExpressionNode : SqlAggregateFunc
     internal SqlAverageAggregateFunctionExpressionNode(
         ReadOnlyMemory<SqlExpressionNode> arguments,
         Chain<SqlAggregateFunctionDecoratorNode> decorators)
-        : base( SqlFunctionType.Average, arguments, decorators )
-    {
-        var argumentType = arguments.Span[0].Type;
-        Type = argumentType is null ? null : SqlExpressionType.Create<double>( isNullable: argumentType.Value.IsNullable );
-    }
-
-    public override SqlExpressionType? Type { get; }
+        : base( SqlFunctionType.Average, arguments, decorators ) { }
 
     [Pure]
     public override SqlAverageAggregateFunctionExpressionNode Decorate(SqlAggregateFunctionDecoratorNode decorator)

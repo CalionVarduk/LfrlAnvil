@@ -9,7 +9,7 @@ namespace LfrlAnvil.Sql.Expressions.Objects;
 
 public sealed class SqlQueryRecordSetNode : SqlRecordSetNode
 {
-    private Dictionary<string, SqlRawDataFieldNode>? _fields;
+    private Dictionary<string, SqlQueryDataFieldNode>? _fields;
 
     internal SqlQueryRecordSetNode(SqlQueryExpressionNode query, string alias, bool isOptional)
         : base( isOptional )
@@ -22,9 +22,10 @@ public sealed class SqlQueryRecordSetNode : SqlRecordSetNode
     public SqlQueryExpressionNode Query { get; }
     public override string Name { get; }
     public override bool IsAliased => true;
+    public new SqlQueryDataFieldNode this[string fieldName] => GetField( fieldName );
 
     [Pure]
-    public override IReadOnlyCollection<SqlDataFieldNode> GetKnownFields()
+    public override IReadOnlyCollection<SqlQueryDataFieldNode> GetKnownFields()
     {
         _fields ??= CreateKnownFields();
         return _fields.Values;
@@ -38,7 +39,7 @@ public sealed class SqlQueryRecordSetNode : SqlRecordSetNode
     }
 
     [Pure]
-    public override SqlDataFieldNode GetField(string name)
+    public override SqlQueryDataFieldNode GetField(string name)
     {
         _fields ??= CreateKnownFields();
         return _fields[name];
@@ -72,13 +73,16 @@ public sealed class SqlQueryRecordSetNode : SqlRecordSetNode
     }
 
     [Pure]
-    private Dictionary<string, SqlRawDataFieldNode> CreateKnownFields()
+    private Dictionary<string, SqlQueryDataFieldNode> CreateKnownFields()
     {
         var selections = Query.Selection.Span;
         var converter = new FieldConverter( this, selections.Length );
 
         foreach ( var selection in selections )
+        {
+            converter.Selection = selection;
             selection.Convert( converter );
+        }
 
         return converter.Fields;
     }
@@ -90,26 +94,18 @@ public sealed class SqlQueryRecordSetNode : SqlRecordSetNode
         internal FieldConverter(SqlQueryRecordSetNode recordSet, int capacity)
         {
             _recordSet = recordSet;
-            Fields = new Dictionary<string, SqlRawDataFieldNode>( capacity: capacity, comparer: StringComparer.OrdinalIgnoreCase );
+            Fields = new Dictionary<string, SqlQueryDataFieldNode>( capacity: capacity, comparer: StringComparer.OrdinalIgnoreCase );
         }
 
-        internal Dictionary<string, SqlRawDataFieldNode> Fields { get; }
+        internal Dictionary<string, SqlQueryDataFieldNode> Fields { get; }
+        internal SqlSelectNode? Selection { get; set; }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public void Add(string name, SqlExpressionType? type)
+        public void Add(string name, SqlExpressionNode? expression)
         {
-            var field = new SqlRawDataFieldNode( _recordSet, name, GetType( type ) );
+            Assume.IsNotNull( Selection, nameof( Selection ) );
+            var field = new SqlQueryDataFieldNode( _recordSet, name, Selection, expression );
             Fields.Add( field.Name, field );
-        }
-
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private SqlExpressionType? GetType(SqlExpressionType? type)
-        {
-            if ( type is null )
-                return null;
-
-            return _recordSet.IsOptional ? type.Value.MakeNullable() : type;
         }
     }
 }

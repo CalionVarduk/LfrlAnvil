@@ -9,11 +9,9 @@ public sealed class SqlConditionValueNode : SqlExpressionNode
         : base( SqlNodeType.ConditionValue )
     {
         Condition = condition;
-        Type = SqlExpressionType.Create<bool>();
     }
 
     public SqlConditionNode Condition { get; }
-    public override SqlExpressionType? Type { get; }
 
     protected override void ToString(StringBuilder builder, int indent)
     {

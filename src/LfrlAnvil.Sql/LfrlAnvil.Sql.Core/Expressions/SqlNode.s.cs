@@ -354,26 +354,6 @@ public static partial class SqlNode
     }
 
     [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlRawSelectFieldNode RawSelect(string name, SqlExpressionType? type = null)
-    {
-        return RawSelect( name, alias: null, type );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlRawSelectFieldNode RawSelect(string name, string? alias, SqlExpressionType? type = null)
-    {
-        return RawSelect( recordSetName: null, name, alias, type );
-    }
-
-    [Pure]
-    public static SqlRawSelectFieldNode RawSelect(string? recordSetName, string name, string? alias, SqlExpressionType? type = null)
-    {
-        return new SqlRawSelectFieldNode( recordSetName, name, alias, type );
-    }
-
-    [Pure]
     public static SqlSelectFieldNode Select(SqlExpressionNode expression, string alias)
     {
         return new SqlSelectFieldNode( expression, alias );

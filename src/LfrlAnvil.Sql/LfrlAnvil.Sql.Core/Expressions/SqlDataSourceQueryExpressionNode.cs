@@ -29,7 +29,6 @@ public sealed class SqlDataSourceQueryExpressionNode<TDataSourceNode> : SqlDataS
     {
         DataSource = dataSource;
         Selection = selection;
-        Type = selection.Length != 1 ? null : selection.Span[0].Type?.MakeNullable();
     }
 
     internal SqlDataSourceQueryExpressionNode(TDataSourceNode dataSource, SqlQueryDecoratorNode decorator)
@@ -37,7 +36,6 @@ public sealed class SqlDataSourceQueryExpressionNode<TDataSourceNode> : SqlDataS
     {
         DataSource = dataSource;
         Selection = ReadOnlyMemory<SqlSelectNode>.Empty;
-        Type = null;
     }
 
     private SqlDataSourceQueryExpressionNode(
@@ -47,7 +45,6 @@ public sealed class SqlDataSourceQueryExpressionNode<TDataSourceNode> : SqlDataS
     {
         DataSource = @base.DataSource;
         Selection = @base.Selection;
-        Type = @base.Type;
     }
 
     private SqlDataSourceQueryExpressionNode(SqlDataSourceQueryExpressionNode<TDataSourceNode> @base, TDataSourceNode dataSource)
@@ -55,12 +52,10 @@ public sealed class SqlDataSourceQueryExpressionNode<TDataSourceNode> : SqlDataS
     {
         DataSource = dataSource;
         Selection = @base.Selection;
-        Type = @base.Type;
     }
 
     public override TDataSourceNode DataSource { get; }
     public override ReadOnlyMemory<SqlSelectNode> Selection { get; }
-    public override SqlExpressionType? Type { get; }
 
     [Pure]
     public override SqlDataSourceQueryExpressionNode<TDataSourceNode> Select(params SqlSelectNode[] selection)

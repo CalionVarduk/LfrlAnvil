@@ -14,12 +14,11 @@ public sealed class SqlSelectFieldNode : SqlSelectNode
 
     public SqlExpressionNode Expression { get; }
     public string? Alias { get; }
-    public override SqlExpressionType? Type => Expression.Type;
     public string FieldName => Alias ?? ReinterpretCast.To<SqlDataFieldNode>( Expression ).Name;
 
     internal override void Convert(ISqlSelectNodeConverter converter)
     {
-        converter.Add( FieldName, Type );
+        converter.Add( FieldName, Expression );
     }
 
     protected override void ToString(StringBuilder builder, int indent)

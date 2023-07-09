@@ -9,12 +9,7 @@ public sealed class SqlMinAggregateFunctionExpressionNode : SqlAggregateFunction
     internal SqlMinAggregateFunctionExpressionNode(
         ReadOnlyMemory<SqlExpressionNode> arguments,
         Chain<SqlAggregateFunctionDecoratorNode> decorators)
-        : base( SqlFunctionType.Min, arguments, decorators )
-    {
-        Type = arguments.Span[0].Type;
-    }
-
-    public override SqlExpressionType? Type { get; }
+        : base( SqlFunctionType.Min, arguments, decorators ) { }
 
     [Pure]
     public override SqlMinAggregateFunctionExpressionNode Decorate(SqlAggregateFunctionDecoratorNode decorator)

@@ -324,7 +324,8 @@ public class ExpressionDecoratorsTests : TestsBase
     [Fact]
     public void OrderByAsc_ShouldCreateOrderByNode_FromSelection()
     {
-        var selection = SqlNode.RawSelect( "foo", "bar" );
+        var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
+        var selection = dataSource.From["bar"].As( "qux" );
         var sut = selection.Asc();
         var text = sut.ToString();
 
@@ -333,14 +334,15 @@ public class ExpressionDecoratorsTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.OrderBy );
             sut.Expression.Should().BeEquivalentTo( selection.ToExpression() );
             sut.Ordering.Should().BeSameAs( OrderBy.Asc );
-            text.Should().Be( "(([foo] : ?) AS [bar]) ASC" );
+            text.Should().Be( "(([foo].[bar] : ?) AS [qux]) ASC" );
         }
     }
 
     [Fact]
     public void OrderByDesc_ShouldCreateOrderByNode_FromSelection()
     {
-        var selection = SqlNode.RawSelect( "foo", "bar" );
+        var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
+        var selection = dataSource.From["bar"].As( "qux" );
         var sut = selection.Desc();
         var text = sut.ToString();
 
@@ -349,7 +351,7 @@ public class ExpressionDecoratorsTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.OrderBy );
             sut.Expression.Should().BeEquivalentTo( selection.ToExpression() );
             sut.Ordering.Should().BeSameAs( OrderBy.Desc );
-            text.Should().Be( "(([foo] : ?) AS [bar]) DESC" );
+            text.Should().Be( "(([foo].[bar] : ?) AS [qux]) DESC" );
         }
     }
 
@@ -413,7 +415,6 @@ DISTINCT" );
             sut.Should().NotBeSameAs( function );
             sut.NodeType.Should().Be( function.NodeType );
             sut.FunctionType.Should().Be( function.FunctionType );
-            sut.Type.Should().Be( function.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( function.Arguments.ToArray() );
             sut.Decorators.Should().HaveCount( 1 );
             (sut.Decorators.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctDecorator );
@@ -495,7 +496,6 @@ AND WHERE
             sut.Should().NotBeSameAs( function );
             sut.NodeType.Should().Be( function.NodeType );
             sut.FunctionType.Should().Be( function.FunctionType );
-            sut.Type.Should().Be( function.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( function.Arguments.ToArray() );
             sut.Decorators.Should().HaveCount( 1 );
             (sut.Decorators.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.FilterDecorator );
@@ -578,7 +578,6 @@ OR WHERE
             sut.Should().NotBeSameAs( function );
             sut.NodeType.Should().Be( function.NodeType );
             sut.FunctionType.Should().Be( function.FunctionType );
-            sut.Type.Should().Be( function.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( function.Arguments.ToArray() );
             sut.Decorators.Should().HaveCount( 1 );
             (sut.Decorators.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.FilterDecorator );
@@ -810,7 +809,6 @@ OR HAVING
             sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
             sut.DataSource.Should().BeSameAs( dataSource );
             sut.Selection.ToArray().Should().BeEmpty();
-            sut.Type.Should().BeNull();
             sut.Decorators.Should().HaveCount( 1 );
             (sut.Decorators.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SortDecorator );
             text.Should()
@@ -834,7 +832,6 @@ SELECT" );
             sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
             sut.DataSource.Should().BeSameAs( dataSource );
             sut.Selection.ToArray().Should().BeEmpty();
-            sut.Type.Should().BeNull();
             sut.Decorators.Should().BeEmpty();
             text.Should()
                 .Be(
@@ -859,7 +856,6 @@ SELECT" );
             sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
             sut.DataSource.Should().BeSameAs( dataSource );
             sut.Selection.ToArray().Should().BeEmpty();
-            sut.Type.Should().BeNull();
             sut.Decorators.Should().HaveCount( 1 );
             (sut.Decorators.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SortDecorator );
             text.Should()
@@ -886,7 +882,6 @@ SELECT" );
             sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
             sut.DataSource.Should().BeSameAs( dataSource );
             sut.Selection.ToArray().Should().BeEmpty();
-            sut.Type.Should().BeNull();
             sut.Decorators.Should().BeEmpty();
             text.Should()
                 .Be(
@@ -913,7 +908,6 @@ SELECT" );
             sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
             sut.DataSource.Should().BeSameAs( dataSource );
             sut.Selection.ToArray().Should().BeEmpty();
-            sut.Type.Should().BeNull();
             sut.Decorators.Should().HaveCount( 1 );
             (sut.Decorators.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.CommonTableExpressionDecorator );
             text.Should()
@@ -939,7 +933,6 @@ SELECT" );
             sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
             sut.DataSource.Should().BeSameAs( dataSource );
             sut.Selection.ToArray().Should().BeEmpty();
-            sut.Type.Should().BeNull();
             sut.Decorators.Should().BeEmpty();
             text.Should()
                 .Be(
@@ -965,7 +958,6 @@ SELECT" );
             sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
             sut.DataSource.Should().BeSameAs( dataSource );
             sut.Selection.ToArray().Should().BeEmpty();
-            sut.Type.Should().BeNull();
             sut.Decorators.Should().HaveCount( 1 );
             (sut.Decorators.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.CommonTableExpressionDecorator );
             text.Should()
@@ -996,7 +988,6 @@ SELECT" );
             sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
             sut.DataSource.Should().BeSameAs( dataSource );
             sut.Selection.ToArray().Should().BeEmpty();
-            sut.Type.Should().BeNull();
             sut.Decorators.Should().BeEmpty();
             text.Should()
                 .Be(
@@ -1020,7 +1011,6 @@ SELECT" );
             sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
             sut.DataSource.Should().BeSameAs( dataSource );
             sut.Selection.ToArray().Should().BeEmpty();
-            sut.Type.Should().BeNull();
             sut.Decorators.Should().HaveCount( 1 );
             (sut.Decorators.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.LimitDecorator );
             text.Should()
@@ -1044,7 +1034,6 @@ SELECT" );
             sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
             sut.DataSource.Should().BeSameAs( dataSource );
             sut.Selection.ToArray().Should().BeEmpty();
-            sut.Type.Should().BeNull();
             sut.Decorators.Should().HaveCount( 1 );
             (sut.Decorators.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.LimitDecorator );
             text.Should()
@@ -1070,7 +1059,6 @@ SELECT" );
             sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
             sut.DataSource.Should().BeSameAs( dataSource );
             sut.Selection.ToArray().Should().BeEmpty();
-            sut.Type.Should().BeNull();
             sut.Decorators.Should().HaveCount( 1 );
             (sut.Decorators.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.OffsetDecorator );
             text.Should()
@@ -1094,7 +1082,6 @@ SELECT" );
             sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
             sut.DataSource.Should().BeSameAs( dataSource );
             sut.Selection.ToArray().Should().BeEmpty();
-            sut.Type.Should().BeNull();
             sut.Decorators.Should().HaveCount( 1 );
             (sut.Decorators.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.OffsetDecorator );
             text.Should()

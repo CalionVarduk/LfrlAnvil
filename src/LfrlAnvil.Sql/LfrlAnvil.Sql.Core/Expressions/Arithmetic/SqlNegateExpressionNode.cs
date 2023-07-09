@@ -11,7 +11,6 @@ public sealed class SqlNegateExpressionNode : SqlExpressionNode
     }
 
     public SqlExpressionNode Value { get; }
-    public override SqlExpressionType? Type => Value.Type;
 
     protected override void ToString(StringBuilder builder, int indent)
     {

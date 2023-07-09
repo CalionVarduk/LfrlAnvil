@@ -603,7 +603,6 @@ public class LogicalExpressionsTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.ConditionValue );
-            sut.Type.Should().Be( SqlExpressionType.Create<bool>() );
             sut.Condition.Should().BeSameAs( condition );
             text.Should().Be( $"VALUE({condition})" );
         }

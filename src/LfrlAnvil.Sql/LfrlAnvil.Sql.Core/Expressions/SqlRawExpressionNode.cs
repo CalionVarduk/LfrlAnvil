@@ -16,7 +16,7 @@ public sealed class SqlRawExpressionNode : SqlExpressionNode
 
     public string Sql { get; }
     public ReadOnlyMemory<SqlParameterNode> Parameters { get; }
-    public override SqlExpressionType? Type { get; }
+    public SqlExpressionType? Type { get; }
 
     protected override void ToString(StringBuilder builder, int indent)
     {

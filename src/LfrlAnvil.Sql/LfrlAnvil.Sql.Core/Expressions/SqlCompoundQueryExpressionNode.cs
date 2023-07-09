@@ -34,7 +34,6 @@ public sealed class SqlCompoundQueryExpressionNode : SqlExtendableQueryExpressio
     public SqlQueryExpressionNode FirstQuery { get; }
     public ReadOnlyMemory<SqlCompoundQueryComponentNode> FollowingQueries { get; }
     public override ReadOnlyMemory<SqlSelectNode> Selection => _selection ??= CreateSelection();
-    public override SqlExpressionType? Type => null;
 
     [Pure]
     public override SqlCompoundQueryExpressionNode Decorate(SqlQueryDecoratorNode decorator)
@@ -61,68 +60,67 @@ public sealed class SqlCompoundQueryExpressionNode : SqlExtendableQueryExpressio
     [Pure]
     private ReadOnlyMemory<SqlSelectNode> CreateSelection()
     {
-        var ignoreTypes = FirstQuery.NodeType == SqlNodeType.RawQuery;
-        if ( ! ignoreTypes )
-        {
-            foreach ( var followingQuery in FollowingQueries.Span )
-            {
-                ignoreTypes = followingQuery.Query.NodeType == SqlNodeType.RawQuery;
-                if ( ignoreTypes )
-                    break;
-            }
-        }
+        var converter = new SelectionConverter( FirstQuery, FollowingQueries.Length + 1 );
 
-        var converter = new SelectionConverter( FirstQuery.Selection.Length, ignoreTypes );
         foreach ( var selection in FirstQuery.Selection.Span )
+        {
+            converter.Selection = selection;
             selection.Convert( converter );
+        }
 
         foreach ( var followingQuery in FollowingQueries.Span )
         {
+            ++converter.QueryIndex;
             foreach ( var selection in followingQuery.Query.Selection.Span )
+            {
+                converter.Selection = selection;
                 selection.Convert( converter );
+            }
         }
 
-        var result = converter.Selection.Count > 0 ? new SqlSelectNode[converter.Selection.Count] : Array.Empty<SqlSelectNode>();
-        converter.Selection.CopyTo( result );
-        return result;
+        return converter.GetSelection();
     }
 
     private sealed class SelectionConverter : ISqlSelectNodeConverter
     {
-        private readonly bool _ignoreTypes;
-        private readonly Dictionary<string, (SqlSelectNode Node, int Index)> _map;
+        private readonly int _queryCount;
+        private readonly Dictionary<string, List<SqlSelectCompoundFieldNode.Origin>> _origins;
 
-        internal SelectionConverter(int capacity, bool ignoreTypes)
+        internal SelectionConverter(SqlQueryExpressionNode firstQuery, int queryCount)
         {
-            _ignoreTypes = ignoreTypes;
-            Selection = new List<SqlSelectNode>( capacity: capacity );
-            _map = new Dictionary<string, (SqlSelectNode Node, int Index)>(
-                capacity: capacity,
+            QueryIndex = 0;
+            _queryCount = queryCount;
+            _origins = new Dictionary<string, List<SqlSelectCompoundFieldNode.Origin>>(
+                capacity: firstQuery.Selection.Length,
                 comparer: StringComparer.OrdinalIgnoreCase );
         }
 
-        internal List<SqlSelectNode> Selection { get; }
+        internal int QueryIndex { get; set; }
+        internal SqlSelectNode? Selection { get; set; }
 
-        public void Add(string name, SqlExpressionType? type)
+        public void Add(string name, SqlExpressionNode? expression)
         {
-            ref var entry = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, name, out var exists );
+            Assume.IsNotNull( Selection, nameof( Selection ) );
+
+            ref var origins = ref CollectionsMarshal.GetValueRefOrAddDefault( _origins, name, out var exists )!;
             if ( ! exists )
-            {
-                entry = (SqlNode.RawSelect( name, alias: null, type: _ignoreTypes ? null : type ), Selection.Count);
-                Selection.Add( entry.Node );
-                return;
-            }
+                origins = new List<SqlSelectCompoundFieldNode.Origin>( capacity: _queryCount );
 
-            if ( _ignoreTypes )
-                return;
+            origins.Add( new SqlSelectCompoundFieldNode.Origin( QueryIndex, Selection, expression ) );
+        }
 
-            var currentType = entry.Node.Type;
-            var newType = SqlExpressionType.GetCommonType( currentType, type );
-            if ( currentType == newType )
-                return;
+        [Pure]
+        internal ReadOnlyMemory<SqlSelectNode> GetSelection()
+        {
+            if ( _origins.Count == 0 )
+                return ReadOnlyMemory<SqlSelectNode>.Empty;
 
-            entry = (SqlNode.RawSelect( name, alias: null, newType ), entry.Index);
-            Selection[entry.Index] = entry.Node;
+            var index = 0;
+            var result = new SqlSelectCompoundFieldNode[_origins.Count];
+            foreach ( var (name, origin) in _origins )
+                result[index++] = new SqlSelectCompoundFieldNode( name, origin.ToArray() );
+
+            return result;
         }
     }
 }

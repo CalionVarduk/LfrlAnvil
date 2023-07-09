@@ -72,9 +72,9 @@ public partial class ObjectExpressionsTests
                 result.NodeType.Should().Be( SqlNodeType.Column );
                 result.Name.Should().Be( "Col0" );
                 result.RecordSet.Should().BeSameAs( sut );
-                result.Type.Should().Be( SqlExpressionType.Create<int>() );
                 var column = result as SqlColumnNode;
                 (column?.Value).Should().BeSameAs( table.Columns.Get( "Col0" ) );
+                (column?.Type).Should().Be( SqlExpressionType.Create<int>() );
                 text.Should().Be( "[foo].[Col0] : System.Int32" );
             }
         }
@@ -92,7 +92,8 @@ public partial class ObjectExpressionsTests
                 result.NodeType.Should().Be( SqlNodeType.RawDataField );
                 result.Name.Should().Be( "bar" );
                 result.RecordSet.Should().BeSameAs( sut );
-                result.Type.Should().BeNull();
+                var dataField = result as SqlRawDataFieldNode;
+                (dataField?.Type).Should().BeNull();
                 text.Should().Be( "[foo].[bar] : ?" );
             }
         }

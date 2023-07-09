@@ -31,24 +31,6 @@ public partial class BaseExpressionsTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.TypeCast );
-            sut.Type.Should().Be( SqlExpressionType.Create<long>( isNullable ) );
-            sut.TargetType.Should().Be( typeof( long ) );
-            sut.Node.Should().BeSameAs( node );
-            text.Should().Be( $"CAST(({node}) AS System.Int64)" );
-        }
-    }
-
-    [Fact]
-    public void TypeCast_ShouldCreateTypeCastExpressionNode_WhenNodeTypeIsUnknown()
-    {
-        var node = SqlNode.Parameter( "foo" );
-        var sut = node.CastTo<long>();
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.TypeCast );
-            sut.Type.Should().BeNull();
             sut.TargetType.Should().Be( typeof( long ) );
             sut.Node.Should().BeSameAs( node );
             text.Should().Be( $"CAST(({node}) AS System.Int64)" );
@@ -90,60 +72,6 @@ public partial class BaseExpressionsTests : TestsBase
     }
 
     [Fact]
-    public void RawSelect_ShouldCreateRawSelectFieldNode_WithAlias()
-    {
-        var sut = SqlNode.RawSelect( "foo", alias: "bar", SqlExpressionType.Create<int>() );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.RawSelectField );
-            sut.RecordSetName.Should().BeNull();
-            sut.Name.Should().Be( "foo" );
-            sut.Alias.Should().Be( "bar" );
-            sut.Type.Should().Be( SqlExpressionType.Create<int>() );
-            sut.FieldName.Should().Be( "bar" );
-            text.Should().Be( "([foo] : System.Int32) AS [bar]" );
-        }
-    }
-
-    [Fact]
-    public void RawSelect_ShouldCreateRawSelectFieldNode_WithoutAlias()
-    {
-        var sut = SqlNode.RawSelect( "foo" );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.RawSelectField );
-            sut.RecordSetName.Should().BeNull();
-            sut.Name.Should().Be( "foo" );
-            sut.Alias.Should().BeNull();
-            sut.Type.Should().BeNull();
-            sut.FieldName.Should().Be( "foo" );
-            text.Should().Be( "([foo] : ?)" );
-        }
-    }
-
-    [Fact]
-    public void RawSelect_ShouldCreateRawSelectFieldNode_WithRecordSetName()
-    {
-        var sut = SqlNode.RawSelect( "qux", "foo", alias: "bar", SqlExpressionType.Create<int>() );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.RawSelectField );
-            sut.RecordSetName.Should().Be( "qux" );
-            sut.Name.Should().Be( "foo" );
-            sut.Alias.Should().Be( "bar" );
-            sut.Type.Should().Be( SqlExpressionType.Create<int>() );
-            sut.FieldName.Should().Be( "bar" );
-            text.Should().Be( "([qux].[foo] : System.Int32) AS [bar]" );
-        }
-    }
-
-    [Fact]
     public void Select_ShouldCreateSelectFieldNode_WithExpressionAndAlias()
     {
         var expression = SqlNode.Parameter<int>( "foo" );
@@ -153,7 +81,6 @@ public partial class BaseExpressionsTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.SelectField );
-            sut.Type.Should().Be( expression.Type );
             sut.Alias.Should().Be( "bar" );
             sut.Expression.Should().BeSameAs( expression );
             sut.FieldName.Should().Be( "bar" );
@@ -171,7 +98,6 @@ public partial class BaseExpressionsTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.SelectField );
-            sut.Type.Should().Be( dataField.Type );
             sut.Alias.Should().Be( "qux" );
             sut.Expression.Should().BeSameAs( dataField );
             sut.FieldName.Should().Be( "qux" );
@@ -189,7 +115,6 @@ public partial class BaseExpressionsTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.SelectField );
-            sut.Type.Should().Be( dataField.Type );
             sut.Alias.Should().BeNull();
             sut.Expression.Should().BeSameAs( dataField );
             sut.FieldName.Should().Be( "bar" );
@@ -207,7 +132,6 @@ public partial class BaseExpressionsTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.SelectRecordSet );
-            sut.Type.Should().BeNull();
             sut.RecordSet.Should().BeSameAs( recordSet );
             text.Should().Be( "[foo].*" );
         }
@@ -223,7 +147,6 @@ public partial class BaseExpressionsTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.SelectAll );
-            sut.Type.Should().BeNull();
             sut.DataSource.Should().BeSameAs( dataSource );
             text.Should().Be( "*" );
         }
@@ -244,7 +167,6 @@ public partial class BaseExpressionsTests : TestsBase
             selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
             sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
             sut.Decorators.ToArray().Should().BeEmpty();
-            sut.Type.Should().BeNull();
             sut.DataSource.Should().BeSameAs( dataSource );
             sut.Selection.ToArray().Should().BeSequentiallyEqualTo( selection );
             text.Should()
@@ -267,7 +189,6 @@ SELECT
         {
             sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
             sut.Decorators.ToArray().Should().BeEmpty();
-            sut.Type.Should().BeNull();
             sut.DataSource.Should().BeSameAs( dataSource );
             sut.Selection.ToArray().Should().BeEmpty();
             text.Should()
@@ -289,7 +210,6 @@ SELECT" );
         {
             sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
             sut.Decorators.ToArray().Should().BeEmpty();
-            sut.Type.Should().Be( SqlExpressionType.Create<int>( isNullable: true ) );
             sut.DataSource.Should().BeSameAs( dataSource );
             sut.Selection.ToArray().Should().BeSequentiallyEqualTo( selection );
             text.Should()
@@ -314,7 +234,6 @@ WHERE id = @a AND value > @b";
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.RawQuery );
-            sut.Type.Should().BeNull();
             sut.Sql.Should().Be( sql );
             sut.Parameters.ToArray().Should().BeSequentiallyEqualTo( parameters );
             sut.Selection.ToArray().Should().BeEmpty();
@@ -342,7 +261,6 @@ WHERE value < 10" );
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.CompoundQuery );
-            sut.Type.Should().BeNull();
             sut.FirstQuery.Should().BeSameAs( query1 );
             sut.FollowingQueries.ToArray().Should().BeSequentiallyEqualTo( union );
             text.Should()
@@ -407,7 +325,6 @@ WHERE value > 10" );
         {
             sut.NodeType.Should().Be( SqlNodeType.Switch );
             sut.Default.Should().BeSameAs( defaultNode );
-            sut.Type.Should().Be( SqlExpressionType.Create<int>() );
             sut.Cases.ToArray().Should().BeSequentiallyEqualTo( firstCase, secondCase );
             text.Should()
                 .Be(
@@ -422,60 +339,11 @@ END" );
     }
 
     [Fact]
-    public void Switch_ShouldCreateSwitchExpressionNode_WithNullType_WhenDefaultNodeHasNullType()
-    {
-        var defaultNode = SqlNode.Parameter( "foo" );
-        var @case = SqlNode.SwitchCase( SqlNode.RawCondition( "bar > 10" ), SqlNode.Literal( 10 ) );
-        var sut = SqlNode.Switch( new[] { @case }, defaultNode );
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Switch );
-            sut.Default.Should().BeSameAs( defaultNode );
-            sut.Type.Should().BeNull();
-            sut.Cases.ToArray().Should().BeSequentiallyEqualTo( @case );
-        }
-    }
-
-    [Fact]
-    public void Switch_ShouldCreateSwitchExpressionNode_WithNullType_WhenAnyCaseExpressionNodeHasNullType()
-    {
-        var defaultNode = SqlNode.Parameter<int>( "foo" );
-        var @case = SqlNode.SwitchCase( SqlNode.RawCondition( "bar > 10" ), SqlNode.RawExpression( "10" ) );
-        var sut = SqlNode.Switch( new[] { @case }, defaultNode );
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Switch );
-            sut.Default.Should().BeSameAs( defaultNode );
-            sut.Type.Should().BeNull();
-            sut.Cases.ToArray().Should().BeSequentiallyEqualTo( @case );
-        }
-    }
-
-    [Fact]
     public void Switch_ShouldThrowArgumentException_WhenCasesAreEmpty()
     {
         var defaultNode = SqlNode.Parameter<int>( "foo" );
         var action = Lambda.Of( () => SqlNode.Switch( Enumerable.Empty<SqlSwitchCaseNode>(), defaultNode ) );
         action.Should().ThrowExactly<ArgumentException>();
-    }
-
-    [Fact]
-    public void Switch_ShouldCreateSwitchExpressionNode_WithNullType_WhenTypesAreIncompatible()
-    {
-        var defaultNode = SqlNode.Parameter<int>( "foo" );
-        var @case = SqlNode.SwitchCase( SqlNode.RawCondition( "bar > 10" ), SqlNode.Literal( "x" ) );
-
-        var sut = SqlNode.Switch( new[] { @case }, defaultNode );
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Switch );
-            sut.Default.Should().BeSameAs( defaultNode );
-            sut.Type.Should().BeNull();
-            sut.Cases.ToArray().Should().BeSequentiallyEqualTo( @case );
-        }
     }
 
     [Fact]
@@ -489,7 +357,6 @@ END" );
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.Switch );
-            sut.Type.Should().Be( SqlExpressionType.Create<int>() );
             sut.Default.Should().BeSameAs( whenFalse );
             sut.Cases.ToArray().Should().HaveCount( 1 );
             (sut.Cases.ToArray().ElementAtOrDefault( 0 )?.Condition).Should().BeSameAs( condition );
@@ -610,7 +477,8 @@ END" );
     [Fact]
     public void SelectExpression_ShouldCreateSelectExpressionNode()
     {
-        var selection = SqlNode.RawSelect( "foo", "bar", "qux" );
+        var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
+        var selection = dataSource.From.GetRawField( "bar", SqlExpressionType.Create<int>() ).AsSelf();
         var sut = selection.ToExpression();
         var text = sut.ToString();
 
@@ -618,7 +486,6 @@ END" );
         {
             sut.NodeType.Should().Be( SqlNodeType.SelectExpression );
             sut.Selection.Should().BeSameAs( selection );
-            sut.Type.Should().Be( selection.Type );
             text.Should().Be( selection.ToString() );
         }
     }

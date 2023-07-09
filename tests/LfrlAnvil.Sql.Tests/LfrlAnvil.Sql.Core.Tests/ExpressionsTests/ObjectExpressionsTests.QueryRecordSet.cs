@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Expressions;
+using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Tests.Helpers;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
@@ -52,16 +53,15 @@ public partial class ObjectExpressionsTests
             var sut = dataSource.Select(
                     dataSource["T1"]["a"].AsSelf(),
                     dataSource["T2"]["d"].AsSelf(),
-                    dataSource["T1"].GetUnsafeField( "e" ).AsSelf(),
-                    SqlNode.RawSelect( "T2", "f", alias: "g" ) )
+                    dataSource["T1"].GetUnsafeField( "e" ).AsSelf() )
                 .AsSet( "foo" );
 
             var result = sut.GetKnownFields();
 
             using ( new AssertionScope() )
             {
-                result.Should().HaveCount( 4 );
-                result.Should().BeEquivalentTo( sut.GetField( "a" ), sut.GetField( "d" ), sut.GetField( "e" ), sut.GetField( "g" ) );
+                result.Should().HaveCount( 3 );
+                result.Should().BeEquivalentTo( sut.GetField( "a" ), sut.GetField( "d" ), sut.GetField( "e" ) );
             }
         }
 
@@ -97,17 +97,20 @@ public partial class ObjectExpressionsTests
         public void GetUnsafeField_ShouldReturnKnownDataFieldNode_WhenNameIsKnown()
         {
             var dataSource = TableMock.Create( "t", areColumnsNullable: false, "a" ).ToRecordSet().ToDataSource();
-            var sut = dataSource.Select( dataSource.GetAll() ).AsSet( "foo" );
+            var selection = dataSource.GetAll();
+            var sut = dataSource.Select( selection ).AsSet( "foo" );
             var result = sut.GetUnsafeField( "a" );
             var text = result.ToString();
 
             using ( new AssertionScope() )
             {
-                result.NodeType.Should().Be( SqlNodeType.RawDataField );
+                result.NodeType.Should().Be( SqlNodeType.QueryDataField );
                 result.Name.Should().Be( "a" );
                 result.RecordSet.Should().BeSameAs( sut );
-                result.Type.Should().Be( SqlExpressionType.Create<int>() );
-                text.Should().Be( "[foo].[a] : System.Int32" );
+                var dataField = result as SqlQueryDataFieldNode;
+                (dataField?.Selection).Should().BeSameAs( selection );
+                (dataField?.Expression).Should().BeSameAs( dataSource["t"]["a"] );
+                text.Should().Be( "[foo].[a]" );
             }
         }
 
@@ -124,7 +127,8 @@ public partial class ObjectExpressionsTests
                 result.NodeType.Should().Be( SqlNodeType.RawDataField );
                 result.Name.Should().Be( "b" );
                 result.RecordSet.Should().BeSameAs( sut );
-                result.Type.Should().BeNull();
+                var dataField = result as SqlRawDataFieldNode;
+                (dataField?.Type).Should().BeNull();
                 text.Should().Be( "[foo].[b] : ?" );
             }
         }
@@ -133,17 +137,19 @@ public partial class ObjectExpressionsTests
         public void GetField_ShouldReturnDataFieldNode_WhenNameIsKnown()
         {
             var dataSource = TableMock.Create( "t", areColumnsNullable: false, "a" ).ToRecordSet().ToDataSource();
-            var sut = dataSource.Select( dataSource.GetAll() ).AsSet( "foo" );
+            var selection = dataSource.GetAll();
+            var sut = dataSource.Select( selection ).AsSet( "foo" );
             var result = sut.GetField( "a" );
             var text = result.ToString();
 
             using ( new AssertionScope() )
             {
-                result.NodeType.Should().Be( SqlNodeType.RawDataField );
+                result.NodeType.Should().Be( SqlNodeType.QueryDataField );
                 result.Name.Should().Be( "a" );
                 result.RecordSet.Should().BeSameAs( sut );
-                result.Type.Should().Be( SqlExpressionType.Create<int>() );
-                text.Should().Be( "[foo].[a] : System.Int32" );
+                result.Selection.Should().BeSameAs( selection );
+                result.Expression.Should().BeSameAs( dataSource["t"]["a"] );
+                text.Should().Be( "[foo].[a]" );
             }
         }
 
@@ -217,17 +223,6 @@ public partial class ObjectExpressionsTests
                 result.IsAliased.Should().BeTrue();
                 result.IsOptional.Should().Be( optional );
             }
-        }
-
-        [Fact]
-        public void OptionalQuery_ShouldChangeAllFieldTypesToOptional()
-        {
-            var dataSource = TableMock.Create( "t", areColumnsNullable: false, "a" ).ToRecordSet().ToDataSource();
-            var sut = dataSource.Select( dataSource.GetAll() ).AsSet( "foo" ).MarkAsOptional();
-
-            var field = sut.GetField( "a" );
-
-            field.Type.Should().Be( SqlExpressionType.Create<int>( isNullable: true ) );
         }
 
         [Fact]

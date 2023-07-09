@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Functions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
@@ -17,10 +18,16 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.RecordsAffected );
-            sut.Type.Should().Be( SqlExpressionType.Create<long>() );
             sut.Arguments.ToArray().Should().BeEmpty();
             text.Should().Be( "RECORDSAFFECTED()" );
         }
+    }
+
+    [Fact]
+    public void Coalesce_ShouldThrowArgumentException_WhenArgumentsAreEmpty()
+    {
+        var action = Lambda.Of( () => SqlNode.Functions.Coalesce() );
+        action.Should().ThrowExactly<ArgumentException>();
     }
 
     [Fact]
@@ -34,14 +41,13 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Coalesce );
-            sut.Type.Should().Be( arg.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
             text.Should().Be( "COALESCE((\"10\" : System.Int32))" );
         }
     }
 
     [Fact]
-    public void Coalesce_ShouldCreateCoalesceFunctionExpressionNode_WithManyArguments_WithUnknownType()
+    public void Coalesce_ShouldCreateCoalesceFunctionExpressionNode_WithManyArguments()
     {
         var args = new SqlExpressionNode[]
         {
@@ -57,78 +63,8 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Coalesce );
-            sut.Type.Should().BeNull();
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( args );
             text.Should().Be( "COALESCE((@a : Nullable<System.Int32>), (@b : ?), (@c : System.Int32))" );
-        }
-    }
-
-    [Fact]
-    public void Coalesce_ShouldCreateCoalesceFunctionExpressionNode_WithManyArguments_WithNonNullableType()
-    {
-        var args = new SqlExpressionNode[]
-        {
-            SqlNode.Parameter<int>( "a", isNullable: true ),
-            SqlNode.Parameter<int>( "b" ),
-            SqlNode.Parameter( "c" )
-        };
-
-        var sut = args[0].Coalesce( args[1], args[2] );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Coalesce );
-            sut.Type.Should().Be( SqlExpressionType.Create<int>() );
-            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( args );
-            text.Should().Be( "COALESCE((@a : Nullable<System.Int32>), (@b : System.Int32), (@c : ?))" );
-        }
-    }
-
-    [Fact]
-    public void Coalesce_ShouldCreateCoalesceFunctionExpressionNode_WithManyArguments_WithNullableType()
-    {
-        var args = new SqlExpressionNode[]
-        {
-            SqlNode.Parameter<int>( "a", isNullable: true ),
-            SqlNode.Parameter<int>( "b", isNullable: true ),
-            SqlNode.Parameter<int>( "c", isNullable: true )
-        };
-
-        var sut = args[0].Coalesce( args[1], args[2] );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Coalesce );
-            sut.Type.Should().Be( SqlExpressionType.Create<int>( isNullable: true ) );
-            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( args );
-            text.Should().Be( "COALESCE((@a : Nullable<System.Int32>), (@b : Nullable<System.Int32>), (@c : Nullable<System.Int32>))" );
-        }
-    }
-
-    [Fact]
-    public void Coalesce_ShouldCreateCoalesceFunctionExpressionNode_WithManyArguments_WithIncompatibleArgumentTypes()
-    {
-        var args = new SqlExpressionNode[]
-        {
-            SqlNode.Parameter<int>( "a", isNullable: true ),
-            SqlNode.Parameter<double>( "b" ),
-            SqlNode.Parameter<long>( "c" )
-        };
-
-        var sut = args[0].Coalesce( args[1], args[2] );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Coalesce );
-            sut.Type.Should().BeNull();
-            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( args );
-            text.Should().Be( "COALESCE((@a : Nullable<System.Int32>), (@b : System.Double), (@c : System.Int64))" );
         }
     }
 
@@ -142,7 +78,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.CurrentDate );
-            sut.Type.Should().Be( SqlExpressionType.Create<DateOnly>() );
             sut.Arguments.ToArray().Should().BeEmpty();
             text.Should().Be( "CURRENTDATE()" );
         }
@@ -158,7 +93,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.CurrentTime );
-            sut.Type.Should().Be( SqlExpressionType.Create<TimeOnly>() );
             sut.Arguments.ToArray().Should().BeEmpty();
             text.Should().Be( "CURRENTTIME()" );
         }
@@ -174,7 +108,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.CurrentDateTime );
-            sut.Type.Should().Be( SqlExpressionType.Create<DateTime>() );
             sut.Arguments.ToArray().Should().BeEmpty();
             text.Should().Be( "CURRENTDATETIME()" );
         }
@@ -190,31 +123,13 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.CurrentTimestamp );
-            sut.Type.Should().Be( SqlExpressionType.Create<TimeSpan>() );
             sut.Arguments.ToArray().Should().BeEmpty();
             text.Should().Be( "CURRENTTIMESTAMP()" );
         }
     }
 
     [Fact]
-    public void Length_ShouldCreateLengthFunctionExpressionNode_WithUnknownType()
-    {
-        var arg = SqlNode.Parameter( "a" );
-        var sut = SqlNode.Functions.Length( arg );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Length );
-            sut.Type.Should().BeNull();
-            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
-            text.Should().Be( "LENGTH((@a : ?))" );
-        }
-    }
-
-    [Fact]
-    public void Length_ShouldCreateLengthFunctionExpressionNode_WithNonNullableType()
+    public void Length_ShouldCreateLengthFunctionExpressionNode()
     {
         var arg = SqlNode.Literal( "foo" );
         var sut = arg.Length();
@@ -224,26 +139,8 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Length );
-            sut.Type.Should().Be( SqlExpressionType.Create<long>() );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
             text.Should().Be( "LENGTH((\"foo\" : System.String))" );
-        }
-    }
-
-    [Fact]
-    public void Length_ShouldCreateLengthFunctionExpressionNode_WithNullableType()
-    {
-        var arg = SqlNode.Parameter<string>( "a", isNullable: true );
-        var sut = arg.Length();
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Length );
-            sut.Type.Should().Be( SqlExpressionType.Create<long>( isNullable: true ) );
-            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
-            text.Should().Be( "LENGTH((@a : Nullable<System.String>))" );
         }
     }
 
@@ -258,7 +155,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.ToLower );
-            sut.Type.Should().Be( arg.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
             text.Should().Be( "TOLOWER((\"FOO\" : System.String))" );
         }
@@ -275,7 +171,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.ToUpper );
-            sut.Type.Should().Be( arg.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
             text.Should().Be( "TOUPPER((\"foo\" : System.String))" );
         }
@@ -292,7 +187,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.TrimStart );
-            sut.Type.Should().Be( arg.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
             text.Should().Be( "TRIMSTART((\"foo\" : System.String))" );
         }
@@ -310,7 +204,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.TrimStart );
-            sut.Type.Should().Be( arg.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg, characters );
             text.Should().Be( "TRIMSTART((\"foo\" : System.String), (\"f\" : System.String))" );
         }
@@ -327,7 +220,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.TrimEnd );
-            sut.Type.Should().Be( arg.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
             text.Should().Be( "TRIMEND((\"foo\" : System.String))" );
         }
@@ -345,7 +237,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.TrimEnd );
-            sut.Type.Should().Be( arg.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg, characters );
             text.Should().Be( "TRIMEND((\"foo\" : System.String), (\"o\" : System.String))" );
         }
@@ -362,7 +253,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Trim );
-            sut.Type.Should().Be( arg.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
             text.Should().Be( "TRIM((\"foo\" : System.String))" );
         }
@@ -380,7 +270,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Trim );
-            sut.Type.Should().Be( arg.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg, characters );
             text.Should().Be( "TRIM((\"foo\" : System.String), (\"o\" : System.String))" );
         }
@@ -398,7 +287,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Substring );
-            sut.Type.Should().Be( arg.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg, startIndex );
             text.Should().Be( "SUBSTRING((\"foo\" : System.String), (\"5\" : System.Int32))" );
         }
@@ -417,7 +305,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Substring );
-            sut.Type.Should().Be( arg.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg, startIndex, length );
             text.Should().Be( "SUBSTRING((\"foo\" : System.String), (\"5\" : System.Int32), (\"10\" : System.Int32))" );
         }
@@ -436,7 +323,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Replace );
-            sut.Type.Should().Be( arg.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg, oldValue, newValue );
             text.Should().Be( "REPLACE((\"foo\" : System.String), (\"f\" : System.String), (\"b\" : System.String))" );
         }
@@ -454,86 +340,13 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.IndexOf );
-            sut.Type.Should().Be( SqlExpressionType.Create<long>() );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg, value );
             text.Should().Be( "INDEXOF((\"foo\" : System.String), (\"o\" : System.String))" );
         }
     }
 
     [Fact]
-    public void IndexOf_ShouldCreateIndexOfFunctionExpressionNode_WithUnknownType()
-    {
-        var arg = SqlNode.Parameter( "a" );
-        var value = SqlNode.Literal( "o" );
-        var sut = arg.IndexOf( value );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.IndexOf );
-            sut.Type.Should().BeNull();
-            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg, value );
-            text.Should().Be( "INDEXOF((@a : ?), (\"o\" : System.String))" );
-        }
-    }
-
-    [Fact]
-    public void IndexOf_ShouldCreateIndexOfFunctionExpressionNode_WithNonNullableType()
-    {
-        var arg = SqlNode.Literal( "foo" );
-        var value = SqlNode.Literal( "o" );
-        var sut = arg.IndexOf( value );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.IndexOf );
-            sut.Type.Should().Be( SqlExpressionType.Create<long>() );
-            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg, value );
-            text.Should().Be( "INDEXOF((\"foo\" : System.String), (\"o\" : System.String))" );
-        }
-    }
-
-    [Fact]
-    public void IndexOf_ShouldCreateIndexOfFunctionExpressionNode_WithNullableType()
-    {
-        var arg = SqlNode.Parameter<string>( "a", isNullable: true );
-        var value = SqlNode.Literal( "o" );
-        var sut = arg.IndexOf( value );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.IndexOf );
-            sut.Type.Should().Be( SqlExpressionType.Create<long>( isNullable: true ) );
-            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg, value );
-            text.Should().Be( "INDEXOF((@a : Nullable<System.String>), (\"o\" : System.String))" );
-        }
-    }
-
-    [Fact]
-    public void LastIndexOf_ShouldCreateLastIndexOfFunctionExpressionNode_WithUnknownType()
-    {
-        var arg = SqlNode.Parameter( "a" );
-        var value = SqlNode.Literal( "o" );
-        var sut = arg.LastIndexOf( value );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.LastIndexOf );
-            sut.Type.Should().BeNull();
-            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg, value );
-            text.Should().Be( "LASTINDEXOF((@a : ?), (\"o\" : System.String))" );
-        }
-    }
-
-    [Fact]
-    public void LastIndexOf_ShouldCreateLastIndexOfFunctionExpressionNode_WithNonNullableType()
+    public void LastIndexOf_ShouldCreateIndexOfFunctionExpressionNode()
     {
         var arg = SqlNode.Literal( "foo" );
         var value = SqlNode.Literal( "o" );
@@ -544,49 +357,13 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.LastIndexOf );
-            sut.Type.Should().Be( SqlExpressionType.Create<long>() );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg, value );
             text.Should().Be( "LASTINDEXOF((\"foo\" : System.String), (\"o\" : System.String))" );
         }
     }
 
     [Fact]
-    public void LastIndexOf_ShouldCreateLastIndexOfFunctionExpressionNode_WithNullableType()
-    {
-        var arg = SqlNode.Parameter<string>( "a", isNullable: true );
-        var value = SqlNode.Literal( "o" );
-        var sut = arg.LastIndexOf( value );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.LastIndexOf );
-            sut.Type.Should().Be( SqlExpressionType.Create<long>( isNullable: true ) );
-            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg, value );
-            text.Should().Be( "LASTINDEXOF((@a : Nullable<System.String>), (\"o\" : System.String))" );
-        }
-    }
-
-    [Fact]
-    public void Sign_ShouldCreateSignFunctionExpressionNode_WithUnknownType()
-    {
-        var arg = SqlNode.Parameter( "a" );
-        var sut = arg.Sign();
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Sign );
-            sut.Type.Should().BeNull();
-            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
-            text.Should().Be( "SIGN((@a : ?))" );
-        }
-    }
-
-    [Fact]
-    public void Sign_ShouldCreateSignFunctionExpressionNode_WithNonNullableType()
+    public void Sign_ShouldCreateSignFunctionExpressionNode()
     {
         var arg = SqlNode.Parameter<double>( "a" );
         var sut = arg.Sign();
@@ -596,26 +373,8 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Sign );
-            sut.Type.Should().Be( SqlExpressionType.Create<int>() );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
             text.Should().Be( "SIGN((@a : System.Double))" );
-        }
-    }
-
-    [Fact]
-    public void Sign_ShouldCreateSignFunctionExpressionNode_WithNullableType()
-    {
-        var arg = SqlNode.Parameter<double>( "a", isNullable: true );
-        var sut = arg.Sign();
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Sign );
-            sut.Type.Should().Be( SqlExpressionType.Create<int>( isNullable: true ) );
-            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
-            text.Should().Be( "SIGN((@a : Nullable<System.Double>))" );
         }
     }
 
@@ -630,7 +389,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Abs );
-            sut.Type.Should().Be( arg.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
             text.Should().Be( "ABS((\"-10\" : System.Int32))" );
         }
@@ -647,7 +405,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Floor );
-            sut.Type.Should().Be( arg.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
             text.Should().Be( "FLOOR((@a : System.Double))" );
         }
@@ -664,7 +421,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Ceiling );
-            sut.Type.Should().Be( arg.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
             text.Should().Be( "CEILING((@a : System.Double))" );
         }
@@ -681,7 +437,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Truncate );
-            sut.Type.Should().Be( arg.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
             text.Should().Be( "TRUNCATE((@a : System.Double))" );
         }
@@ -699,31 +454,13 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Power );
-            sut.Type.Should().Be( arg.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg, power );
             text.Should().Be( "POWER((@a : System.Int32), (@b : System.Int32))" );
         }
     }
 
     [Fact]
-    public void SquareRoot_ShouldCreateSquareRootFunctionExpressionNode_WithUnknownType()
-    {
-        var arg = SqlNode.Parameter( "a" );
-        var sut = arg.SquareRoot();
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.SquareRoot );
-            sut.Type.Should().BeNull();
-            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
-            text.Should().Be( "SQUAREROOT((@a : ?))" );
-        }
-    }
-
-    [Fact]
-    public void SquareRoot_ShouldCreateSquareRootFunctionExpressionNode_WithNonNullableType()
+    public void SquareRoot_ShouldCreateSquareRootFunctionExpressionNode()
     {
         var arg = SqlNode.Parameter<int>( "a" );
         var sut = arg.SquareRoot();
@@ -733,26 +470,8 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.SquareRoot );
-            sut.Type.Should().Be( SqlExpressionType.Create<double>() );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
             text.Should().Be( "SQUAREROOT((@a : System.Int32))" );
-        }
-    }
-
-    [Fact]
-    public void SquareRoot_ShouldCreateSquareRootFunctionExpressionNode_WithNullableType()
-    {
-        var arg = SqlNode.Parameter<int>( "a", isNullable: true );
-        var sut = arg.SquareRoot();
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.SquareRoot );
-            sut.Type.Should().Be( SqlExpressionType.Create<double>( isNullable: true ) );
-            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
-            text.Should().Be( "SQUAREROOT((@a : Nullable<System.Int32>))" );
         }
     }
 
@@ -767,7 +486,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Count );
-            sut.Type.Should().Be( SqlExpressionType.Create<long>() );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
             sut.Decorators.Should().BeEmpty();
             text.Should().Be( "AGG_COUNT((@a : System.Int32))" );
@@ -785,7 +503,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Count );
-            sut.Type.Should().Be( SqlExpressionType.Create<long>() );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
             sut.Decorators.Should().HaveCount( 1 );
             (sut.Decorators.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctDecorator );
@@ -807,7 +524,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Min );
-            sut.Type.Should().Be( arg.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
             sut.Decorators.Should().BeEmpty();
             text.Should().Be( "AGG_MIN((@a : System.Int32))" );
@@ -825,7 +541,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Min );
-            sut.Type.Should().Be( arg.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
             sut.Decorators.Should().HaveCount( 1 );
             (sut.Decorators.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctDecorator );
@@ -834,6 +549,13 @@ public class FunctionExpressionTests : TestsBase
                     @"AGG_MIN((@a : System.Int32))
     DISTINCT" );
         }
+    }
+
+    [Fact]
+    public void Min_ShouldThrowArgumentException_WhenArgumentsAreEmpty()
+    {
+        var action = Lambda.Of( () => SqlNode.Functions.Min() );
+        action.Should().ThrowExactly<ArgumentException>();
     }
 
     [Fact]
@@ -847,14 +569,13 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Min );
-            sut.Type.Should().Be( arg.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
             text.Should().Be( "MIN((@a : ?))" );
         }
     }
 
     [Fact]
-    public void Min_ShouldCreateMinFunctionExpressionNode_WithManyArguments_WithUnknownType()
+    public void Min_ShouldCreateMinFunctionExpressionNode_WithManyArguments()
     {
         var args = new SqlExpressionNode[]
         {
@@ -870,78 +591,8 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Min );
-            sut.Type.Should().BeNull();
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( args );
             text.Should().Be( "MIN((@a : Nullable<System.Int32>), (@b : ?), (@c : System.Int32))" );
-        }
-    }
-
-    [Fact]
-    public void Min_ShouldCreateMinFunctionExpressionNode_WithManyArguments_WithNonNullableType()
-    {
-        var args = new SqlExpressionNode[]
-        {
-            SqlNode.Parameter<int>( "a" ),
-            SqlNode.Parameter<int>( "b" ),
-            SqlNode.Parameter<int>( "c" )
-        };
-
-        var sut = args[0].Min( args[1], args[2] );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Min );
-            sut.Type.Should().Be( SqlExpressionType.Create<int>() );
-            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( args );
-            text.Should().Be( "MIN((@a : System.Int32), (@b : System.Int32), (@c : System.Int32))" );
-        }
-    }
-
-    [Fact]
-    public void Min_ShouldCreateMinFunctionExpressionNode_WithManyArguments_WithNullableType()
-    {
-        var args = new SqlExpressionNode[]
-        {
-            SqlNode.Parameter<int>( "a", isNullable: true ),
-            SqlNode.Parameter<int>( "b", isNullable: true ),
-            SqlNode.Parameter<int>( "c" )
-        };
-
-        var sut = args[0].Min( args[1], args[2] );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Min );
-            sut.Type.Should().Be( SqlExpressionType.Create<int>( isNullable: true ) );
-            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( args );
-            text.Should().Be( "MIN((@a : Nullable<System.Int32>), (@b : Nullable<System.Int32>), (@c : System.Int32))" );
-        }
-    }
-
-    [Fact]
-    public void Min_ShouldCreateMinFunctionExpressionNode_WithManyArguments_WithIncompatibleArgumentTypes()
-    {
-        var args = new SqlExpressionNode[]
-        {
-            SqlNode.Parameter<int>( "a", isNullable: true ),
-            SqlNode.Parameter<double>( "b" ),
-            SqlNode.Parameter<long>( "c" )
-        };
-
-        var sut = args[0].Min( args[1], args[2] );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Min );
-            sut.Type.Should().BeNull();
-            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( args );
-            text.Should().Be( "MIN((@a : Nullable<System.Int32>), (@b : System.Double), (@c : System.Int64))" );
         }
     }
 
@@ -956,7 +607,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Max );
-            sut.Type.Should().Be( arg.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
             sut.Decorators.Should().BeEmpty();
             text.Should().Be( "AGG_MAX((@a : System.Int32))" );
@@ -974,7 +624,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Max );
-            sut.Type.Should().Be( arg.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
             sut.Decorators.Should().HaveCount( 1 );
             (sut.Decorators.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctDecorator );
@@ -983,6 +632,13 @@ public class FunctionExpressionTests : TestsBase
                     @"AGG_MAX((@a : System.Int32))
     DISTINCT" );
         }
+    }
+
+    [Fact]
+    public void Max_ShouldThrowArgumentException_WhenArgumentsAreEmpty()
+    {
+        var action = Lambda.Of( () => SqlNode.Functions.Max() );
+        action.Should().ThrowExactly<ArgumentException>();
     }
 
     [Fact]
@@ -996,14 +652,13 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Max );
-            sut.Type.Should().Be( arg.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
             text.Should().Be( "MAX((@a : ?))" );
         }
     }
 
     [Fact]
-    public void Max_ShouldCreateMaxFunctionExpressionNode_WithManyArguments_WithUnknownType()
+    public void Max_ShouldCreateMaxFunctionExpressionNode_WithManyArguments()
     {
         var args = new SqlExpressionNode[]
         {
@@ -1019,78 +674,8 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Max );
-            sut.Type.Should().BeNull();
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( args );
             text.Should().Be( "MAX((@a : Nullable<System.Int32>), (@b : ?), (@c : System.Int32))" );
-        }
-    }
-
-    [Fact]
-    public void Max_ShouldCreateMaxFunctionExpressionNode_WithManyArguments_WithNonNullableType()
-    {
-        var args = new SqlExpressionNode[]
-        {
-            SqlNode.Parameter<int>( "a" ),
-            SqlNode.Parameter<int>( "b" ),
-            SqlNode.Parameter<int>( "c" )
-        };
-
-        var sut = args[0].Max( args[1], args[2] );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Max );
-            sut.Type.Should().Be( SqlExpressionType.Create<int>() );
-            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( args );
-            text.Should().Be( "MAX((@a : System.Int32), (@b : System.Int32), (@c : System.Int32))" );
-        }
-    }
-
-    [Fact]
-    public void Max_ShouldCreateMaxFunctionExpressionNode_WithManyArguments_WithNullableType()
-    {
-        var args = new SqlExpressionNode[]
-        {
-            SqlNode.Parameter<int>( "a", isNullable: true ),
-            SqlNode.Parameter<int>( "b", isNullable: true ),
-            SqlNode.Parameter<int>( "c" )
-        };
-
-        var sut = args[0].Max( args[1], args[2] );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Max );
-            sut.Type.Should().Be( SqlExpressionType.Create<int>( isNullable: true ) );
-            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( args );
-            text.Should().Be( "MAX((@a : Nullable<System.Int32>), (@b : Nullable<System.Int32>), (@c : System.Int32))" );
-        }
-    }
-
-    [Fact]
-    public void Max_ShouldCreateMaxFunctionExpressionNode_WithManyArguments_WithIncompatibleArgumentTypes()
-    {
-        var args = new SqlExpressionNode[]
-        {
-            SqlNode.Parameter<int>( "a", isNullable: true ),
-            SqlNode.Parameter<double>( "b" ),
-            SqlNode.Parameter<long>( "c" )
-        };
-
-        var sut = args[0].Max( args[1], args[2] );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.Max );
-            sut.Type.Should().BeNull();
-            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( args );
-            text.Should().Be( "MAX((@a : Nullable<System.Int32>), (@b : System.Double), (@c : System.Int64))" );
         }
     }
 
@@ -1105,7 +690,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Sum );
-            sut.Type.Should().Be( arg.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
             sut.Decorators.Should().BeEmpty();
             text.Should().Be( "AGG_SUM((@a : System.Int32))" );
@@ -1123,7 +707,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Sum );
-            sut.Type.Should().Be( arg.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
             sut.Decorators.Should().HaveCount( 1 );
             (sut.Decorators.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctDecorator );
@@ -1145,7 +728,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Average );
-            sut.Type.Should().Be( SqlExpressionType.Create<double>( isNullable: true ) );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
             sut.Decorators.Should().BeEmpty();
             text.Should().Be( "AGG_AVERAGE((@a : Nullable<System.Int32>))" );
@@ -1163,7 +745,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Average );
-            sut.Type.Should().Be( SqlExpressionType.Create<double>() );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
             sut.Decorators.Should().HaveCount( 1 );
             (sut.Decorators.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctDecorator );
@@ -1185,7 +766,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.StringConcat );
-            sut.Type.Should().Be( arg.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
             sut.Decorators.Should().BeEmpty();
             text.Should().Be( "AGG_STRINGCONCAT((@a : System.String))" );
@@ -1204,7 +784,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.StringConcat );
-            sut.Type.Should().Be( arg.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg, separator );
             sut.Decorators.Should().BeEmpty();
             text.Should().Be( "AGG_STRINGCONCAT((@a : System.String), (\",\" : System.String))" );
@@ -1222,7 +801,6 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.StringConcat );
-            sut.Type.Should().Be( arg.Type );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
             sut.Decorators.Should().HaveCount( 1 );
             (sut.Decorators.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctDecorator );

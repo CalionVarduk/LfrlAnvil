@@ -3,10 +3,5 @@
 public sealed class SqlAbsFunctionExpressionNode : SqlFunctionExpressionNode
 {
     internal SqlAbsFunctionExpressionNode(SqlExpressionNode argument)
-        : base( SqlFunctionType.Abs, new[] { argument } )
-    {
-        Type = argument.Type;
-    }
-
-    public override SqlExpressionType? Type { get; }
+        : base( SqlFunctionType.Abs, new[] { argument } ) { }
 }

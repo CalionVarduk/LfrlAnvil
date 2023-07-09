@@ -11,8 +11,6 @@ public abstract class SqlExpressionNode : SqlNodeBase
     protected SqlExpressionNode(SqlNodeType nodeType)
         : base( nodeType ) { }
 
-    public abstract SqlExpressionType? Type { get; }
-
     [Pure]
     public static SqlNegateExpressionNode operator -(SqlExpressionNode node)
     {

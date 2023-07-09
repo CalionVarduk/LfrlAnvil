@@ -9,12 +9,7 @@ public sealed class SqlStringConcatAggregateFunctionExpressionNode : SqlAggregat
     internal SqlStringConcatAggregateFunctionExpressionNode(
         ReadOnlyMemory<SqlExpressionNode> arguments,
         Chain<SqlAggregateFunctionDecoratorNode> decorators)
-        : base( SqlFunctionType.StringConcat, arguments, decorators )
-    {
-        Type = Arguments.Span[0].Type;
-    }
-
-    public override SqlExpressionType? Type { get; }
+        : base( SqlFunctionType.StringConcat, arguments, decorators ) { }
 
     [Pure]
     public override SqlStringConcatAggregateFunctionExpressionNode Decorate(SqlAggregateFunctionDecoratorNode decorator)

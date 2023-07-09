@@ -9,12 +9,7 @@ public sealed class SqlCountAggregateFunctionExpressionNode : SqlAggregateFuncti
     internal SqlCountAggregateFunctionExpressionNode(
         ReadOnlyMemory<SqlExpressionNode> arguments,
         Chain<SqlAggregateFunctionDecoratorNode> decorators)
-        : base( SqlFunctionType.Count, arguments, decorators )
-    {
-        Type = SqlExpressionType.Create<long>();
-    }
-
-    public override SqlExpressionType? Type { get; }
+        : base( SqlFunctionType.Count, arguments, decorators ) { }
 
     [Pure]
     public override SqlCountAggregateFunctionExpressionNode Decorate(SqlAggregateFunctionDecoratorNode decorator)

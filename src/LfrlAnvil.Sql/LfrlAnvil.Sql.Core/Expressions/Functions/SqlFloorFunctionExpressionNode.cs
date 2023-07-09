@@ -3,10 +3,5 @@
 public sealed class SqlFloorFunctionExpressionNode : SqlFunctionExpressionNode
 {
     internal SqlFloorFunctionExpressionNode(SqlExpressionNode argument)
-        : base( SqlFunctionType.Floor, new[] { argument } )
-    {
-        Type = argument.Type;
-    }
-
-    public override SqlExpressionType? Type { get; }
+        : base( SqlFunctionType.Floor, new[] { argument } ) { }
 }

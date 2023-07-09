@@ -19,10 +19,10 @@ public partial class ObjectExpressionsTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.Literal );
-            sut.Type.Should().Be( SqlExpressionType.Create<string>() );
             text.Should().Be( "\"foo\" : System.String" );
             var literalNode = sut as SqlLiteralNode<string>;
             (literalNode?.Value).Should().Be( "foo" );
+            (literalNode?.Type).Should().Be( SqlExpressionType.Create<string>() );
         }
     }
 
@@ -35,7 +35,6 @@ public partial class ObjectExpressionsTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.Null );
-            sut.Type.Should().Be( SqlExpressionType.Create<DBNull>() );
             text.Should().Be( "NULL" );
         }
     }
@@ -49,10 +48,10 @@ public partial class ObjectExpressionsTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.Literal );
-            sut.Type.Should().Be( SqlExpressionType.Create<int>() );
             text.Should().Be( "\"42\" : System.Int32" );
             var literalNode = sut as SqlLiteralNode<int>;
             (literalNode?.Value).Should().Be( 42 );
+            (literalNode?.Type).Should().Be( SqlExpressionType.Create<int>() );
         }
     }
 
@@ -65,10 +64,10 @@ public partial class ObjectExpressionsTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.Literal );
-            sut.Type.Should().Be( SqlExpressionType.Create<int>() );
             text.Should().Be( "\"42\" : System.Int32" );
             var literalNode = sut as SqlLiteralNode<int>;
             (literalNode?.Value).Should().Be( 42 );
+            (literalNode?.Type).Should().Be( SqlExpressionType.Create<int>() );
         }
     }
 
@@ -81,7 +80,6 @@ public partial class ObjectExpressionsTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.Null );
-            sut.Type.Should().Be( SqlExpressionType.Create<DBNull>() );
             text.Should().Be( "NULL" );
         }
     }
@@ -95,7 +93,6 @@ public partial class ObjectExpressionsTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.Null );
-            sut.Type.Should().Be( SqlExpressionType.Create<DBNull>() );
             text.Should().Be( "NULL" );
         }
     }
@@ -347,6 +344,52 @@ WHERE value < 10" );
         WHERE value < 10
     )
 ) AS [bar]" );
+        }
+    }
+
+    [Fact]
+    public void QueryRecordSet_FromCompoundQuery_ShouldCreateQueryRecordSetNode_WithKnownFields()
+    {
+        var dataSource1 = SqlNode.RawRecordSet( "T1" ).ToDataSource();
+        var a1 = dataSource1["T1"]["a"];
+        var a1Select = a1.AsSelf();
+        var query1 = dataSource1.Select( a1Select );
+
+        var dataSource2 = SqlNode.RawRecordSet( "T2" ).ToDataSource();
+        var a2 = dataSource2["T2"]["a"];
+        var a2Select = a2.AsSelf();
+        var query2 = dataSource2.Select( a2Select );
+
+        var query = query1.CompoundWith( query2.ToUnion() );
+        var sut = query.AsSet( "foo" );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.RecordSet );
+            sut.Name.Should().Be( "foo" );
+            sut.IsAliased.Should().BeTrue();
+            sut.IsOptional.Should().BeFalse();
+            sut.Query.Should().BeSameAs( query );
+            text.Should()
+                .Be(
+                    @"(
+    (
+        FROM [T1]
+        SELECT
+            ([T1].[a] : ?)
+    )
+    UNION
+    (
+        FROM [T2]
+        SELECT
+            ([T2].[a] : ?)
+    )
+) AS [foo]" );
+
+            var dataField = sut.GetField( "a" );
+            dataField.Selection.Should().BeSameAs( query.Selection.Span[0] );
+            dataField.Expression.Should().BeNull();
         }
     }
 

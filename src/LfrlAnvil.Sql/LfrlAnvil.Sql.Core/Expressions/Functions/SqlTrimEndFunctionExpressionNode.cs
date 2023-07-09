@@ -3,10 +3,5 @@
 public sealed class SqlTrimEndFunctionExpressionNode : SqlFunctionExpressionNode
 {
     internal SqlTrimEndFunctionExpressionNode(SqlExpressionNode argument, SqlExpressionNode? characters)
-        : base( SqlFunctionType.TrimEnd, characters is null ? new[] { argument } : new[] { argument, characters } )
-    {
-        Type = argument.Type;
-    }
-
-    public override SqlExpressionType? Type { get; }
+        : base( SqlFunctionType.TrimEnd, characters is null ? new[] { argument } : new[] { argument, characters } ) { }
 }

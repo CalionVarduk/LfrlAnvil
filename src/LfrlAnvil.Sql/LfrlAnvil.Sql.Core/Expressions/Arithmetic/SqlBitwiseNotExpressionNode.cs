@@ -11,7 +11,6 @@ public sealed class SqlBitwiseNotExpressionNode : SqlExpressionNode
     }
 
     public SqlExpressionNode Value { get; }
-    public override SqlExpressionType? Type => Value.Type;
 
     protected override void ToString(StringBuilder builder, int indent)
     {

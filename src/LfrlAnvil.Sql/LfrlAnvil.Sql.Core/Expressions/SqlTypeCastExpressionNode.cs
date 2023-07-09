@@ -11,12 +11,10 @@ public sealed class SqlTypeCastExpressionNode : SqlExpressionNode
     {
         Node = node;
         TargetType = targetType;
-        Type = Node.Type is not null ? SqlExpressionType.Create( targetType, Node.Type.Value.IsNullable ) : null;
     }
 
     public SqlExpressionNode Node { get; }
     public Type TargetType { get; }
-    public override SqlExpressionType? Type { get; }
 
     protected override void ToString(StringBuilder builder, int indent)
     {

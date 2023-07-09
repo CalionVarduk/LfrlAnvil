@@ -13,7 +13,7 @@ public sealed class SqlLiteralNode<T> : SqlExpressionNode
     }
 
     public T Value { get; }
-    public override SqlExpressionType? Type { get; }
+    public SqlExpressionType Type { get; }
 
     protected override void ToString(StringBuilder builder, int indent)
     {

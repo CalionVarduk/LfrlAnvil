@@ -28,7 +28,6 @@ public partial class BaseExpressionsTests
                 selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
                 sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
                 sut.Decorators.ToArray().Should().BeSequentiallyEqualTo( query.Decorators );
-                sut.Type.Should().BeNull();
                 sut.DataSource.Should().BeSameAs( dataSource );
                 sut.Selection.ToArray().Should().BeSequentiallyEqualTo( oldSelection, newSelection );
                 text.Should()
