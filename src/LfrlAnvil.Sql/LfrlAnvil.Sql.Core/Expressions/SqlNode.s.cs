@@ -18,6 +18,7 @@ public static partial class SqlNode
     private static SqlTrueNode? _true;
     private static SqlFalseNode? _false;
     private static SqlDistinctDataSourceDecoratorNode? _distinct;
+    private static SqlDummyDataSourceNode? _dummyDataSource;
 
     [Pure]
     public static SqlExpressionNode Literal<T>(T? value)
@@ -432,6 +433,12 @@ public static partial class SqlNode
         where TRecordSetNode : SqlRecordSetNode
     {
         return new SqlSingleDataSourceNode<TRecordSetNode>( from );
+    }
+
+    [Pure]
+    public static SqlDummyDataSourceNode DummyDataSource()
+    {
+        return _dummyDataSource ??= new SqlDummyDataSourceNode( Chain<SqlDataSourceDecoratorNode>.Empty );
     }
 
     [Pure]

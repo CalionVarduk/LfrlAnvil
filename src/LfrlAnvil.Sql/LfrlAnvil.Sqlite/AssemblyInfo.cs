@@ -28,5 +28,4 @@
 // - Add node tree interpreter
 //   ^ this interpreter must be customizable through DB builder
 // - Add CREATE/DROP (TEMP)TABLE/INDEX nodes
-// - Add INSERT/UPDATE/DELETE nodes
-// - Add DummyDataSource node (SELECT without FROM) <= NEXT
+// - Add INSERT/UPDATE/DELETE nodes <= NEXT

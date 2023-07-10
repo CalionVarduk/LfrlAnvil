@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using LfrlAnvil.Functional;
+﻿using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
@@ -7,45 +6,28 @@ namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
 
 public partial class ObjectExpressionsTests
 {
-    public class SingleDataSource : TestsBase
+    public class DummyDataSource : TestsBase
     {
         [Fact]
-        public void GetRecordSet_ShouldReturnFrom_WhenNameEqualsFromName()
+        public void From_ShouldThrowInvalidOperationException()
         {
-            var from = SqlNode.RawRecordSet( "foo" );
-            var sut = from.ToDataSource();
-
-            var result = sut.GetRecordSet( "foo" );
-
-            result.Should().BeSameAs( from );
+            var sut = SqlNode.DummyDataSource();
+            var action = Lambda.Of( () => sut.From );
+            action.Should().ThrowExactly<InvalidOperationException>();
         }
 
         [Fact]
-        public void GetRecordSet_ShouldThrowKeyNotFoundException_WhenNameDoesNotEqualFromName()
+        public void GetRecordSet_ShouldThrowInvalidOperationException()
         {
-            var from = SqlNode.RawRecordSet( "foo" );
-            var sut = from.ToDataSource();
-
-            var action = Lambda.Of( () => sut.GetRecordSet( "bar" ) );
-
-            action.Should().ThrowExactly<KeyNotFoundException>();
+            var sut = SqlNode.DummyDataSource();
+            var action = Lambda.Of( () => sut.GetRecordSet( "foo" ) );
+            action.Should().ThrowExactly<InvalidOperationException>();
         }
 
         [Fact]
-        public void Indexer_ShouldBeEquivalentToGetRecordSet()
+        public void Decorate_ShouldCreateDecoratedDummyDataSource_WhenCalledForTheFirstTime()
         {
-            var from = SqlNode.RawRecordSet( "foo" );
-            var sut = from.ToDataSource();
-
-            var result = sut["foo"]["bar"];
-
-            result.Should().BeEquivalentTo( from["bar"] );
-        }
-
-        [Fact]
-        public void Decorate_ShouldCreateDecoratedSingleDataSource_WhenCalledForTheFirstTime()
-        {
-            var sut = SqlNode.RawRecordSet( "foo" ).ToDataSource();
+            var sut = SqlNode.DummyDataSource();
             var decorator = SqlNode.FilterDecorator( SqlNode.RawCondition( "a > 10" ), isConjunction: true );
             var result = sut.Decorate( decorator );
             var text = result.ToString();
@@ -56,17 +38,17 @@ public partial class ObjectExpressionsTests
                 result.Decorators.Should().BeSequentiallyEqualTo( decorator );
                 text.Should()
                     .Be(
-                        @"FROM [foo]
+                        @"FROM <DUMMY>
 AND WHERE
     (a > 10)" );
             }
         }
 
         [Fact]
-        public void Decorate_ShouldCreateDecoratedSingleDataSource_WhenCalledForTheSecondTime()
+        public void Decorate_ShouldCreateDecoratedDummyDataSource_WhenCalledForTheSecondTime()
         {
             var firstDecorator = SqlNode.FilterDecorator( SqlNode.RawCondition( "a > 10" ), isConjunction: true );
-            var sut = SqlNode.RawRecordSet( "foo" ).ToDataSource().Decorate( firstDecorator );
+            var sut = SqlNode.DummyDataSource().Decorate( firstDecorator );
             var secondDecorator = SqlNode.FilterDecorator( SqlNode.RawCondition( "b > 15" ), isConjunction: false );
             var result = sut.Decorate( secondDecorator );
             var text = result.ToString();
@@ -77,7 +59,7 @@ AND WHERE
                 result.Decorators.Should().BeSequentiallyEqualTo( firstDecorator, secondDecorator );
                 text.Should()
                     .Be(
-                        @"FROM [foo]
+                        @"FROM <DUMMY>
 AND WHERE
     (a > 10)
 OR WHERE

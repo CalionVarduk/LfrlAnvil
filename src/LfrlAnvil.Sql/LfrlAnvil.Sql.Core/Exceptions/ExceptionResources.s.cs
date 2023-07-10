@@ -19,6 +19,8 @@ public static class ExceptionResources
     public const string ForeignKeyIndexAndReferencedIndexMustHaveTheSameAmountOfColumns =
         "Foreign key index and referenced index must have the same amount of columns.";
 
+    public const string DummyDataSourceDoesNotContainAnyRecordSets = "Dummy data source does not contain any record sets.";
+
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string ObjectHasBeenRemoved(ISqlObjectBuilder obj)

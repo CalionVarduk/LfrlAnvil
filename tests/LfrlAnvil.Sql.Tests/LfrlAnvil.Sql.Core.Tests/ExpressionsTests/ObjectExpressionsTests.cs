@@ -411,6 +411,21 @@ WHERE value < 10" );
     }
 
     [Fact]
+    public void DummyDataSource_ShouldCreateDummyDataSourceNode()
+    {
+        var sut = SqlNode.DummyDataSource();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.DataSource );
+            sut.Joins.ToArray().Should().BeEmpty();
+            sut.RecordSets.Should().BeEmpty();
+            text.Should().Be( "FROM <DUMMY>" );
+        }
+    }
+
+    [Fact]
     public void InnerJoinOn_ShouldCreateDataSourceJoinOnNode()
     {
         var recordSet = SqlNode.RawRecordSet( "foo" );
