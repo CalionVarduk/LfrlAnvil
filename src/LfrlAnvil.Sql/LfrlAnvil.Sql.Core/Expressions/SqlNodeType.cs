@@ -67,5 +67,8 @@ public enum SqlNodeType : byte
     CommonTableExpression,
     CommonTableExpressionDecorator,
     TypeCast,
-    Values
+    Values,
+    InsertInto,
+    Update,
+    DeleteFrom
 }

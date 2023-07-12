@@ -8,6 +8,7 @@ using LfrlAnvil.Sql.Expressions.Arithmetic;
 using LfrlAnvil.Sql.Expressions.Decorators;
 using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Objects;
+using LfrlAnvil.Sql.Expressions.Persistence;
 using LfrlAnvil.Sql.Objects;
 
 namespace LfrlAnvil.Sql.Expressions;
@@ -574,5 +575,11 @@ public static partial class SqlNode
     public static SqlValuesNode Values(params SqlExpressionNode[] expressions)
     {
         return new SqlValuesNode( expressions );
+    }
+
+    [Pure]
+    public static SqlDeleteFromNode DeleteFrom(SqlDataSourceNode dataSource, SqlRecordSetNode recordSet)
+    {
+        return new SqlDeleteFromNode( dataSource, recordSet );
     }
 }

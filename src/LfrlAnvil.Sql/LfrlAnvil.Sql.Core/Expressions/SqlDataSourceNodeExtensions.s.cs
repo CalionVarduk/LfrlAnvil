@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using LfrlAnvil.Sql.Expressions.Decorators;
 using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Objects;
+using LfrlAnvil.Sql.Expressions.Persistence;
 
 namespace LfrlAnvil.Sql.Expressions;
 
@@ -242,5 +243,30 @@ public static class SqlDataSourceNodeExtensions
     public static SqlExistsConditionNode NotExists(this SqlDataSourceNode node)
     {
         return node.Select( node.GetAll() ).NotExists();
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlDeleteFromNode ToDeleteFrom<TDataSourceNode>(
+        this TDataSourceNode node,
+        Func<TDataSourceNode, SqlRecordSetNode> recordSet)
+        where TDataSourceNode : SqlDataSourceNode
+    {
+        return node.ToDeleteFrom( recordSet( node ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlDeleteFromNode ToDeleteFrom(this SqlDataSourceNode node, SqlRecordSetNode recordSet)
+    {
+        return SqlNode.DeleteFrom( node, recordSet );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlDeleteFromNode ToDeleteFrom<TRecordSetNode>(this SqlSingleDataSourceNode<TRecordSetNode> node)
+        where TRecordSetNode : SqlRecordSetNode
+    {
+        return node.ToDeleteFrom( node.From );
     }
 }
