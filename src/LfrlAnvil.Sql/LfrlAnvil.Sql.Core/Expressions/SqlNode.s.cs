@@ -563,4 +563,16 @@ public static partial class SqlNode
     {
         return new SqlSwitchCaseNode( condition, expression );
     }
+
+    [Pure]
+    public static SqlValuesNode Values(SqlExpressionNode[,] expressions)
+    {
+        return new SqlValuesNode( expressions );
+    }
+
+    [Pure]
+    public static SqlValuesNode Values(params SqlExpressionNode[] expressions)
+    {
+        return new SqlValuesNode( expressions );
+    }
 }

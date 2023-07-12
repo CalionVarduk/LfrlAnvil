@@ -66,5 +66,6 @@ public enum SqlNodeType : byte
     OffsetDecorator,
     CommonTableExpression,
     CommonTableExpressionDecorator,
-    TypeCast
+    TypeCast,
+    Values
 }

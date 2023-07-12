@@ -19,6 +19,7 @@
 //   ^ so that e.g. loggers could be easily added
 // - For Sqlite, add possibility to setup connection with e.g. custom functions
 //   ^ just add an optional delegate for on connection created/connected
+// - For Sqlite, add possibility to set connection to permanent in factory - works like the current in-memory version
 // - Support for Sqlite COLLATION in added columns? let's see how other SQL providers handle that
 // - ON CONFLICT ROLLBACK instead of ABORT? https://www.sqlite.org/lang_conflict.html
 // - STRICT table option is supported in v3.37.0 (2021-11-27), disabled for now

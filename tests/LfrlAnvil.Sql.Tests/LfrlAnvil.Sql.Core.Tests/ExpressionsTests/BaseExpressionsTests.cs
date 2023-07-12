@@ -490,6 +490,79 @@ END" );
         }
     }
 
+    [Fact]
+    public void Values_From1DArray_ShouldCreateValuesNode()
+    {
+        var expressions = new[]
+        {
+            SqlNode.Literal( 1 ),
+            SqlNode.Literal( 2 ),
+            SqlNode.Literal( 3 )
+        };
+
+        var sut = SqlNode.Values( expressions );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.Values );
+            sut.RowCount.Should().Be( 1 );
+            sut.ColumnCount.Should().Be( 3 );
+            sut[0].ToArray().Should().BeSequentiallyEqualTo( expressions );
+            text.Should()
+                .Be(
+                    @"VALUES
+(
+    (""1"" : System.Int32),
+    (""2"" : System.Int32),
+    (""3"" : System.Int32)
+)" );
+        }
+    }
+
+    [Fact]
+    public void Values_From2DArray_ShouldCreateValuesNode()
+    {
+        var expressions = new[,]
+        {
+            {
+                SqlNode.Literal( 1 ),
+                SqlNode.Literal( 2 ),
+                SqlNode.Literal( 3 )
+            },
+            {
+                SqlNode.Literal( 4 ),
+                SqlNode.Literal( 5 ),
+                SqlNode.Literal( 6 )
+            }
+        };
+
+        var sut = SqlNode.Values( expressions );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.Values );
+            sut.RowCount.Should().Be( 2 );
+            sut.ColumnCount.Should().Be( 3 );
+            sut[0].ToArray().Should().BeSequentiallyEqualTo( expressions[0, 0], expressions[0, 1], expressions[0, 2] );
+            sut[1].ToArray().Should().BeSequentiallyEqualTo( expressions[1, 0], expressions[1, 1], expressions[1, 2] );
+            text.Should()
+                .Be(
+                    @"VALUES
+(
+    (""1"" : System.Int32),
+    (""2"" : System.Int32),
+    (""3"" : System.Int32)
+),
+(
+    (""4"" : System.Int32),
+    (""5"" : System.Int32),
+    (""6"" : System.Int32)
+)" );
+        }
+    }
+
     private sealed class NodeMock : SqlNodeBase
     {
         public NodeMock()
