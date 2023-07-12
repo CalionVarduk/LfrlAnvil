@@ -70,5 +70,6 @@ public enum SqlNodeType : byte
     Values,
     InsertInto,
     Update,
+    ValueAssignment,
     DeleteFrom
 }

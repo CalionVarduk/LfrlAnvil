@@ -582,4 +582,19 @@ public static partial class SqlNode
     {
         return new SqlDeleteFromNode( dataSource, recordSet );
     }
+
+    [Pure]
+    public static SqlValueAssignmentNode ValueAssignment(SqlDataFieldNode dataField, SqlExpressionNode value)
+    {
+        return new SqlValueAssignmentNode( dataField, value );
+    }
+
+    [Pure]
+    public static SqlUpdateNode Update(
+        SqlDataSourceNode dataSource,
+        SqlRecordSetNode recordSet,
+        params SqlValueAssignmentNode[] assignments)
+    {
+        return new SqlUpdateNode( dataSource, recordSet, assignments );
+    }
 }

@@ -8,6 +8,7 @@ using LfrlAnvil.Sql.Expressions.Decorators;
 using LfrlAnvil.Sql.Expressions.Functions;
 using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Objects;
+using LfrlAnvil.Sql.Expressions.Persistence;
 using LfrlAnvil.Sql.Objects;
 
 namespace LfrlAnvil.Sql.Expressions;
@@ -33,6 +34,13 @@ public static class SqlNodeExtensions
     public static SqlSelectFieldNode AsSelf(this SqlDataFieldNode node)
     {
         return SqlNode.Select( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlValueAssignmentNode Assign(this SqlDataFieldNode node, SqlExpressionNode value)
+    {
+        return SqlNode.ValueAssignment( node, value );
     }
 
     [Pure]

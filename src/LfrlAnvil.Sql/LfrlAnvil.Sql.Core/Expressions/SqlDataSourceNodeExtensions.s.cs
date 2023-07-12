@@ -269,4 +269,67 @@ public static class SqlDataSourceNodeExtensions
     {
         return node.ToDeleteFrom( node.From );
     }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlUpdateNode ToUpdate<TDataSourceNode, TRecordSetNode>(
+        this TDataSourceNode node,
+        Func<TDataSourceNode, TRecordSetNode> recordSet,
+        Func<TRecordSetNode, IEnumerable<SqlValueAssignmentNode>> assignments)
+        where TDataSourceNode : SqlDataSourceNode
+        where TRecordSetNode : SqlRecordSetNode
+    {
+        var set = recordSet( node );
+        return node.ToUpdate( set, assignments( set ).ToArray() );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlUpdateNode ToUpdate(
+        this SqlDataSourceNode node,
+        SqlRecordSetNode recordSet,
+        params SqlValueAssignmentNode[] assignments)
+    {
+        return SqlNode.Update( node, recordSet, assignments );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlUpdateNode ToUpdate<TRecordSetNode>(
+        this SqlSingleDataSourceNode<TRecordSetNode> node,
+        Func<TRecordSetNode, IEnumerable<SqlValueAssignmentNode>> assignments)
+        where TRecordSetNode : SqlRecordSetNode
+    {
+        return node.ToUpdate( assignments( node.From ).ToArray() );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlUpdateNode ToUpdate<TRecordSetNode>(
+        this SqlSingleDataSourceNode<TRecordSetNode> node,
+        params SqlValueAssignmentNode[] assignments)
+        where TRecordSetNode : SqlRecordSetNode
+    {
+        return node.ToUpdate( node.From, assignments );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlUpdateNode AndSet(this SqlUpdateNode node, Func<SqlUpdateNode, IEnumerable<SqlValueAssignmentNode>> assignments)
+    {
+        return node.AndSet( assignments( node ).ToArray() );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlUpdateNode AndSet(this SqlUpdateNode node, params SqlValueAssignmentNode[] assignments)
+    {
+        if ( assignments.Length == 0 )
+            return node;
+
+        var newAssignments = new SqlValueAssignmentNode[node.Assignments.Length + assignments.Length];
+        node.Assignments.CopyTo( newAssignments );
+        assignments.CopyTo( newAssignments, node.Assignments.Length );
+        return new SqlUpdateNode( node.DataSource, node.RecordSet, newAssignments );
+    }
 }
