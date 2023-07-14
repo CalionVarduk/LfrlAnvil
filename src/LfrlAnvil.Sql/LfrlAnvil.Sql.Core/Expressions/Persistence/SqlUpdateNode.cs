@@ -21,8 +21,6 @@ public sealed class SqlUpdateNode : SqlNodeBase
 
     protected override void ToString(StringBuilder builder, int indent)
     {
-        var assignmentIndent = indent + DefaultIndent;
-
         AppendTo( builder, DataSource, indent );
         AppendTo( builder.Indent( indent ).Append( "UPDATE" ).Append( ' ' ), RecordSet, indent );
         builder.Indent( indent ).Append( "SET" );
@@ -30,6 +28,7 @@ public sealed class SqlUpdateNode : SqlNodeBase
         if ( Assignments.Length == 0 )
             return;
 
+        var assignmentIndent = indent + DefaultIndent;
         foreach ( var assignment in Assignments.Span )
         {
             AppendTo( builder.Indent( assignmentIndent ), assignment, assignmentIndent );

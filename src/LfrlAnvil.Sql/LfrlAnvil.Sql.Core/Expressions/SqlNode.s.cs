@@ -597,4 +597,19 @@ public static partial class SqlNode
     {
         return new SqlUpdateNode( dataSource, recordSet, assignments );
     }
+
+    [Pure]
+    public static SqlInsertIntoNode InsertInto(
+        SqlQueryExpressionNode query,
+        SqlRecordSetNode recordSet,
+        params SqlDataFieldNode[] dataFields)
+    {
+        return new SqlInsertIntoNode( query, recordSet, dataFields );
+    }
+
+    [Pure]
+    public static SqlInsertIntoNode InsertInto(SqlValuesNode values, SqlRecordSetNode recordSet, params SqlDataFieldNode[] dataFields)
+    {
+        return new SqlInsertIntoNode( values, recordSet, dataFields );
+    }
 }

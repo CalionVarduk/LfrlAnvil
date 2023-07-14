@@ -315,21 +315,40 @@ public static class SqlDataSourceNodeExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlUpdateNode AndSet(this SqlUpdateNode node, Func<SqlUpdateNode, IEnumerable<SqlValueAssignmentNode>> assignments)
+    public static SqlInsertIntoNode ToInsertInto<TRecordSetNode>(
+        this SqlQueryExpressionNode node,
+        TRecordSetNode recordSet,
+        Func<TRecordSetNode, IEnumerable<SqlDataFieldNode>> dataFields)
+        where TRecordSetNode : SqlRecordSetNode
     {
-        return node.AndSet( assignments( node ).ToArray() );
+        return node.ToInsertInto( recordSet, dataFields( recordSet ).ToArray() );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlUpdateNode AndSet(this SqlUpdateNode node, params SqlValueAssignmentNode[] assignments)
+    public static SqlInsertIntoNode ToInsertInto(
+        this SqlQueryExpressionNode node,
+        SqlRecordSetNode recordSet,
+        params SqlDataFieldNode[] dataFields)
     {
-        if ( assignments.Length == 0 )
-            return node;
+        return SqlNode.InsertInto( node, recordSet, dataFields );
+    }
 
-        var newAssignments = new SqlValueAssignmentNode[node.Assignments.Length + assignments.Length];
-        node.Assignments.CopyTo( newAssignments );
-        assignments.CopyTo( newAssignments, node.Assignments.Length );
-        return new SqlUpdateNode( node.DataSource, node.RecordSet, newAssignments );
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlInsertIntoNode ToInsertInto<TRecordSetNode>(
+        this SqlValuesNode node,
+        TRecordSetNode recordSet,
+        Func<TRecordSetNode, IEnumerable<SqlDataFieldNode>> dataFields)
+        where TRecordSetNode : SqlRecordSetNode
+    {
+        return node.ToInsertInto( recordSet, dataFields( recordSet ).ToArray() );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlInsertIntoNode ToInsertInto(this SqlValuesNode node, SqlRecordSetNode recordSet, params SqlDataFieldNode[] dataFields)
+    {
+        return SqlNode.InsertInto( node, recordSet, dataFields );
     }
 }

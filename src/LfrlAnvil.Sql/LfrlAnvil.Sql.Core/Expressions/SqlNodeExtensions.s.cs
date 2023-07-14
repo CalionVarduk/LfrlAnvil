@@ -672,4 +672,24 @@ public static class SqlNodeExtensions
     {
         return (TAggregateFunctionNode)node.Decorate( SqlNode.AggregateFunctions.FilterDecorator( filter, isConjunction: false ) );
     }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlUpdateNode AndSet(this SqlUpdateNode node, Func<SqlUpdateNode, IEnumerable<SqlValueAssignmentNode>> assignments)
+    {
+        return node.AndSet( assignments( node ).ToArray() );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlUpdateNode AndSet(this SqlUpdateNode node, params SqlValueAssignmentNode[] assignments)
+    {
+        if ( assignments.Length == 0 )
+            return node;
+
+        var newAssignments = new SqlValueAssignmentNode[node.Assignments.Length + assignments.Length];
+        node.Assignments.CopyTo( newAssignments );
+        assignments.CopyTo( newAssignments, node.Assignments.Length );
+        return new SqlUpdateNode( node.DataSource, node.RecordSet, newAssignments );
+    }
 }

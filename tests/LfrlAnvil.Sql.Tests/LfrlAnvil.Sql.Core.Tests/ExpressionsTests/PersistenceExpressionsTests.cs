@@ -245,4 +245,97 @@ SET
     ([foo].[b] : ?) = (""10"" : System.Int32)" );
         }
     }
+
+    [Fact]
+    public void InsertInto_ShouldCreateInsertIntoNode_FromQuery()
+    {
+        var set = SqlNode.RawRecordSet( "foo" );
+        var query = SqlNode.RawQuery( "SELECT a, b FROM bar" );
+        var dataFields = new SqlDataFieldNode[]
+        {
+            set["x"],
+            set["y"]
+        };
+
+        var dataFieldsSelector = Substitute.For<Func<SqlRecordSetNode, IEnumerable<SqlDataFieldNode>>>();
+        dataFieldsSelector.WithAnyArgs( _ => dataFields );
+        var sut = query.ToInsertInto( set, dataFieldsSelector );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            dataFieldsSelector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( set );
+            sut.NodeType.Should().Be( SqlNodeType.InsertInto );
+            sut.Source.Should().BeSameAs( query );
+            sut.RecordSet.Should().BeSameAs( set );
+            sut.DataFields.ToArray().Should().BeSequentiallyEqualTo( dataFields );
+            text.Should()
+                .Be(
+                    @"SELECT a, b FROM bar
+INSERT INTO [foo]
+(
+    ([foo].[x] : ?),
+    ([foo].[y] : ?)
+)" );
+        }
+    }
+
+    [Fact]
+    public void InsertInto_ShouldCreateInsertIntoNode_FromValues()
+    {
+        var set = SqlNode.RawRecordSet( "foo" );
+        var values = SqlNode.Values( SqlNode.Literal( 5 ), SqlNode.Parameter<string>( "a" ) );
+        var dataFields = new SqlDataFieldNode[]
+        {
+            set["x"],
+            set["y"]
+        };
+
+        var dataFieldsSelector = Substitute.For<Func<SqlRecordSetNode, IEnumerable<SqlDataFieldNode>>>();
+        dataFieldsSelector.WithAnyArgs( _ => dataFields );
+        var sut = values.ToInsertInto( set, dataFieldsSelector );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            dataFieldsSelector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( set );
+            sut.NodeType.Should().Be( SqlNodeType.InsertInto );
+            sut.Source.Should().BeSameAs( values );
+            sut.RecordSet.Should().BeSameAs( set );
+            sut.DataFields.ToArray().Should().BeSequentiallyEqualTo( dataFields );
+            text.Should()
+                .Be(
+                    @"VALUES
+(
+    (""5"" : System.Int32),
+    (@a : System.String)
+)
+INSERT INTO [foo]
+(
+    ([foo].[x] : ?),
+    ([foo].[y] : ?)
+)" );
+        }
+    }
+
+    [Fact]
+    public void InsertInto_ShouldCreateInsertIntoNode_WithEmptyDataFields()
+    {
+        var set = SqlNode.RawRecordSet( "foo" );
+        var query = SqlNode.RawQuery( "SELECT a, b FROM bar" );
+        var sut = query.ToInsertInto( set );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.InsertInto );
+            sut.Source.Should().BeSameAs( query );
+            sut.RecordSet.Should().BeSameAs( set );
+            sut.DataFields.ToArray().Should().BeEmpty();
+            text.Should()
+                .Be(
+                    @"SELECT a, b FROM bar
+INSERT INTO [foo]" );
+        }
+    }
 }

@@ -28,5 +28,5 @@
 // - update: v3.8.3 (2014-02-03) is now the oldest supported version, unless CTEs aren't used (WITH clause)
 // - Add node tree interpreter
 //   ^ this interpreter must be customizable through DB builder
-// - Add CREATE/DROP (TEMP)TABLE/INDEX nodes
-// - Add INSERT/UPDATE/DELETE nodes <= NEXT
+// - Add CREATE/DROP (TEMP)TABLE/INDEX nodes <= NEXT
+// - Rename decorators to traits
