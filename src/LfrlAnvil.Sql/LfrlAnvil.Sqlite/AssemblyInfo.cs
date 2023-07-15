@@ -26,6 +26,6 @@
 // - more ReferenceBehavior options?
 // - WITHOUT ROWID is supported in v3.8.2 (2013-12-06), this is the oldest supported version
 // - update: v3.8.3 (2014-02-03) is now the oldest supported version, unless CTEs aren't used (WITH clause)
-// - Add node tree interpreter
+// - Add node tree interpreter <= NEXT
 //   ^ this interpreter must be customizable through DB builder
-// - Add CREATE/DROP (TEMP)TABLE/INDEX nodes <= NEXT
+// - Add CREATE/DROP (TEMP)INDEX nodes

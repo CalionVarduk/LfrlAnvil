@@ -692,4 +692,11 @@ public static class SqlNodeExtensions
         assignments.CopyTo( newAssignments, node.Assignments.Length );
         return new SqlUpdateNode( node.DataSource, node.RecordSet, newAssignments );
     }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlDropTemporaryTableNode ToDropTable(this SqlCreateTemporaryTableNode node)
+    {
+        return SqlNode.DropTempTable( node.Name );
+    }
 }

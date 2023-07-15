@@ -71,5 +71,8 @@ public enum SqlNodeType : byte
     InsertInto,
     Update,
     ValueAssignment,
-    DeleteFrom
+    DeleteFrom,
+    ColumnDefinition,
+    CreateTemporaryTable,
+    DropTemporaryTable
 }

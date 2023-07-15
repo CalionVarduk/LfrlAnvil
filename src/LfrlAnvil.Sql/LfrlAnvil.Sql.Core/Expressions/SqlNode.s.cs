@@ -612,4 +612,30 @@ public static partial class SqlNode
     {
         return new SqlInsertIntoNode( values, recordSet, dataFields );
     }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlColumnDefinitionNode ColumnDefinition<T>(string name, bool isNullable = false)
+        where T : notnull
+    {
+        return ColumnDefinition( name, SqlExpressionType.Create<T>( isNullable ) );
+    }
+
+    [Pure]
+    public static SqlColumnDefinitionNode ColumnDefinition(string name, SqlExpressionType type)
+    {
+        return new SqlColumnDefinitionNode( name, type );
+    }
+
+    [Pure]
+    public static SqlCreateTemporaryTableNode CreateTempTable(string name, params SqlColumnDefinitionNode[] columns)
+    {
+        return new SqlCreateTemporaryTableNode( name, columns );
+    }
+
+    [Pure]
+    public static SqlDropTemporaryTableNode DropTempTable(string name)
+    {
+        return new SqlDropTemporaryTableNode( name );
+    }
 }

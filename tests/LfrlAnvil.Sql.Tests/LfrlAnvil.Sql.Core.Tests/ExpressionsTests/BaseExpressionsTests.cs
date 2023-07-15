@@ -563,6 +563,94 @@ END" );
         }
     }
 
+    [Fact]
+    public void ColumnDefinition_ShouldCreateColumnDefinitionNode()
+    {
+        var sut = SqlNode.ColumnDefinition<string>( "foo" );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.ColumnDefinition );
+            sut.Name.Should().Be( "foo" );
+            sut.Type.Should().BeEquivalentTo( SqlExpressionType.Create<string>( isNullable: false ) );
+            text.Should().Be( "[foo] : System.String" );
+        }
+    }
+
+    [Fact]
+    public void ColumnDefinition_ShouldCreateColumnDefinitionNode_WithNullableType()
+    {
+        var sut = SqlNode.ColumnDefinition<string>( "foo", isNullable: true );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.ColumnDefinition );
+            sut.Name.Should().Be( "foo" );
+            sut.Type.Should().BeEquivalentTo( SqlExpressionType.Create<string>( isNullable: true ) );
+            text.Should().Be( "[foo] : Nullable<System.String>" );
+        }
+    }
+
+    [Fact]
+    public void CreateTemporaryTable_ShouldCreateCreateTemporaryTableNode()
+    {
+        var columns = new[]
+        {
+            SqlNode.ColumnDefinition<int>( "x" ),
+            SqlNode.ColumnDefinition<string>( "y", isNullable: true ),
+            SqlNode.ColumnDefinition<double>( "z" )
+        };
+
+        var sut = SqlNode.CreateTempTable( "foo", columns );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.CreateTemporaryTable );
+            sut.Name.Should().Be( "foo" );
+            sut.Columns.ToArray().Should().BeSequentiallyEqualTo( columns );
+            text.Should()
+                .Be(
+                    @"CREATE TEMPORARY TABLE [foo]
+(
+    ([x] : System.Int32),
+    ([y] : Nullable<System.String>),
+    ([z] : System.Double)
+)" );
+        }
+    }
+
+    [Fact]
+    public void CreateTemporaryTable_ShouldCreateCreateTemporaryTableNode_WithEmptyColumns()
+    {
+        var sut = SqlNode.CreateTempTable( "foo" );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.CreateTemporaryTable );
+            sut.Name.Should().Be( "foo" );
+            sut.Columns.ToArray().Should().BeEmpty();
+            text.Should().Be( "CREATE TEMPORARY TABLE [foo]" );
+        }
+    }
+
+    [Fact]
+    public void DropTemporaryTable_ShouldCreateDropTemporaryTableNode()
+    {
+        var sut = SqlNode.CreateTempTable( "foo" ).ToDropTable();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.DropTemporaryTable );
+            sut.Name.Should().Be( "foo" );
+            text.Should().Be( "DROP TEMPORARY TABLE [foo]" );
+        }
+    }
+
     private sealed class NodeMock : SqlNodeBase
     {
         public NodeMock()
