@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
@@ -648,6 +649,83 @@ END" );
             sut.NodeType.Should().Be( SqlNodeType.DropTemporaryTable );
             sut.Name.Should().Be( "foo" );
             text.Should().Be( "DROP TEMPORARY TABLE [foo]" );
+        }
+    }
+
+    [Fact]
+    public void Batch_ShouldCreateStatementBatchNode()
+    {
+        var statements = new SqlNodeBase[]
+        {
+            SqlNode.RawQuery( "SELECT a, b FROM foo" ),
+            SqlNode.RawQuery( "SELECT b, c FROM bar" ),
+            SqlNode.RawQuery( "SELECT d, e FROM qux" )
+        };
+
+        var sut = SqlNode.Batch( statements );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.StatementBatch );
+            sut.IsolationLevel.Should().BeNull();
+            sut.Statements.ToArray().Should().BeSequentiallyEqualTo( statements );
+            text.Should()
+                .Be(
+                    @"BATCH
+(
+    SELECT a, b FROM foo;
+
+    SELECT b, c FROM bar;
+
+    SELECT d, e FROM qux;
+)" );
+        }
+    }
+
+    [Fact]
+    public void Batch_ShouldCreateStatementBatchNode_WithIsolationLevel()
+    {
+        var statements = new SqlNodeBase[]
+        {
+            SqlNode.RawQuery( "SELECT a, b FROM foo" ),
+            SqlNode.RawQuery( "SELECT b, c FROM bar" ),
+            SqlNode.RawQuery( "SELECT d, e FROM qux" )
+        };
+
+        var sut = SqlNode.Batch( IsolationLevel.Serializable, statements );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.StatementBatch );
+            sut.IsolationLevel.Should().Be( IsolationLevel.Serializable );
+            sut.Statements.ToArray().Should().BeSequentiallyEqualTo( statements );
+            text.Should()
+                .Be(
+                    @"BATCH <ISOLATION LEVEL SERIALIZABLE>
+(
+    SELECT a, b FROM foo;
+
+    SELECT b, c FROM bar;
+
+    SELECT d, e FROM qux;
+)" );
+        }
+    }
+
+    [Fact]
+    public void Batch_ShouldCreateStatementBatchNode_WithEmptyStatements()
+    {
+        var sut = SqlNode.Batch();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.StatementBatch );
+            sut.IsolationLevel.Should().BeNull();
+            sut.Statements.ToArray().Should().BeEmpty();
+            text.Should().Be( "BATCH" );
         }
     }
 

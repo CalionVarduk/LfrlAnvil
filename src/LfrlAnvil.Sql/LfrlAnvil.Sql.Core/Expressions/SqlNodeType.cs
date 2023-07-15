@@ -74,5 +74,6 @@ public enum SqlNodeType : byte
     DeleteFrom,
     ColumnDefinition,
     CreateTemporaryTable,
-    DropTemporaryTable
+    DropTemporaryTable,
+    StatementBatch
 }

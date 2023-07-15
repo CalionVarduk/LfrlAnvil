@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -637,5 +638,17 @@ public static partial class SqlNode
     public static SqlDropTemporaryTableNode DropTempTable(string name)
     {
         return new SqlDropTemporaryTableNode( name );
+    }
+
+    [Pure]
+    public static SqlStatementBatchNode Batch(params SqlNodeBase[] statements)
+    {
+        return new SqlStatementBatchNode( isolationLevel: null, statements );
+    }
+
+    [Pure]
+    public static SqlStatementBatchNode Batch(IsolationLevel isolationLevel, params SqlNodeBase[] statements)
+    {
+        return new SqlStatementBatchNode( isolationLevel, statements );
     }
 }
