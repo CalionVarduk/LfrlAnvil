@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Sql.Expressions.Decorators;
 using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Persistence;
+using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Expressions;
 
@@ -17,7 +17,7 @@ public static class SqlDataSourceNodeExtensions
     public static TDataSourceNode Distinct<TDataSourceNode>(this TDataSourceNode node)
         where TDataSourceNode : SqlDataSourceNode
     {
-        return (TDataSourceNode)node.Decorate( SqlNode.DistinctDecorator() );
+        return (TDataSourceNode)node.AddTrait( SqlNode.DistinctTrait() );
     }
 
     [Pure]
@@ -33,7 +33,7 @@ public static class SqlDataSourceNodeExtensions
     public static TDataSourceNode AndWhere<TDataSourceNode>(this TDataSourceNode node, SqlConditionNode filter)
         where TDataSourceNode : SqlDataSourceNode
     {
-        return (TDataSourceNode)node.Decorate( SqlNode.FilterDecorator( filter, isConjunction: true ) );
+        return (TDataSourceNode)node.AddTrait( SqlNode.FilterTrait( filter, isConjunction: true ) );
     }
 
     [Pure]
@@ -49,7 +49,7 @@ public static class SqlDataSourceNodeExtensions
     public static TDataSourceNode OrWhere<TDataSourceNode>(this TDataSourceNode node, SqlConditionNode filter)
         where TDataSourceNode : SqlDataSourceNode
     {
-        return (TDataSourceNode)node.Decorate( SqlNode.FilterDecorator( filter, isConjunction: false ) );
+        return (TDataSourceNode)node.AddTrait( SqlNode.FilterTrait( filter, isConjunction: false ) );
     }
 
     [Pure]
@@ -75,7 +75,7 @@ public static class SqlDataSourceNodeExtensions
     public static TDataSourceNode GroupBy<TDataSourceNode>(this TDataSourceNode node, params SqlExpressionNode[] expressions)
         where TDataSourceNode : SqlDataSourceNode
     {
-        return expressions.Length == 0 ? node : (TDataSourceNode)node.Decorate( SqlNode.AggregationDecorator( expressions ) );
+        return expressions.Length == 0 ? node : (TDataSourceNode)node.AddTrait( SqlNode.AggregationTrait( expressions ) );
     }
 
     [Pure]
@@ -91,7 +91,7 @@ public static class SqlDataSourceNodeExtensions
     public static TDataSourceNode AndHaving<TDataSourceNode>(this TDataSourceNode node, SqlConditionNode filter)
         where TDataSourceNode : SqlDataSourceNode
     {
-        return (TDataSourceNode)node.Decorate( SqlNode.AggregationFilterDecorator( filter, isConjunction: true ) );
+        return (TDataSourceNode)node.AddTrait( SqlNode.AggregationFilterTrait( filter, isConjunction: true ) );
     }
 
     [Pure]
@@ -107,7 +107,7 @@ public static class SqlDataSourceNodeExtensions
     public static TDataSourceNode OrHaving<TDataSourceNode>(this TDataSourceNode node, SqlConditionNode filter)
         where TDataSourceNode : SqlDataSourceNode
     {
-        return (TDataSourceNode)node.Decorate( SqlNode.AggregationFilterDecorator( filter, isConjunction: false ) );
+        return (TDataSourceNode)node.AddTrait( SqlNode.AggregationFilterTrait( filter, isConjunction: false ) );
     }
 
     [Pure]
@@ -139,7 +139,7 @@ public static class SqlDataSourceNodeExtensions
     {
         return ordering.Length == 0
             ? SqlNode.Query( node, Array.Empty<SqlSelectNode>() )
-            : SqlNode.Query( node, SqlNode.SortDecorator( ordering ) );
+            : SqlNode.Query( node, SqlNode.SortTrait( ordering ) );
     }
 
     [Pure]
@@ -171,7 +171,7 @@ public static class SqlDataSourceNodeExtensions
     {
         return commonTableExpressions.Length == 0
             ? SqlNode.Query( node, Array.Empty<SqlSelectNode>() )
-            : SqlNode.Query( node, SqlNode.CommonTableExpressionDecorator( commonTableExpressions ) );
+            : SqlNode.Query( node, SqlNode.CommonTableExpressionTrait( commonTableExpressions ) );
     }
 
     [Pure]
@@ -181,7 +181,7 @@ public static class SqlDataSourceNodeExtensions
         SqlExpressionNode value)
         where TDataSourceNode : SqlDataSourceNode
     {
-        return SqlNode.Query( node, SqlNode.LimitDecorator( value ) );
+        return SqlNode.Query( node, SqlNode.LimitTrait( value ) );
     }
 
     [Pure]
@@ -191,7 +191,7 @@ public static class SqlDataSourceNodeExtensions
         SqlExpressionNode value)
         where TDataSourceNode : SqlDataSourceNode
     {
-        return SqlNode.Query( node, SqlNode.OffsetDecorator( value ) );
+        return SqlNode.Query( node, SqlNode.OffsetTrait( value ) );
     }
 
     [Pure]

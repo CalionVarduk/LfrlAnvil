@@ -2,12 +2,12 @@
 using System.Text;
 using LfrlAnvil.Extensions;
 
-namespace LfrlAnvil.Sql.Expressions.Decorators;
+namespace LfrlAnvil.Sql.Expressions.Traits;
 
-public sealed class SqlAggregationDataSourceDecoratorNode : SqlDataSourceDecoratorNode
+public sealed class SqlAggregationDataSourceTraitNode : SqlDataSourceTraitNode
 {
-    internal SqlAggregationDataSourceDecoratorNode(SqlExpressionNode[] expressions)
-        : base( SqlNodeType.AggregationDecorator )
+    internal SqlAggregationDataSourceTraitNode(SqlExpressionNode[] expressions)
+        : base( SqlNodeType.AggregationTrait )
     {
         Expressions = expressions;
     }

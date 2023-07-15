@@ -1,19 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using LfrlAnvil.Sql.Expressions.Decorators;
+using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
 
 public abstract class SqlDataSourceNode : SqlNodeBase
 {
-    protected SqlDataSourceNode(Chain<SqlDataSourceDecoratorNode> decorators)
+    protected SqlDataSourceNode(Chain<SqlDataSourceTraitNode> traits)
         : base( SqlNodeType.DataSource )
     {
-        Decorators = decorators;
+        Traits = traits;
     }
 
-    public Chain<SqlDataSourceDecoratorNode> Decorators { get; }
+    public Chain<SqlDataSourceTraitNode> Traits { get; }
     public abstract SqlRecordSetNode From { get; }
     public abstract ReadOnlyMemory<SqlDataSourceJoinOnNode> Joins { get; }
     public abstract IReadOnlyCollection<SqlRecordSetNode> RecordSets { get; }
@@ -23,5 +23,5 @@ public abstract class SqlDataSourceNode : SqlNodeBase
     public abstract SqlRecordSetNode GetRecordSet(string name);
 
     [Pure]
-    public abstract SqlDataSourceNode Decorate(SqlDataSourceDecoratorNode decorator);
+    public abstract SqlDataSourceNode AddTrait(SqlDataSourceTraitNode trait);
 }

@@ -4,14 +4,14 @@ using System.Diagnostics.Contracts;
 using System.Text;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Exceptions;
-using LfrlAnvil.Sql.Expressions.Decorators;
+using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
 
 public sealed class SqlDummyDataSourceNode : SqlDataSourceNode
 {
-    internal SqlDummyDataSourceNode(Chain<SqlDataSourceDecoratorNode> decorators)
-        : base( decorators ) { }
+    internal SqlDummyDataSourceNode(Chain<SqlDataSourceTraitNode> traits)
+        : base( traits ) { }
 
     public override SqlRecordSetNode From =>
         throw new InvalidOperationException( ExceptionResources.DummyDataSourceDoesNotContainAnyRecordSets );
@@ -26,17 +26,17 @@ public sealed class SqlDummyDataSourceNode : SqlDataSourceNode
     }
 
     [Pure]
-    public override SqlDummyDataSourceNode Decorate(SqlDataSourceDecoratorNode decorator)
+    public override SqlDummyDataSourceNode AddTrait(SqlDataSourceTraitNode trait)
     {
-        var decorators = Decorators.ToExtendable().Extend( decorator );
-        return new SqlDummyDataSourceNode( decorators );
+        var traits = Traits.ToExtendable().Extend( trait );
+        return new SqlDummyDataSourceNode( traits );
     }
 
     protected override void ToString(StringBuilder builder, int indent)
     {
         builder.Append( "FROM" ).Append( ' ' ).Append( '<' ).Append( "DUMMY" ).Append( '>' );
 
-        foreach ( var decorator in Decorators )
-            AppendTo( builder.Indent( indent ), decorator, indent );
+        foreach ( var trait in Traits )
+            AppendTo( builder.Indent( indent ), trait, indent );
     }
 }

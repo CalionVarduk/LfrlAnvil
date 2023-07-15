@@ -2,12 +2,12 @@
 using System.Text;
 using LfrlAnvil.Extensions;
 
-namespace LfrlAnvil.Sql.Expressions.Decorators;
+namespace LfrlAnvil.Sql.Expressions.Traits;
 
-public sealed class SqlSortQueryDecoratorNode : SqlQueryDecoratorNode
+public sealed class SqlSortQueryTraitNode : SqlQueryTraitNode
 {
-    internal SqlSortQueryDecoratorNode(SqlOrderByNode[] ordering)
-        : base( SqlNodeType.SortDecorator )
+    internal SqlSortQueryTraitNode(SqlOrderByNode[] ordering)
+        : base( SqlNodeType.SortTrait )
     {
         Ordering = ordering;
     }
@@ -16,12 +16,12 @@ public sealed class SqlSortQueryDecoratorNode : SqlQueryDecoratorNode
 
     protected override void ToString(StringBuilder builder, int indent)
     {
-        var orderIndent = indent + DefaultIndent;
         builder.Append( "ORDER BY" );
 
         if ( Ordering.Length == 0 )
             return;
 
+        var orderIndent = indent + DefaultIndent;
         foreach ( var orderBy in Ordering.Span )
         {
             AppendTo( builder.Indent( orderIndent ), orderBy, orderIndent );

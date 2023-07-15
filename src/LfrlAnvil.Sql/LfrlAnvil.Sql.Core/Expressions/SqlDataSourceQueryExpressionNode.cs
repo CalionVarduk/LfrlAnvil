@@ -2,15 +2,15 @@
 using System.Diagnostics.Contracts;
 using System.Text;
 using LfrlAnvil.Extensions;
-using LfrlAnvil.Sql.Expressions.Decorators;
 using LfrlAnvil.Sql.Expressions.Objects;
+using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Expressions;
 
 public abstract class SqlDataSourceQueryExpressionNode : SqlExtendableQueryExpressionNode
 {
-    internal SqlDataSourceQueryExpressionNode(Chain<SqlQueryDecoratorNode> decorators)
-        : base( SqlNodeType.DataSourceQuery, decorators ) { }
+    internal SqlDataSourceQueryExpressionNode(Chain<SqlQueryTraitNode> traits)
+        : base( SqlNodeType.DataSourceQuery, traits ) { }
 
     public abstract SqlDataSourceNode DataSource { get; }
 
@@ -18,37 +18,35 @@ public abstract class SqlDataSourceQueryExpressionNode : SqlExtendableQueryExpre
     public abstract SqlDataSourceQueryExpressionNode Select(params SqlSelectNode[] selection);
 
     [Pure]
-    public abstract SqlDataSourceQueryExpressionNode Decorate(SqlDataSourceDecoratorNode decorator);
+    public abstract SqlDataSourceQueryExpressionNode AddTrait(SqlDataSourceTraitNode trait);
 }
 
 public sealed class SqlDataSourceQueryExpressionNode<TDataSourceNode> : SqlDataSourceQueryExpressionNode
     where TDataSourceNode : SqlDataSourceNode
 {
     internal SqlDataSourceQueryExpressionNode(TDataSourceNode dataSource, ReadOnlyMemory<SqlSelectNode> selection)
-        : base( Chain<SqlQueryDecoratorNode>.Empty )
+        : base( Chain<SqlQueryTraitNode>.Empty )
     {
         DataSource = dataSource;
         Selection = selection;
     }
 
-    internal SqlDataSourceQueryExpressionNode(TDataSourceNode dataSource, SqlQueryDecoratorNode decorator)
-        : base( Chain.Create( decorator ) )
+    internal SqlDataSourceQueryExpressionNode(TDataSourceNode dataSource, SqlQueryTraitNode trait)
+        : base( Chain.Create( trait ) )
     {
         DataSource = dataSource;
         Selection = ReadOnlyMemory<SqlSelectNode>.Empty;
     }
 
-    private SqlDataSourceQueryExpressionNode(
-        SqlDataSourceQueryExpressionNode<TDataSourceNode> @base,
-        Chain<SqlQueryDecoratorNode> decorators)
-        : base( decorators )
+    private SqlDataSourceQueryExpressionNode(SqlDataSourceQueryExpressionNode<TDataSourceNode> @base, Chain<SqlQueryTraitNode> traits)
+        : base( traits )
     {
         DataSource = @base.DataSource;
         Selection = @base.Selection;
     }
 
     private SqlDataSourceQueryExpressionNode(SqlDataSourceQueryExpressionNode<TDataSourceNode> @base, TDataSourceNode dataSource)
-        : base( @base.Decorators )
+        : base( @base.Traits )
     {
         DataSource = dataSource;
         Selection = @base.Selection;
@@ -70,16 +68,16 @@ public sealed class SqlDataSourceQueryExpressionNode<TDataSourceNode> : SqlDataS
     }
 
     [Pure]
-    public override SqlDataSourceQueryExpressionNode<TDataSourceNode> Decorate(SqlQueryDecoratorNode decorator)
+    public override SqlDataSourceQueryExpressionNode<TDataSourceNode> AddTrait(SqlQueryTraitNode trait)
     {
-        var decorators = Decorators.ToExtendable().Extend( decorator );
-        return new SqlDataSourceQueryExpressionNode<TDataSourceNode>( this, decorators );
+        var traits = Traits.ToExtendable().Extend( trait );
+        return new SqlDataSourceQueryExpressionNode<TDataSourceNode>( this, traits );
     }
 
     [Pure]
-    public override SqlDataSourceQueryExpressionNode<TDataSourceNode> Decorate(SqlDataSourceDecoratorNode decorator)
+    public override SqlDataSourceQueryExpressionNode<TDataSourceNode> AddTrait(SqlDataSourceTraitNode trait)
     {
-        var dataSource = (TDataSourceNode)DataSource.Decorate( decorator );
+        var dataSource = (TDataSourceNode)DataSource.AddTrait( trait );
         return new SqlDataSourceQueryExpressionNode<TDataSourceNode>( this, dataSource );
     }
 
@@ -88,8 +86,8 @@ public sealed class SqlDataSourceQueryExpressionNode<TDataSourceNode> : SqlDataS
         var selectIndent = indent + DefaultIndent;
         AppendTo( builder, DataSource, indent );
 
-        foreach ( var decorator in Decorators )
-            AppendTo( builder.Indent( indent ), decorator, indent );
+        foreach ( var trait in Traits )
+            AppendTo( builder.Indent( indent ), trait, indent );
 
         builder.Indent( indent ).Append( "SELECT" );
 

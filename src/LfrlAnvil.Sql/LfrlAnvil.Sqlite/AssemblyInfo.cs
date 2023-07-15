@@ -29,4 +29,3 @@
 // - Add node tree interpreter
 //   ^ this interpreter must be customizable through DB builder
 // - Add CREATE/DROP (TEMP)TABLE/INDEX nodes <= NEXT
-// - Rename decorators to traits

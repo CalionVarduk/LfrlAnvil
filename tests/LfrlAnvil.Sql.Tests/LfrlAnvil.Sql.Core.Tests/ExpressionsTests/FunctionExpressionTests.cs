@@ -487,13 +487,13 @@ public class FunctionExpressionTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Count );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
-            sut.Decorators.Should().BeEmpty();
+            sut.Traits.Should().BeEmpty();
             text.Should().Be( "AGG_COUNT((@a : System.Int32))" );
         }
     }
 
     [Fact]
-    public void Count_ShouldCreateCountAggregateFunctionExpressionNode_Decorated()
+    public void Count_ShouldCreateCountAggregateFunctionExpressionNode_WithTrait()
     {
         var arg = SqlNode.Parameter<int>( "a" );
         var sut = arg.Count().Distinct();
@@ -504,8 +504,8 @@ public class FunctionExpressionTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Count );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
-            sut.Decorators.Should().HaveCount( 1 );
-            (sut.Decorators.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctDecorator );
+            sut.Traits.Should().HaveCount( 1 );
+            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
             text.Should()
                 .Be(
                     @"AGG_COUNT((@a : System.Int32))
@@ -525,13 +525,13 @@ public class FunctionExpressionTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Min );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
-            sut.Decorators.Should().BeEmpty();
+            sut.Traits.Should().BeEmpty();
             text.Should().Be( "AGG_MIN((@a : System.Int32))" );
         }
     }
 
     [Fact]
-    public void Min_ShouldCreateMinAggregateFunctionExpressionNode_Decorated()
+    public void Min_ShouldCreateMinAggregateFunctionExpressionNode_WithTrait()
     {
         var arg = SqlNode.Parameter<int>( "a" );
         var sut = arg.Min().Distinct();
@@ -542,8 +542,8 @@ public class FunctionExpressionTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Min );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
-            sut.Decorators.Should().HaveCount( 1 );
-            (sut.Decorators.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctDecorator );
+            sut.Traits.Should().HaveCount( 1 );
+            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
             text.Should()
                 .Be(
                     @"AGG_MIN((@a : System.Int32))
@@ -608,13 +608,13 @@ public class FunctionExpressionTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Max );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
-            sut.Decorators.Should().BeEmpty();
+            sut.Traits.Should().BeEmpty();
             text.Should().Be( "AGG_MAX((@a : System.Int32))" );
         }
     }
 
     [Fact]
-    public void Max_ShouldCreateMaxAggregateFunctionExpressionNode_Decorated()
+    public void Max_ShouldCreateMaxAggregateFunctionExpressionNode_WithTrait()
     {
         var arg = SqlNode.Parameter<int>( "a" );
         var sut = arg.Max().Distinct();
@@ -625,8 +625,8 @@ public class FunctionExpressionTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Max );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
-            sut.Decorators.Should().HaveCount( 1 );
-            (sut.Decorators.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctDecorator );
+            sut.Traits.Should().HaveCount( 1 );
+            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
             text.Should()
                 .Be(
                     @"AGG_MAX((@a : System.Int32))
@@ -691,13 +691,13 @@ public class FunctionExpressionTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Sum );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
-            sut.Decorators.Should().BeEmpty();
+            sut.Traits.Should().BeEmpty();
             text.Should().Be( "AGG_SUM((@a : System.Int32))" );
         }
     }
 
     [Fact]
-    public void Sum_ShouldCreateSumAggregateFunctionExpressionNode_Decorated()
+    public void Sum_ShouldCreateSumAggregateFunctionExpressionNode_WithTrait()
     {
         var arg = SqlNode.Parameter<int>( "a" );
         var sut = arg.Sum().Distinct();
@@ -708,8 +708,8 @@ public class FunctionExpressionTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Sum );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
-            sut.Decorators.Should().HaveCount( 1 );
-            (sut.Decorators.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctDecorator );
+            sut.Traits.Should().HaveCount( 1 );
+            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
             text.Should()
                 .Be(
                     @"AGG_SUM((@a : System.Int32))
@@ -729,13 +729,13 @@ public class FunctionExpressionTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Average );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
-            sut.Decorators.Should().BeEmpty();
+            sut.Traits.Should().BeEmpty();
             text.Should().Be( "AGG_AVERAGE((@a : Nullable<System.Int32>))" );
         }
     }
 
     [Fact]
-    public void Average_ShouldCreateAverageAggregateFunctionExpressionNode_Decorated()
+    public void Average_ShouldCreateAverageAggregateFunctionExpressionNode_WithTrait()
     {
         var arg = SqlNode.Parameter<int>( "a" );
         var sut = arg.Average().Distinct();
@@ -746,8 +746,8 @@ public class FunctionExpressionTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Average );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
-            sut.Decorators.Should().HaveCount( 1 );
-            (sut.Decorators.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctDecorator );
+            sut.Traits.Should().HaveCount( 1 );
+            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
             text.Should()
                 .Be(
                     @"AGG_AVERAGE((@a : System.Int32))
@@ -767,7 +767,7 @@ public class FunctionExpressionTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.StringConcat );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
-            sut.Decorators.Should().BeEmpty();
+            sut.Traits.Should().BeEmpty();
             text.Should().Be( "AGG_STRINGCONCAT((@a : System.String))" );
         }
     }
@@ -785,13 +785,13 @@ public class FunctionExpressionTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.StringConcat );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg, separator );
-            sut.Decorators.Should().BeEmpty();
+            sut.Traits.Should().BeEmpty();
             text.Should().Be( "AGG_STRINGCONCAT((@a : System.String), (\",\" : System.String))" );
         }
     }
 
     [Fact]
-    public void StringConcat_ShouldCreateStringConcatAggregateFunctionExpressionNode_Decorated()
+    public void StringConcat_ShouldCreateStringConcatAggregateFunctionExpressionNode_WithTrait()
     {
         var arg = SqlNode.Parameter<string>( "a" );
         var sut = arg.StringConcat().Distinct();
@@ -802,8 +802,8 @@ public class FunctionExpressionTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.StringConcat );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
-            sut.Decorators.Should().HaveCount( 1 );
-            (sut.Decorators.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctDecorator );
+            sut.Traits.Should().HaveCount( 1 );
+            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
             text.Should()
                 .Be(
                     @"AGG_STRINGCONCAT((@a : System.String))

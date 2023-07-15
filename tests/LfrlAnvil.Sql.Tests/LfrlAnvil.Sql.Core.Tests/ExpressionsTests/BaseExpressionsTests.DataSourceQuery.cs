@@ -27,7 +27,7 @@ public partial class BaseExpressionsTests
             {
                 selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
                 sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-                sut.Decorators.ToArray().Should().BeSequentiallyEqualTo( query.Decorators );
+                sut.Traits.ToArray().Should().BeSequentiallyEqualTo( query.Traits );
                 sut.DataSource.Should().BeSameAs( dataSource );
                 sut.Selection.ToArray().Should().BeSequentiallyEqualTo( oldSelection, newSelection );
                 text.Should()
@@ -52,18 +52,18 @@ SELECT
         }
 
         [Fact]
-        public void Decorate_ShouldCreateDecoratedDataSourceQuery_WhenCalledForTheFirstTime()
+        public void AddTrait_ShouldCreateDataSourceQueryWithTrait_WhenCalledForTheFirstTime()
         {
             var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
             var sut = dataSource.Select( dataSource.GetAll() );
-            var decorator = SqlNode.LimitDecorator( SqlNode.Literal( 10 ) );
-            var result = sut.Decorate( decorator );
+            var trait = SqlNode.LimitTrait( SqlNode.Literal( 10 ) );
+            var result = sut.AddTrait( trait );
             var text = result.ToString();
 
             using ( new AssertionScope() )
             {
                 result.Should().NotBeSameAs( sut );
-                result.Decorators.Should().BeSequentiallyEqualTo( decorator );
+                result.Traits.Should().BeSequentiallyEqualTo( trait );
                 text.Should()
                     .Be(
                         @"FROM [foo]
@@ -74,20 +74,20 @@ SELECT
         }
 
         [Fact]
-        public void Decorate_ShouldCreateDecoratedCompoundQuery_WhenCalledForTheSecondTime()
+        public void AddTrait_ShouldCreateCompoundQueryWithTraits_WhenCalledForTheSecondTime()
         {
-            var firstDecorator = SqlNode.LimitDecorator( SqlNode.Literal( 10 ) );
+            var firstTrait = SqlNode.LimitTrait( SqlNode.Literal( 10 ) );
             var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
-            var sut = dataSource.Select( dataSource.GetAll() ).Decorate( firstDecorator );
+            var sut = dataSource.Select( dataSource.GetAll() ).AddTrait( firstTrait );
 
-            var secondDecorator = SqlNode.OffsetDecorator( SqlNode.Literal( 15 ) );
-            var result = sut.Decorate( secondDecorator );
+            var secondTrait = SqlNode.OffsetTrait( SqlNode.Literal( 15 ) );
+            var result = sut.AddTrait( secondTrait );
             var text = result.ToString();
 
             using ( new AssertionScope() )
             {
                 result.Should().NotBeSameAs( sut );
-                result.Decorators.Should().BeSequentiallyEqualTo( firstDecorator, secondDecorator );
+                result.Traits.Should().BeSequentiallyEqualTo( firstTrait, secondTrait );
                 text.Should()
                     .Be(
                         @"FROM [foo]

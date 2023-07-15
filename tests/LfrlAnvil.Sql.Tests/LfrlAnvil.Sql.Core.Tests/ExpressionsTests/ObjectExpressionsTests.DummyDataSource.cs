@@ -25,17 +25,17 @@ public partial class ObjectExpressionsTests
         }
 
         [Fact]
-        public void Decorate_ShouldCreateDecoratedDummyDataSource_WhenCalledForTheFirstTime()
+        public void AddTrait_ShouldCreateDummyDataSourceWithTrait_WhenCalledForTheFirstTime()
         {
             var sut = SqlNode.DummyDataSource();
-            var decorator = SqlNode.FilterDecorator( SqlNode.RawCondition( "a > 10" ), isConjunction: true );
-            var result = sut.Decorate( decorator );
+            var trait = SqlNode.FilterTrait( SqlNode.RawCondition( "a > 10" ), isConjunction: true );
+            var result = sut.AddTrait( trait );
             var text = result.ToString();
 
             using ( new AssertionScope() )
             {
                 result.Should().NotBeSameAs( sut );
-                result.Decorators.Should().BeSequentiallyEqualTo( decorator );
+                result.Traits.Should().BeSequentiallyEqualTo( trait );
                 text.Should()
                     .Be(
                         @"FROM <DUMMY>
@@ -45,18 +45,18 @@ AND WHERE
         }
 
         [Fact]
-        public void Decorate_ShouldCreateDecoratedDummyDataSource_WhenCalledForTheSecondTime()
+        public void AddTrait_ShouldCreateDummyDataSourceWithTraits_WhenCalledForTheSecondTime()
         {
-            var firstDecorator = SqlNode.FilterDecorator( SqlNode.RawCondition( "a > 10" ), isConjunction: true );
-            var sut = SqlNode.DummyDataSource().Decorate( firstDecorator );
-            var secondDecorator = SqlNode.FilterDecorator( SqlNode.RawCondition( "b > 15" ), isConjunction: false );
-            var result = sut.Decorate( secondDecorator );
+            var firstTrait = SqlNode.FilterTrait( SqlNode.RawCondition( "a > 10" ), isConjunction: true );
+            var sut = SqlNode.DummyDataSource().AddTrait( firstTrait );
+            var secondTrait = SqlNode.FilterTrait( SqlNode.RawCondition( "b > 15" ), isConjunction: false );
+            var result = sut.AddTrait( secondTrait );
             var text = result.ToString();
 
             using ( new AssertionScope() )
             {
                 result.Should().NotBeSameAs( sut );
-                result.Decorators.Should().BeSequentiallyEqualTo( firstDecorator, secondDecorator );
+                result.Traits.Should().BeSequentiallyEqualTo( firstTrait, secondTrait );
                 text.Should()
                     .Be(
                         @"FROM <DUMMY>

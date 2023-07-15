@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
-using LfrlAnvil.Sql.Expressions.Decorators;
+using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Expressions.Functions;
 
@@ -8,13 +8,13 @@ public sealed class SqlMaxAggregateFunctionExpressionNode : SqlAggregateFunction
 {
     internal SqlMaxAggregateFunctionExpressionNode(
         ReadOnlyMemory<SqlExpressionNode> arguments,
-        Chain<SqlAggregateFunctionDecoratorNode> decorators)
-        : base( SqlFunctionType.Max, arguments, decorators ) { }
+        Chain<SqlAggregateFunctionTraitNode> traits)
+        : base( SqlFunctionType.Max, arguments, traits ) { }
 
     [Pure]
-    public override SqlMaxAggregateFunctionExpressionNode Decorate(SqlAggregateFunctionDecoratorNode decorator)
+    public override SqlMaxAggregateFunctionExpressionNode AddTrait(SqlAggregateFunctionTraitNode trait)
     {
-        var decorators = Decorators.ToExtendable().Extend( decorator );
-        return new SqlMaxAggregateFunctionExpressionNode( Arguments, decorators );
+        var traits = Traits.ToExtendable().Extend( trait );
+        return new SqlMaxAggregateFunctionExpressionNode( Arguments, traits );
     }
 }

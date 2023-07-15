@@ -4,11 +4,11 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Sql.Expressions.Arithmetic;
-using LfrlAnvil.Sql.Expressions.Decorators;
 using LfrlAnvil.Sql.Expressions.Functions;
 using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Persistence;
+using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Objects;
 
 namespace LfrlAnvil.Sql.Expressions;
@@ -654,7 +654,7 @@ public static class SqlNodeExtensions
     public static TAggregateFunctionNode Distinct<TAggregateFunctionNode>(this TAggregateFunctionNode node)
         where TAggregateFunctionNode : SqlAggregateFunctionExpressionNode
     {
-        return (TAggregateFunctionNode)node.Decorate( SqlNode.AggregateFunctions.DistinctDecorator() );
+        return (TAggregateFunctionNode)node.AddTrait( SqlNode.AggregateFunctions.DistinctTrait() );
     }
 
     [Pure]
@@ -662,7 +662,7 @@ public static class SqlNodeExtensions
     public static TAggregateFunctionNode AndWhere<TAggregateFunctionNode>(this TAggregateFunctionNode node, SqlConditionNode filter)
         where TAggregateFunctionNode : SqlAggregateFunctionExpressionNode
     {
-        return (TAggregateFunctionNode)node.Decorate( SqlNode.AggregateFunctions.FilterDecorator( filter, isConjunction: true ) );
+        return (TAggregateFunctionNode)node.AddTrait( SqlNode.AggregateFunctions.FilterTrait( filter, isConjunction: true ) );
     }
 
     [Pure]
@@ -670,7 +670,7 @@ public static class SqlNodeExtensions
     public static TAggregateFunctionNode OrWhere<TAggregateFunctionNode>(this TAggregateFunctionNode node, SqlConditionNode filter)
         where TAggregateFunctionNode : SqlAggregateFunctionExpressionNode
     {
-        return (TAggregateFunctionNode)node.Decorate( SqlNode.AggregateFunctions.FilterDecorator( filter, isConjunction: false ) );
+        return (TAggregateFunctionNode)node.AddTrait( SqlNode.AggregateFunctions.FilterTrait( filter, isConjunction: false ) );
     }
 
     [Pure]

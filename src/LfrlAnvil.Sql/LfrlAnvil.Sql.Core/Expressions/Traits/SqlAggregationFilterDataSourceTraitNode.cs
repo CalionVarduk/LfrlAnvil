@@ -2,12 +2,12 @@
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Expressions.Logical;
 
-namespace LfrlAnvil.Sql.Expressions.Decorators;
+namespace LfrlAnvil.Sql.Expressions.Traits;
 
-public sealed class SqlFilterDataSourceDecoratorNode : SqlDataSourceDecoratorNode
+public sealed class SqlAggregationFilterDataSourceTraitNode : SqlDataSourceTraitNode
 {
-    internal SqlFilterDataSourceDecoratorNode(SqlConditionNode filter, bool isConjunction)
-        : base( SqlNodeType.FilterDecorator )
+    internal SqlAggregationFilterDataSourceTraitNode(SqlConditionNode filter, bool isConjunction)
+        : base( SqlNodeType.AggregationFilterTrait )
     {
         Filter = filter;
         IsConjunction = isConjunction;
@@ -19,7 +19,7 @@ public sealed class SqlFilterDataSourceDecoratorNode : SqlDataSourceDecoratorNod
     protected override void ToString(StringBuilder builder, int indent)
     {
         var filterIndent = indent + DefaultIndent;
-        builder.Append( IsConjunction ? "AND" : "OR" ).Append( ' ' ).Append( "WHERE" ).Indent( filterIndent );
+        builder.Append( IsConjunction ? "AND" : "OR" ).Append( ' ' ).Append( "HAVING" ).Indent( filterIndent );
         AppendChildTo( builder, Filter, filterIndent );
     }
 }

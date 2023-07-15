@@ -1,11 +1,11 @@
 ﻿using System.Text;
 
-namespace LfrlAnvil.Sql.Expressions.Decorators;
+namespace LfrlAnvil.Sql.Expressions.Traits;
 
-public sealed class SqlOffsetQueryDecoratorNode : SqlQueryDecoratorNode
+public sealed class SqlOffsetQueryTraitNode : SqlQueryTraitNode
 {
-    internal SqlOffsetQueryDecoratorNode(SqlExpressionNode value)
-        : base( SqlNodeType.OffsetDecorator )
+    internal SqlOffsetQueryTraitNode(SqlExpressionNode value)
+        : base( SqlNodeType.OffsetTrait )
     {
         Value = value;
     }

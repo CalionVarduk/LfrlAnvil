@@ -5,10 +5,10 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Internal;
 using LfrlAnvil.Sql.Expressions.Arithmetic;
-using LfrlAnvil.Sql.Expressions.Decorators;
 using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Persistence;
+using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Objects;
 
 namespace LfrlAnvil.Sql.Expressions;
@@ -18,7 +18,7 @@ public static partial class SqlNode
     private static SqlNullNode? _null;
     private static SqlTrueNode? _true;
     private static SqlFalseNode? _false;
-    private static SqlDistinctDataSourceDecoratorNode? _distinct;
+    private static SqlDistinctDataSourceTraitNode? _distinct;
     private static SqlDummyDataSourceNode? _dummyDataSource;
 
     [Pure]
@@ -307,52 +307,52 @@ public static partial class SqlNode
     }
 
     [Pure]
-    public static SqlFilterDataSourceDecoratorNode FilterDecorator(SqlConditionNode filter, bool isConjunction)
+    public static SqlFilterDataSourceTraitNode FilterTrait(SqlConditionNode filter, bool isConjunction)
     {
-        return new SqlFilterDataSourceDecoratorNode( filter, isConjunction );
+        return new SqlFilterDataSourceTraitNode( filter, isConjunction );
     }
 
     [Pure]
-    public static SqlAggregationDataSourceDecoratorNode AggregationDecorator(params SqlExpressionNode[] expressions)
+    public static SqlAggregationDataSourceTraitNode AggregationTrait(params SqlExpressionNode[] expressions)
     {
-        return new SqlAggregationDataSourceDecoratorNode( expressions );
+        return new SqlAggregationDataSourceTraitNode( expressions );
     }
 
     [Pure]
-    public static SqlAggregationFilterDataSourceDecoratorNode AggregationFilterDecorator(SqlConditionNode filter, bool isConjunction)
+    public static SqlAggregationFilterDataSourceTraitNode AggregationFilterTrait(SqlConditionNode filter, bool isConjunction)
     {
-        return new SqlAggregationFilterDataSourceDecoratorNode( filter, isConjunction );
+        return new SqlAggregationFilterDataSourceTraitNode( filter, isConjunction );
     }
 
     [Pure]
-    public static SqlDistinctDataSourceDecoratorNode DistinctDecorator()
+    public static SqlDistinctDataSourceTraitNode DistinctTrait()
     {
-        return _distinct ??= new SqlDistinctDataSourceDecoratorNode();
+        return _distinct ??= new SqlDistinctDataSourceTraitNode();
     }
 
     [Pure]
-    public static SqlSortQueryDecoratorNode SortDecorator(params SqlOrderByNode[] ordering)
+    public static SqlSortQueryTraitNode SortTrait(params SqlOrderByNode[] ordering)
     {
-        return new SqlSortQueryDecoratorNode( ordering );
+        return new SqlSortQueryTraitNode( ordering );
     }
 
     [Pure]
-    public static SqlLimitQueryDecoratorNode LimitDecorator(SqlExpressionNode value)
+    public static SqlLimitQueryTraitNode LimitTrait(SqlExpressionNode value)
     {
-        return new SqlLimitQueryDecoratorNode( value );
+        return new SqlLimitQueryTraitNode( value );
     }
 
     [Pure]
-    public static SqlOffsetQueryDecoratorNode OffsetDecorator(SqlExpressionNode value)
+    public static SqlOffsetQueryTraitNode OffsetTrait(SqlExpressionNode value)
     {
-        return new SqlOffsetQueryDecoratorNode( value );
+        return new SqlOffsetQueryTraitNode( value );
     }
 
     [Pure]
-    public static SqlCommonTableExpressionQueryDecoratorNode CommonTableExpressionDecorator(
+    public static SqlCommonTableExpressionQueryTraitNode CommonTableExpressionTrait(
         params SqlCommonTableExpressionNode[] commonTableExpressions)
     {
-        return new SqlCommonTableExpressionQueryDecoratorNode( commonTableExpressions );
+        return new SqlCommonTableExpressionQueryTraitNode( commonTableExpressions );
     }
 
     [Pure]
@@ -397,10 +397,10 @@ public static partial class SqlNode
     [Pure]
     public static SqlDataSourceQueryExpressionNode<TDataSourceNode> Query<TDataSourceNode>(
         TDataSourceNode dataSource,
-        SqlQueryDecoratorNode decorator)
+        SqlQueryTraitNode trait)
         where TDataSourceNode : SqlDataSourceNode
     {
-        return new SqlDataSourceQueryExpressionNode<TDataSourceNode>( dataSource, decorator );
+        return new SqlDataSourceQueryExpressionNode<TDataSourceNode>( dataSource, trait );
     }
 
     [Pure]
@@ -439,7 +439,7 @@ public static partial class SqlNode
     [Pure]
     public static SqlDummyDataSourceNode DummyDataSource()
     {
-        return _dummyDataSource ??= new SqlDummyDataSourceNode( Chain<SqlDataSourceDecoratorNode>.Empty );
+        return _dummyDataSource ??= new SqlDummyDataSourceNode( Chain<SqlDataSourceTraitNode>.Empty );
     }
 
     [Pure]

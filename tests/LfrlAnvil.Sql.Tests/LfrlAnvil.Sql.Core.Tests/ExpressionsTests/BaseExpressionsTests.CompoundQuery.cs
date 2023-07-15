@@ -107,17 +107,17 @@ public partial class BaseExpressionsTests
         }
 
         [Fact]
-        public void Decorate_ShouldCreateDecoratedCompoundQuery_WhenCalledForTheFirstTime()
+        public void AddTrait_ShouldCreateCompoundQueryWithTrait_WhenCalledForTheFirstTime()
         {
             var sut = SqlNode.RawQuery( "SELECT * FROM foo" ).CompoundWith( SqlNode.RawQuery( "SELECT * FROM bar" ).ToUnion() );
-            var decorator = SqlNode.LimitDecorator( SqlNode.Literal( 10 ) );
-            var result = sut.Decorate( decorator );
+            var trait = SqlNode.LimitTrait( SqlNode.Literal( 10 ) );
+            var result = sut.AddTrait( trait );
             var text = result.ToString();
 
             using ( new AssertionScope() )
             {
                 result.Should().NotBeSameAs( sut );
-                result.Decorators.Should().BeSequentiallyEqualTo( decorator );
+                result.Traits.Should().BeSequentiallyEqualTo( trait );
                 text.Should()
                     .Be(
                         @"(
@@ -132,21 +132,21 @@ LIMIT (""10"" : System.Int32)" );
         }
 
         [Fact]
-        public void Decorate_ShouldCreateDecoratedCompoundQuery_WhenCalledForTheSecondTime()
+        public void AddTrait_ShouldCreateCompoundQueryWithTraits_WhenCalledForTheSecondTime()
         {
-            var firstDecorator = SqlNode.LimitDecorator( SqlNode.Literal( 10 ) );
+            var firstTrait = SqlNode.LimitTrait( SqlNode.Literal( 10 ) );
             var sut = SqlNode.RawQuery( "SELECT * FROM foo" )
                 .CompoundWith( SqlNode.RawQuery( "SELECT * FROM bar" ).ToUnion() )
-                .Decorate( firstDecorator );
+                .AddTrait( firstTrait );
 
-            var secondDecorator = SqlNode.OffsetDecorator( SqlNode.Literal( 15 ) );
-            var result = sut.Decorate( secondDecorator );
+            var secondTrait = SqlNode.OffsetTrait( SqlNode.Literal( 15 ) );
+            var result = sut.AddTrait( secondTrait );
             var text = result.ToString();
 
             using ( new AssertionScope() )
             {
                 result.Should().NotBeSameAs( sut );
-                result.Decorators.Should().BeSequentiallyEqualTo( firstDecorator, secondDecorator );
+                result.Traits.Should().BeSequentiallyEqualTo( firstTrait, secondTrait );
                 text.Should()
                     .Be(
                         @"(

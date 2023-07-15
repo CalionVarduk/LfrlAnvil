@@ -2,12 +2,12 @@
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Expressions.Logical;
 
-namespace LfrlAnvil.Sql.Expressions.Decorators;
+namespace LfrlAnvil.Sql.Expressions.Traits;
 
-public sealed class SqlFilterAggregateFunctionDecoratorNode : SqlAggregateFunctionDecoratorNode
+public sealed class SqlFilterDataSourceTraitNode : SqlDataSourceTraitNode
 {
-    internal SqlFilterAggregateFunctionDecoratorNode(SqlConditionNode filter, bool isConjunction)
-        : base( SqlNodeType.FilterDecorator )
+    internal SqlFilterDataSourceTraitNode(SqlConditionNode filter, bool isConjunction)
+        : base( SqlNodeType.FilterTrait )
     {
         Filter = filter;
         IsConjunction = isConjunction;

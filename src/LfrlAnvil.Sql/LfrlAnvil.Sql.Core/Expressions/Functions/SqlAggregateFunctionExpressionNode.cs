@@ -2,7 +2,7 @@
 using System.Diagnostics.Contracts;
 using System.Text;
 using LfrlAnvil.Extensions;
-using LfrlAnvil.Sql.Expressions.Decorators;
+using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Expressions.Functions;
 
@@ -11,25 +11,25 @@ public abstract class SqlAggregateFunctionExpressionNode : SqlExpressionNode
     protected SqlAggregateFunctionExpressionNode(
         SqlFunctionType functionType,
         ReadOnlyMemory<SqlExpressionNode> arguments,
-        Chain<SqlAggregateFunctionDecoratorNode> decorators)
+        Chain<SqlAggregateFunctionTraitNode> traits)
         : base( SqlNodeType.AggregateFunctionExpression )
     {
         FunctionType = functionType;
         Arguments = arguments;
-        Decorators = decorators;
+        Traits = traits;
     }
 
     public SqlFunctionType FunctionType { get; }
     public ReadOnlyMemory<SqlExpressionNode> Arguments { get; }
-    public Chain<SqlAggregateFunctionDecoratorNode> Decorators { get; }
+    public Chain<SqlAggregateFunctionTraitNode> Traits { get; }
 
     [Pure]
-    public abstract SqlAggregateFunctionExpressionNode Decorate(SqlAggregateFunctionDecoratorNode decorator);
+    public abstract SqlAggregateFunctionExpressionNode AddTrait(SqlAggregateFunctionTraitNode trait);
 
     protected override void ToString(StringBuilder builder, int indent)
     {
         ArgumentsToString( builder.Append( "AGG_" ).Append( FunctionType.ToString().ToUpperInvariant() ), indent );
-        DecoratorsToString( builder, indent );
+        TraitsToString( builder, indent );
     }
 
     protected void ArgumentsToString(StringBuilder builder, int indent)
@@ -50,10 +50,10 @@ public abstract class SqlAggregateFunctionExpressionNode : SqlExpressionNode
         builder.Append( ')' );
     }
 
-    protected void DecoratorsToString(StringBuilder builder, int indent)
+    protected void TraitsToString(StringBuilder builder, int indent)
     {
-        var decoratorIndent = indent + DefaultIndent;
-        foreach ( var decorator in Decorators )
-            AppendTo( builder.Indent( decoratorIndent ), decorator, decoratorIndent );
+        var traitIndent = indent + DefaultIndent;
+        foreach ( var trait in Traits )
+            AppendTo( builder.Indent( traitIndent ), trait, traitIndent );
     }
 }

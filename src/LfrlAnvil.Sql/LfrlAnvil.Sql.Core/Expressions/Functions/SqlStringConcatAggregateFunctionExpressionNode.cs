@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
-using LfrlAnvil.Sql.Expressions.Decorators;
+using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Expressions.Functions;
 
@@ -8,13 +8,13 @@ public sealed class SqlStringConcatAggregateFunctionExpressionNode : SqlAggregat
 {
     internal SqlStringConcatAggregateFunctionExpressionNode(
         ReadOnlyMemory<SqlExpressionNode> arguments,
-        Chain<SqlAggregateFunctionDecoratorNode> decorators)
-        : base( SqlFunctionType.StringConcat, arguments, decorators ) { }
+        Chain<SqlAggregateFunctionTraitNode> traits)
+        : base( SqlFunctionType.StringConcat, arguments, traits ) { }
 
     [Pure]
-    public override SqlStringConcatAggregateFunctionExpressionNode Decorate(SqlAggregateFunctionDecoratorNode decorator)
+    public override SqlStringConcatAggregateFunctionExpressionNode AddTrait(SqlAggregateFunctionTraitNode trait)
     {
-        var decorators = Decorators.ToExtendable().Extend( decorator );
-        return new SqlStringConcatAggregateFunctionExpressionNode( Arguments, decorators );
+        var traits = Traits.ToExtendable().Extend( trait );
+        return new SqlStringConcatAggregateFunctionExpressionNode( Arguments, traits );
     }
 }

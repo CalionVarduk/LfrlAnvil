@@ -4,7 +4,7 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Text;
 using LfrlAnvil.Extensions;
-using LfrlAnvil.Sql.Expressions.Decorators;
+using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
 
@@ -13,7 +13,7 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
     private readonly Dictionary<string, SqlRecordSetNode> _recordSets;
 
     protected internal SqlMultiDataSourceNode(SqlRecordSetNode from, SqlDataSourceJoinOnNode[] joins)
-        : base( Chain<SqlDataSourceDecoratorNode>.Empty )
+        : base( Chain<SqlDataSourceTraitNode>.Empty )
     {
         Joins = joins;
         from = from.MarkAsOptional( false );
@@ -29,7 +29,7 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
     }
 
     protected internal SqlMultiDataSourceNode(SqlRecordSetNode from, SqlJoinDefinition[] definitions)
-        : base( Chain<SqlDataSourceDecoratorNode>.Empty )
+        : base( Chain<SqlDataSourceTraitNode>.Empty )
     {
         from = from.MarkAsOptional( false );
         _recordSets = CreateRecordSetDictionary( definitions.Length + 1 );
@@ -58,7 +58,7 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
     }
 
     internal SqlMultiDataSourceNode(SqlDataSourceNode source, SqlDataSourceJoinOnNode[] newJoins)
-        : base( source.Decorators )
+        : base( source.Traits )
     {
         var from = source.From;
         var sourceRecordSets = source.RecordSets;
@@ -87,7 +87,7 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
     }
 
     internal SqlMultiDataSourceNode(SqlDataSourceNode source, SqlJoinDefinition[] newDefinitions)
-        : base( source.Decorators )
+        : base( source.Traits )
     {
         var from = source.From;
         var sourceRecordSets = source.RecordSets;
@@ -127,8 +127,8 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
         Joins = joins;
     }
 
-    protected SqlMultiDataSourceNode(SqlMultiDataSourceNode @base, Chain<SqlDataSourceDecoratorNode> decorators)
-        : base( decorators )
+    protected SqlMultiDataSourceNode(SqlMultiDataSourceNode @base, Chain<SqlDataSourceTraitNode> traits)
+        : base( traits )
     {
         From = @base.From;
         Joins = @base.Joins;
@@ -146,10 +146,10 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
     }
 
     [Pure]
-    public override SqlMultiDataSourceNode Decorate(SqlDataSourceDecoratorNode decorator)
+    public override SqlMultiDataSourceNode AddTrait(SqlDataSourceTraitNode trait)
     {
-        var decorators = Decorators.ToExtendable().Extend( decorator );
-        return new SqlMultiDataSourceNode( this, decorators );
+        var traits = Traits.ToExtendable().Extend( trait );
+        return new SqlMultiDataSourceNode( this, traits );
     }
 
     protected sealed override void ToString(StringBuilder builder, int indent)
@@ -159,8 +159,8 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
         foreach ( var join in Joins.Span )
             AppendTo( builder.Indent( indent ), join, indent );
 
-        foreach ( var decorator in Decorators )
-            AppendTo( builder.Indent( indent ), decorator, indent );
+        foreach ( var trait in Traits )
+            AppendTo( builder.Indent( indent ), trait, indent );
     }
 
     [Pure]

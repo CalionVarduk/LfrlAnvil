@@ -4,7 +4,7 @@ using System.Diagnostics.Contracts;
 using System.Runtime.InteropServices;
 using System.Text;
 using LfrlAnvil.Extensions;
-using LfrlAnvil.Sql.Expressions.Decorators;
+using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Expressions;
 
@@ -15,7 +15,7 @@ public sealed class SqlCompoundQueryExpressionNode : SqlExtendableQueryExpressio
     internal SqlCompoundQueryExpressionNode(
         SqlQueryExpressionNode firstQuery,
         SqlCompoundQueryComponentNode[] followingQueries)
-        : base( SqlNodeType.CompoundQuery, Chain<SqlQueryDecoratorNode>.Empty )
+        : base( SqlNodeType.CompoundQuery, Chain<SqlQueryTraitNode>.Empty )
     {
         Ensure.IsNotEmpty( followingQueries, nameof( followingQueries ) );
         FirstQuery = firstQuery;
@@ -23,8 +23,8 @@ public sealed class SqlCompoundQueryExpressionNode : SqlExtendableQueryExpressio
         _selection = null;
     }
 
-    private SqlCompoundQueryExpressionNode(SqlCompoundQueryExpressionNode @base, Chain<SqlQueryDecoratorNode> decorators)
-        : base( SqlNodeType.CompoundQuery, decorators )
+    private SqlCompoundQueryExpressionNode(SqlCompoundQueryExpressionNode @base, Chain<SqlQueryTraitNode> traits)
+        : base( SqlNodeType.CompoundQuery, traits )
     {
         FirstQuery = @base.FirstQuery;
         FollowingQueries = @base.FollowingQueries;
@@ -36,10 +36,10 @@ public sealed class SqlCompoundQueryExpressionNode : SqlExtendableQueryExpressio
     public override ReadOnlyMemory<SqlSelectNode> Selection => _selection ??= CreateSelection();
 
     [Pure]
-    public override SqlCompoundQueryExpressionNode Decorate(SqlQueryDecoratorNode decorator)
+    public override SqlCompoundQueryExpressionNode AddTrait(SqlQueryTraitNode trait)
     {
-        var decorators = Decorators.ToExtendable().Extend( decorator );
-        return new SqlCompoundQueryExpressionNode( this, decorators );
+        var traits = Traits.ToExtendable().Extend( trait );
+        return new SqlCompoundQueryExpressionNode( this, traits );
     }
 
     protected override void ToString(StringBuilder builder, int indent)
@@ -53,8 +53,8 @@ public sealed class SqlCompoundQueryExpressionNode : SqlExtendableQueryExpressio
         foreach ( var followingQuery in FollowingQueries.Span )
             AppendTo( builder.Indent( indent ), followingQuery, indent );
 
-        foreach ( var decorator in Decorators )
-            AppendTo( builder.Indent( indent ), decorator, indent );
+        foreach ( var trait in Traits )
+            AppendTo( builder.Indent( indent ), trait, indent );
     }
 
     [Pure]

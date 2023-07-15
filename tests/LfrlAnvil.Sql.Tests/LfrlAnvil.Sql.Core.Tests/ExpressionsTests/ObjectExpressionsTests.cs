@@ -757,7 +757,7 @@ INNER JOIN [qux] ON
             sut.NodeType.Should().Be( SqlNodeType.CommonTableExpression );
             sut.Query.FirstQuery.Should().BeSameAs( initialQuery.Query );
             sut.Query.FollowingQueries.ToArray().Should().BeSequentiallyEqualTo( components );
-            sut.Query.Decorators.Should().BeEmpty();
+            sut.Query.Traits.Should().BeEmpty();
             sut.Name.Should().Be( "A" );
             sut.IsRecursive.Should().BeTrue();
             sut.RecordSet.Should().NotBeSameAs( initialQuery.RecordSet );

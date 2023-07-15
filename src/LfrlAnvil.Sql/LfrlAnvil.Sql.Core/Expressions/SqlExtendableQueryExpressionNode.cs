@@ -1,18 +1,18 @@
 ﻿using System.Diagnostics.Contracts;
-using LfrlAnvil.Sql.Expressions.Decorators;
+using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Expressions;
 
 public abstract class SqlExtendableQueryExpressionNode : SqlQueryExpressionNode
 {
-    internal SqlExtendableQueryExpressionNode(SqlNodeType nodeType, Chain<SqlQueryDecoratorNode> decorators)
+    internal SqlExtendableQueryExpressionNode(SqlNodeType nodeType, Chain<SqlQueryTraitNode> traits)
         : base( nodeType )
     {
-        Decorators = decorators;
+        Traits = traits;
     }
 
-    public Chain<SqlQueryDecoratorNode> Decorators { get; }
+    public Chain<SqlQueryTraitNode> Traits { get; }
 
     [Pure]
-    public abstract SqlExtendableQueryExpressionNode Decorate(SqlQueryDecoratorNode decorator);
+    public abstract SqlExtendableQueryExpressionNode AddTrait(SqlQueryTraitNode trait);
 }

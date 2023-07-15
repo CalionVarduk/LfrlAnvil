@@ -1,11 +1,11 @@
 ﻿using System.Text;
 
-namespace LfrlAnvil.Sql.Expressions.Decorators;
+namespace LfrlAnvil.Sql.Expressions.Traits;
 
-public sealed class SqlLimitQueryDecoratorNode : SqlQueryDecoratorNode
+public sealed class SqlLimitQueryTraitNode : SqlQueryTraitNode
 {
-    internal SqlLimitQueryDecoratorNode(SqlExpressionNode value)
-        : base( SqlNodeType.LimitDecorator )
+    internal SqlLimitQueryTraitNode(SqlExpressionNode value)
+        : base( SqlNodeType.LimitTrait )
     {
         Value = value;
     }

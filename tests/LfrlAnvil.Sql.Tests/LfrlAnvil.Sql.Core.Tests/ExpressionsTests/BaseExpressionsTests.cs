@@ -166,7 +166,7 @@ public partial class BaseExpressionsTests : TestsBase
         {
             selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
             sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.Decorators.ToArray().Should().BeEmpty();
+            sut.Traits.ToArray().Should().BeEmpty();
             sut.DataSource.Should().BeSameAs( dataSource );
             sut.Selection.ToArray().Should().BeSequentiallyEqualTo( selection );
             text.Should()
@@ -188,7 +188,7 @@ SELECT
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.Decorators.ToArray().Should().BeEmpty();
+            sut.Traits.ToArray().Should().BeEmpty();
             sut.DataSource.Should().BeSameAs( dataSource );
             sut.Selection.ToArray().Should().BeEmpty();
             text.Should()
@@ -209,7 +209,7 @@ SELECT" );
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.Decorators.ToArray().Should().BeEmpty();
+            sut.Traits.ToArray().Should().BeEmpty();
             sut.DataSource.Should().BeSameAs( dataSource );
             sut.Selection.ToArray().Should().BeSequentiallyEqualTo( selection );
             text.Should()

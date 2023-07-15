@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace LfrlAnvil.Sql.Expressions.Decorators;
+namespace LfrlAnvil.Sql.Expressions.Traits;
 
 public sealed class SqlOrderByNode : SqlNodeBase
 {

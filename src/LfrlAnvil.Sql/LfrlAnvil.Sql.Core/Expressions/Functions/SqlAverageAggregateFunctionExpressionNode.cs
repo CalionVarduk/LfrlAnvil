@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
-using LfrlAnvil.Sql.Expressions.Decorators;
+using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Expressions.Functions;
 
@@ -8,13 +8,13 @@ public sealed class SqlAverageAggregateFunctionExpressionNode : SqlAggregateFunc
 {
     internal SqlAverageAggregateFunctionExpressionNode(
         ReadOnlyMemory<SqlExpressionNode> arguments,
-        Chain<SqlAggregateFunctionDecoratorNode> decorators)
-        : base( SqlFunctionType.Average, arguments, decorators ) { }
+        Chain<SqlAggregateFunctionTraitNode> traits)
+        : base( SqlFunctionType.Average, arguments, traits ) { }
 
     [Pure]
-    public override SqlAverageAggregateFunctionExpressionNode Decorate(SqlAggregateFunctionDecoratorNode decorator)
+    public override SqlAverageAggregateFunctionExpressionNode AddTrait(SqlAggregateFunctionTraitNode trait)
     {
-        var decorators = Decorators.ToExtendable().Extend( decorator );
-        return new SqlAverageAggregateFunctionExpressionNode( Arguments, decorators );
+        var traits = Traits.ToExtendable().Extend( trait );
+        return new SqlAverageAggregateFunctionExpressionNode( Arguments, traits );
     }
 }

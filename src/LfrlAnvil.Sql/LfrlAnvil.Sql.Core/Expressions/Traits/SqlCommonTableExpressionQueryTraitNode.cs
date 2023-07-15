@@ -3,12 +3,12 @@ using System.Text;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Expressions.Objects;
 
-namespace LfrlAnvil.Sql.Expressions.Decorators;
+namespace LfrlAnvil.Sql.Expressions.Traits;
 
-public sealed class SqlCommonTableExpressionQueryDecoratorNode : SqlQueryDecoratorNode
+public sealed class SqlCommonTableExpressionQueryTraitNode : SqlQueryTraitNode
 {
-    internal SqlCommonTableExpressionQueryDecoratorNode(SqlCommonTableExpressionNode[] commonTableExpressions)
-        : base( SqlNodeType.CommonTableExpressionDecorator )
+    internal SqlCommonTableExpressionQueryTraitNode(SqlCommonTableExpressionNode[] commonTableExpressions)
+        : base( SqlNodeType.CommonTableExpressionTrait )
     {
         CommonTableExpressions = commonTableExpressions;
     }

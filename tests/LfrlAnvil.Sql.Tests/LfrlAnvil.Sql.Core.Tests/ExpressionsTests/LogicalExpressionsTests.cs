@@ -332,7 +332,7 @@ public class LogicalExpressionsTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.Exists );
             var query = sut.Query as SqlDataSourceQueryExpressionNode;
-            (query?.Decorators.ToArray()).Should().BeEmpty();
+            (query?.Traits.ToArray()).Should().BeEmpty();
             (query?.DataSource.Joins.ToArray()).Should().BeEmpty();
             (query?.DataSource.From).Should().BeSameAs( recordSet );
             (query?.DataSource.RecordSets).Should().BeSequentiallyEqualTo( recordSet );
@@ -361,7 +361,7 @@ public class LogicalExpressionsTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.Exists );
             var query = sut.Query as SqlDataSourceQueryExpressionNode;
-            (query?.Decorators.ToArray()).Should().BeEmpty();
+            (query?.Traits.ToArray()).Should().BeEmpty();
             (query?.DataSource).Should().BeSameAs( dataSource );
             sut.Query.Selection.ToArray().Should().HaveCount( 1 );
             (sut.Query.Selection.ToArray().ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SelectAll );
@@ -389,7 +389,7 @@ public class LogicalExpressionsTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.Exists );
             var query = sut.Query as SqlDataSourceQueryExpressionNode;
-            (query?.Decorators.ToArray()).Should().BeEmpty();
+            (query?.Traits.ToArray()).Should().BeEmpty();
             (query?.DataSource.Joins.ToArray()).Should().BeEmpty();
             (query?.DataSource.From).Should().BeSameAs( recordSet );
             (query?.DataSource.RecordSets).Should().BeSequentiallyEqualTo( recordSet );
@@ -418,7 +418,7 @@ public class LogicalExpressionsTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.Exists );
             var query = sut.Query as SqlDataSourceQueryExpressionNode;
-            (query?.Decorators.ToArray()).Should().BeEmpty();
+            (query?.Traits.ToArray()).Should().BeEmpty();
             (query?.DataSource).Should().BeSameAs( dataSource );
             sut.Query.Selection.ToArray().Should().HaveCount( 1 );
             (sut.Query.Selection.ToArray().ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SelectAll );

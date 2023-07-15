@@ -4,7 +4,7 @@ using System.Diagnostics.Contracts;
 using System.Text;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Exceptions;
-using LfrlAnvil.Sql.Expressions.Decorators;
+using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
 
@@ -14,13 +14,13 @@ public sealed class SqlSingleDataSourceNode<TRecordSetNode> : SqlDataSourceNode
     private readonly TRecordSetNode[] _from;
 
     internal SqlSingleDataSourceNode(TRecordSetNode from)
-        : base( Chain<SqlDataSourceDecoratorNode>.Empty )
+        : base( Chain<SqlDataSourceTraitNode>.Empty )
     {
         _from = new[] { from };
     }
 
-    private SqlSingleDataSourceNode(SqlSingleDataSourceNode<TRecordSetNode> @base, Chain<SqlDataSourceDecoratorNode> decorators)
-        : base( decorators )
+    private SqlSingleDataSourceNode(SqlSingleDataSourceNode<TRecordSetNode> @base, Chain<SqlDataSourceTraitNode> traits)
+        : base( traits )
     {
         _from = @base._from;
     }
@@ -39,17 +39,17 @@ public sealed class SqlSingleDataSourceNode<TRecordSetNode> : SqlDataSourceNode
     }
 
     [Pure]
-    public override SqlSingleDataSourceNode<TRecordSetNode> Decorate(SqlDataSourceDecoratorNode decorator)
+    public override SqlSingleDataSourceNode<TRecordSetNode> AddTrait(SqlDataSourceTraitNode trait)
     {
-        var decorators = Decorators.ToExtendable().Extend( decorator );
-        return new SqlSingleDataSourceNode<TRecordSetNode>( this, decorators );
+        var traits = Traits.ToExtendable().Extend( trait );
+        return new SqlSingleDataSourceNode<TRecordSetNode>( this, traits );
     }
 
     protected override void ToString(StringBuilder builder, int indent)
     {
         AppendTo( builder.Append( "FROM" ).Append( ' ' ), From, indent );
 
-        foreach ( var decorator in Decorators )
-            AppendTo( builder.Indent( indent ), decorator, indent );
+        foreach ( var trait in Traits )
+            AppendTo( builder.Indent( indent ), trait, indent );
     }
 }
