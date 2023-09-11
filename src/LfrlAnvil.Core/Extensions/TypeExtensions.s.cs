@@ -184,8 +184,7 @@ public static class TypeExtensions
             }
         }
 
-        builder.Length -= 2;
-        builder.Append( ']' );
+        builder.ShrinkBy( 2 ).Append( ']' );
         return builder;
     }
 

@@ -58,7 +58,7 @@ public static class MethodInfoExtensions
             ParameterInfoExtensions.AppendDebugString( builder, parameter ).Append( ", " );
 
         if ( parameters.Length > 0 )
-            builder.Length -= 2;
+            builder.ShrinkBy( 2 );
 
         builder.Append( close );
         return builder;

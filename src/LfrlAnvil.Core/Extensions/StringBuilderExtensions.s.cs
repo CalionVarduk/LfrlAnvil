@@ -26,4 +26,42 @@ public static class StringBuilderExtensions
     {
         return builder.AppendLine().Append( ' ', count );
     }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static StringBuilder AppendLine(this StringBuilder builder, char symbol)
+    {
+        return builder.Append( symbol ).AppendLine();
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static StringBuilder AppendSpace(this StringBuilder builder)
+    {
+        return builder.Append( ' ' );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static StringBuilder AppendDot(this StringBuilder builder)
+    {
+        return builder.Append( '.' );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static StringBuilder AppendComma(this StringBuilder builder)
+    {
+        return builder.Append( ',' );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static StringBuilder AppendSemicolon(this StringBuilder builder)
+    {
+        return builder.Append( ';' );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static StringBuilder ShrinkBy(this StringBuilder builder, int length)
+    {
+        Assume.IsGreaterThanOrEqualTo( length, 0, nameof( length ) );
+        builder.Length -= length;
+        return builder;
+    }
 }

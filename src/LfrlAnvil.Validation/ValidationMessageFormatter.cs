@@ -2,6 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Text;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Validation;
 
@@ -44,9 +45,7 @@ public abstract class ValidationMessageFormatter<TResource> : IValidationMessage
             builder.Append( separator );
         }
 
-        builder.Length -= separator.Length;
-        builder.Append( args.PostfixAll );
-
+        builder.ShrinkBy( separator.Length ).Append( args.PostfixAll );
         return builder;
     }
 

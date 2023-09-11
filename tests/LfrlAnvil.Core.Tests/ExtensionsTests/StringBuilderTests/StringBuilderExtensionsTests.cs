@@ -81,4 +81,88 @@ public class StringBuilderExtensionsTests : TestsBase
             result.ToString().Should().Be( Environment.NewLine + new string( ' ', value ) );
         }
     }
+
+    [Fact]
+    public void AppendLine_WithChar_ShouldAppendCharFollowedByNewLine()
+    {
+        var sut = new StringBuilder();
+
+        var result = sut.AppendLine( '.' );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            result.ToString().Should().Be( $".{Environment.NewLine}" );
+        }
+    }
+
+    [Fact]
+    public void AppendSpace_ShouldAppendSingleSpace()
+    {
+        var sut = new StringBuilder();
+
+        var result = sut.AppendSpace();
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            result.ToString().Should().Be( " " );
+        }
+    }
+
+    [Fact]
+    public void AppendDot_ShouldAppendSingleDot()
+    {
+        var sut = new StringBuilder();
+
+        var result = sut.AppendDot();
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            result.ToString().Should().Be( "." );
+        }
+    }
+
+    [Fact]
+    public void AppendComma_ShouldAppendSingleComma()
+    {
+        var sut = new StringBuilder();
+
+        var result = sut.AppendComma();
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            result.ToString().Should().Be( "," );
+        }
+    }
+
+    [Fact]
+    public void AppendSemicolon_ShouldAppendSingleSemicolon()
+    {
+        var sut = new StringBuilder();
+
+        var result = sut.AppendSemicolon();
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            result.ToString().Should().Be( ";" );
+        }
+    }
+
+    [Fact]
+    public void ShrinkBy_ShouldReduceLength()
+    {
+        var sut = new StringBuilder( "foobar" );
+
+        var result = sut.ShrinkBy( 3 );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            result.ToString().Should().Be( "foo" );
+        }
+    }
 }
