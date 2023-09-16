@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace LfrlAnvil.Sql.Expressions.Traits;
+﻿namespace LfrlAnvil.Sql.Expressions.Traits;
 
 public sealed class SqlOrderByNode : SqlNodeBase
 {
@@ -13,10 +11,4 @@ public sealed class SqlOrderByNode : SqlNodeBase
 
     public SqlExpressionNode Expression { get; }
     public OrderBy Ordering { get; }
-
-    protected override void ToString(StringBuilder builder, int indent)
-    {
-        AppendChildTo( builder, Expression, indent );
-        builder.Append( ' ' ).Append( Ordering.Name );
-    }
 }

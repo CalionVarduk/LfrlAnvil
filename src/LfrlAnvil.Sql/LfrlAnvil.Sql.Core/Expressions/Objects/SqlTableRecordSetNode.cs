@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using System.Text;
 using LfrlAnvil.Sql.Objects;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
@@ -11,7 +10,7 @@ public sealed class SqlTableRecordSetNode : SqlRecordSetNode
     private Dictionary<string, SqlColumnNode>? _columns;
 
     internal SqlTableRecordSetNode(ISqlTable table, string? alias, bool isOptional)
-        : base( isOptional )
+        : base( SqlNodeType.TableRecordSet, isOptional )
     {
         Table = table;
         Name = alias ?? Table.FullName;
@@ -63,13 +62,6 @@ public sealed class SqlTableRecordSetNode : SqlRecordSetNode
         return IsOptional != optional
             ? new SqlTableRecordSetNode( Table, alias: IsAliased ? Name : null, isOptional: optional )
             : this;
-    }
-
-    protected override void ToString(StringBuilder builder, int indent)
-    {
-        builder.Append( '[' ).Append( Table.FullName ).Append( ']' );
-        if ( IsAliased )
-            builder.Append( ' ' ).Append( "AS" ).Append( ' ' ).Append( '[' ).Append( Name ).Append( ']' );
     }
 
     [Pure]

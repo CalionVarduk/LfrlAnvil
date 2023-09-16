@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace LfrlAnvil.Sql.Expressions;
+﻿namespace LfrlAnvil.Sql.Expressions;
 
 public sealed class SqlSelectExpressionNode : SqlExpressionNode
 {
@@ -11,9 +9,4 @@ public sealed class SqlSelectExpressionNode : SqlExpressionNode
     }
 
     public SqlSelectNode Selection { get; }
-
-    protected override void ToString(StringBuilder builder, int indent)
-    {
-        AppendTo( builder, Selection, indent );
-    }
 }

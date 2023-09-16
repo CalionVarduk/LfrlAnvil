@@ -4,7 +4,9 @@ using System.Linq;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Expressions;
+using LfrlAnvil.Sql.Expressions.Functions;
 using LfrlAnvil.Sql.Expressions.Objects;
+using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 
@@ -13,11 +15,33 @@ namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
 public partial class BaseExpressionsTests : TestsBase
 {
     [Fact]
-    public void BaseToString_ShouldReturnTypeInfo()
+    public void CustomToString_ShouldReturnTypeInfo()
     {
         var sut = new NodeMock();
         var result = sut.ToString();
         result.Should().Be( $"{{{sut.GetType().GetDebugString()}}}" );
+    }
+
+    [Fact]
+    public void CustomFunctionToString_ShouldReturnTypeInfoAndArguments()
+    {
+        var sut = new FunctionNodeMock( new[] { SqlNode.Null(), SqlNode.Literal( 5 ) } );
+        var result = sut.ToString();
+        result.Should().Be( $"{{{sut.GetType().GetDebugString()}}}((NULL), (\"5\" : System.Int32))" );
+    }
+
+    [Fact]
+    public void CustomAggregateFunctionToString_ShouldReturnTypeInfoAndArgumentsAndTraits()
+    {
+        var sut = new AggregateFunctionNodeMock( new[] { SqlNode.Null(), SqlNode.Literal( 5 ) }, Chain<SqlTraitNode>.Empty )
+            .AddTrait( SqlNode.DistinctTrait() );
+
+        var result = sut.ToString();
+
+        result.Should()
+            .Be(
+                $@"AGG_{{{sut.GetType().GetDebugString()}}}((NULL), (""5"" : System.Int32))
+  DISTINCT" );
     }
 
     [Theory]
@@ -33,7 +57,7 @@ public partial class BaseExpressionsTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.TypeCast );
             sut.TargetType.Should().Be( typeof( long ) );
-            sut.Node.Should().BeSameAs( node );
+            sut.Value.Should().BeSameAs( node );
             text.Should().Be( $"CAST(({node}) AS System.Int64)" );
         }
     }
@@ -174,8 +198,8 @@ public partial class BaseExpressionsTests : TestsBase
                 .Be(
                     @"FROM [foo]
 SELECT
-    ([foo].[bar] : ?) AS [x],
-    ([foo].[qux] : ?)" );
+  ([foo].[bar] : ?) AS [x],
+  ([foo].[qux] : ?)" );
         }
     }
 
@@ -217,7 +241,7 @@ SELECT" );
                 .Be(
                     @"FROM [foo]
 SELECT
-    ([foo].[bar] : System.Int32)" );
+  ([foo].[bar] : System.Int32)" );
         }
     }
 
@@ -267,15 +291,15 @@ WHERE value < 10" );
             text.Should()
                 .Be(
                     @"(
-    SELECT a, b
-    FROM foo
-    WHERE value > 10
+  SELECT a, b
+  FROM foo
+  WHERE value > 10
 )
 UNION
 (
-    SELECT a, c AS b
-    FROM qux
-    WHERE value < 10
+  SELECT a, c AS b
+  FROM qux
+  WHERE value < 10
 )" );
         }
     }
@@ -308,8 +332,8 @@ WHERE value > 10" );
             sut.Expression.Should().BeSameAs( expression );
             text.Should()
                 .Be(
-                    $@"WHEN ({condition})
-    THEN ({expression})" );
+                    $@"WHEN {condition}
+  THEN ({expression})" );
         }
     }
 
@@ -330,11 +354,53 @@ WHERE value > 10" );
             text.Should()
                 .Be(
                     $@"CASE
-    WHEN ({firstCase.Condition})
-        THEN ({firstCase.Expression})
-    WHEN ({secondCase.Condition})
-        THEN ({secondCase.Expression})
-    ELSE ({defaultNode})
+  WHEN {firstCase.Condition}
+    THEN ({firstCase.Expression})
+  WHEN {secondCase.Condition}
+    THEN ({secondCase.Expression})
+  ELSE ({defaultNode})
+END" );
+        }
+    }
+
+    [Fact]
+    public void Switch_ShouldCreateSwitchExpressionNode_WithAnotherNestedSwitch()
+    {
+        var nestedSwitch = SqlNode.Switch(
+            new[]
+            {
+                SqlNode.SwitchCase( SqlNode.RawCondition( "bar > 20" ), SqlNode.Literal( 20 ) ),
+                SqlNode.SwitchCase( SqlNode.RawCondition( "bar > 15" ), SqlNode.Literal( 15 ) )
+            },
+            SqlNode.Literal( 10 ) );
+
+        var defaultNode = SqlNode.Parameter<int>( "foo" );
+        var firstCase = SqlNode.SwitchCase( SqlNode.RawCondition( "bar > 10" ), nestedSwitch );
+        var secondCase = SqlNode.SwitchCase( SqlNode.RawCondition( "bar < 5" ), SqlNode.Literal( 5 ) );
+        var sut = SqlNode.Switch( new[] { firstCase, secondCase }, defaultNode );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.Switch );
+            sut.Default.Should().BeSameAs( defaultNode );
+            sut.Cases.ToArray().Should().BeSequentiallyEqualTo( firstCase, secondCase );
+            text.Should()
+                .Be(
+                    @"CASE
+  WHEN bar > 10
+    THEN (
+      CASE
+        WHEN bar > 20
+          THEN (""20"" : System.Int32)
+        WHEN bar > 15
+          THEN (""15"" : System.Int32)
+        ELSE (""10"" : System.Int32)
+      END
+    )
+  WHEN bar < 5
+    THEN (""5"" : System.Int32)
+  ELSE (@foo : System.Int32)
 END" );
         }
     }
@@ -381,7 +447,7 @@ END" );
                 .Be(
                     @"UNION
 (
-    SELECT * FROM foo
+  SELECT * FROM foo
 )" );
         }
     }
@@ -400,9 +466,9 @@ END" );
             sut.Query.Should().BeSameAs( query );
             text.Should()
                 .Be(
-                    @"UNIONALL
+                    @"UNION ALL
 (
-    SELECT * FROM foo
+  SELECT * FROM foo
 )" );
         }
     }
@@ -423,7 +489,7 @@ END" );
                 .Be(
                     @"INTERSECT
 (
-    SELECT * FROM foo
+  SELECT * FROM foo
 )" );
         }
     }
@@ -444,7 +510,7 @@ END" );
                 .Be(
                     @"EXCEPT
 (
-    SELECT * FROM foo
+  SELECT * FROM foo
 )" );
         }
     }
@@ -487,7 +553,7 @@ END" );
         {
             sut.NodeType.Should().Be( SqlNodeType.SelectExpression );
             sut.Selection.Should().BeSameAs( selection );
-            text.Should().Be( selection.ToString() );
+            text.Should().Be( "[bar]" );
         }
     }
 
@@ -513,11 +579,7 @@ END" );
             text.Should()
                 .Be(
                     @"VALUES
-(
-    (""1"" : System.Int32),
-    (""2"" : System.Int32),
-    (""3"" : System.Int32)
-)" );
+((""1"" : System.Int32), (""2"" : System.Int32), (""3"" : System.Int32))" );
         }
     }
 
@@ -551,16 +613,8 @@ END" );
             text.Should()
                 .Be(
                     @"VALUES
-(
-    (""1"" : System.Int32),
-    (""2"" : System.Int32),
-    (""3"" : System.Int32)
-),
-(
-    (""4"" : System.Int32),
-    (""5"" : System.Int32),
-    (""6"" : System.Int32)
-)" );
+((""1"" : System.Int32), (""2"" : System.Int32), (""3"" : System.Int32)),
+((""4"" : System.Int32), (""5"" : System.Int32), (""6"" : System.Int32))" );
         }
     }
 
@@ -614,11 +668,10 @@ END" );
             sut.Columns.ToArray().Should().BeSequentiallyEqualTo( columns );
             text.Should()
                 .Be(
-                    @"CREATE TEMPORARY TABLE [foo]
-(
-    ([x] : System.Int32),
-    ([y] : Nullable<System.String>),
-    ([z] : System.Double)
+                    @"CREATE TEMPORARY TABLE [foo] (
+  [x] : System.Int32,
+  [y] : Nullable<System.String>,
+  [z] : System.Double
 )" );
         }
     }
@@ -668,48 +721,16 @@ END" );
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.StatementBatch );
-            sut.IsolationLevel.Should().BeNull();
             sut.Statements.ToArray().Should().BeSequentiallyEqualTo( statements );
             text.Should()
                 .Be(
                     @"BATCH
 (
-    SELECT a, b FROM foo;
+  SELECT a, b FROM foo;
 
-    SELECT b, c FROM bar;
+  SELECT b, c FROM bar;
 
-    SELECT d, e FROM qux;
-)" );
-        }
-    }
-
-    [Fact]
-    public void Batch_ShouldCreateStatementBatchNode_WithIsolationLevel()
-    {
-        var statements = new SqlNodeBase[]
-        {
-            SqlNode.RawQuery( "SELECT a, b FROM foo" ),
-            SqlNode.RawQuery( "SELECT b, c FROM bar" ),
-            SqlNode.RawQuery( "SELECT d, e FROM qux" )
-        };
-
-        var sut = SqlNode.Batch( IsolationLevel.Serializable, statements );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.StatementBatch );
-            sut.IsolationLevel.Should().Be( IsolationLevel.Serializable );
-            sut.Statements.ToArray().Should().BeSequentiallyEqualTo( statements );
-            text.Should()
-                .Be(
-                    @"BATCH <ISOLATION LEVEL SERIALIZABLE>
-(
-    SELECT a, b FROM foo;
-
-    SELECT b, c FROM bar;
-
-    SELECT d, e FROM qux;
+  SELECT d, e FROM qux;
 )" );
         }
     }
@@ -723,9 +744,56 @@ END" );
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.StatementBatch );
-            sut.IsolationLevel.Should().BeNull();
             sut.Statements.ToArray().Should().BeEmpty();
-            text.Should().Be( "BATCH" );
+            text.Should()
+                .Be(
+                    @"BATCH
+(
+  
+)" );
+        }
+    }
+
+    [Theory]
+    [InlineData( IsolationLevel.Serializable )]
+    [InlineData( IsolationLevel.ReadUncommitted )]
+    [InlineData( IsolationLevel.Unspecified )]
+    public void BeginTransaction_ShouldCreateBeginTransactionNode(IsolationLevel isolationLevel)
+    {
+        var sut = SqlNode.BeginTransaction( isolationLevel );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.BeginTransaction );
+            sut.IsolationLevel.Should().Be( isolationLevel );
+            text.Should().Be( $"BEGIN {isolationLevel.ToString().ToUpperInvariant()} TRANSACTION" );
+        }
+    }
+
+    [Fact]
+    public void CommitTransaction_ShouldCreateCommitTransactionNode()
+    {
+        var sut = SqlNode.CommitTransaction();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.CommitTransaction );
+            text.Should().Be( "COMMIT" );
+        }
+    }
+
+    [Fact]
+    public void RollbackTransaction_ShouldCreateRollbackTransactionNode()
+    {
+        var sut = SqlNode.RollbackTransaction();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.RollbackTransaction );
+            text.Should().Be( "ROLLBACK" );
         }
     }
 
@@ -733,5 +801,23 @@ END" );
     {
         public NodeMock()
             : base( SqlNodeType.Unknown ) { }
+    }
+
+    private sealed class FunctionNodeMock : SqlFunctionExpressionNode
+    {
+        public FunctionNodeMock(SqlExpressionNode[] arguments)
+            : base( SqlFunctionType.Custom, arguments ) { }
+    }
+
+    private sealed class AggregateFunctionNodeMock : SqlAggregateFunctionExpressionNode
+    {
+        public AggregateFunctionNodeMock(ReadOnlyMemory<SqlExpressionNode> arguments, Chain<SqlTraitNode> traits)
+            : base( SqlFunctionType.Custom, arguments, traits ) { }
+
+        public override AggregateFunctionNodeMock AddTrait(SqlTraitNode trait)
+        {
+            var traits = Traits.ToExtendable().Extend( trait );
+            return new AggregateFunctionNodeMock( Arguments, traits );
+        }
     }
 }

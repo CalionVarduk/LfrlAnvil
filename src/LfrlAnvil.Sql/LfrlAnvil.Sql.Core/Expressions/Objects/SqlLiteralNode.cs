@@ -1,23 +1,47 @@
-﻿using System.Text;
+﻿using System.Diagnostics.Contracts;
+using LfrlAnvil.Sql.Extensions;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
 
-public sealed class SqlLiteralNode<T> : SqlExpressionNode
+public abstract class SqlLiteralNode : SqlExpressionNode
+{
+    internal SqlLiteralNode(SqlExpressionType type)
+        : base( SqlNodeType.Literal )
+    {
+        Type = type;
+    }
+
+    public SqlExpressionType Type { get; }
+
+    [Pure]
+    public abstract object GetValue();
+
+    [Pure]
+    public abstract string GetSql(ISqlColumnTypeDefinitionProvider typeDefinitionProvider);
+}
+
+public sealed class SqlLiteralNode<T> : SqlLiteralNode
     where T : notnull
 {
     internal SqlLiteralNode(T value)
-        : base( SqlNodeType.Literal )
+        : base( SqlExpressionType.Create<T>() )
     {
         Value = value;
-        Type = SqlExpressionType.Create<T>();
     }
 
     public T Value { get; }
-    public SqlExpressionType Type { get; }
 
-    protected override void ToString(StringBuilder builder, int indent)
+    [Pure]
+    public override object GetValue()
     {
-        builder.Append( '"' ).Append( Value ).Append( '"' );
-        AppendTypeTo( builder, Type );
+        return Value;
+    }
+
+    [Pure]
+    public override string GetSql(ISqlColumnTypeDefinitionProvider typeDefinitionProvider)
+    {
+        var definition = typeDefinitionProvider.GetByType<T>();
+        var result = definition.ToDbLiteral( Value );
+        return result;
     }
 }

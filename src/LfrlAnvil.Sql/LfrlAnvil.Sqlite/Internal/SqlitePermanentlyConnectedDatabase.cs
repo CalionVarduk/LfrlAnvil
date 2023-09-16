@@ -7,12 +7,12 @@ using Microsoft.Data.Sqlite;
 
 namespace LfrlAnvil.Sqlite.Internal;
 
-internal sealed class SqliteInMemoryDatabase : SqliteDatabase
+internal sealed class SqlitePermanentlyConnectedDatabase : SqliteDatabase
 {
-    private readonly SqliteInMemoryConnection _connection;
+    private readonly SqlitePermanentConnection _connection;
 
-    internal SqliteInMemoryDatabase(
-        SqliteInMemoryConnection connection,
+    internal SqlitePermanentlyConnectedDatabase(
+        SqlitePermanentConnection connection,
         SqliteDatabaseBuilder builder,
         Func<SqliteCommand, List<SqlDatabaseVersionRecord>> versionRecordsReader,
         Version version)

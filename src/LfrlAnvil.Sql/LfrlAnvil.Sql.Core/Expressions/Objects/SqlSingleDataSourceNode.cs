@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using System.Text;
-using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions.Traits;
 
@@ -14,12 +12,12 @@ public sealed class SqlSingleDataSourceNode<TRecordSetNode> : SqlDataSourceNode
     private readonly TRecordSetNode[] _from;
 
     internal SqlSingleDataSourceNode(TRecordSetNode from)
-        : base( Chain<SqlDataSourceTraitNode>.Empty )
+        : base( Chain<SqlTraitNode>.Empty )
     {
         _from = new[] { from };
     }
 
-    private SqlSingleDataSourceNode(SqlSingleDataSourceNode<TRecordSetNode> @base, Chain<SqlDataSourceTraitNode> traits)
+    private SqlSingleDataSourceNode(SqlSingleDataSourceNode<TRecordSetNode> @base, Chain<SqlTraitNode> traits)
         : base( traits )
     {
         _from = @base._from;
@@ -39,17 +37,9 @@ public sealed class SqlSingleDataSourceNode<TRecordSetNode> : SqlDataSourceNode
     }
 
     [Pure]
-    public override SqlSingleDataSourceNode<TRecordSetNode> AddTrait(SqlDataSourceTraitNode trait)
+    public override SqlSingleDataSourceNode<TRecordSetNode> AddTrait(SqlTraitNode trait)
     {
         var traits = Traits.ToExtendable().Extend( trait );
         return new SqlSingleDataSourceNode<TRecordSetNode>( this, traits );
-    }
-
-    protected override void ToString(StringBuilder builder, int indent)
-    {
-        AppendTo( builder.Append( "FROM" ).Append( ' ' ), From, indent );
-
-        foreach ( var trait in Traits )
-            AppendTo( builder.Indent( indent ), trait, indent );
     }
 }

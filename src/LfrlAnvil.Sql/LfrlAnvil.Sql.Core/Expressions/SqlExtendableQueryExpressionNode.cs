@@ -5,14 +5,14 @@ namespace LfrlAnvil.Sql.Expressions;
 
 public abstract class SqlExtendableQueryExpressionNode : SqlQueryExpressionNode
 {
-    internal SqlExtendableQueryExpressionNode(SqlNodeType nodeType, Chain<SqlQueryTraitNode> traits)
+    internal SqlExtendableQueryExpressionNode(SqlNodeType nodeType, Chain<SqlTraitNode> traits)
         : base( nodeType )
     {
         Traits = traits;
     }
 
-    public Chain<SqlQueryTraitNode> Traits { get; }
+    public Chain<SqlTraitNode> Traits { get; }
 
     [Pure]
-    public abstract SqlExtendableQueryExpressionNode AddTrait(SqlQueryTraitNode trait);
+    public abstract SqlExtendableQueryExpressionNode AddTrait(SqlTraitNode trait);
 }

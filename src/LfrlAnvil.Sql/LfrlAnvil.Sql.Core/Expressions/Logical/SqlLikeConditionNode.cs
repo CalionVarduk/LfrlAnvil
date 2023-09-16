@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace LfrlAnvil.Sql.Expressions.Logical;
+﻿namespace LfrlAnvil.Sql.Expressions.Logical;
 
 public sealed class SqlLikeConditionNode : SqlConditionNode
 {
@@ -17,17 +15,4 @@ public sealed class SqlLikeConditionNode : SqlConditionNode
     public SqlExpressionNode Pattern { get; }
     public SqlExpressionNode? Escape { get; }
     public bool IsNegated { get; }
-
-    protected override void ToString(StringBuilder builder, int indent)
-    {
-        AppendChildTo( builder, Value, indent );
-
-        builder.Append( ' ' );
-        if ( IsNegated )
-            builder.Append( "NOT" ).Append( ' ' );
-
-        AppendChildTo( builder.Append( "LIKE" ).Append( ' ' ), Pattern, indent );
-        if ( Escape is not null )
-            AppendChildTo( builder.Append( ' ' ).Append( "ESCAPE" ).Append( ' ' ), Escape, indent );
-    }
 }

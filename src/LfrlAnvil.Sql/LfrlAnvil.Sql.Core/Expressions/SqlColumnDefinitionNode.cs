@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace LfrlAnvil.Sql.Expressions;
+﻿namespace LfrlAnvil.Sql.Expressions;
 
 public class SqlColumnDefinitionNode : SqlNodeBase
 {
@@ -13,10 +11,4 @@ public class SqlColumnDefinitionNode : SqlNodeBase
 
     public string Name { get; }
     public SqlExpressionType Type { get; }
-
-    protected override void ToString(StringBuilder builder, int indent)
-    {
-        builder.Append( '[' ).Append( Name ).Append( ']' );
-        AppendTypeTo( builder, Type );
-    }
 }

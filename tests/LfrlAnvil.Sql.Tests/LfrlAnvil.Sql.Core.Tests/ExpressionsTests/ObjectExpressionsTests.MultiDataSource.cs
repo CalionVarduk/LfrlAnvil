@@ -159,10 +159,8 @@ public partial class ObjectExpressionsTests
                 text.Should()
                     .Be(
                         @"FROM [foo]
-INNER JOIN [bar] ON
-    (TRUE)
-AND WHERE
-    (a > 10)" );
+INNER JOIN [bar] ON TRUE
+AND WHERE a > 10" );
             }
         }
 
@@ -185,12 +183,9 @@ AND WHERE
                 text.Should()
                     .Be(
                         @"FROM [foo]
-INNER JOIN [bar] ON
-    (TRUE)
-AND WHERE
-    (a > 10)
-OR WHERE
-    (b > 15)" );
+INNER JOIN [bar] ON TRUE
+AND WHERE a > 10
+OR WHERE b > 15" );
             }
         }
     }

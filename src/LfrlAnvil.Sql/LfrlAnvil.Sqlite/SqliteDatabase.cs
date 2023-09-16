@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Versioning;
 using LfrlAnvil.Sqlite.Objects;
@@ -24,6 +25,7 @@ public abstract class SqliteDatabase : ISqlDatabase
         Version = version;
         DataTypes = builder.DataTypes;
         TypeDefinitions = builder.TypeDefinitions;
+        NodeInterpreterFactory = builder.NodeInterpreterFactory;
         Schemas = new SqliteSchemaCollection( this, builder.Schemas );
     }
 
@@ -31,10 +33,12 @@ public abstract class SqliteDatabase : ISqlDatabase
     public SqliteSchemaCollection Schemas { get; }
     public SqliteDataTypeProvider DataTypes { get; }
     public SqliteColumnTypeDefinitionProvider TypeDefinitions { get; }
+    public SqliteNodeInterpreterFactory NodeInterpreterFactory { get; }
 
     ISqlSchemaCollection ISqlDatabase.Schemas => Schemas;
     ISqlDataTypeProvider ISqlDatabase.DataTypes => DataTypes;
     ISqlColumnTypeDefinitionProvider ISqlDatabase.TypeDefinitions => TypeDefinitions;
+    ISqlNodeInterpreterFactory ISqlDatabase.NodeInterpreterFactory => NodeInterpreterFactory;
 
     [Pure]
     public abstract SqliteConnection Connect();

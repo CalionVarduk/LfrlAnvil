@@ -6,7 +6,7 @@
 // - ISqlColumnBuilder.DefaultValue should be an expression tree
 // - Add partial indexes with filter as an expression tree
 // - Add check constraints? as expression trees
-// - Add views
+// - Add views <= NEXT
 // - ISqlDatabaseBuilder.AddRawStatement should accept an expression tree + parameters
 // - Add column script can be handled with ALTER TABLE
 //   ^ however, situation where column with this name was also removed must be treated as a full reconstruction
@@ -26,6 +26,13 @@
 // - more ReferenceBehavior options?
 // - WITHOUT ROWID is supported in v3.8.2 (2013-12-06), this is the oldest supported version
 // - update: v3.8.3 (2014-02-03) is now the oldest supported version, unless CTEs aren't used (WITH clause)
-// - Add node tree interpreter <= NEXT
-//   ^ this interpreter must be customizable through DB builder
 // - Add CREATE/DROP (TEMP)INDEX nodes
+// - Add window function nodes
+// - Add shared db object record set node => Table + TableBuilder + TemporaryTable <= NEXT
+// - Add shared db object data field node => Column + ColumnBuilder + ColumnDefinition <= NEXT
+// - Add TemporaryTable as valid target for complex Update/DeleteFrom nodes <= NEXT NEXT
+// - Add attach/detach DB nodes
+// - Add optional explicit DB name to table/view record set nodes (cross-DB queries)
+// - Make DB builder use SQL node tree? This could unify a lot of SQL statement building by moving it all to interpreters
+//   ^ it will cause a bit of an overhead, due to having to create a graph and then interpret it
+//   ^ but it happens only once per version, when it's actually applied to the DB, so it should be fine

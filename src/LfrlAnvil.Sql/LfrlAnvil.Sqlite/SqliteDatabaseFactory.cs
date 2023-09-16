@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -19,7 +20,13 @@ namespace LfrlAnvil.Sqlite;
 
 public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
 {
+    public SqliteDatabaseFactory(bool isConnectionPermanent = false)
+    {
+        IsConnectionPermanent = isConnectionPermanent;
+    }
+
     public SqlDialect Dialect => SqliteDialect.Instance;
+    public bool IsConnectionPermanent { get; }
 
     public SqlCreateDatabaseResult<SqliteDatabase> Create(
         string connectionString,
@@ -30,6 +37,25 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         try
         {
             connection.Open();
+
+            // TODO: these functions need to be registered every time the connection is opened, also: tests
+            connection.CreateFunction( "CURRENT_DATE", static () => DateTime.Now.ToString( "yyyy-MM-dd", CultureInfo.InvariantCulture ) );
+            connection.CreateFunction(
+                "CURRENT_TIME",
+                static () => DateTime.Now.ToString( "HH:mm:ss.fffffff", CultureInfo.InvariantCulture ) );
+
+            connection.CreateFunction(
+                "CURRENT_DATETIME",
+                static () => DateTime.Now.ToString( "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture ) );
+
+            connection.CreateFunction( "CURRENT_TIMESTAMP", static () => DateTime.UtcNow.Ticks );
+
+            connection.CreateFunction( "TO_LOWER", static (string a) => a.ToLowerInvariant(), isDeterministic: true );
+            connection.CreateFunction( "TO_UPPER", static (string a) => a.ToUpperInvariant(), isDeterministic: true );
+            connection.CreateFunction(
+                "INSTR_LAST",
+                static (string a, string b) => a.LastIndexOf( b, StringComparison.Ordinal ) + 1,
+                isDeterministic: true );
 
             var (versionHistoryTable, types) = InitializeDatabaseBuilderWithVersionHistoryTable( options );
             var builder = versionHistoryTable.Database;
@@ -67,8 +93,8 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
             var pendingVersions = versions.Uncommitted.Slice( appliedVersions.Length );
             var newDbVersion = appliedVersions.Length > 0 ? appliedVersions[^1].Value : versions.Current;
 
-            SqliteDatabase database = connection is SqliteInMemoryConnection inMemoryConnection
-                ? new SqliteInMemoryDatabase( inMemoryConnection, builder, versionRecordsReader, newDbVersion )
+            SqliteDatabase database = connection is SqlitePermanentConnection permanentConnection
+                ? new SqlitePermanentlyConnectedDatabase( permanentConnection, builder, versionRecordsReader, newDbVersion )
                 : new SqlitePersistentDatabase( connectionString, builder, versionRecordsReader, newDbVersion );
 
             return new SqlCreateDatabaseResult<SqliteDatabase>(
@@ -81,7 +107,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         }
         catch
         {
-            if ( connection is SqliteInMemoryConnection )
+            if ( connection is SqlitePermanentConnection )
                 connection.Close();
 
             throw;
@@ -104,10 +130,12 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
     }
 
     [Pure]
-    private static SqliteConnection CreateConnection(string connectionString)
+    private SqliteConnection CreateConnection(string connectionString)
     {
         var cs = new SqliteConnectionStringBuilder( connectionString );
-        return cs.DataSource == ":memory:" ? new SqliteInMemoryConnection( cs.ToString() ) : new SqliteConnection( cs.ToString() );
+        return IsConnectionPermanent || cs.DataSource == ":memory:"
+            ? new SqlitePermanentConnection( cs.ToString() )
+            : new SqliteConnection( cs.ToString() );
     }
 
     [Pure]

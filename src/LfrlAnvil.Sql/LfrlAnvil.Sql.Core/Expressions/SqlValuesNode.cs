@@ -2,8 +2,6 @@
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text;
-using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Sql.Expressions;
 
@@ -39,29 +37,6 @@ public sealed class SqlValuesNode : SqlNodeBase
             Ensure.IsInRange( rowIndex, 0, RowCount - 1, nameof( rowIndex ) );
             return GetRow( rowIndex );
         }
-    }
-
-    protected override void ToString(StringBuilder builder, int indent)
-    {
-        var valueIndent = indent + DefaultIndent;
-        builder.Append( "VALUES" );
-
-        for ( var row = 0; row < RowCount; ++row )
-        {
-            var expressions = GetRow( row );
-            builder.Indent( indent ).Append( '(' );
-
-            foreach ( var expression in expressions )
-            {
-                AppendChildTo( builder.Indent( valueIndent ), expression, valueIndent );
-                builder.Append( ',' );
-            }
-
-            builder.Length -= 1;
-            builder.Indent( indent ).Append( ')' ).Append( ',' );
-        }
-
-        builder.Length -= 1;
     }
 
     [Pure]

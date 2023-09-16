@@ -24,6 +24,13 @@ public static class SqlNodeExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlTemporaryTableRecordSetNode AsSet(this SqlCreateTemporaryTableNode node, string? alias = null)
+    {
+        return new SqlTemporaryTableRecordSetNode( node, alias, isOptional: false );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlSelectFieldNode As(this SqlExpressionNode node, string alias)
     {
         return SqlNode.Select( node, alias );
@@ -424,6 +431,13 @@ public static class SqlNodeExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlSwitchCaseNode Then(this SqlConditionNode node, SqlExpressionNode value)
+    {
+        return SqlNode.SwitchCase( node, value );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlOrderByNode Asc(this SqlExpressionNode node)
     {
         return SqlNode.OrderByAsc( node );
@@ -654,7 +668,7 @@ public static class SqlNodeExtensions
     public static TAggregateFunctionNode Distinct<TAggregateFunctionNode>(this TAggregateFunctionNode node)
         where TAggregateFunctionNode : SqlAggregateFunctionExpressionNode
     {
-        return (TAggregateFunctionNode)node.AddTrait( SqlNode.AggregateFunctions.DistinctTrait() );
+        return (TAggregateFunctionNode)node.AddTrait( SqlNode.DistinctTrait() );
     }
 
     [Pure]
@@ -662,7 +676,7 @@ public static class SqlNodeExtensions
     public static TAggregateFunctionNode AndWhere<TAggregateFunctionNode>(this TAggregateFunctionNode node, SqlConditionNode filter)
         where TAggregateFunctionNode : SqlAggregateFunctionExpressionNode
     {
-        return (TAggregateFunctionNode)node.AddTrait( SqlNode.AggregateFunctions.FilterTrait( filter, isConjunction: true ) );
+        return (TAggregateFunctionNode)node.AddTrait( SqlNode.FilterTrait( filter, isConjunction: true ) );
     }
 
     [Pure]
@@ -670,7 +684,7 @@ public static class SqlNodeExtensions
     public static TAggregateFunctionNode OrWhere<TAggregateFunctionNode>(this TAggregateFunctionNode node, SqlConditionNode filter)
         where TAggregateFunctionNode : SqlAggregateFunctionExpressionNode
     {
-        return (TAggregateFunctionNode)node.AddTrait( SqlNode.AggregateFunctions.FilterTrait( filter, isConjunction: false ) );
+        return (TAggregateFunctionNode)node.AddTrait( SqlNode.FilterTrait( filter, isConjunction: false ) );
     }
 
     [Pure]
@@ -690,7 +704,7 @@ public static class SqlNodeExtensions
         var newAssignments = new SqlValueAssignmentNode[node.Assignments.Length + assignments.Length];
         node.Assignments.CopyTo( newAssignments );
         assignments.CopyTo( newAssignments, node.Assignments.Length );
-        return new SqlUpdateNode( node.DataSource, node.RecordSet, newAssignments );
+        return new SqlUpdateNode( node.DataSource, newAssignments );
     }
 
     [Pure]

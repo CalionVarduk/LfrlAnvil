@@ -5,8 +5,8 @@ namespace LfrlAnvil.Sql.Expressions.Objects;
 
 public abstract class SqlRecordSetNode : SqlNodeBase
 {
-    protected SqlRecordSetNode(bool isOptional)
-        : base( SqlNodeType.RecordSet )
+    protected SqlRecordSetNode(SqlNodeType nodeType, bool isOptional)
+        : base( nodeType )
     {
         IsOptional = isOptional;
     }

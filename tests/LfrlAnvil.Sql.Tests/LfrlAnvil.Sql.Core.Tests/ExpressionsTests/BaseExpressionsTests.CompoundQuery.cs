@@ -121,11 +121,11 @@ public partial class BaseExpressionsTests
                 text.Should()
                     .Be(
                         @"(
-    SELECT * FROM foo
+  SELECT * FROM foo
 )
 UNION
 (
-    SELECT * FROM bar
+  SELECT * FROM bar
 )
 LIMIT (""10"" : System.Int32)" );
             }
@@ -150,11 +150,11 @@ LIMIT (""10"" : System.Int32)" );
                 text.Should()
                     .Be(
                         @"(
-    SELECT * FROM foo
+  SELECT * FROM foo
 )
 UNION
 (
-    SELECT * FROM bar
+  SELECT * FROM bar
 )
 LIMIT (""10"" : System.Int32)
 OFFSET (""15"" : System.Int32)" );

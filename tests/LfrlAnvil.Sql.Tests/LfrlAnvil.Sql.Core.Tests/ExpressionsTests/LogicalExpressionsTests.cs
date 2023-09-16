@@ -18,7 +18,7 @@ public class LogicalExpressionsTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.EqualTo );
-            text.Should().Be( $"({left}) = ({right})" );
+            text.Should().Be( $"({left}) == ({right})" );
             var equalToNode = sut as SqlEqualToConditionNode;
             (equalToNode?.Left).Should().BeSameAs( left );
             (equalToNode?.Right).Should().BeSameAs( right );
@@ -36,7 +36,7 @@ public class LogicalExpressionsTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.EqualTo );
-            text.Should().Be( "(NULL) = (NULL)" );
+            text.Should().Be( "(NULL) == (NULL)" );
             var equalToNode = sut as SqlEqualToConditionNode;
             (equalToNode?.Left).Should().BeSameAs( SqlNode.Null() );
             (equalToNode?.Right).Should().BeSameAs( SqlNode.Null() );
@@ -342,9 +342,9 @@ public class LogicalExpressionsTests : TestsBase
             text.Should()
                 .Be(
                     @"EXISTS (
-    FROM [foo]
-    SELECT
-        *
+  FROM [foo]
+  SELECT
+    *
 )" );
         }
     }
@@ -369,11 +369,10 @@ public class LogicalExpressionsTests : TestsBase
             text.Should()
                 .Be(
                     @"EXISTS (
-    FROM [foo]
-    AND WHERE
-        (TRUE)
-    SELECT
-        *
+  FROM [foo]
+  AND WHERE TRUE
+  SELECT
+    *
 )" );
         }
     }
@@ -399,9 +398,9 @@ public class LogicalExpressionsTests : TestsBase
             text.Should()
                 .Be(
                     @"NOT EXISTS (
-    FROM [foo]
-    SELECT
-        *
+  FROM [foo]
+  SELECT
+    *
 )" );
         }
     }
@@ -426,11 +425,10 @@ public class LogicalExpressionsTests : TestsBase
             text.Should()
                 .Be(
                     @"NOT EXISTS (
-    FROM [foo]
-    AND WHERE
-        (TRUE)
-    SELECT
-        *
+  FROM [foo]
+  AND WHERE TRUE
+  SELECT
+    *
 )" );
         }
     }
@@ -519,9 +517,9 @@ public class LogicalExpressionsTests : TestsBase
             text.Should()
                 .Be(
                     $@"({value}) IN (
-    FROM [foo]
-    SELECT
-        ([foo].[id] : ?)
+  FROM [foo]
+  SELECT
+    ([foo].[id] : ?)
 )" );
         }
     }
@@ -544,9 +542,9 @@ public class LogicalExpressionsTests : TestsBase
             text.Should()
                 .Be(
                     $@"({value}) NOT IN (
-    FROM [foo]
-    SELECT
-        ([foo].[id] : ?)
+  FROM [foo]
+  SELECT
+    ([foo].[id] : ?)
 )" );
         }
     }
@@ -604,7 +602,7 @@ public class LogicalExpressionsTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.ConditionValue );
             sut.Condition.Should().BeSameAs( condition );
-            text.Should().Be( $"VALUE({condition})" );
+            text.Should().Be( $"CONDITION_VALUE({condition})" );
         }
     }
 
@@ -613,7 +611,7 @@ public class LogicalExpressionsTests : TestsBase
     {
         var left = SqlNode.True();
         var right = SqlNode.False();
-        var sut = left & right;
+        var sut = left.And( right );
         var text = sut.ToString();
 
         using ( new AssertionScope() )
@@ -630,7 +628,7 @@ public class LogicalExpressionsTests : TestsBase
     {
         var left = SqlNode.True();
         var right = SqlNode.False();
-        var sut = left | right;
+        var sut = left.Or( right );
         var text = sut.ToString();
 
         using ( new AssertionScope() )

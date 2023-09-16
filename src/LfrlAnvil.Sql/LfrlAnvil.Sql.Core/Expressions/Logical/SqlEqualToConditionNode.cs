@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace LfrlAnvil.Sql.Expressions.Logical;
+﻿namespace LfrlAnvil.Sql.Expressions.Logical;
 
 public sealed class SqlEqualToConditionNode : SqlConditionNode
 {
@@ -13,9 +11,4 @@ public sealed class SqlEqualToConditionNode : SqlConditionNode
 
     public SqlExpressionNode Left { get; }
     public SqlExpressionNode Right { get; }
-
-    protected override void ToString(StringBuilder builder, int indent)
-    {
-        AppendInfixBinaryTo( builder, Left, "=", Right, indent );
-    }
 }

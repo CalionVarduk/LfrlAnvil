@@ -1,5 +1,4 @@
-﻿using System.Text;
-using LfrlAnvil.Sql.Objects;
+﻿using LfrlAnvil.Sql.Objects;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
 
@@ -13,12 +12,6 @@ public sealed class SqlColumnNode : SqlDataFieldNode
     }
 
     public ISqlColumn Value { get; }
-    public SqlExpressionType? Type { get; }
+    public SqlExpressionType Type { get; }
     public override string Name => Value.Name;
-
-    protected override void ToString(StringBuilder builder, int indent)
-    {
-        base.ToString( builder, indent );
-        AppendTypeTo( builder, Type );
-    }
 }

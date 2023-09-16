@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace LfrlAnvil.Sql.Expressions;
+﻿namespace LfrlAnvil.Sql.Expressions;
 
 public sealed class SqlDropTemporaryTableNode : SqlNodeBase
 {
@@ -11,9 +9,4 @@ public sealed class SqlDropTemporaryTableNode : SqlNodeBase
     }
 
     public string Name { get; }
-
-    protected override void ToString(StringBuilder builder, int indent)
-    {
-        builder.Append( "DROP TEMPORARY TABLE" ).Append( ' ' ).Append( '[' ).Append( Name ).Append( ']' );
-    }
 }

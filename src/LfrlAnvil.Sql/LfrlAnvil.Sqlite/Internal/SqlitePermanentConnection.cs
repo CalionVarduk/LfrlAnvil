@@ -7,15 +7,14 @@ using Microsoft.Data.Sqlite;
 
 namespace LfrlAnvil.Sqlite.Internal;
 
-internal sealed class SqliteInMemoryConnection : SqliteConnection
+internal sealed class SqlitePermanentConnection : SqliteConnection
 {
     private volatile int _closed;
 
-    internal SqliteInMemoryConnection(string connectionString)
+    internal SqlitePermanentConnection(string connectionString)
         : base( connectionString )
     {
         _closed = 0;
-        Assume.Equals( DataSource, ":memory:", nameof( DataSource ) );
         base.Open();
     }
 
@@ -26,7 +25,7 @@ internal sealed class SqliteInMemoryConnection : SqliteConnection
         set
         {
             if ( base.ConnectionString is not null )
-                throw new InvalidOperationException( Resources.ConnectionStringForInMemoryDatabaseIsImmutable );
+                throw new InvalidOperationException( Resources.ConnectionStringForPermanentDatabaseIsImmutable );
 
             base.ConnectionString = value;
         }
@@ -35,7 +34,7 @@ internal sealed class SqliteInMemoryConnection : SqliteConnection
     public override void Open()
     {
         if ( State != ConnectionState.Open )
-            throw new InvalidOperationException( Resources.ConnectionForClosedInMemoryDatabaseCannotBeReopened );
+            throw new InvalidOperationException( Resources.ConnectionForClosedPermanentDatabaseCannotBeReopened );
     }
 
     public override void Close()

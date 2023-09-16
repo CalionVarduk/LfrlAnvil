@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using System.Text;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
 
@@ -12,7 +11,7 @@ public sealed class SqlCommonTableExpressionRecordSetNode : SqlRecordSetNode
     private Dictionary<string, SqlQueryDataFieldNode>? _fields;
 
     internal SqlCommonTableExpressionRecordSetNode(SqlCommonTableExpressionNode commonTableExpression, string? alias, bool isOptional)
-        : base( isOptional )
+        : base( SqlNodeType.CommonTableExpressionRecordSet, isOptional )
     {
         CommonTableExpression = commonTableExpression;
         Alias = alias;
@@ -67,13 +66,6 @@ public sealed class SqlCommonTableExpressionRecordSetNode : SqlRecordSetNode
         return IsOptional != optional
             ? new SqlCommonTableExpressionRecordSetNode( CommonTableExpression, Alias, optional )
             : this;
-    }
-
-    protected override void ToString(StringBuilder builder, int indent)
-    {
-        builder.Append( '[' ).Append( CommonTableExpression.Name ).Append( ']' );
-        if ( IsAliased )
-            builder.Append( ' ' ).Append( "AS" ).Append( ' ' ).Append( '[' ).Append( Alias ).Append( ']' );
     }
 
     [Pure]

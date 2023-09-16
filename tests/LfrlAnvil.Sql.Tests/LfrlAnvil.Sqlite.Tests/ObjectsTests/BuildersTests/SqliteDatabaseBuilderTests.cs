@@ -1,4 +1,5 @@
 ﻿using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Objects.Builders;
@@ -38,6 +39,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
 
             ((ISqlDatabaseBuilder)sut).DataTypes.Should().BeSameAs( sut.DataTypes );
             ((ISqlDatabaseBuilder)sut).TypeDefinitions.Should().BeSameAs( sut.TypeDefinitions );
+            ((ISqlDatabaseBuilder)sut).NodeInterpreterFactory.Should().BeSameAs( sut.NodeInterpreterFactory );
             ((ISqlDatabaseBuilder)sut).Schemas.Should().BeSameAs( sut.Schemas );
         }
     }
@@ -133,6 +135,21 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
         column.Remove();
 
         sut.GetPendingStatements().Length.Should().Be( 0 );
+    }
+
+    [Fact]
+    public void SetNodeInterpreterFactory_ShouldUpdateNodeInterpreterFactory()
+    {
+        var sut = new SqliteDatabaseBuilder();
+        var expected = new SqliteNodeInterpreterFactory( sut.TypeDefinitions );
+
+        var result = ((ISqlDatabaseBuilder)sut).SetNodeInterpreterFactory( expected );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            result.NodeInterpreterFactory.Should().BeSameAs( expected );
+        }
     }
 
     [Theory]
@@ -232,5 +249,21 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
 
         result.Should().BeSameAs( sut );
         action.Verify().CallCount.Should().Be( 0 );
+    }
+
+    [Fact]
+    public void DefaultNodeInterpreterFactory_ShouldCreateCorrectInterpreter()
+    {
+        var sut = new SqliteDatabaseBuilder().NodeInterpreterFactory;
+        var result = sut.Create();
+
+        using ( new AssertionScope() )
+        {
+            result.Context.Sql.Capacity.Should().Be( 1024 );
+            result.Context.Indent.Should().Be( 0 );
+            result.Context.ParentNode.Should().BeNull();
+            result.Context.Parameters.Should().BeEmpty();
+            result.Should().BeOfType( typeof( SqliteNodeInterpreter ) );
+        }
     }
 }

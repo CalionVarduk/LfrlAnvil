@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace LfrlAnvil.Sql.Expressions.Arithmetic;
+﻿namespace LfrlAnvil.Sql.Expressions.Arithmetic;
 
 public sealed class SqlNegateExpressionNode : SqlExpressionNode
 {
@@ -11,9 +9,4 @@ public sealed class SqlNegateExpressionNode : SqlExpressionNode
     }
 
     public SqlExpressionNode Value { get; }
-
-    protected override void ToString(StringBuilder builder, int indent)
-    {
-        AppendChildTo( builder.Append( '-' ), Value, indent );
-    }
 }

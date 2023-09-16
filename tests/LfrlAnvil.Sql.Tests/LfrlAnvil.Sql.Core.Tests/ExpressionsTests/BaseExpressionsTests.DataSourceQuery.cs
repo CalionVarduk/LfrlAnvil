@@ -34,8 +34,8 @@ public partial class BaseExpressionsTests
                     .Be(
                         @"FROM [foo]
 SELECT
-    ([foo].[bar] : ?),
-    ([foo].[qux] : ?) AS [x]" );
+  ([foo].[bar] : ?),
+  ([foo].[qux] : ?) AS [x]" );
             }
         }
 
@@ -69,7 +69,7 @@ SELECT
                         @"FROM [foo]
 LIMIT (""10"" : System.Int32)
 SELECT
-    *" );
+  *" );
             }
         }
 
@@ -94,7 +94,7 @@ SELECT
 LIMIT (""10"" : System.Int32)
 OFFSET (""15"" : System.Int32)
 SELECT
-    *" );
+  *" );
             }
         }
     }

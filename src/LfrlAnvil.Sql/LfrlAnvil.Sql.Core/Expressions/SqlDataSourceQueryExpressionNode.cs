@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
-using System.Text;
-using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
 
@@ -9,47 +7,39 @@ namespace LfrlAnvil.Sql.Expressions;
 
 public abstract class SqlDataSourceQueryExpressionNode : SqlExtendableQueryExpressionNode
 {
-    internal SqlDataSourceQueryExpressionNode(Chain<SqlQueryTraitNode> traits)
+    internal SqlDataSourceQueryExpressionNode(Chain<SqlTraitNode> traits)
         : base( SqlNodeType.DataSourceQuery, traits ) { }
 
     public abstract SqlDataSourceNode DataSource { get; }
 
     [Pure]
     public abstract SqlDataSourceQueryExpressionNode Select(params SqlSelectNode[] selection);
-
-    [Pure]
-    public abstract SqlDataSourceQueryExpressionNode AddTrait(SqlDataSourceTraitNode trait);
 }
 
 public sealed class SqlDataSourceQueryExpressionNode<TDataSourceNode> : SqlDataSourceQueryExpressionNode
     where TDataSourceNode : SqlDataSourceNode
 {
     internal SqlDataSourceQueryExpressionNode(TDataSourceNode dataSource, ReadOnlyMemory<SqlSelectNode> selection)
-        : base( Chain<SqlQueryTraitNode>.Empty )
+        : base( Chain<SqlTraitNode>.Empty )
     {
         DataSource = dataSource;
         Selection = selection;
     }
 
-    internal SqlDataSourceQueryExpressionNode(TDataSourceNode dataSource, SqlQueryTraitNode trait)
-        : base( Chain.Create( trait ) )
-    {
-        DataSource = dataSource;
-        Selection = ReadOnlyMemory<SqlSelectNode>.Empty;
-    }
-
-    private SqlDataSourceQueryExpressionNode(SqlDataSourceQueryExpressionNode<TDataSourceNode> @base, Chain<SqlQueryTraitNode> traits)
+    private SqlDataSourceQueryExpressionNode(SqlDataSourceQueryExpressionNode<TDataSourceNode> @base, Chain<SqlTraitNode> traits)
         : base( traits )
     {
         DataSource = @base.DataSource;
         Selection = @base.Selection;
     }
 
-    private SqlDataSourceQueryExpressionNode(SqlDataSourceQueryExpressionNode<TDataSourceNode> @base, TDataSourceNode dataSource)
+    private SqlDataSourceQueryExpressionNode(
+        SqlDataSourceQueryExpressionNode<TDataSourceNode> @base,
+        ReadOnlyMemory<SqlSelectNode> selection)
         : base( @base.Traits )
     {
-        DataSource = dataSource;
-        Selection = @base.Selection;
+        DataSource = @base.DataSource;
+        Selection = selection;
     }
 
     public override TDataSourceNode DataSource { get; }
@@ -64,42 +54,13 @@ public sealed class SqlDataSourceQueryExpressionNode<TDataSourceNode> : SqlDataS
         var newSelection = new SqlSelectNode[Selection.Length + selection.Length];
         Selection.CopyTo( newSelection );
         selection.CopyTo( newSelection, Selection.Length );
-        return new SqlDataSourceQueryExpressionNode<TDataSourceNode>( DataSource, newSelection );
+        return new SqlDataSourceQueryExpressionNode<TDataSourceNode>( this, newSelection );
     }
 
     [Pure]
-    public override SqlDataSourceQueryExpressionNode<TDataSourceNode> AddTrait(SqlQueryTraitNode trait)
+    public override SqlDataSourceQueryExpressionNode<TDataSourceNode> AddTrait(SqlTraitNode trait)
     {
         var traits = Traits.ToExtendable().Extend( trait );
         return new SqlDataSourceQueryExpressionNode<TDataSourceNode>( this, traits );
-    }
-
-    [Pure]
-    public override SqlDataSourceQueryExpressionNode<TDataSourceNode> AddTrait(SqlDataSourceTraitNode trait)
-    {
-        var dataSource = (TDataSourceNode)DataSource.AddTrait( trait );
-        return new SqlDataSourceQueryExpressionNode<TDataSourceNode>( this, dataSource );
-    }
-
-    protected override void ToString(StringBuilder builder, int indent)
-    {
-        var selectIndent = indent + DefaultIndent;
-        AppendTo( builder, DataSource, indent );
-
-        foreach ( var trait in Traits )
-            AppendTo( builder.Indent( indent ), trait, indent );
-
-        builder.Indent( indent ).Append( "SELECT" );
-
-        if ( Selection.Length > 0 )
-        {
-            foreach ( var field in Selection.Span )
-            {
-                AppendTo( builder.Indent( selectIndent ), field, selectIndent );
-                builder.Append( ',' );
-            }
-
-            builder.Length -= 1;
-        }
     }
 }

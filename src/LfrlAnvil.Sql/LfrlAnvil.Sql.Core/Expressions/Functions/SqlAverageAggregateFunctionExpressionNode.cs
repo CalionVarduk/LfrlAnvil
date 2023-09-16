@@ -6,13 +6,11 @@ namespace LfrlAnvil.Sql.Expressions.Functions;
 
 public sealed class SqlAverageAggregateFunctionExpressionNode : SqlAggregateFunctionExpressionNode
 {
-    internal SqlAverageAggregateFunctionExpressionNode(
-        ReadOnlyMemory<SqlExpressionNode> arguments,
-        Chain<SqlAggregateFunctionTraitNode> traits)
+    internal SqlAverageAggregateFunctionExpressionNode(ReadOnlyMemory<SqlExpressionNode> arguments, Chain<SqlTraitNode> traits)
         : base( SqlFunctionType.Average, arguments, traits ) { }
 
     [Pure]
-    public override SqlAverageAggregateFunctionExpressionNode AddTrait(SqlAggregateFunctionTraitNode trait)
+    public override SqlAverageAggregateFunctionExpressionNode AddTrait(SqlTraitNode trait)
     {
         var traits = Traits.ToExtendable().Extend( trait );
         return new SqlAverageAggregateFunctionExpressionNode( Arguments, traits );

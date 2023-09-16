@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using System.Text;
-using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions.Traits;
 
@@ -10,7 +8,7 @@ namespace LfrlAnvil.Sql.Expressions.Objects;
 
 public sealed class SqlDummyDataSourceNode : SqlDataSourceNode
 {
-    internal SqlDummyDataSourceNode(Chain<SqlDataSourceTraitNode> traits)
+    internal SqlDummyDataSourceNode(Chain<SqlTraitNode> traits)
         : base( traits ) { }
 
     public override SqlRecordSetNode From =>
@@ -26,17 +24,9 @@ public sealed class SqlDummyDataSourceNode : SqlDataSourceNode
     }
 
     [Pure]
-    public override SqlDummyDataSourceNode AddTrait(SqlDataSourceTraitNode trait)
+    public override SqlDummyDataSourceNode AddTrait(SqlTraitNode trait)
     {
         var traits = Traits.ToExtendable().Extend( trait );
         return new SqlDummyDataSourceNode( traits );
-    }
-
-    protected override void ToString(StringBuilder builder, int indent)
-    {
-        builder.Append( "FROM" ).Append( ' ' ).Append( '<' ).Append( "DUMMY" ).Append( '>' );
-
-        foreach ( var trait in Traits )
-            AppendTo( builder.Indent( indent ), trait, indent );
     }
 }

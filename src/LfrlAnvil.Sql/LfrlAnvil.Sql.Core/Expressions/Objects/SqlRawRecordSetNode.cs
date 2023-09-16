@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using System.Text;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
 
 public class SqlRawRecordSetNode : SqlRecordSetNode
 {
     protected internal SqlRawRecordSetNode(string name, string? alias, bool isOptional)
-        : base( isOptional )
+        : base( SqlNodeType.RawRecordSet, isOptional )
     {
         BaseName = name;
         Name = alias ?? name;
@@ -16,8 +15,8 @@ public class SqlRawRecordSetNode : SqlRecordSetNode
     }
 
     public string BaseName { get; }
-    public override string Name { get; }
-    public override bool IsAliased { get; }
+    public sealed override string Name { get; }
+    public sealed override bool IsAliased { get; }
     public new SqlRawDataFieldNode this[string fieldName] => GetField( fieldName );
 
     [Pure]
@@ -56,12 +55,5 @@ public class SqlRawRecordSetNode : SqlRecordSetNode
         return IsOptional != optional
             ? new SqlRawRecordSetNode( BaseName, alias: IsAliased ? Name : null, isOptional: optional )
             : this;
-    }
-
-    protected override void ToString(StringBuilder builder, int indent)
-    {
-        builder.Append( '[' ).Append( BaseName ).Append( ']' );
-        if ( IsAliased )
-            builder.Append( ' ' ).Append( "AS" ).Append( ' ' ).Append( '[' ).Append( Name ).Append( ']' );
     }
 }

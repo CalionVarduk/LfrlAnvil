@@ -57,8 +57,7 @@ public partial class ObjectExpressionsTests
                 text.Should()
                     .Be(
                         @"FROM [foo]
-AND WHERE
-    (a > 10)" );
+AND WHERE a > 10" );
             }
         }
 
@@ -78,10 +77,8 @@ AND WHERE
                 text.Should()
                     .Be(
                         @"FROM [foo]
-AND WHERE
-    (a > 10)
-OR WHERE
-    (b > 15)" );
+AND WHERE a > 10
+OR WHERE b > 15" );
             }
         }
     }

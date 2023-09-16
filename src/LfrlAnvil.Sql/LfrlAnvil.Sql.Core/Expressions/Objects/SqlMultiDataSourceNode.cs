@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using System.Text;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Expressions.Traits;
 
@@ -13,7 +12,7 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
     private readonly Dictionary<string, SqlRecordSetNode> _recordSets;
 
     protected internal SqlMultiDataSourceNode(SqlRecordSetNode from, SqlDataSourceJoinOnNode[] joins)
-        : base( Chain<SqlDataSourceTraitNode>.Empty )
+        : base( Chain<SqlTraitNode>.Empty )
     {
         Joins = joins;
         from = from.MarkAsOptional( false );
@@ -29,7 +28,7 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
     }
 
     protected internal SqlMultiDataSourceNode(SqlRecordSetNode from, SqlJoinDefinition[] definitions)
-        : base( Chain<SqlDataSourceTraitNode>.Empty )
+        : base( Chain<SqlTraitNode>.Empty )
     {
         from = from.MarkAsOptional( false );
         _recordSets = CreateRecordSetDictionary( definitions.Length + 1 );
@@ -127,7 +126,7 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
         Joins = joins;
     }
 
-    protected SqlMultiDataSourceNode(SqlMultiDataSourceNode @base, Chain<SqlDataSourceTraitNode> traits)
+    protected SqlMultiDataSourceNode(SqlMultiDataSourceNode @base, Chain<SqlTraitNode> traits)
         : base( traits )
     {
         From = @base.From;
@@ -146,21 +145,10 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
     }
 
     [Pure]
-    public override SqlMultiDataSourceNode AddTrait(SqlDataSourceTraitNode trait)
+    public override SqlMultiDataSourceNode AddTrait(SqlTraitNode trait)
     {
         var traits = Traits.ToExtendable().Extend( trait );
         return new SqlMultiDataSourceNode( this, traits );
-    }
-
-    protected sealed override void ToString(StringBuilder builder, int indent)
-    {
-        AppendTo( builder.Append( "FROM" ).Append( ' ' ), From, indent );
-
-        foreach ( var join in Joins.Span )
-            AppendTo( builder.Indent( indent ), join, indent );
-
-        foreach ( var trait in Traits )
-            AppendTo( builder.Indent( indent ), trait, indent );
     }
 
     [Pure]

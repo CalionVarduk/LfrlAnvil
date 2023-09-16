@@ -6,13 +6,11 @@ namespace LfrlAnvil.Sql.Expressions.Functions;
 
 public sealed class SqlCountAggregateFunctionExpressionNode : SqlAggregateFunctionExpressionNode
 {
-    internal SqlCountAggregateFunctionExpressionNode(
-        ReadOnlyMemory<SqlExpressionNode> arguments,
-        Chain<SqlAggregateFunctionTraitNode> traits)
+    internal SqlCountAggregateFunctionExpressionNode(ReadOnlyMemory<SqlExpressionNode> arguments, Chain<SqlTraitNode> traits)
         : base( SqlFunctionType.Count, arguments, traits ) { }
 
     [Pure]
-    public override SqlCountAggregateFunctionExpressionNode AddTrait(SqlAggregateFunctionTraitNode trait)
+    public override SqlCountAggregateFunctionExpressionNode AddTrait(SqlTraitNode trait)
     {
         var traits = Traits.ToExtendable().Extend( trait );
         return new SqlCountAggregateFunctionExpressionNode( Arguments, traits );

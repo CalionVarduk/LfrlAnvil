@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using System.Text;
-using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
 
@@ -12,7 +10,7 @@ public sealed class SqlQueryRecordSetNode : SqlRecordSetNode
     private Dictionary<string, SqlQueryDataFieldNode>? _fields;
 
     internal SqlQueryRecordSetNode(SqlQueryExpressionNode query, string alias, bool isOptional)
-        : base( isOptional )
+        : base( SqlNodeType.QueryRecordSet, isOptional )
     {
         Query = query;
         Name = alias;
@@ -63,13 +61,6 @@ public sealed class SqlQueryRecordSetNode : SqlRecordSetNode
         return IsOptional != optional
             ? new SqlQueryRecordSetNode( Query, Name, isOptional: optional )
             : this;
-    }
-
-    protected override void ToString(StringBuilder builder, int indent)
-    {
-        var queryIndent = indent + DefaultIndent;
-        AppendTo( builder.Append( '(' ).Indent( queryIndent ), Query, queryIndent );
-        builder.Indent( indent ).Append( ')' ).Append( ' ' ).Append( "AS" ).Append( ' ' ).Append( '[' ).Append( Name ).Append( ']' );
     }
 
     [Pure]

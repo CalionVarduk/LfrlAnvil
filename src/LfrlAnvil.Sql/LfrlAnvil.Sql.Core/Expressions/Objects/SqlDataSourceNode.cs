@@ -7,13 +7,13 @@ namespace LfrlAnvil.Sql.Expressions.Objects;
 
 public abstract class SqlDataSourceNode : SqlNodeBase
 {
-    protected SqlDataSourceNode(Chain<SqlDataSourceTraitNode> traits)
+    protected SqlDataSourceNode(Chain<SqlTraitNode> traits)
         : base( SqlNodeType.DataSource )
     {
         Traits = traits;
     }
 
-    public Chain<SqlDataSourceTraitNode> Traits { get; }
+    public Chain<SqlTraitNode> Traits { get; }
     public abstract SqlRecordSetNode From { get; }
     public abstract ReadOnlyMemory<SqlDataSourceJoinOnNode> Joins { get; }
     public abstract IReadOnlyCollection<SqlRecordSetNode> RecordSets { get; }
@@ -23,5 +23,5 @@ public abstract class SqlDataSourceNode : SqlNodeBase
     public abstract SqlRecordSetNode GetRecordSet(string name);
 
     [Pure]
-    public abstract SqlDataSourceNode AddTrait(SqlDataSourceTraitNode trait);
+    public abstract SqlDataSourceNode AddTrait(SqlTraitNode trait);
 }

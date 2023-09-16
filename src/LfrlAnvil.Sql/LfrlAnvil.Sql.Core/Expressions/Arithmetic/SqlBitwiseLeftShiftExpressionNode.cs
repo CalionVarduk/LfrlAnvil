@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace LfrlAnvil.Sql.Expressions.Arithmetic;
+﻿namespace LfrlAnvil.Sql.Expressions.Arithmetic;
 
 public sealed class SqlBitwiseLeftShiftExpressionNode : SqlExpressionNode
 {
@@ -13,9 +11,4 @@ public sealed class SqlBitwiseLeftShiftExpressionNode : SqlExpressionNode
 
     public SqlExpressionNode Left { get; }
     public SqlExpressionNode Right { get; }
-
-    protected override void ToString(StringBuilder builder, int indent)
-    {
-        AppendInfixBinaryTo( builder, Left, "<<", Right, indent );
-    }
 }

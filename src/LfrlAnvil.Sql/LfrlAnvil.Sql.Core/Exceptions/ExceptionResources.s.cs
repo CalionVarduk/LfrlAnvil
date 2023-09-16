@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using LfrlAnvil.Extensions;
+using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Versioning;
 
@@ -163,6 +164,22 @@ public static class ExceptionResources
     public static string ValueCannotBeUsedInParameter(Type type)
     {
         return $"Value cannot be used in database parameter through definition of '{type.GetDebugString()}' type.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string UnrecognizedSqlNode(Type visitorType, SqlNodeBase node)
+    {
+        return $@"Visitor of '{visitorType.GetDebugString()}' type doesn't recognize the following node:
+{node}";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string FailedWhileVisitingNode(string reason, Type visitorType, SqlNodeBase node)
+    {
+        return $@"Visitor of '{visitorType.GetDebugString()}' type has failed because {reason} while visiting the following node:
+{node}";
     }
 
     [Pure]

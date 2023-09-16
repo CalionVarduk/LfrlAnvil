@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace LfrlAnvil.Sql.Expressions.Logical;
+﻿namespace LfrlAnvil.Sql.Expressions.Logical;
 
 public sealed class SqlBetweenConditionNode : SqlConditionNode
 {
@@ -17,16 +15,4 @@ public sealed class SqlBetweenConditionNode : SqlConditionNode
     public SqlExpressionNode Min { get; }
     public SqlExpressionNode Max { get; }
     public bool IsNegated { get; }
-
-    protected override void ToString(StringBuilder builder, int indent)
-    {
-        AppendChildTo( builder, Value, indent );
-
-        builder.Append( ' ' );
-        if ( IsNegated )
-            builder.Append( "NOT" ).Append( ' ' );
-
-        AppendChildTo( builder.Append( "BETWEEN" ).Append( ' ' ), Min, indent );
-        AppendChildTo( builder.Append( ' ' ).Append( "AND" ).Append( ' ' ), Max, indent );
-    }
 }

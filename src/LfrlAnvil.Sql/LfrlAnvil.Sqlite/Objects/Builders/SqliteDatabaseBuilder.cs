@@ -2,6 +2,7 @@
 using LfrlAnvil.Generators;
 using LfrlAnvil.Memory;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Internal;
@@ -17,6 +18,7 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
         _idGenerator = new UlongSequenceGenerator();
         DataTypes = new SqliteDataTypeProvider();
         TypeDefinitions = new SqliteColumnTypeDefinitionProvider();
+        NodeInterpreterFactory = new SqliteNodeInterpreterFactory( TypeDefinitions );
         Schemas = new SqliteSchemaBuilderCollection( this );
         ChangeTracker = new SqliteDatabaseChangeTracker();
         ObjectPool = new MemorySequencePool<SqliteObjectBuilder>( minSegmentLength: 32 );
@@ -24,6 +26,7 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
 
     public SqliteDataTypeProvider DataTypes { get; }
     public SqliteColumnTypeDefinitionProvider TypeDefinitions { get; }
+    public SqliteNodeInterpreterFactory NodeInterpreterFactory { get; private set; }
     public SqliteSchemaBuilderCollection Schemas { get; }
     public SqlDialect Dialect => SqliteDialect.Instance;
     public SqlDatabaseCreateMode Mode => ChangeTracker.Mode;
@@ -33,6 +36,7 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
 
     ISqlDataTypeProvider ISqlDatabaseBuilder.DataTypes => DataTypes;
     ISqlColumnTypeDefinitionProvider ISqlDatabaseBuilder.TypeDefinitions => TypeDefinitions;
+    ISqlNodeInterpreterFactory ISqlDatabaseBuilder.NodeInterpreterFactory => NodeInterpreterFactory;
     ISqlSchemaBuilderCollection ISqlDatabaseBuilder.Schemas => Schemas;
 
     public ReadOnlySpan<string> GetPendingStatements()
@@ -43,6 +47,12 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
     public void AddRawStatement(string statement)
     {
         ChangeTracker.AddRawStatement( statement );
+    }
+
+    public SqliteDatabaseBuilder SetNodeInterpreterFactory(SqliteNodeInterpreterFactory factory)
+    {
+        NodeInterpreterFactory = factory;
+        return this;
     }
 
     public SqliteDatabaseBuilder SetAttachedMode(bool enabled = true)
@@ -120,6 +130,11 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
                 var fk2 = ReinterpretCast.To<SqliteForeignKeyBuilder>( b );
                 return fk1.Index.Table.Id.CompareTo( fk2.Index.Table.Id );
             } );
+    }
+
+    ISqlDatabaseBuilder ISqlDatabaseBuilder.SetNodeInterpreterFactory(ISqlNodeInterpreterFactory factory)
+    {
+        return SetNodeInterpreterFactory( SqliteHelpers.CastOrThrow<SqliteNodeInterpreterFactory>( factory ) );
     }
 
     ISqlDatabaseBuilder ISqlDatabaseBuilder.SetDetachedMode(bool enabled)

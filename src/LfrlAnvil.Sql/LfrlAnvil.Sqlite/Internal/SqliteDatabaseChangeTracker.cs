@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using LfrlAnvil.Exceptions;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Objects.Builders;
@@ -514,9 +515,7 @@ internal sealed class SqliteDatabaseChangeTracker
             builder.AppendElementSeparator().AppendTokenSeparator();
         }
 
-        builder.Length -= 2;
-        builder.AppendLine().AppendFrom( table.FullName ).AppendCommandEnd();
-
+        builder.ShrinkBy( 2 ).AppendLine().AppendFrom( table.FullName ).AppendCommandEnd();
         builder.AppendLine().AppendLine().AppendDropTable( table.FullName );
         builder.AppendLine().AppendLine().AppendRenameTable( temporaryTableName, table.FullName );
         AppendCreateIndexCollection( builder, table.Indexes );

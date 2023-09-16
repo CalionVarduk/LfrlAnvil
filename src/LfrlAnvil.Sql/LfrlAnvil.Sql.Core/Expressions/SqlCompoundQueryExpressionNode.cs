@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.InteropServices;
-using System.Text;
-using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Expressions;
@@ -15,7 +13,7 @@ public sealed class SqlCompoundQueryExpressionNode : SqlExtendableQueryExpressio
     internal SqlCompoundQueryExpressionNode(
         SqlQueryExpressionNode firstQuery,
         SqlCompoundQueryComponentNode[] followingQueries)
-        : base( SqlNodeType.CompoundQuery, Chain<SqlQueryTraitNode>.Empty )
+        : base( SqlNodeType.CompoundQuery, Chain<SqlTraitNode>.Empty )
     {
         Ensure.IsNotEmpty( followingQueries, nameof( followingQueries ) );
         FirstQuery = firstQuery;
@@ -23,7 +21,7 @@ public sealed class SqlCompoundQueryExpressionNode : SqlExtendableQueryExpressio
         _selection = null;
     }
 
-    private SqlCompoundQueryExpressionNode(SqlCompoundQueryExpressionNode @base, Chain<SqlQueryTraitNode> traits)
+    private SqlCompoundQueryExpressionNode(SqlCompoundQueryExpressionNode @base, Chain<SqlTraitNode> traits)
         : base( SqlNodeType.CompoundQuery, traits )
     {
         FirstQuery = @base.FirstQuery;
@@ -36,25 +34,10 @@ public sealed class SqlCompoundQueryExpressionNode : SqlExtendableQueryExpressio
     public override ReadOnlyMemory<SqlSelectNode> Selection => _selection ??= CreateSelection();
 
     [Pure]
-    public override SqlCompoundQueryExpressionNode AddTrait(SqlQueryTraitNode trait)
+    public override SqlCompoundQueryExpressionNode AddTrait(SqlTraitNode trait)
     {
         var traits = Traits.ToExtendable().Extend( trait );
         return new SqlCompoundQueryExpressionNode( this, traits );
-    }
-
-    protected override void ToString(StringBuilder builder, int indent)
-    {
-        var elementIndent = indent + DefaultIndent;
-
-        builder.Append( '(' ).Indent( elementIndent );
-        AppendTo( builder, FirstQuery, elementIndent );
-        builder.Indent( indent ).Append( ')' );
-
-        foreach ( var followingQuery in FollowingQueries.Span )
-            AppendTo( builder.Indent( indent ), followingQuery, indent );
-
-        foreach ( var trait in Traits )
-            AppendTo( builder.Indent( indent ), trait, indent );
     }
 
     [Pure]

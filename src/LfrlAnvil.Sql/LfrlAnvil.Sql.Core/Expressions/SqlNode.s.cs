@@ -19,8 +19,10 @@ public static partial class SqlNode
     private static SqlNullNode? _null;
     private static SqlTrueNode? _true;
     private static SqlFalseNode? _false;
-    private static SqlDistinctDataSourceTraitNode? _distinct;
+    private static SqlDistinctTraitNode? _distinct;
     private static SqlDummyDataSourceNode? _dummyDataSource;
+    private static SqlCommitTransactionNode? _commitTransaction;
+    private static SqlRollbackTransactionNode? _rollbackTransaction;
 
     [Pure]
     public static SqlExpressionNode Literal<T>(T? value)
@@ -308,52 +310,52 @@ public static partial class SqlNode
     }
 
     [Pure]
-    public static SqlFilterDataSourceTraitNode FilterTrait(SqlConditionNode filter, bool isConjunction)
+    public static SqlFilterTraitNode FilterTrait(SqlConditionNode filter, bool isConjunction)
     {
-        return new SqlFilterDataSourceTraitNode( filter, isConjunction );
+        return new SqlFilterTraitNode( filter, isConjunction );
     }
 
     [Pure]
-    public static SqlAggregationDataSourceTraitNode AggregationTrait(params SqlExpressionNode[] expressions)
+    public static SqlAggregationTraitNode AggregationTrait(params SqlExpressionNode[] expressions)
     {
-        return new SqlAggregationDataSourceTraitNode( expressions );
+        return new SqlAggregationTraitNode( expressions );
     }
 
     [Pure]
-    public static SqlAggregationFilterDataSourceTraitNode AggregationFilterTrait(SqlConditionNode filter, bool isConjunction)
+    public static SqlAggregationFilterTraitNode AggregationFilterTrait(SqlConditionNode filter, bool isConjunction)
     {
-        return new SqlAggregationFilterDataSourceTraitNode( filter, isConjunction );
+        return new SqlAggregationFilterTraitNode( filter, isConjunction );
     }
 
     [Pure]
-    public static SqlDistinctDataSourceTraitNode DistinctTrait()
+    public static SqlDistinctTraitNode DistinctTrait()
     {
-        return _distinct ??= new SqlDistinctDataSourceTraitNode();
+        return _distinct ??= new SqlDistinctTraitNode();
     }
 
     [Pure]
-    public static SqlSortQueryTraitNode SortTrait(params SqlOrderByNode[] ordering)
+    public static SqlSortTraitNode SortTrait(params SqlOrderByNode[] ordering)
     {
-        return new SqlSortQueryTraitNode( ordering );
+        return new SqlSortTraitNode( ordering );
     }
 
     [Pure]
-    public static SqlLimitQueryTraitNode LimitTrait(SqlExpressionNode value)
+    public static SqlLimitTraitNode LimitTrait(SqlExpressionNode value)
     {
-        return new SqlLimitQueryTraitNode( value );
+        return new SqlLimitTraitNode( value );
     }
 
     [Pure]
-    public static SqlOffsetQueryTraitNode OffsetTrait(SqlExpressionNode value)
+    public static SqlOffsetTraitNode OffsetTrait(SqlExpressionNode value)
     {
-        return new SqlOffsetQueryTraitNode( value );
+        return new SqlOffsetTraitNode( value );
     }
 
     [Pure]
-    public static SqlCommonTableExpressionQueryTraitNode CommonTableExpressionTrait(
+    public static SqlCommonTableExpressionTraitNode CommonTableExpressionTrait(
         params SqlCommonTableExpressionNode[] commonTableExpressions)
     {
-        return new SqlCommonTableExpressionQueryTraitNode( commonTableExpressions );
+        return new SqlCommonTableExpressionTraitNode( commonTableExpressions );
     }
 
     [Pure]
@@ -396,15 +398,6 @@ public static partial class SqlNode
     }
 
     [Pure]
-    public static SqlDataSourceQueryExpressionNode<TDataSourceNode> Query<TDataSourceNode>(
-        TDataSourceNode dataSource,
-        SqlQueryTraitNode trait)
-        where TDataSourceNode : SqlDataSourceNode
-    {
-        return new SqlDataSourceQueryExpressionNode<TDataSourceNode>( dataSource, trait );
-    }
-
-    [Pure]
     public static SqlCompoundQueryExpressionNode CompoundQuery(
         SqlQueryExpressionNode firstQuery,
         params SqlCompoundQueryComponentNode[] followingQueries)
@@ -440,7 +433,7 @@ public static partial class SqlNode
     [Pure]
     public static SqlDummyDataSourceNode DummyDataSource()
     {
-        return _dummyDataSource ??= new SqlDummyDataSourceNode( Chain<SqlDataSourceTraitNode>.Empty );
+        return _dummyDataSource ??= new SqlDummyDataSourceNode( Chain<SqlTraitNode>.Empty );
     }
 
     [Pure]
@@ -579,9 +572,9 @@ public static partial class SqlNode
     }
 
     [Pure]
-    public static SqlDeleteFromNode DeleteFrom(SqlDataSourceNode dataSource, SqlRecordSetNode recordSet)
+    public static SqlDeleteFromNode DeleteFrom(SqlDataSourceNode dataSource)
     {
-        return new SqlDeleteFromNode( dataSource, recordSet );
+        return new SqlDeleteFromNode( dataSource );
     }
 
     [Pure]
@@ -591,12 +584,9 @@ public static partial class SqlNode
     }
 
     [Pure]
-    public static SqlUpdateNode Update(
-        SqlDataSourceNode dataSource,
-        SqlRecordSetNode recordSet,
-        params SqlValueAssignmentNode[] assignments)
+    public static SqlUpdateNode Update(SqlDataSourceNode dataSource, params SqlValueAssignmentNode[] assignments)
     {
-        return new SqlUpdateNode( dataSource, recordSet, assignments );
+        return new SqlUpdateNode( dataSource, assignments );
     }
 
     [Pure]
@@ -643,12 +633,24 @@ public static partial class SqlNode
     [Pure]
     public static SqlStatementBatchNode Batch(params SqlNodeBase[] statements)
     {
-        return new SqlStatementBatchNode( isolationLevel: null, statements );
+        return new SqlStatementBatchNode( statements );
     }
 
     [Pure]
-    public static SqlStatementBatchNode Batch(IsolationLevel isolationLevel, params SqlNodeBase[] statements)
+    public static SqlBeginTransactionNode BeginTransaction(IsolationLevel isolationLevel)
     {
-        return new SqlStatementBatchNode( isolationLevel, statements );
+        return new SqlBeginTransactionNode( isolationLevel );
+    }
+
+    [Pure]
+    public static SqlCommitTransactionNode CommitTransaction()
+    {
+        return _commitTransaction ??= new SqlCommitTransactionNode();
+    }
+
+    [Pure]
+    public static SqlRollbackTransactionNode RollbackTransaction()
+    {
+        return _rollbackTransaction ??= new SqlRollbackTransactionNode();
     }
 }

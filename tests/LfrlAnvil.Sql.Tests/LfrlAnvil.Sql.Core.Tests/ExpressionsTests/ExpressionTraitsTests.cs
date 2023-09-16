@@ -25,19 +25,6 @@ public class ExpressionTraitsTests : TestsBase
     }
 
     [Fact]
-    public void DistinctTrait_ForAggregateFunction_ShouldCreateDistinctAggregateFunctionTraitNode()
-    {
-        var sut = SqlNode.AggregateFunctions.DistinctTrait();
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.DistinctTrait );
-            text.Should().Be( "DISTINCT" );
-        }
-    }
-
-    [Fact]
     public void FilterTrait_ShouldCreateFilterDataSourceTraitNode_AsConjunction()
     {
         var condition = SqlNode.RawCondition( "bar > 10" );
@@ -49,10 +36,7 @@ public class ExpressionTraitsTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.FilterTrait );
             sut.Filter.Should().BeSameAs( condition );
             sut.IsConjunction.Should().BeTrue();
-            text.Should()
-                .Be(
-                    @"AND WHERE
-    (bar > 10)" );
+            text.Should().Be( "AND WHERE bar > 10" );
         }
     }
 
@@ -68,48 +52,7 @@ public class ExpressionTraitsTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.FilterTrait );
             sut.Filter.Should().BeSameAs( condition );
             sut.IsConjunction.Should().BeFalse();
-            text.Should()
-                .Be(
-                    @"OR WHERE
-    (bar > 10)" );
-        }
-    }
-
-    [Fact]
-    public void FilterTrait_ForAggregateFunction_ShouldCreateFilterAggregateFunctionTraitNode_AsConjunction()
-    {
-        var condition = SqlNode.RawCondition( "bar > 10" );
-        var sut = SqlNode.AggregateFunctions.FilterTrait( condition, isConjunction: true );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FilterTrait );
-            sut.Filter.Should().BeSameAs( condition );
-            sut.IsConjunction.Should().BeTrue();
-            text.Should()
-                .Be(
-                    @"AND WHERE
-    (bar > 10)" );
-        }
-    }
-
-    [Fact]
-    public void FilterTrait_ForAggregateFunction_ShouldCreateFilterAggregateFunctionTraitNode_AsDisjunction()
-    {
-        var condition = SqlNode.RawCondition( "bar > 10" );
-        var sut = SqlNode.AggregateFunctions.FilterTrait( condition, isConjunction: false );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FilterTrait );
-            sut.Filter.Should().BeSameAs( condition );
-            sut.IsConjunction.Should().BeFalse();
-            text.Should()
-                .Be(
-                    @"OR WHERE
-    (bar > 10)" );
+            text.Should().Be( "OR WHERE bar > 10" );
         }
     }
 
@@ -124,11 +67,7 @@ public class ExpressionTraitsTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.AggregationTrait );
             sut.Expressions.ToArray().Should().BeSequentiallyEqualTo( expressions );
-            text.Should()
-                .Be(
-                    @"GROUP BY
-    (a),
-    (b)" );
+            text.Should().Be( "GROUP BY (a), (b)" );
         }
     }
 
@@ -158,10 +97,7 @@ public class ExpressionTraitsTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.AggregationFilterTrait );
             sut.Filter.Should().BeSameAs( condition );
             sut.IsConjunction.Should().BeTrue();
-            text.Should()
-                .Be(
-                    @"AND HAVING
-    (bar > 10)" );
+            text.Should().Be( "AND HAVING bar > 10" );
         }
     }
 
@@ -177,10 +113,7 @@ public class ExpressionTraitsTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.AggregationFilterTrait );
             sut.Filter.Should().BeSameAs( condition );
             sut.IsConjunction.Should().BeFalse();
-            text.Should()
-                .Be(
-                    @"OR HAVING
-    (bar > 10)" );
+            text.Should().Be( "OR HAVING bar > 10" );
         }
     }
 
@@ -195,11 +128,7 @@ public class ExpressionTraitsTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.SortTrait );
             sut.Ordering.ToArray().Should().BeSequentiallyEqualTo( ordering );
-            text.Should()
-                .Be(
-                    @"ORDER BY
-    (a) ASC,
-    (b) DESC" );
+            text.Should().Be( "ORDER BY (a) ASC, (b) DESC" );
         }
     }
 
@@ -265,13 +194,12 @@ public class ExpressionTraitsTests : TestsBase
             sut.CommonTableExpressions.ToArray().Should().BeSequentiallyEqualTo( cte );
             text.Should()
                 .Be(
-                    @"WITH
-    ORDINAL [A] (
-        SELECT * FROM foo
-    ),
-    ORDINAL [B] (
-        SELECT * FROM bar
-    )" );
+                    @"WITH ORDINAL [A] (
+  SELECT * FROM foo
+),
+ORDINAL [B] (
+  SELECT * FROM bar
+)" );
         }
     }
 
@@ -334,7 +262,7 @@ public class ExpressionTraitsTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.OrderBy );
             sut.Expression.Should().BeEquivalentTo( selection.ToExpression() );
             sut.Ordering.Should().BeSameAs( OrderBy.Asc );
-            text.Should().Be( "(([foo].[bar] : ?) AS [qux]) ASC" );
+            text.Should().Be( "([qux]) ASC" );
         }
     }
 
@@ -351,7 +279,7 @@ public class ExpressionTraitsTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.OrderBy );
             sut.Expression.Should().BeEquivalentTo( selection.ToExpression() );
             sut.Ordering.Should().BeSameAs( OrderBy.Desc );
-            text.Should().Be( "(([foo].[bar] : ?) AS [qux]) DESC" );
+            text.Should().Be( "([qux]) DESC" );
         }
     }
 
@@ -397,8 +325,7 @@ DISTINCT" );
             text.Should()
                 .Be(
                     @"FROM [foo]
-INNER JOIN [bar] ON
-    (TRUE)
+INNER JOIN [bar] ON TRUE
 DISTINCT" );
         }
     }
@@ -421,7 +348,7 @@ DISTINCT" );
             text.Should()
                 .Be(
                     @"AGG_COUNT((*))
-    DISTINCT" );
+  DISTINCT" );
         }
     }
 
@@ -448,8 +375,7 @@ DISTINCT" );
             text.Should()
                 .Be(
                     @"FROM [foo]
-AND WHERE
-    (a > 10)" );
+AND WHERE a > 10" );
         }
     }
 
@@ -476,10 +402,8 @@ AND WHERE
             text.Should()
                 .Be(
                     @"FROM [foo]
-INNER JOIN [bar] ON
-    (TRUE)
-AND WHERE
-    (a > 10)" );
+INNER JOIN [bar] ON TRUE
+AND WHERE a > 10" );
         }
     }
 
@@ -502,8 +426,7 @@ AND WHERE
             text.Should()
                 .Be(
                     @"AGG_COUNT((*))
-    AND WHERE
-        (a > 10)" );
+  AND WHERE a > 10" );
         }
     }
 
@@ -530,8 +453,7 @@ AND WHERE
             text.Should()
                 .Be(
                     @"FROM [foo]
-OR WHERE
-    (a > 10)" );
+OR WHERE a > 10" );
         }
     }
 
@@ -558,10 +480,8 @@ OR WHERE
             text.Should()
                 .Be(
                     @"FROM [foo]
-INNER JOIN [bar] ON
-    (TRUE)
-OR WHERE
-    (a > 10)" );
+INNER JOIN [bar] ON TRUE
+OR WHERE a > 10" );
         }
     }
 
@@ -584,8 +504,7 @@ OR WHERE
             text.Should()
                 .Be(
                     @"AGG_COUNT((*))
-    OR WHERE
-        (a > 10)" );
+  OR WHERE a > 10" );
         }
     }
 
@@ -612,8 +531,7 @@ OR WHERE
             text.Should()
                 .Be(
                     @"FROM [foo]
-GROUP BY
-    ([foo].[a] : ?)" );
+GROUP BY ([foo].[a] : ?)" );
         }
     }
 
@@ -655,10 +573,8 @@ GROUP BY
             text.Should()
                 .Be(
                     @"FROM [foo]
-INNER JOIN [bar] ON
-    (TRUE)
-GROUP BY
-    ([foo].[a] : ?)" );
+INNER JOIN [bar] ON TRUE
+GROUP BY ([foo].[a] : ?)" );
         }
     }
 
@@ -700,8 +616,7 @@ GROUP BY
             text.Should()
                 .Be(
                     @"FROM [foo]
-AND HAVING
-    (a > 10)" );
+AND HAVING a > 10" );
         }
     }
 
@@ -728,10 +643,8 @@ AND HAVING
             text.Should()
                 .Be(
                     @"FROM [foo]
-INNER JOIN [bar] ON
-    (TRUE)
-AND HAVING
-    (a > 10)" );
+INNER JOIN [bar] ON TRUE
+AND HAVING a > 10" );
         }
     }
 
@@ -758,8 +671,7 @@ AND HAVING
             text.Should()
                 .Be(
                     @"FROM [foo]
-OR HAVING
-    (a > 10)" );
+OR HAVING a > 10" );
         }
     }
 
@@ -786,15 +698,13 @@ OR HAVING
             text.Should()
                 .Be(
                     @"FROM [foo]
-INNER JOIN [bar] ON
-    (TRUE)
-OR HAVING
-    (a > 10)" );
+INNER JOIN [bar] ON TRUE
+OR HAVING a > 10" );
         }
     }
 
     [Fact]
-    public void OrderBy_ForSingleDataSource_ShouldReturnDataSourceQueryWithTrait()
+    public void OrderBy_ForSingleDataSource_ShouldReturnDataSourceWithTrait()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
         var ordering = new[] { dataSource.From["a"].Asc() };
@@ -806,22 +716,21 @@ OR HAVING
         using ( new AssertionScope() )
         {
             selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Selection.ToArray().Should().BeEmpty();
+            sut.NodeType.Should().Be( SqlNodeType.DataSource );
+            sut.From.Should().BeSameAs( dataSource.From );
+            sut.Joins.Should().Be( dataSource.Joins );
+            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
             sut.Traits.Should().HaveCount( 1 );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SortTrait );
             text.Should()
                 .Be(
                     @"FROM [foo]
-ORDER BY
-    ([foo].[a] : ?) ASC
-SELECT" );
+ORDER BY ([foo].[a] : ?) ASC" );
         }
     }
 
     [Fact]
-    public void OrderBy_ForSingleDataSource_ShouldReturnDataSourceQuery_WithEmptyOrdering()
+    public void OrderBy_ForSingleDataSource_ShouldReturnDataSource_WithEmptyOrdering()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
         var sut = dataSource.OrderBy( Enumerable.Empty<SqlOrderByNode>() );
@@ -829,19 +738,17 @@ SELECT" );
 
         using ( new AssertionScope() )
         {
-            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Selection.ToArray().Should().BeEmpty();
+            sut.NodeType.Should().Be( SqlNodeType.DataSource );
+            sut.From.Should().BeSameAs( dataSource.From );
+            sut.Joins.Should().Be( dataSource.Joins );
+            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
             sut.Traits.Should().BeEmpty();
-            text.Should()
-                .Be(
-                    @"FROM [foo]
-SELECT" );
+            text.Should().Be( "FROM [foo]" );
         }
     }
 
     [Fact]
-    public void OrderBy_ForMultiDataSource_ShouldReturnDataSourceQueryWithTrait()
+    public void OrderBy_ForMultiDataSource_ShouldReturnDataSourceWithTrait()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).Join( SqlNode.RawRecordSet( "bar" ).InnerOn( SqlNode.True() ) );
         var ordering = new[] { dataSource["foo"]["a"].Asc(), dataSource["bar"]["b"].Desc() };
@@ -853,25 +760,22 @@ SELECT" );
         using ( new AssertionScope() )
         {
             selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Selection.ToArray().Should().BeEmpty();
+            sut.NodeType.Should().Be( SqlNodeType.DataSource );
+            sut.From.Should().BeSameAs( dataSource.From );
+            sut.Joins.Should().Be( dataSource.Joins );
+            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
             sut.Traits.Should().HaveCount( 1 );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SortTrait );
             text.Should()
                 .Be(
                     @"FROM [foo]
-INNER JOIN [bar] ON
-    (TRUE)
-ORDER BY
-    ([foo].[a] : ?) ASC,
-    ([bar].[b] : ?) DESC
-SELECT" );
+INNER JOIN [bar] ON TRUE
+ORDER BY ([foo].[a] : ?) ASC, ([bar].[b] : ?) DESC" );
         }
     }
 
     [Fact]
-    public void OrderBy_ForMultiDataSource_ShouldReturnDataSourceQuery_WithEmptyOrdering()
+    public void OrderBy_ForMultiDataSource_ShouldReturnDataSource_WithEmptyOrdering()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).Join( SqlNode.RawRecordSet( "bar" ).InnerOn( SqlNode.True() ) );
         var sut = dataSource.OrderBy( Enumerable.Empty<SqlOrderByNode>() );
@@ -879,21 +783,20 @@ SELECT" );
 
         using ( new AssertionScope() )
         {
-            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Selection.ToArray().Should().BeEmpty();
+            sut.NodeType.Should().Be( SqlNodeType.DataSource );
+            sut.From.Should().BeSameAs( dataSource.From );
+            sut.Joins.Should().Be( dataSource.Joins );
+            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
             sut.Traits.Should().BeEmpty();
             text.Should()
                 .Be(
                     @"FROM [foo]
-INNER JOIN [bar] ON
-    (TRUE)
-SELECT" );
+INNER JOIN [bar] ON TRUE" );
         }
     }
 
     [Fact]
-    public void With_ForSingleDataSource_ShouldReturnDataSourceQueryWithTrait()
+    public void With_ForSingleDataSource_ShouldReturnDataSourceWithTrait()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
         var cte = new[] { SqlNode.RawQuery( "SELECT * FROM bar" ).ToCte( "A" ) };
@@ -905,24 +808,23 @@ SELECT" );
         using ( new AssertionScope() )
         {
             selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Selection.ToArray().Should().BeEmpty();
+            sut.NodeType.Should().Be( SqlNodeType.DataSource );
+            sut.From.Should().BeSameAs( dataSource.From );
+            sut.Joins.Should().Be( dataSource.Joins );
+            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
             sut.Traits.Should().HaveCount( 1 );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.CommonTableExpressionTrait );
             text.Should()
                 .Be(
                     @"FROM [foo]
-WITH
-    ORDINAL [A] (
-        SELECT * FROM bar
-    )
-SELECT" );
+WITH ORDINAL [A] (
+  SELECT * FROM bar
+)" );
         }
     }
 
     [Fact]
-    public void With_ForSingleDataSource_ShouldReturnDataSourceQuery_WithEmptyCte()
+    public void With_ForSingleDataSource_ShouldReturnDataSource_WithEmptyCte()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
         var sut = dataSource.With( Enumerable.Empty<SqlCommonTableExpressionNode>() );
@@ -930,19 +832,13 @@ SELECT" );
 
         using ( new AssertionScope() )
         {
-            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Selection.ToArray().Should().BeEmpty();
-            sut.Traits.Should().BeEmpty();
-            text.Should()
-                .Be(
-                    @"FROM [foo]
-SELECT" );
+            sut.Should().BeSameAs( dataSource );
+            text.Should().Be( "FROM [foo]" );
         }
     }
 
     [Fact]
-    public void With_ForMultiDataSource_ShouldReturnDataSourceQueryWithTrait()
+    public void With_ForMultiDataSource_ShouldReturnDataSourceWithTrait()
     {
         var firstCte = SqlNode.RawQuery( "SELECT * FROM foo" ).ToCte( "A" );
         var secondCte = SqlNode.RawQuery( "SELECT * FROM bar" ).ToCte( "B" );
@@ -955,29 +851,27 @@ SELECT" );
         using ( new AssertionScope() )
         {
             selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
-            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Selection.ToArray().Should().BeEmpty();
+            sut.NodeType.Should().Be( SqlNodeType.DataSource );
+            sut.From.Should().BeSameAs( dataSource.From );
+            sut.Joins.Should().Be( dataSource.Joins );
+            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
             sut.Traits.Should().HaveCount( 1 );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.CommonTableExpressionTrait );
             text.Should()
                 .Be(
                     @"FROM [A]
-INNER JOIN [B] AS [C] ON
-    (TRUE)
-WITH
-    ORDINAL [A] (
-        SELECT * FROM foo
-    ),
-    ORDINAL [B] (
-        SELECT * FROM bar
-    )
-SELECT" );
+INNER JOIN [B] AS [C] ON TRUE
+WITH ORDINAL [A] (
+  SELECT * FROM foo
+),
+ORDINAL [B] (
+  SELECT * FROM bar
+)" );
         }
     }
 
     [Fact]
-    public void With_ForMultiDataSource_ShouldReturnDataSourceQuery_WithEmptyCte()
+    public void With_ForMultiDataSource_ShouldReturnDataSource_WithEmptyCte()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).Join( SqlNode.RawRecordSet( "bar" ).InnerOn( SqlNode.True() ) );
         var sut = dataSource.With( Enumerable.Empty<SqlCommonTableExpressionNode>() );
@@ -985,21 +879,20 @@ SELECT" );
 
         using ( new AssertionScope() )
         {
-            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Selection.ToArray().Should().BeEmpty();
+            sut.NodeType.Should().Be( SqlNodeType.DataSource );
+            sut.From.Should().BeSameAs( dataSource.From );
+            sut.Joins.Should().Be( dataSource.Joins );
+            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
             sut.Traits.Should().BeEmpty();
             text.Should()
                 .Be(
                     @"FROM [foo]
-INNER JOIN [bar] ON
-    (TRUE)
-SELECT" );
+INNER JOIN [bar] ON TRUE" );
         }
     }
 
     [Fact]
-    public void Limit_ForSingleDataSource_ShouldReturnDataSourceQueryWithTrait()
+    public void Limit_ForSingleDataSource_ShouldReturnDataSourceWithTrait()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
         var value = SqlNode.Literal( 10 );
@@ -1008,21 +901,21 @@ SELECT" );
 
         using ( new AssertionScope() )
         {
-            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Selection.ToArray().Should().BeEmpty();
+            sut.NodeType.Should().Be( SqlNodeType.DataSource );
+            sut.From.Should().BeSameAs( dataSource.From );
+            sut.Joins.Should().Be( dataSource.Joins );
+            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
             sut.Traits.Should().HaveCount( 1 );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.LimitTrait );
             text.Should()
                 .Be(
                     @"FROM [foo]
-LIMIT (""10"" : System.Int32)
-SELECT" );
+LIMIT (""10"" : System.Int32)" );
         }
     }
 
     [Fact]
-    public void Limit_ForMultiDataSource_ShouldReturnDataSourceQueryWithTrait()
+    public void Limit_ForMultiDataSource_ShouldReturnDataSourceWithTrait()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).Join( SqlNode.RawRecordSet( "bar" ).InnerOn( SqlNode.True() ) );
         var value = SqlNode.Literal( 10 );
@@ -1031,23 +924,22 @@ SELECT" );
 
         using ( new AssertionScope() )
         {
-            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Selection.ToArray().Should().BeEmpty();
+            sut.NodeType.Should().Be( SqlNodeType.DataSource );
+            sut.From.Should().BeSameAs( dataSource.From );
+            sut.Joins.Should().Be( dataSource.Joins );
+            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
             sut.Traits.Should().HaveCount( 1 );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.LimitTrait );
             text.Should()
                 .Be(
                     @"FROM [foo]
-INNER JOIN [bar] ON
-    (TRUE)
-LIMIT (""10"" : System.Int32)
-SELECT" );
+INNER JOIN [bar] ON TRUE
+LIMIT (""10"" : System.Int32)" );
         }
     }
 
     [Fact]
-    public void Offset_ForSingleDataSource_ShouldReturnDataSourceQueryWithTrait()
+    public void Offset_ForSingleDataSource_ShouldReturnDataSourceWithTrait()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
         var value = SqlNode.Literal( 10 );
@@ -1056,21 +948,21 @@ SELECT" );
 
         using ( new AssertionScope() )
         {
-            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Selection.ToArray().Should().BeEmpty();
+            sut.NodeType.Should().Be( SqlNodeType.DataSource );
+            sut.From.Should().BeSameAs( dataSource.From );
+            sut.Joins.Should().Be( dataSource.Joins );
+            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
             sut.Traits.Should().HaveCount( 1 );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.OffsetTrait );
             text.Should()
                 .Be(
                     @"FROM [foo]
-OFFSET (""10"" : System.Int32)
-SELECT" );
+OFFSET (""10"" : System.Int32)" );
         }
     }
 
     [Fact]
-    public void Offset_ForMultiDataSource_ShouldReturnDataSourceQueryWithTrait()
+    public void Offset_ForMultiDataSource_ShouldReturnDataSourceWithTrait()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).Join( SqlNode.RawRecordSet( "bar" ).InnerOn( SqlNode.True() ) );
         var value = SqlNode.Literal( 10 );
@@ -1079,18 +971,17 @@ SELECT" );
 
         using ( new AssertionScope() )
         {
-            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Selection.ToArray().Should().BeEmpty();
+            sut.NodeType.Should().Be( SqlNodeType.DataSource );
+            sut.From.Should().BeSameAs( dataSource.From );
+            sut.Joins.Should().Be( dataSource.Joins );
+            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
             sut.Traits.Should().HaveCount( 1 );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.OffsetTrait );
             text.Should()
                 .Be(
                     @"FROM [foo]
-INNER JOIN [bar] ON
-    (TRUE)
-OFFSET (""10"" : System.Int32)
-SELECT" );
+INNER JOIN [bar] ON TRUE
+OFFSET (""10"" : System.Int32)" );
         }
     }
 
@@ -1106,14 +997,10 @@ SELECT" );
         {
             sut.Should().NotBeSameAs( query );
             sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.Traits.Should().BeSequentiallyEqualTo( query.Traits );
             sut.Selection.Should().Be( query.Selection );
-            sut.DataSource.Should().NotBeSameAs( dataSource );
-            sut.DataSource.From.Should().BeSameAs( dataSource.From );
-            sut.DataSource.Joins.Should().Be( dataSource.Joins );
-            sut.DataSource.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.DataSource.Traits.Should().HaveCount( 1 );
-            (sut.DataSource.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
+            sut.DataSource.Should().BeSameAs( dataSource );
+            sut.Traits.Should().HaveCount( 1 );
+            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
             text.Should()
                 .Be(
                     @"FROM [foo]
@@ -1138,19 +1025,14 @@ SELECT" );
             selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
             sut.Should().NotBeSameAs( query );
             sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.Traits.Should().BeSequentiallyEqualTo( query.Traits );
             sut.Selection.Should().Be( query.Selection );
-            sut.DataSource.Should().NotBeSameAs( dataSource );
-            sut.DataSource.From.Should().BeSameAs( dataSource.From );
-            sut.DataSource.Joins.Should().Be( dataSource.Joins );
-            sut.DataSource.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.DataSource.Traits.Should().HaveCount( 1 );
-            (sut.DataSource.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.FilterTrait );
+            sut.DataSource.Should().BeSameAs( dataSource );
+            sut.Traits.Should().HaveCount( 1 );
+            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.FilterTrait );
             text.Should()
                 .Be(
                     @"FROM [foo]
-AND WHERE
-    (a > 10)
+AND WHERE a > 10
 SELECT" );
         }
     }
@@ -1171,19 +1053,14 @@ SELECT" );
             selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
             sut.Should().NotBeSameAs( query );
             sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.Traits.Should().BeSequentiallyEqualTo( query.Traits );
             sut.Selection.Should().Be( query.Selection );
-            sut.DataSource.Should().NotBeSameAs( dataSource );
-            sut.DataSource.From.Should().BeSameAs( dataSource.From );
-            sut.DataSource.Joins.Should().Be( dataSource.Joins );
-            sut.DataSource.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.DataSource.Traits.Should().HaveCount( 1 );
-            (sut.DataSource.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.FilterTrait );
+            sut.DataSource.Should().BeSameAs( dataSource );
+            sut.Traits.Should().HaveCount( 1 );
+            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.FilterTrait );
             text.Should()
                 .Be(
                     @"FROM [foo]
-OR WHERE
-    (a > 10)
+OR WHERE a > 10
 SELECT" );
         }
     }
@@ -1204,20 +1081,14 @@ SELECT" );
             selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
             sut.Should().NotBeSameAs( query );
             sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.Traits.Should().BeSequentiallyEqualTo( query.Traits );
             sut.Selection.Should().Be( query.Selection );
-            sut.DataSource.Should().NotBeSameAs( dataSource );
-            sut.DataSource.From.Should().BeSameAs( dataSource.From );
-            sut.DataSource.Joins.Should().Be( dataSource.Joins );
-            sut.DataSource.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.DataSource.Traits.Should().HaveCount( 1 );
-            (sut.DataSource.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.AggregationTrait );
+            sut.DataSource.Should().BeSameAs( dataSource );
+            sut.Traits.Should().HaveCount( 1 );
+            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.AggregationTrait );
             text.Should()
                 .Be(
                     @"FROM [foo]
-GROUP BY
-    ([foo].[a] : ?),
-    ([foo].[b] : ?)
+GROUP BY ([foo].[a] : ?), ([foo].[b] : ?)
 SELECT" );
         }
     }
@@ -1254,19 +1125,14 @@ SELECT" );
             selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
             sut.Should().NotBeSameAs( query );
             sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.Traits.Should().BeSequentiallyEqualTo( query.Traits );
             sut.Selection.Should().Be( query.Selection );
-            sut.DataSource.Should().NotBeSameAs( dataSource );
-            sut.DataSource.From.Should().BeSameAs( dataSource.From );
-            sut.DataSource.Joins.Should().Be( dataSource.Joins );
-            sut.DataSource.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.DataSource.Traits.Should().HaveCount( 1 );
-            (sut.DataSource.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.AggregationFilterTrait );
+            sut.DataSource.Should().BeSameAs( dataSource );
+            sut.Traits.Should().HaveCount( 1 );
+            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.AggregationFilterTrait );
             text.Should()
                 .Be(
                     @"FROM [foo]
-AND HAVING
-    (a > 10)
+AND HAVING a > 10
 SELECT" );
         }
     }
@@ -1287,19 +1153,14 @@ SELECT" );
             selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
             sut.Should().NotBeSameAs( query );
             sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
-            sut.Traits.Should().BeSequentiallyEqualTo( query.Traits );
             sut.Selection.Should().Be( query.Selection );
-            sut.DataSource.Should().NotBeSameAs( dataSource );
-            sut.DataSource.From.Should().BeSameAs( dataSource.From );
-            sut.DataSource.Joins.Should().Be( dataSource.Joins );
-            sut.DataSource.RecordSets.Should().BeSameAs( dataSource.RecordSets );
-            sut.DataSource.Traits.Should().HaveCount( 1 );
-            (sut.DataSource.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.AggregationFilterTrait );
+            sut.DataSource.Should().BeSameAs( dataSource );
+            sut.Traits.Should().HaveCount( 1 );
+            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.AggregationFilterTrait );
             text.Should()
                 .Be(
                     @"FROM [foo]
-OR HAVING
-    (a > 10)
+OR HAVING a > 10
 SELECT" );
         }
     }
@@ -1329,9 +1190,7 @@ SELECT" );
             text.Should()
                 .Be(
                     @"FROM [foo]
-ORDER BY
-    ([foo].[a] : ?) ASC,
-    ([foo].[b] : ?) DESC
+ORDER BY ([foo].[a] : ?) ASC, ([foo].[b] : ?) DESC
 SELECT" );
         }
     }
@@ -1377,15 +1236,13 @@ SELECT" );
             text.Should()
                 .Be(
                     @"(
-    SELECT * FROM foo
+  SELECT * FROM foo
 )
 UNION
 (
-    SELECT * FROM bar
+  SELECT * FROM bar
 )
-ORDER BY
-    (a) ASC,
-    (b) DESC" );
+ORDER BY (a) ASC, (b) DESC" );
         }
     }
 
@@ -1430,10 +1287,9 @@ ORDER BY
             text.Should()
                 .Be(
                     @"FROM [foo]
-WITH
-    ORDINAL [A] (
-        SELECT * FROM bar
-    )
+WITH ORDINAL [A] (
+  SELECT * FROM bar
+)
 SELECT" );
         }
     }
@@ -1480,16 +1336,15 @@ SELECT" );
             text.Should()
                 .Be(
                     @"(
-    SELECT * FROM foo
+  SELECT * FROM foo
 )
 UNION
 (
-    SELECT * FROM bar
+  SELECT * FROM bar
 )
-WITH
-    ORDINAL [A] (
-        SELECT * FROM qux
-    )" );
+WITH ORDINAL [A] (
+  SELECT * FROM qux
+)" );
         }
     }
 
@@ -1553,11 +1408,11 @@ SELECT" );
             text.Should()
                 .Be(
                     @"(
-    SELECT * FROM foo
+  SELECT * FROM foo
 )
 UNION
 (
-    SELECT * FROM bar
+  SELECT * FROM bar
 )
 LIMIT (""10"" : System.Int32)" );
         }
@@ -1608,11 +1463,11 @@ SELECT" );
             text.Should()
                 .Be(
                     @"(
-    SELECT * FROM foo
+  SELECT * FROM foo
 )
 UNION
 (
-    SELECT * FROM bar
+  SELECT * FROM bar
 )
 OFFSET (""10"" : System.Int32)" );
         }
