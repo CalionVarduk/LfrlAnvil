@@ -114,6 +114,44 @@ public class RentedMemorySequenceSpanTests : TestsBase
     }
 
     [Fact]
+    public void GetRef_ShouldReturnReferenceToCorrectElement()
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+
+        var seq = pool.Rent( 16 );
+        var sut = seq.Slice( 2, 12 );
+        sut.CopyFrom( Enumerable.Range( 1, 12 ).ToArray() );
+
+        ref var result = ref sut.GetRef( 8 );
+        result = 20;
+
+        seq.Should().BeSequentiallyEqualTo( 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 20, 10, 11, 12, 0, 0 );
+    }
+
+    [Theory]
+    [InlineData( -1 )]
+    [InlineData( 12 )]
+    [InlineData( 13 )]
+    public void GetRef_ShouldThrowArgumentOutOfRangeException_WhenIndexIsOutOfBounds(int index)
+    {
+        var pool = new MemorySequencePool<int>( 8 );
+        var seq = pool.Rent( 16 );
+        var sut = seq.Slice( 2, 12 );
+
+        ArgumentOutOfRangeException? exception = null;
+        try
+        {
+            _ = sut.GetRef( index );
+        }
+        catch ( ArgumentOutOfRangeException e )
+        {
+            exception = e;
+        }
+
+        exception.Should().NotBeNull();
+    }
+
+    [Fact]
     public void Segments_ShouldReturnCorrectArraySegments()
     {
         var pool = new MemorySequencePool<int>( 8 );

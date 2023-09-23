@@ -42,13 +42,7 @@ public struct RentedMemorySequence<T> : IReadOnlyList<T>, ICollection<T>, IDispo
             Assume.IsNotNull( _node, nameof( _node ) );
             return _node.GetElement( index );
         }
-        set
-        {
-            Ensure.IsGreaterThanOrEqualTo( index, 0, nameof( index ) );
-            Ensure.IsLessThan( index, Length, nameof( index ) );
-            Assume.IsNotNull( _node, nameof( _node ) );
-            _node.SetElement( index, value );
-        }
+        set => Set( index, value );
     }
 
     [Pure]
@@ -69,6 +63,24 @@ public struct RentedMemorySequence<T> : IReadOnlyList<T>, ICollection<T>, IDispo
     public RentedMemorySequenceSpan<T> Slice(int startIndex, int length)
     {
         return new RentedMemorySequenceSpan<T>( _node, startIndex, length );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public ref T GetRef(int index)
+    {
+        Ensure.IsGreaterThanOrEqualTo( index, 0, nameof( index ) );
+        Ensure.IsLessThan( index, Length, nameof( index ) );
+        Assume.IsNotNull( _node, nameof( _node ) );
+        return ref _node.GetElementRef( index );
+    }
+
+    public void Set(int index, T item)
+    {
+        Ensure.IsGreaterThanOrEqualTo( index, 0, nameof( index ) );
+        Ensure.IsLessThan( index, Length, nameof( index ) );
+        Assume.IsNotNull( _node, nameof( _node ) );
+        _node.SetElement( index, item );
     }
 
     public void Push(T item)

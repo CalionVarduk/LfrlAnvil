@@ -413,6 +413,18 @@ public class MemorySequencePool<T>
             segment[sequenceIndex.Element] = value;
         }
 
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal ref T GetElementRef(int index)
+        {
+            Assume.IsGreaterThanOrEqualTo( index, 0, nameof( index ) );
+            Assume.IsLessThan( index, Length, nameof( index ) );
+
+            var sequenceIndex = OffsetFirstIndex( index );
+            var segment = GetAbsoluteSegment( sequenceIndex.Segment );
+            return ref segment[sequenceIndex.Element];
+        }
+
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void ClearSegments()
         {

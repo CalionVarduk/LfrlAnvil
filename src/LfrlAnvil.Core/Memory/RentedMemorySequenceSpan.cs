@@ -42,13 +42,7 @@ public readonly ref struct RentedMemorySequenceSpan<T>
             Assume.IsNotNull( _node, nameof( _node ) );
             return _node.GetElement( StartIndex + index );
         }
-        set
-        {
-            Ensure.IsGreaterThanOrEqualTo( index, 0, nameof( index ) );
-            Ensure.IsLessThan( index, Length, nameof( index ) );
-            Assume.IsNotNull( _node, nameof( _node ) );
-            _node.SetElement( StartIndex + index, value );
-        }
+        set => Set( index, value );
     }
 
     [Pure]
@@ -75,6 +69,24 @@ public readonly ref struct RentedMemorySequenceSpan<T>
     public bool Contains(T item)
     {
         return _node is not null && ! _node.IsReusable && _node.IndexOf( item, StartIndex, Length ) != -1;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public ref T GetRef(int index)
+    {
+        Ensure.IsGreaterThanOrEqualTo( index, 0, nameof( index ) );
+        Ensure.IsLessThan( index, Length, nameof( index ) );
+        Assume.IsNotNull( _node, nameof( _node ) );
+        return ref _node.GetElementRef( StartIndex + index );
+    }
+
+    public void Set(int index, T item)
+    {
+        Ensure.IsGreaterThanOrEqualTo( index, 0, nameof( index ) );
+        Ensure.IsLessThan( index, Length, nameof( index ) );
+        Assume.IsNotNull( _node, nameof( _node ) );
+        _node.SetElement( StartIndex + index, item );
     }
 
     public void Clear()
