@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
@@ -359,6 +360,22 @@ public class SqliteColumnBuilderTests : TestsBase
     }
 
     [Fact]
+    public void SetName_ShouldThrowSqliteObjectBuilderException_WhenColumnIsUsedInView()
+    {
+        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" );
+        schema.Objects.CreateView( "V", table.ToRecordSet().ToDataSource().Select( s => new[] { s.From["C2"].AsSelf() } ) );
+
+        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetName( "C3" ) );
+
+        action.Should()
+            .ThrowExactly<SqliteObjectBuilderException>()
+            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+    }
+
+    [Fact]
     public void SetType_ShouldDoNothing_WhenNewTypeEqualsOldType()
     {
         var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
@@ -481,6 +498,22 @@ public class SqliteColumnBuilderTests : TestsBase
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
         table.Indexes.Create( sut.Asc() );
+
+        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetType<int>() );
+
+        action.Should()
+            .ThrowExactly<SqliteObjectBuilderException>()
+            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+    }
+
+    [Fact]
+    public void SetType_ShouldThrowSqliteObjectBuilderException_WhenColumnIsUsedInView()
+    {
+        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" );
+        schema.Objects.CreateView( "V", table.ToRecordSet().ToDataSource().Select( s => new[] { s.From["C2"].AsSelf() } ) );
 
         var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetType<int>() );
 
@@ -743,6 +776,24 @@ public class SqliteColumnBuilderTests : TestsBase
             .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
     }
 
+    [Theory]
+    [InlineData( true )]
+    [InlineData( false )]
+    public void MarkAsNullable_ShouldThrowSqliteObjectBuilderException_WhenColumnIsUsedInView(bool value)
+    {
+        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" ).MarkAsNullable( ! value );
+        schema.Objects.CreateView( "V", table.ToRecordSet().ToDataSource().Select( s => new[] { s.From["C2"].AsSelf() } ) );
+
+        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).MarkAsNullable( value ) );
+
+        action.Should()
+            .ThrowExactly<SqliteObjectBuilderException>()
+            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+    }
+
     [Fact]
     public void SetDefaultValue_ShouldDoNothing_WhenNewValueEqualsOldValue()
     {
@@ -894,6 +945,42 @@ public class SqliteColumnBuilderTests : TestsBase
     }
 
     [Fact]
+    public void SetDefaultValue_ShouldBePossible_WhenColumnIsUsedInView()
+    {
+        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" );
+        schema.Objects.CreateView( "V", table.ToRecordSet().ToDataSource().Select( s => new[] { s.From["C2"].AsSelf() } ) );
+
+        var startStatementCount = schema.Database.GetPendingStatements().Length;
+
+        var result = ((ISqlColumnBuilder)sut).SetDefaultValue( 123 );
+        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.DefaultValue.Should().Be( 123 );
+
+            statements.Should().HaveCount( 1 );
+            statements.ElementAtOrDefault( 0 )
+                .Should()
+                .SatisfySql(
+                    @"CREATE TABLE ""__foo_T__{GUID}__"" (
+                      ""C1"" ANY NOT NULL,
+                      ""C2"" ANY NOT NULL DEFAULT (123),
+                      CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
+                    ) WITHOUT ROWID;",
+                    @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
+                    SELECT ""C1"", ""C2""
+                    FROM ""foo_T"";",
+                    "DROP TABLE \"foo_T\";",
+                    "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
+        }
+    }
+
+    [Fact]
     public void SetDefaultValue_ShouldThrowSqliteObjectBuilderException_WhenColumnIsRemoved()
     {
         var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
@@ -959,6 +1046,20 @@ public class SqliteColumnBuilderTests : TestsBase
         t1.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() );
         var sut = t1.Columns.Create( "C2" );
         t1.Indexes.Create( sut.Asc() );
+
+        var action = Lambda.Of( () => sut.Remove() );
+
+        action.Should().ThrowExactly<SqliteObjectBuilderException>();
+    }
+
+    [Fact]
+    public void Remove_ShouldThrowSqliteObjectBuilderException_WhenColumnIsReferencedByViews()
+    {
+        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var t1 = schema.Objects.CreateTable( "T1" );
+        t1.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() );
+        var sut = t1.Columns.Create( "C2" );
+        schema.Objects.CreateView( "V", t1.ToRecordSet().ToDataSource().Select( s => new[] { s.From["C2"].AsSelf() } ) );
 
         var action = Lambda.Of( () => sut.Remove() );
 

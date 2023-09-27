@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using LfrlAnvil.Memory;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
+using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Internal;
@@ -90,6 +91,17 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
         return TryGetTypedObject( name, SqlObjectType.ForeignKey, out result );
     }
 
+    [Pure]
+    public SqliteViewBuilder GetView(string name)
+    {
+        return GetTypedObject<SqliteViewBuilder>( name, SqlObjectType.View );
+    }
+
+    public bool TryGetView(string name, [MaybeNullWhen( false )] out SqliteViewBuilder result)
+    {
+        return TryGetTypedObject( name, SqlObjectType.View, out result );
+    }
+
     public SqliteTableBuilder CreateTable(string name)
     {
         Schema.EnsureNotRemoved();
@@ -121,6 +133,22 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
         var table = CreateNewTable( name );
         obj = table;
         return table;
+    }
+
+    public SqliteViewBuilder CreateView(string name, SqlQueryExpressionNode source)
+    {
+        Schema.EnsureNotRemoved();
+        SqliteHelpers.AssertName( name );
+        var visitor = SqliteViewBuilder.AssertSourceNode( Schema.Database, source );
+
+        ref var obj = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, name, out var exists )!;
+        if ( exists )
+            throw new SqliteObjectBuilderException( ExceptionResources.NameIsAlreadyTaken( obj, name ) );
+
+        var view = new SqliteViewBuilder( Schema, name, source, visitor );
+        Schema.Database.ChangeTracker.ObjectCreated( view );
+        obj = view;
+        return view;
     }
 
     public bool Remove(string name)
@@ -238,28 +266,41 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
         return result;
     }
 
-    internal RentedMemorySequence<SqliteObjectBuilder> ClearIntoBuffer()
+    internal void Clear()
     {
-        var buffer = CopyTablesIntoBuffer();
         _map.Clear();
-        return buffer;
     }
 
     internal RentedMemorySequence<SqliteObjectBuilder> CopyTablesIntoBuffer()
     {
-        var buffer = Schema.Database.ObjectPool.GreedyRent();
-        foreach ( var obj in _map.Values )
-        {
-            if ( obj.Type == SqlObjectType.Table )
-                buffer.Push( obj );
-        }
+        return CopyObjectsIntoBuffer( SqlObjectType.Table );
+    }
 
-        return buffer;
+    internal RentedMemorySequence<SqliteObjectBuilder> CopyViewsIntoBuffer()
+    {
+        return CopyObjectsIntoBuffer( SqlObjectType.View );
+    }
+
+    internal void ForceRemove(SqliteObjectBuilder obj)
+    {
+        _map.Remove( obj.Name );
     }
 
     internal void Reactivate(SqliteObjectBuilder obj)
     {
         _map.Add( obj.Name, obj );
+    }
+
+    private RentedMemorySequence<SqliteObjectBuilder> CopyObjectsIntoBuffer(SqlObjectType type)
+    {
+        var buffer = Schema.Database.ObjectPool.GreedyRent();
+        foreach ( var obj in _map.Values )
+        {
+            if ( obj.Type == type )
+                buffer.Push( obj );
+        }
+
+        return buffer;
     }
 
     [Pure]
@@ -356,6 +397,17 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
         return TryGetTypedObject( name, SqlObjectType.ForeignKey, out result );
     }
 
+    [Pure]
+    ISqlViewBuilder ISqlObjectBuilderCollection.GetView(string name)
+    {
+        return GetView( name );
+    }
+
+    bool ISqlObjectBuilderCollection.TryGetView(string name, [MaybeNullWhen( false )] out ISqlViewBuilder result)
+    {
+        return TryGetTypedObject( name, SqlObjectType.View, out result );
+    }
+
     ISqlTableBuilder ISqlObjectBuilderCollection.CreateTable(string name)
     {
         return CreateTable( name );
@@ -364,6 +416,11 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
     ISqlTableBuilder ISqlObjectBuilderCollection.GetOrCreateTable(string name)
     {
         return GetOrCreateTable( name );
+    }
+
+    ISqlViewBuilder ISqlObjectBuilderCollection.CreateView(string name, SqlQueryExpressionNode source)
+    {
+        return CreateView( name, source );
     }
 
     [Pure]

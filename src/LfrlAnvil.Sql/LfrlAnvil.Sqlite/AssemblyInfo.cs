@@ -36,3 +36,4 @@
 // - Make DB builder use SQL node tree? This could unify a lot of SQL statement building by moving it all to interpreters
 //   ^ it will cause a bit of an overhead, due to having to create a graph and then interpret it
 //   ^ but it happens only once per version, when it's actually applied to the DB, so it should be fine
+// - Add sql node visitor that allows to extract node's type (+ add Type to ViewDataField)

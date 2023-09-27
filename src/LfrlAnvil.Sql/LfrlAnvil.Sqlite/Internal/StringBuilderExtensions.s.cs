@@ -285,6 +285,26 @@ internal static class StringBuilderExtensions
             .AppendElementsEnd();
     }
 
+    internal static StringBuilder AppendCreateViewBegin(this StringBuilder builder, string fullViewName)
+    {
+        return builder
+            .Append( "CREATE VIEW" )
+            .AppendTokenSeparator()
+            .AppendName( fullViewName )
+            .AppendTokenSeparator()
+            .Append( "AS" )
+            .AppendLine();
+    }
+
+    internal static StringBuilder AppendDropView(this StringBuilder builder, string fullViewName)
+    {
+        return builder
+            .Append( "DROP VIEW" )
+            .AppendTokenSeparator()
+            .AppendName( fullViewName )
+            .AppendCommandEnd();
+    }
+
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static StringBuilder AppendConstraintDefinition(this StringBuilder builder, string fullConstraintName, string type)
     {

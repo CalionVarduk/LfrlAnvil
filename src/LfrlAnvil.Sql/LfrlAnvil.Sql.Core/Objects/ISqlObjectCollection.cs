@@ -35,4 +35,9 @@ public interface ISqlObjectCollection : IReadOnlyCollection<ISqlObject>
     ISqlForeignKey GetForeignKey(string name);
 
     bool TryGetForeignKey(string name, [MaybeNullWhen( false )] out ISqlForeignKey result);
+
+    [Pure]
+    ISqlView GetView(string name);
+
+    bool TryGetView(string name, [MaybeNullWhen( false )] out ISqlView result);
 }

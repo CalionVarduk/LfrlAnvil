@@ -8,5 +8,7 @@ public enum SqlObjectType : byte
     Column = 3,
     PrimaryKey = 4,
     ForeignKey = 5,
-    Index = 6
+    Index = 6,
+    View = 7,
+    ViewDataField = 8
 }

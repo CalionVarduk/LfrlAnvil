@@ -39,8 +39,16 @@ public static class SqlNodeVisitorExtensions
                 visitor.VisitColumn( ReinterpretCast.To<SqlColumnNode>( node ) );
                 break;
 
+            case SqlNodeType.ColumnBuilder:
+                visitor.VisitColumnBuilder( ReinterpretCast.To<SqlColumnBuilderNode>( node ) );
+                break;
+
             case SqlNodeType.QueryDataField:
                 visitor.VisitQueryDataField( ReinterpretCast.To<SqlQueryDataFieldNode>( node ) );
+                break;
+
+            case SqlNodeType.ViewDataField:
+                visitor.VisitViewDataField( ReinterpretCast.To<SqlViewDataFieldNode>( node ) );
                 break;
 
             case SqlNodeType.Negate:
@@ -185,6 +193,18 @@ public static class SqlNodeVisitorExtensions
 
             case SqlNodeType.TableRecordSet:
                 visitor.VisitTableRecordSet( ReinterpretCast.To<SqlTableRecordSetNode>( node ) );
+                break;
+
+            case SqlNodeType.TableBuilderRecordSet:
+                visitor.VisitTableBuilderRecordSet( ReinterpretCast.To<SqlTableBuilderRecordSetNode>( node ) );
+                break;
+
+            case SqlNodeType.ViewRecordSet:
+                visitor.VisitViewRecordSet( ReinterpretCast.To<SqlViewRecordSetNode>( node ) );
+                break;
+
+            case SqlNodeType.ViewBuilderRecordSet:
+                visitor.VisitViewBuilderRecordSet( ReinterpretCast.To<SqlViewBuilderRecordSetNode>( node ) );
                 break;
 
             case SqlNodeType.QueryRecordSet:

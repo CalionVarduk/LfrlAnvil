@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Expressions;
+using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Versioning;
 
@@ -75,6 +76,13 @@ public static class ExceptionResources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string DetectedExternalReferencingView(ISqlViewBuilder view, ISqlObjectBuilder obj)
+    {
+        return $"Detected an external '{view.FullName}' referencing view in {obj}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string ObjectDoesNotBelongToTable(ISqlObjectBuilder obj, ISqlTableBuilder expectedTable)
     {
         return $"{obj} does not belong to table '{expectedTable.FullName}'.";
@@ -140,9 +148,23 @@ public static class ExceptionResources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string ColumnIsReferencedByIndex(ISqlIndexBuilder index)
+    public static string ColumnIsReferencedByObject(ISqlObjectBuilder obj)
     {
-        return $"Column is referenced by {index}.";
+        return $"Column is referenced by {obj}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string TableIsReferencedByObject(ISqlObjectBuilder obj)
+    {
+        return $"Table is referenced by {obj}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string ViewIsReferencedByObject(ISqlObjectBuilder obj)
+    {
+        return $"View is referenced by {obj}.";
     }
 
     [Pure]
@@ -180,6 +202,76 @@ public static class ExceptionResources
     {
         return $@"Visitor of '{visitorType.GetDebugString()}' type has failed because {reason} while visiting the following node:
 {node}";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string ColumnBelongsToAnotherDatabase(SqlColumnBuilderNode node)
+    {
+        return $@"Column belongs to another database:
+{node}";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string TableBelongsToAnotherDatabase(SqlTableBuilderRecordSetNode node)
+    {
+        return $@"Table belongs to another database:
+{node}";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string ViewBelongsToAnotherDatabase(SqlViewBuilderRecordSetNode node)
+    {
+        return $@"View belongs to another database:
+{node}";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string ColumnIsArchived(SqlColumnBuilderNode node)
+    {
+        return $@"Column is archived:
+{node}";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string TableIsArchived(SqlTableBuilderRecordSetNode node)
+    {
+        return $@"Table is archived:
+{node}";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string ViewIsArchived(SqlViewBuilderRecordSetNode node)
+    {
+        return $@"View is archived:
+{node}";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string UnexpectedNode(SqlNodeBase node)
+    {
+        return $@"Unexpected node of type '{node.GetType().GetDebugString()}':
+{node}";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string FieldDoesNotExist(string name)
+    {
+        return $"Field with name '{name}' does not exist.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string FieldExistsMoreThanOnce(string name)
+    {
+        return $"Field with name '{name}' exists more than once.";
     }
 
     [Pure]

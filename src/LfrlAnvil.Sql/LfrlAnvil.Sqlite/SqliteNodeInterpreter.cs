@@ -235,6 +235,34 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         this.Visit( node.Condition );
     }
 
+    public override void VisitTableRecordSet(SqlTableRecordSetNode node)
+    {
+        AppendDelimitedName( node.Table.FullName );
+        if ( node.IsAliased )
+            AppendDelimitedAlias( node.Name );
+    }
+
+    public override void VisitTableBuilderRecordSet(SqlTableBuilderRecordSetNode node)
+    {
+        AppendDelimitedName( node.Table.FullName );
+        if ( node.IsAliased )
+            AppendDelimitedAlias( node.Name );
+    }
+
+    public override void VisitViewRecordSet(SqlViewRecordSetNode node)
+    {
+        AppendDelimitedName( node.View.FullName );
+        if ( node.IsAliased )
+            AppendDelimitedAlias( node.Name );
+    }
+
+    public override void VisitViewBuilderRecordSet(SqlViewBuilderRecordSetNode node)
+    {
+        AppendDelimitedName( node.View.FullName );
+        if ( node.IsAliased )
+            AppendDelimitedAlias( node.Name );
+    }
+
     public override void VisitTemporaryTableRecordSet(SqlTemporaryTableRecordSetNode node)
     {
         Context.Sql.Append( "temp" ).AppendDot();
@@ -446,6 +474,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
                 return;
             }
 
+            // TODO: (later) check by verifying node enum type, rather than node cli type
             if ( node.DataSource.From is not SqlTableRecordSetNode from )
                 throw new SqlNodeVisitorException( Resources.DeleteTargetIsNotTableRecordSet, this, node );
 
@@ -550,7 +579,9 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             case SqlNodeType.Literal:
             case SqlNodeType.Parameter:
             case SqlNodeType.Column:
+            case SqlNodeType.ColumnBuilder:
             case SqlNodeType.QueryDataField:
+            case SqlNodeType.ViewDataField:
             case SqlNodeType.Modulo:
             case SqlNodeType.FunctionExpression:
             case SqlNodeType.True:
@@ -707,6 +738,11 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         SqlDataSourceNode dataSource,
         SqlDataSourceTraits traits)
     {
+        // TODO: (later)
+        // - in order for this to work with TableBuilder & TemporaryTable nodes:
+        //   - IsTemporary boolean
+        //   - FullName string
+        //   - collection of PK column names (or, if table lacks PK, collection of all column names)
         var primaryKeyColumns = target.Table.PrimaryKey.Index.Columns.Span;
         Context.AppendIndent().Append( "WHERE" ).AppendSpace();
 

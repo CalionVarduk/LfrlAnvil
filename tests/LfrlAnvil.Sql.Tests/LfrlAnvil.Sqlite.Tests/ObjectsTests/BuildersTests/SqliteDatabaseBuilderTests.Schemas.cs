@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Extensions;
@@ -224,6 +225,8 @@ public partial class SqliteDatabaseBuilderTests
             var otherColumn = table.Columns.Create( "C2" ).MarkAsNullable();
             var pk = table.SetPrimaryKey( column.Asc() );
             var fk = table.ForeignKeys.Create( table.Indexes.Create( otherColumn.Asc() ), table.PrimaryKey!.Index );
+            var view = schema.Objects.CreateView( "V1", table.ToRecordSet().ToDataSource().Select( s => new[] { s.From["C1"].AsSelf() } ) );
+            var otherView = schema.Objects.CreateView( "V2", view.ToRecordSet().ToDataSource().Select( s => new[] { s.GetAll() } ) );
 
             var result = sut.Schemas.Remove( name );
 
@@ -239,6 +242,8 @@ public partial class SqliteDatabaseBuilderTests
                 pk.IsRemoved.Should().BeTrue();
                 pk.Index.IsRemoved.Should().BeTrue();
                 fk.IsRemoved.Should().BeTrue();
+                view.IsRemoved.Should().BeTrue();
+                otherView.IsRemoved.Should().BeTrue();
             }
         }
 
@@ -262,7 +267,7 @@ public partial class SqliteDatabaseBuilderTests
         }
 
         [Fact]
-        public void Remove_ShouldReturnFalse_WhenTryingToRemoveSchemaWithTableReferencedByExternalSchema()
+        public void Remove_ShouldReturnFalse_WhenTryingToRemoveSchemaWithTableReferencedByForeignKeyFromOtherSchema()
         {
             var sut = new SqliteDatabaseBuilder();
             var schema = sut.Schemas.Create( Fixture.Create<string>() );
@@ -274,6 +279,40 @@ public partial class SqliteDatabaseBuilderTests
             var otherColumn = otherTable.Columns.Create( "C2" );
             otherTable.SetPrimaryKey( otherColumn.Asc() );
             otherTable.ForeignKeys.Create( otherTable.PrimaryKey!.Index, table.PrimaryKey!.Index );
+
+            var result = sut.Schemas.Remove( schema.Name );
+
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public void Remove_ShouldReturnFalse_WhenTryingToRemoveSchemaWithTableReferencedByViewFromOtherSchema()
+        {
+            var sut = new SqliteDatabaseBuilder();
+            var schema = sut.Schemas.Create( Fixture.Create<string>() );
+            var table = schema.Objects.CreateTable( "T" );
+            var column = table.Columns.Create( "C" );
+            table.SetPrimaryKey( column.Asc() );
+
+            sut.Schemas.Default.Objects.CreateView(
+                "V",
+                table.ToRecordSet().ToDataSource().Select( s => new[] { s.GetAll() } ) );
+
+            var result = sut.Schemas.Remove( schema.Name );
+
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public void Remove_ShouldReturnFalse_WhenTryingToRemoveSchemaWithViewReferencedByViewFromOtherSchema()
+        {
+            var sut = new SqliteDatabaseBuilder();
+            var schema = sut.Schemas.Create( Fixture.Create<string>() );
+            var view = schema.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
+
+            sut.Schemas.Default.Objects.CreateView(
+                "W",
+                view.ToRecordSet().ToDataSource().Select( s => new[] { s.GetAll() } ) );
 
             var result = sut.Schemas.Remove( schema.Name );
 

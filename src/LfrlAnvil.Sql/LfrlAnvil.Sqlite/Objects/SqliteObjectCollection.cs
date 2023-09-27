@@ -89,6 +89,17 @@ public sealed class SqliteObjectCollection : ISqlObjectCollection
     }
 
     [Pure]
+    public SqliteView GetView(string name)
+    {
+        return GetTypedObject<SqliteView>( name, SqlObjectType.View );
+    }
+
+    public bool TryGetView(string name, [MaybeNullWhen( false )] out SqliteView result)
+    {
+        return TryGetTypedObject( name, SqlObjectType.View, out result );
+    }
+
+    [Pure]
     public Enumerator GetEnumerator()
     {
         return new Enumerator( _map );
@@ -128,19 +139,30 @@ public sealed class SqliteObjectCollection : ISqlObjectCollection
     {
         foreach ( var b in objects )
         {
-            if ( b.Type != SqlObjectType.Table )
-                continue;
+            switch ( b.Type )
+            {
+                case SqlObjectType.Table:
+                {
+                    tables.Push( b );
+                    var tableBuilder = ReinterpretCast.To<SqliteTableBuilder>( b );
+                    var table = new SqliteTable( Schema, tableBuilder );
+                    _map.Add( table.Name, table );
 
-            tables.Push( b );
-            var tableBuilder = ReinterpretCast.To<SqliteTableBuilder>( b );
-            var table = new SqliteTable( Schema, tableBuilder );
-            _map.Add( table.Name, table );
+                    foreach ( var ix in table.Indexes )
+                        _map.Add( ix.Name, ix );
 
-            foreach ( var ix in table.Indexes )
-                _map.Add( ix.Name, ix );
-
-            table.SetPrimaryKey( tableBuilder );
-            _map.Add( table.PrimaryKey.Name, table.PrimaryKey );
+                    table.SetPrimaryKey( tableBuilder );
+                    _map.Add( table.PrimaryKey.Name, table.PrimaryKey );
+                    break;
+                }
+                case SqlObjectType.View:
+                {
+                    var viewBuilder = ReinterpretCast.To<SqliteViewBuilder>( b );
+                    var view = new SqliteView( Schema, viewBuilder );
+                    _map.Add( view.Name, view );
+                    break;
+                }
+            }
         }
     }
 
@@ -234,6 +256,17 @@ public sealed class SqliteObjectCollection : ISqlObjectCollection
     bool ISqlObjectCollection.TryGetForeignKey(string name, [MaybeNullWhen( false )] out ISqlForeignKey result)
     {
         return TryGetTypedObject( name, SqlObjectType.ForeignKey, out result );
+    }
+
+    [Pure]
+    ISqlView ISqlObjectCollection.GetView(string name)
+    {
+        return GetView( name );
+    }
+
+    bool ISqlObjectCollection.TryGetView(string name, [MaybeNullWhen( false )] out ISqlView result)
+    {
+        return TryGetTypedObject( name, SqlObjectType.View, out result );
     }
 
     [Pure]

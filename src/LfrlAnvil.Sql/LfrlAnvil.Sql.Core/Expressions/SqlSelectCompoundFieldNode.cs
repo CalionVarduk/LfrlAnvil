@@ -14,9 +14,9 @@ public sealed class SqlSelectCompoundFieldNode : SqlSelectNode
     public string Name { get; }
     public ReadOnlyMemory<Origin> Origins { get; }
 
-    internal override void Convert(ISqlSelectNodeConverter converter)
+    internal override void VisitExpressions(ISqlSelectNodeExpressionVisitor visitor)
     {
-        converter.Add( Name, null );
+        visitor.Handle( Name, null );
     }
 
     public readonly record struct Origin(int QueryIndex, SqlSelectNode Selection, SqlExpressionNode? Expression);

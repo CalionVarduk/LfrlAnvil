@@ -10,13 +10,18 @@ public static class StringAssertionsExtensions
 
     public static AndConstraint<StringAssertions> SatisfySql(this StringAssertions assertions, params string[] expected)
     {
-        var regexes = new Regex?[expected.Length];
+        var regexes = new Regex[expected.Length];
         for ( var i = 0; i < expected.Length; ++i )
         {
-            var pattern = NewLineRegex.Replace( expected[i].Replace( " ", "[ ]" ), "\\r{0,1}\\n[ ]*" )
-                .Replace( "{GUID}", "[0-9a-fA-F]{32}" )
-                .Replace( "(", "\\(" )
-                .Replace( ")", "\\)" );
+            var pattern = NewLineRegex.Replace(
+                expected[i]
+                    .Replace( " ", "[ ]" )
+                    .Replace( "{GUID}", "[0-9a-fA-F]{32}" )
+                    .Replace( "(", "\\(" )
+                    .Replace( ")", "\\)" )
+                    .Replace( ".", "\\." )
+                    .Replace( "*", "\\*" ),
+                "\\r{0,1}\\n[ ]*" );
 
             regexes[i] = new Regex( '^' + pattern + '$', RegexOptions.Singleline );
         }
@@ -28,7 +33,7 @@ public static class StringAssertionsExtensions
 
         statements.Zip( regexes )
             .Should()
-            .OnlyContain( x => x.Second != null && x.Second.IsMatch( x.First ) );
+            .OnlyContain( x => x.Second.IsMatch( x.First ) );
 
         return new AndConstraint<StringAssertions>( assertions );
     }

@@ -187,21 +187,21 @@ public class SqliteDatabaseFactoryTests : TestsBase
             (firstVersion?.Version).Should().Be( Version.Parse( "0.1" ) );
             (firstVersion?.Description).Should().Be( "1st version" );
             (firstVersion?.CommitDateUtc).Should().BeOnOrAfter( start ).And.BeOnOrBefore( end );
-            firstVersion.CommitDuration.Should().BeGreaterThan( TimeSpan.Zero );
+            (firstVersion?.CommitDuration).Should().BeGreaterThan( TimeSpan.Zero );
 
             var secondVersion = versions.ElementAtOrDefault( 1 );
             (secondVersion?.Ordinal).Should().Be( 2 );
             (secondVersion?.Version).Should().Be( Version.Parse( "0.2" ) );
             (secondVersion?.Description).Should().Be( "2nd version" );
-            (secondVersion?.CommitDateUtc).Should().BeOnOrAfter( firstVersion.CommitDateUtc ).And.BeOnOrBefore( end );
-            (secondVersion.CommitDuration).Should().BeGreaterThan( TimeSpan.Zero );
+            (secondVersion?.CommitDateUtc).Should().BeOnOrAfter( firstVersion?.CommitDateUtc ?? DateTime.Now ).And.BeOnOrBefore( end );
+            (secondVersion?.CommitDuration).Should().BeGreaterThan( TimeSpan.Zero );
 
             var thirdVersion = versions.ElementAtOrDefault( 2 );
             (thirdVersion?.Ordinal).Should().Be( 3 );
             (thirdVersion?.Version).Should().Be( Version.Parse( "0.3" ) );
             (thirdVersion?.Description).Should().Be( "3rd version" );
-            (thirdVersion?.CommitDateUtc).Should().BeOnOrAfter( secondVersion.CommitDateUtc ).And.BeOnOrBefore( end );
-            thirdVersion.CommitDuration.Should().BeGreaterThan( TimeSpan.Zero );
+            (thirdVersion?.CommitDateUtc).Should().BeOnOrAfter( secondVersion?.CommitDateUtc ?? DateTime.Now ).And.BeOnOrBefore( end );
+            (thirdVersion?.CommitDuration).Should().BeGreaterThan( TimeSpan.Zero );
         }
     }
 
@@ -254,7 +254,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
             (lastVersion?.Version).Should().Be( Version.Parse( "0.3" ) );
             (lastVersion?.Description).Should().Be( "3rd version" );
             (lastVersion?.CommitDateUtc).Should().BeOnOrAfter( start ).And.BeOnOrBefore( end );
-            lastVersion.CommitDuration.Should().BeGreaterThan( TimeSpan.Zero );
+            (lastVersion?.CommitDuration).Should().BeGreaterThan( TimeSpan.Zero );
         }
     }
 

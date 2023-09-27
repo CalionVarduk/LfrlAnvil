@@ -69,9 +69,9 @@ public partial class BaseExpressionsTests
         [Fact]
         public void Selection_ShouldFlattenSelectAllNodesToKnownFields()
         {
-            var set1 = TableMock.Create( "T1", areColumnsNullable: false, "a", "b" ).ToRecordSet().ToDataSource();
-            var t2 = TableMock.Create( "T2", areColumnsNullable: false, "a", "b" ).ToRecordSet();
-            var t3 = TableMock.Create( "T3", areColumnsNullable: false, "c" ).ToRecordSet();
+            var set1 = TableMock.Create( "T1", ColumnMock.CreateMany<int>( areNullable: false, "a", "b" ) ).ToRecordSet().ToDataSource();
+            var t2 = TableMock.Create( "T2", ColumnMock.CreateMany<int>( areNullable: false, "a", "b" ) ).ToRecordSet();
+            var t3 = TableMock.Create( "T3", ColumnMock.Create<int>( "c" ) ).ToRecordSet();
             var set2 = t2.Join( t3.InnerOn( t2["a"] == t3["c"] ) );
 
             var select1 = set1.GetAll();

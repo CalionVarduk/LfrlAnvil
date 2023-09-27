@@ -61,7 +61,21 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         AppendDelimitedName( node.Name );
     }
 
+    public virtual void VisitColumnBuilder(SqlColumnBuilderNode node)
+    {
+        AppendRecordSetName( node.RecordSet );
+        Context.Sql.AppendDot();
+        AppendDelimitedName( node.Name );
+    }
+
     public virtual void VisitQueryDataField(SqlQueryDataFieldNode node)
+    {
+        AppendRecordSetName( node.RecordSet );
+        Context.Sql.AppendDot();
+        AppendDelimitedName( node.Name );
+    }
+
+    public virtual void VisitViewDataField(SqlViewDataFieldNode node)
     {
         AppendRecordSetName( node.RecordSet );
         Context.Sql.AppendDot();
@@ -434,7 +448,28 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public virtual void VisitTableRecordSet(SqlTableRecordSetNode node)
     {
-        AppendDelimitedName( node.Table.FullName );
+        AppendSchemaObjectName( node.Table.Schema.Name, node.Table.Name );
+        if ( node.IsAliased )
+            AppendDelimitedAlias( node.Name );
+    }
+
+    public virtual void VisitTableBuilderRecordSet(SqlTableBuilderRecordSetNode node)
+    {
+        AppendSchemaObjectName( node.Table.Schema.Name, node.Table.Name );
+        if ( node.IsAliased )
+            AppendDelimitedAlias( node.Name );
+    }
+
+    public virtual void VisitViewRecordSet(SqlViewRecordSetNode node)
+    {
+        AppendSchemaObjectName( node.View.Schema.Name, node.View.Name );
+        if ( node.IsAliased )
+            AppendDelimitedAlias( node.Name );
+    }
+
+    public virtual void VisitViewBuilderRecordSet(SqlViewBuilderRecordSetNode node)
+    {
+        AppendSchemaObjectName( node.View.Schema.Name, node.View.Name );
         if ( node.IsAliased )
             AppendDelimitedAlias( node.Name );
     }
@@ -1132,6 +1167,17 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
             Context.Sql.ShrinkBy( 1 );
         }
+    }
+
+    protected void AppendSchemaObjectName(string schemaName, string objName)
+    {
+        if ( schemaName.Length > 0 )
+        {
+            AppendDelimitedName( schemaName );
+            Context.Sql.AppendDot();
+        }
+
+        AppendDelimitedName( objName );
     }
 
     [Pure]

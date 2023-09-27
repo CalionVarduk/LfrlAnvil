@@ -13,6 +13,7 @@ namespace LfrlAnvil.Sqlite.Objects.Builders;
 public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
 {
     private Dictionary<ulong, SqliteIndexBuilder>? _indexes;
+    private Dictionary<ulong, SqliteViewBuilder>? _referencingViews;
     private string? _fullName;
 
     internal SqliteColumnBuilder(SqliteTableBuilder table, string name, SqliteColumnTypeDefinition typeDefinition)
@@ -25,6 +26,7 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
         DefaultValue = null;
         _fullName = null;
         _indexes = null;
+        _referencingViews = null;
     }
 
     public SqliteTableBuilder Table { get; }
@@ -32,14 +34,18 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
     public bool IsNullable { get; private set; }
     public object? DefaultValue { get; private set; }
     public override SqliteDatabaseBuilder Database => Table.Database;
-    public override string FullName => _fullName ??= SqliteHelpers.GetFullColumnName( Table.FullName, Name );
+    public override string FullName => _fullName ??= SqliteHelpers.GetFullFieldName( Table.FullName, Name );
     public IReadOnlyCollection<SqliteIndexBuilder> Indexes => (_indexes?.Values).EmptyIfNull();
-    internal override bool CanRemove => _indexes is null || _indexes.Count == 0;
+    public IReadOnlyCollection<SqliteViewBuilder> ReferencingViews => (_referencingViews?.Values).EmptyIfNull();
+
+    internal override bool CanRemove =>
+        (_indexes is null || _indexes.Count == 0) && (_referencingViews is null || _referencingViews.Count == 0);
 
     ISqlTableBuilder ISqlColumnBuilder.Table => Table;
     IReadOnlyCollection<ISqlIndexBuilder> ISqlColumnBuilder.Indexes => Indexes;
     ISqlColumnTypeDefinition ISqlColumnBuilder.TypeDefinition => TypeDefinition;
     object? ISqlColumnBuilder.DefaultValue => DefaultValue;
+    IReadOnlyCollection<ISqlViewBuilder> ISqlColumnBuilder.ReferencingViews => ReferencingViews;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
 
     public SqliteColumnBuilder SetName(string name)
@@ -120,6 +126,17 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
         _indexes?.Remove( index.Id );
     }
 
+    internal void AddReferencingView(SqliteViewBuilder view)
+    {
+        _referencingViews ??= new Dictionary<ulong, SqliteViewBuilder>();
+        _referencingViews.Add( view.Id, view );
+    }
+
+    internal void RemoveReferencingView(SqliteViewBuilder view)
+    {
+        _referencingViews?.Remove( view.Id );
+    }
+
     internal void UpdateDefaultValueBasedOnDataType()
     {
         Assume.IsNull( DefaultValue, nameof( DefaultValue ) );
@@ -136,6 +153,7 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
         Assume.Equals( CanRemove, true, nameof( CanRemove ) );
 
         _indexes = null;
+        _referencingViews = null;
 
         Table.Columns.Remove( Name );
         Database.ChangeTracker.ObjectRemoved( Table, this );
@@ -172,10 +190,16 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
     {
         var errors = Chain<string>.Empty;
 
-        if ( _indexes is not null )
+        if ( _indexes is not null && _indexes.Count > 0 )
         {
             foreach ( var index in _indexes.Values )
-                errors = errors.Extend( ExceptionResources.ColumnIsReferencedByIndex( index ) );
+                errors = errors.Extend( ExceptionResources.ColumnIsReferencedByObject( index ) );
+        }
+
+        if ( _referencingViews is not null && _referencingViews.Count > 0 )
+        {
+            foreach ( var view in _referencingViews.Values )
+                errors = errors.Extend( ExceptionResources.ColumnIsReferencedByObject( view ) );
         }
 
         if ( errors.Count > 0 )

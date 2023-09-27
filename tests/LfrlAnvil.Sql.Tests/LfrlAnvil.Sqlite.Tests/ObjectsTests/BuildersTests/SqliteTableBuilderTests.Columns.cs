@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Extensions;
@@ -32,6 +33,7 @@ public partial class SqliteTableBuilderTests
                 result.TypeDefinition.Should().BeSameAs( sut.DefaultTypeDefinition );
                 result.DefaultValue.Should().BeNull();
                 result.Indexes.Should().BeEmpty();
+                result.ReferencingViews.Should().BeEmpty();
                 sut.Count.Should().Be( 1 );
                 sut.Should().BeSequentiallyEqualTo( result );
             }
@@ -285,6 +287,25 @@ public partial class SqliteTableBuilderTests
             {
                 result.Should().BeFalse();
                 sut.Count.Should().Be( 1 );
+            }
+        }
+
+        [Fact]
+        public void Remove_ShouldReturnFalse_WhenColumnExistsButIsUsedByAtLeastOneView()
+        {
+            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var table = schema.Objects.CreateTable( "T" );
+            var sut = table.Columns;
+            sut.Create( "A" );
+            table.SetPrimaryKey( sut.Create( "B" ).Asc() );
+            schema.Objects.CreateView( "V", table.ToRecordSet().ToDataSource().Select( s => new[] { s.From["A"].AsSelf() } ) );
+
+            var result = sut.Remove( "A" );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeFalse();
+                sut.Count.Should().Be( 2 );
             }
         }
 

@@ -15,7 +15,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
 
     public override void VisitRawDataField(SqlRawDataFieldNode node)
     {
-        VisitDataField( node );
+        base.VisitRawDataField( node );
         AppendExpressionType( node.Type );
     }
 
@@ -33,13 +33,14 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
 
     public override void VisitColumn(SqlColumnNode node)
     {
-        VisitDataField( node );
+        base.VisitColumn( node );
         AppendExpressionType( node.Type );
     }
 
-    public override void VisitQueryDataField(SqlQueryDataFieldNode node)
+    public override void VisitColumnBuilder(SqlColumnBuilderNode node)
     {
-        VisitDataField( node );
+        base.VisitColumnBuilder( node );
+        AppendExpressionType( node.Type );
     }
 
     public override void VisitRecordsAffectedFunction(SqlRecordsAffectedFunctionExpressionNode node)
@@ -530,23 +531,56 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
 
     public override void AppendRecordSetName(SqlRecordSetNode node)
     {
-        if ( node.NodeType == SqlNodeType.TemporaryTableRecordSet && ! node.IsAliased )
-            Context.Sql.Append( "TEMP" ).AppendDot();
+        if ( node.IsAliased )
+        {
+            AppendDelimitedName( node.Name );
+            return;
+        }
 
-        AppendDelimitedName( node.Name );
+        switch ( node.NodeType )
+        {
+            case SqlNodeType.TableRecordSet:
+            {
+                var table = ReinterpretCast.To<SqlTableRecordSetNode>( node );
+                AppendSchemaObjectName( table.Table.Schema.Name, table.Table.Name );
+                break;
+            }
+            case SqlNodeType.TableBuilderRecordSet:
+            {
+                var table = ReinterpretCast.To<SqlTableBuilderRecordSetNode>( node );
+                AppendSchemaObjectName( table.Table.Schema.Name, table.Table.Name );
+                break;
+            }
+            case SqlNodeType.ViewRecordSet:
+            {
+                var view = ReinterpretCast.To<SqlViewRecordSetNode>( node );
+                AppendSchemaObjectName( view.View.Schema.Name, view.View.Name );
+                break;
+            }
+            case SqlNodeType.ViewBuilderRecordSet:
+            {
+                var view = ReinterpretCast.To<SqlViewBuilderRecordSetNode>( node );
+                AppendSchemaObjectName( view.View.Schema.Name, view.View.Name );
+                break;
+            }
+            case SqlNodeType.TemporaryTableRecordSet:
+            {
+                if ( node.NodeType == SqlNodeType.TemporaryTableRecordSet )
+                    Context.Sql.Append( "TEMP" ).AppendDot();
+
+                AppendDelimitedName( node.Name );
+                break;
+            }
+            default:
+                AppendDelimitedName( node.Name );
+                break;
+        }
     }
 
     [Pure]
     protected override bool DoesChildNodeRequireParentheses(SqlNodeBase node)
     {
         return true;
-    }
-
-    private void VisitDataField(SqlDataFieldNode node)
-    {
-        AppendRecordSetName( node.RecordSet );
-        Context.Sql.AppendDot();
-        AppendDelimitedName( node.Name );
     }
 
     private void AppendExpressionType(SqlExpressionType? type)

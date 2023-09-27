@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Extensions;
@@ -652,6 +653,132 @@ public class SqliteSchemaTests : TestsBase
         var expected = sut.TryGetForeignKey( "FK_T_C2_REF_T", out var outExpected );
 
         var result = ((ISqlObjectCollection)sut).TryGetForeignKey( "FK_T_C2_REF_T", out var outResult );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().Be( expected );
+            outResult.Should().BeSameAs( outExpected );
+        }
+    }
+
+    [Fact]
+    public void Objects_GetView_ShouldReturnCorrectView()
+    {
+        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        schemaBuilder.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
+
+        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
+
+        var result = sut.GetView( "V" );
+
+        using ( new AssertionScope() )
+        {
+            result.Type.Should().Be( SqlObjectType.View );
+            result.Name.Should().Be( "V" );
+        }
+    }
+
+    [Fact]
+    public void Objects_GetView_ShouldThrowKeyNotFoundException_WhenObjectDoesNotExist()
+    {
+        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
+        tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C" ).Asc() );
+
+        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
+
+        var action = Lambda.Of( () => sut.GetView( "V" ) );
+
+        action.Should().ThrowExactly<KeyNotFoundException>();
+    }
+
+    [Fact]
+    public void Objects_GetView_ShouldThrowSqliteObjectCastException_WhenObjectExistsButIsNotView()
+    {
+        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
+        tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C" ).Asc() );
+
+        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
+
+        var action = Lambda.Of( () => sut.GetView( "T" ) );
+
+        action.Should().ThrowExactly<SqliteObjectCastException>();
+    }
+
+    [Fact]
+    public void Objects_TryGetView_ShouldReturnCorrectView()
+    {
+        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        schemaBuilder.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
+
+        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        var sut = db.Schemas.Get( "foo" ).Objects;
+
+        var result = sut.TryGetView( "V", out var outResult );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeTrue();
+            (outResult?.Type).Should().Be( SqlObjectType.View );
+            (outResult?.Name).Should().Be( "V" );
+        }
+    }
+
+    [Fact]
+    public void Objects_TryGetView_ShouldReturnFalse_WhenObjectDoesNotExist()
+    {
+        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
+        var indexBuilder1 = tableBuilder.Indexes.Create( tableBuilder.Columns.Create( "C2" ).Asc() );
+        var indexBuilder2 = tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() ).Index;
+        tableBuilder.ForeignKeys.Create( indexBuilder1, indexBuilder2 );
+
+        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        var sut = db.Schemas.Get( "foo" ).Objects;
+
+        var result = sut.TryGetView( "U", out var outResult );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeFalse();
+            outResult.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void Objects_TryGetView_ShouldReturnFalse_WhenObjectExistsButIsNotView()
+    {
+        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
+        tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C" ).Asc() );
+
+        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        var sut = db.Schemas.Get( "foo" ).Objects;
+
+        var result = sut.TryGetView( "T", out var outResult );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeFalse();
+            outResult.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void ISqlObjectCollection_TryGetView_ShouldBeEquivalentToTryGetView()
+    {
+        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        schemaBuilder.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
+
+        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        var sut = db.Schemas.Get( "foo" ).Objects;
+        var expected = sut.TryGetView( "V", out var outExpected );
+
+        var result = ((ISqlObjectCollection)sut).TryGetView( "V", out var outResult );
 
         using ( new AssertionScope() )
         {

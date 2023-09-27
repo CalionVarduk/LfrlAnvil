@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using LfrlAnvil.Functional;
+using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Extensions;
@@ -82,6 +83,14 @@ public partial class SqliteSchemaBuilderTests : TestsBase
         var c4 = t3.Columns.Create( "C4" );
         var pk3 = t3.SetPrimaryKey( c4.Asc() );
 
+        var v1 = sut.Objects.CreateView(
+            "V1",
+            t2.ToRecordSet().Join( t3.ToRecordSet().InnerOn( SqlNode.True() ) ).Select( s => new[] { s.GetAll() } ) );
+
+        var v2 = sut.Objects.CreateView(
+            "V2",
+            t1.ToRecordSet().Join( v1.ToRecordSet().InnerOn( SqlNode.True() ) ).Select( s => new[] { s.GetAll() } ) );
+
         var startStatementCount = db.GetPendingStatements().Length;
 
         var result = ((ISqlSchemaBuilder)sut).SetName( newName );
@@ -110,6 +119,29 @@ public partial class SqliteSchemaBuilderTests : TestsBase
             ix1.FullName.Should().Be( "bar_IX_T1_C2A" );
             fk1.FullName.Should().Be( "bar_FK_T1_C2_REF_T1" );
             fk2.FullName.Should().Be( "bar_FK_T2_C3_REF_T1" );
+            v1.FullName.Should().Be( "bar_V1" );
+            v2.FullName.Should().Be( "bar_V2" );
+
+            statements.Should().Contain( s => s.Contains( "DROP VIEW \"foo_V1\";" ) );
+            statements.Should()
+                .Contain(
+                    s => s.Contains(
+                        @"CREATE VIEW ""bar_V1"" AS
+SELECT
+  *
+FROM ""bar_T2""
+INNER JOIN ""bar_T3"" ON TRUE;" ) );
+
+            statements.Should().Contain( s => s.Contains( "DROP VIEW \"foo_V2\";" ) );
+            statements.Should()
+                .Contain(
+                    s => s.Contains(
+                        @"CREATE VIEW ""bar_V2"" AS
+SELECT
+  *
+FROM ""bar_T1""
+INNER JOIN ""bar_V1"" ON TRUE;" ) );
+
             statements.Should().Contain( s => s.Contains( "DROP INDEX \"foo_IX_T1_C2A\";" ) );
             statements.Should().Contain( s => s.Contains( "CREATE INDEX \"bar_IX_T1_C2A\" ON \"bar_T1\" (\"C2\" ASC);" ) );
             statements.Should().Contain( s => s.Contains( "ALTER TABLE \"foo_T1\" RENAME TO \"bar_T1\";" ) );
@@ -198,7 +230,7 @@ public partial class SqliteSchemaBuilderTests : TestsBase
     }
 
     [Fact]
-    public void Remove_ShouldRemoveSchemaAndAllOfItsObjects_WhenSchemaHasTablesWithoutReferencesFromOtherSchemas()
+    public void Remove_ShouldRemoveSchemaAndAllOfItsObjects_WhenSchemaHasTablesAndViewsWithoutReferencesFromOtherSchemas()
     {
         var name = "foo";
         var db = new SqliteDatabaseBuilder();
@@ -231,6 +263,14 @@ public partial class SqliteSchemaBuilderTests : TestsBase
 
         var ix3 = t3.Indexes.Create( c6.Asc() );
         var fk5 = t3.ForeignKeys.Create( ix3, pk4.Index );
+
+        var v1 = sut.Objects.CreateView(
+            "V1",
+            t2.ToRecordSet().Join( t3.ToRecordSet().InnerOn( SqlNode.True() ) ).Select( s => new[] { s.GetAll() } ) );
+
+        var v2 = sut.Objects.CreateView(
+            "V2",
+            t1.ToRecordSet().Join( v1.ToRecordSet().InnerOn( SqlNode.True() ) ).Select( s => new[] { s.GetAll() } ) );
 
         var startStatementCount = db.GetPendingStatements().Length;
 
@@ -268,11 +308,16 @@ public partial class SqliteSchemaBuilderTests : TestsBase
             fk3.IsRemoved.Should().BeTrue();
             fk4.IsRemoved.Should().BeTrue();
             fk5.IsRemoved.Should().BeTrue();
+            v1.IsRemoved.Should().BeTrue();
+            v2.IsRemoved.Should().BeTrue();
             sut.Objects.Should().BeEmpty();
 
-            statements.Should().HaveCount( 5 );
+            statements.Should().HaveCount( 7 );
 
-            statements.ElementAtOrDefault( 0 )
+            statements.ElementAtOrDefault( 0 ).Should().SatisfySql( "DROP VIEW \"foo_V1\";" );
+            statements.ElementAtOrDefault( 1 ).Should().SatisfySql( "DROP VIEW \"foo_V2\";" );
+
+            statements.ElementAtOrDefault( 2 )
                 .Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T3_C6A\";",
@@ -289,10 +334,10 @@ public partial class SqliteSchemaBuilderTests : TestsBase
                     "ALTER TABLE \"__foo_T3__{GUID}__\" RENAME TO \"foo_T3\";",
                     "CREATE INDEX \"foo_IX_T3_C6A\" ON \"foo_T3\" (\"C6\" ASC);" );
 
-            statements.ElementAtOrDefault( 1 ).Should().SatisfySql( "DROP TABLE \"foo_T4\";" );
-            statements.ElementAtOrDefault( 2 ).Should().SatisfySql( "DROP TABLE \"foo_T3\";" );
-            statements.ElementAtOrDefault( 3 ).Should().SatisfySql( "DROP TABLE \"foo_T2\";" );
-            statements.ElementAtOrDefault( 4 ).Should().SatisfySql( "DROP TABLE \"foo_T1\";" );
+            statements.ElementAtOrDefault( 3 ).Should().SatisfySql( "DROP TABLE \"foo_T4\";" );
+            statements.ElementAtOrDefault( 4 ).Should().SatisfySql( "DROP TABLE \"foo_T3\";" );
+            statements.ElementAtOrDefault( 5 ).Should().SatisfySql( "DROP TABLE \"foo_T2\";" );
+            statements.ElementAtOrDefault( 6 ).Should().SatisfySql( "DROP TABLE \"foo_T1\";" );
         }
     }
 
@@ -310,7 +355,7 @@ public partial class SqliteSchemaBuilderTests : TestsBase
     }
 
     [Fact]
-    public void Remove_ShouldThrowSqliteObjectBuilderException_WhenAttemptingToRemoveSchemaWithExternalForeignKeys()
+    public void Remove_ShouldThrowSqliteObjectBuilderException_WhenAttemptingToRemoveSchemaWithTableReferencedByForeignKeyFromOtherSchema()
     {
         var db = new SqliteDatabaseBuilder();
         var sut = db.Schemas.Create( Fixture.Create<string>() );
@@ -331,6 +376,40 @@ public partial class SqliteSchemaBuilderTests : TestsBase
         action.Should()
             .ThrowExactly<SqliteObjectBuilderException>()
             .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 2 );
+    }
+
+    [Fact]
+    public void Remove_ShouldThrowSqliteObjectBuilderException_WhenAttemptingToRemoveSchemaWithTableReferencedByViewFromOtherSchema()
+    {
+        var db = new SqliteDatabaseBuilder();
+        var sut = db.Schemas.Create( Fixture.Create<string>() );
+        var table = sut.Objects.CreateTable( "T" );
+        var column = table.Columns.Create( "C" );
+        table.SetPrimaryKey( column.Asc() );
+
+        db.Schemas.Default.Objects.CreateView( "V", table.ToRecordSet().ToDataSource().Select( s => new[] { s.GetAll() } ) );
+
+        var action = Lambda.Of( () => sut.Remove() );
+
+        action.Should()
+            .ThrowExactly<SqliteObjectBuilderException>()
+            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+    }
+
+    [Fact]
+    public void Remove_ShouldThrowSqliteObjectBuilderException_WhenAttemptingToRemoveSchemaWithViewReferencedByViewFromOtherSchema()
+    {
+        var db = new SqliteDatabaseBuilder();
+        var sut = db.Schemas.Create( Fixture.Create<string>() );
+        var view = sut.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
+
+        db.Schemas.Default.Objects.CreateView( "W", view.ToRecordSet().ToDataSource().Select( s => new[] { s.GetAll() } ) );
+
+        var action = Lambda.Of( () => sut.Remove() );
+
+        action.Should()
+            .ThrowExactly<SqliteObjectBuilderException>()
+            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]

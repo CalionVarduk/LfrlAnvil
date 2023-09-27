@@ -24,7 +24,7 @@ public sealed class SqliteColumn : SqliteObject, ISqlColumn
     public SqliteColumnTypeDefinition TypeDefinition { get; }
     public bool IsNullable { get; }
     public object? DefaultValue { get; }
-    public override string FullName => _fullName ??= SqliteHelpers.GetFullColumnName( Table.FullName, Name );
+    public override string FullName => _fullName ??= SqliteHelpers.GetFullFieldName( Table.FullName, Name );
     public override SqliteDatabase Database => Table.Schema.Database;
 
     [Pure]

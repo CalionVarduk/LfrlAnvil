@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
@@ -199,7 +200,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     }
 
     [Fact]
-    public void SetName_ShouldUpdateName_WhenNameChangesAndTableHasExternalReferences()
+    public void SetName_ShouldUpdateName_WhenNameChangesAndTableHasExternalForeignKeyReferences()
     {
         var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateTable( "T1" );
@@ -304,7 +305,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     }
 
     [Fact]
-    public void SetName_ShouldUpdateName_WhenNameChangesAndTableHasExternalReferencesWithOneOfReferencingTablesUnderChange()
+    public void SetName_ShouldUpdateName_WhenNameChangesAndTableHasExternalForeignKeyReferencesWithOneOfReferencingTablesUnderChange()
     {
         var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateTable( "T1" );
@@ -444,7 +445,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     }
 
     [Fact]
-    public void SetName_ShouldUpdateName_WhenNameChangesAndTableHasExternalReferencesAndChangedTableHasOtherPendingChanges()
+    public void SetName_ShouldUpdateName_WhenNameChangesAndTableHasExternalForeignKeyReferencesAndChangedTableHasOtherPendingChanges()
     {
         var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateTable( "T1" );
@@ -519,7 +520,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     }
 
     [Fact]
-    public void SetName_ShouldUpdateName_WhenNameChangesAndTableHasExternalReferencesAndUnrelatedTableHasPendingChanges()
+    public void SetName_ShouldUpdateName_WhenNameChangesAndTableHasExternalForeignKeyReferencesAndUnrelatedTableHasPendingChanges()
     {
         var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateTable( "T1" );
@@ -593,6 +594,135 @@ public partial class SqliteTableBuilderTests : TestsBase
                     FROM ""foo_T2"";",
                     "DROP TABLE \"foo_T2\";",
                     "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" );
+        }
+    }
+
+    [Fact]
+    public void SetName_ShouldUpdateName_WhenNameChangesAndTableHasViewReferences()
+    {
+        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var sut = schema.Objects.CreateTable( "T" );
+        sut.SetPrimaryKey( sut.Columns.Create( "C" ).Asc() );
+
+        var v1 = schema.Objects.CreateView( "V1", sut.ToRecordSet().ToDataSource().Select( s => new[] { s.From["C"].AsSelf() } ) );
+
+        var v2 = schema.Objects.CreateView(
+            "V2",
+            v1.ToRecordSet().Join( sut.ToRecordSet().InnerOn( SqlNode.True() ) ).Select( s => new[] { s.GetAll() } ) );
+
+        var v3 = schema.Objects.CreateView( "V3", v1.ToRecordSet().ToDataSource().Select( s => new[] { s.GetAll() } ) );
+
+        var startStatementCount = schema.Database.GetPendingStatements().Length;
+
+        var result = ((ISqlTableBuilder)sut).SetName( "U" );
+        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.Name.Should().Be( "U" );
+            sut.FullName.Should().Be( "foo_U" );
+            schema.Objects.Contains( "U" ).Should().BeTrue();
+            schema.Objects.Contains( "T" ).Should().BeFalse();
+            v1.IsRemoved.Should().BeFalse();
+            v2.IsRemoved.Should().BeFalse();
+            v3.IsRemoved.Should().BeFalse();
+
+            statements.Should().HaveCount( 5 );
+
+            statements.ElementAtOrDefault( 0 ).Should().SatisfySql( "DROP VIEW \"foo_V2\";" );
+            statements.ElementAtOrDefault( 1 ).Should().SatisfySql( "DROP VIEW \"foo_V1\";" );
+
+            statements.ElementAtOrDefault( 2 ).Should().SatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_U\";" );
+
+            statements.ElementAtOrDefault( 3 )
+                .Should()
+                .SatisfySql(
+                    @"CREATE VIEW ""foo_V1"" AS
+                    SELECT
+                      ""foo_U"".""C""
+                    FROM ""foo_U"";" );
+
+            statements.ElementAtOrDefault( 4 )
+                .Should()
+                .SatisfySql(
+                    @"CREATE VIEW ""foo_V2"" AS
+                    SELECT
+                      *
+                    FROM ""foo_V1""
+                    INNER JOIN ""foo_U"" ON TRUE;" );
+        }
+    }
+
+    [Fact]
+    public void SetName_ShouldUpdateName_WhenNameChangesAndTableHasViewReferencesAndChangedTableHasOtherPendingChanges()
+    {
+        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var sut = schema.Objects.CreateTable( "T" );
+        sut.SetPrimaryKey( sut.Columns.Create( "C" ).Asc() );
+
+        var v1 = schema.Objects.CreateView( "V1", sut.ToRecordSet().ToDataSource().Select( s => new[] { s.From["C"].AsSelf() } ) );
+
+        var v2 = schema.Objects.CreateView(
+            "V2",
+            v1.ToRecordSet().Join( sut.ToRecordSet().InnerOn( SqlNode.True() ) ).Select( s => new[] { s.GetAll() } ) );
+
+        var v3 = schema.Objects.CreateView( "V3", v1.ToRecordSet().ToDataSource().Select( s => new[] { s.GetAll() } ) );
+
+        var startStatementCount = schema.Database.GetPendingStatements().Length;
+
+        sut.Columns.Create( "D" ).SetType<int>();
+        var result = ((ISqlTableBuilder)sut).SetName( "U" );
+        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.Name.Should().Be( "U" );
+            sut.FullName.Should().Be( "foo_U" );
+            schema.Objects.Contains( "U" ).Should().BeTrue();
+            schema.Objects.Contains( "T" ).Should().BeFalse();
+            v1.IsRemoved.Should().BeFalse();
+            v2.IsRemoved.Should().BeFalse();
+            v3.IsRemoved.Should().BeFalse();
+
+            statements.Should().HaveCount( 6 );
+
+            statements.ElementAtOrDefault( 0 )
+                .Should()
+                .SatisfySql(
+                    @"CREATE TABLE ""__foo_T__{GUID}__"" (
+                      ""C"" ANY NOT NULL,
+                      ""D"" INTEGER NOT NULL DEFAULT (0),
+                      CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C"" ASC)
+                    ) WITHOUT ROWID;",
+                    @"INSERT INTO ""__foo_T__{GUID}__"" (""C"", ""D"")
+                    SELECT ""C"", 0
+                    FROM ""foo_T"";",
+                    "DROP TABLE \"foo_T\";",
+                    "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
+
+            statements.ElementAtOrDefault( 1 ).Should().SatisfySql( "DROP VIEW \"foo_V2\";" );
+            statements.ElementAtOrDefault( 2 ).Should().SatisfySql( "DROP VIEW \"foo_V1\";" );
+
+            statements.ElementAtOrDefault( 3 ).Should().SatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_U\";" );
+
+            statements.ElementAtOrDefault( 4 )
+                .Should()
+                .SatisfySql(
+                    @"CREATE VIEW ""foo_V1"" AS
+                    SELECT
+                      ""foo_U"".""C""
+                    FROM ""foo_U"";" );
+
+            statements.ElementAtOrDefault( 5 )
+                .Should()
+                .SatisfySql(
+                    @"CREATE VIEW ""foo_V2"" AS
+                    SELECT
+                      *
+                    FROM ""foo_V1""
+                    INNER JOIN ""foo_U"" ON TRUE;" );
         }
     }
 
@@ -1100,7 +1230,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     }
 
     [Fact]
-    public void Remove_ShouldThrowSqliteObjectBuilderException_WhenTableHasExternalReferences()
+    public void Remove_ShouldThrowSqliteObjectBuilderException_WhenTableHasExternalForeignKeyReferences()
     {
         var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateTable( "T" );
@@ -1111,6 +1241,22 @@ public partial class SqliteTableBuilderTests : TestsBase
         var otherColumn = otherTable.Columns.Create( "D" );
         var otherPk = otherTable.SetPrimaryKey( otherColumn.Asc() );
         otherTable.ForeignKeys.Create( otherPk.Index, pk.Index );
+
+        var action = Lambda.Of( () => sut.Remove() );
+
+        action.Should()
+            .ThrowExactly<SqliteObjectBuilderException>()
+            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+    }
+
+    [Fact]
+    public void Remove_ShouldThrowSqliteObjectBuilderException_WhenTableHasViewReferences()
+    {
+        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var sut = schema.Objects.CreateTable( "T" );
+        var column = sut.Columns.Create( "C" );
+        sut.SetPrimaryKey( column.Asc() );
+        schema.Objects.CreateView( "V", sut.ToRecordSet().ToDataSource().Select( s => new[] { s.GetAll() } ) );
 
         var action = Lambda.Of( () => sut.Remove() );
 
@@ -1248,6 +1394,22 @@ public partial class SqliteTableBuilderTests : TestsBase
                     "ALTER TABLE \"foo_U\" RENAME COLUMN \"C3\" TO \"X\";",
                     "CREATE INDEX \"foo_IX_U_C2A_XD\" ON \"foo_U\" (\"C2\" ASC, \"X\" DESC);" );
         }
+    }
+
+    [Fact]
+    public void NameChange_ThenRemoval_ShouldDropTableByUsingItsOldName()
+    {
+        var builder = new SqliteDatabaseBuilder();
+        var sut = builder.Schemas.Create( "s" ).Objects.CreateTable( "foo" );
+        sut.SetPrimaryKey( sut.Columns.Create( "a" ).Asc() );
+        _ = builder.GetPendingStatements();
+
+        sut.SetName( "bar" );
+        sut.Remove();
+
+        var result = builder.GetPendingStatements()[^1];
+
+        result.Should().SatisfySql( "DROP TABLE \"s_foo\";" );
     }
 
     [Fact]

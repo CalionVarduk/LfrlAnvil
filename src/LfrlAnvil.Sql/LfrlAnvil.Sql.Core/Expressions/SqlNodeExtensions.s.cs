@@ -10,6 +10,7 @@ using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Persistence;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Objects;
+using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.Sql.Expressions;
 
@@ -20,6 +21,27 @@ public static class SqlNodeExtensions
     public static SqlTableRecordSetNode ToRecordSet(this ISqlTable table, string? alias = null)
     {
         return SqlNode.Table( table, alias );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlTableBuilderRecordSetNode ToRecordSet(this ISqlTableBuilder table, string? alias = null)
+    {
+        return SqlNode.Table( table, alias );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlViewRecordSetNode ToRecordSet(this ISqlView view, string? alias = null)
+    {
+        return SqlNode.View( view, alias );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlViewBuilderRecordSetNode ToRecordSet(this ISqlViewBuilder view, string? alias = null)
+    {
+        return SqlNode.View( view, alias );
     }
 
     [Pure]

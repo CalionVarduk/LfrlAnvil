@@ -15,7 +15,9 @@ public interface ISqlNodeVisitor
     void VisitLiteral(SqlLiteralNode node);
     void VisitParameter(SqlParameterNode node);
     void VisitColumn(SqlColumnNode node);
+    void VisitColumnBuilder(SqlColumnBuilderNode node);
     void VisitQueryDataField(SqlQueryDataFieldNode node);
+    void VisitViewDataField(SqlViewDataFieldNode node);
     void VisitNegate(SqlNegateExpressionNode node);
     void VisitAdd(SqlAddExpressionNode node);
     void VisitConcat(SqlConcatExpressionNode node);
@@ -83,6 +85,9 @@ public interface ISqlNodeVisitor
     void VisitInQuery(SqlInQueryConditionNode node);
     void VisitRawRecordSet(SqlRawRecordSetNode node);
     void VisitTableRecordSet(SqlTableRecordSetNode node);
+    void VisitTableBuilderRecordSet(SqlTableBuilderRecordSetNode node);
+    void VisitViewRecordSet(SqlViewRecordSetNode node);
+    void VisitViewBuilderRecordSet(SqlViewBuilderRecordSetNode node);
     void VisitQueryRecordSet(SqlQueryRecordSetNode node);
     void VisitCommonTableExpressionRecordSet(SqlCommonTableExpressionRecordSetNode node);
     void VisitTemporaryTableRecordSet(SqlTemporaryTableRecordSetNode node);

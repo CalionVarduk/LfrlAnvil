@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
 
@@ -25,21 +23,21 @@ public sealed class SqlQueryRecordSetNode : SqlRecordSetNode
     [Pure]
     public override IReadOnlyCollection<SqlQueryDataFieldNode> GetKnownFields()
     {
-        _fields ??= CreateKnownFields();
+        _fields ??= Query.ExtractKnownDataFields( this );
         return _fields.Values;
     }
 
     [Pure]
     public override SqlDataFieldNode GetUnsafeField(string name)
     {
-        _fields ??= CreateKnownFields();
+        _fields ??= Query.ExtractKnownDataFields( this );
         return _fields.TryGetValue( name, out var field ) ? field : new SqlRawDataFieldNode( this, name, type: null );
     }
 
     [Pure]
     public override SqlQueryDataFieldNode GetField(string name)
     {
-        _fields ??= CreateKnownFields();
+        _fields ??= Query.ExtractKnownDataFields( this );
         return _fields[name];
     }
 
@@ -61,42 +59,5 @@ public sealed class SqlQueryRecordSetNode : SqlRecordSetNode
         return IsOptional != optional
             ? new SqlQueryRecordSetNode( Query, Name, isOptional: optional )
             : this;
-    }
-
-    [Pure]
-    private Dictionary<string, SqlQueryDataFieldNode> CreateKnownFields()
-    {
-        var selections = Query.Selection.Span;
-        var converter = new FieldConverter( this, selections.Length );
-
-        foreach ( var selection in selections )
-        {
-            converter.Selection = selection;
-            selection.Convert( converter );
-        }
-
-        return converter.Fields;
-    }
-
-    private sealed class FieldConverter : ISqlSelectNodeConverter
-    {
-        private readonly SqlQueryRecordSetNode _recordSet;
-
-        internal FieldConverter(SqlQueryRecordSetNode recordSet, int capacity)
-        {
-            _recordSet = recordSet;
-            Fields = new Dictionary<string, SqlQueryDataFieldNode>( capacity: capacity, comparer: StringComparer.OrdinalIgnoreCase );
-        }
-
-        internal Dictionary<string, SqlQueryDataFieldNode> Fields { get; }
-        internal SqlSelectNode? Selection { get; set; }
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public void Add(string name, SqlExpressionNode? expression)
-        {
-            Assume.IsNotNull( Selection, nameof( Selection ) );
-            var field = new SqlQueryDataFieldNode( _recordSet, name, Selection, expression );
-            Fields.Add( field.Name, field );
-        }
     }
 }

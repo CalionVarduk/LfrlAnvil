@@ -41,7 +41,7 @@ public static class SqliteHelpers
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string GetFullColumnName(string fullTableName, string name)
+    public static string GetFullFieldName(string fullTableName, string name)
     {
         return $"{fullTableName}.{name}";
     }

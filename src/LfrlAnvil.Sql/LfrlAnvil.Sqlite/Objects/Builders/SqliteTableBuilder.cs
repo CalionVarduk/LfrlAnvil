@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Extensions;
@@ -10,11 +12,13 @@ namespace LfrlAnvil.Sqlite.Objects.Builders;
 
 public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
 {
+    private Dictionary<ulong, SqliteViewBuilder>? _referencingViews;
     private string _fullName;
 
     internal SqliteTableBuilder(SqliteSchemaBuilder schema, string name)
         : base( schema.Database.GetNextId(), name, SqlObjectType.Table )
     {
+        _referencingViews = null;
         Schema = schema;
         PrimaryKey = null;
         Columns = new SqliteColumnBuilderCollection( this );
@@ -29,6 +33,8 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
     public SqliteIndexBuilderCollection Indexes { get; }
     public SqliteForeignKeyBuilderCollection ForeignKeys { get; }
     public SqlitePrimaryKeyBuilder? PrimaryKey { get; private set; }
+    public IReadOnlyCollection<SqliteViewBuilder> ReferencingViews => (_referencingViews?.Values).EmptyIfNull();
+
     public override string FullName => _fullName;
     public override SqliteDatabaseBuilder Database => Schema.Database;
 
@@ -36,6 +42,9 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
     {
         get
         {
+            if ( _referencingViews is not null && _referencingViews.Count > 0 )
+                return false;
+
             foreach ( var ix in Indexes )
             {
                 if ( ! ix.CanRemove )
@@ -51,6 +60,7 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
     ISqlColumnBuilderCollection ISqlTableBuilder.Columns => Columns;
     ISqlIndexBuilderCollection ISqlTableBuilder.Indexes => Indexes;
     ISqlForeignKeyBuilderCollection ISqlTableBuilder.ForeignKeys => ForeignKeys;
+    IReadOnlyCollection<ISqlViewBuilder> ISqlTableBuilder.ReferencingViews => ReferencingViews;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
 
     public SqliteTableBuilder SetName(string name)
@@ -90,6 +100,17 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
         Database.ChangeTracker.PrimaryKeyUpdated( this, oldPrimaryKey );
     }
 
+    internal void AddReferencingView(SqliteViewBuilder view)
+    {
+        _referencingViews ??= new Dictionary<ulong, SqliteViewBuilder>();
+        _referencingViews.Add( view.Id, view );
+    }
+
+    internal void RemoveReferencingView(SqliteViewBuilder view)
+    {
+        _referencingViews?.Remove( view.Id );
+    }
+
     internal void ForceRemove()
     {
         Assume.Equals( IsRemoved, false, nameof( IsRemoved ) );
@@ -114,6 +135,12 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
     {
         var errors = Chain<string>.Empty;
 
+        if ( _referencingViews is not null && _referencingViews.Count > 0 )
+        {
+            foreach ( var view in _referencingViews.Values )
+                errors = errors.Extend( ExceptionResources.TableIsReferencedByObject( view ) );
+        }
+
         foreach ( var ix in Indexes )
         {
             foreach ( var fk in ix.ReferencingForeignKeys )
@@ -131,6 +158,7 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
     {
         Assume.Equals( CanRemove, true, nameof( CanRemove ) );
 
+        _referencingViews = null;
         ForeignKeys.Clear();
 
         using var buffer = Database.ObjectPool.GreedyRent( Columns.Count + Indexes.Count );
@@ -225,32 +253,39 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
 
     private void Rename(string newName, Action<SqliteTableBuilder, string> update)
     {
-        var hasSelfRefForeignKeys = false;
+        using var viewBuffer = SqliteViewBuilder.RemoveReferencingViewsIntoBuffer( Database, _referencingViews );
 
-        using var buffer = Database.ObjectPool.GreedyRent();
-        foreach ( var index in Indexes )
+        using ( var fkBuffer = Database.ObjectPool.GreedyRent() )
         {
-            foreach ( var fk in index.ReferencingForeignKeys )
-            {
-                if ( fk.IsSelfReference() )
-                {
-                    hasSelfRefForeignKeys = true;
-                    continue;
-                }
+            var hasSelfRefForeignKeys = false;
 
-                buffer.Push( fk );
+            foreach ( var index in Indexes )
+            {
+                foreach ( var fk in index.ReferencingForeignKeys )
+                {
+                    if ( fk.IsSelfReference() )
+                    {
+                        hasSelfRefForeignKeys = true;
+                        continue;
+                    }
+
+                    fkBuffer.Push( fk );
+                }
             }
+
+            SqliteDatabaseBuilder.RemoveReferencingForeignKeys( this, fkBuffer );
+
+            update( this, newName );
+
+            if ( hasSelfRefForeignKeys )
+                Database.ChangeTracker.ReconstructionRequested( this );
+
+            foreach ( var fk in fkBuffer )
+                ReinterpretCast.To<SqliteForeignKeyBuilder>( fk ).Reactivate();
         }
 
-        SqliteDatabaseBuilder.RemoveReferencingForeignKeys( this, buffer );
-
-        update( this, newName );
-
-        if ( hasSelfRefForeignKeys )
-            Database.ChangeTracker.ReconstructionRequested( this );
-
-        foreach ( var obj in buffer )
-            ReinterpretCast.To<SqliteForeignKeyBuilder>( obj ).Reactivate();
+        foreach ( var view in viewBuffer )
+            ReinterpretCast.To<SqliteViewBuilder>( view ).Reactivate();
     }
 
     ISqlTableBuilder ISqlTableBuilder.SetName(string name)

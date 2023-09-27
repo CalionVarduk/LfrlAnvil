@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
+using LfrlAnvil.Sql.Expressions;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
 
@@ -36,7 +37,13 @@ public interface ISqlObjectBuilderCollection : IReadOnlyCollection<ISqlObjectBui
 
     bool TryGetForeignKey(string name, [MaybeNullWhen( false )] out ISqlForeignKeyBuilder result);
 
+    [Pure]
+    ISqlViewBuilder GetView(string name);
+
+    bool TryGetView(string name, [MaybeNullWhen( false )] out ISqlViewBuilder result);
+
     ISqlTableBuilder CreateTable(string name);
     ISqlTableBuilder GetOrCreateTable(string name);
+    ISqlViewBuilder CreateView(string name, SqlQueryExpressionNode source);
     bool Remove(string name);
 }

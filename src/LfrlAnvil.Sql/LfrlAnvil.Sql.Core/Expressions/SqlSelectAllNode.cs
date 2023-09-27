@@ -12,12 +12,12 @@ public sealed class SqlSelectAllNode : SqlSelectNode
 
     public SqlDataSourceNode DataSource { get; }
 
-    internal override void Convert(ISqlSelectNodeConverter converter)
+    internal override void VisitExpressions(ISqlSelectNodeExpressionVisitor visitor)
     {
         foreach ( var recordSet in DataSource.RecordSets )
         {
             foreach ( var field in recordSet.GetKnownFields() )
-                converter.Add( field.Name, field );
+                visitor.Handle( field.Name, field );
         }
     }
 }

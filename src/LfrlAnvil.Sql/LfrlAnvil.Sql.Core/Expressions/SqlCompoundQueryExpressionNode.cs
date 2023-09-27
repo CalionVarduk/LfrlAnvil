@@ -43,33 +43,33 @@ public sealed class SqlCompoundQueryExpressionNode : SqlExtendableQueryExpressio
     [Pure]
     private ReadOnlyMemory<SqlSelectNode> CreateSelection()
     {
-        var converter = new SelectionConverter( FirstQuery, FollowingQueries.Length + 1 );
+        var visitor = new SelectionExpressionVisitor( FirstQuery, FollowingQueries.Length + 1 );
 
         foreach ( var selection in FirstQuery.Selection.Span )
         {
-            converter.Selection = selection;
-            selection.Convert( converter );
+            visitor.Selection = selection;
+            selection.VisitExpressions( visitor );
         }
 
         foreach ( var followingQuery in FollowingQueries.Span )
         {
-            ++converter.QueryIndex;
+            ++visitor.QueryIndex;
             foreach ( var selection in followingQuery.Query.Selection.Span )
             {
-                converter.Selection = selection;
-                selection.Convert( converter );
+                visitor.Selection = selection;
+                selection.VisitExpressions( visitor );
             }
         }
 
-        return converter.GetSelection();
+        return visitor.GetSelection();
     }
 
-    private sealed class SelectionConverter : ISqlSelectNodeConverter
+    private sealed class SelectionExpressionVisitor : ISqlSelectNodeExpressionVisitor
     {
         private readonly int _queryCount;
         private readonly Dictionary<string, List<SqlSelectCompoundFieldNode.Origin>> _origins;
 
-        internal SelectionConverter(SqlQueryExpressionNode firstQuery, int queryCount)
+        internal SelectionExpressionVisitor(SqlQueryExpressionNode firstQuery, int queryCount)
         {
             QueryIndex = 0;
             _queryCount = queryCount;
@@ -81,7 +81,7 @@ public sealed class SqlCompoundQueryExpressionNode : SqlExtendableQueryExpressio
         internal int QueryIndex { get; set; }
         internal SqlSelectNode? Selection { get; set; }
 
-        public void Add(string name, SqlExpressionNode? expression)
+        public void Handle(string name, SqlExpressionNode? expression)
         {
             Assume.IsNotNull( Selection, nameof( Selection ) );
 

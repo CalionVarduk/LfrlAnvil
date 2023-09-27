@@ -1,72 +1,89 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Diagnostics.Contracts;
+﻿using System.Diagnostics.Contracts;
 using System.Linq;
 using LfrlAnvil.Sql.Objects;
+using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.Sql.Tests.Helpers;
 
 public static class TableMock
 {
     [Pure]
-    public static ISqlTable Create(string name, bool areColumnsNullable = false, params string[] columnNames)
+    public static ISqlTable Create(
+        string name,
+        ISqlSchema schema,
+        Func<ISqlColumnCollection, ISqlPrimaryKey>? primaryKey = null,
+        params ISqlColumn[] columns)
     {
-        var table = Substitute.For<ISqlTable>();
-        table.FullName.Returns( name );
-        var columns = new ColumnsMock( table, areColumnsNullable, columnNames );
-        table.Columns.Returns( columns );
-        return table;
+        var fullName = schema.Name.Length > 0 ? $"{schema.Name}.{name}" : name;
+        var result = Substitute.For<ISqlTable>();
+        result.Type.Returns( SqlObjectType.Table );
+        result.Schema.Returns( schema );
+        result.Name.Returns( name );
+        result.FullName.Returns( fullName );
+
+        var columnsCollection = Substitute.For<ISqlColumnCollection>();
+        columnsCollection.Table.Returns( result );
+        columnsCollection.Count.Returns( columns.Length );
+        columnsCollection.GetEnumerator().Returns( _ => columns.AsEnumerable().GetEnumerator() );
+        columnsCollection.Contains( Arg.Any<string>() ).Returns( i => columns.Any( c => c.Name == i.ArgAt<string>( 0 ) ) );
+        columnsCollection.Get( Arg.Any<string>() ).Returns( i => columns.First( c => c.Name == i.ArgAt<string>( 0 ) ) );
+        columnsCollection.TryGet( Arg.Any<string>(), out Arg.Any<ISqlColumn?>() )
+            .Returns(
+                i =>
+                {
+                    i[1] = columns.FirstOrDefault( c => c.Name == i.ArgAt<string>( 0 ) );
+                    return i[1] is not null;
+                } );
+
+        var pk = primaryKey?.Invoke( columnsCollection ) ?? PrimaryKeyMock.Create();
+        result.Columns.Returns( columnsCollection );
+        result.PrimaryKey.Returns( pk );
+        return result;
     }
 
-    private sealed class ColumnsMock : ISqlColumnCollection
+    [Pure]
+    public static ISqlTableBuilder CreateBuilder(
+        string name,
+        ISqlSchemaBuilder schema,
+        Func<ISqlColumnBuilderCollection, ISqlPrimaryKeyBuilder>? primaryKey = null,
+        params ISqlColumnBuilder[] columns)
     {
-        private readonly ISqlColumn[] _columns;
+        var fullName = schema.Name.Length > 0 ? $"{schema.Name}.{name}" : name;
+        var result = Substitute.For<ISqlTableBuilder>();
+        result.Type.Returns( SqlObjectType.Table );
+        result.Schema.Returns( schema );
+        result.Name.Returns( name );
+        result.FullName.Returns( fullName );
 
-        public ColumnsMock(ISqlTable table, bool nullable, string[] columnNames)
-        {
-            Table = table;
-            var typeMock = Substitute.For<ISqlColumnTypeDefinition>();
-            typeMock.RuntimeType.Returns( typeof( int ) );
+        var columnsCollection = Substitute.For<ISqlColumnBuilderCollection>();
+        columnsCollection.Table.Returns( result );
+        columnsCollection.Count.Returns( columns.Length );
+        columnsCollection.GetEnumerator().Returns( _ => columns.AsEnumerable().GetEnumerator() );
+        columnsCollection.Contains( Arg.Any<string>() ).Returns( i => columns.Any( c => c.Name == i.ArgAt<string>( 0 ) ) );
+        columnsCollection.Get( Arg.Any<string>() ).Returns( i => columns.First( c => c.Name == i.ArgAt<string>( 0 ) ) );
+        columnsCollection.TryGet( Arg.Any<string>(), out Arg.Any<ISqlColumnBuilder?>() )
+            .Returns(
+                i =>
+                {
+                    i[1] = columns.FirstOrDefault( c => c.Name == i.ArgAt<string>( 0 ) );
+                    return i[1] is not null;
+                } );
 
-            _columns = new ISqlColumn[columnNames.Length];
-            for ( var i = 0; i < _columns.Length; ++i )
-            {
-                var column = Substitute.For<ISqlColumn>();
-                column.IsNullable.Returns( nullable );
-                column.TypeDefinition.Returns( typeMock );
-                column.Name.Returns( columnNames[i] );
-                _columns[i] = column;
-            }
-        }
+        var pk = primaryKey?.Invoke( columnsCollection );
+        result.Columns.Returns( columnsCollection );
+        result.PrimaryKey.Returns( pk );
+        return result;
+    }
 
-        public IEnumerator<ISqlColumn> GetEnumerator()
-        {
-            return _columns.AsEnumerable().GetEnumerator();
-        }
+    [Pure]
+    public static ISqlTable Create(string name, params ISqlColumn[] columns)
+    {
+        return Create( name, SchemaMock.Create(), null, columns );
+    }
 
-        public int Count => _columns.Length;
-        public ISqlTable Table { get; }
-
-        public bool Contains(string name)
-        {
-            return Array.FindIndex( _columns, c => c.Name == name ) != -1;
-        }
-
-        public ISqlColumn Get(string name)
-        {
-            return Array.Find( _columns, c => c.Name == name )!;
-        }
-
-        public bool TryGet(string name, [MaybeNullWhen( false )] out ISqlColumn result)
-        {
-            result = Get( name );
-            return result is not null;
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+    [Pure]
+    public static ISqlTableBuilder CreateBuilder(string name, params ISqlColumnBuilder[] columns)
+    {
+        return CreateBuilder( name, SchemaMock.CreateBuilder(), null, columns );
     }
 }

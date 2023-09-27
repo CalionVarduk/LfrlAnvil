@@ -1,15 +1,17 @@
 ﻿using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics.Contracts;
+using System.Linq;
 using LfrlAnvil.Functional;
-using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Functions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
-using LfrlAnvil.Sql.Objects;
-using LfrlAnvil.Sql.Tests.Helpers;
+using LfrlAnvil.Sqlite.Objects;
+using LfrlAnvil.Sqlite.Objects.Builders;
+using LfrlAnvil.Sqlite.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sqlite.Tests;
@@ -128,7 +130,7 @@ public class SqliteNodeInterpreterTests : TestsBase
     [Fact]
     public void Visit_ShouldInterpretColumn()
     {
-        var table = SqlNode.Table( TableMock.Create( "foo", areColumnsNullable: false, "bar" ) );
+        var table = CreateTable( string.Empty, "foo", "bar" ).ToRecordSet();
         _sut.Visit( table.GetField( "bar" ) );
         _sut.Context.Sql.ToString().Should().Be( "\"foo\".\"bar\"" );
     }
@@ -136,7 +138,23 @@ public class SqliteNodeInterpreterTests : TestsBase
     [Fact]
     public void VisitChild_ShouldInterpretColumnWithoutParentheses()
     {
-        var table = SqlNode.Table( TableMock.Create( "foo", areColumnsNullable: false, "bar" ) );
+        var table = SqlNode.Table( CreateTable( string.Empty, "foo", "bar" ) );
+        _sut.VisitChild( table.GetField( "bar" ) );
+        _sut.Context.Sql.ToString().Should().Be( "\"foo\".\"bar\"" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretColumnBuilder()
+    {
+        var table = SqlNode.Table( CreateTableBuilder( string.Empty, "foo", "bar" ) );
+        _sut.Visit( table.GetField( "bar" ) );
+        _sut.Context.Sql.ToString().Should().Be( "\"foo\".\"bar\"" );
+    }
+
+    [Fact]
+    public void VisitChild_ShouldInterpretColumnBuilderWithoutParentheses()
+    {
+        var table = SqlNode.Table( CreateTableBuilder( string.Empty, "foo", "bar" ) );
         _sut.VisitChild( table.GetField( "bar" ) );
         _sut.Context.Sql.ToString().Should().Be( "\"foo\".\"bar\"" );
     }
@@ -155,6 +173,32 @@ public class SqliteNodeInterpreterTests : TestsBase
         var query = SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["bar"].AsSelf() } ).AsSet( "qux" );
         _sut.VisitChild( query.GetField( "bar" ) );
         _sut.Context.Sql.ToString().Should().Be( "\"qux\".\"bar\"" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretViewDataField()
+    {
+        var view = SqlNode.View(
+            CreateView(
+                string.Empty,
+                "foo",
+                SqlNode.RawRecordSet( "bar" ).ToDataSource().Select( s => new[] { s.From["qux"].AsSelf() } ) ) );
+
+        _sut.Visit( view.GetField( "qux" ) );
+        _sut.Context.Sql.ToString().Should().Be( "\"foo\".\"qux\"" );
+    }
+
+    [Fact]
+    public void VisitChild_ShouldInterpretViewDataFieldWithoutParentheses()
+    {
+        var view = SqlNode.View(
+            CreateView(
+                string.Empty,
+                "foo",
+                SqlNode.RawRecordSet( "bar" ).ToDataSource().Select( s => new[] { s.From["qux"].AsSelf() } ) ) );
+
+        _sut.VisitChild( view.GetField( "qux" ) );
+        _sut.Context.Sql.ToString().Should().Be( "\"foo\".\"qux\"" );
     }
 
     [Fact]
@@ -1221,14 +1265,56 @@ END" );
     [Fact]
     public void Visit_ShouldInterpretTableRecordSet()
     {
-        _sut.Visit( TableMock.Create( "foo" ).ToRecordSet( "bar" ) );
+        _sut.Visit( CreateTable( string.Empty, "foo" ).ToRecordSet( "bar" ) );
         _sut.Context.Sql.ToString().Should().Be( "\"foo\" AS \"bar\"" );
     }
 
     [Fact]
     public void VisitChild_ShouldInterpretTableRecordSetWithParentheses()
     {
-        _sut.VisitChild( TableMock.Create( "foo" ).ToRecordSet() );
+        _sut.VisitChild( CreateTable( string.Empty, "foo" ).ToRecordSet() );
+        _sut.Context.Sql.ToString().Should().Be( "(\"foo\")" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretTableBuilderRecordSet()
+    {
+        _sut.Visit( CreateTableBuilder( string.Empty, "foo" ).ToRecordSet( "bar" ) );
+        _sut.Context.Sql.ToString().Should().Be( "\"foo\" AS \"bar\"" );
+    }
+
+    [Fact]
+    public void VisitChild_ShouldInterpretTableBuilderRecordSetWithParentheses()
+    {
+        _sut.VisitChild( CreateTableBuilder( string.Empty, "foo" ).ToRecordSet() );
+        _sut.Context.Sql.ToString().Should().Be( "(\"foo\")" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretViewRecordSet()
+    {
+        _sut.Visit( CreateView( string.Empty, "foo" ).ToRecordSet( "bar" ) );
+        _sut.Context.Sql.ToString().Should().Be( "\"foo\" AS \"bar\"" );
+    }
+
+    [Fact]
+    public void VisitChild_ShouldInterpretViewRecordSetWithParentheses()
+    {
+        _sut.VisitChild( CreateView( string.Empty, "foo" ).ToRecordSet() );
+        _sut.Context.Sql.ToString().Should().Be( "(\"foo\")" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretViewBuilderRecordSet()
+    {
+        _sut.Visit( CreateViewBuilder( string.Empty, "foo" ).ToRecordSet( "bar" ) );
+        _sut.Context.Sql.ToString().Should().Be( "\"foo\" AS \"bar\"" );
+    }
+
+    [Fact]
+    public void VisitChild_ShouldInterpretViewBuilderRecordSetWithParentheses()
+    {
+        _sut.VisitChild( CreateViewBuilder( string.Empty, "foo" ).ToRecordSet() );
         _sut.Context.Sql.ToString().Should().Be( "(\"foo\")" );
     }
 
@@ -1374,12 +1460,12 @@ LEFT JOIN qux ON qux.b = foo.b" );
     [Fact]
     public void Visit_ShouldInterpretSelectCompoundField()
     {
-        var query = TableMock.Create( "foo", areColumnsNullable: false, "a" )
+        var query = CreateTable( string.Empty, "foo", "a" )
             .ToRecordSet()
             .ToDataSource()
             .Select( t => new[] { t.From["a"].AsSelf() } )
             .CompoundWith(
-                TableMock.Create( "bar", areColumnsNullable: false, "a" )
+                CreateTable( string.Empty, "bar", "a" )
                     .ToRecordSet()
                     .ToDataSource()
                     .Select( t => new[] { t.From["a"].AsSelf() } )
@@ -1393,12 +1479,12 @@ LEFT JOIN qux ON qux.b = foo.b" );
     [Fact]
     public void VisitChild_ShouldInterpretSelectCompoundFieldWithoutParentheses()
     {
-        var query = TableMock.Create( "foo", areColumnsNullable: false, "a" )
+        var query = CreateTable( string.Empty, "foo", "a" )
             .ToRecordSet()
             .ToDataSource()
             .Select( t => new[] { t.From["a"].AsSelf() } )
             .CompoundWith(
-                TableMock.Create( "bar", areColumnsNullable: false, "a" )
+                CreateTable( string.Empty, "bar", "a" )
                     .ToRecordSet()
                     .ToDataSource()
                     .Select( t => new[] { t.From["a"].AsSelf() } )
@@ -1489,9 +1575,10 @@ LEFT JOIN qux ON qux.b = foo.b" );
     [Fact]
     public void Visit_ShouldInterpretDataSourceQuery_WithoutTraits()
     {
-        var foo = TableMock.Create( "foo", areColumnsNullable: false, "a", "b" ).ToRecordSet();
-        var bar = TableMock.Create( "bar", areColumnsNullable: false, "c", "d" ).ToRecordSet( "lorem" );
-        var qux = TableMock.Create( "qux", areColumnsNullable: false, "e", "f" ).ToRecordSet();
+        var foo = CreateTable( string.Empty, "foo", "a", "b" ).ToRecordSet();
+        var bar = CreateTable( string.Empty, "bar", "c", "d" ).ToRecordSet( "lorem" );
+        var qux = CreateTable( string.Empty, "qux", "e", "f" ).ToRecordSet();
+
         var query = foo
             .Join( bar.InnerOn( bar["c"] == foo["a"] ), qux.LeftOn( qux["e"] == foo["b"] ) )
             .Select(
@@ -1535,9 +1622,9 @@ LEFT JOIN ""qux"" ON ""qux"".""e"" = ""foo"".""b""" );
         var cba = SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" );
         var zyx = SqlNode.RawQuery( "SELECT * FROM xyz JOIN cba ON cba.h = xyz.h" ).ToCte( "zyx" );
 
-        var foo = TableMock.Create( "foo", areColumnsNullable: false, "a", "b" ).ToRecordSet();
-        var bar = TableMock.Create( "bar", areColumnsNullable: false, "c", "d" ).ToRecordSet( "lorem" );
-        var qux = TableMock.Create( "qux", areColumnsNullable: false, "e", "f" ).ToRecordSet();
+        var foo = CreateTable( string.Empty, "foo", "a", "b" ).ToRecordSet();
+        var bar = CreateTable( string.Empty, "bar", "c", "d" ).ToRecordSet( "lorem" );
+        var qux = CreateTable( string.Empty, "qux", "e", "f" ).ToRecordSet();
 
         var query = foo
             .Join( bar.InnerOn( bar["c"] == foo["a"] ), qux.LeftOn( qux["e"] == foo["b"] ) )
@@ -1633,7 +1720,7 @@ LIMIT -1 OFFSET 100" );
     public void VisitChild_ShouldInterpretDataSourceQueryWithParentheses()
     {
         _sut.Context.SetParentNode( SqlNode.Null() );
-        var query = TableMock.Create( "foo", areColumnsNullable: false, "a" )
+        var query = CreateTable( string.Empty, "foo", "a" )
             .ToRecordSet()
             .ToDataSource()
             .Select( s => new[] { s.GetAll() } );
@@ -1930,8 +2017,8 @@ SELECT a, b FROM foo" );
     [Fact]
     public void Visit_ShouldInterpretInsertIntoWithDataSourceQuery()
     {
-        var foo = TableMock.Create( "foo", areColumnsNullable: false, "a", "b" ).ToRecordSet();
-        var bar = TableMock.Create( "bar", areColumnsNullable: false, "c", "d" ).ToRecordSet();
+        var foo = CreateTable( string.Empty, "foo", "a", "b" ).ToRecordSet();
+        var bar = CreateTable( string.Empty, "bar", "c", "d" ).ToRecordSet();
 
         var query = foo
             .Join( bar.InnerOn( bar["c"] == foo["a"] ) )
@@ -2036,16 +2123,7 @@ WHERE foo.""a"" IN (
     [Fact]
     public void Visit_ShouldInterpretUpdateWithComplexDataSourceAndTargetTableWithSingleColumnPrimaryKey()
     {
-        var table = TableMock.Create( "foo", areColumnsNullable: false, "a", "b" );
-        var columnBase = table.Columns.Get( "a" );
-        var column = Substitute.For<ISqlIndexColumn>();
-        column.Column.Returns( columnBase );
-        column.Ordering.Returns( OrderBy.Asc );
-        var index = Substitute.For<ISqlIndex>();
-        index.Columns.Returns( new ReadOnlyMemory<ISqlIndexColumn>( new[] { column } ) );
-        var pk = Substitute.For<ISqlPrimaryKey>();
-        pk.Index.Returns( index );
-        table.PrimaryKey.Returns( pk );
+        var table = CreateTable( string.Empty, "foo", new[] { "a", "b" }, "a" );
         var foo = table.ToRecordSet( "f" );
 
         var dataSource = foo
@@ -2089,20 +2167,7 @@ WHERE ""a"" IN (
     [Fact]
     public void Visit_ShouldInterpretUpdateWithComplexDataSourceAndTargetTableWithMultipleColumnPrimaryKey_WithFilter()
     {
-        var table = TableMock.Create( "foo", areColumnsNullable: false, "a", "b" );
-        var columnBase1 = table.Columns.Get( "a" );
-        var columnBase2 = table.Columns.Get( "b" );
-        var column1 = Substitute.For<ISqlIndexColumn>();
-        column1.Column.Returns( columnBase1 );
-        column1.Ordering.Returns( OrderBy.Asc );
-        var column2 = Substitute.For<ISqlIndexColumn>();
-        column2.Column.Returns( columnBase2 );
-        column2.Ordering.Returns( OrderBy.Asc );
-        var index = Substitute.For<ISqlIndex>();
-        index.Columns.Returns( new ReadOnlyMemory<ISqlIndexColumn>( new[] { column1, column2 } ) );
-        var pk = Substitute.For<ISqlPrimaryKey>();
-        pk.Index.Returns( index );
-        table.PrimaryKey.Returns( pk );
+        var table = CreateTable( string.Empty, "foo", "a", "b" );
         var foo = table.ToRecordSet( "f" );
 
         var dataSource = foo
@@ -2146,20 +2211,7 @@ WHERE EXISTS (
     [Fact]
     public void Visit_ShouldInterpretUpdateWithComplexDataSourceAndTargetTableWithMultipleColumnPrimaryKey_WithoutFilter()
     {
-        var table = TableMock.Create( "foo", areColumnsNullable: false, "a", "b" );
-        var columnBase1 = table.Columns.Get( "a" );
-        var columnBase2 = table.Columns.Get( "b" );
-        var column1 = Substitute.For<ISqlIndexColumn>();
-        column1.Column.Returns( columnBase1 );
-        column1.Ordering.Returns( OrderBy.Asc );
-        var column2 = Substitute.For<ISqlIndexColumn>();
-        column2.Column.Returns( columnBase2 );
-        column2.Ordering.Returns( OrderBy.Asc );
-        var index = Substitute.For<ISqlIndex>();
-        index.Columns.Returns( new ReadOnlyMemory<ISqlIndexColumn>( new[] { column1, column2 } ) );
-        var pk = Substitute.For<ISqlPrimaryKey>();
-        pk.Index.Returns( index );
-        table.PrimaryKey.Returns( pk );
+        var table = CreateTable( string.Empty, "foo", "a", "b" );
         var foo = table.ToRecordSet( "f" );
 
         var dataSource = foo
@@ -2211,7 +2263,7 @@ WHERE EXISTS (
     [Fact]
     public void Visit_ShouldThrowSqlNodeVisitorException_WhenUpdateIsComplexAndDataSourceFromIsTableRecordSetWithoutAlias()
     {
-        var foo = TableMock.Create( "foo" ).ToRecordSet();
+        var foo = CreateTable( string.Empty, "foo" ).ToRecordSet();
         var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToUpdate();
         var action = Lambda.Of( () => _sut.Visit( node ) );
 
@@ -2252,16 +2304,7 @@ WHERE foo.""a"" IN (
     [Fact]
     public void Visit_ShouldInterpretDeleteFromWithComplexDataSourceAndTargetTableWithSingleColumnPrimaryKey()
     {
-        var table = TableMock.Create( "foo", areColumnsNullable: false, "a", "b" );
-        var columnBase = table.Columns.Get( "a" );
-        var column = Substitute.For<ISqlIndexColumn>();
-        column.Column.Returns( columnBase );
-        column.Ordering.Returns( OrderBy.Asc );
-        var index = Substitute.For<ISqlIndex>();
-        index.Columns.Returns( new ReadOnlyMemory<ISqlIndexColumn>( new[] { column } ) );
-        var pk = Substitute.For<ISqlPrimaryKey>();
-        pk.Index.Returns( index );
-        table.PrimaryKey.Returns( pk );
+        var table = CreateTable( string.Empty, "foo", new[] { "a", "b" }, "a" );
         var foo = table.ToRecordSet( "f" );
 
         var dataSource = foo
@@ -2301,20 +2344,7 @@ WHERE ""a"" IN (
     [Fact]
     public void Visit_ShouldInterpretDeleteFromWithComplexDataSourceAndTargetTableWithMultipleColumnPrimaryKey_WithFilter()
     {
-        var table = TableMock.Create( "foo", areColumnsNullable: false, "a", "b" );
-        var columnBase1 = table.Columns.Get( "a" );
-        var columnBase2 = table.Columns.Get( "b" );
-        var column1 = Substitute.For<ISqlIndexColumn>();
-        column1.Column.Returns( columnBase1 );
-        column1.Ordering.Returns( OrderBy.Asc );
-        var column2 = Substitute.For<ISqlIndexColumn>();
-        column2.Column.Returns( columnBase2 );
-        column2.Ordering.Returns( OrderBy.Asc );
-        var index = Substitute.For<ISqlIndex>();
-        index.Columns.Returns( new ReadOnlyMemory<ISqlIndexColumn>( new[] { column1, column2 } ) );
-        var pk = Substitute.For<ISqlPrimaryKey>();
-        pk.Index.Returns( index );
-        table.PrimaryKey.Returns( pk );
+        var table = CreateTable( string.Empty, "foo", "a", "b" );
         var foo = table.ToRecordSet( "f" );
 
         var dataSource = foo
@@ -2354,20 +2384,7 @@ WHERE EXISTS (
     [Fact]
     public void Visit_ShouldInterpretDeleteFromWithComplexDataSourceAndTargetTableWithMultipleColumnPrimaryKey_WithoutFilter()
     {
-        var table = TableMock.Create( "foo", areColumnsNullable: false, "a", "b" );
-        var columnBase1 = table.Columns.Get( "a" );
-        var columnBase2 = table.Columns.Get( "b" );
-        var column1 = Substitute.For<ISqlIndexColumn>();
-        column1.Column.Returns( columnBase1 );
-        column1.Ordering.Returns( OrderBy.Asc );
-        var column2 = Substitute.For<ISqlIndexColumn>();
-        column2.Column.Returns( columnBase2 );
-        column2.Ordering.Returns( OrderBy.Asc );
-        var index = Substitute.For<ISqlIndex>();
-        index.Columns.Returns( new ReadOnlyMemory<ISqlIndexColumn>( new[] { column1, column2 } ) );
-        var pk = Substitute.For<ISqlPrimaryKey>();
-        pk.Index.Returns( index );
-        table.PrimaryKey.Returns( pk );
+        var table = CreateTable( string.Empty, "foo", "a", "b" );
         var foo = table.ToRecordSet( "f" );
 
         var dataSource = foo
@@ -2415,7 +2432,7 @@ WHERE EXISTS (
     [Fact]
     public void Visit_ShouldThrowSqlNodeVisitorException_WhenDeleteFromIsComplexAndDataSourceFromIsTableRecordSetWithoutAlias()
     {
-        var foo = TableMock.Create( "foo" ).ToRecordSet();
+        var foo = CreateTable( string.Empty, "foo" ).ToRecordSet();
         var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToDeleteFrom();
         var action = Lambda.Of( () => _sut.Visit( node ) );
 
@@ -2544,6 +2561,67 @@ BEGIN" );
         action.Should()
             .ThrowExactly<UnrecognizedSqlNodeException>()
             .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, _sut ) );
+    }
+
+    [Pure]
+    private static SqliteTableBuilder CreateTableBuilder(string schemaName, string tableName, params string[] columnNames)
+    {
+        return CreateTableBuilder( schemaName, tableName, columnNames, Array.Empty<string>() );
+    }
+
+    [Pure]
+    private static SqliteTableBuilder CreateTableBuilder(
+        string schemaName,
+        string tableName,
+        string[] columnNames,
+        params string[] pkColumnNames)
+    {
+        var db = new SqliteDatabaseBuilder();
+        var schema = db.Schemas.GetOrCreate( schemaName );
+        var table = schema.Objects.CreateTable( tableName );
+
+        if ( columnNames.Length == 0 )
+            columnNames = new[] { "X" };
+
+        foreach ( var c in columnNames )
+            table.Columns.Create( c );
+
+        if ( pkColumnNames.Length == 0 )
+            pkColumnNames = columnNames;
+
+        table.SetPrimaryKey( pkColumnNames.Select( n => table.Columns.Get( n ).Asc() ).ToArray() );
+        return table;
+    }
+
+    [Pure]
+    private static SqliteTable CreateTable(string schemaName, string tableName, params string[] columnNames)
+    {
+        return CreateTable( schemaName, tableName, columnNames, Array.Empty<string>() );
+    }
+
+    [Pure]
+    private static SqliteTable CreateTable(string schemaName, string tableName, string[] columnNames, params string[] pkColumnNames)
+    {
+        var builder = CreateTableBuilder( schemaName, tableName, columnNames, pkColumnNames );
+        var db = new SqliteDatabaseMock( builder.Database );
+        return db.Schemas.Get( schemaName ).Objects.GetTable( tableName );
+    }
+
+    [Pure]
+    private static SqliteViewBuilder CreateViewBuilder(string schemaName, string viewName, SqlQueryExpressionNode? source = null)
+    {
+        var db = new SqliteDatabaseBuilder();
+        var schema = db.Schemas.GetOrCreate( schemaName );
+        var view = schema.Objects.CreateView( viewName, source ?? SqlNode.RawQuery( "SELECT * FROM foo" ) );
+        return view;
+    }
+
+    [Pure]
+    private static SqliteView CreateView(string schemaName, string viewName, SqlQueryExpressionNode? source = null)
+    {
+        var builder = CreateViewBuilder( schemaName, viewName, source );
+        var db = new SqliteDatabaseMock( builder.Database );
+        return db.Schemas.Get( schemaName ).Objects.GetView( viewName );
     }
 
     private sealed class FunctionMock : SqlFunctionExpressionNode

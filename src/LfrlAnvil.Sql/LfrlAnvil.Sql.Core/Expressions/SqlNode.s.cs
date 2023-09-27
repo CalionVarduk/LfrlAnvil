@@ -11,6 +11,7 @@ using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Persistence;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Objects;
+using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.Sql.Expressions;
 
@@ -289,6 +290,24 @@ public static partial class SqlNode
     public static SqlTableRecordSetNode Table(ISqlTable value, string? alias = null)
     {
         return new SqlTableRecordSetNode( value, alias, isOptional: false );
+    }
+
+    [Pure]
+    public static SqlTableBuilderRecordSetNode Table(ISqlTableBuilder value, string? alias = null)
+    {
+        return new SqlTableBuilderRecordSetNode( value, alias, isOptional: false );
+    }
+
+    [Pure]
+    public static SqlViewRecordSetNode View(ISqlView value, string? alias = null)
+    {
+        return new SqlViewRecordSetNode( value, alias, isOptional: false );
+    }
+
+    [Pure]
+    public static SqlViewBuilderRecordSetNode View(ISqlViewBuilder value, string? alias = null)
+    {
+        return new SqlViewBuilderRecordSetNode( value, alias, isOptional: false );
     }
 
     [Pure]

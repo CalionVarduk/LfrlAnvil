@@ -12,9 +12,9 @@ public sealed class SqlSelectRecordSetNode : SqlSelectNode
 
     public SqlRecordSetNode RecordSet { get; }
 
-    internal override void Convert(ISqlSelectNodeConverter converter)
+    internal override void VisitExpressions(ISqlSelectNodeExpressionVisitor visitor)
     {
         foreach ( var field in RecordSet.GetKnownFields() )
-            converter.Add( field.Name, field );
+            visitor.Handle( field.Name, field );
     }
 }

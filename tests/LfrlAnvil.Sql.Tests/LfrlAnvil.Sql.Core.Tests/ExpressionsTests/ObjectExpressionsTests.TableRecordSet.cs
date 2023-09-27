@@ -13,7 +13,7 @@ public partial class ObjectExpressionsTests
         [Fact]
         public void GetKnownFields_ShouldReturnCollectionWithKnownColumns()
         {
-            var table = TableMock.Create( "foo", areColumnsNullable: false, "Col0", "Col1" );
+            var table = TableMock.Create( "foo", ColumnMock.CreateMany<int>( areNullable: false, "Col0", "Col1" ) );
             var sut = SqlNode.Table( table );
 
             var result = sut.GetKnownFields();
@@ -62,7 +62,7 @@ public partial class ObjectExpressionsTests
         [Fact]
         public void GetUnsafeField_ShouldReturnColumnNode_WhenColumnExists()
         {
-            var table = TableMock.Create( "foo", areColumnsNullable: false, "Col0" );
+            var table = TableMock.Create( "foo", ColumnMock.Create<int>( "Col0" ) );
             var sut = SqlNode.Table( table );
             var result = sut.GetUnsafeField( "Col0" );
             var text = result.ToString();
@@ -101,7 +101,7 @@ public partial class ObjectExpressionsTests
         [Fact]
         public void GetField_ShouldReturnColumnNode()
         {
-            var table = TableMock.Create( "foo", areColumnsNullable: false, "Col0" );
+            var table = TableMock.Create( "foo", ColumnMock.Create<int>( "Col0" ) );
             var sut = SqlNode.Table( table );
             var result = sut.GetField( "Col0" );
             var text = result.ToString();
@@ -120,7 +120,7 @@ public partial class ObjectExpressionsTests
         [Fact]
         public void GetField_ShouldReturnColumnNode_WhenColumnIsNullable()
         {
-            var table = TableMock.Create( "foo", areColumnsNullable: true, "Col0" );
+            var table = TableMock.Create( "foo", ColumnMock.Create<int>( "Col0", isNullable: true ) );
             var sut = SqlNode.Table( table );
             var result = sut.GetField( "Col0" );
             var text = result.ToString();
@@ -139,7 +139,7 @@ public partial class ObjectExpressionsTests
         [Fact]
         public void GetField_ShouldReturnColumnNode_WithNullableType_WhenTableIsOptional()
         {
-            var table = TableMock.Create( "foo", areColumnsNullable: false, "Col0" );
+            var table = TableMock.Create( "foo", ColumnMock.Create<int>( "Col0" ) );
             var sut = SqlNode.Table( table ).MarkAsOptional();
             var result = sut.GetField( "Col0" );
             var text = result.ToString();
@@ -158,7 +158,7 @@ public partial class ObjectExpressionsTests
         [Fact]
         public void GetField_ShouldReturnColumnNode_WithAlias()
         {
-            var table = TableMock.Create( "foo", areColumnsNullable: false, "Col0" );
+            var table = TableMock.Create( "foo", ColumnMock.Create<int>( "Col0" ) );
             var sut = SqlNode.Table( table, "bar" );
             var result = sut.GetField( "Col0" );
             var text = result.ToString();
@@ -177,7 +177,7 @@ public partial class ObjectExpressionsTests
         [Fact]
         public void GetField_ShouldThrowKeyNotFoundException_WhenColumnDoesNotExist()
         {
-            var table = TableMock.Create( "foo", areColumnsNullable: false, "Col0" );
+            var table = TableMock.Create( "foo", ColumnMock.Create<int>( "Col0" ) );
             var sut = SqlNode.Table( table );
 
             var action = Lambda.Of( () => sut.GetField( "Col1" ) );
@@ -188,7 +188,7 @@ public partial class ObjectExpressionsTests
         [Fact]
         public void Indexer_ShouldBeEquivalentToGetField()
         {
-            var table = TableMock.Create( "foo", areColumnsNullable: false, "Col0" );
+            var table = TableMock.Create( "foo", ColumnMock.Create<int>( "Col0" ) );
             var sut = SqlNode.Table( table, "bar" );
 
             var result = sut["Col0"];

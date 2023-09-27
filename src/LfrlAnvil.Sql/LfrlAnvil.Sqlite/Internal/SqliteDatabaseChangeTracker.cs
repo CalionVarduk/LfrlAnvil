@@ -8,6 +8,7 @@ using System.Text;
 using LfrlAnvil.Exceptions;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Objects.Builders;
 using ExceptionResources = LfrlAnvil.Sql.Exceptions.ExceptionResources;
@@ -19,6 +20,7 @@ internal sealed class SqliteDatabaseChangeTracker
     private const byte IsDetachedBit = 1 << 0;
     private const byte ModeMask = (1 << 8) - 2;
 
+    private readonly SqliteDatabaseBuilder _database;
     private readonly List<string> _pendingStatements;
     private readonly List<SqliteDatabasePropertyChange> _ongoing;
     private readonly StringBuilder _ongoingStatement;
@@ -26,18 +28,19 @@ internal sealed class SqliteDatabaseChangeTracker
     private SqliteAlterTableBuffer? _alterTableBuffer;
     private byte _mode;
 
-    internal SqliteDatabaseChangeTracker()
+    internal SqliteDatabaseChangeTracker(SqliteDatabaseBuilder database)
     {
+        _database = database;
         _pendingStatements = new List<string>();
         _ongoing = new List<SqliteDatabasePropertyChange>();
         _ongoingStatement = new StringBuilder();
         _modifiedTables = new Dictionary<ulong, SqliteTableBuilder>();
         _alterTableBuffer = null;
-        CurrentTable = null;
+        CurrentObject = null;
         _mode = (byte)SqlDatabaseCreateMode.DryRun << 1;
     }
 
-    internal SqliteTableBuilder? CurrentTable { get; private set; }
+    internal SqliteObjectBuilder? CurrentObject { get; private set; }
     internal SqlDatabaseCreateMode Mode => (SqlDatabaseCreateMode)((_mode & ModeMask) >> 1);
     internal bool IsAttached => (_mode & IsDetachedBit) == 0;
     internal bool IsPreparingStatements => _mode > 0 && IsAttached;
@@ -85,7 +88,7 @@ internal sealed class SqliteDatabaseChangeTracker
 
     internal void ClearStatements()
     {
-        CurrentTable = null;
+        CurrentObject = null;
         _modifiedTables.Clear();
         _ongoing.Clear();
         _pendingStatements.Clear();
@@ -93,32 +96,22 @@ internal sealed class SqliteDatabaseChangeTracker
 
     internal void ObjectCreated(SqliteTableBuilder table, SqliteObjectBuilder obj)
     {
-        if ( ! IsPreparingStatements )
-            return;
+        ObjectCreated( (SqliteObjectBuilder)table, obj );
+    }
 
-        var change = new SqliteDatabasePropertyChange(
-            obj,
-            SqliteObjectChangeDescriptor.Exists,
-            SqliteObjectStatus.Created,
-            Boxed.False,
-            Boxed.True );
-
-        AddChange( table, change );
+    internal void ObjectCreated(SqliteViewBuilder view)
+    {
+        ObjectCreated( view, view );
     }
 
     internal void ObjectRemoved(SqliteTableBuilder table, SqliteObjectBuilder obj)
     {
-        if ( ! IsPreparingStatements )
-            return;
+        ObjectRemoved( (SqliteObjectBuilder)table, obj );
+    }
 
-        var change = new SqliteDatabasePropertyChange(
-            obj,
-            SqliteObjectChangeDescriptor.Exists,
-            SqliteObjectStatus.Removed,
-            Boxed.True,
-            Boxed.False );
-
-        AddChange( table, change );
+    internal void ObjectRemoved(SqliteViewBuilder view)
+    {
+        ObjectRemoved( view, view );
     }
 
     internal void NameUpdated(SqliteTableBuilder table, SqliteObjectBuilder obj, string oldValue)
@@ -138,17 +131,12 @@ internal sealed class SqliteDatabaseChangeTracker
 
     internal void FullNameUpdated(SqliteTableBuilder table, SqliteObjectBuilder obj, string oldValue)
     {
-        if ( ! IsPreparingStatements )
-            return;
+        FullNameUpdated( (SqliteObjectBuilder)table, obj, oldValue );
+    }
 
-        var change = new SqliteDatabasePropertyChange(
-            obj,
-            SqliteObjectChangeDescriptor.Name,
-            SqliteObjectStatus.Modified,
-            oldValue,
-            obj.FullName );
-
-        AddChange( table, change );
+    internal void FullNameUpdated(SqliteViewBuilder view, string oldValue)
+    {
+        FullNameUpdated( view, view, oldValue );
     }
 
     internal void TypeDefinitionUpdated(SqliteColumnBuilder column, SqliteColumnTypeDefinition oldValue)
@@ -286,16 +274,61 @@ internal sealed class SqliteDatabaseChangeTracker
         AddChange( table, change );
     }
 
-    private void AddChange(SqliteTableBuilder table, SqliteDatabasePropertyChange change)
+    private void ObjectCreated(SqliteObjectBuilder owner, SqliteObjectBuilder obj)
+    {
+        if ( ! IsPreparingStatements )
+            return;
+
+        var change = new SqliteDatabasePropertyChange(
+            obj,
+            SqliteObjectChangeDescriptor.Exists,
+            SqliteObjectStatus.Created,
+            Boxed.False,
+            Boxed.True );
+
+        AddChange( owner, change );
+    }
+
+    private void ObjectRemoved(SqliteObjectBuilder owner, SqliteObjectBuilder obj)
+    {
+        if ( ! IsPreparingStatements )
+            return;
+
+        var change = new SqliteDatabasePropertyChange(
+            obj,
+            SqliteObjectChangeDescriptor.Exists,
+            SqliteObjectStatus.Removed,
+            Boxed.True,
+            Boxed.False );
+
+        AddChange( owner, change );
+    }
+
+    private void FullNameUpdated(SqliteObjectBuilder owner, SqliteObjectBuilder obj, string oldValue)
+    {
+        if ( ! IsPreparingStatements )
+            return;
+
+        var change = new SqliteDatabasePropertyChange(
+            obj,
+            SqliteObjectChangeDescriptor.Name,
+            SqliteObjectStatus.Modified,
+            oldValue,
+            obj.FullName );
+
+        AddChange( owner, change );
+    }
+
+    private void AddChange(SqliteObjectBuilder obj, SqliteDatabasePropertyChange change)
     {
         Assume.Equals( IsPreparingStatements, true, nameof( IsPreparingStatements ) );
 
-        if ( ! ReferenceEquals( CurrentTable, table ) )
+        if ( ! ReferenceEquals( CurrentObject, obj ) )
         {
-            if ( CurrentTable is not null )
+            if ( CurrentObject is not null )
                 CompletePendingStatement();
 
-            CurrentTable = table;
+            CurrentObject = obj;
         }
 
         _ongoing.Add( change );
@@ -303,78 +336,111 @@ internal sealed class SqliteDatabaseChangeTracker
 
     private void CompletePendingStatement()
     {
-        Assume.IsNotNull( CurrentTable, nameof( CurrentTable ) );
+        Assume.IsNotNull( CurrentObject, nameof( CurrentObject ) );
         Assume.ContainsAtLeast( _ongoing, 1, nameof( _ongoing ) );
 
         var changes = CollectionsMarshal.AsSpan( _ongoing );
         var firstChange = changes[0];
         var lastChange = changes[^1];
 
-        if ( firstChange.Status == SqliteObjectStatus.Created && ReferenceEquals( firstChange.Object, CurrentTable ) )
+        if ( firstChange.Status == SqliteObjectStatus.Created && ReferenceEquals( firstChange.Object, CurrentObject ) )
         {
-            if ( lastChange.Status != SqliteObjectStatus.Removed || ! ReferenceEquals( lastChange.Object, CurrentTable ) )
-                CompletePendingCreateTableStatement();
+            if ( lastChange.Status != SqliteObjectStatus.Removed || ! ReferenceEquals( lastChange.Object, CurrentObject ) )
+                CompletePendingCreateObjectStatement();
         }
-        else if ( lastChange.Status == SqliteObjectStatus.Removed && ReferenceEquals( lastChange.Object, CurrentTable ) )
-            CompletePendingDropTableStatement();
+        else if ( lastChange.Status == SqliteObjectStatus.Removed && ReferenceEquals( lastChange.Object, CurrentObject ) )
+            CompletePendingDropObjectStatement();
         else
-            CompletePendingAlterTableStatement( changes );
+            CompletePendingAlterObjectStatement( changes );
 
         _ongoing.Clear();
         if ( _ongoingStatement.Length > 0 )
         {
-            if ( CurrentTable.IsRemoved )
-                _modifiedTables.Remove( CurrentTable.Id );
-            else
-                _modifiedTables.TryAdd( CurrentTable.Id, CurrentTable );
+            if ( CurrentObject.Type == SqlObjectType.Table )
+            {
+                if ( CurrentObject.IsRemoved )
+                    _modifiedTables.Remove( CurrentObject.Id );
+                else
+                    _modifiedTables.TryAdd( CurrentObject.Id, ReinterpretCast.To<SqliteTableBuilder>( CurrentObject ) );
+            }
 
             _pendingStatements.Add( _ongoingStatement.AppendLine().ToString() );
             _ongoingStatement.Clear();
         }
 
-        CurrentTable = null;
+        CurrentObject = null;
     }
 
-    private void CompletePendingCreateTableStatement()
+    private void CompletePendingCreateObjectStatement()
     {
-        Assume.IsNotNull( CurrentTable, nameof( CurrentTable ) );
-        ValidateTable( CurrentTable );
+        Assume.IsNotNull( CurrentObject, nameof( CurrentObject ) );
 
-        AppendCreateTable( _ongoingStatement, CurrentTable );
-        AppendCreateIndexCollection( _ongoingStatement, CurrentTable.Indexes );
-    }
-
-    private void CompletePendingDropTableStatement()
-    {
-        Assume.IsNotNull( CurrentTable, nameof( CurrentTable ) );
-        _ongoingStatement.AppendDropTable( CurrentTable.FullName );
-    }
-
-    private void CompletePendingAlterTableStatement(ReadOnlySpan<SqliteDatabasePropertyChange> changes)
-    {
-        Assume.IsNotNull( CurrentTable, nameof( CurrentTable ) );
-
-        _alterTableBuffer ??= new SqliteAlterTableBuffer();
-        var (hasChanged, requiresReconstruction, isTableRenamed) = _alterTableBuffer.ParseChanges( CurrentTable, changes );
-
-        if ( hasChanged )
+        if ( CurrentObject.Type == SqlObjectType.Table )
         {
-            ValidateTable( CurrentTable );
+            var currentTable = ReinterpretCast.To<SqliteTableBuilder>( CurrentObject );
+            ValidateTable( currentTable );
+            AppendCreateTable( _ongoingStatement, currentTable );
+            AppendCreateIndexCollection( _ongoingStatement, currentTable.Indexes );
+        }
+        else
+        {
+            var currentView = ReinterpretCast.To<SqliteViewBuilder>( CurrentObject );
+            AppendCreateView( _ongoingStatement, currentView, _database.NodeInterpreterFactory );
+        }
+    }
 
-            if ( isTableRenamed )
+    private void CompletePendingDropObjectStatement()
+    {
+        Assume.IsNotNull( CurrentObject, nameof( CurrentObject ) );
+
+        var oldFullName = TryFindOldFullNameForCurrentObject();
+
+        if ( CurrentObject.Type == SqlObjectType.Table )
+            _ongoingStatement.AppendDropTable( oldFullName ?? CurrentObject.FullName );
+        else
+            _ongoingStatement.AppendDropView( oldFullName ?? CurrentObject.FullName );
+    }
+
+    private void CompletePendingAlterObjectStatement(ReadOnlySpan<SqliteDatabasePropertyChange> changes)
+    {
+        Assume.IsNotNull( CurrentObject, nameof( CurrentObject ) );
+
+        if ( CurrentObject.Type == SqlObjectType.Table )
+        {
+            var currentTable = ReinterpretCast.To<SqliteTableBuilder>( CurrentObject );
+            _alterTableBuffer ??= new SqliteAlterTableBuffer();
+            var (hasChanged, requiresReconstruction, isTableRenamed) = _alterTableBuffer.ParseChanges( currentTable, changes );
+
+            if ( hasChanged )
             {
-                var oldName = _alterTableBuffer.TryGetOldName( CurrentTable.Id );
-                Assume.IsNotNull( oldName, nameof( oldName ) );
-                _ongoingStatement.AppendRenameTable( oldName, CurrentTable.FullName );
+                ValidateTable( currentTable );
+
+                if ( isTableRenamed )
+                {
+                    var oldName = _alterTableBuffer.TryGetOldName( CurrentObject.Id );
+                    Assume.IsNotNull( oldName, nameof( oldName ) );
+                    _ongoingStatement.AppendRenameTable( oldName, CurrentObject.FullName );
+                }
+
+                if ( requiresReconstruction )
+                    AppendReconstructTable( _ongoingStatement, currentTable, _alterTableBuffer );
+                else
+                    AppendAlterTableWithoutReconstruction( _ongoingStatement, currentTable, _alterTableBuffer );
             }
 
-            if ( requiresReconstruction )
-                AppendReconstructTable( _ongoingStatement, CurrentTable, _alterTableBuffer );
-            else
-                AppendAlterTableWithoutReconstruction( _ongoingStatement, CurrentTable, _alterTableBuffer );
+            _alterTableBuffer.Clear();
         }
+        else
+        {
+            var currentView = ReinterpretCast.To<SqliteViewBuilder>( CurrentObject );
+            var oldFullViewName = TryFindOldFullNameForCurrentObject();
 
-        _alterTableBuffer.Clear();
+            if ( oldFullViewName is null || oldFullViewName.Equals( currentView.FullName ) )
+                return;
+
+            _ongoingStatement.AppendDropView( oldFullViewName ).AppendLine().AppendLine();
+            AppendCreateView( _ongoingStatement, currentView, _database.NodeInterpreterFactory );
+        }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -644,6 +710,27 @@ internal sealed class SqliteDatabaseChangeTracker
             if ( index.PrimaryKey is null )
                 AppendCreateIndex( builder.AppendLine(), index );
         }
+    }
+
+    private static void AppendCreateView(StringBuilder builder, SqliteViewBuilder view, SqliteNodeInterpreterFactory nodeInterpreterFactory)
+    {
+        builder.AppendCreateViewBegin( view.FullName );
+
+        var interpreter = nodeInterpreterFactory.Create( SqlNodeInterpreterContext.Create( builder ) );
+        interpreter.Visit( view.Source );
+        builder.AppendCommandEnd();
+    }
+
+    [Pure]
+    private string? TryFindOldFullNameForCurrentObject()
+    {
+        foreach ( var change in CollectionsMarshal.AsSpan( _ongoing ) )
+        {
+            if ( ReferenceEquals( CurrentObject, change.Object ) && change.Descriptor == SqliteObjectChangeDescriptor.Name )
+                return ReinterpretCast.To<string>( change.OldValue );
+        }
+
+        return null;
     }
 
     [Pure]

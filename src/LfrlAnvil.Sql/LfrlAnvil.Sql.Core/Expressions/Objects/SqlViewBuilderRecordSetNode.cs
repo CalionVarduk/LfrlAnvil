@@ -1,0 +1,114 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
+using LfrlAnvil.Sql.Exceptions;
+using LfrlAnvil.Sql.Objects.Builders;
+
+namespace LfrlAnvil.Sql.Expressions.Objects;
+
+public sealed class SqlViewBuilderRecordSetNode : SqlRecordSetNode
+{
+    private readonly string? _alias;
+    private readonly FieldCollection _fields;
+
+    internal SqlViewBuilderRecordSetNode(ISqlViewBuilder view, string? alias, bool isOptional)
+        : base( SqlNodeType.ViewBuilderRecordSet, isOptional )
+    {
+        View = view;
+        _alias = alias;
+        IsAliased = _alias is not null;
+        _fields = new FieldCollection( this );
+    }
+
+    public ISqlViewBuilder View { get; }
+    public override bool IsAliased { get; }
+    public override string Name => _alias ?? View.FullName;
+    public new SqlQueryDataFieldNode this[string fieldName] => GetField( fieldName );
+
+    [Pure]
+    public override IReadOnlyCollection<SqlQueryDataFieldNode> GetKnownFields()
+    {
+        return _fields;
+    }
+
+    [Pure]
+    public override SqlViewBuilderRecordSetNode As(string alias)
+    {
+        return new SqlViewBuilderRecordSetNode( View, alias, IsOptional );
+    }
+
+    [Pure]
+    public override SqlViewBuilderRecordSetNode AsSelf()
+    {
+        return new SqlViewBuilderRecordSetNode( View, alias: null, IsOptional );
+    }
+
+    [Pure]
+    public override SqlDataFieldNode GetUnsafeField(string name)
+    {
+        return (SqlDataFieldNode?)_fields.TryGet( name ) ?? new SqlRawDataFieldNode( this, name, type: null );
+    }
+
+    [Pure]
+    public override SqlQueryDataFieldNode GetField(string name)
+    {
+        return _fields.Get( name );
+    }
+
+    [Pure]
+    public override SqlViewBuilderRecordSetNode MarkAsOptional(bool optional = true)
+    {
+        return IsOptional != optional
+            ? new SqlViewBuilderRecordSetNode( View, IsAliased ? Name : null, isOptional: optional )
+            : this;
+    }
+
+    private sealed class FieldCollection : IReadOnlyCollection<SqlQueryDataFieldNode>
+    {
+        private readonly SqlViewBuilderRecordSetNode _owner;
+
+        internal FieldCollection(SqlViewBuilderRecordSetNode owner)
+        {
+            _owner = owner;
+        }
+
+        public int Count => _owner.View.Source.ExtractKnownDataFieldCount();
+
+        [Pure]
+        public IEnumerator<SqlQueryDataFieldNode> GetEnumerator()
+        {
+            return _owner.View.Source.ExtractKnownDataFields( _owner ).Values.GetEnumerator();
+        }
+
+        [Pure]
+        internal SqlQueryDataFieldNode Get(string name)
+        {
+            var info = _owner.View.Source.TryFindKnownDataFieldInfo( name );
+            if ( info is null )
+                throw new KeyNotFoundException( ExceptionResources.FieldDoesNotExist( name ) );
+
+            return GetNode( name, info.Value );
+        }
+
+        [Pure]
+        internal SqlQueryDataFieldNode? TryGet(string name)
+        {
+            var info = _owner.View.Source.TryFindKnownDataFieldInfo( name );
+            return info is not null ? GetNode( name, info.Value ) : null;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private SqlQueryDataFieldNode GetNode(string name, SqlQueryExpressionNode.KnownDataFieldInfo info)
+        {
+            return new SqlQueryDataFieldNode( _owner, name, info.Selection, info.Expression );
+        }
+
+        [Pure]
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+    }
+}

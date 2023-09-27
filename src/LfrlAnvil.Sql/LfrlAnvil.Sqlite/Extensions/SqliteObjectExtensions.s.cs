@@ -95,6 +95,11 @@ public static class SqliteObjectExtensions
         return ForSqliteImpl( builder, action );
     }
 
+    public static ISqlViewBuilder ForSqlite(this ISqlViewBuilder builder, Action<SqliteViewBuilder> action)
+    {
+        return ForSqliteImpl( builder, action );
+    }
+
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static T ForSqliteImpl<T, TImpl>(T builder, Action<TImpl> action)
         where T : class

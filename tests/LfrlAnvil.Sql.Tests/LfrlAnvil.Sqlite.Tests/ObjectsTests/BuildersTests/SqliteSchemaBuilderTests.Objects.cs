@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Extensions;
@@ -29,6 +30,7 @@ public partial class SqliteSchemaBuilderTests
                 result.FullName.Should().Be( $"foo_{name}" );
                 result.PrimaryKey.Should().BeNull();
                 result.Database.Should().BeSameAs( db );
+                result.ReferencingViews.Should().BeEmpty();
                 result.Type.Should().Be( SqlObjectType.Table );
                 sut.Count.Should().Be( 1 );
                 sut.Should().BeEquivalentTo( result );
@@ -112,6 +114,7 @@ public partial class SqliteSchemaBuilderTests
                 result.FullName.Should().Be( $"foo_{name}" );
                 result.PrimaryKey.Should().BeNull();
                 result.Database.Should().BeSameAs( db );
+                result.ReferencingViews.Should().BeEmpty();
                 result.Type.Should().Be( SqlObjectType.Table );
                 sut.Count.Should().Be( 1 );
                 sut.Should().BeEquivalentTo( result );
@@ -200,11 +203,141 @@ public partial class SqliteSchemaBuilderTests
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
+        [Fact]
+        public void CreateView_ShouldCreateNewViewWithTableReference()
+        {
+            var name = Fixture.Create<string>();
+            var db = new SqliteDatabaseBuilder();
+            var sut = db.Schemas.Create( "foo" ).Objects;
+
+            var table = sut.CreateTable( "T" );
+            var column = table.Columns.Create( "C" );
+            var pk = table.SetPrimaryKey( column.Asc() );
+
+            var source = table.ToRecordSet().ToDataSource().Select( s => new[] { s.From["C"].AsSelf() } );
+            var result = ((ISqlObjectBuilderCollection)sut).CreateView( name, source );
+
+            using ( new AssertionScope() )
+            {
+                result.Schema.Should().BeSameAs( sut.Schema );
+                result.Name.Should().Be( name );
+                result.FullName.Should().Be( $"foo_{name}" );
+                result.Database.Should().BeSameAs( db );
+                result.Source.Should().BeSameAs( source );
+                result.ReferencingViews.Should().BeEmpty();
+                result.ReferencedObjects.Should().HaveCount( 2 );
+                result.ReferencedObjects.Should().BeEquivalentTo( table, column );
+                result.Type.Should().Be( SqlObjectType.View );
+                sut.Count.Should().Be( 4 );
+                sut.Should().BeEquivalentTo( table, pk, pk.Index, result );
+
+                table.ReferencingViews.Should().HaveCount( 1 );
+                table.ReferencingViews.Should().BeEquivalentTo( result );
+
+                column.ReferencingViews.Should().HaveCount( 1 );
+                column.ReferencingViews.Should().BeEquivalentTo( result );
+            }
+        }
+
+        [Fact]
+        public void CreateView_ShouldCreateNewViewWithOtherViewReference()
+        {
+            var name = Fixture.Create<string>();
+            var db = new SqliteDatabaseBuilder();
+            var sut = db.Schemas.Create( "foo" ).Objects;
+            var view = sut.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
+
+            var source = view.ToRecordSet().ToDataSource().Select( s => new[] { s.GetAll() } );
+            var result = ((ISqlObjectBuilderCollection)sut).CreateView( name, source );
+
+            using ( new AssertionScope() )
+            {
+                result.Schema.Should().BeSameAs( sut.Schema );
+                result.Name.Should().Be( name );
+                result.FullName.Should().Be( $"foo_{name}" );
+                result.Database.Should().BeSameAs( db );
+                result.Source.Should().BeSameAs( source );
+                result.ReferencingViews.Should().BeEmpty();
+                result.ReferencedObjects.Should().HaveCount( 1 );
+                result.ReferencedObjects.Should().BeEquivalentTo( view );
+                result.Type.Should().Be( SqlObjectType.View );
+                sut.Count.Should().Be( 2 );
+                sut.Should().BeEquivalentTo( view, result );
+
+                view.ReferencingViews.Should().HaveCount( 1 );
+                view.ReferencingViews.Should().BeEquivalentTo( result );
+            }
+        }
+
+        [Fact]
+        public void CreateView_ShouldThrowSqliteObjectBuilderException_WhenSourceIsNotValid()
+        {
+            var name = Fixture.Create<string>();
+            var db = new SqliteDatabaseBuilder();
+            var sut = db.Schemas.Create( "foo" ).Objects;
+
+            var source = SqlNode.RawQuery( "SELECT * FROM foo WHERE a > @a", SqlNode.Parameter<int>( "a" ) );
+            var action = Lambda.Of( () => ((ISqlObjectBuilderCollection)sut).CreateView( name, source ) );
+
+            action.Should()
+                .ThrowExactly<SqliteObjectBuilderException>()
+                .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+        }
+
+        [Theory]
+        [InlineData( "" )]
+        [InlineData( " " )]
+        [InlineData( "\"" )]
+        [InlineData( "'" )]
+        [InlineData( "f\"oo" )]
+        public void CreateView_ShouldThrowSqliteObjectBuilderException_WhenNameIsInvalid(string name)
+        {
+            var db = new SqliteDatabaseBuilder();
+            var sut = db.Schemas.Create( "foo" ).Objects;
+
+            var action = Lambda.Of( () => sut.CreateView( name, SqlNode.RawQuery( "SELECT * FROM foo" ) ) );
+
+            action.Should()
+                .ThrowExactly<SqliteObjectBuilderException>()
+                .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+        }
+
+        [Fact]
+        public void CreateView_ShouldThrowSqliteObjectBuilderException_WhenViewWithNameAlreadyExists()
+        {
+            var name = Fixture.Create<string>();
+            var db = new SqliteDatabaseBuilder();
+            var sut = db.Schemas.Create( "foo" ).Objects;
+            sut.CreateView( name, SqlNode.RawQuery( "SELECT * FROM foo" ) );
+
+            var action = Lambda.Of( () => sut.CreateView( name, SqlNode.RawQuery( "SELECT * FROM foo" ) ) );
+
+            action.Should()
+                .ThrowExactly<SqliteObjectBuilderException>()
+                .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+        }
+
+        [Fact]
+        public void CreateView_ShouldThrowSqliteObjectBuilderException_WhenSchemaIsRemoved()
+        {
+            var name = Fixture.Create<string>();
+            var db = new SqliteDatabaseBuilder();
+            var sut = db.Schemas.Create( "foo" ).Objects;
+            sut.Schema.Remove();
+
+            var action = Lambda.Of( () => sut.CreateView( name, SqlNode.RawQuery( "SELECT * FROM foo" ) ) );
+
+            action.Should()
+                .ThrowExactly<SqliteObjectBuilderException>()
+                .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+        }
+
         [Theory]
         [InlineData( "foo", false )]
         [InlineData( "T", true )]
         [InlineData( "PK", true )]
         [InlineData( "IX", true )]
+        [InlineData( "V", true )]
         public void Contains_ShouldReturnTrue_WhenObjectExists(string name, bool expected)
         {
             var db = new SqliteDatabaseBuilder();
@@ -212,6 +345,7 @@ public partial class SqliteSchemaBuilderTests
             var t = sut.CreateTable( "T" );
             var c = t.Columns.Create( "C" );
             t.SetPrimaryKey( c.Asc() ).SetName( "PK" ).Index.SetName( "IX" );
+            sut.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
 
             var result = sut.Contains( name );
 
@@ -671,6 +805,99 @@ public partial class SqliteSchemaBuilderTests
         }
 
         [Fact]
+        public void GetView_ShouldReturnExistingView()
+        {
+            var name = Fixture.Create<string>();
+            var db = new SqliteDatabaseBuilder();
+            var sut = db.Schemas.Create( "foo" ).Objects;
+            var expected = sut.CreateView( name, SqlNode.RawQuery( "SELECT * FROM foo" ) );
+
+            var result = sut.GetView( name );
+
+            result.Should().BeSameAs( expected );
+        }
+
+        [Fact]
+        public void GetView_ShouldThrowKeyNotFoundException_WhenObjectDoesNotExist()
+        {
+            var name = Fixture.Create<string>();
+            var db = new SqliteDatabaseBuilder();
+            var sut = db.Schemas.Create( "foo" ).Objects;
+
+            var action = Lambda.Of( () => sut.GetView( name ) );
+
+            action.Should().ThrowExactly<KeyNotFoundException>();
+        }
+
+        [Fact]
+        public void GetView_ShouldThrowSqliteObjectCastException_WhenObjectExistsButNotAsView()
+        {
+            var name = Fixture.Create<string>();
+            var db = new SqliteDatabaseBuilder();
+            var sut = db.Schemas.Create( "foo" ).Objects;
+            sut.CreateTable( name );
+
+            var action = Lambda.Of( () => sut.GetView( name ) );
+
+            action.Should()
+                .ThrowExactly<SqliteObjectCastException>()
+                .AndMatch(
+                    e => e.Dialect == SqliteDialect.Instance &&
+                        e.Expected == typeof( SqliteViewBuilder ) &&
+                        e.Actual == typeof( SqliteTableBuilder ) );
+        }
+
+        [Fact]
+        public void TryGetView_ShouldReturnExistingView()
+        {
+            var name = Fixture.Create<string>();
+            var db = new SqliteDatabaseBuilder();
+            var sut = db.Schemas.Create( "foo" ).Objects;
+            var expected = sut.CreateView( name, SqlNode.RawQuery( "SELECT * FROM foo" ) );
+
+            var result = sut.TryGetView( name, out var outResult );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeTrue();
+                outResult.Should().BeSameAs( expected );
+            }
+        }
+
+        [Fact]
+        public void TryGetView_ShouldReturnFalse_WhenObjectDoesNotExist()
+        {
+            var name = Fixture.Create<string>();
+            var db = new SqliteDatabaseBuilder();
+            var sut = db.Schemas.Create( "foo" ).Objects;
+
+            var result = sut.TryGetView( name, out var outResult );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeFalse();
+                outResult.Should().BeNull();
+            }
+        }
+
+        [Fact]
+        public void TryGetView_ShouldReturnFalse_WhenObjectExistsButNotAsView()
+        {
+            var name = Fixture.Create<string>();
+            var db = new SqliteDatabaseBuilder();
+            var sut = db.Schemas.Create( "foo" ).Objects;
+            sut.CreateTable( name );
+
+            var result = sut.TryGetView( name, out var outResult );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeFalse();
+                outResult.Should().BeNull();
+            }
+        }
+
+        [Fact]
         public void Remove_ShouldRemoveExistingEmptyTable()
         {
             var db = new SqliteDatabaseBuilder();
@@ -716,7 +943,7 @@ public partial class SqliteSchemaBuilderTests
         }
 
         [Fact]
-        public void Remove_ShouldReturnFalse_WhenTableToRemoveHasExternalReferences()
+        public void Remove_ShouldReturnFalse_WhenTableToRemoveHasReferencingForeignKeys()
         {
             var db = new SqliteDatabaseBuilder();
             var sut = db.Schemas.Create( "foo" ).Objects;
@@ -736,6 +963,31 @@ public partial class SqliteSchemaBuilderTests
                 result.Should().BeFalse();
                 sut.Count.Should().Be( 7 );
                 sut.Should().BeEquivalentTo( table, pk, pk.Index, otherTable, otherPk, otherPk.Index, fk );
+                table.IsRemoved.Should().BeFalse();
+                column.IsRemoved.Should().BeFalse();
+                pk.IsRemoved.Should().BeFalse();
+                pk.Index.IsRemoved.Should().BeFalse();
+            }
+        }
+
+        [Fact]
+        public void Remove_ShouldReturnFalse_WhenTableToRemoveHasReferencingViews()
+        {
+            var db = new SqliteDatabaseBuilder();
+            var sut = db.Schemas.Create( "foo" ).Objects;
+            var table = sut.CreateTable( "T" );
+            var column = table.Columns.Create( "C" );
+            var pk = table.SetPrimaryKey( column.Asc() );
+
+            var view = sut.CreateView( "V", table.ToRecordSet().ToDataSource().Select( s => new[] { s.GetAll() } ) );
+
+            var result = sut.Remove( table.Name );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeFalse();
+                sut.Count.Should().Be( 4 );
+                sut.Should().BeEquivalentTo( table, pk, pk.Index, view );
                 table.IsRemoved.Should().BeFalse();
                 column.IsRemoved.Should().BeFalse();
                 pk.IsRemoved.Should().BeFalse();
@@ -862,6 +1114,43 @@ public partial class SqliteSchemaBuilderTests
                 sut.Count.Should().Be( 6 );
                 sut.Should().BeEquivalentTo( table, pk, pk.Index, otherTable, otherPk, otherPk.Index );
                 fk.IsRemoved.Should().BeTrue();
+            }
+        }
+
+        [Fact]
+        public void Remove_ShouldRemoveExistingView()
+        {
+            var db = new SqliteDatabaseBuilder();
+            var sut = db.Schemas.Create( "foo" ).Objects;
+            var view = sut.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
+
+            var result = sut.Remove( view.Name );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeTrue();
+                sut.Count.Should().Be( 0 );
+                sut.Should().BeEmpty();
+                view.IsRemoved.Should().BeTrue();
+            }
+        }
+
+        [Fact]
+        public void Remove_ShouldReturnFalse_WhenViewToRemoveHasReferencingViews()
+        {
+            var db = new SqliteDatabaseBuilder();
+            var sut = db.Schemas.Create( "foo" ).Objects;
+            var view = sut.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
+            var otherView = sut.CreateView( "W", view.ToRecordSet().ToDataSource().Select( s => new[] { s.GetAll() } ) );
+
+            var result = sut.Remove( view.Name );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeFalse();
+                sut.Count.Should().Be( 2 );
+                sut.Should().BeEquivalentTo( view, otherView );
+                view.IsRemoved.Should().BeFalse();
             }
         }
 
@@ -1008,6 +1297,36 @@ public partial class SqliteSchemaBuilderTests
             using ( new AssertionScope() )
             {
                 result.Should().Be( sut.TryGetForeignKey( name, out var outExpected ) );
+                outResult.Should().BeSameAs( outExpected );
+            }
+        }
+
+        [Fact]
+        public void ISqlObjectBuilderCollection_GetView_ShouldBeEquivalentToGetView()
+        {
+            var name = Fixture.Create<string>();
+            var db = new SqliteDatabaseBuilder();
+            var sut = db.Schemas.Create( "foo" ).Objects;
+            sut.CreateView( name, SqlNode.RawQuery( "SELECT * FROM foo" ) );
+
+            var result = ((ISqlObjectBuilderCollection)sut).GetView( name );
+
+            result.Should().BeSameAs( sut.GetView( name ) );
+        }
+
+        [Fact]
+        public void ISqlObjectBuilderCollection_TryGetView_ShouldBeEquivalentToTryGetView()
+        {
+            var name = Fixture.Create<string>();
+            var db = new SqliteDatabaseBuilder();
+            var sut = db.Schemas.Create( "foo" ).Objects;
+            sut.CreateView( name, SqlNode.RawQuery( "SELECT * FROM foo" ) );
+
+            var result = ((ISqlObjectBuilderCollection)sut).TryGetView( name, out var outResult );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().Be( sut.TryGetView( name, out var outExpected ) );
                 outResult.Should().BeSameAs( outExpected );
             }
         }

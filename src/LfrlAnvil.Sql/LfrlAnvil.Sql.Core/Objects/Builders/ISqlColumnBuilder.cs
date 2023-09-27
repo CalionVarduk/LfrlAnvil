@@ -10,6 +10,7 @@ public interface ISqlColumnBuilder : ISqlObjectBuilder
     bool IsNullable { get; }
     object? DefaultValue { get; }
     IReadOnlyCollection<ISqlIndexBuilder> Indexes { get; }
+    IReadOnlyCollection<ISqlViewBuilder> ReferencingViews { get; }
 
     new ISqlColumnBuilder SetName(string name);
     ISqlColumnBuilder MarkAsNullable(bool enabled = true);

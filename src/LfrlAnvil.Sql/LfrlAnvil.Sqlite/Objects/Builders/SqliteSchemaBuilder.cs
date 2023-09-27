@@ -30,14 +30,41 @@ public sealed class SqliteSchemaBuilder : SqliteObjectBuilder, ISqlSchemaBuilder
 
             foreach ( var obj in Objects )
             {
-                if ( obj.Type != SqlObjectType.Index )
-                    continue;
-
-                var ix = ReinterpretCast.To<SqliteIndexBuilder>( obj );
-                foreach ( var fk in ix.ReferencingForeignKeys )
+                switch ( obj.Type )
                 {
-                    if ( ! ReferenceEquals( fk.Index.Table.Schema, this ) )
-                        return false;
+                    case SqlObjectType.Table:
+                    {
+                        var table = ReinterpretCast.To<SqliteTableBuilder>( obj );
+                        foreach ( var v in table.ReferencingViews )
+                        {
+                            if ( ! ReferenceEquals( v.Schema, this ) )
+                                return false;
+                        }
+
+                        break;
+                    }
+                    case SqlObjectType.Index:
+                    {
+                        var ix = ReinterpretCast.To<SqliteIndexBuilder>( obj );
+                        foreach ( var fk in ix.ReferencingForeignKeys )
+                        {
+                            if ( ! ReferenceEquals( fk.Index.Table.Schema, this ) )
+                                return false;
+                        }
+
+                        break;
+                    }
+                    case SqlObjectType.View:
+                    {
+                        var view = ReinterpretCast.To<SqliteViewBuilder>( obj );
+                        foreach ( var v in view.ReferencingViews )
+                        {
+                            if ( ! ReferenceEquals( v.Schema, this ) )
+                                return false;
+                        }
+
+                        break;
+                    }
                 }
             }
 
@@ -62,14 +89,41 @@ public sealed class SqliteSchemaBuilder : SqliteObjectBuilder, ISqlSchemaBuilder
 
         foreach ( var obj in Objects )
         {
-            if ( obj.Type != SqlObjectType.Index )
-                continue;
-
-            var ix = ReinterpretCast.To<SqliteIndexBuilder>( obj );
-            foreach ( var fk in ix.ReferencingForeignKeys )
+            switch ( obj.Type )
             {
-                if ( ! ReferenceEquals( fk.Index.Table.Schema, this ) )
-                    errors = errors.Extend( ExceptionResources.DetectedExternalForeignKey( fk ) );
+                case SqlObjectType.Table:
+                {
+                    var table = ReinterpretCast.To<SqliteTableBuilder>( obj );
+                    foreach ( var v in table.ReferencingViews )
+                    {
+                        if ( ! ReferenceEquals( v.Schema, this ) )
+                            errors = errors.Extend( ExceptionResources.DetectedExternalReferencingView( v, table ) );
+                    }
+
+                    break;
+                }
+                case SqlObjectType.Index:
+                {
+                    var ix = ReinterpretCast.To<SqliteIndexBuilder>( obj );
+                    foreach ( var fk in ix.ReferencingForeignKeys )
+                    {
+                        if ( ! ReferenceEquals( fk.Index.Table.Schema, this ) )
+                            errors = errors.Extend( ExceptionResources.DetectedExternalForeignKey( fk ) );
+                    }
+
+                    break;
+                }
+                case SqlObjectType.View:
+                {
+                    var view = ReinterpretCast.To<SqliteViewBuilder>( obj );
+                    foreach ( var v in view.ReferencingViews )
+                    {
+                        if ( ! ReferenceEquals( v.Schema, this ) )
+                            errors = errors.Extend( ExceptionResources.DetectedExternalReferencingView( v, view ) );
+                    }
+
+                    break;
+                }
             }
         }
 
@@ -81,14 +135,20 @@ public sealed class SqliteSchemaBuilder : SqliteObjectBuilder, ISqlSchemaBuilder
     {
         Assume.Equals( CanRemove, true, nameof( CanRemove ) );
 
-        using var buffer = Objects.ClearIntoBuffer();
-        if ( buffer.Length > 0 )
+        using var tableBuffer = Objects.CopyTablesIntoBuffer();
+        using var viewBuffer = Objects.CopyViewsIntoBuffer();
+        Objects.Clear();
+
+        foreach ( var obj in viewBuffer )
+            ReinterpretCast.To<SqliteViewBuilder>( obj ).ForceRemove();
+
+        if ( tableBuffer.Length > 0 )
         {
             var reachedTables = new HashSet<ulong>();
-            foreach ( var obj in buffer )
+            foreach ( var obj in tableBuffer )
                 RemoveTable( ReinterpretCast.To<SqliteTableBuilder>( obj ), reachedTables );
 
-            Assume.ContainsExactly( reachedTables, buffer.Length, nameof( reachedTables ) );
+            Assume.ContainsExactly( reachedTables, tableBuffer.Length, nameof( reachedTables ) );
         }
 
         Database.Schemas.Remove( Name );
@@ -121,11 +181,16 @@ public sealed class SqliteSchemaBuilder : SqliteObjectBuilder, ISqlSchemaBuilder
         Database.Schemas.ChangeName( this, name );
         Name = name;
 
-        using var buffer = Objects.CopyTablesIntoBuffer();
-        foreach ( var obj in buffer )
+        using ( var buffer = Objects.CopyViewsIntoBuffer() )
         {
-            var table = ReinterpretCast.To<SqliteTableBuilder>( obj );
-            table.OnSchemaNameChange();
+            foreach ( var obj in buffer )
+                ReinterpretCast.To<SqliteViewBuilder>( obj ).OnSchemaNameChange();
+        }
+
+        using ( var buffer = Objects.CopyTablesIntoBuffer() )
+        {
+            foreach ( var obj in buffer )
+                ReinterpretCast.To<SqliteTableBuilder>( obj ).OnSchemaNameChange();
         }
     }
 

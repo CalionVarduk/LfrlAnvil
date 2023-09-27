@@ -8,9 +8,12 @@ namespace LfrlAnvil.Sqlite.Objects;
 public abstract class SqliteObject : ISqlObject
 {
     protected SqliteObject(SqliteObjectBuilder builder)
+        : this( builder.Name, builder.Type ) { }
+
+    protected SqliteObject(string name, SqlObjectType type)
     {
-        Name = builder.Name;
-        Type = builder.Type;
+        Name = name;
+        Type = type;
     }
 
     public SqlObjectType Type { get; }

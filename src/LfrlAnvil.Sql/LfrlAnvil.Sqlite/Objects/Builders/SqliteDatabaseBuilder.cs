@@ -20,7 +20,7 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
         TypeDefinitions = new SqliteColumnTypeDefinitionProvider();
         NodeInterpreterFactory = new SqliteNodeInterpreterFactory( TypeDefinitions );
         Schemas = new SqliteSchemaBuilderCollection( this );
-        ChangeTracker = new SqliteDatabaseChangeTracker();
+        ChangeTracker = new SqliteDatabaseChangeTracker( this );
         ObjectPool = new MemorySequencePool<SqliteObjectBuilder>( minSegmentLength: 32 );
     }
 
@@ -77,7 +77,7 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
         if ( foreignKeys.Length == 0 )
             return;
 
-        PrepareReferencingForeignKeysForRemoval( foreignKeys, table.Database.ChangeTracker.CurrentTable, table );
+        PrepareReferencingForeignKeysForRemoval( foreignKeys, table.Database.ChangeTracker.CurrentObject, table );
 
         foreach ( var obj in foreignKeys )
         {
@@ -88,20 +88,20 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
         }
     }
 
-    internal static void PrepareReferencingForeignKeysForRemoval(
+    private static void PrepareReferencingForeignKeysForRemoval(
         RentedMemorySequenceSpan<SqliteObjectBuilder> foreignKeys,
-        SqliteTableBuilder? tableWithOngoingChanges = null,
+        SqliteObjectBuilder? objectWithOngoingChanges = null,
         SqliteTableBuilder? sourceTable = null)
     {
         Assume.IsGreaterThan( foreignKeys.Length, 0, nameof( foreignKeys.Length ) );
 
-        if ( tableWithOngoingChanges is not null && ! ReferenceEquals( tableWithOngoingChanges, sourceTable ) )
+        if ( objectWithOngoingChanges is not null && ! ReferenceEquals( objectWithOngoingChanges, sourceTable ) )
         {
             var i = 0;
             while ( i < foreignKeys.Length )
             {
                 var fk = ReinterpretCast.To<SqliteForeignKeyBuilder>( foreignKeys[i] );
-                if ( ! ReferenceEquals( fk.Index.Table, tableWithOngoingChanges ) )
+                if ( ! ReferenceEquals( fk.Index.Table, objectWithOngoingChanges ) )
                     break;
 
                 ++i;
@@ -111,7 +111,7 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
             while ( i < foreignKeys.Length )
             {
                 var fk = ReinterpretCast.To<SqliteForeignKeyBuilder>( foreignKeys[i] );
-                if ( ReferenceEquals( fk.Index.Table, tableWithOngoingChanges ) )
+                if ( ReferenceEquals( fk.Index.Table, objectWithOngoingChanges ) )
                 {
                     foreignKeys[i] = foreignKeys[j];
                     foreignKeys[j++] = fk;

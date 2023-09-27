@@ -15,8 +15,8 @@ public sealed class SqlSelectFieldNode : SqlSelectNode
     public string? Alias { get; }
     public string FieldName => Alias ?? ReinterpretCast.To<SqlDataFieldNode>( Expression ).Name;
 
-    internal override void Convert(ISqlSelectNodeConverter converter)
+    internal override void VisitExpressions(ISqlSelectNodeExpressionVisitor visitor)
     {
-        converter.Add( FieldName, Expression );
+        visitor.Handle( FieldName, Expression );
     }
 }
