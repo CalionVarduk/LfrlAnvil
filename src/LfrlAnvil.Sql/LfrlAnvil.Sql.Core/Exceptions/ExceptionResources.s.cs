@@ -262,6 +262,13 @@ public static class ExceptionResources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string MissingColumnTypeDefinition(Type type)
+    {
+        return $"Column type definition for type '{type.GetDebugString()}' is missing.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string FieldDoesNotExist(string name)
     {
         return $"Field with name '{name}' does not exist.";

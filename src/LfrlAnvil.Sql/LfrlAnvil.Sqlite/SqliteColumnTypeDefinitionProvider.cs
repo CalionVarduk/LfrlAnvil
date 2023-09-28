@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
@@ -85,13 +86,30 @@ public sealed class SqliteColumnTypeDefinitionProvider : ISqlColumnTypeDefinitio
     [Pure]
     public SqliteColumnTypeDefinition GetByType(Type type)
     {
-        return _definitionsByType[type];
+        return TryGetByType( type ) ?? throw new KeyNotFoundException( ExceptionResources.MissingColumnTypeDefinition( type ) );
     }
 
     [Pure]
     internal SqliteColumnTypeDefinition? TryGetByType(Type type)
     {
-        return _definitionsByType.GetValueOrDefault( type );
+        if ( _definitionsByType.TryGetValue( type, out var result ) )
+            return result;
+
+        if ( type.IsEnum )
+        {
+            var underlyingType = type.GetEnumUnderlyingType();
+            var baseDefinition = _definitionsByType.GetValueOrDefault( underlyingType );
+            if ( baseDefinition is null )
+                return null;
+
+            var definitionType = typeof( SqliteColumnTypeEnumDefinition<,> ).MakeGenericType( type, underlyingType );
+            var definitionTypeCtor = definitionType.GetConstructors( BindingFlags.Instance | BindingFlags.NonPublic )[0];
+            var definition = (SqliteColumnTypeDefinition)definitionTypeCtor.Invoke( new object[] { baseDefinition } );
+            _definitionsByType.Add( type, definition );
+            return definition;
+        }
+
+        return null;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

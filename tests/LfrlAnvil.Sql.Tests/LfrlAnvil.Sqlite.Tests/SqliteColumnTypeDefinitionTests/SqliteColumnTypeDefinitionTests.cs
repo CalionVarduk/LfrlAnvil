@@ -1,4 +1,6 @@
-﻿using System.Data;
+﻿using System.Collections.Generic;
+using System.Data;
+using LfrlAnvil.Functional;
 using LfrlAnvil.Sqlite.Extensions;
 using Microsoft.Data.Sqlite;
 
@@ -38,5 +40,13 @@ public class SqliteColumnTypeDefinitionTests : TestsBase
             parameter.DbType.Should().Be( DbType.String );
             parameter.Value.Should().Be( "10" );
         }
+    }
+
+    [Fact]
+    public void ProviderShouldThrowKeyNotFoundException_WhenDefinitionDoesNotExistAndIsNotEnum()
+    {
+        var provider = new SqliteColumnTypeDefinitionProvider();
+        var action = Lambda.Of( () => provider.GetByType<SqliteParameter>() );
+        action.Should().ThrowExactly<KeyNotFoundException>();
     }
 }

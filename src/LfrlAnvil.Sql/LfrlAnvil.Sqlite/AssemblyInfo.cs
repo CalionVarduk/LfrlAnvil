@@ -3,11 +3,10 @@
 [assembly: InternalsVisibleTo( "LfrlAnvil.Core.Tests" )]
 
 // TODO:
-// - ISqlColumnBuilder.DefaultValue should be an expression tree
-// - Add partial indexes with filter as an expression tree
+// - ISqlColumnBuilder.DefaultValue should be an expression tree <= NEXT
+// - Add partial indexes with filter as an expression tree <= NEXT NEXT
 // - Add check constraints? as expression trees
-// - Add views <= NEXT
-// - ISqlDatabaseBuilder.AddRawStatement should accept an expression tree + parameters
+// - ISqlDatabaseBuilder.AddRawStatement should accept an expression tree (array of, internally will create a batch node) + parameters
 // - Add column script can be handled with ALTER TABLE
 //   ^ however, situation where column with this name was also removed must be treated as a full reconstruction
 //   ^ this may need to be handled anyway for MySQL and/or PostgreSQL - leave it as-is, for now
@@ -28,9 +27,7 @@
 // - update: v3.8.3 (2014-02-03) is now the oldest supported version, unless CTEs aren't used (WITH clause)
 // - Add CREATE/DROP (TEMP)INDEX nodes
 // - Add window function nodes
-// - Add shared db object record set node => Table + TableBuilder + TemporaryTable <= NEXT
-// - Add shared db object data field node => Column + ColumnBuilder + ColumnDefinition <= NEXT
-// - Add TemporaryTable as valid target for complex Update/DeleteFrom nodes <= NEXT NEXT
+// - Add TemporaryTable & TableBuilder as valid target for complex Update/DeleteFrom nodes <= NEXT
 // - Add attach/detach DB nodes
 // - Add optional explicit DB name to table/view record set nodes (cross-DB queries)
 // - Make DB builder use SQL node tree? This could unify a lot of SQL statement building by moving it all to interpreters

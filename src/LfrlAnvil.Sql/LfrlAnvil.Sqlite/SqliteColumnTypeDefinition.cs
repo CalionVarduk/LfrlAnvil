@@ -2,6 +2,7 @@
 using System.Data;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Extensions;
+using LfrlAnvil.Internal;
 using LfrlAnvil.Sql;
 
 namespace LfrlAnvil.Sqlite;
@@ -119,5 +120,32 @@ internal sealed class SqliteColumnTypeDefinitionLambda<T, TBase> : SqliteColumnT
     protected override TBase MapToBaseType(T value)
     {
         return _mapper( value );
+    }
+}
+
+internal sealed class SqliteColumnTypeEnumDefinition<TEnum, T> : SqliteColumnTypeDefinition<TEnum, T>
+    where TEnum : struct, Enum
+    where T : unmanaged, IEquatable<T>
+{
+    internal SqliteColumnTypeEnumDefinition(SqliteColumnTypeDefinition<T> @base)
+        : base( @base, FindDefaultValue() ) { }
+
+    [Pure]
+    protected override T MapToBaseType(TEnum value)
+    {
+        return (T)(object)value;
+    }
+
+    [Pure]
+    private static TEnum FindDefaultValue()
+    {
+        var values = Enum.GetValues<TEnum>();
+        foreach ( var value in values )
+        {
+            if ( Generic<TEnum>.IsDefault( value ) )
+                return value;
+        }
+
+        return values.Length > 0 ? values[0] : default;
     }
 }
