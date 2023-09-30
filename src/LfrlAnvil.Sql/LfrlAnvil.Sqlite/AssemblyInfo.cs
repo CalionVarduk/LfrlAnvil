@@ -26,7 +26,7 @@
 // - Add CREATE/DROP (TEMP)INDEX nodes
 // - Add window function nodes
 // - Add TemporaryTable & TableBuilder as valid target for complex Update/DeleteFrom nodes <= NEXT NEXT
-// - Add new guid function <= NEXT
+// - Add datetime related functions?
 // - Add possibility to register custom view/default-value validators in db builders
 // - Add attach/detach DB nodes
 // - Add optional explicit DB name to table/view record set nodes (cross-DB queries)

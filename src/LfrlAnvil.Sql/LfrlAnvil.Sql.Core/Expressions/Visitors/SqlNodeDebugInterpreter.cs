@@ -73,6 +73,11 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
         VisitSimpleFunction( "CURRENT_TIMESTAMP", node );
     }
 
+    public override void VisitNewGuidFunction(SqlNewGuidFunctionExpressionNode node)
+    {
+        VisitSimpleFunction( "NEW_GUID", node );
+    }
+
     public override void VisitLengthFunction(SqlLengthFunctionExpressionNode node)
     {
         VisitSimpleFunction( "LENGTH", node );

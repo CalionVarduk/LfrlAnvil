@@ -221,6 +221,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     public abstract void VisitCurrentTimeFunction(SqlCurrentTimeFunctionExpressionNode node);
     public abstract void VisitCurrentDateTimeFunction(SqlCurrentDateTimeFunctionExpressionNode node);
     public abstract void VisitCurrentTimestampFunction(SqlCurrentTimestampFunctionExpressionNode node);
+    public abstract void VisitNewGuidFunction(SqlNewGuidFunctionExpressionNode node);
     public abstract void VisitLengthFunction(SqlLengthFunctionExpressionNode node);
     public abstract void VisitToLowerFunction(SqlToLowerFunctionExpressionNode node);
     public abstract void VisitToUpperFunction(SqlToUpperFunctionExpressionNode node);

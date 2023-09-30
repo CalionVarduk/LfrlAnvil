@@ -497,6 +497,18 @@ public class SqliteViewSourceValidatorTests : TestsBase
     }
 
     [Fact]
+    public void VisitNewGuidFunction_ShouldDoNothing()
+    {
+        _sut.VisitNewGuidFunction( SqlNode.Functions.NewGuid() );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().BeEmpty();
+            _sut.ReferencedObjects.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
     public void VisitLengthFunction_ShouldVisitArguments()
     {
         var node = SqlNode.Parameter( "a" ).Length();

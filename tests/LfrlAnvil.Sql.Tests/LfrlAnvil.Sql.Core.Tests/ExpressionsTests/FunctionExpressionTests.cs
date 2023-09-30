@@ -129,6 +129,21 @@ public class FunctionExpressionTests : TestsBase
     }
 
     [Fact]
+    public void NewGuid_ShouldCreateNewGuidFunctionExpressionNode()
+    {
+        var sut = SqlNode.Functions.NewGuid();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.NewGuid );
+            sut.Arguments.ToArray().Should().BeEmpty();
+            text.Should().Be( "NEW_GUID()" );
+        }
+    }
+
+    [Fact]
     public void Length_ShouldCreateLengthFunctionExpressionNode()
     {
         var arg = SqlNode.Literal( "foo" );

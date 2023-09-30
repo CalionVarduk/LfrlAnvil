@@ -49,6 +49,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
                 static () => DateTime.Now.ToString( "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture ) );
 
             connection.CreateFunction( "CURRENT_TIMESTAMP", static () => DateTime.UtcNow.Ticks );
+            connection.CreateFunction( "NEW_GUID", static () => Guid.NewGuid().ToByteArray() );
 
             connection.CreateFunction( "TO_LOWER", static (string a) => a.ToLowerInvariant(), isDeterministic: true );
             connection.CreateFunction( "TO_UPPER", static (string a) => a.ToUpperInvariant(), isDeterministic: true );

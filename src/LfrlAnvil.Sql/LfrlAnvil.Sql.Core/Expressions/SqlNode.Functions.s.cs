@@ -12,6 +12,7 @@ public static partial class SqlNode
         private static SqlCurrentTimeFunctionExpressionNode? _currentTime;
         private static SqlCurrentDateTimeFunctionExpressionNode? _currentDateTime;
         private static SqlCurrentTimestampFunctionExpressionNode? _currentTimestamp;
+        private static SqlNewGuidFunctionExpressionNode? _newGuid;
 
         [Pure]
         public static SqlRecordsAffectedFunctionExpressionNode RecordsAffected()
@@ -47,6 +48,12 @@ public static partial class SqlNode
         public static SqlCurrentTimestampFunctionExpressionNode CurrentTimestamp()
         {
             return _currentTimestamp ??= new SqlCurrentTimestampFunctionExpressionNode();
+        }
+
+        [Pure]
+        public static SqlNewGuidFunctionExpressionNode NewGuid()
+        {
+            return _newGuid ??= new SqlNewGuidFunctionExpressionNode();
         }
 
         [Pure]

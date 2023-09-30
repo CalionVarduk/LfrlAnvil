@@ -389,6 +389,10 @@ public static class SqlNodeVisitorExtensions
                 visitor.VisitCurrentTimestampFunction( ReinterpretCast.To<SqlCurrentTimestampFunctionExpressionNode>( node ) );
                 break;
 
+            case SqlFunctionType.NewGuid:
+                visitor.VisitNewGuidFunction( ReinterpretCast.To<SqlNewGuidFunctionExpressionNode>( node ) );
+                break;
+
             case SqlFunctionType.Length:
                 visitor.VisitLengthFunction( ReinterpretCast.To<SqlLengthFunctionExpressionNode>( node ) );
                 break;

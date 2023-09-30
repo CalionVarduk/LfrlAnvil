@@ -163,6 +163,11 @@ internal abstract class SqliteSourceNodeValidator : ISqlNodeVisitor
         VisitFunction( node );
     }
 
+    public virtual void VisitNewGuidFunction(SqlNewGuidFunctionExpressionNode node)
+    {
+        VisitFunction( node );
+    }
+
     public virtual void VisitLengthFunction(SqlLengthFunctionExpressionNode node)
     {
         VisitFunction( node );

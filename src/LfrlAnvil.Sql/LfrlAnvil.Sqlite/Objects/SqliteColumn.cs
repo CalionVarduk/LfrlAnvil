@@ -16,14 +16,12 @@ public sealed class SqliteColumn : SqliteObject, ISqlColumn
         Table = table;
         TypeDefinition = builder.TypeDefinition;
         IsNullable = builder.IsNullable;
-        DefaultValue = builder.DefaultValue;
         _fullName = builder.GetCachedFullName();
     }
 
     public SqliteTable Table { get; }
     public SqliteColumnTypeDefinition TypeDefinition { get; }
     public bool IsNullable { get; }
-    public object? DefaultValue { get; }
     public override string FullName => _fullName ??= SqliteHelpers.GetFullFieldName( Table.FullName, Name );
     public override SqliteDatabase Database => Table.Schema.Database;
 

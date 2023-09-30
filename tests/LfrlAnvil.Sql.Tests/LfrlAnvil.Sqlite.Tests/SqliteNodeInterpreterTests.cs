@@ -604,6 +604,13 @@ END" );
     }
 
     [Fact]
+    public void Visit_ShouldInterpretNewGuidFunction()
+    {
+        _sut.Visit( SqlNode.Functions.NewGuid() );
+        _sut.Context.Sql.ToString().Should().Be( "NEW_GUID()" );
+    }
+
+    [Fact]
     public void Visit_ShouldInterpretLengthFunction()
     {
         _sut.Visit( SqlNode.Functions.Length( SqlNode.Literal( "foo" ) ) );

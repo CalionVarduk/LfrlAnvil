@@ -9,6 +9,7 @@ public enum SqlFunctionType : byte
     CurrentTime,
     CurrentDateTime,
     CurrentTimestamp,
+    NewGuid,
     Length,
     ToLower,
     ToUpper,
