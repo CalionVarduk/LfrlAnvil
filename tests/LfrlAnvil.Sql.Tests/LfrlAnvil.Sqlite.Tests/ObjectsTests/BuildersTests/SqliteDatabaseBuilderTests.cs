@@ -1,5 +1,6 @@
 ﻿using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Expressions.Visitors;
+using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Objects.Builders;
@@ -130,7 +131,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
         var fk = table.ForeignKeys.Create( ix1, ix2 );
         fk.SetOnDeleteBehavior( ReferenceBehavior.Cascade ).SetOnUpdateBehavior( ReferenceBehavior.Cascade );
         var column = table.Columns.Create( "E" );
-        column.SetName( "F" ).MarkAsNullable().SetType<int>().SetDefaultValue( 123 );
+        column.SetName( "F" ).MarkAsNullable().SetType<string>().SetDefaultValue( "123" );
         table.SetName( "U" );
         column.Remove();
 

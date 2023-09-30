@@ -10,7 +10,7 @@ internal sealed class SqliteColumnTypeDefinitionObject : SqliteColumnTypeDefinit
     private readonly SqliteColumnTypeDefinitionProvider _provider;
 
     internal SqliteColumnTypeDefinitionObject(SqliteColumnTypeDefinitionProvider provider)
-        : base( SqliteDataType.Any, provider.GetDefaultForDataType( SqliteDataType.Blob ).DefaultValue )
+        : base( SqliteDataType.Any, provider.GetDefaultForDataType( SqliteDataType.Blob ).DefaultValue.GetValue() )
     {
         _provider = provider;
     }

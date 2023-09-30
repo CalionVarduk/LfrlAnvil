@@ -4,6 +4,8 @@ using System.Runtime.CompilerServices;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
+using LfrlAnvil.Sql.Expressions;
+using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Internal;
@@ -32,7 +34,7 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
     public SqliteTableBuilder Table { get; }
     public SqliteColumnTypeDefinition TypeDefinition { get; private set; }
     public bool IsNullable { get; private set; }
-    public object? DefaultValue { get; private set; }
+    public SqlExpressionNode? DefaultValue { get; private set; }
     public override SqliteDatabaseBuilder Database => Table.Database;
     public override string FullName => _fullName ??= SqliteHelpers.GetFullFieldName( Table.FullName, Name );
     public IReadOnlyCollection<SqliteIndexBuilder> Indexes => (_indexes?.Values).EmptyIfNull();
@@ -44,7 +46,6 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
     ISqlTableBuilder ISqlColumnBuilder.Table => Table;
     IReadOnlyCollection<ISqlIndexBuilder> ISqlColumnBuilder.Indexes => Indexes;
     ISqlColumnTypeDefinition ISqlColumnBuilder.TypeDefinition => TypeDefinition;
-    object? ISqlColumnBuilder.DefaultValue => DefaultValue;
     IReadOnlyCollection<ISqlViewBuilder> ISqlColumnBuilder.ReferencingViews => ReferencingViews;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
 
@@ -89,12 +90,22 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
         return this;
     }
 
-    public SqliteColumnBuilder SetDefaultValue(object? value)
+    public SqliteColumnBuilder SetDefaultValue(SqlExpressionNode? value)
     {
         EnsureNotRemoved();
 
-        if ( ! Equals( DefaultValue, value ) )
+        if ( ! ReferenceEquals( DefaultValue, value ) )
         {
+            if ( value is not null )
+            {
+                var validator = new SqliteDefaultValueSourceValidator();
+                validator.Visit( value );
+
+                var errors = validator.GetErrors();
+                if ( errors.Count > 0 )
+                    throw new SqliteObjectBuilderException( errors );
+            }
+
             var oldValue = DefaultValue;
             DefaultValue = value;
             Database.ChangeTracker.DefaultValueUpdated( this, oldValue );
@@ -221,7 +232,7 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
         return MarkAsNullable( enabled );
     }
 
-    ISqlColumnBuilder ISqlColumnBuilder.SetDefaultValue(object? value)
+    ISqlColumnBuilder ISqlColumnBuilder.SetDefaultValue(SqlExpressionNode? value)
     {
         return SetDefaultValue( value );
     }

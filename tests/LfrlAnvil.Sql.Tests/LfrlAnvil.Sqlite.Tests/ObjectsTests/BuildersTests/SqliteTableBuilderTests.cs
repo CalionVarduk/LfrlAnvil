@@ -357,7 +357,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                     @"CREATE TABLE ""__foo_T3__{GUID}__"" (
                       ""C3"" ANY NOT NULL,
                       ""C4"" ANY NOT NULL,
-                      ""C6"" INTEGER NOT NULL DEFAULT (0),
+                      ""C6"" INTEGER NOT NULL DEFAULT 0,
                       CONSTRAINT ""foo_PK_T3"" PRIMARY KEY (""C3"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T3__{GUID}__"" (""C3"", ""C4"", ""C6"")
@@ -402,7 +402,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                     @"CREATE TABLE ""__foo_T3__{GUID}__"" (
                       ""C3"" ANY NOT NULL,
                       ""C4"" ANY NOT NULL,
-                      ""C6"" INTEGER NOT NULL DEFAULT (0),
+                      ""C6"" INTEGER NOT NULL DEFAULT 0,
                       CONSTRAINT ""foo_PK_T3"" PRIMARY KEY (""C3"" ASC),
                       CONSTRAINT ""foo_FK_T3_C4_REF_T1"" FOREIGN KEY (""C4"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT,
                       CONSTRAINT ""foo_FK_T3_C3_REF_T1"" FOREIGN KEY (""C3"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
@@ -479,7 +479,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T1__{GUID}__"" (
                       ""C1"" ANY NOT NULL,
-                      ""C3"" INTEGER NOT NULL DEFAULT (0),
+                      ""C3"" INTEGER NOT NULL DEFAULT 0,
                       CONSTRAINT ""foo_PK_T1"" PRIMARY KEY (""C1"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T1__{GUID}__"" (""C1"", ""C3"")
@@ -557,7 +557,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T3__{GUID}__"" (
                       ""C3"" ANY NOT NULL,
-                      ""C4"" INTEGER NOT NULL DEFAULT (0),
+                      ""C4"" INTEGER NOT NULL DEFAULT 0,
                       CONSTRAINT ""foo_PK_T3"" PRIMARY KEY (""C3"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T3__{GUID}__"" (""C3"", ""C4"")
@@ -693,7 +693,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
                       ""C"" ANY NOT NULL,
-                      ""D"" INTEGER NOT NULL DEFAULT (0),
+                      ""D"" INTEGER NOT NULL DEFAULT 0,
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C"", ""D"")

@@ -4,19 +4,21 @@ using System.Diagnostics.Contracts;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Internal;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Expressions;
+using LfrlAnvil.Sql.Expressions.Objects;
 
 namespace LfrlAnvil.Sqlite;
 
 public abstract class SqliteColumnTypeDefinition : ISqlColumnTypeDefinition
 {
-    internal SqliteColumnTypeDefinition(SqliteDataType dbType, object defaultValue)
+    internal SqliteColumnTypeDefinition(SqliteDataType dbType, SqlLiteralNode defaultValue)
     {
         DbType = dbType;
         DefaultValue = defaultValue;
     }
 
     public SqliteDataType DbType { get; }
-    public object DefaultValue { get; }
+    public SqlLiteralNode DefaultValue { get; }
     public abstract Type RuntimeType { get; }
     ISqlDataType ISqlColumnTypeDefinition.DbType => DbType;
 
@@ -36,9 +38,9 @@ public abstract class SqliteColumnTypeDefinition<T> : SqliteColumnTypeDefinition
     where T : notnull
 {
     protected SqliteColumnTypeDefinition(SqliteDataType dbType, T defaultValue)
-        : base( dbType, defaultValue ) { }
+        : base( dbType, (SqlLiteralNode)SqlNode.Literal( defaultValue ) ) { }
 
-    public new T DefaultValue => (T)base.DefaultValue;
+    public new SqlLiteralNode<T> DefaultValue => ReinterpretCast.To<SqlLiteralNode<T>>( base.DefaultValue );
     public sealed override Type RuntimeType => typeof( T );
 
     [Pure]
@@ -125,7 +127,7 @@ internal sealed class SqliteColumnTypeDefinitionLambda<T, TBase> : SqliteColumnT
 
 internal sealed class SqliteColumnTypeEnumDefinition<TEnum, T> : SqliteColumnTypeDefinition<TEnum, T>
     where TEnum : struct, Enum
-    where T : unmanaged, IEquatable<T>
+    where T : unmanaged
 {
     internal SqliteColumnTypeEnumDefinition(SqliteColumnTypeDefinition<T> @base)
         : base( @base, FindDefaultValue() ) { }

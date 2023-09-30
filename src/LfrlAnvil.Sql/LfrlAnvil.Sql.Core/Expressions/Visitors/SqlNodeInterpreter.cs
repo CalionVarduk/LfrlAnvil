@@ -1019,7 +1019,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     protected void VisitPrefixUnaryOperator(SqlNodeBase value, string symbol)
     {
         Context.Sql.Append( symbol );
-        VisitChild( value );
+        VisitChildWrappedInParentheses( value );
     }
 
     protected void VisitInfixBinaryOperator(SqlNodeBase left, string symbol, SqlNodeBase right)

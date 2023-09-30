@@ -77,7 +77,7 @@ public class SqliteColumnBuilderTests : TestsBase
             table.Columns.Get( sut.Name ).Should().BeSameAs( sut );
             sut.Name.Should().Be( "C2" );
             sut.FullName.Should().Be( "foo_T.C2" );
-            sut.DefaultValue.Should().BeSameAs( Array.Empty<byte>() );
+            sut.DefaultValue.Should().BeEquivalentTo( SqlNode.Literal<object>( Array.Empty<byte>() ) );
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
@@ -85,7 +85,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
                       ""C1"" ANY NOT NULL,
-                      ""C2"" ANY NOT NULL DEFAULT (X''),
+                      ""C2"" ANY NOT NULL DEFAULT X'',
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
@@ -156,7 +156,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
                       ""C1"" ANY NOT NULL,
-                      ""C2"" ANY NOT NULL DEFAULT (X'010203'),
+                      ""C2"" ANY NOT NULL DEFAULT X'010203',
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
@@ -694,7 +694,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
                       ""C1"" ANY NOT NULL,
-                      ""C2"" ANY NOT NULL DEFAULT (X'010203'),
+                      ""C2"" ANY NOT NULL DEFAULT X'010203',
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
@@ -804,7 +804,7 @@ public class SqliteColumnBuilderTests : TestsBase
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
-        var result = ((ISqlColumnBuilder)sut).SetDefaultValue( 123 );
+        var result = ((ISqlColumnBuilder)sut).SetDefaultValue( sut.DefaultValue );
         var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
@@ -821,11 +821,12 @@ public class SqliteColumnBuilderTests : TestsBase
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).SetDefaultValue( 123 );
+        var originalDefaultValue = sut.DefaultValue;
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
-        sut.SetDefaultValue( 42 );
-        var result = ((ISqlColumnBuilder)sut).SetDefaultValue( 123 );
+        sut.SetDefaultValue( (int?)42 );
+        var result = ((ISqlColumnBuilder)sut).SetDefaultValue( originalDefaultValue );
 
         var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
 
@@ -852,7 +853,7 @@ public class SqliteColumnBuilderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            sut.DefaultValue.Should().Be( 42 );
+            sut.DefaultValue.Should().BeEquivalentTo( SqlNode.Literal( 42 ) );
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
@@ -860,7 +861,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
                       ""C1"" ANY NOT NULL,
-                      ""C2"" ANY NOT NULL DEFAULT (42),
+                      ""C2"" ANY NOT NULL DEFAULT 42,
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
@@ -907,6 +908,43 @@ public class SqliteColumnBuilderTests : TestsBase
     }
 
     [Fact]
+    public void SetDefaultValue_ShouldUpdateDefaultValue_WhenNewValueIsValidComplexExpression()
+    {
+        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" );
+
+        var startStatementCount = schema.Database.GetPendingStatements().Length;
+
+        var defaultValue = SqlNode.Literal( 10 ) + SqlNode.Literal( 50 ) + SqlNode.Literal( 100 ).Max( SqlNode.Literal( 80 ) );
+        var result = ((ISqlColumnBuilder)sut).SetDefaultValue( defaultValue );
+
+        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.DefaultValue.Should().BeSameAs( defaultValue );
+
+            statements.Should().HaveCount( 1 );
+            statements.ElementAtOrDefault( 0 )
+                .Should()
+                .SatisfySql(
+                    @"CREATE TABLE ""__foo_T__{GUID}__"" (
+                      ""C1"" ANY NOT NULL,
+                      ""C2"" ANY NOT NULL DEFAULT ((10 + 50) + MAX(100, 80)),
+                      CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
+                    ) WITHOUT ROWID;",
+                    @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
+                    SELECT ""C1"", ""C2""
+                    FROM ""foo_T"";",
+                    "DROP TABLE \"foo_T\";",
+                    "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
+        }
+    }
+
+    [Fact]
     public void SetDefaultValue_ShouldBePossible_WhenColumnIsUsedInIndex()
     {
         var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
@@ -923,7 +961,7 @@ public class SqliteColumnBuilderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            sut.DefaultValue.Should().Be( 123 );
+            sut.DefaultValue.Should().BeEquivalentTo( SqlNode.Literal( 123 ) );
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
@@ -932,7 +970,7 @@ public class SqliteColumnBuilderTests : TestsBase
                     "DROP INDEX \"foo_IX_T_C2A\";",
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
                       ""C1"" ANY NOT NULL,
-                      ""C2"" ANY NOT NULL DEFAULT (123),
+                      ""C2"" ANY NOT NULL DEFAULT 123,
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
@@ -955,13 +993,13 @@ public class SqliteColumnBuilderTests : TestsBase
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
-        var result = ((ISqlColumnBuilder)sut).SetDefaultValue( 123 );
+        var result = ((ISqlColumnBuilder)sut).SetDefaultValue( (int?)123 );
         var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            sut.DefaultValue.Should().Be( 123 );
+            sut.DefaultValue.Should().BeEquivalentTo( SqlNode.Literal( 123 ) );
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
@@ -969,7 +1007,7 @@ public class SqliteColumnBuilderTests : TestsBase
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
                       ""C1"" ANY NOT NULL,
-                      ""C2"" ANY NOT NULL DEFAULT (123),
+                      ""C2"" ANY NOT NULL DEFAULT 123,
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
@@ -990,6 +1028,21 @@ public class SqliteColumnBuilderTests : TestsBase
         sut.Remove();
 
         var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetDefaultValue( 42 ) );
+
+        action.Should()
+            .ThrowExactly<SqliteObjectBuilderException>()
+            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+    }
+
+    [Fact]
+    public void SetDefaultValue_ShouldThrowSqliteObjectBuilderException_WhenExpressionIsInvalid()
+    {
+        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" );
+
+        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetDefaultValue( table.ToRecordSet().GetField( "C1" ) ) );
 
         action.Should()
             .ThrowExactly<SqliteObjectBuilderException>()

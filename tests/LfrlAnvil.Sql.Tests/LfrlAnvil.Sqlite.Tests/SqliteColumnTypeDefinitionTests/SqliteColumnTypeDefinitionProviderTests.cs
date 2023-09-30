@@ -19,7 +19,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DbType.Should().BeSameAs( SqliteDataType.Integer );
-            result.DefaultValue.Should().Be( 0L );
+            result.DefaultValue.GetValue().Should().Be( 0L );
             result.RuntimeType.Should().Be( typeof( long ) );
         }
     }
@@ -32,7 +32,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DbType.Should().BeSameAs( SqliteDataType.Real );
-            result.DefaultValue.Should().Be( 0.0 );
+            result.DefaultValue.GetValue().Should().Be( 0.0 );
             result.RuntimeType.Should().Be( typeof( double ) );
         }
     }
@@ -45,7 +45,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DbType.Should().BeSameAs( SqliteDataType.Text );
-            result.DefaultValue.Should().Be( string.Empty );
+            result.DefaultValue.GetValue().Should().Be( string.Empty );
             result.RuntimeType.Should().Be( typeof( string ) );
         }
     }
@@ -58,7 +58,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DbType.Should().BeSameAs( SqliteDataType.Blob );
-            result.DefaultValue.Should().BeEquivalentTo( Array.Empty<byte>() );
+            result.DefaultValue.GetValue().Should().BeEquivalentTo( Array.Empty<byte>() );
             result.RuntimeType.Should().Be( typeof( byte[] ) );
         }
     }
@@ -71,7 +71,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DbType.Should().BeSameAs( SqliteDataType.Any );
-            result.DefaultValue.Should().BeEquivalentTo( Array.Empty<byte>() );
+            result.DefaultValue.GetValue().Should().BeEquivalentTo( Array.Empty<byte>() );
             result.RuntimeType.Should().Be( typeof( object ) );
         }
     }
@@ -84,7 +84,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DbType.Should().BeSameAs( SqliteDataType.Integer );
-            result.DefaultValue.Should().BeFalse();
+            result.DefaultValue.Value.Should().BeFalse();
             result.RuntimeType.Should().Be( typeof( bool ) );
         }
     }
@@ -97,7 +97,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DbType.Should().BeSameAs( SqliteDataType.Integer );
-            result.DefaultValue.Should().Be( 0 );
+            result.DefaultValue.Value.Should().Be( 0 );
             result.RuntimeType.Should().Be( typeof( byte ) );
         }
     }
@@ -110,7 +110,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DbType.Should().BeSameAs( SqliteDataType.Integer );
-            result.DefaultValue.Should().Be( 0 );
+            result.DefaultValue.Value.Should().Be( 0 );
             result.RuntimeType.Should().Be( typeof( sbyte ) );
         }
     }
@@ -123,7 +123,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DbType.Should().BeSameAs( SqliteDataType.Integer );
-            result.DefaultValue.Should().Be( 0 );
+            result.DefaultValue.Value.Should().Be( 0 );
             result.RuntimeType.Should().Be( typeof( ushort ) );
         }
     }
@@ -136,7 +136,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DbType.Should().BeSameAs( SqliteDataType.Integer );
-            result.DefaultValue.Should().Be( 0 );
+            result.DefaultValue.Value.Should().Be( 0 );
             result.RuntimeType.Should().Be( typeof( short ) );
         }
     }
@@ -149,7 +149,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DbType.Should().BeSameAs( SqliteDataType.Integer );
-            result.DefaultValue.Should().Be( 0 );
+            result.DefaultValue.Value.Should().Be( 0 );
             result.RuntimeType.Should().Be( typeof( uint ) );
         }
     }
@@ -162,7 +162,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DbType.Should().BeSameAs( SqliteDataType.Integer );
-            result.DefaultValue.Should().Be( 0 );
+            result.DefaultValue.Value.Should().Be( 0 );
             result.RuntimeType.Should().Be( typeof( int ) );
         }
     }
@@ -175,7 +175,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DbType.Should().BeSameAs( SqliteDataType.Integer );
-            result.DefaultValue.Should().Be( 0 );
+            result.DefaultValue.Value.Should().Be( 0 );
             result.RuntimeType.Should().Be( typeof( ulong ) );
         }
     }
@@ -188,7 +188,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DbType.Should().BeSameAs( SqliteDataType.Integer );
-            result.DefaultValue.Should().Be( 0 );
+            result.DefaultValue.Value.Should().Be( 0 );
             result.RuntimeType.Should().Be( typeof( long ) );
         }
     }
@@ -201,7 +201,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DbType.Should().BeSameAs( SqliteDataType.Integer );
-            result.DefaultValue.Should().Be( TimeSpan.Zero );
+            result.DefaultValue.Value.Should().Be( TimeSpan.Zero );
             result.RuntimeType.Should().Be( typeof( TimeSpan ) );
         }
     }
@@ -214,7 +214,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DbType.Should().BeSameAs( SqliteDataType.Real );
-            result.DefaultValue.Should().Be( 0 );
+            result.DefaultValue.Value.Should().Be( 0 );
             result.RuntimeType.Should().Be( typeof( float ) );
         }
     }
@@ -227,7 +227,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DbType.Should().BeSameAs( SqliteDataType.Real );
-            result.DefaultValue.Should().Be( 0 );
+            result.DefaultValue.Value.Should().Be( 0 );
             result.RuntimeType.Should().Be( typeof( double ) );
         }
     }
@@ -240,7 +240,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DbType.Should().BeSameAs( SqliteDataType.Text );
-            result.DefaultValue.Should().Be( DateTime.UnixEpoch );
+            result.DefaultValue.Value.Should().Be( DateTime.UnixEpoch );
             result.RuntimeType.Should().Be( typeof( DateTime ) );
         }
     }
@@ -253,7 +253,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DbType.Should().BeSameAs( SqliteDataType.Text );
-            result.DefaultValue.Should().Be( DateTimeOffset.UnixEpoch );
+            result.DefaultValue.Value.Should().Be( DateTimeOffset.UnixEpoch );
             result.RuntimeType.Should().Be( typeof( DateTimeOffset ) );
         }
     }
@@ -266,7 +266,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DbType.Should().BeSameAs( SqliteDataType.Text );
-            result.DefaultValue.Should().Be( DateOnly.FromDateTime( DateTime.UnixEpoch ) );
+            result.DefaultValue.Value.Should().Be( DateOnly.FromDateTime( DateTime.UnixEpoch ) );
             result.RuntimeType.Should().Be( typeof( DateOnly ) );
         }
     }
@@ -279,7 +279,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DbType.Should().BeSameAs( SqliteDataType.Text );
-            result.DefaultValue.Should().Be( TimeOnly.MinValue );
+            result.DefaultValue.Value.Should().Be( TimeOnly.MinValue );
             result.RuntimeType.Should().Be( typeof( TimeOnly ) );
         }
     }
@@ -292,7 +292,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DbType.Should().BeSameAs( SqliteDataType.Text );
-            result.DefaultValue.Should().Be( 0 );
+            result.DefaultValue.Value.Should().Be( 0m );
             result.RuntimeType.Should().Be( typeof( decimal ) );
         }
     }
@@ -305,7 +305,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DbType.Should().BeSameAs( SqliteDataType.Text );
-            result.DefaultValue.Should().Be( '0' );
+            result.DefaultValue.Value.Should().Be( '0' );
             result.RuntimeType.Should().Be( typeof( char ) );
         }
     }
@@ -318,7 +318,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DbType.Should().BeSameAs( SqliteDataType.Text );
-            result.DefaultValue.Should().Be( string.Empty );
+            result.DefaultValue.Value.Should().Be( string.Empty );
             result.RuntimeType.Should().Be( typeof( string ) );
         }
     }
@@ -331,7 +331,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DbType.Should().BeSameAs( SqliteDataType.Blob );
-            result.DefaultValue.Should().Be( Guid.Empty );
+            result.DefaultValue.Value.Should().Be( Guid.Empty );
             result.RuntimeType.Should().Be( typeof( Guid ) );
         }
     }
@@ -344,7 +344,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DbType.Should().BeSameAs( SqliteDataType.Blob );
-            result.DefaultValue.Should().BeEquivalentTo( Array.Empty<byte>() );
+            result.DefaultValue.Value.Should().BeEquivalentTo( Array.Empty<byte>() );
             result.RuntimeType.Should().Be( typeof( byte[] ) );
         }
     }
@@ -357,9 +357,56 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DbType.Should().BeSameAs( SqliteDataType.Any );
-            result.DefaultValue.Should().BeEquivalentTo( Array.Empty<byte>() );
+            result.DefaultValue.Value.Should().BeEquivalentTo( Array.Empty<byte>() );
             result.RuntimeType.Should().Be( typeof( object ) );
         }
+    }
+
+    [Fact]
+    public void GetByType_ShouldAutomaticallyCreateMissingEnumDefinitionWithDefaultZeroValue()
+    {
+        var result = _sut.GetByType<EnumWithDefault>();
+
+        using ( new AssertionScope() )
+        {
+            result.DbType.Should().BeSameAs( SqliteDataType.Integer );
+            result.DefaultValue.Value.Should().Be( EnumWithDefault.B );
+            result.RuntimeType.Should().Be( typeof( EnumWithDefault ) );
+        }
+    }
+
+    [Fact]
+    public void GetByType_ShouldAutomaticallyCreateMissingEnumDefinitionWithoutDefaultZeroValue()
+    {
+        var result = _sut.GetByType<EnumWithoutDefault>();
+
+        using ( new AssertionScope() )
+        {
+            result.DbType.Should().BeSameAs( SqliteDataType.Integer );
+            result.DefaultValue.Value.Should().Be( EnumWithoutDefault.A );
+            result.RuntimeType.Should().Be( typeof( EnumWithoutDefault ) );
+        }
+    }
+
+    [Fact]
+    public void GetByType_ShouldAutomaticallyCreateMissingEnumDefinitionWithoutAnyValues()
+    {
+        var result = _sut.GetByType<EmptyEnum>();
+
+        using ( new AssertionScope() )
+        {
+            result.DbType.Should().BeSameAs( SqliteDataType.Integer );
+            result.DefaultValue.Value.Should().Be( default( EmptyEnum ) );
+            result.RuntimeType.Should().Be( typeof( EmptyEnum ) );
+        }
+    }
+
+    [Fact]
+    public void GetByType_ShouldReturnPreviouslyCreatedEnumDefinition_WhenCalledMoreThanOnce()
+    {
+        var expected = _sut.GetByType<EnumWithDefault>();
+        var result = _sut.GetByType<EnumWithDefault>();
+        expected.Should().BeSameAs( result );
     }
 
     [Fact]
@@ -406,7 +453,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
             result.Should().BeSameAs( _sut );
             definition.DbType.Should().BeSameAs( baseDefinition.DbType );
             definition.RuntimeType.Should().Be( typeof( Code ) );
-            definition.DefaultValue.Should().Be( new Code( string.Empty ) );
+            definition.DefaultValue.Value.Should().Be( new Code( string.Empty ) );
             _sut.GetByType( typeof( Code ) ).Should().BeSameAs( definition );
         }
     }
@@ -423,7 +470,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
             result.Should().BeSameAs( _sut );
             definition.DbType.Should().BeSameAs( baseDefinition.DbType );
             definition.RuntimeType.Should().Be( typeof( decimal ) );
-            definition.DefaultValue.Should().Be( 1m );
+            definition.DefaultValue.Value.Should().Be( 1m );
             _sut.GetByType( typeof( decimal ) ).Should().BeSameAs( definition );
         }
     }
@@ -474,3 +521,19 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
 }
 
 public readonly record struct Code(string Value);
+
+public enum EmptyEnum { }
+
+public enum EnumWithoutDefault : short
+{
+    A = 5,
+    B = 10,
+    C = 20
+}
+
+public enum EnumWithDefault : sbyte
+{
+    A = -1,
+    B = 0,
+    C = 1
+}

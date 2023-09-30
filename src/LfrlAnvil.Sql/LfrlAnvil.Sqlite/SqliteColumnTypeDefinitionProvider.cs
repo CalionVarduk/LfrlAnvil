@@ -98,8 +98,7 @@ public sealed class SqliteColumnTypeDefinitionProvider : ISqlColumnTypeDefinitio
         if ( type.IsEnum )
         {
             var underlyingType = type.GetEnumUnderlyingType();
-            var baseDefinition = _definitionsByType.GetValueOrDefault( underlyingType );
-            if ( baseDefinition is null )
+            if ( ! _definitionsByType.TryGetValue( underlyingType, out var baseDefinition ) )
                 return null;
 
             var definitionType = typeof( SqliteColumnTypeEnumDefinition<,> ).MakeGenericType( type, underlyingType );

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Objects.Builders;
 
@@ -62,6 +63,20 @@ public static class SqlObjectExtensions
     public static ISqlColumnBuilder SetType<T>(this ISqlColumnBuilder column)
     {
         return column.SetType( typeof( T ) );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static ISqlColumnBuilder SetDefaultValue<T>(this ISqlColumnBuilder column, T? value)
+        where T : notnull
+    {
+        return column.SetDefaultValue( SqlNode.Literal( value ) );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static ISqlColumnBuilder SetDefaultValue<T>(this ISqlColumnBuilder column, T? value)
+        where T : struct
+    {
+        return column.SetDefaultValue( SqlNode.Literal( value ) );
     }
 
     [Pure]

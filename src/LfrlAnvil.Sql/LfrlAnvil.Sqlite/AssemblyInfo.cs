@@ -3,7 +3,6 @@
 [assembly: InternalsVisibleTo( "LfrlAnvil.Core.Tests" )]
 
 // TODO:
-// - ISqlColumnBuilder.DefaultValue should be an expression tree <= NEXT
 // - Add partial indexes with filter as an expression tree <= NEXT NEXT
 // - Add check constraints? as expression trees
 // - ISqlDatabaseBuilder.AddRawStatement should accept an expression tree (array of, internally will create a batch node) + parameters
@@ -18,7 +17,6 @@
 //   ^ so that e.g. loggers could be easily added
 // - For Sqlite, add possibility to setup connection with e.g. custom functions
 //   ^ just add an optional delegate for on connection created/connected
-// - For Sqlite, add possibility to set connection to permanent in factory - works like the current in-memory version
 // - Support for Sqlite COLLATION in added columns? let's see how other SQL providers handle that
 // - ON CONFLICT ROLLBACK instead of ABORT? https://www.sqlite.org/lang_conflict.html
 // - STRICT table option is supported in v3.37.0 (2021-11-27), disabled for now
@@ -27,7 +25,9 @@
 // - update: v3.8.3 (2014-02-03) is now the oldest supported version, unless CTEs aren't used (WITH clause)
 // - Add CREATE/DROP (TEMP)INDEX nodes
 // - Add window function nodes
-// - Add TemporaryTable & TableBuilder as valid target for complex Update/DeleteFrom nodes <= NEXT
+// - Add TemporaryTable & TableBuilder as valid target for complex Update/DeleteFrom nodes <= NEXT NEXT
+// - Add new guid function <= NEXT
+// - Add possibility to register custom view/default-value validators in db builders
 // - Add attach/detach DB nodes
 // - Add optional explicit DB name to table/view record set nodes (cross-DB queries)
 // - Make DB builder use SQL node tree? This could unify a lot of SQL statement building by moving it all to interpreters

@@ -202,24 +202,17 @@ public class SqliteNodeInterpreterTests : TestsBase
     }
 
     [Fact]
-    public void Visit_ShouldInterpretNegate_WhenValueRequiresParentheses()
+    public void Visit_ShouldInterpretNegate_WithValueWrappedInParentheses()
     {
-        _sut.Visit( SqlNode.RawExpression( "foo.a" ).Negate() );
-        _sut.Context.Sql.ToString().Should().Be( "-(foo.a)" );
-    }
-
-    [Fact]
-    public void Visit_ShouldInterpretNegate_WhenValueDoesNotRequireParentheses()
-    {
-        _sut.Visit( SqlNode.Literal( 25 ).Negate() );
-        _sut.Context.Sql.ToString().Should().Be( "-25" );
+        _sut.Visit( SqlNode.Literal( -25 ).Negate() );
+        _sut.Context.Sql.ToString().Should().Be( "-(-25)" );
     }
 
     [Fact]
     public void VisitChild_ShouldInterpretNegateWithParentheses()
     {
         _sut.VisitChild( SqlNode.Literal( 25 ).Negate() );
-        _sut.Context.Sql.ToString().Should().Be( "(-25)" );
+        _sut.Context.Sql.ToString().Should().Be( "(-(25))" );
     }
 
     [Fact]
@@ -349,24 +342,17 @@ public class SqliteNodeInterpreterTests : TestsBase
     }
 
     [Fact]
-    public void Visit_ShouldInterpretBitwiseNot_WhenValueRequiresParentheses()
+    public void Visit_ShouldInterpretBitwiseNot_WithValueWrappedInParentheses()
     {
-        _sut.Visit( SqlNode.RawExpression( "foo.a" ).BitwiseNot() );
-        _sut.Context.Sql.ToString().Should().Be( "~(foo.a)" );
-    }
-
-    [Fact]
-    public void Visit_ShouldInterpretBitwiseNot_WhenValueDoesNotRequireParentheses()
-    {
-        _sut.Visit( SqlNode.Literal( 25 ).BitwiseNot() );
-        _sut.Context.Sql.ToString().Should().Be( "~25" );
+        _sut.Visit( SqlNode.Literal( -25 ).BitwiseNot() );
+        _sut.Context.Sql.ToString().Should().Be( "~(-25)" );
     }
 
     [Fact]
     public void VisitChild_ShouldInterpretBitwiseNotWithParentheses()
     {
         _sut.VisitChild( SqlNode.Literal( 25 ).BitwiseNot() );
-        _sut.Context.Sql.ToString().Should().Be( "(~25)" );
+        _sut.Context.Sql.ToString().Should().Be( "(~(25))" );
     }
 
     [Fact]

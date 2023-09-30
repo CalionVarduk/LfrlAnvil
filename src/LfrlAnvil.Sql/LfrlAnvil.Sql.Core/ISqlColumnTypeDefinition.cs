@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data;
 using System.Diagnostics.Contracts;
+using LfrlAnvil.Sql.Expressions.Objects;
 
 namespace LfrlAnvil.Sql;
 
@@ -8,7 +9,7 @@ public interface ISqlColumnTypeDefinition
 {
     ISqlDataType DbType { get; }
     Type RuntimeType { get; }
-    object DefaultValue { get; }
+    SqlLiteralNode DefaultValue { get; }
 
     [Pure]
     string? TryToDbLiteral(object value);
@@ -19,7 +20,7 @@ public interface ISqlColumnTypeDefinition
 public interface ISqlColumnTypeDefinition<T> : ISqlColumnTypeDefinition
     where T : notnull
 {
-    new T DefaultValue { get; }
+    new SqlLiteralNode<T> DefaultValue { get; }
 
     [Pure]
     string ToDbLiteral(T value);

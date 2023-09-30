@@ -9,19 +9,15 @@ namespace LfrlAnvil.Sqlite.Tests.ObjectsTests;
 public class SqliteColumnTests : TestsBase
 {
     [Theory]
-    [InlineData( typeof( int ), null, true )]
-    [InlineData( typeof( int ), 10, true )]
-    [InlineData( typeof( int ), null, false )]
-    [InlineData( typeof( int ), 10, false )]
-    [InlineData( typeof( double ), null, true )]
-    [InlineData( typeof( double ), 123.5, true )]
-    [InlineData( typeof( string ), null, false )]
-    [InlineData( typeof( string ), "foo", false )]
-    public void Properties_ShouldBeCorrectlyCopiedFromBuilder(Type type, object? defaultValue, bool isNullable)
+    [InlineData( typeof( int ), true )]
+    [InlineData( typeof( int ), false )]
+    [InlineData( typeof( double ), true )]
+    [InlineData( typeof( string ), false )]
+    public void Properties_ShouldBeCorrectlyCopiedFromBuilder(Type type, bool isNullable)
     {
         var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Default;
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
-        var columnBuilder = tableBuilder.Columns.Create( "C" ).SetType( type ).SetDefaultValue( defaultValue ).MarkAsNullable( isNullable );
+        tableBuilder.Columns.Create( "C" ).SetType( type ).MarkAsNullable( isNullable );
         tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "X" ).Asc() );
 
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
@@ -38,7 +34,6 @@ public class SqliteColumnTests : TestsBase
             sut.FullName.Should().Be( "T.C" );
             sut.IsNullable.Should().Be( isNullable );
             sut.TypeDefinition.Should().BeSameAs( db.TypeDefinitions.GetByType( type ) );
-            sut.DefaultValue.Should().BeSameAs( columnBuilder.DefaultValue );
             sut.ToString().Should().Be( "[Column] T.C" );
         }
     }

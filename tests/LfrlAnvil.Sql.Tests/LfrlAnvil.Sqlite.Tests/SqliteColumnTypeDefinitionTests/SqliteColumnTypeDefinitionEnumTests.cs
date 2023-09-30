@@ -10,12 +10,12 @@ public class SqliteColumnTypeDefinitionEnumTests : TestsBase
     private readonly ISqlColumnTypeDefinitionProvider _provider = new SqliteColumnTypeDefinitionProvider();
 
     [Theory]
-    [InlineData( WithDefault.A, "-1" )]
-    [InlineData( WithDefault.B, "0" )]
-    [InlineData( WithDefault.C, "1" )]
-    public void TryToDbLiteral_ShouldReturnCorrectResult(WithDefault value, string expected)
+    [InlineData( Values.A, "-10" )]
+    [InlineData( Values.B, "0" )]
+    [InlineData( Values.C, "123" )]
+    public void TryToDbLiteral_ShouldReturnCorrectResult(Values value, string expected)
     {
-        var sut = _provider.GetByType<WithDefault>();
+        var sut = _provider.GetByType<Values>();
         var result = sut.TryToDbLiteral( value );
         result.Should().Be( expected );
     }
@@ -23,19 +23,19 @@ public class SqliteColumnTypeDefinitionEnumTests : TestsBase
     [Fact]
     public void TryToDbLiteral_ShouldReturnNull_WhenValueIsNotOfEnumType()
     {
-        var sut = _provider.GetByType<WithDefault>();
+        var sut = _provider.GetByType<Values>();
         var result = sut.TryToDbLiteral( string.Empty );
         result.Should().BeNull();
     }
 
     [Theory]
-    [InlineData( WithDefault.A )]
-    [InlineData( WithDefault.B )]
-    [InlineData( WithDefault.C )]
-    public void TrySetParameter_ShouldUpdateParameterCorrectly(WithDefault value)
+    [InlineData( Values.A )]
+    [InlineData( Values.B )]
+    [InlineData( Values.C )]
+    public void TrySetParameter_ShouldUpdateParameterCorrectly(Values value)
     {
         var parameter = new SqliteParameter();
-        var sut = _provider.GetByType<WithDefault>();
+        var sut = _provider.GetByType<Values>();
 
         var result = sut.TrySetParameter( parameter, value );
 
@@ -51,58 +51,17 @@ public class SqliteColumnTypeDefinitionEnumTests : TestsBase
     public void TrySetParameter_ShouldReturnFalse_WhenValueIsNotOfEnumType()
     {
         var parameter = new SqliteParameter();
-        var sut = _provider.GetByType<WithDefault>();
+        var sut = _provider.GetByType<Values>();
 
         var result = sut.TrySetParameter( parameter, string.Empty );
 
         result.Should().BeFalse();
     }
 
-    [Fact]
-    public void ProviderShouldRegisterEnumTypeOnlyOnce()
+    public enum Values : sbyte
     {
-        var sut = _provider.GetByType<WithDefault>();
-        var result = _provider.GetByType<WithDefault>();
-        sut.Should().BeSameAs( result );
-    }
-
-    [Fact]
-    public void ProviderShouldRegisterEnumTypeWithDefaultValue_WhenZeroLikeValueExists()
-    {
-        var sut = _provider.GetByType<WithDefault>();
-        var result = sut.DefaultValue;
-        result.Should().Be( WithDefault.B );
-    }
-
-    [Fact]
-    public void ProviderShouldRegisterEnumTypeWithDefaultValue_WhenZeroValueDoesNotExist()
-    {
-        var sut = _provider.GetByType<WithoutDefault>();
-        var result = sut.DefaultValue;
-        result.Should().Be( WithoutDefault.A );
-    }
-
-    [Fact]
-    public void ProviderShouldRegisterEnumTypeWithDefaultValue_WhenThereAreNotValues()
-    {
-        var sut = _provider.GetByType<Empty>();
-        var result = sut.DefaultValue;
-        result.Should().Be( default( Empty ) );
-    }
-
-    public enum Empty { }
-
-    public enum WithoutDefault : short
-    {
-        A = 5,
-        B = 10,
-        C = 20
-    }
-
-    public enum WithDefault : sbyte
-    {
-        A = -1,
+        A = -10,
         B = 0,
-        C = 1
+        C = 123
     }
 }

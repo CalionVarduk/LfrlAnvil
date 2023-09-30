@@ -450,7 +450,7 @@ internal sealed class SqliteDatabaseChangeTracker
             ExceptionThrower.Throw( new SqliteObjectBuilderException( ExceptionResources.PrimaryKeyIsMissing( table ) ) );
     }
 
-    private static void AppendCreateTable(StringBuilder builder, SqliteTableBuilder table, string? temporaryName = null)
+    private void AppendCreateTable(StringBuilder builder, SqliteTableBuilder table, string? temporaryName = null)
     {
         Assume.IsNotNull( table.PrimaryKey, nameof( table.PrimaryKey ) );
 
@@ -461,7 +461,12 @@ internal sealed class SqliteDatabaseChangeTracker
         {
             builder
                 .AppendIndentation()
-                .AppendColumnDefinition( column.Name, column.TypeDefinition, column.IsNullable, column.DefaultValue )
+                .AppendColumnDefinition(
+                    column.Name,
+                    column.TypeDefinition,
+                    column.IsNullable,
+                    column.DefaultValue,
+                    _database.NodeInterpreterFactory )
                 .AppendElementSeparator()
                 .AppendLine();
         }
@@ -509,7 +514,7 @@ internal sealed class SqliteDatabaseChangeTracker
         builder.AppendCreateTableEnd();
     }
 
-    private static void AppendReconstructTable(StringBuilder builder, SqliteTableBuilder table, SqliteAlterTableBuffer buffer)
+    private void AppendReconstructTable(StringBuilder builder, SqliteTableBuilder table, SqliteAlterTableBuffer buffer)
     {
         if ( builder.Length > 0 )
             builder.AppendLine().AppendLine();
@@ -548,7 +553,7 @@ internal sealed class SqliteDatabaseChangeTracker
         foreach ( var column in table.Columns )
         {
             if ( buffer.CreatedColumns.ContainsKey( column.Id ) )
-                builder.AppendDefaultValue( column.TypeDefinition, column.DefaultValue );
+                builder.AppendDefaultValue( column.DefaultValue, _database.NodeInterpreterFactory );
             else if ( ! buffer.Objects.ContainsKey( column.Id ) )
                 builder.AppendName( column.Name );
             else
@@ -569,7 +574,7 @@ internal sealed class SqliteDatabaseChangeTracker
                     builder
                         .AppendElementSeparator()
                         .AppendTokenSeparator()
-                        .AppendDefaultValue( column.TypeDefinition, column.DefaultValue ?? column.TypeDefinition.DefaultValue )
+                        .AppendDefaultValue( column.DefaultValue ?? column.TypeDefinition.DefaultValue, _database.NodeInterpreterFactory )
                         .AppendElementsEnd();
                 }
                 else if ( oldDataType == column.TypeDefinition.DbType )

@@ -2,6 +2,8 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Expressions;
+using LfrlAnvil.Sql.Expressions.Visitors;
 
 namespace LfrlAnvil.Sqlite.Internal;
 
@@ -67,7 +69,8 @@ internal static class StringBuilderExtensions
         string name,
         SqliteColumnTypeDefinition valueType,
         bool isNullable,
-        object? defaultValue)
+        SqlExpressionNode? defaultValue,
+        SqliteNodeInterpreterFactory nodeInterpreterFactory)
     {
         builder
             .AppendName( name )
@@ -82,10 +85,17 @@ internal static class StringBuilderExtensions
             builder
                 .AppendTokenSeparator()
                 .Append( "DEFAULT" )
-                .AppendTokenSeparator()
-                .AppendElementsBegin()
-                .Append( valueType.TryToDbLiteral( defaultValue ) )
-                .AppendElementsEnd();
+                .AppendTokenSeparator();
+
+            // NOTE:
+            // this is a temporary solution, it will be improved once db schema change scripts are generated
+            // by interpreting an sql node tree
+            var context = SqlNodeInterpreterContext.Create( builder );
+            context.IncreaseIndent();
+            context.SetParentNode( SqlNode.Null() );
+
+            var interpreter = nodeInterpreterFactory.Create( context );
+            interpreter.VisitChild( defaultValue );
         }
 
         return builder;
@@ -262,9 +272,22 @@ internal static class StringBuilderExtensions
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static StringBuilder AppendDefaultValue(this StringBuilder builder, SqliteColumnTypeDefinition valueType, object? value)
+    internal static StringBuilder AppendDefaultValue(
+        this StringBuilder builder,
+        SqlExpressionNode? value,
+        SqliteNodeInterpreterFactory nodeInterpreterFactory)
     {
-        return builder.Append( value is null ? "NULL" : valueType.TryToDbLiteral( value ) );
+        // NOTE:
+        // this is a temporary solution, it will be improved once db schema change scripts are generated
+        // by interpreting an sql node tree
+
+        value ??= SqlNode.Null();
+        var context = SqlNodeInterpreterContext.Create( builder );
+        context.SetParentNode( SqlNode.Null() );
+
+        var interpreter = nodeInterpreterFactory.Create( context );
+        interpreter.VisitChild( value );
+        return builder;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
