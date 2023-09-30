@@ -452,15 +452,10 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
                 return;
             }
 
-            if ( node.DataSource.From is not SqlTableRecordSetNode from )
-                throw new SqlNodeVisitorException( Resources.UpdateTargetIsNotTableRecordSet, this, node );
-
-            if ( ! from.IsAliased )
-                throw new SqlNodeVisitorException( Resources.UpdateTargetIsNotAliased, this, node );
-
-            AppendDelimitedName( from.Table.FullName );
+            var targetInfo = ExtractTargetUpdateInfo( node );
+            AppendRecordSetName( targetInfo.BaseTarget );
             VisitUpdateAssignmentRange( node.Assignments.Span );
-            VisitComplexDeleteOrUpdateDataSourceFilter( from, node.DataSource, traits );
+            VisitComplexDeleteOrUpdateDataSourceFilter( targetInfo, node.DataSource, traits );
         }
     }
 
@@ -479,15 +474,9 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
                 return;
             }
 
-            // TODO: (later) check by verifying node enum type, rather than node cli type
-            if ( node.DataSource.From is not SqlTableRecordSetNode from )
-                throw new SqlNodeVisitorException( Resources.DeleteTargetIsNotTableRecordSet, this, node );
-
-            if ( ! from.IsAliased )
-                throw new SqlNodeVisitorException( Resources.DeleteTargetIsNotAliased, this, node );
-
-            AppendDelimitedName( from.Table.FullName );
-            VisitComplexDeleteOrUpdateDataSourceFilter( from, node.DataSource, traits );
+            var targetInfo = ExtractTargetDeleteInfo( node );
+            AppendRecordSetName( targetInfo.BaseTarget );
+            VisitComplexDeleteOrUpdateDataSourceFilter( targetInfo, node.DataSource, traits );
         }
     }
 
@@ -505,10 +494,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
     {
         using ( Context.TempParentNodeUpdate( node ) )
         {
-            Context.Sql.Append( "DROP TABLE IF EXISTS" ).AppendSpace().Append( "temp" ).AppendDot();
-            AppendDelimitedName( node.Name );
-            Context.Sql.AppendSemicolon();
-            Context.AppendIndent().Append( "CREATE TEMP TABLE" ).AppendSpace();
+            Context.Sql.Append( "CREATE TEMP TABLE" ).AppendSpace();
             AppendDelimitedName( node.Name );
             Context.Sql.AppendSpace().Append( '(' );
 
@@ -739,21 +725,15 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
     }
 
     protected void VisitComplexDeleteOrUpdateDataSourceFilter(
-        SqlTableRecordSetNode target,
+        TargetDeleteOrUpdateInfo targetInfo,
         SqlDataSourceNode dataSource,
         SqlDataSourceTraits traits)
     {
-        // TODO: (later)
-        // - in order for this to work with TableBuilder & TemporaryTable nodes:
-        //   - IsTemporary boolean
-        //   - FullName string
-        //   - collection of PK column names (or, if table lacks PK, collection of all column names)
-        var primaryKeyColumns = target.Table.PrimaryKey.Index.Columns.Span;
         Context.AppendIndent().Append( "WHERE" ).AppendSpace();
 
-        if ( primaryKeyColumns.Length == 1 )
+        if ( targetInfo.IdentityColumnNames.Length == 1 )
         {
-            AppendDelimitedName( primaryKeyColumns[0].Column.Name );
+            AppendDelimitedName( targetInfo.IdentityColumnNames[0] );
             Context.Sql.AppendSpace().Append( "IN" ).AppendSpace().Append( '(' );
 
             using ( Context.TempIndentIncrease() )
@@ -761,9 +741,9 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
                 Context.AppendIndent().Append( "SELECT" );
                 VisitOptionalDistinctMarker( traits.Distinct );
                 Context.Sql.AppendSpace();
-                AppendRecordSetName( target );
+                AppendRecordSetName( targetInfo.Target );
                 Context.Sql.AppendDot();
-                AppendDelimitedName( primaryKeyColumns[0].Column.Name );
+                AppendDelimitedName( targetInfo.IdentityColumnNames[0] );
 
                 Context.AppendIndent();
                 VisitDataSource( dataSource );
@@ -788,16 +768,16 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
                 VisitDataSource( dataSource );
                 Context.AppendIndent().Append( "WHERE" ).AppendSpace();
 
-                foreach ( var c in primaryKeyColumns )
+                foreach ( var columnName in targetInfo.IdentityColumnNames )
                 {
                     Context.Sql.Append( '(' );
-                    AppendDelimitedName( target.Table.FullName );
+                    AppendRecordSetName( targetInfo.BaseTarget );
                     Context.Sql.AppendDot();
-                    AppendDelimitedName( c.Column.Name );
+                    AppendDelimitedName( columnName );
                     Context.Sql.AppendSpace().Append( '=' ).AppendSpace();
-                    AppendRecordSetName( target );
+                    AppendRecordSetName( targetInfo.Target );
                     Context.Sql.AppendDot();
-                    AppendDelimitedName( c.Column.Name );
+                    AppendDelimitedName( columnName );
                     Context.Sql.Append( ')' ).AppendSpace().Append( "AND" ).AppendSpace();
                 }
 
@@ -814,5 +794,140 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         }
 
         Context.AppendIndent().Append( ')' );
+    }
+
+    [Pure]
+    protected static TargetDeleteOrUpdateInfo ExtractTableRecordSetDeleteOrUpdateInfo(SqlTableRecordSetNode node)
+    {
+        var identityColumns = node.Table.PrimaryKey.Index.Columns.Span;
+        var identityColumnNames = new string[identityColumns.Length];
+        for ( var i = 0; i < identityColumns.Length; ++i )
+            identityColumnNames[i] = identityColumns[i].Column.Name;
+
+        return new TargetDeleteOrUpdateInfo( node, node.AsSelf(), identityColumnNames );
+    }
+
+    [Pure]
+    protected TargetDeleteOrUpdateInfo ExtractTableBuilderRecordSetDeleteInfo(SqlDeleteFromNode node, SqlTableBuilderRecordSetNode target)
+    {
+        return ExtractTableBuilderRecordSetDeleteOrUpdateInfo( node, target, Resources.DeleteTargetDoesNotHaveAnyColumns );
+    }
+
+    [Pure]
+    protected TargetDeleteOrUpdateInfo ExtractTableBuilderRecordSetUpdateInfo(SqlUpdateNode node, SqlTableBuilderRecordSetNode target)
+    {
+        return ExtractTableBuilderRecordSetDeleteOrUpdateInfo( node, target, Resources.UpdateTargetDoesNotHaveAnyColumns );
+    }
+
+    [Pure]
+    protected TargetDeleteOrUpdateInfo ExtractTemporaryTableRecordSetDeleteInfo(
+        SqlDeleteFromNode node,
+        SqlTemporaryTableRecordSetNode target)
+    {
+        return ExtractTemporaryTableRecordSetDeleteOrUpdateInfo( node, target, Resources.DeleteTargetDoesNotHaveAnyColumns );
+    }
+
+    [Pure]
+    protected TargetDeleteOrUpdateInfo ExtractTemporaryTableRecordSetUpdateInfo(SqlUpdateNode node, SqlTemporaryTableRecordSetNode target)
+    {
+        return ExtractTemporaryTableRecordSetDeleteOrUpdateInfo( node, target, Resources.UpdateTargetDoesNotHaveAnyColumns );
+    }
+
+    [Pure]
+    protected TargetDeleteOrUpdateInfo ExtractTargetDeleteInfo(SqlDeleteFromNode node)
+    {
+        var from = node.DataSource.From;
+        var info = from.NodeType switch
+        {
+            SqlNodeType.TableRecordSet => ExtractTableRecordSetDeleteOrUpdateInfo( ReinterpretCast.To<SqlTableRecordSetNode>( from ) ),
+            SqlNodeType.TableBuilderRecordSet => ExtractTableBuilderRecordSetDeleteInfo(
+                node,
+                ReinterpretCast.To<SqlTableBuilderRecordSetNode>( from ) ),
+            SqlNodeType.TemporaryTableRecordSet => ExtractTemporaryTableRecordSetDeleteInfo(
+                node,
+                ReinterpretCast.To<SqlTemporaryTableRecordSetNode>( from ) ),
+            _ => throw new SqlNodeVisitorException( Resources.DeleteTargetIsNotTableRecordSet, this, node )
+        };
+
+        if ( ! from.IsAliased )
+            throw new SqlNodeVisitorException( Resources.DeleteTargetIsNotAliased, this, node );
+
+        return info;
+    }
+
+    [Pure]
+    protected TargetDeleteOrUpdateInfo ExtractTargetUpdateInfo(SqlUpdateNode node)
+    {
+        var from = node.DataSource.From;
+        var info = from.NodeType switch
+        {
+            SqlNodeType.TableRecordSet => ExtractTableRecordSetDeleteOrUpdateInfo( ReinterpretCast.To<SqlTableRecordSetNode>( from ) ),
+            SqlNodeType.TableBuilderRecordSet => ExtractTableBuilderRecordSetUpdateInfo(
+                node,
+                ReinterpretCast.To<SqlTableBuilderRecordSetNode>( from ) ),
+            SqlNodeType.TemporaryTableRecordSet => ExtractTemporaryTableRecordSetUpdateInfo(
+                node,
+                ReinterpretCast.To<SqlTemporaryTableRecordSetNode>( from ) ),
+            _ => throw new SqlNodeVisitorException( Resources.UpdateTargetIsNotTableRecordSet, this, node )
+        };
+
+        if ( ! from.IsAliased )
+            throw new SqlNodeVisitorException( Resources.UpdateTargetIsNotAliased, this, node );
+
+        return info;
+    }
+
+    protected readonly record struct TargetDeleteOrUpdateInfo(
+        SqlRecordSetNode Target,
+        SqlRecordSetNode BaseTarget,
+        string[] IdentityColumnNames);
+
+    [Pure]
+    private TargetDeleteOrUpdateInfo ExtractTableBuilderRecordSetDeleteOrUpdateInfo(
+        SqlNodeBase source,
+        SqlTableBuilderRecordSetNode node,
+        string noColumnsErrorReason)
+    {
+        string[] identityColumnNames;
+        var primaryKey = node.Table.PrimaryKey;
+
+        if ( primaryKey is not null )
+        {
+            var identityColumns = primaryKey.Index.Columns.Span;
+            identityColumnNames = new string[identityColumns.Length];
+            for ( var i = 0; i < identityColumns.Length; ++i )
+                identityColumnNames[i] = identityColumns[i].Column.Name;
+        }
+        else
+        {
+            var index = 0;
+            var identityColumns = node.Table.Columns;
+            if ( identityColumns.Count == 0 )
+                throw new SqlNodeVisitorException( noColumnsErrorReason, this, source );
+
+            identityColumnNames = new string[identityColumns.Count];
+            foreach ( var column in identityColumns )
+                identityColumnNames[index++] = column.Name;
+        }
+
+        return new TargetDeleteOrUpdateInfo( node, node.AsSelf(), identityColumnNames );
+    }
+
+    [Pure]
+    private TargetDeleteOrUpdateInfo ExtractTemporaryTableRecordSetDeleteOrUpdateInfo(
+        SqlNodeBase source,
+        SqlTemporaryTableRecordSetNode node,
+        string noColumnsErrorReason)
+    {
+        // TODO: same as table builder, once an optional PK is added to CreationNode
+        var identityColumns = node.CreationNode.Columns.Span;
+        if ( identityColumns.Length == 0 )
+            throw new SqlNodeVisitorException( noColumnsErrorReason, this, source );
+
+        var identityColumnNames = new string[identityColumns.Length];
+        for ( var i = 0; i < identityColumns.Length; ++i )
+            identityColumnNames[i] = identityColumns[i].Name;
+
+        return new TargetDeleteOrUpdateInfo( node, node.AsSelf(), identityColumnNames );
     }
 }

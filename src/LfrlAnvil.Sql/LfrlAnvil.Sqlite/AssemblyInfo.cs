@@ -25,9 +25,8 @@
 // - update: v3.8.3 (2014-02-03) is now the oldest supported version, unless CTEs aren't used (WITH clause)
 // - Add CREATE/DROP (TEMP)INDEX nodes
 // - Add window function nodes
-// - Add TemporaryTable & TableBuilder as valid target for complex Update/DeleteFrom nodes <= NEXT NEXT
 // - Add datetime related functions?
-// - Add possibility to register custom view/default-value validators in db builders
+// - Add possibility to register custom view/default-value/index-filter validators in db builders
 // - Add attach/detach DB nodes
 // - Add optional explicit DB name to table/view record set nodes (cross-DB queries)
 // - Make DB builder use SQL node tree? This could unify a lot of SQL statement building by moving it all to interpreters

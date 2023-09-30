@@ -40,6 +40,18 @@ internal static class Resources
         nameof( SqlDataSourceNode.From ) +
         ") is not aliased";
 
+    internal const string UpdateTargetDoesNotHaveAnyColumns = "update target (" +
+        nameof( SqlDataSourceQueryExpressionNode.DataSource ) +
+        "." +
+        nameof( SqlDataSourceNode.From ) +
+        ") does not have any columns";
+
+    internal const string DeleteTargetDoesNotHaveAnyColumns = "delete target (" +
+        nameof( SqlDataSourceQueryExpressionNode.DataSource ) +
+        "." +
+        nameof( SqlDataSourceNode.From ) +
+        ") does not have any columns";
+
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string ForeignKeyCheckFailure(Version version, IReadOnlySet<string> failedTableNames)

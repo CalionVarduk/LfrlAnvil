@@ -2243,6 +2243,216 @@ WHERE EXISTS (
     }
 
     [Fact]
+    public void Visit_ShouldInterpretUpdateWithComplexDataSourceAndTargetTableBuilderWithSingleColumnPrimaryKey()
+    {
+        var table = CreateTableBuilder( string.Empty, "foo", new[] { "a", "b" }, "a" );
+        var foo = table.ToRecordSet( "f" );
+
+        var dataSource = foo
+            .Join( SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ), x => x.Inner["a"] == foo["a"] ) )
+            .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
+            .Distinct()
+            .AndWhere( s => s["bar"]["c"].InQuery( SqlNode.RawQuery( "SELECT cba.c FROM cba" ) ) )
+            .GroupBy( s => new[] { s["f"]["b"] } )
+            .AndHaving( s => s["f"]["b"] < SqlNode.Literal( 100 ) )
+            .OrderBy( s => new[] { s["f"]["b"].Asc() } )
+            .Limit( SqlNode.Literal( 50 ) )
+            .Offset( SqlNode.Literal( 100 ) );
+
+        _sut.Visit(
+            dataSource.ToUpdate(
+                s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ), s["f"]["b"].Assign( SqlNode.Literal( 20 ) ) } ) );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                @"WITH ""cba"" AS (
+  SELECT * FROM abc
+)
+UPDATE ""foo"" SET
+  ""a"" = 10,
+  ""b"" = 20
+WHERE ""a"" IN (
+  SELECT DISTINCT ""f"".""a""
+  FROM ""foo"" AS ""f""
+  INNER JOIN bar ON bar.""a"" = ""f"".""a""
+  WHERE bar.""c"" IN (
+    SELECT cba.c FROM cba
+  )
+  GROUP BY ""f"".""b""
+  HAVING ""f"".""b"" < 100
+  ORDER BY ""f"".""b"" ASC
+  LIMIT 50 OFFSET 100
+)" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretUpdateWithComplexDataSourceAndTargetTableBuilderWithMultipleColumnPrimaryKey()
+    {
+        var table = CreateTableBuilder( string.Empty, "foo", "a", "b" );
+        var foo = table.ToRecordSet( "f" );
+
+        var dataSource = foo
+            .Join( SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ), x => x.Inner["a"] == foo["a"] ) )
+            .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
+            .Distinct()
+            .GroupBy( s => new[] { s["f"]["b"] } )
+            .AndHaving( s => s["f"]["b"] < SqlNode.Literal( 100 ) )
+            .OrderBy( s => new[] { s["f"]["b"].Asc() } )
+            .Limit( SqlNode.Literal( 50 ) )
+            .Offset( SqlNode.Literal( 100 ) );
+
+        _sut.Visit(
+            dataSource.ToUpdate(
+                s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ), s["f"]["b"].Assign( SqlNode.Literal( 20 ) ) } ) );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                @"WITH ""cba"" AS (
+  SELECT * FROM abc
+)
+UPDATE ""foo"" SET
+  ""a"" = 10,
+  ""b"" = 20
+WHERE EXISTS (
+  SELECT DISTINCT *
+  FROM ""foo"" AS ""f""
+  INNER JOIN bar ON bar.""a"" = ""f"".""a""
+  WHERE (""foo"".""a"" = ""f"".""a"") AND (""foo"".""b"" = ""f"".""b"")
+  GROUP BY ""f"".""b""
+  HAVING ""f"".""b"" < 100
+  ORDER BY ""f"".""b"" ASC
+  LIMIT 50 OFFSET 100
+)" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretUpdateWithComplexDataSourceAndTargetTableBuilderWithoutPrimaryKey()
+    {
+        var table = CreateEmptyTableBuilder( string.Empty, "foo" );
+        table.Columns.Create( "a" );
+        table.Columns.Create( "b" );
+        var foo = table.ToRecordSet( "f" );
+
+        var dataSource = foo
+            .Join( SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ), x => x.Inner["a"] == foo["a"] ) )
+            .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
+            .Distinct()
+            .GroupBy( s => new[] { s["f"]["b"] } )
+            .AndHaving( s => s["f"]["b"] < SqlNode.Literal( 100 ) )
+            .OrderBy( s => new[] { s["f"]["b"].Asc() } )
+            .Limit( SqlNode.Literal( 50 ) )
+            .Offset( SqlNode.Literal( 100 ) );
+
+        _sut.Visit(
+            dataSource.ToUpdate(
+                s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ), s["f"]["b"].Assign( SqlNode.Literal( 20 ) ) } ) );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                @"WITH ""cba"" AS (
+  SELECT * FROM abc
+)
+UPDATE ""foo"" SET
+  ""a"" = 10,
+  ""b"" = 20
+WHERE EXISTS (
+  SELECT DISTINCT *
+  FROM ""foo"" AS ""f""
+  INNER JOIN bar ON bar.""a"" = ""f"".""a""
+  WHERE (""foo"".""a"" = ""f"".""a"") AND (""foo"".""b"" = ""f"".""b"")
+  GROUP BY ""f"".""b""
+  HAVING ""f"".""b"" < 100
+  ORDER BY ""f"".""b"" ASC
+  LIMIT 50 OFFSET 100
+)" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretUpdateWithComplexDataSourceAndTargetTemporaryTableWithSingleColumn()
+    {
+        var table = SqlNode.CreateTempTable( "foo", SqlNode.ColumnDefinition<int>( "a" ) );
+        var foo = table.AsSet( "f" );
+
+        var dataSource = foo
+            .Join( SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ), x => x.Inner["a"] == foo["a"] ) )
+            .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
+            .Distinct()
+            .AndWhere( s => s["bar"]["c"].InQuery( SqlNode.RawQuery( "SELECT cba.c FROM cba" ) ) )
+            .GroupBy( s => new[] { s["f"].GetUnsafeField( "b" ) } )
+            .AndHaving( s => s["f"].GetUnsafeField( "b" ) < SqlNode.Literal( 100 ) )
+            .OrderBy( s => new[] { s["f"].GetUnsafeField( "b" ).Asc() } )
+            .Limit( SqlNode.Literal( 50 ) )
+            .Offset( SqlNode.Literal( 100 ) );
+
+        _sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                @"WITH ""cba"" AS (
+  SELECT * FROM abc
+)
+UPDATE temp.""foo"" SET
+  ""a"" = 10
+WHERE ""a"" IN (
+  SELECT DISTINCT ""f"".""a""
+  FROM temp.""foo"" AS ""f""
+  INNER JOIN bar ON bar.""a"" = ""f"".""a""
+  WHERE bar.""c"" IN (
+    SELECT cba.c FROM cba
+  )
+  GROUP BY ""f"".""b""
+  HAVING ""f"".""b"" < 100
+  ORDER BY ""f"".""b"" ASC
+  LIMIT 50 OFFSET 100
+)" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretUpdateWithComplexDataSourceAndTargetTemporaryTableWithMultipleColumns()
+    {
+        var table = SqlNode.CreateTempTable( "foo", SqlNode.ColumnDefinition<int>( "a" ), SqlNode.ColumnDefinition<int>( "b" ) );
+        var foo = table.AsSet( "f" );
+
+        var dataSource = foo
+            .Join( SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ), x => x.Inner["a"] == foo["a"] ) )
+            .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
+            .Distinct()
+            .GroupBy( s => new[] { s["f"]["b"] } )
+            .AndHaving( s => s["f"]["b"] < SqlNode.Literal( 100 ) )
+            .OrderBy( s => new[] { s["f"]["b"].Asc() } )
+            .Limit( SqlNode.Literal( 50 ) )
+            .Offset( SqlNode.Literal( 100 ) );
+
+        _sut.Visit(
+            dataSource.ToUpdate(
+                s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ), s["f"]["b"].Assign( SqlNode.Literal( 20 ) ) } ) );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                @"WITH ""cba"" AS (
+  SELECT * FROM abc
+)
+UPDATE temp.""foo"" SET
+  ""a"" = 10,
+  ""b"" = 20
+WHERE EXISTS (
+  SELECT DISTINCT *
+  FROM temp.""foo"" AS ""f""
+  INNER JOIN bar ON bar.""a"" = ""f"".""a""
+  WHERE (temp.""foo"".""a"" = ""f"".""a"") AND (temp.""foo"".""b"" = ""f"".""b"")
+  GROUP BY ""f"".""b""
+  HAVING ""f"".""b"" < 100
+  ORDER BY ""f"".""b"" ASC
+  LIMIT 50 OFFSET 100
+)" );
+    }
+
+    [Fact]
     public void Visit_ShouldThrowSqlNodeVisitorException_WhenUpdateIsComplexAndDataSourceFromIsNotTableRecordSet()
     {
         var node = SqlNode.RawRecordSet( "foo" ).Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToUpdate();
@@ -2257,6 +2467,30 @@ WHERE EXISTS (
     public void Visit_ShouldThrowSqlNodeVisitorException_WhenUpdateIsComplexAndDataSourceFromIsTableRecordSetWithoutAlias()
     {
         var foo = CreateTable( string.Empty, "foo" ).ToRecordSet();
+        var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToUpdate();
+        var action = Lambda.Of( () => _sut.Visit( node ) );
+
+        action.Should()
+            .ThrowExactly<SqlNodeVisitorException>()
+            .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, _sut ) );
+    }
+
+    [Fact]
+    public void Visit_ShouldThrowSqlNodeVisitorException_WhenUpdateIsComplexAndDataSourceFromIsTableBuilderRecordSetWithoutColumns()
+    {
+        var foo = CreateEmptyTableBuilder( string.Empty, "foo" ).ToRecordSet( "f" );
+        var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToUpdate();
+        var action = Lambda.Of( () => _sut.Visit( node ) );
+
+        action.Should()
+            .ThrowExactly<SqlNodeVisitorException>()
+            .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, _sut ) );
+    }
+
+    [Fact]
+    public void Visit_ShouldThrowSqlNodeVisitorException_WhenUpdateIsComplexAndDataSourceFromIsTemporaryTableRecordSetWithoutColumns()
+    {
+        var foo = SqlNode.CreateTempTable( "foo" ).AsSet( "f" );
         var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToUpdate();
         var action = Lambda.Of( () => _sut.Visit( node ) );
 
@@ -2377,7 +2611,7 @@ WHERE EXISTS (
     [Fact]
     public void Visit_ShouldInterpretDeleteFromWithComplexDataSourceAndTargetTableWithMultipleColumnPrimaryKey_WithoutFilter()
     {
-        var table = CreateTable( string.Empty, "foo", "a", "b" );
+        var table = CreateTable( string.Empty, "foo", new[] { "a", "b", "c" }, "a", "b" );
         var foo = table.ToRecordSet( "f" );
 
         var dataSource = foo
@@ -2412,6 +2646,199 @@ WHERE EXISTS (
     }
 
     [Fact]
+    public void Visit_ShouldInterpretDeleteFromWithComplexDataSourceAndTargetTableBuilderWithSingleColumnPrimaryKey()
+    {
+        var table = CreateTableBuilder( string.Empty, "foo", new[] { "a", "b" }, "a" );
+        var foo = table.ToRecordSet( "f" );
+
+        var dataSource = foo
+            .Join( SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ), x => x.Inner["a"] == foo["a"] ) )
+            .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
+            .Distinct()
+            .AndWhere( s => s["bar"]["c"].InQuery( SqlNode.RawQuery( "SELECT cba.c FROM cba" ) ) )
+            .GroupBy( s => new[] { s["f"]["b"] } )
+            .AndHaving( s => s["f"]["b"] < SqlNode.Literal( 100 ) )
+            .OrderBy( s => new[] { s["f"]["b"].Asc() } )
+            .Limit( SqlNode.Literal( 50 ) )
+            .Offset( SqlNode.Literal( 100 ) );
+
+        _sut.Visit( dataSource.ToDeleteFrom() );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                @"WITH ""cba"" AS (
+  SELECT * FROM abc
+)
+DELETE FROM ""foo""
+WHERE ""a"" IN (
+  SELECT DISTINCT ""f"".""a""
+  FROM ""foo"" AS ""f""
+  INNER JOIN bar ON bar.""a"" = ""f"".""a""
+  WHERE bar.""c"" IN (
+    SELECT cba.c FROM cba
+  )
+  GROUP BY ""f"".""b""
+  HAVING ""f"".""b"" < 100
+  ORDER BY ""f"".""b"" ASC
+  LIMIT 50 OFFSET 100
+)" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretDeleteFromWithComplexDataSourceAndTargetTableBuilderWithMultipleColumnPrimaryKey()
+    {
+        var table = CreateTableBuilder( string.Empty, "foo", new[] { "a", "b", "c" }, "a", "b" );
+        var foo = table.ToRecordSet( "f" );
+
+        var dataSource = foo
+            .Join( SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ), x => x.Inner["a"] == foo["a"] ) )
+            .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
+            .Distinct()
+            .GroupBy( s => new[] { s["f"]["b"] } )
+            .AndHaving( s => s["f"]["b"] < SqlNode.Literal( 100 ) )
+            .OrderBy( s => new[] { s["f"]["b"].Asc() } )
+            .Limit( SqlNode.Literal( 50 ) )
+            .Offset( SqlNode.Literal( 100 ) );
+
+        _sut.Visit( dataSource.ToDeleteFrom() );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                @"WITH ""cba"" AS (
+  SELECT * FROM abc
+)
+DELETE FROM ""foo""
+WHERE EXISTS (
+  SELECT DISTINCT *
+  FROM ""foo"" AS ""f""
+  INNER JOIN bar ON bar.""a"" = ""f"".""a""
+  WHERE (""foo"".""a"" = ""f"".""a"") AND (""foo"".""b"" = ""f"".""b"")
+  GROUP BY ""f"".""b""
+  HAVING ""f"".""b"" < 100
+  ORDER BY ""f"".""b"" ASC
+  LIMIT 50 OFFSET 100
+)" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretDeleteFromWithComplexDataSourceAndTargetTableBuilderWithoutPrimaryKey()
+    {
+        var table = CreateEmptyTableBuilder( string.Empty, "foo" );
+        table.Columns.Create( "a" );
+        table.Columns.Create( "b" );
+        var foo = table.ToRecordSet( "f" );
+
+        var dataSource = foo
+            .Join( SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ), x => x.Inner["a"] == foo["a"] ) )
+            .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
+            .Distinct()
+            .GroupBy( s => new[] { s["f"]["b"] } )
+            .AndHaving( s => s["f"]["b"] < SqlNode.Literal( 100 ) )
+            .OrderBy( s => new[] { s["f"]["b"].Asc() } )
+            .Limit( SqlNode.Literal( 50 ) )
+            .Offset( SqlNode.Literal( 100 ) );
+
+        _sut.Visit( dataSource.ToDeleteFrom() );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                @"WITH ""cba"" AS (
+  SELECT * FROM abc
+)
+DELETE FROM ""foo""
+WHERE EXISTS (
+  SELECT DISTINCT *
+  FROM ""foo"" AS ""f""
+  INNER JOIN bar ON bar.""a"" = ""f"".""a""
+  WHERE (""foo"".""a"" = ""f"".""a"") AND (""foo"".""b"" = ""f"".""b"")
+  GROUP BY ""f"".""b""
+  HAVING ""f"".""b"" < 100
+  ORDER BY ""f"".""b"" ASC
+  LIMIT 50 OFFSET 100
+)" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretDeleteFromWithComplexDataSourceAndTargetTemporaryTableWithSingleColumn()
+    {
+        var table = SqlNode.CreateTempTable( "foo", SqlNode.ColumnDefinition<int>( "a" ) );
+        var foo = table.AsSet( "f" );
+
+        var dataSource = foo
+            .Join( SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ), x => x.Inner["a"] == foo["a"] ) )
+            .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
+            .Distinct()
+            .AndWhere( s => s["bar"]["c"].InQuery( SqlNode.RawQuery( "SELECT cba.c FROM cba" ) ) )
+            .GroupBy( s => new[] { s["f"].GetUnsafeField( "b" ) } )
+            .AndHaving( s => s["f"].GetUnsafeField( "b" ) < SqlNode.Literal( 100 ) )
+            .OrderBy( s => new[] { s["f"].GetUnsafeField( "b" ).Asc() } )
+            .Limit( SqlNode.Literal( 50 ) )
+            .Offset( SqlNode.Literal( 100 ) );
+
+        _sut.Visit( dataSource.ToDeleteFrom() );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                @"WITH ""cba"" AS (
+  SELECT * FROM abc
+)
+DELETE FROM temp.""foo""
+WHERE ""a"" IN (
+  SELECT DISTINCT ""f"".""a""
+  FROM temp.""foo"" AS ""f""
+  INNER JOIN bar ON bar.""a"" = ""f"".""a""
+  WHERE bar.""c"" IN (
+    SELECT cba.c FROM cba
+  )
+  GROUP BY ""f"".""b""
+  HAVING ""f"".""b"" < 100
+  ORDER BY ""f"".""b"" ASC
+  LIMIT 50 OFFSET 100
+)" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretDeleteFromWithComplexDataSourceAndTargetTemporaryTableWithMultipleColumns()
+    {
+        var table = SqlNode.CreateTempTable( "foo", SqlNode.ColumnDefinition<int>( "a" ), SqlNode.ColumnDefinition<int>( "b" ) );
+        var foo = table.AsSet( "f" );
+
+        var dataSource = foo
+            .Join( SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ), x => x.Inner["a"] == foo["a"] ) )
+            .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
+            .Distinct()
+            .GroupBy( s => new[] { s["f"]["b"] } )
+            .AndHaving( s => s["f"]["b"] < SqlNode.Literal( 100 ) )
+            .OrderBy( s => new[] { s["f"]["b"].Asc() } )
+            .Limit( SqlNode.Literal( 50 ) )
+            .Offset( SqlNode.Literal( 100 ) );
+
+        _sut.Visit( dataSource.ToDeleteFrom() );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                @"WITH ""cba"" AS (
+  SELECT * FROM abc
+)
+DELETE FROM temp.""foo""
+WHERE EXISTS (
+  SELECT DISTINCT *
+  FROM temp.""foo"" AS ""f""
+  INNER JOIN bar ON bar.""a"" = ""f"".""a""
+  WHERE (temp.""foo"".""a"" = ""f"".""a"") AND (temp.""foo"".""b"" = ""f"".""b"")
+  GROUP BY ""f"".""b""
+  HAVING ""f"".""b"" < 100
+  ORDER BY ""f"".""b"" ASC
+  LIMIT 50 OFFSET 100
+)" );
+    }
+
+    [Fact]
     public void Visit_ShouldThrowSqlNodeVisitorException_WhenDeleteFromIsComplexAndDataSourceFromIsNotTableRecordSet()
     {
         var node = SqlNode.RawRecordSet( "foo" ).Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToDeleteFrom();
@@ -2426,6 +2853,30 @@ WHERE EXISTS (
     public void Visit_ShouldThrowSqlNodeVisitorException_WhenDeleteFromIsComplexAndDataSourceFromIsTableRecordSetWithoutAlias()
     {
         var foo = CreateTable( string.Empty, "foo" ).ToRecordSet();
+        var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToDeleteFrom();
+        var action = Lambda.Of( () => _sut.Visit( node ) );
+
+        action.Should()
+            .ThrowExactly<SqlNodeVisitorException>()
+            .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, _sut ) );
+    }
+
+    [Fact]
+    public void Visit_ShouldThrowSqlNodeVisitorException_WhenDeleteFromIsComplexAndDataSourceFromIsTableBuilderRecordSetWithoutColumns()
+    {
+        var foo = CreateEmptyTableBuilder( string.Empty, "foo" ).ToRecordSet( "f" );
+        var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToDeleteFrom();
+        var action = Lambda.Of( () => _sut.Visit( node ) );
+
+        action.Should()
+            .ThrowExactly<SqlNodeVisitorException>()
+            .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, _sut ) );
+    }
+
+    [Fact]
+    public void Visit_ShouldThrowSqlNodeVisitorException_WhenDeleteFromIsComplexAndDataSourceFromIsTemporaryTableRecordSetWithoutColumns()
+    {
+        var foo = SqlNode.CreateTempTable( "foo" ).AsSet( "f" );
         var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToDeleteFrom();
         var action = Lambda.Of( () => _sut.Visit( node ) );
 
@@ -2460,8 +2911,7 @@ WHERE EXISTS (
         _sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"DROP TABLE IF EXISTS temp.""foo"";
-CREATE TEMP TABLE ""foo"" (
+                @"CREATE TEMP TABLE ""foo"" (
   ""a"" INTEGER NOT NULL,
   ""b"" TEXT
 ) WITHOUT ROWID" );
@@ -2569,9 +3019,7 @@ BEGIN" );
         string[] columnNames,
         params string[] pkColumnNames)
     {
-        var db = new SqliteDatabaseBuilder();
-        var schema = db.Schemas.GetOrCreate( schemaName );
-        var table = schema.Objects.CreateTable( tableName );
+        var table = CreateEmptyTableBuilder( schemaName, tableName );
 
         if ( columnNames.Length == 0 )
             columnNames = new[] { "X" };
@@ -2583,6 +3031,15 @@ BEGIN" );
             pkColumnNames = columnNames;
 
         table.SetPrimaryKey( pkColumnNames.Select( n => table.Columns.Get( n ).Asc() ).ToArray() );
+        return table;
+    }
+
+    [Pure]
+    private static SqliteTableBuilder CreateEmptyTableBuilder(string schemaName, string tableName)
+    {
+        var db = new SqliteDatabaseBuilder();
+        var schema = db.Schemas.GetOrCreate( schemaName );
+        var table = schema.Objects.CreateTable( tableName );
         return table;
     }
 
