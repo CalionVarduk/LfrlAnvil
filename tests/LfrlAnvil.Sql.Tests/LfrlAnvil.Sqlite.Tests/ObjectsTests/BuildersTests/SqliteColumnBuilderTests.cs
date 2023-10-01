@@ -1106,6 +1106,20 @@ public class SqliteColumnBuilderTests : TestsBase
     }
 
     [Fact]
+    public void Remove_ShouldThrowSqliteObjectBuilderException_WhenColumnIsReferencedByIndexFilters()
+    {
+        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var t1 = schema.Objects.CreateTable( "T1" );
+        t1.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() );
+        var sut = t1.Columns.Create( "C2" );
+        t1.Indexes.Create( t1.Columns.Create( "C3" ).Asc() ).SetFilter( t => t["C2"] != null );
+
+        var action = Lambda.Of( () => sut.Remove() );
+
+        action.Should().ThrowExactly<SqliteObjectBuilderException>();
+    }
+
+    [Fact]
     public void Remove_ShouldThrowSqliteObjectBuilderException_WhenColumnIsReferencedByViews()
     {
         var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );

@@ -5,6 +5,8 @@ using LfrlAnvil.Extensions;
 using LfrlAnvil.Memory;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
+using LfrlAnvil.Sql.Expressions.Logical;
+using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
@@ -16,6 +18,7 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
 {
     private Dictionary<ulong, SqliteForeignKeyBuilder>? _foreignKeys;
     private Dictionary<ulong, SqliteForeignKeyBuilder>? _referencingForeignKeys;
+    private Dictionary<ulong, SqliteColumnBuilder>? _filterColumns;
     private SqliteIndexColumnBuilder[] _columns;
     private string _fullName;
 
@@ -26,8 +29,10 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
         IsUnique = isUnique;
         _columns = columns;
         PrimaryKey = null;
+        Filter = null;
         _foreignKeys = null;
         _referencingForeignKeys = null;
+        _filterColumns = null;
         _fullName = string.Empty;
         UpdateFullName();
 
@@ -38,9 +43,11 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
     public SqliteTableBuilder Table { get; }
     public SqlitePrimaryKeyBuilder? PrimaryKey { get; private set; }
     public bool IsUnique { get; private set; }
+    public SqlConditionNode? Filter { get; private set; }
     public ReadOnlyMemory<SqliteIndexColumnBuilder> Columns => _columns;
     public IReadOnlyCollection<SqliteForeignKeyBuilder> ForeignKeys => (_foreignKeys?.Values).EmptyIfNull();
     public IReadOnlyCollection<SqliteForeignKeyBuilder> ReferencingForeignKeys => (_referencingForeignKeys?.Values).EmptyIfNull();
+    public IReadOnlyCollection<SqliteColumnBuilder> FilterColumns => (_filterColumns?.Values).EmptyIfNull();
     public override SqliteDatabaseBuilder Database => Table.Database;
     public override string FullName => _fullName;
 
@@ -67,6 +74,7 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
     ReadOnlyMemory<ISqlIndexColumnBuilder> ISqlIndexBuilder.Columns => _columns;
     IReadOnlyCollection<ISqlForeignKeyBuilder> ISqlIndexBuilder.ForeignKeys => ForeignKeys;
     IReadOnlyCollection<ISqlForeignKeyBuilder> ISqlIndexBuilder.ReferencingForeignKeys => ReferencingForeignKeys;
+    IReadOnlyCollection<ISqlColumnBuilder> ISqlIndexBuilder.FilterColumns => FilterColumns;
 
     public SqliteIndexBuilder SetDefaultName()
     {
@@ -96,10 +104,43 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
         return this;
     }
 
+    public SqliteIndexBuilder SetFilter(SqlConditionNode? filter)
+    {
+        EnsureNotRemoved();
+
+        if ( ! ReferenceEquals( Filter, filter ) )
+        {
+            if ( filter is not null )
+            {
+                if ( PrimaryKey is not null )
+                    throw new SqliteObjectBuilderException( ExceptionResources.PrimaryKeyIndexCannotBePartial );
+
+                var validator = new SqliteIndexFilterSourceValidator( Table );
+                validator.Visit( filter );
+
+                var errors = validator.GetErrors();
+                if ( errors.Count > 0 )
+                    throw new SqliteObjectBuilderException( errors );
+
+                ClearFilterColumns();
+                RegisterFilterColumns( validator.ReferencedColumns );
+            }
+            else
+                ClearFilterColumns();
+
+            var oldValue = Filter;
+            Filter = filter;
+            Database.ChangeTracker.IsFilterUpdated( this, oldValue );
+        }
+
+        return this;
+    }
+
     internal void AssignPrimaryKey(SqlitePrimaryKeyBuilder primaryKey)
     {
         Assume.IsNull( PrimaryKey, nameof( PrimaryKey ) );
         Assume.Equals( IsUnique, true, nameof( IsUnique ) );
+        Assume.IsNull( Filter, nameof( Filter ) );
 
         PrimaryKey = primaryKey;
         Database.ChangeTracker.PrimaryKeyUpdated( this, null );
@@ -194,6 +235,14 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
 
         _columns = Array.Empty<SqliteIndexColumnBuilder>();
 
+        if ( Filter is not null )
+        {
+            var filter = Filter;
+            ClearFilterColumns();
+            Filter = null;
+            Database.ChangeTracker.IsFilterUpdated( this, filter );
+        }
+
         Table.Schema.Objects.Remove( Name );
         Table.Indexes.Remove( columns );
         Database.ChangeTracker.ObjectRemoved( Table, this );
@@ -230,6 +279,29 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
             throw new SqliteObjectBuilderException( errors );
     }
 
+    private void ClearFilterColumns()
+    {
+        if ( _filterColumns is not null && _filterColumns.Count > 0 )
+        {
+            foreach ( var column in _filterColumns.Values )
+                column.RemoveIndexFilter( this );
+        }
+
+        _filterColumns = null;
+    }
+
+    private void RegisterFilterColumns(Dictionary<ulong, SqliteColumnBuilder> columns)
+    {
+        Assume.IsNull( _filterColumns, nameof( _filterColumns ) );
+
+        if ( columns.Count == 0 )
+            return;
+
+        _filterColumns = columns;
+        foreach ( var column in _filterColumns.Values )
+            column.AddIndexFilter( this );
+    }
+
     ISqlIndexBuilder ISqlIndexBuilder.SetDefaultName()
     {
         return SetDefaultName();
@@ -243,5 +315,10 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
     ISqlIndexBuilder ISqlIndexBuilder.MarkAsUnique(bool enabled)
     {
         return MarkAsUnique( enabled );
+    }
+
+    ISqlIndexBuilder ISqlIndexBuilder.SetFilter(SqlConditionNode? filter)
+    {
+        return SetFilter( filter );
     }
 }

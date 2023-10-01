@@ -128,7 +128,7 @@ public sealed class SqliteIndexBuilderCollection : ISqlIndexBuilderCollection
     internal SqliteIndexBuilder GetOrCreateForPrimaryKey(SqliteIndexColumnBuilder[] columns)
     {
         if ( TryGet( columns, out var index ) )
-            return index.MarkAsUnique();
+            return index.MarkAsUnique().SetFilter( null );
 
         var result = Table.Schema.Objects.CreateIndex( Table, columns, isUnique: true );
         _map.Add( columns, result );

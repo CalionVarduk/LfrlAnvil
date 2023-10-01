@@ -8,8 +8,9 @@ internal enum SqliteObjectChangeDescriptor : byte
     DataType = 3,
     DefaultValue = 4,
     IsUnique = 5,
-    PrimaryKey = 6,
-    OnDeleteBehavior = 7,
-    OnUpdateBehavior = 8,
-    Reconstruct = 9
+    Filter = 6,
+    PrimaryKey = 7,
+    OnDeleteBehavior = 8,
+    OnUpdateBehavior = 9,
+    Reconstruct = 10
 }

@@ -614,19 +614,19 @@ internal abstract class SqliteSourceNodeValidator : ISqlNodeVisitor
             ForbiddenNodes.Add( node );
     }
 
-    private void VisitBinaryOperator(SqlNodeBase left, SqlNodeBase right)
+    protected void VisitBinaryOperator(SqlNodeBase left, SqlNodeBase right)
     {
         this.Visit( left );
         this.Visit( right );
     }
 
-    private void VisitFunction(SqlFunctionExpressionNode node)
+    protected void VisitFunction(SqlFunctionExpressionNode node)
     {
         foreach ( var arg in node.Arguments.Span )
             this.Visit( arg );
     }
 
-    private void VisitAggregateFunction(SqlAggregateFunctionExpressionNode node)
+    protected void VisitAggregateFunction(SqlAggregateFunctionExpressionNode node)
     {
         foreach ( var arg in node.Arguments.Span )
             this.Visit( arg );

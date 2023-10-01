@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using LfrlAnvil.Functional;
+using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
@@ -595,6 +596,170 @@ public class SqliteIndexBuilderTests : TestsBase
     }
 
     [Fact]
+    public void SetFilter_ShouldDoNothing_WhenValueDoesNotChange()
+    {
+        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).SetFilter( SqlNode.True() );
+
+        var startStatementCount = schema.Database.GetPendingStatements().Length;
+
+        var result = ((ISqlIndexBuilder)sut).SetFilter( SqlNode.True() );
+        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            statements.Should().HaveCount( 0 );
+        }
+    }
+
+    [Fact]
+    public void SetFilter_ShouldDoNothing_WhenValueChangeIsFollowedByChangeToOriginal()
+    {
+        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
+
+        var startStatementCount = schema.Database.GetPendingStatements().Length;
+
+        var result = ((ISqlIndexBuilder)sut).SetFilter( SqlNode.True() ).SetFilter( null );
+        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            statements.Should().HaveCount( 0 );
+        }
+    }
+
+    [Fact]
+    public void SetFilter_ShouldUpdateFilterAndFilterColumns_WhenValueChangesToNonNull()
+    {
+        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var column = table.Columns.Create( "C2" );
+        var sut = table.Indexes.Create( column.Asc() );
+
+        var startStatementCount = schema.Database.GetPendingStatements().Length;
+
+        var result = sut.SetFilter( t => t["C2"] != null );
+        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            result.Filter.Should().BeEquivalentTo( table.ToRecordSet().GetField( "C2" ) != null );
+            result.FilterColumns.Should().BeSequentiallyEqualTo( column );
+            column.IndexFilters.Should().BeSequentiallyEqualTo( sut );
+            statements.Should().HaveCount( 1 );
+            statements.ElementAtOrDefault( 0 )
+                .Should()
+                .SatisfySql(
+                    "DROP INDEX \"foo_IX_T_C2A\";",
+                    "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC) WHERE \"foo_T\".\"C2\" IS NOT NULL;" );
+        }
+    }
+
+    [Fact]
+    public void SetFilter_ShouldUpdateFilterAndFilterColumns_WhenValueChangesToNull()
+    {
+        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var column = table.Columns.Create( "C2" );
+        var sut = table.Indexes.Create( column.Asc() ).SetFilter( t => t["C2"] != null );
+
+        var startStatementCount = schema.Database.GetPendingStatements().Length;
+
+        var result = ((ISqlIndexBuilder)sut).SetFilter( null );
+        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            result.Filter.Should().BeNull();
+            result.FilterColumns.Should().BeEmpty();
+            column.IndexFilters.Should().BeEmpty();
+            statements.Should().HaveCount( 1 );
+            statements.ElementAtOrDefault( 0 )
+                .Should()
+                .SatisfySql(
+                    "DROP INDEX \"foo_IX_T_C2A\";",
+                    "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" );
+        }
+    }
+
+    [Fact]
+    public void SetFilter_ShouldThrowSqliteObjectBuilderException_WhenFilterIsInvalid()
+    {
+        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var sut = table.Indexes.Create( table.Columns.Create( "C" ).Asc() );
+
+        var action = Lambda.Of(
+            () => ((ISqlIndexBuilder)sut).SetFilter( _ => SqlNode.Functions.RecordsAffected() == SqlNode.Literal( 0 ) ) );
+
+        action.Should().ThrowExactly<SqliteObjectBuilderException>();
+    }
+
+    [Fact]
+    public void SetFilter_ShouldThrowSqliteObjectBuilderException_WhenPrimaryKeyIndexFilterChangesToNonNull()
+    {
+        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var sut = table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
+
+        var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).SetFilter( SqlNode.True() ) );
+
+        action.Should().ThrowExactly<SqliteObjectBuilderException>();
+    }
+
+    [Fact]
+    public void SetFilter_ShouldThrowSqliteObjectBuilderException_WhenIndexIsRemoved()
+    {
+        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
+        sut.Remove();
+
+        var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).SetFilter( null ) );
+
+        action.Should()
+            .ThrowExactly<SqliteObjectBuilderException>()
+            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+    }
+
+    [Fact]
+    public void SetFilter_ShouldUpdateFilterAndIsUniqueAndNameCorrectly_WhenFilterAndIsUniqueAndNameChangeAtTheSameTime()
+    {
+        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
+
+        var startStatementCount = schema.Database.GetPendingStatements().Length;
+
+        var result = ((ISqlIndexBuilder)sut).MarkAsUnique().SetFilter( t => t["C2"] != null ).SetName( "bar" );
+        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            statements.Should().HaveCount( 1 );
+            statements.ElementAtOrDefault( 0 )
+                .Should()
+                .SatisfySql(
+                    "DROP INDEX \"foo_IX_T_C2A\";",
+                    "CREATE UNIQUE INDEX \"foo_bar\" ON \"foo_T\" (\"C2\" ASC) WHERE \"foo_T\".\"C2\" IS NOT NULL;" );
+        }
+    }
+
+    [Fact]
     public void Remove_ShouldRemoveIndexAndSelfReferencingForeignKeys()
     {
         var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
@@ -663,6 +828,30 @@ public class SqliteIndexBuilderTests : TestsBase
             sut.ReferencingForeignKeys.Should().BeEmpty();
             column.Indexes.Should().BeEmpty();
             pk.IsRemoved.Should().BeTrue();
+            table.PrimaryKey.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void Remove_ShouldRemoveIndexAndClearAssignedFilterColumns()
+    {
+        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var column = table.Columns.Create( "C" );
+        var sut = table.Indexes.Create( column.Asc() ).SetFilter( t => t["C"] != null );
+
+        sut.Remove();
+
+        using ( new AssertionScope() )
+        {
+            table.Indexes.Contains( column.Asc() ).Should().BeFalse();
+            schema.Objects.Contains( sut.Name ).Should().BeFalse();
+            sut.IsRemoved.Should().BeTrue();
+            sut.ForeignKeys.Should().BeEmpty();
+            sut.ReferencingForeignKeys.Should().BeEmpty();
+            sut.FilterColumns.Should().BeEmpty();
+            column.Indexes.Should().BeEmpty();
+            column.IndexFilters.Should().BeEmpty();
             table.PrimaryKey.Should().BeNull();
         }
     }

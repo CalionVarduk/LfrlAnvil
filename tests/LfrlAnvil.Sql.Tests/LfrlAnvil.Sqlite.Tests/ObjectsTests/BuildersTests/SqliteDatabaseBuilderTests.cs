@@ -1,6 +1,6 @@
 ﻿using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Visitors;
-using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Objects.Builders;
@@ -107,7 +107,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
         var sut = new SqliteDatabaseBuilder().SetDetachedMode();
 
         var table = sut.Schemas.Default.Objects.CreateTable( "T" );
-        var ix1 = table.Indexes.Create( table.Columns.Create( "D" ).Asc() ).MarkAsUnique();
+        var ix1 = table.Indexes.Create( table.Columns.Create( "D" ).Asc() ).MarkAsUnique().SetFilter( SqlNode.True() );
         var ix2 = table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
         var fk = table.ForeignKeys.Create( ix1, ix2 );
         fk.SetOnDeleteBehavior( ReferenceBehavior.Cascade ).SetOnUpdateBehavior( ReferenceBehavior.Cascade );
@@ -126,7 +126,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
         sut.ChangeTracker.SetMode( SqlDatabaseCreateMode.NoChanges );
 
         var table = sut.Schemas.Default.Objects.CreateTable( "T" );
-        var ix1 = table.Indexes.Create( table.Columns.Create( "D" ).Asc() ).MarkAsUnique();
+        var ix1 = table.Indexes.Create( table.Columns.Create( "D" ).Asc() ).MarkAsUnique().SetFilter( SqlNode.True() );
         var ix2 = table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
         var fk = table.ForeignKeys.Create( ix1, ix2 );
         fk.SetOnDeleteBehavior( ReferenceBehavior.Cascade ).SetOnUpdateBehavior( ReferenceBehavior.Cascade );

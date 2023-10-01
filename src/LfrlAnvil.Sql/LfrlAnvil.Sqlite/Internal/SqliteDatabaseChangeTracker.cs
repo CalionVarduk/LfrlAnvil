@@ -8,6 +8,7 @@ using System.Text;
 using LfrlAnvil.Exceptions;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Objects.Builders;
@@ -225,6 +226,21 @@ internal sealed class SqliteDatabaseChangeTracker
             SqliteObjectStatus.Modified,
             Boxed.GetBool( ! index.IsUnique ),
             Boxed.GetBool( index.IsUnique ) );
+
+        AddChange( index.Table, change );
+    }
+
+    internal void IsFilterUpdated(SqliteIndexBuilder index, SqlConditionNode? oldValue)
+    {
+        if ( ! IsPreparingStatements )
+            return;
+
+        var change = new SqliteDatabasePropertyChange(
+            index,
+            SqliteObjectChangeDescriptor.Filter,
+            SqliteObjectStatus.Modified,
+            oldValue,
+            index.Filter );
 
         AddChange( index.Table, change );
     }
@@ -592,7 +608,7 @@ internal sealed class SqliteDatabaseChangeTracker
         AppendCreateIndexCollection( builder, table.Indexes );
     }
 
-    private static void AppendAlterTableWithoutReconstruction(
+    private void AppendAlterTableWithoutReconstruction(
         StringBuilder builder,
         SqliteTableBuilder table,
         SqliteAlterTableBuffer buffer)
@@ -690,7 +706,7 @@ internal sealed class SqliteDatabaseChangeTracker
         }
     }
 
-    private static StringBuilder AppendCreateIndex(StringBuilder builder, SqliteIndexBuilder index)
+    private StringBuilder AppendCreateIndex(StringBuilder builder, SqliteIndexBuilder index)
     {
         Assume.IsNull( index.PrimaryKey, nameof( index.PrimaryKey ) );
 
@@ -702,10 +718,14 @@ internal sealed class SqliteDatabaseChangeTracker
         foreach ( var c in index.Columns.Span )
             builder.AppendIndexedColumn( c.Column.Name, c.Ordering );
 
-        return builder.AppendElementsEnd( trimCount: 2 ).AppendCommandEnd();
+        builder.AppendElementsEnd( trimCount: 2 );
+        if ( index.Filter is not null )
+            builder.AppendIndexFilter( index.Filter, _database.NodeInterpreterFactory );
+
+        return builder.AppendCommandEnd();
     }
 
-    private static void AppendCreateIndexCollection(StringBuilder builder, SqliteIndexBuilderCollection indexes)
+    private void AppendCreateIndexCollection(StringBuilder builder, SqliteIndexBuilderCollection indexes)
     {
         if ( indexes.Count > 1 )
             builder.AppendLine();

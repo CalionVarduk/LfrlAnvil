@@ -34,6 +34,7 @@ public partial class SqliteTableBuilderTests
                 result.DefaultValue.Should().BeNull();
                 result.Indexes.Should().BeEmpty();
                 result.ReferencingViews.Should().BeEmpty();
+                result.IndexFilters.Should().BeEmpty();
                 sut.Count.Should().Be( 1 );
                 sut.Should().BeSequentiallyEqualTo( result );
             }
@@ -107,6 +108,7 @@ public partial class SqliteTableBuilderTests
                 result.TypeDefinition.Should().BeSameAs( sut.DefaultTypeDefinition );
                 result.DefaultValue.Should().BeNull();
                 result.Indexes.Should().BeEmpty();
+                result.IndexFilters.Should().BeEmpty();
                 sut.Count.Should().Be( 1 );
                 sut.Should().BeSequentiallyEqualTo( result );
             }
@@ -287,6 +289,24 @@ public partial class SqliteTableBuilderTests
             {
                 result.Should().BeFalse();
                 sut.Count.Should().Be( 1 );
+            }
+        }
+
+        [Fact]
+        public void Remove_ShouldReturnFalse_WhenColumnExistsButIsUsedByAtLeastOneIndexFilter()
+        {
+            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var table = schema.Objects.CreateTable( "T" );
+            var sut = table.Columns;
+            sut.Create( "C1" );
+            table.Indexes.Create( sut.Create( "C2" ).Asc() ).SetFilter( t => t["C1"] != null );
+
+            var result = sut.Remove( "C1" );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeFalse();
+                sut.Count.Should().Be( 2 );
             }
         }
 

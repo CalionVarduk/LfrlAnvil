@@ -35,8 +35,10 @@ public partial class SqliteTableBuilderTests
                 result.Type.Should().Be( SqlObjectType.Index );
                 result.ForeignKeys.Should().BeEmpty();
                 result.ReferencingForeignKeys.Should().BeEmpty();
+                result.FilterColumns.Should().BeEmpty();
                 result.PrimaryKey.Should().BeNull();
                 result.IsUnique.Should().BeFalse();
+                result.Filter.Should().BeNull();
                 sut.Count.Should().Be( 1 );
                 sut.Should().BeEquivalentTo( result );
                 schema.Objects.Contains( result.Name ).Should().BeTrue();
@@ -178,8 +180,10 @@ public partial class SqliteTableBuilderTests
                 result.Type.Should().Be( SqlObjectType.Index );
                 result.ForeignKeys.Should().BeEmpty();
                 result.ReferencingForeignKeys.Should().BeEmpty();
+                result.FilterColumns.Should().BeEmpty();
                 result.PrimaryKey.Should().BeNull();
                 result.IsUnique.Should().BeFalse();
+                result.Filter.Should().BeNull();
                 sut.Count.Should().Be( 1 );
                 sut.Should().BeEquivalentTo( result );
                 schema.Objects.Contains( result.Name ).Should().BeTrue();

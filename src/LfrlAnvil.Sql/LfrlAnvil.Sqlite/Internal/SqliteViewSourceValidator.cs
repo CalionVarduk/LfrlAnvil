@@ -92,10 +92,6 @@ internal sealed class SqliteViewSourceValidator : SqliteSourceNodeValidator
 
     public override void VisitCommonTableExpressionRecordSet(SqlCommonTableExpressionRecordSetNode node) { }
 
-    public override void VisitTemporaryTableRecordSet(SqlTemporaryTableRecordSetNode node)
-    {
-        AddForbiddenNode( node );
-    }
 
     public override void VisitJoinOn(SqlDataSourceJoinOnNode node)
     {

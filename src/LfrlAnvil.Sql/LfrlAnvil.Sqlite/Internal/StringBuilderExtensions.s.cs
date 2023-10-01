@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Expressions;
+using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Visitors;
 
 namespace LfrlAnvil.Sqlite.Internal;
@@ -139,6 +140,24 @@ internal static class StringBuilderExtensions
             .Append( ordering.Name )
             .AppendElementSeparator()
             .AppendTokenSeparator();
+    }
+
+    internal static StringBuilder AppendIndexFilter(
+        this StringBuilder builder,
+        SqlConditionNode filter,
+        SqliteNodeInterpreterFactory nodeInterpreterFactory)
+    {
+        builder.AppendTokenSeparator().Append( "WHERE" ).AppendTokenSeparator();
+
+        // NOTE:
+        // this is a temporary solution, it will be improved once db schema change scripts are generated
+        // by interpreting an sql node tree
+        var context = SqlNodeInterpreterContext.Create( builder );
+        context.SetParentNode( SqlNode.Null() );
+
+        var interpreter = nodeInterpreterFactory.Create( context );
+        interpreter.Visit( filter );
+        return builder;
     }
 
     internal static StringBuilder AppendNamedElement(this StringBuilder builder, string name)

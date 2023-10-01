@@ -2,6 +2,8 @@
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Sql.Expressions;
+using LfrlAnvil.Sql.Expressions.Logical;
+using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Objects.Builders;
 
@@ -39,6 +41,12 @@ public static class SqlObjectExtensions
     public static bool Remove(this ISqlIndexBuilderCollection indexes, params ISqlIndexColumnBuilder[] columns)
     {
         return indexes.Remove( columns );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static ISqlIndexBuilder SetFilter(this ISqlIndexBuilder index, Func<SqlTableBuilderRecordSetNode, SqlConditionNode?> filter)
+    {
+        return index.SetFilter( filter( index.Table.ToRecordSet() ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

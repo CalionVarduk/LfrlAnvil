@@ -16,6 +16,7 @@ public static class ExceptionResources
     public const string DefaultSchemaCannotBeRemoved = "Default schema cannot be removed.";
     public const string IndexMustHaveAtLeastOneColumn = "Index must have at least one column.";
     public const string PrimaryKeyIndexMustRemainUnique = "Primary key index must remain unique.";
+    public const string PrimaryKeyIndexCannotBePartial = "Primary key index cannot be partial.";
     public const string ForeignKeyIndexAndReferencedIndexAreTheSame = "Foreign key index and referenced index are the same.";
 
     public const string ForeignKeyIndexAndReferencedIndexMustHaveTheSameAmountOfColumns =
@@ -155,6 +156,13 @@ public static class ExceptionResources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string ColumnIsReferencedByIndexFilter(ISqlIndexBuilder index)
+    {
+        return $"Column is referenced by filter of {index}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string TableIsReferencedByObject(ISqlObjectBuilder obj)
     {
         return $"Table is referenced by {obj}.";
@@ -225,6 +233,14 @@ public static class ExceptionResources
     public static string ViewBelongsToAnotherDatabase(SqlViewBuilderRecordSetNode node)
     {
         return $@"View belongs to another database:
+{node}";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string ColumnBelongsToAnotherTable(SqlColumnBuilderNode node)
+    {
+        return $@"Column belongs to another table:
 {node}";
     }
 

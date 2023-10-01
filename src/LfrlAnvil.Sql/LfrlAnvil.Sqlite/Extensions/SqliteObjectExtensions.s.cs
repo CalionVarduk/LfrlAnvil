@@ -2,6 +2,8 @@
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Sql.Expressions;
+using LfrlAnvil.Sql.Expressions.Logical;
+using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Objects;
@@ -28,6 +30,12 @@ public static class SqliteObjectExtensions
     public static SqliteIndexBuilder GetOrCreate(this SqliteIndexBuilderCollection indexes, params ISqlIndexColumnBuilder[] columns)
     {
         return indexes.GetOrCreate( columns );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqliteIndexBuilder SetFilter(this SqliteIndexBuilder index, Func<SqlTableBuilderRecordSetNode, SqlConditionNode?> filter)
+    {
+        return index.SetFilter( filter( index.Table.ToRecordSet() ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

@@ -1,4 +1,5 @@
 ﻿using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Objects;
@@ -38,8 +39,39 @@ public class SqliteIndexTests : TestsBase
             sut.Name.Should().Be( "IX_TEST" );
             sut.FullName.Should().Be( "foo_IX_TEST" );
             sut.IsUnique.Should().Be( isUnique );
+            sut.IsPartial.Should().BeFalse();
             ((SqliteIndex)sut).Columns.ToArray().Should().BeSequentiallyEqualTo( c1.Asc(), c2.Desc() );
             sut.Columns.ToArray().Should().BeSequentiallyEqualTo( c1.Asc(), c2.Desc() );
+            sut.ToString().Should().Be( "[Index] foo_IX_TEST" );
+        }
+    }
+
+    [Fact]
+    public void Properties_ShouldBeCorrectlyCopiedFromBuilder_ForPartialIndex()
+    {
+        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
+        var c1Builder = tableBuilder.Columns.Create( "C1" );
+        tableBuilder.Indexes.Create( c1Builder.Asc() ).SetName( "IX_TEST" ).SetFilter( SqlNode.True() );
+        tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "X" ).Asc() );
+
+        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        var schema = db.Schemas.Get( "foo" );
+        var table = schema.Objects.GetTable( "T" );
+        var c1 = table.Columns.Get( "C1" );
+
+        ISqlIndex sut = schema.Objects.GetIndex( "IX_TEST" );
+
+        using ( new AssertionScope() )
+        {
+            sut.Database.Should().BeSameAs( db );
+            sut.Table.Should().BeSameAs( table );
+            sut.Type.Should().Be( SqlObjectType.Index );
+            sut.Name.Should().Be( "IX_TEST" );
+            sut.FullName.Should().Be( "foo_IX_TEST" );
+            sut.IsUnique.Should().BeFalse();
+            sut.IsPartial.Should().BeTrue();
+            sut.Columns.ToArray().Should().BeSequentiallyEqualTo( c1.Asc() );
             sut.ToString().Should().Be( "[Index] foo_IX_TEST" );
         }
     }

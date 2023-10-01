@@ -11,6 +11,7 @@ public interface ISqlColumnBuilder : ISqlObjectBuilder
     bool IsNullable { get; }
     SqlExpressionNode? DefaultValue { get; }
     IReadOnlyCollection<ISqlIndexBuilder> Indexes { get; }
+    IReadOnlyCollection<ISqlIndexBuilder> IndexFilters { get; }
     IReadOnlyCollection<ISqlViewBuilder> ReferencingViews { get; }
 
     new ISqlColumnBuilder SetName(string name);

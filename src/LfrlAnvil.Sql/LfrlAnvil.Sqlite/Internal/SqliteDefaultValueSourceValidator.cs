@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql.Exceptions;
-using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Functions;
 
 namespace LfrlAnvil.Sqlite.Internal;
@@ -38,16 +37,6 @@ internal sealed class SqliteDefaultValueSourceValidator : SqliteSourceNodeValida
     }
 
     public override void VisitCustomAggregateFunction(SqlAggregateFunctionExpressionNode node)
-    {
-        AddForbiddenNode( node );
-    }
-
-    public override void VisitSelectExpression(SqlSelectExpressionNode node)
-    {
-        AddForbiddenNode( node );
-    }
-
-    public override void VisitCompoundQueryComponent(SqlCompoundQueryComponentNode node)
     {
         AddForbiddenNode( node );
     }

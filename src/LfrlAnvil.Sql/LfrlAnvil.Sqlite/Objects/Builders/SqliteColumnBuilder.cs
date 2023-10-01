@@ -15,6 +15,7 @@ namespace LfrlAnvil.Sqlite.Objects.Builders;
 public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
 {
     private Dictionary<ulong, SqliteIndexBuilder>? _indexes;
+    private Dictionary<ulong, SqliteIndexBuilder>? _indexFilters;
     private Dictionary<ulong, SqliteViewBuilder>? _referencingViews;
     private string? _fullName;
 
@@ -28,6 +29,7 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
         DefaultValue = null;
         _fullName = null;
         _indexes = null;
+        _indexFilters = null;
         _referencingViews = null;
     }
 
@@ -38,13 +40,17 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
     public override SqliteDatabaseBuilder Database => Table.Database;
     public override string FullName => _fullName ??= SqliteHelpers.GetFullFieldName( Table.FullName, Name );
     public IReadOnlyCollection<SqliteIndexBuilder> Indexes => (_indexes?.Values).EmptyIfNull();
+    public IReadOnlyCollection<SqliteIndexBuilder> IndexFilters => (_indexFilters?.Values).EmptyIfNull();
     public IReadOnlyCollection<SqliteViewBuilder> ReferencingViews => (_referencingViews?.Values).EmptyIfNull();
 
     internal override bool CanRemove =>
-        (_indexes is null || _indexes.Count == 0) && (_referencingViews is null || _referencingViews.Count == 0);
+        (_indexes is null || _indexes.Count == 0) &&
+        (_indexFilters is null || _indexFilters.Count == 0) &&
+        (_referencingViews is null || _referencingViews.Count == 0);
 
     ISqlTableBuilder ISqlColumnBuilder.Table => Table;
     IReadOnlyCollection<ISqlIndexBuilder> ISqlColumnBuilder.Indexes => Indexes;
+    IReadOnlyCollection<ISqlIndexBuilder> ISqlColumnBuilder.IndexFilters => IndexFilters;
     ISqlColumnTypeDefinition ISqlColumnBuilder.TypeDefinition => TypeDefinition;
     IReadOnlyCollection<ISqlViewBuilder> ISqlColumnBuilder.ReferencingViews => ReferencingViews;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
@@ -137,6 +143,17 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
         _indexes?.Remove( index.Id );
     }
 
+    internal void AddIndexFilter(SqliteIndexBuilder index)
+    {
+        _indexFilters ??= new Dictionary<ulong, SqliteIndexBuilder>();
+        _indexFilters.Add( index.Id, index );
+    }
+
+    internal void RemoveIndexFilter(SqliteIndexBuilder index)
+    {
+        _indexFilters?.Remove( index.Id );
+    }
+
     internal void AddReferencingView(SqliteViewBuilder view)
     {
         _referencingViews ??= new Dictionary<ulong, SqliteViewBuilder>();
@@ -164,6 +181,7 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
         Assume.Equals( CanRemove, true, nameof( CanRemove ) );
 
         _indexes = null;
+        _indexFilters = null;
         _referencingViews = null;
 
         Table.Columns.Remove( Name );
@@ -205,6 +223,12 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
         {
             foreach ( var index in _indexes.Values )
                 errors = errors.Extend( ExceptionResources.ColumnIsReferencedByObject( index ) );
+        }
+
+        if ( _indexFilters is not null && _indexFilters.Count > 0 )
+        {
+            foreach ( var index in _indexFilters.Values )
+                errors = errors.Extend( ExceptionResources.ColumnIsReferencedByIndexFilter( index ) );
         }
 
         if ( _referencingViews is not null && _referencingViews.Count > 0 )
