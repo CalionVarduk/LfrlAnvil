@@ -3,7 +3,6 @@ using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Objects;
-using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
@@ -16,7 +15,7 @@ public class SqliteIndexTests : TestsBase
     [InlineData( false )]
     public void Properties_ShouldBeCorrectlyCopiedFromBuilder(bool isUnique)
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         var c1Builder = tableBuilder.Columns.Create( "C1" );
         var c2Builder = tableBuilder.Columns.Create( "C2" );
@@ -49,7 +48,7 @@ public class SqliteIndexTests : TestsBase
     [Fact]
     public void Properties_ShouldBeCorrectlyCopiedFromBuilder_ForPartialIndex()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         var c1Builder = tableBuilder.Columns.Create( "C1" );
         tableBuilder.Indexes.Create( c1Builder.Asc() ).SetName( "IX_TEST" ).SetFilter( SqlNode.True() );

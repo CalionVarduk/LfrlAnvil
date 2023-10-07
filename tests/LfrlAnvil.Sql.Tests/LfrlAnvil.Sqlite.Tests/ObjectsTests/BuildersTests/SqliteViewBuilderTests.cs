@@ -15,7 +15,7 @@ public class SqliteViewBuilderTests : TestsBase
     [Fact]
     public void Create_ShouldPrepareCorrectStatement()
     {
-        var db = new SqliteDatabaseBuilder();
+        var db = SqliteDatabaseBuilderMock.Create();
         db.Schemas.Create( "foo" ).Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
 
         var statements = db.GetPendingStatements().ToArray();
@@ -34,7 +34,7 @@ public class SqliteViewBuilderTests : TestsBase
     [Fact]
     public void Create_FollowedByRemove_ShouldDoNothing()
     {
-        var db = new SqliteDatabaseBuilder();
+        var db = SqliteDatabaseBuilderMock.Create();
         var sut = db.Schemas.Create( "foo" ).Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
         sut.Remove();
 
@@ -46,7 +46,7 @@ public class SqliteViewBuilderTests : TestsBase
     [Fact]
     public void ToString_ShouldReturnCorrectResult()
     {
-        var db = new SqliteDatabaseBuilder();
+        var db = SqliteDatabaseBuilderMock.Create();
         var sut = db.Schemas.Create( "foo" ).Objects.CreateView( "bar", SqlNode.RawQuery( "SELECT * FROM foo" ) );
 
         var result = sut.ToString();
@@ -58,7 +58,7 @@ public class SqliteViewBuilderTests : TestsBase
     public void SetName_ShouldDoNothing_WhenNewNameEqualsOldName()
     {
         var name = Fixture.Create<string>();
-        var schema = new SqliteDatabaseBuilder().Schemas.Default;
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
         var sut = schema.Objects.CreateView( name, SqlNode.RawQuery( "SELECT * FROM foo" ) );
 
         var result = ((ISqlViewBuilder)sut).SetName( name );
@@ -76,7 +76,7 @@ public class SqliteViewBuilderTests : TestsBase
     public void SetName_ShouldDoNothing_WhenNameChangesToNewNameAndThenChangesToOldName()
     {
         var (oldName, newName) = Fixture.CreateDistinctCollection<string>( count: 2 );
-        var schema = new SqliteDatabaseBuilder().Schemas.Default;
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
         var sut = schema.Objects.CreateView( oldName, SqlNode.RawQuery( "SELECT * FROM foo" ) );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -99,7 +99,7 @@ public class SqliteViewBuilderTests : TestsBase
     public void SetName_ShouldUpdateName_WhenNameChangesAndViewDoesNotHaveAnyReferencingViews()
     {
         var (oldName, newName) = ("foo", "bar");
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "s" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "s" );
         var sut = schema.Objects.CreateView( oldName, SqlNode.RawQuery( "SELECT * FROM foo" ) );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -128,7 +128,7 @@ public class SqliteViewBuilderTests : TestsBase
     public void SetName_ShouldUpdateName_WhenNameChangesAndViewHasReferencingViews()
     {
         var (oldName, newName) = ("V1", "V2");
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "s" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "s" );
         var sut = schema.Objects.CreateView( oldName, SqlNode.RawQuery( "SELECT * FROM foo" ) );
         var w1 = schema.Objects.CreateView( "W1", sut.ToRecordSet().ToDataSource().Select( s => new[] { s.GetAll() } ) );
         schema.Objects.CreateView( "W2", w1.ToRecordSet().ToDataSource().Select( s => new[] { s.GetAll() } ) );
@@ -185,7 +185,7 @@ public class SqliteViewBuilderTests : TestsBase
     [InlineData( "f\"oo" )]
     public void SetName_ShouldThrowSqliteObjectBuilderException_WhenNameIsInvalid(string name)
     {
-        var db = new SqliteDatabaseBuilder();
+        var db = SqliteDatabaseBuilderMock.Create();
         var sut = db.Schemas.Default.Objects.CreateView( Fixture.Create<string>(), SqlNode.RawQuery( "SELECT * FROM foo" ) );
 
         var action = Lambda.Of( () => sut.SetName( name ) );
@@ -199,7 +199,7 @@ public class SqliteViewBuilderTests : TestsBase
     public void SetName_ShouldThrowSqliteObjectBuilderException_WhenObjectWithNameAlreadyExists()
     {
         var (name1, name2) = Fixture.CreateDistinctCollection<string>( count: 2 );
-        var schema = new SqliteDatabaseBuilder().Schemas.Default;
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
         var other = schema.Objects.CreateTable( name2 );
         other.SetPrimaryKey( other.Columns.Create( "C" ).Asc() );
         var sut = schema.Objects.CreateView( name1, SqlNode.RawQuery( "SELECT * FROM foo" ) );
@@ -214,7 +214,7 @@ public class SqliteViewBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldThrowSqliteObjectBuilderException_WhenViewHasBeenRemoved()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Default;
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
         var sut = schema.Objects.CreateView( Fixture.Create<string>(), SqlNode.RawQuery( "SELECT * FROM foo" ) );
         schema.Objects.Remove( sut.Name );
 
@@ -228,7 +228,7 @@ public class SqliteViewBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldRemoveView_WhenViewDoesNotHaveAnyReferencingViews()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var otherView = schema.Objects.CreateView( "W", SqlNode.RawQuery( "SELECT * FROM foo" ) );
         var sut = schema.Objects.CreateView( "V", otherView.ToRecordSet().ToDataSource().Select( s => new[] { s.GetAll() } ) );
 
@@ -253,7 +253,7 @@ public class SqliteViewBuilderTests : TestsBase
     public void Remove_ShouldDoNothing_WhenViewHasAlreadyBeenRemoved()
     {
         var name = Fixture.Create<string>();
-        var schema = new SqliteDatabaseBuilder().Schemas.Default;
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
         var sut = schema.Objects.CreateView( name, SqlNode.RawQuery( "SELECT * FROM foo" ) );
         sut.Remove();
 
@@ -269,7 +269,7 @@ public class SqliteViewBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldThrowSqliteObjectBuilderException_WhenViewIsReferencedByAnyView()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
         schema.Objects.CreateView( "W", sut.ToRecordSet().ToDataSource().Select( s => new[] { s.GetAll() } ) );
 
@@ -283,7 +283,7 @@ public class SqliteViewBuilderTests : TestsBase
     [Fact]
     public void NameChange_ThenRemoval_ShouldDropViewByUsingItsOldName()
     {
-        var builder = new SqliteDatabaseBuilder();
+        var builder = SqliteDatabaseBuilderMock.Create();
         var sut = builder.Schemas.Create( "s" ).Objects.CreateView( "foo", SqlNode.RawQuery( "SELECT * FROM foo" ) );
         _ = builder.GetPendingStatements();
 
@@ -299,7 +299,7 @@ public class SqliteViewBuilderTests : TestsBase
     public void ForSqlite_ShouldInvokeAction_WhenViewIsSqlite()
     {
         var action = Substitute.For<Action<SqliteViewBuilder>>();
-        var sut = new SqliteDatabaseBuilder().Schemas.Default.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
+        var sut = SqliteDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
 
         var result = sut.ForSqlite( action );
 

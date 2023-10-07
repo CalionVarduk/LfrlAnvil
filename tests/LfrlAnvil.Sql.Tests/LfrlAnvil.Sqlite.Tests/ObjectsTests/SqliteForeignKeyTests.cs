@@ -2,7 +2,6 @@
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sqlite.Extensions;
-using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Tests.Helpers;
 
 namespace LfrlAnvil.Sqlite.Tests.ObjectsTests;
@@ -17,7 +16,7 @@ public class SqliteForeignKeyTests : TestsBase
         var onDeleteBehavior = onDelete == "CASCADE" ? ReferenceBehavior.Cascade : ReferenceBehavior.Restrict;
         var onUpdateBehavior = onUpdate == "CASCADE" ? ReferenceBehavior.Cascade : ReferenceBehavior.Restrict;
 
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         var indexBuilder1 = tableBuilder.Indexes.Create( tableBuilder.Columns.Create( "C1" ).Asc() );
         var indexBuilder2 = tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C2" ).Asc() ).Index;
@@ -58,7 +57,7 @@ public class SqliteForeignKeyTests : TestsBase
         var onDeleteBehavior = onDelete == "CASCADE" ? ReferenceBehavior.Cascade : ReferenceBehavior.Restrict;
         var onUpdateBehavior = onUpdate == "CASCADE" ? ReferenceBehavior.Cascade : ReferenceBehavior.Restrict;
 
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder1 = schemaBuilder.Objects.CreateTable( "T1" );
         var indexBuilder1 = tableBuilder1.SetPrimaryKey( tableBuilder1.Columns.Create( "C1" ).Asc() ).Index;
         var tableBuilder2 = schemaBuilder.Objects.CreateTable( "T2" );
@@ -100,7 +99,7 @@ public class SqliteForeignKeyTests : TestsBase
         var onDeleteBehavior = onDelete == "CASCADE" ? ReferenceBehavior.Cascade : ReferenceBehavior.Restrict;
         var onUpdateBehavior = onUpdate == "CASCADE" ? ReferenceBehavior.Cascade : ReferenceBehavior.Restrict;
 
-        var dbBuilder = new SqliteDatabaseBuilder();
+        var dbBuilder = SqliteDatabaseBuilderMock.Create();
         var schemaBuilder1 = dbBuilder.Schemas.Create( "foo" );
         var tableBuilder1 = schemaBuilder1.Objects.CreateTable( "T1" );
         var indexBuilder1 = tableBuilder1.SetPrimaryKey( tableBuilder1.Columns.Create( "C1" ).Asc() ).Index;

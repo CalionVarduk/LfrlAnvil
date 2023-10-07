@@ -1,9 +1,11 @@
 ﻿using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Extensions;
+using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Versioning;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Extensions;
@@ -23,6 +25,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
 
         using ( new AssertionScope() )
         {
+            var db = ReinterpretCast.To<SqliteDatabase>( result.Database );
             sut.Dialect.Should().BeSameAs( SqliteDialect.Instance );
             result.Database.Schemas.Should().BeSequentiallyEqualTo( result.Database.Schemas.Default );
             result.Database.Schemas.Default.Objects.Should().BeEmpty();
@@ -32,6 +35,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
             result.OldVersion.Should().Be( SqlDatabaseVersionHistory.InitialVersion );
             result.NewVersion.Should().Be( SqlDatabaseVersionHistory.InitialVersion );
             result.Database.Version.Should().Be( result.NewVersion );
+            result.Database.ServerVersion.Should().Be( db.Connect().ServerVersion );
             versions.Should().BeEmpty();
         }
     }
@@ -314,6 +318,308 @@ public class SqliteDatabaseFactoryTests : TestsBase
     }
 
     [Fact]
+    public void Create_ShouldReturnDatabaseWithCustomGetCurrentDateFunction()
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT GET_CURRENT_DATE()";
+
+        var min = DateOnly.FromDateTime( DateTime.Now );
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = DateOnly.Parse( reader.GetString( 0 ) );
+        var max = DateOnly.FromDateTime( DateTime.Now );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeGreaterOrEqualTo( min );
+            result.Should().BeLessOrEqualTo( max );
+        }
+    }
+
+    [Fact]
+    public void Create_ShouldReturnDatabaseWithCustomGetCurrentTimeFunction()
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT GET_CURRENT_TIME()";
+
+        var min = TimeOnly.FromDateTime( DateTime.Now );
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = TimeOnly.Parse( reader.GetString( 0 ) );
+        var max = TimeOnly.FromDateTime( DateTime.Now );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeGreaterOrEqualTo( min );
+            result.Should().BeLessOrEqualTo( max );
+        }
+    }
+
+    [Fact]
+    public void Create_ShouldReturnDatabaseWithCustomGetCurrentDateTimeFunction()
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT GET_CURRENT_DATETIME()";
+
+        var min = DateTime.Now;
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = DateTime.Parse( reader.GetString( 0 ) );
+        var max = DateTime.Now;
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeOnOrAfter( min );
+            result.Should().BeOnOrBefore( max );
+        }
+    }
+
+    [Fact]
+    public void Create_ShouldReturnDatabaseWithCustomGetCurrentTimestampFunction()
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT GET_CURRENT_TIMESTAMP()";
+
+        var min = DateTime.UtcNow.Ticks;
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetInt64( 0 );
+        var max = DateTime.UtcNow.Ticks;
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeGreaterOrEqualTo( min );
+            result.Should().BeLessOrEqualTo( max );
+        }
+    }
+
+    [Fact]
+    public void Create_ShouldReturnDatabaseWithCustomNewGuidFunction()
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT NEW_GUID()";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetValue( 0 ) as byte[];
+
+        var action = Lambda.Of( () => new Guid( result! ) );
+
+        action.Should().NotThrow();
+    }
+
+    [Fact]
+    public void Create_ShouldReturnDatabaseWithCustomToLowerFunction()
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT TO_LOWER('FooBarQUX')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetString( 0 );
+
+        result.Should().Be( "foobarqux" );
+    }
+
+    [Fact]
+    public void Create_ShouldReturnDatabaseWithCustomToLowerFunction_ThatReturnsNullWhenParameterIsNull()
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT TO_LOWER(NULL)";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetValue( 0 );
+
+        result.Should().BeOfType<DBNull>();
+    }
+
+    [Fact]
+    public void Create_ShouldReturnDatabaseWithCustomToUpperFunction()
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT TO_UPPER('fOObARqux')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetString( 0 );
+
+        result.Should().Be( "FOOBARQUX" );
+    }
+
+    [Fact]
+    public void Create_ShouldReturnDatabaseWithCustomToUpperFunction_ThatReturnsNullWhenParameterIsNull()
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT TO_UPPER(NULL)";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetValue( 0 );
+
+        result.Should().BeOfType<DBNull>();
+    }
+
+    [Fact]
+    public void Create_ShouldReturnDatabaseWithCustomInstrLastFunction()
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT INSTR_LAST('foo.bar.qux', '.')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetInt64( 0 );
+
+        result.Should().Be( 8 );
+    }
+
+    [Fact]
+    public void Create_ShouldReturnDatabaseWithCustomInstrLastFunction_ThatReturnsNullWhenFirstParameterIsNull()
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT INSTR_LAST(NULL, '.')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetValue( 0 );
+
+        result.Should().BeOfType<DBNull>();
+    }
+
+    [Fact]
+    public void Create_ShouldReturnDatabaseWithCustomInstrLastFunction_ThatReturnsNullWhenSecondParameterIsNull()
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT INSTR_LAST('foo', NULL)";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetValue( 0 );
+
+        result.Should().BeOfType<DBNull>();
+    }
+
+    [Fact]
+    public void AddConnectionChangeCallback_ShouldRegisterCallbackAndInvokeItDuringDatabaseCreation()
+    {
+        var firstCallback = Substitute.For<Action<SqlDatabaseConnectionChangeEvent>>();
+        var secondCallback = Substitute.For<Action<SqlDatabaseConnectionChangeEvent>>();
+
+        var sut = new SqliteDatabaseFactory();
+        var history = new SqlDatabaseVersionHistory(
+            SqlDatabaseVersion.Create( Version.Parse( "0.0.1" ), b => b.AddConnectionChangeCallback( firstCallback ) ),
+            SqlDatabaseVersion.Create( Version.Parse( "0.0.2" ), b => b.AddConnectionChangeCallback( secondCallback ) ) );
+
+        var result = sut.Create( "DataSource=:memory:", history, SqlCreateDatabaseOptions.Default.SetMode( SqlDatabaseCreateMode.DryRun ) );
+
+        using ( new AssertionScope() )
+        {
+            firstCallback.Verify().CallCount.Should().Be( 1 );
+            var firstEvent = (SqlDatabaseConnectionChangeEvent?)firstCallback.Verify().CallAt( 0 ).Arguments.ElementAtOrDefault( 0 );
+            (firstEvent?.Connection).Should().BeSameAs( result.Database.Connect() );
+            (firstEvent?.StateChange).Should().BeEquivalentTo( new StateChangeEventArgs( ConnectionState.Closed, ConnectionState.Open ) );
+
+            secondCallback.Verify().CallCount.Should().Be( 1 );
+            var secondEvent = (SqlDatabaseConnectionChangeEvent?)secondCallback.Verify().CallAt( 0 ).Arguments.ElementAtOrDefault( 0 );
+            (secondEvent?.Connection).Should().BeSameAs( result.Database.Connect() );
+            (secondEvent?.StateChange).Should().BeEquivalentTo( new StateChangeEventArgs( ConnectionState.Closed, ConnectionState.Open ) );
+        }
+    }
+
+    [Fact]
+    public void AddConnectionChangeCallback_ShouldRegisterCallbackAndInvokeItDuringDatabaseDisposal()
+    {
+        var callback = Substitute.For<Action<SqlDatabaseConnectionChangeEvent>>();
+
+        var sut = new SqliteDatabaseFactory();
+        var history = new SqlDatabaseVersionHistory(
+            SqlDatabaseVersion.Create( Version.Parse( "0.0.1" ), b => b.AddConnectionChangeCallback( callback ) ) );
+
+        var result = sut.Create( "DataSource=:memory:", history, SqlCreateDatabaseOptions.Default.SetMode( SqlDatabaseCreateMode.DryRun ) );
+        result.Database.Dispose();
+
+        using ( new AssertionScope() )
+        {
+            callback.Verify().CallCount.Should().Be( 2 );
+            var @event = (SqlDatabaseConnectionChangeEvent?)callback.Verify().CallAt( 1 ).Arguments.ElementAtOrDefault( 0 );
+            (@event?.Connection).Should().BeSameAs( result.Database.Connect() );
+            (@event?.StateChange).Should().BeEquivalentTo( new StateChangeEventArgs( ConnectionState.Open, ConnectionState.Closed ) );
+        }
+    }
+
+    [Fact]
+    public void AddConnectionChangeCallback_ShouldRegisterCallbackAndInvokeItOnConnectionClose_WhenBuilderThrowsAnException()
+    {
+        var callback = Substitute.For<Action<SqlDatabaseConnectionChangeEvent>>();
+
+        var sut = new SqliteDatabaseFactory();
+        var history = new SqlDatabaseVersionHistory(
+            SqlDatabaseVersion.Create( Version.Parse( "0.0.1" ), b => b.AddConnectionChangeCallback( callback ) ),
+            SqlDatabaseVersion.Create( Version.Parse( "0.0.2" ), _ => throw new Exception() ) );
+
+        try
+        {
+            sut.Create( "DataSource=:memory:", history, SqlCreateDatabaseOptions.Default.SetMode( SqlDatabaseCreateMode.Commit ) );
+        }
+        catch { }
+
+        using ( new AssertionScope() )
+        {
+            callback.Verify().CallCount.Should().Be( 2 );
+            var @event = (SqlDatabaseConnectionChangeEvent?)callback.Verify().CallAt( 1 ).Arguments.ElementAtOrDefault( 0 );
+            (@event?.StateChange).Should().BeEquivalentTo( new StateChangeEventArgs( ConnectionState.Open, ConnectionState.Closed ) );
+        }
+    }
+
+    [Fact]
     public void RegisterSqlite_ShouldAddSqliteFactory()
     {
         var sut = new SqlDatabaseFactoryProvider();
@@ -451,6 +757,58 @@ public class SqliteDatabaseFactoryTests : TestsBase
                     versions.Select( v => v.Version )
                         .Should()
                         .BeSequentiallyEqualTo( Version.Parse( "0.1" ), Version.Parse( "0.2" ), Version.Parse( "0.3" ) );
+                }
+            }
+            finally
+            {
+                var dbPath = Path.Combine( Environment.CurrentDirectory, dbName );
+                File.Delete( dbPath );
+            }
+        }
+
+        [Fact]
+        public void AddConnectionChangeCallback_ShouldRegisterCallbackAndInvokeItOnEachConnectionOpenAndClose()
+        {
+            const string dbName = ".test_2.db";
+            const string connectionString = $"DataSource=./{dbName};Pooling=false";
+
+            var callback = Substitute.For<Action<SqlDatabaseConnectionChangeEvent>>();
+
+            var sut = new SqliteDatabaseFactory();
+            var history = new SqlDatabaseVersionHistory(
+                SqlDatabaseVersion.Create( Version.Parse( "0.1" ), b => b.AddConnectionChangeCallback( callback ) ) );
+
+            try
+            {
+                var result = sut.Create(
+                    connectionString,
+                    history,
+                    SqlCreateDatabaseOptions.Default.SetMode( SqlDatabaseCreateMode.Commit ) );
+
+                var connection = result.Database.Connect();
+                connection.Dispose();
+
+                using ( new AssertionScope() )
+                {
+                    callback.Verify().CallCount.Should().Be( 4 );
+
+                    var firstEvent = (SqlDatabaseConnectionChangeEvent?)callback.Verify().CallAt( 0 ).Arguments.ElementAtOrDefault( 0 );
+                    (firstEvent?.StateChange).Should()
+                        .BeEquivalentTo( new StateChangeEventArgs( ConnectionState.Closed, ConnectionState.Open ) );
+
+                    var secondEvent = (SqlDatabaseConnectionChangeEvent?)callback.Verify().CallAt( 1 ).Arguments.ElementAtOrDefault( 0 );
+                    (secondEvent?.StateChange).Should()
+                        .BeEquivalentTo( new StateChangeEventArgs( ConnectionState.Open, ConnectionState.Closed ) );
+
+                    var thirdEvent = (SqlDatabaseConnectionChangeEvent?)callback.Verify().CallAt( 2 ).Arguments.ElementAtOrDefault( 0 );
+                    (thirdEvent?.Connection).Should().BeSameAs( connection );
+                    (thirdEvent?.StateChange).Should()
+                        .BeEquivalentTo( new StateChangeEventArgs( ConnectionState.Closed, ConnectionState.Open ) );
+
+                    var fourthEvent = (SqlDatabaseConnectionChangeEvent?)callback.Verify().CallAt( 3 ).Arguments.ElementAtOrDefault( 0 );
+                    (fourthEvent?.Connection).Should().BeSameAs( connection );
+                    (fourthEvent?.StateChange).Should()
+                        .BeEquivalentTo( new StateChangeEventArgs( ConnectionState.Open, ConnectionState.Closed ) );
                 }
             }
             finally

@@ -579,28 +579,28 @@ END" );
     public void Visit_ShouldInterpretCurrentDateFunction()
     {
         _sut.Visit( SqlNode.Functions.CurrentDate() );
-        _sut.Context.Sql.ToString().Should().Be( "CURRENT_DATE()" );
+        _sut.Context.Sql.ToString().Should().Be( "GET_CURRENT_DATE()" );
     }
 
     [Fact]
     public void Visit_ShouldInterpretCurrentTimeFunction()
     {
         _sut.Visit( SqlNode.Functions.CurrentTime() );
-        _sut.Context.Sql.ToString().Should().Be( "CURRENT_TIME()" );
+        _sut.Context.Sql.ToString().Should().Be( "GET_CURRENT_TIME()" );
     }
 
     [Fact]
     public void Visit_ShouldInterpretCurrentDateTimeFunction()
     {
         _sut.Visit( SqlNode.Functions.CurrentDateTime() );
-        _sut.Context.Sql.ToString().Should().Be( "CURRENT_DATETIME()" );
+        _sut.Context.Sql.ToString().Should().Be( "GET_CURRENT_DATETIME()" );
     }
 
     [Fact]
     public void Visit_ShouldInterpretCurrentTimestampFunction()
     {
         _sut.Visit( SqlNode.Functions.CurrentTimestamp() );
-        _sut.Context.Sql.ToString().Should().Be( "CURRENT_TIMESTAMP()" );
+        _sut.Context.Sql.ToString().Should().Be( "GET_CURRENT_TIMESTAMP()" );
     }
 
     [Fact]
@@ -2143,7 +2143,7 @@ WHERE foo.""a"" IN (
 UPDATE ""foo"" SET
   ""a"" = 10,
   ""b"" = 20
-WHERE ""a"" IN (
+WHERE ""foo"".""a"" IN (
   SELECT DISTINCT ""f"".""a""
   FROM ""foo"" AS ""f""
   INNER JOIN bar ON bar.""a"" = ""f"".""a""
@@ -2272,7 +2272,7 @@ WHERE EXISTS (
 UPDATE ""foo"" SET
   ""a"" = 10,
   ""b"" = 20
-WHERE ""a"" IN (
+WHERE ""foo"".""a"" IN (
   SELECT DISTINCT ""f"".""a""
   FROM ""foo"" AS ""f""
   INNER JOIN bar ON bar.""a"" = ""f"".""a""
@@ -2397,7 +2397,7 @@ WHERE EXISTS (
 )
 UPDATE temp.""foo"" SET
   ""a"" = 10
-WHERE ""a"" IN (
+WHERE temp.""foo"".""a"" IN (
   SELECT DISTINCT ""f"".""a""
   FROM temp.""foo"" AS ""f""
   INNER JOIN bar ON bar.""a"" = ""f"".""a""
@@ -2554,7 +2554,7 @@ WHERE foo.""a"" IN (
   SELECT * FROM abc
 )
 DELETE FROM ""foo""
-WHERE ""a"" IN (
+WHERE ""foo"".""a"" IN (
   SELECT DISTINCT ""f"".""a""
   FROM ""foo"" AS ""f""
   INNER JOIN bar ON bar.""a"" = ""f"".""a""
@@ -2671,7 +2671,7 @@ WHERE EXISTS (
   SELECT * FROM abc
 )
 DELETE FROM ""foo""
-WHERE ""a"" IN (
+WHERE ""foo"".""a"" IN (
   SELECT DISTINCT ""f"".""a""
   FROM ""foo"" AS ""f""
   INNER JOIN bar ON bar.""a"" = ""f"".""a""
@@ -2787,7 +2787,7 @@ WHERE EXISTS (
   SELECT * FROM abc
 )
 DELETE FROM temp.""foo""
-WHERE ""a"" IN (
+WHERE temp.""foo"".""a"" IN (
   SELECT DISTINCT ""f"".""a""
   FROM temp.""foo"" AS ""f""
   INNER JOIN bar ON bar.""a"" = ""f"".""a""
@@ -3037,7 +3037,7 @@ BEGIN" );
     [Pure]
     private static SqliteTableBuilder CreateEmptyTableBuilder(string schemaName, string tableName)
     {
-        var db = new SqliteDatabaseBuilder();
+        var db = SqliteDatabaseBuilderMock.Create();
         var schema = db.Schemas.GetOrCreate( schemaName );
         var table = schema.Objects.CreateTable( tableName );
         return table;
@@ -3060,7 +3060,7 @@ BEGIN" );
     [Pure]
     private static SqliteViewBuilder CreateViewBuilder(string schemaName, string viewName, SqlQueryExpressionNode? source = null)
     {
-        var db = new SqliteDatabaseBuilder();
+        var db = SqliteDatabaseBuilderMock.Create();
         var schema = db.Schemas.GetOrCreate( schemaName );
         var view = schema.Objects.CreateView( viewName, source ?? SqlNode.RawQuery( "SELECT * FROM foo" ) );
         return view;

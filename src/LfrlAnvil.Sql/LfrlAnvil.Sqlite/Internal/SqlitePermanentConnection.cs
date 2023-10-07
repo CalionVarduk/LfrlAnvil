@@ -3,7 +3,6 @@ using System.Data;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using LfrlAnvil.Sqlite.Exceptions;
-using Microsoft.Data.Sqlite;
 
 namespace LfrlAnvil.Sqlite.Internal;
 

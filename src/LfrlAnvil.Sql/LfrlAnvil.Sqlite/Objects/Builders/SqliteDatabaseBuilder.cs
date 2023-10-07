@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
 using LfrlAnvil.Generators;
 using LfrlAnvil.Memory;
 using LfrlAnvil.Sql;
@@ -13,8 +14,9 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
 {
     private readonly UlongSequenceGenerator _idGenerator;
 
-    internal SqliteDatabaseBuilder()
+    internal SqliteDatabaseBuilder(string serverVersion)
     {
+        ServerVersion = serverVersion;
         _idGenerator = new UlongSequenceGenerator();
         DataTypes = new SqliteDataTypeProvider();
         TypeDefinitions = new SqliteColumnTypeDefinitionProvider();
@@ -22,18 +24,20 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
         Schemas = new SqliteSchemaBuilderCollection( this );
         ChangeTracker = new SqliteDatabaseChangeTracker( this );
         ObjectPool = new MemorySequencePool<SqliteObjectBuilder>( minSegmentLength: 32 );
+        ConnectionChanges = SqlDatabaseConnectionChangeCallbacks.Create();
     }
 
     public SqliteDataTypeProvider DataTypes { get; }
     public SqliteColumnTypeDefinitionProvider TypeDefinitions { get; }
     public SqliteNodeInterpreterFactory NodeInterpreterFactory { get; private set; }
     public SqliteSchemaBuilderCollection Schemas { get; }
+    public string ServerVersion { get; }
     public SqlDialect Dialect => SqliteDialect.Instance;
     public SqlDatabaseCreateMode Mode => ChangeTracker.Mode;
     public bool IsAttached => ChangeTracker.IsAttached;
     internal SqliteDatabaseChangeTracker ChangeTracker { get; }
     internal MemorySequencePool<SqliteObjectBuilder> ObjectPool { get; }
-
+    internal SqlDatabaseConnectionChangeCallbacks ConnectionChanges { get; private set; }
     ISqlDataTypeProvider ISqlDatabaseBuilder.DataTypes => DataTypes;
     ISqlColumnTypeDefinitionProvider ISqlDatabaseBuilder.TypeDefinitions => TypeDefinitions;
     ISqlNodeInterpreterFactory ISqlDatabaseBuilder.NodeInterpreterFactory => NodeInterpreterFactory;
@@ -65,6 +69,20 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
     {
         ChangeTracker.SetAttachedMode( ! enabled );
         return this;
+    }
+
+    public SqliteDatabaseBuilder AddConnectionChangeCallback(Action<SqlDatabaseConnectionChangeEvent> callback)
+    {
+        ConnectionChanges.Callbacks.Add( callback );
+        return this;
+    }
+
+    [Pure]
+    internal ReadOnlySpan<Action<SqlDatabaseConnectionChangeEvent>> GetPendingConnectionChangeCallbacks()
+    {
+        var result = ConnectionChanges.GetPendingCallbacks();
+        ConnectionChanges = ConnectionChanges.UpdateFirstPendingCallbackIndex();
+        return result;
     }
 
     internal ulong GetNextId()
@@ -145,5 +163,10 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
     ISqlDatabaseBuilder ISqlDatabaseBuilder.SetAttachedMode(bool enabled)
     {
         return SetAttachedMode( enabled );
+    }
+
+    ISqlDatabaseBuilder ISqlDatabaseBuilder.AddConnectionChangeCallback(Action<SqlDatabaseConnectionChangeEvent> callback)
+    {
+        return AddConnectionChangeCallback( callback );
     }
 }

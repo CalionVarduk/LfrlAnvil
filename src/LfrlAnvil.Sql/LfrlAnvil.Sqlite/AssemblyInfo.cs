@@ -4,7 +4,8 @@
 
 // TODO:
 // - Add possibility to ignore record set name in data field node
-//   ^ may be important for partial indexes & updates in the form of UPDATE T SET X = X + 1 (instead of UPDATE T SET X = T.X +1)
+//   ^ may be important for partial indexes & updates in the form of UPDATE T SET X = X + 1 (instead of UPDATE T SET X = T.X + 1)
+//   ^ seems to work for Sqlite, at least => leave it for now, let's see how other db providers handle that
 // - Add check constraints? as expression trees
 // - ISqlDatabaseBuilder.AddRawStatement should accept an expression tree (array of, internally will create a batch node) + parameters
 // - Add column script can be handled with ALTER TABLE
@@ -14,10 +15,8 @@
 // - SqliteIndexColumnBuilder is a candidate for moving to Sql.Core, as a generic class, where T is a column builder type
 //   ^ honestly, pretty much everything could be moved to Sql.Core, as generic abstract classes, that allow to override default behaviors
 //   ^ and define new ones
-// - Add some events to database creation process, e.g. version statement begin, version statement end <= NEXT NEXT
+// - Add some events to database creation process, e.g. version statement begin, version statement end <= NEXT
 //   ^ so that e.g. loggers could be easily added
-// - For Sqlite, add possibility to setup connection with e.g. custom functions <= NEXT
-//   ^ just add an optional delegate for on connection created/connected
 // - Support for Sqlite COLLATION in added columns? let's see how other SQL providers handle that
 // - ON CONFLICT ROLLBACK instead of ABORT? https://www.sqlite.org/lang_conflict.html
 // - STRICT table option is supported in v3.37.0 (2021-11-27), disabled for now
@@ -44,3 +43,7 @@
 //   ^ this can later be extended to work with table db objects, that could automatically verify input parameters type's properties
 //   ^ and link them with correct table columns
 //   ^ + update could accept any subset of columns to allow multiple 'variations' for the same table
+// - Improve sqlite interpreter complex update handling (more info in interpreter comment)
+// - Add sqlite interpreter options, that can be enabled e.g. based on server version
+//   ^ these options can e.g. allow to enable STRICT tables, UPDATE FROM handling,
+//   ^ row value comparison in complex DELETE/UPDATE with multiple column PKs etc.

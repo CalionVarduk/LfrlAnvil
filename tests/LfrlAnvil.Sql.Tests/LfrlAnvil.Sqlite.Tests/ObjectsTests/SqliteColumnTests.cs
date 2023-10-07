@@ -1,7 +1,6 @@
 ﻿using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sqlite.Extensions;
-using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Tests.Helpers;
 
 namespace LfrlAnvil.Sqlite.Tests.ObjectsTests;
@@ -15,7 +14,7 @@ public class SqliteColumnTests : TestsBase
     [InlineData( typeof( string ), false )]
     public void Properties_ShouldBeCorrectlyCopiedFromBuilder(Type type, bool isNullable)
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Default;
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Default;
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.Columns.Create( "C" ).SetType( type ).MarkAsNullable( isNullable );
         tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "X" ).Asc() );

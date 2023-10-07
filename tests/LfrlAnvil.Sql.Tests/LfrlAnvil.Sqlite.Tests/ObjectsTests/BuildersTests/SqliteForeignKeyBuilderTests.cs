@@ -15,7 +15,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
     [Fact]
     public void ToString_ShouldReturnCorrectResult()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
         var ix2 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
@@ -29,7 +29,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
     [Fact]
     public void Create_ShouldMarkTableForReconstruction_WhenForeignKeyReferencesAnotherTable()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
 
         var t1 = schema.Objects.CreateTable( "T1" );
         var ix2 = t1.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() ).Index;
@@ -64,7 +64,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
     [Fact]
     public void Create_FollowedByRemove_ShouldDoNothing()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
         var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
@@ -81,7 +81,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
     [Fact]
     public void Create_ShouldMarkTableForReconstruction_WhenForeignKeyIsSelfReference()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
         var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
@@ -116,7 +116,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldDoNothing_WhenNewNameEqualsOldName()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
         var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
@@ -137,7 +137,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldDoNothing_WhenNameChangeIsFollowedByChangeToOriginal()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
         var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
@@ -161,7 +161,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldUpdateName_WhenNewNameIsDifferentFromOldName()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
         var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
@@ -209,7 +209,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
     [InlineData( "f\"oo" )]
     public void SetName_ShouldThrowSqliteObjectBuilderException_WhenNameIsInvalid(string name)
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
         var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
@@ -225,7 +225,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldThrowSqliteObjectBuilderException_WhenForeignKeyIsRemoved()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
         var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
@@ -242,7 +242,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldThrowSqliteObjectBuilderException_WhenNewNameAlreadyExistsInSchema()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
         var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
@@ -258,7 +258,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
     [Fact]
     public void SetDefaultName_ShouldDoNothing_WhenNewNameEqualsOldName()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
         var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
@@ -279,7 +279,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
     [Fact]
     public void SetDefaultName_ShouldDoNothing_WhenNameChangeIsFollowedByChangeToOriginal()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
         var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
@@ -302,7 +302,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
     [Fact]
     public void SetDefaultName_ShouldUpdateName_WhenNewNameIsDifferentFromOldName()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
         var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
@@ -345,7 +345,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
     [Fact]
     public void SetDefaultName_ShouldThrowSqliteObjectBuilderException_WhenForeignKeyIsRemoved()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
         var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
@@ -362,7 +362,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
     [Fact]
     public void SetDefaultName_ShouldThrowSqliteObjectBuilderException_WhenNewNameAlreadyExistsInSchema()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
         var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
@@ -379,7 +379,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
     [Fact]
     public void SetOnDeleteBehavior_ShouldUpdateBehavior_WhenNewValueIsDifferentFromOldValue()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
         var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
@@ -418,7 +418,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
     [Fact]
     public void SetOnDeleteBehavior_ShouldDoNothing_WhenNewValueEqualsOldValue()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
         var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
@@ -439,7 +439,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
     [Fact]
     public void SetOnDeleteBehavior_ShouldDoNothing_WhenValueChangeIsFollowedByChangeToOriginal()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
         var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
@@ -462,7 +462,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
     [Fact]
     public void SetOnDeleteBehavior_ShouldThrowSqliteObjectBuilderException_WhenForeignKeyIsRemoved()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
         var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
@@ -479,7 +479,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
     [Fact]
     public void SetOnUpdateBehavior_ShouldUpdateBehavior_WhenNewValueIsDifferentFromOldValue()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
         var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
@@ -518,7 +518,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
     [Fact]
     public void SetOnUpdateBehavior_ShouldDoNothing_WhenNewValueEqualsOldValue()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
         var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
@@ -539,7 +539,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
     [Fact]
     public void SetOnUpdateBehavior_ShouldDoNothing_WhenValueChangeIsFollowedByChangeToOriginal()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
         var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
@@ -562,7 +562,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
     [Fact]
     public void SetOnUpdateBehavior_ShouldThrowSqliteObjectBuilderException_WhenForeignKeyIsRemoved()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
         var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
@@ -579,7 +579,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldRemoveForeignKey()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
         var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
@@ -620,7 +620,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldDoNothing_WhenForeignKeyIsRemoved()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
         var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
@@ -640,7 +640,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
     public void ForSqlite_ShouldInvokeAction_WhenForeignKeyIsSqlite()
     {
         var action = Substitute.For<Action<SqliteForeignKeyBuilder>>();
-        var table = new SqliteDatabaseBuilder().Schemas.Default.Objects.CreateTable( "T" );
+        var table = SqliteDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
         var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
         var ix2 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
         var sut = table.ForeignKeys.Create( ix1, ix2 );

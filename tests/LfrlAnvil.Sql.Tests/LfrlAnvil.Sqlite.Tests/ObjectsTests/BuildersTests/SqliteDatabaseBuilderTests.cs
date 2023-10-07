@@ -4,6 +4,7 @@ using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Objects.Builders;
+using LfrlAnvil.Sqlite.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sqlite.Tests.ObjectsTests.BuildersTests;
@@ -13,7 +14,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
     [Fact]
     public void Ctor_ShouldCreateBuilderWithDefaultSchema()
     {
-        var sut = new SqliteDatabaseBuilder();
+        var sut = SqliteDatabaseBuilderMock.Create();
 
         using ( new AssertionScope() )
         {
@@ -37,6 +38,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
             sut.Dialect.Should().BeSameAs( SqliteDialect.Instance );
             sut.IsAttached.Should().BeTrue();
             sut.GetPendingStatements().ToArray().Should().BeEmpty();
+            sut.ServerVersion.Should().NotBeEmpty();
 
             ((ISqlDatabaseBuilder)sut).DataTypes.Should().BeSameAs( sut.DataTypes );
             ((ISqlDatabaseBuilder)sut).TypeDefinitions.Should().BeSameAs( sut.TypeDefinitions );
@@ -49,7 +51,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
     public void AddRawStatement_ShouldAddNewStatement_WhenThereAreNoPendingChanges()
     {
         var statement = Fixture.Create<string>();
-        var sut = new SqliteDatabaseBuilder();
+        var sut = SqliteDatabaseBuilderMock.Create();
 
         sut.AddRawStatement( statement );
         var result = sut.GetPendingStatements().ToArray();
@@ -61,7 +63,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
     public void AddRawStatement_ShouldAddNewStatement_WhenThereAreSomePendingChanges()
     {
         var statement = Fixture.Create<string>();
-        var sut = new SqliteDatabaseBuilder();
+        var sut = SqliteDatabaseBuilderMock.Create();
         sut.ChangeTracker.SetMode( SqlDatabaseCreateMode.Commit );
 
         var table = sut.Schemas.Default.Objects.CreateTable( "T" );
@@ -82,7 +84,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
     public void AddRawStatement_ShouldDoNothing_WhenBuilderIsDetached()
     {
         var statement = Fixture.Create<string>();
-        var sut = new SqliteDatabaseBuilder().SetDetachedMode();
+        var sut = SqliteDatabaseBuilderMock.Create().SetDetachedMode();
 
         sut.AddRawStatement( statement );
 
@@ -93,7 +95,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
     public void AddRawStatement_ShouldDoNothing_WhenBuilderIsInNoChangesMode()
     {
         var statement = Fixture.Create<string>();
-        var sut = new SqliteDatabaseBuilder();
+        var sut = SqliteDatabaseBuilderMock.Create();
         sut.ChangeTracker.SetMode( SqlDatabaseCreateMode.NoChanges );
 
         sut.AddRawStatement( statement );
@@ -104,7 +106,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
     [Fact]
     public void ObjectChanges_ShouldDoNothing_WhenBuilderIsDetached()
     {
-        var sut = new SqliteDatabaseBuilder().SetDetachedMode();
+        var sut = SqliteDatabaseBuilderMock.Create().SetDetachedMode();
 
         var table = sut.Schemas.Default.Objects.CreateTable( "T" );
         var ix1 = table.Indexes.Create( table.Columns.Create( "D" ).Asc() ).MarkAsUnique().SetFilter( SqlNode.True() );
@@ -122,7 +124,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
     [Fact]
     public void ObjectCreation_ShouldDoNothing_WhenBuilderIsInNoChangesMode()
     {
-        var sut = new SqliteDatabaseBuilder();
+        var sut = SqliteDatabaseBuilderMock.Create();
         sut.ChangeTracker.SetMode( SqlDatabaseCreateMode.NoChanges );
 
         var table = sut.Schemas.Default.Objects.CreateTable( "T" );
@@ -141,7 +143,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
     [Fact]
     public void SetNodeInterpreterFactory_ShouldUpdateNodeInterpreterFactory()
     {
-        var sut = new SqliteDatabaseBuilder();
+        var sut = SqliteDatabaseBuilderMock.Create();
         var expected = new SqliteNodeInterpreterFactory( sut.TypeDefinitions );
 
         var result = ((ISqlDatabaseBuilder)sut).SetNodeInterpreterFactory( expected );
@@ -158,7 +160,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
     [InlineData( false )]
     public void SetAttachedMode_ShouldUpdateIsAttached(bool enabled)
     {
-        var sut = new SqliteDatabaseBuilder().SetAttachedMode( ! enabled );
+        var sut = SqliteDatabaseBuilderMock.Create().SetAttachedMode( ! enabled );
 
         var result = ((ISqlDatabaseBuilder)sut).SetAttachedMode( enabled );
 
@@ -172,7 +174,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
     [Fact]
     public void SetAttachedMode_ShouldDoNothing_WhenBuilderIsAlreadyAttached()
     {
-        var sut = new SqliteDatabaseBuilder();
+        var sut = SqliteDatabaseBuilderMock.Create();
 
         var result = ((ISqlDatabaseBuilder)sut).SetAttachedMode();
 
@@ -188,7 +190,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
     [InlineData( false )]
     public void SetDetachedMode_ShouldUpdateIsAttached(bool enabled)
     {
-        var sut = new SqliteDatabaseBuilder().SetDetachedMode( ! enabled );
+        var sut = SqliteDatabaseBuilderMock.Create().SetDetachedMode( ! enabled );
 
         var result = ((ISqlDatabaseBuilder)sut).SetDetachedMode( enabled );
 
@@ -202,7 +204,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
     [Fact]
     public void SetDetachedMode_ShouldDoNothing_WhenBuilderIsAlreadyDetached()
     {
-        var sut = new SqliteDatabaseBuilder().SetDetachedMode();
+        var sut = SqliteDatabaseBuilderMock.Create().SetDetachedMode();
 
         var result = ((ISqlDatabaseBuilder)sut).SetDetachedMode();
 
@@ -216,7 +218,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
     [Fact]
     public void DetachingBuilder_ShouldCompletePendingChanges()
     {
-        var sut = new SqliteDatabaseBuilder();
+        var sut = SqliteDatabaseBuilderMock.Create();
 
         var table = sut.Schemas.Default.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C" );
@@ -232,7 +234,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
     public void ForSqlite_ShouldInvokeAction_WhenDatabaseIsSqlite()
     {
         var action = Substitute.For<Action<SqliteDatabaseBuilder>>();
-        var sut = new SqliteDatabaseBuilder();
+        var sut = SqliteDatabaseBuilderMock.Create();
 
         var result = sut.ForSqlite( action );
 
@@ -255,7 +257,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
     [Fact]
     public void DefaultNodeInterpreterFactory_ShouldCreateCorrectInterpreter()
     {
-        var sut = new SqliteDatabaseBuilder().NodeInterpreterFactory;
+        var sut = SqliteDatabaseBuilderMock.Create().NodeInterpreterFactory;
         var result = sut.Create();
 
         using ( new AssertionScope() )

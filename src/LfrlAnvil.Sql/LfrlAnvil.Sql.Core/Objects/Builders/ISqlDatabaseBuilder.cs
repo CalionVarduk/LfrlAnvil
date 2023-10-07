@@ -13,6 +13,7 @@ public interface ISqlDatabaseBuilder
     ISqlSchemaBuilderCollection Schemas { get; }
     SqlDatabaseCreateMode Mode { get; }
     bool IsAttached { get; }
+    string ServerVersion { get; }
 
     [Pure]
     ReadOnlySpan<string> GetPendingStatements();
@@ -22,4 +23,5 @@ public interface ISqlDatabaseBuilder
     ISqlDatabaseBuilder SetNodeInterpreterFactory(ISqlNodeInterpreterFactory factory);
     ISqlDatabaseBuilder SetAttachedMode(bool enabled = true);
     ISqlDatabaseBuilder SetDetachedMode(bool enabled = true);
+    ISqlDatabaseBuilder AddConnectionChangeCallback(Action<SqlDatabaseConnectionChangeEvent> callback);
 }

@@ -6,6 +6,7 @@ using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Objects.Builders;
+using LfrlAnvil.Sqlite.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sqlite.Tests.ObjectsTests.BuildersTests;
@@ -18,7 +19,7 @@ public partial class SqliteSchemaBuilderTests
         public void CreateTable_ShouldCreateNewTable()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
 
             var result = ((ISqlObjectBuilderCollection)sut).CreateTable( name );
@@ -58,7 +59,7 @@ public partial class SqliteSchemaBuilderTests
         [InlineData( "f\"oo" )]
         public void CreateTable_ShouldThrowSqliteObjectBuilderException_WhenNameIsInvalid(string name)
         {
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
 
             var action = Lambda.Of( () => sut.CreateTable( name ) );
@@ -72,7 +73,7 @@ public partial class SqliteSchemaBuilderTests
         public void CreateTable_ShouldThrowSqliteObjectBuilderException_WhenTableWithNameAlreadyExists()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             sut.CreateTable( name );
 
@@ -87,7 +88,7 @@ public partial class SqliteSchemaBuilderTests
         public void CreateTable_ShouldThrowSqliteObjectBuilderException_WhenSchemaIsRemoved()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             sut.Schema.Remove();
 
@@ -102,7 +103,7 @@ public partial class SqliteSchemaBuilderTests
         public void GetOrCreateTable_ShouldCreateNewTable()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
 
             var result = ((ISqlObjectBuilderCollection)sut).GetOrCreateTable( name );
@@ -141,7 +142,7 @@ public partial class SqliteSchemaBuilderTests
         [InlineData( "f\"oo" )]
         public void GetOrCreateTable_ShouldThrowSqliteObjectBuilderException_WhenNameIsInvalid(string name)
         {
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
 
             var action = Lambda.Of( () => sut.GetOrCreateTable( name ) );
@@ -155,7 +156,7 @@ public partial class SqliteSchemaBuilderTests
         public void GetOrCreateTable_ShouldReturnExistingTable_WhenTableWithNameAlreadyExists()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var expected = sut.CreateTable( name );
 
@@ -172,7 +173,7 @@ public partial class SqliteSchemaBuilderTests
         public void GetOrCreateTable_ShouldThrowSqliteObjectCastException_WhenNonTableObjectWithNameAlreadyExists()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var t = sut.CreateTable( "T" );
             var c = t.Columns.Create( "C" );
@@ -192,7 +193,7 @@ public partial class SqliteSchemaBuilderTests
         public void GetOrCreateTable_ShouldThrowSqliteObjectBuilderException_WhenSchemaIsRemoved()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             sut.Schema.Remove();
 
@@ -207,7 +208,7 @@ public partial class SqliteSchemaBuilderTests
         public void CreateView_ShouldCreateNewViewWithTableReference()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
 
             var table = sut.CreateTable( "T" );
@@ -243,7 +244,7 @@ public partial class SqliteSchemaBuilderTests
         public void CreateView_ShouldCreateNewViewWithOtherViewReference()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var view = sut.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
 
@@ -273,7 +274,7 @@ public partial class SqliteSchemaBuilderTests
         public void CreateView_ShouldThrowSqliteObjectBuilderException_WhenSourceIsNotValid()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
 
             var source = SqlNode.RawQuery( "SELECT * FROM foo WHERE a > @a", SqlNode.Parameter<int>( "a" ) );
@@ -292,7 +293,7 @@ public partial class SqliteSchemaBuilderTests
         [InlineData( "f\"oo" )]
         public void CreateView_ShouldThrowSqliteObjectBuilderException_WhenNameIsInvalid(string name)
         {
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
 
             var action = Lambda.Of( () => sut.CreateView( name, SqlNode.RawQuery( "SELECT * FROM foo" ) ) );
@@ -306,7 +307,7 @@ public partial class SqliteSchemaBuilderTests
         public void CreateView_ShouldThrowSqliteObjectBuilderException_WhenViewWithNameAlreadyExists()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             sut.CreateView( name, SqlNode.RawQuery( "SELECT * FROM foo" ) );
 
@@ -321,7 +322,7 @@ public partial class SqliteSchemaBuilderTests
         public void CreateView_ShouldThrowSqliteObjectBuilderException_WhenSchemaIsRemoved()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             sut.Schema.Remove();
 
@@ -340,7 +341,7 @@ public partial class SqliteSchemaBuilderTests
         [InlineData( "V", true )]
         public void Contains_ShouldReturnTrue_WhenObjectExists(string name, bool expected)
         {
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var t = sut.CreateTable( "T" );
             var c = t.Columns.Create( "C" );
@@ -356,7 +357,7 @@ public partial class SqliteSchemaBuilderTests
         public void Get_ShouldReturnExistingObject()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var expected = sut.CreateTable( name );
 
@@ -369,7 +370,7 @@ public partial class SqliteSchemaBuilderTests
         public void Get_ShouldThrowKeyNotFoundException_WhenObjectDoesNotExist()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
 
             var action = Lambda.Of( () => ((ISqlObjectBuilderCollection)sut).Get( name ) );
@@ -381,7 +382,7 @@ public partial class SqliteSchemaBuilderTests
         public void TryGet_ShouldReturnExistingObject()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var expected = sut.CreateTable( name );
 
@@ -398,7 +399,7 @@ public partial class SqliteSchemaBuilderTests
         public void TryGet_ShouldReturnFalse_WhenObjectDoesNotExist()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
 
             var result = ((ISqlObjectBuilderCollection)sut).TryGet( name, out var outResult );
@@ -414,7 +415,7 @@ public partial class SqliteSchemaBuilderTests
         public void GetTable_ShouldReturnExistingTable()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var expected = sut.CreateTable( name );
 
@@ -427,7 +428,7 @@ public partial class SqliteSchemaBuilderTests
         public void GetTable_ShouldThrowKeyNotFoundException_WhenObjectDoesNotExist()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
 
             var action = Lambda.Of( () => sut.GetTable( name ) );
@@ -439,7 +440,7 @@ public partial class SqliteSchemaBuilderTests
         public void GetTable_ShouldThrowSqliteObjectCastException_WhenObjectExistsButNotAsTable()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var t = sut.CreateTable( "T" );
             var c = t.Columns.Create( "C" );
@@ -459,7 +460,7 @@ public partial class SqliteSchemaBuilderTests
         public void TryGetTable_ShouldReturnExistingTable()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var expected = sut.CreateTable( name );
 
@@ -476,7 +477,7 @@ public partial class SqliteSchemaBuilderTests
         public void TryGetTable_ShouldReturnFalse_WhenObjectDoesNotExist()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
 
             var result = sut.TryGetTable( name, out var outResult );
@@ -492,7 +493,7 @@ public partial class SqliteSchemaBuilderTests
         public void TryGetTable_ShouldReturnFalse_WhenObjectExistsButNotAsTable()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var t = sut.CreateTable( "T" );
             var c = t.Columns.Create( "C" );
@@ -511,7 +512,7 @@ public partial class SqliteSchemaBuilderTests
         public void GetIndex_ShouldReturnExistingIndex()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var t = sut.CreateTable( "T" );
             var c = t.Columns.Create( "C" );
@@ -526,7 +527,7 @@ public partial class SqliteSchemaBuilderTests
         public void GetIndex_ShouldThrowKeyNotFoundException_WhenObjectDoesNotExist()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
 
             var action = Lambda.Of( () => sut.GetIndex( name ) );
@@ -538,7 +539,7 @@ public partial class SqliteSchemaBuilderTests
         public void GetIndex_ShouldThrowSqliteObjectCastException_WhenObjectExistsButNotAsIndex()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             sut.CreateTable( name );
 
@@ -556,7 +557,7 @@ public partial class SqliteSchemaBuilderTests
         public void TryGetIndex_ShouldReturnExistingIndex()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var t = sut.CreateTable( "T" );
             var c = t.Columns.Create( "C" );
@@ -575,7 +576,7 @@ public partial class SqliteSchemaBuilderTests
         public void TryGetIndex_ShouldReturnFalse_WhenObjectDoesNotExist()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
 
             var result = sut.TryGetIndex( name, out var outResult );
@@ -591,7 +592,7 @@ public partial class SqliteSchemaBuilderTests
         public void TryGetIndex_ShouldReturnFalse_WhenObjectExistsButNotAsIndex()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             sut.CreateTable( name );
 
@@ -608,7 +609,7 @@ public partial class SqliteSchemaBuilderTests
         public void GetPrimaryKey_ShouldReturnExistingPrimaryKey()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var t = sut.CreateTable( "T" );
             var c = t.Columns.Create( "C" );
@@ -623,7 +624,7 @@ public partial class SqliteSchemaBuilderTests
         public void GetPrimaryKey_ShouldThrowKeyNotFoundException_WhenObjectDoesNotExist()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
 
             var action = Lambda.Of( () => sut.GetPrimaryKey( name ) );
@@ -635,7 +636,7 @@ public partial class SqliteSchemaBuilderTests
         public void GetPrimaryKey_ShouldThrowSqliteObjectCastException_WhenObjectExistsButNotAsPrimaryKey()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             sut.CreateTable( name );
 
@@ -653,7 +654,7 @@ public partial class SqliteSchemaBuilderTests
         public void TryGetPrimaryKey_ShouldReturnExistingPrimaryKey()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var t = sut.CreateTable( "T" );
             var c = t.Columns.Create( "C" );
@@ -672,7 +673,7 @@ public partial class SqliteSchemaBuilderTests
         public void TryGetPrimaryKey_ShouldReturnFalse_WhenObjectDoesNotExist()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
 
             var result = sut.TryGetPrimaryKey( name, out var outResult );
@@ -688,7 +689,7 @@ public partial class SqliteSchemaBuilderTests
         public void TryGetPrimaryKey_ShouldReturnFalse_WhenObjectExistsButNotAsPrimaryKey()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             sut.CreateTable( name );
 
@@ -705,7 +706,7 @@ public partial class SqliteSchemaBuilderTests
         public void GetForeignKey_ShouldReturnExistingForeignKey()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var t = sut.CreateTable( "T" );
             var c = t.Columns.Create( "C" );
@@ -723,7 +724,7 @@ public partial class SqliteSchemaBuilderTests
         public void GetForeignKey_ShouldThrowKeyNotFoundException_WhenObjectDoesNotExist()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
 
             var action = Lambda.Of( () => sut.GetForeignKey( name ) );
@@ -735,7 +736,7 @@ public partial class SqliteSchemaBuilderTests
         public void GetForeignKey_ShouldThrowSqliteObjectCastException_WhenObjectExistsButNotAsForeignKey()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             sut.CreateTable( name );
 
@@ -753,7 +754,7 @@ public partial class SqliteSchemaBuilderTests
         public void TryGetForeignKey_ShouldReturnExistingForeignKey()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var t = sut.CreateTable( "T" );
             var c = t.Columns.Create( "C" );
@@ -775,7 +776,7 @@ public partial class SqliteSchemaBuilderTests
         public void TryGetForeignKey_ShouldReturnFalse_WhenObjectDoesNotExist()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
 
             var result = sut.TryGetForeignKey( name, out var outResult );
@@ -791,7 +792,7 @@ public partial class SqliteSchemaBuilderTests
         public void TryGetForeignKey_ShouldReturnFalse_WhenObjectExistsButNotAsForeignKey()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             sut.CreateTable( name );
 
@@ -808,7 +809,7 @@ public partial class SqliteSchemaBuilderTests
         public void GetView_ShouldReturnExistingView()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var expected = sut.CreateView( name, SqlNode.RawQuery( "SELECT * FROM foo" ) );
 
@@ -821,7 +822,7 @@ public partial class SqliteSchemaBuilderTests
         public void GetView_ShouldThrowKeyNotFoundException_WhenObjectDoesNotExist()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
 
             var action = Lambda.Of( () => sut.GetView( name ) );
@@ -833,7 +834,7 @@ public partial class SqliteSchemaBuilderTests
         public void GetView_ShouldThrowSqliteObjectCastException_WhenObjectExistsButNotAsView()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             sut.CreateTable( name );
 
@@ -851,7 +852,7 @@ public partial class SqliteSchemaBuilderTests
         public void TryGetView_ShouldReturnExistingView()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var expected = sut.CreateView( name, SqlNode.RawQuery( "SELECT * FROM foo" ) );
 
@@ -868,7 +869,7 @@ public partial class SqliteSchemaBuilderTests
         public void TryGetView_ShouldReturnFalse_WhenObjectDoesNotExist()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
 
             var result = sut.TryGetView( name, out var outResult );
@@ -884,7 +885,7 @@ public partial class SqliteSchemaBuilderTests
         public void TryGetView_ShouldReturnFalse_WhenObjectExistsButNotAsView()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             sut.CreateTable( name );
 
@@ -900,7 +901,7 @@ public partial class SqliteSchemaBuilderTests
         [Fact]
         public void Remove_ShouldRemoveExistingEmptyTable()
         {
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var table = sut.CreateTable( "T" );
 
@@ -916,7 +917,7 @@ public partial class SqliteSchemaBuilderTests
         [Fact]
         public void Remove_ShouldRemoveExistingNonEmptyTable()
         {
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var table = sut.CreateTable( "T" );
             var column = table.Columns.Create( "C" );
@@ -945,7 +946,7 @@ public partial class SqliteSchemaBuilderTests
         [Fact]
         public void Remove_ShouldReturnFalse_WhenTableToRemoveHasReferencingForeignKeys()
         {
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var table = sut.CreateTable( "T" );
             var column = table.Columns.Create( "C" );
@@ -973,7 +974,7 @@ public partial class SqliteSchemaBuilderTests
         [Fact]
         public void Remove_ShouldReturnFalse_WhenTableToRemoveHasReferencingViews()
         {
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var table = sut.CreateTable( "T" );
             var column = table.Columns.Create( "C" );
@@ -998,7 +999,7 @@ public partial class SqliteSchemaBuilderTests
         [Fact]
         public void Remove_ShouldRemoveExistingPrimaryKey()
         {
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var table = sut.CreateTable( "T" );
             var column = table.Columns.Create( "C" );
@@ -1020,7 +1021,7 @@ public partial class SqliteSchemaBuilderTests
         [Fact]
         public void Remove_ShouldReturnFalse_WhenPrimaryKeyToRemoveHasExternalReferences()
         {
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var table = sut.CreateTable( "T" );
             var column = table.Columns.Create( "C" );
@@ -1046,7 +1047,7 @@ public partial class SqliteSchemaBuilderTests
         [Fact]
         public void Remove_ShouldRemoveExistingIndex()
         {
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var table = sut.CreateTable( "T" );
             var column = table.Columns.Create( "C" );
@@ -1068,7 +1069,7 @@ public partial class SqliteSchemaBuilderTests
         [Fact]
         public void Remove_ShouldReturnFalse_WhenIndexToRemoveHasExternalReferences()
         {
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var table = sut.CreateTable( "T" );
             var column = table.Columns.Create( "C" );
@@ -1095,7 +1096,7 @@ public partial class SqliteSchemaBuilderTests
         [Fact]
         public void Remove_ShouldRemoveExistingForeignKey()
         {
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var table = sut.CreateTable( "T" );
             var column = table.Columns.Create( "C" );
@@ -1120,7 +1121,7 @@ public partial class SqliteSchemaBuilderTests
         [Fact]
         public void Remove_ShouldRemoveExistingView()
         {
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var view = sut.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
 
@@ -1138,7 +1139,7 @@ public partial class SqliteSchemaBuilderTests
         [Fact]
         public void Remove_ShouldReturnFalse_WhenViewToRemoveHasReferencingViews()
         {
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var view = sut.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
             var otherView = sut.CreateView( "W", view.ToRecordSet().ToDataSource().Select( s => new[] { s.GetAll() } ) );
@@ -1157,7 +1158,7 @@ public partial class SqliteSchemaBuilderTests
         [Fact]
         public void Remove_ShouldReturnFalse_WhenObjectDoesNotExist()
         {
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
 
             var result = sut.Remove( Fixture.Create<string>() );
@@ -1169,7 +1170,7 @@ public partial class SqliteSchemaBuilderTests
         public void ISqlObjectBuilderCollection_GetTable_ShouldBeEquivalentToGetTable()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             sut.CreateTable( name );
 
@@ -1182,7 +1183,7 @@ public partial class SqliteSchemaBuilderTests
         public void ISqlObjectBuilderCollection_TryGetTable_ShouldBeEquivalentToTryGetTable()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             sut.CreateTable( name );
 
@@ -1199,7 +1200,7 @@ public partial class SqliteSchemaBuilderTests
         public void ISqlObjectBuilderCollection_GetIndex_ShouldBeEquivalentToGetIndex()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var t = sut.CreateTable( "T" );
             var c = t.Columns.Create( "C" );
@@ -1214,7 +1215,7 @@ public partial class SqliteSchemaBuilderTests
         public void ISqlObjectBuilderCollection_TryGetIndex_ShouldBeEquivalentToTryGetIndex()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var t = sut.CreateTable( "T" );
             var c = t.Columns.Create( "C" );
@@ -1233,7 +1234,7 @@ public partial class SqliteSchemaBuilderTests
         public void ISqlObjectBuilderCollection_GetPrimaryKey_ShouldBeEquivalentToGetPrimaryKey()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var t = sut.CreateTable( "T" );
             var c = t.Columns.Create( "C" );
@@ -1248,7 +1249,7 @@ public partial class SqliteSchemaBuilderTests
         public void ISqlObjectBuilderCollection_TryGetPrimaryKey_ShouldBeEquivalentToTryGetPrimaryKey()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var t = sut.CreateTable( "T" );
             var c = t.Columns.Create( "C" );
@@ -1267,7 +1268,7 @@ public partial class SqliteSchemaBuilderTests
         public void ISqlObjectBuilderCollection_GetForeignKey_ShouldBeEquivalentToGetForeignKey()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var t = sut.CreateTable( "T" );
             var c = t.Columns.Create( "C" );
@@ -1284,7 +1285,7 @@ public partial class SqliteSchemaBuilderTests
         public void ISqlObjectBuilderCollection_TryGetForeignKey_ShouldBeEquivalentToTryGetForeignKey()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             var t = sut.CreateTable( "T" );
             var c = t.Columns.Create( "C" );
@@ -1305,7 +1306,7 @@ public partial class SqliteSchemaBuilderTests
         public void ISqlObjectBuilderCollection_GetView_ShouldBeEquivalentToGetView()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             sut.CreateView( name, SqlNode.RawQuery( "SELECT * FROM foo" ) );
 
@@ -1318,7 +1319,7 @@ public partial class SqliteSchemaBuilderTests
         public void ISqlObjectBuilderCollection_TryGetView_ShouldBeEquivalentToTryGetView()
         {
             var name = Fixture.Create<string>();
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var sut = db.Schemas.Create( "foo" ).Objects;
             sut.CreateView( name, SqlNode.RawQuery( "SELECT * FROM foo" ) );
 

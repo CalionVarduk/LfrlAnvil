@@ -1,7 +1,6 @@
 ﻿using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sqlite.Extensions;
-using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Tests.Helpers;
 
 namespace LfrlAnvil.Sqlite.Tests.ObjectsTests;
@@ -11,7 +10,7 @@ public class SqlitePrimaryKeyTests : TestsBase
     [Fact]
     public void Properties_ShouldBeCorrectlyCopiedFromBuilder()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() ).SetName( "PK_TEST" );
 

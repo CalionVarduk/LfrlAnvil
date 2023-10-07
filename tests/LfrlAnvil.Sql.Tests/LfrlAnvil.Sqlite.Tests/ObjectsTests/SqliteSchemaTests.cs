@@ -5,7 +5,6 @@ using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Extensions;
-using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Tests.Helpers;
 
 namespace LfrlAnvil.Sqlite.Tests.ObjectsTests;
@@ -15,7 +14,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Properties_ShouldBeCorrectlyCopiedFromBuilder()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
@@ -46,7 +45,7 @@ public class SqliteSchemaTests : TestsBase
     [InlineData( "C1", false )]
     public void Objects_Contains_ShouldReturnTrue_WhenObjectExists(string name, bool expected)
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         var indexBuilder1 = tableBuilder.Indexes.Create( tableBuilder.Columns.Create( "C2" ).Asc() );
         var indexBuilder2 = tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() ).Index;
@@ -63,7 +62,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_Get_ShouldReturnCorrectObject()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
@@ -82,7 +81,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_Get_ShouldThrowKeyNotFoundException_WhenObjectDoesNotExist()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
@@ -97,7 +96,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_TryGet_ShouldReturnCorrectObject()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
@@ -117,7 +116,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_TryGet_ShouldReturnFalse_WhenObjectDoesNotExist()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
@@ -136,7 +135,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_GetTable_ShouldReturnCorrectTable()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
@@ -155,7 +154,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_GetTable_ShouldThrowKeyNotFoundException_WhenObjectDoesNotExist()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
@@ -170,7 +169,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_GetTable_ShouldThrowSqliteObjectCastException_WhenObjectExistsButIsNotTable()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
@@ -185,7 +184,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_TryGetTable_ShouldReturnCorrectTable()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
@@ -205,7 +204,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_TryGetTable_ShouldReturnFalse_WhenObjectDoesNotExist()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
@@ -224,7 +223,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_TryGetTable_ShouldReturnFalse_WhenObjectExistsButIsNotTable()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
@@ -243,7 +242,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void ISqlObjectCollection_TryGetTable_ShouldBeEquivalentToTryGetTable()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         var indexBuilder1 = tableBuilder.Indexes.Create( tableBuilder.Columns.Create( "C2" ).Asc() );
         var indexBuilder2 = tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() ).Index;
@@ -265,7 +264,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_GetPrimaryKey_ShouldReturnCorrectPrimaryKey()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
@@ -284,7 +283,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_GetPrimaryKey_ShouldThrowKeyNotFoundException_WhenObjectDoesNotExist()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
@@ -299,7 +298,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_GetPrimaryKey_ShouldThrowSqliteObjectCastException_WhenObjectExistsButIsNotPrimaryKey()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
@@ -314,7 +313,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_TryGetPrimaryKey_ShouldReturnCorrectPrimaryKey()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
@@ -334,7 +333,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_TryGetPrimaryKey_ShouldReturnFalse_WhenObjectDoesNotExist()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
@@ -353,7 +352,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_TryGetPrimaryKey_ShouldReturnFalse_WhenObjectExistsButIsNotPrimaryKey()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
@@ -372,7 +371,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void ISqlObjectCollection_TryGetPrimaryKey_ShouldBeEquivalentToTryGetPrimaryKey()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         var indexBuilder1 = tableBuilder.Indexes.Create( tableBuilder.Columns.Create( "C2" ).Asc() );
         var indexBuilder2 = tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() ).Index;
@@ -394,7 +393,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_GetIndex_ShouldReturnCorrectIndex()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
@@ -413,7 +412,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_GetIndex_ShouldThrowKeyNotFoundException_WhenObjectDoesNotExist()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
@@ -428,7 +427,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_GetIndex_ShouldThrowSqliteObjectCastException_WhenObjectExistsButIsNotIndex()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
@@ -443,7 +442,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_TryGetIndex_ShouldReturnCorrectIndex()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
@@ -463,7 +462,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_TryGetIndex_ShouldReturnFalse_WhenObjectDoesNotExist()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
@@ -482,7 +481,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_TryGetIndex_ShouldReturnFalse_WhenObjectExistsButIsNotIndex()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
@@ -501,7 +500,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void ISqlObjectCollection_TryGetIndex_ShouldBeEquivalentToTryGetIndex()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         var indexBuilder1 = tableBuilder.Indexes.Create( tableBuilder.Columns.Create( "C2" ).Asc() );
         var indexBuilder2 = tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() ).Index;
@@ -523,7 +522,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_GetForeignKey_ShouldReturnCorrectForeignKey()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         var indexBuilder1 = tableBuilder.Indexes.Create( tableBuilder.Columns.Create( "C2" ).Asc() );
         var indexBuilder2 = tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() ).Index;
@@ -544,7 +543,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_GetForeignKey_ShouldThrowKeyNotFoundException_WhenObjectDoesNotExist()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         var indexBuilder1 = tableBuilder.Indexes.Create( tableBuilder.Columns.Create( "C2" ).Asc() );
         var indexBuilder2 = tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() ).Index;
@@ -561,7 +560,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_GetForeignKey_ShouldThrowSqliteObjectCastException_WhenObjectExistsButIsNotForeignKey()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         var indexBuilder1 = tableBuilder.Indexes.Create( tableBuilder.Columns.Create( "C2" ).Asc() );
         var indexBuilder2 = tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() ).Index;
@@ -578,7 +577,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_TryGetForeignKey_ShouldReturnCorrectForeignKey()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         var indexBuilder1 = tableBuilder.Indexes.Create( tableBuilder.Columns.Create( "C2" ).Asc() );
         var indexBuilder2 = tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() ).Index;
@@ -600,7 +599,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_TryGetForeignKey_ShouldReturnFalse_WhenObjectDoesNotExist()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         var indexBuilder1 = tableBuilder.Indexes.Create( tableBuilder.Columns.Create( "C2" ).Asc() );
         var indexBuilder2 = tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() ).Index;
@@ -621,7 +620,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_TryGetForeignKey_ShouldReturnFalse_WhenObjectExistsButIsNotForeignKey()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         var indexBuilder1 = tableBuilder.Indexes.Create( tableBuilder.Columns.Create( "C2" ).Asc() );
         var indexBuilder2 = tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() ).Index;
@@ -642,7 +641,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void ISqlObjectCollection_TryGetForeignKey_ShouldBeEquivalentToTryGetForeignKey()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         var indexBuilder1 = tableBuilder.Indexes.Create( tableBuilder.Columns.Create( "C2" ).Asc() );
         var indexBuilder2 = tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() ).Index;
@@ -664,7 +663,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_GetView_ShouldReturnCorrectView()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         schemaBuilder.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
 
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
@@ -682,7 +681,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_GetView_ShouldThrowKeyNotFoundException_WhenObjectDoesNotExist()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C" ).Asc() );
 
@@ -697,7 +696,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_GetView_ShouldThrowSqliteObjectCastException_WhenObjectExistsButIsNotView()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C" ).Asc() );
 
@@ -712,7 +711,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_TryGetView_ShouldReturnCorrectView()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         schemaBuilder.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
 
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
@@ -731,7 +730,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_TryGetView_ShouldReturnFalse_WhenObjectDoesNotExist()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         var indexBuilder1 = tableBuilder.Indexes.Create( tableBuilder.Columns.Create( "C2" ).Asc() );
         var indexBuilder2 = tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() ).Index;
@@ -752,7 +751,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void Objects_TryGetView_ShouldReturnFalse_WhenObjectExistsButIsNotView()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C" ).Asc() );
 
@@ -771,7 +770,7 @@ public class SqliteSchemaTests : TestsBase
     [Fact]
     public void ISqlObjectCollection_TryGetView_ShouldBeEquivalentToTryGetView()
     {
-        var schemaBuilder = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         schemaBuilder.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
 
         var db = new SqliteDatabaseMock( schemaBuilder.Database );

@@ -18,7 +18,7 @@ public class SqliteViewSourceValidatorTests : TestsBase
 
     public SqliteViewSourceValidatorTests()
     {
-        _db = new SqliteDatabaseBuilder();
+        _db = SqliteDatabaseBuilderMock.Create();
         _sut = new SqliteViewSourceValidator( _db );
     }
 
@@ -136,7 +136,7 @@ public class SqliteViewSourceValidatorTests : TestsBase
     [Fact]
     public void VisitColumnBuilder_ShouldRegisterError_WhenColumnDoesNotBelongToTheSameDatabase()
     {
-        var table = new SqliteDatabaseBuilder().Schemas.Default.Objects.CreateTable( "T" );
+        var table = SqliteDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
         table.Columns.Create( "A" );
         var node = table.ToRecordSet().GetField( "A" );
 
@@ -1138,7 +1138,7 @@ public class SqliteViewSourceValidatorTests : TestsBase
     [Fact]
     public void VisitTableBuilderRecordSet_ShouldRegisterError_WhenTableDoesNotBelongToTheSameDatabase()
     {
-        var table = new SqliteDatabaseBuilder().Schemas.Default.Objects.CreateTable( "T" );
+        var table = SqliteDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
         var node = table.ToRecordSet();
 
         _sut.VisitTableBuilderRecordSet( node );
@@ -1199,7 +1199,7 @@ public class SqliteViewSourceValidatorTests : TestsBase
     [Fact]
     public void VisitViewBuilderRecordSet_ShouldRegisterError_WhenViewDoesNotBelongToTheSameDatabase()
     {
-        var view = new SqliteDatabaseBuilder().Schemas.Default.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
+        var view = SqliteDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
         var node = view.ToRecordSet();
 
         _sut.VisitViewBuilderRecordSet( node );

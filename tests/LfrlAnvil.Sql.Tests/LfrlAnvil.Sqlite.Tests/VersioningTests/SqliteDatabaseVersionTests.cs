@@ -2,6 +2,7 @@
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Objects.Builders;
+using LfrlAnvil.Sqlite.Tests.Helpers;
 using LfrlAnvil.Sqlite.Versioning;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
@@ -15,7 +16,7 @@ public class SqliteDatabaseVersionTests : TestsBase
         var version = Version.Parse( "1.2.3.4" );
         var description = Fixture.Create<string>();
         var apply = Substitute.For<Action<SqliteDatabaseBuilder>>();
-        var builder = new SqliteDatabaseBuilder();
+        var builder = SqliteDatabaseBuilderMock.Create();
         var sut = SqliteDatabaseVersion.Create( version, description, apply );
 
         sut.Apply( builder );
@@ -33,7 +34,7 @@ public class SqliteDatabaseVersionTests : TestsBase
     {
         var version = Version.Parse( "1.2.3.4" );
         var apply = Substitute.For<Action<SqliteDatabaseBuilder>>();
-        var builder = new SqliteDatabaseBuilder();
+        var builder = SqliteDatabaseBuilderMock.Create();
         var sut = SqliteDatabaseVersion.Create( version, apply );
 
         sut.Apply( builder );

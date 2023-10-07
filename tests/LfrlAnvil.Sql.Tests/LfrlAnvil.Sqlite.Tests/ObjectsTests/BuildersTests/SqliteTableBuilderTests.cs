@@ -17,7 +17,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void Create_ShouldPrepareCorrectStatement()
     {
-        var db = new SqliteDatabaseBuilder();
+        var db = SqliteDatabaseBuilderMock.Create();
         var sut = db.Schemas.Create( "foo" ).Objects.CreateTable( "T" );
         var ix1 = sut.Indexes.Create( sut.Columns.Create( "C1" ).Asc() );
         var ix2 = sut.SetPrimaryKey( sut.Columns.Create( "C2" ).Asc() ).Index;
@@ -48,7 +48,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void Create_FollowedByRemove_ShouldDoNothing()
     {
-        var db = new SqliteDatabaseBuilder();
+        var db = SqliteDatabaseBuilderMock.Create();
         var sut = db.Schemas.Create( "foo" ).Objects.CreateTable( "T" );
         sut.SetPrimaryKey( sut.Columns.Create( "C" ).Asc() );
         sut.Remove();
@@ -61,7 +61,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void Create_ShouldThrowSqliteObjectBuilderException_WhenTableDoesNotHavePrimaryKeyDuringScriptResolution()
     {
-        var db = new SqliteDatabaseBuilder();
+        var db = SqliteDatabaseBuilderMock.Create();
         var sut = db.Schemas.Create( "foo" ).Objects.CreateTable( "T" );
         sut.Columns.Create( "C" );
 
@@ -79,7 +79,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void ToString_ShouldReturnCorrectResult()
     {
-        var db = new SqliteDatabaseBuilder();
+        var db = SqliteDatabaseBuilderMock.Create();
         var sut = db.Schemas.Create( "foo" ).Objects.CreateTable( "bar" );
 
         var result = sut.ToString();
@@ -91,7 +91,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     public void SetName_ShouldDoNothing_WhenNewNameEqualsOldName()
     {
         var name = Fixture.Create<string>();
-        var schema = new SqliteDatabaseBuilder().Schemas.Default;
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
         var sut = schema.Objects.CreateTable( name );
 
         var result = ((ISqlTableBuilder)sut).SetName( name );
@@ -109,7 +109,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     public void SetName_ShouldDoNothing_WhenNameChangesToNewNameAndThenChangesToOldName()
     {
         var (oldName, newName) = Fixture.CreateDistinctCollection<string>( count: 2 );
-        var schema = new SqliteDatabaseBuilder().Schemas.Default;
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
         var sut = schema.Objects.CreateTable( oldName );
         sut.SetPrimaryKey( sut.Columns.Create( "C" ).Asc() );
 
@@ -133,7 +133,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     public void SetName_ShouldUpdateName_WhenNameChangesAndTableDoesNotHaveAnyExternalReferences()
     {
         var (oldName, newName) = ("foo", "bar");
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "s" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "s" );
         var sut = schema.Objects.CreateTable( oldName );
         sut.SetPrimaryKey( sut.Columns.Create( "C" ).Asc() );
 
@@ -158,7 +158,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     public void SetName_ShouldUpdateName_WhenNameChangesAndTableHasSelfReference()
     {
         var (oldName, newName) = ("foo", "bar");
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "s" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "s" );
         var sut = schema.Objects.CreateTable( oldName );
         var c1 = sut.Columns.Create( "C1" );
         var c2 = sut.Columns.Create( "C2" );
@@ -202,7 +202,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldUpdateName_WhenNameChangesAndTableHasExternalForeignKeyReferences()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateTable( "T1" );
         var c1 = sut.Columns.Create( "C1" );
         var pk1 = sut.SetPrimaryKey( c1.Asc() );
@@ -307,7 +307,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldUpdateName_WhenNameChangesAndTableHasExternalForeignKeyReferencesWithOneOfReferencingTablesUnderChange()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateTable( "T1" );
         var c1 = sut.Columns.Create( "C1" );
         var pk1 = sut.SetPrimaryKey( c1.Asc() );
@@ -447,7 +447,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldUpdateName_WhenNameChangesAndTableHasExternalForeignKeyReferencesAndChangedTableHasOtherPendingChanges()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateTable( "T1" );
         var c1 = sut.Columns.Create( "C1" );
         var pk1 = sut.SetPrimaryKey( c1.Asc() );
@@ -522,7 +522,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldUpdateName_WhenNameChangesAndTableHasExternalForeignKeyReferencesAndUnrelatedTableHasPendingChanges()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateTable( "T1" );
         var c1 = sut.Columns.Create( "C1" );
         var pk1 = sut.SetPrimaryKey( c1.Asc() );
@@ -600,7 +600,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldUpdateName_WhenNameChangesAndTableHasViewReferences()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateTable( "T" );
         sut.SetPrimaryKey( sut.Columns.Create( "C" ).Asc() );
 
@@ -657,7 +657,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldUpdateName_WhenNameChangesAndTableHasViewReferencesAndChangedTableHasOtherPendingChanges()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateTable( "T" );
         sut.SetPrimaryKey( sut.Columns.Create( "C" ).Asc() );
 
@@ -733,7 +733,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [InlineData( "f\"oo" )]
     public void SetName_ShouldThrowSqliteObjectBuilderException_WhenNameIsInvalid(string name)
     {
-        var db = new SqliteDatabaseBuilder();
+        var db = SqliteDatabaseBuilderMock.Create();
         var sut = db.Schemas.Default.Objects.CreateTable( Fixture.Create<string>() );
 
         var action = Lambda.Of( () => sut.SetName( name ) );
@@ -747,7 +747,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     public void SetName_ShouldThrowSqliteObjectBuilderException_WhenObjectWithNameAlreadyExists()
     {
         var (name1, name2) = Fixture.CreateDistinctCollection<string>( count: 2 );
-        var schema = new SqliteDatabaseBuilder().Schemas.Default;
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
         var other = schema.Objects.CreateTable( name2 );
         other.SetPrimaryKey( other.Columns.Create( "C" ).Asc() );
         var sut = schema.Objects.CreateTable( name1 );
@@ -762,7 +762,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldThrowSqliteObjectBuilderException_WhenTableHasBeenRemoved()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Default;
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
         var sut = schema.Objects.CreateTable( Fixture.Create<string>() );
         schema.Objects.Remove( sut.Name );
 
@@ -776,7 +776,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void SetPrimaryKey_ShouldUpdatePrimaryKey_WhenTableDoesNotHaveOne()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateTable( "T" );
         var column = sut.Columns.Create( "C" );
 
@@ -805,7 +805,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void SetPrimaryKey_ShouldDoNothing_WhenNewPrimaryKeyIsEquivalentToTheOldOne()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateTable( "T" );
         var c1 = sut.Columns.Create( "C1" );
         var c2 = sut.Columns.Create( "C2" );
@@ -824,7 +824,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void SetPrimaryKey_ShouldUpdatePrimaryKey_WhenNewPrimaryKeyHasDifferentAmountOfColumnsFromTheCurrentOne()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateTable( "T" );
         var c1 = sut.Columns.Create( "C1" );
         var c2 = sut.Columns.Create( "C2" );
@@ -877,7 +877,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void SetPrimaryKey_ShouldUpdatePrimaryKey_WhenNewPrimaryKeyHasTheSameAmountOfColumnsButDifferentAsCurrentOne()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateTable( "T" );
         var c1 = sut.Columns.Create( "C1" );
         var c2 = sut.Columns.Create( "C2" );
@@ -930,7 +930,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void SetPrimaryKey_ShouldUpdatePrimaryKey_WhenNewPrimaryKeyIsDifferentFromCurrentOneButUsesExistingIndex()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateTable( "T" );
         var c1 = sut.Columns.Create( "C1" );
         var c2 = sut.Columns.Create( "C2" );
@@ -977,7 +977,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void SetPrimaryKey_ShouldUpdatePrimaryKeyAndRemoveSelfReferencingForeignKeysToCurrentOne()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateTable( "T" );
         var c1 = sut.Columns.Create( "C1" );
         var c2 = sut.Columns.Create( "C2" );
@@ -1025,7 +1025,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void SetPrimaryKey_ShouldThrowSqliteObjectBuilderException_WhenCurrentPrimaryKeyIndexHasExternalReferences()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateTable( "T" );
         var c1 = sut.Columns.Create( "C1" );
         var c2 = sut.Columns.Create( "C2" );
@@ -1045,7 +1045,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void SetPrimaryKey_ShouldThrowSqliteObjectCastException_WhenAtLeastOneColumnIsOfInvalidType()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Default;
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
         var sut = schema.Objects.CreateTable( "foo" );
         var c1 = sut.Columns.Create( "C1" );
         var c2 = Substitute.For<ISqlIndexColumnBuilder>();
@@ -1060,7 +1060,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void SetPrimaryKey_ShouldThrowSqliteObjectBuilderException_WhenDefaultPrimaryKeyNameExists()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Default;
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
         var sut = schema.Objects.CreateTable( "foo" );
         var c1 = sut.Columns.Create( "C1" );
         var c2 = sut.Columns.Create( "C2" );
@@ -1076,7 +1076,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void SetPrimaryKey_ShouldThrowSqliteObjectBuilderException_WhenDefaultUnderlyingIndexNameExists()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Default;
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
         var sut = schema.Objects.CreateTable( "foo" );
         var c1 = sut.Columns.Create( "C1" );
         var c2 = sut.Columns.Create( "C2" );
@@ -1092,7 +1092,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void SetPrimaryKey_ShouldThrowSqliteObjectBuilderException_WhenAtLeastOneColumnBelongsToAnotherTable()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Default;
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
         var otherTable = schema.Objects.CreateTable( "foo" );
         var c2 = otherTable.Columns.Create( "C2" );
         otherTable.SetPrimaryKey( c2.Asc() );
@@ -1110,7 +1110,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void SetPrimaryKey_ShouldThrowSqliteObjectBuilderException_WhenSomeColumnsAreDuplicated()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Default;
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
         var sut = schema.Objects.CreateTable( Fixture.Create<string>() );
         var c1 = sut.Columns.Create( "C1" );
         var c2 = sut.Columns.Create( "C2" );
@@ -1125,7 +1125,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void SetPrimaryKey_ShouldThrowSqliteObjectBuilderException_WhenAtLeastOneColumnIsRemoved()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Default;
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
         var sut = schema.Objects.CreateTable( Fixture.Create<string>() );
         var c1 = sut.Columns.Create( "C1" );
         var c2 = sut.Columns.Create( "C2" );
@@ -1141,7 +1141,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void SetPrimaryKey_ShouldThrowSqliteObjectBuilderException_WhenAtLeastOneColumnIsNullable()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Default;
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
         var sut = schema.Objects.CreateTable( Fixture.Create<string>() );
         var c1 = sut.Columns.Create( "C1" );
         var c2 = sut.Columns.Create( "C2" ).MarkAsNullable();
@@ -1156,7 +1156,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void SetPrimaryKey_ShouldThrowSqliteObjectBuilderException_WhenColumnsAreEmpty()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Default;
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
         var sut = schema.Objects.CreateTable( Fixture.Create<string>() );
 
         var action = Lambda.Of( () => sut.SetPrimaryKey() );
@@ -1169,7 +1169,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void SetPrimaryKey_ShouldThrowSqliteObjectBuilderException_WhenTableHasBeenRemoved()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Default;
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
         var sut = schema.Objects.CreateTable( Fixture.Create<string>() );
         var column = sut.Columns.Create( "C" );
         schema.Objects.Remove( sut.Name );
@@ -1184,7 +1184,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldRemoveTable_WhenTableDoesNotHaveAnyExternalReferences()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateTable( "T" );
         var column = sut.Columns.Create( "C" );
         var otherColumn = sut.Columns.Create( "D" );
@@ -1216,7 +1216,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     public void Remove_ShouldDoNothing_WhenTableHasAlreadyBeenRemoved()
     {
         var name = Fixture.Create<string>();
-        var schema = new SqliteDatabaseBuilder().Schemas.Default;
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
         var sut = schema.Objects.CreateTable( name );
         sut.Remove();
 
@@ -1232,7 +1232,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldThrowSqliteObjectBuilderException_WhenTableHasExternalForeignKeyReferences()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateTable( "T" );
         var column = sut.Columns.Create( "C" );
         var pk = sut.SetPrimaryKey( column.Asc() );
@@ -1252,7 +1252,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldThrowSqliteObjectBuilderException_WhenTableHasViewReferences()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateTable( "T" );
         var column = sut.Columns.Create( "C" );
         sut.SetPrimaryKey( column.Asc() );
@@ -1268,7 +1268,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void ColumnNameSwap_ShouldGenerateCorrectScript()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateTable( "T" );
         sut.SetPrimaryKey( sut.Columns.Create( "P" ).Asc() );
         var a = sut.Columns.Create( "A" );
@@ -1297,7 +1297,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void ColumnChainNameSwap_ShouldGenerateCorrectScript()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateTable( "T" );
         sut.SetPrimaryKey( sut.Columns.Create( "P" ).Asc() );
         var a = sut.Columns.Create( "A" );
@@ -1332,7 +1332,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void MultipleColumnNameChange_ShouldGenerateCorrectScript_WhenThereAreTemporaryNameConflicts()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateTable( "T" );
         sut.SetPrimaryKey( sut.Columns.Create( "P" ).Asc() );
         var a = sut.Columns.Create( "A" );
@@ -1364,7 +1364,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void MultipleTableChangesWithoutReconstruction_ShouldGenerateCorrectScript()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateTable( "T" );
         sut.SetPrimaryKey( sut.Columns.Create( "C1" ).Asc() );
         var c2 = sut.Columns.Create( "C2" );
@@ -1399,7 +1399,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     [Fact]
     public void NameChange_ThenRemoval_ShouldDropTableByUsingItsOldName()
     {
-        var builder = new SqliteDatabaseBuilder();
+        var builder = SqliteDatabaseBuilderMock.Create();
         var sut = builder.Schemas.Create( "s" ).Objects.CreateTable( "foo" );
         sut.SetPrimaryKey( sut.Columns.Create( "a" ).Asc() );
         _ = builder.GetPendingStatements();
@@ -1416,7 +1416,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     public void ForSqlite_ShouldInvokeAction_WhenTableIsSqlite()
     {
         var action = Substitute.For<Action<SqliteTableBuilder>>();
-        var sut = new SqliteDatabaseBuilder().Schemas.Default.Objects.CreateTable( "T" );
+        var sut = SqliteDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
 
         var result = sut.ForSqlite( action );
 

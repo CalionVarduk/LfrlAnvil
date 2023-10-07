@@ -6,6 +6,7 @@ using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Objects.Builders;
+using LfrlAnvil.Sqlite.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sqlite.Tests.ObjectsTests.BuildersTests;
@@ -17,7 +18,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldCreateNewIndex()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Indexes;
             var c1 = table.Columns.Create( "C1" ).Asc();
@@ -51,7 +52,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldThrowSqliteObjectBuilderException_WhenTableIsRemoved()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Indexes;
             var column = table.Columns.Create( "C" ).Asc();
@@ -67,7 +68,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldThrowSqliteObjectBuilderException_WhenIndexAlreadyExists()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Indexes;
             var c1 = table.Columns.Create( "C1" ).Asc();
@@ -84,7 +85,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldThrowSqliteObjectBuilderException_WhenColumnsAreEmpty()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Indexes;
 
@@ -98,7 +99,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldThrowSqliteObjectBuilderException_WhenAtLeastOneColumnBelongsToAnotherTable()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var t1 = schema.Objects.CreateTable( "T1" );
             var c1 = t1.Columns.Create( "C1" );
             t1.SetPrimaryKey( c1.Asc() );
@@ -116,7 +117,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldThrowSqliteObjectBuilderException_WhenAtLeastOneColumnIsRemoved()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var column = table.Columns.Create( "C" );
             var sut = table.Indexes;
@@ -132,7 +133,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldThrowSqliteObjectBuilderException_WhenAtLeastOneColumnIsDuplicated()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var column = table.Columns.Create( "C" );
             var sut = table.Indexes;
@@ -147,7 +148,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldThrowSqliteObjectCastException_WhenAtLeastOneColumnIsOfInvalidType()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var column = Substitute.For<ISqlColumnBuilder>();
             var sut = table.Indexes;
@@ -162,7 +163,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void GetOrCreate_ShouldCreateNewIndex_WhenIndexDoesNotExist()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Indexes;
             var c1 = table.Columns.Create( "C1" ).Asc();
@@ -196,7 +197,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void GetOrCreate_ShouldReturnExistingIndex_WhenIndexExists()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Indexes;
             var c1 = table.Columns.Create( "C1" ).Asc();
@@ -215,7 +216,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Contains_ShouldReturnTrue_WhenIndexExists()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Indexes;
             var c1 = table.Columns.Create( "C1" ).Asc();
@@ -230,7 +231,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Contains_ShouldReturnFalse_WhenIndexDoesNotExist()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Indexes;
             var c1 = table.Columns.Create( "C1" ).Asc();
@@ -245,7 +246,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Get_ShouldReturnExistingIndex()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Indexes;
             var c1 = table.Columns.Create( "C1" ).Asc();
@@ -260,7 +261,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Get_ShouldThrowKeyNotFoundException_WhenIndexDoesNotExist()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Indexes;
             var c1 = table.Columns.Create( "C1" ).Asc();
@@ -275,7 +276,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void TryGet_ShouldReturnExistingIndex()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Indexes;
             var c1 = table.Columns.Create( "C1" ).Asc();
@@ -294,7 +295,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void TryGet_ShouldReturnFalse_WhenIndexDoesNotExist()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Indexes;
             var c1 = table.Columns.Create( "C1" ).Asc();
@@ -313,7 +314,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Remove_ShouldRemoveExistingIndex()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Indexes;
             var c1 = table.Columns.Create( "C1" ).Asc();
@@ -336,7 +337,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Remove_ShouldReturnFalse_WhenIndexDoesNotExist()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Indexes;
             var c1 = table.Columns.Create( "C1" ).Asc();
@@ -355,7 +356,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Remove_ShouldReturnFalse_WhenIndexContainsReferencingForeignKeys()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var t1 = schema.Objects.CreateTable( "T1" );
             var c1 = t1.Columns.Create( "C1" ).Asc();
             var sut = t1.Indexes;

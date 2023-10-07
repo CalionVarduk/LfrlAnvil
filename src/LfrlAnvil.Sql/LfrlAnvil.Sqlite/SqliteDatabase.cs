@@ -26,6 +26,7 @@ public abstract class SqliteDatabase : ISqlDatabase
         DataTypes = builder.DataTypes;
         TypeDefinitions = builder.TypeDefinitions;
         NodeInterpreterFactory = builder.NodeInterpreterFactory;
+        ServerVersion = builder.ServerVersion;
         Schemas = new SqliteSchemaCollection( this, builder.Schemas );
     }
 
@@ -34,6 +35,7 @@ public abstract class SqliteDatabase : ISqlDatabase
     public SqliteDataTypeProvider DataTypes { get; }
     public SqliteColumnTypeDefinitionProvider TypeDefinitions { get; }
     public SqliteNodeInterpreterFactory NodeInterpreterFactory { get; }
+    public string ServerVersion { get; }
 
     ISqlSchemaCollection ISqlDatabase.Schemas => Schemas;
     ISqlDataTypeProvider ISqlDatabase.DataTypes => DataTypes;

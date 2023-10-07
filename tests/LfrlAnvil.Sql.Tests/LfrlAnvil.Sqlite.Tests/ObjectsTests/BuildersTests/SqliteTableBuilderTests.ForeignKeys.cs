@@ -5,6 +5,7 @@ using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Objects.Builders;
+using LfrlAnvil.Sqlite.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sqlite.Tests.ObjectsTests.BuildersTests;
@@ -16,7 +17,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldCreateNewForeignKey_WhenIndexesBelongToTheSameTable()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -49,7 +50,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldCreateNewForeignKey_WhenIndexesDoNotBelongToTheSameTable()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var t1 = schema.Objects.CreateTable( "T1" );
             var ix2 = t1.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() ).Index;
             var t2 = schema.Objects.CreateTable( "T2" );
@@ -83,7 +84,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldCreateNewForeignKey_WhenIndexesDoNotBelongToTheSameSchema()
         {
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var schema1 = db.Schemas.Create( "foo" );
             var schema2 = db.Schemas.Create( "bar" );
             var t1 = schema1.Objects.CreateTable( "T1" );
@@ -119,7 +120,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldThrowSqliteObjectBuilderException_WhenTableIsRemoved()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -136,7 +137,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldThrowSqliteObjectBuilderException_WhenForeignKeyAlreadyExists()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -153,7 +154,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldThrowSqliteObjectBuilderException_WhenSchemaObjectWithDefaultForeignKeyNameAlreadyExists()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() ).SetName( "FK_T_C1_REF_T" );
@@ -169,7 +170,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldThrowSqliteObjectBuilderException_WhenIndexAndReferencedIndexAreTheSame()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() ).MarkAsUnique();
@@ -184,7 +185,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldThrowSqliteObjectBuilderException_WhenReferencedIndexIsNotUnique()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -200,7 +201,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldThrowSqliteObjectBuilderException_WhenIndexBelongsToAnotherTable()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var t1 = schema.Objects.CreateTable( "T1" );
             var sut = t1.ForeignKeys;
             var ix1 = t1.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() ).Index;
@@ -217,8 +218,8 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldThrowSqliteObjectBuilderException_WhenReferencedIndexBelongsToAnotherDatabase()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
-            var otherSchema = new SqliteDatabaseBuilder().Schemas.Default;
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var otherSchema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
             var t1 = schema.Objects.CreateTable( "T1" );
             var sut = t1.ForeignKeys;
             var ix1 = t1.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() ).Index;
@@ -235,7 +236,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldThrowSqliteObjectBuilderException_WhenIndexIsRemoved()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -252,7 +253,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldThrowSqliteObjectBuilderException_WhenReferencedIndexIsRemoved()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -269,7 +270,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldThrowSqliteObjectBuilderException_WhenReferencedIndexContainsNullableColumn()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc(), table.Columns.Create( "C2" ).Asc() );
@@ -289,7 +290,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldThrowSqliteObjectBuilderException_WhenIndexAndReferencedIndexHaveDifferentAmountOfColumns()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc(), table.Columns.Create( "C2" ).Asc() );
@@ -305,7 +306,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldThrowSqliteObjectBuilderException_WhenAtLeastOneIndexAndReferencedIndexColumnPairHasIncompatibleTypes()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create(
@@ -327,7 +328,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldThrowSqliteObjectCastException_WhenIndexIsOfInvalidType()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = Substitute.For<ISqlIndexBuilder>();
@@ -343,7 +344,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldThrowSqliteObjectCastException_WhenReferencedIndexIsOfInvalidType()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -359,7 +360,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void GetOrCreate_ShouldCreateNewForeignKey_WhenForeignKeyDoesNotExist()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -392,7 +393,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void GetOrCreate_ShouldReturnExistingForeignKey_WhenForeignKeyAlreadyExists()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -411,7 +412,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Contains_ShouldReturnTrue_WhenForeignKeyExists()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -426,7 +427,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Contains_ShouldReturnFalse_WhenForeignKeyDoesNotExist()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -441,7 +442,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Get_ShouldReturnExistingForeignKey()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -456,7 +457,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Get_ShouldThrowKeyNotFoundException_WhenForeignKeyDoesNotExist()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -471,7 +472,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void TryGet_ShouldReturnExistingForeignKey()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -490,7 +491,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void TryGet_ShouldReturnFalse_WhenForeignKeyDoesNotExist()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -509,7 +510,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Remove_ShouldRemoveExistingForeignKey()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -533,7 +534,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Remove_ShouldReturnFalse_WhenForeignKeyDoesNotExist()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );

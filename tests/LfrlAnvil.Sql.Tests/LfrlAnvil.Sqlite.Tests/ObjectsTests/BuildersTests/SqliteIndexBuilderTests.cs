@@ -16,7 +16,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void ToString_ShouldReturnCorrectResult()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.Indexes.Create( table.Columns.Create( "C" ).Asc() ).SetName( "bar" );
 
@@ -28,7 +28,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void Create_ShouldNotMarkTableForReconstruction()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var c2 = table.Columns.Create( "C2" );
@@ -48,7 +48,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void Create_FollowedByRemove_ShouldDoNothing()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var c2 = table.Columns.Create( "C2" );
@@ -65,7 +65,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void Create_ShouldNotCreateIndex_WhenIndexIsAttachedToPrimaryKey()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var c2 = table.Columns.Create( "C2" );
@@ -99,7 +99,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void AssigningToPrimaryKey_ShouldDropIndexByItsOldName_WhenIndexNameAlsoChanges()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -134,7 +134,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldDoNothing_WhenNewNameEqualsOldName()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -154,7 +154,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldDoNothing_WhenNameChangeIsFollowedByChangeToOriginal()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -177,7 +177,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldDoNothing_WhenIndexIsAssignedToPrimaryKey()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var oldName = sut.Name;
@@ -199,7 +199,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldUpdateName_WhenNewNameIsDifferentFromOldName()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -235,7 +235,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [InlineData( "f\"oo" )]
     public void SetName_ShouldThrowSqliteObjectBuilderException_WhenNameIsInvalid(string name)
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -250,7 +250,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldThrowSqliteObjectBuilderException_WhenIndexIsRemoved()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -266,7 +266,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldThrowSqliteObjectBuilderException_WhenNewNameAlreadyExistsInSchema()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -281,7 +281,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void SetDefaultName_ShouldDoNothing_WhenNewNameEqualsOldName()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -301,7 +301,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void SetDefaultName_ShouldDoNothing_WhenNameChangeIsFollowedByChangeToOriginal()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -323,7 +323,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void SetDefaultName_ShouldDoNothing_WhenIndexIsAssignedToPrimaryKey()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index.SetName( "bar" );
         var oldName = sut.Name;
@@ -345,7 +345,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void SetDefaultName_ShouldUpdateName_WhenNewNameIsDifferentFromOldName()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" );
@@ -376,7 +376,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void SetDefaultName_ShouldUpdateName_WhenNewNameIsDifferentFromOldNameAndIndexIsUnique()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" ).MarkAsUnique();
@@ -407,7 +407,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void SetDefaultName_ShouldThrowSqliteObjectBuilderException_WhenIndexIsRemoved()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" );
@@ -423,7 +423,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void SetDefaultName_ShouldThrowSqliteObjectBuilderException_WhenNewNameAlreadyExistsInSchema()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var pk = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" );
@@ -441,7 +441,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [InlineData( false )]
     public void MarkAsUnique_ShouldDoNothing_WhenUniquenessFlagDoesNotChange(bool value)
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique( value );
@@ -461,7 +461,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void MarkAsUnique_ShouldDoNothing_WhenValueChangeIsFollowedByChangeToOriginal()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -481,7 +481,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void MarkAsUnique_ShouldUpdateIsUnique_WhenValueChangesToTrue()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -506,7 +506,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void MarkAsUnique_ShouldUpdateIsUnique_WhenValueChangesToFalse()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
@@ -531,7 +531,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void MarkAsUnique_ShouldThrowSqliteObjectBuilderException_WhenPrimaryKeyIndexUniquenessChangesToFalse()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
 
@@ -543,7 +543,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void MarkAsUnique_ShouldThrowSqliteObjectBuilderException_WhenUniquenessChangesToFalseAndIndexIsReferencedByForeignKey()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
@@ -557,7 +557,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void MarkAsUnique_ShouldThrowSqliteObjectBuilderException_WhenIndexIsRemoved()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -573,7 +573,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void MarkAsUnique_ShouldUpdateIsUniqueAndNameCorrectly_WhenIsUniqueAndNameChangeAtTheSameTime()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -598,7 +598,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void SetFilter_ShouldDoNothing_WhenValueDoesNotChange()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).SetFilter( SqlNode.True() );
@@ -618,7 +618,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void SetFilter_ShouldDoNothing_WhenValueChangeIsFollowedByChangeToOriginal()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -638,7 +638,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void SetFilter_ShouldUpdateFilterAndFilterColumns_WhenValueChangesToNonNull()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var column = table.Columns.Create( "C2" );
@@ -667,7 +667,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void SetFilter_ShouldUpdateFilterAndFilterColumns_WhenValueChangesToNull()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var column = table.Columns.Create( "C2" );
@@ -696,7 +696,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void SetFilter_ShouldThrowSqliteObjectBuilderException_WhenFilterIsInvalid()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.Indexes.Create( table.Columns.Create( "C" ).Asc() );
 
@@ -709,7 +709,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void SetFilter_ShouldThrowSqliteObjectBuilderException_WhenPrimaryKeyIndexFilterChangesToNonNull()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
 
@@ -721,7 +721,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void SetFilter_ShouldThrowSqliteObjectBuilderException_WhenIndexIsRemoved()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -737,7 +737,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void SetFilter_ShouldUpdateFilterAndIsUniqueAndNameCorrectly_WhenFilterAndIsUniqueAndNameChangeAtTheSameTime()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -762,7 +762,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldRemoveIndexAndSelfReferencingForeignKeys()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var pk = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var c2 = table.Columns.Create( "C2" );
@@ -810,7 +810,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldRemoveIndexAndAssignedPrimaryKey()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C" );
         var pk = table.SetPrimaryKey( column.Asc() );
@@ -835,7 +835,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldRemoveIndexAndClearAssignedFilterColumns()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C" );
         var sut = table.Indexes.Create( column.Asc() ).SetFilter( t => t["C"] != null );
@@ -859,7 +859,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldDoNothing_WhenIndexIsRemoved()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -877,7 +877,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldThrowSqliteObjectBuilderException_WhenIndexHasExternalReferences()
     {
-        var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var t1 = schema.Objects.CreateTable( "T1" );
         t1.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() );
         var sut = t1.Indexes.Create( t1.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
@@ -894,7 +894,7 @@ public class SqliteIndexBuilderTests : TestsBase
     public void ForSqlite_ShouldInvokeAction_WhenIndexIsSqlite()
     {
         var action = Substitute.For<Action<SqliteIndexBuilder>>();
-        var table = new SqliteDatabaseBuilder().Schemas.Default.Objects.CreateTable( "T" );
+        var table = SqliteDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
         var sut = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
 
         var result = sut.ForSqlite( action );

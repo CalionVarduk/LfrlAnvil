@@ -28,7 +28,7 @@ internal sealed class SqlitePermanentlyConnectedDatabase : SqliteDatabase
     }
 
     [Pure]
-    public override SqliteConnection Connect()
+    public override Microsoft.Data.Sqlite.SqliteConnection Connect()
     {
         return _connection;
     }

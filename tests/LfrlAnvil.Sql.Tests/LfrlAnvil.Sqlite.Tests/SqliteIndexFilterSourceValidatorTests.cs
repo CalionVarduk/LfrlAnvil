@@ -18,7 +18,7 @@ public class SqliteIndexFilterSourceValidatorTests : TestsBase
 
     public SqliteIndexFilterSourceValidatorTests()
     {
-        _table = new SqliteDatabaseBuilder().Schemas.Default.Objects.CreateTable( "T" );
+        _table = SqliteDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
         _table.SetPrimaryKey( _table.Columns.Create( "X" ).Asc() );
         _sut = new SqliteIndexFilterSourceValidator( _table );
     }

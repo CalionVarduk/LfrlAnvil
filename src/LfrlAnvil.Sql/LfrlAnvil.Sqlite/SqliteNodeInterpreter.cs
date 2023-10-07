@@ -65,22 +65,22 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitCurrentDateFunction(SqlCurrentDateFunctionExpressionNode node)
     {
-        VisitSimpleFunction( "CURRENT_DATE", node );
+        VisitSimpleFunction( "GET_CURRENT_DATE", node );
     }
 
     public override void VisitCurrentTimeFunction(SqlCurrentTimeFunctionExpressionNode node)
     {
-        VisitSimpleFunction( "CURRENT_TIME", node );
+        VisitSimpleFunction( "GET_CURRENT_TIME", node );
     }
 
     public override void VisitCurrentDateTimeFunction(SqlCurrentDateTimeFunctionExpressionNode node)
     {
-        VisitSimpleFunction( "CURRENT_DATETIME", node );
+        VisitSimpleFunction( "GET_CURRENT_DATETIME", node );
     }
 
     public override void VisitCurrentTimestampFunction(SqlCurrentTimestampFunctionExpressionNode node)
     {
-        VisitSimpleFunction( "CURRENT_TIMESTAMP", node );
+        VisitSimpleFunction( "GET_CURRENT_TIMESTAMP", node );
     }
 
     public override void VisitNewGuidFunction(SqlNewGuidFunctionExpressionNode node)
@@ -438,6 +438,52 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitUpdate(SqlUpdateNode node)
     {
+        // TODO
+        // update does not work in more complex scenarios e.g.
+        // UPDATE U SET
+        //   B = U.B + X.B + 1
+        // FROM T AS U
+        // JOIN X ON X.A = U.A
+        //
+        // interpreter will produce sth like this:
+        // UPDATE T SET
+        //   B = T.B + X.B + 1 <= X.B doesn't exist in this scope
+        // WHERE A IN (
+        //   SELECT U.A
+        //   FROM T AS U
+        //   JOIN X ON X.A = U.A
+        // )
+        //
+        // X.B should be replaced by some other expression
+        //
+        // CTEs could be used to improve this behavior:
+        // WITH X AS ( <= CTEs could be grouped by joined record set & include all fields used in value assignments
+        //   SELECT U.A, X.B <= requires T PK columns
+        //   FROM T AS U
+        //   JOIN X ON X.A = U.A
+        // )
+        // UPDATE T SET
+        //   B = T.B + (SELECT X.B FROM X WHERE X.A = T.A) + 1 <= X.B replaced by selection from CTE filtered by T PK
+        // WHERE A IN (
+        //   SELECT U.A
+        //   FROM T AS U
+        //   JOIN X ON X.A = U.A
+        // )
+        //
+        // more general form:
+        // WITH <other-cte>
+        // "_{GUID}" AS (
+        //   SELECT <aliased-target-pk>, <non-target-columns-used-in-assignments>
+        //   FROM <complex-data-source>
+        // )
+        // UPDATE <target> SET
+        //   <value-assignments> <= all non-<target> columns need to be replaced by:
+        //                          (SELECT <non-target-column> FROM "_{GUID}" WHERE <target-pk-comparison>)
+        // WHERE <target-pk> IN (SELECT <aliased-target-pk> FROM "_{GUID}") <= or EXISTS (or row value comparison), if pk has multiple columns
+        //
+        // this approach requires pre-emptive scanning of value assignments in order to get all non-<target> columns (new visitor)
+        // and to properly prepare the CTE
+
         using ( Context.TempParentNodeUpdate( node ) )
         {
             var traits = ExtractDataSourceTraits( node.DataSource.Traits );
@@ -733,6 +779,8 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
         if ( targetInfo.IdentityColumnNames.Length == 1 )
         {
+            AppendRecordSetName( targetInfo.BaseTarget );
+            Context.Sql.AppendDot();
             AppendDelimitedName( targetInfo.IdentityColumnNames[0] );
             Context.Sql.AppendSpace().Append( "IN" ).AppendSpace().Append( '(' );
 

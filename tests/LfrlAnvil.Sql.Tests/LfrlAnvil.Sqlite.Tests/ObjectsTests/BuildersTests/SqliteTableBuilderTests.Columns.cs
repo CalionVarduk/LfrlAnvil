@@ -5,7 +5,7 @@ using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Extensions;
-using LfrlAnvil.Sqlite.Objects.Builders;
+using LfrlAnvil.Sqlite.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sqlite.Tests.ObjectsTests.BuildersTests;
@@ -17,7 +17,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldCreateNewColumn()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T1" );
             var sut = table.Columns;
 
@@ -43,7 +43,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldThrowSqliteObjectBuilderException_WhenColumnAlreadyExists()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             sut.Create( "C" );
@@ -58,7 +58,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldThrowSqliteObjectBuilderException_WhenTableIsRemoved()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             table.Remove();
@@ -78,7 +78,7 @@ public partial class SqliteTableBuilderTests
         [InlineData( "f\"oo" )]
         public void Create_ShouldThrowSqliteObjectBuilderException_WhenNameIsInvalid(string name)
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
 
@@ -92,7 +92,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void GetOrCreate_ShouldCreateNewColumn_When_ColumnDoesNotExist()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T1" );
             var sut = table.Columns;
 
@@ -117,7 +117,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void GetOrCreate_ShouldReturnExistingColumn_WhenColumnAlreadyExists()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             var expected = sut.Create( "C" );
@@ -134,7 +134,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void GetOrCreate_ShouldThrowSqliteObjectBuilderException_WhenTableIsRemoved()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             table.Remove();
@@ -153,7 +153,7 @@ public partial class SqliteTableBuilderTests
         [InlineData( "f\"oo" )]
         public void GetOrCreate_ShouldThrowSqliteObjectBuilderException_WhenNameIsInvalid(string name)
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
 
@@ -169,7 +169,7 @@ public partial class SqliteTableBuilderTests
         [InlineData( "D", false )]
         public void Contains_ShouldReturnTrue_WhenColumnExists(string name, bool expected)
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             sut.Create( "C" );
@@ -182,7 +182,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Get_ShouldReturnExistingColumn()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             var expected = sut.Create( "C" );
@@ -195,7 +195,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Get_ShouldThrowKeyNotFoundException_WhenColumnDoesNotExist()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             sut.Create( "C" );
@@ -208,7 +208,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void TryGet_ShouldReturnExistingColumn()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             var expected = sut.Create( "C" );
@@ -225,7 +225,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void TryGet_ShouldReturnFalse_WhenColumnDoesNotExist()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             sut.Create( "C" );
@@ -242,7 +242,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Remove_ShouldRemoveExistingColumn()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             var column = sut.Create( "C" );
@@ -261,7 +261,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Remove_ShouldReturnFalse_WhenColumnDoesNotExist()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             sut.Create( "C" );
@@ -278,7 +278,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Remove_ShouldReturnFalse_WhenColumnExistsButIsUsedByAtLeastOneIndex()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             table.Indexes.Create( sut.Create( "C" ).Asc() );
@@ -295,7 +295,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Remove_ShouldReturnFalse_WhenColumnExistsButIsUsedByAtLeastOneIndexFilter()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             sut.Create( "C1" );
@@ -313,7 +313,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Remove_ShouldReturnFalse_WhenColumnExistsButIsUsedByAtLeastOneView()
         {
-            var schema = new SqliteDatabaseBuilder().Schemas.Create( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             sut.Create( "A" );
@@ -332,7 +332,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void SetDefaultTypeDefinition_ShouldUpdateDefaultTypeDefinition()
         {
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var table = db.Schemas.Create( "foo" ).Objects.CreateTable( "T" );
             var sut = table.Columns;
             var definition = db.TypeDefinitions.GetByType<string>();
@@ -349,10 +349,10 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void SetDefaultTypeDefinition_ShouldThrowSqliteObjectBuilderException_WhenDefinitionDoesNotBelongToTheDatabase()
         {
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var table = db.Schemas.Create( "foo" ).Objects.CreateTable( "T" );
             var sut = table.Columns;
-            var definition = new SqliteDatabaseBuilder().TypeDefinitions.GetByType<string>();
+            var definition = SqliteDatabaseBuilderMock.Create().TypeDefinitions.GetByType<string>();
 
             var action = Lambda.Of( () => ((ISqlColumnBuilderCollection)sut).SetDefaultTypeDefinition( definition ) );
 
@@ -364,7 +364,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void SetDefaultTypeDefinition_ShouldThrowSqliteObjectCastException_WhenDefinitionIsOfInvalidType()
         {
-            var db = new SqliteDatabaseBuilder();
+            var db = SqliteDatabaseBuilderMock.Create();
             var table = db.Schemas.Create( "foo" ).Objects.CreateTable( "T" );
             var sut = table.Columns;
             var definition = Substitute.For<ISqlColumnTypeDefinition>();

@@ -247,7 +247,7 @@ VALUES
     [Fact]
     public void InsertInto_ShouldCreateInsertIntoNode_WithEmptyDataFields()
     {
-        var set = SqlNode.RawRecordSet( "foo" );
+        var set = SqlNode.RawRecordSet( "foo" ).As( "qux" );
         var query = SqlNode.RawQuery( "SELECT a, b FROM bar" );
         var sut = query.ToInsertInto( set );
         var text = sut.ToString();
@@ -260,7 +260,7 @@ VALUES
             sut.DataFields.ToArray().Should().BeEmpty();
             text.Should()
                 .Be(
-                    @"INSERT INTO [foo] ()
+                    @"INSERT INTO [foo] AS [qux] ()
 SELECT a, b FROM bar" );
         }
     }

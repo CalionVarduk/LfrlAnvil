@@ -14,6 +14,7 @@ public interface ISqlDatabase : IDisposable
     ISqlColumnTypeDefinitionProvider TypeDefinitions { get; }
     ISqlNodeInterpreterFactory NodeInterpreterFactory { get; }
     Version Version { get; }
+    public string ServerVersion { get; }
 
     [Pure]
     IDbConnection Connect();

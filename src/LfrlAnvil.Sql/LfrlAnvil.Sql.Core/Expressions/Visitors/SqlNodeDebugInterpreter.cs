@@ -403,7 +403,11 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
         using ( Context.TempParentNodeUpdate( node ) )
         {
             Context.Sql.Append( "INSERT INTO" ).AppendSpace();
-            AppendRecordSetName( node.RecordSet );
+
+            AppendRecordSetName( node.RecordSet.AsSelf() );
+            if ( node.RecordSet.IsAliased )
+                AppendDelimitedAlias( node.RecordSet.Name );
+
             Context.Sql.AppendSpace().Append( '(' );
 
             if ( node.DataFields.Length > 0 )
@@ -570,9 +574,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
             }
             case SqlNodeType.TemporaryTableRecordSet:
             {
-                if ( node.NodeType == SqlNodeType.TemporaryTableRecordSet )
-                    Context.Sql.Append( "TEMP" ).AppendDot();
-
+                Context.Sql.Append( "TEMP" ).AppendDot();
                 AppendDelimitedName( node.Name );
                 break;
             }

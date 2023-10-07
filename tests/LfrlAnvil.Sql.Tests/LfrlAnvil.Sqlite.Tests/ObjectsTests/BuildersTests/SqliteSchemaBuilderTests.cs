@@ -15,7 +15,7 @@ public partial class SqliteSchemaBuilderTests : TestsBase
     [Fact]
     public void ToString_ShouldReturnCorrectResult()
     {
-        var db = new SqliteDatabaseBuilder();
+        var db = SqliteDatabaseBuilderMock.Create();
         var sut = db.Schemas.Create( "foo" );
 
         var result = sut.ToString();
@@ -27,7 +27,7 @@ public partial class SqliteSchemaBuilderTests : TestsBase
     public void SetName_ShouldDoNothing_WhenNewNameEqualsOldName()
     {
         var name = Fixture.Create<string>();
-        var db = new SqliteDatabaseBuilder();
+        var db = SqliteDatabaseBuilderMock.Create();
         var sut = db.Schemas.Create( name );
 
         var result = ((ISqlObjectBuilder)sut).SetName( name );
@@ -45,7 +45,7 @@ public partial class SqliteSchemaBuilderTests : TestsBase
     public void SetName_ShouldUpdateName_WhenNameChangesAndSchemaDoesNotHaveAnyObjects()
     {
         var (oldName, newName) = Fixture.CreateDistinctCollection<string>( count: 2 );
-        var db = new SqliteDatabaseBuilder();
+        var db = SqliteDatabaseBuilderMock.Create();
         var sut = db.Schemas.Create( oldName );
 
         var result = ((ISqlSchemaBuilder)sut).SetName( newName );
@@ -64,7 +64,7 @@ public partial class SqliteSchemaBuilderTests : TestsBase
     public void SetName_ShouldUpdateName_WhenNameChangesAndSchemaHasObjects()
     {
         var (oldName, newName) = ("foo", "bar");
-        var db = new SqliteDatabaseBuilder();
+        var db = SqliteDatabaseBuilderMock.Create();
         var sut = db.Schemas.Create( oldName );
 
         var t1 = sut.Objects.CreateTable( "T1" );
@@ -157,7 +157,7 @@ INNER JOIN ""bar_V1"" ON TRUE;" ) );
     [InlineData( "f\"oo" )]
     public void SetName_ShouldThrowSqliteObjectBuilderException_WhenNameIsInvalid(string name)
     {
-        var db = new SqliteDatabaseBuilder();
+        var db = SqliteDatabaseBuilderMock.Create();
         var sut = db.Schemas.Create( Fixture.Create<string>() );
 
         var action = Lambda.Of( () => sut.SetName( name ) );
@@ -171,7 +171,7 @@ INNER JOIN ""bar_V1"" ON TRUE;" ) );
     public void SetName_ShouldThrowSqliteObjectBuilderException_WhenSchemaWithNameAlreadyExists()
     {
         var (name1, name2) = Fixture.CreateDistinctCollection<string>( count: 2 );
-        var db = new SqliteDatabaseBuilder();
+        var db = SqliteDatabaseBuilderMock.Create();
         db.Schemas.Create( name2 );
         var sut = db.Schemas.Create( name1 );
 
@@ -185,7 +185,7 @@ INNER JOIN ""bar_V1"" ON TRUE;" ) );
     [Fact]
     public void SetName_ShouldThrowSqliteObjectBuilderException_WhenSchemaHasBeenRemoved()
     {
-        var db = new SqliteDatabaseBuilder();
+        var db = SqliteDatabaseBuilderMock.Create();
         var sut = db.Schemas.Create( Fixture.Create<string>() );
         db.Schemas.Remove( sut.Name );
 
@@ -200,7 +200,7 @@ INNER JOIN ""bar_V1"" ON TRUE;" ) );
     public void Remove_ShouldRemoveSchema_WhenSchemaDoesNotHaveAnyObjects()
     {
         var name = Fixture.Create<string>();
-        var db = new SqliteDatabaseBuilder();
+        var db = SqliteDatabaseBuilderMock.Create();
         var sut = db.Schemas.Create( name );
 
         sut.Remove();
@@ -216,7 +216,7 @@ INNER JOIN ""bar_V1"" ON TRUE;" ) );
     public void Remove_ShouldDoNothing_WhenSchemaHasAlreadyBeenRemoved()
     {
         var name = Fixture.Create<string>();
-        var db = new SqliteDatabaseBuilder();
+        var db = SqliteDatabaseBuilderMock.Create();
         var sut = db.Schemas.Create( name );
         sut.Remove();
 
@@ -233,7 +233,7 @@ INNER JOIN ""bar_V1"" ON TRUE;" ) );
     public void Remove_ShouldRemoveSchemaAndAllOfItsObjects_WhenSchemaHasTablesAndViewsWithoutReferencesFromOtherSchemas()
     {
         var name = "foo";
-        var db = new SqliteDatabaseBuilder();
+        var db = SqliteDatabaseBuilderMock.Create();
         var sut = db.Schemas.Create( name );
 
         var t1 = sut.Objects.CreateTable( "T1" );
@@ -344,7 +344,7 @@ INNER JOIN ""bar_V1"" ON TRUE;" ) );
     [Fact]
     public void Remove_ShouldThrowSqliteObjectBuilderException_WhenAttemptingToRemoveDefaultSchema()
     {
-        var db = new SqliteDatabaseBuilder();
+        var db = SqliteDatabaseBuilderMock.Create();
         var sut = db.Schemas.Default;
 
         var action = Lambda.Of( () => sut.Remove() );
@@ -357,7 +357,7 @@ INNER JOIN ""bar_V1"" ON TRUE;" ) );
     [Fact]
     public void Remove_ShouldThrowSqliteObjectBuilderException_WhenAttemptingToRemoveSchemaWithTableReferencedByForeignKeyFromOtherSchema()
     {
-        var db = new SqliteDatabaseBuilder();
+        var db = SqliteDatabaseBuilderMock.Create();
         var sut = db.Schemas.Create( Fixture.Create<string>() );
         var table = sut.Objects.CreateTable( "T1" );
         var column = table.Columns.Create( "C1" );
@@ -381,7 +381,7 @@ INNER JOIN ""bar_V1"" ON TRUE;" ) );
     [Fact]
     public void Remove_ShouldThrowSqliteObjectBuilderException_WhenAttemptingToRemoveSchemaWithTableReferencedByViewFromOtherSchema()
     {
-        var db = new SqliteDatabaseBuilder();
+        var db = SqliteDatabaseBuilderMock.Create();
         var sut = db.Schemas.Create( Fixture.Create<string>() );
         var table = sut.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C" );
@@ -399,7 +399,7 @@ INNER JOIN ""bar_V1"" ON TRUE;" ) );
     [Fact]
     public void Remove_ShouldThrowSqliteObjectBuilderException_WhenAttemptingToRemoveSchemaWithViewReferencedByViewFromOtherSchema()
     {
-        var db = new SqliteDatabaseBuilder();
+        var db = SqliteDatabaseBuilderMock.Create();
         var sut = db.Schemas.Create( Fixture.Create<string>() );
         var view = sut.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
 
@@ -416,7 +416,7 @@ INNER JOIN ""bar_V1"" ON TRUE;" ) );
     public void ForSqlite_ShouldInvokeAction_WhenSchemaIsSqlite()
     {
         var action = Substitute.For<Action<SqliteSchemaBuilder>>();
-        var sut = new SqliteDatabaseBuilder().Schemas.Default;
+        var sut = SqliteDatabaseBuilderMock.Create().Schemas.Default;
 
         var result = sut.ForSqlite( action );
 

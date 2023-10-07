@@ -13,7 +13,7 @@ namespace LfrlAnvil.Sqlite.Tests;
 
 public class SqliteDefaultValueSourceValidatorTests : TestsBase
 {
-    private readonly SqliteDatabaseBuilder _db = new SqliteDatabaseBuilder();
+    private readonly SqliteDatabaseBuilder _db = SqliteDatabaseBuilderMock.Create();
     private readonly SqliteDefaultValueSourceValidator _sut = new SqliteDefaultValueSourceValidator();
 
     [Fact]

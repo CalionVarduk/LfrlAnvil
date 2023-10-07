@@ -9,12 +9,14 @@ using System.Runtime.InteropServices;
 using System.Text;
 using LfrlAnvil.Diagnostics;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Versioning;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Internal;
 using LfrlAnvil.Sqlite.Objects.Builders;
 using Microsoft.Data.Sqlite;
+using SqliteConnection = LfrlAnvil.Sqlite.Internal.SqliteConnection;
 
 namespace LfrlAnvil.Sqlite;
 
@@ -33,33 +35,19 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         SqlDatabaseVersionHistory versionHistory,
         SqlCreateDatabaseOptions options = default)
     {
+        List<Action<SqlDatabaseConnectionChangeEvent>>? connectionChangeCallbacks = null;
         var connection = CreateConnection( connectionString );
         try
         {
             connection.Open();
 
-            // TODO: these functions need to be registered every time the connection is opened, also: tests
-            connection.CreateFunction( "CURRENT_DATE", static () => DateTime.Now.ToString( "yyyy-MM-dd", CultureInfo.InvariantCulture ) );
-            connection.CreateFunction(
-                "CURRENT_TIME",
-                static () => DateTime.Now.ToString( "HH:mm:ss.fffffff", CultureInfo.InvariantCulture ) );
+            var connectionChangeEvent = new SqlDatabaseConnectionChangeEvent(
+                connection,
+                new StateChangeEventArgs( ConnectionState.Closed, ConnectionState.Open ) );
 
-            connection.CreateFunction(
-                "CURRENT_DATETIME",
-                static () => DateTime.Now.ToString( "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture ) );
-
-            connection.CreateFunction( "CURRENT_TIMESTAMP", static () => DateTime.UtcNow.Ticks );
-            connection.CreateFunction( "NEW_GUID", static () => Guid.NewGuid().ToByteArray() );
-
-            connection.CreateFunction( "TO_LOWER", static (string a) => a.ToLowerInvariant(), isDeterministic: true );
-            connection.CreateFunction( "TO_UPPER", static (string a) => a.ToUpperInvariant(), isDeterministic: true );
-            connection.CreateFunction(
-                "INSTR_LAST",
-                static (string a, string b) => a.LastIndexOf( b, StringComparison.Ordinal ) + 1,
-                isDeterministic: true );
-
-            var (versionHistoryTable, types) = InitializeDatabaseBuilderWithVersionHistoryTable( options );
+            var (versionHistoryTable, types) = InitializeDatabaseBuilderWithVersionHistoryTable( connectionChangeEvent, options );
             var builder = versionHistoryTable.Database;
+            connectionChangeCallbacks = builder.ConnectionChanges.Callbacks;
 
             var versionRecordsReader = CreateVersionRecordsReader( versionHistoryTable );
 
@@ -80,9 +68,9 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
 
             var (exception, appliedVersionCount) = options.Mode switch
             {
-                SqlDatabaseCreateMode.DryRun => ApplyVersionsInDryRunMode( builder, versions ),
+                SqlDatabaseCreateMode.DryRun => ApplyVersionsInDryRunMode( connectionChangeEvent, builder, versions ),
                 SqlDatabaseCreateMode.Commit => ApplyVersionsInCommitMode(
-                    connection,
+                    connectionChangeEvent,
                     versionHistoryTable,
                     versions,
                     types,
@@ -93,6 +81,8 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
             var appliedVersions = versions.Uncommitted.Slice( 0, appliedVersionCount );
             var pendingVersions = versions.Uncommitted.Slice( appliedVersions.Length );
             var newDbVersion = appliedVersions.Length > 0 ? appliedVersions[^1].Value : versions.Current;
+
+            connection.ChangeCallbacks = connectionChangeCallbacks.ToArray();
 
             SqliteDatabase database = connection is SqlitePermanentConnection permanentConnection
                 ? new SqlitePermanentlyConnectedDatabase( permanentConnection, builder, versionRecordsReader, newDbVersion )
@@ -108,6 +98,9 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         }
         catch
         {
+            if ( connectionChangeCallbacks is not null )
+                connection.ChangeCallbacks = connectionChangeCallbacks.ToArray();
+
             if ( connection is SqlitePermanentConnection )
                 connection.Close();
 
@@ -140,9 +133,12 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
     }
 
     [Pure]
-    private static SqliteDatabaseBuilder CreateBuilder()
+    private static SqliteDatabaseBuilder CreateBuilder(SqlDatabaseConnectionChangeEvent connectionChangeEvent)
     {
-        return new SqliteDatabaseBuilder();
+        var result = new SqliteDatabaseBuilder( connectionChangeEvent.Connection.ServerVersion );
+        result.AddConnectionChangeCallback( FunctionInitializer );
+        InvokePendingConnectionChangeCallbacks( result, connectionChangeEvent );
+        return result;
     }
 
     private static void SetBuilderMode(SqliteDatabaseBuilder builder, SqlDatabaseCreateMode mode)
@@ -166,9 +162,11 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
 
     [Pure]
     private static (SqliteTableBuilder VersionHistoryTable, VersionHistoryTypes Types)
-        InitializeDatabaseBuilderWithVersionHistoryTable(SqlCreateDatabaseOptions options)
+        InitializeDatabaseBuilderWithVersionHistoryTable(
+            SqlDatabaseConnectionChangeEvent connectionChangeEvent,
+            SqlCreateDatabaseOptions options)
     {
-        var builder = CreateBuilder();
+        var builder = CreateBuilder( connectionChangeEvent );
         SetBuilderMode( builder, SqlDatabaseCreateMode.Commit );
 
         var intType = builder.TypeDefinitions.GetByType<int>();
@@ -283,6 +281,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
     }
 
     private static (Exception? Exception, int AppliedVersions) ApplyVersionsInDryRunMode(
+        SqlDatabaseConnectionChangeEvent connectionChangeEvent,
         SqliteDatabaseBuilder builder,
         SqlDatabaseVersionHistory.DatabaseComparisonResult versions)
     {
@@ -293,7 +292,8 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
             try
             {
                 version.Apply( builder );
-                var _ = builder.GetPendingStatements();
+                _ = builder.GetPendingStatements();
+                InvokePendingConnectionChangeCallbacks( builder, connectionChangeEvent );
             }
             finally
             {
@@ -305,7 +305,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
     }
 
     private static (Exception? Exception, int AppliedVersions) ApplyVersionsInCommitMode(
-        SqliteConnection connection,
+        SqlDatabaseConnectionChangeEvent connectionChangeEvent,
         SqliteTableBuilder versionHistoryTable,
         SqlDatabaseVersionHistory.DatabaseComparisonResult versions,
         VersionHistoryTypes types,
@@ -314,6 +314,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         if ( versions.Uncommitted.Length == 0 )
             return (null, 0);
 
+        var connection = ReinterpretCast.To<SqliteConnection>( connectionChangeEvent.Connection );
         using var statementCommand = connection.CreateCommand();
         var (preparePragmaText, restorePragmaText) = CreatePragmaCommandTexts( statementCommand );
 
@@ -344,6 +345,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
 
             version.Apply( builder );
             var statements = builder.GetPendingStatements();
+            InvokePendingConnectionChangeCallbacks( builder, connectionChangeEvent );
             var versionOrdinal = nextVersionOrdinal;
             var pragmaSwapped = false;
 
@@ -439,6 +441,13 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         }
 
         return (exception, nextVersionOrdinal - versions.Committed.Length - 1);
+    }
+
+    private static void InvokePendingConnectionChangeCallbacks(SqliteDatabaseBuilder builder, SqlDatabaseConnectionChangeEvent @event)
+    {
+        var callbacks = builder.GetPendingConnectionChangeCallbacks();
+        foreach ( var callback in callbacks )
+            callback( @event );
     }
 
     [Pure]
@@ -638,6 +647,71 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         }
 
         return command;
+    }
+
+    private static void FunctionInitializer(SqlDatabaseConnectionChangeEvent @event)
+    {
+        if ( @event.StateChange.CurrentState != ConnectionState.Open )
+            return;
+
+        var connection = ReinterpretCast.To<Microsoft.Data.Sqlite.SqliteConnection>( @event.Connection );
+
+        connection.CreateFunction( "GET_CURRENT_DATE", GetCurrentDateImpl );
+        connection.CreateFunction( "GET_CURRENT_TIME", GetCurrentTimeImpl );
+        connection.CreateFunction( "GET_CURRENT_DATETIME", GetCurrentDateTimeImpl );
+        connection.CreateFunction( "GET_CURRENT_TIMESTAMP", GetCurrentTimestampImpl );
+        connection.CreateFunction( "NEW_GUID", NewGuidImpl );
+        connection.CreateFunction<string?, string?>( "TO_LOWER", ToLowerImpl, isDeterministic: true );
+        connection.CreateFunction<string?, string?>( "TO_UPPER", ToUpperImpl, isDeterministic: true );
+        connection.CreateFunction<string?, string?, long?>( "INSTR_LAST", InstrLastImpl, isDeterministic: true );
+    }
+
+    [Pure]
+    private static string GetCurrentDateImpl()
+    {
+        return DateTime.Now.ToString( "yyyy-MM-dd", CultureInfo.InvariantCulture );
+    }
+
+    [Pure]
+    private static string GetCurrentTimeImpl()
+    {
+        return DateTime.Now.ToString( "HH:mm:ss.fffffff", CultureInfo.InvariantCulture );
+    }
+
+    [Pure]
+    private static string GetCurrentDateTimeImpl()
+    {
+        return DateTime.Now.ToString( "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture );
+    }
+
+    [Pure]
+    private static long GetCurrentTimestampImpl()
+    {
+        return DateTime.UtcNow.Ticks;
+    }
+
+    [Pure]
+    private static byte[] NewGuidImpl()
+    {
+        return Guid.NewGuid().ToByteArray();
+    }
+
+    [Pure]
+    private static string? ToLowerImpl(string? s)
+    {
+        return s?.ToLowerInvariant();
+    }
+
+    [Pure]
+    private static string? ToUpperImpl(string? s)
+    {
+        return s?.ToUpperInvariant();
+    }
+
+    [Pure]
+    private static long? InstrLastImpl(string? s, string? v)
+    {
+        return s is not null && v is not null ? s.LastIndexOf( v, StringComparison.Ordinal ) + 1 : null;
     }
 
     private static class VersionHistoryColumns

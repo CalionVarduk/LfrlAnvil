@@ -4,7 +4,6 @@ using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Versioning;
-using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
@@ -15,7 +14,7 @@ public class SqliteDatabaseTests : TestsBase
     [Fact]
     public void Properties_ShouldBeCorrectlyCopiedFromBuilder()
     {
-        var dbBuilder = new SqliteDatabaseBuilder();
+        var dbBuilder = SqliteDatabaseBuilderMock.Create();
         ISqlDatabase sut = new SqliteDatabaseMock( dbBuilder );
 
         using ( new AssertionScope() )
@@ -36,7 +35,7 @@ public class SqliteDatabaseTests : TestsBase
     [InlineData( "bar", false )]
     public void Schemas_Contains_ShouldReturnTrue_WhenSchemaExists(string name, bool expected)
     {
-        var dbBuilder = new SqliteDatabaseBuilder();
+        var dbBuilder = SqliteDatabaseBuilderMock.Create();
         dbBuilder.Schemas.Create( "foo" );
         var db = new SqliteDatabaseMock( dbBuilder );
         ISqlSchemaCollection sut = db.Schemas;
@@ -49,7 +48,7 @@ public class SqliteDatabaseTests : TestsBase
     [Fact]
     public void Schemas_Get_ShouldReturnExistingSchema()
     {
-        var dbBuilder = new SqliteDatabaseBuilder();
+        var dbBuilder = SqliteDatabaseBuilderMock.Create();
         dbBuilder.Schemas.Default.SetName( "foo" );
         var db = new SqliteDatabaseMock( dbBuilder );
         ISqlSchemaCollection sut = db.Schemas;
@@ -62,7 +61,7 @@ public class SqliteDatabaseTests : TestsBase
     [Fact]
     public void Schemas_Get_ShouldThrowKeyNotFoundException_WhenSchemaDoesNotExist()
     {
-        var dbBuilder = new SqliteDatabaseBuilder();
+        var dbBuilder = SqliteDatabaseBuilderMock.Create();
         dbBuilder.Schemas.Default.SetName( "foo" );
         var db = new SqliteDatabaseMock( dbBuilder );
         ISqlSchemaCollection sut = db.Schemas;
@@ -75,7 +74,7 @@ public class SqliteDatabaseTests : TestsBase
     [Fact]
     public void Schemas_TryGet_ShouldReturnExistingSchema()
     {
-        var dbBuilder = new SqliteDatabaseBuilder();
+        var dbBuilder = SqliteDatabaseBuilderMock.Create();
         dbBuilder.Schemas.Default.SetName( "foo" );
         var db = new SqliteDatabaseMock( dbBuilder );
         ISqlSchemaCollection sut = db.Schemas;
@@ -92,7 +91,7 @@ public class SqliteDatabaseTests : TestsBase
     [Fact]
     public void Schemas_TryGet_ShouldReturnFalse_WhenSchemaDoesNotExist()
     {
-        var dbBuilder = new SqliteDatabaseBuilder();
+        var dbBuilder = SqliteDatabaseBuilderMock.Create();
         dbBuilder.Schemas.Default.SetName( "foo" );
         var db = new SqliteDatabaseMock( dbBuilder );
         ISqlSchemaCollection sut = db.Schemas;
