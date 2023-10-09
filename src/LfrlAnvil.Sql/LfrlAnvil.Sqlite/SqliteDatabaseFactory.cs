@@ -4,11 +4,13 @@ using System.Data;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Globalization;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using LfrlAnvil.Diagnostics;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Events;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Versioning;
 using LfrlAnvil.Sqlite.Exceptions;
@@ -35,7 +37,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         SqlDatabaseVersionHistory versionHistory,
         SqlCreateDatabaseOptions options = default)
     {
-        List<Action<SqlDatabaseConnectionChangeEvent>>? connectionChangeCallbacks = null;
+        IReadOnlyCollection<Action<SqlDatabaseConnectionChangeEvent>>? connectionChangeCallbacks = null;
         var connection = CreateConnection( connectionString );
         try
         {
@@ -49,14 +51,11 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
             var builder = versionHistoryTable.Database;
             connectionChangeCallbacks = builder.ConnectionChanges.Callbacks;
 
+            var statementExecutor = new SqlStatementExecutor( options );
+            CreateVersionHistoryTableInDatabaseIfNotExists( connection, versionHistoryTable, ref statementExecutor );
+
             var versionRecordsReader = CreateVersionRecordsReader( versionHistoryTable );
-
-            if ( ! VersionHistoryTableExistsInDatabase( connection, versionHistoryTable.FullName ) )
-                CreateVersionHistoryTableInDatabase( connection, versionHistoryTable );
-
-            RemoveVersionHistoryTable( versionHistoryTable );
-
-            var versions = CompareVersionHistoryToDatabase( connection, versionHistory, versionRecordsReader );
+            var versions = CompareVersionHistoryToDatabase( connection, versionHistory, versionRecordsReader, ref statementExecutor );
 
             foreach ( var version in versions.Committed )
             {
@@ -74,7 +73,8 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
                     versionHistoryTable,
                     versions,
                     types,
-                    options.VersionHistoryPersistenceMode ),
+                    options.VersionHistoryPersistenceMode,
+                    ref statementExecutor ),
                 _ => (null, 0)
             };
 
@@ -116,10 +116,12 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
     private static SqlDatabaseVersionHistory.DatabaseComparisonResult CompareVersionHistoryToDatabase(
         SqliteConnection connection,
         SqlDatabaseVersionHistory versionHistory,
-        Func<SqliteCommand, List<SqlDatabaseVersionRecord>> versionRecordsReader)
+        SqlQueryDefinition<List<SqlDatabaseVersionRecord>> versionRecordsReader,
+        ref SqlStatementExecutor statementExecutor)
     {
         using var command = connection.CreateCommand();
-        var registeredVersionRecords = versionRecordsReader( command );
+        command.CommandText = versionRecordsReader.Sql;
+        var registeredVersionRecords = statementExecutor.ExecuteVersionHistoryQuery( command, versionRecordsReader.Executor );
         return versionHistory.CompareToDatabase( CollectionsMarshal.AsSpan( registeredVersionRecords ) );
     }
 
@@ -149,15 +151,6 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
     private static void ClearBuilderStatements(SqliteDatabaseBuilder builder)
     {
         builder.ChangeTracker.ClearStatements();
-    }
-
-    [Pure]
-    private static bool VersionHistoryTableExistsInDatabase(SqliteConnection connection, string tableName)
-    {
-        using var command = connection.CreateCommand();
-        command.CommandText = $"SELECT EXISTS (SELECT * FROM sqlite_master WHERE type = 'table' AND name = '{tableName}');";
-        var exists = Convert.ToBoolean( command.ExecuteScalar() );
-        return exists;
     }
 
     [Pure]
@@ -193,22 +186,34 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         return (table, new VersionHistoryTypes( intType, longType, stringType, dateTimeType ));
     }
 
-    private static void CreateVersionHistoryTableInDatabase(SqliteConnection connection, SqliteTableBuilder table)
+    private static void CreateVersionHistoryTableInDatabaseIfNotExists(
+        SqliteConnection connection,
+        SqliteTableBuilder table,
+        ref SqlStatementExecutor statementExecutor)
     {
-        using var command = connection.CreateCommand();
-        using var transaction = CreateTransaction( command );
-
-        foreach ( var statement in table.Database.GetPendingStatements() )
+        using ( var command = connection.CreateCommand() )
         {
-            command.CommandText = statement;
-            command.ExecuteNonQuery();
+            command.CommandText = $"SELECT EXISTS (SELECT * FROM sqlite_master WHERE type = 'table' AND name = '{table.FullName}');";
+            var exists = statementExecutor.ExecuteVersionHistoryQuery( command, static cmd => Convert.ToBoolean( cmd.ExecuteScalar() ) );
+
+            if ( ! exists )
+            {
+                using ( var transaction = CreateTransaction( command ) )
+                {
+                    var statements = table.Database.GetPendingStatements();
+                    foreach ( var statement in statements )
+                    {
+                        command.CommandText = statement;
+                        statementExecutor.ExecuteVersionHistoryNonQuery( command );
+                    }
+
+                    transaction.Commit();
+                }
+
+                command.Transaction = null;
+            }
         }
 
-        transaction.Commit();
-    }
-
-    private static void RemoveVersionHistoryTable(SqliteTableBuilder table)
-    {
         SetBuilderMode( table.Database, SqlDatabaseCreateMode.NoChanges );
 
         table.Remove();
@@ -229,15 +234,15 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
     }
 
     [Pure]
-    private static Func<SqliteCommand, List<SqlDatabaseVersionRecord>> CreateVersionRecordsReader(SqliteTableBuilder table)
+    private static SqlQueryDefinition<List<SqlDatabaseVersionRecord>> CreateVersionRecordsReader(SqliteTableBuilder table)
     {
         var query = $"SELECT * FROM \"{table.FullName}\" ORDER BY \"{VersionHistoryColumns.Ordinal}\" ASC;";
+        return new SqlQueryDefinition<List<SqlDatabaseVersionRecord>>( query, Executor );
 
-        return c =>
+        [Pure]
+        static List<SqlDatabaseVersionRecord> Executor(SqliteCommand c)
         {
             var result = new List<SqlDatabaseVersionRecord>();
-
-            c.CommandText = query;
             using var reader = c.ExecuteReader();
 
             if ( ! reader.Read() )
@@ -277,7 +282,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
             while ( reader.Read() );
 
             return result;
-        };
+        }
     }
 
     private static (Exception? Exception, int AppliedVersions) ApplyVersionsInDryRunMode(
@@ -309,14 +314,16 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         SqliteTableBuilder versionHistoryTable,
         SqlDatabaseVersionHistory.DatabaseComparisonResult versions,
         VersionHistoryTypes types,
-        SqlDatabaseVersionHistoryPersistenceMode versionHistoryPersistenceMode)
+        SqlDatabaseVersionHistoryPersistenceMode versionHistoryPersistenceMode,
+        ref SqlStatementExecutor statementExecutor)
     {
         if ( versions.Uncommitted.Length == 0 )
             return (null, 0);
 
         var connection = ReinterpretCast.To<SqliteConnection>( connectionChangeEvent.Connection );
+
         using var statementCommand = connection.CreateCommand();
-        var (preparePragmaText, restorePragmaText) = CreatePragmaCommandTexts( statementCommand );
+        var (preparePragmaText, restorePragmaText) = CreatePragmaCommandTexts( statementCommand, ref statementExecutor );
 
         using var insertVersionCommand = PrepareInsertVersionRecordCommand( connection, versionHistoryTable.FullName, types );
         var pOrdinal = insertVersionCommand.Parameters[0];
@@ -348,13 +355,15 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
             InvokePendingConnectionChangeCallbacks( builder, connectionChangeEvent );
             var versionOrdinal = nextVersionOrdinal;
             var pragmaSwapped = false;
+            var statementKey = SqlDatabaseFactoryStatementKey.Create( version.Value );
 
             try
             {
                 if ( preparePragmaText.Length > 0 )
                 {
+                    statementKey = statementKey.NextOrdinal();
                     statementCommand.CommandText = preparePragmaText;
-                    statementCommand.ExecuteNonQuery();
+                    statementExecutor.ExecuteNonQuery( statementCommand, statementKey, SqlDatabaseFactoryStatementType.Other );
                     pragmaSwapped = true;
                 }
 
@@ -365,15 +374,27 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
 
                     foreach ( var statement in statements )
                     {
+                        statementKey = statementKey.NextOrdinal();
                         statementCommand.CommandText = statement;
-                        statementCommand.ExecuteNonQuery();
+                        statementExecutor.ExecuteNonQuery( statementCommand, statementKey, SqlDatabaseFactoryStatementType.Change );
                     }
 
                     foreach ( var tableName in builder.ChangeTracker.ModifiedTableNames )
                     {
+                        statementKey = statementKey.NextOrdinal();
                         statementCommand.CommandText = $"PRAGMA foreign_key_check('{tableName}');";
-                        using var reader = statementCommand.ExecuteReader();
-                        if ( reader.Read() )
+
+                        var hasFkFailure = statementExecutor.ExecuteQuery(
+                            statementCommand,
+                            statementKey,
+                            SqlDatabaseFactoryStatementType.Other,
+                            static cmd =>
+                            {
+                                using var reader = cmd.ExecuteReader();
+                                return reader.Read();
+                            } );
+
+                        if ( hasFkFailure )
                             fkCheckFailures.Add( tableName );
                     }
 
@@ -382,8 +403,12 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
 
                     if ( deleteVersionsCommand.Value is not null )
                     {
+                        statementKey = statementKey.NextOrdinal();
                         deleteVersionsCommand.Value.Transaction = transaction;
-                        deleteVersionsCommand.Value.ExecuteNonQuery();
+                        statementExecutor.ExecuteNonQuery(
+                            deleteVersionsCommand.Value,
+                            statementKey,
+                            SqlDatabaseFactoryStatementType.VersionHistory );
                     }
 
                     pOrdinal.Value = versionOrdinal;
@@ -394,7 +419,9 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
                     pDescription.Value = version.Description;
                     types.DateTimeType.SetParameter( pCommitDateUtc, DateTime.UtcNow );
 
-                    insertVersionCommand.ExecuteNonQuery();
+                    statementKey = statementKey.NextOrdinal();
+                    statementExecutor.ExecuteNonQuery( insertVersionCommand, statementKey, SqlDatabaseFactoryStatementType.VersionHistory );
+
                     transaction.Commit();
                 }
                 finally
@@ -406,8 +433,9 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
 
                     if ( pragmaSwapped && restorePragmaText.Length > 0 )
                     {
+                        statementKey = statementKey.NextOrdinal();
                         statementCommand.CommandText = restorePragmaText;
-                        statementCommand.ExecuteNonQuery();
+                        statementExecutor.ExecuteNonQuery( statementCommand, statementKey, SqlDatabaseFactoryStatementType.Other );
                     }
                 }
 
@@ -433,7 +461,11 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
 
         try
         {
-            UpdateVersionRecordRangeElapsedTime( connection, versionHistoryTable.FullName, CollectionsMarshal.AsSpan( elapsedTimes ) );
+            UpdateVersionRecordRangeElapsedTime(
+                connection,
+                versionHistoryTable.FullName,
+                CollectionsMarshal.AsSpan( elapsedTimes ),
+                ref statementExecutor );
         }
         catch ( Exception exc )
         {
@@ -451,20 +483,23 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
     }
 
     [Pure]
-    private static (string Prepare, string Restore) CreatePragmaCommandTexts(SqliteCommand command)
+    private static (string Prepare, string Restore) CreatePragmaCommandTexts(
+        SqliteCommand command,
+        ref SqlStatementExecutor statementExecutor)
     {
-        bool areForeignKeysEnabled;
-        bool isLegacyAlterTableEnabled;
         command.CommandText = "PRAGMA foreign_keys; PRAGMA legacy_alter_table;";
-
-        using ( var reader = command.ExecuteReader() )
-        {
-            reader.Read();
-            areForeignKeysEnabled = reader.GetBoolean( 0 );
-            reader.NextResult();
-            reader.Read();
-            isLegacyAlterTableEnabled = reader.GetBoolean( 0 );
-        }
+        var (areForeignKeysEnabled, isLegacyAlterTableEnabled) = statementExecutor.ExecuteVersionHistoryQuery(
+            command,
+            static cmd =>
+            {
+                using var reader = cmd.ExecuteReader();
+                reader.Read();
+                var fkResult = reader.GetBoolean( 0 );
+                reader.NextResult();
+                reader.Read();
+                return (fkResult, reader.GetBoolean( 0 ));
+            },
+            SqlDatabaseFactoryStatementType.Other );
 
         var prepareText = string.Empty;
         var restoreText = string.Empty;
@@ -587,7 +622,8 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
     private static void UpdateVersionRecordRangeElapsedTime(
         SqliteConnection connection,
         string versionTableName,
-        ReadOnlySpan<(int Ordinal, TimeSpan ElapsedTime)> elapsedTimes)
+        ReadOnlySpan<(int Ordinal, TimeSpan ElapsedTime)> elapsedTimes,
+        ref SqlStatementExecutor statementExecutor)
     {
         if ( elapsedTimes.Length == 0 )
             return;
@@ -602,7 +638,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         {
             pCommitDurationInTicks.Value = elapsedTime.Ticks;
             pOrdinal.Value = ordinal;
-            command.ExecuteNonQuery();
+            statementExecutor.ExecuteVersionHistoryNonQuery( command );
         }
 
         transaction.Commit();
@@ -731,6 +767,92 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         SqliteColumnTypeDefinition<long> LongType,
         SqliteColumnTypeDefinition<string> StringType,
         SqliteColumnTypeDefinition<DateTime> DateTimeType);
+
+    private ref struct SqlStatementExecutor
+    {
+        internal SqlStatementExecutor(SqlCreateDatabaseOptions options)
+        {
+            VersionHistoryKey = SqlDatabaseFactoryStatementKey.Create( SqlDatabaseVersionHistory.InitialVersion ).NextOrdinal();
+            Listeners = options.GetStatementListeners();
+        }
+
+        internal SqlDatabaseFactoryStatementKey VersionHistoryKey { get; private set; }
+        internal ReadOnlySpan<ISqlDatabaseFactoryStatementListener> Listeners { get; }
+
+        internal void ExecuteVersionHistoryNonQuery(SqliteCommand command)
+        {
+            ExecuteNonQuery( command, VersionHistoryKey, SqlDatabaseFactoryStatementType.VersionHistory );
+            VersionHistoryKey = VersionHistoryKey.NextOrdinal();
+        }
+
+        internal void ExecuteNonQuery(SqliteCommand command, SqlDatabaseFactoryStatementKey key, SqlDatabaseFactoryStatementType type)
+        {
+            var @event = SqlDatabaseFactoryStatementEvent.Create( key, command, type );
+            var start = Stopwatch.GetTimestamp();
+
+            OnBeforeStatementExecution( @event );
+
+            try
+            {
+                command.ExecuteNonQuery();
+            }
+            catch ( Exception exc )
+            {
+                OnAfterStatementExecution( @event, StopwatchTimestamp.GetTimeSpan( start, Stopwatch.GetTimestamp() ), exc );
+                throw;
+            }
+
+            OnAfterStatementExecution( @event, StopwatchTimestamp.GetTimeSpan( start, Stopwatch.GetTimestamp() ), null );
+        }
+
+        internal T ExecuteVersionHistoryQuery<T>(
+            SqliteCommand command,
+            Func<SqliteCommand, T> resultSelector,
+            SqlDatabaseFactoryStatementType type = SqlDatabaseFactoryStatementType.VersionHistory)
+        {
+            var result = ExecuteQuery( command, VersionHistoryKey, type, resultSelector );
+            VersionHistoryKey = VersionHistoryKey.NextOrdinal();
+            return result;
+        }
+
+        internal T ExecuteQuery<T>(
+            SqliteCommand command,
+            SqlDatabaseFactoryStatementKey key,
+            SqlDatabaseFactoryStatementType type,
+            Func<SqliteCommand, T> resultSelector)
+        {
+            T result;
+            var @event = SqlDatabaseFactoryStatementEvent.Create( key, command, type );
+            var start = Stopwatch.GetTimestamp();
+
+            OnBeforeStatementExecution( @event );
+
+            try
+            {
+                result = resultSelector( command );
+            }
+            catch ( Exception exc )
+            {
+                OnAfterStatementExecution( @event, StopwatchTimestamp.GetTimeSpan( start, Stopwatch.GetTimestamp() ), exc );
+                throw;
+            }
+
+            OnAfterStatementExecution( @event, StopwatchTimestamp.GetTimeSpan( start, Stopwatch.GetTimestamp() ), null );
+            return result;
+        }
+
+        private void OnBeforeStatementExecution(SqlDatabaseFactoryStatementEvent @event)
+        {
+            foreach ( var listener in Listeners )
+                listener.OnBefore( @event );
+        }
+
+        private void OnAfterStatementExecution(SqlDatabaseFactoryStatementEvent @event, TimeSpan elapsedTime, Exception? exception)
+        {
+            foreach ( var listener in Listeners )
+                listener.OnAfter( @event, elapsedTime, exception );
+        }
+    }
 
     SqlCreateDatabaseResult<ISqlDatabase> ISqlDatabaseFactory.Create(
         string connectionString,

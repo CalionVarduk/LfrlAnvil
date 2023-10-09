@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Sql.Versioning;
+using LfrlAnvil.Sqlite.Internal;
 using LfrlAnvil.Sqlite.Objects.Builders;
-using Microsoft.Data.Sqlite;
+using SqliteConnection = Microsoft.Data.Sqlite.SqliteConnection;
 
 namespace LfrlAnvil.Sqlite.Tests.Helpers;
 
@@ -10,7 +11,7 @@ public sealed class SqliteDatabaseMock : SqliteDatabase
     public SqliteDatabaseMock(SqliteDatabaseBuilder builder)
         : base(
             builder,
-            _ => new List<SqlDatabaseVersionRecord>(),
+            new SqlQueryDefinition<List<SqlDatabaseVersionRecord>>( string.Empty, _ => new List<SqlDatabaseVersionRecord>() ),
             new Version() ) { }
 
     public override SqliteConnection Connect()

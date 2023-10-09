@@ -1,4 +1,7 @@
-﻿namespace LfrlAnvil.Sql.Tests;
+﻿using LfrlAnvil.Sql.Events;
+using LfrlAnvil.TestExtensions.FluentAssertions;
+
+namespace LfrlAnvil.Sql.Tests;
 
 public class SqlCreateDatabaseOptionsTests : TestsBase
 {
@@ -13,6 +16,7 @@ public class SqlCreateDatabaseOptionsTests : TestsBase
             sut.VersionHistorySchemaName.Should().BeNull();
             sut.VersionHistoryTableName.Should().BeNull();
             sut.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryPersistenceMode.AllRecords );
+            sut.GetStatementListeners().ToArray().Should().BeEmpty();
         }
     }
 
@@ -31,6 +35,7 @@ public class SqlCreateDatabaseOptionsTests : TestsBase
             result.VersionHistorySchemaName.Should().BeNull();
             result.VersionHistoryTableName.Should().BeNull();
             result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryPersistenceMode.AllRecords );
+            result.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( sut.GetStatementListeners().ToArray() );
         }
     }
 
@@ -48,6 +53,7 @@ public class SqlCreateDatabaseOptionsTests : TestsBase
             result.VersionHistorySchemaName.Should().BeSameAs( name );
             result.VersionHistoryTableName.Should().BeNull();
             result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryPersistenceMode.AllRecords );
+            result.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( sut.GetStatementListeners().ToArray() );
         }
     }
 
@@ -65,6 +71,7 @@ public class SqlCreateDatabaseOptionsTests : TestsBase
             result.VersionHistorySchemaName.Should().BeNull();
             result.VersionHistoryTableName.Should().BeSameAs( name );
             result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryPersistenceMode.AllRecords );
+            result.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( sut.GetStatementListeners().ToArray() );
         }
     }
 
@@ -82,6 +89,45 @@ public class SqlCreateDatabaseOptionsTests : TestsBase
             result.VersionHistorySchemaName.Should().BeNull();
             result.VersionHistoryTableName.Should().BeNull();
             result.VersionHistoryPersistenceMode.Should().Be( mode );
+            result.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( sut.GetStatementListeners().ToArray() );
+        }
+    }
+
+    [Fact]
+    public void AddStatementListener_ShouldAddStatementListener_WhenOriginalOptionsDoNotHaveAnyListeners()
+    {
+        var listener = Substitute.For<ISqlDatabaseFactoryStatementListener>();
+        var sut = SqlCreateDatabaseOptions.Default;
+
+        var result = sut.AddStatementListener( listener );
+
+        using ( new AssertionScope() )
+        {
+            result.Mode.Should().Be( SqlDatabaseCreateMode.NoChanges );
+            result.VersionHistorySchemaName.Should().BeNull();
+            result.VersionHistoryTableName.Should().BeNull();
+            result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryPersistenceMode.AllRecords );
+            result.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( listener );
+        }
+    }
+
+    [Fact]
+    public void AddStatementListener_ShouldAddStatementListener_WhenOriginalOptionsHaveHaveListeners()
+    {
+        var listener1 = Substitute.For<ISqlDatabaseFactoryStatementListener>();
+        var listener2 = Substitute.For<ISqlDatabaseFactoryStatementListener>();
+        var sut = SqlCreateDatabaseOptions.Default.AddStatementListener( listener1 );
+
+        var result = sut.AddStatementListener( listener2 );
+
+        using ( new AssertionScope() )
+        {
+            result.Mode.Should().Be( SqlDatabaseCreateMode.NoChanges );
+            result.VersionHistorySchemaName.Should().BeNull();
+            result.VersionHistoryTableName.Should().BeNull();
+            result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryPersistenceMode.AllRecords );
+            result.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( listener1, listener2 );
+            sut.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( listener1, listener2 );
         }
     }
 }

@@ -4,12 +4,16 @@ using System.IO;
 using System.Linq;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Events;
+using LfrlAnvil.Sql.Expressions;
+using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Versioning;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using Microsoft.Data.Sqlite;
 
 namespace LfrlAnvil.Sqlite.Tests;
 
@@ -548,6 +552,91 @@ public class SqliteDatabaseFactoryTests : TestsBase
     }
 
     [Fact]
+    public void Create_ShouldInvokeStatementListenersWithCorrectEvents_WhenModeIsCommit()
+    {
+        var onBefore = Substitute.For<Action<SqlDatabaseFactoryStatementEvent>>();
+        var onAfter = Substitute.For<Action<SqlDatabaseFactoryStatementEvent, TimeSpan, Exception?>>();
+        var listener = SqlDatabaseFactoryStatementListener.Create( onBefore, onAfter );
+
+        var sut = new SqliteDatabaseFactory();
+        var history = new SqlDatabaseVersionHistory(
+            SqlDatabaseVersion.Create(
+                Version.Parse( "0.0.1" ),
+                b =>
+                {
+                    var table = b.Schemas.Default.Objects.CreateTable( "T" );
+                    table.SetPrimaryKey( table.Columns.Create( "A" ).Asc() );
+                } ),
+            SqlDatabaseVersion.Create(
+                Version.Parse( "0.0.2" ),
+                b =>
+                {
+                    b.Schemas.Default.Objects.GetTable( "T" ).Columns.Create( "B" );
+                    var table = b.Schemas.Default.Objects.CreateTable( "U" );
+                    table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
+                } ) );
+
+        sut.Create(
+            "DataSource=:memory:",
+            history,
+            SqlCreateDatabaseOptions.Default.SetMode( SqlDatabaseCreateMode.Commit ).AddStatementListener( listener ) );
+
+        using ( new AssertionScope() )
+        {
+            onBefore.Verify().CallCount.Should().Be( 18 );
+            onAfter.Verify().CallCount.Should().Be( 18 );
+        }
+    }
+
+    [Fact]
+    public void Create_ShouldInvokeStatementListenersWithCorrectEvents_WhenModeIsCommitAndStatementThrowsAnException()
+    {
+        var onBefore = Substitute.For<Action<SqlDatabaseFactoryStatementEvent>>();
+        var onAfter = Substitute.For<Action<SqlDatabaseFactoryStatementEvent, TimeSpan, Exception?>>();
+        var listener = SqlDatabaseFactoryStatementListener.Create( onBefore, onAfter );
+
+        var sut = new SqliteDatabaseFactory();
+        var history = new SqlDatabaseVersionHistory(
+            SqlDatabaseVersion.Create(
+                Version.Parse( "0.0.1" ),
+                b =>
+                {
+                    var table = b.Schemas.Default.Objects.CreateTable( "T" );
+                    table.SetPrimaryKey( table.Columns.Create( "A" ).Asc() );
+                } ),
+            SqlDatabaseVersion.Create(
+                Version.Parse( "0.0.2" ),
+                b => b.AddRawStatement( "INSERT INTO T (A, B) VALUES (1, 1);" ) ) );
+
+        var min = DateTime.UtcNow;
+
+        sut.Create(
+            "DataSource=:memory:",
+            history,
+            SqlCreateDatabaseOptions.Default.SetMode( SqlDatabaseCreateMode.Commit ).AddStatementListener( listener ) );
+
+        var max = DateTime.UtcNow;
+
+        using ( new AssertionScope() )
+        {
+            var invalidArgs = onAfter.Verify().CallAt( 10 ).Exists().And.Arguments;
+            var @event = (SqlDatabaseFactoryStatementEvent)invalidArgs[0]!;
+            var elapsedTime = (TimeSpan)invalidArgs[1]!;
+            var exception = (Exception)invalidArgs[2]!;
+
+            @event.Key.Version.Should().BeEquivalentTo( Version.Parse( "0.0.2" ) );
+            @event.Key.Ordinal.Should().Be( 2 );
+            @event.Sql.Should().Be( "INSERT INTO T (A, B) VALUES (1, 1);" );
+            @event.Parameters.Should().BeEmpty();
+            @event.Type.Should().Be( SqlDatabaseFactoryStatementType.Change );
+            @event.UtcStartDate.Should().BeOnOrAfter( min );
+            @event.UtcStartDate.Should().BeOnOrBefore( max );
+            elapsedTime.Should().BeGreaterThan( TimeSpan.Zero );
+            exception.Should().BeOfType<SqliteException>();
+        }
+    }
+
+    [Fact]
     public void AddConnectionChangeCallback_ShouldRegisterCallbackAndInvokeItDuringDatabaseCreation()
     {
         var firstCallback = Substitute.For<Action<SqlDatabaseConnectionChangeEvent>>();
@@ -630,6 +719,134 @@ public class SqliteDatabaseFactoryTests : TestsBase
             result.Should().BeSameAs( sut );
             result.SupportedDialects.Should().BeSequentiallyEqualTo( SqliteDialect.Instance );
             result.GetFor( SqliteDialect.Instance ).Should().BeOfType<SqliteDatabaseFactory>();
+        }
+    }
+
+    //[Fact]
+    [Fact( Skip = "x" )]
+    public void X()
+    {
+        var sut = new SqliteDatabaseFactory();
+        var history = new SqlDatabaseVersionHistory(
+            SqlDatabaseVersion.Create(
+                Version.Parse( "0.1" ),
+                "1st version",
+                db =>
+                {
+                    var s = db.Schemas.Default;
+                    var t = s.Objects.CreateTable( "T" );
+                    var a = t.Columns.Create( "A" );
+                    var b = t.Columns.Create( "B" ).MarkAsNullable();
+                    var c = t.Columns.Create( "C" );
+
+                    t.SetPrimaryKey( a.Asc(), c.Asc() );
+
+                    t.Indexes.Create( b.Asc() ).SetFilter( x => x["B"] != null );
+
+                    t = s.Objects.CreateTable( "X" );
+                    a = t.Columns.Create( "A" );
+                    b = t.Columns.Create( "B" ).MarkAsNullable();
+
+                    t.SetPrimaryKey( a.Asc() );
+                } ) );
+
+        var result = sut.Create(
+            "DataSource=:memory:",
+            history,
+            SqlCreateDatabaseOptions.Default
+                .SetMode( SqlDatabaseCreateMode.Commit )
+                .AddStatementListener(
+                    SqlDatabaseFactoryStatementListener.Create(
+                        e =>
+                        {
+                            var x = 5;
+                        },
+                        (e, dt, exc) =>
+                        {
+                            var y = 5;
+                        } ) ) );
+
+        var interpreter = result.Database.NodeInterpreterFactory.Create();
+        var table = result.Database.Schemas.Default.Objects.GetTable( "T" ).ToRecordSet();
+        var xTable = result.Database.Schemas.Default.Objects.GetTable( "X" ).ToRecordSet();
+        var aliasedTable = table.As( "U" );
+
+        var insertInto = SqlNode.Batch(
+            SqlNode.Values(
+                    new[,]
+                    {
+                        { SqlNode.Literal( 1 ), SqlNode.Literal( 101 ), SqlNode.Literal( 1 ) },
+                        { SqlNode.Literal( 2 ), SqlNode.Null(), SqlNode.Literal( 1 ) }
+                    } )
+                .ToInsertInto( table, table["A"], table["B"], table["C"] ),
+            SqlNode.Values( SqlNode.Literal( 1 ), SqlNode.Literal( 11 ) )
+                .ToInsertInto( xTable, xTable["A"], xTable["B"] ) );
+
+        var update2 = aliasedTable.Join( xTable.InnerOn( xTable["A"] == aliasedTable["A"] ) )
+            .ToUpdate( table["B"].Assign( table["B"] + xTable["B"] + SqlNode.Literal( 1 ) ) );
+
+        var cte = aliasedTable.Join( xTable.InnerOn( xTable["A"] == aliasedTable["A"] ) )
+            .Select( aliasedTable["A"].AsSelf(), xTable["B"].AsSelf() )
+            .ToCte( "_X" );
+
+        var cteUpdate = aliasedTable.Join( xTable.InnerOn( xTable["A"] == aliasedTable["A"] ) )
+            .With( cte )
+            .ToUpdate(
+                table["B"]
+                    .Assign(
+                        table["B"] +
+                        cte.RecordSet.ToDataSource().AndWhere( cte.RecordSet["A"] == table["A"] ).Select( cte.RecordSet["B"].AsSelf() ) +
+                        SqlNode.Literal( 1 ) ) );
+
+        var update = aliasedTable.ToDataSource()
+            .AndWhere( aliasedTable["B"] != null )
+            .OrderBy( aliasedTable["A"].Asc() )
+            .ToUpdate( table["B"].Assign( table["B"] + SqlNode.Literal( 1 ) ) );
+
+        var query = table.ToDataSource().Select( table.GetAll() ).OrderBy( table["A"].Asc() );
+
+        using var connection = result.Database.Connect();
+        using var cmd = connection.CreateCommand();
+
+        interpreter.Visit( insertInto );
+        cmd.CommandText = interpreter.Context.Sql.ToString();
+        interpreter.Context.Clear();
+
+        cmd.ExecuteNonQuery();
+
+        interpreter.Visit( update );
+        cmd.CommandText = interpreter.Context.Sql.ToString();
+        interpreter.Context.Clear();
+
+        cmd.ExecuteNonQuery();
+
+        interpreter.Visit( query );
+        cmd.CommandText = interpreter.Context.Sql.ToString();
+
+        var values = new List<Dictionary<string, object?>>();
+        using ( var reader = cmd.ExecuteReader() )
+        {
+            while ( reader.Read() )
+            {
+                var row = new Dictionary<string, object?>();
+                row["A"] = reader.GetValue( reader.GetOrdinal( "A" ) );
+                row["B"] = reader.GetValue( reader.GetOrdinal( "B" ) );
+                values.Add( row );
+            }
+        }
+
+        cmd.CommandText = "SELECT NEW_GUID() AS A, GET_CURRENT_DATETIME() AS B, GET_CURRENT_TIMESTAMP() AS C";
+
+        using ( var reader = cmd.ExecuteReader() )
+        {
+            while ( reader.Read() )
+            {
+                var row = new Dictionary<string, object?>();
+                row["A"] = reader.GetGuid( reader.GetOrdinal( "A" ) );
+                row["B"] = DateTime.Parse( reader.GetString( reader.GetOrdinal( "B" ) ) );
+                row["C"] = reader.GetInt64( reader.GetOrdinal( "C" ) );
+                values.Add( row );
+            }
         }
     }
 

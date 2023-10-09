@@ -8,14 +8,16 @@ namespace LfrlAnvil.Sql.Objects.Builders;
 
 public readonly struct SqlDatabaseConnectionChangeCallbacks
 {
+    private readonly List<Action<SqlDatabaseConnectionChangeEvent>> _callbacks;
+
     private SqlDatabaseConnectionChangeCallbacks(List<Action<SqlDatabaseConnectionChangeEvent>> callbacks)
     {
         FirstPendingCallbackIndex = callbacks.Count;
-        Callbacks = callbacks;
+        _callbacks = callbacks;
     }
 
     public int FirstPendingCallbackIndex { get; }
-    public List<Action<SqlDatabaseConnectionChangeEvent>> Callbacks { get; }
+    public IReadOnlyCollection<Action<SqlDatabaseConnectionChangeEvent>> Callbacks => _callbacks;
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -24,11 +26,17 @@ public readonly struct SqlDatabaseConnectionChangeCallbacks
         return new SqlDatabaseConnectionChangeCallbacks( new List<Action<SqlDatabaseConnectionChangeEvent>>() );
     }
 
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public void AddCallback(Action<SqlDatabaseConnectionChangeEvent> callback)
+    {
+        _callbacks.Add( callback );
+    }
+
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ReadOnlySpan<Action<SqlDatabaseConnectionChangeEvent>> GetPendingCallbacks()
     {
-        var span = CollectionsMarshal.AsSpan( Callbacks );
+        var span = CollectionsMarshal.AsSpan( _callbacks );
         return span.Slice( FirstPendingCallbackIndex );
     }
 
@@ -36,6 +44,12 @@ public readonly struct SqlDatabaseConnectionChangeCallbacks
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public SqlDatabaseConnectionChangeCallbacks UpdateFirstPendingCallbackIndex()
     {
-        return new SqlDatabaseConnectionChangeCallbacks( Callbacks );
+        return new SqlDatabaseConnectionChangeCallbacks( _callbacks );
+    }
+
+    [Pure]
+    public Action<SqlDatabaseConnectionChangeEvent>[] GetCallbacksArray()
+    {
+        return _callbacks.ToArray();
     }
 }

@@ -73,7 +73,7 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
 
     public SqliteDatabaseBuilder AddConnectionChangeCallback(Action<SqlDatabaseConnectionChangeEvent> callback)
     {
-        ConnectionChanges.Callbacks.Add( callback );
+        ConnectionChanges.AddCallback( callback );
         return this;
     }
 

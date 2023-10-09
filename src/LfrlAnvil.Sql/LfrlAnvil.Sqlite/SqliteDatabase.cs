@@ -6,19 +6,20 @@ using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Versioning;
+using LfrlAnvil.Sqlite.Internal;
 using LfrlAnvil.Sqlite.Objects;
 using LfrlAnvil.Sqlite.Objects.Builders;
-using Microsoft.Data.Sqlite;
+using SqliteConnection = Microsoft.Data.Sqlite.SqliteConnection;
 
 namespace LfrlAnvil.Sqlite;
 
 public abstract class SqliteDatabase : ISqlDatabase
 {
-    private readonly Func<SqliteCommand, List<SqlDatabaseVersionRecord>> _versionRecordsReader;
+    private readonly SqlQueryDefinition<List<SqlDatabaseVersionRecord>> _versionRecordsReader;
 
     internal SqliteDatabase(
         SqliteDatabaseBuilder builder,
-        Func<SqliteCommand, List<SqlDatabaseVersionRecord>> versionRecordsReader,
+        SqlQueryDefinition<List<SqlDatabaseVersionRecord>> versionRecordsReader,
         Version version)
     {
         _versionRecordsReader = versionRecordsReader;
@@ -50,7 +51,7 @@ public abstract class SqliteDatabase : ISqlDatabase
     {
         using var connection = Connect();
         using var command = connection.CreateCommand();
-        return _versionRecordsReader( command ).ToArray();
+        return _versionRecordsReader.Execute( command ).ToArray();
     }
 
     public virtual void Dispose() { }

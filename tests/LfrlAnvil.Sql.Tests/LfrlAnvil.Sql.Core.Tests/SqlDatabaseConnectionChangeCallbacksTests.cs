@@ -37,8 +37,8 @@ public class SqlDatabaseConnectionChangeCallbacksTests : TestsBase
         var c2 = Substitute.For<Action<SqlDatabaseConnectionChangeEvent>>();
 
         var sut = SqlDatabaseConnectionChangeCallbacks.Create();
-        sut.Callbacks.Add( c1 );
-        sut.Callbacks.Add( c2 );
+        sut.AddCallback( c1 );
+        sut.AddCallback( c2 );
 
         var result = sut.UpdateFirstPendingCallbackIndex();
 
@@ -64,8 +64,8 @@ public class SqlDatabaseConnectionChangeCallbacksTests : TestsBase
         var c2 = Substitute.For<Action<SqlDatabaseConnectionChangeEvent>>();
 
         var sut = SqlDatabaseConnectionChangeCallbacks.Create();
-        sut.Callbacks.Add( c1 );
-        sut.Callbacks.Add( c2 );
+        sut.AddCallback( c1 );
+        sut.AddCallback( c2 );
 
         var result = sut.GetPendingCallbacks();
 
@@ -81,11 +81,11 @@ public class SqlDatabaseConnectionChangeCallbacksTests : TestsBase
         var c4 = Substitute.For<Action<SqlDatabaseConnectionChangeEvent>>();
 
         var sut = SqlDatabaseConnectionChangeCallbacks.Create();
-        sut.Callbacks.Add( c1 );
-        sut.Callbacks.Add( c2 );
+        sut.AddCallback( c1 );
+        sut.AddCallback( c2 );
         sut = sut.UpdateFirstPendingCallbackIndex();
-        sut.Callbacks.Add( c3 );
-        sut.Callbacks.Add( c4 );
+        sut.AddCallback( c3 );
+        sut.AddCallback( c4 );
 
         var result = sut.GetPendingCallbacks();
 

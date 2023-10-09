@@ -5,7 +5,6 @@ using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Versioning;
 using LfrlAnvil.Sqlite.Objects.Builders;
-using Microsoft.Data.Sqlite;
 
 namespace LfrlAnvil.Sqlite.Internal;
 
@@ -19,12 +18,12 @@ internal sealed class SqlitePersistentDatabase : SqliteDatabase
     internal SqlitePersistentDatabase(
         string connectionString,
         SqliteDatabaseBuilder builder,
-        Func<SqliteCommand, List<SqlDatabaseVersionRecord>> versionRecordsReader,
+        SqlQueryDefinition<List<SqlDatabaseVersionRecord>> versionRecordsReader,
         Version version)
         : base( builder, versionRecordsReader, version )
     {
         _connectionString = connectionString;
-        _connectionChangeCallbacks = builder.ConnectionChanges.Callbacks.ToArray();
+        _connectionChangeCallbacks = builder.ConnectionChanges.GetCallbacksArray();
     }
 
     [Pure]

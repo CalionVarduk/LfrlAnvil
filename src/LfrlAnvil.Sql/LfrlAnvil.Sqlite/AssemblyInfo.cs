@@ -15,8 +15,6 @@
 // - SqliteIndexColumnBuilder is a candidate for moving to Sql.Core, as a generic class, where T is a column builder type
 //   ^ honestly, pretty much everything could be moved to Sql.Core, as generic abstract classes, that allow to override default behaviors
 //   ^ and define new ones
-// - Add some events to database creation process, e.g. version statement begin, version statement end <= NEXT
-//   ^ so that e.g. loggers could be easily added
 // - Support for Sqlite COLLATION in added columns? let's see how other SQL providers handle that
 // - ON CONFLICT ROLLBACK instead of ABORT? https://www.sqlite.org/lang_conflict.html
 // - STRICT table option is supported in v3.37.0 (2021-11-27), disabled for now
@@ -31,7 +29,7 @@
 // - Add datetime related functions?
 // - Add attach/detach DB nodes
 // - Add optional explicit DB name to table/view record set nodes (cross-DB queries)
-// - Make DB builder use SQL node tree? This could unify a lot of SQL statement building by moving it all to interpreters
+// - Make DB builder use SQL node tree? This could unify a lot of SQL statement building by moving it all to interpreters <= NEXT NEXT
 //   ^ it will cause a bit of an overhead, due to having to create a graph and then interpret it
 //   ^ but it happens only once per version, when it's actually applied to the DB, so it should be fine
 // - Add sql node visitor that allows to extract node's type (+ add Type to ViewDataField)
@@ -43,7 +41,7 @@
 //   ^ this can later be extended to work with table db objects, that could automatically verify input parameters type's properties
 //   ^ and link them with correct table columns
 //   ^ + update could accept any subset of columns to allow multiple 'variations' for the same table
-// - Improve sqlite interpreter complex update handling (more info in interpreter comment)
+// - Improve sqlite interpreter complex update handling (more info in interpreter comment) <= NEXT
 // - Add sqlite interpreter options, that can be enabled e.g. based on server version
 //   ^ these options can e.g. allow to enable STRICT tables, UPDATE FROM handling,
 //   ^ row value comparison in complex DELETE/UPDATE with multiple column PKs etc.
