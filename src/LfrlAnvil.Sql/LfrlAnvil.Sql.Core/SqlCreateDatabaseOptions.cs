@@ -17,6 +17,7 @@ public readonly record struct SqlCreateDatabaseOptions
     public readonly SqlDatabaseVersionHistoryPersistenceMode VersionHistoryPersistenceMode;
 
     private readonly List<ISqlDatabaseFactoryStatementListener>? _statementListeners;
+    private readonly int _statementListenerCount;
 
     private SqlCreateDatabaseOptions(
         SqlDatabaseCreateMode mode,
@@ -30,13 +31,14 @@ public readonly record struct SqlCreateDatabaseOptions
         VersionHistoryTableName = versionHistoryTableName;
         VersionHistoryPersistenceMode = versionHistoryPersistenceMode;
         _statementListeners = statementListeners;
+        _statementListenerCount = statementListeners?.Count ?? 0;
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ReadOnlySpan<ISqlDatabaseFactoryStatementListener> GetStatementListeners()
     {
-        return CollectionsMarshal.AsSpan( _statementListeners );
+        return CollectionsMarshal.AsSpan( _statementListeners ).Slice( 0, _statementListenerCount );
     }
 
     [Pure]

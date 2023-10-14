@@ -1,5 +1,10 @@
-﻿using System.Data;
+﻿using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
@@ -16,18 +21,52 @@ namespace LfrlAnvil.Sqlite;
 
 public class SqliteNodeInterpreter : SqlNodeInterpreter
 {
+    private ComplexUpdateInfo _updateInfo;
+
     public SqliteNodeInterpreter(SqliteColumnTypeDefinitionProvider columnTypeDefinitions, SqlNodeInterpreterContext context)
         : base( context, beginNameDelimiter: '"', endNameDelimiter: '"' )
     {
         ColumnTypeDefinitions = columnTypeDefinitions;
+        _updateInfo = default;
     }
 
     public SqliteColumnTypeDefinitionProvider ColumnTypeDefinitions { get; }
+    protected ComplexUpdateInfo UpdateInfo => _updateInfo;
+
+    public override void VisitRawDataField(SqlRawDataFieldNode node)
+    {
+        if ( ! TryReplaceDataField( node ) )
+            base.VisitRawDataField( node );
+    }
 
     public override void VisitLiteral(SqlLiteralNode node)
     {
         var sql = node.GetSql( ColumnTypeDefinitions );
         Context.Sql.Append( sql );
+    }
+
+    public override void VisitColumn(SqlColumnNode node)
+    {
+        if ( ! TryReplaceDataField( node ) )
+            base.VisitColumn( node );
+    }
+
+    public override void VisitColumnBuilder(SqlColumnBuilderNode node)
+    {
+        if ( ! TryReplaceDataField( node ) )
+            base.VisitColumnBuilder( node );
+    }
+
+    public override void VisitQueryDataField(SqlQueryDataFieldNode node)
+    {
+        if ( ! TryReplaceDataField( node ) )
+            base.VisitQueryDataField( node );
+    }
+
+    public override void VisitViewDataField(SqlViewDataFieldNode node)
+    {
+        if ( ! TryReplaceDataField( node ) )
+            base.VisitViewDataField( node );
     }
 
     public override void VisitModulo(SqlModuloExpressionNode node)
@@ -438,60 +477,14 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitUpdate(SqlUpdateNode node)
     {
-        // TODO
-        // update does not work in more complex scenarios e.g.
-        // UPDATE U SET
-        //   B = U.B + X.B + 1
-        // FROM T AS U
-        // JOIN X ON X.A = U.A
-        //
-        // interpreter will produce sth like this:
-        // UPDATE T SET
-        //   B = T.B + X.B + 1 <= X.B doesn't exist in this scope
-        // WHERE A IN (
-        //   SELECT U.A
-        //   FROM T AS U
-        //   JOIN X ON X.A = U.A
-        // )
-        //
-        // X.B should be replaced by some other expression
-        //
-        // CTEs could be used to improve this behavior:
-        // WITH X AS ( <= CTEs could be grouped by joined record set & include all fields used in value assignments
-        //   SELECT U.A, X.B <= requires T PK columns
-        //   FROM T AS U
-        //   JOIN X ON X.A = U.A
-        // )
-        // UPDATE T SET
-        //   B = T.B + (SELECT X.B FROM X WHERE X.A = T.A) + 1 <= X.B replaced by selection from CTE filtered by T PK
-        // WHERE A IN (
-        //   SELECT U.A
-        //   FROM T AS U
-        //   JOIN X ON X.A = U.A
-        // )
-        //
-        // more general form:
-        // WITH <other-cte>
-        // "_{GUID}" AS (
-        //   SELECT <aliased-target-pk>, <non-target-columns-used-in-assignments>
-        //   FROM <complex-data-source>
-        // )
-        // UPDATE <target> SET
-        //   <value-assignments> <= all non-<target> columns need to be replaced by:
-        //                          (SELECT <non-target-column> FROM "_{GUID}" WHERE <target-pk-comparison>)
-        // WHERE <target-pk> IN (SELECT <aliased-target-pk> FROM "_{GUID}") <= or EXISTS (or row value comparison), if pk has multiple columns
-        //
-        // this approach requires pre-emptive scanning of value assignments in order to get all non-<target> columns (new visitor)
-        // and to properly prepare the CTE
-
         using ( Context.TempParentNodeUpdate( node ) )
         {
             var traits = ExtractDataSourceTraits( node.DataSource.Traits );
             VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions );
-            Context.Sql.Append( "UPDATE" ).AppendSpace();
 
             if ( IsUpdateOrDeleteDataSourceSimple( node.DataSource, traits ) )
             {
+                Context.Sql.Append( "UPDATE" ).AppendSpace();
                 AppendRecordSetName( node.DataSource.From );
                 VisitUpdateAssignmentRange( node.Assignments.Span );
                 VisitOptionalFilterCondition( traits.Filter );
@@ -499,9 +492,24 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             }
 
             var targetInfo = ExtractTargetUpdateInfo( node );
-            AppendRecordSetName( targetInfo.BaseTarget );
-            VisitUpdateAssignmentRange( node.Assignments.Span );
-            VisitComplexDeleteOrUpdateDataSourceFilter( targetInfo, node.DataSource, traits );
+
+            ComplexUpdateAssignmentsVisitor? updateVisitor = null;
+            if ( node.DataSource.Joins.Length > 0 )
+            {
+                updateVisitor = new ComplexUpdateAssignmentsVisitor( node.DataSource );
+                foreach ( var assignment in node.Assignments )
+                    updateVisitor.Visit( assignment.Value );
+            }
+
+            if ( updateVisitor is null || ! updateVisitor.ContainsDataFieldsToReplace() )
+            {
+                Context.Sql.Append( "UPDATE" ).AppendSpace();
+                AppendRecordSetName( targetInfo.BaseTarget );
+                VisitUpdateAssignmentRange( node.Assignments.Span );
+                VisitComplexDeleteOrUpdateDataSourceFilter( targetInfo, node.DataSource, traits );
+            }
+            else
+                VisitUpdateWithComplexAssignments( targetInfo, node, traits, updateVisitor );
         }
     }
 
@@ -590,7 +598,11 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         switch ( node.NodeType )
         {
             case SqlNodeType.RawRecordSet:
-                Context.Sql.Append( node.Name );
+                if ( node.IsAliased )
+                    AppendDelimitedName( node.Name );
+                else
+                    Context.Sql.Append( node.Name );
+
                 break;
 
             case SqlNodeType.TemporaryTableRecordSet:
@@ -844,6 +856,128 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         Context.AppendIndent().Append( ')' );
     }
 
+    protected void VisitUpdateWithComplexAssignments(
+        TargetDeleteOrUpdateInfo targetInfo,
+        SqlUpdateNode node,
+        SqlDataSourceTraits traits,
+        ComplexUpdateAssignmentsVisitor updateVisitor)
+    {
+        var cteName = $"_{Guid.NewGuid():N}";
+
+        if ( traits.CommonTableExpressions.Count == 0 )
+            Context.Sql.Append( "WITH" ).AppendSpace();
+        else
+        {
+            Context.Sql.ShrinkBy( Environment.NewLine.Length + Context.Indent ).AppendComma();
+            Context.AppendIndent();
+        }
+
+        AppendDelimitedName( cteName );
+        Context.Sql.AppendSpace().Append( "AS" ).AppendSpace().Append( '(' );
+
+        using ( Context.TempIndentIncrease() )
+        {
+            Context.AppendIndent().Append( "SELECT" );
+            VisitOptionalDistinctMarker( traits.Distinct );
+
+            using ( Context.TempIndentIncrease() )
+            {
+                foreach ( var identityColumnName in targetInfo.IdentityColumnNames )
+                {
+                    Context.AppendIndent();
+                    AppendRecordSetName( targetInfo.Target );
+                    Context.Sql.AppendDot();
+                    AppendDelimitedName( identityColumnName );
+                    Context.Sql.AppendSpace().Append( "AS" ).AppendSpace().Append( BeginNameDelimiter );
+                    Context.Sql.Append( targetInfo.Target.Name ).Append( '_' ).Append( identityColumnName );
+                    Context.Sql.Append( EndNameDelimiter ).AppendComma();
+                }
+
+                foreach ( var dataField in updateVisitor.GetDataFieldsToReplace() )
+                {
+                    Context.AppendIndent();
+                    this.Visit( dataField );
+                    Context.Sql.AppendSpace().Append( "AS" ).AppendSpace().Append( BeginNameDelimiter );
+                    Context.Sql.Append( dataField.RecordSet.Name ).Append( '_' ).Append( dataField.Name );
+                    Context.Sql.Append( EndNameDelimiter ).AppendComma();
+                }
+
+                Context.Sql.ShrinkBy( 1 );
+            }
+
+            Context.AppendIndent();
+            VisitDataSource( node.DataSource );
+            VisitOptionalFilterCondition( traits.Filter );
+            VisitOptionalAggregationRange( traits.Aggregations );
+            VisitOptionalAggregationFilterCondition( traits.AggregationFilter );
+            VisitOptionalOrderingRange( traits.Ordering );
+            VisitOptionalLimitAndOffsetExpressions( traits.Limit, traits.Offset );
+        }
+
+        Context.AppendIndent().Append( ')' );
+        Context.AppendIndent();
+
+        Context.Sql.Append( "UPDATE" ).AppendSpace();
+        AppendRecordSetName( targetInfo.BaseTarget );
+
+        if ( ! UpdateInfo.IsDefault )
+            throw new SqlNodeVisitorException( Resources.NestedUpdateAttempt, this, node );
+
+        try
+        {
+            _updateInfo = new ComplexUpdateInfo( updateVisitor, targetInfo, cteName );
+            VisitUpdateAssignmentRange( node.Assignments.Span );
+            Context.AppendIndent().Append( "WHERE" ).AppendSpace();
+
+            if ( targetInfo.IdentityColumnNames.Length == 1 )
+            {
+                AppendRecordSetName( targetInfo.BaseTarget );
+                Context.Sql.AppendDot();
+                AppendDelimitedName( targetInfo.IdentityColumnNames[0] );
+                Context.Sql.AppendSpace().Append( "IN" ).AppendSpace().Append( '(' ).Append( "SELECT" ).AppendSpace();
+                Context.Sql.Append( BeginNameDelimiter ).Append( targetInfo.Target.Name ).Append( '_' );
+                Context.Sql.Append( targetInfo.IdentityColumnNames[0] ).Append( EndNameDelimiter );
+                Context.Sql.AppendSpace().Append( "FROM" ).AppendSpace();
+                AppendDelimitedName( cteName );
+                Context.Sql.Append( ')' );
+            }
+            else
+            {
+                Context.Sql.Append( "EXISTS" ).AppendSpace().Append( '(' );
+                Context.Sql.Append( "SELECT" ).AppendSpace().Append( '*' ).AppendSpace().Append( "FROM" ).AppendSpace();
+                AppendDelimitedName( cteName );
+                Context.Sql.AppendSpace().Append( "WHERE" ).AppendSpace();
+                _updateInfo.AppendIdentityColumnsFilter( this );
+                Context.Sql.Append( ')' );
+            }
+        }
+        finally
+        {
+            _updateInfo = default;
+        }
+    }
+
+    protected bool TryReplaceDataField(SqlDataFieldNode node)
+    {
+        if ( ! _updateInfo.ShouldReplaceDataField( node ) )
+            return false;
+
+        Context.Sql.Append( '(' ).Append( "SELECT" ).AppendSpace();
+
+        Context.Sql.Append( BeginNameDelimiter )
+            .Append( node.RecordSet.Name )
+            .Append( '_' )
+            .Append( node.Name )
+            .Append( EndNameDelimiter );
+
+        Context.Sql.AppendSpace().Append( "FROM" ).AppendSpace();
+        AppendDelimitedName( _updateInfo.CteName );
+        Context.Sql.AppendSpace().Append( "WHERE" ).AppendSpace();
+        _updateInfo.AppendIdentityColumnsFilter( this );
+        Context.Sql.AppendSpace().Append( "LIMIT" ).AppendSpace().Append( '1' ).Append( ')' );
+        return true;
+    }
+
     [Pure]
     protected static TargetDeleteOrUpdateInfo ExtractTableRecordSetDeleteOrUpdateInfo(SqlTableRecordSetNode node)
     {
@@ -929,6 +1063,139 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         SqlRecordSetNode Target,
         SqlRecordSetNode BaseTarget,
         string[] IdentityColumnNames);
+
+    protected readonly struct ComplexUpdateInfo
+    {
+        private readonly string? _cteName;
+
+        public ComplexUpdateInfo(ComplexUpdateAssignmentsVisitor visitor, TargetDeleteOrUpdateInfo targetInfo, string cteName)
+        {
+            Visitor = visitor;
+            TargetInfo = targetInfo;
+            _cteName = cteName;
+        }
+
+        [MemberNotNullWhen( false, nameof( Visitor ) )]
+        public bool IsDefault => Visitor is null;
+
+        public ComplexUpdateAssignmentsVisitor? Visitor { get; }
+        public TargetDeleteOrUpdateInfo TargetInfo { get; }
+
+        public string CteName
+        {
+            get
+            {
+                Assume.IsNotNull( _cteName, nameof( _cteName ) );
+                return _cteName;
+            }
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public bool ShouldReplaceDataField(SqlDataFieldNode node)
+        {
+            return Visitor?.ShouldReplaceDataField( node ) == true;
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public void AppendIdentityColumnsFilter(SqliteNodeInterpreter interpreter)
+        {
+            foreach ( var identityColumnName in TargetInfo.IdentityColumnNames )
+            {
+                interpreter.Context.Sql.Append( '(' );
+                interpreter.AppendRecordSetName( TargetInfo.BaseTarget );
+                interpreter.Context.Sql.AppendDot();
+                interpreter.AppendDelimitedName( identityColumnName );
+                interpreter.Context.Sql.AppendSpace().Append( '=' ).AppendSpace();
+                interpreter.AppendDelimitedName( CteName );
+                interpreter.Context.Sql.AppendDot().Append( interpreter.BeginNameDelimiter );
+                interpreter.Context.Sql.Append( TargetInfo.Target.Name ).Append( '_' );
+                interpreter.Context.Sql.Append( identityColumnName ).Append( interpreter.EndNameDelimiter );
+                interpreter.Context.Sql.Append( ')' ).AppendSpace().Append( "AND" ).AppendSpace();
+            }
+
+            interpreter.Context.Sql.ShrinkBy( 5 );
+        }
+    }
+
+    protected sealed class ComplexUpdateAssignmentsVisitor : SqlNodeVisitor
+    {
+        private readonly SqlRecordSetNode[] _joinedRecordSets;
+        private List<SqlDataFieldNode>? _dataFieldsToReplace;
+
+        public ComplexUpdateAssignmentsVisitor(SqlDataSourceNode dataSource)
+        {
+            Assume.IsGreaterThan( dataSource.Joins.Length, 0, nameof( dataSource.Joins.Length ) );
+
+            var index = 0;
+            _joinedRecordSets = new SqlRecordSetNode[dataSource.Joins.Length];
+            foreach ( var join in dataSource.Joins )
+                _joinedRecordSets[index++] = join.InnerRecordSet;
+
+            _dataFieldsToReplace = null;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public bool ContainsDataFieldsToReplace()
+        {
+            return _dataFieldsToReplace is not null;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public bool ShouldReplaceDataField(SqlDataFieldNode node)
+        {
+            return _dataFieldsToReplace is not null && _dataFieldsToReplace.Contains( node );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public ReadOnlySpan<SqlDataFieldNode> GetDataFieldsToReplace()
+        {
+            return CollectionsMarshal.AsSpan( _dataFieldsToReplace );
+        }
+
+        public override void VisitRawDataField(SqlRawDataFieldNode node)
+        {
+            VisitDataField( node );
+        }
+
+        public override void VisitColumn(SqlColumnNode node)
+        {
+            VisitDataField( node );
+        }
+
+        public override void VisitColumnBuilder(SqlColumnBuilderNode node)
+        {
+            VisitDataField( node );
+        }
+
+        public override void VisitQueryDataField(SqlQueryDataFieldNode node)
+        {
+            VisitDataField( node );
+        }
+
+        public override void VisitViewDataField(SqlViewDataFieldNode node)
+        {
+            VisitDataField( node );
+        }
+
+        private void VisitDataField(SqlDataFieldNode node)
+        {
+            if ( Array.IndexOf( _joinedRecordSets, node.RecordSet ) == -1 )
+                return;
+
+            if ( _dataFieldsToReplace is null )
+            {
+                _dataFieldsToReplace = new List<SqlDataFieldNode> { node };
+                return;
+            }
+
+            if ( ! _dataFieldsToReplace.Contains( node ) )
+                _dataFieldsToReplace.Add( node );
+        }
+    }
 
     [Pure]
     private TargetDeleteOrUpdateInfo ExtractTableBuilderRecordSetDeleteOrUpdateInfo(

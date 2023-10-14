@@ -112,7 +112,7 @@ public class SqlCreateDatabaseOptionsTests : TestsBase
     }
 
     [Fact]
-    public void AddStatementListener_ShouldAddStatementListener_WhenOriginalOptionsHaveHaveListeners()
+    public void AddStatementListener_ShouldAddStatementListener_WhenOriginalOptionsHaveListeners()
     {
         var listener1 = Substitute.For<ISqlDatabaseFactoryStatementListener>();
         var listener2 = Substitute.For<ISqlDatabaseFactoryStatementListener>();
@@ -127,7 +127,7 @@ public class SqlCreateDatabaseOptionsTests : TestsBase
             result.VersionHistoryTableName.Should().BeNull();
             result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryPersistenceMode.AllRecords );
             result.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( listener1, listener2 );
-            sut.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( listener1, listener2 );
+            sut.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( listener1 );
         }
     }
 }

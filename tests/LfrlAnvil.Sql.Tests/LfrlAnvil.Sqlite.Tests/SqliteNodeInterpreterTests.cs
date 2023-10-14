@@ -23,6 +23,16 @@ public class SqliteNodeInterpreterTests : TestsBase
         SqlNodeInterpreterContext.Create() );
 
     [Fact]
+    public void Interpreter_ShouldUseDoubleQuotesAsNameDelimiters()
+    {
+        using ( new AssertionScope() )
+        {
+            _sut.BeginNameDelimiter.Should().Be( '"' );
+            _sut.EndNameDelimiter.Should().Be( '"' );
+        }
+    }
+
+    [Fact]
     public void Visit_ShouldInterpretRawExpression()
     {
         _sut.Visit( SqlNode.RawExpression( "foo.a + @bar", SqlNode.Parameter<int>( "bar" ) ) );
@@ -2450,6 +2460,146 @@ WHERE EXISTS (
   ORDER BY ""f"".""b"" ASC
   LIMIT 50 OFFSET 100
 )" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretUpdateWithComplexAssignments()
+    {
+        var table = CreateTable( string.Empty, "foo", new[] { "a", "b" }, "a" );
+        var foo = table.ToRecordSet( "f" );
+
+        var dataSource = foo
+            .Join( SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ).As( "qux" ), x => x.Inner["a"] == foo["a"] ) )
+            .Distinct()
+            .AndWhere( s => s["f"]["b"] != null )
+            .GroupBy( s => new[] { s["f"]["b"] } )
+            .AndHaving( s => s["f"]["b"] < SqlNode.Literal( 100 ) )
+            .OrderBy( s => new[] { s["f"]["b"].Asc() } )
+            .Limit( SqlNode.Literal( 50 ) )
+            .Offset( SqlNode.Literal( 100 ) );
+
+        _sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["b"].Assign( foo.AsSelf()["b"] + s["qux"]["b"] + SqlNode.Literal( 1 ) ) } ) );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .SatisfySql(
+                @"WITH ""_{GUID}"" AS (
+  SELECT DISTINCT
+    ""f"".""a"" AS ""f_a"",
+    ""qux"".""b"" AS ""qux_b""
+  FROM ""foo"" AS ""f""
+  INNER JOIN bar AS ""qux"" ON ""qux"".""a"" = ""f"".""a""
+  WHERE ""f"".""b"" IS NOT NULL
+  GROUP BY ""f"".""b""
+  HAVING ""f"".""b"" < 100
+  ORDER BY ""f"".""b"" ASC
+  LIMIT 50 OFFSET 100
+)
+UPDATE ""foo"" SET
+  ""b"" = ((""foo"".""b"" + (SELECT ""qux_b"" FROM ""_{GUID}"" WHERE (""foo"".""a"" = ""_{GUID}"".""f_a"") LIMIT 1)) + 1)
+WHERE ""foo"".""a"" IN (SELECT ""f_a"" FROM ""_{GUID}"");" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretUpdateWithComplexAssignments_WithAdditionalCommonTableExpressions()
+    {
+        var table = CreateTable( string.Empty, "foo", new[] { "a", "b" }, "a" );
+        var other = CreateTableBuilder( string.Empty, "bar", "a", "b" );
+        var foo = table.ToRecordSet( "f" );
+
+        var dataSource = foo
+            .Join( SqlJoinDefinition.Inner( other.ToRecordSet( "qux" ), x => x.Inner["a"] == foo["a"] ) )
+            .Distinct()
+            .With( SqlNode.RawQuery( "SELECT * FROM lorem" ).ToCte( "ipsum" ) )
+            .AndWhere( s => s["f"]["b"] != null )
+            .GroupBy( s => new[] { s["f"]["b"] } )
+            .AndHaving( s => s["f"]["b"] < SqlNode.Literal( 100 ) )
+            .OrderBy( s => new[] { s["f"]["b"].Asc() } )
+            .Limit( SqlNode.Literal( 50 ) )
+            .Offset( SqlNode.Literal( 100 ) );
+
+        _sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["b"].Assign( foo.AsSelf()["b"] + s["qux"]["b"] + SqlNode.Literal( 1 ) ) } ) );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .SatisfySql(
+                @"WITH ""ipsum"" AS (
+  SELECT * FROM lorem
+),
+""_{GUID}"" AS (
+  SELECT DISTINCT
+    ""f"".""a"" AS ""f_a"",
+    ""qux"".""b"" AS ""qux_b""
+  FROM ""foo"" AS ""f""
+  INNER JOIN ""bar"" AS ""qux"" ON ""qux"".""a"" = ""f"".""a""
+  WHERE ""f"".""b"" IS NOT NULL
+  GROUP BY ""f"".""b""
+  HAVING ""f"".""b"" < 100
+  ORDER BY ""f"".""b"" ASC
+  LIMIT 50 OFFSET 100
+)
+UPDATE ""foo"" SET
+  ""b"" = ((""foo"".""b"" + (SELECT ""qux_b"" FROM ""_{GUID}"" WHERE (""foo"".""a"" = ""_{GUID}"".""f_a"") LIMIT 1)) + 1)
+WHERE ""foo"".""a"" IN (SELECT ""f_a"" FROM ""_{GUID}"");" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretUpdateWithComplexAssignments_WithMultipleAssignments()
+    {
+        var table = CreateTable( string.Empty, "foo", new[] { "a", "b", "c" }, "a", "b" );
+        var view = CreateView(
+            string.Empty,
+            "bar",
+            SqlNode.RawRecordSet( "T" ).ToDataSource().Select( x => new[] { x.From["a"].AsSelf(), x.From["b"].AsSelf() } ) );
+
+        var subQuery = SqlNode.RawRecordSet( "U" )
+            .ToDataSource()
+            .Select( x => new[] { x.From["x"].AsSelf(), x.From["y"].AsSelf() } )
+            .AsSet( "lorem" );
+
+        var foo = table.ToRecordSet( "f" );
+
+        var dataSource = foo
+            .Join(
+                SqlJoinDefinition.Inner( view.ToRecordSet( "qux" ), x => x.Inner["a"] == foo["a"] ),
+                SqlJoinDefinition.Inner( subQuery, x => x.Inner["x"] == foo["b"] ) )
+            .Distinct()
+            .AndWhere( s => s["f"]["b"] != null )
+            .GroupBy( s => new[] { s["f"]["b"] } )
+            .AndHaving( s => s["f"]["b"] < SqlNode.Literal( 100 ) )
+            .OrderBy( s => new[] { s["f"]["b"].Asc() } )
+            .Limit( SqlNode.Literal( 50 ) )
+            .Offset( SqlNode.Literal( 100 ) );
+
+        _sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["b"].Assign( s["qux"]["b"] ), s["f"]["c"].Assign( s["lorem"]["y"] ) } ) );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .SatisfySql(
+                @"WITH ""_{GUID}"" AS (
+  SELECT DISTINCT
+    ""f"".""a"" AS ""f_a"",
+    ""f"".""b"" AS ""f_b"",
+    ""qux"".""b"" AS ""qux_b"",
+    ""lorem"".""y"" AS ""lorem_y""
+  FROM ""foo"" AS ""f""
+  INNER JOIN ""bar"" AS ""qux"" ON ""qux"".""a"" = ""f"".""a""
+  INNER JOIN (
+    SELECT
+      U.""x"",
+      U.""y""
+    FROM U
+  ) AS ""lorem"" ON ""lorem"".""x"" = ""f"".""b""
+  WHERE ""f"".""b"" IS NOT NULL
+  GROUP BY ""f"".""b""
+  HAVING ""f"".""b"" < 100
+  ORDER BY ""f"".""b"" ASC
+  LIMIT 50 OFFSET 100
+)
+UPDATE ""foo"" SET
+  ""b"" = (SELECT ""qux_b"" FROM ""_{GUID}"" WHERE (""foo"".""a"" = ""_{GUID}"".""f_a"") AND (""foo"".""b"" = ""_{GUID}"".""f_b"") LIMIT 1),
+  ""c"" = (SELECT ""lorem_y"" FROM ""_{GUID}"" WHERE (""foo"".""a"" = ""_{GUID}"".""f_a"") AND (""foo"".""b"" = ""_{GUID}"".""f_b"") LIMIT 1)
+WHERE EXISTS (SELECT * FROM ""_{GUID}"" WHERE (""foo"".""a"" = ""_{GUID}"".""f_a"") AND (""foo"".""b"" = ""_{GUID}"".""f_b""));" );
     }
 
     [Fact]

@@ -14,14 +14,14 @@ namespace LfrlAnvil.Sql.Expressions.Visitors;
 
 public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 {
-    private readonly char _beginNameDelimiter;
-    private readonly char _endNameDelimiter;
+    public readonly char BeginNameDelimiter;
+    public readonly char EndNameDelimiter;
 
     protected SqlNodeInterpreter(SqlNodeInterpreterContext context, char beginNameDelimiter, char endNameDelimiter)
     {
         Context = context;
-        _beginNameDelimiter = beginNameDelimiter;
-        _endNameDelimiter = endNameDelimiter;
+        BeginNameDelimiter = beginNameDelimiter;
+        EndNameDelimiter = endNameDelimiter;
     }
 
     public SqlNodeInterpreterContext Context { get; }
@@ -767,7 +767,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public void AppendDelimitedName(string name)
     {
-        Context.Sql.Append( _beginNameDelimiter ).Append( name ).Append( _endNameDelimiter );
+        Context.Sql.Append( BeginNameDelimiter ).Append( name ).Append( EndNameDelimiter );
     }
 
     public void AppendDelimitedAlias(string alias)

@@ -1347,7 +1347,7 @@ public class SqliteViewSourceValidatorTests : TestsBase
     }
 
     [Fact]
-    public void VisitSelectRecordSet_ShouldVisitRecordSet_WithoutErrors()
+    public void VisitSelectRecordSet_ShouldDoNothing()
     {
         var node = SqlNode.RawRecordSet( "foo" ).GetAll();
         _sut.VisitSelectRecordSet( node );
@@ -1355,22 +1355,6 @@ public class SqliteViewSourceValidatorTests : TestsBase
         using ( new AssertionScope() )
         {
             _sut.GetErrors().Should().BeEmpty();
-            _sut.ReferencedObjects.Should().BeEmpty();
-        }
-    }
-
-    [Fact]
-    public void VisitSelectRecordSet_ShouldVisitRecordSet_WithErrors()
-    {
-        var table = _db.Schemas.Default.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "A" ).Asc() );
-        var node = new SqliteDatabaseMock( _db ).Schemas.Default.Objects.GetTable( "T" ).ToRecordSet().GetAll();
-
-        _sut.VisitSelectRecordSet( node );
-
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
             _sut.ReferencedObjects.Should().BeEmpty();
         }
     }
