@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.Internal;
 
 namespace LfrlAnvil;
@@ -29,7 +30,7 @@ public sealed class MemoryElementWiseComparer<T> : IEqualityComparer<ReadOnlyMem
     public int GetHashCode(ReadOnlyMemory<T> obj)
     {
         var result = Hash.Default;
-        foreach ( var o in obj.Span )
+        foreach ( var o in obj )
             result = result.Add( o );
 
         return result.Value;
