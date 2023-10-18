@@ -5,9 +5,9 @@ namespace LfrlAnvil.Tests.DiagnosticsTests;
 public class MemorySizeTests : TestsBase
 {
     [Fact]
-    public void Empty_ShouldReturnZeroBytes()
+    public void Zero_ShouldReturnZeroBytes()
     {
-        var sut = MemorySize.Empty;
+        var sut = MemorySize.Zero;
         sut.Bytes.Should().Be( 0 );
     }
 

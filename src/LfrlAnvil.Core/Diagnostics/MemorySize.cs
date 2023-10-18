@@ -10,7 +10,7 @@ public readonly struct MemorySize : IEquatable<MemorySize>, IComparable<MemorySi
     public const long BytesPerMegabyte = BytesPerKilobyte * 1024;
     public const long BytesPerGigabyte = BytesPerMegabyte * 1024;
     public const long BytesPerTerabyte = BytesPerGigabyte * 1024;
-    public static readonly MemorySize Empty = new MemorySize( 0 );
+    public static readonly MemorySize Zero = new MemorySize( 0 );
 
     public MemorySize(long bytes)
     {
