@@ -120,11 +120,11 @@ public abstract class Benchmark<TState>
             var sampleArgs = new BenchmarkSampleArgs( sampleType, s, options.Count, options.StepsPerSample );
             var sampleStart = GetTimestamp();
             OnBeforeSample( state, sampleArgs );
+            statistics.ResetSample( s );
 
             if ( options.CollectGarbage )
                 BenchmarkHelpers.CollectGarbage();
 
-            statistics.ResetSample( s );
             OnSample( state, sampleArgs, ref statistics );
             OnAfterSample( state, sampleArgs, GetElapsedTime( sampleStart ) );
         }
@@ -134,7 +134,7 @@ public abstract class Benchmark<TState>
     }
 
     [Pure]
-    private BenchmarkStepInfo[] GetResult(BenchmarkStatisticsCollection buffers)
+    private BenchmarkStepInfo[] GetResult(BenchmarkStatisticsCollection statistics)
     {
         var sampleOptions = Options.Samples;
         var steps = new BenchmarkStepInfo[sampleOptions.StepsPerSample];
@@ -143,25 +143,25 @@ public abstract class Benchmark<TState>
 
         for ( var i = 0; i < sampleOptions.StepsPerSample; ++i )
         {
-            var allocatedBytesEntry = buffers.AllocatedBytes[i];
+            var allocatedBytesEntry = statistics.AllocatedBytes[i];
             var variance = allocatedBytesEntry.VarianceBase / sampleOptions.Count;
             var standardDeviation = Math.Sqrt( variance );
             var allocatedBytes = new AggregateStatistic<MemorySize>(
-                Min: MemorySize.FromBytes( double.IsInfinity( allocatedBytesEntry.Min ) ? 0.0 : allocatedBytesEntry.Min ),
-                Max: MemorySize.FromBytes( double.IsInfinity( allocatedBytesEntry.Max ) ? 0.0 : allocatedBytesEntry.Max ),
+                Min: MemorySize.FromBytes( allocatedBytesEntry.Min ),
+                Max: MemorySize.FromBytes( allocatedBytesEntry.Max ),
                 Mean: MemorySize.FromBytes( allocatedBytesEntry.Mean ),
                 Variance: MemorySize.FromBytes( variance ),
                 StandardDeviation: MemorySize.FromBytes( standardDeviation ),
                 StandardError: MemorySize.FromBytes( standardDeviation / samplesSqrt ) );
 
-            var minElapsedTime = double.PositiveInfinity;
-            var maxElapsedTime = double.NegativeInfinity;
+            var minElapsedTime = long.MaxValue;
+            var maxElapsedTime = long.MinValue;
             var elapsedTimeMean = 0.0;
             var elapsedTimeVarianceBase = 0.0;
 
             for ( var s = 0; s < sampleOptions.Count; ++s )
             {
-                var value = buffers.ElapsedTimeTicks[s, i];
+                var value = statistics.ElapsedTimeTicks[s, i];
                 var previousElapsedTimeMean = elapsedTimeMean;
                 elapsedTimeMean = BenchmarkHelpers.GetNextMean( elapsedTimeMean, value, s );
                 elapsedTimeVarianceBase = BenchmarkHelpers.GetNextVarianceBase(
@@ -178,15 +178,15 @@ public abstract class Benchmark<TState>
             variance = elapsedTimeVarianceBase / sampleOptions.Count;
             standardDeviation = Math.Sqrt( variance );
             var elapsedTimeWithOutliers = new AggregateStatistic<TimeSpan>(
-                Min: TimeSpan.FromTicks( (long)Math.Ceiling( minElapsedTime ) ),
-                Max: TimeSpan.FromTicks( (long)Math.Ceiling( maxElapsedTime ) ),
+                Min: TimeSpan.FromTicks( minElapsedTime ),
+                Max: TimeSpan.FromTicks( maxElapsedTime ),
                 Mean: TimeSpan.FromTicks( (long)Math.Ceiling( elapsedTimeMean ) ),
                 Variance: TimeSpan.FromTicks( (long)Math.Ceiling( variance ) ),
                 StandardDeviation: TimeSpan.FromTicks( (long)Math.Ceiling( standardDeviation ) ),
                 StandardError: TimeSpan.FromTicks( (long)Math.Ceiling( standardDeviation / samplesSqrt ) ) );
 
-            minElapsedTime = double.PositiveInfinity;
-            maxElapsedTime = double.NegativeInfinity;
+            minElapsedTime = long.MaxValue;
+            maxElapsedTime = long.MinValue;
             elapsedTimeVarianceBase = 0.0;
             var actualElapsedTimeMean = 0.0;
             var actualElapsedTimeSampleCount = 0;
@@ -210,15 +210,18 @@ public abstract class Benchmark<TState>
                     actualElapsedTimeMean );
             }
 
-            variance = elapsedTimeVarianceBase / sampleOptions.Count;
+            variance = actualElapsedTimeSampleCount > 0 ? elapsedTimeVarianceBase / actualElapsedTimeSampleCount : 0.0;
             standardDeviation = Math.Sqrt( variance );
             var elapsedTime = new AggregateStatistic<TimeSpan>(
-                Min: TimeSpan.FromTicks( double.IsInfinity( minElapsedTime ) ? 0L : (long)Math.Ceiling( minElapsedTime ) ),
-                Max: TimeSpan.FromTicks( double.IsInfinity( maxElapsedTime ) ? 0L : (long)Math.Ceiling( maxElapsedTime ) ),
+                Min: TimeSpan.FromTicks( minElapsedTime ),
+                Max: TimeSpan.FromTicks( maxElapsedTime ),
                 Mean: TimeSpan.FromTicks( (long)Math.Ceiling( actualElapsedTimeMean ) ),
                 Variance: TimeSpan.FromTicks( (long)Math.Ceiling( variance ) ),
                 StandardDeviation: TimeSpan.FromTicks( (long)Math.Ceiling( standardDeviation ) ),
-                StandardError: TimeSpan.FromTicks( (long)Math.Ceiling( standardDeviation / samplesSqrt ) ) );
+                StandardError: TimeSpan.FromTicks(
+                    actualElapsedTimeSampleCount > 0
+                        ? (long)Math.Ceiling( standardDeviation / Math.Sqrt( actualElapsedTimeSampleCount ) )
+                        : 0 ) );
 
             steps[i] = new BenchmarkStepInfo(
                 allocatedBytes,

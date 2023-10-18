@@ -6,7 +6,9 @@ namespace LfrlAnvil.Diagnostics;
 
 public struct BenchmarkStatisticsCollection
 {
-    internal readonly record struct MemoryEntry(double Min, double Max, double Mean, double VarianceBase);
+    public readonly record struct StatisticInfo(long StartTimestamp, long StartAllocatedBytes, bool CollectGarbage = false);
+
+    internal readonly record struct MemoryEntry(long Min, long Max, double Mean, double VarianceBase);
 
     internal readonly MemoryEntry[] AllocatedBytes;
     internal readonly long[,] ElapsedTimeTicks;
@@ -43,7 +45,7 @@ public struct BenchmarkStatisticsCollection
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void Reset()
     {
-        Array.Fill( AllocatedBytes, new MemoryEntry( double.PositiveInfinity, double.NegativeInfinity, 0.0, 0.0 ) );
+        Array.Fill( AllocatedBytes, new MemoryEntry( long.MaxValue, long.MinValue, 0.0, 0.0 ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -56,7 +58,7 @@ public struct BenchmarkStatisticsCollection
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private MemoryEntry GetNextMemoryEntry(MemoryEntry previous, double value)
+    private MemoryEntry GetNextMemoryEntry(MemoryEntry previous, long value)
     {
         var min = Math.Min( previous.Min, value );
         var max = Math.Max( previous.Max, value );
@@ -64,6 +66,4 @@ public struct BenchmarkStatisticsCollection
         var varianceBase = BenchmarkHelpers.GetNextVarianceBase( previous.VarianceBase, value, previous.Mean, mean );
         return new MemoryEntry( min, max, mean, varianceBase );
     }
-
-    public readonly record struct StatisticInfo(long StartTimestamp, long StartAllocatedBytes, bool CollectGarbage = false);
 }
