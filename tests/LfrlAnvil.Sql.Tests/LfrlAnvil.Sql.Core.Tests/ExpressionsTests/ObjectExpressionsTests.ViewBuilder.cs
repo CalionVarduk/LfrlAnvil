@@ -8,7 +8,7 @@ namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
 
 public partial class ObjectExpressionsTests
 {
-    public class ViewBuilderRecordSet : TestsBase
+    public class ViewBuilder : TestsBase
     {
         [Fact]
         public void GetKnownFields_ShouldReturnCollectionWithKnownFields()
@@ -30,7 +30,7 @@ public partial class ObjectExpressionsTests
         }
 
         [Fact]
-        public void As_ShouldCreateViewBuilderRecordSetNode_WithNewAlias()
+        public void As_ShouldCreateViewBuilderNode_WithNewAlias()
         {
             var view = ViewMock.CreateBuilder( "foo" );
             var sut = SqlNode.View( view );
@@ -40,24 +40,30 @@ public partial class ObjectExpressionsTests
             {
                 result.Should().NotBeSameAs( sut );
                 result.View.Should().BeSameAs( sut.View );
-                result.Name.Should().Be( "bar" );
+                result.SourceSchemaName.Should().BeEmpty();
+                result.SourceName.Should().Be( "foo" );
+                result.Alias.Should().Be( "bar" );
+                result.Identifier.Should().Be( "bar" );
                 result.IsOptional.Should().Be( sut.IsOptional );
                 result.IsAliased.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void AsSelf_ShouldCreateViewBuilderRecordSetNode_WithoutAlias()
+        public void AsSelf_ShouldCreateViewBuilderNode_WithoutAlias()
         {
-            var view = ViewMock.CreateBuilder( "foo" );
-            var sut = SqlNode.View( view, "bar" );
+            var view = ViewMock.CreateBuilder( "bar", SchemaMock.CreateBuilder( "foo" ) );
+            var sut = SqlNode.View( view, "qux" );
             var result = sut.AsSelf();
 
             using ( new AssertionScope() )
             {
                 result.Should().NotBeSameAs( sut );
                 result.View.Should().BeSameAs( sut.View );
-                result.Name.Should().Be( "foo" );
+                result.SourceSchemaName.Should().Be( "foo" );
+                result.SourceName.Should().Be( "bar" );
+                result.Alias.Should().BeNull();
+                result.Identifier.Should().Be( "foo.bar" );
                 result.IsOptional.Should().Be( sut.IsOptional );
                 result.IsAliased.Should().BeFalse();
             }
@@ -219,7 +225,7 @@ public partial class ObjectExpressionsTests
         [Theory]
         [InlineData( false )]
         [InlineData( true )]
-        public void MarkAsOptional_ShouldReturnViewBuilderRecordSetNode_WhenOptionalityChanges_WithoutAlias(bool optional)
+        public void MarkAsOptional_ShouldReturnViewBuilderNode_WhenOptionalityChanges_WithoutAlias(bool optional)
         {
             var view = ViewMock.CreateBuilder( "foo" );
             var sut = SqlNode.View( view ).MarkAsOptional( ! optional );
@@ -229,7 +235,10 @@ public partial class ObjectExpressionsTests
             {
                 result.Should().NotBeSameAs( sut );
                 result.View.Should().BeSameAs( sut.View );
-                result.Name.Should().Be( sut.Name );
+                result.SourceSchemaName.Should().BeEmpty();
+                result.SourceName.Should().Be( "foo" );
+                result.Alias.Should().BeNull();
+                result.Identifier.Should().Be( "foo" );
                 result.IsAliased.Should().BeFalse();
                 result.IsOptional.Should().Be( optional );
             }
@@ -238,7 +247,7 @@ public partial class ObjectExpressionsTests
         [Theory]
         [InlineData( false )]
         [InlineData( true )]
-        public void MarkAsOptional_ShouldReturnViewBuilderRecordSetNode_WhenOptionalityChanges_WithAlias(bool optional)
+        public void MarkAsOptional_ShouldReturnViewBuilderNode_WhenOptionalityChanges_WithAlias(bool optional)
         {
             var view = ViewMock.CreateBuilder( "foo" );
             var sut = SqlNode.View( view, "bar" ).MarkAsOptional( ! optional );
@@ -248,7 +257,10 @@ public partial class ObjectExpressionsTests
             {
                 result.Should().NotBeSameAs( sut );
                 result.View.Should().BeSameAs( sut.View );
-                result.Name.Should().Be( sut.Name );
+                result.SourceSchemaName.Should().BeEmpty();
+                result.SourceName.Should().Be( "foo" );
+                result.Alias.Should().Be( "bar" );
+                result.Identifier.Should().Be( "bar" );
                 result.IsAliased.Should().BeTrue();
                 result.IsOptional.Should().Be( optional );
             }

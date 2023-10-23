@@ -31,7 +31,7 @@ public sealed class SqlSingleDataSourceNode<TRecordSetNode> : SqlDataSourceNode
     [Pure]
     public override TRecordSetNode GetRecordSet(string name)
     {
-        return name.Equals( From.Name, StringComparison.OrdinalIgnoreCase )
+        return name.Equals( From.Identifier, StringComparison.OrdinalIgnoreCase )
             ? From
             : throw new KeyNotFoundException( ExceptionResources.GivenRecordSetWasNotPresentInDataSource( name ) );
     }

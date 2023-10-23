@@ -5,22 +5,20 @@ using LfrlAnvil.Sql.Objects;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
 
-public sealed class SqlViewRecordSetNode : SqlRecordSetNode
+public sealed class SqlViewNode : SqlRecordSetNode
 {
     private Dictionary<string, SqlViewDataFieldNode>? _fields;
 
-    internal SqlViewRecordSetNode(ISqlView view, string? alias, bool isOptional)
-        : base( SqlNodeType.ViewRecordSet, isOptional )
+    internal SqlViewNode(ISqlView view, string? alias, bool isOptional)
+        : base( SqlNodeType.View, alias, isOptional )
     {
         View = view;
-        Name = alias ?? View.FullName;
-        IsAliased = alias is not null;
         _fields = null;
     }
 
     public ISqlView View { get; }
-    public override string Name { get; }
-    public override bool IsAliased { get; }
+    public override string SourceSchemaName => View.Schema.Name;
+    public override string SourceName => View.Name;
     public new SqlViewDataFieldNode this[string fieldName] => GetField( fieldName );
 
     [Pure]
@@ -31,15 +29,15 @@ public sealed class SqlViewRecordSetNode : SqlRecordSetNode
     }
 
     [Pure]
-    public override SqlViewRecordSetNode As(string alias)
+    public override SqlViewNode As(string alias)
     {
-        return new SqlViewRecordSetNode( View, alias, IsOptional );
+        return new SqlViewNode( View, alias, IsOptional );
     }
 
     [Pure]
-    public override SqlViewRecordSetNode AsSelf()
+    public override SqlViewNode AsSelf()
     {
-        return new SqlViewRecordSetNode( View, alias: null, IsOptional );
+        return new SqlViewNode( View, alias: null, IsOptional );
     }
 
     [Pure]
@@ -57,10 +55,10 @@ public sealed class SqlViewRecordSetNode : SqlRecordSetNode
     }
 
     [Pure]
-    public override SqlViewRecordSetNode MarkAsOptional(bool optional = true)
+    public override SqlViewNode MarkAsOptional(bool optional = true)
     {
         return IsOptional != optional
-            ? new SqlViewRecordSetNode( View, alias: IsAliased ? Name : null, isOptional: optional )
+            ? new SqlViewNode( View, Alias, isOptional: optional )
             : this;
     }
 

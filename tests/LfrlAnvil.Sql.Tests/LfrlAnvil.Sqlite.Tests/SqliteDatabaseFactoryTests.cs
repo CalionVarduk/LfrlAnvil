@@ -753,18 +753,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var result = sut.Create(
             "DataSource=:memory:",
             history,
-            SqlCreateDatabaseOptions.Default
-                .SetMode( SqlDatabaseCreateMode.Commit )
-                .AddStatementListener(
-                    SqlDatabaseFactoryStatementListener.Create(
-                        e =>
-                        {
-                            var x = 5;
-                        },
-                        (e, dt, exc) =>
-                        {
-                            var y = 5;
-                        } ) ) );
+            SqlCreateDatabaseOptions.Default.SetMode( SqlDatabaseCreateMode.Commit ) );
 
         var interpreter = result.Database.NodeInterpreterFactory.Create();
         var table = result.Database.Schemas.Default.Objects.GetTable( "T" ).ToRecordSet();
@@ -808,13 +797,44 @@ public class SqliteDatabaseFactoryTests : TestsBase
         using var connection = result.Database.Connect();
         using var cmd = connection.CreateCommand();
 
-        interpreter.Visit( insertInto );
+        var createTable = SqlNode.CreateTable(
+            string.Empty,
+            "test",
+            new[]
+            {
+                SqlNode.Column<int>( "x" ),
+                SqlNode.Column<DateTime>( "y", defaultValue: SqlNode.Literal("foo").Concat(SqlNode.Literal("bar")) )
+            },
+            constraintsProvider: t => SqlCreateTableConstraints.Empty
+                .WithPrimaryKey( SqlNode.PrimaryKey( "PK_test", t["x"].Asc() ) )
+                .WithChecks( SqlNode.Check( "CHK_test", t["x"] > SqlNode.Literal( 0 ) ) ) );
+
+        interpreter.Visit( createTable );
+        //interpreter.Visit( insertInto );
         cmd.CommandText = interpreter.Context.Sql.ToString();
         interpreter.Context.Clear();
 
+        var dt = DateTime.Now;
         cmd.ExecuteNonQuery();
 
-        interpreter.Visit( update );
+        cmd.CommandText = "INSERT INTO test (x) VALUES (1);";
+        cmd.ExecuteNonQuery();
+
+        cmd.CommandText = "SELECT * FROM test;";
+        using ( var reader = cmd.ExecuteReader() )
+        {
+            var x = new List<Dictionary<string, object?>>();
+            while ( reader.Read() )
+            {
+                var dict = new Dictionary<string, object?>();
+                for ( var i = 0; i < reader.FieldCount; ++i )
+                    dict[reader.GetName( i )] = reader.GetValue( i );
+
+                x.Add( dict );
+            }
+        }
+
+        interpreter.Visit( update2 );
         cmd.CommandText = interpreter.Context.Sql.ToString();
         interpreter.Context.Clear();
 

@@ -17,13 +17,13 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
         Joins = joins;
         from = from.MarkAsOptional( false );
         _recordSets = CreateRecordSetDictionary( joins.Length + 1 );
-        _recordSets.Add( from.Name, from );
+        _recordSets.Add( from.Identifier, from );
 
         var lastRightJoinIndex = -1;
         for ( var i = 0; i < joins.Length; ++i )
             lastRightJoinIndex = AddNextJoin( from, _recordSets, joins, lastRightJoinIndex, i );
 
-        From = _recordSets[from.Name];
+        From = _recordSets[from.Identifier];
         Joins = joins;
     }
 
@@ -32,7 +32,7 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
     {
         from = from.MarkAsOptional( false );
         _recordSets = CreateRecordSetDictionary( definitions.Length + 1 );
-        _recordSets.Add( from.Name, from );
+        _recordSets.Add( from.Identifier, from );
 
         if ( definitions.Length == 0 )
         {
@@ -52,7 +52,7 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
             lastRightJoinIndex = AddNextJoin( from, _recordSets, joins, lastRightJoinIndex, i );
         }
 
-        From = _recordSets[from.Name];
+        From = _recordSets[from.Identifier];
         Joins = joins;
     }
 
@@ -63,7 +63,7 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
         var sourceRecordSets = source.RecordSets;
         _recordSets = CreateRecordSetDictionary( sourceRecordSets.Count );
         foreach ( var recordSet in sourceRecordSets )
-            _recordSets.Add( recordSet.Name, recordSet );
+            _recordSets.Add( recordSet.Identifier, recordSet );
 
         var sourceJoins = source.Joins;
         var offset = sourceJoins.Length;
@@ -81,7 +81,7 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
         for ( var i = offset; i < joins.Length; ++i )
             lastRightJoinIndex = AddNextJoin( from, _recordSets, joins, lastRightJoinIndex, i );
 
-        From = _recordSets[from.Name];
+        From = _recordSets[from.Identifier];
         Joins = joins;
     }
 
@@ -92,7 +92,7 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
         var sourceRecordSets = source.RecordSets;
         _recordSets = CreateRecordSetDictionary( sourceRecordSets.Count );
         foreach ( var recordSet in sourceRecordSets )
-            _recordSets.Add( recordSet.Name, recordSet );
+            _recordSets.Add( recordSet.Identifier, recordSet );
 
         var sourceJoins = source.Joins;
         if ( newDefinitions.Length == 0 )
@@ -122,7 +122,7 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
             lastRightJoinIndex = AddNextJoin( from, _recordSets, joins, lastRightJoinIndex, index );
         }
 
-        From = _recordSets[from.Name];
+        From = _recordSets[from.Identifier];
         Joins = joins;
     }
 
@@ -196,7 +196,7 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
             }
         }
 
-        recordSets.Add( innerRecordSet.Name, innerRecordSet );
+        recordSets.Add( innerRecordSet.Identifier, innerRecordSet );
         return lastRightJoinIndex;
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -212,7 +212,7 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
             if ( lastRightJoinIndex == -1 )
             {
                 startIndex = 0;
-                recordSets[from.Name] = from.MarkAsOptional();
+                recordSets[from.Identifier] = from.MarkAsOptional();
             }
             else
                 startIndex = lastRightJoinIndex;
@@ -222,7 +222,7 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
             {
                 var outerRecordSet = join.InnerRecordSet;
                 if ( ! outerRecordSet.IsOptional )
-                    recordSets[outerRecordSet.Name] = outerRecordSet.MarkAsOptional();
+                    recordSets[outerRecordSet.Identifier] = outerRecordSet.MarkAsOptional();
             }
         }
     }

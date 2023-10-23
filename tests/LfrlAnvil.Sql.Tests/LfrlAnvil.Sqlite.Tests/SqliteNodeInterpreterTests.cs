@@ -3,6 +3,7 @@ using System.Data;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using LfrlAnvil.Functional;
+using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Functions;
@@ -67,18 +68,30 @@ public class SqliteNodeInterpreterTests : TestsBase
         _sut.Context.Sql.ToString().Should().Be( "foo.\"bar\"" );
     }
 
-    [Fact]
-    public void Visit_ShouldInterpretRawDataField_FromTemporaryTableRecordSet()
+    [Theory]
+    [InlineData( false, "\"foo_bar\".\"qux\"" )]
+    [InlineData( true, "temp.\"foo_bar\".\"qux\"" )]
+    public void Visit_ShouldInterpretRawDataField_FromNewTable(bool isTemporary, string expected)
     {
-        _sut.Visit( SqlNode.CreateTempTable( "foo", SqlNode.ColumnDefinition<int>( "bar" ) ).AsSet().GetField( "bar" ) );
-        _sut.Context.Sql.ToString().Should().Be( "temp.\"foo\".\"bar\"" );
+        _sut.Visit(
+            SqlNode.CreateTable( "foo", "bar", new[] { SqlNode.Column<int>( "qux" ) }, isTemporary: isTemporary )
+                .AsSet()
+                .GetField( "qux" ) );
+
+        _sut.Context.Sql.ToString().Should().Be( expected );
     }
 
-    [Fact]
-    public void Visit_ShouldInterpretRawDataField_FromAliasedTemporaryTableRecordSet()
+    [Theory]
+    [InlineData( false )]
+    [InlineData( true )]
+    public void Visit_ShouldInterpretRawDataField_FromAliasedNewTable(bool isTemporary)
     {
-        _sut.Visit( SqlNode.CreateTempTable( "foo", SqlNode.ColumnDefinition<int>( "bar" ) ).AsSet( "qux" ).GetField( "bar" ) );
-        _sut.Context.Sql.ToString().Should().Be( "\"qux\".\"bar\"" );
+        _sut.Visit(
+            SqlNode.CreateTable( "foo", "bar", new[] { SqlNode.Column<int>( "qux" ) }, isTemporary: isTemporary )
+                .AsSet( "lorem" )
+                .GetField( "qux" ) );
+
+        _sut.Context.Sql.ToString().Should().Be( "\"lorem\".\"qux\"" );
     }
 
     [Fact]
@@ -1266,56 +1279,56 @@ END" );
     }
 
     [Fact]
-    public void Visit_ShouldInterpretTableRecordSet()
+    public void Visit_ShouldInterpretTable()
     {
         _sut.Visit( CreateTable( string.Empty, "foo" ).ToRecordSet( "bar" ) );
         _sut.Context.Sql.ToString().Should().Be( "\"foo\" AS \"bar\"" );
     }
 
     [Fact]
-    public void VisitChild_ShouldInterpretTableRecordSetWithParentheses()
+    public void VisitChild_ShouldInterpretTableWithParentheses()
     {
         _sut.VisitChild( CreateTable( string.Empty, "foo" ).ToRecordSet() );
         _sut.Context.Sql.ToString().Should().Be( "(\"foo\")" );
     }
 
     [Fact]
-    public void Visit_ShouldInterpretTableBuilderRecordSet()
+    public void Visit_ShouldInterpretTableBuilder()
     {
         _sut.Visit( CreateTableBuilder( string.Empty, "foo" ).ToRecordSet( "bar" ) );
         _sut.Context.Sql.ToString().Should().Be( "\"foo\" AS \"bar\"" );
     }
 
     [Fact]
-    public void VisitChild_ShouldInterpretTableBuilderRecordSetWithParentheses()
+    public void VisitChild_ShouldInterpretTableBuilderWithParentheses()
     {
         _sut.VisitChild( CreateTableBuilder( string.Empty, "foo" ).ToRecordSet() );
         _sut.Context.Sql.ToString().Should().Be( "(\"foo\")" );
     }
 
     [Fact]
-    public void Visit_ShouldInterpretViewRecordSet()
+    public void Visit_ShouldInterpretView()
     {
         _sut.Visit( CreateView( string.Empty, "foo" ).ToRecordSet( "bar" ) );
         _sut.Context.Sql.ToString().Should().Be( "\"foo\" AS \"bar\"" );
     }
 
     [Fact]
-    public void VisitChild_ShouldInterpretViewRecordSetWithParentheses()
+    public void VisitChild_ShouldInterpretViewWithParentheses()
     {
         _sut.VisitChild( CreateView( string.Empty, "foo" ).ToRecordSet() );
         _sut.Context.Sql.ToString().Should().Be( "(\"foo\")" );
     }
 
     [Fact]
-    public void Visit_ShouldInterpretViewBuilderRecordSet()
+    public void Visit_ShouldInterpretViewBuilder()
     {
         _sut.Visit( CreateViewBuilder( string.Empty, "foo" ).ToRecordSet( "bar" ) );
         _sut.Context.Sql.ToString().Should().Be( "\"foo\" AS \"bar\"" );
     }
 
     [Fact]
-    public void VisitChild_ShouldInterpretViewBuilderRecordSetWithParentheses()
+    public void VisitChild_ShouldInterpretViewBuilderWithParentheses()
     {
         _sut.VisitChild( CreateViewBuilder( string.Empty, "foo" ).ToRecordSet() );
         _sut.Context.Sql.ToString().Should().Be( "(\"foo\")" );
@@ -1359,18 +1372,38 @@ END" );
         _sut.Context.Sql.ToString().Should().Be( "(\"bar\")" );
     }
 
-    [Fact]
-    public void Visit_ShouldInterpretTemporaryTableRecordSet()
+    [Theory]
+    [InlineData( false, "\"foo_bar\" AS \"qux\"" )]
+    [InlineData( true, "temp.\"foo_bar\" AS \"qux\"" )]
+    public void Visit_ShouldInterpretNewTable(bool isTemporary, string expected)
     {
-        _sut.Visit( SqlNode.CreateTempTable( "foo" ).AsSet( "bar" ) );
-        _sut.Context.Sql.ToString().Should().Be( "temp.\"foo\" AS \"bar\"" );
+        _sut.Visit( SqlNode.CreateTable( "foo", "bar", Array.Empty<SqlColumnDefinitionNode>(), isTemporary: isTemporary ).AsSet( "qux" ) );
+        _sut.Context.Sql.ToString().Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( false, "(\"foo\")" )]
+    [InlineData( true, "(temp.\"foo\")" )]
+    public void VisitChild_ShouldInterpretNewTableWithParentheses(bool isTemporary, string expected)
+    {
+        _sut.VisitChild(
+            SqlNode.CreateTable( string.Empty, "foo", Array.Empty<SqlColumnDefinitionNode>(), isTemporary: isTemporary ).AsSet() );
+
+        _sut.Context.Sql.ToString().Should().Be( expected );
     }
 
     [Fact]
-    public void VisitChild_ShouldInterpretTemporaryTableRecordSetWithParentheses()
+    public void Visit_ShouldInterpretNewView()
     {
-        _sut.VisitChild( SqlNode.CreateTempTable( "foo" ).AsSet() );
-        _sut.Context.Sql.ToString().Should().Be( "(temp.\"foo\")" );
+        _sut.Visit( SqlNode.CreateView( "foo", "bar", SqlNode.RawQuery( "SELECT * FROM lorem" ) ).AsSet( "qux" ) );
+        _sut.Context.Sql.ToString().Should().Be( "\"foo_bar\" AS \"qux\"" );
+    }
+
+    [Fact]
+    public void VisitChild_ShouldInterpretNewViewWithParentheses()
+    {
+        _sut.VisitChild( SqlNode.CreateView( string.Empty, "foo", SqlNode.RawQuery( "SELECT * FROM bar" ) ).AsSet() );
+        _sut.Context.Sql.ToString().Should().Be( "(\"foo\")" );
     }
 
     [Fact]
@@ -2380,10 +2413,20 @@ WHERE EXISTS (
 )" );
     }
 
-    [Fact]
-    public void Visit_ShouldInterpretUpdateWithComplexDataSourceAndTargetTemporaryTableWithSingleColumn()
+    [Theory]
+    [InlineData( false, "\"foo\"" )]
+    [InlineData( true, "temp.\"foo\"" )]
+    public void Visit_ShouldInterpretUpdateWithComplexDataSourceAndTargetNewTableWithSingleColumnPrimaryKey(
+        bool isTemporary,
+        string expectedName)
     {
-        var table = SqlNode.CreateTempTable( "foo", SqlNode.ColumnDefinition<int>( "a" ) );
+        var table = SqlNode.CreateTable(
+            string.Empty,
+            "foo",
+            new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ) },
+            isTemporary: isTemporary,
+            constraintsProvider: t => SqlCreateTableConstraints.Empty.WithPrimaryKey( SqlNode.PrimaryKey( "PK", t["a"].Asc() ) ) );
+
         var foo = table.AsSet( "f" );
 
         var dataSource = foo
@@ -2402,14 +2445,14 @@ WHERE EXISTS (
         _sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"WITH ""cba"" AS (
+                $@"WITH ""cba"" AS (
   SELECT * FROM abc
 )
-UPDATE temp.""foo"" SET
+UPDATE {expectedName} SET
   ""a"" = 10
-WHERE temp.""foo"".""a"" IN (
+WHERE {expectedName}.""a"" IN (
   SELECT DISTINCT ""f"".""a""
-  FROM temp.""foo"" AS ""f""
+  FROM {expectedName} AS ""f""
   INNER JOIN bar ON bar.""a"" = ""f"".""a""
   WHERE bar.""c"" IN (
     SELECT cba.c FROM cba
@@ -2421,10 +2464,21 @@ WHERE temp.""foo"".""a"" IN (
 )" );
     }
 
-    [Fact]
-    public void Visit_ShouldInterpretUpdateWithComplexDataSourceAndTargetTemporaryTableWithMultipleColumns()
+    [Theory]
+    [InlineData( false, "\"foo\"" )]
+    [InlineData( true, "temp.\"foo\"" )]
+    public void Visit_ShouldInterpretUpdateWithComplexDataSourceAndTargetNewTableWithMultipleColumnPrimaryKey(
+        bool isTemporary,
+        string expectedName)
     {
-        var table = SqlNode.CreateTempTable( "foo", SqlNode.ColumnDefinition<int>( "a" ), SqlNode.ColumnDefinition<int>( "b" ) );
+        var table = SqlNode.CreateTable(
+            string.Empty,
+            "foo",
+            new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ), SqlNode.Column<int>( "c" ) },
+            isTemporary: isTemporary,
+            constraintsProvider: t =>
+                SqlCreateTableConstraints.Empty.WithPrimaryKey( SqlNode.PrimaryKey( "PK", t["a"].Asc(), t["b"].Desc() ) ) );
+
         var foo = table.AsSet( "f" );
 
         var dataSource = foo
@@ -2444,17 +2498,67 @@ WHERE temp.""foo"".""a"" IN (
         _sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"WITH ""cba"" AS (
+                $@"WITH ""cba"" AS (
   SELECT * FROM abc
 )
-UPDATE temp.""foo"" SET
+UPDATE {expectedName} SET
   ""a"" = 10,
   ""b"" = 20
 WHERE EXISTS (
   SELECT DISTINCT *
-  FROM temp.""foo"" AS ""f""
+  FROM {expectedName} AS ""f""
   INNER JOIN bar ON bar.""a"" = ""f"".""a""
-  WHERE (temp.""foo"".""a"" = ""f"".""a"") AND (temp.""foo"".""b"" = ""f"".""b"")
+  WHERE ({expectedName}.""a"" = ""f"".""a"") AND ({expectedName}.""b"" = ""f"".""b"")
+  GROUP BY ""f"".""b""
+  HAVING ""f"".""b"" < 100
+  ORDER BY ""f"".""b"" ASC
+  LIMIT 50 OFFSET 100
+)" );
+    }
+
+    [Theory]
+    [InlineData( false, "\"foo\"" )]
+    [InlineData( true, "temp.\"foo\"" )]
+    public void Visit_ShouldInterpretUpdateWithComplexDataSourceAndTargetNewTableWithoutPrimaryKey(
+        bool isTemporary,
+        string expectedName)
+    {
+        var table = SqlNode.CreateTable(
+            string.Empty,
+            "foo",
+            new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ) },
+            isTemporary: isTemporary );
+
+        var foo = table.AsSet( "f" );
+
+        var dataSource = foo
+            .Join( SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ), x => x.Inner["a"] == foo["a"] ) )
+            .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
+            .Distinct()
+            .GroupBy( s => new[] { s["f"]["b"] } )
+            .AndHaving( s => s["f"]["b"] < SqlNode.Literal( 100 ) )
+            .OrderBy( s => new[] { s["f"]["b"].Asc() } )
+            .Limit( SqlNode.Literal( 50 ) )
+            .Offset( SqlNode.Literal( 100 ) );
+
+        _sut.Visit(
+            dataSource.ToUpdate(
+                s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ), s["f"]["b"].Assign( SqlNode.Literal( 20 ) ) } ) );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                $@"WITH ""cba"" AS (
+  SELECT * FROM abc
+)
+UPDATE {expectedName} SET
+  ""a"" = 10,
+  ""b"" = 20
+WHERE EXISTS (
+  SELECT DISTINCT *
+  FROM {expectedName} AS ""f""
+  INNER JOIN bar ON bar.""a"" = ""f"".""a""
+  WHERE ({expectedName}.""a"" = ""f"".""a"") AND ({expectedName}.""b"" = ""f"".""b"")
   GROUP BY ""f"".""b""
   HAVING ""f"".""b"" < 100
   ORDER BY ""f"".""b"" ASC
@@ -2603,7 +2707,43 @@ WHERE EXISTS (SELECT * FROM ""_{GUID}"" WHERE (""foo"".""a"" = ""_{GUID}"".""f_a
     }
 
     [Fact]
-    public void Visit_ShouldThrowSqlNodeVisitorException_WhenUpdateIsComplexAndDataSourceFromIsNotTableRecordSet()
+    public void Visit_ShouldInterpretUpdateWithComplexAssignments_WithNonAliasedJoinedSets()
+    {
+        var table = CreateTable( string.Empty, "foo", new[] { "a", "b" }, "a" );
+        var foo = table.ToRecordSet( "f" );
+
+        var dataSource = foo
+            .Join(
+                SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ), x => x.Inner["a"] == foo["a"] ),
+                SqlJoinDefinition.Inner(
+                    SqlNode.CreateTable( string.Empty, "tmp", new[] { SqlNode.Column<int>( "b" ) }, isTemporary: true ).AsSet(),
+                    x => x.Inner["b"] == x.GetOuter( "bar" )["b"] ) )
+            .AndWhere( s => s["f"]["b"] != null );
+
+        _sut.Visit(
+            dataSource.ToUpdate(
+                s => new[] { s["f"]["b"].Assign( foo.AsSelf()["b"] + s["bar"]["b"] - s["tmp"]["b"] + SqlNode.Literal( 1 ) ) } ) );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .SatisfySql(
+                @"WITH ""_{GUID}"" AS (
+  SELECT
+    ""f"".""a"" AS ""f_a"",
+    bar.""b"" AS ""bar_b"",
+    temp.""tmp"".""b"" AS ""temp_tmp_b""
+  FROM ""foo"" AS ""f""
+  INNER JOIN bar ON bar.""a"" = ""f"".""a""
+  INNER JOIN temp.""tmp"" ON temp.""tmp"".""b"" = bar.""b""
+  WHERE ""f"".""b"" IS NOT NULL
+)
+UPDATE ""foo"" SET
+  ""b"" = (((""foo"".""b"" + (SELECT ""bar_b"" FROM ""_{GUID}"" WHERE (""foo"".""a"" = ""_{GUID}"".""f_a"") LIMIT 1)) - (SELECT ""temp_tmp_b"" FROM ""_{GUID}"" WHERE (""foo"".""a"" = ""_{GUID}"".""f_a"") LIMIT 1)) + 1)
+WHERE ""foo"".""a"" IN (SELECT ""f_a"" FROM ""_{GUID}"");" );
+    }
+
+    [Fact]
+    public void Visit_ShouldThrowSqlNodeVisitorException_WhenUpdateIsComplexAndDataSourceFromIsNotTable()
     {
         var node = SqlNode.RawRecordSet( "foo" ).Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToUpdate();
         var action = Lambda.Of( () => _sut.Visit( node ) );
@@ -2614,7 +2754,7 @@ WHERE EXISTS (SELECT * FROM ""_{GUID}"" WHERE (""foo"".""a"" = ""_{GUID}"".""f_a
     }
 
     [Fact]
-    public void Visit_ShouldThrowSqlNodeVisitorException_WhenUpdateIsComplexAndDataSourceFromIsTableRecordSetWithoutAlias()
+    public void Visit_ShouldThrowSqlNodeVisitorException_WhenUpdateIsComplexAndDataSourceFromIsTableWithoutAlias()
     {
         var foo = CreateTable( string.Empty, "foo" ).ToRecordSet();
         var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToUpdate();
@@ -2626,7 +2766,7 @@ WHERE EXISTS (SELECT * FROM ""_{GUID}"" WHERE (""foo"".""a"" = ""_{GUID}"".""f_a
     }
 
     [Fact]
-    public void Visit_ShouldThrowSqlNodeVisitorException_WhenUpdateIsComplexAndDataSourceFromIsTableBuilderRecordSetWithoutColumns()
+    public void Visit_ShouldThrowSqlNodeVisitorException_WhenUpdateIsComplexAndDataSourceFromIsTableBuilderWithoutColumns()
     {
         var foo = CreateEmptyTableBuilder( string.Empty, "foo" ).ToRecordSet( "f" );
         var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToUpdate();
@@ -2638,9 +2778,49 @@ WHERE EXISTS (SELECT * FROM ""_{GUID}"" WHERE (""foo"".""a"" = ""_{GUID}"".""f_a
     }
 
     [Fact]
-    public void Visit_ShouldThrowSqlNodeVisitorException_WhenUpdateIsComplexAndDataSourceFromIsTemporaryTableRecordSetWithoutColumns()
+    public void
+        Visit_ShouldThrowSqlNodeVisitorException_WhenUpdateIsComplexAndDataSourceFromIsNewTableWithoutPrimaryKeyAndColumns()
     {
-        var foo = SqlNode.CreateTempTable( "foo" ).AsSet( "f" );
+        var foo = SqlNode.CreateTable( string.Empty, "foo", Array.Empty<SqlColumnDefinitionNode>() ).AsSet( "f" );
+        var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToUpdate();
+        var action = Lambda.Of( () => _sut.Visit( node ) );
+
+        action.Should()
+            .ThrowExactly<SqlNodeVisitorException>()
+            .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, _sut ) );
+    }
+
+    [Fact]
+    public void
+        Visit_ShouldThrowSqlNodeVisitorException_WhenUpdateIsComplexAndDataSourceFromIsNewTableWithPrimaryKeyWithoutColumns()
+    {
+        var foo = SqlNode.CreateTable(
+                string.Empty,
+                "foo",
+                new[] { SqlNode.Column<int>( "a" ) },
+                constraintsProvider: _ => SqlCreateTableConstraints.Empty.WithPrimaryKey( SqlNode.PrimaryKey( "PK" ) ) )
+            .AsSet( "f" );
+
+        var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToUpdate();
+        var action = Lambda.Of( () => _sut.Visit( node ) );
+
+        action.Should()
+            .ThrowExactly<SqlNodeVisitorException>()
+            .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, _sut ) );
+    }
+
+    [Fact]
+    public void
+        Visit_ShouldThrowSqlNodeVisitorException_WhenUpdateIsComplexAndDataSourceFromIsNewTableWithPrimaryKeyContainingNonDataFieldColumn()
+    {
+        var foo = SqlNode.CreateTable(
+                string.Empty,
+                "foo",
+                new[] { SqlNode.Column<int>( "a" ) },
+                constraintsProvider: t =>
+                    SqlCreateTableConstraints.Empty.WithPrimaryKey( SqlNode.PrimaryKey( "PK", (t["a"] + SqlNode.Literal( 1 )).Asc() ) ) )
+            .AsSet( "f" );
+
         var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToUpdate();
         var action = Lambda.Of( () => _sut.Visit( node ) );
 
@@ -2911,10 +3091,20 @@ WHERE EXISTS (
 )" );
     }
 
-    [Fact]
-    public void Visit_ShouldInterpretDeleteFromWithComplexDataSourceAndTargetTemporaryTableWithSingleColumn()
+    [Theory]
+    [InlineData( false, "\"foo\"" )]
+    [InlineData( true, "temp.\"foo\"" )]
+    public void Visit_ShouldInterpretDeleteFromWithComplexDataSourceAndTargetNewTableWithSingleColumnPrimaryKey(
+        bool isTemporary,
+        string expectedName)
     {
-        var table = SqlNode.CreateTempTable( "foo", SqlNode.ColumnDefinition<int>( "a" ) );
+        var table = SqlNode.CreateTable(
+            string.Empty,
+            "foo",
+            new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ) },
+            isTemporary: isTemporary,
+            constraintsProvider: t => SqlCreateTableConstraints.Empty.WithPrimaryKey( SqlNode.PrimaryKey( "PK", t["a"].Asc() ) ) );
+
         var foo = table.AsSet( "f" );
 
         var dataSource = foo
@@ -2933,13 +3123,13 @@ WHERE EXISTS (
         _sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"WITH ""cba"" AS (
+                $@"WITH ""cba"" AS (
   SELECT * FROM abc
 )
-DELETE FROM temp.""foo""
-WHERE temp.""foo"".""a"" IN (
+DELETE FROM {expectedName}
+WHERE {expectedName}.""a"" IN (
   SELECT DISTINCT ""f"".""a""
-  FROM temp.""foo"" AS ""f""
+  FROM {expectedName} AS ""f""
   INNER JOIN bar ON bar.""a"" = ""f"".""a""
   WHERE bar.""c"" IN (
     SELECT cba.c FROM cba
@@ -2951,10 +3141,21 @@ WHERE temp.""foo"".""a"" IN (
 )" );
     }
 
-    [Fact]
-    public void Visit_ShouldInterpretDeleteFromWithComplexDataSourceAndTargetTemporaryTableWithMultipleColumns()
+    [Theory]
+    [InlineData( false, "\"foo\"" )]
+    [InlineData( true, "temp.\"foo\"" )]
+    public void Visit_ShouldInterpretDeleteFromWithComplexDataSourceAndTargetNewTableWithMultipleColumnPrimaryKey(
+        bool isTemporary,
+        string expectedName)
     {
-        var table = SqlNode.CreateTempTable( "foo", SqlNode.ColumnDefinition<int>( "a" ), SqlNode.ColumnDefinition<int>( "b" ) );
+        var table = SqlNode.CreateTable(
+            string.Empty,
+            "foo",
+            new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ), SqlNode.Column<int>( "c" ) },
+            isTemporary: isTemporary,
+            constraintsProvider: t =>
+                SqlCreateTableConstraints.Empty.WithPrimaryKey( SqlNode.PrimaryKey( "PK", t["a"].Asc(), t["b"].Desc() ) ) );
+
         var foo = table.AsSet( "f" );
 
         var dataSource = foo
@@ -2972,15 +3173,61 @@ WHERE temp.""foo"".""a"" IN (
         _sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"WITH ""cba"" AS (
+                $@"WITH ""cba"" AS (
   SELECT * FROM abc
 )
-DELETE FROM temp.""foo""
+DELETE FROM {expectedName}
 WHERE EXISTS (
   SELECT DISTINCT *
-  FROM temp.""foo"" AS ""f""
+  FROM {expectedName} AS ""f""
   INNER JOIN bar ON bar.""a"" = ""f"".""a""
-  WHERE (temp.""foo"".""a"" = ""f"".""a"") AND (temp.""foo"".""b"" = ""f"".""b"")
+  WHERE ({expectedName}.""a"" = ""f"".""a"") AND ({expectedName}.""b"" = ""f"".""b"")
+  GROUP BY ""f"".""b""
+  HAVING ""f"".""b"" < 100
+  ORDER BY ""f"".""b"" ASC
+  LIMIT 50 OFFSET 100
+)" );
+    }
+
+    [Theory]
+    [InlineData( false, "\"foo\"" )]
+    [InlineData( true, "temp.\"foo\"" )]
+    public void Visit_ShouldInterpretDeleteFromWithComplexDataSourceAndTargetNewTableWithoutPrimaryKey(
+        bool isTemporary,
+        string expectedName)
+    {
+        var table = SqlNode.CreateTable(
+            string.Empty,
+            "foo",
+            new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ) },
+            isTemporary: isTemporary );
+
+        var foo = table.AsSet( "f" );
+
+        var dataSource = foo
+            .Join( SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ), x => x.Inner["a"] == foo["a"] ) )
+            .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
+            .Distinct()
+            .GroupBy( s => new[] { s["f"]["b"] } )
+            .AndHaving( s => s["f"]["b"] < SqlNode.Literal( 100 ) )
+            .OrderBy( s => new[] { s["f"]["b"].Asc() } )
+            .Limit( SqlNode.Literal( 50 ) )
+            .Offset( SqlNode.Literal( 100 ) );
+
+        _sut.Visit( dataSource.ToDeleteFrom() );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                $@"WITH ""cba"" AS (
+  SELECT * FROM abc
+)
+DELETE FROM {expectedName}
+WHERE EXISTS (
+  SELECT DISTINCT *
+  FROM {expectedName} AS ""f""
+  INNER JOIN bar ON bar.""a"" = ""f"".""a""
+  WHERE ({expectedName}.""a"" = ""f"".""a"") AND ({expectedName}.""b"" = ""f"".""b"")
   GROUP BY ""f"".""b""
   HAVING ""f"".""b"" < 100
   ORDER BY ""f"".""b"" ASC
@@ -2989,7 +3236,7 @@ WHERE EXISTS (
     }
 
     [Fact]
-    public void Visit_ShouldThrowSqlNodeVisitorException_WhenDeleteFromIsComplexAndDataSourceFromIsNotTableRecordSet()
+    public void Visit_ShouldThrowSqlNodeVisitorException_WhenDeleteFromIsComplexAndDataSourceFromIsNotTable()
     {
         var node = SqlNode.RawRecordSet( "foo" ).Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToDeleteFrom();
         var action = Lambda.Of( () => _sut.Visit( node ) );
@@ -3000,7 +3247,7 @@ WHERE EXISTS (
     }
 
     [Fact]
-    public void Visit_ShouldThrowSqlNodeVisitorException_WhenDeleteFromIsComplexAndDataSourceFromIsTableRecordSetWithoutAlias()
+    public void Visit_ShouldThrowSqlNodeVisitorException_WhenDeleteFromIsComplexAndDataSourceFromIsTableWithoutAlias()
     {
         var foo = CreateTable( string.Empty, "foo" ).ToRecordSet();
         var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToDeleteFrom();
@@ -3012,7 +3259,7 @@ WHERE EXISTS (
     }
 
     [Fact]
-    public void Visit_ShouldThrowSqlNodeVisitorException_WhenDeleteFromIsComplexAndDataSourceFromIsTableBuilderRecordSetWithoutColumns()
+    public void Visit_ShouldThrowSqlNodeVisitorException_WhenDeleteFromIsComplexAndDataSourceFromIsTableBuilderWithoutColumns()
     {
         var foo = CreateEmptyTableBuilder( string.Empty, "foo" ).ToRecordSet( "f" );
         var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToDeleteFrom();
@@ -3024,9 +3271,10 @@ WHERE EXISTS (
     }
 
     [Fact]
-    public void Visit_ShouldThrowSqlNodeVisitorException_WhenDeleteFromIsComplexAndDataSourceFromIsTemporaryTableRecordSetWithoutColumns()
+    public void
+        Visit_ShouldThrowSqlNodeVisitorException_WhenDeleteFromIsComplexAndDataSourceFromIsNewTableWithoutPrimaryKeyAndColumns()
     {
-        var foo = SqlNode.CreateTempTable( "foo" ).AsSet( "f" );
+        var foo = SqlNode.CreateTable( string.Empty, "foo", Array.Empty<SqlColumnDefinitionNode>() ).AsSet( "f" );
         var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToDeleteFrom();
         var action = Lambda.Of( () => _sut.Visit( node ) );
 
@@ -3036,42 +3284,320 @@ WHERE EXISTS (
     }
 
     [Fact]
+    public void
+        Visit_ShouldThrowSqlNodeVisitorException_WhenDeleteFromIsComplexAndDataSourceFromIsNewTableWithPrimaryKeyWithoutColumns()
+    {
+        var foo = SqlNode.CreateTable(
+                string.Empty,
+                "foo",
+                new[] { SqlNode.Column<int>( "a" ) },
+                constraintsProvider: _ => SqlCreateTableConstraints.Empty.WithPrimaryKey( SqlNode.PrimaryKey( "PK" ) ) )
+            .AsSet( "f" );
+
+        var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToDeleteFrom();
+        var action = Lambda.Of( () => _sut.Visit( node ) );
+
+        action.Should()
+            .ThrowExactly<SqlNodeVisitorException>()
+            .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, _sut ) );
+    }
+
+    [Fact]
+    public void
+        Visit_ShouldThrowSqlNodeVisitorException_WhenDeleteFromIsComplexAndDataSourceFromIsNewTableWithPrimaryKeyContainingNonDataFieldColumn()
+    {
+        var foo = SqlNode.CreateTable(
+                string.Empty,
+                "foo",
+                new[] { SqlNode.Column<int>( "a" ) },
+                constraintsProvider: t =>
+                    SqlCreateTableConstraints.Empty.WithPrimaryKey( SqlNode.PrimaryKey( "PK", (t["a"] + SqlNode.Literal( 1 )).Asc() ) ) )
+            .AsSet( "f" );
+
+        var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToDeleteFrom();
+        var action = Lambda.Of( () => _sut.Visit( node ) );
+
+        action.Should()
+            .ThrowExactly<SqlNodeVisitorException>()
+            .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, _sut ) );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretTruncate()
+    {
+        var table = CreateTable( "foo", "bar" );
+        var node = table.ToRecordSet().ToTruncate();
+
+        _sut.Visit( node );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                @"DELETE FROM ""foo_bar"";
+DELETE FROM ""SQLITE_SEQUENCE"" WHERE ""name"" = 'foo_bar'" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretTruncate_WithTemporaryNewTable()
+    {
+        var table = SqlNode.CreateTable( "foo", "bar", Array.Empty<SqlColumnDefinitionNode>(), isTemporary: true );
+        var node = table.AsSet().ToTruncate();
+
+        _sut.Visit( node );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                @"DELETE FROM temp.""foo_bar"";
+DELETE FROM temp.""SQLITE_SEQUENCE"" WHERE ""name"" = 'foo_bar'" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretTruncate_WithAliasedTable()
+    {
+        var table = CreateTable( "foo", "bar" );
+        var node = table.ToRecordSet( "qux" ).ToTruncate();
+
+        _sut.Visit( node );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                @"DELETE FROM ""qux"";
+DELETE FROM ""SQLITE_SEQUENCE"" WHERE ""name"" = 'qux'" );
+    }
+
+    [Fact]
     public void Visit_ShouldInterpretColumnDefinition_WhenNullable()
     {
-        _sut.Visit( SqlNode.ColumnDefinition<int>( "a", isNullable: true ) );
+        _sut.Visit( SqlNode.Column<int>( "a", isNullable: true ) );
         _sut.Context.Sql.ToString().Should().Be( "\"a\" INTEGER" );
     }
 
     [Fact]
     public void Visit_ShouldInterpretColumnDefinition_WhenNonNullable()
     {
-        _sut.Visit( SqlNode.ColumnDefinition<string>( "a", isNullable: false ) );
+        _sut.Visit( SqlNode.Column<string>( "a", isNullable: false ) );
         _sut.Context.Sql.ToString().Should().Be( "\"a\" TEXT NOT NULL" );
     }
 
     [Fact]
-    public void Visit_ShouldInterpretCreateTemporaryTable()
+    public void Visit_ShouldInterpretColumnDefinition_WithDefaultValue()
     {
-        _sut.Visit(
-            SqlNode.CreateTempTable(
+        _sut.Visit( SqlNode.Column<string>( "a", defaultValue: SqlNode.Literal( "abc" ).Concat( SqlNode.Literal( "def" ) ) ) );
+        _sut.Context.Sql.ToString().Should().Be( "\"a\" TEXT NOT NULL DEFAULT ('abc' || 'def')" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretPrimaryKeyDefinition()
+    {
+        var table = SqlNode.CreateTable(
                 "foo",
-                SqlNode.ColumnDefinition<int>( "a" ),
-                SqlNode.ColumnDefinition<string>( "b", isNullable: true ) ) );
+                "bar",
+                new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ) } )
+            .RecordSet;
+
+        var node = SqlNode.PrimaryKey( "PK_foobar", table["a"].Asc(), table["b"].Desc() );
+        _sut.Visit( node );
+
+        _sut.Context.Sql.ToString().Should().Be( "CONSTRAINT \"PK_foobar\" PRIMARY KEY (\"foo_bar\".\"a\" ASC, \"foo_bar\".\"b\" DESC)" );
+    }
+
+    [Theory]
+    [InlineData( ReferenceBehavior.Values.Cascade, ReferenceBehavior.Values.Cascade )]
+    [InlineData( ReferenceBehavior.Values.Restrict, ReferenceBehavior.Values.Cascade )]
+    [InlineData( ReferenceBehavior.Values.Cascade, ReferenceBehavior.Values.Restrict )]
+    [InlineData( ReferenceBehavior.Values.Restrict, ReferenceBehavior.Values.Restrict )]
+    public void Visit_ShouldInterpretForeignKeyDefinition(ReferenceBehavior.Values onDelete, ReferenceBehavior.Values onUpdate)
+    {
+        var onDeleteBehavior = onDelete == ReferenceBehavior.Values.Cascade ? ReferenceBehavior.Cascade : ReferenceBehavior.Restrict;
+        var onUpdateBehavior = onUpdate == ReferenceBehavior.Values.Cascade ? ReferenceBehavior.Cascade : ReferenceBehavior.Restrict;
+
+        var qux = CreateTable( string.Empty, "qux", "a", "b" ).ToRecordSet();
+        var table = SqlNode.CreateTable(
+                "foo",
+                "bar",
+                new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ) } )
+            .RecordSet;
+
+        var node = SqlNode.ForeignKey(
+            "FK_foobar_REF_qux",
+            new SqlDataFieldNode[] { table["a"], table["b"] },
+            qux,
+            new SqlDataFieldNode[] { qux["a"], qux["b"] },
+            onDeleteBehavior,
+            onUpdateBehavior );
+
+        _sut.Visit( node );
 
         _sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"CREATE TEMP TABLE ""foo"" (
-  ""a"" INTEGER NOT NULL,
-  ""b"" TEXT
-) WITHOUT ROWID" );
+                $"CONSTRAINT \"FK_foobar_REF_qux\" FOREIGN KEY (\"a\", \"b\") REFERENCES \"qux\" (\"a\", \"b\") ON DELETE {onDeleteBehavior.Name} ON UPDATE {onUpdateBehavior.Name}" );
     }
 
     [Fact]
-    public void Visit_ShouldInterpretDropTemporaryTable()
+    public void Visit_ShouldInterpretCheckDefinition()
     {
-        _sut.Visit( SqlNode.DropTempTable( "foo" ) );
-        _sut.Context.Sql.ToString().Should().Be( "DROP TABLE temp.\"foo\"" );
+        var table = SqlNode.CreateTable( "foo", "bar", new[] { SqlNode.Column<int>( "a" ) } ).RecordSet;
+        var node = SqlNode.Check( "CHK_foobar", table["a"] > SqlNode.Literal( 10 ) );
+        _sut.Visit( node );
+
+        _sut.Context.Sql.ToString().Should().Be( "CONSTRAINT \"CHK_foobar\" CHECK (\"foo_bar\".\"a\" > 10)" );
+    }
+
+    [Theory]
+    [InlineData( false, false, "\"foo_bar\"" )]
+    [InlineData( true, false, "temp.\"foo_bar\"" )]
+    [InlineData( false, true, "\"foo_bar\"" )]
+    [InlineData( true, true, "temp.\"foo_bar\"" )]
+    public void Visit_ShouldInterpretCreateTable(bool isTemporary, bool ifNotExists, string expectedName)
+    {
+        var node = SqlNode.CreateTable(
+            "foo",
+            "bar",
+            new[]
+            {
+                SqlNode.Column<int>( "x" ),
+                SqlNode.Column<string>( "y", isNullable: true ),
+                SqlNode.Column<double>( "z", defaultValue: SqlNode.Literal( 10.5 ) )
+            },
+            ifNotExists: ifNotExists,
+            isTemporary: isTemporary,
+            constraintsProvider: t =>
+            {
+                var qux = SqlNode.RawRecordSet( "qux" );
+                return SqlCreateTableConstraints.Empty
+                    .WithPrimaryKey( SqlNode.PrimaryKey( "PK_foobar", t["x"].Asc() ) )
+                    .WithForeignKeys(
+                        SqlNode.ForeignKey(
+                            "FK_foobar_REF_qux",
+                            new SqlDataFieldNode[] { t["y"] },
+                            qux,
+                            new SqlDataFieldNode[] { qux["y"] } ) )
+                    .WithChecks( SqlNode.Check( "CHK_foobar", t["z"] > SqlNode.Literal( 100.0 ) ) );
+            } );
+
+        _sut.Visit( node );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                $@"CREATE TABLE{(ifNotExists ? " IF NOT EXISTS" : string.Empty)} {expectedName} (
+  ""x"" INTEGER NOT NULL,
+  ""y"" TEXT,
+  ""z"" REAL NOT NULL DEFAULT (10.5),
+  CONSTRAINT ""PK_foobar"" PRIMARY KEY (""x"" ASC),
+  CONSTRAINT ""FK_foobar_REF_qux"" FOREIGN KEY (""y"") REFERENCES qux (""y"") ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT ""CHK_foobar"" CHECK (""z"" > 100.0)
+) WITHOUT ROWID" );
+    }
+
+    [Theory]
+    [InlineData( false )]
+    [InlineData( true )]
+    public void Visit_ShouldInterpretCreateView(bool ifNotExists)
+    {
+        var node = SqlNode.CreateView( "foo", "bar", ifNotExists: ifNotExists, source: SqlNode.RawQuery( "SELECT * FROM qux" ) );
+        _sut.Visit( node );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                $@"CREATE VIEW{(ifNotExists ? " IF NOT EXISTS" : string.Empty)} ""foo_bar"" AS
+SELECT * FROM qux" );
+    }
+
+    [Theory]
+    [InlineData( false )]
+    [InlineData( true )]
+    public void Visit_ShouldInterpretCreateIndex(bool ifNotExists)
+    {
+        var qux = SqlNode.RawRecordSet( "qux" );
+        var node = SqlNode.CreateIndex(
+            "foo",
+            "bar",
+            isUnique: false,
+            ifNotExists: ifNotExists,
+            table: qux,
+            columns: new[] { qux["a"].Asc(), qux["b"].Desc() } );
+
+        _sut.Visit( node );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be( $"CREATE INDEX{(ifNotExists ? " IF NOT EXISTS" : string.Empty)} \"foo_bar\" ON qux (\"a\" ASC, \"b\" DESC)" );
+    }
+
+    [Theory]
+    [InlineData( false )]
+    [InlineData( true )]
+    public void Visit_ShouldInterpretCreateUniqueIndex(bool ifNotExists)
+    {
+        var qux = SqlNode.RawRecordSet( "qux" );
+        var node = SqlNode.CreateIndex(
+            "foo",
+            "bar",
+            isUnique: true,
+            ifNotExists: ifNotExists,
+            table: qux,
+            columns: new[] { qux["a"].Asc(), qux["b"].Desc() } );
+
+        _sut.Visit( node );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                $"CREATE UNIQUE INDEX{(ifNotExists ? " IF NOT EXISTS" : string.Empty)} \"foo_bar\" ON qux (\"a\" ASC, \"b\" DESC)" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretCreateIndex_WithFilter()
+    {
+        var qux = SqlNode.RawRecordSet( "qux" );
+        var node = SqlNode.CreateIndex(
+            "foo",
+            "bar",
+            isUnique: false,
+            ifNotExists: false,
+            table: qux,
+            columns: new[] { qux["a"].Asc(), qux["b"].Desc() },
+            filter: qux["a"] != null );
+
+        _sut.Visit( node );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be( "CREATE INDEX \"foo_bar\" ON qux (\"a\" ASC, \"b\" DESC) WHERE (\"a\" IS NOT NULL)" );
+    }
+
+    [Theory]
+    [InlineData( false, false, "DROP TABLE \"foo_bar\"" )]
+    [InlineData( true, false, "DROP TABLE temp.\"foo_bar\"" )]
+    [InlineData( false, true, "DROP TABLE IF EXISTS \"foo_bar\"" )]
+    [InlineData( true, true, "DROP TABLE IF EXISTS temp.\"foo_bar\"" )]
+    public void Visit_ShouldInterpretDropTable(bool isTemporary, bool ifExists, string expected)
+    {
+        _sut.Visit( SqlNode.DropTable( "foo", "bar", ifExists, isTemporary ) );
+        _sut.Context.Sql.ToString().Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( false, "DROP VIEW \"foo_bar\"" )]
+    [InlineData( true, "DROP VIEW IF EXISTS \"foo_bar\"" )]
+    public void Visit_ShouldInterpretDropView(bool ifExists, string expected)
+    {
+        _sut.Visit( SqlNode.DropView( "foo", "bar", ifExists ) );
+        _sut.Context.Sql.ToString().Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( false, "DROP INDEX \"foo_bar\"" )]
+    [InlineData( true, "DROP INDEX IF EXISTS \"foo_bar\"" )]
+    public void Visit_ShouldInterpretDropIndex(bool ifExists, string expected)
+    {
+        _sut.Visit( SqlNode.DropIndex( "foo", "bar", ifExists ) );
+        _sut.Context.Sql.ToString().Should().Be( expected );
     }
 
     [Fact]
@@ -3080,7 +3606,7 @@ WHERE EXISTS (
         _sut.Visit(
             SqlNode.Batch(
                 SqlNode.BeginTransaction( IsolationLevel.Serializable ),
-                SqlNode.DropTempTable( "bar" ),
+                SqlNode.DropTable( string.Empty, "bar", isTemporary: true ),
                 SqlNode.RawQuery( "SELECT * FROM foo" ),
                 SqlNode.RawQuery( "SELECT * FROM qux" ),
                 SqlNode.CommitTransaction() ) );

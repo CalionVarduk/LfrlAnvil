@@ -18,37 +18,44 @@ public static class SqlNodeExtensions
 {
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlTableRecordSetNode ToRecordSet(this ISqlTable table, string? alias = null)
+    public static SqlTableNode ToRecordSet(this ISqlTable table, string? alias = null)
     {
         return SqlNode.Table( table, alias );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlTableBuilderRecordSetNode ToRecordSet(this ISqlTableBuilder table, string? alias = null)
+    public static SqlTableBuilderNode ToRecordSet(this ISqlTableBuilder table, string? alias = null)
     {
         return SqlNode.Table( table, alias );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlViewRecordSetNode ToRecordSet(this ISqlView view, string? alias = null)
+    public static SqlViewNode ToRecordSet(this ISqlView view, string? alias = null)
     {
         return SqlNode.View( view, alias );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlViewBuilderRecordSetNode ToRecordSet(this ISqlViewBuilder view, string? alias = null)
+    public static SqlViewBuilderNode ToRecordSet(this ISqlViewBuilder view, string? alias = null)
     {
         return SqlNode.View( view, alias );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlTemporaryTableRecordSetNode AsSet(this SqlCreateTemporaryTableNode node, string? alias = null)
+    public static SqlNewTableNode AsSet(this SqlCreateTableNode node, string? alias = null)
     {
-        return new SqlTemporaryTableRecordSetNode( node, alias, isOptional: false );
+        return new SqlNewTableNode( node, alias, isOptional: false );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlNewViewNode AsSet(this SqlCreateViewNode node, string? alias = null)
+    {
+        return new SqlNewViewNode( node, alias, isOptional: false );
     }
 
     [Pure]
@@ -731,8 +738,29 @@ public static class SqlNodeExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlDropTemporaryTableNode ToDropTable(this SqlCreateTemporaryTableNode node)
+    public static SqlDropTableNode ToDropTable(this SqlCreateTableNode node, bool ifExists = false)
     {
-        return SqlNode.DropTempTable( node.Name );
+        return SqlNode.DropTable( node.SchemaName, node.Name, ifExists, node.IsTemporary );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlDropViewNode ToDropView(this SqlCreateViewNode node, bool ifExists = false)
+    {
+        return SqlNode.DropView( node.SchemaName, node.Name, ifExists );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlDropIndexNode ToDropIndex(this SqlCreateIndexNode node, bool ifExists = false)
+    {
+        return SqlNode.DropIndex( node.SchemaName, node.Name, ifExists );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlTruncateNode ToTruncate(this SqlRecordSetNode node)
+    {
+        return SqlNode.Truncate( node );
     }
 }

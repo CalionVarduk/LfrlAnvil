@@ -44,17 +44,22 @@ internal abstract class SqliteSourceNodeValidator : SqlNodeVisitor
         AddForbiddenNode( node );
     }
 
-    public override void VisitTableRecordSet(SqlTableRecordSetNode node)
+    public override void VisitTable(SqlTableNode node)
     {
         AddForbiddenNode( node );
     }
 
-    public override void VisitViewRecordSet(SqlViewRecordSetNode node)
+    public override void VisitView(SqlViewNode node)
     {
         AddForbiddenNode( node );
     }
 
-    public override void VisitTemporaryTableRecordSet(SqlTemporaryTableRecordSetNode node)
+    public override void VisitNewTable(SqlNewTableNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
+    public override void VisitNewView(SqlNewViewNode node)
     {
         AddForbiddenNode( node );
     }
@@ -84,17 +89,57 @@ internal abstract class SqliteSourceNodeValidator : SqlNodeVisitor
         AddForbiddenNode( node );
     }
 
+    public override void VisitTruncate(SqlTruncateNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
     public override void VisitColumnDefinition(SqlColumnDefinitionNode node)
     {
         AddForbiddenNode( node );
     }
 
-    public override void VisitCreateTemporaryTable(SqlCreateTemporaryTableNode node)
+    public override void VisitPrimaryKeyDefinition(SqlPrimaryKeyDefinitionNode node)
     {
         AddForbiddenNode( node );
     }
 
-    public override void VisitDropTemporaryTable(SqlDropTemporaryTableNode node)
+    public override void VisitForeignKeyDefinition(SqlForeignKeyDefinitionNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
+    public override void VisitCheckDefinition(SqlCheckDefinitionNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
+    public override void VisitCreateTable(SqlCreateTableNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
+    public override void VisitCreateView(SqlCreateViewNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
+    public override void VisitCreateIndex(SqlCreateIndexNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
+    public override void VisitDropTable(SqlDropTableNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
+    public override void VisitDropView(SqlDropViewNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
+    public override void VisitDropIndex(SqlDropIndexNode node)
     {
         AddForbiddenNode( node );
     }

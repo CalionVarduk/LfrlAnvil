@@ -191,20 +191,20 @@ public static class SqlNodeVisitorExtensions
                 visitor.VisitRawRecordSet( ReinterpretCast.To<SqlRawRecordSetNode>( node ) );
                 break;
 
-            case SqlNodeType.TableRecordSet:
-                visitor.VisitTableRecordSet( ReinterpretCast.To<SqlTableRecordSetNode>( node ) );
+            case SqlNodeType.Table:
+                visitor.VisitTable( ReinterpretCast.To<SqlTableNode>( node ) );
                 break;
 
-            case SqlNodeType.TableBuilderRecordSet:
-                visitor.VisitTableBuilderRecordSet( ReinterpretCast.To<SqlTableBuilderRecordSetNode>( node ) );
+            case SqlNodeType.TableBuilder:
+                visitor.VisitTableBuilder( ReinterpretCast.To<SqlTableBuilderNode>( node ) );
                 break;
 
-            case SqlNodeType.ViewRecordSet:
-                visitor.VisitViewRecordSet( ReinterpretCast.To<SqlViewRecordSetNode>( node ) );
+            case SqlNodeType.View:
+                visitor.VisitView( ReinterpretCast.To<SqlViewNode>( node ) );
                 break;
 
-            case SqlNodeType.ViewBuilderRecordSet:
-                visitor.VisitViewBuilderRecordSet( ReinterpretCast.To<SqlViewBuilderRecordSetNode>( node ) );
+            case SqlNodeType.ViewBuilder:
+                visitor.VisitViewBuilder( ReinterpretCast.To<SqlViewBuilderNode>( node ) );
                 break;
 
             case SqlNodeType.QueryRecordSet:
@@ -215,8 +215,12 @@ public static class SqlNodeVisitorExtensions
                 visitor.VisitCommonTableExpressionRecordSet( ReinterpretCast.To<SqlCommonTableExpressionRecordSetNode>( node ) );
                 break;
 
-            case SqlNodeType.TemporaryTableRecordSet:
-                visitor.VisitTemporaryTableRecordSet( ReinterpretCast.To<SqlTemporaryTableRecordSetNode>( node ) );
+            case SqlNodeType.NewTable:
+                visitor.VisitNewTable( ReinterpretCast.To<SqlNewTableNode>( node ) );
+                break;
+
+            case SqlNodeType.NewView:
+                visitor.VisitNewView( ReinterpretCast.To<SqlNewViewNode>( node ) );
                 break;
 
             case SqlNodeType.JoinOn:
@@ -327,16 +331,48 @@ public static class SqlNodeVisitorExtensions
                 visitor.VisitDeleteFrom( ReinterpretCast.To<SqlDeleteFromNode>( node ) );
                 break;
 
+            case SqlNodeType.Truncate:
+                visitor.VisitTruncate( ReinterpretCast.To<SqlTruncateNode>( node ) );
+                break;
+
             case SqlNodeType.ColumnDefinition:
                 visitor.VisitColumnDefinition( ReinterpretCast.To<SqlColumnDefinitionNode>( node ) );
                 break;
 
-            case SqlNodeType.CreateTemporaryTable:
-                visitor.VisitCreateTemporaryTable( ReinterpretCast.To<SqlCreateTemporaryTableNode>( node ) );
+            case SqlNodeType.PrimaryKeyDefinition:
+                visitor.VisitPrimaryKeyDefinition( ReinterpretCast.To<SqlPrimaryKeyDefinitionNode>( node ) );
                 break;
 
-            case SqlNodeType.DropTemporaryTable:
-                visitor.VisitDropTemporaryTable( ReinterpretCast.To<SqlDropTemporaryTableNode>( node ) );
+            case SqlNodeType.ForeignKeyDefinition:
+                visitor.VisitForeignKeyDefinition( ReinterpretCast.To<SqlForeignKeyDefinitionNode>( node ) );
+                break;
+
+            case SqlNodeType.CheckDefinition:
+                visitor.VisitCheckDefinition( ReinterpretCast.To<SqlCheckDefinitionNode>( node ) );
+                break;
+
+            case SqlNodeType.CreateTable:
+                visitor.VisitCreateTable( ReinterpretCast.To<SqlCreateTableNode>( node ) );
+                break;
+
+            case SqlNodeType.CreateView:
+                visitor.VisitCreateView( ReinterpretCast.To<SqlCreateViewNode>( node ) );
+                break;
+
+            case SqlNodeType.CreateIndex:
+                visitor.VisitCreateIndex( ReinterpretCast.To<SqlCreateIndexNode>( node ) );
+                break;
+
+            case SqlNodeType.DropTable:
+                visitor.VisitDropTable( ReinterpretCast.To<SqlDropTableNode>( node ) );
+                break;
+
+            case SqlNodeType.DropView:
+                visitor.VisitDropView( ReinterpretCast.To<SqlDropViewNode>( node ) );
+                break;
+
+            case SqlNodeType.DropIndex:
+                visitor.VisitDropIndex( ReinterpretCast.To<SqlDropIndexNode>( node ) );
                 break;
 
             case SqlNodeType.StatementBatch:

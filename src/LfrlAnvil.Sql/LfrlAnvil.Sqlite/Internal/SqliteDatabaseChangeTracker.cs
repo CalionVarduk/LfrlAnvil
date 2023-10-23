@@ -493,7 +493,7 @@ internal sealed class SqliteDatabaseChangeTracker
             .AppendTokenSeparator()
             .AppendElementsBegin();
 
-        foreach ( var c in table.PrimaryKey.Index.Columns.Span )
+        foreach ( var c in table.PrimaryKey.Index.Columns )
             builder.AppendIndexedColumn( c.Column.Name, c.Ordering );
 
         builder.AppendElementsEnd( trimCount: 2 );
@@ -508,7 +508,7 @@ internal sealed class SqliteDatabaseChangeTracker
                 .AppendTokenSeparator()
                 .AppendElementsBegin();
 
-            foreach ( var c in foreignKey.Index.Columns.Span )
+            foreach ( var c in foreignKey.Index.Columns )
                 builder.AppendNamedElement( c.Column.Name );
 
             builder
@@ -518,7 +518,7 @@ internal sealed class SqliteDatabaseChangeTracker
                 .AppendTokenSeparator()
                 .AppendElementsBegin();
 
-            foreach ( var c in foreignKey.ReferencedIndex.Columns.Span )
+            foreach ( var c in foreignKey.ReferencedIndex.Columns )
                 builder.AppendNamedElement( c.Column.Name );
 
             builder
@@ -715,7 +715,7 @@ internal sealed class SqliteDatabaseChangeTracker
             .AppendTokenSeparator()
             .AppendElementsBegin();
 
-        foreach ( var c in index.Columns.Span )
+        foreach ( var c in index.Columns )
             builder.AppendIndexedColumn( c.Column.Name, c.Ordering );
 
         builder.AppendElementsEnd( trimCount: 2 );

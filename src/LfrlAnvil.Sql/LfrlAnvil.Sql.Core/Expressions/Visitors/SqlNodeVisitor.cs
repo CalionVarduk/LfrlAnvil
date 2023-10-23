@@ -428,10 +428,10 @@ public abstract class SqlNodeVisitor : ISqlNodeVisitor
     }
 
     public virtual void VisitRawRecordSet(SqlRawRecordSetNode node) { }
-    public virtual void VisitTableRecordSet(SqlTableRecordSetNode node) { }
-    public virtual void VisitTableBuilderRecordSet(SqlTableBuilderRecordSetNode node) { }
-    public virtual void VisitViewRecordSet(SqlViewRecordSetNode node) { }
-    public virtual void VisitViewBuilderRecordSet(SqlViewBuilderRecordSetNode node) { }
+    public virtual void VisitTable(SqlTableNode node) { }
+    public virtual void VisitTableBuilder(SqlTableBuilderNode node) { }
+    public virtual void VisitView(SqlViewNode node) { }
+    public virtual void VisitViewBuilder(SqlViewBuilderNode node) { }
 
     public virtual void VisitQueryRecordSet(SqlQueryRecordSetNode node)
     {
@@ -439,7 +439,8 @@ public abstract class SqlNodeVisitor : ISqlNodeVisitor
     }
 
     public virtual void VisitCommonTableExpressionRecordSet(SqlCommonTableExpressionRecordSetNode node) { }
-    public virtual void VisitTemporaryTableRecordSet(SqlTemporaryTableRecordSetNode node) { }
+    public virtual void VisitNewTable(SqlNewTableNode node) { }
+    public virtual void VisitNewView(SqlNewViewNode node) { }
 
     public virtual void VisitJoinOn(SqlDataSourceJoinOnNode node)
     {
@@ -602,15 +603,71 @@ public abstract class SqlNodeVisitor : ISqlNodeVisitor
         this.Visit( node.DataSource );
     }
 
-    public virtual void VisitColumnDefinition(SqlColumnDefinitionNode node) { }
+    public virtual void VisitTruncate(SqlTruncateNode node)
+    {
+        this.Visit( node.Table );
+    }
 
-    public virtual void VisitCreateTemporaryTable(SqlCreateTemporaryTableNode node)
+    public virtual void VisitColumnDefinition(SqlColumnDefinitionNode node)
+    {
+        if ( node.DefaultValue is not null )
+            this.Visit( node.DefaultValue );
+    }
+
+    public virtual void VisitPrimaryKeyDefinition(SqlPrimaryKeyDefinitionNode node)
+    {
+        foreach ( var column in node.Columns )
+            VisitOrderBy( column );
+    }
+
+    public virtual void VisitForeignKeyDefinition(SqlForeignKeyDefinitionNode node)
+    {
+        foreach ( var column in node.Columns )
+            this.Visit( column );
+
+        this.Visit( node.ReferencedTable );
+        foreach ( var column in node.ReferencedColumns )
+            this.Visit( column );
+    }
+
+    public virtual void VisitCheckDefinition(SqlCheckDefinitionNode node)
+    {
+        this.Visit( node.Predicate );
+    }
+
+    public virtual void VisitCreateTable(SqlCreateTableNode node)
     {
         foreach ( var column in node.Columns )
             VisitColumnDefinition( column );
+
+        if ( node.PrimaryKey is not null )
+            VisitPrimaryKeyDefinition( node.PrimaryKey );
+
+        foreach ( var foreignKey in node.ForeignKeys )
+            VisitForeignKeyDefinition( foreignKey );
+
+        foreach ( var check in node.Checks )
+            VisitCheckDefinition( check );
     }
 
-    public virtual void VisitDropTemporaryTable(SqlDropTemporaryTableNode node) { }
+    public virtual void VisitCreateView(SqlCreateViewNode node)
+    {
+        this.Visit( node.Source );
+    }
+
+    public virtual void VisitCreateIndex(SqlCreateIndexNode node)
+    {
+        this.Visit( node.Table );
+        foreach ( var column in node.Columns )
+            VisitOrderBy( column );
+
+        if ( node.Filter is not null )
+            this.Visit( node.Filter );
+    }
+
+    public virtual void VisitDropTable(SqlDropTableNode node) { }
+    public virtual void VisitDropView(SqlDropViewNode node) { }
+    public virtual void VisitDropIndex(SqlDropIndexNode node) { }
 
     public virtual void VisitStatementBatch(SqlStatementBatchNode node)
     {

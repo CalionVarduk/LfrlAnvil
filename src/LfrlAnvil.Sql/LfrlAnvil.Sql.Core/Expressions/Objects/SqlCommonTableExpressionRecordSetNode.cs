@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
@@ -9,20 +8,15 @@ public sealed class SqlCommonTableExpressionRecordSetNode : SqlRecordSetNode
     private Dictionary<string, SqlQueryDataFieldNode>? _fields;
 
     internal SqlCommonTableExpressionRecordSetNode(SqlCommonTableExpressionNode commonTableExpression, string? alias, bool isOptional)
-        : base( SqlNodeType.CommonTableExpressionRecordSet, isOptional )
+        : base( SqlNodeType.CommonTableExpressionRecordSet, alias, isOptional )
     {
         CommonTableExpression = commonTableExpression;
-        Alias = alias;
         _fields = null;
     }
 
-    public string? Alias { get; }
     public SqlCommonTableExpressionNode CommonTableExpression { get; }
-    public override string Name => Alias ?? CommonTableExpression.Name;
-
-    [MemberNotNullWhen( true, nameof( Alias ) )]
-    public override bool IsAliased => Alias is not null;
-
+    public override string SourceSchemaName => string.Empty;
+    public override string SourceName => CommonTableExpression.Name;
     public new SqlQueryDataFieldNode this[string fieldName] => GetField( fieldName );
 
     [Pure]

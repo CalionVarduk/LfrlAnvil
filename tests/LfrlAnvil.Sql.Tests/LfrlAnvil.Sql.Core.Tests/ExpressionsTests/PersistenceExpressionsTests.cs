@@ -50,6 +50,21 @@ AND WHERE ([foo].[a] : ?) > (""5"" : System.Int32)" );
     }
 
     [Fact]
+    public void Truncate_ShouldCreateTruncateNode()
+    {
+        var set = SqlNode.RawRecordSet( "foo" );
+        var sut = set.ToTruncate();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.Truncate );
+            sut.Table.Should().BeSameAs( set );
+            text.Should().Be( "TRUNCATE [foo]" );
+        }
+    }
+
+    [Fact]
     public void ValueAssignment_ShouldCreateValueAssignmentNode()
     {
         var dataField = SqlNode.RawRecordSet( "foo" )["a"];

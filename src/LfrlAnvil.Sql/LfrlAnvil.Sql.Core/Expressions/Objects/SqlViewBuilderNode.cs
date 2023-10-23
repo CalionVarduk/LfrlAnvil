@@ -7,23 +7,20 @@ using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
 
-public sealed class SqlViewBuilderRecordSetNode : SqlRecordSetNode
+public sealed class SqlViewBuilderNode : SqlRecordSetNode
 {
-    private readonly string? _alias;
     private readonly FieldCollection _fields;
 
-    internal SqlViewBuilderRecordSetNode(ISqlViewBuilder view, string? alias, bool isOptional)
-        : base( SqlNodeType.ViewBuilderRecordSet, isOptional )
+    internal SqlViewBuilderNode(ISqlViewBuilder view, string? alias, bool isOptional)
+        : base( SqlNodeType.ViewBuilder, alias, isOptional )
     {
         View = view;
-        _alias = alias;
-        IsAliased = _alias is not null;
         _fields = new FieldCollection( this );
     }
 
     public ISqlViewBuilder View { get; }
-    public override bool IsAliased { get; }
-    public override string Name => _alias ?? View.FullName;
+    public override string SourceSchemaName => View.Schema.Name;
+    public override string SourceName => View.Name;
     public new SqlQueryDataFieldNode this[string fieldName] => GetField( fieldName );
 
     [Pure]
@@ -33,15 +30,15 @@ public sealed class SqlViewBuilderRecordSetNode : SqlRecordSetNode
     }
 
     [Pure]
-    public override SqlViewBuilderRecordSetNode As(string alias)
+    public override SqlViewBuilderNode As(string alias)
     {
-        return new SqlViewBuilderRecordSetNode( View, alias, IsOptional );
+        return new SqlViewBuilderNode( View, alias, IsOptional );
     }
 
     [Pure]
-    public override SqlViewBuilderRecordSetNode AsSelf()
+    public override SqlViewBuilderNode AsSelf()
     {
-        return new SqlViewBuilderRecordSetNode( View, alias: null, IsOptional );
+        return new SqlViewBuilderNode( View, alias: null, IsOptional );
     }
 
     [Pure]
@@ -57,18 +54,18 @@ public sealed class SqlViewBuilderRecordSetNode : SqlRecordSetNode
     }
 
     [Pure]
-    public override SqlViewBuilderRecordSetNode MarkAsOptional(bool optional = true)
+    public override SqlViewBuilderNode MarkAsOptional(bool optional = true)
     {
         return IsOptional != optional
-            ? new SqlViewBuilderRecordSetNode( View, IsAliased ? Name : null, isOptional: optional )
+            ? new SqlViewBuilderNode( View, Alias, isOptional: optional )
             : this;
     }
 
     private sealed class FieldCollection : IReadOnlyCollection<SqlQueryDataFieldNode>
     {
-        private readonly SqlViewBuilderRecordSetNode _owner;
+        private readonly SqlViewBuilderNode _owner;
 
-        internal FieldCollection(SqlViewBuilderRecordSetNode owner)
+        internal FieldCollection(SqlViewBuilderNode owner)
         {
             _owner = owner;
         }

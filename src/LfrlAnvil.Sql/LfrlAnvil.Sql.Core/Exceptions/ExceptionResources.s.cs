@@ -53,7 +53,7 @@ public static class ExceptionResources
 
         if ( columns.Length > 0 )
         {
-            foreach ( var c in columns.Span )
+            foreach ( var c in columns )
                 builder.Append( c.Column.Name ).Append( ' ' ).Append( c.Ordering.Name );
         }
 
@@ -222,7 +222,7 @@ public static class ExceptionResources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string TableBelongsToAnotherDatabase(SqlTableBuilderRecordSetNode node)
+    public static string TableBelongsToAnotherDatabase(SqlTableBuilderNode node)
     {
         return $@"Table belongs to another database:
 {node}";
@@ -230,7 +230,7 @@ public static class ExceptionResources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string ViewBelongsToAnotherDatabase(SqlViewBuilderRecordSetNode node)
+    public static string ViewBelongsToAnotherDatabase(SqlViewBuilderNode node)
     {
         return $@"View belongs to another database:
 {node}";
@@ -254,7 +254,7 @@ public static class ExceptionResources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string TableIsArchived(SqlTableBuilderRecordSetNode node)
+    public static string TableIsArchived(SqlTableBuilderNode node)
     {
         return $@"Table is archived:
 {node}";
@@ -262,7 +262,7 @@ public static class ExceptionResources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string ViewIsArchived(SqlViewBuilderRecordSetNode node)
+    public static string ViewIsArchived(SqlViewBuilderNode node)
     {
         return $@"View is archived:
 {node}";

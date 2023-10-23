@@ -243,17 +243,17 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
 
     public override void VisitRawRecordSet(SqlRawRecordSetNode node)
     {
-        AppendDelimitedName( node.BaseName );
-        if ( node.IsAliased )
-            AppendDelimitedAlias( node.Name );
+        AppendDelimitedName( node.SourceName );
+        AppendDelimitedAlias( node.Alias );
     }
 
-    public override void VisitTemporaryTableRecordSet(SqlTemporaryTableRecordSetNode node)
+    public override void VisitNewTable(SqlNewTableNode node)
     {
-        Context.Sql.Append( "TEMP" ).AppendDot();
-        AppendDelimitedName( node.CreationNode.Name );
-        if ( node.IsAliased )
-            AppendDelimitedAlias( node.Name );
+        if ( node.CreationNode.IsTemporary )
+            Context.Sql.Append( "TEMP" ).AppendDot();
+
+        AppendDelimitedSchemaObjectName( node.CreationNode.SchemaName, node.CreationNode.Name );
+        AppendDelimitedAlias( node.Alias );
     }
 
     public override void VisitDataSource(SqlDataSourceNode node)
@@ -268,7 +268,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
             {
                 this.Visit( node.From );
 
-                foreach ( var join in node.Joins.Span )
+                foreach ( var join in node.Joins )
                 {
                     Context.AppendIndent();
                     VisitJoinOn( join );
@@ -303,7 +303,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
 
             using ( Context.TempIndentIncrease() )
             {
-                foreach ( var selection in node.Selection.Span )
+                foreach ( var selection in node.Selection )
                 {
                     Context.AppendIndent();
                     this.Visit( selection );
@@ -328,7 +328,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
         {
             VisitChild( node.FirstQuery );
 
-            foreach ( var component in node.FollowingQueries.Span )
+            foreach ( var component in node.FollowingQueries )
             {
                 Context.AppendIndent();
                 VisitCompoundQueryComponent( component );
@@ -404,15 +404,14 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
         {
             Context.Sql.Append( "INSERT INTO" ).AppendSpace();
 
-            AppendRecordSetName( node.RecordSet.AsSelf() );
-            if ( node.RecordSet.IsAliased )
-                AppendDelimitedAlias( node.RecordSet.Name );
+            AppendDelimitedRecordSetName( node.RecordSet.AsSelf() );
+            AppendDelimitedAlias( node.RecordSet.Alias );
 
             Context.Sql.AppendSpace().Append( '(' );
 
             if ( node.DataFields.Length > 0 )
             {
-                foreach ( var dataField in node.DataFields.Span )
+                foreach ( var dataField in node.DataFields )
                 {
                     this.Visit( dataField );
                     Context.Sql.AppendComma().AppendSpace();
@@ -441,7 +440,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
 
             using ( Context.TempIndentIncrease() )
             {
-                foreach ( var assignment in node.Assignments.Span )
+                foreach ( var assignment in node.Assignments )
                 {
                     Context.AppendIndent();
                     VisitValueAssignment( assignment );
@@ -468,43 +467,229 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
         }
     }
 
+    public override void VisitTruncate(SqlTruncateNode node)
+    {
+        using ( Context.TempParentNodeUpdate( node ) )
+        {
+            Context.Sql.Append( "TRUNCATE" ).AppendSpace();
+            AppendDelimitedRecordSetName( node.Table );
+        }
+    }
+
     public override void VisitColumnDefinition(SqlColumnDefinitionNode node)
     {
         AppendDelimitedName( node.Name );
         AppendExpressionType( node.Type );
+
+        if ( node.DefaultValue is not null )
+        {
+            Context.Sql.AppendSpace().Append( "DEFAULT" ).AppendSpace();
+            VisitChild( node.DefaultValue );
+        }
     }
 
-    public override void VisitCreateTemporaryTable(SqlCreateTemporaryTableNode node)
+    public override void VisitPrimaryKeyDefinition(SqlPrimaryKeyDefinitionNode node)
+    {
+        Context.Sql.Append( "PRIMARY" ).AppendSpace().Append( "KEY" ).AppendSpace();
+        AppendDelimitedName( node.Name );
+        Context.Sql.AppendSpace().Append( '(' );
+
+        if ( node.Columns.Length > 0 )
+        {
+            foreach ( var column in node.Columns )
+            {
+                VisitOrderBy( column );
+                Context.Sql.AppendComma().AppendSpace();
+            }
+
+            Context.Sql.ShrinkBy( 2 );
+        }
+
+        Context.Sql.Append( ')' );
+    }
+
+    public override void VisitForeignKeyDefinition(SqlForeignKeyDefinitionNode node)
+    {
+        Context.Sql.Append( "FOREIGN" ).AppendSpace().Append( "KEY" ).AppendSpace();
+        AppendDelimitedName( node.Name );
+        Context.Sql.AppendSpace().Append( '(' );
+
+        if ( node.Columns.Length > 0 )
+        {
+            foreach ( var column in node.Columns )
+            {
+                VisitChild( column );
+                Context.Sql.AppendComma().AppendSpace();
+            }
+
+            Context.Sql.ShrinkBy( 2 );
+        }
+
+        Context.Sql.Append( ')' ).AppendSpace().Append( "REFERENCES" ).AppendSpace();
+        AppendDelimitedRecordSetName( node.ReferencedTable );
+        Context.Sql.AppendSpace().Append( '(' );
+
+        if ( node.ReferencedColumns.Length > 0 )
+        {
+            foreach ( var column in node.ReferencedColumns )
+            {
+                VisitChild( column );
+                Context.Sql.AppendComma().AppendSpace();
+            }
+
+            Context.Sql.ShrinkBy( 2 );
+        }
+
+        Context.Sql.Append( ')' ).AppendSpace();
+        Context.Sql.Append( "ON" ).AppendSpace().Append( "DELETE" ).AppendSpace().Append( node.OnDeleteBehavior.Name ).AppendSpace();
+        Context.Sql.Append( "ON" ).AppendSpace().Append( "UPDATE" ).AppendSpace().Append( node.OnUpdateBehavior.Name );
+    }
+
+    public override void VisitCheckDefinition(SqlCheckDefinitionNode node)
     {
         using ( Context.TempParentNodeUpdate( node ) )
         {
-            Context.Sql.Append( "CREATE TEMPORARY TABLE" ).AppendSpace();
+            Context.Sql.Append( "CHECK" ).AppendSpace();
             AppendDelimitedName( node.Name );
+            Context.Sql.AppendSpace();
+            VisitChildWrappedInParentheses( node.Predicate );
+        }
+    }
 
-            if ( node.Columns.Length == 0 )
-                return;
+    public override void VisitCreateTable(SqlCreateTableNode node)
+    {
+        using ( Context.TempParentNodeUpdate( node ) )
+        {
+            Context.Sql.Append( "CREATE" ).AppendSpace().Append( "TABLE" ).AppendSpace();
+            if ( node.IfNotExists )
+                Context.Sql.Append( "IF" ).AppendSpace().Append( "NOT" ).AppendSpace().Append( "EXISTS" ).AppendSpace();
 
+            if ( node.IsTemporary )
+                Context.Sql.Append( "TEMP" ).AppendDot();
+
+            AppendDelimitedSchemaObjectName( node.SchemaName, node.Name );
             Context.Sql.AppendSpace().Append( '(' );
+
             using ( Context.TempIndentIncrease() )
             {
-                foreach ( var column in node.Columns.Span )
+                foreach ( var column in node.Columns )
                 {
                     Context.AppendIndent();
                     VisitColumnDefinition( column );
                     Context.Sql.AppendComma();
                 }
 
-                Context.Sql.ShrinkBy( 1 );
+                if ( node.PrimaryKey is not null )
+                {
+                    Context.AppendIndent();
+                    VisitPrimaryKeyDefinition( node.PrimaryKey );
+                    Context.Sql.AppendComma();
+                }
+
+                foreach ( var foreignKey in node.ForeignKeys )
+                {
+                    Context.AppendIndent();
+                    VisitForeignKeyDefinition( foreignKey );
+                    Context.Sql.AppendComma();
+                }
+
+                foreach ( var check in node.Checks )
+                {
+                    Context.AppendIndent();
+                    VisitCheckDefinition( check );
+                    Context.Sql.AppendComma();
+                }
+
+                if ( node.Columns.Length > 0 || node.PrimaryKey is not null || node.ForeignKeys.Length > 0 || node.Checks.Length > 0 )
+                    Context.Sql.ShrinkBy( 1 );
             }
 
             Context.AppendIndent().Append( ')' );
         }
     }
 
-    public override void VisitDropTemporaryTable(SqlDropTemporaryTableNode node)
+    public override void VisitCreateView(SqlCreateViewNode node)
     {
-        Context.Sql.Append( "DROP TEMPORARY TABLE" ).AppendSpace();
-        AppendDelimitedName( node.Name );
+        Context.Sql.Append( "CREATE" ).AppendSpace().Append( "VIEW" ).AppendSpace();
+        if ( node.IfNotExists )
+            Context.Sql.Append( "IF" ).AppendSpace().Append( "NOT" ).AppendSpace().Append( "EXISTS" ).AppendSpace();
+
+        AppendDelimitedSchemaObjectName( node.SchemaName, node.Name );
+
+        Context.Sql.AppendSpace().Append( "AS" );
+        Context.AppendIndent();
+        this.Visit( node.Source );
+    }
+
+    public override void VisitCreateIndex(SqlCreateIndexNode node)
+    {
+        using ( Context.TempParentNodeUpdate( node ) )
+        {
+            Context.Sql.Append( "CREATE" ).AppendSpace();
+            if ( node.IsUnique )
+                Context.Sql.Append( "UNIQUE" ).AppendSpace();
+
+            Context.Sql.Append( "INDEX" ).AppendSpace();
+            if ( node.IfNotExists )
+                Context.Sql.Append( "IF" ).AppendSpace().Append( "NOT" ).AppendSpace().Append( "EXISTS" ).AppendSpace();
+
+            AppendDelimitedSchemaObjectName( node.SchemaName, node.Name );
+            Context.Sql.AppendSpace().Append( "ON" ).AppendSpace();
+            AppendDelimitedRecordSetName( node.Table );
+
+            Context.Sql.AppendSpace().Append( '(' );
+            if ( node.Columns.Length > 0 )
+            {
+                using ( Context.TempIndentIncrease() )
+                {
+                    foreach ( var column in node.Columns )
+                    {
+                        VisitOrderBy( column );
+                        Context.Sql.AppendComma().AppendSpace();
+                    }
+
+                    Context.Sql.ShrinkBy( 2 );
+                }
+            }
+
+            Context.Sql.Append( ')' );
+
+            if ( node.Filter is not null )
+            {
+                Context.Sql.AppendSpace().Append( "WHERE" ).AppendSpace();
+                VisitChild( node.Filter );
+            }
+        }
+    }
+
+    public override void VisitDropTable(SqlDropTableNode node)
+    {
+        Context.Sql.Append( "DROP" ).AppendSpace().Append( "TABLE" ).AppendSpace();
+        if ( node.IfExists )
+            Context.Sql.Append( "IF" ).AppendSpace().Append( "EXISTS" ).AppendSpace();
+
+        if ( node.IsTemporary )
+            Context.Sql.Append( "TEMP" ).AppendDot();
+
+        AppendDelimitedSchemaObjectName( node.SchemaName, node.Name );
+    }
+
+    public override void VisitDropView(SqlDropViewNode node)
+    {
+        Context.Sql.Append( "DROP" ).AppendSpace().Append( "VIEW" ).AppendSpace();
+        if ( node.IfExists )
+            Context.Sql.Append( "IF" ).AppendSpace().Append( "EXISTS" ).AppendSpace();
+
+        AppendDelimitedSchemaObjectName( node.SchemaName, node.Name );
+    }
+
+    public override void VisitDropIndex(SqlDropIndexNode node)
+    {
+        Context.Sql.Append( "DROP" ).AppendSpace().Append( "INDEX" ).AppendSpace();
+        if ( node.IfExists )
+            Context.Sql.Append( "IF" ).AppendSpace().Append( "EXISTS" ).AppendSpace();
+
+        AppendDelimitedSchemaObjectName( node.SchemaName, node.Name );
     }
 
     public override void VisitStatementBatch(SqlStatementBatchNode node)
@@ -538,50 +723,18 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
         Context.Sql.Append( '{' ).Append( node.GetType().GetDebugString() ).Append( '}' );
     }
 
-    public override void AppendRecordSetName(SqlRecordSetNode node)
+    public override void AppendDelimitedRecordSetName(SqlRecordSetNode node)
     {
         if ( node.IsAliased )
         {
-            AppendDelimitedName( node.Name );
+            AppendDelimitedName( node.Alias );
             return;
         }
 
-        switch ( node.NodeType )
-        {
-            case SqlNodeType.TableRecordSet:
-            {
-                var table = ReinterpretCast.To<SqlTableRecordSetNode>( node );
-                AppendSchemaObjectName( table.Table.Schema.Name, table.Table.Name );
-                break;
-            }
-            case SqlNodeType.TableBuilderRecordSet:
-            {
-                var table = ReinterpretCast.To<SqlTableBuilderRecordSetNode>( node );
-                AppendSchemaObjectName( table.Table.Schema.Name, table.Table.Name );
-                break;
-            }
-            case SqlNodeType.ViewRecordSet:
-            {
-                var view = ReinterpretCast.To<SqlViewRecordSetNode>( node );
-                AppendSchemaObjectName( view.View.Schema.Name, view.View.Name );
-                break;
-            }
-            case SqlNodeType.ViewBuilderRecordSet:
-            {
-                var view = ReinterpretCast.To<SqlViewBuilderRecordSetNode>( node );
-                AppendSchemaObjectName( view.View.Schema.Name, view.View.Name );
-                break;
-            }
-            case SqlNodeType.TemporaryTableRecordSet:
-            {
-                Context.Sql.Append( "TEMP" ).AppendDot();
-                AppendDelimitedName( node.Name );
-                break;
-            }
-            default:
-                AppendDelimitedName( node.Name );
-                break;
-        }
+        if ( node.NodeType == SqlNodeType.NewTable && ReinterpretCast.To<SqlNewTableNode>( node ).CreationNode.IsTemporary )
+            Context.Sql.Append( "TEMP" ).AppendDot();
+
+        AppendDelimitedSchemaObjectName( node.SourceSchemaName, node.SourceName );
     }
 
     [Pure]
@@ -609,7 +762,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
             {
                 using ( Context.TempIndentIncrease() )
                 {
-                    foreach ( var arg in node.Arguments.Span )
+                    foreach ( var arg in node.Arguments )
                     {
                         VisitChild( arg );
                         Context.Sql.AppendComma().AppendSpace();

@@ -22,22 +22,28 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         Context = context;
         BeginNameDelimiter = beginNameDelimiter;
         EndNameDelimiter = endNameDelimiter;
+        IgnoredRecordSet = null;
     }
 
     public SqlNodeInterpreterContext Context { get; }
+    public SqlRecordSetNode? IgnoredRecordSet { get; private set; }
 
     public virtual void VisitRawExpression(SqlRawExpressionNode node)
     {
         AppendMultilineSql( node.Sql );
 
-        foreach ( var parameter in node.Parameters.Span )
+        foreach ( var parameter in node.Parameters )
             Context.AddParameter( parameter.Name, parameter.Type );
     }
 
     public virtual void VisitRawDataField(SqlRawDataFieldNode node)
     {
-        AppendRecordSetName( node.RecordSet );
-        Context.Sql.AppendDot();
+        if ( ! ReferenceEquals( IgnoredRecordSet, node.RecordSet ) )
+        {
+            AppendDelimitedRecordSetName( node.RecordSet );
+            Context.Sql.AppendDot();
+        }
+
         AppendDelimitedName( node.Name );
     }
 
@@ -56,29 +62,45 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public virtual void VisitColumn(SqlColumnNode node)
     {
-        AppendRecordSetName( node.RecordSet );
-        Context.Sql.AppendDot();
+        if ( ! ReferenceEquals( IgnoredRecordSet, node.RecordSet ) )
+        {
+            AppendDelimitedRecordSetName( node.RecordSet );
+            Context.Sql.AppendDot();
+        }
+
         AppendDelimitedName( node.Name );
     }
 
     public virtual void VisitColumnBuilder(SqlColumnBuilderNode node)
     {
-        AppendRecordSetName( node.RecordSet );
-        Context.Sql.AppendDot();
+        if ( ! ReferenceEquals( IgnoredRecordSet, node.RecordSet ) )
+        {
+            AppendDelimitedRecordSetName( node.RecordSet );
+            Context.Sql.AppendDot();
+        }
+
         AppendDelimitedName( node.Name );
     }
 
     public virtual void VisitQueryDataField(SqlQueryDataFieldNode node)
     {
-        AppendRecordSetName( node.RecordSet );
-        Context.Sql.AppendDot();
+        if ( ! ReferenceEquals( IgnoredRecordSet, node.RecordSet ) )
+        {
+            AppendDelimitedRecordSetName( node.RecordSet );
+            Context.Sql.AppendDot();
+        }
+
         AppendDelimitedName( node.Name );
     }
 
     public virtual void VisitViewDataField(SqlViewDataFieldNode node)
     {
-        AppendRecordSetName( node.RecordSet );
-        Context.Sql.AppendDot();
+        if ( ! ReferenceEquals( IgnoredRecordSet, node.RecordSet ) )
+        {
+            AppendDelimitedRecordSetName( node.RecordSet );
+            Context.Sql.AppendDot();
+        }
+
         AppendDelimitedName( node.Name );
     }
 
@@ -187,7 +209,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
             using ( Context.TempIndentIncrease() )
             {
-                foreach ( var @case in node.Cases.Span )
+                foreach ( var @case in node.Cases )
                 {
                     Context.AppendIndent();
                     VisitSwitchCase( @case );
@@ -263,7 +285,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     {
         AppendMultilineSql( node.Sql );
 
-        foreach ( var parameter in node.Parameters.Span )
+        foreach ( var parameter in node.Parameters )
             Context.AddParameter( parameter.Name, parameter.Type );
     }
 
@@ -415,7 +437,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
             Context.Sql.Append( "IN" ).AppendSpace().Append( '(' );
 
-            foreach ( var expr in node.Expressions.Span )
+            foreach ( var expr in node.Expressions )
             {
                 VisitChild( expr );
                 Context.Sql.AppendComma().AppendSpace();
@@ -442,37 +464,32 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public virtual void VisitRawRecordSet(SqlRawRecordSetNode node)
     {
-        Context.Sql.Append( node.BaseName );
-        if ( node.IsAliased )
-            AppendDelimitedAlias( node.Name );
+        Context.Sql.Append( node.SourceName );
+        AppendDelimitedAlias( node.Alias );
     }
 
-    public virtual void VisitTableRecordSet(SqlTableRecordSetNode node)
+    public virtual void VisitTable(SqlTableNode node)
     {
-        AppendSchemaObjectName( node.Table.Schema.Name, node.Table.Name );
-        if ( node.IsAliased )
-            AppendDelimitedAlias( node.Name );
+        AppendDelimitedSchemaObjectName( node.Table.Schema.Name, node.Table.Name );
+        AppendDelimitedAlias( node.Alias );
     }
 
-    public virtual void VisitTableBuilderRecordSet(SqlTableBuilderRecordSetNode node)
+    public virtual void VisitTableBuilder(SqlTableBuilderNode node)
     {
-        AppendSchemaObjectName( node.Table.Schema.Name, node.Table.Name );
-        if ( node.IsAliased )
-            AppendDelimitedAlias( node.Name );
+        AppendDelimitedSchemaObjectName( node.Table.Schema.Name, node.Table.Name );
+        AppendDelimitedAlias( node.Alias );
     }
 
-    public virtual void VisitViewRecordSet(SqlViewRecordSetNode node)
+    public virtual void VisitView(SqlViewNode node)
     {
-        AppendSchemaObjectName( node.View.Schema.Name, node.View.Name );
-        if ( node.IsAliased )
-            AppendDelimitedAlias( node.Name );
+        AppendDelimitedSchemaObjectName( node.View.Schema.Name, node.View.Name );
+        AppendDelimitedAlias( node.Alias );
     }
 
-    public virtual void VisitViewBuilderRecordSet(SqlViewBuilderRecordSetNode node)
+    public virtual void VisitViewBuilder(SqlViewBuilderNode node)
     {
-        AppendSchemaObjectName( node.View.Schema.Name, node.View.Name );
-        if ( node.IsAliased )
-            AppendDelimitedAlias( node.Name );
+        AppendDelimitedSchemaObjectName( node.View.Schema.Name, node.View.Name );
+        AppendDelimitedAlias( node.Alias );
     }
 
     public virtual void VisitQueryRecordSet(SqlQueryRecordSetNode node)
@@ -480,18 +497,23 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         using ( Context.TempParentNodeUpdate( node ) )
         {
             VisitChild( node.Query );
-            AppendDelimitedAlias( node.Name );
+            AppendDelimitedAlias( node.Alias );
         }
     }
 
     public virtual void VisitCommonTableExpressionRecordSet(SqlCommonTableExpressionRecordSetNode node)
     {
         AppendDelimitedName( node.CommonTableExpression.Name );
-        if ( node.IsAliased )
-            AppendDelimitedAlias( node.Alias );
+        AppendDelimitedAlias( node.Alias );
     }
 
-    public abstract void VisitTemporaryTableRecordSet(SqlTemporaryTableRecordSetNode node);
+    public abstract void VisitNewTable(SqlNewTableNode node);
+
+    public virtual void VisitNewView(SqlNewViewNode node)
+    {
+        AppendDelimitedSchemaObjectName( node.CreationNode.SchemaName, node.CreationNode.Name );
+        AppendDelimitedAlias( node.Alias );
+    }
 
     public virtual void VisitJoinOn(SqlDataSourceJoinOnNode node)
     {
@@ -540,7 +562,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public virtual void VisitSelectRecordSet(SqlSelectRecordSetNode node)
     {
-        AppendRecordSetName( node.RecordSet );
+        AppendDelimitedRecordSetName( node.RecordSet );
         Context.Sql.AppendDot().Append( '*' );
     }
 
@@ -559,7 +581,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public virtual void VisitRawQuery(SqlRawQueryExpressionNode node)
     {
-        foreach ( var parameter in node.Parameters.Span )
+        foreach ( var parameter in node.Parameters )
             Context.AddParameter( parameter.Name, parameter.Type );
 
         if ( Context.ParentNode is not null )
@@ -616,7 +638,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
                 return;
 
             Context.Sql.AppendSpace();
-            foreach ( var expr in node.Expressions.Span )
+            foreach ( var expr in node.Expressions )
             {
                 VisitChild( expr );
                 Context.Sql.AppendComma().AppendSpace();
@@ -644,7 +666,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
                 return;
 
             Context.Sql.AppendSpace();
-            foreach ( var orderBy in node.Ordering.Span )
+            foreach ( var orderBy in node.Ordering )
             {
                 VisitOrderBy( orderBy );
                 Context.Sql.AppendComma().AppendSpace();
@@ -666,7 +688,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
                 return;
 
             Context.Sql.AppendSpace();
-            foreach ( var cte in node.CommonTableExpressions.Span )
+            foreach ( var cte in node.CommonTableExpressions )
             {
                 VisitCommonTableExpression( cte );
                 Context.Sql.AppendComma();
@@ -727,16 +749,24 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     }
 
     public abstract void VisitDeleteFrom(SqlDeleteFromNode node);
+    public abstract void VisitTruncate(SqlTruncateNode node);
     public abstract void VisitColumnDefinition(SqlColumnDefinitionNode node);
-    public abstract void VisitCreateTemporaryTable(SqlCreateTemporaryTableNode node);
-    public abstract void VisitDropTemporaryTable(SqlDropTemporaryTableNode node);
+    public abstract void VisitPrimaryKeyDefinition(SqlPrimaryKeyDefinitionNode node);
+    public abstract void VisitForeignKeyDefinition(SqlForeignKeyDefinitionNode node);
+    public abstract void VisitCheckDefinition(SqlCheckDefinitionNode node);
+    public abstract void VisitCreateTable(SqlCreateTableNode node);
+    public abstract void VisitCreateView(SqlCreateViewNode node);
+    public abstract void VisitCreateIndex(SqlCreateIndexNode node);
+    public abstract void VisitDropTable(SqlDropTableNode node);
+    public abstract void VisitDropView(SqlDropViewNode node);
+    public abstract void VisitDropIndex(SqlDropIndexNode node);
 
     public virtual void VisitStatementBatch(SqlStatementBatchNode node)
     {
         if ( node.Statements.Length == 0 )
             return;
 
-        foreach ( var statement in node.Statements.Span )
+        foreach ( var statement in node.Statements )
         {
             this.Visit( statement );
             Context.Sql.AppendSemicolon().AppendLine();
@@ -763,17 +793,31 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         throw new UnrecognizedSqlNodeException( this, node );
     }
 
-    public abstract void AppendRecordSetName(SqlRecordSetNode node);
+    public abstract void AppendDelimitedRecordSetName(SqlRecordSetNode node);
 
     public void AppendDelimitedName(string name)
     {
         Context.Sql.Append( BeginNameDelimiter ).Append( name ).Append( EndNameDelimiter );
     }
 
-    public void AppendDelimitedAlias(string alias)
+    public void AppendDelimitedAlias(string? alias)
     {
+        if ( alias is null )
+            return;
+
         Context.Sql.AppendSpace().Append( "AS" ).AppendSpace();
         AppendDelimitedName( alias );
+    }
+
+    public virtual void AppendDelimitedSchemaObjectName(string schemaName, string objName)
+    {
+        if ( schemaName.Length > 0 )
+        {
+            AppendDelimitedName( schemaName );
+            Context.Sql.AppendDot();
+        }
+
+        AppendDelimitedName( objName );
     }
 
     public void AppendMultilineSql(string sql)
@@ -1017,6 +1061,33 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         return new SqlAggregateFunctionTraits( distinct, filter, custom );
     }
 
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public IgnoredRecordSetSwapper SwapIgnoredRecordSet(SqlRecordSetNode? node)
+    {
+        return new IgnoredRecordSetSwapper( this, node );
+    }
+
+    public readonly struct IgnoredRecordSetSwapper : IDisposable
+    {
+        private readonly SqlRecordSetNode? _previous;
+        private readonly SqlNodeInterpreter _interpreter;
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal IgnoredRecordSetSwapper(SqlNodeInterpreter interpreter, SqlRecordSetNode? node)
+        {
+            _interpreter = interpreter;
+            _previous = interpreter.IgnoredRecordSet;
+            interpreter.IgnoredRecordSet = node;
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public void Dispose()
+        {
+            _interpreter.IgnoredRecordSet = _previous;
+        }
+    }
+
     protected void VisitPrefixUnaryOperator(SqlNodeBase value, string symbol)
     {
         Context.Sql.Append( symbol );
@@ -1050,7 +1121,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             {
                 using ( Context.TempIndentIncrease() )
                 {
-                    foreach ( var arg in node.Arguments.Span )
+                    foreach ( var arg in node.Arguments )
                     {
                         VisitChild( arg );
                         Context.Sql.AppendComma().AppendSpace();
@@ -1073,7 +1144,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
         foreach ( var cteRange in commonTableExpressions )
         {
-            foreach ( var cte in cteRange.Span )
+            foreach ( var cte in cteRange )
             {
                 VisitCommonTableExpression( cte );
                 Context.Sql.AppendComma();
@@ -1112,7 +1183,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
         foreach ( var aggregationRange in aggregations )
         {
-            foreach ( var aggregation in aggregationRange.Span )
+            foreach ( var aggregation in aggregationRange )
             {
                 VisitChild( aggregation );
                 Context.Sql.AppendComma().AppendSpace();
@@ -1140,7 +1211,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
         foreach ( var orderByRange in ordering )
         {
-            foreach ( var orderBy in orderByRange.Span )
+            foreach ( var orderBy in orderByRange )
             {
                 VisitOrderBy( orderBy );
                 Context.Sql.AppendComma().AppendSpace();
@@ -1168,17 +1239,6 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
             Context.Sql.ShrinkBy( 1 );
         }
-    }
-
-    protected void AppendSchemaObjectName(string schemaName, string objName)
-    {
-        if ( schemaName.Length > 0 )
-        {
-            AppendDelimitedName( schemaName );
-            Context.Sql.AppendDot();
-        }
-
-        AppendDelimitedName( objName );
     }
 
     [Pure]

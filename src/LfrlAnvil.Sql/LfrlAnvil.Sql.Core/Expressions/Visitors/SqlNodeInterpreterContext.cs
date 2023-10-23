@@ -135,6 +135,7 @@ public sealed class SqlNodeInterpreterContext
         private readonly SqlNodeInterpreterContext _context;
         private readonly SqlNodeBase? _prevParentNode;
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal TemporaryParentNodeUpdate(SqlNodeInterpreterContext context, SqlNodeBase parentNode)
         {
             _context = context;
@@ -142,6 +143,7 @@ public sealed class SqlNodeInterpreterContext
             context.SetParentNode( parentNode );
         }
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public void Dispose()
         {
             _context.ParentNode = _prevParentNode;
@@ -152,12 +154,14 @@ public sealed class SqlNodeInterpreterContext
     {
         private readonly SqlNodeInterpreterContext _context;
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal TemporaryIndentIncrease(SqlNodeInterpreterContext context)
         {
             _context = context;
             context.IncreaseIndent();
         }
 
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public void Dispose()
         {
             _context.DecreaseIndent();

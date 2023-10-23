@@ -49,12 +49,12 @@ internal sealed class SqliteDefaultValueSourceValidator : SqliteSourceNodeValida
         AddForbiddenNode( node );
     }
 
-    public override void VisitTableBuilderRecordSet(SqlTableBuilderRecordSetNode node)
+    public override void VisitTableBuilder(SqlTableBuilderNode node)
     {
         AddForbiddenNode( node );
     }
 
-    public override void VisitViewBuilderRecordSet(SqlViewBuilderRecordSetNode node)
+    public override void VisitViewBuilder(SqlViewBuilderNode node)
     {
         AddForbiddenNode( node );
     }

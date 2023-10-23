@@ -619,89 +619,402 @@ END" );
     }
 
     [Fact]
-    public void ColumnDefinition_ShouldCreateColumnDefinitionNode()
+    public void Column_ShouldCreateColumnDefinitionNode()
     {
-        var sut = SqlNode.ColumnDefinition<string>( "foo" );
+        var sut = SqlNode.Column<string>( "foo" );
         var text = sut.ToString();
 
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.ColumnDefinition );
             sut.Name.Should().Be( "foo" );
+            sut.DefaultValue.Should().BeNull();
             sut.Type.Should().BeEquivalentTo( SqlExpressionType.Create<string>( isNullable: false ) );
             text.Should().Be( "[foo] : System.String" );
         }
     }
 
     [Fact]
-    public void ColumnDefinition_ShouldCreateColumnDefinitionNode_WithNullableType()
+    public void Column_ShouldCreateColumnDefinitionNode_WithNullableType()
     {
-        var sut = SqlNode.ColumnDefinition<string>( "foo", isNullable: true );
+        var sut = SqlNode.Column<string>( "foo", isNullable: true );
         var text = sut.ToString();
 
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.ColumnDefinition );
             sut.Name.Should().Be( "foo" );
+            sut.DefaultValue.Should().BeNull();
             sut.Type.Should().BeEquivalentTo( SqlExpressionType.Create<string>( isNullable: true ) );
             text.Should().Be( "[foo] : Nullable<System.String>" );
         }
     }
 
     [Fact]
-    public void CreateTemporaryTable_ShouldCreateCreateTemporaryTableNode()
+    public void Column_ShouldCreateColumnDefinitionNode_WithDefaultValue()
     {
-        var columns = new[]
-        {
-            SqlNode.ColumnDefinition<int>( "x" ),
-            SqlNode.ColumnDefinition<string>( "y", isNullable: true ),
-            SqlNode.ColumnDefinition<double>( "z" )
-        };
-
-        var sut = SqlNode.CreateTempTable( "foo", columns );
+        var defaultValue = SqlNode.Literal( "abc" ).Concat( SqlNode.Literal( "def" ) );
+        var sut = SqlNode.Column<string>( "foo", defaultValue: defaultValue );
         var text = sut.ToString();
 
         using ( new AssertionScope() )
         {
-            sut.NodeType.Should().Be( SqlNodeType.CreateTemporaryTable );
+            sut.NodeType.Should().Be( SqlNodeType.ColumnDefinition );
             sut.Name.Should().Be( "foo" );
+            sut.DefaultValue.Should().BeSameAs( defaultValue );
+            sut.Type.Should().BeEquivalentTo( SqlExpressionType.Create<string>() );
+            text.Should().Be( "[foo] : System.String DEFAULT ((\"abc\" : System.String) || (\"def\" : System.String))" );
+        }
+    }
+
+    [Fact]
+    public void PrimaryKey_ShouldCreatePrimaryKeyDefinitionNode()
+    {
+        var table = SqlNode.RawRecordSet( "foo" );
+        var columns = new[] { table["x"].Asc(), table["y"].Desc() };
+        var sut = SqlNode.PrimaryKey( "PK_foo", columns );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.PrimaryKeyDefinition );
+            sut.Name.Should().Be( "PK_foo" );
             sut.Columns.ToArray().Should().BeSequentiallyEqualTo( columns );
+            text.Should().Be( "PRIMARY KEY [PK_foo] (([foo].[x] : ?) ASC, ([foo].[y] : ?) DESC)" );
+        }
+    }
+
+    [Fact]
+    public void PrimaryKey_ShouldCreatePrimaryKeyDefinitionNode_WithoutColumns()
+    {
+        var sut = SqlNode.PrimaryKey( "PK_foo", Array.Empty<SqlOrderByNode>() );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.PrimaryKeyDefinition );
+            sut.Name.Should().Be( "PK_foo" );
+            sut.Columns.ToArray().Should().BeEmpty();
+            text.Should().Be( "PRIMARY KEY [PK_foo] ()" );
+        }
+    }
+
+    [Fact]
+    public void ForeignKey_ShouldCreateForeignKeyDefinitionNode()
+    {
+        var table = SqlNode.RawRecordSet( "foo" );
+        var referencedTable = SqlNode.RawRecordSet( "bar" );
+        var columns = new SqlDataFieldNode[] { table["x"], table["y"] };
+        var referencedColumns = new SqlDataFieldNode[] { referencedTable["x"], referencedTable["y"] };
+        var sut = SqlNode.ForeignKey( "FK_foo_REF_bar", columns, referencedTable, referencedColumns );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.ForeignKeyDefinition );
+            sut.Name.Should().Be( "FK_foo_REF_bar" );
+            sut.Columns.ToArray().Should().BeSequentiallyEqualTo( columns );
+            sut.ReferencedTable.Should().BeSameAs( referencedTable );
+            sut.ReferencedColumns.ToArray().Should().BeSequentiallyEqualTo( referencedColumns );
+            sut.OnDeleteBehavior.Should().BeSameAs( ReferenceBehavior.Restrict );
+            sut.OnUpdateBehavior.Should().BeSameAs( ReferenceBehavior.Restrict );
             text.Should()
                 .Be(
-                    @"CREATE TEMPORARY TABLE [foo] (
+                    "FOREIGN KEY [FK_foo_REF_bar] (([foo].[x] : ?), ([foo].[y] : ?)) REFERENCES [bar] (([bar].[x] : ?), ([bar].[y] : ?)) ON DELETE RESTRICT ON UPDATE RESTRICT" );
+        }
+    }
+
+    [Theory]
+    [InlineData( ReferenceBehavior.Values.Cascade, ReferenceBehavior.Values.Cascade )]
+    [InlineData( ReferenceBehavior.Values.Cascade, ReferenceBehavior.Values.Restrict )]
+    [InlineData( ReferenceBehavior.Values.Restrict, ReferenceBehavior.Values.Cascade )]
+    [InlineData( ReferenceBehavior.Values.Restrict, ReferenceBehavior.Values.Restrict )]
+    public void ForeignKey_ShouldCreateForeignKeyDefinitionNode_WithoutColumns(
+        ReferenceBehavior.Values onDelete,
+        ReferenceBehavior.Values onUpdate)
+    {
+        var referencedTable = SqlNode.RawRecordSet( "bar" );
+        var onDeleteBehavior = onDelete == ReferenceBehavior.Values.Restrict ? ReferenceBehavior.Restrict : ReferenceBehavior.Cascade;
+        var onUpdateBehavior = onUpdate == ReferenceBehavior.Values.Restrict ? ReferenceBehavior.Restrict : ReferenceBehavior.Cascade;
+
+        var sut = SqlNode.ForeignKey(
+            "FK_foo_REF_bar",
+            Array.Empty<SqlDataFieldNode>(),
+            referencedTable,
+            Array.Empty<SqlDataFieldNode>(),
+            onDeleteBehavior,
+            onUpdateBehavior );
+
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.ForeignKeyDefinition );
+            sut.Name.Should().Be( "FK_foo_REF_bar" );
+            sut.Columns.ToArray().Should().BeEmpty();
+            sut.ReferencedTable.Should().BeSameAs( referencedTable );
+            sut.ReferencedColumns.ToArray().Should().BeEmpty();
+            sut.OnDeleteBehavior.Should().BeSameAs( onDeleteBehavior );
+            sut.OnUpdateBehavior.Should().BeSameAs( onUpdateBehavior );
+            text.Should()
+                .Be( $"FOREIGN KEY [FK_foo_REF_bar] () REFERENCES [bar] () ON DELETE {onDeleteBehavior.Name} ON UPDATE {onUpdateBehavior.Name}" );
+        }
+    }
+
+    [Fact]
+    public void Check_ShouldCreateCheckDefinitionNode()
+    {
+        var table = SqlNode.RawRecordSet( "foo" );
+        var predicate = table["x"] > SqlNode.Literal( 10 );
+        var sut = SqlNode.Check( "CHK_foo", predicate );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.CheckDefinition );
+            sut.Name.Should().Be( "CHK_foo" );
+            sut.Predicate.Should().BeSameAs( predicate );
+            text.Should().Be( "CHECK [CHK_foo] (([foo].[x] : ?) > (\"10\" : System.Int32))" );
+        }
+    }
+
+    [Fact]
+    public void CreateTable_ShouldCreateCreateTableNode()
+    {
+        var columns = new[]
+        {
+            SqlNode.Column<int>( "x" ),
+            SqlNode.Column<string>( "y", isNullable: true ),
+            SqlNode.Column<double>( "z", defaultValue: SqlNode.Literal( 10.5 ) )
+        };
+
+        SqlPrimaryKeyDefinitionNode? primaryKey = null;
+        var foreignKeys = Array.Empty<SqlForeignKeyDefinitionNode>();
+        var checks = Array.Empty<SqlCheckDefinitionNode>();
+
+        var sut = SqlNode.CreateTable(
+            "foo",
+            "bar",
+            columns,
+            constraintsProvider: t =>
+            {
+                var qux = SqlNode.RawRecordSet( "qux" );
+                primaryKey = SqlNode.PrimaryKey( "PK_foobar", t["x"].Asc() );
+                foreignKeys = new[]
+                {
+                    SqlNode.ForeignKey(
+                        "FK_foobar_REF_qux",
+                        new SqlDataFieldNode[] { t["y"] },
+                        qux,
+                        new SqlDataFieldNode[] { qux["y"] } )
+                };
+
+                checks = new[] { SqlNode.Check( "CHK_foobar", t["z"] > SqlNode.Literal( 100.0 ) ) };
+
+                return SqlCreateTableConstraints.Empty
+                    .WithPrimaryKey( primaryKey )
+                    .WithForeignKeys( foreignKeys )
+                    .WithChecks( checks );
+            } );
+
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.CreateTable );
+            sut.SchemaName.Should().Be( "foo" );
+            sut.Name.Should().Be( "bar" );
+            sut.IsTemporary.Should().BeFalse();
+            sut.IfNotExists.Should().BeFalse();
+            sut.Columns.ToArray().Should().BeSequentiallyEqualTo( columns );
+            sut.PrimaryKey.Should().BeSameAs( primaryKey );
+            sut.ForeignKeys.ToArray().Should().BeSequentiallyEqualTo( foreignKeys );
+            sut.Checks.ToArray().Should().BeSequentiallyEqualTo( checks );
+            text.Should()
+                .Be(
+                    @"CREATE TABLE [foo].[bar] (
   [x] : System.Int32,
   [y] : Nullable<System.String>,
-  [z] : System.Double
+  [z] : System.Double DEFAULT (""10,5"" : System.Double),
+  PRIMARY KEY [PK_foobar] (([foo].[bar].[x] : System.Int32) ASC),
+  FOREIGN KEY [FK_foobar_REF_qux] (([foo].[bar].[y] : Nullable<System.String>)) REFERENCES [qux] (([qux].[y] : ?)) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CHECK [CHK_foobar] (([foo].[bar].[z] : System.Double) > (""100"" : System.Double))
 )" );
         }
     }
 
-    [Fact]
-    public void CreateTemporaryTable_ShouldCreateCreateTemporaryTableNode_WithEmptyColumns()
+    [Theory]
+    [InlineData( false, false, "CREATE TABLE [foo]" )]
+    [InlineData( true, false, "CREATE TABLE TEMP.[foo]" )]
+    [InlineData( false, true, "CREATE TABLE IF NOT EXISTS [foo]" )]
+    [InlineData( true, true, "CREATE TABLE IF NOT EXISTS TEMP.[foo]" )]
+    public void CreateTable_ShouldCreateCreateTableNode_WithEmptyColumnsAndNoConstraints(
+        bool isTemporary,
+        bool ifNotExists,
+        string expectedText)
     {
-        var sut = SqlNode.CreateTempTable( "foo" );
+        var sut = SqlNode.CreateTable( string.Empty, "foo", Array.Empty<SqlColumnDefinitionNode>(), ifNotExists, isTemporary );
         var text = sut.ToString();
 
         using ( new AssertionScope() )
         {
-            sut.NodeType.Should().Be( SqlNodeType.CreateTemporaryTable );
+            sut.NodeType.Should().Be( SqlNodeType.CreateTable );
+            sut.SchemaName.Should().BeEmpty();
             sut.Name.Should().Be( "foo" );
+            sut.IsTemporary.Should().Be( isTemporary );
+            sut.IfNotExists.Should().Be( ifNotExists );
             sut.Columns.ToArray().Should().BeEmpty();
-            text.Should().Be( "CREATE TEMPORARY TABLE [foo]" );
+            sut.PrimaryKey.Should().BeNull();
+            sut.ForeignKeys.ToArray().Should().BeEmpty();
+            sut.Checks.ToArray().Should().BeEmpty();
+            text.Should()
+                .Be(
+                    $@"{expectedText} (
+)" );
+        }
+    }
+
+    [Theory]
+    [InlineData( true, "CREATE VIEW IF NOT EXISTS [foo].[bar] AS" )]
+    [InlineData( false, "CREATE VIEW [foo].[bar] AS" )]
+    public void CreateView_ShouldCreateCreateViewNode(bool ifNotExists, string expectedHeader)
+    {
+        var source = SqlNode.RawQuery( "SELECT * FROM qux" );
+        var sut = source.ToCreateView( "foo", "bar", ifNotExists );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.CreateView );
+            sut.SchemaName.Should().Be( "foo" );
+            sut.Name.Should().Be( "bar" );
+            sut.IfNotExists.Should().Be( ifNotExists );
+            sut.Source.Should().BeSameAs( source );
+            text.Should()
+                .Be(
+                    $@"{expectedHeader}
+SELECT * FROM qux" );
         }
     }
 
     [Fact]
-    public void DropTemporaryTable_ShouldCreateDropTemporaryTableNode()
+    public void CreateIndex_ShouldCreateCreateIndexNode()
     {
-        var sut = SqlNode.CreateTempTable( "foo" ).ToDropTable();
+        var table = SqlNode.RawRecordSet( "qux" );
+        var columns = new[]
+        {
+            table["x"].Asc(),
+            table["y"].Desc()
+        };
+
+        var filter = table["x"] > table["y"];
+
+        var sut = SqlNode.CreateIndex( "foo", "bar", isUnique: false, table, columns, filter: filter );
         var text = sut.ToString();
 
         using ( new AssertionScope() )
         {
-            sut.NodeType.Should().Be( SqlNodeType.DropTemporaryTable );
+            sut.NodeType.Should().Be( SqlNodeType.CreateIndex );
+            sut.SchemaName.Should().Be( "foo" );
+            sut.Name.Should().Be( "bar" );
+            sut.IfNotExists.Should().BeFalse();
+            sut.IsUnique.Should().BeFalse();
+            sut.Table.Should().BeSameAs( table );
+            sut.Columns.ToArray().Should().BeSequentiallyEqualTo( columns );
+            text.Should()
+                .Be(
+                    "CREATE INDEX [foo].[bar] ON [qux] (([qux].[x] : ?) ASC, ([qux].[y] : ?) DESC) WHERE (([qux].[x] : ?) > ([qux].[y] : ?))" );
+        }
+    }
+
+    [Theory]
+    [InlineData( false, false, "CREATE INDEX [foo] ON [bar] ()" )]
+    [InlineData( false, true, "CREATE UNIQUE INDEX [foo] ON [bar] ()" )]
+    [InlineData( true, false, "CREATE INDEX IF NOT EXISTS [foo] ON [bar] ()" )]
+    [InlineData( true, true, "CREATE UNIQUE INDEX IF NOT EXISTS [foo] ON [bar] ()" )]
+    public void CreateIndex_ShouldCreateCreateIndexNode_WithEmptyColumnsAndNoFilter(bool ifNotExists, bool isUnique, string expectedText)
+    {
+        var table = SqlNode.RawRecordSet( "bar" );
+        var sut = SqlNode.CreateIndex( string.Empty, "foo", isUnique, table, Array.Empty<SqlOrderByNode>(), ifNotExists );
+
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.CreateIndex );
+            sut.SchemaName.Should().BeEmpty();
             sut.Name.Should().Be( "foo" );
-            text.Should().Be( "DROP TEMPORARY TABLE [foo]" );
+            sut.IfNotExists.Should().Be( ifNotExists );
+            sut.IsUnique.Should().Be( isUnique );
+            sut.Table.Should().BeSameAs( table );
+            sut.Columns.ToArray().Should().BeEmpty();
+            text.Should().Be( expectedText );
+        }
+    }
+
+    [Theory]
+    [InlineData( false, false, "DROP TABLE [foo].[bar]" )]
+    [InlineData( true, false, "DROP TABLE TEMP.[foo].[bar]" )]
+    [InlineData( false, true, "DROP TABLE IF EXISTS [foo].[bar]" )]
+    [InlineData( true, true, "DROP TABLE IF EXISTS TEMP.[foo].[bar]" )]
+    public void DropTable_ShouldCreateDropTableNode(bool isTemporary, bool ifExists, string expectedText)
+    {
+        var sut = SqlNode.CreateTable( "foo", "bar", Array.Empty<SqlColumnDefinitionNode>(), isTemporary: isTemporary )
+            .ToDropTable( ifExists );
+
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.DropTable );
+            sut.SchemaName.Should().Be( "foo" );
+            sut.Name.Should().Be( "bar" );
+            sut.IfExists.Should().Be( ifExists );
+            sut.IsTemporary.Should().Be( isTemporary );
+            text.Should().Be( expectedText );
+        }
+    }
+
+    [Theory]
+    [InlineData( false, "DROP VIEW [foo].[bar]" )]
+    [InlineData( true, "DROP VIEW IF EXISTS [foo].[bar]" )]
+    public void DropView_ShouldCreateDropViewNode(bool ifExists, string expectedText)
+    {
+        var sut = SqlNode.CreateView( "foo", "bar", SqlNode.RawQuery( "SELECT * FROM qux" ) ).ToDropView( ifExists );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.DropView );
+            sut.SchemaName.Should().Be( "foo" );
+            sut.Name.Should().Be( "bar" );
+            sut.IfExists.Should().Be( ifExists );
+            text.Should().Be( expectedText );
+        }
+    }
+
+    [Theory]
+    [InlineData( false, "DROP INDEX [foo].[bar]" )]
+    [InlineData( true, "DROP INDEX IF EXISTS [foo].[bar]" )]
+    public void DropIndex_ShouldCreateDropIndexNode(bool ifExists, string expectedText)
+    {
+        var sut = SqlNode.CreateIndex(
+                "foo",
+                "bar",
+                isUnique: Fixture.Create<bool>(),
+                SqlNode.RawRecordSet( "qux" ),
+                Array.Empty<SqlOrderByNode>() )
+            .ToDropIndex( ifExists );
+
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.DropIndex );
+            sut.SchemaName.Should().Be( "foo" );
+            sut.Name.Should().Be( "bar" );
+            sut.IfExists.Should().Be( ifExists );
+            text.Should().Be( expectedText );
         }
     }
 

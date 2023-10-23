@@ -653,46 +653,46 @@ public class SqliteDefaultValueSourceValidatorTests : TestsBase
     }
 
     [Fact]
-    public void VisitTableRecordSet_ShouldRegisterError()
+    public void VisitTable_ShouldRegisterError()
     {
         var table = _db.Schemas.Default.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         var node = new SqliteDatabaseMock( _db ).Schemas.Default.Objects.GetTable( "T" ).ToRecordSet();
 
-        _sut.VisitTableRecordSet( node );
+        _sut.VisitTable( node );
 
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 
     [Fact]
-    public void VisitTableBuilderRecordSet_ShouldRegisterError()
+    public void VisitTableBuilder_ShouldRegisterError()
     {
         var table = _db.Schemas.Default.Objects.CreateTable( "T" );
         var node = table.ToRecordSet();
 
-        _sut.VisitTableBuilderRecordSet( node );
+        _sut.VisitTableBuilder( node );
 
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 
     [Fact]
-    public void VisitViewRecordSet_ShouldRegisterError()
+    public void VisitView_ShouldRegisterError()
     {
         _db.Schemas.Default.Objects.CreateView( "V", SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.GetAll() } ) );
         var node = new SqliteDatabaseMock( _db ).Schemas.Default.Objects.GetView( "V" ).ToRecordSet();
 
-        _sut.VisitViewRecordSet( node );
+        _sut.VisitView( node );
 
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 
     [Fact]
-    public void VisitViewBuilderRecordSet_ShouldRegisterError()
+    public void VisitViewBuilder_ShouldRegisterError()
     {
         var view = _db.Schemas.Default.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
         var node = view.ToRecordSet();
 
-        _sut.VisitViewBuilderRecordSet( node );
+        _sut.VisitViewBuilder( node );
 
         _sut.GetErrors().Should().HaveCount( 1 );
     }
@@ -714,10 +714,18 @@ public class SqliteDefaultValueSourceValidatorTests : TestsBase
     }
 
     [Fact]
-    public void VisitTemporaryTableRecordSet_ShouldRegisterError()
+    public void VisitNewTable_ShouldRegisterError()
     {
-        var node = SqlNode.CreateTempTable( "foo", SqlNode.ColumnDefinition<int>( "a" ) ).AsSet( "bar" );
-        _sut.VisitTemporaryTableRecordSet( node );
+        var node = SqlNode.CreateTable( string.Empty, "foo", new[] { SqlNode.Column<int>( "a" ) } ).AsSet( "bar" );
+        _sut.VisitNewTable( node );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
+    public void VisitNewView_ShouldRegisterError()
+    {
+        var node = SqlNode.CreateView( string.Empty, "foo", SqlNode.RawQuery( "SELECT * FROM qux" ) ).AsSet( "bar" );
+        _sut.VisitNewView( node );
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 
@@ -959,23 +967,88 @@ public class SqliteDefaultValueSourceValidatorTests : TestsBase
     }
 
     [Fact]
+    public void VisitTruncate_ShouldRegisterError()
+    {
+        _sut.VisitTruncate( SqlNode.Truncate( SqlNode.RawRecordSet( "foo" ) ) );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
     public void VisitColumnDefinition_ShouldRegisterError()
     {
-        _sut.VisitColumnDefinition( SqlNode.ColumnDefinition<int>( "a" ) );
+        _sut.VisitColumnDefinition( SqlNode.Column<int>( "a" ) );
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 
     [Fact]
-    public void VisitCreateTemporaryTable_ShouldRegisterError()
+    public void VisitPrimaryKeyDefinition_ShouldRegisterError()
     {
-        _sut.VisitCreateTemporaryTable( SqlNode.CreateTempTable( "foo", SqlNode.ColumnDefinition<int>( "a" ) ) );
+        _sut.VisitPrimaryKeyDefinition( SqlNode.PrimaryKey( "PK" ) );
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 
     [Fact]
-    public void VisitDropTemporaryTable_ShouldRegisterError()
+    public void VisitForeignKeyDefinition_ShouldRegisterError()
     {
-        _sut.VisitDropTemporaryTable( SqlNode.DropTempTable( "foo" ) );
+        _sut.VisitForeignKeyDefinition(
+            SqlNode.ForeignKey( "FK", Array.Empty<SqlDataFieldNode>(), SqlNode.RawRecordSet( "foo" ), Array.Empty<SqlDataFieldNode>() ) );
+
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
+    public void VisitCheckDefinition_ShouldRegisterError()
+    {
+        _sut.VisitCheckDefinition( SqlNode.Check( "CHK", SqlNode.True() ) );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
+    public void VisitCreateTable_ShouldRegisterError()
+    {
+        _sut.VisitCreateTable( SqlNode.CreateTable( string.Empty, "foo", new[] { SqlNode.Column<int>( "a" ) } ) );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
+    public void VisitCreateView_ShouldRegisterError()
+    {
+        _sut.VisitCreateView( SqlNode.CreateView( string.Empty, "foo", SqlNode.RawQuery( "SELECT * FROM bar" ) ) );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
+    public void VisitCreateIndex_ShouldRegisterError()
+    {
+        _sut.VisitCreateIndex(
+            SqlNode.CreateIndex(
+                string.Empty,
+                "foo",
+                isUnique: Fixture.Create<bool>(),
+                SqlNode.RawRecordSet( "bar" ),
+                Array.Empty<SqlOrderByNode>() ) );
+
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
+    public void VisitDropTable_ShouldRegisterError()
+    {
+        _sut.VisitDropTable( SqlNode.DropTable( string.Empty, "foo" ) );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
+    public void VisitDropView_ShouldRegisterError()
+    {
+        _sut.VisitDropView( SqlNode.DropView( string.Empty, "foo" ) );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
+    public void VisitDropIndex_ShouldRegisterError()
+    {
+        _sut.VisitDropIndex( SqlNode.DropIndex( string.Empty, "foo" ) );
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 

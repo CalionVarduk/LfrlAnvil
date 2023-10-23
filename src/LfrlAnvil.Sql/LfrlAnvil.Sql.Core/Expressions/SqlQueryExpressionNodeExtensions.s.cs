@@ -338,4 +338,11 @@ public static class SqlQueryExpressionNodeExtensions
     {
         return SqlNode.NotExists( node );
     }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlCreateViewNode ToCreateView(this SqlQueryExpressionNode node, string schemaName, string name, bool ifNotExists = false)
+    {
+        return SqlNode.CreateView( schemaName, name, node, ifNotExists );
+    }
 }

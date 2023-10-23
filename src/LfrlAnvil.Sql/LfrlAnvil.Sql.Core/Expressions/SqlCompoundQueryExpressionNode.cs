@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.InteropServices;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Expressions;
@@ -45,16 +46,16 @@ public sealed class SqlCompoundQueryExpressionNode : SqlExtendableQueryExpressio
     {
         var visitor = new SelectionExpressionVisitor( FirstQuery, FollowingQueries.Length + 1 );
 
-        foreach ( var selection in FirstQuery.Selection.Span )
+        foreach ( var selection in FirstQuery.Selection )
         {
             visitor.Selection = selection;
             selection.VisitExpressions( visitor );
         }
 
-        foreach ( var followingQuery in FollowingQueries.Span )
+        foreach ( var followingQuery in FollowingQueries )
         {
             ++visitor.QueryIndex;
-            foreach ( var selection in followingQuery.Query.Selection.Span )
+            foreach ( var selection in followingQuery.Query.Selection )
             {
                 visitor.Selection = selection;
                 selection.VisitExpressions( visitor );

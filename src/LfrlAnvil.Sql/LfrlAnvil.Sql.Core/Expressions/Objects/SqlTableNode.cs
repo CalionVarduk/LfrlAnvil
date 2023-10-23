@@ -5,22 +5,20 @@ using LfrlAnvil.Sql.Objects;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
 
-public sealed class SqlTableRecordSetNode : SqlRecordSetNode
+public sealed class SqlTableNode : SqlRecordSetNode
 {
     private Dictionary<string, SqlColumnNode>? _columns;
 
-    internal SqlTableRecordSetNode(ISqlTable table, string? alias, bool isOptional)
-        : base( SqlNodeType.TableRecordSet, isOptional )
+    internal SqlTableNode(ISqlTable table, string? alias, bool isOptional)
+        : base( SqlNodeType.Table, alias, isOptional )
     {
         Table = table;
-        Name = alias ?? Table.FullName;
-        IsAliased = alias is not null;
         _columns = null;
     }
 
     public ISqlTable Table { get; }
-    public override string Name { get; }
-    public override bool IsAliased { get; }
+    public override string SourceSchemaName => Table.Schema.Name;
+    public override string SourceName => Table.Name;
     public new SqlColumnNode this[string fieldName] => GetField( fieldName );
 
     [Pure]
@@ -31,15 +29,15 @@ public sealed class SqlTableRecordSetNode : SqlRecordSetNode
     }
 
     [Pure]
-    public override SqlTableRecordSetNode As(string alias)
+    public override SqlTableNode As(string alias)
     {
-        return new SqlTableRecordSetNode( Table, alias, IsOptional );
+        return new SqlTableNode( Table, alias, IsOptional );
     }
 
     [Pure]
-    public override SqlTableRecordSetNode AsSelf()
+    public override SqlTableNode AsSelf()
     {
-        return new SqlTableRecordSetNode( Table, alias: null, IsOptional );
+        return new SqlTableNode( Table, alias: null, IsOptional );
     }
 
     [Pure]
@@ -57,10 +55,10 @@ public sealed class SqlTableRecordSetNode : SqlRecordSetNode
     }
 
     [Pure]
-    public override SqlTableRecordSetNode MarkAsOptional(bool optional = true)
+    public override SqlTableNode MarkAsOptional(bool optional = true)
     {
         return IsOptional != optional
-            ? new SqlTableRecordSetNode( Table, alias: IsAliased ? Name : null, isOptional: optional )
+            ? new SqlTableNode( Table, Alias, isOptional: optional )
             : this;
     }
 

@@ -6,23 +6,20 @@ using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
 
-public sealed class SqlTableBuilderRecordSetNode : SqlRecordSetNode
+public sealed class SqlTableBuilderNode : SqlRecordSetNode
 {
-    private readonly string? _alias;
     private readonly ColumnBuilderCollection _columns;
 
-    internal SqlTableBuilderRecordSetNode(ISqlTableBuilder table, string? alias, bool isOptional)
-        : base( SqlNodeType.TableBuilderRecordSet, isOptional )
+    internal SqlTableBuilderNode(ISqlTableBuilder table, string? alias, bool isOptional)
+        : base( SqlNodeType.TableBuilder, alias, isOptional )
     {
         Table = table;
-        _alias = alias;
-        IsAliased = _alias is not null;
         _columns = new ColumnBuilderCollection( this );
     }
 
     public ISqlTableBuilder Table { get; }
-    public override bool IsAliased { get; }
-    public override string Name => _alias ?? Table.FullName;
+    public override string SourceSchemaName => Table.Schema.Name;
+    public override string SourceName => Table.Name;
     public new SqlColumnBuilderNode this[string fieldName] => GetField( fieldName );
 
     [Pure]
@@ -32,15 +29,15 @@ public sealed class SqlTableBuilderRecordSetNode : SqlRecordSetNode
     }
 
     [Pure]
-    public override SqlTableBuilderRecordSetNode As(string alias)
+    public override SqlTableBuilderNode As(string alias)
     {
-        return new SqlTableBuilderRecordSetNode( Table, alias, IsOptional );
+        return new SqlTableBuilderNode( Table, alias, IsOptional );
     }
 
     [Pure]
-    public override SqlTableBuilderRecordSetNode AsSelf()
+    public override SqlTableBuilderNode AsSelf()
     {
-        return new SqlTableBuilderRecordSetNode( Table, alias: null, IsOptional );
+        return new SqlTableBuilderNode( Table, alias: null, IsOptional );
     }
 
     [Pure]
@@ -56,18 +53,18 @@ public sealed class SqlTableBuilderRecordSetNode : SqlRecordSetNode
     }
 
     [Pure]
-    public override SqlTableBuilderRecordSetNode MarkAsOptional(bool optional = true)
+    public override SqlTableBuilderNode MarkAsOptional(bool optional = true)
     {
         return IsOptional != optional
-            ? new SqlTableBuilderRecordSetNode( Table, IsAliased ? Name : null, isOptional: optional )
+            ? new SqlTableBuilderNode( Table, Alias, isOptional: optional )
             : this;
     }
 
     private sealed class ColumnBuilderCollection : IReadOnlyCollection<SqlColumnBuilderNode>
     {
-        private readonly SqlTableBuilderRecordSetNode _owner;
+        private readonly SqlTableBuilderNode _owner;
 
-        internal ColumnBuilderCollection(SqlTableBuilderRecordSetNode owner)
+        internal ColumnBuilderCollection(SqlTableBuilderNode owner)
         {
             _owner = owner;
         }

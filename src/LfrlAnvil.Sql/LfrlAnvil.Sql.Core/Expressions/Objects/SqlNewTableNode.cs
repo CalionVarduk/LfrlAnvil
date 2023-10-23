@@ -4,22 +4,21 @@ using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
 
-public sealed class SqlTemporaryTableRecordSetNode : SqlRecordSetNode
+public sealed class SqlNewTableNode : SqlRecordSetNode
 {
     private Dictionary<string, SqlRawDataFieldNode>? _columns;
 
-    internal SqlTemporaryTableRecordSetNode(SqlCreateTemporaryTableNode creationNode, string? alias, bool isOptional)
-        : base( SqlNodeType.TemporaryTableRecordSet, isOptional )
+    internal SqlNewTableNode(SqlCreateTableNode creationNode, string? alias, bool isOptional)
+        : base( SqlNodeType.NewTable, alias, isOptional )
     {
         CreationNode = creationNode;
-        Name = alias ?? CreationNode.Name;
-        IsAliased = alias is not null;
         _columns = null;
     }
 
-    public SqlCreateTemporaryTableNode CreationNode { get; }
-    public override string Name { get; }
-    public override bool IsAliased { get; }
+    public SqlCreateTableNode CreationNode { get; }
+    public override string SourceSchemaName => CreationNode.SchemaName;
+    public override string SourceName => CreationNode.Name;
+
     public new SqlRawDataFieldNode this[string fieldName] => GetField( fieldName );
 
     [Pure]
@@ -30,15 +29,15 @@ public sealed class SqlTemporaryTableRecordSetNode : SqlRecordSetNode
     }
 
     [Pure]
-    public override SqlTemporaryTableRecordSetNode As(string alias)
+    public override SqlNewTableNode As(string alias)
     {
-        return new SqlTemporaryTableRecordSetNode( CreationNode, alias, IsOptional );
+        return new SqlNewTableNode( CreationNode, alias, IsOptional );
     }
 
     [Pure]
-    public override SqlTemporaryTableRecordSetNode AsSelf()
+    public override SqlNewTableNode AsSelf()
     {
-        return new SqlTemporaryTableRecordSetNode( CreationNode, alias: null, IsOptional );
+        return new SqlNewTableNode( CreationNode, alias: null, IsOptional );
     }
 
     [Pure]
@@ -56,10 +55,10 @@ public sealed class SqlTemporaryTableRecordSetNode : SqlRecordSetNode
     }
 
     [Pure]
-    public override SqlTemporaryTableRecordSetNode MarkAsOptional(bool optional = true)
+    public override SqlNewTableNode MarkAsOptional(bool optional = true)
     {
         return IsOptional != optional
-            ? new SqlTemporaryTableRecordSetNode( CreationNode, alias: IsAliased ? Name : null, isOptional: optional )
+            ? new SqlNewTableNode( CreationNode, alias: Alias, isOptional: optional )
             : this;
     }
 

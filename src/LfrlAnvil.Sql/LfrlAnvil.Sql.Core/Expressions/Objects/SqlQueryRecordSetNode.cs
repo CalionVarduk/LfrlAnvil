@@ -8,16 +8,25 @@ public sealed class SqlQueryRecordSetNode : SqlRecordSetNode
     private Dictionary<string, SqlQueryDataFieldNode>? _fields;
 
     internal SqlQueryRecordSetNode(SqlQueryExpressionNode query, string alias, bool isOptional)
-        : base( SqlNodeType.QueryRecordSet, isOptional )
+        : base( SqlNodeType.QueryRecordSet, alias, isOptional )
     {
         Query = query;
-        Name = alias;
         _fields = null;
     }
 
     public SqlQueryExpressionNode Query { get; }
-    public override string Name { get; }
-    public override bool IsAliased => true;
+
+    public new string Alias
+    {
+        get
+        {
+            Assume.IsNotNull( base.Alias, nameof( Alias ) );
+            return base.Alias;
+        }
+    }
+
+    public override string SourceSchemaName => string.Empty;
+    public override string SourceName => Alias;
     public new SqlQueryDataFieldNode this[string fieldName] => GetField( fieldName );
 
     [Pure]
@@ -57,7 +66,7 @@ public sealed class SqlQueryRecordSetNode : SqlRecordSetNode
     public override SqlQueryRecordSetNode MarkAsOptional(bool optional = true)
     {
         return IsOptional != optional
-            ? new SqlQueryRecordSetNode( Query, Name, isOptional: optional )
+            ? new SqlQueryRecordSetNode( Query, Alias, isOptional: optional )
             : this;
     }
 }

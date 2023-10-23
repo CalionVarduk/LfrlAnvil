@@ -832,34 +832,34 @@ public class SqlNodeVisitorTests : TestsBase
     }
 
     [Fact]
-    public void VisitTableRecordSet_ShouldDoNothing()
+    public void VisitTable_ShouldDoNothing()
     {
         var sut = new Visitor();
-        var action = Lambda.Of( () => sut.VisitTableRecordSet( TableMock.Create( "foo" ).ToRecordSet() ) );
+        var action = Lambda.Of( () => sut.VisitTable( TableMock.Create( "foo" ).ToRecordSet() ) );
         action.Should().NotThrow();
     }
 
     [Fact]
-    public void VisitTableBuilderRecordSet_ShouldDoNothing()
+    public void VisitTableBuilder_ShouldDoNothing()
     {
         var sut = new Visitor();
-        var action = Lambda.Of( () => sut.VisitTableBuilderRecordSet( TableMock.CreateBuilder( "foo" ).ToRecordSet() ) );
+        var action = Lambda.Of( () => sut.VisitTableBuilder( TableMock.CreateBuilder( "foo" ).ToRecordSet() ) );
         action.Should().NotThrow();
     }
 
     [Fact]
-    public void VisitViewRecordSet_ShouldDoNothing()
+    public void VisitView_ShouldDoNothing()
     {
         var sut = new Visitor();
-        var action = Lambda.Of( () => sut.VisitViewRecordSet( ViewMock.Create( "foo" ).ToRecordSet() ) );
+        var action = Lambda.Of( () => sut.VisitView( ViewMock.Create( "foo" ).ToRecordSet() ) );
         action.Should().NotThrow();
     }
 
     [Fact]
-    public void VisitViewBuilderRecordSet_ShouldDoNothing()
+    public void VisitViewBuilder_ShouldDoNothing()
     {
         var sut = new Visitor();
-        var action = Lambda.Of( () => sut.VisitViewBuilderRecordSet( ViewMock.CreateBuilder( "foo" ).ToRecordSet() ) );
+        var action = Lambda.Of( () => sut.VisitViewBuilder( ViewMock.CreateBuilder( "foo" ).ToRecordSet() ) );
         action.Should().NotThrow();
     }
 
@@ -885,12 +885,26 @@ public class SqlNodeVisitorTests : TestsBase
     }
 
     [Fact]
-    public void VisitTemporaryTableRecordSet_ShouldDoNothing()
+    public void VisitNewTable_ShouldDoNothing()
     {
         var sut = new Visitor();
         var action = Lambda.Of(
-            () => sut.VisitTemporaryTableRecordSet(
-                SqlNode.CreateTempTable( "foo", SqlNode.ColumnDefinition<int>( "a" ) ).AsSet( "bar" ) ) );
+            () => sut.VisitNewTable(
+                SqlNode.CreateTable(
+                        string.Empty,
+                        "foo",
+                        new[] { SqlNode.Column<int>( "a", defaultValue: SqlNode.Parameter( "a" ) ) } )
+                    .AsSet( "bar" ) ) );
+
+        action.Should().NotThrow();
+    }
+
+    [Fact]
+    public void VisitNewView_ShouldDoNothing()
+    {
+        var sut = new Visitor();
+        var action = Lambda.Of(
+            () => sut.VisitNewView( SqlNode.RawQuery( "SELECT * FROM foo" ).ToCreateView( string.Empty, "bar" ).AsSet() ) );
 
         action.Should().NotThrow();
     }
@@ -1226,29 +1240,158 @@ public class SqlNodeVisitorTests : TestsBase
     }
 
     [Fact]
-    public void VisitColumnDefinition_ShouldDoNothing()
+    public void VisitTruncate_ShouldVisitTable()
+    {
+        var sut = new VisitorMock();
+        var recordSet = SqlNode.RawRecordSet( "foo" );
+
+        sut.VisitTruncate( recordSet.ToTruncate() );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( recordSet );
+    }
+
+    [Fact]
+    public void VisitColumnDefinition_ShouldVisitDefaultValue()
+    {
+        var sut = new VisitorMock();
+        var parameter = SqlNode.Parameter( "a" );
+        var column = SqlNode.Column<int>( "a", defaultValue: parameter );
+
+        sut.VisitColumnDefinition( column );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( parameter );
+    }
+
+    [Fact]
+    public void VisitPrimaryKeyDefinition_ShouldVisitColumns()
+    {
+        var sut = new VisitorMock();
+        var table = SqlNode.RawRecordSet( "foo" );
+        var columns = new[] { table["a"], table["b"] };
+
+        sut.VisitPrimaryKeyDefinition( SqlNode.PrimaryKey( "PK", columns[0].Asc(), columns[1].Desc() ) );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( table, table );
+    }
+
+    [Fact]
+    public void VisitForeignKeyDefinition_ShouldVisitColumnsAndReferencedObjects()
+    {
+        var sut = new VisitorMock();
+        var table = SqlNode.RawRecordSet( "foo" );
+        var columns = new SqlDataFieldNode[] { table["a"], table["b"] };
+        var otherTable = SqlNode.RawRecordSet( "bar" );
+        var otherColumns = new SqlDataFieldNode[] { otherTable["a"], otherTable["b"] };
+
+        sut.VisitForeignKeyDefinition( SqlNode.ForeignKey( "FK", columns, otherTable, otherColumns ) );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( table, table, otherTable, otherTable, otherTable );
+    }
+
+    [Fact]
+    public void VisitCheckDefinition_ShouldVisitPredicate()
+    {
+        var sut = new VisitorMock();
+        var parameter = SqlNode.Parameter( "a" );
+
+        sut.VisitCheckDefinition( SqlNode.Check( "CHK", SqlNode.RawCondition( "a > @a", parameter ) ) );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( parameter );
+    }
+
+    [Fact]
+    public void VisitCreateTable_ShouldVisitColumnsAndConstraints()
+    {
+        var sut = new VisitorMock();
+        var otherTable = SqlNode.RawRecordSet( "bar" );
+        var referencedColumn = otherTable["b"];
+        var parameters = new[] { SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ), SqlNode.Parameter( "c" ) };
+
+        var table = SqlNode.CreateTable(
+            string.Empty,
+            "foo",
+            new[]
+            {
+                SqlNode.Column<int>( "a", defaultValue: parameters[0] ),
+                SqlNode.Column<int>( "b", defaultValue: parameters[1] )
+            },
+            constraintsProvider: t =>
+                SqlCreateTableConstraints.Empty
+                    .WithPrimaryKey( SqlNode.PrimaryKey( "PK", t["a"].Asc() ) )
+                    .WithForeignKeys(
+                        SqlNode.ForeignKey(
+                            "FK",
+                            new SqlDataFieldNode[] { t["b"] },
+                            otherTable,
+                            new SqlDataFieldNode[] { referencedColumn } ) )
+                    .WithChecks( SqlNode.Check( "CHK", SqlNode.RawCondition( "a > @a", parameters[2] ) ) ) );
+
+        sut.VisitCreateTable( table );
+
+        sut.Nodes.Should()
+            .BeSequentiallyEqualTo(
+                parameters[0],
+                parameters[1],
+                table.RecordSet,
+                table.RecordSet,
+                otherTable,
+                otherTable,
+                parameters[2] );
+    }
+
+    [Fact]
+    public void VisitCreateView_ShouldVisitSource()
+    {
+        var sut = new VisitorMock();
+        var parameter = SqlNode.Parameter( "a" );
+        var view = SqlNode.CreateView( string.Empty, "V", SqlNode.RawQuery( "SELECT * FROM foo WHERE a > @a", parameter ) );
+
+        sut.VisitCreateView( view );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( parameter );
+    }
+
+    [Fact]
+    public void VisitCreateIndex_ShouldVisitTableAndColumnsAndFilter()
+    {
+        var sut = new VisitorMock();
+        var table = SqlNode.RawRecordSet( "foo" );
+        var parameter = SqlNode.Parameter( "a" );
+
+        var index = SqlNode.CreateIndex(
+            string.Empty,
+            "IX",
+            isUnique: Fixture.Create<bool>(),
+            table,
+            new[] { table["a"].Asc(), table["b"].Asc() },
+            filter: SqlNode.RawCondition( "a > @a", parameter ) );
+
+        sut.VisitCreateIndex( index );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( table, table, table, parameter );
+    }
+
+    [Fact]
+    public void VisitDropTable_ShouldDoNothing()
     {
         var sut = new Visitor();
-        var action = Lambda.Of( () => sut.VisitColumnDefinition( SqlNode.ColumnDefinition<int>( "a" ) ) );
+        var action = Lambda.Of( () => sut.VisitDropTable( SqlNode.DropTable( string.Empty, "a" ) ) );
         action.Should().NotThrow();
     }
 
     [Fact]
-    public void VisitCreateTemporaryTable_ShouldVisitColumns()
+    public void VisitDropView_ShouldDoNothing()
     {
-        var sut = new VisitorMock();
-        var columns = new[] { SqlNode.ColumnDefinition<int>( "a" ), SqlNode.ColumnDefinition<int>( "b" ) };
-
-        sut.VisitCreateTemporaryTable( SqlNode.CreateTempTable( "foo", columns ) );
-
-        sut.Nodes.Should().BeSequentiallyEqualTo( columns[0], columns[1] );
+        var sut = new Visitor();
+        var action = Lambda.Of( () => sut.VisitDropView( SqlNode.DropView( string.Empty, "a" ) ) );
+        action.Should().NotThrow();
     }
 
     [Fact]
-    public void VisitDropTemporaryTable_ShouldDoNothing()
+    public void VisitDropIndex_ShouldDoNothing()
     {
         var sut = new Visitor();
-        var action = Lambda.Of( () => sut.VisitDropTemporaryTable( SqlNode.DropTempTable( "a" ) ) );
+        var action = Lambda.Of( () => sut.VisitDropIndex( SqlNode.DropIndex( string.Empty, "a" ) ) );
         action.Should().NotThrow();
     }
 
@@ -1303,141 +1446,175 @@ public class SqlNodeVisitorTests : TestsBase
 
         public override void VisitNull(SqlNullNode node)
         {
+            base.VisitNull( node );
             Nodes.Add( node );
         }
 
         public override void VisitLiteral(SqlLiteralNode node)
         {
+            base.VisitLiteral( node );
             Nodes.Add( node );
         }
 
         public override void VisitParameter(SqlParameterNode node)
         {
+            base.VisitParameter( node );
             Nodes.Add( node );
         }
 
         public override void VisitRecordsAffectedFunction(SqlRecordsAffectedFunctionExpressionNode node)
         {
+            base.VisitRecordsAffectedFunction( node );
             Nodes.Add( node );
         }
 
         public override void VisitCurrentDateFunction(SqlCurrentDateFunctionExpressionNode node)
         {
+            base.VisitCurrentDateFunction( node );
             Nodes.Add( node );
         }
 
         public override void VisitCurrentTimeFunction(SqlCurrentTimeFunctionExpressionNode node)
         {
+            base.VisitCurrentTimeFunction( node );
             Nodes.Add( node );
         }
 
         public override void VisitCurrentDateTimeFunction(SqlCurrentDateTimeFunctionExpressionNode node)
         {
+            base.VisitCurrentDateTimeFunction( node );
             Nodes.Add( node );
         }
 
         public override void VisitCurrentTimestampFunction(SqlCurrentTimestampFunctionExpressionNode node)
         {
+            base.VisitCurrentTimestampFunction( node );
             Nodes.Add( node );
         }
 
         public override void VisitNewGuidFunction(SqlNewGuidFunctionExpressionNode node)
         {
+            base.VisitNewGuidFunction( node );
             Nodes.Add( node );
         }
 
         public override void VisitTrue(SqlTrueNode node)
         {
+            base.VisitTrue( node );
             Nodes.Add( node );
         }
 
         public override void VisitFalse(SqlFalseNode node)
         {
+            base.VisitFalse( node );
             Nodes.Add( node );
         }
 
         public override void VisitRawRecordSet(SqlRawRecordSetNode node)
         {
+            base.VisitRawRecordSet( node );
             Nodes.Add( node );
         }
 
-        public override void VisitTableRecordSet(SqlTableRecordSetNode node)
+        public override void VisitTable(SqlTableNode node)
         {
+            base.VisitTable( node );
             Nodes.Add( node );
         }
 
-        public override void VisitTableBuilderRecordSet(SqlTableBuilderRecordSetNode node)
+        public override void VisitTableBuilder(SqlTableBuilderNode node)
         {
+            base.VisitTableBuilder( node );
             Nodes.Add( node );
         }
 
-        public override void VisitViewRecordSet(SqlViewRecordSetNode node)
+        public override void VisitView(SqlViewNode node)
         {
+            base.VisitView( node );
             Nodes.Add( node );
         }
 
-        public override void VisitViewBuilderRecordSet(SqlViewBuilderRecordSetNode node)
+        public override void VisitViewBuilder(SqlViewBuilderNode node)
         {
+            base.VisitViewBuilder( node );
             Nodes.Add( node );
         }
 
         public override void VisitCommonTableExpressionRecordSet(SqlCommonTableExpressionRecordSetNode node)
         {
+            base.VisitCommonTableExpressionRecordSet( node );
             Nodes.Add( node );
         }
 
-        public override void VisitTemporaryTableRecordSet(SqlTemporaryTableRecordSetNode node)
+        public override void VisitNewTable(SqlNewTableNode node)
         {
+            base.VisitNewTable( node );
             Nodes.Add( node );
         }
 
         public override void VisitSelectCompoundField(SqlSelectCompoundFieldNode node)
         {
+            base.VisitSelectCompoundField( node );
             Nodes.Add( node );
         }
 
         public override void VisitSelectRecordSet(SqlSelectRecordSetNode node)
         {
+            base.VisitSelectRecordSet( node );
             Nodes.Add( node );
         }
 
         public override void VisitSelectAll(SqlSelectAllNode node)
         {
+            base.VisitSelectAll( node );
             Nodes.Add( node );
         }
 
         public override void VisitDistinctTrait(SqlDistinctTraitNode node)
         {
+            base.VisitDistinctTrait( node );
             Nodes.Add( node );
         }
 
-        public override void VisitColumnDefinition(SqlColumnDefinitionNode node)
+        public override void VisitDropTable(SqlDropTableNode node)
         {
+            base.VisitDropTable( node );
             Nodes.Add( node );
         }
 
-        public override void VisitDropTemporaryTable(SqlDropTemporaryTableNode node)
+        public override void VisitDropView(SqlDropViewNode node)
         {
+            base.VisitDropView( node );
+            Nodes.Add( node );
+        }
+
+        public override void VisitDropIndex(SqlDropIndexNode node)
+        {
+            base.VisitDropIndex( node );
             Nodes.Add( node );
         }
 
         public override void VisitBeginTransaction(SqlBeginTransactionNode node)
         {
+            base.VisitBeginTransaction( node );
             Nodes.Add( node );
         }
 
         public override void VisitCommitTransaction(SqlCommitTransactionNode node)
         {
+            base.VisitCommitTransaction( node );
             Nodes.Add( node );
         }
 
         public override void VisitRollbackTransaction(SqlRollbackTransactionNode node)
         {
+            base.VisitRollbackTransaction( node );
             Nodes.Add( node );
         }
 
         public override void VisitCustom(SqlNodeBase node)
         {
+            base.VisitCustom( node );
             Nodes.Add( node );
         }
     }

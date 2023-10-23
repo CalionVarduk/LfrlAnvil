@@ -8,15 +8,26 @@ namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
 
 public partial class ObjectExpressionsTests
 {
-    public class QueryRecordSet : TestsBase
+    public class NewView : TestsBase
     {
+        [Fact]
+        public void ToString_ShouldReturnCorrectRepresentation()
+        {
+            var view = SqlNode.CreateView( "foo", "bar", SqlNode.RawQuery( "SELECT * FROM qux" ) );
+            var sut = view.AsSet( "qux" );
+
+            var result = sut.ToString();
+
+            result.Should().Be( "[foo].[bar] AS [qux]" );
+        }
+
         [Fact]
         public void GetKnownFields_ShouldReturnAllKnownRecordSetsFields_WithSelectAll()
         {
             var t1 = TableMock.Create( "T1", ColumnMock.CreateMany<int>( areNullable: false, "a", "b" ) ).ToRecordSet();
             var t2 = TableMock.Create( "T2", ColumnMock.CreateMany<int>( areNullable: false, "c", "d" ) ).ToRecordSet();
             var dataSource = t1.Join( SqlNode.InnerJoinOn( t2, SqlNode.True() ) );
-            var sut = dataSource.Select( dataSource.GetAll() ).AsSet( "foo" );
+            var sut = dataSource.Select( dataSource.GetAll() ).ToCreateView( string.Empty, "foo" ).AsSet();
 
             var result = sut.GetKnownFields();
 
@@ -33,7 +44,7 @@ public partial class ObjectExpressionsTests
             var t1 = TableMock.Create( "T1", ColumnMock.CreateMany<int>( areNullable: false, "a", "b" ) ).ToRecordSet();
             var t2 = TableMock.Create( "T2", ColumnMock.CreateMany<int>( areNullable: false, "c", "d" ) ).ToRecordSet();
             var dataSource = t1.Join( SqlNode.InnerJoinOn( t2, SqlNode.True() ) );
-            var sut = dataSource.Select( dataSource.From.GetAll() ).AsSet( "foo" );
+            var sut = dataSource.Select( dataSource.From.GetAll() ).ToCreateView( string.Empty, "foo" ).AsSet();
 
             var result = sut.GetKnownFields();
 
@@ -54,7 +65,8 @@ public partial class ObjectExpressionsTests
                     dataSource["T1"]["a"].AsSelf(),
                     dataSource["T2"]["d"].AsSelf(),
                     dataSource["T1"].GetUnsafeField( "e" ).AsSelf() )
-                .AsSet( "foo" );
+                .ToCreateView( string.Empty, "foo" )
+                .AsSet();
 
             var result = sut.GetKnownFields();
 
@@ -66,34 +78,43 @@ public partial class ObjectExpressionsTests
         }
 
         [Fact]
-        public void As_ShouldCreateQueryRecordSetNode_WithNewAlias()
+        public void As_ShouldCreateNewViewNode_WithNewAlias()
         {
-            var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
-            var sut = dataSource.Select( dataSource.GetAll() ).AsSet( "bar" );
-            var result = sut.As( "qux" );
+            var view = SqlNode.CreateView( string.Empty, "foo", SqlNode.RawQuery( "SELECT * FROM qux" ) );
+            var sut = view.AsSet();
+            var result = sut.As( "bar" );
 
             using ( new AssertionScope() )
             {
                 result.Should().NotBeSameAs( sut );
-                result.Query.Should().BeSameAs( sut.Query );
-                result.SourceSchemaName.Should().BeEmpty();
-                result.SourceName.Should().Be( "qux" );
-                result.Alias.Should().Be( "qux" );
-                result.Identifier.Should().Be( "qux" );
+                result.CreationNode.Should().BeSameAs( sut.CreationNode );
+                result.SourceSchemaName.Should().Be( sut.CreationNode.SchemaName );
+                result.SourceName.Should().Be( sut.CreationNode.Name );
+                result.Alias.Should().Be( "bar" );
+                result.Identifier.Should().Be( "bar" );
                 result.IsOptional.Should().Be( sut.IsOptional );
                 result.IsAliased.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void AsSelf_ShouldReturnSelf()
+        public void AsSelf_ShouldCreateNewViewNode_WithoutAlias()
         {
-            var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
-            var sut = dataSource.Select( dataSource.GetAll() ).AsSet( "bar" );
-
+            var view = SqlNode.CreateView( "foo", "bar", SqlNode.RawQuery( "SELECT * FROM lorem" ) );
+            var sut = view.AsSet( "qux" );
             var result = sut.AsSelf();
 
-            result.Should().BeSameAs( sut );
+            using ( new AssertionScope() )
+            {
+                result.Should().NotBeSameAs( sut );
+                result.CreationNode.Should().BeSameAs( sut.CreationNode );
+                result.SourceSchemaName.Should().Be( sut.CreationNode.SchemaName );
+                result.SourceName.Should().Be( sut.CreationNode.Name );
+                result.Alias.Should().BeNull();
+                result.Identifier.Should().Be( "foo.bar" );
+                result.IsOptional.Should().Be( sut.IsOptional );
+                result.IsAliased.Should().BeFalse();
+            }
         }
 
         [Fact]
@@ -101,7 +122,7 @@ public partial class ObjectExpressionsTests
         {
             var dataSource = TableMock.Create( "t", ColumnMock.Create<int>( "a" ) ).ToRecordSet().ToDataSource();
             var selection = dataSource.GetAll();
-            var sut = dataSource.Select( selection ).AsSet( "foo" );
+            var sut = dataSource.Select( selection ).ToCreateView( string.Empty, "foo" ).AsSet();
             var result = sut.GetUnsafeField( "a" );
             var text = result.ToString();
 
@@ -121,7 +142,7 @@ public partial class ObjectExpressionsTests
         public void GetUnsafeField_ShouldReturnRawDataFieldNode_WhenNameIsNotKnown()
         {
             var dataSource = TableMock.Create( "t", ColumnMock.Create<int>( "a" ) ).ToRecordSet().ToDataSource();
-            var sut = dataSource.Select( dataSource.GetAll() ).AsSet( "foo" );
+            var sut = dataSource.Select( dataSource.GetAll() ).ToCreateView( "foo", "bar" ).AsSet();
             var result = sut.GetUnsafeField( "b" );
             var text = result.ToString();
 
@@ -132,7 +153,7 @@ public partial class ObjectExpressionsTests
                 result.RecordSet.Should().BeSameAs( sut );
                 var dataField = result as SqlRawDataFieldNode;
                 (dataField?.Type).Should().BeNull();
-                text.Should().Be( "[foo].[b] : ?" );
+                text.Should().Be( "[foo].[bar].[b] : ?" );
             }
         }
 
@@ -141,7 +162,7 @@ public partial class ObjectExpressionsTests
         {
             var dataSource = TableMock.Create( "t", ColumnMock.Create<int>( "a" ) ).ToRecordSet().ToDataSource();
             var selection = dataSource.GetAll();
-            var sut = dataSource.Select( selection ).AsSet( "foo" );
+            var sut = dataSource.Select( selection ).ToCreateView( string.Empty, "foo" ).AsSet();
             var result = sut.GetField( "a" );
             var text = result.ToString();
 
@@ -160,7 +181,7 @@ public partial class ObjectExpressionsTests
         public void GetField_ShouldThrowKeyNotFoundException_WhenNameIsNotKnown()
         {
             var dataSource = TableMock.Create( "t", ColumnMock.Create<int>( "a" ) ).ToRecordSet().ToDataSource();
-            var sut = dataSource.Select( dataSource.GetAll() ).AsSet( "foo" );
+            var sut = dataSource.Select( dataSource.GetAll() ).ToCreateView( string.Empty, "foo" ).AsSet();
 
             var action = Lambda.Of( () => sut.GetField( "b" ) );
 
@@ -171,7 +192,7 @@ public partial class ObjectExpressionsTests
         public void Indexer_ShouldBeEquivalentToGetField()
         {
             var dataSource = TableMock.Create( "t", ColumnMock.Create<int>( "a" ) ).ToRecordSet().ToDataSource();
-            var sut = dataSource.Select( dataSource.GetAll() ).AsSet( "foo" );
+            var sut = dataSource.Select( dataSource.GetAll() ).ToCreateView( string.Empty, "foo" ).AsSet();
 
             var result = sut["a"];
 
@@ -182,17 +203,17 @@ public partial class ObjectExpressionsTests
         public void GetRawField_ShouldReturnRawDataFieldNode()
         {
             var dataSource = TableMock.Create( "t", ColumnMock.Create<int>( "a" ) ).ToRecordSet().ToDataSource();
-            var sut = dataSource.Select( dataSource.GetAll() ).AsSet( "foo" );
-            var result = sut.GetRawField( "bar", SqlExpressionType.Create<int>() );
+            var sut = dataSource.Select( dataSource.GetAll() ).ToCreateView( "foo", "bar" ).AsSet( "qux" );
+            var result = sut.GetRawField( "x", SqlExpressionType.Create<int>() );
             var text = result.ToString();
 
             using ( new AssertionScope() )
             {
                 result.NodeType.Should().Be( SqlNodeType.RawDataField );
-                result.Name.Should().Be( "bar" );
+                result.Name.Should().Be( "x" );
                 result.RecordSet.Should().BeSameAs( sut );
                 result.Type.Should().Be( SqlExpressionType.Create<int>() );
-                text.Should().Be( "[foo].[bar] : System.Int32" );
+                text.Should().Be( "[qux].[x] : System.Int32" );
             }
         }
 
@@ -201,45 +222,54 @@ public partial class ObjectExpressionsTests
         [InlineData( true )]
         public void MarkAsOptional_ShouldReturnSelf_WhenOptionalityDoesNotChange(bool optional)
         {
-            var dataSource = TableMock.Create( "t", ColumnMock.Create<int>( "a" ) ).ToRecordSet().ToDataSource();
-            var sut = dataSource.Select( dataSource.GetAll() ).AsSet( "foo" ).MarkAsOptional( optional );
-
+            var view = SqlNode.CreateView( string.Empty, "foo", SqlNode.RawQuery( "SELECT * FROM bar" ) );
+            var sut = view.AsSet().MarkAsOptional( optional );
             var result = sut.MarkAsOptional( optional );
-
             result.Should().BeSameAs( sut );
         }
 
         [Theory]
         [InlineData( false )]
         [InlineData( true )]
-        public void MarkAsOptional_ShouldReturnQueryRecordSetNode_WhenOptionalityChanges(bool optional)
+        public void MarkAsOptional_ShouldReturnNewViewNode_WhenOptionalityChanges_WithoutAlias(bool optional)
         {
-            var dataSource = TableMock.Create( "t", ColumnMock.Create<int>( "a" ) ).ToRecordSet().ToDataSource();
-            var sut = dataSource.Select( dataSource.GetAll() ).AsSet( "foo" ).MarkAsOptional( ! optional );
+            var view = SqlNode.CreateView( string.Empty, "foo", SqlNode.RawQuery( "SELECT * FROM bar" ) );
+            var sut = view.AsSet().MarkAsOptional( ! optional );
             var result = sut.MarkAsOptional( optional );
 
             using ( new AssertionScope() )
             {
                 result.Should().NotBeSameAs( sut );
-                result.Query.Should().Be( sut.Query );
-                result.SourceSchemaName.Should().BeEmpty();
-                result.SourceName.Should().Be( "foo" );
-                result.Alias.Should().Be( "foo" );
+                result.CreationNode.Should().BeSameAs( sut.CreationNode );
+                result.SourceSchemaName.Should().Be( sut.CreationNode.SchemaName );
+                result.SourceName.Should().Be( sut.CreationNode.Name );
+                result.Alias.Should().BeNull();
                 result.Identifier.Should().Be( "foo" );
-                result.IsAliased.Should().BeTrue();
+                result.IsAliased.Should().BeFalse();
                 result.IsOptional.Should().Be( optional );
             }
         }
 
-        [Fact]
-        public void FieldInit_ShouldThrowArgumentException_WhenMultipleKnownFieldsWithSameNameExist()
+        [Theory]
+        [InlineData( false )]
+        [InlineData( true )]
+        public void MarkAsOptional_ShouldReturnNewViewNode_WhenOptionalityChanges_WithAlias(bool optional)
         {
-            var dataSource = TableMock.Create( "t", ColumnMock.Create<int>( "a" ) ).ToRecordSet().ToDataSource();
-            var sut = dataSource.Select( dataSource["t"].GetAll(), dataSource["t"]["a"].AsSelf() ).AsSet( "foo" );
+            var view = SqlNode.CreateView( string.Empty, "foo", SqlNode.RawQuery( "SELECT * FROM qux" ) );
+            var sut = view.AsSet( "bar" ).MarkAsOptional( ! optional );
+            var result = sut.MarkAsOptional( optional );
 
-            var action = Lambda.Of( () => sut.GetField( "a" ) );
-
-            action.Should().ThrowExactly<ArgumentException>();
+            using ( new AssertionScope() )
+            {
+                result.Should().NotBeSameAs( sut );
+                result.CreationNode.Should().BeSameAs( sut.CreationNode );
+                result.SourceSchemaName.Should().Be( sut.CreationNode.SchemaName );
+                result.SourceName.Should().Be( sut.CreationNode.Name );
+                result.Alias.Should().Be( "bar" );
+                result.Identifier.Should().Be( "bar" );
+                result.IsAliased.Should().BeTrue();
+                result.IsOptional.Should().Be( optional );
+            }
         }
     }
 }

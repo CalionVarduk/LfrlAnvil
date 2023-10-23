@@ -52,7 +52,7 @@ internal sealed class SqliteViewSourceValidator : SqliteSourceNodeValidator
         VisitNonQueryRecordSet( node.RecordSet );
     }
 
-    public override void VisitTableBuilderRecordSet(SqlTableBuilderRecordSetNode node)
+    public override void VisitTableBuilder(SqlTableBuilderNode node)
     {
         if ( ! ReferenceEquals( node.Table.Database, Database ) )
         {
@@ -67,7 +67,7 @@ internal sealed class SqliteViewSourceValidator : SqliteSourceNodeValidator
             ReferencedObjects.TryAdd( table.Id, table );
     }
 
-    public override void VisitViewBuilderRecordSet(SqlViewBuilderRecordSetNode node)
+    public override void VisitViewBuilder(SqlViewBuilderNode node)
     {
         if ( ! ReferenceEquals( node.View.Database, Database ) )
         {
@@ -104,9 +104,9 @@ internal sealed class SqliteViewSourceValidator : SqliteSourceNodeValidator
 
                     break;
                 }
-                case SqlNodeType.TableBuilderRecordSet:
+                case SqlNodeType.TableBuilder:
                 {
-                    var builder = ReinterpretCast.To<SqlTableBuilderRecordSetNode>( node );
+                    var builder = ReinterpretCast.To<SqlTableBuilderNode>( node );
                     errors = errors.Extend(
                         ReferenceEquals( builder.Table.Database, Database )
                             ? ExceptionResources.TableIsArchived( builder )
@@ -114,9 +114,9 @@ internal sealed class SqliteViewSourceValidator : SqliteSourceNodeValidator
 
                     break;
                 }
-                case SqlNodeType.ViewBuilderRecordSet:
+                case SqlNodeType.ViewBuilder:
                 {
-                    var builder = ReinterpretCast.To<SqlViewBuilderRecordSetNode>( node );
+                    var builder = ReinterpretCast.To<SqlViewBuilderNode>( node );
                     errors = errors.Extend(
                         ReferenceEquals( builder.View.Database, Database )
                             ? ExceptionResources.ViewIsArchived( builder )

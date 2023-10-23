@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using LfrlAnvil.Exceptions;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
@@ -59,7 +60,7 @@ public static class SqliteHelpers
         var builder = new StringBuilder( 32 );
         builder.Append( "FK_" ).Append( index.Table.Name );
 
-        foreach ( var c in index.Columns.Span )
+        foreach ( var c in index.Columns )
             builder.Append( '_' ).Append( c.Column.Name );
 
         var refName = ReferenceEquals( index.Table.Schema, referencedIndex.Table.Schema )
@@ -76,7 +77,7 @@ public static class SqliteHelpers
         var builder = new StringBuilder( 32 );
         builder.Append( isUnique ? "UIX_" : "IX_" ).Append( table.Name );
 
-        foreach ( var c in columns.Span )
+        foreach ( var c in columns )
             builder.Append( '_' ).Append( c.Column.Name ).Append( c.Ordering == OrderBy.Asc ? 'A' : 'D' );
 
         return builder.ToString();

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions.Objects;
 
@@ -17,7 +18,7 @@ public abstract class SqlQueryExpressionNode : SqlExpressionNode
     public virtual void ReduceKnownDataFieldExpressions(Action<KeyValuePair<string, KnownDataFieldInfo>> callback)
     {
         var visitor = new DataFieldInfoVisitor( callback );
-        foreach ( var selection in Selection.Span )
+        foreach ( var selection in Selection )
         {
             visitor.Selection = selection;
             selection.VisitExpressions( visitor );
@@ -28,7 +29,7 @@ public abstract class SqlQueryExpressionNode : SqlExpressionNode
     protected internal virtual Dictionary<string, SqlQueryDataFieldNode> ExtractKnownDataFields(SqlRecordSetNode recordSet)
     {
         var visitor = new DataFieldVisitor( recordSet, Selection.Length );
-        foreach ( var selection in Selection.Span )
+        foreach ( var selection in Selection )
         {
             visitor.Selection = selection;
             selection.VisitExpressions( visitor );
@@ -41,7 +42,7 @@ public abstract class SqlQueryExpressionNode : SqlExpressionNode
     protected internal virtual int ExtractKnownDataFieldCount()
     {
         var counter = new DataFieldCounter();
-        foreach ( var selection in Selection.Span )
+        foreach ( var selection in Selection )
             selection.VisitExpressions( counter );
 
         return counter.Count;
@@ -51,7 +52,7 @@ public abstract class SqlQueryExpressionNode : SqlExpressionNode
     protected internal virtual KnownDataFieldInfo? TryFindKnownDataFieldInfo(string name)
     {
         var finder = new DataFieldFinder( name );
-        foreach ( var selection in Selection.Span )
+        foreach ( var selection in Selection )
         {
             finder.Selection = selection;
             selection.VisitExpressions( finder );

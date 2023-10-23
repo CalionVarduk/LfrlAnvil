@@ -279,40 +279,13 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         this.Visit( node.Condition );
     }
 
-    public override void VisitTableRecordSet(SqlTableRecordSetNode node)
+    public override void VisitNewTable(SqlNewTableNode node)
     {
-        AppendDelimitedName( node.Table.FullName );
-        if ( node.IsAliased )
-            AppendDelimitedAlias( node.Name );
-    }
+        if ( node.CreationNode.IsTemporary )
+            Context.Sql.Append( "temp" ).AppendDot();
 
-    public override void VisitTableBuilderRecordSet(SqlTableBuilderRecordSetNode node)
-    {
-        AppendDelimitedName( node.Table.FullName );
-        if ( node.IsAliased )
-            AppendDelimitedAlias( node.Name );
-    }
-
-    public override void VisitViewRecordSet(SqlViewRecordSetNode node)
-    {
-        AppendDelimitedName( node.View.FullName );
-        if ( node.IsAliased )
-            AppendDelimitedAlias( node.Name );
-    }
-
-    public override void VisitViewBuilderRecordSet(SqlViewBuilderRecordSetNode node)
-    {
-        AppendDelimitedName( node.View.FullName );
-        if ( node.IsAliased )
-            AppendDelimitedAlias( node.Name );
-    }
-
-    public override void VisitTemporaryTableRecordSet(SqlTemporaryTableRecordSetNode node)
-    {
-        Context.Sql.Append( "temp" ).AppendDot();
-        AppendDelimitedName( node.CreationNode.Name );
-        if ( node.IsAliased )
-            AppendDelimitedAlias( node.Name );
+        AppendDelimitedSchemaObjectName( node.CreationNode.SchemaName, node.CreationNode.Name );
+        AppendDelimitedAlias( node.Alias );
     }
 
     public override void VisitDataSource(SqlDataSourceNode node)
@@ -325,7 +298,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             Context.Sql.Append( "FROM" ).AppendSpace();
             this.Visit( node.From );
 
-            foreach ( var join in node.Joins.Span )
+            foreach ( var join in node.Joins )
             {
                 Context.AppendIndent();
                 VisitJoinOn( join );
@@ -485,7 +458,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             if ( IsUpdateOrDeleteDataSourceSimple( node.DataSource, traits ) )
             {
                 Context.Sql.Append( "UPDATE" ).AppendSpace();
-                AppendRecordSetName( node.DataSource.From );
+                AppendDelimitedRecordSetName( node.DataSource.From );
                 VisitUpdateAssignmentRange( node.Assignments.Span );
                 VisitOptionalFilterCondition( traits.Filter );
                 return;
@@ -504,7 +477,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             if ( updateVisitor is null || ! updateVisitor.ContainsDataFieldsToReplace() )
             {
                 Context.Sql.Append( "UPDATE" ).AppendSpace();
-                AppendRecordSetName( targetInfo.BaseTarget );
+                AppendDelimitedRecordSetName( targetInfo.BaseTarget );
                 VisitUpdateAssignmentRange( node.Assignments.Span );
                 VisitComplexDeleteOrUpdateDataSourceFilter( targetInfo, node.DataSource, traits );
             }
@@ -519,19 +492,45 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         {
             var traits = ExtractDataSourceTraits( node.DataSource.Traits );
             VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions );
-            Context.Sql.Append( "DELETE FROM" ).AppendSpace();
+            Context.Sql.Append( "DELETE" ).AppendSpace().Append( "FROM" ).AppendSpace();
 
             if ( IsUpdateOrDeleteDataSourceSimple( node.DataSource, traits ) )
             {
-                AppendRecordSetName( node.DataSource.From );
+                AppendDelimitedRecordSetName( node.DataSource.From );
                 VisitOptionalFilterCondition( traits.Filter );
                 return;
             }
 
             var targetInfo = ExtractTargetDeleteInfo( node );
-            AppendRecordSetName( targetInfo.BaseTarget );
+            AppendDelimitedRecordSetName( targetInfo.BaseTarget );
             VisitComplexDeleteOrUpdateDataSourceFilter( targetInfo, node.DataSource, traits );
         }
+    }
+
+    public override void VisitTruncate(SqlTruncateNode node)
+    {
+        var isTemporary = node.Table.NodeType == SqlNodeType.NewTable &&
+            ReinterpretCast.To<SqlNewTableNode>( node.Table ).CreationNode.IsTemporary;
+
+        Context.Sql.Append( "DELETE" ).AppendSpace().Append( "FROM" ).AppendSpace();
+        AppendDelimitedRecordSetName( node.Table );
+        Context.Sql.AppendSemicolon();
+        Context.AppendIndent();
+        Context.Sql.Append( "DELETE" ).AppendSpace().Append( "FROM" ).AppendSpace();
+        if ( isTemporary )
+            Context.Sql.Append( "temp" ).AppendDot();
+
+        AppendDelimitedName( "SQLITE_SEQUENCE" );
+        Context.Sql.AppendSpace().Append( "WHERE" ).AppendSpace();
+        AppendDelimitedName( "name" );
+        Context.Sql.AppendSpace().Append( '=' ).AppendSpace().Append( '\'' );
+
+        if ( node.Table.IsAliased )
+            Context.Sql.Append( node.Table.Alias );
+        else
+            AppendSchemaObjectName( node.Table.SourceSchemaName, node.Table.SourceName );
+
+        Context.Sql.Append( '\'' );
     }
 
     public override void VisitColumnDefinition(SqlColumnDefinitionNode node)
@@ -542,41 +541,220 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
         if ( ! node.Type.IsNullable )
             Context.Sql.AppendSpace().Append( "NOT" ).AppendSpace().Append( "NULL" );
+
+        if ( node.DefaultValue is not null )
+        {
+            Context.Sql.AppendSpace().Append( "DEFAULT" ).AppendSpace();
+
+            using ( Context.TempParentNodeUpdate( node ) )
+                VisitChildWrappedInParentheses( node.DefaultValue );
+        }
     }
 
-    public override void VisitCreateTemporaryTable(SqlCreateTemporaryTableNode node)
+    public override void VisitPrimaryKeyDefinition(SqlPrimaryKeyDefinitionNode node)
+    {
+        Context.Sql.Append( "CONSTRAINT" ).AppendSpace();
+        AppendDelimitedName( node.Name );
+        Context.Sql.AppendSpace().Append( "PRIMARY" ).AppendSpace().Append( "KEY" ).AppendSpace().Append( '(' );
+
+        if ( node.Columns.Length > 0 )
+        {
+            foreach ( var column in node.Columns )
+            {
+                VisitOrderBy( column );
+                Context.Sql.AppendComma().AppendSpace();
+            }
+
+            Context.Sql.ShrinkBy( 2 );
+        }
+
+        Context.Sql.Append( ')' );
+    }
+
+    public override void VisitForeignKeyDefinition(SqlForeignKeyDefinitionNode node)
+    {
+        Context.Sql.Append( "CONSTRAINT" ).AppendSpace();
+        AppendDelimitedName( node.Name );
+        Context.Sql.AppendSpace().Append( "FOREIGN" ).AppendSpace().Append( "KEY" ).AppendSpace().Append( '(' );
+
+        if ( node.Columns.Length > 0 )
+        {
+            foreach ( var column in node.Columns )
+            {
+                AppendDelimitedName( column.Name );
+                Context.Sql.AppendComma().AppendSpace();
+            }
+
+            Context.Sql.ShrinkBy( 2 );
+        }
+
+        Context.Sql.Append( ')' ).AppendSpace().Append( "REFERENCES" ).AppendSpace();
+        AppendDelimitedRecordSetName( node.ReferencedTable );
+        Context.Sql.AppendSpace().Append( '(' );
+
+        if ( node.ReferencedColumns.Length > 0 )
+        {
+            foreach ( var column in node.ReferencedColumns )
+            {
+                AppendDelimitedName( column.Name );
+                Context.Sql.AppendComma().AppendSpace();
+            }
+
+            Context.Sql.ShrinkBy( 2 );
+        }
+
+        Context.Sql.Append( ')' ).AppendSpace();
+        Context.Sql.Append( "ON" ).AppendSpace().Append( "DELETE" ).AppendSpace().Append( node.OnDeleteBehavior.Name ).AppendSpace();
+        Context.Sql.Append( "ON" ).AppendSpace().Append( "UPDATE" ).AppendSpace().Append( node.OnUpdateBehavior.Name );
+    }
+
+    public override void VisitCheckDefinition(SqlCheckDefinitionNode node)
     {
         using ( Context.TempParentNodeUpdate( node ) )
         {
-            Context.Sql.Append( "CREATE TEMP TABLE" ).AppendSpace();
+            Context.Sql.Append( "CONSTRAINT" ).AppendSpace();
             AppendDelimitedName( node.Name );
+            Context.Sql.AppendSpace().Append( "CHECK" ).AppendSpace();
+            VisitChildWrappedInParentheses( node.Predicate );
+        }
+    }
+
+    public override void VisitCreateTable(SqlCreateTableNode node)
+    {
+        using ( SwapIgnoredRecordSet( node.RecordSet ) )
+        using ( Context.TempParentNodeUpdate( node ) )
+        {
+            Context.Sql.Append( "CREATE" ).AppendSpace().Append( "TABLE" ).AppendSpace();
+            if ( node.IfNotExists )
+                Context.Sql.Append( "IF" ).AppendSpace().Append( "NOT" ).AppendSpace().Append( "EXISTS" ).AppendSpace();
+
+            if ( node.IsTemporary )
+                Context.Sql.Append( "temp" ).AppendDot();
+
+            AppendDelimitedSchemaObjectName( node.SchemaName, node.Name );
             Context.Sql.AppendSpace().Append( '(' );
 
+            using ( Context.TempIndentIncrease() )
+            {
+                foreach ( var column in node.Columns )
+                {
+                    Context.AppendIndent();
+                    VisitColumnDefinition( column );
+                    Context.Sql.AppendComma();
+                }
+
+                if ( node.PrimaryKey is not null )
+                {
+                    Context.AppendIndent();
+                    VisitPrimaryKeyDefinition( node.PrimaryKey );
+                    Context.Sql.AppendComma();
+                }
+
+                foreach ( var foreignKey in node.ForeignKeys )
+                {
+                    Context.AppendIndent();
+                    VisitForeignKeyDefinition( foreignKey );
+                    Context.Sql.AppendComma();
+                }
+
+                foreach ( var check in node.Checks )
+                {
+                    Context.AppendIndent();
+                    VisitCheckDefinition( check );
+                    Context.Sql.AppendComma();
+                }
+
+                if ( node.Columns.Length > 0 || node.PrimaryKey is not null || node.ForeignKeys.Length > 0 || node.Checks.Length > 0 )
+                    Context.Sql.ShrinkBy( 1 );
+            }
+
+            Context.AppendIndent().Append( ')' ).AppendSpace().Append( "WITHOUT" ).AppendSpace().Append( "ROWID" );
+        }
+    }
+
+    public override void VisitCreateView(SqlCreateViewNode node)
+    {
+        Context.Sql.Append( "CREATE" ).AppendSpace().Append( "VIEW" ).AppendSpace();
+        if ( node.IfNotExists )
+            Context.Sql.Append( "IF" ).AppendSpace().Append( "NOT" ).AppendSpace().Append( "EXISTS" ).AppendSpace();
+
+        AppendDelimitedSchemaObjectName( node.SchemaName, node.Name );
+
+        Context.Sql.AppendSpace().Append( "AS" );
+        Context.AppendIndent();
+        this.Visit( node.Source );
+    }
+
+    public override void VisitCreateIndex(SqlCreateIndexNode node)
+    {
+        using ( SwapIgnoredRecordSet( node.Table ) )
+        using ( Context.TempParentNodeUpdate( node ) )
+        {
+            Context.Sql.Append( "CREATE" ).AppendSpace();
+            if ( node.IsUnique )
+                Context.Sql.Append( "UNIQUE" ).AppendSpace();
+
+            Context.Sql.Append( "INDEX" ).AppendSpace();
+            if ( node.IfNotExists )
+                Context.Sql.Append( "IF" ).AppendSpace().Append( "NOT" ).AppendSpace().Append( "EXISTS" ).AppendSpace();
+
+            AppendDelimitedSchemaObjectName( node.SchemaName, node.Name );
+            Context.Sql.AppendSpace().Append( "ON" ).AppendSpace();
+            AppendDelimitedRecordSetName( node.Table );
+
+            Context.Sql.AppendSpace().Append( '(' );
             if ( node.Columns.Length > 0 )
             {
                 using ( Context.TempIndentIncrease() )
                 {
-                    foreach ( var column in node.Columns.Span )
+                    foreach ( var column in node.Columns )
                     {
-                        Context.AppendIndent();
-                        VisitColumnDefinition( column );
-                        Context.Sql.AppendComma();
+                        VisitOrderBy( column );
+                        Context.Sql.AppendComma().AppendSpace();
                     }
 
-                    Context.Sql.ShrinkBy( 1 );
+                    Context.Sql.ShrinkBy( 2 );
                 }
-
-                Context.AppendIndent();
             }
 
-            Context.Sql.Append( ')' ).AppendSpace().Append( "WITHOUT ROWID" );
+            Context.Sql.Append( ')' );
+
+            if ( node.Filter is not null )
+            {
+                Context.Sql.AppendSpace().Append( "WHERE" ).AppendSpace();
+                VisitChild( node.Filter );
+            }
         }
     }
 
-    public override void VisitDropTemporaryTable(SqlDropTemporaryTableNode node)
+    public override void VisitDropTable(SqlDropTableNode node)
     {
-        Context.Sql.Append( "DROP TABLE" ).AppendSpace().Append( "temp" ).AppendDot();
-        AppendDelimitedName( node.Name );
+        Context.Sql.Append( "DROP" ).AppendSpace().Append( "TABLE" ).AppendSpace();
+        if ( node.IfExists )
+            Context.Sql.Append( "IF" ).AppendSpace().Append( "EXISTS" ).AppendSpace();
+
+        if ( node.IsTemporary )
+            Context.Sql.Append( "temp" ).AppendDot();
+
+        AppendDelimitedSchemaObjectName( node.SchemaName, node.Name );
+    }
+
+    public override void VisitDropView(SqlDropViewNode node)
+    {
+        Context.Sql.Append( "DROP" ).AppendSpace().Append( "VIEW" ).AppendSpace();
+        if ( node.IfExists )
+            Context.Sql.Append( "IF" ).AppendSpace().Append( "EXISTS" ).AppendSpace();
+
+        AppendDelimitedSchemaObjectName( node.SchemaName, node.Name );
+    }
+
+    public override void VisitDropIndex(SqlDropIndexNode node)
+    {
+        Context.Sql.Append( "DROP" ).AppendSpace().Append( "INDEX" ).AppendSpace();
+        if ( node.IfExists )
+            Context.Sql.Append( "IF" ).AppendSpace().Append( "EXISTS" ).AppendSpace();
+
+        AppendDelimitedSchemaObjectName( node.SchemaName, node.Name );
     }
 
     public override void VisitBeginTransaction(SqlBeginTransactionNode node)
@@ -593,29 +771,39 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         }
     }
 
-    public override void AppendRecordSetName(SqlRecordSetNode node)
+    public override void AppendDelimitedRecordSetName(SqlRecordSetNode node)
     {
-        switch ( node.NodeType )
+        if ( node.IsAliased )
         {
-            case SqlNodeType.RawRecordSet:
-                if ( node.IsAliased )
-                    AppendDelimitedName( node.Name );
-                else
-                    Context.Sql.Append( node.Name );
-
-                break;
-
-            case SqlNodeType.TemporaryTableRecordSet:
-                if ( ! node.IsAliased )
-                    Context.Sql.Append( "temp" ).AppendDot();
-
-                AppendDelimitedName( node.Name );
-                break;
-
-            default:
-                AppendDelimitedName( node.Name );
-                break;
+            AppendDelimitedName( node.Alias );
+            return;
         }
+
+        if ( node.NodeType == SqlNodeType.RawRecordSet )
+        {
+            Context.Sql.Append( node.SourceName );
+            return;
+        }
+
+        if ( node.NodeType == SqlNodeType.NewTable && ReinterpretCast.To<SqlNewTableNode>( node ).CreationNode.IsTemporary )
+            Context.Sql.Append( "temp" ).AppendDot();
+
+        AppendDelimitedSchemaObjectName( node.SourceSchemaName, node.SourceName );
+    }
+
+    public sealed override void AppendDelimitedSchemaObjectName(string schemaName, string objName)
+    {
+        Context.Sql.Append( BeginNameDelimiter );
+        AppendSchemaObjectName( schemaName, objName );
+        Context.Sql.Append( EndNameDelimiter );
+    }
+
+    protected void AppendSchemaObjectName(string schemaName, string objName)
+    {
+        if ( schemaName.Length > 0 )
+            Context.Sql.Append( schemaName ).Append( '_' );
+
+        Context.Sql.Append( objName );
     }
 
     [Pure]
@@ -674,7 +862,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
                         Context.Sql.AppendSpace();
                     }
 
-                    foreach ( var arg in node.Arguments.Span )
+                    foreach ( var arg in node.Arguments )
                     {
                         VisitChild( arg );
                         Context.Sql.AppendComma().AppendSpace();
@@ -722,12 +910,12 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
     protected void VisitInsertIntoFields(SqlInsertIntoNode node)
     {
         Context.Sql.Append( "INSERT INTO" ).AppendSpace();
-        AppendRecordSetName( node.RecordSet );
+        AppendDelimitedRecordSetName( node.RecordSet );
         Context.Sql.AppendSpace().Append( '(' );
 
         if ( node.DataFields.Length > 0 )
         {
-            foreach ( var dataField in node.DataFields.Span )
+            foreach ( var dataField in node.DataFields )
             {
                 AppendDelimitedName( dataField.Name );
                 Context.Sql.AppendComma().AppendSpace();
@@ -746,7 +934,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
         using ( Context.TempIndentIncrease() )
         {
-            foreach ( var selection in node.Selection.Span )
+            foreach ( var selection in node.Selection )
             {
                 Context.AppendIndent();
                 this.Visit( selection );
@@ -761,7 +949,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
     protected void VisitCompoundQueryComponents(SqlCompoundQueryExpressionNode node)
     {
         VisitChild( node.FirstQuery );
-        foreach ( var component in node.FollowingQueries.Span )
+        foreach ( var component in node.FollowingQueries )
         {
             Context.AppendIndent();
             VisitCompoundQueryComponent( component );
@@ -791,7 +979,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
         if ( targetInfo.IdentityColumnNames.Length == 1 )
         {
-            AppendRecordSetName( targetInfo.BaseTarget );
+            AppendDelimitedRecordSetName( targetInfo.BaseTarget );
             Context.Sql.AppendDot();
             AppendDelimitedName( targetInfo.IdentityColumnNames[0] );
             Context.Sql.AppendSpace().Append( "IN" ).AppendSpace().Append( '(' );
@@ -801,7 +989,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
                 Context.AppendIndent().Append( "SELECT" );
                 VisitOptionalDistinctMarker( traits.Distinct );
                 Context.Sql.AppendSpace();
-                AppendRecordSetName( targetInfo.Target );
+                AppendDelimitedRecordSetName( targetInfo.Target );
                 Context.Sql.AppendDot();
                 AppendDelimitedName( targetInfo.IdentityColumnNames[0] );
 
@@ -831,11 +1019,11 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
                 foreach ( var columnName in targetInfo.IdentityColumnNames )
                 {
                     Context.Sql.Append( '(' );
-                    AppendRecordSetName( targetInfo.BaseTarget );
+                    AppendDelimitedRecordSetName( targetInfo.BaseTarget );
                     Context.Sql.AppendDot();
                     AppendDelimitedName( columnName );
                     Context.Sql.AppendSpace().Append( '=' ).AppendSpace();
-                    AppendRecordSetName( targetInfo.Target );
+                    AppendDelimitedRecordSetName( targetInfo.Target );
                     Context.Sql.AppendDot();
                     AppendDelimitedName( columnName );
                     Context.Sql.Append( ')' ).AppendSpace().Append( "AND" ).AppendSpace();
@@ -862,6 +1050,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         SqlDataSourceTraits traits,
         ComplexUpdateAssignmentsVisitor updateVisitor)
     {
+        Assume.IsNotNull( targetInfo.Target.Alias, nameof( targetInfo.Target.Alias ) );
         var cteName = $"_{Guid.NewGuid():N}";
 
         if ( traits.CommonTableExpressions.Count == 0 )
@@ -885,11 +1074,11 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
                 foreach ( var identityColumnName in targetInfo.IdentityColumnNames )
                 {
                     Context.AppendIndent();
-                    AppendRecordSetName( targetInfo.Target );
+                    AppendDelimitedRecordSetName( targetInfo.Target );
                     Context.Sql.AppendDot();
                     AppendDelimitedName( identityColumnName );
                     Context.Sql.AppendSpace().Append( "AS" ).AppendSpace().Append( BeginNameDelimiter );
-                    Context.Sql.Append( targetInfo.Target.Name ).Append( '_' ).Append( identityColumnName );
+                    Context.Sql.Append( targetInfo.Target.Alias ).Append( '_' ).Append( identityColumnName );
                     Context.Sql.Append( EndNameDelimiter ).AppendComma();
                 }
 
@@ -897,9 +1086,9 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
                 {
                     Context.AppendIndent();
                     this.Visit( dataField );
-                    Context.Sql.AppendSpace().Append( "AS" ).AppendSpace().Append( BeginNameDelimiter );
-                    Context.Sql.Append( dataField.RecordSet.Name ).Append( '_' ).Append( dataField.Name );
-                    Context.Sql.Append( EndNameDelimiter ).AppendComma();
+                    Context.Sql.AppendSpace().Append( "AS" ).AppendSpace();
+                    AppendDelimitedPrefixedReplacementDataFieldName( dataField );
+                    Context.Sql.AppendComma();
                 }
 
                 Context.Sql.ShrinkBy( 1 );
@@ -918,7 +1107,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         Context.AppendIndent();
 
         Context.Sql.Append( "UPDATE" ).AppendSpace();
-        AppendRecordSetName( targetInfo.BaseTarget );
+        AppendDelimitedRecordSetName( targetInfo.BaseTarget );
 
         if ( ! UpdateInfo.IsDefault )
             throw new SqlNodeVisitorException( Resources.NestedUpdateAttempt, this, node );
@@ -931,11 +1120,11 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
             if ( targetInfo.IdentityColumnNames.Length == 1 )
             {
-                AppendRecordSetName( targetInfo.BaseTarget );
+                AppendDelimitedRecordSetName( targetInfo.BaseTarget );
                 Context.Sql.AppendDot();
                 AppendDelimitedName( targetInfo.IdentityColumnNames[0] );
                 Context.Sql.AppendSpace().Append( "IN" ).AppendSpace().Append( '(' ).Append( "SELECT" ).AppendSpace();
-                Context.Sql.Append( BeginNameDelimiter ).Append( targetInfo.Target.Name ).Append( '_' );
+                Context.Sql.Append( BeginNameDelimiter ).Append( targetInfo.Target.Alias ).Append( '_' );
                 Context.Sql.Append( targetInfo.IdentityColumnNames[0] ).Append( EndNameDelimiter );
                 Context.Sql.AppendSpace().Append( "FROM" ).AppendSpace();
                 AppendDelimitedName( cteName );
@@ -957,19 +1146,31 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         }
     }
 
+    protected void AppendDelimitedPrefixedReplacementDataFieldName(SqlDataFieldNode node)
+    {
+        Context.Sql.Append( BeginNameDelimiter );
+
+        if ( node.RecordSet.IsAliased )
+            Context.Sql.Append( node.RecordSet.Alias );
+        else
+        {
+            if ( node.RecordSet.NodeType == SqlNodeType.NewTable &&
+                ReinterpretCast.To<SqlNewTableNode>( node.RecordSet ).CreationNode.IsTemporary )
+                Context.Sql.Append( "temp" ).Append( '_' );
+
+            AppendSchemaObjectName( node.RecordSet.SourceSchemaName, node.RecordSet.SourceName );
+        }
+
+        Context.Sql.Append( '_' ).Append( node.Name ).Append( EndNameDelimiter );
+    }
+
     protected bool TryReplaceDataField(SqlDataFieldNode node)
     {
         if ( ! _updateInfo.ShouldReplaceDataField( node ) )
             return false;
 
         Context.Sql.Append( '(' ).Append( "SELECT" ).AppendSpace();
-
-        Context.Sql.Append( BeginNameDelimiter )
-            .Append( node.RecordSet.Name )
-            .Append( '_' )
-            .Append( node.Name )
-            .Append( EndNameDelimiter );
-
+        AppendDelimitedPrefixedReplacementDataFieldName( node );
         Context.Sql.AppendSpace().Append( "FROM" ).AppendSpace();
         AppendDelimitedName( _updateInfo.CteName );
         Context.Sql.AppendSpace().Append( "WHERE" ).AppendSpace();
@@ -979,7 +1180,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
     }
 
     [Pure]
-    protected static TargetDeleteOrUpdateInfo ExtractTableRecordSetDeleteOrUpdateInfo(SqlTableRecordSetNode node)
+    protected static TargetDeleteOrUpdateInfo ExtractTableDeleteOrUpdateInfo(SqlTableNode node)
     {
         var identityColumns = node.Table.PrimaryKey.Index.Columns.Span;
         var identityColumnNames = new string[identityColumns.Length];
@@ -990,29 +1191,29 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
     }
 
     [Pure]
-    protected TargetDeleteOrUpdateInfo ExtractTableBuilderRecordSetDeleteInfo(SqlDeleteFromNode node, SqlTableBuilderRecordSetNode target)
+    protected TargetDeleteOrUpdateInfo ExtractTableBuilderDeleteInfo(SqlDeleteFromNode node, SqlTableBuilderNode target)
     {
-        return ExtractTableBuilderRecordSetDeleteOrUpdateInfo( node, target, Resources.DeleteTargetDoesNotHaveAnyColumns );
+        return ExtractTableBuilderDeleteOrUpdateInfo( node, target, isUpdate: false );
     }
 
     [Pure]
-    protected TargetDeleteOrUpdateInfo ExtractTableBuilderRecordSetUpdateInfo(SqlUpdateNode node, SqlTableBuilderRecordSetNode target)
+    protected TargetDeleteOrUpdateInfo ExtractTableBuilderUpdateInfo(SqlUpdateNode node, SqlTableBuilderNode target)
     {
-        return ExtractTableBuilderRecordSetDeleteOrUpdateInfo( node, target, Resources.UpdateTargetDoesNotHaveAnyColumns );
+        return ExtractTableBuilderDeleteOrUpdateInfo( node, target, isUpdate: true );
     }
 
     [Pure]
-    protected TargetDeleteOrUpdateInfo ExtractTemporaryTableRecordSetDeleteInfo(
+    protected TargetDeleteOrUpdateInfo ExtractNewTableDeleteInfo(
         SqlDeleteFromNode node,
-        SqlTemporaryTableRecordSetNode target)
+        SqlNewTableNode target)
     {
-        return ExtractTemporaryTableRecordSetDeleteOrUpdateInfo( node, target, Resources.DeleteTargetDoesNotHaveAnyColumns );
+        return ExtractNewTableDeleteOrUpdateInfo( node, target, isUpdate: false );
     }
 
     [Pure]
-    protected TargetDeleteOrUpdateInfo ExtractTemporaryTableRecordSetUpdateInfo(SqlUpdateNode node, SqlTemporaryTableRecordSetNode target)
+    protected TargetDeleteOrUpdateInfo ExtractNewTableUpdateInfo(SqlUpdateNode node, SqlNewTableNode target)
     {
-        return ExtractTemporaryTableRecordSetDeleteOrUpdateInfo( node, target, Resources.UpdateTargetDoesNotHaveAnyColumns );
+        return ExtractNewTableDeleteOrUpdateInfo( node, target, isUpdate: true );
     }
 
     [Pure]
@@ -1021,14 +1222,14 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         var from = node.DataSource.From;
         var info = from.NodeType switch
         {
-            SqlNodeType.TableRecordSet => ExtractTableRecordSetDeleteOrUpdateInfo( ReinterpretCast.To<SqlTableRecordSetNode>( from ) ),
-            SqlNodeType.TableBuilderRecordSet => ExtractTableBuilderRecordSetDeleteInfo(
+            SqlNodeType.Table => ExtractTableDeleteOrUpdateInfo( ReinterpretCast.To<SqlTableNode>( from ) ),
+            SqlNodeType.TableBuilder => ExtractTableBuilderDeleteInfo(
                 node,
-                ReinterpretCast.To<SqlTableBuilderRecordSetNode>( from ) ),
-            SqlNodeType.TemporaryTableRecordSet => ExtractTemporaryTableRecordSetDeleteInfo(
+                ReinterpretCast.To<SqlTableBuilderNode>( from ) ),
+            SqlNodeType.NewTable => ExtractNewTableDeleteInfo(
                 node,
-                ReinterpretCast.To<SqlTemporaryTableRecordSetNode>( from ) ),
-            _ => throw new SqlNodeVisitorException( Resources.DeleteTargetIsNotTableRecordSet, this, node )
+                ReinterpretCast.To<SqlNewTableNode>( from ) ),
+            _ => throw new SqlNodeVisitorException( Resources.DeleteTargetIsNotTable, this, node )
         };
 
         if ( ! from.IsAliased )
@@ -1043,14 +1244,14 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         var from = node.DataSource.From;
         var info = from.NodeType switch
         {
-            SqlNodeType.TableRecordSet => ExtractTableRecordSetDeleteOrUpdateInfo( ReinterpretCast.To<SqlTableRecordSetNode>( from ) ),
-            SqlNodeType.TableBuilderRecordSet => ExtractTableBuilderRecordSetUpdateInfo(
+            SqlNodeType.Table => ExtractTableDeleteOrUpdateInfo( ReinterpretCast.To<SqlTableNode>( from ) ),
+            SqlNodeType.TableBuilder => ExtractTableBuilderUpdateInfo(
                 node,
-                ReinterpretCast.To<SqlTableBuilderRecordSetNode>( from ) ),
-            SqlNodeType.TemporaryTableRecordSet => ExtractTemporaryTableRecordSetUpdateInfo(
+                ReinterpretCast.To<SqlTableBuilderNode>( from ) ),
+            SqlNodeType.NewTable => ExtractNewTableUpdateInfo(
                 node,
-                ReinterpretCast.To<SqlTemporaryTableRecordSetNode>( from ) ),
-            _ => throw new SqlNodeVisitorException( Resources.UpdateTargetIsNotTableRecordSet, this, node )
+                ReinterpretCast.To<SqlNewTableNode>( from ) ),
+            _ => throw new SqlNodeVisitorException( Resources.UpdateTargetIsNotTable, this, node )
         };
 
         if ( ! from.IsAliased )
@@ -1100,16 +1301,18 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public void AppendIdentityColumnsFilter(SqliteNodeInterpreter interpreter)
         {
+            Assume.IsNotNull( TargetInfo.Target.Alias, nameof( TargetInfo.Target.Alias ) );
+
             foreach ( var identityColumnName in TargetInfo.IdentityColumnNames )
             {
                 interpreter.Context.Sql.Append( '(' );
-                interpreter.AppendRecordSetName( TargetInfo.BaseTarget );
+                interpreter.AppendDelimitedRecordSetName( TargetInfo.BaseTarget );
                 interpreter.Context.Sql.AppendDot();
                 interpreter.AppendDelimitedName( identityColumnName );
                 interpreter.Context.Sql.AppendSpace().Append( '=' ).AppendSpace();
                 interpreter.AppendDelimitedName( CteName );
                 interpreter.Context.Sql.AppendDot().Append( interpreter.BeginNameDelimiter );
-                interpreter.Context.Sql.Append( TargetInfo.Target.Name ).Append( '_' );
+                interpreter.Context.Sql.Append( TargetInfo.Target.Alias ).Append( '_' );
                 interpreter.Context.Sql.Append( identityColumnName ).Append( interpreter.EndNameDelimiter );
                 interpreter.Context.Sql.Append( ')' ).AppendSpace().Append( "AND" ).AppendSpace();
             }
@@ -1198,10 +1401,10 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
     }
 
     [Pure]
-    private TargetDeleteOrUpdateInfo ExtractTableBuilderRecordSetDeleteOrUpdateInfo(
+    private TargetDeleteOrUpdateInfo ExtractTableBuilderDeleteOrUpdateInfo(
         SqlNodeBase source,
-        SqlTableBuilderRecordSetNode node,
-        string noColumnsErrorReason)
+        SqlTableBuilderNode node,
+        bool isUpdate)
     {
         string[] identityColumnNames;
         var primaryKey = node.Table.PrimaryKey;
@@ -1218,7 +1421,10 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             var index = 0;
             var identityColumns = node.Table.Columns;
             if ( identityColumns.Count == 0 )
-                throw new SqlNodeVisitorException( noColumnsErrorReason, this, source );
+            {
+                var reason = isUpdate ? Resources.UpdateTargetDoesNotHaveAnyColumns : Resources.DeleteTargetDoesNotHaveAnyColumns;
+                throw new SqlNodeVisitorException( reason, this, source );
+            }
 
             identityColumnNames = new string[identityColumns.Count];
             foreach ( var column in identityColumns )
@@ -1229,19 +1435,53 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
     }
 
     [Pure]
-    private TargetDeleteOrUpdateInfo ExtractTemporaryTableRecordSetDeleteOrUpdateInfo(
+    private TargetDeleteOrUpdateInfo ExtractNewTableDeleteOrUpdateInfo(
         SqlNodeBase source,
-        SqlTemporaryTableRecordSetNode node,
-        string noColumnsErrorReason)
+        SqlNewTableNode node,
+        bool isUpdate)
     {
-        // TODO: same as table builder, once an optional PK is added to CreationNode
-        var identityColumns = node.CreationNode.Columns.Span;
-        if ( identityColumns.Length == 0 )
-            throw new SqlNodeVisitorException( noColumnsErrorReason, this, source );
+        string[] identityColumnNames;
+        var primaryKey = node.CreationNode.PrimaryKey;
 
-        var identityColumnNames = new string[identityColumns.Length];
-        for ( var i = 0; i < identityColumns.Length; ++i )
-            identityColumnNames[i] = identityColumns[i].Name;
+        if ( primaryKey is not null )
+        {
+            var identityColumns = primaryKey.Columns.Span;
+            if ( identityColumns.Length == 0 )
+            {
+                var reason = isUpdate ? Resources.UpdateTargetDoesNotHaveAnyColumns : Resources.DeleteTargetDoesNotHaveAnyColumns;
+                throw new SqlNodeVisitorException( reason, this, source );
+            }
+
+            identityColumnNames = new string[identityColumns.Length];
+            for ( var i = 0; i < identityColumns.Length; ++i )
+            {
+                if ( identityColumns[i].Expression is not SqlDataFieldNode dataField )
+                {
+                    var reason = Resources.DeleteOrUpdateTargetPrimaryKeyColumnIsComplexExpression(
+                        isUpdate,
+                        i,
+                        identityColumns[i].Expression );
+
+                    throw new SqlNodeVisitorException( reason, this, source );
+                }
+
+                identityColumnNames[i] = dataField.Name;
+            }
+        }
+        else
+        {
+            var index = 0;
+            var identityColumns = node.CreationNode.Columns.Span;
+            if ( identityColumns.Length == 0 )
+            {
+                var reason = isUpdate ? Resources.UpdateTargetDoesNotHaveAnyColumns : Resources.DeleteTargetDoesNotHaveAnyColumns;
+                throw new SqlNodeVisitorException( reason, this, source );
+            }
+
+            identityColumnNames = new string[identityColumns.Length];
+            foreach ( var column in identityColumns )
+                identityColumnNames[index++] = column.Name;
+        }
 
         return new TargetDeleteOrUpdateInfo( node, node.AsSelf(), identityColumnNames );
     }

@@ -44,7 +44,7 @@ public static class SqlObjectExtensions
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static ISqlIndexBuilder SetFilter(this ISqlIndexBuilder index, Func<SqlTableBuilderRecordSetNode, SqlConditionNode?> filter)
+    public static ISqlIndexBuilder SetFilter(this ISqlIndexBuilder index, Func<SqlTableBuilderNode, SqlConditionNode?> filter)
     {
         return index.SetFilter( filter( index.Table.ToRecordSet() ) );
     }

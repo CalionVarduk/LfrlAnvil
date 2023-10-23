@@ -398,6 +398,8 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
                             fkCheckFailures.Add( tableName );
                     }
 
+                    // TODO: can use PRAGMA quick_check(TABLENAME) to run similar tests, but for CHECK constrains
+
                     if ( fkCheckFailures.Count > 0 )
                         throw new SqliteForeignKeyCheckException( version.Value, fkCheckFailures );
 
@@ -691,6 +693,12 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
             return;
 
         var connection = ReinterpretCast.To<Microsoft.Data.Sqlite.SqliteConnection>( @event.Connection );
+
+        using ( var command = connection.CreateCommand() )
+        {
+            command.CommandText = "PRAGMA foreign_keys = 1; PRAGMA ignore_check_constraints = 0;";
+            command.ExecuteNonQuery();
+        }
 
         connection.CreateFunction( "GET_CURRENT_DATE", GetCurrentDateImpl );
         connection.CreateFunction( "GET_CURRENT_TIME", GetCurrentTimeImpl );

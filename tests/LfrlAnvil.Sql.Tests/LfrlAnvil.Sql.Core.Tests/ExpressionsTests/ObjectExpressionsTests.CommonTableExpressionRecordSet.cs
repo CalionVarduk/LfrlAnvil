@@ -47,8 +47,10 @@ public partial class ObjectExpressionsTests
             {
                 result.Should().NotBeSameAs( sut );
                 result.CommonTableExpression.Should().BeSameAs( sut.CommonTableExpression );
-                result.Name.Should().Be( "qux" );
+                result.SourceSchemaName.Should().BeEmpty();
+                result.SourceName.Should().Be( "A" );
                 result.Alias.Should().Be( "qux" );
+                result.Identifier.Should().Be( "qux" );
                 result.IsOptional.Should().Be( sut.IsOptional );
                 result.IsAliased.Should().BeTrue();
             }
@@ -84,8 +86,10 @@ public partial class ObjectExpressionsTests
             {
                 result.Should().NotBeSameAs( sut );
                 result.CommonTableExpression.Should().BeSameAs( sut.CommonTableExpression );
-                result.Name.Should().Be( "qux" );
+                result.SourceSchemaName.Should().BeEmpty();
+                result.SourceName.Should().Be( "A" );
                 result.Alias.Should().Be( "qux" );
+                result.Identifier.Should().Be( "qux" );
                 result.IsOptional.Should().Be( sut.IsOptional );
                 result.IsAliased.Should().BeTrue();
             }
@@ -225,7 +229,10 @@ public partial class ObjectExpressionsTests
             {
                 result.Should().NotBeSameAs( sut );
                 result.CommonTableExpression.Should().BeSameAs( sut.CommonTableExpression );
-                result.Name.Should().Be( sut.Name );
+                result.SourceSchemaName.Should().BeEmpty();
+                result.SourceName.Should().Be( "A" );
+                result.Alias.Should().BeNull();
+                result.Identifier.Should().Be( "A" );
                 result.IsAliased.Should().BeFalse();
                 result.IsOptional.Should().Be( optional );
             }

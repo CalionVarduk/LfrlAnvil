@@ -23,8 +23,10 @@ public partial class ObjectExpressionsTests
             using ( new AssertionScope() )
             {
                 result.Should().NotBeSameAs( sut );
-                result.BaseName.Should().Be( sut.BaseName );
-                result.Name.Should().Be( "bar" );
+                result.SourceSchemaName.Should().BeEmpty();
+                result.SourceName.Should().Be( "foo" );
+                result.Alias.Should().Be( "bar" );
+                result.Identifier.Should().Be( "bar" );
                 result.IsOptional.Should().Be( sut.IsOptional );
                 result.IsAliased.Should().BeTrue();
             }
@@ -39,8 +41,10 @@ public partial class ObjectExpressionsTests
             using ( new AssertionScope() )
             {
                 result.Should().NotBeSameAs( sut );
-                result.BaseName.Should().Be( sut.BaseName );
-                result.Name.Should().Be( "foo" );
+                result.SourceSchemaName.Should().BeEmpty();
+                result.SourceName.Should().Be( "foo" );
+                result.Alias.Should().BeNull();
+                result.Identifier.Should().Be( "foo" );
                 result.IsOptional.Should().Be( sut.IsOptional );
                 result.IsAliased.Should().BeFalse();
             }
@@ -142,9 +146,10 @@ public partial class ObjectExpressionsTests
 
             using ( new AssertionScope() )
             {
-                result.Should().NotBeSameAs( sut );
-                result.BaseName.Should().Be( sut.BaseName );
-                result.Name.Should().Be( sut.Name );
+                result.SourceSchemaName.Should().BeEmpty();
+                result.SourceName.Should().Be( "foo" );
+                result.Alias.Should().BeNull();
+                result.Identifier.Should().Be( "foo" );
                 result.IsAliased.Should().BeFalse();
                 result.IsOptional.Should().Be( optional );
             }
@@ -161,8 +166,10 @@ public partial class ObjectExpressionsTests
             using ( new AssertionScope() )
             {
                 result.Should().NotBeSameAs( sut );
-                result.BaseName.Should().Be( sut.BaseName );
-                result.Name.Should().Be( sut.Name );
+                result.SourceSchemaName.Should().BeEmpty();
+                result.SourceName.Should().Be( "foo" );
+                result.Alias.Should().Be( "bar" );
+                result.Identifier.Should().Be( "bar" );
                 result.IsAliased.Should().BeTrue();
                 result.IsOptional.Should().Be( optional );
             }

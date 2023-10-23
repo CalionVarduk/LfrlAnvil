@@ -287,27 +287,27 @@ public static partial class SqlNode
     }
 
     [Pure]
-    public static SqlTableRecordSetNode Table(ISqlTable value, string? alias = null)
+    public static SqlTableNode Table(ISqlTable value, string? alias = null)
     {
-        return new SqlTableRecordSetNode( value, alias, isOptional: false );
+        return new SqlTableNode( value, alias, isOptional: false );
     }
 
     [Pure]
-    public static SqlTableBuilderRecordSetNode Table(ISqlTableBuilder value, string? alias = null)
+    public static SqlTableBuilderNode Table(ISqlTableBuilder value, string? alias = null)
     {
-        return new SqlTableBuilderRecordSetNode( value, alias, isOptional: false );
+        return new SqlTableBuilderNode( value, alias, isOptional: false );
     }
 
     [Pure]
-    public static SqlViewRecordSetNode View(ISqlView value, string? alias = null)
+    public static SqlViewNode View(ISqlView value, string? alias = null)
     {
-        return new SqlViewRecordSetNode( value, alias, isOptional: false );
+        return new SqlViewNode( value, alias, isOptional: false );
     }
 
     [Pure]
-    public static SqlViewBuilderRecordSetNode View(ISqlViewBuilder value, string? alias = null)
+    public static SqlViewBuilderNode View(ISqlViewBuilder value, string? alias = null)
     {
-        return new SqlViewBuilderRecordSetNode( value, alias, isOptional: false );
+        return new SqlViewBuilderNode( value, alias, isOptional: false );
     }
 
     [Pure]
@@ -597,6 +597,12 @@ public static partial class SqlNode
     }
 
     [Pure]
+    public static SqlTruncateNode Truncate(SqlRecordSetNode table)
+    {
+        return new SqlTruncateNode( table );
+    }
+
+    [Pure]
     public static SqlValueAssignmentNode ValueAssignment(SqlDataFieldNode dataField, SqlExpressionNode value)
     {
         return new SqlValueAssignmentNode( dataField, value );
@@ -625,28 +631,103 @@ public static partial class SqlNode
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlColumnDefinitionNode ColumnDefinition<T>(string name, bool isNullable = false)
+    public static SqlColumnDefinitionNode Column<T>(string name, bool isNullable = false, SqlExpressionNode? defaultValue = null)
         where T : notnull
     {
-        return ColumnDefinition( name, SqlExpressionType.Create<T>( isNullable ) );
+        return Column( name, SqlExpressionType.Create<T>( isNullable ), defaultValue );
     }
 
     [Pure]
-    public static SqlColumnDefinitionNode ColumnDefinition(string name, SqlExpressionType type)
+    public static SqlColumnDefinitionNode Column(string name, SqlExpressionType type, SqlExpressionNode? defaultValue = null)
     {
-        return new SqlColumnDefinitionNode( name, type );
+        return new SqlColumnDefinitionNode( name, type, defaultValue );
     }
 
     [Pure]
-    public static SqlCreateTemporaryTableNode CreateTempTable(string name, params SqlColumnDefinitionNode[] columns)
+    public static SqlPrimaryKeyDefinitionNode PrimaryKey(string name, params SqlOrderByNode[] columns)
     {
-        return new SqlCreateTemporaryTableNode( name, columns );
+        return new SqlPrimaryKeyDefinitionNode( name, columns );
     }
 
     [Pure]
-    public static SqlDropTemporaryTableNode DropTempTable(string name)
+    public static SqlForeignKeyDefinitionNode ForeignKey(
+        string name,
+        SqlDataFieldNode[] columns,
+        SqlRecordSetNode referencedTable,
+        SqlDataFieldNode[] referencedColumns,
+        ReferenceBehavior? onDeleteBehavior = null,
+        ReferenceBehavior? onUpdateBehavior = null)
     {
-        return new SqlDropTemporaryTableNode( name );
+        return new SqlForeignKeyDefinitionNode(
+            name,
+            columns,
+            referencedTable,
+            referencedColumns,
+            onDeleteBehavior ?? ReferenceBehavior.Restrict,
+            onUpdateBehavior ?? ReferenceBehavior.Restrict );
+    }
+
+    [Pure]
+    public static SqlCheckDefinitionNode Check(string name, SqlConditionNode predicate)
+    {
+        return new SqlCheckDefinitionNode( name, predicate );
+    }
+
+    [Pure]
+    public static SqlCreateTableNode CreateTable(
+        string schemaName,
+        string name,
+        SqlColumnDefinitionNode[] columns,
+        bool ifNotExists = false,
+        bool isTemporary = false,
+        Func<SqlNewTableNode, SqlCreateTableConstraints>? constraintsProvider = null)
+    {
+        return new SqlCreateTableNode(
+            schemaName,
+            name,
+            ifNotExists,
+            isTemporary,
+            columns,
+            constraintsProvider );
+    }
+
+    [Pure]
+    public static SqlCreateViewNode CreateView(string schemaName, string name, SqlQueryExpressionNode source, bool ifNotExists = false)
+    {
+        return new SqlCreateViewNode( schemaName, name, ifNotExists, source );
+    }
+
+    [Pure]
+    public static SqlCreateIndexNode CreateIndex(
+        string schemaName,
+        string name,
+        bool isUnique,
+        SqlRecordSetNode table,
+        SqlOrderByNode[] columns,
+        bool ifNotExists = false,
+        SqlConditionNode? filter = null)
+    {
+        return new SqlCreateIndexNode( schemaName, name, isUnique, ifNotExists, table, columns, filter );
+    }
+
+    // TODO: alter
+
+    [Pure]
+    public static SqlDropTableNode DropTable(string schemaName, string name, bool ifExists = false, bool isTemporary = false)
+    {
+        return new SqlDropTableNode( schemaName, name, ifExists, isTemporary );
+    }
+
+    [Pure]
+    public static SqlDropViewNode DropView(string schemaName, string name, bool ifExists = false)
+    {
+        return new SqlDropViewNode( schemaName, name, ifExists );
+    }
+
+    [Pure]
+    public static SqlDropIndexNode DropIndex(string schemaName, string name, bool ifExists = false)
+    {
+        return new SqlDropIndexNode( schemaName, name, ifExists );
     }
 
     [Pure]

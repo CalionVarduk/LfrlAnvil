@@ -1,4 +1,5 @@
-﻿using LfrlAnvil.Functional;
+﻿using System.Collections.Generic;
+using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Tests.Helpers;
@@ -7,28 +8,27 @@ namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
 
 public partial class ObjectExpressionsTests
 {
-    public class TableBuilderRecordSet : TestsBase
+    public class Table : TestsBase
     {
         [Fact]
         public void GetKnownFields_ShouldReturnCollectionWithKnownColumns()
         {
-            var table = TableMock.CreateBuilder( "foo", ColumnMock.CreateManyBuilders<int>( areNullable: false, "Col0", "Col1" ) );
+            var table = TableMock.Create( "foo", ColumnMock.CreateMany<int>( areNullable: false, "Col0", "Col1" ) );
             var sut = SqlNode.Table( table );
 
             var result = sut.GetKnownFields();
 
             using ( new AssertionScope() )
             {
-                result.Count.Should().Be( 2 );
                 result.Should().HaveCount( 2 );
                 result.Should().BeEquivalentTo( sut.GetField( "Col0" ), sut.GetField( "Col1" ) );
             }
         }
 
         [Fact]
-        public void As_ShouldCreateTableBuilderRecordSetNode_WithNewAlias()
+        public void As_ShouldCreateTableNode_WithNewAlias()
         {
-            var table = TableMock.CreateBuilder( "foo" );
+            var table = TableMock.Create( "foo" );
             var sut = SqlNode.Table( table );
             var result = sut.As( "bar" );
 
@@ -36,43 +36,49 @@ public partial class ObjectExpressionsTests
             {
                 result.Should().NotBeSameAs( sut );
                 result.Table.Should().BeSameAs( sut.Table );
-                result.Name.Should().Be( "bar" );
+                result.SourceSchemaName.Should().BeEmpty();
+                result.SourceName.Should().Be( "foo" );
+                result.Alias.Should().Be( "bar" );
+                result.Identifier.Should().Be( "bar" );
                 result.IsOptional.Should().Be( sut.IsOptional );
                 result.IsAliased.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void AsSelf_ShouldCreateTableBuilderRecordSetNode_WithoutAlias()
+        public void AsSelf_ShouldCreateTableNode_WithoutAlias()
         {
-            var table = TableMock.CreateBuilder( "foo" );
-            var sut = SqlNode.Table( table, "bar" );
+            var table = TableMock.Create( "bar", SchemaMock.Create( "foo" ) );
+            var sut = SqlNode.Table( table, "qux" );
             var result = sut.AsSelf();
 
             using ( new AssertionScope() )
             {
                 result.Should().NotBeSameAs( sut );
                 result.Table.Should().BeSameAs( sut.Table );
-                result.Name.Should().Be( "foo" );
+                result.SourceSchemaName.Should().Be( "foo" );
+                result.SourceName.Should().Be( "bar" );
+                result.Alias.Should().BeNull();
+                result.Identifier.Should().Be( "foo.bar" );
                 result.IsOptional.Should().Be( sut.IsOptional );
                 result.IsAliased.Should().BeFalse();
             }
         }
 
         [Fact]
-        public void GetUnsafeField_ShouldReturnColumnBuilderNode_WhenColumnExists()
+        public void GetUnsafeField_ShouldReturnColumnNode_WhenColumnExists()
         {
-            var table = TableMock.CreateBuilder( "foo", ColumnMock.CreateBuilder<int>( "Col0" ) );
+            var table = TableMock.Create( "foo", ColumnMock.Create<int>( "Col0" ) );
             var sut = SqlNode.Table( table );
             var result = sut.GetUnsafeField( "Col0" );
             var text = result.ToString();
 
             using ( new AssertionScope() )
             {
-                result.NodeType.Should().Be( SqlNodeType.ColumnBuilder );
+                result.NodeType.Should().Be( SqlNodeType.Column );
                 result.Name.Should().Be( "Col0" );
                 result.RecordSet.Should().BeSameAs( sut );
-                var column = result as SqlColumnBuilderNode;
+                var column = result as SqlColumnNode;
                 (column?.Value).Should().BeSameAs( table.Columns.Get( "Col0" ) );
                 (column?.Type).Should().Be( SqlExpressionType.Create<int>() );
                 text.Should().Be( "[foo].[Col0] : System.Int32" );
@@ -82,7 +88,7 @@ public partial class ObjectExpressionsTests
         [Fact]
         public void GetUnsafeField_ShouldReturnRawDataFieldNode_WhenColumnDoesNotExist()
         {
-            var table = TableMock.CreateBuilder( "foo" );
+            var table = TableMock.Create( "foo" );
             var sut = SqlNode.Table( table );
             var result = sut.GetUnsafeField( "bar" );
             var text = result.ToString();
@@ -99,16 +105,16 @@ public partial class ObjectExpressionsTests
         }
 
         [Fact]
-        public void GetField_ShouldReturnColumnBuilderNode()
+        public void GetField_ShouldReturnColumnNode()
         {
-            var table = TableMock.CreateBuilder( "foo", ColumnMock.CreateBuilder<int>( "Col0" ) );
+            var table = TableMock.Create( "foo", ColumnMock.Create<int>( "Col0" ) );
             var sut = SqlNode.Table( table );
             var result = sut.GetField( "Col0" );
             var text = result.ToString();
 
             using ( new AssertionScope() )
             {
-                result.NodeType.Should().Be( SqlNodeType.ColumnBuilder );
+                result.NodeType.Should().Be( SqlNodeType.Column );
                 result.Value.Should().BeSameAs( table.Columns.Get( "Col0" ) );
                 result.Name.Should().Be( "Col0" );
                 result.RecordSet.Should().BeSameAs( sut );
@@ -118,16 +124,16 @@ public partial class ObjectExpressionsTests
         }
 
         [Fact]
-        public void GetField_ShouldReturnColumnBuilderNode_WhenColumnIsNullable()
+        public void GetField_ShouldReturnColumnNode_WhenColumnIsNullable()
         {
-            var table = TableMock.CreateBuilder( "foo", ColumnMock.CreateBuilder<int>( "Col0", isNullable: true ) );
+            var table = TableMock.Create( "foo", ColumnMock.Create<int>( "Col0", isNullable: true ) );
             var sut = SqlNode.Table( table );
             var result = sut.GetField( "Col0" );
             var text = result.ToString();
 
             using ( new AssertionScope() )
             {
-                result.NodeType.Should().Be( SqlNodeType.ColumnBuilder );
+                result.NodeType.Should().Be( SqlNodeType.Column );
                 result.Value.Should().BeSameAs( table.Columns.Get( "Col0" ) );
                 result.Name.Should().Be( "Col0" );
                 result.RecordSet.Should().BeSameAs( sut );
@@ -137,16 +143,16 @@ public partial class ObjectExpressionsTests
         }
 
         [Fact]
-        public void GetField_ShouldReturnColumnBuilderNode_WithNullableType_WhenTableIsOptional()
+        public void GetField_ShouldReturnColumnNode_WithNullableType_WhenTableIsOptional()
         {
-            var table = TableMock.CreateBuilder( "foo", ColumnMock.CreateBuilder<int>( "Col0" ) );
+            var table = TableMock.Create( "foo", ColumnMock.Create<int>( "Col0" ) );
             var sut = SqlNode.Table( table ).MarkAsOptional();
             var result = sut.GetField( "Col0" );
             var text = result.ToString();
 
             using ( new AssertionScope() )
             {
-                result.NodeType.Should().Be( SqlNodeType.ColumnBuilder );
+                result.NodeType.Should().Be( SqlNodeType.Column );
                 result.Value.Should().BeSameAs( table.Columns.Get( "Col0" ) );
                 result.Name.Should().Be( "Col0" );
                 result.RecordSet.Should().BeSameAs( sut );
@@ -156,16 +162,16 @@ public partial class ObjectExpressionsTests
         }
 
         [Fact]
-        public void GetField_ShouldReturnColumnBuilderNode_WithAlias()
+        public void GetField_ShouldReturnColumnNode_WithAlias()
         {
-            var table = TableMock.CreateBuilder( "foo", ColumnMock.CreateBuilder<int>( "Col0" ) );
+            var table = TableMock.Create( "foo", ColumnMock.Create<int>( "Col0" ) );
             var sut = SqlNode.Table( table, "bar" );
             var result = sut.GetField( "Col0" );
             var text = result.ToString();
 
             using ( new AssertionScope() )
             {
-                result.NodeType.Should().Be( SqlNodeType.ColumnBuilder );
+                result.NodeType.Should().Be( SqlNodeType.Column );
                 result.Value.Should().BeSameAs( table.Columns.Get( "Col0" ) );
                 result.Name.Should().Be( "Col0" );
                 result.RecordSet.Should().BeSameAs( sut );
@@ -175,31 +181,31 @@ public partial class ObjectExpressionsTests
         }
 
         [Fact]
-        public void GetField_ShouldThrowException_WhenColumnDoesNotExist()
+        public void GetField_ShouldThrowKeyNotFoundException_WhenColumnDoesNotExist()
         {
-            var table = TableMock.CreateBuilder( "foo", ColumnMock.CreateBuilder<int>( "Col0" ) );
+            var table = TableMock.Create( "foo", ColumnMock.Create<int>( "Col0" ) );
             var sut = SqlNode.Table( table );
 
             var action = Lambda.Of( () => sut.GetField( "Col1" ) );
 
-            action.Should().Throw<Exception>();
+            action.Should().ThrowExactly<KeyNotFoundException>();
         }
 
         [Fact]
         public void Indexer_ShouldBeEquivalentToGetField()
         {
-            var table = TableMock.CreateBuilder( "foo", ColumnMock.CreateBuilder<int>( "Col0" ) );
+            var table = TableMock.Create( "foo", ColumnMock.Create<int>( "Col0" ) );
             var sut = SqlNode.Table( table, "bar" );
 
             var result = sut["Col0"];
 
-            result.Should().BeEquivalentTo( sut.GetField( "Col0" ) );
+            result.Should().BeSameAs( sut.GetField( "Col0" ) );
         }
 
         [Fact]
         public void GetRawField_ShouldReturnRawDataFieldNode()
         {
-            var table = TableMock.CreateBuilder( "foo" );
+            var table = TableMock.Create( "foo" );
             var sut = SqlNode.Table( table );
             var result = sut.GetRawField( "bar", SqlExpressionType.Create<int>() );
             var text = result.ToString();
@@ -219,7 +225,7 @@ public partial class ObjectExpressionsTests
         [InlineData( true )]
         public void MarkAsOptional_ShouldReturnSelf_WhenOptionalityDoesNotChange(bool optional)
         {
-            var table = TableMock.CreateBuilder( "foo" );
+            var table = TableMock.Create( "foo" );
             var sut = SqlNode.Table( table ).MarkAsOptional( optional );
             var result = sut.MarkAsOptional( optional );
             result.Should().BeSameAs( sut );
@@ -228,9 +234,9 @@ public partial class ObjectExpressionsTests
         [Theory]
         [InlineData( false )]
         [InlineData( true )]
-        public void MarkAsOptional_ShouldReturnTableBuilderRecordSetNode_WhenOptionalityChanges_WithoutAlias(bool optional)
+        public void MarkAsOptional_ShouldReturnTableNode_WhenOptionalityChanges_WithoutAlias(bool optional)
         {
-            var table = TableMock.CreateBuilder( "foo" );
+            var table = TableMock.Create( "foo" );
             var sut = SqlNode.Table( table ).MarkAsOptional( ! optional );
             var result = sut.MarkAsOptional( optional );
 
@@ -238,7 +244,10 @@ public partial class ObjectExpressionsTests
             {
                 result.Should().NotBeSameAs( sut );
                 result.Table.Should().BeSameAs( sut.Table );
-                result.Name.Should().Be( sut.Name );
+                result.SourceSchemaName.Should().BeEmpty();
+                result.SourceName.Should().Be( "foo" );
+                result.Alias.Should().BeNull();
+                result.Identifier.Should().Be( "foo" );
                 result.IsAliased.Should().BeFalse();
                 result.IsOptional.Should().Be( optional );
             }
@@ -247,9 +256,9 @@ public partial class ObjectExpressionsTests
         [Theory]
         [InlineData( false )]
         [InlineData( true )]
-        public void MarkAsOptional_ShouldReturnTableBuilderRecordSetNode_WhenOptionalityChanges_WithAlias(bool optional)
+        public void MarkAsOptional_ShouldReturnTableNode_WhenOptionalityChanges_WithAlias(bool optional)
         {
-            var table = TableMock.CreateBuilder( "foo" );
+            var table = TableMock.Create( "foo" );
             var sut = SqlNode.Table( table, "bar" ).MarkAsOptional( ! optional );
             var result = sut.MarkAsOptional( optional );
 
@@ -257,7 +266,10 @@ public partial class ObjectExpressionsTests
             {
                 result.Should().NotBeSameAs( sut );
                 result.Table.Should().BeSameAs( sut.Table );
-                result.Name.Should().Be( sut.Name );
+                result.SourceSchemaName.Should().BeEmpty();
+                result.SourceName.Should().Be( "foo" );
+                result.Alias.Should().Be( "bar" );
+                result.Identifier.Should().Be( "bar" );
                 result.IsAliased.Should().BeTrue();
                 result.IsOptional.Should().Be( optional );
             }
