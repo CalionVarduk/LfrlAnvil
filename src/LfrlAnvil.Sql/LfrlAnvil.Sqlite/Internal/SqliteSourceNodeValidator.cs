@@ -129,6 +129,26 @@ internal abstract class SqliteSourceNodeValidator : SqlNodeVisitor
         AddForbiddenNode( node );
     }
 
+    public override void VisitRenameTable(SqlRenameTableNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
+    public override void VisitRenameColumn(SqlRenameColumnNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
+    public override void VisitAddColumn(SqlAddColumnNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
+    public override void VisitDropColumn(SqlDropColumnNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
     public override void VisitDropTable(SqlDropTableNode node)
     {
         AddForbiddenNode( node );

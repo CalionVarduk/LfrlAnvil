@@ -1032,6 +1032,34 @@ public class SqliteDefaultValueSourceValidatorTests : TestsBase
     }
 
     [Fact]
+    public void VisitRenameTable_ShouldRegisterError()
+    {
+        _sut.VisitRenameTable( SqlNode.RenameTable( string.Empty, "foo", "bar" ) );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
+    public void VisitRenameColumn_ShouldRegisterError()
+    {
+        _sut.VisitRenameColumn( SqlNode.RenameColumn( string.Empty, "foo", "bar", "qux" ) );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
+    public void VisitAddColumn_ShouldRegisterError()
+    {
+        _sut.VisitAddColumn( SqlNode.AddColumn( string.Empty, "foo", SqlNode.Column<int>( "a" ) ) );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
+    public void VisitDropColumn_ShouldRegisterError()
+    {
+        _sut.VisitDropColumn( SqlNode.DropColumn( string.Empty, "foo", "bar" ) );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
     public void VisitDropTable_ShouldRegisterError()
     {
         _sut.VisitDropTable( SqlNode.DropTable( string.Empty, "foo" ) );

@@ -363,6 +363,22 @@ public static class SqlNodeVisitorExtensions
                 visitor.VisitCreateIndex( ReinterpretCast.To<SqlCreateIndexNode>( node ) );
                 break;
 
+            case SqlNodeType.RenameTable:
+                visitor.VisitRenameTable( ReinterpretCast.To<SqlRenameTableNode>( node ) );
+                break;
+
+            case SqlNodeType.RenameColumn:
+                visitor.VisitRenameColumn( ReinterpretCast.To<SqlRenameColumnNode>( node ) );
+                break;
+
+            case SqlNodeType.AddColumn:
+                visitor.VisitAddColumn( ReinterpretCast.To<SqlAddColumnNode>( node ) );
+                break;
+
+            case SqlNodeType.DropColumn:
+                visitor.VisitDropColumn( ReinterpretCast.To<SqlDropColumnNode>( node ) );
+                break;
+
             case SqlNodeType.DropTable:
                 visitor.VisitDropTable( ReinterpretCast.To<SqlDropTableNode>( node ) );
                 break;

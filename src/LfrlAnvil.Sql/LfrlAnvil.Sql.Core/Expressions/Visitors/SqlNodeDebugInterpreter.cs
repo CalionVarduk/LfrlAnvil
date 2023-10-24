@@ -662,6 +662,55 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
         }
     }
 
+    public override void VisitRenameTable(SqlRenameTableNode node)
+    {
+        Context.Sql.Append( "RENAME" ).AppendSpace().Append( "TABLE" ).AppendSpace();
+        if ( node.IsTemporary )
+            Context.Sql.Append( "TEMP" ).AppendDot();
+
+        AppendDelimitedSchemaObjectName( node.OldSchemaName, node.OldName );
+        Context.Sql.AppendSpace().Append( "TO" ).AppendSpace();
+        if ( node.IsTemporary )
+            Context.Sql.Append( "TEMP" ).AppendDot();
+
+        AppendDelimitedSchemaObjectName( node.NewSchemaName, node.NewName );
+    }
+
+    public override void VisitRenameColumn(SqlRenameColumnNode node)
+    {
+        Context.Sql.Append( "RENAME" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
+        if ( node.IsTableTemporary )
+            Context.Sql.Append( "TEMP" ).AppendDot();
+
+        AppendDelimitedSchemaObjectName( node.SchemaName, node.TableName );
+        Context.Sql.AppendDot();
+        AppendDelimitedName( node.OldName );
+        Context.Sql.AppendSpace().Append( "TO" ).AppendSpace();
+        AppendDelimitedName( node.NewName );
+    }
+
+    public override void VisitAddColumn(SqlAddColumnNode node)
+    {
+        Context.Sql.Append( "ADD" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
+        if ( node.IsTableTemporary )
+            Context.Sql.Append( "TEMP" ).AppendDot();
+
+        AppendDelimitedSchemaObjectName( node.SchemaName, node.TableName );
+        Context.Sql.AppendDot();
+        VisitColumnDefinition( node.Definition );
+    }
+
+    public override void VisitDropColumn(SqlDropColumnNode node)
+    {
+        Context.Sql.Append( "DROP" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
+        if ( node.IsTableTemporary )
+            Context.Sql.Append( "TEMP" ).AppendDot();
+
+        AppendDelimitedSchemaObjectName( node.SchemaName, node.TableName );
+        Context.Sql.AppendDot();
+        AppendDelimitedName( node.Name );
+    }
+
     public override void VisitDropTable(SqlDropTableNode node)
     {
         Context.Sql.Append( "DROP" ).AppendSpace().Append( "TABLE" ).AppendSpace();

@@ -1783,6 +1783,54 @@ public class SqliteViewSourceValidatorTests : TestsBase
     }
 
     [Fact]
+    public void VisitRenameTable_ShouldRegisterError()
+    {
+        _sut.VisitRenameTable( SqlNode.RenameTable( string.Empty, "foo", "bar" ) );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 1 );
+            _sut.ReferencedObjects.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void VisitRenameColumn_ShouldRegisterError()
+    {
+        _sut.VisitRenameColumn( SqlNode.RenameColumn( string.Empty, "foo", "bar", "qux" ) );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 1 );
+            _sut.ReferencedObjects.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void VisitAddColumn_ShouldRegisterError()
+    {
+        _sut.VisitAddColumn( SqlNode.AddColumn( string.Empty, "foo", SqlNode.Column<int>( "a" ) ) );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 1 );
+            _sut.ReferencedObjects.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void VisitDropColumn_ShouldRegisterError()
+    {
+        _sut.VisitDropColumn( SqlNode.DropColumn( string.Empty, "foo", "bar" ) );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 1 );
+            _sut.ReferencedObjects.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
     public void VisitDropTable_ShouldRegisterError()
     {
         _sut.VisitDropTable( SqlNode.DropTable( string.Empty, "foo" ) );

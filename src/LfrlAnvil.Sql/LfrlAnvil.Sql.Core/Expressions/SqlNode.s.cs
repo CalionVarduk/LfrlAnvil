@@ -710,7 +710,49 @@ public static partial class SqlNode
         return new SqlCreateIndexNode( schemaName, name, isUnique, ifNotExists, table, columns, filter );
     }
 
-    // TODO: alter
+    [Pure]
+    public static SqlRenameTableNode RenameTable(string schemaName, string oldName, string newName, bool isTemporary = false)
+    {
+        return RenameTable( schemaName, oldName, schemaName, newName, isTemporary );
+    }
+
+    [Pure]
+    public static SqlRenameTableNode RenameTable(
+        string oldSchemaName,
+        string oldName,
+        string newSchemaName,
+        string newName,
+        bool isTemporary = false)
+    {
+        return new SqlRenameTableNode( oldSchemaName, oldName, newSchemaName, newName, isTemporary );
+    }
+
+    [Pure]
+    public static SqlRenameColumnNode RenameColumn(
+        string schemaName,
+        string tableName,
+        string oldName,
+        string newName,
+        bool isTableTemporary = false)
+    {
+        return new SqlRenameColumnNode( schemaName, tableName, oldName, newName, isTableTemporary );
+    }
+
+    [Pure]
+    public static SqlAddColumnNode AddColumn(
+        string schemaName,
+        string tableName,
+        SqlColumnDefinitionNode definition,
+        bool isTableTemporary = false)
+    {
+        return new SqlAddColumnNode( schemaName, tableName, definition, isTableTemporary );
+    }
+
+    [Pure]
+    public static SqlDropColumnNode DropColumn(string schemaName, string tableName, string name, bool isTableTemporary = false)
+    {
+        return new SqlDropColumnNode( schemaName, tableName, name, isTableTemporary );
+    }
 
     [Pure]
     public static SqlDropTableNode DropTable(string schemaName, string name, bool ifExists = false, bool isTemporary = false)

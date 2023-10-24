@@ -2140,7 +2140,11 @@ LIMIT 50 OFFSET 75" );
 
         _sut.Visit(
             dataSource.ToUpdate(
-                s => new[] { s["foo"]["b"].Assign( SqlNode.Literal( 10 ) ), s["foo"]["c"].Assign( SqlNode.Literal( "foo" ) ) } ) );
+                s => new[]
+                {
+                    s["foo"]["b"].Assign( s["foo"]["b"] + SqlNode.Literal( 10 ) ),
+                    s["foo"]["c"].Assign( SqlNode.Literal( "foo" ) )
+                } ) );
 
         _sut.Context.Sql.ToString()
             .Should()
@@ -2149,7 +2153,7 @@ LIMIT 50 OFFSET 75" );
   SELECT * FROM abc
 )
 UPDATE foo SET
-  ""b"" = 10,
+  ""b"" = (""b"" + 10),
   ""c"" = 'foo'
 WHERE foo.""a"" IN (
   SELECT cba.c FROM cba
@@ -2582,7 +2586,7 @@ WHERE EXISTS (
             .Limit( SqlNode.Literal( 50 ) )
             .Offset( SqlNode.Literal( 100 ) );
 
-        _sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["b"].Assign( foo.AsSelf()["b"] + s["qux"]["b"] + SqlNode.Literal( 1 ) ) } ) );
+        _sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["b"].Assign( s["f"]["b"] + s["qux"]["b"] + SqlNode.Literal( 1 ) ) } ) );
 
         _sut.Context.Sql.ToString()
             .Should()
@@ -2600,7 +2604,7 @@ WHERE EXISTS (
   LIMIT 50 OFFSET 100
 )
 UPDATE ""foo"" SET
-  ""b"" = ((""foo"".""b"" + (SELECT ""qux_b"" FROM ""_{GUID}"" WHERE (""foo"".""a"" = ""_{GUID}"".""f_a"") LIMIT 1)) + 1)
+  ""b"" = ((""b"" + (SELECT ""qux_b"" FROM ""_{GUID}"" WHERE (""foo"".""a"" = ""_{GUID}"".""f_a"") LIMIT 1)) + 1)
 WHERE ""foo"".""a"" IN (SELECT ""f_a"" FROM ""_{GUID}"");" );
     }
 
@@ -2622,7 +2626,7 @@ WHERE ""foo"".""a"" IN (SELECT ""f_a"" FROM ""_{GUID}"");" );
             .Limit( SqlNode.Literal( 50 ) )
             .Offset( SqlNode.Literal( 100 ) );
 
-        _sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["b"].Assign( foo.AsSelf()["b"] + s["qux"]["b"] + SqlNode.Literal( 1 ) ) } ) );
+        _sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["b"].Assign( s["f"]["b"] + s["qux"]["b"] + SqlNode.Literal( 1 ) ) } ) );
 
         _sut.Context.Sql.ToString()
             .Should()
@@ -2643,7 +2647,7 @@ WHERE ""foo"".""a"" IN (SELECT ""f_a"" FROM ""_{GUID}"");" );
   LIMIT 50 OFFSET 100
 )
 UPDATE ""foo"" SET
-  ""b"" = ((""foo"".""b"" + (SELECT ""qux_b"" FROM ""_{GUID}"" WHERE (""foo"".""a"" = ""_{GUID}"".""f_a"") LIMIT 1)) + 1)
+  ""b"" = ((""b"" + (SELECT ""qux_b"" FROM ""_{GUID}"" WHERE (""foo"".""a"" = ""_{GUID}"".""f_a"") LIMIT 1)) + 1)
 WHERE ""foo"".""a"" IN (SELECT ""f_a"" FROM ""_{GUID}"");" );
     }
 
@@ -2722,7 +2726,7 @@ WHERE EXISTS (SELECT * FROM ""_{GUID}"" WHERE (""foo"".""a"" = ""_{GUID}"".""f_a
 
         _sut.Visit(
             dataSource.ToUpdate(
-                s => new[] { s["f"]["b"].Assign( foo.AsSelf()["b"] + s["bar"]["b"] - s["tmp"]["b"] + SqlNode.Literal( 1 ) ) } ) );
+                s => new[] { s["f"]["b"].Assign( s["f"]["b"] + s["bar"]["b"] - s["tmp"]["b"] + SqlNode.Literal( 1 ) ) } ) );
 
         _sut.Context.Sql.ToString()
             .Should()
@@ -2738,7 +2742,7 @@ WHERE EXISTS (SELECT * FROM ""_{GUID}"" WHERE (""foo"".""a"" = ""_{GUID}"".""f_a
   WHERE ""f"".""b"" IS NOT NULL
 )
 UPDATE ""foo"" SET
-  ""b"" = (((""foo"".""b"" + (SELECT ""bar_b"" FROM ""_{GUID}"" WHERE (""foo"".""a"" = ""_{GUID}"".""f_a"") LIMIT 1)) - (SELECT ""temp_tmp_b"" FROM ""_{GUID}"" WHERE (""foo"".""a"" = ""_{GUID}"".""f_a"") LIMIT 1)) + 1)
+  ""b"" = (((""b"" + (SELECT ""bar_b"" FROM ""_{GUID}"" WHERE (""foo"".""a"" = ""_{GUID}"".""f_a"") LIMIT 1)) - (SELECT ""temp_tmp_b"" FROM ""_{GUID}"" WHERE (""foo"".""a"" = ""_{GUID}"".""f_a"") LIMIT 1)) + 1)
 WHERE ""foo"".""a"" IN (SELECT ""f_a"" FROM ""_{GUID}"");" );
     }
 
@@ -2834,6 +2838,14 @@ WHERE ""foo"".""a"" IN (SELECT ""f_a"" FROM ""_{GUID}"");" );
     {
         _sut.Visit( SqlNode.RawRecordSet( "foo" )["a"].Assign( SqlNode.Literal( 50 ) ) );
         _sut.Context.Sql.ToString().Should().Be( "\"a\" = 50" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretValueAssignment_WithValueContainingDataFieldFromAssigneeRecordSet()
+    {
+        var recordSet = SqlNode.RawRecordSet( "foo" );
+        _sut.Visit( recordSet["a"].Assign( recordSet["a"] + recordSet["b"] ) );
+        _sut.Context.Sql.ToString().Should().Be( "\"a\" = (\"a\" + \"b\")" );
     }
 
     [Fact]
@@ -3569,6 +3581,44 @@ SELECT * FROM qux" );
         _sut.Context.Sql.ToString()
             .Should()
             .Be( "CREATE INDEX \"foo_bar\" ON qux (\"a\" ASC, \"b\" DESC) WHERE (\"a\" IS NOT NULL)" );
+    }
+
+    [Theory]
+    [InlineData( false, "ALTER TABLE \"foo_bar\" RENAME TO \"qux_lorem\"" )]
+    [InlineData( true, "ALTER TABLE temp.\"foo_bar\" RENAME TO \"qux_lorem\"" )]
+    public void Visit_ShouldInterpretRenameTable(bool isTemporary, string expected)
+    {
+        _sut.Visit( SqlNode.RenameTable( "foo", "bar", "qux", "lorem", isTemporary ) );
+        _sut.Context.Sql.ToString().Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( false, "ALTER TABLE \"foo_bar\" RENAME COLUMN \"qux\" TO \"lorem\"" )]
+    [InlineData( true, "ALTER TABLE temp.\"foo_bar\" RENAME COLUMN \"qux\" TO \"lorem\"" )]
+    public void Visit_ShouldInterpretRenameColumn(bool isTableTemporary, string expected)
+    {
+        _sut.Visit( SqlNode.RenameColumn( "foo", "bar", "qux", "lorem", isTableTemporary ) );
+        _sut.Context.Sql.ToString().Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( false, "ALTER TABLE \"foo_bar\" ADD COLUMN \"qux\" INTEGER NOT NULL DEFAULT (10)" )]
+    [InlineData( true, "ALTER TABLE temp.\"foo_bar\" ADD COLUMN \"qux\" INTEGER NOT NULL DEFAULT (10)" )]
+    public void Visit_ShouldInterpretAddColumn(bool isTableTemporary, string expected)
+    {
+        _sut.Visit(
+            SqlNode.AddColumn( "foo", "bar", SqlNode.Column<int>( "qux", defaultValue: SqlNode.Literal( 10 ) ), isTableTemporary ) );
+
+        _sut.Context.Sql.ToString().Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( false, "ALTER TABLE \"foo_bar\" DROP COLUMN \"qux\"" )]
+    [InlineData( true, "ALTER TABLE temp.\"foo_bar\" DROP COLUMN \"qux\"" )]
+    public void Visit_ShouldInterpretDropColumn(bool isTableTemporary, string expected)
+    {
+        _sut.Visit( SqlNode.DropColumn( "foo", "bar", "qux", isTableTemporary ) );
+        _sut.Context.Sql.ToString().Should().Be( expected );
     }
 
     [Theory]

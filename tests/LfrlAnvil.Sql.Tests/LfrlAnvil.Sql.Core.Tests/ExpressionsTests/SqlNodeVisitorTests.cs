@@ -1372,6 +1372,41 @@ public class SqlNodeVisitorTests : TestsBase
     }
 
     [Fact]
+    public void VisitRenameTable_ShouldDoNothing()
+    {
+        var sut = new Visitor();
+        var action = Lambda.Of( () => sut.VisitRenameTable( SqlNode.RenameTable( string.Empty, "a", "b" ) ) );
+        action.Should().NotThrow();
+    }
+
+    [Fact]
+    public void VisitRenameColumn_ShouldDoNothing()
+    {
+        var sut = new Visitor();
+        var action = Lambda.Of( () => sut.VisitRenameColumn( SqlNode.RenameColumn( string.Empty, "a", "b", "c" ) ) );
+        action.Should().NotThrow();
+    }
+
+    [Fact]
+    public void VisitAddColumn_ShouldVisitDefinition()
+    {
+        var sut = new VisitorMock();
+        var defaultValue = SqlNode.Literal( 10 );
+
+        sut.VisitAddColumn( SqlNode.AddColumn( string.Empty, "a", SqlNode.Column<int>( "b", defaultValue: defaultValue ) ) );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( defaultValue );
+    }
+
+    [Fact]
+    public void VisitDropColumn_ShouldDoNothing()
+    {
+        var sut = new Visitor();
+        var action = Lambda.Of( () => sut.VisitDropColumn( SqlNode.DropColumn( string.Empty, "a", "b" ) ) );
+        action.Should().NotThrow();
+    }
+
+    [Fact]
     public void VisitDropTable_ShouldDoNothing()
     {
         var sut = new Visitor();

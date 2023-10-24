@@ -665,6 +665,15 @@ public abstract class SqlNodeVisitor : ISqlNodeVisitor
             this.Visit( node.Filter );
     }
 
+    public virtual void VisitRenameTable(SqlRenameTableNode node) { }
+    public virtual void VisitRenameColumn(SqlRenameColumnNode node) { }
+
+    public virtual void VisitAddColumn(SqlAddColumnNode node)
+    {
+        VisitColumnDefinition( node.Definition );
+    }
+
+    public virtual void VisitDropColumn(SqlDropColumnNode node) { }
     public virtual void VisitDropTable(SqlDropTableNode node) { }
     public virtual void VisitDropView(SqlDropViewNode node) { }
     public virtual void VisitDropIndex(SqlDropIndexNode node) { }

@@ -90,7 +90,7 @@ public enum SqlNodeType : byte
     CreateTable,
     CreateView,
     CreateIndex,
-    RenameTable, // TODO: alter table nodes
+    RenameTable,
     RenameColumn,
     AddColumn,
     DropColumn,

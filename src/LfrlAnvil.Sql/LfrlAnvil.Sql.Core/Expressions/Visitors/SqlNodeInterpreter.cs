@@ -744,7 +744,9 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         {
             AppendDelimitedName( node.DataField.Name );
             Context.Sql.AppendSpace().Append( '=' ).AppendSpace();
-            VisitChild( node.Value );
+
+            using ( SwapIgnoredRecordSet( node.DataField.RecordSet ) )
+                VisitChild( node.Value );
         }
     }
 
@@ -757,6 +759,10 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     public abstract void VisitCreateTable(SqlCreateTableNode node);
     public abstract void VisitCreateView(SqlCreateViewNode node);
     public abstract void VisitCreateIndex(SqlCreateIndexNode node);
+    public abstract void VisitRenameTable(SqlRenameTableNode node);
+    public abstract void VisitRenameColumn(SqlRenameColumnNode node);
+    public abstract void VisitAddColumn(SqlAddColumnNode node);
+    public abstract void VisitDropColumn(SqlDropColumnNode node);
     public abstract void VisitDropTable(SqlDropTableNode node);
     public abstract void VisitDropView(SqlDropViewNode node);
     public abstract void VisitDropIndex(SqlDropIndexNode node);

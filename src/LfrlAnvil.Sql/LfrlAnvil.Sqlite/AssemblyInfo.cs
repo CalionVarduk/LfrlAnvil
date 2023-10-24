@@ -3,9 +3,6 @@
 [assembly: InternalsVisibleTo( "LfrlAnvil.Core.Tests" )]
 
 // TODO:
-// - Add possibility to ignore record set name in data field node
-//   ^ may be important for partial indexes & updates in the form of UPDATE T SET X = X + 1 (instead of UPDATE T SET X = T.X + 1)
-//   ^ seems to work for Sqlite, at least => leave it for now, let's see how other db providers handle that
 // - Add check constraints? as expression trees <= NEXT NEXT
 // - ISqlDatabaseBuilder.AddRawStatement should accept an expression tree (array of, internally will create a batch node) + parameters
 // - Add column script can be handled with ALTER TABLE

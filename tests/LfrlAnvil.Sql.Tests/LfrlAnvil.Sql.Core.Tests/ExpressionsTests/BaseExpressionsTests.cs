@@ -757,7 +757,8 @@ END" );
             sut.OnDeleteBehavior.Should().BeSameAs( onDeleteBehavior );
             sut.OnUpdateBehavior.Should().BeSameAs( onUpdateBehavior );
             text.Should()
-                .Be( $"FOREIGN KEY [FK_foo_REF_bar] () REFERENCES [bar] () ON DELETE {onDeleteBehavior.Name} ON UPDATE {onUpdateBehavior.Name}" );
+                .Be(
+                    $"FOREIGN KEY [FK_foo_REF_bar] () REFERENCES [bar] () ON DELETE {onDeleteBehavior.Name} ON UPDATE {onUpdateBehavior.Name}" );
         }
     }
 
@@ -948,6 +949,85 @@ SELECT * FROM qux" );
             sut.IsUnique.Should().Be( isUnique );
             sut.Table.Should().BeSameAs( table );
             sut.Columns.ToArray().Should().BeEmpty();
+            text.Should().Be( expectedText );
+        }
+    }
+
+    [Theory]
+    [InlineData( false, "RENAME TABLE [foo].[bar] TO [foo].[qux]" )]
+    [InlineData( true, "RENAME TABLE TEMP.[foo].[bar] TO TEMP.[foo].[qux]" )]
+    public void RenameTable_ShouldCreateRenameTableNode(bool isTemporary, string expectedText)
+    {
+        var sut = SqlNode.RenameTable( "foo", "bar", "qux", isTemporary );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.RenameTable );
+            sut.OldSchemaName.Should().Be( "foo" );
+            sut.OldName.Should().Be( "bar" );
+            sut.NewSchemaName.Should().Be( "foo" );
+            sut.NewName.Should().Be( "qux" );
+            sut.IsTemporary.Should().Be( isTemporary );
+            text.Should().Be( expectedText );
+        }
+    }
+
+    [Theory]
+    [InlineData( false, "RENAME COLUMN [foo].[bar].[qux] TO [lorem]" )]
+    [InlineData( true, "RENAME COLUMN TEMP.[foo].[bar].[qux] TO [lorem]" )]
+    public void RenameColumn_ShouldCreateRenameColumnNode(bool isTableTemporary, string expectedText)
+    {
+        var sut = SqlNode.RenameColumn( "foo", "bar", "qux", "lorem", isTableTemporary );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.RenameColumn );
+            sut.SchemaName.Should().Be( "foo" );
+            sut.TableName.Should().Be( "bar" );
+            sut.OldName.Should().Be( "qux" );
+            sut.NewName.Should().Be( "lorem" );
+            sut.IsTableTemporary.Should().Be( isTableTemporary );
+            text.Should().Be( expectedText );
+        }
+    }
+
+    [Theory]
+    [InlineData( false, "ADD COLUMN [foo].[bar].[qux] : System.Int32 DEFAULT (\"10\" : System.Int32)" )]
+    [InlineData( true, "ADD COLUMN TEMP.[foo].[bar].[qux] : System.Int32 DEFAULT (\"10\" : System.Int32)" )]
+    public void AddColumn_ShouldCreateAddColumnNode(bool isTableTemporary, string expectedText)
+    {
+        var definition = SqlNode.Column<int>( "qux", defaultValue: SqlNode.Literal( 10 ) );
+        var sut = SqlNode.AddColumn( "foo", "bar", definition, isTableTemporary );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AddColumn );
+            sut.SchemaName.Should().Be( "foo" );
+            sut.TableName.Should().Be( "bar" );
+            sut.Definition.Should().BeSameAs( definition );
+            sut.IsTableTemporary.Should().Be( isTableTemporary );
+            text.Should().Be( expectedText );
+        }
+    }
+
+    [Theory]
+    [InlineData( false, "DROP COLUMN [foo].[bar].[qux]" )]
+    [InlineData( true, "DROP COLUMN TEMP.[foo].[bar].[qux]" )]
+    public void DropColumn_ShouldCreateDropColumnNode(bool isTableTemporary, string expectedText)
+    {
+        var sut = SqlNode.DropColumn( "foo", "bar", "qux", isTableTemporary );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.DropColumn );
+            sut.SchemaName.Should().Be( "foo" );
+            sut.TableName.Should().Be( "bar" );
+            sut.Name.Should().Be( "qux" );
+            sut.IsTableTemporary.Should().Be( isTableTemporary );
             text.Should().Be( expectedText );
         }
     }

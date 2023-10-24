@@ -128,6 +128,10 @@ public interface ISqlNodeVisitor
     void VisitCreateTable(SqlCreateTableNode node);
     void VisitCreateView(SqlCreateViewNode node);
     void VisitCreateIndex(SqlCreateIndexNode node);
+    void VisitRenameTable(SqlRenameTableNode node);
+    void VisitRenameColumn(SqlRenameColumnNode node);
+    void VisitAddColumn(SqlAddColumnNode node);
+    void VisitDropColumn(SqlDropColumnNode node);
     void VisitDropTable(SqlDropTableNode node);
     void VisitDropView(SqlDropViewNode node);
     void VisitDropIndex(SqlDropIndexNode node);
