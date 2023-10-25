@@ -22,6 +22,7 @@ public abstract class SqlRecordSetNode : SqlNodeBase
     [MemberNotNullWhen( true, nameof( Alias ) )]
     public bool IsAliased => Alias is not null;
 
+    // TODO: replace with SqlRecordSetInfo, since this doesn't work correctly for temp tables
     public string Identifier => _identifier ??= SourceSchemaName.Length > 0 ? $"{SourceSchemaName}.{SourceName}" : SourceName;
     public abstract string SourceSchemaName { get; }
     public abstract string SourceName { get; }

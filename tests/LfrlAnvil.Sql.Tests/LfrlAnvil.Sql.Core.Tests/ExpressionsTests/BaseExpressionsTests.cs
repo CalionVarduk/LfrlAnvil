@@ -792,10 +792,10 @@ END" );
         SqlPrimaryKeyDefinitionNode? primaryKey = null;
         var foreignKeys = Array.Empty<SqlForeignKeyDefinitionNode>();
         var checks = Array.Empty<SqlCheckDefinitionNode>();
+        var info = SqlRecordSetInfo.Create( "foo", "bar" );
 
         var sut = SqlNode.CreateTable(
-            "foo",
-            "bar",
+            info,
             columns,
             constraintsProvider: t =>
             {
@@ -823,9 +823,7 @@ END" );
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.CreateTable );
-            sut.SchemaName.Should().Be( "foo" );
-            sut.Name.Should().Be( "bar" );
-            sut.IsTemporary.Should().BeFalse();
+            sut.Info.Should().Be( info );
             sut.IfNotExists.Should().BeFalse();
             sut.Columns.ToArray().Should().BeSequentiallyEqualTo( columns );
             sut.PrimaryKey.Should().BeSameAs( primaryKey );
@@ -854,15 +852,14 @@ END" );
         bool ifNotExists,
         string expectedText)
     {
-        var sut = SqlNode.CreateTable( string.Empty, "foo", Array.Empty<SqlColumnDefinitionNode>(), ifNotExists, isTemporary );
+        var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo" );
+        var sut = SqlNode.CreateTable( info, Array.Empty<SqlColumnDefinitionNode>(), ifNotExists );
         var text = sut.ToString();
 
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.CreateTable );
-            sut.SchemaName.Should().BeEmpty();
-            sut.Name.Should().Be( "foo" );
-            sut.IsTemporary.Should().Be( isTemporary );
+            sut.Info.Should().Be( info );
             sut.IfNotExists.Should().Be( ifNotExists );
             sut.Columns.ToArray().Should().BeEmpty();
             sut.PrimaryKey.Should().BeNull();
@@ -876,19 +873,21 @@ END" );
     }
 
     [Theory]
-    [InlineData( true, "CREATE VIEW IF NOT EXISTS [foo].[bar] AS" )]
-    [InlineData( false, "CREATE VIEW [foo].[bar] AS" )]
-    public void CreateView_ShouldCreateCreateViewNode(bool ifNotExists, string expectedHeader)
+    [InlineData( false, true, "CREATE VIEW IF NOT EXISTS [foo].[bar] AS" )]
+    [InlineData( true, true, "CREATE VIEW IF NOT EXISTS TEMP.[foo] AS" )]
+    [InlineData( false, false, "CREATE VIEW [foo].[bar] AS" )]
+    [InlineData( true, false, "CREATE VIEW TEMP.[foo] AS" )]
+    public void CreateView_ShouldCreateCreateViewNode(bool isTemporary, bool ifNotExists, string expectedHeader)
     {
+        var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
         var source = SqlNode.RawQuery( "SELECT * FROM qux" );
-        var sut = source.ToCreateView( "foo", "bar", ifNotExists );
+        var sut = source.ToCreateView( info, ifNotExists );
         var text = sut.ToString();
 
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.CreateView );
-            sut.SchemaName.Should().Be( "foo" );
-            sut.Name.Should().Be( "bar" );
+            sut.Info.Should().Be( info );
             sut.IfNotExists.Should().Be( ifNotExists );
             sut.Source.Should().BeSameAs( source );
             text.Should()
@@ -909,15 +908,15 @@ SELECT * FROM qux" );
         };
 
         var filter = table["x"] > table["y"];
+        var name = SqlSchemaObjectName.Create( "foo", "bar" );
 
-        var sut = SqlNode.CreateIndex( "foo", "bar", isUnique: false, table, columns, filter: filter );
+        var sut = SqlNode.CreateIndex( name, isUnique: false, table, columns, filter: filter );
         var text = sut.ToString();
 
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.CreateIndex );
-            sut.SchemaName.Should().Be( "foo" );
-            sut.Name.Should().Be( "bar" );
+            sut.Name.Should().Be( name );
             sut.IfNotExists.Should().BeFalse();
             sut.IsUnique.Should().BeFalse();
             sut.Table.Should().BeSameAs( table );
@@ -935,16 +934,16 @@ SELECT * FROM qux" );
     [InlineData( true, true, "CREATE UNIQUE INDEX IF NOT EXISTS [foo] ON [bar] ()" )]
     public void CreateIndex_ShouldCreateCreateIndexNode_WithEmptyColumnsAndNoFilter(bool ifNotExists, bool isUnique, string expectedText)
     {
+        var name = SqlSchemaObjectName.Create( "foo" );
         var table = SqlNode.RawRecordSet( "bar" );
-        var sut = SqlNode.CreateIndex( string.Empty, "foo", isUnique, table, Array.Empty<SqlOrderByNode>(), ifNotExists );
+        var sut = SqlNode.CreateIndex( name, isUnique, table, Array.Empty<SqlOrderByNode>(), ifNotExists );
 
         var text = sut.ToString();
 
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.CreateIndex );
-            sut.SchemaName.Should().BeEmpty();
-            sut.Name.Should().Be( "foo" );
+            sut.Name.Should().Be( name );
             sut.IfNotExists.Should().Be( ifNotExists );
             sut.IsUnique.Should().Be( isUnique );
             sut.Table.Should().BeSameAs( table );
@@ -955,119 +954,115 @@ SELECT * FROM qux" );
 
     [Theory]
     [InlineData( false, "RENAME TABLE [foo].[bar] TO [foo].[qux]" )]
-    [InlineData( true, "RENAME TABLE TEMP.[foo].[bar] TO TEMP.[foo].[qux]" )]
+    [InlineData( true, "RENAME TABLE TEMP.[foo] TO [qux]" )]
     public void RenameTable_ShouldCreateRenameTableNode(bool isTemporary, string expectedText)
     {
-        var sut = SqlNode.RenameTable( "foo", "bar", "qux", isTemporary );
+        var table = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
+        var newName = SqlSchemaObjectName.Create( table.Name.Schema, "qux" );
+        var sut = SqlNode.RenameTable( table, newName );
         var text = sut.ToString();
 
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.RenameTable );
-            sut.OldSchemaName.Should().Be( "foo" );
-            sut.OldName.Should().Be( "bar" );
-            sut.NewSchemaName.Should().Be( "foo" );
-            sut.NewName.Should().Be( "qux" );
-            sut.IsTemporary.Should().Be( isTemporary );
+            sut.Table.Should().Be( table );
+            sut.NewName.Should().Be( newName );
             text.Should().Be( expectedText );
         }
     }
 
     [Theory]
     [InlineData( false, "RENAME COLUMN [foo].[bar].[qux] TO [lorem]" )]
-    [InlineData( true, "RENAME COLUMN TEMP.[foo].[bar].[qux] TO [lorem]" )]
+    [InlineData( true, "RENAME COLUMN TEMP.[foo].[qux] TO [lorem]" )]
     public void RenameColumn_ShouldCreateRenameColumnNode(bool isTableTemporary, string expectedText)
     {
-        var sut = SqlNode.RenameColumn( "foo", "bar", "qux", "lorem", isTableTemporary );
+        var table = isTableTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
+        var sut = SqlNode.RenameColumn( table, "qux", "lorem" );
         var text = sut.ToString();
 
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.RenameColumn );
-            sut.SchemaName.Should().Be( "foo" );
-            sut.TableName.Should().Be( "bar" );
+            sut.Table.Should().Be( table );
             sut.OldName.Should().Be( "qux" );
             sut.NewName.Should().Be( "lorem" );
-            sut.IsTableTemporary.Should().Be( isTableTemporary );
             text.Should().Be( expectedText );
         }
     }
 
     [Theory]
     [InlineData( false, "ADD COLUMN [foo].[bar].[qux] : System.Int32 DEFAULT (\"10\" : System.Int32)" )]
-    [InlineData( true, "ADD COLUMN TEMP.[foo].[bar].[qux] : System.Int32 DEFAULT (\"10\" : System.Int32)" )]
+    [InlineData( true, "ADD COLUMN TEMP.[foo].[qux] : System.Int32 DEFAULT (\"10\" : System.Int32)" )]
     public void AddColumn_ShouldCreateAddColumnNode(bool isTableTemporary, string expectedText)
     {
+        var table = isTableTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
         var definition = SqlNode.Column<int>( "qux", defaultValue: SqlNode.Literal( 10 ) );
-        var sut = SqlNode.AddColumn( "foo", "bar", definition, isTableTemporary );
+        var sut = SqlNode.AddColumn( table, definition );
         var text = sut.ToString();
 
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.AddColumn );
-            sut.SchemaName.Should().Be( "foo" );
-            sut.TableName.Should().Be( "bar" );
+            sut.Table.Should().Be( table );
             sut.Definition.Should().BeSameAs( definition );
-            sut.IsTableTemporary.Should().Be( isTableTemporary );
             text.Should().Be( expectedText );
         }
     }
 
     [Theory]
     [InlineData( false, "DROP COLUMN [foo].[bar].[qux]" )]
-    [InlineData( true, "DROP COLUMN TEMP.[foo].[bar].[qux]" )]
+    [InlineData( true, "DROP COLUMN TEMP.[foo].[qux]" )]
     public void DropColumn_ShouldCreateDropColumnNode(bool isTableTemporary, string expectedText)
     {
-        var sut = SqlNode.DropColumn( "foo", "bar", "qux", isTableTemporary );
+        var table = isTableTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
+        var sut = SqlNode.DropColumn( table, "qux" );
         var text = sut.ToString();
 
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.DropColumn );
-            sut.SchemaName.Should().Be( "foo" );
-            sut.TableName.Should().Be( "bar" );
+            sut.Table.Should().Be( table );
             sut.Name.Should().Be( "qux" );
-            sut.IsTableTemporary.Should().Be( isTableTemporary );
             text.Should().Be( expectedText );
         }
     }
 
     [Theory]
     [InlineData( false, false, "DROP TABLE [foo].[bar]" )]
-    [InlineData( true, false, "DROP TABLE TEMP.[foo].[bar]" )]
+    [InlineData( true, false, "DROP TABLE TEMP.[foo]" )]
     [InlineData( false, true, "DROP TABLE IF EXISTS [foo].[bar]" )]
-    [InlineData( true, true, "DROP TABLE IF EXISTS TEMP.[foo].[bar]" )]
+    [InlineData( true, true, "DROP TABLE IF EXISTS TEMP.[foo]" )]
     public void DropTable_ShouldCreateDropTableNode(bool isTemporary, bool ifExists, string expectedText)
     {
-        var sut = SqlNode.CreateTable( "foo", "bar", Array.Empty<SqlColumnDefinitionNode>(), isTemporary: isTemporary )
-            .ToDropTable( ifExists );
+        var table = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
+        var sut = SqlNode.CreateTable( table, Array.Empty<SqlColumnDefinitionNode>() ).ToDropTable( ifExists );
 
         var text = sut.ToString();
 
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.DropTable );
-            sut.SchemaName.Should().Be( "foo" );
-            sut.Name.Should().Be( "bar" );
+            sut.Table.Should().Be( table );
             sut.IfExists.Should().Be( ifExists );
-            sut.IsTemporary.Should().Be( isTemporary );
             text.Should().Be( expectedText );
         }
     }
 
     [Theory]
-    [InlineData( false, "DROP VIEW [foo].[bar]" )]
-    [InlineData( true, "DROP VIEW IF EXISTS [foo].[bar]" )]
-    public void DropView_ShouldCreateDropViewNode(bool ifExists, string expectedText)
+    [InlineData( false, false, "DROP VIEW [foo].[bar]" )]
+    [InlineData( true, false, "DROP VIEW TEMP.[foo]" )]
+    [InlineData( false, true, "DROP VIEW IF EXISTS [foo].[bar]" )]
+    [InlineData( true, true, "DROP VIEW IF EXISTS TEMP.[foo]" )]
+    public void DropView_ShouldCreateDropViewNode(bool isTemporary, bool ifExists, string expectedText)
     {
-        var sut = SqlNode.CreateView( "foo", "bar", SqlNode.RawQuery( "SELECT * FROM qux" ) ).ToDropView( ifExists );
+        var view = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
+        var sut = SqlNode.CreateView( view, SqlNode.RawQuery( "SELECT * FROM qux" ) ).ToDropView( ifExists );
         var text = sut.ToString();
 
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.DropView );
-            sut.SchemaName.Should().Be( "foo" );
-            sut.Name.Should().Be( "bar" );
+            sut.View.Should().Be( view );
             sut.IfExists.Should().Be( ifExists );
             text.Should().Be( expectedText );
         }
@@ -1078,9 +1073,9 @@ SELECT * FROM qux" );
     [InlineData( true, "DROP INDEX IF EXISTS [foo].[bar]" )]
     public void DropIndex_ShouldCreateDropIndexNode(bool ifExists, string expectedText)
     {
+        var name = SqlSchemaObjectName.Create( "foo", "bar" );
         var sut = SqlNode.CreateIndex(
-                "foo",
-                "bar",
+                name,
                 isUnique: Fixture.Create<bool>(),
                 SqlNode.RawRecordSet( "qux" ),
                 Array.Empty<SqlOrderByNode>() )
@@ -1091,8 +1086,7 @@ SELECT * FROM qux" );
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.DropIndex );
-            sut.SchemaName.Should().Be( "foo" );
-            sut.Name.Should().Be( "bar" );
+            sut.Name.Should().Be( name );
             sut.IfExists.Should().Be( ifExists );
             text.Should().Be( expectedText );
         }

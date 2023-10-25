@@ -2,17 +2,13 @@
 
 public sealed class SqlDropColumnNode : SqlNodeBase
 {
-    internal SqlDropColumnNode(string schemaName, string tableName, string name, bool isTableTemporary)
+    internal SqlDropColumnNode(SqlRecordSetInfo table, string name)
         : base( SqlNodeType.DropColumn )
     {
-        SchemaName = schemaName;
-        TableName = tableName;
+        Table = table;
         Name = name;
-        IsTableTemporary = isTableTemporary;
     }
 
-    public string SchemaName { get; }
-    public string TableName { get; }
+    public SqlRecordSetInfo Table { get; }
     public string Name { get; }
-    public bool IsTableTemporary { get; }
 }

@@ -891,8 +891,7 @@ public class SqlNodeVisitorTests : TestsBase
         var action = Lambda.Of(
             () => sut.VisitNewTable(
                 SqlNode.CreateTable(
-                        string.Empty,
-                        "foo",
+                        SqlRecordSetInfo.Create( "foo" ),
                         new[] { SqlNode.Column<int>( "a", defaultValue: SqlNode.Parameter( "a" ) ) } )
                     .AsSet( "bar" ) ) );
 
@@ -904,7 +903,7 @@ public class SqlNodeVisitorTests : TestsBase
     {
         var sut = new Visitor();
         var action = Lambda.Of(
-            () => sut.VisitNewView( SqlNode.RawQuery( "SELECT * FROM foo" ).ToCreateView( string.Empty, "bar" ).AsSet() ) );
+            () => sut.VisitNewView( SqlNode.RawQuery( "SELECT * FROM foo" ).ToCreateView( SqlRecordSetInfo.Create( "foo" ) ).AsSet() ) );
 
         action.Should().NotThrow();
     }
@@ -1308,8 +1307,7 @@ public class SqlNodeVisitorTests : TestsBase
         var parameters = new[] { SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ), SqlNode.Parameter( "c" ) };
 
         var table = SqlNode.CreateTable(
-            string.Empty,
-            "foo",
+            SqlRecordSetInfo.Create( "foo" ),
             new[]
             {
                 SqlNode.Column<int>( "a", defaultValue: parameters[0] ),
@@ -1344,7 +1342,7 @@ public class SqlNodeVisitorTests : TestsBase
     {
         var sut = new VisitorMock();
         var parameter = SqlNode.Parameter( "a" );
-        var view = SqlNode.CreateView( string.Empty, "V", SqlNode.RawQuery( "SELECT * FROM foo WHERE a > @a", parameter ) );
+        var view = SqlNode.CreateView( SqlRecordSetInfo.Create( "V" ), SqlNode.RawQuery( "SELECT * FROM foo WHERE a > @a", parameter ) );
 
         sut.VisitCreateView( view );
 
@@ -1359,8 +1357,7 @@ public class SqlNodeVisitorTests : TestsBase
         var parameter = SqlNode.Parameter( "a" );
 
         var index = SqlNode.CreateIndex(
-            string.Empty,
-            "IX",
+            SqlSchemaObjectName.Create( "IX" ),
             isUnique: Fixture.Create<bool>(),
             table,
             new[] { table["a"].Asc(), table["b"].Asc() },
@@ -1375,7 +1372,9 @@ public class SqlNodeVisitorTests : TestsBase
     public void VisitRenameTable_ShouldDoNothing()
     {
         var sut = new Visitor();
-        var action = Lambda.Of( () => sut.VisitRenameTable( SqlNode.RenameTable( string.Empty, "a", "b" ) ) );
+        var action = Lambda.Of(
+            () => sut.VisitRenameTable( SqlNode.RenameTable( SqlRecordSetInfo.Create( "a" ), SqlSchemaObjectName.Create( "b" ) ) ) );
+
         action.Should().NotThrow();
     }
 
@@ -1383,7 +1382,7 @@ public class SqlNodeVisitorTests : TestsBase
     public void VisitRenameColumn_ShouldDoNothing()
     {
         var sut = new Visitor();
-        var action = Lambda.Of( () => sut.VisitRenameColumn( SqlNode.RenameColumn( string.Empty, "a", "b", "c" ) ) );
+        var action = Lambda.Of( () => sut.VisitRenameColumn( SqlNode.RenameColumn( SqlRecordSetInfo.Create( "a" ), "b", "c" ) ) );
         action.Should().NotThrow();
     }
 
@@ -1393,7 +1392,7 @@ public class SqlNodeVisitorTests : TestsBase
         var sut = new VisitorMock();
         var defaultValue = SqlNode.Literal( 10 );
 
-        sut.VisitAddColumn( SqlNode.AddColumn( string.Empty, "a", SqlNode.Column<int>( "b", defaultValue: defaultValue ) ) );
+        sut.VisitAddColumn( SqlNode.AddColumn( SqlRecordSetInfo.Create( "a" ), SqlNode.Column<int>( "b", defaultValue: defaultValue ) ) );
 
         sut.Nodes.Should().BeSequentiallyEqualTo( defaultValue );
     }
@@ -1402,7 +1401,7 @@ public class SqlNodeVisitorTests : TestsBase
     public void VisitDropColumn_ShouldDoNothing()
     {
         var sut = new Visitor();
-        var action = Lambda.Of( () => sut.VisitDropColumn( SqlNode.DropColumn( string.Empty, "a", "b" ) ) );
+        var action = Lambda.Of( () => sut.VisitDropColumn( SqlNode.DropColumn( SqlRecordSetInfo.Create( "a" ), "b" ) ) );
         action.Should().NotThrow();
     }
 
@@ -1410,7 +1409,7 @@ public class SqlNodeVisitorTests : TestsBase
     public void VisitDropTable_ShouldDoNothing()
     {
         var sut = new Visitor();
-        var action = Lambda.Of( () => sut.VisitDropTable( SqlNode.DropTable( string.Empty, "a" ) ) );
+        var action = Lambda.Of( () => sut.VisitDropTable( SqlNode.DropTable( SqlRecordSetInfo.Create( "a" ) ) ) );
         action.Should().NotThrow();
     }
 
@@ -1418,7 +1417,7 @@ public class SqlNodeVisitorTests : TestsBase
     public void VisitDropView_ShouldDoNothing()
     {
         var sut = new Visitor();
-        var action = Lambda.Of( () => sut.VisitDropView( SqlNode.DropView( string.Empty, "a" ) ) );
+        var action = Lambda.Of( () => sut.VisitDropView( SqlNode.DropView( SqlRecordSetInfo.Create( "a" ) ) ) );
         action.Should().NotThrow();
     }
 
@@ -1426,7 +1425,7 @@ public class SqlNodeVisitorTests : TestsBase
     public void VisitDropIndex_ShouldDoNothing()
     {
         var sut = new Visitor();
-        var action = Lambda.Of( () => sut.VisitDropIndex( SqlNode.DropIndex( string.Empty, "a" ) ) );
+        var action = Lambda.Of( () => sut.VisitDropIndex( SqlNode.DropIndex( SqlSchemaObjectName.Create( "a" ) ) ) );
         action.Should().NotThrow();
     }
 

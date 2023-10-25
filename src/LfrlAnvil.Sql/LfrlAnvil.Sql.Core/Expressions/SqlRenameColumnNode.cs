@@ -2,19 +2,15 @@
 
 public sealed class SqlRenameColumnNode : SqlNodeBase
 {
-    internal SqlRenameColumnNode(string schemaName, string tableName, string oldName, string newName, bool isTableTemporary)
+    internal SqlRenameColumnNode(SqlRecordSetInfo table, string oldName, string newName)
         : base( SqlNodeType.RenameColumn )
     {
-        SchemaName = schemaName;
-        TableName = tableName;
+        Table = table;
         OldName = oldName;
         NewName = newName;
-        IsTableTemporary = isTableTemporary;
     }
 
-    public string SchemaName { get; }
-    public string TableName { get; }
+    public SqlRecordSetInfo Table { get; }
     public string OldName { get; }
     public string NewName { get; }
-    public bool IsTableTemporary { get; }
 }

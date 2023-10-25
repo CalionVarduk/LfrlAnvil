@@ -247,15 +247,6 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
         AppendDelimitedAlias( node.Alias );
     }
 
-    public override void VisitNewTable(SqlNewTableNode node)
-    {
-        if ( node.CreationNode.IsTemporary )
-            Context.Sql.Append( "TEMP" ).AppendDot();
-
-        AppendDelimitedSchemaObjectName( node.CreationNode.SchemaName, node.CreationNode.Name );
-        AppendDelimitedAlias( node.Alias );
-    }
-
     public override void VisitDataSource(SqlDataSourceNode node)
     {
         using ( Context.TempParentNodeUpdate( node ) )
@@ -564,10 +555,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
             if ( node.IfNotExists )
                 Context.Sql.Append( "IF" ).AppendSpace().Append( "NOT" ).AppendSpace().Append( "EXISTS" ).AppendSpace();
 
-            if ( node.IsTemporary )
-                Context.Sql.Append( "TEMP" ).AppendDot();
-
-            AppendDelimitedSchemaObjectName( node.SchemaName, node.Name );
+            AppendDelimitedRecordSetInfo( node.Info );
             Context.Sql.AppendSpace().Append( '(' );
 
             using ( Context.TempIndentIncrease() )
@@ -614,8 +602,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
         if ( node.IfNotExists )
             Context.Sql.Append( "IF" ).AppendSpace().Append( "NOT" ).AppendSpace().Append( "EXISTS" ).AppendSpace();
 
-        AppendDelimitedSchemaObjectName( node.SchemaName, node.Name );
-
+        AppendDelimitedRecordSetInfo( node.Info );
         Context.Sql.AppendSpace().Append( "AS" );
         Context.AppendIndent();
         this.Visit( node.Source );
@@ -633,7 +620,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
             if ( node.IfNotExists )
                 Context.Sql.Append( "IF" ).AppendSpace().Append( "NOT" ).AppendSpace().Append( "EXISTS" ).AppendSpace();
 
-            AppendDelimitedSchemaObjectName( node.SchemaName, node.Name );
+            AppendDelimitedSchemaObjectName( node.Name );
             Context.Sql.AppendSpace().Append( "ON" ).AppendSpace();
             AppendDelimitedRecordSetName( node.Table );
 
@@ -665,24 +652,15 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
     public override void VisitRenameTable(SqlRenameTableNode node)
     {
         Context.Sql.Append( "RENAME" ).AppendSpace().Append( "TABLE" ).AppendSpace();
-        if ( node.IsTemporary )
-            Context.Sql.Append( "TEMP" ).AppendDot();
-
-        AppendDelimitedSchemaObjectName( node.OldSchemaName, node.OldName );
+        AppendDelimitedRecordSetInfo( node.Table );
         Context.Sql.AppendSpace().Append( "TO" ).AppendSpace();
-        if ( node.IsTemporary )
-            Context.Sql.Append( "TEMP" ).AppendDot();
-
-        AppendDelimitedSchemaObjectName( node.NewSchemaName, node.NewName );
+        AppendDelimitedSchemaObjectName( node.NewName );
     }
 
     public override void VisitRenameColumn(SqlRenameColumnNode node)
     {
         Context.Sql.Append( "RENAME" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
-        if ( node.IsTableTemporary )
-            Context.Sql.Append( "TEMP" ).AppendDot();
-
-        AppendDelimitedSchemaObjectName( node.SchemaName, node.TableName );
+        AppendDelimitedRecordSetInfo( node.Table );
         Context.Sql.AppendDot();
         AppendDelimitedName( node.OldName );
         Context.Sql.AppendSpace().Append( "TO" ).AppendSpace();
@@ -692,10 +670,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
     public override void VisitAddColumn(SqlAddColumnNode node)
     {
         Context.Sql.Append( "ADD" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
-        if ( node.IsTableTemporary )
-            Context.Sql.Append( "TEMP" ).AppendDot();
-
-        AppendDelimitedSchemaObjectName( node.SchemaName, node.TableName );
+        AppendDelimitedRecordSetInfo( node.Table );
         Context.Sql.AppendDot();
         VisitColumnDefinition( node.Definition );
     }
@@ -703,10 +678,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
     public override void VisitDropColumn(SqlDropColumnNode node)
     {
         Context.Sql.Append( "DROP" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
-        if ( node.IsTableTemporary )
-            Context.Sql.Append( "TEMP" ).AppendDot();
-
-        AppendDelimitedSchemaObjectName( node.SchemaName, node.TableName );
+        AppendDelimitedRecordSetInfo( node.Table );
         Context.Sql.AppendDot();
         AppendDelimitedName( node.Name );
     }
@@ -717,10 +689,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
         if ( node.IfExists )
             Context.Sql.Append( "IF" ).AppendSpace().Append( "EXISTS" ).AppendSpace();
 
-        if ( node.IsTemporary )
-            Context.Sql.Append( "TEMP" ).AppendDot();
-
-        AppendDelimitedSchemaObjectName( node.SchemaName, node.Name );
+        AppendDelimitedRecordSetInfo( node.Table );
     }
 
     public override void VisitDropView(SqlDropViewNode node)
@@ -729,7 +698,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
         if ( node.IfExists )
             Context.Sql.Append( "IF" ).AppendSpace().Append( "EXISTS" ).AppendSpace();
 
-        AppendDelimitedSchemaObjectName( node.SchemaName, node.Name );
+        AppendDelimitedRecordSetInfo( node.View );
     }
 
     public override void VisitDropIndex(SqlDropIndexNode node)
@@ -738,7 +707,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
         if ( node.IfExists )
             Context.Sql.Append( "IF" ).AppendSpace().Append( "EXISTS" ).AppendSpace();
 
-        AppendDelimitedSchemaObjectName( node.SchemaName, node.Name );
+        AppendDelimitedSchemaObjectName( node.Name );
     }
 
     public override void VisitStatementBatch(SqlStatementBatchNode node)
@@ -780,7 +749,8 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
             return;
         }
 
-        if ( node.NodeType == SqlNodeType.NewTable && ReinterpretCast.To<SqlNewTableNode>( node ).CreationNode.IsTemporary )
+        if ( (node.NodeType == SqlNodeType.NewTable && ReinterpretCast.To<SqlNewTableNode>( node ).CreationNode.Info.IsTemporary) ||
+            (node.NodeType == SqlNodeType.NewView && ReinterpretCast.To<SqlNewViewNode>( node ).CreationNode.Info.IsTemporary) )
             Context.Sql.Append( "TEMP" ).AppendDot();
 
         AppendDelimitedSchemaObjectName( node.SourceSchemaName, node.SourceName );

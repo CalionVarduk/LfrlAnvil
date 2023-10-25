@@ -70,14 +70,11 @@ public class SqliteNodeInterpreterTests : TestsBase
 
     [Theory]
     [InlineData( false, "\"foo_bar\".\"qux\"" )]
-    [InlineData( true, "temp.\"foo_bar\".\"qux\"" )]
+    [InlineData( true, "temp.\"foo\".\"qux\"" )]
     public void Visit_ShouldInterpretRawDataField_FromNewTable(bool isTemporary, string expected)
     {
-        _sut.Visit(
-            SqlNode.CreateTable( "foo", "bar", new[] { SqlNode.Column<int>( "qux" ) }, isTemporary: isTemporary )
-                .AsSet()
-                .GetField( "qux" ) );
-
+        var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
+        _sut.Visit( SqlNode.CreateTable( info, new[] { SqlNode.Column<int>( "qux" ) } ).AsSet().GetField( "qux" ) );
         _sut.Context.Sql.ToString().Should().Be( expected );
     }
 
@@ -86,11 +83,8 @@ public class SqliteNodeInterpreterTests : TestsBase
     [InlineData( true )]
     public void Visit_ShouldInterpretRawDataField_FromAliasedNewTable(bool isTemporary)
     {
-        _sut.Visit(
-            SqlNode.CreateTable( "foo", "bar", new[] { SqlNode.Column<int>( "qux" ) }, isTemporary: isTemporary )
-                .AsSet( "lorem" )
-                .GetField( "qux" ) );
-
+        var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
+        _sut.Visit( SqlNode.CreateTable( info, new[] { SqlNode.Column<int>( "qux" ) } ).AsSet( "lorem" ).GetField( "qux" ) );
         _sut.Context.Sql.ToString().Should().Be( "\"lorem\".\"qux\"" );
     }
 
@@ -1374,36 +1368,42 @@ END" );
 
     [Theory]
     [InlineData( false, "\"foo_bar\" AS \"qux\"" )]
-    [InlineData( true, "temp.\"foo_bar\" AS \"qux\"" )]
+    [InlineData( true, "temp.\"foo\" AS \"qux\"" )]
     public void Visit_ShouldInterpretNewTable(bool isTemporary, string expected)
     {
-        _sut.Visit( SqlNode.CreateTable( "foo", "bar", Array.Empty<SqlColumnDefinitionNode>(), isTemporary: isTemporary ).AsSet( "qux" ) );
+        var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
+        _sut.Visit( SqlNode.CreateTable( info, Array.Empty<SqlColumnDefinitionNode>() ).AsSet( "qux" ) );
         _sut.Context.Sql.ToString().Should().Be( expected );
     }
 
     [Theory]
-    [InlineData( false, "(\"foo\")" )]
+    [InlineData( false, "(\"foo_bar\")" )]
     [InlineData( true, "(temp.\"foo\")" )]
     public void VisitChild_ShouldInterpretNewTableWithParentheses(bool isTemporary, string expected)
     {
-        _sut.VisitChild(
-            SqlNode.CreateTable( string.Empty, "foo", Array.Empty<SqlColumnDefinitionNode>(), isTemporary: isTemporary ).AsSet() );
-
+        var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
+        _sut.VisitChild( SqlNode.CreateTable( info, Array.Empty<SqlColumnDefinitionNode>() ).AsSet() );
         _sut.Context.Sql.ToString().Should().Be( expected );
     }
 
-    [Fact]
-    public void Visit_ShouldInterpretNewView()
+    [Theory]
+    [InlineData( false, "\"foo_bar\" AS \"qux\"" )]
+    [InlineData( true, "temp.\"foo\" AS \"qux\"" )]
+    public void Visit_ShouldInterpretNewView(bool isTemporary, string expected)
     {
-        _sut.Visit( SqlNode.CreateView( "foo", "bar", SqlNode.RawQuery( "SELECT * FROM lorem" ) ).AsSet( "qux" ) );
-        _sut.Context.Sql.ToString().Should().Be( "\"foo_bar\" AS \"qux\"" );
+        var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
+        _sut.Visit( SqlNode.CreateView( info, SqlNode.RawQuery( "SELECT * FROM lorem" ) ).AsSet( "qux" ) );
+        _sut.Context.Sql.ToString().Should().Be( expected );
     }
 
-    [Fact]
-    public void VisitChild_ShouldInterpretNewViewWithParentheses()
+    [Theory]
+    [InlineData( false, "(\"foo_bar\")" )]
+    [InlineData( true, "(temp.\"foo\")" )]
+    public void VisitChild_ShouldInterpretNewViewWithParentheses(bool isTemporary, string expected)
     {
-        _sut.VisitChild( SqlNode.CreateView( string.Empty, "foo", SqlNode.RawQuery( "SELECT * FROM bar" ) ).AsSet() );
-        _sut.Context.Sql.ToString().Should().Be( "(\"foo\")" );
+        var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
+        _sut.VisitChild( SqlNode.CreateView( info, SqlNode.RawQuery( "SELECT * FROM bar" ) ).AsSet() );
+        _sut.Context.Sql.ToString().Should().Be( expected );
     }
 
     [Fact]
@@ -2418,17 +2418,16 @@ WHERE EXISTS (
     }
 
     [Theory]
-    [InlineData( false, "\"foo\"" )]
+    [InlineData( false, "\"foo_bar\"" )]
     [InlineData( true, "temp.\"foo\"" )]
     public void Visit_ShouldInterpretUpdateWithComplexDataSourceAndTargetNewTableWithSingleColumnPrimaryKey(
         bool isTemporary,
         string expectedName)
     {
+        var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
         var table = SqlNode.CreateTable(
-            string.Empty,
-            "foo",
+            info,
             new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ) },
-            isTemporary: isTemporary,
             constraintsProvider: t => SqlCreateTableConstraints.Empty.WithPrimaryKey( SqlNode.PrimaryKey( "PK", t["a"].Asc() ) ) );
 
         var foo = table.AsSet( "f" );
@@ -2469,17 +2468,16 @@ WHERE {expectedName}.""a"" IN (
     }
 
     [Theory]
-    [InlineData( false, "\"foo\"" )]
+    [InlineData( false, "\"foo_bar\"" )]
     [InlineData( true, "temp.\"foo\"" )]
     public void Visit_ShouldInterpretUpdateWithComplexDataSourceAndTargetNewTableWithMultipleColumnPrimaryKey(
         bool isTemporary,
         string expectedName)
     {
+        var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
         var table = SqlNode.CreateTable(
-            string.Empty,
-            "foo",
+            info,
             new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ), SqlNode.Column<int>( "c" ) },
-            isTemporary: isTemporary,
             constraintsProvider: t =>
                 SqlCreateTableConstraints.Empty.WithPrimaryKey( SqlNode.PrimaryKey( "PK", t["a"].Asc(), t["b"].Desc() ) ) );
 
@@ -2521,17 +2519,14 @@ WHERE EXISTS (
     }
 
     [Theory]
-    [InlineData( false, "\"foo\"" )]
+    [InlineData( false, "\"foo_bar\"" )]
     [InlineData( true, "temp.\"foo\"" )]
     public void Visit_ShouldInterpretUpdateWithComplexDataSourceAndTargetNewTableWithoutPrimaryKey(
         bool isTemporary,
         string expectedName)
     {
-        var table = SqlNode.CreateTable(
-            string.Empty,
-            "foo",
-            new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ) },
-            isTemporary: isTemporary );
+        var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
+        var table = SqlNode.CreateTable( info, new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ) } );
 
         var foo = table.AsSet( "f" );
 
@@ -2720,7 +2715,7 @@ WHERE EXISTS (SELECT * FROM ""_{GUID}"" WHERE (""foo"".""a"" = ""_{GUID}"".""f_a
             .Join(
                 SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ), x => x.Inner["a"] == foo["a"] ),
                 SqlJoinDefinition.Inner(
-                    SqlNode.CreateTable( string.Empty, "tmp", new[] { SqlNode.Column<int>( "b" ) }, isTemporary: true ).AsSet(),
+                    SqlNode.CreateTable( SqlRecordSetInfo.CreateTemporary( "tmp" ), new[] { SqlNode.Column<int>( "b" ) } ).AsSet(),
                     x => x.Inner["b"] == x.GetOuter( "bar" )["b"] ) )
             .AndWhere( s => s["f"]["b"] != null );
 
@@ -2785,7 +2780,7 @@ WHERE ""foo"".""a"" IN (SELECT ""f_a"" FROM ""_{GUID}"");" );
     public void
         Visit_ShouldThrowSqlNodeVisitorException_WhenUpdateIsComplexAndDataSourceFromIsNewTableWithoutPrimaryKeyAndColumns()
     {
-        var foo = SqlNode.CreateTable( string.Empty, "foo", Array.Empty<SqlColumnDefinitionNode>() ).AsSet( "f" );
+        var foo = SqlNode.CreateTable( SqlRecordSetInfo.Create( "foo" ), Array.Empty<SqlColumnDefinitionNode>() ).AsSet( "f" );
         var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToUpdate();
         var action = Lambda.Of( () => _sut.Visit( node ) );
 
@@ -2799,8 +2794,7 @@ WHERE ""foo"".""a"" IN (SELECT ""f_a"" FROM ""_{GUID}"");" );
         Visit_ShouldThrowSqlNodeVisitorException_WhenUpdateIsComplexAndDataSourceFromIsNewTableWithPrimaryKeyWithoutColumns()
     {
         var foo = SqlNode.CreateTable(
-                string.Empty,
-                "foo",
+                SqlRecordSetInfo.Create( "foo" ),
                 new[] { SqlNode.Column<int>( "a" ) },
                 constraintsProvider: _ => SqlCreateTableConstraints.Empty.WithPrimaryKey( SqlNode.PrimaryKey( "PK" ) ) )
             .AsSet( "f" );
@@ -2818,8 +2812,7 @@ WHERE ""foo"".""a"" IN (SELECT ""f_a"" FROM ""_{GUID}"");" );
         Visit_ShouldThrowSqlNodeVisitorException_WhenUpdateIsComplexAndDataSourceFromIsNewTableWithPrimaryKeyContainingNonDataFieldColumn()
     {
         var foo = SqlNode.CreateTable(
-                string.Empty,
-                "foo",
+                SqlRecordSetInfo.Create( "foo" ),
                 new[] { SqlNode.Column<int>( "a" ) },
                 constraintsProvider: t =>
                     SqlCreateTableConstraints.Empty.WithPrimaryKey( SqlNode.PrimaryKey( "PK", (t["a"] + SqlNode.Literal( 1 )).Asc() ) ) )
@@ -3104,17 +3097,16 @@ WHERE EXISTS (
     }
 
     [Theory]
-    [InlineData( false, "\"foo\"" )]
+    [InlineData( false, "\"foo_bar\"" )]
     [InlineData( true, "temp.\"foo\"" )]
     public void Visit_ShouldInterpretDeleteFromWithComplexDataSourceAndTargetNewTableWithSingleColumnPrimaryKey(
         bool isTemporary,
         string expectedName)
     {
+        var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
         var table = SqlNode.CreateTable(
-            string.Empty,
-            "foo",
+            info,
             new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ) },
-            isTemporary: isTemporary,
             constraintsProvider: t => SqlCreateTableConstraints.Empty.WithPrimaryKey( SqlNode.PrimaryKey( "PK", t["a"].Asc() ) ) );
 
         var foo = table.AsSet( "f" );
@@ -3154,17 +3146,16 @@ WHERE {expectedName}.""a"" IN (
     }
 
     [Theory]
-    [InlineData( false, "\"foo\"" )]
+    [InlineData( false, "\"foo_bar\"" )]
     [InlineData( true, "temp.\"foo\"" )]
     public void Visit_ShouldInterpretDeleteFromWithComplexDataSourceAndTargetNewTableWithMultipleColumnPrimaryKey(
         bool isTemporary,
         string expectedName)
     {
+        var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
         var table = SqlNode.CreateTable(
-            string.Empty,
-            "foo",
+            info,
             new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ), SqlNode.Column<int>( "c" ) },
-            isTemporary: isTemporary,
             constraintsProvider: t =>
                 SqlCreateTableConstraints.Empty.WithPrimaryKey( SqlNode.PrimaryKey( "PK", t["a"].Asc(), t["b"].Desc() ) ) );
 
@@ -3202,17 +3193,14 @@ WHERE EXISTS (
     }
 
     [Theory]
-    [InlineData( false, "\"foo\"" )]
+    [InlineData( false, "\"foo_bar\"" )]
     [InlineData( true, "temp.\"foo\"" )]
     public void Visit_ShouldInterpretDeleteFromWithComplexDataSourceAndTargetNewTableWithoutPrimaryKey(
         bool isTemporary,
         string expectedName)
     {
-        var table = SqlNode.CreateTable(
-            string.Empty,
-            "foo",
-            new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ) },
-            isTemporary: isTemporary );
+        var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
+        var table = SqlNode.CreateTable( info, new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ) } );
 
         var foo = table.AsSet( "f" );
 
@@ -3286,7 +3274,7 @@ WHERE EXISTS (
     public void
         Visit_ShouldThrowSqlNodeVisitorException_WhenDeleteFromIsComplexAndDataSourceFromIsNewTableWithoutPrimaryKeyAndColumns()
     {
-        var foo = SqlNode.CreateTable( string.Empty, "foo", Array.Empty<SqlColumnDefinitionNode>() ).AsSet( "f" );
+        var foo = SqlNode.CreateTable( SqlRecordSetInfo.Create( "foo" ), Array.Empty<SqlColumnDefinitionNode>() ).AsSet( "f" );
         var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToDeleteFrom();
         var action = Lambda.Of( () => _sut.Visit( node ) );
 
@@ -3300,8 +3288,7 @@ WHERE EXISTS (
         Visit_ShouldThrowSqlNodeVisitorException_WhenDeleteFromIsComplexAndDataSourceFromIsNewTableWithPrimaryKeyWithoutColumns()
     {
         var foo = SqlNode.CreateTable(
-                string.Empty,
-                "foo",
+                SqlRecordSetInfo.Create( "foo" ),
                 new[] { SqlNode.Column<int>( "a" ) },
                 constraintsProvider: _ => SqlCreateTableConstraints.Empty.WithPrimaryKey( SqlNode.PrimaryKey( "PK" ) ) )
             .AsSet( "f" );
@@ -3319,8 +3306,7 @@ WHERE EXISTS (
         Visit_ShouldThrowSqlNodeVisitorException_WhenDeleteFromIsComplexAndDataSourceFromIsNewTableWithPrimaryKeyContainingNonDataFieldColumn()
     {
         var foo = SqlNode.CreateTable(
-                string.Empty,
-                "foo",
+                SqlRecordSetInfo.Create( "foo" ),
                 new[] { SqlNode.Column<int>( "a" ) },
                 constraintsProvider: t =>
                     SqlCreateTableConstraints.Empty.WithPrimaryKey( SqlNode.PrimaryKey( "PK", (t["a"] + SqlNode.Literal( 1 )).Asc() ) ) )
@@ -3352,7 +3338,7 @@ DELETE FROM ""SQLITE_SEQUENCE"" WHERE ""name"" = 'foo_bar'" );
     [Fact]
     public void Visit_ShouldInterpretTruncate_WithTemporaryNewTable()
     {
-        var table = SqlNode.CreateTable( "foo", "bar", Array.Empty<SqlColumnDefinitionNode>(), isTemporary: true );
+        var table = SqlNode.CreateTable( SqlRecordSetInfo.CreateTemporary( "foo" ), Array.Empty<SqlColumnDefinitionNode>() );
         var node = table.AsSet().ToTruncate();
 
         _sut.Visit( node );
@@ -3360,8 +3346,8 @@ DELETE FROM ""SQLITE_SEQUENCE"" WHERE ""name"" = 'foo_bar'" );
         _sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"DELETE FROM temp.""foo_bar"";
-DELETE FROM temp.""SQLITE_SEQUENCE"" WHERE ""name"" = 'foo_bar'" );
+                @"DELETE FROM temp.""foo"";
+DELETE FROM temp.""SQLITE_SEQUENCE"" WHERE ""name"" = 'foo'" );
     }
 
     [Fact]
@@ -3404,8 +3390,7 @@ DELETE FROM ""SQLITE_SEQUENCE"" WHERE ""name"" = 'qux'" );
     public void Visit_ShouldInterpretPrimaryKeyDefinition()
     {
         var table = SqlNode.CreateTable(
-                "foo",
-                "bar",
+                SqlRecordSetInfo.Create( "foo", "bar" ),
                 new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ) } )
             .RecordSet;
 
@@ -3427,8 +3412,7 @@ DELETE FROM ""SQLITE_SEQUENCE"" WHERE ""name"" = 'qux'" );
 
         var qux = CreateTable( string.Empty, "qux", "a", "b" ).ToRecordSet();
         var table = SqlNode.CreateTable(
-                "foo",
-                "bar",
+                SqlRecordSetInfo.Create( "foo", "bar" ),
                 new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ) } )
             .RecordSet;
 
@@ -3451,7 +3435,7 @@ DELETE FROM ""SQLITE_SEQUENCE"" WHERE ""name"" = 'qux'" );
     [Fact]
     public void Visit_ShouldInterpretCheckDefinition()
     {
-        var table = SqlNode.CreateTable( "foo", "bar", new[] { SqlNode.Column<int>( "a" ) } ).RecordSet;
+        var table = SqlNode.CreateTable( SqlRecordSetInfo.Create( "foo", "bar" ), new[] { SqlNode.Column<int>( "a" ) } ).RecordSet;
         var node = SqlNode.Check( "CHK_foobar", table["a"] > SqlNode.Literal( 10 ) );
         _sut.Visit( node );
 
@@ -3460,14 +3444,14 @@ DELETE FROM ""SQLITE_SEQUENCE"" WHERE ""name"" = 'qux'" );
 
     [Theory]
     [InlineData( false, false, "\"foo_bar\"" )]
-    [InlineData( true, false, "temp.\"foo_bar\"" )]
+    [InlineData( true, false, "temp.\"foo\"" )]
     [InlineData( false, true, "\"foo_bar\"" )]
-    [InlineData( true, true, "temp.\"foo_bar\"" )]
+    [InlineData( true, true, "temp.\"foo\"" )]
     public void Visit_ShouldInterpretCreateTable(bool isTemporary, bool ifNotExists, string expectedName)
     {
+        var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
         var node = SqlNode.CreateTable(
-            "foo",
-            "bar",
+            info,
             new[]
             {
                 SqlNode.Column<int>( "x" ),
@@ -3475,7 +3459,6 @@ DELETE FROM ""SQLITE_SEQUENCE"" WHERE ""name"" = 'qux'" );
                 SqlNode.Column<double>( "z", defaultValue: SqlNode.Literal( 10.5 ) )
             },
             ifNotExists: ifNotExists,
-            isTemporary: isTemporary,
             constraintsProvider: t =>
             {
                 var qux = SqlNode.RawRecordSet( "qux" );
@@ -3506,17 +3489,20 @@ DELETE FROM ""SQLITE_SEQUENCE"" WHERE ""name"" = 'qux'" );
     }
 
     [Theory]
-    [InlineData( false )]
-    [InlineData( true )]
-    public void Visit_ShouldInterpretCreateView(bool ifNotExists)
+    [InlineData( false, false, "\"foo_bar\"" )]
+    [InlineData( true, false, "temp.\"foo\"" )]
+    [InlineData( false, true, "\"foo_bar\"" )]
+    [InlineData( true, true, "temp.\"foo\"" )]
+    public void Visit_ShouldInterpretCreateView(bool isTemporary, bool ifNotExists, string expectedName)
     {
-        var node = SqlNode.CreateView( "foo", "bar", ifNotExists: ifNotExists, source: SqlNode.RawQuery( "SELECT * FROM qux" ) );
+        var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
+        var node = SqlNode.CreateView( info, ifNotExists: ifNotExists, source: SqlNode.RawQuery( "SELECT * FROM qux" ) );
         _sut.Visit( node );
 
         _sut.Context.Sql.ToString()
             .Should()
             .Be(
-                $@"CREATE VIEW{(ifNotExists ? " IF NOT EXISTS" : string.Empty)} ""foo_bar"" AS
+                $@"CREATE VIEW{(ifNotExists ? " IF NOT EXISTS" : string.Empty)} {expectedName} AS
 SELECT * FROM qux" );
     }
 
@@ -3527,8 +3513,7 @@ SELECT * FROM qux" );
     {
         var qux = SqlNode.RawRecordSet( "qux" );
         var node = SqlNode.CreateIndex(
-            "foo",
-            "bar",
+            SqlSchemaObjectName.Create( "foo", "bar" ),
             isUnique: false,
             ifNotExists: ifNotExists,
             table: qux,
@@ -3548,8 +3533,7 @@ SELECT * FROM qux" );
     {
         var qux = SqlNode.RawRecordSet( "qux" );
         var node = SqlNode.CreateIndex(
-            "foo",
-            "bar",
+            SqlSchemaObjectName.Create( "foo", "bar" ),
             isUnique: true,
             ifNotExists: ifNotExists,
             table: qux,
@@ -3568,8 +3552,7 @@ SELECT * FROM qux" );
     {
         var qux = SqlNode.RawRecordSet( "qux" );
         var node = SqlNode.CreateIndex(
-            "foo",
-            "bar",
+            SqlSchemaObjectName.Create( "foo", "bar" ),
             isUnique: false,
             ifNotExists: false,
             table: qux,
@@ -3585,59 +3568,65 @@ SELECT * FROM qux" );
 
     [Theory]
     [InlineData( false, "ALTER TABLE \"foo_bar\" RENAME TO \"qux_lorem\"" )]
-    [InlineData( true, "ALTER TABLE temp.\"foo_bar\" RENAME TO \"qux_lorem\"" )]
+    [InlineData( true, "ALTER TABLE temp.\"foo\" RENAME TO \"qux_lorem\"" )]
     public void Visit_ShouldInterpretRenameTable(bool isTemporary, string expected)
     {
-        _sut.Visit( SqlNode.RenameTable( "foo", "bar", "qux", "lorem", isTemporary ) );
+        var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
+        _sut.Visit( SqlNode.RenameTable( info, SqlSchemaObjectName.Create( "qux", "lorem" ) ) );
         _sut.Context.Sql.ToString().Should().Be( expected );
     }
 
     [Theory]
     [InlineData( false, "ALTER TABLE \"foo_bar\" RENAME COLUMN \"qux\" TO \"lorem\"" )]
-    [InlineData( true, "ALTER TABLE temp.\"foo_bar\" RENAME COLUMN \"qux\" TO \"lorem\"" )]
+    [InlineData( true, "ALTER TABLE temp.\"foo\" RENAME COLUMN \"qux\" TO \"lorem\"" )]
     public void Visit_ShouldInterpretRenameColumn(bool isTableTemporary, string expected)
     {
-        _sut.Visit( SqlNode.RenameColumn( "foo", "bar", "qux", "lorem", isTableTemporary ) );
+        var info = isTableTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
+        _sut.Visit( SqlNode.RenameColumn( info, "qux", "lorem" ) );
         _sut.Context.Sql.ToString().Should().Be( expected );
     }
 
     [Theory]
     [InlineData( false, "ALTER TABLE \"foo_bar\" ADD COLUMN \"qux\" INTEGER NOT NULL DEFAULT (10)" )]
-    [InlineData( true, "ALTER TABLE temp.\"foo_bar\" ADD COLUMN \"qux\" INTEGER NOT NULL DEFAULT (10)" )]
+    [InlineData( true, "ALTER TABLE temp.\"foo\" ADD COLUMN \"qux\" INTEGER NOT NULL DEFAULT (10)" )]
     public void Visit_ShouldInterpretAddColumn(bool isTableTemporary, string expected)
     {
-        _sut.Visit(
-            SqlNode.AddColumn( "foo", "bar", SqlNode.Column<int>( "qux", defaultValue: SqlNode.Literal( 10 ) ), isTableTemporary ) );
-
+        var info = isTableTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
+        _sut.Visit( SqlNode.AddColumn( info, SqlNode.Column<int>( "qux", defaultValue: SqlNode.Literal( 10 ) ) ) );
         _sut.Context.Sql.ToString().Should().Be( expected );
     }
 
     [Theory]
     [InlineData( false, "ALTER TABLE \"foo_bar\" DROP COLUMN \"qux\"" )]
-    [InlineData( true, "ALTER TABLE temp.\"foo_bar\" DROP COLUMN \"qux\"" )]
+    [InlineData( true, "ALTER TABLE temp.\"foo\" DROP COLUMN \"qux\"" )]
     public void Visit_ShouldInterpretDropColumn(bool isTableTemporary, string expected)
     {
-        _sut.Visit( SqlNode.DropColumn( "foo", "bar", "qux", isTableTemporary ) );
+        var info = isTableTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
+        _sut.Visit( SqlNode.DropColumn( info, "qux" ) );
         _sut.Context.Sql.ToString().Should().Be( expected );
     }
 
     [Theory]
     [InlineData( false, false, "DROP TABLE \"foo_bar\"" )]
-    [InlineData( true, false, "DROP TABLE temp.\"foo_bar\"" )]
+    [InlineData( true, false, "DROP TABLE temp.\"foo\"" )]
     [InlineData( false, true, "DROP TABLE IF EXISTS \"foo_bar\"" )]
-    [InlineData( true, true, "DROP TABLE IF EXISTS temp.\"foo_bar\"" )]
+    [InlineData( true, true, "DROP TABLE IF EXISTS temp.\"foo\"" )]
     public void Visit_ShouldInterpretDropTable(bool isTemporary, bool ifExists, string expected)
     {
-        _sut.Visit( SqlNode.DropTable( "foo", "bar", ifExists, isTemporary ) );
+        var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
+        _sut.Visit( SqlNode.DropTable( info, ifExists ) );
         _sut.Context.Sql.ToString().Should().Be( expected );
     }
 
     [Theory]
-    [InlineData( false, "DROP VIEW \"foo_bar\"" )]
-    [InlineData( true, "DROP VIEW IF EXISTS \"foo_bar\"" )]
-    public void Visit_ShouldInterpretDropView(bool ifExists, string expected)
+    [InlineData( false, false, "DROP VIEW \"foo_bar\"" )]
+    [InlineData( true, false, "DROP VIEW temp.\"foo\"" )]
+    [InlineData( false, true, "DROP VIEW IF EXISTS \"foo_bar\"" )]
+    [InlineData( true, true, "DROP VIEW IF EXISTS temp.\"foo\"" )]
+    public void Visit_ShouldInterpretDropView(bool isTemporary, bool ifExists, string expected)
     {
-        _sut.Visit( SqlNode.DropView( "foo", "bar", ifExists ) );
+        var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
+        _sut.Visit( SqlNode.DropView( info, ifExists ) );
         _sut.Context.Sql.ToString().Should().Be( expected );
     }
 
@@ -3646,7 +3635,7 @@ SELECT * FROM qux" );
     [InlineData( true, "DROP INDEX IF EXISTS \"foo_bar\"" )]
     public void Visit_ShouldInterpretDropIndex(bool ifExists, string expected)
     {
-        _sut.Visit( SqlNode.DropIndex( "foo", "bar", ifExists ) );
+        _sut.Visit( SqlNode.DropIndex( SqlSchemaObjectName.Create( "foo", "bar" ), ifExists ) );
         _sut.Context.Sql.ToString().Should().Be( expected );
     }
 
@@ -3656,7 +3645,7 @@ SELECT * FROM qux" );
         _sut.Visit(
             SqlNode.Batch(
                 SqlNode.BeginTransaction( IsolationLevel.Serializable ),
-                SqlNode.DropTable( string.Empty, "bar", isTemporary: true ),
+                SqlNode.DropTable( SqlRecordSetInfo.CreateTemporary( "bar" ) ),
                 SqlNode.RawQuery( "SELECT * FROM foo" ),
                 SqlNode.RawQuery( "SELECT * FROM qux" ),
                 SqlNode.CommitTransaction() ) );

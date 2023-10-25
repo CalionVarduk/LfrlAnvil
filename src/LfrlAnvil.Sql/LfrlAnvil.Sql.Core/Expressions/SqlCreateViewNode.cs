@@ -2,17 +2,15 @@
 
 public sealed class SqlCreateViewNode : SqlNodeBase
 {
-    internal SqlCreateViewNode(string schemaName, string name, bool ifNotExists, SqlQueryExpressionNode source)
+    internal SqlCreateViewNode(SqlRecordSetInfo info, bool ifNotExists, SqlQueryExpressionNode source)
         : base( SqlNodeType.CreateView )
     {
-        SchemaName = schemaName;
-        Name = name;
+        Info = info;
         IfNotExists = ifNotExists;
         Source = source;
     }
 
-    public string SchemaName { get; }
-    public string Name { get; }
+    public SqlRecordSetInfo Info { get; }
     public bool IfNotExists { get; }
     public SqlQueryExpressionNode Source { get; }
 }

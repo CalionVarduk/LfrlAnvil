@@ -675,101 +675,72 @@ public static partial class SqlNode
 
     [Pure]
     public static SqlCreateTableNode CreateTable(
-        string schemaName,
-        string name,
+        SqlRecordSetInfo info,
         SqlColumnDefinitionNode[] columns,
         bool ifNotExists = false,
-        bool isTemporary = false,
         Func<SqlNewTableNode, SqlCreateTableConstraints>? constraintsProvider = null)
     {
-        return new SqlCreateTableNode(
-            schemaName,
-            name,
-            ifNotExists,
-            isTemporary,
-            columns,
-            constraintsProvider );
+        return new SqlCreateTableNode( info, ifNotExists, columns, constraintsProvider );
     }
 
     [Pure]
-    public static SqlCreateViewNode CreateView(string schemaName, string name, SqlQueryExpressionNode source, bool ifNotExists = false)
+    public static SqlCreateViewNode CreateView(SqlRecordSetInfo info, SqlQueryExpressionNode source, bool ifNotExists = false)
     {
-        return new SqlCreateViewNode( schemaName, name, ifNotExists, source );
+        return new SqlCreateViewNode( info, ifNotExists, source );
     }
 
     [Pure]
     public static SqlCreateIndexNode CreateIndex(
-        string schemaName,
-        string name,
+        SqlSchemaObjectName name,
         bool isUnique,
         SqlRecordSetNode table,
         SqlOrderByNode[] columns,
         bool ifNotExists = false,
         SqlConditionNode? filter = null)
     {
-        return new SqlCreateIndexNode( schemaName, name, isUnique, ifNotExists, table, columns, filter );
+        return new SqlCreateIndexNode( name, isUnique, ifNotExists, table, columns, filter );
     }
 
     [Pure]
-    public static SqlRenameTableNode RenameTable(string schemaName, string oldName, string newName, bool isTemporary = false)
+    public static SqlRenameTableNode RenameTable(SqlRecordSetInfo info, SqlSchemaObjectName newName)
     {
-        return RenameTable( schemaName, oldName, schemaName, newName, isTemporary );
+        return new SqlRenameTableNode( info, newName );
     }
 
     [Pure]
-    public static SqlRenameTableNode RenameTable(
-        string oldSchemaName,
-        string oldName,
-        string newSchemaName,
-        string newName,
-        bool isTemporary = false)
+    public static SqlRenameColumnNode RenameColumn(SqlRecordSetInfo table, string oldName, string newName)
     {
-        return new SqlRenameTableNode( oldSchemaName, oldName, newSchemaName, newName, isTemporary );
+        return new SqlRenameColumnNode( table, oldName, newName );
     }
 
     [Pure]
-    public static SqlRenameColumnNode RenameColumn(
-        string schemaName,
-        string tableName,
-        string oldName,
-        string newName,
-        bool isTableTemporary = false)
+    public static SqlAddColumnNode AddColumn(SqlRecordSetInfo table, SqlColumnDefinitionNode definition)
     {
-        return new SqlRenameColumnNode( schemaName, tableName, oldName, newName, isTableTemporary );
+        return new SqlAddColumnNode( table, definition );
     }
 
     [Pure]
-    public static SqlAddColumnNode AddColumn(
-        string schemaName,
-        string tableName,
-        SqlColumnDefinitionNode definition,
-        bool isTableTemporary = false)
+    public static SqlDropColumnNode DropColumn(SqlRecordSetInfo table, string name)
     {
-        return new SqlAddColumnNode( schemaName, tableName, definition, isTableTemporary );
+        return new SqlDropColumnNode( table, name );
     }
 
     [Pure]
-    public static SqlDropColumnNode DropColumn(string schemaName, string tableName, string name, bool isTableTemporary = false)
+    public static SqlDropTableNode DropTable(SqlRecordSetInfo table, bool ifExists = false)
     {
-        return new SqlDropColumnNode( schemaName, tableName, name, isTableTemporary );
+        return new SqlDropTableNode( table, ifExists );
     }
 
     [Pure]
-    public static SqlDropTableNode DropTable(string schemaName, string name, bool ifExists = false, bool isTemporary = false)
+    public static SqlDropViewNode DropView(SqlRecordSetInfo view, bool ifExists = false)
     {
-        return new SqlDropTableNode( schemaName, name, ifExists, isTemporary );
+        return new SqlDropViewNode( view, ifExists );
     }
 
     [Pure]
-    public static SqlDropViewNode DropView(string schemaName, string name, bool ifExists = false)
+    public static SqlDropIndexNode DropIndex(SqlSchemaObjectName name, bool ifExists = false)
     {
-        return new SqlDropViewNode( schemaName, name, ifExists );
-    }
-
-    [Pure]
-    public static SqlDropIndexNode DropIndex(string schemaName, string name, bool ifExists = false)
-    {
-        return new SqlDropIndexNode( schemaName, name, ifExists );
+        return new SqlDropIndexNode( name, ifExists );
     }
 
     [Pure]

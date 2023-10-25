@@ -2,15 +2,13 @@
 
 public sealed class SqlDropViewNode : SqlNodeBase
 {
-    internal SqlDropViewNode(string schemaName, string name, bool ifExists)
+    internal SqlDropViewNode(SqlRecordSetInfo view, bool ifExists)
         : base( SqlNodeType.DropView )
     {
-        SchemaName = schemaName;
-        Name = name;
+        View = view;
         IfExists = ifExists;
     }
 
-    public string SchemaName { get; }
-    public string Name { get; }
+    public SqlRecordSetInfo View { get; }
     public bool IfExists { get; }
 }

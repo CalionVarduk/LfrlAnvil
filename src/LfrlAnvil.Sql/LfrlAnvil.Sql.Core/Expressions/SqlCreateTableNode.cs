@@ -6,18 +6,14 @@ namespace LfrlAnvil.Sql.Expressions;
 public sealed class SqlCreateTableNode : SqlNodeBase
 {
     internal SqlCreateTableNode(
-        string schemaName,
-        string name,
+        SqlRecordSetInfo info,
         bool ifNotExists,
-        bool isTemporary,
         SqlColumnDefinitionNode[] columns,
         Func<SqlNewTableNode, SqlCreateTableConstraints>? constraintsProvider)
         : base( SqlNodeType.CreateTable )
     {
-        SchemaName = schemaName;
-        Name = name;
+        Info = info;
         IfNotExists = ifNotExists;
-        IsTemporary = isTemporary;
         Columns = columns;
         RecordSet = new SqlNewTableNode( this, alias: null, isOptional: false );
         if ( constraintsProvider is not null )
@@ -35,10 +31,8 @@ public sealed class SqlCreateTableNode : SqlNodeBase
         }
     }
 
-    public string SchemaName { get; }
-    public string Name { get; }
+    public SqlRecordSetInfo Info { get; }
     public bool IfNotExists { get; }
-    public bool IsTemporary { get; }
     public ReadOnlyMemory<SqlColumnDefinitionNode> Columns { get; }
     public SqlPrimaryKeyDefinitionNode? PrimaryKey { get; }
     public ReadOnlyMemory<SqlForeignKeyDefinitionNode> ForeignKeys { get; }

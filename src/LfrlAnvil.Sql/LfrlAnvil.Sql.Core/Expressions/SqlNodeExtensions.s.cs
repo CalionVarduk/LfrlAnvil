@@ -740,21 +740,21 @@ public static class SqlNodeExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlDropTableNode ToDropTable(this SqlCreateTableNode node, bool ifExists = false)
     {
-        return SqlNode.DropTable( node.SchemaName, node.Name, ifExists, node.IsTemporary );
+        return SqlNode.DropTable( node.Info, ifExists );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlDropViewNode ToDropView(this SqlCreateViewNode node, bool ifExists = false)
     {
-        return SqlNode.DropView( node.SchemaName, node.Name, ifExists );
+        return SqlNode.DropView( node.Info, ifExists );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlDropIndexNode ToDropIndex(this SqlCreateIndexNode node, bool ifExists = false)
     {
-        return SqlNode.DropIndex( node.SchemaName, node.Name, ifExists );
+        return SqlNode.DropIndex( node.Name, ifExists );
     }
 
     [Pure]

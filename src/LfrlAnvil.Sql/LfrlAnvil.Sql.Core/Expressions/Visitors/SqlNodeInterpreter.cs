@@ -507,11 +507,15 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         AppendDelimitedAlias( node.Alias );
     }
 
-    public abstract void VisitNewTable(SqlNewTableNode node);
+    public virtual void VisitNewTable(SqlNewTableNode node)
+    {
+        AppendDelimitedRecordSetInfo( node.CreationNode.Info );
+        AppendDelimitedAlias( node.Alias );
+    }
 
     public virtual void VisitNewView(SqlNewViewNode node)
     {
-        AppendDelimitedSchemaObjectName( node.CreationNode.SchemaName, node.CreationNode.Name );
+        AppendDelimitedRecordSetInfo( node.CreationNode.Info );
         AppendDelimitedAlias( node.Alias );
     }
 
@@ -815,6 +819,21 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         AppendDelimitedName( alias );
     }
 
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public void AppendDelimitedSchemaObjectName(SqlSchemaObjectName name)
+    {
+        AppendDelimitedSchemaObjectName( name.Schema, name.Object );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public void AppendDelimitedRecordSetInfo(SqlRecordSetInfo info)
+    {
+        if ( info.IsTemporary )
+            AppendDelimitedTemporaryObjectName( info.Name.Object );
+        else
+            AppendDelimitedSchemaObjectName( info.Name );
+    }
+
     public virtual void AppendDelimitedSchemaObjectName(string schemaName, string objName)
     {
         if ( schemaName.Length > 0 )
@@ -826,7 +845,13 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         AppendDelimitedName( objName );
     }
 
-    public void AppendMultilineSql(string sql)
+    public virtual void AppendDelimitedTemporaryObjectName(string name)
+    {
+        Context.Sql.Append( "TEMP" ).AppendDot();
+        AppendDelimitedName( name );
+    }
+
+    public void AppendMultilineSql(ReadOnlySpan<char> sql)
     {
         if ( Context.Indent <= 0 )
         {
@@ -834,18 +859,19 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             return;
         }
 
-        var startIndex = 0;
-        while ( startIndex < sql.Length )
+        var slice = sql;
+        while ( slice.Length > 0 )
         {
-            var newLineIndex = sql.IndexOf( Environment.NewLine, startIndex, StringComparison.Ordinal );
+            var newLineIndex = slice.IndexOf( Environment.NewLine, StringComparison.Ordinal );
             if ( newLineIndex < 0 )
             {
-                Context.Sql.Append( sql.AsSpan( startIndex ) );
+                Context.Sql.Append( slice );
                 break;
             }
 
-            Context.Sql.Append( sql.AsSpan( startIndex, newLineIndex - startIndex ) ).Indent( Context.Indent );
-            startIndex = newLineIndex + Environment.NewLine.Length;
+            Context.Sql.Append( slice.Slice( 0, newLineIndex ) );
+            Context.AppendIndent();
+            slice = slice.Slice( newLineIndex + Environment.NewLine.Length );
         }
     }
 

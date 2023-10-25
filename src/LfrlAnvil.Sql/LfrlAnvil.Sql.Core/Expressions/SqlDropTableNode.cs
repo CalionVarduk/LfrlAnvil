@@ -2,17 +2,13 @@
 
 public sealed class SqlDropTableNode : SqlNodeBase
 {
-    internal SqlDropTableNode(string schemaName, string name, bool ifExists, bool isTemporary)
+    internal SqlDropTableNode(SqlRecordSetInfo table, bool ifExists)
         : base( SqlNodeType.DropTable )
     {
-        SchemaName = schemaName;
-        Name = name;
+        Table = table;
         IfExists = ifExists;
-        IsTemporary = isTemporary;
     }
 
-    public string SchemaName { get; }
-    public string Name { get; }
+    public SqlRecordSetInfo Table { get; }
     public bool IfExists { get; }
-    public bool IsTemporary { get; }
 }

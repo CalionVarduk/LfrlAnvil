@@ -16,8 +16,8 @@ public sealed class SqlNewTableNode : SqlRecordSetNode
     }
 
     public SqlCreateTableNode CreationNode { get; }
-    public override string SourceSchemaName => CreationNode.SchemaName;
-    public override string SourceName => CreationNode.Name;
+    public override string SourceSchemaName => CreationNode.Info.Name.Schema;
+    public override string SourceName => CreationNode.Info.Name.Object;
 
     public new SqlRawDataFieldNode this[string fieldName] => GetField( fieldName );
 

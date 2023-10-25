@@ -798,8 +798,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         using var cmd = connection.CreateCommand();
 
         var createTable = SqlNode.CreateTable(
-            string.Empty,
-            "test",
+            SqlRecordSetInfo.Create( "test" ),
             new[]
             {
                 SqlNode.Column<int>( "x" ),

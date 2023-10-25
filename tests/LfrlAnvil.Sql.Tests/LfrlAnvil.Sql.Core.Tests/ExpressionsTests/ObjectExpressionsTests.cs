@@ -526,15 +526,16 @@ public partial class ObjectExpressionsTests : TestsBase
     [Fact]
     public void NewTable_ShouldCreateNewTableNode()
     {
-        var table = SqlNode.CreateTable( string.Empty, "foo", Array.Empty<SqlColumnDefinitionNode>() );
+        var info = SqlRecordSetInfo.Create( "foo" );
+        var table = SqlNode.CreateTable( info, Array.Empty<SqlColumnDefinitionNode>() );
         var sut = table.AsSet();
         var text = sut.ToString();
 
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.NewTable );
-            sut.SourceSchemaName.Should().Be( table.SchemaName );
-            sut.SourceName.Should().Be( table.Name );
+            sut.SourceSchemaName.Should().Be( info.Name.Schema );
+            sut.SourceName.Should().Be( info.Name.Object );
             sut.Alias.Should().BeNull();
             sut.Identifier.Should().Be( "foo" );
             sut.CreationNode.Should().BeSameAs( table );
@@ -547,15 +548,16 @@ public partial class ObjectExpressionsTests : TestsBase
     [Fact]
     public void NewTable_ShouldCreateNewTableNode_WithSchemaName()
     {
-        var table = SqlNode.CreateTable( "s", "foo", Array.Empty<SqlColumnDefinitionNode>() );
+        var info = SqlRecordSetInfo.Create( "s", "foo" );
+        var table = SqlNode.CreateTable( info, Array.Empty<SqlColumnDefinitionNode>() );
         var sut = table.AsSet();
         var text = sut.ToString();
 
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.NewTable );
-            sut.SourceSchemaName.Should().Be( table.SchemaName );
-            sut.SourceName.Should().Be( table.Name );
+            sut.SourceSchemaName.Should().Be( info.Name.Schema );
+            sut.SourceName.Should().Be( info.Name.Object );
             sut.Alias.Should().BeNull();
             sut.Identifier.Should().Be( "s.foo" );
             sut.CreationNode.Should().BeSameAs( table );
@@ -568,15 +570,16 @@ public partial class ObjectExpressionsTests : TestsBase
     [Fact]
     public void NewTable_ShouldCreateNewTableNode_WithAlias()
     {
-        var table = SqlNode.CreateTable( string.Empty, "foo", Array.Empty<SqlColumnDefinitionNode>() );
+        var info = SqlRecordSetInfo.Create( "foo" );
+        var table = SqlNode.CreateTable( info, Array.Empty<SqlColumnDefinitionNode>() );
         var sut = table.AsSet( "bar" );
         var text = sut.ToString();
 
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.NewTable );
-            sut.SourceSchemaName.Should().Be( table.SchemaName );
-            sut.SourceName.Should().Be( table.Name );
+            sut.SourceSchemaName.Should().Be( info.Name.Schema );
+            sut.SourceName.Should().Be( info.Name.Object );
             sut.Alias.Should().Be( "bar" );
             sut.Identifier.Should().Be( "bar" );
             sut.CreationNode.Should().BeSameAs( table );
@@ -589,15 +592,16 @@ public partial class ObjectExpressionsTests : TestsBase
     [Fact]
     public void NewTable_ShouldCreateNewTableNode_WithAliasAndSchemaName()
     {
-        var table = SqlNode.CreateTable( "s", "foo", Array.Empty<SqlColumnDefinitionNode>() );
+        var info = SqlRecordSetInfo.Create( "s", "foo" );
+        var table = SqlNode.CreateTable( info, Array.Empty<SqlColumnDefinitionNode>() );
         var sut = table.AsSet( "bar" );
         var text = sut.ToString();
 
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.NewTable );
-            sut.SourceSchemaName.Should().Be( table.SchemaName );
-            sut.SourceName.Should().Be( table.Name );
+            sut.SourceSchemaName.Should().Be( info.Name.Schema );
+            sut.SourceName.Should().Be( info.Name.Object );
             sut.Alias.Should().Be( "bar" );
             sut.Identifier.Should().Be( "bar" );
             sut.CreationNode.Should().BeSameAs( table );
@@ -610,15 +614,16 @@ public partial class ObjectExpressionsTests : TestsBase
     [Fact]
     public void NewView_ShouldCreateNewViewNode()
     {
-        var view = SqlNode.CreateView( string.Empty, "foo", SqlNode.RawQuery( "SELECT * FROM qux" ) );
+        var info = SqlRecordSetInfo.Create( "foo" );
+        var view = SqlNode.CreateView( info, SqlNode.RawQuery( "SELECT * FROM qux" ) );
         var sut = view.AsSet();
         var text = sut.ToString();
 
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.NewView );
-            sut.SourceSchemaName.Should().Be( view.SchemaName );
-            sut.SourceName.Should().Be( view.Name );
+            sut.SourceSchemaName.Should().Be( info.Name.Schema );
+            sut.SourceName.Should().Be( info.Name.Object );
             sut.Alias.Should().BeNull();
             sut.Identifier.Should().Be( "foo" );
             sut.CreationNode.Should().BeSameAs( view );
@@ -631,15 +636,16 @@ public partial class ObjectExpressionsTests : TestsBase
     [Fact]
     public void NewView_ShouldCreateNewViewNode_WithSchemaName()
     {
-        var view = SqlNode.CreateView( "s", "foo", SqlNode.RawQuery( "SELECT * FROM qux" ) );
+        var info = SqlRecordSetInfo.Create( "s", "foo" );
+        var view = SqlNode.CreateView( info, SqlNode.RawQuery( "SELECT * FROM qux" ) );
         var sut = view.AsSet();
         var text = sut.ToString();
 
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.NewView );
-            sut.SourceSchemaName.Should().Be( view.SchemaName );
-            sut.SourceName.Should().Be( view.Name );
+            sut.SourceSchemaName.Should().Be( info.Name.Schema );
+            sut.SourceName.Should().Be( info.Name.Object );
             sut.Alias.Should().BeNull();
             sut.Identifier.Should().Be( "s.foo" );
             sut.CreationNode.Should().BeSameAs( view );
@@ -652,15 +658,16 @@ public partial class ObjectExpressionsTests : TestsBase
     [Fact]
     public void NewView_ShouldCreateNewViewNode_WithAlias()
     {
-        var view = SqlNode.CreateView( string.Empty, "foo", SqlNode.RawQuery( "SELECT * FROM qux" ) );
+        var info = SqlRecordSetInfo.Create( "foo" );
+        var view = SqlNode.CreateView( info, SqlNode.RawQuery( "SELECT * FROM qux" ) );
         var sut = view.AsSet( "bar" );
         var text = sut.ToString();
 
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.NewView );
-            sut.SourceSchemaName.Should().Be( view.SchemaName );
-            sut.SourceName.Should().Be( view.Name );
+            sut.SourceSchemaName.Should().Be( info.Name.Schema );
+            sut.SourceName.Should().Be( info.Name.Object );
             sut.Alias.Should().Be( "bar" );
             sut.Identifier.Should().Be( "bar" );
             sut.CreationNode.Should().BeSameAs( view );
@@ -673,15 +680,16 @@ public partial class ObjectExpressionsTests : TestsBase
     [Fact]
     public void NewView_ShouldCreateNewViewNode_WithAliasAndSchemaName()
     {
-        var view = SqlNode.CreateView( "s", "foo", SqlNode.RawQuery( "SELECT * FROM qux" ) );
+        var info = SqlRecordSetInfo.Create( "s", "foo" );
+        var view = SqlNode.CreateView( info, SqlNode.RawQuery( "SELECT * FROM qux" ) );
         var sut = view.AsSet( "bar" );
         var text = sut.ToString();
 
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.NewView );
-            sut.SourceSchemaName.Should().Be( view.SchemaName );
-            sut.SourceName.Should().Be( view.Name );
+            sut.SourceSchemaName.Should().Be( info.Name.Schema );
+            sut.SourceName.Should().Be( info.Name.Object );
             sut.Alias.Should().Be( "bar" );
             sut.Identifier.Should().Be( "bar" );
             sut.CreationNode.Should().BeSameAs( view );

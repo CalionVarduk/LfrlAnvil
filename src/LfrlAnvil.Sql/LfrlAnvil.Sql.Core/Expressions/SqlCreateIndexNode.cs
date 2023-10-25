@@ -8,8 +8,7 @@ namespace LfrlAnvil.Sql.Expressions;
 public sealed class SqlCreateIndexNode : SqlNodeBase
 {
     internal SqlCreateIndexNode(
-        string schemaName,
-        string name,
+        SqlSchemaObjectName name,
         bool isUnique,
         bool ifNotExists,
         SqlRecordSetNode table,
@@ -17,7 +16,6 @@ public sealed class SqlCreateIndexNode : SqlNodeBase
         SqlConditionNode? filter)
         : base( SqlNodeType.CreateIndex )
     {
-        SchemaName = schemaName;
         Name = name;
         IsUnique = isUnique;
         IfNotExists = ifNotExists;
@@ -26,8 +24,7 @@ public sealed class SqlCreateIndexNode : SqlNodeBase
         Filter = filter;
     }
 
-    public string SchemaName { get; }
-    public string Name { get; }
+    public SqlSchemaObjectName Name { get; }
     public bool IsUnique { get; }
     public bool IfNotExists { get; }
     public SqlRecordSetNode Table { get; }

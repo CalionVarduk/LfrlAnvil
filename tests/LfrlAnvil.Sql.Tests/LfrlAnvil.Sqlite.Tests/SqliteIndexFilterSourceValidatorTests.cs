@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Functions;
 using LfrlAnvil.Sql.Expressions.Logical;
@@ -769,7 +770,7 @@ public class SqliteIndexFilterSourceValidatorTests : TestsBase
     [Fact]
     public void VisitNewTable_ShouldRegisterError()
     {
-        var node = SqlNode.CreateTable( string.Empty, "foo", new[] { SqlNode.Column<int>( "a" ) } ).AsSet( "bar" );
+        var node = SqlNode.CreateTable( SqlRecordSetInfo.Create( "foo" ), new[] { SqlNode.Column<int>( "a" ) } ).AsSet( "bar" );
         _sut.VisitNewTable( node );
         _sut.GetErrors().Should().HaveCount( 1 );
     }
@@ -777,7 +778,7 @@ public class SqliteIndexFilterSourceValidatorTests : TestsBase
     [Fact]
     public void VisitNewView_ShouldRegisterError()
     {
-        var node = SqlNode.CreateView( string.Empty, "foo", SqlNode.RawQuery( "SELECT * FROM qux" ) ).AsSet( "bar" );
+        var node = SqlNode.CreateView( SqlRecordSetInfo.Create( "foo" ), SqlNode.RawQuery( "SELECT * FROM qux" ) ).AsSet( "bar" );
         _sut.VisitNewView( node );
         _sut.GetErrors().Should().HaveCount( 1 );
     }
@@ -1059,14 +1060,14 @@ public class SqliteIndexFilterSourceValidatorTests : TestsBase
     [Fact]
     public void VisitCreateTable_ShouldRegisterError()
     {
-        _sut.VisitCreateTable( SqlNode.CreateTable( string.Empty, "foo", new[] { SqlNode.Column<int>( "a" ) } ) );
+        _sut.VisitCreateTable( SqlNode.CreateTable( SqlRecordSetInfo.Create( "foo" ), new[] { SqlNode.Column<int>( "a" ) } ) );
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 
     [Fact]
     public void VisitCreateView_ShouldRegisterError()
     {
-        _sut.VisitCreateView( SqlNode.CreateView( string.Empty, "foo", SqlNode.RawQuery( "SELECT * FROM bar" ) ) );
+        _sut.VisitCreateView( SqlNode.CreateView( SqlRecordSetInfo.Create( "foo" ), SqlNode.RawQuery( "SELECT * FROM bar" ) ) );
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 
@@ -1075,8 +1076,7 @@ public class SqliteIndexFilterSourceValidatorTests : TestsBase
     {
         _sut.VisitCreateIndex(
             SqlNode.CreateIndex(
-                string.Empty,
-                "foo",
+                SqlSchemaObjectName.Create( "foo" ),
                 isUnique: Fixture.Create<bool>(),
                 SqlNode.RawRecordSet( "bar" ),
                 Array.Empty<SqlOrderByNode>() ) );
@@ -1087,49 +1087,49 @@ public class SqliteIndexFilterSourceValidatorTests : TestsBase
     [Fact]
     public void VisitRenameTable_ShouldRegisterError()
     {
-        _sut.VisitRenameTable( SqlNode.RenameTable( string.Empty, "foo", "bar" ) );
+        _sut.VisitRenameTable( SqlNode.RenameTable( SqlRecordSetInfo.Create( "foo" ), SqlSchemaObjectName.Create( "bar" ) ) );
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 
     [Fact]
     public void VisitRenameColumn_ShouldRegisterError()
     {
-        _sut.VisitRenameColumn( SqlNode.RenameColumn( string.Empty, "foo", "bar", "qux" ) );
+        _sut.VisitRenameColumn( SqlNode.RenameColumn( SqlRecordSetInfo.Create( "foo" ), "bar", "qux" ) );
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 
     [Fact]
     public void VisitAddColumn_ShouldRegisterError()
     {
-        _sut.VisitAddColumn( SqlNode.AddColumn( string.Empty, "foo", SqlNode.Column<int>( "a" ) ) );
+        _sut.VisitAddColumn( SqlNode.AddColumn( SqlRecordSetInfo.Create( "foo" ), SqlNode.Column<int>( "a" ) ) );
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 
     [Fact]
     public void VisitDropColumn_ShouldRegisterError()
     {
-        _sut.VisitDropColumn( SqlNode.DropColumn( string.Empty, "foo", "bar" ) );
+        _sut.VisitDropColumn( SqlNode.DropColumn( SqlRecordSetInfo.Create( "foo" ), "bar" ) );
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 
     [Fact]
     public void VisitDropTable_ShouldRegisterError()
     {
-        _sut.VisitDropTable( SqlNode.DropTable( string.Empty, "foo" ) );
+        _sut.VisitDropTable( SqlNode.DropTable( SqlRecordSetInfo.Create( "foo" ) ) );
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 
     [Fact]
     public void VisitDropView_ShouldRegisterError()
     {
-        _sut.VisitDropView( SqlNode.DropView( string.Empty, "foo" ) );
+        _sut.VisitDropView( SqlNode.DropView( SqlRecordSetInfo.Create( "foo" ) ) );
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 
     [Fact]
     public void VisitDropIndex_ShouldRegisterError()
     {
-        _sut.VisitDropIndex( SqlNode.DropIndex( string.Empty, "foo" ) );
+        _sut.VisitDropIndex( SqlNode.DropIndex( SqlSchemaObjectName.Create( "foo" ) ) );
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 

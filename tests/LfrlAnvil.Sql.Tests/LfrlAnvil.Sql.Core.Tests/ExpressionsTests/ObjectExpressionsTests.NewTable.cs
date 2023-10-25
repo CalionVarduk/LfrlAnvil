@@ -11,10 +11,11 @@ public partial class ObjectExpressionsTests
     {
         [Theory]
         [InlineData( false, "[foo].[bar] AS [qux]" )]
-        [InlineData( true, "TEMP.[foo].[bar] AS [qux]" )]
+        [InlineData( true, "TEMP.[foo] AS [qux]" )]
         public void ToString_ShouldReturnCorrectRepresentation(bool isTemporary, string expected)
         {
-            var table = SqlNode.CreateTable( "foo", "bar", Array.Empty<SqlColumnDefinitionNode>(), isTemporary: isTemporary );
+            var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
+            var table = SqlNode.CreateTable( info, Array.Empty<SqlColumnDefinitionNode>() );
             var sut = table.AsSet( "qux" );
 
             var result = sut.ToString();
@@ -26,8 +27,7 @@ public partial class ObjectExpressionsTests
         public void GetKnownFields_ShouldReturnCollectionWithKnownColumns()
         {
             var table = SqlNode.CreateTable(
-                string.Empty,
-                "foo",
+                SqlRecordSetInfo.Create( "foo" ),
                 new[]
                 {
                     SqlNode.Column<int>( "Col0" ),
@@ -48,7 +48,7 @@ public partial class ObjectExpressionsTests
         [Fact]
         public void As_ShouldCreateNewTableNode_WithNewAlias()
         {
-            var table = SqlNode.CreateTable( string.Empty, "foo", Array.Empty<SqlColumnDefinitionNode>() );
+            var table = SqlNode.CreateTable( SqlRecordSetInfo.Create( "foo" ), Array.Empty<SqlColumnDefinitionNode>() );
             var sut = table.AsSet();
             var result = sut.As( "bar" );
 
@@ -56,8 +56,8 @@ public partial class ObjectExpressionsTests
             {
                 result.Should().NotBeSameAs( sut );
                 result.CreationNode.Should().BeSameAs( sut.CreationNode );
-                result.SourceSchemaName.Should().Be( sut.CreationNode.SchemaName );
-                result.SourceName.Should().Be( sut.CreationNode.Name );
+                result.SourceSchemaName.Should().Be( sut.CreationNode.Info.Name.Schema );
+                result.SourceName.Should().Be( sut.CreationNode.Info.Name.Object );
                 result.Alias.Should().Be( "bar" );
                 result.Identifier.Should().Be( "bar" );
                 result.IsOptional.Should().Be( sut.IsOptional );
@@ -68,7 +68,7 @@ public partial class ObjectExpressionsTests
         [Fact]
         public void AsSelf_ShouldCreateNewTableNode_WithoutAlias()
         {
-            var table = SqlNode.CreateTable( "foo", "bar", Array.Empty<SqlColumnDefinitionNode>() );
+            var table = SqlNode.CreateTable( SqlRecordSetInfo.Create( "foo", "bar" ), Array.Empty<SqlColumnDefinitionNode>() );
             var sut = table.AsSet( "qux" );
             var result = sut.AsSelf();
 
@@ -76,8 +76,8 @@ public partial class ObjectExpressionsTests
             {
                 result.Should().NotBeSameAs( sut );
                 result.CreationNode.Should().BeSameAs( sut.CreationNode );
-                result.SourceSchemaName.Should().Be( sut.CreationNode.SchemaName );
-                result.SourceName.Should().Be( sut.CreationNode.Name );
+                result.SourceSchemaName.Should().Be( sut.CreationNode.Info.Name.Schema );
+                result.SourceName.Should().Be( sut.CreationNode.Info.Name.Object );
                 result.Alias.Should().BeNull();
                 result.Identifier.Should().Be( "foo.bar" );
                 result.IsOptional.Should().Be( sut.IsOptional );
@@ -87,10 +87,11 @@ public partial class ObjectExpressionsTests
 
         [Theory]
         [InlineData( false, "[foo].[bar].[Col0] : System.Int32" )]
-        [InlineData( true, "TEMP.[foo].[bar].[Col0] : System.Int32" )]
+        [InlineData( true, "TEMP.[foo].[Col0] : System.Int32" )]
         public void GetUnsafeField_ShouldReturnRawDataFieldNode_WhenColumnExists(bool isTemporary, string expectedText)
         {
-            var table = SqlNode.CreateTable( "foo", "bar", new[] { SqlNode.Column<int>( "Col0" ) }, isTemporary: isTemporary );
+            var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
+            var table = SqlNode.CreateTable( info, new[] { SqlNode.Column<int>( "Col0" ) } );
             var sut = table.AsSet();
             var result = sut.GetUnsafeField( "Col0" );
             var text = result.ToString();
@@ -108,10 +109,11 @@ public partial class ObjectExpressionsTests
 
         [Theory]
         [InlineData( false, "[foo].[bar].[x] : ?" )]
-        [InlineData( true, "TEMP.[foo].[bar].[x] : ?" )]
+        [InlineData( true, "TEMP.[foo].[x] : ?" )]
         public void GetUnsafeField_ShouldReturnRawDataFieldNode_WhenColumnDoesNotExist(bool isTemporary, string expected)
         {
-            var table = SqlNode.CreateTable( "foo", "bar", Array.Empty<SqlColumnDefinitionNode>(), isTemporary: isTemporary );
+            var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
+            var table = SqlNode.CreateTable( info, Array.Empty<SqlColumnDefinitionNode>() );
             var sut = table.AsSet();
             var result = sut.GetUnsafeField( "x" );
             var text = result.ToString();
@@ -129,10 +131,11 @@ public partial class ObjectExpressionsTests
 
         [Theory]
         [InlineData( false, "[foo].[bar].[Col0] : System.Int32" )]
-        [InlineData( true, "TEMP.[foo].[bar].[Col0] : System.Int32" )]
+        [InlineData( true, "TEMP.[foo].[Col0] : System.Int32" )]
         public void GetField_ShouldReturnRawDataFieldNode(bool isTemporary, string expected)
         {
-            var table = SqlNode.CreateTable( "foo", "bar", new[] { SqlNode.Column<int>( "Col0" ) }, isTemporary: isTemporary );
+            var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
+            var table = SqlNode.CreateTable( info, new[] { SqlNode.Column<int>( "Col0" ) } );
             var sut = table.AsSet();
             var result = sut.GetField( "Col0" );
             var text = result.ToString();
@@ -149,14 +152,11 @@ public partial class ObjectExpressionsTests
 
         [Theory]
         [InlineData( false, "[foo].[bar].[Col0] : Nullable<System.Int32>" )]
-        [InlineData( true, "TEMP.[foo].[bar].[Col0] : Nullable<System.Int32>" )]
+        [InlineData( true, "TEMP.[foo].[Col0] : Nullable<System.Int32>" )]
         public void GetField_ShouldReturnRawDataFieldNode_WhenColumnIsNullable(bool isTemporary, string expected)
         {
-            var table = SqlNode.CreateTable(
-                "foo",
-                "bar",
-                new[] { SqlNode.Column<int>( "Col0", isNullable: true ) },
-                isTemporary: isTemporary );
+            var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
+            var table = SqlNode.CreateTable( info, new[] { SqlNode.Column<int>( "Col0", isNullable: true ) } );
 
             var sut = table.AsSet();
             var result = sut.GetField( "Col0" );
@@ -174,10 +174,11 @@ public partial class ObjectExpressionsTests
 
         [Theory]
         [InlineData( false, "[foo].[bar].[Col0] : Nullable<System.Int32>" )]
-        [InlineData( true, "TEMP.[foo].[bar].[Col0] : Nullable<System.Int32>" )]
+        [InlineData( true, "TEMP.[foo].[Col0] : Nullable<System.Int32>" )]
         public void GetField_ShouldReturnRawDataFieldNode_WithNullableType_WhenTableIsOptional(bool isTemporary, string expected)
         {
-            var table = SqlNode.CreateTable( "foo", "bar", new[] { SqlNode.Column<int>( "Col0" ) }, isTemporary: isTemporary );
+            var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
+            var table = SqlNode.CreateTable( info, new[] { SqlNode.Column<int>( "Col0" ) } );
             var sut = table.AsSet().MarkAsOptional();
             var result = sut.GetField( "Col0" );
             var text = result.ToString();
@@ -197,7 +198,8 @@ public partial class ObjectExpressionsTests
         [InlineData( true )]
         public void GetField_ShouldReturnRawDataFieldNode_WithAlias(bool isTemporary)
         {
-            var table = SqlNode.CreateTable( "foo", "bar", new[] { SqlNode.Column<int>( "Col0" ) }, isTemporary: isTemporary );
+            var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
+            var table = SqlNode.CreateTable( info, new[] { SqlNode.Column<int>( "Col0" ) } );
             var sut = table.AsSet( "qux" );
             var result = sut.GetField( "Col0" );
             var text = result.ToString();
@@ -215,7 +217,7 @@ public partial class ObjectExpressionsTests
         [Fact]
         public void GetField_ShouldThrowKeyNotFoundException_WhenColumnDoesNotExist()
         {
-            var table = SqlNode.CreateTable( string.Empty, "foo", new[] { SqlNode.Column<int>( "Col0" ) } );
+            var table = SqlNode.CreateTable( SqlRecordSetInfo.Create( "foo" ), new[] { SqlNode.Column<int>( "Col0" ) } );
             var sut = table.AsSet();
 
             var action = Lambda.Of( () => sut.GetField( "Col1" ) );
@@ -226,7 +228,7 @@ public partial class ObjectExpressionsTests
         [Fact]
         public void Indexer_ShouldBeEquivalentToGetField()
         {
-            var table = SqlNode.CreateTable( string.Empty, "foo", new[] { SqlNode.Column<int>( "Col0" ) } );
+            var table = SqlNode.CreateTable( SqlRecordSetInfo.Create( "foo" ), new[] { SqlNode.Column<int>( "Col0" ) } );
             var sut = table.AsSet( "bar" );
 
             var result = sut["Col0"];
@@ -236,10 +238,11 @@ public partial class ObjectExpressionsTests
 
         [Theory]
         [InlineData( false, "[foo].[bar].[x] : System.Int32" )]
-        [InlineData( true, "TEMP.[foo].[bar].[x] : System.Int32" )]
+        [InlineData( true, "TEMP.[foo].[x] : System.Int32" )]
         public void GetRawField_ShouldReturnRawDataFieldNode(bool isTemporary, string expected)
         {
-            var table = SqlNode.CreateTable( "foo", "bar", new[] { SqlNode.Column<int>( "Col0" ) }, isTemporary: isTemporary );
+            var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
+            var table = SqlNode.CreateTable( info, new[] { SqlNode.Column<int>( "Col0" ) } );
             var sut = table.AsSet();
             var result = sut.GetRawField( "x", SqlExpressionType.Create<int>() );
             var text = result.ToString();
@@ -259,7 +262,7 @@ public partial class ObjectExpressionsTests
         [InlineData( true )]
         public void MarkAsOptional_ShouldReturnSelf_WhenOptionalityDoesNotChange(bool optional)
         {
-            var table = SqlNode.CreateTable( string.Empty, "foo", Array.Empty<SqlColumnDefinitionNode>() );
+            var table = SqlNode.CreateTable( SqlRecordSetInfo.Create( "foo" ), Array.Empty<SqlColumnDefinitionNode>() );
             var sut = table.AsSet().MarkAsOptional( optional );
             var result = sut.MarkAsOptional( optional );
             result.Should().BeSameAs( sut );
@@ -270,7 +273,7 @@ public partial class ObjectExpressionsTests
         [InlineData( true )]
         public void MarkAsOptional_ShouldReturnNewTableNode_WhenOptionalityChanges_WithoutAlias(bool optional)
         {
-            var table = SqlNode.CreateTable( string.Empty, "foo", Array.Empty<SqlColumnDefinitionNode>() );
+            var table = SqlNode.CreateTable( SqlRecordSetInfo.Create( "foo" ), Array.Empty<SqlColumnDefinitionNode>() );
             var sut = table.AsSet().MarkAsOptional( ! optional );
             var result = sut.MarkAsOptional( optional );
 
@@ -278,8 +281,8 @@ public partial class ObjectExpressionsTests
             {
                 result.Should().NotBeSameAs( sut );
                 result.CreationNode.Should().BeSameAs( sut.CreationNode );
-                result.SourceSchemaName.Should().Be( sut.CreationNode.SchemaName );
-                result.SourceName.Should().Be( sut.CreationNode.Name );
+                result.SourceSchemaName.Should().Be( sut.CreationNode.Info.Name.Schema );
+                result.SourceName.Should().Be( sut.CreationNode.Info.Name.Object );
                 result.Alias.Should().BeNull();
                 result.Identifier.Should().Be( "foo" );
                 result.IsAliased.Should().BeFalse();
@@ -292,7 +295,7 @@ public partial class ObjectExpressionsTests
         [InlineData( true )]
         public void MarkAsOptional_ShouldReturnNewTableNode_WhenOptionalityChanges_WithAlias(bool optional)
         {
-            var table = SqlNode.CreateTable( string.Empty, "foo", Array.Empty<SqlColumnDefinitionNode>() );
+            var table = SqlNode.CreateTable( SqlRecordSetInfo.Create( "foo" ), Array.Empty<SqlColumnDefinitionNode>() );
             var sut = table.AsSet( "bar" ).MarkAsOptional( ! optional );
             var result = sut.MarkAsOptional( optional );
 
@@ -300,8 +303,8 @@ public partial class ObjectExpressionsTests
             {
                 result.Should().NotBeSameAs( sut );
                 result.CreationNode.Should().BeSameAs( sut.CreationNode );
-                result.SourceSchemaName.Should().Be( sut.CreationNode.SchemaName );
-                result.SourceName.Should().Be( sut.CreationNode.Name );
+                result.SourceSchemaName.Should().Be( sut.CreationNode.Info.Name.Schema );
+                result.SourceName.Should().Be( sut.CreationNode.Info.Name.Object );
                 result.Alias.Should().Be( "bar" );
                 result.Identifier.Should().Be( "bar" );
                 result.IsAliased.Should().BeTrue();
