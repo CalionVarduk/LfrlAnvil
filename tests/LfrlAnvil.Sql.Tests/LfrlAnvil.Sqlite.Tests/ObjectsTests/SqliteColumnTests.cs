@@ -33,6 +33,7 @@ public class SqliteColumnTests : TestsBase
             sut.FullName.Should().Be( "T.C" );
             sut.IsNullable.Should().Be( isNullable );
             sut.TypeDefinition.Should().BeSameAs( db.TypeDefinitions.GetByType( type ) );
+            sut.Node.Should().BeSameAs( table.RecordSet["C"] );
             sut.ToString().Should().Be( "[Column] T.C" );
         }
     }

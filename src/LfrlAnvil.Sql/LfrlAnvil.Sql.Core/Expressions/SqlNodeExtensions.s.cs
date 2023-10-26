@@ -20,28 +20,28 @@ public static class SqlNodeExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlTableNode ToRecordSet(this ISqlTable table, string? alias = null)
     {
-        return SqlNode.Table( table, alias );
+        return alias is null ? table.RecordSet : SqlNode.Table( table, alias );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlTableBuilderNode ToRecordSet(this ISqlTableBuilder table, string? alias = null)
     {
-        return SqlNode.Table( table, alias );
+        return alias is null ? table.RecordSet : SqlNode.Table( table, alias );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlViewNode ToRecordSet(this ISqlView view, string? alias = null)
     {
-        return SqlNode.View( view, alias );
+        return alias is null ? view.RecordSet : SqlNode.View( view, alias );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlViewBuilderNode ToRecordSet(this ISqlViewBuilder view, string? alias = null)
     {
-        return SqlNode.View( view, alias );
+        return alias is null ? view.RecordSet : SqlNode.View( view, alias );
     }
 
     [Pure]

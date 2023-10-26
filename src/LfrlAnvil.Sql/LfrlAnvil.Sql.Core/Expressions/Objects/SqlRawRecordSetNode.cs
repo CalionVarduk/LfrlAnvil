@@ -6,14 +6,15 @@ namespace LfrlAnvil.Sql.Expressions.Objects;
 
 public class SqlRawRecordSetNode : SqlRecordSetNode
 {
+    private readonly SqlRecordSetInfo _info;
+
     protected internal SqlRawRecordSetNode(string name, string? alias, bool isOptional)
         : base( SqlNodeType.RawRecordSet, alias, isOptional )
     {
-        SourceName = name;
+        _info = SqlRecordSetInfo.Create( name );
     }
 
-    public sealed override string SourceSchemaName => string.Empty;
-    public sealed override string SourceName { get; }
+    public sealed override SqlRecordSetInfo Info => _info;
     public new SqlRawDataFieldNode this[string fieldName] => GetField( fieldName );
 
     [Pure]
@@ -25,13 +26,13 @@ public class SqlRawRecordSetNode : SqlRecordSetNode
     [Pure]
     public override SqlRawRecordSetNode As(string alias)
     {
-        return new SqlRawRecordSetNode( SourceName, alias, IsOptional );
+        return new SqlRawRecordSetNode( Info.Name.Object, alias, IsOptional );
     }
 
     [Pure]
     public override SqlRawRecordSetNode AsSelf()
     {
-        return new SqlRawRecordSetNode( SourceName, alias: null, IsOptional );
+        return new SqlRawRecordSetNode( Info.Name.Object, alias: null, IsOptional );
     }
 
     [Pure]
@@ -50,7 +51,7 @@ public class SqlRawRecordSetNode : SqlRecordSetNode
     public override SqlRawRecordSetNode MarkAsOptional(bool optional = true)
     {
         return IsOptional != optional
-            ? new SqlRawRecordSetNode( SourceName, alias: Alias, isOptional: optional )
+            ? new SqlRawRecordSetNode( Info.Name.Object, alias: Alias, isOptional: optional )
             : this;
     }
 }

@@ -1,10 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Memory;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
+using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
@@ -17,6 +19,8 @@ public sealed class SqliteViewBuilder : SqliteObjectBuilder, ISqlViewBuilder
     private Dictionary<ulong, SqliteViewBuilder>? _referencingViews;
     private readonly Dictionary<ulong, SqliteObjectBuilder> _referencedObjects;
     private string _fullName;
+    private SqlRecordSetInfo? _info;
+    private SqlViewBuilderNode? _recordSet;
 
     internal SqliteViewBuilder(SqliteSchemaBuilder schema, string name, SqlQueryExpressionNode source, SqliteViewSourceValidator visitor)
         : base( schema.Database.GetNextId(), name, SqlObjectType.View )
@@ -26,8 +30,10 @@ public sealed class SqliteViewBuilder : SqliteObjectBuilder, ISqlViewBuilder
         _referencingViews = null;
         _referencedObjects = visitor.ReferencedObjects;
         _fullName = string.Empty;
+        _info = null;
         UpdateFullName();
         AddSelfToReferencedObjects();
+        _recordSet = null;
     }
 
     public SqliteSchemaBuilder Schema { get; }
@@ -35,6 +41,8 @@ public sealed class SqliteViewBuilder : SqliteObjectBuilder, ISqlViewBuilder
     public IReadOnlyCollection<SqliteObjectBuilder> ReferencedObjects => _referencedObjects.Values;
     public IReadOnlyCollection<SqliteViewBuilder> ReferencingViews => (_referencingViews?.Values).EmptyIfNull();
     public override string FullName => _fullName;
+    public SqlRecordSetInfo Info => _info ??= SqlRecordSetInfo.Create( Schema.Name, Name );
+    public SqlViewBuilderNode RecordSet => _recordSet ??= SqlNode.View( this );
     public override SqliteDatabaseBuilder Database => Schema.Database;
 
     internal override bool CanRemove => _referencingViews is null || _referencingViews.Count == 0;
@@ -92,6 +100,13 @@ public sealed class SqliteViewBuilder : SqliteObjectBuilder, ISqlViewBuilder
             ReinterpretCast.To<SqliteViewBuilder>( view ).Reactivate();
     }
 
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal SqlRecordSetInfo? GetCachedInfo()
+    {
+        return _info;
+    }
+
     internal void AddReferencingView(SqliteViewBuilder view)
     {
         _referencingViews ??= new Dictionary<ulong, SqliteViewBuilder>();
@@ -105,6 +120,7 @@ public sealed class SqliteViewBuilder : SqliteObjectBuilder, ISqlViewBuilder
 
     internal void UpdateFullName()
     {
+        _info = null;
         _fullName = SqliteHelpers.GetFullName( Schema.Name, Name );
     }
 

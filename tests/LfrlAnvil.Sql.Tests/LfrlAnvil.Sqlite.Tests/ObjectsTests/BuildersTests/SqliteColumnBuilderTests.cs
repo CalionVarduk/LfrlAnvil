@@ -273,6 +273,7 @@ public class SqliteColumnBuilderTests : TestsBase
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
         var oldName = sut.Name;
+        var node = sut.Node;
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -286,6 +287,7 @@ public class SqliteColumnBuilderTests : TestsBase
             sut.FullName.Should().Be( "foo_T.bar" );
             table.Columns.Get( "bar" ).Should().BeSameAs( sut );
             table.Columns.Contains( oldName ).Should().BeFalse();
+            node.Name.Should().Be( "bar" );
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 ).Should().SatisfySql( "ALTER TABLE \"foo_T\" RENAME COLUMN \"C2\" TO \"bar\";" );

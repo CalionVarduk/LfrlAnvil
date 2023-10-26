@@ -26,6 +26,7 @@ public class SqliteViewDataFieldTests : TestsBase
             sut.Type.Should().Be( SqlObjectType.ViewDataField );
             sut.Name.Should().Be( "a" );
             sut.FullName.Should().Be( "foo_V.a" );
+            sut.Node.Should().BeSameAs( view.RecordSet["a"] );
             sut.ToString().Should().Be( "[ViewDataField] foo_V.a" );
         }
     }

@@ -1,4 +1,6 @@
-﻿namespace LfrlAnvil.Sql.Objects;
+﻿using LfrlAnvil.Sql.Expressions.Objects;
+
+namespace LfrlAnvil.Sql.Objects;
 
 public interface ISqlTable : ISqlObject
 {
@@ -7,4 +9,6 @@ public interface ISqlTable : ISqlObject
     ISqlColumnCollection Columns { get; }
     ISqlIndexCollection Indexes { get; }
     ISqlForeignKeyCollection ForeignKeys { get; }
+    SqlRecordSetInfo Info { get; }
+    SqlTableNode RecordSet { get; }
 }

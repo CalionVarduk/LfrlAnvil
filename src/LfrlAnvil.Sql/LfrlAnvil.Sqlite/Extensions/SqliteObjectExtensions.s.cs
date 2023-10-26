@@ -35,7 +35,7 @@ public static class SqliteObjectExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqliteIndexBuilder SetFilter(this SqliteIndexBuilder index, Func<SqlTableBuilderNode, SqlConditionNode?> filter)
     {
-        return index.SetFilter( filter( index.Table.ToRecordSet() ) );
+        return index.SetFilter( filter( index.Table.RecordSet ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

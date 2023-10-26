@@ -48,6 +48,13 @@ public partial class SqliteSchemaBuilderTests
                 result.ForeignKeys.Should().BeEmpty();
                 result.ForeignKeys.Table.Should().BeSameAs( result );
                 result.ForeignKeys.Count.Should().Be( 0 );
+
+                result.Info.Should().Be( SqlRecordSetInfo.Create( "foo", name ) );
+                result.RecordSet.Table.Should().BeSameAs( result );
+                result.RecordSet.Info.Should().Be( result.Info );
+                result.RecordSet.Alias.Should().BeNull();
+                result.RecordSet.Identifier.Should().Be( result.Info.Identifier );
+                result.RecordSet.IsOptional.Should().BeFalse();
             }
         }
 
@@ -237,6 +244,13 @@ public partial class SqliteSchemaBuilderTests
 
                 column.ReferencingViews.Should().HaveCount( 1 );
                 column.ReferencingViews.Should().BeEquivalentTo( result );
+
+                result.Info.Should().Be( SqlRecordSetInfo.Create( "foo", name ) );
+                result.RecordSet.View.Should().BeSameAs( result );
+                result.RecordSet.Info.Should().Be( result.Info );
+                result.RecordSet.Alias.Should().BeNull();
+                result.RecordSet.Identifier.Should().Be( result.Info.Identifier );
+                result.RecordSet.IsOptional.Should().BeFalse();
             }
         }
 

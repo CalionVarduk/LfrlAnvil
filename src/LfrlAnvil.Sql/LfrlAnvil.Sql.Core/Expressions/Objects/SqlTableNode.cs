@@ -17,8 +17,7 @@ public sealed class SqlTableNode : SqlRecordSetNode
     }
 
     public ISqlTable Table { get; }
-    public override string SourceSchemaName => Table.Schema.Name;
-    public override string SourceName => Table.Name;
+    public override SqlRecordSetInfo Info => Table.Info;
     public new SqlColumnNode this[string fieldName] => GetField( fieldName );
 
     [Pure]

@@ -15,9 +15,7 @@ public sealed class SqlNewViewNode : SqlRecordSetNode
     }
 
     public SqlCreateViewNode CreationNode { get; }
-    public override string SourceSchemaName => CreationNode.Info.Name.Schema;
-    public override string SourceName => CreationNode.Info.Name.Object;
-
+    public override SqlRecordSetInfo Info => CreationNode.Info;
     public new SqlQueryDataFieldNode this[string fieldName] => GetField( fieldName );
 
     [Pure]

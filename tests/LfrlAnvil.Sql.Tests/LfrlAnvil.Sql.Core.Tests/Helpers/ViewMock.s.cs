@@ -18,6 +18,8 @@ public static class ViewMock
         result.Schema.Returns( schema );
         result.Name.Returns( name );
         result.FullName.Returns( fullName );
+        var info = SqlRecordSetInfo.Create( schema.Name, name );
+        result.Info.Returns( info );
 
         var fields = new List<ISqlViewDataField>();
         source?.ReduceKnownDataFieldExpressions(
@@ -46,6 +48,16 @@ public static class ViewMock
                 } );
 
         result.DataFields.Returns( dataFields );
+
+        var recordSet = SqlNode.View( result );
+        result.RecordSet.Returns( recordSet );
+        foreach ( var field in fields )
+        {
+            var fieldName = field.Name;
+            var fieldNode = recordSet[fieldName];
+            field.Node.Returns( fieldNode );
+        }
+
         return result;
     }
 
@@ -58,7 +70,10 @@ public static class ViewMock
         result.Schema.Returns( schema );
         result.Name.Returns( name );
         result.FullName.Returns( fullName );
+        var info = SqlRecordSetInfo.Create( schema.Name, name );
+        result.Info.Returns( info );
         result.Source.Returns( source ?? SqlNode.RawQuery( string.Empty ) );
+        result.RecordSet.Returns( SqlNode.View( result ) );
         return result;
     }
 

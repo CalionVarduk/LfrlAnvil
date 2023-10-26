@@ -5,16 +5,19 @@ namespace LfrlAnvil.Sql.Expressions.Objects;
 
 public sealed class SqlQueryRecordSetNode : SqlRecordSetNode
 {
+    private readonly SqlRecordSetInfo _info;
     private Dictionary<string, SqlQueryDataFieldNode>? _fields;
 
     internal SqlQueryRecordSetNode(SqlQueryExpressionNode query, string alias, bool isOptional)
         : base( SqlNodeType.QueryRecordSet, alias, isOptional )
     {
+        _info = SqlRecordSetInfo.Create( alias );
         Query = query;
         _fields = null;
     }
 
     public SqlQueryExpressionNode Query { get; }
+    public override SqlRecordSetInfo Info => _info;
 
     public new string Alias
     {
@@ -25,8 +28,6 @@ public sealed class SqlQueryRecordSetNode : SqlRecordSetNode
         }
     }
 
-    public override string SourceSchemaName => string.Empty;
-    public override string SourceName => Alias;
     public new SqlQueryDataFieldNode this[string fieldName] => GetField( fieldName );
 
     [Pure]

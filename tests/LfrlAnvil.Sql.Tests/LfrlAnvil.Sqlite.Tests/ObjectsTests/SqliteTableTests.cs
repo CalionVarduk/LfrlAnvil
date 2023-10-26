@@ -32,6 +32,12 @@ public class SqliteTableTests : TestsBase
             sut.Type.Should().Be( SqlObjectType.Table );
             sut.Name.Should().Be( "T" );
             sut.FullName.Should().Be( "foo_T" );
+            sut.Info.Should().Be( tableBuilder.Info );
+            sut.RecordSet.Table.Should().BeSameAs( sut );
+            sut.RecordSet.Info.Should().Be( sut.Info );
+            sut.RecordSet.Alias.Should().BeNull();
+            sut.RecordSet.Identifier.Should().Be( sut.Info.Identifier );
+            sut.RecordSet.IsOptional.Should().BeFalse();
             sut.ToString().Should().Be( "[Table] foo_T" );
 
             sut.Columns.Count.Should().Be( 1 );

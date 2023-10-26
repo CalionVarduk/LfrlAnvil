@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.Contracts;
 using System.Linq;
+using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Objects.Builders;
 
@@ -20,6 +21,8 @@ public static class TableMock
         result.Schema.Returns( schema );
         result.Name.Returns( name );
         result.FullName.Returns( fullName );
+        var info = SqlRecordSetInfo.Create( schema.Name, name );
+        result.Info.Returns( info );
 
         var columnsCollection = Substitute.For<ISqlColumnCollection>();
         columnsCollection.Table.Returns( result );
@@ -38,6 +41,16 @@ public static class TableMock
         var pk = primaryKey?.Invoke( columnsCollection ) ?? PrimaryKeyMock.Create();
         result.Columns.Returns( columnsCollection );
         result.PrimaryKey.Returns( pk );
+
+        var recordSet = SqlNode.Table( result );
+        result.RecordSet.Returns( recordSet );
+        foreach ( var column in columns )
+        {
+            var columnName = column.Name;
+            var columnNode = recordSet[columnName];
+            column.Node.Returns( columnNode );
+        }
+
         return result;
     }
 
@@ -54,6 +67,8 @@ public static class TableMock
         result.Schema.Returns( schema );
         result.Name.Returns( name );
         result.FullName.Returns( fullName );
+        var info = SqlRecordSetInfo.Create( schema.Name, name );
+        result.Info.Returns( info );
 
         var columnsCollection = Substitute.For<ISqlColumnBuilderCollection>();
         columnsCollection.Table.Returns( result );
@@ -72,6 +87,16 @@ public static class TableMock
         var pk = primaryKey?.Invoke( columnsCollection );
         result.Columns.Returns( columnsCollection );
         result.PrimaryKey.Returns( pk );
+
+        var recordSet = SqlNode.Table( result );
+        result.RecordSet.Returns( recordSet );
+        foreach ( var column in columns )
+        {
+            var columnName = column.Name;
+            var columnNode = recordSet[columnName];
+            column.Node.Returns( columnNode );
+        }
+
         return result;
     }
 

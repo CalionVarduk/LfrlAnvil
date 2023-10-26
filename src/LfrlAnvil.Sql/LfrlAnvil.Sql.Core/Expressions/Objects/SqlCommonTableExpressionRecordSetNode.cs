@@ -5,18 +5,19 @@ namespace LfrlAnvil.Sql.Expressions.Objects;
 
 public sealed class SqlCommonTableExpressionRecordSetNode : SqlRecordSetNode
 {
+    private readonly SqlRecordSetInfo _info;
     private Dictionary<string, SqlQueryDataFieldNode>? _fields;
 
     internal SqlCommonTableExpressionRecordSetNode(SqlCommonTableExpressionNode commonTableExpression, string? alias, bool isOptional)
         : base( SqlNodeType.CommonTableExpressionRecordSet, alias, isOptional )
     {
+        _info = SqlRecordSetInfo.Create( commonTableExpression.Name );
         CommonTableExpression = commonTableExpression;
         _fields = null;
     }
 
     public SqlCommonTableExpressionNode CommonTableExpression { get; }
-    public override string SourceSchemaName => string.Empty;
-    public override string SourceName => CommonTableExpression.Name;
+    public override SqlRecordSetInfo Info => _info;
     public new SqlQueryDataFieldNode this[string fieldName] => GetField( fieldName );
 
     [Pure]

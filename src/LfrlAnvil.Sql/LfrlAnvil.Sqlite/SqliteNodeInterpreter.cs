@@ -500,15 +500,12 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitTruncate(SqlTruncateNode node)
     {
-        var isTemporary = node.Table.NodeType == SqlNodeType.NewTable &&
-            ReinterpretCast.To<SqlNewTableNode>( node.Table ).CreationNode.Info.IsTemporary;
-
         Context.Sql.Append( "DELETE" ).AppendSpace().Append( "FROM" ).AppendSpace();
         AppendDelimitedRecordSetName( node.Table );
         Context.Sql.AppendSemicolon();
         Context.AppendIndent();
         Context.Sql.Append( "DELETE" ).AppendSpace().Append( "FROM" ).AppendSpace();
-        if ( isTemporary )
+        if ( node.Table.Info.IsTemporary )
             Context.Sql.Append( "temp" ).AppendDot();
 
         AppendDelimitedName( "SQLITE_SEQUENCE" );
@@ -519,7 +516,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         if ( node.Table.IsAliased )
             Context.Sql.Append( node.Table.Alias );
         else
-            AppendSchemaObjectName( node.Table.SourceSchemaName, node.Table.SourceName );
+            AppendSchemaObjectName( node.Table.Info.Name.Schema, node.Table.Info.Name.Object );
 
         Context.Sql.Append( '\'' );
     }
@@ -799,15 +796,11 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
         if ( node.NodeType == SqlNodeType.RawRecordSet )
         {
-            Context.Sql.Append( node.SourceName );
+            Context.Sql.Append( node.Info.Name.Object );
             return;
         }
 
-        if ( (node.NodeType == SqlNodeType.NewTable && ReinterpretCast.To<SqlNewTableNode>( node ).CreationNode.Info.IsTemporary) ||
-            (node.NodeType == SqlNodeType.NewView && ReinterpretCast.To<SqlNewViewNode>( node ).CreationNode.Info.IsTemporary) )
-            Context.Sql.Append( "temp" ).AppendDot();
-
-        AppendDelimitedSchemaObjectName( node.SourceSchemaName, node.SourceName );
+        AppendDelimitedRecordSetInfo( node.Info );
     }
 
     public sealed override void AppendDelimitedTemporaryObjectName(string name)
@@ -1177,16 +1170,10 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
         if ( node.RecordSet.IsAliased )
             Context.Sql.Append( node.RecordSet.Alias );
+        else if ( node.RecordSet.Info.IsTemporary )
+            Context.Sql.Append( "temp" ).Append( '_' ).Append( node.RecordSet.Info.Name.Object );
         else
-        {
-            if ( (node.RecordSet.NodeType == SqlNodeType.NewTable &&
-                    ReinterpretCast.To<SqlNewTableNode>( node.RecordSet ).CreationNode.Info.IsTemporary) ||
-                (node.RecordSet.NodeType == SqlNodeType.NewView &&
-                    ReinterpretCast.To<SqlNewViewNode>( node.RecordSet ).CreationNode.Info.IsTemporary) )
-                Context.Sql.Append( "temp" ).Append( '_' );
-
-            AppendSchemaObjectName( node.RecordSet.SourceSchemaName, node.RecordSet.SourceName );
-        }
+            AppendSchemaObjectName( node.RecordSet.Info.Name.Schema, node.RecordSet.Info.Name.Object );
 
         Context.Sql.Append( '_' ).Append( node.Name ).Append( EndNameDelimiter );
     }

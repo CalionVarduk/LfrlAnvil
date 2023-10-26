@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql.Expressions;
+using LfrlAnvil.Sql.Expressions.Objects;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
 
@@ -13,6 +14,7 @@ public interface ISqlColumnBuilder : ISqlObjectBuilder
     IReadOnlyCollection<ISqlIndexBuilder> Indexes { get; }
     IReadOnlyCollection<ISqlIndexBuilder> IndexFilters { get; }
     IReadOnlyCollection<ISqlViewBuilder> ReferencingViews { get; }
+    SqlColumnBuilderNode Node { get; }
 
     new ISqlColumnBuilder SetName(string name);
     ISqlColumnBuilder MarkAsNullable(bool enabled = true);

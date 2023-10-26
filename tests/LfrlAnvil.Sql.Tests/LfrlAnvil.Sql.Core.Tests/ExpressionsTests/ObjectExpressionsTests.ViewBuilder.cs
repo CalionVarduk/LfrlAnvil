@@ -40,8 +40,7 @@ public partial class ObjectExpressionsTests
             {
                 result.Should().NotBeSameAs( sut );
                 result.View.Should().BeSameAs( sut.View );
-                result.SourceSchemaName.Should().BeEmpty();
-                result.SourceName.Should().Be( "foo" );
+                result.Info.Should().Be( SqlRecordSetInfo.Create( "foo" ) );
                 result.Alias.Should().Be( "bar" );
                 result.Identifier.Should().Be( "bar" );
                 result.IsOptional.Should().Be( sut.IsOptional );
@@ -60,8 +59,7 @@ public partial class ObjectExpressionsTests
             {
                 result.Should().NotBeSameAs( sut );
                 result.View.Should().BeSameAs( sut.View );
-                result.SourceSchemaName.Should().Be( "foo" );
-                result.SourceName.Should().Be( "bar" );
+                result.Info.Should().Be( SqlRecordSetInfo.Create( "foo", "bar" ) );
                 result.Alias.Should().BeNull();
                 result.Identifier.Should().Be( "foo.bar" );
                 result.IsOptional.Should().Be( sut.IsOptional );
@@ -235,8 +233,7 @@ public partial class ObjectExpressionsTests
             {
                 result.Should().NotBeSameAs( sut );
                 result.View.Should().BeSameAs( sut.View );
-                result.SourceSchemaName.Should().BeEmpty();
-                result.SourceName.Should().Be( "foo" );
+                result.Info.Should().Be( SqlRecordSetInfo.Create( "foo" ) );
                 result.Alias.Should().BeNull();
                 result.Identifier.Should().Be( "foo" );
                 result.IsAliased.Should().BeFalse();
@@ -257,8 +254,7 @@ public partial class ObjectExpressionsTests
             {
                 result.Should().NotBeSameAs( sut );
                 result.View.Should().BeSameAs( sut.View );
-                result.SourceSchemaName.Should().BeEmpty();
-                result.SourceName.Should().Be( "foo" );
+                result.Info.Should().Be( SqlRecordSetInfo.Create( "foo" ) );
                 result.Alias.Should().Be( "bar" );
                 result.Identifier.Should().Be( "bar" );
                 result.IsAliased.Should().BeTrue();

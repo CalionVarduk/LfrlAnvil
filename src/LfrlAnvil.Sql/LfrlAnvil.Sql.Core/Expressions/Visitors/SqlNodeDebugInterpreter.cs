@@ -243,7 +243,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
 
     public override void VisitRawRecordSet(SqlRawRecordSetNode node)
     {
-        AppendDelimitedName( node.SourceName );
+        AppendDelimitedRecordSetInfo( node.Info );
         AppendDelimitedAlias( node.Alias );
     }
 
@@ -744,16 +744,9 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
     public override void AppendDelimitedRecordSetName(SqlRecordSetNode node)
     {
         if ( node.IsAliased )
-        {
             AppendDelimitedName( node.Alias );
-            return;
-        }
-
-        if ( (node.NodeType == SqlNodeType.NewTable && ReinterpretCast.To<SqlNewTableNode>( node ).CreationNode.Info.IsTemporary) ||
-            (node.NodeType == SqlNodeType.NewView && ReinterpretCast.To<SqlNewViewNode>( node ).CreationNode.Info.IsTemporary) )
-            Context.Sql.Append( "TEMP" ).AppendDot();
-
-        AppendDelimitedSchemaObjectName( node.SourceSchemaName, node.SourceName );
+        else
+            AppendDelimitedRecordSetInfo( node.Info );
     }
 
     [Pure]

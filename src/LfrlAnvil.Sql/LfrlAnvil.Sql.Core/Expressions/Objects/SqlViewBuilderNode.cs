@@ -19,8 +19,7 @@ public sealed class SqlViewBuilderNode : SqlRecordSetNode
     }
 
     public ISqlViewBuilder View { get; }
-    public override string SourceSchemaName => View.Schema.Name;
-    public override string SourceName => View.Name;
+    public override SqlRecordSetInfo Info => View.Info;
     public new SqlQueryDataFieldNode this[string fieldName] => GetField( fieldName );
 
     [Pure]

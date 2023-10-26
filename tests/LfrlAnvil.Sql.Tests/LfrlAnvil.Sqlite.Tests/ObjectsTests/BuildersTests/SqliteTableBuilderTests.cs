@@ -136,6 +136,7 @@ public partial class SqliteTableBuilderTests : TestsBase
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "s" );
         var sut = schema.Objects.CreateTable( oldName );
         sut.SetPrimaryKey( sut.Columns.Create( "C" ).Asc() );
+        var recordSet = sut.RecordSet;
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -147,6 +148,8 @@ public partial class SqliteTableBuilderTests : TestsBase
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( newName );
             sut.FullName.Should().Be( "s_bar" );
+            sut.Info.Should().Be( SqlRecordSetInfo.Create( "s", "bar" ) );
+            recordSet.Info.Should().Be( sut.Info );
             schema.Objects.Contains( newName ).Should().BeTrue();
             schema.Objects.Contains( oldName ).Should().BeFalse();
             statements.Should().HaveCount( 1 );

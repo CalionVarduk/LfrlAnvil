@@ -464,7 +464,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public virtual void VisitRawRecordSet(SqlRawRecordSetNode node)
     {
-        Context.Sql.Append( node.SourceName );
+        Context.Sql.Append( node.Info.Name.Object );
         AppendDelimitedAlias( node.Alias );
     }
 

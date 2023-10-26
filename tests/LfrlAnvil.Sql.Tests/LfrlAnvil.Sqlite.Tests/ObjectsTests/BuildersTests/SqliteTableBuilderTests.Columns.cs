@@ -35,6 +35,7 @@ public partial class SqliteTableBuilderTests
                 result.Indexes.Should().BeEmpty();
                 result.ReferencingViews.Should().BeEmpty();
                 result.IndexFilters.Should().BeEmpty();
+                result.Node.Should().BeEquivalentTo( table.RecordSet["C"] );
                 sut.Count.Should().Be( 1 );
                 sut.Should().BeSequentiallyEqualTo( result );
             }
@@ -109,6 +110,7 @@ public partial class SqliteTableBuilderTests
                 result.DefaultValue.Should().BeNull();
                 result.Indexes.Should().BeEmpty();
                 result.IndexFilters.Should().BeEmpty();
+                result.Node.Should().BeEquivalentTo( table.RecordSet["C"] );
                 sut.Count.Should().Be( 1 );
                 sut.Should().BeSequentiallyEqualTo( result );
             }

@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
+using LfrlAnvil.Sql.Expressions;
+using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
@@ -14,6 +18,8 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
 {
     private Dictionary<ulong, SqliteViewBuilder>? _referencingViews;
     private string _fullName;
+    private SqlRecordSetInfo? _info;
+    private SqlTableBuilderNode? _recordSet;
 
     internal SqliteTableBuilder(SqliteSchemaBuilder schema, string name)
         : base( schema.Database.GetNextId(), name, SqlObjectType.Table )
@@ -25,7 +31,9 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
         Indexes = new SqliteIndexBuilderCollection( this );
         ForeignKeys = new SqliteForeignKeyBuilderCollection( this );
         _fullName = string.Empty;
+        _info = null;
         UpdateFullName();
+        _recordSet = null;
     }
 
     public SqliteSchemaBuilder Schema { get; }
@@ -36,6 +44,8 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
     public IReadOnlyCollection<SqliteViewBuilder> ReferencingViews => (_referencingViews?.Values).EmptyIfNull();
 
     public override string FullName => _fullName;
+    public SqlRecordSetInfo Info => _info ??= SqlRecordSetInfo.Create( Schema.Name, Name );
+    public SqlTableBuilderNode RecordSet => _recordSet ??= SqlNode.Table( this );
     public override SqliteDatabaseBuilder Database => Schema.Database;
 
     internal override bool CanRemove
@@ -89,6 +99,13 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
         }
 
         return PrimaryKey;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal SqlRecordSetInfo? GetCachedInfo()
+    {
+        return _info;
     }
 
     internal void UnassignPrimaryKey()
@@ -246,6 +263,7 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
 
     internal void UpdateFullName()
     {
+        _info = null;
         _fullName = SqliteHelpers.GetFullName( Schema.Name, Name );
         foreach ( var column in Columns )
             column.ResetFullName();

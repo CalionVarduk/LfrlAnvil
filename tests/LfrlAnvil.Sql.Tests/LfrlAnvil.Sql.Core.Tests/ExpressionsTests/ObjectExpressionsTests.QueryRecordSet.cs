@@ -76,8 +76,7 @@ public partial class ObjectExpressionsTests
             {
                 result.Should().NotBeSameAs( sut );
                 result.Query.Should().BeSameAs( sut.Query );
-                result.SourceSchemaName.Should().BeEmpty();
-                result.SourceName.Should().Be( "qux" );
+                result.Info.Should().Be( SqlRecordSetInfo.Create( "qux" ) );
                 result.Alias.Should().Be( "qux" );
                 result.Identifier.Should().Be( "qux" );
                 result.IsOptional.Should().Be( sut.IsOptional );
@@ -222,8 +221,7 @@ public partial class ObjectExpressionsTests
             {
                 result.Should().NotBeSameAs( sut );
                 result.Query.Should().Be( sut.Query );
-                result.SourceSchemaName.Should().BeEmpty();
-                result.SourceName.Should().Be( "foo" );
+                result.Info.Should().Be( SqlRecordSetInfo.Create( "foo" ) );
                 result.Alias.Should().Be( "foo" );
                 result.Identifier.Should().Be( "foo" );
                 result.IsAliased.Should().BeTrue();

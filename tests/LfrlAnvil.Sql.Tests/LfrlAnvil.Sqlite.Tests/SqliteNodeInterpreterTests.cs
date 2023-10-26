@@ -2721,7 +2721,7 @@ WHERE EXISTS (SELECT * FROM ""_{GUID}"" WHERE (""foo"".""a"" = ""_{GUID}"".""f_a
 
         _sut.Visit(
             dataSource.ToUpdate(
-                s => new[] { s["f"]["b"].Assign( s["f"]["b"] + s["bar"]["b"] - s["tmp"]["b"] + SqlNode.Literal( 1 ) ) } ) );
+                s => new[] { s["f"]["b"].Assign( s["f"]["b"] + s["bar"]["b"] - s["TEMP.tmp"]["b"] + SqlNode.Literal( 1 ) ) } ) );
 
         _sut.Context.Sql.ToString()
             .Should()

@@ -15,7 +15,7 @@ public class SqliteViewTests : TestsBase
     public void Properties_ShouldBeCorrectlyCopiedFromBuilder()
     {
         var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
-        schemaBuilder.Objects.CreateView(
+        var viewBuilder = schemaBuilder.Objects.CreateView(
             "V",
             SqlNode.RawRecordSet( "bar" )
                 .ToDataSource()
@@ -36,6 +36,12 @@ public class SqliteViewTests : TestsBase
             sut.Type.Should().Be( SqlObjectType.View );
             sut.Name.Should().Be( "V" );
             sut.FullName.Should().Be( "foo_V" );
+            sut.Info.Should().Be( viewBuilder.Info );
+            sut.RecordSet.View.Should().BeSameAs( sut );
+            sut.RecordSet.Info.Should().Be( sut.Info );
+            sut.RecordSet.Alias.Should().BeNull();
+            sut.RecordSet.Identifier.Should().Be( sut.Info.Identifier );
+            sut.RecordSet.IsOptional.Should().BeFalse();
             sut.ToString().Should().Be( "[View] foo_V" );
 
             sut.DataFields.Count.Should().Be( 3 );

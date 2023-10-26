@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using LfrlAnvil.Functional;
+using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
@@ -101,6 +102,7 @@ public class SqliteViewBuilderTests : TestsBase
         var (oldName, newName) = ("foo", "bar");
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "s" );
         var sut = schema.Objects.CreateView( oldName, SqlNode.RawQuery( "SELECT * FROM foo" ) );
+        var recordSet = sut.RecordSet;
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -112,6 +114,8 @@ public class SqliteViewBuilderTests : TestsBase
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( newName );
             sut.FullName.Should().Be( "s_bar" );
+            sut.Info.Should().Be( SqlRecordSetInfo.Create( "s", "bar" ) );
+            recordSet.Info.Should().Be( sut.Info );
             schema.Objects.Contains( newName ).Should().BeTrue();
             schema.Objects.Contains( oldName ).Should().BeFalse();
             statements.Should().HaveCount( 1 );

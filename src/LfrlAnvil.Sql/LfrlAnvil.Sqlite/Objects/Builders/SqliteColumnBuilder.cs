@@ -5,6 +5,7 @@ using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
+using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
@@ -18,6 +19,7 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
     private Dictionary<ulong, SqliteIndexBuilder>? _indexFilters;
     private Dictionary<ulong, SqliteViewBuilder>? _referencingViews;
     private string? _fullName;
+    private SqlColumnBuilderNode? _node;
 
     internal SqliteColumnBuilder(SqliteTableBuilder table, string name, SqliteColumnTypeDefinition typeDefinition)
         : base( table.Database.GetNextId(), name, SqlObjectType.Column )
@@ -31,6 +33,7 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
         _indexes = null;
         _indexFilters = null;
         _referencingViews = null;
+        _node = null;
     }
 
     public SqliteTableBuilder Table { get; }
@@ -39,6 +42,7 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
     public SqlExpressionNode? DefaultValue { get; private set; }
     public override SqliteDatabaseBuilder Database => Table.Database;
     public override string FullName => _fullName ??= SqliteHelpers.GetFullFieldName( Table.FullName, Name );
+    public SqlColumnBuilderNode Node => _node ??= Table.RecordSet[Name];
     public IReadOnlyCollection<SqliteIndexBuilder> Indexes => (_indexes?.Values).EmptyIfNull();
     public IReadOnlyCollection<SqliteIndexBuilder> IndexFilters => (_indexFilters?.Values).EmptyIfNull();
     public IReadOnlyCollection<SqliteViewBuilder> ReferencingViews => (_referencingViews?.Values).EmptyIfNull();
