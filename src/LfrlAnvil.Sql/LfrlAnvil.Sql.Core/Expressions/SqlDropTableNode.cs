@@ -1,6 +1,6 @@
 ﻿namespace LfrlAnvil.Sql.Expressions;
 
-public sealed class SqlDropTableNode : SqlNodeBase
+public sealed class SqlDropTableNode : SqlNodeBase, ISqlStatementNode
 {
     internal SqlDropTableNode(SqlRecordSetInfo table, bool ifExists)
         : base( SqlNodeType.DropTable )
@@ -11,4 +11,6 @@ public sealed class SqlDropTableNode : SqlNodeBase
 
     public SqlRecordSetInfo Table { get; }
     public bool IfExists { get; }
+    SqlNodeBase ISqlStatementNode.Node => this;
+    int ISqlStatementNode.QueryCount => 0;
 }

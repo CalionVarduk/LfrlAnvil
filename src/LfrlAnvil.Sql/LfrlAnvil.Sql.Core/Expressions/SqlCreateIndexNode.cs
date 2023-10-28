@@ -5,7 +5,7 @@ using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Expressions;
 
-public sealed class SqlCreateIndexNode : SqlNodeBase
+public sealed class SqlCreateIndexNode : SqlNodeBase, ISqlStatementNode
 {
     internal SqlCreateIndexNode(
         SqlSchemaObjectName name,
@@ -30,4 +30,6 @@ public sealed class SqlCreateIndexNode : SqlNodeBase
     public SqlRecordSetNode Table { get; }
     public ReadOnlyMemory<SqlOrderByNode> Columns { get; }
     public SqlConditionNode? Filter { get; }
+    SqlNodeBase ISqlStatementNode.Node => this;
+    int ISqlStatementNode.QueryCount => 0;
 }

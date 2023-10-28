@@ -2,7 +2,7 @@
 
 namespace LfrlAnvil.Sql.Expressions.Persistence;
 
-public sealed class SqlDeleteFromNode : SqlNodeBase
+public sealed class SqlDeleteFromNode : SqlNodeBase, ISqlStatementNode
 {
     internal SqlDeleteFromNode(SqlDataSourceNode dataSource)
         : base( SqlNodeType.DeleteFrom )
@@ -11,4 +11,6 @@ public sealed class SqlDeleteFromNode : SqlNodeBase
     }
 
     public SqlDataSourceNode DataSource { get; }
+    SqlNodeBase ISqlStatementNode.Node => this;
+    int ISqlStatementNode.QueryCount => 0;
 }

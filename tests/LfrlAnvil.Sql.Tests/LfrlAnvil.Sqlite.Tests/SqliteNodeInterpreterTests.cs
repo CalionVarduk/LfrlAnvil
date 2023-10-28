@@ -2017,6 +2017,29 @@ LIMIT 50 OFFSET 75" );
     }
 
     [Fact]
+    public void Visit_ShouldInterpretRawStatement()
+    {
+        _sut.Visit(
+            SqlNode.RawStatement(
+                @"INSERT INTO foo (a, b)
+VALUES (@a, 1)",
+                SqlNode.Parameter<int>( "a" ) ) );
+
+        using ( new AssertionScope() )
+        {
+            _sut.Context.Sql.ToString()
+                .Should()
+                .Be(
+                    @"INSERT INTO foo (a, b)
+VALUES (@a, 1)" );
+
+            _sut.Context.Parameters.Should().HaveCount( 1 );
+            _sut.Context.Parameters.Should()
+                .BeEquivalentTo( KeyValuePair.Create( "a", (SqlExpressionType?)SqlExpressionType.Create<int>() ) );
+        }
+    }
+
+    [Fact]
     public void Visit_ShouldInterpretInsertIntoWithValues()
     {
         _sut.Visit(

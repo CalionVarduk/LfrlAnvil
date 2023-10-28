@@ -591,6 +591,12 @@ public static partial class SqlNode
     }
 
     [Pure]
+    public static SqlRawStatementNode RawStatement(string sql, params SqlParameterNode[] parameters)
+    {
+        return new SqlRawStatementNode( sql, parameters );
+    }
+
+    [Pure]
     public static SqlDeleteFromNode DeleteFrom(SqlDataSourceNode dataSource)
     {
         return new SqlDeleteFromNode( dataSource );
@@ -744,7 +750,7 @@ public static partial class SqlNode
     }
 
     [Pure]
-    public static SqlStatementBatchNode Batch(params SqlNodeBase[] statements)
+    public static SqlStatementBatchNode Batch(params ISqlStatementNode[] statements)
     {
         return new SqlStatementBatchNode( statements );
     }

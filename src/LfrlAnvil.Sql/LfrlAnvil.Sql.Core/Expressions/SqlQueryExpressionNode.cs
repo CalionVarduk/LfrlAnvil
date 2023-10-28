@@ -8,12 +8,14 @@ using LfrlAnvil.Sql.Expressions.Objects;
 
 namespace LfrlAnvil.Sql.Expressions;
 
-public abstract class SqlQueryExpressionNode : SqlExpressionNode
+public abstract class SqlQueryExpressionNode : SqlExpressionNode, ISqlStatementNode
 {
     internal SqlQueryExpressionNode(SqlNodeType nodeType)
         : base( nodeType ) { }
 
     public abstract ReadOnlyMemory<SqlSelectNode> Selection { get; }
+    SqlNodeBase ISqlStatementNode.Node => this;
+    int ISqlStatementNode.QueryCount => 1;
 
     public virtual void ReduceKnownDataFieldExpressions(Action<KeyValuePair<string, KnownDataFieldInfo>> callback)
     {

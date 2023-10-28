@@ -1,6 +1,6 @@
 ﻿namespace LfrlAnvil.Sql.Expressions;
 
-public sealed class SqlRenameColumnNode : SqlNodeBase
+public sealed class SqlRenameColumnNode : SqlNodeBase, ISqlStatementNode
 {
     internal SqlRenameColumnNode(SqlRecordSetInfo table, string oldName, string newName)
         : base( SqlNodeType.RenameColumn )
@@ -13,4 +13,6 @@ public sealed class SqlRenameColumnNode : SqlNodeBase
     public SqlRecordSetInfo Table { get; }
     public string OldName { get; }
     public string NewName { get; }
+    SqlNodeBase ISqlStatementNode.Node => this;
+    int ISqlStatementNode.QueryCount => 0;
 }

@@ -69,6 +69,11 @@ internal abstract class SqliteSourceNodeValidator : SqlNodeVisitor
         AddForbiddenNode( node );
     }
 
+    public override void VisitRawStatement(SqlRawStatementNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
     public override void VisitInsertInto(SqlInsertIntoNode node)
     {
         AddForbiddenNode( node );

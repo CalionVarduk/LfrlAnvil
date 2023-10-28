@@ -78,6 +78,7 @@ public enum SqlNodeType : byte
     CommonTableExpression,
     TypeCast,
     Values,
+    RawStatement,
     InsertInto,
     Update,
     ValueAssignment,

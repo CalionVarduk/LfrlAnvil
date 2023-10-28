@@ -3,7 +3,7 @@ using LfrlAnvil.Sql.Expressions.Objects;
 
 namespace LfrlAnvil.Sql.Expressions;
 
-public sealed class SqlCreateTableNode : SqlNodeBase
+public sealed class SqlCreateTableNode : SqlNodeBase, ISqlStatementNode
 {
     internal SqlCreateTableNode(
         SqlRecordSetInfo info,
@@ -38,4 +38,6 @@ public sealed class SqlCreateTableNode : SqlNodeBase
     public ReadOnlyMemory<SqlForeignKeyDefinitionNode> ForeignKeys { get; }
     public ReadOnlyMemory<SqlCheckDefinitionNode> Checks { get; }
     public SqlNewTableNode RecordSet { get; }
+    SqlNodeBase ISqlStatementNode.Node => this;
+    int ISqlStatementNode.QueryCount => 0;
 }

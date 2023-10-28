@@ -2,7 +2,7 @@
 
 namespace LfrlAnvil.Sql.Expressions.Persistence;
 
-public sealed class SqlTruncateNode : SqlNodeBase
+public sealed class SqlTruncateNode : SqlNodeBase, ISqlStatementNode
 {
     internal SqlTruncateNode(SqlRecordSetNode table)
         : base( SqlNodeType.Truncate )
@@ -11,4 +11,6 @@ public sealed class SqlTruncateNode : SqlNodeBase
     }
 
     public SqlRecordSetNode Table { get; }
+    SqlNodeBase ISqlStatementNode.Node => this;
+    int ISqlStatementNode.QueryCount => 0;
 }

@@ -194,6 +194,8 @@ public partial class BaseExpressionsTests : TestsBase
             sut.Traits.ToArray().Should().BeEmpty();
             sut.DataSource.Should().BeSameAs( dataSource );
             sut.Selection.ToArray().Should().BeSequentiallyEqualTo( selection );
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 1 );
             text.Should()
                 .Be(
                     @"FROM [foo]
@@ -216,6 +218,8 @@ SELECT
             sut.Traits.ToArray().Should().BeEmpty();
             sut.DataSource.Should().BeSameAs( dataSource );
             sut.Selection.ToArray().Should().BeEmpty();
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 1 );
             text.Should()
                 .Be(
                     @"FROM [foo]
@@ -237,6 +241,8 @@ SELECT" );
             sut.Traits.ToArray().Should().BeEmpty();
             sut.DataSource.Should().BeSameAs( dataSource );
             sut.Selection.ToArray().Should().BeSequentiallyEqualTo( selection );
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 1 );
             text.Should()
                 .Be(
                     @"FROM [foo]
@@ -262,6 +268,8 @@ WHERE id = @a AND value > @b";
             sut.Sql.Should().Be( sql );
             sut.Parameters.ToArray().Should().BeSequentiallyEqualTo( parameters );
             sut.Selection.ToArray().Should().BeEmpty();
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 1 );
             text.Should().Be( sql );
         }
     }
@@ -288,6 +296,8 @@ WHERE value < 10" );
             sut.NodeType.Should().Be( SqlNodeType.CompoundQuery );
             sut.FirstQuery.Should().BeSameAs( query1 );
             sut.FollowingQueries.ToArray().Should().BeSequentiallyEqualTo( union );
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 1 );
             text.Should()
                 .Be(
                     @"(
@@ -619,6 +629,29 @@ END" );
     }
 
     [Fact]
+    public void RawStatement_ShouldCreateRawStatementNode()
+    {
+        var sql = @"INSERT INTO foo (x, y)
+VALUES
+(@a, 10),
+(@b, 20)";
+
+        var parameters = new[] { SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) };
+        var sut = SqlNode.RawStatement( sql, parameters );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.RawStatement );
+            sut.Sql.Should().Be( sql );
+            sut.Parameters.ToArray().Should().BeSequentiallyEqualTo( parameters );
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
+            text.Should().Be( sql );
+        }
+    }
+
+    [Fact]
     public void Column_ShouldCreateColumnDefinitionNode()
     {
         var sut = SqlNode.Column<string>( "foo" );
@@ -829,6 +862,8 @@ END" );
             sut.PrimaryKey.Should().BeSameAs( primaryKey );
             sut.ForeignKeys.ToArray().Should().BeSequentiallyEqualTo( foreignKeys );
             sut.Checks.ToArray().Should().BeSequentiallyEqualTo( checks );
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
             text.Should()
                 .Be(
                     @"CREATE TABLE [foo].[bar] (
@@ -865,6 +900,8 @@ END" );
             sut.PrimaryKey.Should().BeNull();
             sut.ForeignKeys.ToArray().Should().BeEmpty();
             sut.Checks.ToArray().Should().BeEmpty();
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
             text.Should()
                 .Be(
                     $@"{expectedText} (
@@ -890,6 +927,8 @@ END" );
             sut.Info.Should().Be( info );
             sut.IfNotExists.Should().Be( ifNotExists );
             sut.Source.Should().BeSameAs( source );
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
             text.Should()
                 .Be(
                     $@"{expectedHeader}
@@ -921,6 +960,8 @@ SELECT * FROM qux" );
             sut.IsUnique.Should().BeFalse();
             sut.Table.Should().BeSameAs( table );
             sut.Columns.ToArray().Should().BeSequentiallyEqualTo( columns );
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
             text.Should()
                 .Be(
                     "CREATE INDEX [foo].[bar] ON [qux] (([qux].[x] : ?) ASC, ([qux].[y] : ?) DESC) WHERE (([qux].[x] : ?) > ([qux].[y] : ?))" );
@@ -948,6 +989,8 @@ SELECT * FROM qux" );
             sut.IsUnique.Should().Be( isUnique );
             sut.Table.Should().BeSameAs( table );
             sut.Columns.ToArray().Should().BeEmpty();
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
             text.Should().Be( expectedText );
         }
     }
@@ -967,6 +1010,8 @@ SELECT * FROM qux" );
             sut.NodeType.Should().Be( SqlNodeType.RenameTable );
             sut.Table.Should().Be( table );
             sut.NewName.Should().Be( newName );
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
             text.Should().Be( expectedText );
         }
     }
@@ -986,6 +1031,8 @@ SELECT * FROM qux" );
             sut.Table.Should().Be( table );
             sut.OldName.Should().Be( "qux" );
             sut.NewName.Should().Be( "lorem" );
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
             text.Should().Be( expectedText );
         }
     }
@@ -1005,6 +1052,8 @@ SELECT * FROM qux" );
             sut.NodeType.Should().Be( SqlNodeType.AddColumn );
             sut.Table.Should().Be( table );
             sut.Definition.Should().BeSameAs( definition );
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
             text.Should().Be( expectedText );
         }
     }
@@ -1023,6 +1072,8 @@ SELECT * FROM qux" );
             sut.NodeType.Should().Be( SqlNodeType.DropColumn );
             sut.Table.Should().Be( table );
             sut.Name.Should().Be( "qux" );
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
             text.Should().Be( expectedText );
         }
     }
@@ -1044,6 +1095,8 @@ SELECT * FROM qux" );
             sut.NodeType.Should().Be( SqlNodeType.DropTable );
             sut.Table.Should().Be( table );
             sut.IfExists.Should().Be( ifExists );
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
             text.Should().Be( expectedText );
         }
     }
@@ -1064,6 +1117,8 @@ SELECT * FROM qux" );
             sut.NodeType.Should().Be( SqlNodeType.DropView );
             sut.View.Should().Be( view );
             sut.IfExists.Should().Be( ifExists );
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
             text.Should().Be( expectedText );
         }
     }
@@ -1088,6 +1143,8 @@ SELECT * FROM qux" );
             sut.NodeType.Should().Be( SqlNodeType.DropIndex );
             sut.Name.Should().Be( name );
             sut.IfExists.Should().Be( ifExists );
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
             text.Should().Be( expectedText );
         }
     }
@@ -1095,11 +1152,11 @@ SELECT * FROM qux" );
     [Fact]
     public void Batch_ShouldCreateStatementBatchNode()
     {
-        var statements = new SqlNodeBase[]
+        var statements = new ISqlStatementNode[]
         {
             SqlNode.RawQuery( "SELECT a, b FROM foo" ),
             SqlNode.RawQuery( "SELECT b, c FROM bar" ),
-            SqlNode.RawQuery( "SELECT d, e FROM qux" )
+            SqlNode.RawStatement( "INSERT INTO qux (x, y) VALUES (1, 'foo')" )
         };
 
         var sut = SqlNode.Batch( statements );
@@ -1108,6 +1165,8 @@ SELECT * FROM qux" );
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.StatementBatch );
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            sut.QueryCount.Should().Be( 2 );
             sut.Statements.ToArray().Should().BeSequentiallyEqualTo( statements );
             text.Should()
                 .Be(
@@ -1117,7 +1176,7 @@ SELECT * FROM qux" );
 
   SELECT b, c FROM bar;
 
-  SELECT d, e FROM qux;
+  INSERT INTO qux (x, y) VALUES (1, 'foo');
 )" );
         }
     }
@@ -1132,6 +1191,8 @@ SELECT * FROM qux" );
         {
             sut.NodeType.Should().Be( SqlNodeType.StatementBatch );
             sut.Statements.ToArray().Should().BeEmpty();
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            sut.QueryCount.Should().Be( 0 );
             text.Should()
                 .Be(
                     @"BATCH
@@ -1154,6 +1215,8 @@ SELECT * FROM qux" );
         {
             sut.NodeType.Should().Be( SqlNodeType.BeginTransaction );
             sut.IsolationLevel.Should().Be( isolationLevel );
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
             text.Should().Be( $"BEGIN {isolationLevel.ToString().ToUpperInvariant()} TRANSACTION" );
         }
     }
@@ -1167,6 +1230,8 @@ SELECT * FROM qux" );
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.CommitTransaction );
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
             text.Should().Be( "COMMIT" );
         }
     }
@@ -1180,6 +1245,8 @@ SELECT * FROM qux" );
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.RollbackTransaction );
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
             text.Should().Be( "ROLLBACK" );
         }
     }

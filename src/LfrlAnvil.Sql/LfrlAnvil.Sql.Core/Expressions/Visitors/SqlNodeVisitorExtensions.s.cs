@@ -315,6 +315,10 @@ public static class SqlNodeVisitorExtensions
                 visitor.VisitValues( ReinterpretCast.To<SqlValuesNode>( node ) );
                 break;
 
+            case SqlNodeType.RawStatement:
+                visitor.VisitRawStatement( ReinterpretCast.To<SqlRawStatementNode>( node ) );
+                break;
+
             case SqlNodeType.InsertInto:
                 visitor.VisitInsertInto( ReinterpretCast.To<SqlInsertIntoNode>( node ) );
                 break;

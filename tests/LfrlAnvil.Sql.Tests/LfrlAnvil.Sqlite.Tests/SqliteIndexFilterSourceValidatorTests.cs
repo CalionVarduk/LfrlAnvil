@@ -982,6 +982,14 @@ public class SqliteIndexFilterSourceValidatorTests : TestsBase
     }
 
     [Fact]
+    public void VisitRawStatement_ShouldRegisterError()
+    {
+        var node = SqlNode.RawStatement( "INSERT INTO foo (a, b) VALUES (1, 2)" );
+        _sut.VisitRawStatement( node );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
     public void VisitInsertInto_ShouldRegisterError()
     {
         var node = SqlNode.InsertInto(

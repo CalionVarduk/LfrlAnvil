@@ -116,6 +116,7 @@ public interface ISqlNodeVisitor
     void VisitCommonTableExpression(SqlCommonTableExpressionNode node);
     void VisitTypeCast(SqlTypeCastExpressionNode node);
     void VisitValues(SqlValuesNode node);
+    void VisitRawStatement(SqlRawStatementNode node);
     void VisitInsertInto(SqlInsertIntoNode node);
     void VisitUpdate(SqlUpdateNode node);
     void VisitValueAssignment(SqlValueAssignmentNode node);

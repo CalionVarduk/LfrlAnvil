@@ -575,6 +575,12 @@ public abstract class SqlNodeVisitor : ISqlNodeVisitor
         }
     }
 
+    public virtual void VisitRawStatement(SqlRawStatementNode node)
+    {
+        foreach ( var parameter in node.Parameters )
+            VisitParameter( parameter );
+    }
+
     public virtual void VisitInsertInto(SqlInsertIntoNode node)
     {
         this.Visit( node.RecordSet );
@@ -681,7 +687,7 @@ public abstract class SqlNodeVisitor : ISqlNodeVisitor
     public virtual void VisitStatementBatch(SqlStatementBatchNode node)
     {
         foreach ( var statement in node.Statements )
-            this.Visit( statement );
+            this.Visit( statement.Node );
     }
 
     public virtual void VisitBeginTransaction(SqlBeginTransactionNode node) { }

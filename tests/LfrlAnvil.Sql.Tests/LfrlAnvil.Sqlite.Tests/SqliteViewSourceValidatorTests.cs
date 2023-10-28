@@ -1624,6 +1624,19 @@ public class SqliteViewSourceValidatorTests : TestsBase
     }
 
     [Fact]
+    public void VisitRawStatement_ShouldRegisterError()
+    {
+        var node = SqlNode.RawStatement( "INSERT INTO foo (a, b) VALUES (1, 2)" );
+        _sut.VisitRawStatement( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 1 );
+            _sut.ReferencedObjects.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
     public void VisitInsertInto_ShouldRegisterError()
     {
         var node = SqlNode.InsertInto(

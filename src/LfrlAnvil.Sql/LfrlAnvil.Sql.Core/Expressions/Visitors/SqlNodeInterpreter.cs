@@ -739,6 +739,14 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         }
     }
 
+    public virtual void VisitRawStatement(SqlRawStatementNode node)
+    {
+        foreach ( var parameter in node.Parameters )
+            Context.AddParameter( parameter.Name, parameter.Type );
+
+        AppendMultilineSql( node.Sql );
+    }
+
     public abstract void VisitInsertInto(SqlInsertIntoNode node);
     public abstract void VisitUpdate(SqlUpdateNode node);
 
@@ -778,7 +786,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
         foreach ( var statement in node.Statements )
         {
-            this.Visit( statement );
+            this.Visit( statement.Node );
             Context.Sql.AppendSemicolon().AppendLine();
             Context.AppendIndent();
         }

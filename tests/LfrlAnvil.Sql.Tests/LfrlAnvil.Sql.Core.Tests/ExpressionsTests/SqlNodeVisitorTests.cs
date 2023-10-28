@@ -1191,6 +1191,17 @@ public class SqlNodeVisitorTests : TestsBase
     }
 
     [Fact]
+    public void VisitRawStatement_ShouldVisitParameters()
+    {
+        var sut = new VisitorMock();
+        var parameters = new[] { SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) };
+
+        sut.VisitRawStatement( SqlNode.RawStatement( "INSERT INTO foo (a, b) VALUES (@a, @b)", parameters ) );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( parameters[0], parameters[1] );
+    }
+
+    [Fact]
     public void VisitInsertInto_ShouldVisitRecordSetAndDataFieldsAndSource()
     {
         var sut = new VisitorMock();
@@ -1433,11 +1444,16 @@ public class SqlNodeVisitorTests : TestsBase
     public void VisitStatementBatch_ShouldVisitStatements()
     {
         var sut = new VisitorMock();
-        var statements = new[] { SqlNode.Literal( 10 ), SqlNode.Literal( 20 ) };
+        var parameters = new[] { SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) };
+        var statements = new[]
+        {
+            SqlNode.RawQuery( "SELECT * FROM foo WHERE a > @a", parameters[0] ),
+            SqlNode.RawQuery( "SELECT * FROM bar WHERE b < @b", parameters[1] )
+        };
 
         sut.VisitStatementBatch( SqlNode.Batch( statements[0], statements[1] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( statements[0], statements[1] );
+        sut.Nodes.Should().BeSequentiallyEqualTo( parameters[0], parameters[1] );
     }
 
     [Fact]
