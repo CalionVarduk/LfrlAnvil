@@ -6,6 +6,7 @@ using LfrlAnvil.Internal;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
+using Microsoft.Data.Sqlite;
 
 namespace LfrlAnvil.Sqlite;
 
@@ -32,6 +33,13 @@ public abstract class SqliteColumnTypeDefinition : ISqlColumnTypeDefinition
     public abstract string? TryToDbLiteral(object value);
 
     public abstract bool TrySetParameter(IDbDataParameter parameter, object value);
+    public abstract void SetNullParameter(IDbDataParameter parameter);
+
+    [Pure]
+    public virtual IDbDataParameter CreateParameter(string name)
+    {
+        return new SqliteParameter( name, DbType.Value );
+    }
 }
 
 public abstract class SqliteColumnTypeDefinition<T> : SqliteColumnTypeDefinition, ISqlColumnTypeDefinition<T>
@@ -100,6 +108,11 @@ public abstract class SqliteColumnTypeDefinition<T, TBase> : SqliteColumnTypeDef
     {
         var baseValue = MapToBaseType( value );
         Base.SetParameter( parameter, baseValue );
+    }
+
+    public sealed override void SetNullParameter(IDbDataParameter parameter)
+    {
+        Base.SetNullParameter( parameter );
     }
 
     [Pure]

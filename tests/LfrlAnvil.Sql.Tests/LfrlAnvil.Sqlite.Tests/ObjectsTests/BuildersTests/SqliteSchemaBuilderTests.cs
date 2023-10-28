@@ -328,7 +328,9 @@ INNER JOIN ""bar_V1"" ON TRUE;" ) );
                       CONSTRAINT ""foo_FK_T3_C5_REF_T2"" FOREIGN KEY (""C5"") REFERENCES ""foo_T2"" (""C3"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T3__{GUID}__"" (""C5"", ""C6"")
-                    SELECT ""C5"", ""C6""
+                    SELECT
+                      ""foo_T3"".""C5"",
+                      ""foo_T3"".""C6""
                     FROM ""foo_T3"";",
                     "DROP TABLE \"foo_T3\";",
                     "ALTER TABLE \"__foo_T3__{GUID}__\" RENAME TO \"foo_T3\";",

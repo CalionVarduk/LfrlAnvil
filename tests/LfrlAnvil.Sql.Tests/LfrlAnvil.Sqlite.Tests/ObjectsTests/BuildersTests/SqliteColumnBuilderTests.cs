@@ -85,11 +85,13 @@ public class SqliteColumnBuilderTests : TestsBase
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
                       ""C1"" ANY NOT NULL,
-                      ""C2"" ANY NOT NULL DEFAULT X'',
+                      ""C2"" ANY NOT NULL DEFAULT (X''),
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
-                    SELECT ""C1"", X''
+                    SELECT
+                      ""foo_T"".""C1"",
+                      X'' AS ""C2""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
@@ -125,7 +127,9 @@ public class SqliteColumnBuilderTests : TestsBase
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
-                    SELECT ""C1"", NULL
+                    SELECT
+                      ""foo_T"".""C1"",
+                      NULL AS ""C2""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
@@ -156,11 +160,13 @@ public class SqliteColumnBuilderTests : TestsBase
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
                       ""C1"" ANY NOT NULL,
-                      ""C2"" ANY NOT NULL DEFAULT X'010203',
+                      ""C2"" ANY NOT NULL DEFAULT (X'010203'),
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
-                    SELECT ""C1"", X'010203'
+                    SELECT
+                      ""foo_T"".""C1"",
+                      X'010203' AS ""C2""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
@@ -199,7 +205,9 @@ public class SqliteColumnBuilderTests : TestsBase
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
-                    SELECT ""C1"", CAST(""C2"" AS TEXT)
+                    SELECT
+                      ""foo_T"".""C1"",
+                      CAST(""foo_T"".""C2"" AS TEXT) AS ""C2""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
@@ -448,7 +456,9 @@ public class SqliteColumnBuilderTests : TestsBase
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
-                    SELECT ""C1"", CAST(""C2"" AS INTEGER)
+                    SELECT
+                      ""foo_T"".""C1"",
+                      CAST(""foo_T"".""C2"" AS INTEGER) AS ""C2""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
@@ -630,7 +640,9 @@ public class SqliteColumnBuilderTests : TestsBase
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
-                    SELECT ""C1"", ""C2""
+                    SELECT
+                      ""foo_T"".""C1"",
+                      ""foo_T"".""C2"" AS ""C2""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
@@ -665,7 +677,9 @@ public class SqliteColumnBuilderTests : TestsBase
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
-                    SELECT ""C1"", COALESCE(""C2"", X'')
+                    SELECT
+                      ""foo_T"".""C1"",
+                      COALESCE(""foo_T"".""C2"", X'') AS ""C2""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
@@ -696,11 +710,13 @@ public class SqliteColumnBuilderTests : TestsBase
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
                       ""C1"" ANY NOT NULL,
-                      ""C2"" ANY NOT NULL DEFAULT X'010203',
+                      ""C2"" ANY NOT NULL DEFAULT (X'010203'),
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
-                    SELECT ""C1"", COALESCE(""C2"", X'010203')
+                    SELECT
+                      ""foo_T"".""C1"",
+                      COALESCE(""foo_T"".""C2"", X'010203') AS ""C2""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
@@ -735,7 +751,9 @@ public class SqliteColumnBuilderTests : TestsBase
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
-                    SELECT ""C1"", COALESCE(CAST(""C2"" AS INTEGER), 0)
+                    SELECT
+                      ""foo_T"".""C1"",
+                      COALESCE(CAST(""foo_T"".""C2"" AS INTEGER), 0) AS ""C2""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
@@ -863,11 +881,13 @@ public class SqliteColumnBuilderTests : TestsBase
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
                       ""C1"" ANY NOT NULL,
-                      ""C2"" ANY NOT NULL DEFAULT 42,
+                      ""C2"" ANY NOT NULL DEFAULT (42),
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
-                    SELECT ""C1"", ""C2""
+                    SELECT
+                      ""foo_T"".""C1"",
+                      ""foo_T"".""C2"" AS ""C2""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
@@ -902,7 +922,9 @@ public class SqliteColumnBuilderTests : TestsBase
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
-                    SELECT ""C1"", ""C2""
+                    SELECT
+                      ""foo_T"".""C1"",
+                      ""foo_T"".""C2"" AS ""C2""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
@@ -939,7 +961,9 @@ public class SqliteColumnBuilderTests : TestsBase
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
-                    SELECT ""C1"", ""C2""
+                    SELECT
+                      ""foo_T"".""C1"",
+                      ""foo_T"".""C2"" AS ""C2""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
@@ -972,11 +996,13 @@ public class SqliteColumnBuilderTests : TestsBase
                     "DROP INDEX \"foo_IX_T_C2A\";",
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
                       ""C1"" ANY NOT NULL,
-                      ""C2"" ANY NOT NULL DEFAULT 123,
+                      ""C2"" ANY NOT NULL DEFAULT (123),
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
-                    SELECT ""C1"", ""C2""
+                    SELECT
+                      ""foo_T"".""C1"",
+                      ""foo_T"".""C2"" AS ""C2""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";",
@@ -1009,11 +1035,13 @@ public class SqliteColumnBuilderTests : TestsBase
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
                       ""C1"" ANY NOT NULL,
-                      ""C2"" ANY NOT NULL DEFAULT 123,
+                      ""C2"" ANY NOT NULL DEFAULT (123),
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
-                    SELECT ""C1"", ""C2""
+                    SELECT
+                      ""foo_T"".""C1"",
+                      ""foo_T"".""C2"" AS ""C2""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );

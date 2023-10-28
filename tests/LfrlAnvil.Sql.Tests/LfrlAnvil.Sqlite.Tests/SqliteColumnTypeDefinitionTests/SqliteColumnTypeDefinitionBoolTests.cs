@@ -55,4 +55,19 @@ public class SqliteColumnTypeDefinitionBoolTests : TestsBase
 
         result.Should().BeFalse();
     }
+
+    [Fact]
+    public void SetNullParameter_ShouldUpdateParameterCorrectly()
+    {
+        var parameter = new SqliteParameter();
+        var sut = _provider.GetByType<bool>();
+
+        sut.SetNullParameter( parameter );
+
+        using ( new AssertionScope() )
+        {
+            parameter.DbType.Should().Be( DbType.Int64 );
+            parameter.Value.Should().BeSameAs( DBNull.Value );
+        }
+    }
 }

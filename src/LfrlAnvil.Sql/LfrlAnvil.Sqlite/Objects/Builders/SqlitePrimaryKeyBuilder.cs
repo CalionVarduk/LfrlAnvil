@@ -57,10 +57,10 @@ public sealed class SqlitePrimaryKeyBuilder : SqliteObjectBuilder, ISqlPrimaryKe
         SqliteHelpers.AssertName( name );
         Index.Table.Schema.Objects.ChangeName( this, name );
 
-        var oldName = FullName;
+        var oldName = Name;
         Name = name;
         UpdateFullName();
-        Database.ChangeTracker.FullNameUpdated( Index.Table, this, oldName );
+        Database.ChangeTracker.NameUpdated( Index.Table, this, oldName );
     }
 
     ISqlPrimaryKeyBuilder ISqlPrimaryKeyBuilder.SetName(string name)

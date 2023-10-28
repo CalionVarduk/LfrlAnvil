@@ -21,4 +21,10 @@ internal sealed class SqliteColumnTypeDefinitionTimeOnly : SqliteColumnTypeDefin
         parameter.DbType = System.Data.DbType.String;
         parameter.Value = value.ToString( "HH:mm:ss.fffffff", CultureInfo.InvariantCulture );
     }
+
+    public override void SetNullParameter(IDbDataParameter parameter)
+    {
+        parameter.DbType = System.Data.DbType.String;
+        parameter.Value = DBNull.Value;
+    }
 }

@@ -20,4 +20,10 @@ internal sealed class SqliteColumnTypeDefinitionGuid : SqliteColumnTypeDefinitio
         parameter.DbType = System.Data.DbType.Binary;
         parameter.Value = value.ToByteArray();
     }
+
+    public override void SetNullParameter(IDbDataParameter parameter)
+    {
+        parameter.DbType = System.Data.DbType.Binary;
+        parameter.Value = DBNull.Value;
+    }
 }

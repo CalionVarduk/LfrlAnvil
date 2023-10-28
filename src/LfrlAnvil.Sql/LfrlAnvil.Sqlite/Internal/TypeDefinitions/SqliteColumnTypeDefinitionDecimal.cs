@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System;
+using System.Data;
 using System.Diagnostics.Contracts;
 using System.Globalization;
 
@@ -21,5 +22,11 @@ internal sealed class SqliteColumnTypeDefinitionDecimal : SqliteColumnTypeDefini
     {
         parameter.DbType = System.Data.DbType.String;
         parameter.Value = value.ToString( "0.0###########################", CultureInfo.InvariantCulture );
+    }
+
+    public override void SetNullParameter(IDbDataParameter parameter)
+    {
+        parameter.DbType = System.Data.DbType.String;
+        parameter.Value = DBNull.Value;
     }
 }

@@ -54,7 +54,8 @@ public class SqliteForeignKeyBuilderTests : TestsBase
                       CONSTRAINT ""foo_FK_T2_C2_REF_T1"" FOREIGN KEY (""C2"") REFERENCES ""foo_T1"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T2__{GUID}__"" (""C2"")
-                    SELECT ""C2""
+                    SELECT
+                      ""foo_T2"".""C2""
                     FROM ""foo_T2"";",
                     "DROP TABLE \"foo_T2\";",
                     "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" );
@@ -105,7 +106,9 @@ public class SqliteForeignKeyBuilderTests : TestsBase
                       CONSTRAINT ""foo_FK_T_C2_REF_T"" FOREIGN KEY (""C2"") REFERENCES ""foo_T"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C2"", ""C1"")
-                    SELECT ""C2"", ""C1""
+                    SELECT
+                      ""foo_T"".""C2"",
+                      ""foo_T"".""C1""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";",
@@ -193,7 +196,9 @@ public class SqliteForeignKeyBuilderTests : TestsBase
                       CONSTRAINT ""foo_bar"" FOREIGN KEY (""C2"") REFERENCES ""foo_T"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C2"", ""C1"")
-                    SELECT ""C2"", ""C1""
+                    SELECT
+                      ""foo_T"".""C2"",
+                      ""foo_T"".""C1""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";",
@@ -334,7 +339,9 @@ public class SqliteForeignKeyBuilderTests : TestsBase
                       CONSTRAINT ""foo_FK_T_C2_REF_T"" FOREIGN KEY (""C2"") REFERENCES ""foo_T"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C2"", ""C1"")
-                    SELECT ""C2"", ""C1""
+                    SELECT
+                      ""foo_T"".""C2"",
+                      ""foo_T"".""C1""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";",
@@ -407,7 +414,9 @@ public class SqliteForeignKeyBuilderTests : TestsBase
                       CONSTRAINT ""foo_FK_T_C2_REF_T"" FOREIGN KEY (""C2"") REFERENCES ""foo_T"" (""C1"") ON DELETE CASCADE ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C2"", ""C1"")
-                    SELECT ""C2"", ""C1""
+                    SELECT
+                      ""foo_T"".""C2"",
+                      ""foo_T"".""C1""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";",
@@ -507,7 +516,9 @@ public class SqliteForeignKeyBuilderTests : TestsBase
                       CONSTRAINT ""foo_FK_T_C2_REF_T"" FOREIGN KEY (""C2"") REFERENCES ""foo_T"" (""C1"") ON DELETE RESTRICT ON UPDATE CASCADE
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C2"", ""C1"")
-                    SELECT ""C2"", ""C1""
+                    SELECT
+                      ""foo_T"".""C2"",
+                      ""foo_T"".""C1""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";",
@@ -609,7 +620,9 @@ public class SqliteForeignKeyBuilderTests : TestsBase
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C2"", ""C1"")
-                    SELECT ""C2"", ""C1""
+                    SELECT
+                      ""foo_T"".""C2"",
+                      ""foo_T"".""C1""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";",

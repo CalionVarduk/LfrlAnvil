@@ -253,4 +253,19 @@ public class SqliteColumnTypeDefinitionObjectTests : TestsBase
 
         action.Should().ThrowExactly<ArgumentException>();
     }
+
+    [Fact]
+    public void SetNullParameter_ShouldUpdateParameterCorrectly()
+    {
+        var parameter = new SqliteParameter();
+        var sut = _provider.GetByType<object>();
+
+        sut.SetNullParameter( parameter );
+
+        using ( new AssertionScope() )
+        {
+            parameter.DbType.Should().Be( DbType.Object );
+            parameter.Value.Should().BeSameAs( DBNull.Value );
+        }
+    }
 }

@@ -57,4 +57,19 @@ public class SqliteColumnTypeDefinitionCharTests : TestsBase
 
         result.Should().BeFalse();
     }
+
+    [Fact]
+    public void SetNullParameter_ShouldUpdateParameterCorrectly()
+    {
+        var parameter = new SqliteParameter();
+        var sut = _provider.GetByType<char>();
+
+        sut.SetNullParameter( parameter );
+
+        using ( new AssertionScope() )
+        {
+            parameter.DbType.Should().Be( DbType.String );
+            parameter.Value.Should().BeSameAs( DBNull.Value );
+        }
+    }
 }

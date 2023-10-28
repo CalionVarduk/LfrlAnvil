@@ -194,7 +194,9 @@ public partial class SqliteTableBuilderTests : TestsBase
                       CONSTRAINT ""s_FK_foo_C2_REF_foo"" FOREIGN KEY (""C2"") REFERENCES ""s_bar"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__s_bar__{GUID}__"" (""C1"", ""C2"")
-                    SELECT ""C1"", ""C2""
+                    SELECT
+                      ""s_bar"".""C1"",
+                      ""s_bar"".""C2""
                     FROM ""s_bar"";",
                     "DROP TABLE \"s_bar\";",
                     "ALTER TABLE \"__s_bar__{GUID}__\" RENAME TO \"s_bar\";",
@@ -250,7 +252,8 @@ public partial class SqliteTableBuilderTests : TestsBase
                       CONSTRAINT ""foo_PK_T2"" PRIMARY KEY (""C2"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T2__{GUID}__"" (""C2"")
-                    SELECT ""C2""
+                    SELECT
+                      ""foo_T2"".""C2""
                     FROM ""foo_T2"";",
                     "DROP TABLE \"foo_T2\";",
                     "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" );
@@ -265,7 +268,9 @@ public partial class SqliteTableBuilderTests : TestsBase
                       CONSTRAINT ""foo_PK_T3"" PRIMARY KEY (""C3"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T3__{GUID}__"" (""C3"", ""C4"")
-                    SELECT ""C3"", ""C4""
+                    SELECT
+                      ""foo_T3"".""C3"",
+                      ""foo_T3"".""C4""
                     FROM ""foo_T3"";",
                     "DROP TABLE \"foo_T3\";",
                     "ALTER TABLE \"__foo_T3__{GUID}__\" RENAME TO \"foo_T3\";",
@@ -282,7 +287,8 @@ public partial class SqliteTableBuilderTests : TestsBase
                       CONSTRAINT ""foo_FK_T2_C2_REF_T1"" FOREIGN KEY (""C2"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T2__{GUID}__"" (""C2"")
-                    SELECT ""C2""
+                    SELECT
+                      ""foo_T2"".""C2""
                     FROM ""foo_T2"";",
                     "DROP TABLE \"foo_T2\";",
                     "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" );
@@ -299,7 +305,9 @@ public partial class SqliteTableBuilderTests : TestsBase
                       CONSTRAINT ""foo_FK_T3_C3_REF_T1"" FOREIGN KEY (""C3"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T3__{GUID}__"" (""C3"", ""C4"")
-                    SELECT ""C3"", ""C4""
+                    SELECT
+                      ""foo_T3"".""C3"",
+                      ""foo_T3"".""C4""
                     FROM ""foo_T3"";",
                     "DROP TABLE \"foo_T3\";",
                     "ALTER TABLE \"__foo_T3__{GUID}__\" RENAME TO \"foo_T3\";",
@@ -360,11 +368,14 @@ public partial class SqliteTableBuilderTests : TestsBase
                     @"CREATE TABLE ""__foo_T3__{GUID}__"" (
                       ""C3"" ANY NOT NULL,
                       ""C4"" ANY NOT NULL,
-                      ""C6"" INTEGER NOT NULL DEFAULT 0,
+                      ""C6"" INTEGER NOT NULL DEFAULT (0),
                       CONSTRAINT ""foo_PK_T3"" PRIMARY KEY (""C3"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T3__{GUID}__"" (""C3"", ""C4"", ""C6"")
-                    SELECT ""C3"", ""C4"", 0
+                    SELECT
+                      ""foo_T3"".""C3"",
+                      ""foo_T3"".""C4"",
+                      0 AS ""C6""
                     FROM ""foo_T3"";",
                     "DROP TABLE \"foo_T3\";",
                     "ALTER TABLE \"__foo_T3__{GUID}__\" RENAME TO \"foo_T3\";",
@@ -378,7 +389,8 @@ public partial class SqliteTableBuilderTests : TestsBase
                       CONSTRAINT ""foo_PK_T2"" PRIMARY KEY (""C2"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T2__{GUID}__"" (""C2"")
-                    SELECT ""C2""
+                    SELECT
+                      ""foo_T2"".""C2""
                     FROM ""foo_T2"";",
                     "DROP TABLE \"foo_T2\";",
                     "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" );
@@ -391,7 +403,8 @@ public partial class SqliteTableBuilderTests : TestsBase
                       CONSTRAINT ""foo_PK_T4"" PRIMARY KEY (""C5"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T4__{GUID}__"" (""C5"")
-                    SELECT ""C5""
+                    SELECT
+                      ""foo_T4"".""C5""
                     FROM ""foo_T4"";",
                     "DROP TABLE \"foo_T4\";",
                     "ALTER TABLE \"__foo_T4__{GUID}__\" RENAME TO \"foo_T4\";" );
@@ -405,13 +418,16 @@ public partial class SqliteTableBuilderTests : TestsBase
                     @"CREATE TABLE ""__foo_T3__{GUID}__"" (
                       ""C3"" ANY NOT NULL,
                       ""C4"" ANY NOT NULL,
-                      ""C6"" INTEGER NOT NULL DEFAULT 0,
+                      ""C6"" INTEGER NOT NULL DEFAULT (0),
                       CONSTRAINT ""foo_PK_T3"" PRIMARY KEY (""C3"" ASC),
                       CONSTRAINT ""foo_FK_T3_C4_REF_T1"" FOREIGN KEY (""C4"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT,
                       CONSTRAINT ""foo_FK_T3_C3_REF_T1"" FOREIGN KEY (""C3"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T3__{GUID}__"" (""C3"", ""C4"", ""C6"")
-                    SELECT ""C3"", ""C4"", ""C6""
+                    SELECT
+                      ""foo_T3"".""C3"",
+                      ""foo_T3"".""C4"",
+                      ""foo_T3"".""C6""
                     FROM ""foo_T3"";",
                     "DROP TABLE \"foo_T3\";",
                     "ALTER TABLE \"__foo_T3__{GUID}__\" RENAME TO \"foo_T3\";",
@@ -426,7 +442,8 @@ public partial class SqliteTableBuilderTests : TestsBase
                       CONSTRAINT ""foo_FK_T2_C2_REF_T1"" FOREIGN KEY (""C2"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T2__{GUID}__"" (""C2"")
-                    SELECT ""C2""
+                    SELECT
+                      ""foo_T2"".""C2""
                     FROM ""foo_T2"";",
                     "DROP TABLE \"foo_T2\";",
                     "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" );
@@ -440,7 +457,8 @@ public partial class SqliteTableBuilderTests : TestsBase
                       CONSTRAINT ""foo_FK_T4_C5_REF_T1"" FOREIGN KEY (""C5"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T4__{GUID}__"" (""C5"")
-                    SELECT ""C5""
+                    SELECT
+                      ""foo_T4"".""C5""
                     FROM ""foo_T4"";",
                     "DROP TABLE \"foo_T4\";",
                     "ALTER TABLE \"__foo_T4__{GUID}__\" RENAME TO \"foo_T4\";" );
@@ -482,11 +500,13 @@ public partial class SqliteTableBuilderTests : TestsBase
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T1__{GUID}__"" (
                       ""C1"" ANY NOT NULL,
-                      ""C3"" INTEGER NOT NULL DEFAULT 0,
+                      ""C3"" INTEGER NOT NULL DEFAULT (0),
                       CONSTRAINT ""foo_PK_T1"" PRIMARY KEY (""C1"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T1__{GUID}__"" (""C1"", ""C3"")
-                    SELECT ""C1"", 0
+                    SELECT
+                      ""foo_T1"".""C1"",
+                      0 AS ""C3""
                     FROM ""foo_T1"";",
                     "DROP TABLE \"foo_T1\";",
                     "ALTER TABLE \"__foo_T1__{GUID}__\" RENAME TO \"foo_T1\";" );
@@ -499,7 +519,8 @@ public partial class SqliteTableBuilderTests : TestsBase
                       CONSTRAINT ""foo_PK_T2"" PRIMARY KEY (""C2"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T2__{GUID}__"" (""C2"")
-                    SELECT ""C2""
+                    SELECT
+                      ""foo_T2"".""C2""
                     FROM ""foo_T2"";",
                     "DROP TABLE \"foo_T2\";",
                     "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" );
@@ -515,7 +536,8 @@ public partial class SqliteTableBuilderTests : TestsBase
                       CONSTRAINT ""foo_FK_T2_C2_REF_T1"" FOREIGN KEY (""C2"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T2__{GUID}__"" (""C2"")
-                    SELECT ""C2""
+                    SELECT
+                      ""foo_T2"".""C2""
                     FROM ""foo_T2"";",
                     "DROP TABLE \"foo_T2\";",
                     "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" );
@@ -560,11 +582,13 @@ public partial class SqliteTableBuilderTests : TestsBase
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T3__{GUID}__"" (
                       ""C3"" ANY NOT NULL,
-                      ""C4"" INTEGER NOT NULL DEFAULT 0,
+                      ""C4"" INTEGER NOT NULL DEFAULT (0),
                       CONSTRAINT ""foo_PK_T3"" PRIMARY KEY (""C3"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T3__{GUID}__"" (""C3"", ""C4"")
-                    SELECT ""C3"", 0
+                    SELECT
+                      ""foo_T3"".""C3"",
+                      0 AS ""C4""
                     FROM ""foo_T3"";",
                     "DROP TABLE \"foo_T3\";",
                     "ALTER TABLE \"__foo_T3__{GUID}__\" RENAME TO \"foo_T3\";" );
@@ -577,7 +601,8 @@ public partial class SqliteTableBuilderTests : TestsBase
                       CONSTRAINT ""foo_PK_T2"" PRIMARY KEY (""C2"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T2__{GUID}__"" (""C2"")
-                    SELECT ""C2""
+                    SELECT
+                      ""foo_T2"".""C2""
                     FROM ""foo_T2"";",
                     "DROP TABLE \"foo_T2\";",
                     "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" );
@@ -593,7 +618,8 @@ public partial class SqliteTableBuilderTests : TestsBase
                       CONSTRAINT ""foo_FK_T2_C2_REF_T1"" FOREIGN KEY (""C2"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T2__{GUID}__"" (""C2"")
-                    SELECT ""C2""
+                    SELECT
+                      ""foo_T2"".""C2""
                     FROM ""foo_T2"";",
                     "DROP TABLE \"foo_T2\";",
                     "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" );
@@ -696,11 +722,13 @@ public partial class SqliteTableBuilderTests : TestsBase
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
                       ""C"" ANY NOT NULL,
-                      ""D"" INTEGER NOT NULL DEFAULT 0,
+                      ""D"" INTEGER NOT NULL DEFAULT (0),
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C"", ""D"")
-                    SELECT ""C"", 0
+                    SELECT
+                      ""foo_T"".""C"",
+                      0 AS ""D""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
@@ -870,7 +898,9 @@ public partial class SqliteTableBuilderTests : TestsBase
                       CONSTRAINT ""foo_PK_OLD"" PRIMARY KEY (""C1"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
-                    SELECT ""C1"", ""C2""
+                    SELECT
+                      ""foo_T"".""C1"",
+                      ""foo_T"".""C2""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
@@ -923,7 +953,9 @@ public partial class SqliteTableBuilderTests : TestsBase
                       CONSTRAINT ""foo_PK_OLD"" PRIMARY KEY (""C1"" ASC, ""C2"" DESC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
-                    SELECT ""C1"", ""C2""
+                    SELECT
+                      ""foo_T"".""C1"",
+                      ""foo_T"".""C2""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
@@ -970,7 +1002,9 @@ public partial class SqliteTableBuilderTests : TestsBase
                       CONSTRAINT ""foo_PK_OLD"" PRIMARY KEY (""C1"" ASC, ""C2"" DESC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
-                    SELECT ""C1"", ""C2""
+                    SELECT
+                      ""foo_T"".""C1"",
+                      ""foo_T"".""C2""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
@@ -1018,7 +1052,9 @@ public partial class SqliteTableBuilderTests : TestsBase
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C2"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
-                    SELECT ""C1"", ""C2""
+                    SELECT
+                      ""foo_T"".""C1"",
+                      ""foo_T"".""C2""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );

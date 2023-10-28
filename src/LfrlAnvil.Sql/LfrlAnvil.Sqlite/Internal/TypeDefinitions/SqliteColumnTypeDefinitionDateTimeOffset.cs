@@ -21,4 +21,10 @@ internal sealed class SqliteColumnTypeDefinitionDateTimeOffset : SqliteColumnTyp
         parameter.DbType = System.Data.DbType.String;
         parameter.Value = value.ToString( "yyyy-MM-dd HH:mm:ss.fffffffzzz", CultureInfo.InvariantCulture );
     }
+
+    public override void SetNullParameter(IDbDataParameter parameter)
+    {
+        parameter.DbType = System.Data.DbType.String;
+        parameter.Value = DBNull.Value;
+    }
 }

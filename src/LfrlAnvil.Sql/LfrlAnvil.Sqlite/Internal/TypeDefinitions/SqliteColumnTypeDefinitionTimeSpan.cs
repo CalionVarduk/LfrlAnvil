@@ -20,4 +20,10 @@ internal sealed class SqliteColumnTypeDefinitionTimeSpan : SqliteColumnTypeDefin
         parameter.DbType = System.Data.DbType.Int64;
         parameter.Value = value.Ticks;
     }
+
+    public override void SetNullParameter(IDbDataParameter parameter)
+    {
+        parameter.DbType = System.Data.DbType.Int64;
+        parameter.Value = DBNull.Value;
+    }
 }

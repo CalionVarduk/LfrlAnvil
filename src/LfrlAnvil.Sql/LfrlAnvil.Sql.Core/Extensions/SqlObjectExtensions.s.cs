@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Objects;
+using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Objects.Builders;
 
@@ -113,5 +115,146 @@ public static class SqlObjectExtensions
     public static bool IsSelfReference(this ISqlForeignKey foreignKey)
     {
         return ReferenceEquals( foreignKey.Index.Table, foreignKey.ReferencedIndex.Table );
+    }
+
+    [Pure]
+    public static SqlCreateViewNode ToCreateNode(this ISqlViewBuilder view)
+    {
+        return SqlNode.CreateView( view.Info, view.Source );
+    }
+
+    [Pure]
+    public static SqlCreateTableNode ToCreateNode(
+        this ISqlTableBuilder table,
+        SqlRecordSetInfo? customInfo = null,
+        bool useFullConstraintNames = false)
+    {
+        var i = 0;
+        var tableColumns = table.Columns;
+        var columns = Array.Empty<SqlColumnDefinitionNode>();
+        if ( tableColumns.Count > 0 )
+        {
+            columns = new SqlColumnDefinitionNode[tableColumns.Count];
+            foreach ( var column in tableColumns )
+                columns[i++] = column.ToDefinitionNode();
+        }
+
+        return new SqlCreateTableNode(
+            customInfo ?? table.Info,
+            ifNotExists: false,
+            columns,
+            t =>
+            {
+                var tableForeignKeys = table.ForeignKeys;
+                var primaryKey = table.PrimaryKey?.ToDefinitionNode( t, useFullConstraintNames );
+                var foreignKeys = Array.Empty<SqlForeignKeyDefinitionNode>();
+                if ( tableForeignKeys.Count > 0 )
+                {
+                    var j = 0;
+                    foreignKeys = new SqlForeignKeyDefinitionNode[tableForeignKeys.Count];
+                    foreach ( var foreignKey in tableForeignKeys )
+                        foreignKeys[j++] = foreignKey.ToDefinitionNode( t, useFullConstraintNames );
+                }
+
+                var result = SqlCreateTableConstraints.Empty.WithForeignKeys( foreignKeys );
+                return primaryKey is not null ? result.WithPrimaryKey( primaryKey ) : result;
+            } );
+    }
+
+    [Pure]
+    public static SqlCreateIndexNode ToCreateNode(this ISqlIndexBuilder index)
+    {
+        var ixColumns = index.Columns;
+        var columns = Array.Empty<SqlOrderByNode>();
+        if ( ixColumns.Length > 0 )
+        {
+            var i = 0;
+            columns = new SqlOrderByNode[ixColumns.Length];
+            foreach ( var column in ixColumns )
+                columns[i++] = SqlNode.OrderBy( column.Column.Node, column.Ordering );
+        }
+
+        var ixTable = index.Table;
+        return SqlNode.CreateIndex(
+            SqlSchemaObjectName.Create( ixTable.Schema.Name, index.Name ),
+            index.IsUnique,
+            ixTable.RecordSet,
+            columns,
+            ifNotExists: false,
+            index.Filter );
+    }
+
+    [Pure]
+    private static SqlColumnDefinitionNode ToDefinitionNode(this ISqlColumnBuilder column)
+    {
+        return SqlNode.Column(
+            column.Name,
+            SqlExpressionType.Create( column.TypeDefinition.RuntimeType, column.IsNullable ),
+            column.DefaultValue );
+    }
+
+    [Pure]
+    private static SqlPrimaryKeyDefinitionNode ToDefinitionNode(
+        this ISqlPrimaryKeyBuilder primaryKey,
+        SqlNewTableNode table,
+        bool useFullName = false)
+    {
+        var pkColumns = primaryKey.Index.Columns;
+        var columns = Array.Empty<SqlOrderByNode>();
+        if ( pkColumns.Length > 0 )
+        {
+            var i = 0;
+            columns = new SqlOrderByNode[pkColumns.Length];
+            foreach ( var column in pkColumns )
+                columns[i++] = SqlNode.OrderBy( table[column.Column.Name], column.Ordering );
+        }
+
+        return SqlNode.PrimaryKey( useFullName ? primaryKey.FullName : primaryKey.Name, columns );
+    }
+
+    [Pure]
+    private static SqlForeignKeyDefinitionNode ToDefinitionNode(
+        this ISqlForeignKeyBuilder foreignKey,
+        SqlNewTableNode table,
+        bool useFullName = false)
+    {
+        var refIndex = foreignKey.ReferencedIndex;
+        var fkColumns = foreignKey.Index.Columns;
+        var fkReferencedColumns = refIndex.Columns;
+        var isSelfReference = foreignKey.IsSelfReference();
+
+        var i = 0;
+        var columns = Array.Empty<SqlDataFieldNode>();
+        if ( fkColumns.Length > 0 )
+        {
+            columns = new SqlDataFieldNode[fkColumns.Length];
+            foreach ( var column in fkColumns )
+                columns[i++] = table[column.Column.Name];
+        }
+
+        var referencedColumns = Array.Empty<SqlDataFieldNode>();
+        if ( fkReferencedColumns.Length > 0 )
+        {
+            i = 0;
+            referencedColumns = new SqlDataFieldNode[fkReferencedColumns.Length];
+            if ( isSelfReference )
+            {
+                foreach ( var column in fkReferencedColumns )
+                    referencedColumns[i++] = table[column.Column.Name];
+            }
+            else
+            {
+                foreach ( var column in fkReferencedColumns )
+                    referencedColumns[i++] = column.Column.Node;
+            }
+        }
+
+        return SqlNode.ForeignKey(
+            useFullName ? foreignKey.FullName : foreignKey.Name,
+            columns,
+            refIndex.Table.RecordSet,
+            referencedColumns,
+            foreignKey.OnDeleteBehavior,
+            foreignKey.OnUpdateBehavior );
     }
 }

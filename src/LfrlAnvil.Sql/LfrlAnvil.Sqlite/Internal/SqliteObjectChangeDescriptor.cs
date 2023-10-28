@@ -4,13 +4,14 @@ internal enum SqliteObjectChangeDescriptor : byte
 {
     Exists = 0,
     Name = 1,
-    IsNullable = 2,
-    DataType = 3,
-    DefaultValue = 4,
-    IsUnique = 5,
-    Filter = 6,
-    PrimaryKey = 7,
-    OnDeleteBehavior = 8,
-    OnUpdateBehavior = 9,
-    Reconstruct = 10
+    SchemaName = 2,
+    IsNullable = 3,
+    DataType = 4,
+    DefaultValue = 5,
+    IsUnique = 6,
+    Filter = 7,
+    PrimaryKey = 8,
+    OnDeleteBehavior = 9,
+    OnUpdateBehavior = 10,
+    Reconstruct = 11
 }

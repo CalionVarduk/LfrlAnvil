@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System;
+using System.Data;
 using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Sqlite.Internal.TypeDefinitions;
@@ -25,6 +26,12 @@ internal sealed class SqliteColumnTypeDefinitionUInt64 : SqliteColumnTypeDefinit
         var v = checked( (long)value );
         parameter.DbType = System.Data.DbType.Int64;
         parameter.Value = v;
+    }
+
+    public override void SetNullParameter(IDbDataParameter parameter)
+    {
+        parameter.DbType = System.Data.DbType.Int64;
+        parameter.Value = DBNull.Value;
     }
 
     public override bool TrySetParameter(IDbDataParameter parameter, object value)

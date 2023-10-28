@@ -88,7 +88,9 @@ public class SqliteIndexBuilderTests : TestsBase
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C2"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
-                    SELECT ""C1"", ""C2""
+                    SELECT
+                      ""foo_T"".""C1"",
+                      ""foo_T"".""C2""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";"
@@ -123,7 +125,9 @@ public class SqliteIndexBuilderTests : TestsBase
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C2"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
-                    SELECT ""C1"", ""C2""
+                    SELECT
+                      ""foo_T"".""C1"",
+                      ""foo_T"".""C2""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";"
@@ -660,7 +664,7 @@ public class SqliteIndexBuilderTests : TestsBase
                 .Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
-                    "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC) WHERE \"foo_T\".\"C2\" IS NOT NULL;" );
+                    "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC) WHERE (\"C2\" IS NOT NULL);" );
         }
     }
 
@@ -755,7 +759,7 @@ public class SqliteIndexBuilderTests : TestsBase
                 .Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
-                    "CREATE UNIQUE INDEX \"foo_bar\" ON \"foo_T\" (\"C2\" ASC) WHERE \"foo_T\".\"C2\" IS NOT NULL;" );
+                    "CREATE UNIQUE INDEX \"foo_bar\" ON \"foo_T\" (\"C2\" ASC) WHERE (\"C2\" IS NOT NULL);" );
         }
     }
 
@@ -799,7 +803,10 @@ public class SqliteIndexBuilderTests : TestsBase
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"", ""C3"")
-                    SELECT ""C1"", ""C2"", ""C3""
+                    SELECT
+                      ""foo_T"".""C1"",
+                      ""foo_T"".""C2"",
+                      ""foo_T"".""C3""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";",

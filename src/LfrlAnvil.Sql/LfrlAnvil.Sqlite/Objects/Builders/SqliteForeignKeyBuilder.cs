@@ -112,10 +112,10 @@ public sealed class SqliteForeignKeyBuilder : SqliteObjectBuilder, ISqlForeignKe
         SqliteHelpers.AssertName( name );
         Index.Table.Schema.Objects.ChangeName( this, name );
 
-        var oldName = FullName;
+        var oldName = Name;
         Name = name;
         UpdateFullName();
-        Database.ChangeTracker.FullNameUpdated( Index.Table, this, oldName );
+        Database.ChangeTracker.NameUpdated( Index.Table, this, oldName );
     }
 
     ISqlForeignKeyBuilder ISqlForeignKeyBuilder.SetName(string name)

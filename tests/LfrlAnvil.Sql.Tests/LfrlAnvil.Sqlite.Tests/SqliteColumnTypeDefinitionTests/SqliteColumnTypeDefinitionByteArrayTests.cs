@@ -61,4 +61,19 @@ public class SqliteColumnTypeDefinitionByteArrayTests : TestsBase
 
         result.Should().BeFalse();
     }
+
+    [Fact]
+    public void SetNullParameter_ShouldUpdateParameterCorrectly()
+    {
+        var parameter = new SqliteParameter();
+        var sut = _provider.GetByType<byte[]>();
+
+        sut.SetNullParameter( parameter );
+
+        using ( new AssertionScope() )
+        {
+            parameter.DbType.Should().Be( DbType.Binary );
+            parameter.Value.Should().BeSameAs( DBNull.Value );
+        }
+    }
 }

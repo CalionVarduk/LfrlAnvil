@@ -7,10 +7,14 @@ using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text;
 using LfrlAnvil.Diagnostics;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Events;
+using LfrlAnvil.Sql.Expressions;
+using LfrlAnvil.Sql.Expressions.Objects;
+using LfrlAnvil.Sql.Expressions.Visitors;
+using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Versioning;
 using LfrlAnvil.Sqlite.Exceptions;
@@ -47,14 +51,14 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
                 connection,
                 new StateChangeEventArgs( ConnectionState.Closed, ConnectionState.Open ) );
 
-            var (versionHistoryTable, types) = InitializeDatabaseBuilderWithVersionHistoryTable( connectionChangeEvent, options );
-            var builder = versionHistoryTable.Database;
+            var versionHistoryInfo = InitializeDatabaseBuilderWithVersionHistoryTable( connectionChangeEvent, options );
+            var builder = versionHistoryInfo.Table.Database;
             connectionChangeCallbacks = builder.ConnectionChanges.Callbacks;
 
             var statementExecutor = new SqlStatementExecutor( options );
-            CreateVersionHistoryTableInDatabaseIfNotExists( connection, versionHistoryTable, ref statementExecutor );
+            CreateVersionHistoryTableInDatabaseIfNotExists( connection, in versionHistoryInfo, ref statementExecutor );
 
-            var versionRecordsReader = CreateVersionRecordsReader( versionHistoryTable );
+            var versionRecordsReader = CreateVersionRecordsReader( in versionHistoryInfo );
             var versions = CompareVersionHistoryToDatabase( connection, versionHistory, versionRecordsReader, ref statementExecutor );
 
             foreach ( var version in versions.Committed )
@@ -70,10 +74,9 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
                 SqlDatabaseCreateMode.DryRun => ApplyVersionsInDryRunMode( connectionChangeEvent, builder, versions ),
                 SqlDatabaseCreateMode.Commit => ApplyVersionsInCommitMode(
                     connectionChangeEvent,
-                    versionHistoryTable,
                     versions,
-                    types,
                     options.VersionHistoryPersistenceMode,
+                    in versionHistoryInfo,
                     ref statementExecutor ),
                 _ => (null, 0)
             };
@@ -154,10 +157,9 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
     }
 
     [Pure]
-    private static (SqliteTableBuilder VersionHistoryTable, VersionHistoryTypes Types)
-        InitializeDatabaseBuilderWithVersionHistoryTable(
-            SqlDatabaseConnectionChangeEvent connectionChangeEvent,
-            SqlCreateDatabaseOptions options)
+    private static VersionHistoryInfo InitializeDatabaseBuilderWithVersionHistoryTable(
+        SqlDatabaseConnectionChangeEvent connectionChangeEvent,
+        SqlCreateDatabaseOptions options)
     {
         var builder = CreateBuilder( connectionChangeEvent );
         SetBuilderMode( builder, SqlDatabaseCreateMode.Commit );
@@ -173,34 +175,61 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         var table = builder.Schemas.GetOrCreate( schemaName ).Objects.CreateTable( tableName );
         var columns = table.Columns;
 
-        var ordinal = columns.Create( VersionHistoryColumns.Ordinal ).SetType( intType );
-        columns.Create( VersionHistoryColumns.VersionMajor ).SetType( intType );
-        columns.Create( VersionHistoryColumns.VersionMinor ).SetType( intType );
-        columns.Create( VersionHistoryColumns.VersionBuild ).SetType( intType ).MarkAsNullable();
-        columns.Create( VersionHistoryColumns.VersionRevision ).SetType( intType ).MarkAsNullable();
-        columns.Create( VersionHistoryColumns.Description ).SetType( stringType );
-        columns.Create( VersionHistoryColumns.CommitDateUtc ).SetType( dateTimeType );
-        columns.Create( VersionHistoryColumns.CommitDurationInTicks ).SetType( longType );
+        var ordinal = columns.Create( VersionHistoryInfo.OrdinalName ).SetType( intType );
+        var versionMajor = columns.Create( VersionHistoryInfo.VersionMajorName ).SetType( intType );
+        var versionMinor = columns.Create( VersionHistoryInfo.VersionMinorName ).SetType( intType );
+        var versionBuild = columns.Create( VersionHistoryInfo.VersionBuildName ).SetType( intType ).MarkAsNullable();
+        var versionRevision = columns.Create( VersionHistoryInfo.VersionRevisionName ).SetType( intType ).MarkAsNullable();
+        var description = columns.Create( VersionHistoryInfo.DescriptionName ).SetType( stringType );
+        var commitDateUtc = columns.Create( VersionHistoryInfo.CommitDateUtcName ).SetType( dateTimeType );
+        var commitDurationInTicks = columns.Create( VersionHistoryInfo.CommitDurationInTicksName ).SetType( longType );
         table.SetPrimaryKey( ordinal.Asc() );
 
-        return (table, new VersionHistoryTypes( intType, longType, stringType, dateTimeType ));
+        return new VersionHistoryInfo(
+            table,
+            new VersionHistoryColumn<int>( ordinal.Node, intType ),
+            new VersionHistoryColumn<int>( versionMajor.Node, intType ),
+            new VersionHistoryColumn<int>( versionMinor.Node, intType ),
+            new VersionHistoryColumn<int>( versionBuild.Node, intType ),
+            new VersionHistoryColumn<int>( versionRevision.Node, intType ),
+            new VersionHistoryColumn<string>( description.Node, stringType ),
+            new VersionHistoryColumn<DateTime>( commitDateUtc.Node, dateTimeType ),
+            new VersionHistoryColumn<long>( commitDurationInTicks.Node, longType ),
+            builder.NodeInterpreterFactory.Create( SqlNodeInterpreterContext.Create( capacity: 256 ) ) );
     }
 
     private static void CreateVersionHistoryTableInDatabaseIfNotExists(
         SqliteConnection connection,
-        SqliteTableBuilder table,
+        in VersionHistoryInfo info,
         ref SqlStatementExecutor statementExecutor)
     {
+        var master = SqlNode.RawRecordSet( "\"sqlite_master\"" );
+        var masterType = master.GetRawField( "type", SqlExpressionType.Create<string>() );
+        var masterName = master.GetRawField( "name", SqlExpressionType.Create<string>() );
+
+        var query = SqlNode.DummyDataSource()
+            .Select(
+                master.ToDataSource()
+                    .AndWhere( masterType == SqlNode.Literal( "table" ) )
+                    .AndWhere( masterName == SqlNode.Literal( info.Table.FullName ) )
+                    .Exists()
+                    .ToValue()
+                    .As( "x" ) );
+
+        info.Interpreter.VisitDataSourceQuery( query );
+
         using ( var command = connection.CreateCommand() )
         {
-            command.CommandText = $"SELECT EXISTS (SELECT * FROM sqlite_master WHERE type = 'table' AND name = '{table.FullName}');";
+            command.CommandText = info.Interpreter.Context.Sql.AppendSemicolon().ToString();
+            info.Interpreter.Context.Clear();
+
             var exists = statementExecutor.ExecuteVersionHistoryQuery( command, static cmd => Convert.ToBoolean( cmd.ExecuteScalar() ) );
 
             if ( ! exists )
             {
                 using ( var transaction = CreateTransaction( command ) )
                 {
-                    var statements = table.Database.GetPendingStatements();
+                    var statements = info.Table.Database.GetPendingStatements();
                     foreach ( var statement in statements )
                     {
                         command.CommandText = statement;
@@ -214,13 +243,13 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
             }
         }
 
-        SetBuilderMode( table.Database, SqlDatabaseCreateMode.NoChanges );
+        SetBuilderMode( info.Table.Database, SqlDatabaseCreateMode.NoChanges );
 
-        table.Remove();
-        if ( table.Schema.CanRemove )
-            table.Schema.Remove();
+        info.Table.Remove();
+        if ( info.Table.Schema.CanRemove )
+            info.Table.Schema.Remove();
 
-        ClearBuilderStatements( table.Database );
+        ClearBuilderStatements( info.Table.Database );
     }
 
     [Pure]
@@ -234,10 +263,16 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
     }
 
     [Pure]
-    private static SqlQueryDefinition<List<SqlDatabaseVersionRecord>> CreateVersionRecordsReader(SqliteTableBuilder table)
+    private static SqlQueryDefinition<List<SqlDatabaseVersionRecord>> CreateVersionRecordsReader(in VersionHistoryInfo info)
     {
-        var query = $"SELECT * FROM \"{table.FullName}\" ORDER BY \"{VersionHistoryColumns.Ordinal}\" ASC;";
-        return new SqlQueryDefinition<List<SqlDatabaseVersionRecord>>( query, Executor );
+        var dataSource = info.Table.RecordSet.ToDataSource();
+        var query = dataSource.Select( dataSource.GetAll() ).OrderBy( info.Ordinal.Node.Asc() );
+        info.Interpreter.VisitDataSourceQuery( query );
+
+        var sql = info.Interpreter.Context.Sql.AppendSemicolon().ToString();
+        info.Interpreter.Context.Clear();
+
+        return new SqlQueryDefinition<List<SqlDatabaseVersionRecord>>( sql, Executor );
 
         [Pure]
         static List<SqlDatabaseVersionRecord> Executor(SqliteCommand c)
@@ -248,14 +283,14 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
             if ( ! reader.Read() )
                 return result;
 
-            var iOrdinal = reader.GetOrdinal( VersionHistoryColumns.Ordinal );
-            var iVersionMajor = reader.GetOrdinal( VersionHistoryColumns.VersionMajor );
-            var iVersionMinor = reader.GetOrdinal( VersionHistoryColumns.VersionMinor );
-            var iVersionBuild = reader.GetOrdinal( VersionHistoryColumns.VersionBuild );
-            var iVersionRevision = reader.GetOrdinal( VersionHistoryColumns.VersionRevision );
-            var iDescription = reader.GetOrdinal( VersionHistoryColumns.Description );
-            var iCommitDateUtc = reader.GetOrdinal( VersionHistoryColumns.CommitDateUtc );
-            var iCommitDurationInTicks = reader.GetOrdinal( VersionHistoryColumns.CommitDurationInTicks );
+            var iOrdinal = reader.GetOrdinal( VersionHistoryInfo.OrdinalName );
+            var iVersionMajor = reader.GetOrdinal( VersionHistoryInfo.VersionMajorName );
+            var iVersionMinor = reader.GetOrdinal( VersionHistoryInfo.VersionMinorName );
+            var iVersionBuild = reader.GetOrdinal( VersionHistoryInfo.VersionBuildName );
+            var iVersionRevision = reader.GetOrdinal( VersionHistoryInfo.VersionRevisionName );
+            var iDescription = reader.GetOrdinal( VersionHistoryInfo.DescriptionName );
+            var iCommitDateUtc = reader.GetOrdinal( VersionHistoryInfo.CommitDateUtcName );
+            var iCommitDurationInTicks = reader.GetOrdinal( VersionHistoryInfo.CommitDurationInTicksName );
 
             do
             {
@@ -311,10 +346,9 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
 
     private static (Exception? Exception, int AppliedVersions) ApplyVersionsInCommitMode(
         SqlDatabaseConnectionChangeEvent connectionChangeEvent,
-        SqliteTableBuilder versionHistoryTable,
         SqlDatabaseVersionHistory.DatabaseComparisonResult versions,
-        VersionHistoryTypes types,
         SqlDatabaseVersionHistoryPersistenceMode versionHistoryPersistenceMode,
+        in VersionHistoryInfo versionHistory,
         ref SqlStatementExecutor statementExecutor)
     {
         if ( versions.Uncommitted.Length == 0 )
@@ -325,7 +359,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         using var statementCommand = connection.CreateCommand();
         var (preparePragmaText, restorePragmaText) = CreatePragmaCommandTexts( statementCommand, ref statementExecutor );
 
-        using var insertVersionCommand = PrepareInsertVersionRecordCommand( connection, versionHistoryTable.FullName, types );
+        using var insertVersionCommand = PrepareInsertVersionRecordCommand( connection, in versionHistory );
         var pOrdinal = insertVersionCommand.Parameters[0];
         var pVersionMajor = insertVersionCommand.Parameters[1];
         var pVersionMinor = insertVersionCommand.Parameters[2];
@@ -335,10 +369,10 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         var pCommitDateUtc = insertVersionCommand.Parameters[6];
 
         using var deleteVersionsCommand = versionHistoryPersistenceMode == SqlDatabaseVersionHistoryPersistenceMode.LastRecordOnly
-            ? OptionalDisposable.Create( PrepareDeleteVersionRecordsCommand( connection, versionHistoryTable.FullName ) )
+            ? OptionalDisposable.Create( PrepareDeleteVersionRecordsCommand( connection, in versionHistory ) )
             : OptionalDisposable<SqliteCommand>.Empty;
 
-        var builder = versionHistoryTable.Database;
+        var builder = versionHistory.Table.Database;
         var elapsedTimes = new List<(int Ordinal, TimeSpan ElapsedTime)>();
         var fkCheckFailures = new HashSet<string>();
         var nextVersionOrdinal = versions.NextOrdinal;
@@ -413,13 +447,15 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
                             SqlDatabaseFactoryStatementType.VersionHistory );
                     }
 
-                    pOrdinal.Value = versionOrdinal;
-                    pVersionMajor.Value = version.Value.Major;
-                    pVersionMinor.Value = version.Value.Minor;
-                    pVersionBuild.Value = version.Value.Build >= 0 ? version.Value.Build : DBNull.Value;
-                    pVersionRevision.Value = version.Value.Revision >= 0 ? version.Value.Revision : DBNull.Value;
-                    pDescription.Value = version.Description;
-                    types.DateTimeType.SetParameter( pCommitDateUtc, DateTime.UtcNow );
+                    var versionBuild = version.Value.Build >= 0 ? version.Value.Build : (int?)null;
+                    var versionRevision = version.Value.Revision >= 0 ? version.Value.Revision : (int?)null;
+                    versionHistory.Ordinal.Type.SetParameter( pOrdinal, versionOrdinal );
+                    versionHistory.VersionMajor.Type.SetParameter( pVersionMajor, version.Value.Major );
+                    versionHistory.VersionMinor.Type.SetParameter( pVersionMinor, version.Value.Minor );
+                    versionHistory.VersionBuild.Type.SetNullableParameter( pVersionBuild, versionBuild );
+                    versionHistory.VersionRevision.Type.SetNullableParameter( pVersionRevision, versionRevision );
+                    versionHistory.Description.Type.SetParameter( pDescription, version.Description );
+                    versionHistory.CommitDateUtc.Type.SetParameter( pCommitDateUtc, DateTime.UtcNow );
 
                     statementKey = statementKey.NextOrdinal();
                     statementExecutor.ExecuteNonQuery( insertVersionCommand, statementKey, SqlDatabaseFactoryStatementType.VersionHistory );
@@ -465,8 +501,8 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         {
             UpdateVersionRecordRangeElapsedTime(
                 connection,
-                versionHistoryTable.FullName,
                 CollectionsMarshal.AsSpan( elapsedTimes ),
+                in versionHistory,
                 ref statementExecutor );
         }
         catch ( Exception exc )
@@ -522,58 +558,51 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
     }
 
     [Pure]
-    private static SqliteCommand PrepareInsertVersionRecordCommand(
-        SqliteConnection connection,
-        string versionTableName,
-        VersionHistoryTypes types)
+    private static SqliteCommand PrepareInsertVersionRecordCommand(SqliteConnection connection, in VersionHistoryInfo info)
     {
-        var query = new StringBuilder()
-            .Append( "INSERT INTO" )
-            .AppendTokenSeparator()
-            .AppendName( versionTableName )
-            .AppendTokenSeparator()
-            .AppendElementsBegin();
+        var pOrdinal = SqlNode.Parameter( VersionHistoryInfo.OrdinalName, info.Ordinal.Node.Type );
+        var pVersionMajor = SqlNode.Parameter( VersionHistoryInfo.VersionMajorName, info.VersionMajor.Node.Type );
+        var pVersionMinor = SqlNode.Parameter( VersionHistoryInfo.VersionMinorName, info.VersionMinor.Node.Type );
+        var pVersionBuild = SqlNode.Parameter( VersionHistoryInfo.VersionBuildName, info.VersionBuild.Node.Type );
+        var pVersionRevision = SqlNode.Parameter( VersionHistoryInfo.VersionRevisionName, info.VersionRevision.Node.Type );
+        var pDescription = SqlNode.Parameter( VersionHistoryInfo.DescriptionName, info.Description.Node.Type );
+        var pCommitDateUtc = SqlNode.Parameter( VersionHistoryInfo.CommitDateUtcName, info.CommitDateUtc.Node.Type );
 
-        AppendColumnName( query, VersionHistoryColumns.Ordinal );
-        AppendColumnName( query, VersionHistoryColumns.VersionMajor );
-        AppendColumnName( query, VersionHistoryColumns.VersionMinor );
-        AppendColumnName( query, VersionHistoryColumns.VersionBuild );
-        AppendColumnName( query, VersionHistoryColumns.VersionRevision );
-        AppendColumnName( query, VersionHistoryColumns.Description );
-        AppendColumnName( query, VersionHistoryColumns.CommitDateUtc );
+        var insertInto = SqlNode.Values(
+                pOrdinal,
+                pVersionMajor,
+                pVersionMinor,
+                pVersionBuild,
+                pVersionRevision,
+                pDescription,
+                pCommitDateUtc,
+                SqlNode.Literal( 0 ) )
+            .ToInsertInto(
+                info.Table.RecordSet,
+                info.Ordinal.Node,
+                info.VersionMajor.Node,
+                info.VersionMinor.Node,
+                info.VersionBuild.Node,
+                info.VersionRevision.Node,
+                info.Description.Node,
+                info.CommitDateUtc.Node,
+                info.CommitDurationInTicks.Node );
 
-        query
-            .AppendName( VersionHistoryColumns.CommitDurationInTicks )
-            .AppendElementsEnd()
-            .AppendLine()
-            .Append( "VALUES" )
-            .AppendTokenSeparator()
-            .AppendElementsBegin();
-
-        AppendParameter( query, "@p0" );
-        AppendParameter( query, "@p1" );
-        AppendParameter( query, "@p2" );
-        AppendParameter( query, "@p3" );
-        AppendParameter( query, "@p4" );
-        AppendParameter( query, "@p5" );
-        AppendParameter( query, "@p6" );
-
-        query
-            .Append( types.LongType.ToDbLiteral( 0 ) )
-            .AppendElementsEnd()
-            .AppendCommandEnd();
+        info.Interpreter.VisitInsertInto( insertInto );
 
         var command = connection.CreateCommand();
         try
         {
-            command.CommandText = query.ToString();
-            command.Parameters.Add( new SqliteParameter( "@p0", SqliteType.Integer ) );
-            command.Parameters.Add( new SqliteParameter( "@p1", SqliteType.Integer ) );
-            command.Parameters.Add( new SqliteParameter( "@p2", SqliteType.Integer ) );
-            command.Parameters.Add( new SqliteParameter( "@p3", SqliteType.Integer ) );
-            command.Parameters.Add( new SqliteParameter( "@p4", SqliteType.Integer ) );
-            command.Parameters.Add( new SqliteParameter( "@p5", SqliteType.Text ) );
-            command.Parameters.Add( new SqliteParameter( "@p6", SqliteType.Text ) );
+            command.CommandText = info.Interpreter.Context.Sql.AppendSemicolon().ToString();
+            info.Interpreter.Context.Clear();
+
+            command.Parameters.Add( info.Ordinal.Type.CreateParameter( pOrdinal.Name ) );
+            command.Parameters.Add( info.VersionMajor.Type.CreateParameter( pVersionMajor.Name ) );
+            command.Parameters.Add( info.VersionMinor.Type.CreateParameter( pVersionMinor.Name ) );
+            command.Parameters.Add( info.VersionBuild.Type.CreateParameter( pVersionBuild.Name ) );
+            command.Parameters.Add( info.VersionRevision.Type.CreateParameter( pVersionRevision.Name ) );
+            command.Parameters.Add( info.Description.Type.CreateParameter( pDescription.Name ) );
+            command.Parameters.Add( info.CommitDateUtc.Type.CreateParameter( pCommitDateUtc.Name ) );
             command.Prepare();
         }
         catch
@@ -583,33 +612,19 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         }
 
         return command;
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        static void AppendColumnName(StringBuilder builder, string name)
-        {
-            builder.AppendName( name ).AppendElementSeparator().AppendTokenSeparator();
-        }
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        static void AppendParameter(StringBuilder builder, string name)
-        {
-            builder.Append( name ).AppendElementSeparator().AppendTokenSeparator();
-        }
     }
 
     [Pure]
-    private static SqliteCommand PrepareDeleteVersionRecordsCommand(SqliteConnection connection, string versionTableName)
+    private static SqliteCommand PrepareDeleteVersionRecordsCommand(SqliteConnection connection, in VersionHistoryInfo info)
     {
-        var query = new StringBuilder()
-            .Append( "DELETE FROM" )
-            .AppendTokenSeparator()
-            .AppendName( versionTableName )
-            .AppendCommandEnd();
+        var deleteFrom = info.Table.RecordSet.ToDataSource().ToDeleteFrom();
+        info.Interpreter.VisitDeleteFrom( deleteFrom );
 
         var command = connection.CreateCommand();
         try
         {
-            command.CommandText = query.ToString();
+            command.CommandText = info.Interpreter.Context.Sql.AppendSemicolon().ToString();
+            info.Interpreter.Context.Clear();
             command.Prepare();
         }
         catch
@@ -623,14 +638,14 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
 
     private static void UpdateVersionRecordRangeElapsedTime(
         SqliteConnection connection,
-        string versionTableName,
         ReadOnlySpan<(int Ordinal, TimeSpan ElapsedTime)> elapsedTimes,
+        in VersionHistoryInfo info,
         ref SqlStatementExecutor statementExecutor)
     {
         if ( elapsedTimes.Length == 0 )
             return;
 
-        using var command = PrepareUpdateVersionRecordCommitDurationCommand( connection, versionTableName );
+        using var command = PrepareUpdateVersionRecordCommitDurationCommand( connection, in info );
         var pCommitDurationInTicks = command.Parameters[0];
         var pOrdinal = command.Parameters[1];
 
@@ -647,35 +662,26 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
     }
 
     [Pure]
-    private static SqliteCommand PrepareUpdateVersionRecordCommitDurationCommand(SqliteConnection connection, string versionTableName)
+    private static SqliteCommand PrepareUpdateVersionRecordCommitDurationCommand(SqliteConnection connection, in VersionHistoryInfo info)
     {
-        var query = new StringBuilder()
-            .Append( "UPDATE" )
-            .AppendTokenSeparator()
-            .AppendName( versionTableName )
-            .AppendLine()
-            .Append( "SET" )
-            .AppendTokenSeparator()
-            .AppendName( VersionHistoryColumns.CommitDurationInTicks )
-            .AppendTokenSeparator()
-            .Append( '=' )
-            .AppendTokenSeparator()
-            .AppendLine( "@p0" )
-            .Append( "WHERE" )
-            .AppendTokenSeparator()
-            .AppendName( VersionHistoryColumns.Ordinal )
-            .AppendTokenSeparator()
-            .Append( '=' )
-            .AppendTokenSeparator()
-            .Append( "@p1" )
-            .AppendCommandEnd();
+        var pCommitDuration = SqlNode.Parameter( VersionHistoryInfo.CommitDurationInTicksName, info.CommitDurationInTicks.Node.Type );
+        var pOrdinal = SqlNode.Parameter( VersionHistoryInfo.OrdinalName, info.Ordinal.Node.Type );
+
+        var update = info.Table.RecordSet
+            .ToDataSource()
+            .AndWhere( info.Ordinal.Node == pOrdinal )
+            .ToUpdate( info.CommitDurationInTicks.Node.Assign( pCommitDuration ) );
+
+        info.Interpreter.VisitUpdate( update );
 
         var command = connection.CreateCommand();
         try
         {
-            command.CommandText = query.ToString();
-            command.Parameters.Add( new SqliteParameter( "@p0", SqliteType.Integer ) );
-            command.Parameters.Add( new SqliteParameter( "@p1", SqliteType.Integer ) );
+            command.CommandText = info.Interpreter.Context.Sql.AppendSemicolon().ToString();
+            info.Interpreter.Context.Clear();
+
+            command.Parameters.Add( info.CommitDurationInTicks.Type.CreateParameter( pCommitDuration.Name ) );
+            command.Parameters.Add( info.Ordinal.Type.CreateParameter( pOrdinal.Name ) );
             command.Prepare();
         }
         catch
@@ -758,23 +764,30 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         return s is not null && v is not null ? s.LastIndexOf( v, StringComparison.Ordinal ) + 1 : null;
     }
 
-    private static class VersionHistoryColumns
-    {
-        public const string Ordinal = nameof( Ordinal );
-        public const string VersionMajor = nameof( VersionMajor );
-        public const string VersionMinor = nameof( VersionMinor );
-        public const string VersionBuild = nameof( VersionBuild );
-        public const string VersionRevision = nameof( VersionRevision );
-        public const string Description = nameof( Description );
-        public const string CommitDateUtc = nameof( CommitDateUtc );
-        public const string CommitDurationInTicks = nameof( CommitDurationInTicks );
-    }
+    private readonly record struct VersionHistoryColumn<T>(SqlColumnBuilderNode Node, SqliteColumnTypeDefinition<T> Type)
+        where T : notnull;
 
-    private readonly record struct VersionHistoryTypes(
-        SqliteColumnTypeDefinition<int> IntType,
-        SqliteColumnTypeDefinition<long> LongType,
-        SqliteColumnTypeDefinition<string> StringType,
-        SqliteColumnTypeDefinition<DateTime> DateTimeType);
+    private readonly record struct VersionHistoryInfo(
+        SqliteTableBuilder Table,
+        VersionHistoryColumn<int> Ordinal,
+        VersionHistoryColumn<int> VersionMajor,
+        VersionHistoryColumn<int> VersionMinor,
+        VersionHistoryColumn<int> VersionBuild,
+        VersionHistoryColumn<int> VersionRevision,
+        VersionHistoryColumn<string> Description,
+        VersionHistoryColumn<DateTime> CommitDateUtc,
+        VersionHistoryColumn<long> CommitDurationInTicks,
+        SqliteNodeInterpreter Interpreter)
+    {
+        public const string OrdinalName = nameof( Ordinal );
+        public const string VersionMajorName = nameof( VersionMajor );
+        public const string VersionMinorName = nameof( VersionMinor );
+        public const string VersionBuildName = nameof( VersionBuild );
+        public const string VersionRevisionName = nameof( VersionRevision );
+        public const string DescriptionName = nameof( Description );
+        public const string CommitDateUtcName = nameof( CommitDateUtc );
+        public const string CommitDurationInTicksName = nameof( CommitDurationInTicks );
+    }
 
     private ref struct SqlStatementExecutor
     {

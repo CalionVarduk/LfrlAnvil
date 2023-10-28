@@ -15,6 +15,10 @@ public interface ISqlColumnTypeDefinition
     string? TryToDbLiteral(object value);
 
     bool TrySetParameter(IDbDataParameter parameter, object value);
+    void SetNullParameter(IDbDataParameter parameter);
+
+    [Pure]
+    IDbDataParameter CreateParameter(string name);
 }
 
 public interface ISqlColumnTypeDefinition<T> : ISqlColumnTypeDefinition

@@ -94,7 +94,8 @@ public class SqlitePrimaryKeyBuilderTests : TestsBase
                       CONSTRAINT ""foo_bar"" PRIMARY KEY (""C"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C"")
-                    SELECT ""C""
+                    SELECT
+                      ""foo_T"".""C""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
@@ -233,7 +234,8 @@ public class SqlitePrimaryKeyBuilderTests : TestsBase
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C"")
-                    SELECT ""C""
+                    SELECT
+                      ""foo_T"".""C""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );

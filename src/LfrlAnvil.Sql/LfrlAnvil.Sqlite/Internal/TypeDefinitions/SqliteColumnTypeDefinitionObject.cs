@@ -37,6 +37,12 @@ internal sealed class SqliteColumnTypeDefinitionObject : SqliteColumnTypeDefinit
             throw new ArgumentException( ExceptionResources.ValueCannotBeUsedInParameter( typeof( object ) ), nameof( value ) );
     }
 
+    public override void SetNullParameter(IDbDataParameter parameter)
+    {
+        parameter.DbType = System.Data.DbType.Object;
+        parameter.Value = DBNull.Value;
+    }
+
     public override bool TrySetParameter(IDbDataParameter parameter, object value)
     {
         var definition = _provider.TryGetByType( value.GetType() );

@@ -22,6 +22,8 @@ public class PersistenceExpressionsTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.DeleteFrom );
             sut.DataSource.Should().BeSameAs( dataSource );
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
             text.Should()
                 .Be(
                     @"DELETE FROM [foo]
@@ -42,6 +44,8 @@ AND WHERE ([bar].[c] : ?) > (""5"" : System.Int32)" );
         {
             sut.NodeType.Should().Be( SqlNodeType.DeleteFrom );
             sut.DataSource.Should().BeSameAs( dataSource );
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
             text.Should()
                 .Be(
                     @"DELETE FROM [foo]
@@ -60,6 +64,8 @@ AND WHERE ([foo].[a] : ?) > (""5"" : System.Int32)" );
         {
             sut.NodeType.Should().Be( SqlNodeType.Truncate );
             sut.Table.Should().BeSameAs( set );
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
             text.Should().Be( "TRUNCATE [foo]" );
         }
     }
@@ -105,6 +111,8 @@ AND WHERE ([foo].[a] : ?) > (""5"" : System.Int32)" );
             sut.NodeType.Should().Be( SqlNodeType.Update );
             sut.DataSource.Should().BeSameAs( dataSource );
             sut.Assignments.ToArray().Should().BeSequentiallyEqualTo( assignments );
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
             text.Should()
                 .Be(
                     @"UPDATE FROM [foo]
@@ -131,6 +139,8 @@ SET
             sut.NodeType.Should().Be( SqlNodeType.Update );
             sut.DataSource.Should().BeSameAs( dataSource );
             sut.Assignments.ToArray().Should().BeEmpty();
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
             text.Should()
                 .Be(
                     @"UPDATE FROM [foo]
@@ -221,6 +231,8 @@ SET
             sut.Source.Should().BeSameAs( query );
             sut.RecordSet.Should().BeSameAs( set );
             sut.DataFields.ToArray().Should().BeSequentiallyEqualTo( dataFields );
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
             text.Should()
                 .Be(
                     @"INSERT INTO [foo] ([foo].[x] : ?, [foo].[y] : ?)
@@ -251,6 +263,8 @@ SELECT a, b FROM bar" );
             sut.Source.Should().BeSameAs( values );
             sut.RecordSet.Should().BeSameAs( set );
             sut.DataFields.ToArray().Should().BeSequentiallyEqualTo( dataFields );
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
             text.Should()
                 .Be(
                     @"INSERT INTO [foo] ([foo].[x] : ?, [foo].[y] : ?)
@@ -273,6 +287,8 @@ VALUES
             sut.Source.Should().BeSameAs( query );
             sut.RecordSet.Should().BeSameAs( set );
             sut.DataFields.ToArray().Should().BeEmpty();
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
             text.Should()
                 .Be(
                     @"INSERT INTO [foo] AS [qux] ()

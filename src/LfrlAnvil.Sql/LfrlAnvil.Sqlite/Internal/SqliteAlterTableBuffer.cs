@@ -12,7 +12,7 @@ internal sealed class SqliteAlterTableBuffer
 {
     internal readonly Dictionary<ulong, ObjectData> Objects;
     internal readonly Dictionary<ChangeKey, ChangeValue> PropertyChanges;
-    internal readonly HashSet<string> DroppedIndexNames;
+    internal readonly HashSet<SqlSchemaObjectName> DroppedIndexNames;
     internal readonly Dictionary<ulong, SqliteIndexBuilder> CreatedIndexes;
     internal readonly Dictionary<string, SqliteColumnBuilder> DroppedColumnsByName;
     internal readonly Dictionary<ulong, SqliteColumnBuilder> CreatedColumns;
@@ -24,7 +24,7 @@ internal sealed class SqliteAlterTableBuffer
     {
         Objects = new Dictionary<ulong, ObjectData>();
         PropertyChanges = new Dictionary<ChangeKey, ChangeValue>();
-        DroppedIndexNames = new HashSet<string>();
+        DroppedIndexNames = new HashSet<SqlSchemaObjectName>();
         CreatedIndexes = new Dictionary<ulong, SqliteIndexBuilder>();
         DroppedColumnsByName = new Dictionary<string, SqliteColumnBuilder>();
         CreatedColumns = new Dictionary<ulong, SqliteColumnBuilder>();
@@ -51,6 +51,16 @@ internal sealed class SqliteAlterTableBuffer
     internal string? TryGetOldName(ulong objectId)
     {
         var changeKey = new ChangeKey( objectId, SqliteObjectChangeDescriptor.Name );
+        return PropertyChanges.TryGetValue( changeKey, out var change )
+            ? ReinterpretCast.To<string>( change.OldValue )
+            : null;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal string? TryGetOldSchemaName(ulong objectId)
+    {
+        var changeKey = new ChangeKey( objectId, SqliteObjectChangeDescriptor.SchemaName );
         return PropertyChanges.TryGetValue( changeKey, out var change )
             ? ReinterpretCast.To<string>( change.OldValue )
             : null;
@@ -148,8 +158,10 @@ internal sealed class SqliteAlterTableBuffer
                     if ( ContainsPrimaryKeyChange( key.ObjectId ) )
                         continue;
 
-                    var name = TryGetOldName( key.ObjectId ) ?? data.Object.FullName;
-                    DroppedIndexNames.Add( name );
+                    var ix = ReinterpretCast.To<SqliteIndexBuilder>( data.Object );
+                    var oldName = TryGetOldName( key.ObjectId );
+                    var oldSchemaName = TryGetOldSchemaName( key.ObjectId );
+                    DroppedIndexNames.Add( SqlSchemaObjectName.Create( oldSchemaName ?? ix.Table.Schema.Name, oldName ?? ix.Name ) );
                     continue;
                 }
 
@@ -200,19 +212,24 @@ internal sealed class SqliteAlterTableBuffer
             if ( data.Object.Type == SqlObjectType.Index )
             {
                 var ix = ReinterpretCast.To<SqliteIndexBuilder>( data.Object );
+
                 var oldName = key.Descriptor == SqliteObjectChangeDescriptor.Name
                     ? ReinterpretCast.To<string>( value.OldValue )
                     : TryGetOldName( key.ObjectId );
 
+                var oldSchemaName = key.Descriptor == SqliteObjectChangeDescriptor.SchemaName
+                    ? ReinterpretCast.To<string>( value.OldValue )
+                    : TryGetOldSchemaName( key.ObjectId );
+
                 if ( ix.PrimaryKey is not null )
                 {
                     if ( ContainsPrimaryKeyChange( key.ObjectId ) )
-                        DroppedIndexNames.Add( oldName ?? ix.FullName );
+                        DroppedIndexNames.Add( SqlSchemaObjectName.Create( oldSchemaName ?? ix.Table.Schema.Name, oldName ?? ix.Name ) );
 
                     continue;
                 }
 
-                DroppedIndexNames.Add( oldName ?? ix.FullName );
+                DroppedIndexNames.Add( SqlSchemaObjectName.Create( oldSchemaName ?? ix.Table.Schema.Name, oldName ?? ix.Name ) );
                 CreatedIndexes.TryAdd( key.ObjectId, ix );
                 continue;
             }
@@ -238,7 +255,8 @@ internal sealed class SqliteAlterTableBuffer
                 continue;
             }
 
-            if ( data.Object.Type == SqlObjectType.Table && key.Descriptor == SqliteObjectChangeDescriptor.Name )
+            if ( data.Object.Type == SqlObjectType.Table &&
+                key.Descriptor is SqliteObjectChangeDescriptor.Name or SqliteObjectChangeDescriptor.SchemaName )
             {
                 isTableRenamed = true;
                 continue;

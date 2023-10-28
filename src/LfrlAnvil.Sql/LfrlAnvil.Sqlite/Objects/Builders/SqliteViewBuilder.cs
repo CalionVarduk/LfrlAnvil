@@ -91,10 +91,10 @@ public sealed class SqliteViewBuilder : SqliteObjectBuilder, ISqlViewBuilder
         using var buffer = RemoveReferencingViewsIntoBuffer( Database, _referencingViews );
 
         Schema.Objects.ChangeName( this, name );
-        var oldName = FullName;
+        var oldName = Name;
         Name = name;
         UpdateFullName();
-        Database.ChangeTracker.FullNameUpdated( this, oldName );
+        Database.ChangeTracker.NameUpdated( this, oldName );
 
         foreach ( var view in buffer )
             ReinterpretCast.To<SqliteViewBuilder>( view ).Reactivate();
@@ -145,13 +145,12 @@ public sealed class SqliteViewBuilder : SqliteObjectBuilder, ISqlViewBuilder
         Schema.Database.ChangeTracker.ObjectCreated( this );
     }
 
-    internal void OnSchemaNameChange()
+    internal void OnSchemaNameChange(string oldName)
     {
         using var buffer = RemoveReferencingViewsIntoBuffer( Database, _referencingViews );
 
-        var oldName = FullName;
         UpdateFullName();
-        Database.ChangeTracker.FullNameUpdated( this, oldName );
+        Database.ChangeTracker.SchemaNameUpdated( this, oldName );
 
         foreach ( var view in buffer )
             ReinterpretCast.To<SqliteViewBuilder>( view ).Reactivate();

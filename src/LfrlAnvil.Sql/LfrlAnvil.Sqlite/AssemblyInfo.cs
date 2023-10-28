@@ -3,7 +3,7 @@
 [assembly: InternalsVisibleTo( "LfrlAnvil.Core.Tests" )]
 
 // TODO:
-// - Add check constraints? as expression trees <= NEXT NEXT
+// - Add check constraints? as expression trees <= NEXT
 //   ^ similar to index, it's ok to use columns from the table, but not much else
 // - ISqlDatabaseBuilder.AddRawStatement should accept an expression tree (array of, internally will create a batch node) + parameters
 // - Add column script can be handled with ALTER TABLE
@@ -23,13 +23,10 @@
 //   ^ this could be an extension to insert node, rather than sth completely new
 //   ^ this, however, would move the oldest supported version to 3.24.0 (2018-06-04), unless upsert isn't used
 // - Add possibility to register custom view/default-value/index-filter validators in db builders
-// - Add window function nodes <= NEXT
+// - Add window function nodes <= NOW
 // - Add datetime related functions? kind of depends on other sql dialects
 // - Add attach/detach DB nodes
 // - Add optional explicit DB name to table/view record set nodes (cross-DB queries), in SqlSchemaObjectName?
-// - Make DB builder use SQL node tree? This could unify a lot of SQL statement building by moving it all to interpreters <= NOW
-//   ^ it will cause a bit of an overhead, due to having to create a graph and then interpret it
-//   ^ but it happens only once per version, when it's actually applied to the DB, so it should be fine
 // - Add sql node visitor that allows to extract node's type (+ add Type to ViewDataField)
 // - Add statement 'compilers', that can work with ado.net objects and prepare a delegate that reads/changes db data
 //   ^ based on sql tree metadata (from the interpreter context)

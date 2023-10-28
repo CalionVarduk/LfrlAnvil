@@ -256,10 +256,10 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
         SqliteHelpers.AssertName( name );
         Table.Schema.Objects.ChangeName( this, name );
 
-        var oldName = FullName;
+        var oldName = Name;
         Name = name;
         UpdateFullName();
-        Database.ChangeTracker.FullNameUpdated( Table, this, oldName );
+        Database.ChangeTracker.NameUpdated( Table, this, oldName );
     }
 
     private void AssertDropUnique()

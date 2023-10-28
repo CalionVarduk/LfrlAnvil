@@ -179,18 +179,19 @@ public sealed class SqliteSchemaBuilder : SqliteObjectBuilder, ISqlSchemaBuilder
 
         SqliteHelpers.AssertName( name );
         Database.Schemas.ChangeName( this, name );
+        var oldName = Name;
         Name = name;
 
         using ( var buffer = Objects.CopyViewsIntoBuffer() )
         {
             foreach ( var obj in buffer )
-                ReinterpretCast.To<SqliteViewBuilder>( obj ).OnSchemaNameChange();
+                ReinterpretCast.To<SqliteViewBuilder>( obj ).OnSchemaNameChange( oldName );
         }
 
         using ( var buffer = Objects.CopyTablesIntoBuffer() )
         {
             foreach ( var obj in buffer )
-                ReinterpretCast.To<SqliteTableBuilder>( obj ).OnSchemaNameChange();
+                ReinterpretCast.To<SqliteTableBuilder>( obj ).OnSchemaNameChange( oldName );
         }
     }
 

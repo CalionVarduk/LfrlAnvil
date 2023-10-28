@@ -221,42 +221,38 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
             static (t, n) =>
             {
                 t.Schema.Objects.ChangeName( t, n );
-                var oldName = t.FullName;
+                var oldName = t.Name;
                 t.Name = n;
                 t.UpdateFullName();
-                t.Database.ChangeTracker.FullNameUpdated( t, t, oldName );
+                t.Database.ChangeTracker.NameUpdated( t, t, oldName );
             } );
     }
 
-    internal void OnSchemaNameChange()
+    internal void OnSchemaNameChange(string oldName)
     {
         Rename(
             Name,
-            static (t, _) =>
+            (t, _) =>
             {
-                var oldName = t.FullName;
                 t.UpdateFullName();
-                t.Database.ChangeTracker.FullNameUpdated( t, t, oldName );
+                t.Database.ChangeTracker.SchemaNameUpdated( t, t, oldName );
 
                 if ( t.PrimaryKey is not null )
                 {
-                    oldName = t.PrimaryKey.FullName;
                     t.PrimaryKey.UpdateFullName();
-                    t.Database.ChangeTracker.FullNameUpdated( t, t.PrimaryKey, oldName );
+                    t.Database.ChangeTracker.SchemaNameUpdated( t, t.PrimaryKey, oldName );
                 }
 
                 foreach ( var fk in t.ForeignKeys )
                 {
-                    oldName = fk.FullName;
                     fk.UpdateFullName();
-                    t.Database.ChangeTracker.FullNameUpdated( t, fk, oldName );
+                    t.Database.ChangeTracker.SchemaNameUpdated( t, fk, oldName );
                 }
 
                 foreach ( var ix in t.Indexes )
                 {
-                    oldName = ix.FullName;
                     ix.UpdateFullName();
-                    t.Database.ChangeTracker.FullNameUpdated( t, ix, oldName );
+                    t.Database.ChangeTracker.SchemaNameUpdated( t, ix, oldName );
                 }
             } );
     }
