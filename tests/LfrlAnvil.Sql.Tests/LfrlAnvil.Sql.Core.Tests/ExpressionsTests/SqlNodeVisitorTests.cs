@@ -1147,6 +1147,33 @@ public class SqlNodeVisitorTests : TestsBase
     }
 
     [Fact]
+    public void VisitWindowDefinitionTrait_ShouldVisitWindows()
+    {
+        var sut = new VisitorMock();
+        var parameters = new[] { SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) };
+        var windows = new[]
+        {
+            SqlNode.WindowDefinition( "foo", new[] { parameters[0].Asc() } ),
+            SqlNode.WindowDefinition( "bar", new[] { parameters[1].Desc() } )
+        };
+
+        sut.VisitWindowDefinitionTrait( SqlNode.WindowDefinitionTrait( windows ) );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( parameters[0], parameters[1] );
+    }
+
+    [Fact]
+    public void VisitWindowTrait_ShouldVisitDefinition()
+    {
+        var sut = new VisitorMock();
+        var parameter = SqlNode.Parameter( "a" );
+
+        sut.VisitWindowTrait( SqlNode.WindowTrait( SqlNode.WindowDefinition( "foo", new[] { parameter.Asc() } ) ) );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( parameter );
+    }
+
+    [Fact]
     public void VisitOrderBy_ShouldVisitExpression()
     {
         var sut = new VisitorMock();
@@ -1166,6 +1193,29 @@ public class SqlNodeVisitorTests : TestsBase
         sut.VisitCommonTableExpression( query.ToCte( "X" ) );
 
         sut.Nodes.Should().BeSequentiallyEqualTo( query.Parameters.Span[0] );
+    }
+
+    [Fact]
+    public void VisitWindowDefinition_ShouldVisitPartitioningAndOrderingAndFrame()
+    {
+        var sut = new VisitorMock();
+        var parameters = new[] { SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) };
+        var frame = SqlNode.RowsWindowFrame( SqlWindowFrameBoundary.CurrentRow, SqlWindowFrameBoundary.CurrentRow );
+        var window = SqlNode.WindowDefinition( "foo", new SqlExpressionNode[] { parameters[0] }, new[] { parameters[1].Asc() }, frame );
+
+        sut.VisitWindowDefinition( window );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( parameters[0], parameters[1], frame );
+    }
+
+    [Fact]
+    public void VisitWindowFrame_ShouldDoNothing()
+    {
+        var sut = new Visitor();
+        var action = Lambda.Of(
+            () => sut.VisitWindowFrame( SqlNode.RowsWindowFrame( SqlWindowFrameBoundary.CurrentRow, SqlWindowFrameBoundary.CurrentRow ) ) );
+
+        action.Should().NotThrow();
     }
 
     [Fact]
@@ -1623,6 +1673,12 @@ public class SqlNodeVisitorTests : TestsBase
         public override void VisitDistinctTrait(SqlDistinctTraitNode node)
         {
             base.VisitDistinctTrait( node );
+            Nodes.Add( node );
+        }
+
+        public override void VisitWindowFrame(SqlWindowFrameNode node)
+        {
+            base.VisitWindowFrame( node );
             Nodes.Add( node );
         }
 

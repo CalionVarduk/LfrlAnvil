@@ -1572,6 +1572,35 @@ public class SqliteViewSourceValidatorTests : TestsBase
     }
 
     [Fact]
+    public void VisitWindowDefinitionTrait_ShouldVisitWindows()
+    {
+        var node = SqlNode.WindowDefinitionTrait(
+            SqlNode.WindowDefinition( "foo", new[] { SqlNode.Parameter( "a" ).Asc() } ),
+            SqlNode.WindowDefinition( "bar", new[] { SqlNode.Parameter( "b" ).Asc() } ) );
+
+        _sut.VisitWindowDefinitionTrait( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 2 );
+            _sut.ReferencedObjects.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void VisitWindowTrait_ShouldVisitDefinition()
+    {
+        var node = SqlNode.WindowTrait( SqlNode.WindowDefinition( "foo", new[] { SqlNode.Parameter( "a" ).Asc() } ) );
+        _sut.VisitWindowTrait( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 1 );
+            _sut.ReferencedObjects.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
     public void VisitOrderBy_ShouldVisitExpression()
     {
         var node = SqlNode.Parameter( "a" ).Asc();
@@ -1593,6 +1622,37 @@ public class SqliteViewSourceValidatorTests : TestsBase
         using ( new AssertionScope() )
         {
             _sut.GetErrors().Should().HaveCount( 1 );
+            _sut.ReferencedObjects.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void VisitWindowDefinition_ShouldVisitPartitioningAndOrderingAndFrame()
+    {
+        var node = SqlNode.WindowDefinition(
+            "foo",
+            new SqlExpressionNode[] { SqlNode.Parameter( "a" ) },
+            new[] { SqlNode.Parameter( "b" ).Asc() },
+            SqlNode.RowsWindowFrame( SqlWindowFrameBoundary.CurrentRow, SqlWindowFrameBoundary.CurrentRow ) );
+
+        _sut.VisitWindowDefinition( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 2 );
+            _sut.ReferencedObjects.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void VisitWindowFrame_ShouldDoNothing()
+    {
+        var node = SqlNode.RowsWindowFrame( SqlWindowFrameBoundary.CurrentRow, SqlWindowFrameBoundary.CurrentRow );
+        _sut.VisitWindowFrame( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().BeEmpty();
             _sut.ReferencedObjects.Should().BeEmpty();
         }
     }
@@ -1942,13 +2002,13 @@ public class SqliteViewSourceValidatorTests : TestsBase
     private sealed class FunctionMock : SqlFunctionExpressionNode
     {
         public FunctionMock(params SqlExpressionNode[] arguments)
-            : base( SqlFunctionType.Custom, arguments ) { }
+            : base( arguments ) { }
     }
 
     private sealed class AggregateFunctionMock : SqlAggregateFunctionExpressionNode
     {
         public AggregateFunctionMock(SqlExpressionNode[] arguments, Chain<SqlTraitNode> traits)
-            : base( SqlFunctionType.Custom, arguments, traits ) { }
+            : base( arguments, traits ) { }
 
         public override SqlAggregateFunctionExpressionNode AddTrait(SqlTraitNode trait)
         {

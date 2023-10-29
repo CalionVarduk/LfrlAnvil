@@ -159,12 +159,32 @@ internal sealed class SqliteDefaultValueSourceValidator : SqliteSourceNodeValida
         AddForbiddenNode( node );
     }
 
+    public override void VisitWindowDefinitionTrait(SqlWindowDefinitionTraitNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
+    public override void VisitWindowTrait(SqlWindowTraitNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
     public override void VisitOrderBy(SqlOrderByNode node)
     {
         AddForbiddenNode( node );
     }
 
     public override void VisitCommonTableExpression(SqlCommonTableExpressionNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
+    public override void VisitWindowDefinition(SqlWindowDefinitionNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
+    public override void VisitWindowFrame(SqlWindowFrameNode node)
     {
         AddForbiddenNode( node );
     }

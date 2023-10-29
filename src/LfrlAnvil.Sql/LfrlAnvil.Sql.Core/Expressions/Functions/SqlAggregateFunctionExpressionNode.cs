@@ -6,12 +6,16 @@ namespace LfrlAnvil.Sql.Expressions.Functions;
 
 public abstract class SqlAggregateFunctionExpressionNode : SqlExpressionNode
 {
-    protected SqlAggregateFunctionExpressionNode(
+    protected SqlAggregateFunctionExpressionNode(ReadOnlyMemory<SqlExpressionNode> arguments, Chain<SqlTraitNode> traits)
+        : this( SqlFunctionType.Custom, arguments, traits ) { }
+
+    internal SqlAggregateFunctionExpressionNode(
         SqlFunctionType functionType,
         ReadOnlyMemory<SqlExpressionNode> arguments,
         Chain<SqlTraitNode> traits)
         : base( SqlNodeType.AggregateFunctionExpression )
     {
+        Assume.IsDefined( functionType, nameof( functionType ) );
         FunctionType = functionType;
         Arguments = arguments;
         Traits = traits;

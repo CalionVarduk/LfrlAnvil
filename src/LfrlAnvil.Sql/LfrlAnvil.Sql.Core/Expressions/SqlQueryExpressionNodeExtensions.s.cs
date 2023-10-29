@@ -233,6 +233,36 @@ public static class SqlQueryExpressionNodeExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlDataSourceQueryExpressionNode<TDataSourceNode> Window<TDataSourceNode>(
+        this SqlDataSourceQueryExpressionNode<TDataSourceNode> node,
+        Func<TDataSourceNode, IEnumerable<SqlWindowDefinitionNode>> windows)
+        where TDataSourceNode : SqlDataSourceNode
+    {
+        return node.Window( windows( node.DataSource ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlDataSourceQueryExpressionNode<TDataSourceNode> Window<TDataSourceNode>(
+        this SqlDataSourceQueryExpressionNode<TDataSourceNode> node,
+        IEnumerable<SqlWindowDefinitionNode> windows)
+        where TDataSourceNode : SqlDataSourceNode
+    {
+        return node.Window( windows.ToArray() );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlDataSourceQueryExpressionNode<TDataSourceNode> Window<TDataSourceNode>(
+        this SqlDataSourceQueryExpressionNode<TDataSourceNode> node,
+        params SqlWindowDefinitionNode[] windows)
+        where TDataSourceNode : SqlDataSourceNode
+    {
+        return windows.Length == 0 ? node : node.AddTrait( SqlNode.WindowDefinitionTrait( windows ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TQueryExpressionNode OrderBy<TQueryExpressionNode>(
         this TQueryExpressionNode node,
         Func<TQueryExpressionNode, IEnumerable<SqlOrderByNode>> ordering)

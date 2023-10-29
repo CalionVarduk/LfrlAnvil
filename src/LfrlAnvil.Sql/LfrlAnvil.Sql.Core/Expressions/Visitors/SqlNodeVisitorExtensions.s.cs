@@ -299,12 +299,28 @@ public static class SqlNodeVisitorExtensions
                 visitor.VisitCommonTableExpressionTrait( ReinterpretCast.To<SqlCommonTableExpressionTraitNode>( node ) );
                 break;
 
+            case SqlNodeType.WindowDefinitionTrait:
+                visitor.VisitWindowDefinitionTrait( ReinterpretCast.To<SqlWindowDefinitionTraitNode>( node ) );
+                break;
+
+            case SqlNodeType.WindowTrait:
+                visitor.VisitWindowTrait( ReinterpretCast.To<SqlWindowTraitNode>( node ) );
+                break;
+
             case SqlNodeType.OrderBy:
                 visitor.VisitOrderBy( ReinterpretCast.To<SqlOrderByNode>( node ) );
                 break;
 
             case SqlNodeType.CommonTableExpression:
                 visitor.VisitCommonTableExpression( ReinterpretCast.To<SqlCommonTableExpressionNode>( node ) );
+                break;
+
+            case SqlNodeType.WindowDefinition:
+                visitor.VisitWindowDefinition( ReinterpretCast.To<SqlWindowDefinitionNode>( node ) );
+                break;
+
+            case SqlNodeType.WindowFrame:
+                visitor.VisitWindowFrame( ReinterpretCast.To<SqlWindowFrameNode>( node ) );
                 break;
 
             case SqlNodeType.TypeCast:

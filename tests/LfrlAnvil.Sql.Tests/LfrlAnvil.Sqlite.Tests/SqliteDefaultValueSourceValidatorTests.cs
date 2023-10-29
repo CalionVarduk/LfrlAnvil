@@ -897,6 +897,29 @@ public class SqliteDefaultValueSourceValidatorTests : TestsBase
     }
 
     [Fact]
+    public void VisitWindowDefinitionTrait_ShouldRegisterError()
+    {
+        var node = SqlNode.WindowDefinitionTrait(
+            SqlNode.WindowDefinition( "foo", Array.Empty<SqlExpressionNode>(), Array.Empty<SqlOrderByNode>() ),
+            SqlNode.WindowDefinition( "bar", Array.Empty<SqlExpressionNode>(), Array.Empty<SqlOrderByNode>() ) );
+
+        _sut.VisitWindowDefinitionTrait( node );
+
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
+    public void VisitWindowTrait_ShouldRegisterError()
+    {
+        var node = SqlNode.WindowTrait(
+            SqlNode.WindowDefinition( "foo", Array.Empty<SqlExpressionNode>(), Array.Empty<SqlOrderByNode>() ) );
+
+        _sut.VisitWindowTrait( node );
+
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
     public void VisitOrderBy_ShouldRegisterError()
     {
         var node = SqlNode.Literal( 10 ).Asc();
@@ -909,6 +932,22 @@ public class SqliteDefaultValueSourceValidatorTests : TestsBase
     {
         var node = SqlNode.RawQuery( "SELECT * FROM foo" ).ToCte( "bar" );
         _sut.VisitCommonTableExpression( node );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
+    public void VisitWindowDefinition_ShouldRegisterError()
+    {
+        var node = SqlNode.WindowDefinition( "foo", Array.Empty<SqlExpressionNode>(), Array.Empty<SqlOrderByNode>() );
+        _sut.VisitWindowDefinition( node );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
+    public void VisitWindowFrame_ShouldRegisterError()
+    {
+        var node = SqlNode.RowsWindowFrame( SqlWindowFrameBoundary.CurrentRow, SqlWindowFrameBoundary.CurrentRow );
+        _sut.VisitWindowFrame( node );
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 
@@ -1126,13 +1165,13 @@ public class SqliteDefaultValueSourceValidatorTests : TestsBase
     private sealed class FunctionMock : SqlFunctionExpressionNode
     {
         public FunctionMock(params SqlExpressionNode[] arguments)
-            : base( SqlFunctionType.Custom, arguments ) { }
+            : base( arguments ) { }
     }
 
     private sealed class AggregateFunctionMock : SqlAggregateFunctionExpressionNode
     {
         public AggregateFunctionMock(SqlExpressionNode[] arguments, Chain<SqlTraitNode> traits)
-            : base( SqlFunctionType.Custom, arguments, traits ) { }
+            : base( arguments, traits ) { }
 
         public override SqlAggregateFunctionExpressionNode AddTrait(SqlTraitNode trait)
         {

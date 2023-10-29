@@ -378,6 +378,46 @@ public static partial class SqlNode
     }
 
     [Pure]
+    public static SqlWindowDefinitionTraitNode WindowDefinitionTrait(params SqlWindowDefinitionNode[] windows)
+    {
+        return new SqlWindowDefinitionTraitNode( windows );
+    }
+
+    [Pure]
+    public static SqlWindowTraitNode WindowTrait(SqlWindowDefinitionNode definition)
+    {
+        return new SqlWindowTraitNode( definition );
+    }
+
+    [Pure]
+    public static SqlWindowDefinitionNode WindowDefinition(string name, SqlOrderByNode[] ordering, SqlWindowFrameNode? frame = null)
+    {
+        return WindowDefinition( name, Array.Empty<SqlExpressionNode>(), ordering, frame );
+    }
+
+    [Pure]
+    public static SqlWindowDefinitionNode WindowDefinition(
+        string name,
+        SqlExpressionNode[] partitioning,
+        SqlOrderByNode[] ordering,
+        SqlWindowFrameNode? frame = null)
+    {
+        return new SqlWindowDefinitionNode( name, partitioning, ordering, frame );
+    }
+
+    [Pure]
+    public static SqlWindowFrameNode RowsWindowFrame(SqlWindowFrameBoundary start, SqlWindowFrameBoundary end)
+    {
+        return new SqlWindowFrameNode( SqlWindowFrameType.Rows, start, end );
+    }
+
+    [Pure]
+    public static SqlWindowFrameNode RangeWindowFrame(SqlWindowFrameBoundary start, SqlWindowFrameBoundary end)
+    {
+        return new SqlWindowFrameNode( SqlWindowFrameType.Range, start, end );
+    }
+
+    [Pure]
     public static SqlSelectFieldNode Select(SqlExpressionNode expression, string alias)
     {
         return new SqlSelectFieldNode( expression, alias );

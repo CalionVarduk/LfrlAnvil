@@ -11,6 +11,7 @@ public readonly record struct SqlDataSourceTraits(
     SqlConditionNode? Filter,
     Chain<ReadOnlyMemory<SqlExpressionNode>> Aggregations,
     SqlConditionNode? AggregationFilter,
+    Chain<ReadOnlyMemory<SqlWindowDefinitionNode>> Windows,
     Chain<ReadOnlyMemory<SqlOrderByNode>> Ordering,
     SqlExpressionNode? Limit,
     SqlExpressionNode? Offset,

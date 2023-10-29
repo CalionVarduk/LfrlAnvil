@@ -112,6 +112,32 @@ public static class SqlDataSourceNodeExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static TDataSourceNode Window<TDataSourceNode>(
+        this TDataSourceNode node,
+        Func<TDataSourceNode, IEnumerable<SqlWindowDefinitionNode>> windows)
+        where TDataSourceNode : SqlDataSourceNode
+    {
+        return node.Window( windows( node ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static TDataSourceNode Window<TDataSourceNode>(this TDataSourceNode node, IEnumerable<SqlWindowDefinitionNode> windows)
+        where TDataSourceNode : SqlDataSourceNode
+    {
+        return node.Window( windows.ToArray() );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static TDataSourceNode Window<TDataSourceNode>(this TDataSourceNode node, params SqlWindowDefinitionNode[] windows)
+        where TDataSourceNode : SqlDataSourceNode
+    {
+        return windows.Length == 0 ? node : (TDataSourceNode)node.AddTrait( SqlNode.WindowDefinitionTrait( windows ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TDataSourceNode OrderBy<TDataSourceNode>(
         this TDataSourceNode node,
         Func<TDataSourceNode, IEnumerable<SqlOrderByNode>> ordering)

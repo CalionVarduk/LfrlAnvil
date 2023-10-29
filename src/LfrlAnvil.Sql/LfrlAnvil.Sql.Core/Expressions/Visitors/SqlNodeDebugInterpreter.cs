@@ -368,6 +368,12 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
         }
     }
 
+    public override void VisitWindowTrait(SqlWindowTraitNode node)
+    {
+        Context.Sql.Append( "OVER" ).AppendSpace();
+        VisitWindowDefinition( node.Definition );
+    }
+
     public override void VisitCommonTableExpression(SqlCommonTableExpressionNode node)
     {
         using ( Context.TempParentNodeUpdate( node ) )
@@ -753,6 +759,14 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
     protected override bool DoesChildNodeRequireParentheses(SqlNodeBase node)
     {
         return true;
+    }
+
+    protected override void VisitCustomWindowFrame(SqlWindowFrameNode node)
+    {
+        Context.Sql.Append( '{' ).Append( node.GetType().GetDebugString() ).Append( '}' ).AppendSpace().Append( "BETWEEN" ).AppendSpace();
+        AppendWindowFrameBoundary( node.Start );
+        Context.Sql.AppendSpace().Append( "AND" ).AppendSpace();
+        AppendWindowFrameBoundary( node.End );
     }
 
     private void AppendExpressionType(SqlExpressionType? type)

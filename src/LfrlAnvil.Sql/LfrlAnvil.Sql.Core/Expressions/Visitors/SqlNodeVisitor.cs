@@ -550,6 +550,17 @@ public abstract class SqlNodeVisitor : ISqlNodeVisitor
             VisitCommonTableExpression( cte );
     }
 
+    public virtual void VisitWindowDefinitionTrait(SqlWindowDefinitionTraitNode node)
+    {
+        foreach ( var definition in node.Windows )
+            VisitWindowDefinition( definition );
+    }
+
+    public virtual void VisitWindowTrait(SqlWindowTraitNode node)
+    {
+        VisitWindowDefinition( node.Definition );
+    }
+
     public virtual void VisitOrderBy(SqlOrderByNode node)
     {
         this.Visit( node.Expression );
@@ -559,6 +570,20 @@ public abstract class SqlNodeVisitor : ISqlNodeVisitor
     {
         this.Visit( node.Query );
     }
+
+    public virtual void VisitWindowDefinition(SqlWindowDefinitionNode node)
+    {
+        foreach ( var partition in node.Partitioning )
+            this.Visit( partition );
+
+        foreach ( var orderBy in node.Ordering )
+            VisitOrderBy( orderBy );
+
+        if ( node.Frame is not null )
+            VisitWindowFrame( node.Frame );
+    }
+
+    public virtual void VisitWindowFrame(SqlWindowFrameNode node) { }
 
     public virtual void VisitTypeCast(SqlTypeCastExpressionNode node)
     {

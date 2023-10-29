@@ -916,9 +916,10 @@ END" );
         _sut.VisitChild(
             SqlNode.AggregateFunctions.Count( SqlNode.RawExpression( "foo.a" ) )
                 .Distinct()
-                .AndWhere( SqlNode.RawCondition( "foo.a > 10" ) ) );
+                .AndWhere( SqlNode.RawCondition( "foo.a > 10" ) )
+                .Over( SqlNode.WindowDefinition( "wnd", new[] { SqlNode.RawExpression( "foo.a" ).Asc() } ) ) );
 
-        _sut.Context.Sql.ToString().Should().Be( "(COUNT(DISTINCT (foo.a)) FILTER (WHERE foo.a > 10))" );
+        _sut.Context.Sql.ToString().Should().Be( "(COUNT(DISTINCT (foo.a)) FILTER (WHERE foo.a > 10) OVER \"wnd\")" );
     }
 
     [Fact]
@@ -1662,6 +1663,12 @@ LEFT JOIN ""qux"" ON ""qux"".""e"" = ""foo"".""b""" );
         var bar = CreateTable( string.Empty, "bar", "c", "d" ).ToRecordSet( "lorem" );
         var qux = CreateTable( string.Empty, "qux", "e", "f" ).ToRecordSet();
 
+        var wnd1 = SqlNode.WindowDefinition( "wnd1", new SqlExpressionNode[] { foo["a"], qux["e"] }, new[] { foo["b"].Asc() } );
+        var wnd2 = SqlNode.WindowDefinition(
+            "wnd2",
+            new[] { qux["e"].Asc(), qux["f"].Desc() },
+            SqlNode.RowsWindowFrame( SqlWindowFrameBoundary.UnboundedPreceding, SqlWindowFrameBoundary.CurrentRow ) );
+
         var query = foo
             .Join( bar.InnerOn( bar["c"] == foo["a"] ), qux.LeftOn( qux["e"] == foo["b"] ) )
             .With( cba, zyx )
@@ -1673,12 +1680,14 @@ LEFT JOIN ""qux"" ON ""qux"".""e"" = ""foo"".""b""" );
             .GroupBy( s => new[] { s["lorem"]["c"] } )
             .AndHaving( s => s["foo"]["b"] < SqlNode.Literal( 100 ) )
             .OrHaving( s => s["lorem"]["c"].IsBetween( SqlNode.Literal( 0 ), SqlNode.Literal( 75 ) ) )
+            .Window( wnd1, wnd2 )
             .Select(
                 s => new SqlSelectNode[]
                 {
                     s["foo"]["b"].As( "x" ),
                     s["lorem"]["c"].AsSelf(),
-                    SqlNode.AggregateFunctions.Count( s.GetAll().ToExpression() ).As( "v" )
+                    SqlNode.AggregateFunctions.Count( s.GetAll().ToExpression() ).As( "v" ),
+                    SqlNode.AggregateFunctions.Sum( s["foo"]["a"] ).Over( wnd1 ).As( "w" )
                 } )
             .OrderBy( s => new[] { s.DataSource["foo"]["b"].Asc() } )
             .OrderBy( s => new[] { s.DataSource["lorem"]["c"].Desc() } )
@@ -1699,7 +1708,8 @@ LEFT JOIN ""qux"" ON ""qux"".""e"" = ""foo"".""b""" );
 SELECT DISTINCT
   ""foo"".""b"" AS ""x"",
   ""lorem"".""c"",
-  COUNT(*) AS ""v""
+  COUNT(*) AS ""v"",
+  (SUM(""foo"".""a"") OVER ""wnd1"") AS ""w""
 FROM ""foo""
 INNER JOIN ""bar"" AS ""lorem"" ON ""lorem"".""c"" = ""foo"".""a""
 LEFT JOIN ""qux"" ON ""qux"".""e"" = ""foo"".""b""
@@ -1710,6 +1720,8 @@ WHERE (""qux"".""f"" > 50) AND (""foo"".""a"" IN (
   ))
 GROUP BY ""foo"".""b"", ""lorem"".""c""
 HAVING (""foo"".""b"" < 100) OR (""lorem"".""c"" BETWEEN 0 AND 75)
+WINDOW ""wnd1"" AS (PARTITION BY ""foo"".""a"", ""qux"".""e"" ORDER BY ""foo"".""b"" ASC),
+  ""wnd2"" AS (ORDER BY ""qux"".""e"" ASC, ""qux"".""f"" DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
 ORDER BY ""foo"".""b"" ASC, ""lorem"".""c"" DESC
 LIMIT 50 OFFSET 100" );
     }
@@ -1955,6 +1967,32 @@ LIMIT 50 OFFSET 75" );
     }
 
     [Fact]
+    public void Visit_ShouldInterpretWindowDefinitionTrait()
+    {
+        _sut.Visit(
+            SqlNode.WindowDefinitionTrait(
+                SqlNode.WindowDefinition( "foo", new[] { SqlNode.RawExpression( "qux.a" ).Asc() } ),
+                SqlNode.WindowDefinition(
+                    "bar",
+                    new SqlExpressionNode[] { SqlNode.RawExpression( "qux.a" ) },
+                    new[] { SqlNode.RawExpression( "qux.b" ).Desc() },
+                    SqlNode.RowsWindowFrame( SqlWindowFrameBoundary.UnboundedPreceding, SqlWindowFrameBoundary.CurrentRow ) ) ) );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                @"WINDOW ""foo"" AS (ORDER BY (qux.a) ASC),
+  ""bar"" AS (PARTITION BY (qux.a) ORDER BY (qux.b) DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretWindowTrait()
+    {
+        _sut.Visit( SqlNode.WindowTrait( SqlNode.WindowDefinition( "foo", new[] { SqlNode.RawExpression( "qux.a" ).Asc() } ) ) );
+        _sut.Context.Sql.ToString().Should().Be( "OVER \"foo\"" );
+    }
+
+    [Fact]
     public void Visit_ShouldInterpretOrderBy()
     {
         _sut.Visit( SqlNode.RawExpression( "foo.a" ).Asc() );
@@ -1981,6 +2019,45 @@ LIMIT 50 OFFSET 75" );
     SELECT * FROM A WHERE A.depth < 10
   )
 )" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretWindowDefinition()
+    {
+        _sut.Visit(
+            SqlNode.WindowDefinition(
+                "foo",
+                new SqlExpressionNode[] { SqlNode.RawExpression( "qux.a" ), SqlNode.RawExpression( "qux.b" ) },
+                new[] { SqlNode.RawExpression( "qux.c" ).Asc(), SqlNode.RawExpression( "qux.d" ).Desc() },
+                SqlNode.RowsWindowFrame( SqlWindowFrameBoundary.CurrentRow, SqlWindowFrameBoundary.UnboundedFollowing ) ) );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                "\"foo\" AS (PARTITION BY (qux.a), (qux.b) ORDER BY (qux.c) ASC, (qux.d) DESC ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING)" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretWindowFrame()
+    {
+        _sut.Visit(
+            SqlNode.RangeWindowFrame(
+                SqlWindowFrameBoundary.Preceding( SqlNode.Literal( 3 ) ),
+                SqlWindowFrameBoundary.Following( SqlNode.Literal( 5 ) ) ) );
+
+        _sut.Context.Sql.ToString().Should().Be( "RANGE BETWEEN 3 PRECEDING AND 5 FOLLOWING" );
+    }
+
+    [Fact]
+    public void Visit_ShouldThrowUnrecognizedSqlNodeException_WhenNodeIsCustomWindowFrame()
+    {
+        var node = new WindowFrameMock();
+
+        var action = Lambda.Of( () => _sut.Visit( node ) );
+
+        action.Should()
+            .ThrowExactly<UnrecognizedSqlNodeException>()
+            .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, _sut ) );
     }
 
     [Fact]
@@ -2078,6 +2155,7 @@ SELECT a, b FROM foo" );
     {
         var foo = CreateTable( string.Empty, "foo", "a", "b" ).ToRecordSet();
         var bar = CreateTable( string.Empty, "bar", "c", "d" ).ToRecordSet();
+        var wnd = SqlNode.WindowDefinition( "wnd", new[] { foo["a"].Asc() } );
 
         var query = foo
             .Join( bar.InnerOn( bar["c"] == foo["a"] ) )
@@ -2086,11 +2164,12 @@ SELECT a, b FROM foo" );
             .AndWhere( s => s["bar"]["c"].InQuery( SqlNode.RawQuery( "SELECT cba.c FROM cba" ) ) )
             .GroupBy( s => new[] { s["foo"]["b"] } )
             .AndHaving( s => s["foo"]["b"] < SqlNode.Literal( 100 ) )
+            .Window( wnd )
             .Select(
                 s => new SqlSelectNode[]
                 {
                     s["foo"]["b"].As( "a" ),
-                    SqlNode.AggregateFunctions.Count( s.GetAll().ToExpression() ).As( "b" )
+                    SqlNode.AggregateFunctions.Count( s.GetAll().ToExpression() ).Over( wnd ).As( "b" )
                 } )
             .OrderBy( s => new[] { s.DataSource["foo"]["b"].Asc() } )
             .Limit( SqlNode.Literal( 50 ) )
@@ -2107,7 +2186,7 @@ SELECT a, b FROM foo" );
 INSERT INTO qux (""a"", ""b"")
 SELECT DISTINCT
   ""foo"".""b"" AS ""a"",
-  COUNT(*) AS ""b""
+  (COUNT(*) OVER ""wnd"") AS ""b""
 FROM ""foo""
 INNER JOIN ""bar"" ON ""bar"".""c"" = ""foo"".""a""
 WHERE ""bar"".""c"" IN (
@@ -2115,6 +2194,7 @@ WHERE ""bar"".""c"" IN (
 )
 GROUP BY ""foo"".""b""
 HAVING ""foo"".""b"" < 100
+WINDOW ""wnd"" AS (ORDER BY ""foo"".""a"" ASC)
 ORDER BY ""foo"".""b"" ASC
 LIMIT 50 OFFSET 100" );
     }
@@ -2196,6 +2276,7 @@ WHERE foo.""a"" IN (
             .AndWhere( s => s["bar"]["c"].InQuery( SqlNode.RawQuery( "SELECT cba.c FROM cba" ) ) )
             .GroupBy( s => new[] { s["f"]["b"] } )
             .AndHaving( s => s["f"]["b"] < SqlNode.Literal( 100 ) )
+            .Window( s => new[] { SqlNode.WindowDefinition( "wnd", new[] { s["f"]["b"].Asc() } ) } )
             .OrderBy( s => new[] { s["f"]["b"].Asc() } )
             .Limit( SqlNode.Literal( 50 ) )
             .Offset( SqlNode.Literal( 100 ) );
@@ -2222,6 +2303,7 @@ WHERE ""foo"".""a"" IN (
   )
   GROUP BY ""f"".""b""
   HAVING ""f"".""b"" < 100
+  WINDOW ""wnd"" AS (ORDER BY ""f"".""b"" ASC)
   ORDER BY ""f"".""b"" ASC
   LIMIT 50 OFFSET 100
 )" );
@@ -2899,6 +2981,7 @@ WHERE foo.""a"" IN (
             .AndWhere( s => s["bar"]["c"].InQuery( SqlNode.RawQuery( "SELECT cba.c FROM cba" ) ) )
             .GroupBy( s => new[] { s["f"]["b"] } )
             .AndHaving( s => s["f"]["b"] < SqlNode.Literal( 100 ) )
+            .Window( s => new[] { SqlNode.WindowDefinition( "wnd", new[] { s["f"]["b"].Asc() } ) } )
             .OrderBy( s => new[] { s["f"]["b"].Asc() } )
             .Limit( SqlNode.Literal( 50 ) )
             .Offset( SqlNode.Literal( 100 ) );
@@ -2921,6 +3004,7 @@ WHERE ""foo"".""a"" IN (
   )
   GROUP BY ""f"".""b""
   HAVING ""f"".""b"" < 100
+  WINDOW ""wnd"" AS (ORDER BY ""f"".""b"" ASC)
   ORDER BY ""f"".""b"" ASC
   LIMIT 50 OFFSET 100
 )" );
@@ -3815,13 +3899,13 @@ BEGIN" );
     private sealed class FunctionMock : SqlFunctionExpressionNode
     {
         public FunctionMock()
-            : base( SqlFunctionType.Custom, Array.Empty<SqlExpressionNode>() ) { }
+            : base( Array.Empty<SqlExpressionNode>() ) { }
     }
 
     private sealed class AggregateFunctionMock : SqlAggregateFunctionExpressionNode
     {
         public AggregateFunctionMock()
-            : base( SqlFunctionType.Custom, ReadOnlyMemory<SqlExpressionNode>.Empty, Chain<SqlTraitNode>.Empty ) { }
+            : base( ReadOnlyMemory<SqlExpressionNode>.Empty, Chain<SqlTraitNode>.Empty ) { }
 
         public override SqlAggregateFunctionExpressionNode AddTrait(SqlTraitNode trait)
         {
@@ -3833,5 +3917,11 @@ BEGIN" );
     {
         public NodeMock()
             : base( SqlNodeType.Unknown ) { }
+    }
+
+    private sealed class WindowFrameMock : SqlWindowFrameNode
+    {
+        public WindowFrameMock()
+            : base( SqlWindowFrameBoundary.UnboundedPreceding, SqlWindowFrameBoundary.UnboundedFollowing ) { }
     }
 }

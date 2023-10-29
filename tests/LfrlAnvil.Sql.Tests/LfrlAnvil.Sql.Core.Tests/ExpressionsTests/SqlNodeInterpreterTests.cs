@@ -40,10 +40,13 @@ public class SqlNodeInterpreterTests : TestsBase
         var cte2 = SqlNode.OrdinalCommonTableExpression( SqlNode.RawQuery( "SELECT * FROM Y" ), "Z2" );
         var aggregation1 = SqlNode.RawExpression( "B" );
         var aggregation2 = SqlNode.RawExpression( "D" );
+        var windows1 = SqlNode.WindowDefinition( "W1", new[] { SqlNode.RawExpression( "C1" ).Asc() } );
         var ordering1 = SqlNode.OrderByAsc( SqlNode.RawExpression( "A" ) );
         var ordering2 = SqlNode.OrderByDesc( SqlNode.RawExpression( "C" ) );
+        var windows2 = SqlNode.WindowDefinition( "W2", new[] { SqlNode.RawExpression( "C2" ).Asc() } );
         var limit = SqlNode.Literal( 11 );
         var offset = SqlNode.Literal( 21 );
+        var over = SqlNode.WindowTrait( windows1 );
         var custom1 = new TraitMock();
         var custom2 = new TraitMock();
 
@@ -60,13 +63,16 @@ public class SqlNodeInterpreterTests : TestsBase
                 SqlNode.AggregationFilterTrait( SqlNode.RawCondition( "D > 16" ), isConjunction: true ),
                 SqlNode.FilterTrait( SqlNode.RawCondition( "E > 12" ), isConjunction: false ),
                 SqlNode.AggregationFilterTrait( SqlNode.RawCondition( "D < 27" ), isConjunction: false ),
+                SqlNode.WindowDefinitionTrait( windows1 ),
                 SqlNode.SortTrait( ordering1 ),
                 SqlNode.LimitTrait( SqlNode.Literal( 10 ) ),
                 SqlNode.SortTrait( ordering2 ),
+                SqlNode.WindowDefinitionTrait( windows2 ),
                 SqlNode.CommonTableExpressionTrait( cte1 ),
                 custom2,
                 SqlNode.OffsetTrait( SqlNode.Literal( 20 ) ),
                 SqlNode.LimitTrait( limit ),
+                over,
                 SqlNode.CommonTableExpressionTrait( cte2 ),
                 SqlNode.OffsetTrait( offset )
             } );
@@ -84,14 +90,18 @@ public class SqlNodeInterpreterTests : TestsBase
             result.Aggregations.ElementAtOrDefault( 0 ).ToArray().Should().BeSequentiallyEqualTo( aggregation1 );
             result.Aggregations.ElementAtOrDefault( 1 ).ToArray().Should().BeSequentiallyEqualTo( aggregation2 );
             (result.AggregationFilter?.ToString()).Should().Be( "((B > 15) AND (D > 16)) OR (D < 27)" );
+            result.Windows.Should().HaveCount( 2 );
+            result.Windows.ElementAtOrDefault( 0 ).ToArray().Should().BeSequentiallyEqualTo( windows1 );
+            result.Windows.ElementAtOrDefault( 1 ).ToArray().Should().BeSequentiallyEqualTo( windows2 );
             result.Ordering.Should().HaveCount( 2 );
             result.Ordering.ElementAtOrDefault( 0 ).ToArray().Should().BeSequentiallyEqualTo( ordering1 );
             result.Ordering.ElementAtOrDefault( 1 ).ToArray().Should().BeSequentiallyEqualTo( ordering2 );
             result.Limit.Should().BeSameAs( limit );
             result.Offset.Should().BeSameAs( offset );
-            result.Custom.Should().HaveCount( 2 );
+            result.Custom.Should().HaveCount( 3 );
             result.Custom.ElementAtOrDefault( 0 ).Should().BeSameAs( custom1 );
             result.Custom.ElementAtOrDefault( 1 ).Should().BeSameAs( custom2 );
+            result.Custom.ElementAtOrDefault( 2 ).Should().BeSameAs( over );
         }
     }
 
@@ -100,6 +110,7 @@ public class SqlNodeInterpreterTests : TestsBase
     {
         var cte1 = SqlNode.OrdinalCommonTableExpression( SqlNode.RawQuery( "SELECT * FROM X" ), "Z1" );
         var cte2 = SqlNode.OrdinalCommonTableExpression( SqlNode.RawQuery( "SELECT * FROM Y" ), "Z2" );
+        var windows = SqlNode.WindowDefinitionTrait( SqlNode.WindowDefinition( "W1", new[] { SqlNode.RawExpression( "C1" ).Asc() } ) );
         var ordering1 = SqlNode.OrderByAsc( SqlNode.RawExpression( "A" ) );
         var ordering2 = SqlNode.OrderByDesc( SqlNode.RawExpression( "C" ) );
         var limit = SqlNode.Literal( 11 );
@@ -108,6 +119,7 @@ public class SqlNodeInterpreterTests : TestsBase
         var filter = SqlNode.FilterTrait( SqlNode.RawCondition( "A > 10" ), isConjunction: true );
         var aggregation = SqlNode.AggregationTrait( SqlNode.RawExpression( "B" ) );
         var aggregationFilter = SqlNode.AggregationFilterTrait( SqlNode.RawCondition( "B > 15" ), isConjunction: true );
+        var over = SqlNode.WindowTrait( windows.Windows.Span[0] );
         var custom = new TraitMock();
 
         var traits = Chain.Create<SqlTraitNode>(
@@ -119,6 +131,8 @@ public class SqlNodeInterpreterTests : TestsBase
                 aggregationFilter,
                 SqlNode.SortTrait( ordering1 ),
                 SqlNode.LimitTrait( SqlNode.Literal( 10 ) ),
+                windows,
+                over,
                 SqlNode.SortTrait( ordering2 ),
                 SqlNode.CommonTableExpressionTrait( cte1 ),
                 custom,
@@ -140,12 +154,14 @@ public class SqlNodeInterpreterTests : TestsBase
             result.Ordering.ElementAtOrDefault( 1 ).ToArray().Should().BeSequentiallyEqualTo( ordering2 );
             result.Limit.Should().BeSameAs( limit );
             result.Offset.Should().BeSameAs( offset );
-            result.Custom.Should().HaveCount( 5 );
+            result.Custom.Should().HaveCount( 7 );
             result.Custom.ElementAtOrDefault( 0 ).Should().BeSameAs( distinct );
             result.Custom.ElementAtOrDefault( 1 ).Should().BeSameAs( filter );
             result.Custom.ElementAtOrDefault( 2 ).Should().BeSameAs( aggregation );
             result.Custom.ElementAtOrDefault( 3 ).Should().BeSameAs( aggregationFilter );
-            result.Custom.ElementAtOrDefault( 4 ).Should().BeSameAs( custom );
+            result.Custom.ElementAtOrDefault( 4 ).Should().BeSameAs( windows );
+            result.Custom.ElementAtOrDefault( 5 ).Should().BeSameAs( over );
+            result.Custom.ElementAtOrDefault( 6 ).Should().BeSameAs( custom );
         }
     }
 
@@ -157,6 +173,8 @@ public class SqlNodeInterpreterTests : TestsBase
         var offset = SqlNode.OffsetTrait( SqlNode.Literal( 20 ) );
         var aggregation = SqlNode.AggregationTrait( SqlNode.RawExpression( "B" ) );
         var aggregationFilter = SqlNode.AggregationFilterTrait( SqlNode.RawCondition( "B > 15" ), isConjunction: true );
+        var windows = SqlNode.WindowDefinitionTrait( SqlNode.WindowDefinition( "W", new[] { SqlNode.RawExpression( "C" ).Asc() } ) );
+        var over = SqlNode.WindowTrait( windows.Windows.Span[0] );
         var sort = SqlNode.SortTrait( SqlNode.OrderByAsc( SqlNode.RawExpression( "A" ) ) );
         var custom = new TraitMock();
 
@@ -168,6 +186,8 @@ public class SqlNodeInterpreterTests : TestsBase
                 aggregation,
                 aggregationFilter,
                 SqlNode.FilterTrait( SqlNode.RawCondition( "C > 11" ), isConjunction: true ),
+                over,
+                windows,
                 sort,
                 limit,
                 cte,
@@ -182,14 +202,16 @@ public class SqlNodeInterpreterTests : TestsBase
         {
             result.Distinct.Should().NotBeNull();
             (result.Filter?.ToString()).Should().Be( "((A > 10) AND (C > 11)) OR (E > 12)" );
-            result.Custom.Should().HaveCount( 7 );
+            (result.Window?.ToString()).Should().Be( "[W] AS (ORDER BY (C) ASC)" );
+            result.Custom.Should().HaveCount( 8 );
             result.Custom.ElementAtOrDefault( 0 ).Should().BeSameAs( aggregation );
             result.Custom.ElementAtOrDefault( 1 ).Should().BeSameAs( aggregationFilter );
-            result.Custom.ElementAtOrDefault( 2 ).Should().BeSameAs( sort );
-            result.Custom.ElementAtOrDefault( 3 ).Should().BeSameAs( limit );
-            result.Custom.ElementAtOrDefault( 4 ).Should().BeSameAs( cte );
-            result.Custom.ElementAtOrDefault( 5 ).Should().BeSameAs( custom );
-            result.Custom.ElementAtOrDefault( 6 ).Should().BeSameAs( offset );
+            result.Custom.ElementAtOrDefault( 2 ).Should().BeSameAs( windows );
+            result.Custom.ElementAtOrDefault( 3 ).Should().BeSameAs( sort );
+            result.Custom.ElementAtOrDefault( 4 ).Should().BeSameAs( limit );
+            result.Custom.ElementAtOrDefault( 5 ).Should().BeSameAs( cte );
+            result.Custom.ElementAtOrDefault( 6 ).Should().BeSameAs( custom );
+            result.Custom.ElementAtOrDefault( 7 ).Should().BeSameAs( offset );
         }
     }
 

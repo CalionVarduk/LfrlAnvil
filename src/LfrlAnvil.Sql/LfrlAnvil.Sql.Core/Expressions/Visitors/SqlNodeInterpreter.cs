@@ -703,6 +703,35 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         }
     }
 
+    public virtual void VisitWindowDefinitionTrait(SqlWindowDefinitionTraitNode node)
+    {
+        using ( Context.TempParentNodeUpdate( node ) )
+        {
+            Context.Sql.Append( "WINDOW" );
+            if ( node.Windows.Length == 0 )
+                return;
+
+            Context.Sql.AppendSpace();
+            using ( Context.TempIndentIncrease() )
+            {
+                foreach ( var definition in node.Windows )
+                {
+                    VisitWindowDefinition( definition );
+                    Context.Sql.AppendComma();
+                    Context.AppendIndent();
+                }
+
+                Context.Sql.ShrinkBy( Environment.NewLine.Length + Context.Indent + 1 );
+            }
+        }
+    }
+
+    public virtual void VisitWindowTrait(SqlWindowTraitNode node)
+    {
+        Context.Sql.Append( "OVER" ).AppendSpace();
+        AppendDelimitedName( node.Definition.Name );
+    }
+
     public virtual void VisitOrderBy(SqlOrderByNode node)
     {
         using ( Context.TempParentNodeUpdate( node ) )
@@ -713,6 +742,121 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     }
 
     public abstract void VisitCommonTableExpression(SqlCommonTableExpressionNode node);
+
+    public virtual void VisitWindowDefinition(SqlWindowDefinitionNode node)
+    {
+        using ( Context.TempParentNodeUpdate( node ) )
+        {
+            AppendDelimitedName( node.Name );
+            Context.Sql.AppendSpace().Append( "AS" ).AppendSpace().Append( '(' );
+
+            if ( node.Partitioning.Length > 0 )
+            {
+                Context.Sql.Append( "PARTITION" ).AppendSpace().Append( "BY" ).AppendSpace();
+                foreach ( var partition in node.Partitioning )
+                {
+                    VisitChild( partition );
+                    Context.Sql.AppendComma().AppendSpace();
+                }
+
+                Context.Sql.ShrinkBy( 2 );
+            }
+
+            if ( node.Ordering.Length > 0 )
+            {
+                if ( node.Partitioning.Length > 0 )
+                    Context.Sql.AppendSpace();
+
+                Context.Sql.Append( "ORDER" ).AppendSpace().Append( "BY" ).AppendSpace();
+                foreach ( var orderBy in node.Ordering )
+                {
+                    VisitOrderBy( orderBy );
+                    Context.Sql.AppendComma().AppendSpace();
+                }
+
+                Context.Sql.ShrinkBy( 2 );
+            }
+
+            if ( node.Frame is not null )
+            {
+                if ( node.Partitioning.Length > 0 || node.Ordering.Length > 0 )
+                    Context.Sql.AppendSpace();
+
+                VisitWindowFrame( node.Frame );
+            }
+
+            Context.Sql.Append( ')' );
+        }
+    }
+
+    public void VisitWindowFrame(SqlWindowFrameNode node)
+    {
+        using ( Context.TempParentNodeUpdate( node ) )
+        {
+            switch ( node.FrameType )
+            {
+                case SqlWindowFrameType.Rows:
+                    VisitRowsWindowFrame( node );
+                    break;
+                case SqlWindowFrameType.Range:
+                    VisitRangeWindowFrame( node );
+                    break;
+                default:
+                    VisitCustomWindowFrame( node );
+                    break;
+            }
+        }
+    }
+
+    protected virtual void VisitRowsWindowFrame(SqlWindowFrameNode node)
+    {
+        Context.Sql.Append( "ROWS" ).AppendSpace().Append( "BETWEEN" ).AppendSpace();
+        AppendWindowFrameBoundary( node.Start );
+        Context.Sql.AppendSpace().Append( "AND" ).AppendSpace();
+        AppendWindowFrameBoundary( node.End );
+    }
+
+    protected virtual void VisitRangeWindowFrame(SqlWindowFrameNode node)
+    {
+        Context.Sql.Append( "RANGE" ).AppendSpace().Append( "BETWEEN" ).AppendSpace();
+        AppendWindowFrameBoundary( node.Start );
+        Context.Sql.AppendSpace().Append( "AND" ).AppendSpace();
+        AppendWindowFrameBoundary( node.End );
+    }
+
+    protected virtual void AppendWindowFrameBoundary(SqlWindowFrameBoundary boundary)
+    {
+        switch ( boundary.Direction )
+        {
+            case SqlWindowFrameBoundaryDirection.Preceding:
+                if ( boundary.Expression is null )
+                    Context.Sql.Append( "UNBOUNDED" );
+                else
+                    VisitChild( boundary.Expression );
+
+                Context.Sql.AppendSpace().Append( "PRECEDING" );
+                break;
+
+            case SqlWindowFrameBoundaryDirection.Following:
+                if ( boundary.Expression is null )
+                    Context.Sql.Append( "UNBOUNDED" );
+                else
+                    VisitChild( boundary.Expression );
+
+                Context.Sql.AppendSpace().Append( "FOLLOWING" );
+                break;
+
+            default:
+                Context.Sql.Append( "CURRENT" ).AppendSpace().Append( "ROW" );
+                break;
+        }
+    }
+
+    protected virtual void VisitCustomWindowFrame(SqlWindowFrameNode node)
+    {
+        throw new UnrecognizedSqlNodeException( this, node );
+    }
+
     public abstract void VisitTypeCast(SqlTypeCastExpressionNode node);
 
     public virtual void VisitValues(SqlValuesNode node)
@@ -906,6 +1050,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         var filter = @base.Filter;
         var aggregations = @base.Aggregations.ToExtendable();
         var aggregationFilter = @base.AggregationFilter;
+        var windows = @base.Windows.ToExtendable();
         var ordering = @base.Ordering.ToExtendable();
         var limit = @base.Limit;
         var offset = @base.Offset;
@@ -978,6 +1123,14 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
                     break;
                 }
+                case SqlNodeType.WindowDefinitionTrait:
+                {
+                    var windowTrait = ReinterpretCast.To<SqlWindowDefinitionTraitNode>( trait );
+                    if ( windowTrait.Windows.Length > 0 )
+                        windows = windows.Extend( windowTrait.Windows );
+
+                    break;
+                }
                 default:
                 {
                     custom = custom.Extend( trait );
@@ -992,6 +1145,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             filter,
             aggregations,
             aggregationFilter,
+            windows,
             ordering,
             limit,
             offset,
@@ -1067,6 +1221,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     {
         var distinct = @base.Distinct;
         var filter = @base.Filter;
+        var window = @base.Window;
         var custom = @base.Custom.ToExtendable();
 
         foreach ( var trait in traits )
@@ -1090,6 +1245,11 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
                     break;
                 }
+                case SqlNodeType.WindowTrait:
+                {
+                    window = ReinterpretCast.To<SqlWindowTraitNode>( trait ).Definition;
+                    break;
+                }
                 default:
                 {
                     custom = custom.Extend( trait );
@@ -1098,7 +1258,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             }
         }
 
-        return new SqlAggregateFunctionTraits( distinct, filter, custom );
+        return new SqlAggregateFunctionTraits( distinct, filter, window, custom );
     }
 
     [Pure]
@@ -1240,6 +1400,28 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
         Context.AppendIndent().Append( "HAVING" ).AppendSpace();
         this.Visit( filter );
+    }
+
+    protected void VisitOptionalWindowRange(Chain<ReadOnlyMemory<SqlWindowDefinitionNode>> windows)
+    {
+        if ( windows.Count == 0 )
+            return;
+
+        Context.AppendIndent().Append( "WINDOW" ).AppendSpace();
+        using ( Context.TempIndentIncrease() )
+        {
+            foreach ( var windowRange in windows )
+            {
+                foreach ( var window in windowRange )
+                {
+                    VisitWindowDefinition( window );
+                    Context.Sql.AppendComma();
+                    Context.AppendIndent();
+                }
+            }
+
+            Context.Sql.ShrinkBy( Environment.NewLine.Length + Context.Indent + 1 );
+        }
     }
 
     protected void VisitOptionalOrderingRange(Chain<ReadOnlyMemory<SqlOrderByNode>> ordering)

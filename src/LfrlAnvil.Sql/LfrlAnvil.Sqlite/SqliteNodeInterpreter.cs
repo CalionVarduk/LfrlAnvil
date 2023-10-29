@@ -312,6 +312,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             VisitOptionalFilterCondition( traits.Filter );
             VisitOptionalAggregationRange( traits.Aggregations );
             VisitOptionalAggregationFilterCondition( traits.AggregationFilter );
+            VisitOptionalWindowRange( traits.Windows );
             VisitOptionalOrderingRange( traits.Ordering );
             VisitOptionalLimitAndOffsetExpressions( traits.Limit, traits.Offset );
         }
@@ -403,6 +404,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
                     VisitOptionalFilterCondition( traits.Filter );
                     VisitOptionalAggregationRange( traits.Aggregations );
                     VisitOptionalAggregationFilterCondition( traits.AggregationFilter );
+                    VisitOptionalWindowRange( traits.Windows );
                     VisitOptionalOrderingRange( traits.Ordering );
                     VisitOptionalLimitAndOffsetExpressions( traits.Limit, traits.Offset );
                 }
@@ -898,6 +900,12 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
                 this.Visit( traits.Filter );
                 Context.Sql.Append( ')' );
             }
+
+            if ( traits.Window is not null )
+            {
+                Context.Sql.AppendSpace().Append( "OVER" ).AppendSpace();
+                AppendDelimitedName( traits.Window.Name );
+            }
         }
     }
 
@@ -982,6 +990,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             traits.Distinct is null &&
             traits.Aggregations.Count == 0 &&
             traits.AggregationFilter is null &&
+            traits.Windows.Count == 0 &&
             traits.Ordering.Count == 0 &&
             traits.Limit is null &&
             traits.Offset is null &&
@@ -1016,6 +1025,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
                 VisitOptionalFilterCondition( traits.Filter );
                 VisitOptionalAggregationRange( traits.Aggregations );
                 VisitOptionalAggregationFilterCondition( traits.AggregationFilter );
+                VisitOptionalWindowRange( traits.Windows );
                 VisitOptionalOrderingRange( traits.Ordering );
                 VisitOptionalLimitAndOffsetExpressions( traits.Limit, traits.Offset );
             }
@@ -1054,6 +1064,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
                 VisitOptionalAggregationRange( traits.Aggregations );
                 VisitOptionalAggregationFilterCondition( traits.AggregationFilter );
+                VisitOptionalWindowRange( traits.Windows );
                 VisitOptionalOrderingRange( traits.Ordering );
                 VisitOptionalLimitAndOffsetExpressions( traits.Limit, traits.Offset );
             }
@@ -1117,6 +1128,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             VisitOptionalFilterCondition( traits.Filter );
             VisitOptionalAggregationRange( traits.Aggregations );
             VisitOptionalAggregationFilterCondition( traits.AggregationFilter );
+            VisitOptionalWindowRange( traits.Windows );
             VisitOptionalOrderingRange( traits.Ordering );
             VisitOptionalLimitAndOffsetExpressions( traits.Limit, traits.Offset );
         }

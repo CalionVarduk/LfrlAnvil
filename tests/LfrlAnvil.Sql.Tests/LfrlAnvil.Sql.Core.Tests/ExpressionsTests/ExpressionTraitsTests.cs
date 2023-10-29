@@ -118,7 +118,7 @@ public class ExpressionTraitsTests : TestsBase
     }
 
     [Fact]
-    public void SortTrait_ShouldCreateSortQueryTraitNode()
+    public void SortTrait_ShouldCreateSortTraitNode()
     {
         var ordering = new[] { SqlNode.RawExpression( "a" ).Asc(), SqlNode.RawExpression( "b" ).Desc() };
         var sut = SqlNode.SortTrait( ordering );
@@ -133,7 +133,7 @@ public class ExpressionTraitsTests : TestsBase
     }
 
     [Fact]
-    public void SortTrait_ShouldCreateSortQueryTraitNode_WithEmptyOrdering()
+    public void SortTrait_ShouldCreateSortTraitNode_WithEmptyOrdering()
     {
         var sut = SqlNode.SortTrait();
         var text = sut.ToString();
@@ -147,7 +147,7 @@ public class ExpressionTraitsTests : TestsBase
     }
 
     [Fact]
-    public void LimitTrait_ShouldCreateLimitQueryTraitNode()
+    public void LimitTrait_ShouldCreateLimitTraitNode()
     {
         var value = SqlNode.Literal( 10 );
         var sut = SqlNode.LimitTrait( value );
@@ -162,7 +162,7 @@ public class ExpressionTraitsTests : TestsBase
     }
 
     [Fact]
-    public void OffsetTrait_ShouldCreateOffsetQueryTraitNode()
+    public void OffsetTrait_ShouldCreateOffsetTraitNode()
     {
         var value = SqlNode.Literal( 10 );
         var sut = SqlNode.OffsetTrait( value );
@@ -177,7 +177,7 @@ public class ExpressionTraitsTests : TestsBase
     }
 
     [Fact]
-    public void CommonTableExpressionTrait_ShouldCreateCommonTableExpressionQueryTraitNode()
+    public void CommonTableExpressionTrait_ShouldCreateCommonTableExpressionTraitNode()
     {
         var cte = new SqlCommonTableExpressionNode[]
         {
@@ -204,7 +204,7 @@ ORDINAL [B] (
     }
 
     [Fact]
-    public void CommonTableExpressionTrait_ShouldCreateCommonTableExpressionQueryTraitNode_WithEmptyTables()
+    public void CommonTableExpressionTrait_ShouldCreateCommonTableExpressionTraitNode_WithEmptyTables()
     {
         var sut = SqlNode.CommonTableExpressionTrait();
         var text = sut.ToString();
@@ -214,6 +214,67 @@ ORDINAL [B] (
             sut.NodeType.Should().Be( SqlNodeType.CommonTableExpressionTrait );
             sut.CommonTableExpressions.ToArray().Should().BeEmpty();
             text.Should().Be( "WITH" );
+        }
+    }
+
+    [Fact]
+    public void WindowDefinitionTrait_ShouldCreateWindowDefinitionTraitNode()
+    {
+        var set = SqlNode.RawRecordSet( "qux" );
+        var windows = new[]
+        {
+            SqlNode.WindowDefinition(
+                "foo",
+                new SqlExpressionNode[] { set["a"] },
+                new[] { set["b"].Asc() },
+                SqlNode.RowsWindowFrame( SqlWindowFrameBoundary.UnboundedPreceding, SqlWindowFrameBoundary.CurrentRow ) ),
+            SqlNode.WindowDefinition(
+                "bar",
+                new SqlExpressionNode[] { set["x"] },
+                new[] { set["y"].Desc() },
+                SqlNode.RangeWindowFrame( SqlWindowFrameBoundary.CurrentRow, SqlWindowFrameBoundary.UnboundedFollowing ) )
+        };
+
+        var sut = SqlNode.WindowDefinitionTrait( windows );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.WindowDefinitionTrait );
+            sut.Windows.ToArray().Should().BeSequentiallyEqualTo( windows );
+            text.Should()
+                .Be(
+                    @"WINDOW [foo] AS (PARTITION BY ([qux].[a] : ?) ORDER BY ([qux].[b] : ?) ASC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+  [bar] AS (PARTITION BY ([qux].[x] : ?) ORDER BY ([qux].[y] : ?) DESC RANGE BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING)" );
+        }
+    }
+
+    [Fact]
+    public void WindowDefinitionTrait_ShouldCreateWindowDefinitionTraitNode_WithEmptyWindows()
+    {
+        var sut = SqlNode.WindowDefinitionTrait();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.WindowDefinitionTrait );
+            sut.Windows.ToArray().Should().BeEmpty();
+            text.Should().Be( "WINDOW" );
+        }
+    }
+
+    [Fact]
+    public void WindowTrait_ShouldCreateWindowTraitNode()
+    {
+        var definition = SqlNode.WindowDefinition( "foo", new[] { SqlNode.RawRecordSet( "qux" )["a"].Asc() } );
+        var sut = SqlNode.WindowTrait( definition );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.WindowTrait );
+            sut.Definition.Should().BeSameAs( definition );
+            text.Should().Be( "OVER [foo] AS (ORDER BY ([qux].[a] : ?) ASC)" );
         }
     }
 
@@ -280,6 +341,121 @@ ORDINAL [B] (
             sut.Expression.Should().BeEquivalentTo( selection.ToExpression() );
             sut.Ordering.Should().BeSameAs( OrderBy.Desc );
             text.Should().Be( "([qux]) DESC" );
+        }
+    }
+
+    [Fact]
+    public void WindowDefinition_ShouldCreateWindowDefinitionNode()
+    {
+        var set = SqlNode.RawRecordSet( "foo" );
+        var partitioning = new SqlExpressionNode[] { set["a"], set["b"] };
+        var ordering = new[] { set["x"].Asc(), set["y"].Desc() };
+        var frame = SqlNode.RowsWindowFrame( SqlWindowFrameBoundary.UnboundedPreceding, SqlWindowFrameBoundary.CurrentRow );
+        var sut = SqlNode.WindowDefinition( "wnd", partitioning, ordering, frame );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.WindowDefinition );
+            sut.Name.Should().Be( "wnd" );
+            sut.Partitioning.ToArray().Should().BeSequentiallyEqualTo( partitioning );
+            sut.Ordering.ToArray().Should().BeSequentiallyEqualTo( ordering );
+            sut.Frame.Should().BeSameAs( frame );
+            text.Should()
+                .Be(
+                    "[wnd] AS (PARTITION BY ([foo].[a] : ?), ([foo].[b] : ?) ORDER BY ([foo].[x] : ?) ASC, ([foo].[y] : ?) DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)" );
+        }
+    }
+
+    [Fact]
+    public void WindowDefinition_ShouldCreateWindowDefinitionNode_WithoutPartitioning()
+    {
+        var set = SqlNode.RawRecordSet( "foo" );
+        var ordering = new[] { set["x"].Asc(), set["y"].Desc() };
+        var frame = SqlNode.RowsWindowFrame( SqlWindowFrameBoundary.UnboundedPreceding, SqlWindowFrameBoundary.CurrentRow );
+        var sut = SqlNode.WindowDefinition( "wnd", ordering, frame );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.WindowDefinition );
+            sut.Name.Should().Be( "wnd" );
+            sut.Partitioning.ToArray().Should().BeEmpty();
+            sut.Ordering.ToArray().Should().BeSequentiallyEqualTo( ordering );
+            sut.Frame.Should().BeSameAs( frame );
+            text.Should()
+                .Be( "[wnd] AS (ORDER BY ([foo].[x] : ?) ASC, ([foo].[y] : ?) DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)" );
+        }
+    }
+
+    [Fact]
+    public void WindowDefinition_ShouldCreateWindowDefinitionNode_WithoutFrame()
+    {
+        var set = SqlNode.RawRecordSet( "foo" );
+        var partitioning = new SqlExpressionNode[] { set["a"], set["b"] };
+        var ordering = new[] { set["x"].Asc(), set["y"].Desc() };
+        var sut = SqlNode.WindowDefinition( "wnd", partitioning, ordering );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.WindowDefinition );
+            sut.Name.Should().Be( "wnd" );
+            sut.Partitioning.ToArray().Should().BeSequentiallyEqualTo( partitioning );
+            sut.Ordering.ToArray().Should().BeSequentiallyEqualTo( ordering );
+            sut.Frame.Should().BeNull();
+            text.Should()
+                .Be( "[wnd] AS (PARTITION BY ([foo].[a] : ?), ([foo].[b] : ?) ORDER BY ([foo].[x] : ?) ASC, ([foo].[y] : ?) DESC)" );
+        }
+    }
+
+    [Fact]
+    public void RowsWindowFrame_ShouldCreateRowsWindowFrameNode()
+    {
+        var sut = SqlNode.RowsWindowFrame( SqlWindowFrameBoundary.UnboundedPreceding, SqlWindowFrameBoundary.UnboundedFollowing );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.WindowFrame );
+            sut.FrameType.Should().Be( SqlWindowFrameType.Rows );
+            sut.Start.Should().BeEquivalentTo( SqlWindowFrameBoundary.UnboundedPreceding );
+            sut.End.Should().BeEquivalentTo( SqlWindowFrameBoundary.UnboundedFollowing );
+            text.Should().Be( "ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING" );
+        }
+    }
+
+    [Fact]
+    public void RangeWindowFrame_ShouldCreateRangeWindowFrameNode()
+    {
+        var sut = SqlNode.RangeWindowFrame( SqlWindowFrameBoundary.CurrentRow, SqlWindowFrameBoundary.UnboundedFollowing );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.WindowFrame );
+            sut.FrameType.Should().Be( SqlWindowFrameType.Range );
+            sut.Start.Should().BeEquivalentTo( SqlWindowFrameBoundary.CurrentRow );
+            sut.End.Should().BeEquivalentTo( SqlWindowFrameBoundary.UnboundedFollowing );
+            text.Should().Be( "RANGE BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING" );
+        }
+    }
+
+    [Fact]
+    public void WindowFrame_ShouldCreateWindowFrameNode_WithExpressionPrecedingAndFollowing()
+    {
+        var start = SqlWindowFrameBoundary.Preceding( SqlNode.Literal( 3 ) );
+        var end = SqlWindowFrameBoundary.Following( SqlNode.Literal( 5 ) );
+        var sut = SqlNode.RangeWindowFrame( start, end );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.WindowFrame );
+            sut.FrameType.Should().Be( SqlWindowFrameType.Range );
+            sut.Start.Should().BeEquivalentTo( start );
+            sut.End.Should().BeEquivalentTo( end );
+            text.Should().Be( "RANGE BETWEEN (\"3\" : System.Int32) PRECEDING AND (\"5\" : System.Int32) FOLLOWING" );
         }
     }
 
@@ -700,6 +876,126 @@ OR HAVING a > 10" );
                     @"FROM [foo]
 INNER JOIN [bar] ON TRUE
 OR HAVING a > 10" );
+        }
+    }
+
+    [Fact]
+    public void Window_ForSingleDataSource_ShouldReturnDataSourceWithTrait()
+    {
+        var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
+        var windows = new[] { SqlNode.WindowDefinition( "x", new[] { dataSource.From["a"].Asc() } ) };
+        var selector = Substitute.For<Func<SqlSingleDataSourceNode<SqlRawRecordSetNode>, IEnumerable<SqlWindowDefinitionNode>>>();
+        selector.WithAnyArgs( _ => windows );
+        var sut = dataSource.Window( selector );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
+            sut.NodeType.Should().Be( SqlNodeType.DataSource );
+            sut.From.Should().BeSameAs( dataSource.From );
+            sut.Joins.Should().Be( dataSource.Joins );
+            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
+            sut.Traits.Should().HaveCount( 1 );
+            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.WindowDefinitionTrait );
+            text.Should()
+                .Be(
+                    @"FROM [foo]
+WINDOW [x] AS (ORDER BY ([foo].[a] : ?) ASC)" );
+        }
+    }
+
+    [Fact]
+    public void Window_ForSingleDataSource_ShouldReturnDataSource_WithEmptyOrdering()
+    {
+        var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
+        var sut = dataSource.Window( Enumerable.Empty<SqlWindowDefinitionNode>() );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.DataSource );
+            sut.From.Should().BeSameAs( dataSource.From );
+            sut.Joins.Should().Be( dataSource.Joins );
+            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
+            sut.Traits.Should().BeEmpty();
+            text.Should().Be( "FROM [foo]" );
+        }
+    }
+
+    [Fact]
+    public void Window_ForMultiDataSource_ShouldReturnDataSourceWithTrait()
+    {
+        var dataSource = SqlNode.RawRecordSet( "foo" ).Join( SqlNode.RawRecordSet( "bar" ).InnerOn( SqlNode.True() ) );
+        var windows = new[]
+        {
+            SqlNode.WindowDefinition( "x", new[] { dataSource["foo"]["a"].Asc() } ),
+            SqlNode.WindowDefinition( "y", new[] { dataSource["bar"]["b"].Desc() } )
+        };
+
+        var selector = Substitute.For<Func<SqlMultiDataSourceNode, IEnumerable<SqlWindowDefinitionNode>>>();
+        selector.WithAnyArgs( _ => windows );
+        var sut = dataSource.Window( selector );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
+            sut.NodeType.Should().Be( SqlNodeType.DataSource );
+            sut.From.Should().BeSameAs( dataSource.From );
+            sut.Joins.Should().Be( dataSource.Joins );
+            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
+            sut.Traits.Should().HaveCount( 1 );
+            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.WindowDefinitionTrait );
+            text.Should()
+                .Be(
+                    @"FROM [foo]
+INNER JOIN [bar] ON TRUE
+WINDOW [x] AS (ORDER BY ([foo].[a] : ?) ASC),
+  [y] AS (ORDER BY ([bar].[b] : ?) DESC)" );
+        }
+    }
+
+    [Fact]
+    public void Window_ForMultiDataSource_ShouldReturnDataSource_WithEmptyOrdering()
+    {
+        var dataSource = SqlNode.RawRecordSet( "foo" ).Join( SqlNode.RawRecordSet( "bar" ).InnerOn( SqlNode.True() ) );
+        var sut = dataSource.Window( Enumerable.Empty<SqlWindowDefinitionNode>() );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.DataSource );
+            sut.From.Should().BeSameAs( dataSource.From );
+            sut.Joins.Should().Be( dataSource.Joins );
+            sut.RecordSets.Should().BeSameAs( dataSource.RecordSets );
+            sut.Traits.Should().BeEmpty();
+            text.Should()
+                .Be(
+                    @"FROM [foo]
+INNER JOIN [bar] ON TRUE" );
+        }
+    }
+
+    [Fact]
+    public void Over_ForAggregateFunction_ShouldReturnAggregateFunctionWithTrait()
+    {
+        var function = SqlNode.AggregateFunctions.Count( SqlNode.RawExpression( "*" ) );
+        var sut = function.Over( SqlNode.WindowDefinition( "x", new[] { SqlNode.RawRecordSet( "foo" )["a"].Asc() } ) );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.Should().NotBeSameAs( function );
+            sut.NodeType.Should().Be( function.NodeType );
+            sut.FunctionType.Should().Be( function.FunctionType );
+            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( function.Arguments.ToArray() );
+            sut.Traits.Should().HaveCount( 1 );
+            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.WindowTrait );
+            text.Should()
+                .Be(
+                    @"AGG_COUNT((*))
+  OVER [x] AS (ORDER BY ([foo].[a] : ?) ASC)" );
         }
     }
 
@@ -1162,6 +1458,56 @@ SELECT" );
                     @"FROM [foo]
 OR HAVING a > 10
 SELECT" );
+        }
+    }
+
+    [Fact]
+    public void Window_ForDataSourceQuery_ShouldReturnDataSourceQueryWithTrait()
+    {
+        var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
+        var query = dataSource.Select();
+        var windows = new[]
+        {
+            SqlNode.WindowDefinition( "x", new[] { dataSource.From["a"].Asc() } ),
+            SqlNode.WindowDefinition( "y", new[] { dataSource.From["b"].Desc() } )
+        };
+
+        var selector = Substitute.For<Func<SqlSingleDataSourceNode<SqlRawRecordSetNode>, IEnumerable<SqlWindowDefinitionNode>>>();
+        selector.WithAnyArgs( _ => windows );
+        var sut = query.Window( selector );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
+            sut.Should().NotBeSameAs( query );
+            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
+            sut.DataSource.Should().BeSameAs( query.DataSource );
+            sut.Selection.Should().Be( query.Selection );
+            sut.Traits.Should().HaveCount( 1 );
+            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.WindowDefinitionTrait );
+            text.Should()
+                .Be(
+                    @"FROM [foo]
+WINDOW [x] AS (ORDER BY ([foo].[a] : ?) ASC),
+  [y] AS (ORDER BY ([foo].[b] : ?) DESC)
+SELECT" );
+        }
+    }
+
+    [Fact]
+    public void Window_ForDataSourceQuery_ShouldReturnDataSourceQuery_WhenOrderingIsEmpty()
+    {
+        var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
+        var query = dataSource.Select();
+        var selector = Substitute.For<Func<SqlSingleDataSourceNode<SqlRawRecordSetNode>, IEnumerable<SqlWindowDefinitionNode>>>();
+        selector.WithAnyArgs( _ => Enumerable.Empty<SqlWindowDefinitionNode>() );
+        var sut = query.Window( selector );
+
+        using ( new AssertionScope() )
+        {
+            selector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
+            sut.Should().BeSameAs( query );
         }
     }
 

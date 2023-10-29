@@ -44,6 +44,14 @@ public partial class BaseExpressionsTests : TestsBase
   DISTINCT" );
     }
 
+    [Fact]
+    public void CustomWindowFrameToString_ShouldReturnTypeInfoAndBoundaries()
+    {
+        var sut = new WindowFrameMock();
+        var result = sut.ToString();
+        result.Should().Be( $"{{{sut.GetType().GetDebugString()}}} BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING" );
+    }
+
     [Theory]
     [InlineData( false )]
     [InlineData( true )]
@@ -1273,5 +1281,11 @@ SELECT * FROM qux" );
             var traits = Traits.ToExtendable().Extend( trait );
             return new AggregateFunctionNodeMock( Arguments, traits );
         }
+    }
+
+    private sealed class WindowFrameMock : SqlWindowFrameNode
+    {
+        public WindowFrameMock()
+            : base( SqlWindowFrameBoundary.UnboundedPreceding, SqlWindowFrameBoundary.UnboundedFollowing ) { }
     }
 }

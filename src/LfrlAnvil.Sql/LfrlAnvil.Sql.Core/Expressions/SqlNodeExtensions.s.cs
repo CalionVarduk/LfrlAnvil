@@ -718,6 +718,14 @@ public static class SqlNodeExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static TAggregateFunctionNode Over<TAggregateFunctionNode>(this TAggregateFunctionNode node, SqlWindowDefinitionNode window)
+        where TAggregateFunctionNode : SqlAggregateFunctionExpressionNode
+    {
+        return (TAggregateFunctionNode)node.AddTrait( SqlNode.WindowTrait( window ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlUpdateNode AndSet(this SqlUpdateNode node, Func<SqlUpdateNode, IEnumerable<SqlValueAssignmentNode>> assignments)
     {
         return node.AndSet( assignments( node ).ToArray() );

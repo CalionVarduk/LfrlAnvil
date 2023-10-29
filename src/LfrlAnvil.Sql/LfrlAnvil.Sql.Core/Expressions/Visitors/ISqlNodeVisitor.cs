@@ -112,8 +112,12 @@ public interface ISqlNodeVisitor
     void VisitLimitTrait(SqlLimitTraitNode node);
     void VisitOffsetTrait(SqlOffsetTraitNode node);
     void VisitCommonTableExpressionTrait(SqlCommonTableExpressionTraitNode node);
+    void VisitWindowDefinitionTrait(SqlWindowDefinitionTraitNode node);
+    void VisitWindowTrait(SqlWindowTraitNode node);
     void VisitOrderBy(SqlOrderByNode node);
     void VisitCommonTableExpression(SqlCommonTableExpressionNode node);
+    void VisitWindowDefinition(SqlWindowDefinitionNode node);
+    void VisitWindowFrame(SqlWindowFrameNode node);
     void VisitTypeCast(SqlTypeCastExpressionNode node);
     void VisitValues(SqlValuesNode node);
     void VisitRawStatement(SqlRawStatementNode node);
