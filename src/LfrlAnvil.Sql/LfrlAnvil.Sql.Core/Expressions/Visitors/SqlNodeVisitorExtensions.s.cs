@@ -575,6 +575,48 @@ public static class SqlNodeVisitorExtensions
                 visitor.VisitStringConcatAggregateFunction( ReinterpretCast.To<SqlStringConcatAggregateFunctionExpressionNode>( node ) );
                 break;
 
+            case SqlFunctionType.RowNumber:
+                visitor.VisitRowNumberWindowFunction( ReinterpretCast.To<SqlRowNumberWindowFunctionExpressionNode>( node ) );
+                break;
+
+            case SqlFunctionType.Rank:
+                visitor.VisitRankWindowFunction( ReinterpretCast.To<SqlRankWindowFunctionExpressionNode>( node ) );
+                break;
+
+            case SqlFunctionType.DenseRank:
+                visitor.VisitDenseRankWindowFunction( ReinterpretCast.To<SqlDenseRankWindowFunctionExpressionNode>( node ) );
+                break;
+
+            case SqlFunctionType.CumulativeDistribution:
+                visitor.VisitCumulativeDistributionWindowFunction(
+                    ReinterpretCast.To<SqlCumulativeDistributionWindowFunctionExpressionNode>( node ) );
+
+                break;
+
+            case SqlFunctionType.NTile:
+                visitor.VisitNTileWindowFunction( ReinterpretCast.To<SqlNTileWindowFunctionExpressionNode>( node ) );
+                break;
+
+            case SqlFunctionType.Lag:
+                visitor.VisitLagWindowFunction( ReinterpretCast.To<SqlLagWindowFunctionExpressionNode>( node ) );
+                break;
+
+            case SqlFunctionType.Lead:
+                visitor.VisitLeadWindowFunction( ReinterpretCast.To<SqlLeadWindowFunctionExpressionNode>( node ) );
+                break;
+
+            case SqlFunctionType.FirstValue:
+                visitor.VisitFirstValueWindowFunction( ReinterpretCast.To<SqlFirstValueWindowFunctionExpressionNode>( node ) );
+                break;
+
+            case SqlFunctionType.LastValue:
+                visitor.VisitLastValueWindowFunction( ReinterpretCast.To<SqlLastValueWindowFunctionExpressionNode>( node ) );
+                break;
+
+            case SqlFunctionType.NthValue:
+                visitor.VisitNthValueWindowFunction( ReinterpretCast.To<SqlNthValueWindowFunctionExpressionNode>( node ) );
+                break;
+
             default:
                 visitor.VisitCustomAggregateFunction( node );
                 break;

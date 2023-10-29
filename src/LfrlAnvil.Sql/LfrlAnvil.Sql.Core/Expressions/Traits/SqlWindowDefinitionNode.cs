@@ -2,7 +2,6 @@
 
 namespace LfrlAnvil.Sql.Expressions.Traits;
 
-// TODO: add built-in window functions like row_number, rank, dense_rank etc. as 'normal' aggregate function nodes
 public sealed class SqlWindowDefinitionNode : SqlNodeBase
 {
     internal SqlWindowDefinitionNode(

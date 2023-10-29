@@ -275,6 +275,16 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     public abstract void VisitSumAggregateFunction(SqlSumAggregateFunctionExpressionNode node);
     public abstract void VisitCountAggregateFunction(SqlCountAggregateFunctionExpressionNode node);
     public abstract void VisitStringConcatAggregateFunction(SqlStringConcatAggregateFunctionExpressionNode node);
+    public abstract void VisitRowNumberWindowFunction(SqlRowNumberWindowFunctionExpressionNode node);
+    public abstract void VisitRankWindowFunction(SqlRankWindowFunctionExpressionNode node);
+    public abstract void VisitDenseRankWindowFunction(SqlDenseRankWindowFunctionExpressionNode node);
+    public abstract void VisitCumulativeDistributionWindowFunction(SqlCumulativeDistributionWindowFunctionExpressionNode node);
+    public abstract void VisitNTileWindowFunction(SqlNTileWindowFunctionExpressionNode node);
+    public abstract void VisitLagWindowFunction(SqlLagWindowFunctionExpressionNode node);
+    public abstract void VisitLeadWindowFunction(SqlLeadWindowFunctionExpressionNode node);
+    public abstract void VisitFirstValueWindowFunction(SqlFirstValueWindowFunctionExpressionNode node);
+    public abstract void VisitLastValueWindowFunction(SqlLastValueWindowFunctionExpressionNode node);
+    public abstract void VisitNthValueWindowFunction(SqlNthValueWindowFunctionExpressionNode node);
 
     public virtual void VisitCustomAggregateFunction(SqlAggregateFunctionExpressionNode node)
     {

@@ -39,6 +39,56 @@ internal sealed class SqliteDefaultValueSourceValidator : SqliteSourceNodeValida
         AddForbiddenNode( node );
     }
 
+    public override void VisitRowNumberWindowFunction(SqlRowNumberWindowFunctionExpressionNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
+    public override void VisitRankWindowFunction(SqlRankWindowFunctionExpressionNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
+    public override void VisitDenseRankWindowFunction(SqlDenseRankWindowFunctionExpressionNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
+    public override void VisitCumulativeDistributionWindowFunction(SqlCumulativeDistributionWindowFunctionExpressionNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
+    public override void VisitNTileWindowFunction(SqlNTileWindowFunctionExpressionNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
+    public override void VisitLagWindowFunction(SqlLagWindowFunctionExpressionNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
+    public override void VisitLeadWindowFunction(SqlLeadWindowFunctionExpressionNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
+    public override void VisitFirstValueWindowFunction(SqlFirstValueWindowFunctionExpressionNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
+    public override void VisitLastValueWindowFunction(SqlLastValueWindowFunctionExpressionNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
+    public override void VisitNthValueWindowFunction(SqlNthValueWindowFunctionExpressionNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
     public override void VisitCustomAggregateFunction(SqlAggregateFunctionExpressionNode node)
     {
         AddForbiddenNode( node );

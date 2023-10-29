@@ -180,37 +180,87 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
 
     public override void VisitMinAggregateFunction(SqlMinAggregateFunctionExpressionNode node)
     {
-        VisitSimpleAggregateFunction( "MIN", node );
+        VisitSimpleAggregateFunction( "AGG", "MIN", node );
     }
 
     public override void VisitMaxAggregateFunction(SqlMaxAggregateFunctionExpressionNode node)
     {
-        VisitSimpleAggregateFunction( "MAX", node );
+        VisitSimpleAggregateFunction( "AGG", "MAX", node );
     }
 
     public override void VisitAverageAggregateFunction(SqlAverageAggregateFunctionExpressionNode node)
     {
-        VisitSimpleAggregateFunction( "AVERAGE", node );
+        VisitSimpleAggregateFunction( "AGG", "AVERAGE", node );
     }
 
     public override void VisitSumAggregateFunction(SqlSumAggregateFunctionExpressionNode node)
     {
-        VisitSimpleAggregateFunction( "SUM", node );
+        VisitSimpleAggregateFunction( "AGG", "SUM", node );
     }
 
     public override void VisitCountAggregateFunction(SqlCountAggregateFunctionExpressionNode node)
     {
-        VisitSimpleAggregateFunction( "COUNT", node );
+        VisitSimpleAggregateFunction( "AGG", "COUNT", node );
     }
 
     public override void VisitStringConcatAggregateFunction(SqlStringConcatAggregateFunctionExpressionNode node)
     {
-        VisitSimpleAggregateFunction( "STRING_CONCAT", node );
+        VisitSimpleAggregateFunction( "AGG", "STRING_CONCAT", node );
+    }
+
+    public override void VisitRowNumberWindowFunction(SqlRowNumberWindowFunctionExpressionNode node)
+    {
+        VisitSimpleAggregateFunction( "WND", "ROW_NUMBER", node );
+    }
+
+    public override void VisitRankWindowFunction(SqlRankWindowFunctionExpressionNode node)
+    {
+        VisitSimpleAggregateFunction( "WND", "RANK", node );
+    }
+
+    public override void VisitDenseRankWindowFunction(SqlDenseRankWindowFunctionExpressionNode node)
+    {
+        VisitSimpleAggregateFunction( "WND", "DENSE_RANK", node );
+    }
+
+    public override void VisitCumulativeDistributionWindowFunction(SqlCumulativeDistributionWindowFunctionExpressionNode node)
+    {
+        VisitSimpleAggregateFunction( "WND", "CUMULATIVE_DISTRIBUTION", node );
+    }
+
+    public override void VisitNTileWindowFunction(SqlNTileWindowFunctionExpressionNode node)
+    {
+        VisitSimpleAggregateFunction( "WND", "N_TILE", node );
+    }
+
+    public override void VisitLagWindowFunction(SqlLagWindowFunctionExpressionNode node)
+    {
+        VisitSimpleAggregateFunction( "WND", "LAG", node );
+    }
+
+    public override void VisitLeadWindowFunction(SqlLeadWindowFunctionExpressionNode node)
+    {
+        VisitSimpleAggregateFunction( "WND", "LEAD", node );
+    }
+
+    public override void VisitFirstValueWindowFunction(SqlFirstValueWindowFunctionExpressionNode node)
+    {
+        VisitSimpleAggregateFunction( "WND", "FIRST_VALUE", node );
+    }
+
+    public override void VisitLastValueWindowFunction(SqlLastValueWindowFunctionExpressionNode node)
+    {
+        VisitSimpleAggregateFunction( "WND", "LAST_VALUE", node );
+    }
+
+    public override void VisitNthValueWindowFunction(SqlNthValueWindowFunctionExpressionNode node)
+    {
+        VisitSimpleAggregateFunction( "WND", "NTH_VALUE", node );
     }
 
     public override void VisitCustomAggregateFunction(SqlAggregateFunctionExpressionNode node)
     {
-        VisitSimpleAggregateFunction( $"{{{node.GetType().GetDebugString()}}}", node );
+        VisitSimpleAggregateFunction( "AGG", $"{{{node.GetType().GetDebugString()}}}", node );
     }
 
     public override void VisitTrue(SqlTrueNode node)
@@ -778,11 +828,11 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
             Context.Sql.Append( type.Value.ToString() );
     }
 
-    private void VisitSimpleAggregateFunction(string functionName, SqlAggregateFunctionExpressionNode node)
+    private void VisitSimpleAggregateFunction(string prefix, string functionName, SqlAggregateFunctionExpressionNode node)
     {
         using ( Context.TempParentNodeUpdate( node ) )
         {
-            Context.Sql.Append( "AGG" ).Append( '_' ).Append( functionName ).Append( '(' );
+            Context.Sql.Append( prefix ).Append( '_' ).Append( functionName ).Append( '(' );
 
             if ( node.Arguments.Length > 0 )
             {

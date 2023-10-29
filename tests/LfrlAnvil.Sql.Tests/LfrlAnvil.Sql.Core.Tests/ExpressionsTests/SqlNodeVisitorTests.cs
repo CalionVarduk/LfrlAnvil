@@ -630,6 +630,122 @@ public class SqlNodeVisitorTests : TestsBase
     }
 
     [Fact]
+    public void VisitRowNumberWindowFunction_ShouldVisitTraits()
+    {
+        var sut = new VisitorMock();
+        var trait = SqlNode.DistinctTrait();
+
+        sut.VisitRowNumberWindowFunction( SqlNode.WindowFunctions.RowNumber().AddTrait( trait ) );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( trait );
+    }
+
+    [Fact]
+    public void VisitRankWindowFunction_ShouldVisitTraits()
+    {
+        var sut = new VisitorMock();
+        var trait = SqlNode.DistinctTrait();
+
+        sut.VisitRankWindowFunction( SqlNode.WindowFunctions.Rank().AddTrait( trait ) );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( trait );
+    }
+
+    [Fact]
+    public void VisitDenseRankWindowFunction_ShouldVisitTraits()
+    {
+        var sut = new VisitorMock();
+        var trait = SqlNode.DistinctTrait();
+
+        sut.VisitDenseRankWindowFunction( SqlNode.WindowFunctions.DenseRank().AddTrait( trait ) );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( trait );
+    }
+
+    [Fact]
+    public void VisitCumulativeDistributionWindowFunction_ShouldVisitTraits()
+    {
+        var sut = new VisitorMock();
+        var trait = SqlNode.DistinctTrait();
+
+        sut.VisitCumulativeDistributionWindowFunction( SqlNode.WindowFunctions.CumulativeDistribution().AddTrait( trait ) );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( trait );
+    }
+
+    [Fact]
+    public void VisitNTileWindowFunction_ShouldVisitArgumentsAndTraits()
+    {
+        var sut = new VisitorMock();
+        var argument = SqlNode.Literal( 10 );
+        var trait = SqlNode.DistinctTrait();
+
+        sut.VisitNTileWindowFunction( argument.NTile().AddTrait( trait ) );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( argument, trait );
+    }
+
+    [Fact]
+    public void VisitLagWindowFunction_ShouldVisitArgumentsAndTraits()
+    {
+        var sut = new VisitorMock();
+        var arguments = new[] { SqlNode.Literal( 10 ), SqlNode.Literal( 20 ), SqlNode.Literal( 30 ) };
+        var trait = SqlNode.DistinctTrait();
+
+        sut.VisitLagWindowFunction( arguments[0].Lag( arguments[1], arguments[2] ).AddTrait( trait ) );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1], arguments[2], trait );
+    }
+
+    [Fact]
+    public void VisitLeadWindowFunction_ShouldVisitArgumentsAndTraits()
+    {
+        var sut = new VisitorMock();
+        var arguments = new[] { SqlNode.Literal( 10 ), SqlNode.Literal( 20 ), SqlNode.Literal( 30 ) };
+        var trait = SqlNode.DistinctTrait();
+
+        sut.VisitLeadWindowFunction( arguments[0].Lead( arguments[1], arguments[2] ).AddTrait( trait ) );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1], arguments[2], trait );
+    }
+
+    [Fact]
+    public void VisitFirstValueWindowFunction_ShouldVisitArgumentsAndTraits()
+    {
+        var sut = new VisitorMock();
+        var argument = SqlNode.Literal( 10 );
+        var trait = SqlNode.DistinctTrait();
+
+        sut.VisitFirstValueWindowFunction( argument.FirstValue().AddTrait( trait ) );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( argument, trait );
+    }
+
+    [Fact]
+    public void VisitLastValueWindowFunction_ShouldVisitArgumentsAndTraits()
+    {
+        var sut = new VisitorMock();
+        var argument = SqlNode.Literal( 10 );
+        var trait = SqlNode.DistinctTrait();
+
+        sut.VisitLastValueWindowFunction( argument.LastValue().AddTrait( trait ) );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( argument, trait );
+    }
+
+    [Fact]
+    public void VisitNthValueWindowFunction_ShouldVisitArgumentsAndTraits()
+    {
+        var sut = new VisitorMock();
+        var arguments = new[] { SqlNode.Literal( 10 ), SqlNode.Literal( 20 ) };
+        var trait = SqlNode.DistinctTrait();
+
+        sut.VisitNthValueWindowFunction( arguments[0].NthValue( arguments[1] ).AddTrait( trait ) );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1], trait );
+    }
+
+    [Fact]
     public void VisitCustomAggregateFunction_ShouldVisitArgumentsAndTraits()
     {
         var sut = new VisitorMock();

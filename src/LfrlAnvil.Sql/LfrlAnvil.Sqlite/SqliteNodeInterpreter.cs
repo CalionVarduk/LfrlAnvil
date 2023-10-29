@@ -264,6 +264,56 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         VisitSimpleAggregateFunction( "GROUP_CONCAT", node );
     }
 
+    public override void VisitRowNumberWindowFunction(SqlRowNumberWindowFunctionExpressionNode node)
+    {
+        VisitSimpleAggregateFunction( "ROW_NUMBER", node );
+    }
+
+    public override void VisitRankWindowFunction(SqlRankWindowFunctionExpressionNode node)
+    {
+        VisitSimpleAggregateFunction( "RANK", node );
+    }
+
+    public override void VisitDenseRankWindowFunction(SqlDenseRankWindowFunctionExpressionNode node)
+    {
+        VisitSimpleAggregateFunction( "DENSE_RANK", node );
+    }
+
+    public override void VisitCumulativeDistributionWindowFunction(SqlCumulativeDistributionWindowFunctionExpressionNode node)
+    {
+        VisitSimpleAggregateFunction( "CUME_DIST", node );
+    }
+
+    public override void VisitNTileWindowFunction(SqlNTileWindowFunctionExpressionNode node)
+    {
+        VisitSimpleAggregateFunction( "NTILE", node );
+    }
+
+    public override void VisitLagWindowFunction(SqlLagWindowFunctionExpressionNode node)
+    {
+        VisitSimpleAggregateFunction( "LAG", node );
+    }
+
+    public override void VisitLeadWindowFunction(SqlLeadWindowFunctionExpressionNode node)
+    {
+        VisitSimpleAggregateFunction( "LEAD", node );
+    }
+
+    public override void VisitFirstValueWindowFunction(SqlFirstValueWindowFunctionExpressionNode node)
+    {
+        VisitSimpleAggregateFunction( "FIRST_VALUE", node );
+    }
+
+    public override void VisitLastValueWindowFunction(SqlLastValueWindowFunctionExpressionNode node)
+    {
+        VisitSimpleAggregateFunction( "LAST_VALUE", node );
+    }
+
+    public override void VisitNthValueWindowFunction(SqlNthValueWindowFunctionExpressionNode node)
+    {
+        VisitSimpleAggregateFunction( "NTH_VALUE", node );
+    }
+
     public override void VisitTrue(SqlTrueNode node)
     {
         Context.Sql.Append( "TRUE" );

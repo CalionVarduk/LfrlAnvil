@@ -694,6 +694,54 @@ public static class SqlNodeExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlNTileWindowFunctionExpressionNode NTile(this SqlExpressionNode node)
+    {
+        return SqlNode.WindowFunctions.NTile( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlLagWindowFunctionExpressionNode Lag(
+        this SqlExpressionNode node,
+        SqlExpressionNode? offset = null,
+        SqlExpressionNode? @default = null)
+    {
+        return SqlNode.WindowFunctions.Lag( node, offset, @default );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlLeadWindowFunctionExpressionNode Lead(
+        this SqlExpressionNode node,
+        SqlExpressionNode? offset = null,
+        SqlExpressionNode? @default = null)
+    {
+        return SqlNode.WindowFunctions.Lead( node, offset, @default );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlFirstValueWindowFunctionExpressionNode FirstValue(this SqlExpressionNode node)
+    {
+        return SqlNode.WindowFunctions.FirstValue( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlLastValueWindowFunctionExpressionNode LastValue(this SqlExpressionNode node)
+    {
+        return SqlNode.WindowFunctions.LastValue( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlNthValueWindowFunctionExpressionNode NthValue(this SqlExpressionNode node, SqlExpressionNode n)
+    {
+        return SqlNode.WindowFunctions.NthValue( node, n );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TAggregateFunctionNode Distinct<TAggregateFunctionNode>(this TAggregateFunctionNode node)
         where TAggregateFunctionNode : SqlAggregateFunctionExpressionNode
     {

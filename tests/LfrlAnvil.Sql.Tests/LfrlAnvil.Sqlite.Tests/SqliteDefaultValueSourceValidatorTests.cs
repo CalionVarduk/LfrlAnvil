@@ -494,6 +494,86 @@ public class SqliteDefaultValueSourceValidatorTests : TestsBase
     }
 
     [Fact]
+    public void VisitRowNumberWindowFunction_ShouldRegisterError()
+    {
+        var node = SqlNode.WindowFunctions.RowNumber();
+        _sut.VisitRowNumberWindowFunction( node );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
+    public void VisitRankWindowFunction_ShouldRegisterError()
+    {
+        var node = SqlNode.WindowFunctions.Rank();
+        _sut.VisitRankWindowFunction( node );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
+    public void VisitDenseRankWindowFunction_ShouldRegisterError()
+    {
+        var node = SqlNode.WindowFunctions.DenseRank();
+        _sut.VisitDenseRankWindowFunction( node );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
+    public void VisitCumulativeDistributionWindowFunction_ShouldRegisterError()
+    {
+        var node = SqlNode.WindowFunctions.CumulativeDistribution();
+        _sut.VisitCumulativeDistributionWindowFunction( node );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
+    public void VisitNTileWindowFunction_ShouldRegisterError()
+    {
+        var node = SqlNode.Parameter( "a" ).NTile();
+        _sut.VisitNTileWindowFunction( node );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
+    public void VisitLagWindowFunction_ShouldRegisterError()
+    {
+        var node = SqlNode.Parameter( "a" ).Lag();
+        _sut.VisitLagWindowFunction( node );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
+    public void VisitLeadWindowFunction_ShouldRegisterError()
+    {
+        var node = SqlNode.Parameter( "a" ).Lead();
+        _sut.VisitLeadWindowFunction( node );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
+    public void VisitFirstValueWindowFunction_ShouldRegisterError()
+    {
+        var node = SqlNode.Parameter( "a" ).FirstValue();
+        _sut.VisitFirstValueWindowFunction( node );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
+    public void VisitLastValueWindowFunction_ShouldRegisterError()
+    {
+        var node = SqlNode.Parameter( "a" ).LastValue();
+        _sut.VisitLastValueWindowFunction( node );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
+    public void VisitNthValueWindowFunction_ShouldRegisterError()
+    {
+        var node = SqlNode.Parameter( "a" ).NthValue( SqlNode.Literal( 5 ) );
+        _sut.VisitNthValueWindowFunction( node );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
     public void VisitCustomAggregateFunction_ShouldRegisterError()
     {
         var node = new AggregateFunctionMock(

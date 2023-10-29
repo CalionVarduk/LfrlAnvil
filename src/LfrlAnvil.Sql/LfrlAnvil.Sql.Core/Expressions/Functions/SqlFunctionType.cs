@@ -32,5 +32,15 @@ public enum SqlFunctionType : byte
     Average,
     Sum,
     Count,
-    StringConcat
+    StringConcat,
+    RowNumber,
+    Rank,
+    DenseRank,
+    CumulativeDistribution,
+    NTile,
+    Lag,
+    Lead,
+    FirstValue,
+    LastValue,
+    NthValue
 }

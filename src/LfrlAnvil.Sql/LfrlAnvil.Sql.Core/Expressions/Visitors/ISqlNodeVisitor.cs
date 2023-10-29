@@ -66,6 +66,16 @@ public interface ISqlNodeVisitor
     void VisitSumAggregateFunction(SqlSumAggregateFunctionExpressionNode node);
     void VisitCountAggregateFunction(SqlCountAggregateFunctionExpressionNode node);
     void VisitStringConcatAggregateFunction(SqlStringConcatAggregateFunctionExpressionNode node);
+    void VisitRowNumberWindowFunction(SqlRowNumberWindowFunctionExpressionNode node);
+    void VisitRankWindowFunction(SqlRankWindowFunctionExpressionNode node);
+    void VisitDenseRankWindowFunction(SqlDenseRankWindowFunctionExpressionNode node);
+    void VisitCumulativeDistributionWindowFunction(SqlCumulativeDistributionWindowFunctionExpressionNode node);
+    void VisitNTileWindowFunction(SqlNTileWindowFunctionExpressionNode node);
+    void VisitLagWindowFunction(SqlLagWindowFunctionExpressionNode node);
+    void VisitLeadWindowFunction(SqlLeadWindowFunctionExpressionNode node);
+    void VisitFirstValueWindowFunction(SqlFirstValueWindowFunctionExpressionNode node);
+    void VisitLastValueWindowFunction(SqlLastValueWindowFunctionExpressionNode node);
+    void VisitNthValueWindowFunction(SqlNthValueWindowFunctionExpressionNode node);
     void VisitCustomAggregateFunction(SqlAggregateFunctionExpressionNode node);
     void VisitRawCondition(SqlRawConditionNode node);
     void VisitTrue(SqlTrueNode node);

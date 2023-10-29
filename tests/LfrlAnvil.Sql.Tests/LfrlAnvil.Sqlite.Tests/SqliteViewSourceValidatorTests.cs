@@ -851,6 +851,147 @@ public class SqliteViewSourceValidatorTests : TestsBase
     }
 
     [Fact]
+    public void VisitRowNumberWindowFunction_ShouldVisitTraits()
+    {
+        var node = SqlNode.WindowFunctions.RowNumber().AndWhere( SqlNode.RawCondition( "foo.a > @c", SqlNode.Parameter( "c" ) ) );
+        _sut.VisitRowNumberWindowFunction( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 1 );
+            _sut.ReferencedObjects.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void VisitRankWindowFunction_ShouldVisitTraits()
+    {
+        var node = SqlNode.WindowFunctions.Rank().AndWhere( SqlNode.RawCondition( "foo.a > @c", SqlNode.Parameter( "c" ) ) );
+        _sut.VisitRankWindowFunction( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 1 );
+            _sut.ReferencedObjects.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void VisitDenseRankWindowFunction_ShouldVisitTraits()
+    {
+        var node = SqlNode.WindowFunctions.DenseRank().AndWhere( SqlNode.RawCondition( "foo.a > @c", SqlNode.Parameter( "c" ) ) );
+        _sut.VisitDenseRankWindowFunction( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 1 );
+            _sut.ReferencedObjects.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void VisitCumulativeDistributionWindowFunction_ShouldVisitTraits()
+    {
+        var node = SqlNode.WindowFunctions.CumulativeDistribution()
+            .AndWhere( SqlNode.RawCondition( "foo.a > @c", SqlNode.Parameter( "c" ) ) );
+
+        _sut.VisitCumulativeDistributionWindowFunction( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 1 );
+            _sut.ReferencedObjects.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void VisitNTileWindowFunction_ShouldVisitArgumentsAndTraits()
+    {
+        var node = SqlNode.Parameter( "a" ).NTile().AndWhere( SqlNode.RawCondition( "foo.a > @c", SqlNode.Parameter( "c" ) ) );
+        _sut.VisitNTileWindowFunction( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 2 );
+            _sut.ReferencedObjects.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void VisitLagWindowFunction_ShouldVisitArgumentsAndTraits()
+    {
+        var node = SqlNode.Parameter( "a" )
+            .Lag( SqlNode.Parameter( "b" ), SqlNode.Parameter( "d" ) )
+            .AndWhere( SqlNode.RawCondition( "foo.a > @c", SqlNode.Parameter( "c" ) ) );
+
+        _sut.VisitLagWindowFunction( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 4 );
+            _sut.ReferencedObjects.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void VisitLeadWindowFunction_ShouldVisitArgumentsAndTraits()
+    {
+        var node = SqlNode.Parameter( "a" )
+            .Lead( SqlNode.Parameter( "b" ), SqlNode.Parameter( "d" ) )
+            .AndWhere( SqlNode.RawCondition( "foo.a > @c", SqlNode.Parameter( "c" ) ) );
+
+        _sut.VisitLeadWindowFunction( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 4 );
+            _sut.ReferencedObjects.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void VisitFirstValueWindowFunction_ShouldVisitArgumentsAndTraits()
+    {
+        var node = SqlNode.Parameter( "a" ).FirstValue().AndWhere( SqlNode.RawCondition( "foo.a > @c", SqlNode.Parameter( "c" ) ) );
+        _sut.VisitFirstValueWindowFunction( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 2 );
+            _sut.ReferencedObjects.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void VisitLastValueWindowFunction_ShouldVisitArgumentsAndTraits()
+    {
+        var node = SqlNode.Parameter( "a" ).LastValue().AndWhere( SqlNode.RawCondition( "foo.a > @c", SqlNode.Parameter( "c" ) ) );
+        _sut.VisitLastValueWindowFunction( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 2 );
+            _sut.ReferencedObjects.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void VisitNthValueWindowFunction_ShouldVisitArgumentsAndTraits()
+    {
+        var node = SqlNode.Parameter( "a" )
+            .NthValue( SqlNode.Parameter( "b" ) )
+            .AndWhere( SqlNode.RawCondition( "foo.a > @c", SqlNode.Parameter( "c" ) ) );
+
+        _sut.VisitNthValueWindowFunction( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 3 );
+            _sut.ReferencedObjects.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
     public void VisitCustomAggregateFunction_ShouldVisitArgumentsAndTraits()
     {
         var node = new AggregateFunctionMock(

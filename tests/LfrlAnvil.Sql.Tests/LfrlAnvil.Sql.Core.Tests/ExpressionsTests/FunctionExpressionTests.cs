@@ -825,4 +825,498 @@ public class FunctionExpressionTests : TestsBase
   DISTINCT" );
         }
     }
+
+    [Fact]
+    public void RowNumber_ShouldCreateRowNumberWindowFunctionExpressionNode()
+    {
+        var sut = SqlNode.WindowFunctions.RowNumber();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.RowNumber );
+            sut.Arguments.ToArray().Should().BeEmpty();
+            sut.Traits.Should().BeEmpty();
+            text.Should().Be( "WND_ROW_NUMBER()" );
+        }
+    }
+
+    [Fact]
+    public void RowNumber_ShouldCreateRowNumberWindowFunctionExpressionNode_WithTrait()
+    {
+        var sut = SqlNode.WindowFunctions.RowNumber().Distinct();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.RowNumber );
+            sut.Arguments.ToArray().Should().BeEmpty();
+            sut.Traits.Should().HaveCount( 1 );
+            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
+            text.Should()
+                .Be(
+                    @"WND_ROW_NUMBER()
+  DISTINCT" );
+        }
+    }
+
+    [Fact]
+    public void Rank_ShouldCreateRankWindowFunctionExpressionNode()
+    {
+        var sut = SqlNode.WindowFunctions.Rank();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.Rank );
+            sut.Arguments.ToArray().Should().BeEmpty();
+            sut.Traits.Should().BeEmpty();
+            text.Should().Be( "WND_RANK()" );
+        }
+    }
+
+    [Fact]
+    public void Rank_ShouldCreateRankWindowFunctionExpressionNode_WithTrait()
+    {
+        var sut = SqlNode.WindowFunctions.Rank().Distinct();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.Rank );
+            sut.Arguments.ToArray().Should().BeEmpty();
+            sut.Traits.Should().HaveCount( 1 );
+            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
+            text.Should()
+                .Be(
+                    @"WND_RANK()
+  DISTINCT" );
+        }
+    }
+
+    [Fact]
+    public void DenseRank_ShouldCreateDenseRankWindowFunctionExpressionNode()
+    {
+        var sut = SqlNode.WindowFunctions.DenseRank();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.DenseRank );
+            sut.Arguments.ToArray().Should().BeEmpty();
+            sut.Traits.Should().BeEmpty();
+            text.Should().Be( "WND_DENSE_RANK()" );
+        }
+    }
+
+    [Fact]
+    public void DenseRank_ShouldCreateDenseRankWindowFunctionExpressionNode_WithTrait()
+    {
+        var sut = SqlNode.WindowFunctions.DenseRank().Distinct();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.DenseRank );
+            sut.Arguments.ToArray().Should().BeEmpty();
+            sut.Traits.Should().HaveCount( 1 );
+            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
+            text.Should()
+                .Be(
+                    @"WND_DENSE_RANK()
+  DISTINCT" );
+        }
+    }
+
+    [Fact]
+    public void CumulativeDistribution_ShouldCreateCumulativeDistributionWindowFunctionExpressionNode()
+    {
+        var sut = SqlNode.WindowFunctions.CumulativeDistribution();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.CumulativeDistribution );
+            sut.Arguments.ToArray().Should().BeEmpty();
+            sut.Traits.Should().BeEmpty();
+            text.Should().Be( "WND_CUMULATIVE_DISTRIBUTION()" );
+        }
+    }
+
+    [Fact]
+    public void CumulativeDistribution_ShouldCreateCumulativeDistributionWindowFunctionExpressionNode_WithTrait()
+    {
+        var sut = SqlNode.WindowFunctions.CumulativeDistribution().Distinct();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.CumulativeDistribution );
+            sut.Arguments.ToArray().Should().BeEmpty();
+            sut.Traits.Should().HaveCount( 1 );
+            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
+            text.Should()
+                .Be(
+                    @"WND_CUMULATIVE_DISTRIBUTION()
+  DISTINCT" );
+        }
+    }
+
+    [Fact]
+    public void NTile_ShouldCreateNTileWindowFunctionExpressionNode()
+    {
+        var arg = SqlNode.Parameter<int>( "a" );
+        var sut = arg.NTile();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.NTile );
+            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
+            sut.Traits.Should().BeEmpty();
+            text.Should().Be( "WND_N_TILE((@a : System.Int32))" );
+        }
+    }
+
+    [Fact]
+    public void NTile_ShouldCreateNTileWindowFunctionExpressionNode_WithTrait()
+    {
+        var arg = SqlNode.Parameter<int>( "a" );
+        var sut = arg.NTile().Distinct();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.NTile );
+            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
+            sut.Traits.Should().HaveCount( 1 );
+            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
+            text.Should()
+                .Be(
+                    @"WND_N_TILE((@a : System.Int32))
+  DISTINCT" );
+        }
+    }
+
+    [Fact]
+    public void Lag_ShouldCreateLagWindowFunctionExpressionNode()
+    {
+        var arg = SqlNode.Parameter<string>( "a" );
+        var sut = arg.Lag();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.Lag );
+            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
+            sut.Traits.Should().BeEmpty();
+            text.Should().Be( "WND_LAG((@a : System.String))" );
+        }
+    }
+
+    [Fact]
+    public void Lag_ShouldCreateLagWindowFunctionExpressionNode_WithOffset()
+    {
+        var arg = SqlNode.Parameter<string>( "a" );
+        var offset = SqlNode.Parameter<int>( "b" );
+        var sut = arg.Lag( offset );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.Lag );
+            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg, offset );
+            sut.Traits.Should().BeEmpty();
+            text.Should().Be( "WND_LAG((@a : System.String), (@b : System.Int32))" );
+        }
+    }
+
+    [Fact]
+    public void Lag_ShouldCreateLagWindowFunctionExpressionNode_WithOffsetAndDefault()
+    {
+        var arg = SqlNode.Parameter<string>( "a" );
+        var offset = SqlNode.Parameter<int>( "b" );
+        var @default = SqlNode.Parameter<string>( "c" );
+        var sut = arg.Lag( offset, @default );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.Lag );
+            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg, offset, @default );
+            sut.Traits.Should().BeEmpty();
+            text.Should().Be( "WND_LAG((@a : System.String), (@b : System.Int32), (@c : System.String))" );
+        }
+    }
+
+    [Fact]
+    public void Lag_ShouldCreateLagWindowFunctionExpressionNode_WithDefault()
+    {
+        var arg = SqlNode.Parameter<string>( "a" );
+        var @default = SqlNode.Parameter<string>( "c" );
+        var sut = arg.Lag( offset: null, @default );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.Lag );
+            sut.Arguments.Length.Should().Be( 3 );
+            sut.Arguments.ToArray().ElementAtOrDefault( 0 ).Should().BeSameAs( arg );
+            sut.Arguments.ToArray().ElementAtOrDefault( 1 ).Should().BeEquivalentTo( SqlNode.Literal( 1 ) );
+            sut.Arguments.ToArray().ElementAtOrDefault( 2 ).Should().BeSameAs( @default );
+            sut.Traits.Should().BeEmpty();
+            text.Should().Be( "WND_LAG((@a : System.String), (\"1\" : System.Int32), (@c : System.String))" );
+        }
+    }
+
+    [Fact]
+    public void Lag_ShouldCreateLagWindowFunctionExpressionNode_WithTrait()
+    {
+        var arg = SqlNode.Parameter<string>( "a" );
+        var offset = SqlNode.Parameter<int>( "b" );
+        var @default = SqlNode.Parameter<string>( "c" );
+        var sut = arg.Lag( offset, @default ).Distinct();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.Lag );
+            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg, offset, @default );
+            sut.Traits.Should().HaveCount( 1 );
+            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
+            text.Should()
+                .Be(
+                    @"WND_LAG((@a : System.String), (@b : System.Int32), (@c : System.String))
+  DISTINCT" );
+        }
+    }
+
+    [Fact]
+    public void Lead_ShouldCreateLeadWindowFunctionExpressionNode()
+    {
+        var arg = SqlNode.Parameter<string>( "a" );
+        var sut = arg.Lead();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.Lead );
+            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
+            sut.Traits.Should().BeEmpty();
+            text.Should().Be( "WND_LEAD((@a : System.String))" );
+        }
+    }
+
+    [Fact]
+    public void Lead_ShouldCreateLeadWindowFunctionExpressionNode_WithOffset()
+    {
+        var arg = SqlNode.Parameter<string>( "a" );
+        var offset = SqlNode.Parameter<int>( "b" );
+        var sut = arg.Lead( offset );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.Lead );
+            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg, offset );
+            sut.Traits.Should().BeEmpty();
+            text.Should().Be( "WND_LEAD((@a : System.String), (@b : System.Int32))" );
+        }
+    }
+
+    [Fact]
+    public void Lead_ShouldCreateLeadWindowFunctionExpressionNode_WithOffsetAndDefault()
+    {
+        var arg = SqlNode.Parameter<string>( "a" );
+        var offset = SqlNode.Parameter<int>( "b" );
+        var @default = SqlNode.Parameter<string>( "c" );
+        var sut = arg.Lead( offset, @default );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.Lead );
+            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg, offset, @default );
+            sut.Traits.Should().BeEmpty();
+            text.Should().Be( "WND_LEAD((@a : System.String), (@b : System.Int32), (@c : System.String))" );
+        }
+    }
+
+    [Fact]
+    public void Lead_ShouldCreateLeadWindowFunctionExpressionNode_WithDefault()
+    {
+        var arg = SqlNode.Parameter<string>( "a" );
+        var @default = SqlNode.Parameter<string>( "c" );
+        var sut = arg.Lead( offset: null, @default );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.Lead );
+            sut.Arguments.Length.Should().Be( 3 );
+            sut.Arguments.ToArray().ElementAtOrDefault( 0 ).Should().BeSameAs( arg );
+            sut.Arguments.ToArray().ElementAtOrDefault( 1 ).Should().BeEquivalentTo( SqlNode.Literal( 1 ) );
+            sut.Arguments.ToArray().ElementAtOrDefault( 2 ).Should().BeSameAs( @default );
+            sut.Traits.Should().BeEmpty();
+            text.Should().Be( "WND_LEAD((@a : System.String), (\"1\" : System.Int32), (@c : System.String))" );
+        }
+    }
+
+    [Fact]
+    public void Lead_ShouldCreateLeadWindowFunctionExpressionNode_WithTrait()
+    {
+        var arg = SqlNode.Parameter<string>( "a" );
+        var offset = SqlNode.Parameter<int>( "b" );
+        var @default = SqlNode.Parameter<string>( "c" );
+        var sut = arg.Lead( offset, @default ).Distinct();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.Lead );
+            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg, offset, @default );
+            sut.Traits.Should().HaveCount( 1 );
+            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
+            text.Should()
+                .Be(
+                    @"WND_LEAD((@a : System.String), (@b : System.Int32), (@c : System.String))
+  DISTINCT" );
+        }
+    }
+
+    [Fact]
+    public void FirstValue_ShouldCreateFirstValueWindowFunctionExpressionNode()
+    {
+        var arg = SqlNode.Parameter<string>( "a" );
+        var sut = arg.FirstValue();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.FirstValue );
+            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
+            sut.Traits.Should().BeEmpty();
+            text.Should().Be( "WND_FIRST_VALUE((@a : System.String))" );
+        }
+    }
+
+    [Fact]
+    public void FirstValue_ShouldCreateFirstValueWindowFunctionExpressionNode_WithTrait()
+    {
+        var arg = SqlNode.Parameter<string>( "a" );
+        var sut = arg.FirstValue().Distinct();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.FirstValue );
+            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
+            sut.Traits.Should().HaveCount( 1 );
+            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
+            text.Should()
+                .Be(
+                    @"WND_FIRST_VALUE((@a : System.String))
+  DISTINCT" );
+        }
+    }
+
+    [Fact]
+    public void LastValue_ShouldCreateLastValueWindowFunctionExpressionNode()
+    {
+        var arg = SqlNode.Parameter<string>( "a" );
+        var sut = arg.LastValue();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.LastValue );
+            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
+            sut.Traits.Should().BeEmpty();
+            text.Should().Be( "WND_LAST_VALUE((@a : System.String))" );
+        }
+    }
+
+    [Fact]
+    public void LastValue_ShouldCreateLastValueWindowFunctionExpressionNode_WithTrait()
+    {
+        var arg = SqlNode.Parameter<string>( "a" );
+        var sut = arg.LastValue().Distinct();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.LastValue );
+            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
+            sut.Traits.Should().HaveCount( 1 );
+            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
+            text.Should()
+                .Be(
+                    @"WND_LAST_VALUE((@a : System.String))
+  DISTINCT" );
+        }
+    }
+
+    [Fact]
+    public void NthValue_ShouldCreateNthValueWindowFunctionExpressionNode()
+    {
+        var arg = SqlNode.Parameter<string>( "a" );
+        var n = SqlNode.Parameter<int>( "b" );
+        var sut = arg.NthValue( n );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.NthValue );
+            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg, n );
+            sut.Traits.Should().BeEmpty();
+            text.Should().Be( "WND_NTH_VALUE((@a : System.String), (@b : System.Int32))" );
+        }
+    }
+
+    [Fact]
+    public void NthValue_ShouldCreateNthValueWindowFunctionExpressionNode_WithTrait()
+    {
+        var arg = SqlNode.Parameter<string>( "a" );
+        var n = SqlNode.Parameter<int>( "b" );
+        var sut = arg.NthValue( n ).Distinct();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.NthValue );
+            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg, n );
+            sut.Traits.Should().HaveCount( 1 );
+            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
+            text.Should()
+                .Be(
+                    @"WND_NTH_VALUE((@a : System.String), (@b : System.Int32))
+  DISTINCT" );
+        }
+    }
 }

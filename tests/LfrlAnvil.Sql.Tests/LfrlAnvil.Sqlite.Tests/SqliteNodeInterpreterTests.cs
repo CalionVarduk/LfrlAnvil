@@ -897,6 +897,86 @@ END" );
     }
 
     [Fact]
+    public void Visit_ShouldInterpretRowNumberWindowFunction()
+    {
+        var window = SqlNode.WindowDefinition( "foo", new[] { SqlNode.RawExpression( "a" ).Asc() } );
+        _sut.Visit( SqlNode.WindowFunctions.RowNumber().Over( window ) );
+        _sut.Context.Sql.ToString().Should().Be( "ROW_NUMBER() OVER \"foo\"" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretRankWindowFunction()
+    {
+        var window = SqlNode.WindowDefinition( "foo", new[] { SqlNode.RawExpression( "a" ).Asc() } );
+        _sut.Visit( SqlNode.WindowFunctions.Rank().Over( window ) );
+        _sut.Context.Sql.ToString().Should().Be( "RANK() OVER \"foo\"" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretDenseRankWindowFunction()
+    {
+        var window = SqlNode.WindowDefinition( "foo", new[] { SqlNode.RawExpression( "a" ).Asc() } );
+        _sut.Visit( SqlNode.WindowFunctions.DenseRank().Over( window ) );
+        _sut.Context.Sql.ToString().Should().Be( "DENSE_RANK() OVER \"foo\"" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretCumulativeDistributionWindowFunction()
+    {
+        var window = SqlNode.WindowDefinition( "foo", new[] { SqlNode.RawExpression( "a" ).Asc() } );
+        _sut.Visit( SqlNode.WindowFunctions.CumulativeDistribution().Over( window ) );
+        _sut.Context.Sql.ToString().Should().Be( "CUME_DIST() OVER \"foo\"" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretNTileWindowFunction()
+    {
+        var window = SqlNode.WindowDefinition( "foo", new[] { SqlNode.RawExpression( "a" ).Asc() } );
+        _sut.Visit( SqlNode.RawExpression( "bar.a" ).NTile().Over( window ) );
+        _sut.Context.Sql.ToString().Should().Be( "NTILE((bar.a)) OVER \"foo\"" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretLagWindowFunction()
+    {
+        var window = SqlNode.WindowDefinition( "foo", new[] { SqlNode.RawExpression( "a" ).Asc() } );
+        _sut.Visit( SqlNode.RawExpression( "bar.a" ).Lag( SqlNode.Literal( 3 ), SqlNode.Literal( "x" ) ).Over( window ) );
+        _sut.Context.Sql.ToString().Should().Be( "LAG((bar.a), 3, 'x') OVER \"foo\"" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretLeadWindowFunction()
+    {
+        var window = SqlNode.WindowDefinition( "foo", new[] { SqlNode.RawExpression( "a" ).Asc() } );
+        _sut.Visit( SqlNode.RawExpression( "bar.a" ).Lead( SqlNode.Literal( 3 ), SqlNode.Literal( "x" ) ).Over( window ) );
+        _sut.Context.Sql.ToString().Should().Be( "LEAD((bar.a), 3, 'x') OVER \"foo\"" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretFirstValueWindowFunction()
+    {
+        var window = SqlNode.WindowDefinition( "foo", new[] { SqlNode.RawExpression( "a" ).Asc() } );
+        _sut.Visit( SqlNode.RawExpression( "bar.a" ).FirstValue().Over( window ) );
+        _sut.Context.Sql.ToString().Should().Be( "FIRST_VALUE((bar.a)) OVER \"foo\"" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretLastValueWindowFunction()
+    {
+        var window = SqlNode.WindowDefinition( "foo", new[] { SqlNode.RawExpression( "a" ).Asc() } );
+        _sut.Visit( SqlNode.RawExpression( "bar.a" ).LastValue().Over( window ) );
+        _sut.Context.Sql.ToString().Should().Be( "LAST_VALUE((bar.a)) OVER \"foo\"" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretNthValueWindowFunction()
+    {
+        var window = SqlNode.WindowDefinition( "foo", new[] { SqlNode.RawExpression( "a" ).Asc() } );
+        _sut.Visit( SqlNode.RawExpression( "bar.a" ).NthValue( SqlNode.Literal( 5 ) ).Over( window ) );
+        _sut.Context.Sql.ToString().Should().Be( "NTH_VALUE((bar.a), 5) OVER \"foo\"" );
+    }
+
+    [Fact]
     public void VisitChild_ShouldInterpretAggregateFunctionWithoutParentheses_WhenTraitsAreEmpty()
     {
         _sut.VisitChild( SqlNode.AggregateFunctions.Count( SqlNode.RawExpression( "foo.a" ) ) );

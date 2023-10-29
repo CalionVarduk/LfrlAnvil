@@ -323,6 +323,84 @@ public abstract class SqlNodeVisitor : ISqlNodeVisitor
             this.Visit( trait );
     }
 
+    public virtual void VisitRowNumberWindowFunction(SqlRowNumberWindowFunctionExpressionNode node)
+    {
+        foreach ( var trait in node.Traits )
+            this.Visit( trait );
+    }
+
+    public virtual void VisitRankWindowFunction(SqlRankWindowFunctionExpressionNode node)
+    {
+        foreach ( var trait in node.Traits )
+            this.Visit( trait );
+    }
+
+    public virtual void VisitDenseRankWindowFunction(SqlDenseRankWindowFunctionExpressionNode node)
+    {
+        foreach ( var trait in node.Traits )
+            this.Visit( trait );
+    }
+
+    public virtual void VisitCumulativeDistributionWindowFunction(SqlCumulativeDistributionWindowFunctionExpressionNode node)
+    {
+        foreach ( var trait in node.Traits )
+            this.Visit( trait );
+    }
+
+    public virtual void VisitNTileWindowFunction(SqlNTileWindowFunctionExpressionNode node)
+    {
+        foreach ( var arg in node.Arguments )
+            this.Visit( arg );
+
+        foreach ( var trait in node.Traits )
+            this.Visit( trait );
+    }
+
+    public virtual void VisitLagWindowFunction(SqlLagWindowFunctionExpressionNode node)
+    {
+        foreach ( var arg in node.Arguments )
+            this.Visit( arg );
+
+        foreach ( var trait in node.Traits )
+            this.Visit( trait );
+    }
+
+    public virtual void VisitLeadWindowFunction(SqlLeadWindowFunctionExpressionNode node)
+    {
+        foreach ( var arg in node.Arguments )
+            this.Visit( arg );
+
+        foreach ( var trait in node.Traits )
+            this.Visit( trait );
+    }
+
+    public virtual void VisitFirstValueWindowFunction(SqlFirstValueWindowFunctionExpressionNode node)
+    {
+        foreach ( var arg in node.Arguments )
+            this.Visit( arg );
+
+        foreach ( var trait in node.Traits )
+            this.Visit( trait );
+    }
+
+    public virtual void VisitLastValueWindowFunction(SqlLastValueWindowFunctionExpressionNode node)
+    {
+        foreach ( var arg in node.Arguments )
+            this.Visit( arg );
+
+        foreach ( var trait in node.Traits )
+            this.Visit( trait );
+    }
+
+    public virtual void VisitNthValueWindowFunction(SqlNthValueWindowFunctionExpressionNode node)
+    {
+        foreach ( var arg in node.Arguments )
+            this.Visit( arg );
+
+        foreach ( var trait in node.Traits )
+            this.Visit( trait );
+    }
+
     public virtual void VisitCustomAggregateFunction(SqlAggregateFunctionExpressionNode node)
     {
         foreach ( var arg in node.Arguments )
