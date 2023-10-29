@@ -70,7 +70,7 @@ public class ToTaskTests : TestsBase
     }
 
     [Fact]
-    public void ToTaskExtension_ShouldReturnTaskThatRunsToCompletionWithLastEvent_WhenSourcePublishesEventsAndDisposes()
+    public async Task ToTaskExtension_ShouldReturnTaskThatRunsToCompletionWithLastEvent_WhenSourcePublishesEventsAndDisposes()
     {
         var values = Fixture.CreateDistinctCollection<int>( count: 3 );
         var expectedResult = values[^1];
@@ -81,31 +81,33 @@ public class ToTaskTests : TestsBase
             source.Publish( e );
 
         source.Dispose();
+        var result = await task;
 
         using ( new AssertionScope() )
         {
             task.Status.Should().Be( TaskStatus.RanToCompletion );
-            task.Result.Should().Be( expectedResult );
+            result.Should().Be( expectedResult );
         }
     }
 
     [Fact]
-    public void ToTaskExtension_ShouldReturnTaskThatRunsToCompletionWithDefaultResult_WhenSourceDisposes()
+    public async Task ToTaskExtension_ShouldReturnTaskThatRunsToCompletionWithDefaultResult_WhenSourceDisposes()
     {
         var source = new EventPublisher<int>();
         var task = source.ToTask( CancellationToken.None );
 
         source.Dispose();
+        var result = await task;
 
         using ( new AssertionScope() )
         {
             task.Status.Should().Be( TaskStatus.RanToCompletion );
-            task.Result.Should().Be( default );
+            result.Should().Be( default );
         }
     }
 
     [Fact]
-    public void ToTaskExtension_ShouldReturnTaskThatRunsToCompletionWithLastEvent_WhenSourcePublishesEventsAndSubscriberDisposes()
+    public async Task ToTaskExtension_ShouldReturnTaskThatRunsToCompletionWithLastEvent_WhenSourcePublishesEventsAndSubscriberDisposes()
     {
         var values = Fixture.CreateDistinctCollection<int>( count: 3 );
         var expectedResult = values[^1];
@@ -117,27 +119,29 @@ public class ToTaskTests : TestsBase
             source.Publish( e );
 
         subscriber.Dispose();
+        var result = await task;
 
         using ( new AssertionScope() )
         {
             task.Status.Should().Be( TaskStatus.RanToCompletion );
-            task.Result.Should().Be( expectedResult );
+            result.Should().Be( expectedResult );
         }
     }
 
     [Fact]
-    public void ToTaskExtension_ShouldReturnTaskThatRunsToCompletionWithDefaultResult_WhenSubscriberDisposes()
+    public async Task ToTaskExtension_ShouldReturnTaskThatRunsToCompletionWithDefaultResult_WhenSubscriberDisposes()
     {
         var source = new EventPublisher<int>();
         var task = source.ToTask( CancellationToken.None );
         var subscriber = source.Subscribers.First();
 
         subscriber.Dispose();
+        var result = await task;
 
         using ( new AssertionScope() )
         {
             task.Status.Should().Be( TaskStatus.RanToCompletion );
-            task.Result.Should().Be( default );
+            result.Should().Be( default );
         }
     }
 }

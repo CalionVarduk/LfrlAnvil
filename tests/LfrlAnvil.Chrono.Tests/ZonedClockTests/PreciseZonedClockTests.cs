@@ -88,12 +88,12 @@ public class PreciseZonedClockTests : TestsBase
     }
 
     [Fact]
-    public void GetNow_ShouldReturnCorrectResult_WhenPrecisionResetTimeoutIsExceeded()
+    public async Task GetNow_ShouldReturnCorrectResult_WhenPrecisionResetTimeoutIsExceeded()
     {
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
         var sut = new PreciseZonedClock( timeZone, Duration.FromTicks( 1 ) );
 
-        Task.Delay( TimeSpan.FromMilliseconds( 1 ) ).Wait();
+        await Task.Delay( TimeSpan.FromMilliseconds( 1 ) );
 
         var expectedMinTimestamp = new Timestamp( DateTime.UtcNow );
         var result = sut.GetNow();

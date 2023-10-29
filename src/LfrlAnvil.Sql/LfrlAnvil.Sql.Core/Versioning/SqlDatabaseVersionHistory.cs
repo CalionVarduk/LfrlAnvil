@@ -46,7 +46,7 @@ public class SqlDatabaseVersionHistory
     public DatabaseComparisonResult CompareToDatabase(ReadOnlySpan<SqlDatabaseVersionRecord> records)
     {
         if ( records.Length == 0 )
-            return new DatabaseComparisonResult( ReadOnlySpan<SqlDatabaseVersion>.Empty, Versions, InitialVersion, 1 );
+            return new DatabaseComparisonResult( _versions, 0, InitialVersion, 1 );
 
         var allVersions = Versions;
         var errors = Chain<string>.Empty;
@@ -64,8 +64,6 @@ public class SqlDatabaseVersionHistory
         if ( lastOrdinal != committedVersionCount )
             errors = errors.Extend( ExceptionResources.VersionCountDoesNotMatch( lastOrdinal, committedVersionCount, dbVersion ) );
 
-        var committedVersions = allVersions.Slice( 0, committedVersionCount );
-        var uncommittedVersions = allVersions.Slice( committedVersionCount );
         var persistedCommittedVersions = ordinalOffset < committedVersionCount
             ? allVersions.Slice( ordinalOffset, committedVersionCount - ordinalOffset )
             : ReadOnlySpan<SqlDatabaseVersion>.Empty;
@@ -93,27 +91,31 @@ public class SqlDatabaseVersionHistory
         if ( errors.Count > 0 )
             throw new SqlDatabaseVersionHistoryException( errors );
 
-        return new DatabaseComparisonResult( committedVersions, uncommittedVersions, dbVersion, lastOrdinal + 1 );
+        return new DatabaseComparisonResult( _versions, committedVersionCount, dbVersion, lastOrdinal + 1 );
     }
 
-    public readonly ref struct DatabaseComparisonResult
+    public readonly struct DatabaseComparisonResult
     {
-        public readonly ReadOnlySpan<SqlDatabaseVersion> Committed;
-        public readonly ReadOnlySpan<SqlDatabaseVersion> Uncommitted;
-        public readonly Version Current;
-        public readonly int NextOrdinal;
+        private readonly SqlDatabaseVersion[] _allVersions;
+        private readonly int _committedVersionCount;
 
         internal DatabaseComparisonResult(
-            ReadOnlySpan<SqlDatabaseVersion> committed,
-            ReadOnlySpan<SqlDatabaseVersion> uncommitted,
+            SqlDatabaseVersion[] allVersions,
+            int committedVersionCount,
             Version current,
             int nextOrdinal)
         {
-            Committed = committed;
-            Uncommitted = uncommitted;
+            Assume.IsGreaterThanOrEqualTo( committedVersionCount, 0, nameof( committedVersionCount ) );
+            _allVersions = allVersions;
+            _committedVersionCount = committedVersionCount;
             Current = current;
             NextOrdinal = nextOrdinal;
         }
+
+        public ReadOnlySpan<SqlDatabaseVersion> Committed => _allVersions.AsSpan( 0, _committedVersionCount );
+        public ReadOnlySpan<SqlDatabaseVersion> Uncommitted => _allVersions.AsSpan( _committedVersionCount );
+        public Version Current { get; }
+        public int NextOrdinal { get; }
     }
 
     [Pure]

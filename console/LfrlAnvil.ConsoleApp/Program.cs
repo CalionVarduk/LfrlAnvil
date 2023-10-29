@@ -13,7 +13,7 @@ using LfrlAnvil.Reactive.Extensions;
     var simDuration = Duration.FromSeconds( 30 );
 
     var timestampProvider = new PreciseTimestampProvider();
-    var timer = new ReactiveTimer( timestampProvider, interval, Duration.FromMilliseconds( 16 ), long.MaxValue );
+    var timer = new ReactiveTimer( timestampProvider, interval, Duration.FromMilliseconds( 1 ), long.MaxValue );
     await RunTimer( timer, () => timer.StartAsync(), simDuration, "Chrono" );
 }
 
@@ -26,7 +26,8 @@ async Task RunTimer(IEventSource<WithInterval<long>> timer, Action starter, Dura
     long last = -1;
     var minInterval = Duration.MaxValue;
     var maxInterval = Duration.MinValue;
-    var intervalSum = Duration.Zero;
+    var intervalMean = 0.0;
+    var intervalVarianceBase = 0.0;
 
     timer.Concurrent()
         .Listen(
@@ -35,7 +36,9 @@ async Task RunTimer(IEventSource<WithInterval<long>> timer, Action starter, Dura
                 {
                     ++count;
                     last = e.Event;
-                    intervalSum += e.Interval;
+                    var prevMean = intervalMean;
+                    intervalMean += (e.Interval.Ticks - intervalMean) / count;
+                    intervalVarianceBase += (e.Interval.Ticks - prevMean) * (e.Interval.Ticks - intervalMean);
                     minInterval = minInterval.Min( e.Interval );
                     maxInterval = maxInterval.Max( e.Interval );
 
@@ -50,7 +53,11 @@ async Task RunTimer(IEventSource<WithInterval<long>> timer, Action starter, Dura
 
     timer.Dispose();
 
-    Console.WriteLine( $"[INTERVALS] Min: {minInterval}, Max: {maxInterval}, Avg: {intervalSum / count}" );
+    var variance = intervalVarianceBase / count;
+    var stdDev = Duration.FromTicks( (long)Math.Sqrt( variance ) );
+    Console.WriteLine(
+        $"[INTERVALS] Min: {minInterval}, Max: {maxInterval}, Avg: {Duration.FromTicks( (long)intervalMean )}, StdDev: {stdDev}" );
+
     Console.WriteLine( $"[CAUGHT EVENTS] {count} out of {last + 1} (skipped {last - count + 1}) ({count / (last + 1.0):P})" );
 
     Console.WriteLine();

@@ -5,13 +5,13 @@ namespace LfrlAnvil.Chrono.Tests.TimestampProviderTests;
 public class FrozenTimestampProviderTests : TestsBase
 {
     [Fact]
-    public void GetNow_ShouldReturnCorrectResult()
+    public async Task GetNow_ShouldReturnCorrectResult()
     {
         var expected = new Timestamp( Fixture.Create<int>() );
         var sut = new FrozenTimestampProvider( expected );
 
         var firstResult = sut.GetNow();
-        Task.Delay( TimeSpan.FromMilliseconds( 1 ) ).Wait();
+        await Task.Delay( TimeSpan.FromMilliseconds( 1 ) );
         var secondResult = sut.GetNow();
 
         using ( new AssertionScope() )

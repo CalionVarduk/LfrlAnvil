@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.Reactive.Composites;
@@ -109,7 +110,7 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
             ct => new TaskFactory<TEvent>( _scheduler ).StartNew(
                 () =>
                 {
-                    Task.Delay( 1, ct ).Wait( ct );
+                    Thread.Sleep( 1 );
                     return value;
                 },
                 ct ),
@@ -150,7 +151,7 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
             ct => new TaskFactory<TEvent>( _scheduler ).StartNew(
                 () =>
                 {
-                    Task.Delay( 1, ct ).Wait( ct );
+                    Thread.Sleep( 1 );
                     throw exception;
                 },
                 ct ),
@@ -181,11 +182,18 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
     }
 
     [Fact]
-    public void Listen_ShouldCreateActiveSubscriberThatEmitsResultOnceAndThenDisposes_WhenTaskCancelledDueToSubscriberDispose()
+    public async Task Listen_ShouldCreateActiveSubscriberThatEmitsResultOnceAndThenDisposes_WhenTaskCancelledDueToSubscriberDispose()
     {
+        var eventReceivedTaskSource = new TaskCompletionSource();
         var actualValues = new List<FromTask<TEvent>>();
 
-        var listener = EventListener.Create<FromTask<TEvent>>( actualValues.Add );
+        var listener = EventListener.Create<FromTask<TEvent>>(
+            e =>
+            {
+                actualValues.Add( e );
+                eventReceivedTaskSource.SetResult();
+            } );
+
         var sut = new TaskEventSource<TEvent>(
             async ct =>
             {
@@ -196,6 +204,7 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
 
         var subscriber = sut.Listen( listener );
         subscriber.Dispose();
+        await eventReceivedTaskSource.Task;
 
         using ( new AssertionScope() )
         {
@@ -220,11 +229,18 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
     }
 
     [Fact]
-    public void Listen_ShouldCreateActiveSubscriberThatEmitsResultOnceAndThenDisposes_WhenTaskCancelledDueToEventSourceDispose()
+    public async Task Listen_ShouldCreateActiveSubscriberThatEmitsResultOnceAndThenDisposes_WhenTaskCancelledDueToEventSourceDispose()
     {
+        var eventReceivedTaskSource = new TaskCompletionSource();
         var actualValues = new List<FromTask<TEvent>>();
 
-        var listener = EventListener.Create<FromTask<TEvent>>( actualValues.Add );
+        var listener = EventListener.Create<FromTask<TEvent>>(
+            e =>
+            {
+                actualValues.Add( e );
+                eventReceivedTaskSource.SetResult();
+            } );
+
         var sut = new TaskEventSource<TEvent>(
             async ct =>
             {
@@ -235,6 +251,7 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
 
         var subscriber = sut.Listen( listener );
         sut.Dispose();
+        await eventReceivedTaskSource.Task;
 
         using ( new AssertionScope() )
         {
@@ -261,12 +278,7 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
     [Fact]
     public void Listen_ShouldCreateActiveSubscriberThatAutomaticallyStartsTaskInCreatedStatusOnDefaultScheduler()
     {
-        var task = new Task<TEvent>(
-            () =>
-            {
-                Task.Delay( 100 ).Wait();
-                return Fixture.Create<TEvent>();
-            } );
+        var task = Task.Delay( 100 ).ContinueWith( _ => Fixture.Create<TEvent>() );
 
         var listener = Substitute.For<IEventListener<FromTask<TEvent>>>();
         var sut = new TaskEventSource<TEvent>(

@@ -128,11 +128,11 @@ public class PreciseDateTimeProviderTests : TestsBase
     }
 
     [Fact]
-    public void GetNow_ForUtc_ShouldReturnCorrectResult_WhenPrecisionResetTimeoutIsExceeded()
+    public async Task GetNow_ForUtc_ShouldReturnCorrectResult_WhenPrecisionResetTimeoutIsExceeded()
     {
         var sut = new PreciseUtcDateTimeProvider( Duration.FromTicks( 1 ) );
 
-        Task.Delay( TimeSpan.FromMilliseconds( 1 ) ).Wait();
+        await Task.Delay( TimeSpan.FromMilliseconds( 1 ) );
 
         var expectedMin = DateTime.UtcNow;
         var result = sut.GetNow();
@@ -146,11 +146,11 @@ public class PreciseDateTimeProviderTests : TestsBase
     }
 
     [Fact]
-    public void GetNow_ForLocal_ShouldReturnCorrectResult_WhenPrecisionResetTimeoutIsExceeded()
+    public async Task GetNow_ForLocal_ShouldReturnCorrectResult_WhenPrecisionResetTimeoutIsExceeded()
     {
         var sut = new PreciseLocalDateTimeProvider( Duration.FromTicks( 1 ) );
 
-        Task.Delay( TimeSpan.FromMilliseconds( 1 ) ).Wait();
+        await Task.Delay( TimeSpan.FromMilliseconds( 1 ) );
 
         var expectedMin = DateTime.Now;
         var result = sut.GetNow();

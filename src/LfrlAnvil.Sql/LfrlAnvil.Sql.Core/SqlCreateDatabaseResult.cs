@@ -4,31 +4,31 @@ using LfrlAnvil.Sql.Versioning;
 
 namespace LfrlAnvil.Sql;
 
-public readonly ref struct SqlCreateDatabaseResult<TDatabase>
+public readonly struct SqlCreateDatabaseResult<TDatabase>
     where TDatabase : ISqlDatabase
 {
-    public readonly TDatabase Database;
-    public readonly Exception? Exception;
-    public readonly Version OldVersion;
-    public readonly Version NewVersion;
-    public readonly ReadOnlySpan<SqlDatabaseVersion> CommittedVersions;
-    public readonly ReadOnlySpan<SqlDatabaseVersion> PendingVersions;
+    private readonly SqlDatabaseVersionHistory.DatabaseComparisonResult _versions;
+    private readonly int _appliedVersionCount;
 
     public SqlCreateDatabaseResult(
         TDatabase database,
         Exception? exception,
-        Version oldVersion,
-        Version newVersion,
-        ReadOnlySpan<SqlDatabaseVersion> committedVersions,
-        ReadOnlySpan<SqlDatabaseVersion> pendingVersions)
+        SqlDatabaseVersionHistory.DatabaseComparisonResult versions,
+        int appliedVersionCount)
     {
+        Assume.IsGreaterThanOrEqualTo( appliedVersionCount, 0, nameof( appliedVersionCount ) );
         Database = database;
         Exception = exception;
-        OldVersion = oldVersion;
-        NewVersion = newVersion;
-        CommittedVersions = committedVersions;
-        PendingVersions = pendingVersions;
+        _versions = versions;
+        _appliedVersionCount = appliedVersionCount;
     }
+
+    public TDatabase Database { get; }
+    public Exception? Exception { get; }
+    public Version OldVersion => _versions.Current;
+    public Version NewVersion => _appliedVersionCount > 0 ? _versions.Uncommitted[_appliedVersionCount - 1].Value : OldVersion;
+    public ReadOnlySpan<SqlDatabaseVersion> CommittedVersions => _versions.Uncommitted.Slice( 0, _appliedVersionCount );
+    public ReadOnlySpan<SqlDatabaseVersion> PendingVersions => _versions.Uncommitted.Slice( _appliedVersionCount );
 
     [Pure]
     public static implicit operator SqlCreateDatabaseResult<ISqlDatabase>(SqlCreateDatabaseResult<TDatabase> result)
@@ -36,9 +36,7 @@ public readonly ref struct SqlCreateDatabaseResult<TDatabase>
         return new SqlCreateDatabaseResult<ISqlDatabase>(
             result.Database,
             result.Exception,
-            result.OldVersion,
-            result.NewVersion,
-            result.CommittedVersions,
-            result.PendingVersions );
+            result._versions,
+            result._appliedVersionCount );
     }
 }

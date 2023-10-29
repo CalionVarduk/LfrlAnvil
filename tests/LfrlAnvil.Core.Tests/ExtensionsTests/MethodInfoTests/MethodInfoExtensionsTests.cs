@@ -109,6 +109,8 @@ public class MethodInfoExtensionsTests : TestsBase
 
 public sealed class TestMethodClass
 {
+    private static int _x;
+
     public static string Parameterless()
     {
         return string.Empty;
@@ -122,7 +124,7 @@ public sealed class TestMethodClass
     public static ref int ByRef(in string a, ref decimal b, out int c)
     {
         c = 0;
-        return ref c;
+        return ref _x;
     }
 
     public static T1? Generic<T1, T2, T3>(T3 a, T2 b)

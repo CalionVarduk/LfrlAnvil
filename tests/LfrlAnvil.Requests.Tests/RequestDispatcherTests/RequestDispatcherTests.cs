@@ -187,7 +187,7 @@ public class RequestDispatcherTests : TestsBase
     }
 
     [Fact]
-    public async ValueTask Dispatch_ForAsyncValueTaskRequestClass_ShouldCallRequestHandler_WhenHandlerExists()
+    public async Task Dispatch_ForAsyncValueTaskRequestClass_ShouldCallRequestHandler_WhenHandlerExists()
     {
         var request = new TestAsyncValueTaskRequestClass();
         var expectedResult = Fixture.Create<int>();
@@ -223,7 +223,7 @@ public class RequestDispatcherTests : TestsBase
     }
 
     [Fact]
-    public async ValueTask Dispatch_ForAsyncValueTaskRequestStruct_ShouldCallRequestHandler_WhenHandlerExists()
+    public async Task Dispatch_ForAsyncValueTaskRequestStruct_ShouldCallRequestHandler_WhenHandlerExists()
     {
         var request = new TestAsyncValueTaskRequestStruct();
         var expectedResult = Fixture.Create<int>();

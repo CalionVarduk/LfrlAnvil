@@ -46,11 +46,11 @@ public class PreciseTimestampProviderTests : TestsBase
     }
 
     [Fact]
-    public void GetNow_ShouldReturnCorrectResult_WhenPrecisionResetTimeoutIsExceeded()
+    public async Task GetNow_ShouldReturnCorrectResult_WhenPrecisionResetTimeoutIsExceeded()
     {
         var sut = new PreciseTimestampProvider( Duration.FromTicks( 1 ) );
 
-        Task.Delay( TimeSpan.FromMilliseconds( 1 ) ).Wait();
+        await Task.Delay( TimeSpan.FromMilliseconds( 1 ) );
 
         var expectedMin = DateTime.UtcNow;
         var result = sut.GetNow();

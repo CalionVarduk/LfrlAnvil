@@ -16,7 +16,7 @@ public class FrozenZonedClockTests : TestsBase
     }
 
     [Fact]
-    public void GetNow_ShouldReturnCorrectResult()
+    public async Task GetNow_ShouldReturnCorrectResult()
     {
         var value = Fixture.Create<DateTime>();
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
@@ -24,7 +24,7 @@ public class FrozenZonedClockTests : TestsBase
         var sut = new FrozenZonedClock( expected );
 
         var firstResult = sut.GetNow();
-        Task.Delay( TimeSpan.FromMilliseconds( 1 ) ).Wait();
+        await Task.Delay( TimeSpan.FromMilliseconds( 1 ) );
         var secondResult = sut.GetNow();
 
         using ( new AssertionScope() )

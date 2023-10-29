@@ -81,23 +81,14 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
                 _ => (null, 0)
             };
 
-            var appliedVersions = versions.Uncommitted.Slice( 0, appliedVersionCount );
-            var pendingVersions = versions.Uncommitted.Slice( appliedVersions.Length );
-            var newDbVersion = appliedVersions.Length > 0 ? appliedVersions[^1].Value : versions.Current;
-
+            var newDbVersion = appliedVersionCount > 0 ? versions.Uncommitted[appliedVersionCount - 1].Value : versions.Current;
             connection.ChangeCallbacks = connectionChangeCallbacks.ToArray();
 
             SqliteDatabase database = connection is SqlitePermanentConnection permanentConnection
                 ? new SqlitePermanentlyConnectedDatabase( permanentConnection, builder, versionRecordsReader, newDbVersion )
                 : new SqlitePersistentDatabase( connectionString, builder, versionRecordsReader, newDbVersion );
 
-            return new SqlCreateDatabaseResult<SqliteDatabase>(
-                database,
-                exception,
-                versions.Current,
-                newDbVersion,
-                appliedVersions,
-                pendingVersions );
+            return new SqlCreateDatabaseResult<SqliteDatabase>( database, exception, versions, appliedVersionCount );
         }
         catch
         {
