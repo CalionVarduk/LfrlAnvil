@@ -20,7 +20,7 @@ public class ByteSequenceGenerator : SequenceGeneratorBase<byte>
     public ByteSequenceGenerator(Bounds<byte> bounds, byte start, byte step)
         : base( bounds, start, step )
     {
-        Ensure.NotEquals( step, 0, nameof( step ) );
+        Ensure.NotEquals( step, 0 );
     }
 
     protected sealed override byte AddStep(byte value)

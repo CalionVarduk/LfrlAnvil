@@ -138,9 +138,9 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
 
     internal void AssignPrimaryKey(SqlitePrimaryKeyBuilder primaryKey)
     {
-        Assume.IsNull( PrimaryKey, nameof( PrimaryKey ) );
-        Assume.Equals( IsUnique, true, nameof( IsUnique ) );
-        Assume.IsNull( Filter, nameof( Filter ) );
+        Assume.IsNull( PrimaryKey );
+        Assume.Equals( IsUnique, true );
+        Assume.IsNull( Filter );
 
         PrimaryKey = primaryKey;
         Database.ChangeTracker.PrimaryKeyUpdated( this, null );
@@ -154,7 +154,7 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
 
     internal void AddReferencingForeignKey(SqliteForeignKeyBuilder foreignKey)
     {
-        Assume.Equals( IsUnique, true, nameof( IsUnique ) );
+        Assume.Equals( IsUnique, true );
         _referencingForeignKeys ??= new Dictionary<ulong, SqliteForeignKeyBuilder>();
         _referencingForeignKeys.Add( foreignKey.Id, foreignKey );
     }
@@ -211,7 +211,7 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
 
     protected override void RemoveCore()
     {
-        Assume.Equals( CanRemove, true, nameof( CanRemove ) );
+        Assume.Equals( CanRemove, true );
 
         var fkCount = ForeignKeys.Count;
         using var buffer = Database.ObjectPool.Rent( fkCount + ReferencingForeignKeys.Count );
@@ -292,7 +292,7 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
 
     private void RegisterFilterColumns(Dictionary<ulong, SqliteColumnBuilder> columns)
     {
-        Assume.IsNull( _filterColumns, nameof( _filterColumns ) );
+        Assume.IsNull( _filterColumns );
 
         if ( columns.Count == 0 )
             return;

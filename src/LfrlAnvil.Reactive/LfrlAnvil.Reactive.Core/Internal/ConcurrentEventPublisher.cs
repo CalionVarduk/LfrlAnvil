@@ -16,6 +16,6 @@ public class ConcurrentEventPublisher<TEvent, TPublisher> : ConcurrentEventSourc
 
     void IEventPublisher.Publish(object? @event)
     {
-        Publish( Argument.CastTo<TEvent>( @event, nameof( @event ) ) );
+        Publish( Argument.CastTo<TEvent>( @event ) );
     }
 }

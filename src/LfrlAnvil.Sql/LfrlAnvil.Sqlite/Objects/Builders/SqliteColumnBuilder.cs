@@ -171,7 +171,7 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
 
     internal void UpdateDefaultValueBasedOnDataType()
     {
-        Assume.IsNull( DefaultValue, nameof( DefaultValue ) );
+        Assume.IsNull( DefaultValue );
         DefaultValue = TypeDefinition.DefaultValue;
     }
 
@@ -182,7 +182,7 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
 
     protected override void RemoveCore()
     {
-        Assume.Equals( CanRemove, true, nameof( CanRemove ) );
+        Assume.Equals( CanRemove, true );
 
         _indexes = null;
         _indexFilters = null;

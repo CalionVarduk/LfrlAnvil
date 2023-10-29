@@ -17,7 +17,7 @@ internal sealed class RangeDependencyResolverFactory : DependencyResolverFactory
         DependencyResolverFactory[]? factories)
         : base( implementorKey, DependencyLifetime.Transient )
     {
-        Assume.Equals( implementorKey.Value.Type.IsGenericType, true, nameof( implementorKey.Value.Type.IsGenericType ) );
+        Assume.Equals( implementorKey.Value.Type.IsGenericType, true );
         Assume.Equals(
             implementorKey.Value.Type.GetGenericTypeDefinition(),
             typeof( IEnumerable<> ),
@@ -102,8 +102,8 @@ internal sealed class RangeDependencyResolverFactory : DependencyResolverFactory
 
     protected override void OnCircularDependencyDetected(List<DependencyGraphNode> path)
     {
-        Assume.ContainsAtLeast( path, 1, nameof( path ) );
-        Assume.IsNotNull( Factories, nameof( Factories ) );
+        Assume.ContainsAtLeast( path, 1 );
+        Assume.IsNotNull( Factories );
 
         var reachedFrom = path[^1].ReachedFrom;
         path.Add( default );
@@ -119,7 +119,7 @@ internal sealed class RangeDependencyResolverFactory : DependencyResolverFactory
 
     protected override void DetectCircularDependenciesInChildren(List<DependencyGraphNode> path)
     {
-        Assume.ContainsAtLeast( path, 2, nameof( path ) );
+        Assume.ContainsAtLeast( path, 2 );
         if ( Factories is null )
             return;
 
@@ -135,9 +135,7 @@ internal sealed class RangeDependencyResolverFactory : DependencyResolverFactory
     {
         Assume.Conditional(
             Factories is not null,
-            () => Assume.True(
-                Factories!.All( f => ! f.HasState( DependencyResolverFactoryState.Invalid ) ),
-                "All range dependency resolver factory elements must be valid." ) );
+            () => Assume.True( Factories!.All( f => ! f.HasState( DependencyResolverFactoryState.Invalid ) ) ) );
 
         var resolver = new TransientDependencyResolver(
             id: idGenerator.Generate(),
@@ -155,7 +153,7 @@ internal sealed class RangeDependencyResolverFactory : DependencyResolverFactory
         var (expressionBuilder, factoryCount) = CreateExpressionBuilder();
         for ( var i = 0; i < factoryCount; ++i )
         {
-            Assume.IsNotNull( Factories, nameof( Factories ) );
+            Assume.IsNotNull( Factories );
             expressionBuilder.AddDependencyResolverFactoryResolution( ElementType, $"e{i}", Factories[i], idGenerator );
         }
 

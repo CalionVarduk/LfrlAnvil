@@ -36,7 +36,7 @@ internal sealed class SingletonDependencyResolver : FactoryDependencyResolver
         if ( _instance is not null )
             return _instance;
 
-        Assume.IsNotNull( Factory, nameof( Factory ) );
+        Assume.IsNotNull( Factory );
         _instance = Factory( scope );
         ClearFactory();
 

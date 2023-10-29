@@ -10,8 +10,6 @@ public static class ExceptionResources
     public const string DividedByZero = "Attempted to divide by zero.";
     public const string SequenceContainsNoElements = "Sequence contains no elements.";
     public const string NonStaticMethodRequiresTarget = "Non-static method requires a target.";
-    public const string ExpectedConditionToBeTrue = "Expected condition to be true.";
-    public const string ExpectedConditionToBeFalse = "Expected condition to be false.";
     public const string AssumedCodeToBeUnreachable = "Assumed the code to be unreachable.";
     public const string FixedSizeCollection = "Collection was of a fixed size.";
 
@@ -162,6 +160,20 @@ public static class ExceptionResources
     public static string AssumedInstanceOfType(Type type, Type? actualType, string paramName)
     {
         return $"Assumed {paramName} to be an instance of type {type.GetDebugString()} but found {actualType?.GetDebugString()}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string AssumedToBeTrue(string description)
+    {
+        return $"Assumed {description} to be true.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string AssumedToBeFalse(string description)
+    {
+        return $"Assumed {description} to be false.";
     }
 
     [Pure]
@@ -428,6 +440,20 @@ public static class ExceptionResources
     public static string ExpectedOrdered(string paramName)
     {
         return $"Expected {paramName} to be ordered.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string ExpectedToBeTrue(string description)
+    {
+        return $"Expected {description} to be true.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string ExpectedToBeFalse(string description)
+    {
+        return $"Expected {description} to be false.";
     }
 
     [Pure]

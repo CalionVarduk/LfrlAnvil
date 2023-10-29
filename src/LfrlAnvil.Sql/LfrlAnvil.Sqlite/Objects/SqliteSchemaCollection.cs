@@ -39,7 +39,7 @@ public sealed class SqliteSchemaCollection : ISqlSchemaCollection
                 tableSchema = _map[tableSchemaBuilder.Name];
             }
 
-            Assume.IsNotNull( tableSchema, nameof( tableSchema ) );
+            Assume.IsNotNull( tableSchema );
             var table = tableSchema.Objects.GetTable( tableBuilder.Name );
             table.ForeignKeys.Populate( this, tableBuilder.ForeignKeys );
             tableSchema.Objects.Populate( table.ForeignKeys );

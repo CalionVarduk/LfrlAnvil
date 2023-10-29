@@ -10,7 +10,7 @@ public sealed class ParsedExpressionSwitchCase : ParsedExpressionVariadicFunctio
     [Pure]
     protected internal override Expression Process(IReadOnlyList<Expression> parameters)
     {
-        Ensure.ContainsAtLeast( parameters, count: 2, nameof( parameters ) );
+        Ensure.ContainsAtLeast( parameters, count: 2 );
         var body = parameters[^1];
         var result = Expression.SwitchCase( body, parameters.Take( parameters.Count - 1 ) );
         return Expression.Constant( result );

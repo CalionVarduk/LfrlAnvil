@@ -19,8 +19,8 @@ public sealed class EventListenerDelayDecorator<TEvent> : IEventListenerDecorato
         TaskScheduler? scheduler,
         Duration spinWaitDurationHint)
     {
-        Ensure.IsInRange( delay, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ), nameof( delay ) );
-        Ensure.IsGreaterThanOrEqualTo( spinWaitDurationHint, Duration.Zero, nameof( spinWaitDurationHint ) );
+        Ensure.IsInRange( delay, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ) );
+        Ensure.IsGreaterThanOrEqualTo( spinWaitDurationHint, Duration.Zero );
 
         _timestampProvider = timestampProvider;
         _delay = delay;
@@ -46,14 +46,14 @@ public sealed class EventListenerDelayDecorator<TEvent> : IEventListenerDecorato
 
         public override void React(TEvent @event)
         {
-            Assume.IsNotNull( _timeout, nameof( _timeout ) );
+            Assume.IsNotNull( _timeout );
             var timerListener = new TimerListener( this, @event );
             _timeout.Listen( timerListener );
         }
 
         public override void OnDispose(DisposalSource source)
         {
-            Assume.IsNotNull( _timeout, nameof( _timeout ) );
+            Assume.IsNotNull( _timeout );
             _timeout.Dispose();
             _timeout = null;
             base.OnDispose( source );
@@ -80,7 +80,7 @@ public sealed class EventListenerDelayDecorator<TEvent> : IEventListenerDecorato
 
         public override void React(WithInterval<long> @event)
         {
-            Assume.IsNotNull( _mainListener, nameof( _mainListener ) );
+            Assume.IsNotNull( _mainListener );
             _mainListener.OnTimerReact( _event!, @event );
         }
 

@@ -87,7 +87,7 @@ public class MemorySequencePool<T>
                     if ( node is null )
                         break;
 
-                    Assume.Equals( node.IsReusable, false, nameof( node.IsReusable ) );
+                    Assume.Equals( node.IsReusable, false );
                 }
 
                 yield return new RentedMemorySequence<T>( node );
@@ -107,8 +107,8 @@ public class MemorySequencePool<T>
 
     public MemorySequencePool(int minSegmentLength)
     {
-        Ensure.IsGreaterThan( minSegmentLength, 0, nameof( minSegmentLength ) );
-        Ensure.IsLessThanOrEqualTo( minSegmentLength, 1 << 30, nameof( minSegmentLength ) );
+        Ensure.IsGreaterThan( minSegmentLength, 0 );
+        Ensure.IsLessThanOrEqualTo( minSegmentLength, 1 << 30 );
 
         _segmentLengthLog2 = BitOperations.Log2( BitOperations.RoundUpToPowerOf2( unchecked( (uint)minSegmentLength ) ) );
         SegmentLength = 1 << _segmentLengthLog2;
@@ -149,7 +149,7 @@ public class MemorySequencePool<T>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Node RentNode(int length)
     {
-        Assume.IsGreaterThan( length, 0, nameof( length ) );
+        Assume.IsGreaterThan( length, 0 );
 
         if ( _fragmentationHeap.Length > 0 )
         {
@@ -184,8 +184,8 @@ public class MemorySequencePool<T>
 
     private Node AllocateAtLargestFragmentedNode(Node node, int length)
     {
-        Assume.Equals( node, _fragmentationHeap.Get( 0 ), nameof( node ) );
-        Assume.IsLessThanOrEqualTo( length, node.Length, nameof( length ) );
+        Assume.Equals( node, _fragmentationHeap.Get( 0 ) );
+        Assume.IsLessThanOrEqualTo( length, node.Length );
 
         if ( node.Length == length )
         {
@@ -201,7 +201,7 @@ public class MemorySequencePool<T>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void AllocateSegments(int lastSegmentIndex)
     {
-        Assume.IsNotNull( _tailNode, nameof( _tailNode ) );
+        Assume.IsNotNull( _tailNode );
 
         var segmentsToAllocate = lastSegmentIndex - _segments.Length + 1;
         for ( var i = 0; i < segmentsToAllocate; ++i )
@@ -210,8 +210,8 @@ public class MemorySequencePool<T>
 
     private void AddToFragmentationHeap(Node node)
     {
-        Assume.IsGreaterThan( node.Length, 0, nameof( node.Length ) );
-        Assume.Equals( node.FragmentationIndex, Node.InactiveFragmentationIndex, nameof( node.FragmentationIndex ) );
+        Assume.IsGreaterThan( node.Length, 0 );
+        Assume.Equals( node.FragmentationIndex, Node.InactiveFragmentationIndex );
 
         node.UpdateFragmentationIndex( _fragmentationHeap.Length );
         _fragmentationHeap = _fragmentationHeap.Push( node );
@@ -252,7 +252,7 @@ public class MemorySequencePool<T>
 
     private void FixUpFragmentationHeap(Node node)
     {
-        Assume.IsGreaterThanOrEqualTo( node.FragmentationIndex, 0, nameof( node.FragmentationIndex ) );
+        Assume.IsGreaterThanOrEqualTo( node.FragmentationIndex, 0 );
         var p = (node.FragmentationIndex - 1) >> 1;
 
         while ( node.FragmentationIndex > 0 )
@@ -270,7 +270,7 @@ public class MemorySequencePool<T>
 
     private void FixDownFragmentationHeap(Node node)
     {
-        Assume.IsGreaterThanOrEqualTo( node.FragmentationIndex, 0, nameof( node.FragmentationIndex ) );
+        Assume.IsGreaterThanOrEqualTo( node.FragmentationIndex, 0 );
         var l = (node.FragmentationIndex << 1) + 1;
 
         while ( l < _fragmentationHeap.Length )
@@ -346,7 +346,7 @@ public class MemorySequencePool<T>
 
             if ( pool._tailNode is not null )
             {
-                Assume.IsNull( pool._tailNode.Next, nameof( pool._tailNode.Next ) );
+                Assume.IsNull( pool._tailNode.Next );
                 node.Prev = pool._tailNode;
                 node.Prev.Next = node;
             }
@@ -357,8 +357,8 @@ public class MemorySequencePool<T>
 
         internal Node ExtractNode(int length)
         {
-            Assume.IsGreaterThan( length, 0, nameof( length ) );
-            Assume.IsGreaterThanOrEqualTo( FragmentationIndex, 0, nameof( FragmentationIndex ) );
+            Assume.IsGreaterThan( length, 0 );
+            Assume.IsGreaterThanOrEqualTo( FragmentationIndex, 0 );
 
             var node = GetOrCreateNode( Pool );
             node.FirstIndex = FirstIndex;
@@ -394,8 +394,8 @@ public class MemorySequencePool<T>
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal T GetElement(int index)
         {
-            Assume.IsGreaterThanOrEqualTo( index, 0, nameof( index ) );
-            Assume.IsLessThan( index, Length, nameof( index ) );
+            Assume.IsGreaterThanOrEqualTo( index, 0 );
+            Assume.IsLessThan( index, Length );
 
             var sequenceIndex = OffsetFirstIndex( index );
             var segment = GetAbsoluteSegment( sequenceIndex.Segment );
@@ -405,8 +405,8 @@ public class MemorySequencePool<T>
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void SetElement(int index, T value)
         {
-            Assume.IsGreaterThanOrEqualTo( index, 0, nameof( index ) );
-            Assume.IsLessThan( index, Length, nameof( index ) );
+            Assume.IsGreaterThanOrEqualTo( index, 0 );
+            Assume.IsLessThan( index, Length );
 
             var sequenceIndex = OffsetFirstIndex( index );
             var segment = GetAbsoluteSegment( sequenceIndex.Segment );
@@ -417,8 +417,8 @@ public class MemorySequencePool<T>
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal ref T GetElementRef(int index)
         {
-            Assume.IsGreaterThanOrEqualTo( index, 0, nameof( index ) );
-            Assume.IsLessThan( index, Length, nameof( index ) );
+            Assume.IsGreaterThanOrEqualTo( index, 0 );
+            Assume.IsLessThan( index, Length );
 
             var sequenceIndex = OffsetFirstIndex( index );
             var segment = GetAbsoluteSegment( sequenceIndex.Segment );
@@ -504,7 +504,7 @@ public class MemorySequencePool<T>
 
         internal Node Expand(int length)
         {
-            Assume.IsGreaterThan( length, 0, nameof( length ) );
+            Assume.IsGreaterThan( length, 0 );
 
             if ( Next is null )
             {
@@ -529,7 +529,7 @@ public class MemorySequencePool<T>
                 Pool.RemoveFromFragmentationHeap( Next );
 
                 var next = Next.Next;
-                Assume.IsNotNull( next, nameof( next ) );
+                Assume.IsNotNull( next );
 
                 Next.Next = null;
                 Next.Prev = null;
@@ -567,22 +567,22 @@ public class MemorySequencePool<T>
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void DeactivateFragmentationIndex()
         {
-            Assume.IsGreaterThanOrEqualTo( FragmentationIndex, 0, nameof( FragmentationIndex ) );
+            Assume.IsGreaterThanOrEqualTo( FragmentationIndex, 0 );
             FragmentationIndex = InactiveFragmentationIndex;
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void UpdateFragmentationIndex(int index)
         {
-            Assume.IsGreaterThanOrEqualTo( index, 0, nameof( index ) );
+            Assume.IsGreaterThanOrEqualTo( index, 0 );
             FragmentationIndex = index;
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void SwapFragmentationIndex(Node other)
         {
-            Assume.IsGreaterThanOrEqualTo( FragmentationIndex, 0, nameof( FragmentationIndex ) );
-            Assume.IsGreaterThanOrEqualTo( other.FragmentationIndex, 0, nameof( other.FragmentationIndex ) );
+            Assume.IsGreaterThanOrEqualTo( FragmentationIndex, 0 );
+            Assume.IsGreaterThanOrEqualTo( other.FragmentationIndex, 0 );
             (FragmentationIndex, other.FragmentationIndex) = (other.FragmentationIndex, FragmentationIndex);
         }
 
@@ -608,10 +608,10 @@ public class MemorySequencePool<T>
             var node = pool._nodeCache.Last();
             pool._nodeCache = pool._nodeCache.Pop();
 
-            Assume.Equals( node.FragmentationIndex, CachedFragmentationIndex, nameof( node.FragmentationIndex ) );
-            Assume.Equals( node.Length, 0, nameof( node.Length ) );
-            Assume.IsNull( node.Prev, nameof( node.Prev ) );
-            Assume.IsNull( node.Next, nameof( node.Next ) );
+            Assume.Equals( node.FragmentationIndex, CachedFragmentationIndex );
+            Assume.Equals( node.Length, 0 );
+            Assume.IsNull( node.Prev );
+            Assume.IsNull( node.Next );
 
             node.FragmentationIndex = InactiveFragmentationIndex;
             return node;
@@ -619,7 +619,7 @@ public class MemorySequencePool<T>
 
         private void FreeAsTail()
         {
-            Assume.IsNull( Next, nameof( Next ) );
+            Assume.IsNull( Next );
 
             if ( Prev is null )
                 Pool._tailNode = null;
@@ -637,7 +637,7 @@ public class MemorySequencePool<T>
 
                     if ( Prev.Prev is not null )
                     {
-                        Assume.Equals( Prev.Prev.IsReusable, false, nameof( Prev.Prev.IsReusable ) );
+                        Assume.Equals( Prev.Prev.IsReusable, false );
                         Prev.Prev.Next = null;
                         Prev.Prev = null;
                     }
@@ -654,8 +654,8 @@ public class MemorySequencePool<T>
 
         private void FreeAsHead()
         {
-            Assume.IsNotNull( Next, nameof( Next ) );
-            Assume.IsNull( Prev, nameof( Prev ) );
+            Assume.IsNotNull( Next );
+            Assume.IsNull( Prev );
 
             if ( ! Next.IsReusable )
             {
@@ -682,8 +682,8 @@ public class MemorySequencePool<T>
 
         private void FreeAsIntermediate()
         {
-            Assume.IsNotNull( Next, nameof( Next ) );
-            Assume.IsNotNull( Prev, nameof( Prev ) );
+            Assume.IsNotNull( Next );
+            Assume.IsNotNull( Prev );
 
             if ( ! Next.IsReusable )
             {
@@ -716,8 +716,8 @@ public class MemorySequencePool<T>
             }
             else
             {
-                Assume.IsNotNull( Next.Next, nameof( Next.Next ) );
-                Assume.Equals( Next.Next.IsReusable, false, nameof( Next.Next.IsReusable ) );
+                Assume.IsNotNull( Next.Next );
+                Assume.Equals( Next.Next.IsReusable, false );
                 Pool.RemoveFromFragmentationHeap( Next );
 
                 Prev.Next = Next.Next;
@@ -874,9 +874,9 @@ public class MemorySequencePool<T>
 
         private void Deactivate()
         {
-            Assume.Equals( FragmentationIndex, InactiveFragmentationIndex, nameof( FragmentationIndex ) );
-            Assume.IsNull( Prev, nameof( Prev ) );
-            Assume.IsNull( Next, nameof( Next ) );
+            Assume.Equals( FragmentationIndex, InactiveFragmentationIndex );
+            Assume.IsNull( Prev );
+            Assume.IsNull( Next );
 
             Pool._nodeCache = Pool._nodeCache.Push( this );
             if ( Pool.ClearReturnedSequences )
@@ -890,8 +890,8 @@ public class MemorySequencePool<T>
 
         private void DecreaseFragmentedLength(int offset)
         {
-            Assume.IsInExclusiveRange( offset, 0, Length, nameof( offset ) );
-            Assume.IsGreaterThanOrEqualTo( FragmentationIndex, 0, nameof( FragmentationIndex ) );
+            Assume.IsInExclusiveRange( offset, 0, Length );
+            Assume.IsGreaterThanOrEqualTo( FragmentationIndex, 0 );
 
             FirstIndex = OffsetFirstIndex( offset );
             Length -= offset;
@@ -904,8 +904,8 @@ public class MemorySequencePool<T>
             if ( offset == 0 )
                 return;
 
-            Assume.IsGreaterThan( offset, 0, nameof( offset ) );
-            Assume.IsGreaterThanOrEqualTo( FragmentationIndex, 0, nameof( FragmentationIndex ) );
+            Assume.IsGreaterThan( offset, 0 );
+            Assume.IsGreaterThanOrEqualTo( FragmentationIndex, 0 );
 
             Length += offset;
             FirstIndex = firstIndex;
@@ -918,8 +918,8 @@ public class MemorySequencePool<T>
             if ( offset == 0 )
                 return;
 
-            Assume.IsGreaterThan( offset, 0, nameof( offset ) );
-            Assume.IsGreaterThanOrEqualTo( FragmentationIndex, 0, nameof( FragmentationIndex ) );
+            Assume.IsGreaterThan( offset, 0 );
+            Assume.IsGreaterThanOrEqualTo( FragmentationIndex, 0 );
 
             Length += offset;
             LastIndex = lastIndex;
@@ -931,8 +931,8 @@ public class MemorySequencePool<T>
         private void AssumeLastIndexValidity()
         {
             var expected = OffsetFirstIndex( Length - 1 );
-            Assume.Equals( LastIndex.Segment, expected.Segment, nameof( LastIndex.Segment ) );
-            Assume.Equals( LastIndex.Element, expected.Element, nameof( LastIndex.Element ) );
+            Assume.Equals( LastIndex.Segment, expected.Segment );
+            Assume.Equals( LastIndex.Element, expected.Element );
         }
     }
 
@@ -957,14 +957,14 @@ public class MemorySequencePool<T>
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal TElement Get(int index)
         {
-            Assume.IsInRange( index, 0, Length - 1, nameof( index ) );
+            Assume.IsInRange( index, 0, Length - 1 );
             return Data[index]!;
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void Set(int index, TElement element)
         {
-            Assume.IsInRange( index, 0, Length - 1, nameof( index ) );
+            Assume.IsInRange( index, 0, Length - 1 );
             Data[index] = element;
         }
 
@@ -972,14 +972,14 @@ public class MemorySequencePool<T>
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal TElement Last()
         {
-            Assume.IsGreaterThan( Length, 0, nameof( Length ) );
+            Assume.IsGreaterThan( Length, 0 );
             return Data[Length - 1]!;
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal Buffer<TElement> Pop()
         {
-            Assume.IsGreaterThan( Length, 0, nameof( Length ) );
+            Assume.IsGreaterThan( Length, 0 );
             var nextLength = Length - 1;
             Data[nextLength] = default;
             return new Buffer<TElement>( Data, nextLength );
@@ -988,8 +988,8 @@ public class MemorySequencePool<T>
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal Buffer<TElement> PopMany(int count)
         {
-            Assume.IsGreaterThanOrEqualTo( count, 0, nameof( count ) );
-            Assume.IsLessThanOrEqualTo( count, Length, nameof( count ) );
+            Assume.IsGreaterThanOrEqualTo( count, 0 );
+            Assume.IsLessThanOrEqualTo( count, Length );
 
             var length = Length - count;
             if ( length != Length )

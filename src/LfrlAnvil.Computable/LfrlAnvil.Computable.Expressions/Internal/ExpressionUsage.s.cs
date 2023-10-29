@@ -65,7 +65,7 @@ internal static class ExpressionUsage
         IReadOnlyList<InlineDelegateCollectionState.Result> delegates,
         BitArray usage)
     {
-        Assume.ContainsExactly( delegates, usage.Length, nameof( delegates ) );
+        Assume.ContainsExactly( delegates, usage.Length );
 
         var count = 0;
         for ( var i = 0; i < usage.Length; ++i )
@@ -99,7 +99,7 @@ internal static class ExpressionUsage
         foreach ( var name in usage )
         {
             localTerms.TryGetVariable( name, out var assignment );
-            Assume.IsNotNull( assignment, nameof( assignment ) );
+            Assume.IsNotNull( assignment );
             result[index++] = assignment;
         }
 
@@ -148,8 +148,8 @@ internal static class ExpressionUsage
 
         internal DelegateAndVariableFinder(IReadOnlyList<InlineDelegateCollectionState.Result> delegates, LocalTermsCollection localTerms)
         {
-            Assume.IsNotEmpty( delegates, nameof( delegates ) );
-            Assume.IsNotEmpty( localTerms.VariableAssignments, nameof( localTerms.VariableAssignments ) );
+            Assume.IsNotEmpty( delegates );
+            Assume.IsNotEmpty( localTerms.VariableAssignments );
             _delegates = delegates;
             _localTerms = localTerms;
             DelegateUsage = new BitArray( delegates.Count );
@@ -176,7 +176,7 @@ internal static class ExpressionUsage
 
         internal DelegateFinder(IReadOnlyList<InlineDelegateCollectionState.Result> delegates)
         {
-            Assume.IsNotEmpty( delegates, nameof( delegates ) );
+            Assume.IsNotEmpty( delegates );
             _delegates = delegates;
             Usage = new BitArray( delegates.Count );
         }
@@ -217,7 +217,7 @@ internal static class ExpressionUsage
 
         internal VariableFinder(LocalTermsCollection localTerms)
         {
-            Assume.IsNotEmpty( localTerms.VariableAssignments, nameof( localTerms.VariableAssignments ) );
+            Assume.IsNotEmpty( localTerms.VariableAssignments );
             _localTerms = localTerms;
             Usage = new HashSet<StringSegment>();
         }
@@ -251,7 +251,7 @@ internal static class ExpressionUsage
 
         internal ArgumentFinder(ParameterExpression rootParameter, int argumentCount)
         {
-            Assume.IsGreaterThan( argumentCount, 0, nameof( argumentCount ) );
+            Assume.IsGreaterThan( argumentCount, 0 );
             _rootParameter = rootParameter;
             Usage = new BitArray( argumentCount );
         }

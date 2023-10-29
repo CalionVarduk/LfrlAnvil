@@ -20,7 +20,7 @@ public class UshortSequenceGenerator : SequenceGeneratorBase<ushort>
     public UshortSequenceGenerator(Bounds<ushort> bounds, ushort start, ushort step)
         : base( bounds, start, step )
     {
-        Ensure.NotEquals( step, 0U, nameof( step ) );
+        Ensure.NotEquals( step, 0U );
     }
 
     protected sealed override ushort AddStep(ushort value)

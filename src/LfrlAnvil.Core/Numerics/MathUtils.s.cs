@@ -121,13 +121,13 @@ public static class MathUtils
             if ( carry == prevLeft )
                 return left;
 
-            Assume.Equals( carry, prevLeft + 1, nameof( carry ) );
+            Assume.Equals( carry, prevLeft + 1 );
 
             var addDigit = (ulong)left + right;
             left = unchecked( (uint)addDigit );
             carry = unchecked( (uint)(addDigit >> 32) );
 
-            Assume.Equals( carry, 1U, nameof( carry ) );
+            Assume.Equals( carry, 1U );
 
             --digit;
             return left;
@@ -190,7 +190,7 @@ public static class MathUtils
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         static bool IsQuotientDigitTooBig(ulong digit, ulong valHigh, uint valLow, uint divHigh, uint divLow)
         {
-            Assume.IsLessThanOrEqualTo( digit, uint.MaxValue, nameof( digit ) );
+            Assume.IsLessThanOrEqualTo( digit, uint.MaxValue );
 
             var checkHigh = divHigh * digit;
             var checkLow = divLow * digit;
@@ -230,7 +230,7 @@ public static class MathUtils
             if ( carry == prevLeft )
                 return;
 
-            Assume.Equals( carry, prevLeft + 1, nameof( carry ) );
+            Assume.Equals( carry, prevLeft + 1 );
 
             var addDigit = (ulong)left0 + right0;
             left0 = unchecked( (uint)addDigit );
@@ -239,7 +239,7 @@ public static class MathUtils
             left1 = unchecked( (uint)addDigit );
             carry = unchecked( (uint)(addDigit >> 32) );
 
-            Assume.Equals( carry, 1U, nameof( carry ) );
+            Assume.Equals( carry, 1U );
             --digit;
         }
     }
@@ -267,7 +267,7 @@ public static class MathUtils
     [Pure]
     public static Fraction[] ConvertToFractions(IEnumerable<Percent> percentages, Fraction targetSum)
     {
-        Ensure.IsGreaterThanOrEqualTo( targetSum, Fraction.Zero, nameof( targetSum ) );
+        Ensure.IsGreaterThanOrEqualTo( targetSum, Fraction.Zero );
 
         var materializedPercentages = percentages.Materialize();
         if ( materializedPercentages.Count == 0 )
@@ -276,7 +276,7 @@ public static class MathUtils
         var percentageSum = Percent.Zero;
         foreach ( var percent in materializedPercentages )
         {
-            Ensure.IsGreaterThan( percent, Percent.Zero, nameof( percent ) );
+            Ensure.IsGreaterThan( percent, Percent.Zero );
             percentageSum += percent;
         }
 
@@ -311,7 +311,7 @@ public static class MathUtils
             }
         }
 
-        Assume.IsGreaterThanOrEqualTo( roundingError, 0, nameof( roundingError ) );
+        Assume.IsGreaterThanOrEqualTo( roundingError, 0 );
         if ( roundingError > 0 )
         {
             index = 0;
@@ -326,7 +326,7 @@ public static class MathUtils
             }
         }
 
-        Assume.Equals( targetSum, fractions.Aggregate( Fraction.Zero, (a, b) => a + b ), nameof( targetSum ) );
+        Assume.Equals( targetSum, fractions.Aggregate( Fraction.Zero, (a, b) => a + b ) );
         return fractions;
     }
 }

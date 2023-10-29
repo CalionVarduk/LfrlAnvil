@@ -147,7 +147,7 @@ internal sealed class SqliteAlterTableBuffer
                 if ( key.Descriptor != SqliteObjectChangeDescriptor.Exists )
                 {
                     var existsChangeKey = new ChangeKey( key.ObjectId, SqliteObjectChangeDescriptor.Exists );
-                    Assume.True( PropertyChanges.ContainsKey( existsChangeKey ), "Exists change is missing for removed object." );
+                    Assume.True( PropertyChanges.ContainsKey( existsChangeKey ) );
                     continue;
                 }
 
@@ -181,7 +181,7 @@ internal sealed class SqliteAlterTableBuffer
                 if ( key.Descriptor != SqliteObjectChangeDescriptor.Exists )
                 {
                     var existsChangeKey = new ChangeKey( key.ObjectId, SqliteObjectChangeDescriptor.Exists );
-                    Assume.True( PropertyChanges.ContainsKey( existsChangeKey ), "Exists change is missing for created object." );
+                    Assume.True( PropertyChanges.ContainsKey( existsChangeKey ) );
                     continue;
                 }
 
@@ -203,7 +203,7 @@ internal sealed class SqliteAlterTableBuffer
                 continue;
             }
 
-            Assume.Equals( data.Status, SqliteObjectStatus.Modified, nameof( data.Status ) );
+            Assume.Equals( data.Status, SqliteObjectStatus.Modified );
             if ( Equals( value.OldValue, value.NewValue ) )
                 continue;
 
@@ -240,8 +240,8 @@ internal sealed class SqliteAlterTableBuffer
 
                 if ( key.Descriptor == SqliteObjectChangeDescriptor.Name )
                 {
-                    Assume.IsNotNull( value.OldValue, nameof( value.OldValue ) );
-                    Assume.IsNotNull( value.NewValue, nameof( value.NewValue ) );
+                    Assume.IsNotNull( value.OldValue );
+                    Assume.IsNotNull( value.NewValue );
                     var rename = new ColumnRename(
                         ReinterpretCast.To<string>( value.OldValue ),
                         ReinterpretCast.To<string>( value.NewValue ),

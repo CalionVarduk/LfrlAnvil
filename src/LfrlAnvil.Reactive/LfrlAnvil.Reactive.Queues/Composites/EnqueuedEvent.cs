@@ -42,7 +42,7 @@ public readonly struct EnqueuedEvent<TEvent, TPoint, TPointDelta>
         TPointDelta delta,
         int repetitions)
     {
-        Ensure.IsGreaterThan( repetitions, 0, nameof( repetitions ) );
+        Ensure.IsGreaterThan( repetitions, 0 );
         return new EnqueuedEvent<TEvent, TPoint, TPointDelta>( @event, dequeuePoint, delta, repetitions );
     }
 
@@ -71,7 +71,7 @@ public readonly struct EnqueuedEvent<TEvent, TPoint, TPointDelta>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public EnqueuedEvent<TEvent, TPoint, TPointDelta> WithRepetitions(int repetitions)
     {
-        Ensure.IsGreaterThan( repetitions, 0, nameof( repetitions ) );
+        Ensure.IsGreaterThan( repetitions, 0 );
         return new EnqueuedEvent<TEvent, TPoint, TPointDelta>( Event, DequeuePoint, Delta, repetitions );
     }
 
@@ -86,7 +86,7 @@ public readonly struct EnqueuedEvent<TEvent, TPoint, TPointDelta>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal EnqueuedEvent<TEvent, TPoint, TPointDelta> Repeat(TPoint dequeuePoint)
     {
-        Assume.IsNotNull( Delta, nameof( Delta ) );
+        Assume.IsNotNull( Delta );
 
         return IsInfinite
             ? CreateInfinite( Event, dequeuePoint, Delta )

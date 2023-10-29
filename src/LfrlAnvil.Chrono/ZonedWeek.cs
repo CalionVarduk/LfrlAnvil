@@ -31,7 +31,7 @@ public readonly struct ZonedWeek : IEquatable<ZonedWeek>, IComparable<ZonedWeek>
     [Pure]
     public static ZonedWeek Create(DateTime dateTime, TimeZoneInfo timeZone, IsoDayOfWeek weekStart = IsoDayOfWeek.Monday)
     {
-        Ensure.IsInRange( (int)weekStart, (int)IsoDayOfWeek.Monday, (int)IsoDayOfWeek.Sunday, nameof( weekStart ) );
+        Ensure.IsInRange( (int)weekStart, (int)IsoDayOfWeek.Monday, (int)IsoDayOfWeek.Sunday );
 
         var bclWeekStart = weekStart.ToBcl();
         var kind = timeZone.GetDateTimeKind();
@@ -62,11 +62,11 @@ public readonly struct ZonedWeek : IEquatable<ZonedWeek>, IComparable<ZonedWeek>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ZonedWeek Create(int year, int weekOfYear, TimeZoneInfo timeZone, IsoDayOfWeek weekStart = IsoDayOfWeek.Monday)
     {
-        Ensure.IsInRange( (int)weekStart, (int)IsoDayOfWeek.Monday, (int)IsoDayOfWeek.Sunday, nameof( weekStart ) );
+        Ensure.IsInRange( (int)weekStart, (int)IsoDayOfWeek.Monday, (int)IsoDayOfWeek.Sunday );
 
         var bclWeekStart = weekStart.ToBcl();
         var maxWeekOfYear = WeekCalculator.GetWeekCountInYear( year, bclWeekStart );
-        Ensure.IsInRange( weekOfYear, 1, maxWeekOfYear, nameof( weekOfYear ) );
+        Ensure.IsInRange( weekOfYear, 1, maxWeekOfYear );
 
         return CreateUnsafe( year, weekOfYear, timeZone, weekStart );
     }
@@ -75,7 +75,7 @@ public readonly struct ZonedWeek : IEquatable<ZonedWeek>, IComparable<ZonedWeek>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ZonedWeek? TryCreate(int year, int weekOfYear, TimeZoneInfo timeZone, IsoDayOfWeek weekStart = IsoDayOfWeek.Monday)
     {
-        Ensure.IsInRange( (int)weekStart, (int)IsoDayOfWeek.Monday, (int)IsoDayOfWeek.Sunday, nameof( weekStart ) );
+        Ensure.IsInRange( (int)weekStart, (int)IsoDayOfWeek.Monday, (int)IsoDayOfWeek.Sunday );
 
         var bclWeekStart = weekStart.ToBcl();
         var maxWeekOfYear = WeekCalculator.GetWeekCountInYear( year, bclWeekStart );
@@ -96,7 +96,7 @@ public readonly struct ZonedWeek : IEquatable<ZonedWeek>, IComparable<ZonedWeek>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ZonedWeek CreateUtc(DateTime utcDateTime, IsoDayOfWeek weekStart = IsoDayOfWeek.Monday)
     {
-        Ensure.IsInRange( (int)weekStart, (int)IsoDayOfWeek.Monday, (int)IsoDayOfWeek.Sunday, nameof( weekStart ) );
+        Ensure.IsInRange( (int)weekStart, (int)IsoDayOfWeek.Monday, (int)IsoDayOfWeek.Sunday );
 
         var bclStartDay = weekStart.ToBcl();
         var start = ZonedDateTime.CreateUtc( utcDateTime.GetStartOfWeek( bclStartDay ) );
@@ -336,7 +336,7 @@ public readonly struct ZonedWeek : IEquatable<ZonedWeek>, IComparable<ZonedWeek>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ZonedDay GetDayOfWeek(IsoDayOfWeek day)
     {
-        Ensure.IsInRange( (int)day, (int)IsoDayOfWeek.Monday, (int)IsoDayOfWeek.Sunday, nameof( day ) );
+        Ensure.IsInRange( (int)day, (int)IsoDayOfWeek.Monday, (int)IsoDayOfWeek.Sunday );
 
         var start = Start;
 

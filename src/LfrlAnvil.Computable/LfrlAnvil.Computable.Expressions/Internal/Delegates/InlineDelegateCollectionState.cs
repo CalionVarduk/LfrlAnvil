@@ -47,15 +47,15 @@ internal sealed class InlineDelegateCollectionState
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void LockParameters()
     {
-        Assume.Equals( _isLastStateActive, true, nameof( _isLastStateActive ) );
+        Assume.Equals( _isLastStateActive, true );
         _isLastStateActive = false;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void Register(ExpressionBuilderState state)
     {
-        Assume.IsNotEmpty( _registeredStates, nameof( _registeredStates ) );
-        Assume.Equals( _isLastStateActive, false, nameof( _isLastStateActive ) );
+        Assume.IsNotEmpty( _registeredStates );
+        Assume.Equals( _isLastStateActive, false );
 
         _registeredStates.Push( new StateRegistration( state.Id ) );
         _isLastStateActive = true;
@@ -63,8 +63,8 @@ internal sealed class InlineDelegateCollectionState
 
     internal bool TryAddParameter(Type type, StringSegment name)
     {
-        Assume.IsNotEmpty( _registeredStates, nameof( _registeredStates ) );
-        Assume.Equals( _isLastStateActive, true, nameof( _isLastStateActive ) );
+        Assume.IsNotEmpty( _registeredStates );
+        Assume.Equals( _isLastStateActive, true );
 
         ref var parameterExpression = ref CollectionsMarshal.GetValueRefOrAddDefault( _parametersMap, name, out var exists )!;
         if ( exists )
@@ -82,7 +82,7 @@ internal sealed class InlineDelegateCollectionState
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ParameterExpression? TryGetParameter(ExpressionBuilderState state, StringSegment name)
     {
-        Assume.Equals( _isLastStateActive, false, nameof( _isLastStateActive ) );
+        Assume.Equals( _isLastStateActive, false );
 
         if ( ! _parametersMap.TryGetValue( name, out var parameter ) )
             return null;
@@ -97,21 +97,21 @@ internal sealed class InlineDelegateCollectionState
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void AddArgumentCapture(ExpressionBuilderState state, int index)
     {
-        Assume.Equals( _isLastStateActive, false, nameof( _isLastStateActive ) );
+        Assume.Equals( _isLastStateActive, false );
         AddParameterCapture( state.Id, _localTerms.ParameterExpression, 0, index );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void AddVariableCapture(ExpressionBuilderState state, ParameterExpression variable)
     {
-        Assume.Equals( _isLastStateActive, false, nameof( _isLastStateActive ) );
+        Assume.Equals( _isLastStateActive, false );
         AddParameterCapture( state.Id, variable, 0 );
     }
 
     internal Expression FinalizeLastState(Expression lambdaBody, bool compileWhenStatic)
     {
-        Assume.IsNotEmpty( _registeredStates, nameof( _registeredStates ) );
-        Assume.Equals( _isLastStateActive, false, nameof( _isLastStateActive ) );
+        Assume.IsNotEmpty( _registeredStates );
+        Assume.Equals( _isLastStateActive, false );
 
         var state = _registeredStates.Pop();
         var parentStateId = GetParentStateId();
@@ -130,8 +130,8 @@ internal sealed class InlineDelegateCollectionState
 
     internal Result? CreateCompilableDelegates()
     {
-        Assume.Equals( AreAllStatesFinalized, true, nameof( AreAllStatesFinalized ) );
-        Assume.ContainsExactly( _nestedStateFinalization, 1, nameof( _nestedStateFinalization ) );
+        Assume.Equals( AreAllStatesFinalized, true );
+        Assume.ContainsExactly( _nestedStateFinalization, 1 );
 
         _capturedParametersByState.Clear();
         var rootFinalization = _nestedStateFinalization[0];
@@ -152,8 +152,8 @@ internal sealed class InlineDelegateCollectionState
         FinalizedDelegate finalization,
         (FinalizedDelegate Finalization, ClosureExpressionFactory? Closure)? parent)
     {
-        Assume.IsNotNull( finalization.LambdaPlaceholder, nameof( finalization.LambdaPlaceholder ) );
-        Assume.Equals( finalization.IsUsed, true, nameof( finalization.IsUsed ) );
+        Assume.IsNotNull( finalization.LambdaPlaceholder );
+        Assume.Equals( finalization.IsUsed, true );
 
         ClosureExpressionFactory? closure = null;
         NewExpression? closureCtorCall = null;
@@ -335,7 +335,7 @@ internal sealed class InlineDelegateCollectionState
                 var ownerStateId = _capturedParameters.FindOwnerStateId( parameter );
                 if ( ownerStateId > 0 || (ownerStateId == 0 && ! ReferenceEquals( parameter, _localTerms.ParameterExpression )) )
                 {
-                    Assume.IsNotNull( parameter.Name, nameof( parameter.Name ) );
+                    Assume.IsNotNull( parameter.Name );
                     _usedParameters.Add( new OwnedParameterExpression( parameter, ownerStateId ) );
                     _usedVariables.Add( parameter.Name );
                 }
@@ -501,7 +501,7 @@ internal sealed class InlineDelegateCollectionState
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void SetNestedFinalization(IReadOnlyList<FinalizedDelegate> states)
         {
-            Assume.IsNull( _nestedFinalization, nameof( _nestedFinalization ) );
+            Assume.IsNull( _nestedFinalization );
 
             _nestedFinalization = states.Count == 0
                 ? Array.Empty<FinalizedDelegate>()

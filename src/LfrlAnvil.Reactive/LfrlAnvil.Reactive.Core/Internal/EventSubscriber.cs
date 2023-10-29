@@ -23,7 +23,7 @@ internal sealed class EventSubscriber<TEvent> : IEventSubscriber
         if ( Interlocked.Exchange( ref _state, 1 ) == 1 )
             return;
 
-        Assume.IsNotNull( _disposer, nameof( _disposer ) );
+        Assume.IsNotNull( _disposer );
         _disposer( this );
         _disposer = null;
 

@@ -11,7 +11,7 @@ public class AssumeTests : TestsBase
     public void IsNull_ForRefType_ShouldPass_WhenParamIsNull()
     {
         string? param = null;
-        var action = Lambda.Of( () => Assume.IsNull( param, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsNull( param ) );
         action.Should().NotThrow();
     }
 
@@ -20,7 +20,7 @@ public class AssumeTests : TestsBase
     public void IsNull_ForRefType_ShouldFail_WhenParamIsNotNull()
     {
         var param = Fixture.Create<string>();
-        var action = Lambda.Of( () => Assume.IsNull( param, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsNull( param ) );
         action.Should().Throw<Exception>();
     }
 
@@ -29,7 +29,7 @@ public class AssumeTests : TestsBase
     public void IsNull_ForNullableStructType_ShouldPass_WhenParamIsNull()
     {
         int? param = null;
-        var action = Lambda.Of( () => Assume.IsNull( param, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsNull( param ) );
         action.Should().NotThrow();
     }
 
@@ -38,7 +38,7 @@ public class AssumeTests : TestsBase
     public void IsNull_ForNullableStructType_ShouldFail_WhenParamIsNotNull()
     {
         var param = Fixture.CreateNullable<int>();
-        var action = Lambda.Of( () => Assume.IsNull( param, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsNull( param ) );
         action.Should().Throw<Exception>();
     }
 
@@ -47,7 +47,7 @@ public class AssumeTests : TestsBase
     public void IsNotNull_ForRefType_ShouldPass_WhenParamIsNotNull()
     {
         var param = Fixture.Create<string>();
-        var action = Lambda.Of( () => Assume.IsNotNull( param, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsNotNull( param ) );
         action.Should().NotThrow();
     }
 
@@ -56,7 +56,7 @@ public class AssumeTests : TestsBase
     public void IsNotNull_ForRefType_ShouldFail_WhenParamIsNull()
     {
         string? param = null;
-        var action = Lambda.Of( () => Assume.IsNotNull( param, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsNotNull( param ) );
         action.Should().Throw<Exception>();
     }
 
@@ -65,7 +65,7 @@ public class AssumeTests : TestsBase
     public void IsNotNull_ForNullableStructType_ShouldPass_WhenParamIsNotNull()
     {
         var param = Fixture.CreateNullable<int>();
-        var action = Lambda.Of( () => Assume.IsNotNull( param, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsNotNull( param ) );
         action.Should().NotThrow();
     }
 
@@ -74,7 +74,7 @@ public class AssumeTests : TestsBase
     public void IsNotNull_ForNullableStructType_ShouldFail_WhenParamIsNull()
     {
         int? param = null;
-        var action = Lambda.Of( () => Assume.IsNotNull( param, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsNotNull( param ) );
         action.Should().Throw<Exception>();
     }
 
@@ -84,7 +84,7 @@ public class AssumeTests : TestsBase
     [InlineData( TestEnum.Bar )]
     public void IsDefined_ShouldPass_WhenParamIsDefined(TestEnum param)
     {
-        var action = Lambda.Of( () => Assume.IsDefined( param, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsDefined( param ) );
         action.Should().NotThrow();
     }
 
@@ -94,7 +94,7 @@ public class AssumeTests : TestsBase
     [InlineData( (int)TestEnum.Bar + 1 )]
     public void IsDefined_ShouldFail_WhenParamIsNotDefined(int param)
     {
-        var action = Lambda.Of( () => Assume.IsDefined( (TestEnum)param, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsDefined( (TestEnum)param ) );
         action.Should().Throw<Exception>();
     }
 
@@ -103,7 +103,7 @@ public class AssumeTests : TestsBase
     public void Equals_ShouldPass_WhenParamIsEqualToValue()
     {
         var param = Fixture.Create<int>();
-        var action = Lambda.Of( () => Assume.Equals( param, param, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.Equals( param, param ) );
         action.Should().NotThrow();
     }
 
@@ -112,7 +112,7 @@ public class AssumeTests : TestsBase
     public void Equals_ShouldFail_WhenParamIsNotEqualToValue()
     {
         var (param, value) = Fixture.CreateDistinctCollection<int>( count: 2 );
-        var action = Lambda.Of( () => Assume.Equals( param, value, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.Equals( param, value ) );
         action.Should().Throw<Exception>();
     }
 
@@ -121,7 +121,7 @@ public class AssumeTests : TestsBase
     public void NotEquals_ShouldPass_WhenParamIsNotEqualToValue()
     {
         var (param, value) = Fixture.CreateDistinctCollection<int>( count: 2 );
-        var action = Lambda.Of( () => Assume.NotEquals( param, value, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.NotEquals( param, value ) );
         action.Should().NotThrow();
     }
 
@@ -130,7 +130,7 @@ public class AssumeTests : TestsBase
     public void NotEquals_ShouldFail_WhenParamIsEqualToValue()
     {
         var param = Fixture.Create<int>();
-        var action = Lambda.Of( () => Assume.NotEquals( param, param, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.NotEquals( param, param ) );
         action.Should().Throw<Exception>();
     }
 
@@ -139,7 +139,7 @@ public class AssumeTests : TestsBase
     public void IsGreaterThan_ShouldPass_WhenParamIsGreaterThanValue()
     {
         var (value, param) = Fixture.CreateDistinctSortedCollection<int>( count: 2 );
-        var action = Lambda.Of( () => Assume.IsGreaterThan( param, value, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsGreaterThan( param, value ) );
         action.Should().NotThrow();
     }
 
@@ -148,7 +148,7 @@ public class AssumeTests : TestsBase
     public void IsGreaterThan_ShouldFail_WhenParamIsEqualToValue()
     {
         var param = Fixture.Create<int>();
-        var action = Lambda.Of( () => Assume.IsGreaterThan( param, param, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsGreaterThan( param, param ) );
         action.Should().Throw<Exception>();
     }
 
@@ -157,7 +157,7 @@ public class AssumeTests : TestsBase
     public void IsGreaterThan_ShouldFail_WhenParamIsLessThanValue()
     {
         var (param, value) = Fixture.CreateDistinctSortedCollection<int>( count: 2 );
-        var action = Lambda.Of( () => Assume.IsGreaterThan( param, value, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsGreaterThan( param, value ) );
         action.Should().Throw<Exception>();
     }
 
@@ -166,7 +166,7 @@ public class AssumeTests : TestsBase
     public void IsGreaterThanOrEqualTo_ShouldPass_WhenParamIsGreaterThanValue()
     {
         var (value, param) = Fixture.CreateDistinctSortedCollection<int>( count: 2 );
-        var action = Lambda.Of( () => Assume.IsGreaterThanOrEqualTo( param, value, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsGreaterThanOrEqualTo( param, value ) );
         action.Should().NotThrow();
     }
 
@@ -175,7 +175,7 @@ public class AssumeTests : TestsBase
     public void IsGreaterThanOrEqualTo_ShouldPass_WhenParamIsEqualToValue()
     {
         var param = Fixture.Create<int>();
-        var action = Lambda.Of( () => Assume.IsGreaterThanOrEqualTo( param, param, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsGreaterThanOrEqualTo( param, param ) );
         action.Should().NotThrow();
     }
 
@@ -184,7 +184,7 @@ public class AssumeTests : TestsBase
     public void IsGreaterThanOrEqualTo_ShouldFail_WhenParamIsLessThanValue()
     {
         var (param, value) = Fixture.CreateDistinctSortedCollection<int>( count: 2 );
-        var action = Lambda.Of( () => Assume.IsGreaterThanOrEqualTo( param, value, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsGreaterThanOrEqualTo( param, value ) );
         action.Should().Throw<Exception>();
     }
 
@@ -193,7 +193,7 @@ public class AssumeTests : TestsBase
     public void IsLessThan_ShouldPass_WhenParamIsLessThanValue()
     {
         var (param, value) = Fixture.CreateDistinctSortedCollection<int>( count: 2 );
-        var action = Lambda.Of( () => Assume.IsLessThan( param, value, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsLessThan( param, value ) );
         action.Should().NotThrow();
     }
 
@@ -202,7 +202,7 @@ public class AssumeTests : TestsBase
     public void IsLessThan_ShouldFail_WhenParamIsEqualToValue()
     {
         var param = Fixture.Create<int>();
-        var action = Lambda.Of( () => Assume.IsLessThan( param, param, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsLessThan( param, param ) );
         action.Should().Throw<Exception>();
     }
 
@@ -211,7 +211,7 @@ public class AssumeTests : TestsBase
     public void IsLessThan_ShouldFail_WhenParamIsGreaterThanValue()
     {
         var (value, param) = Fixture.CreateDistinctSortedCollection<int>( count: 2 );
-        var action = Lambda.Of( () => Assume.IsLessThan( param, value, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsLessThan( param, value ) );
         action.Should().Throw<Exception>();
     }
 
@@ -220,7 +220,7 @@ public class AssumeTests : TestsBase
     public void IsLessThanOrEqualTo_ShouldPass_WhenParamIsLessThanValue()
     {
         var (param, value) = Fixture.CreateDistinctSortedCollection<int>( count: 2 );
-        var action = Lambda.Of( () => Assume.IsLessThanOrEqualTo( param, value, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsLessThanOrEqualTo( param, value ) );
         action.Should().NotThrow();
     }
 
@@ -229,7 +229,7 @@ public class AssumeTests : TestsBase
     public void IsLessThanOrEqualTo_ShouldPass_WhenParamIsEqualToValue()
     {
         var param = Fixture.Create<int>();
-        var action = Lambda.Of( () => Assume.IsLessThanOrEqualTo( param, param, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsLessThanOrEqualTo( param, param ) );
         action.Should().NotThrow();
     }
 
@@ -238,7 +238,7 @@ public class AssumeTests : TestsBase
     public void IsLessThanOrEqualTo_ShouldFail_WhenParamIsGreaterThanValue()
     {
         var (value, param) = Fixture.CreateDistinctSortedCollection<int>( count: 2 );
-        var action = Lambda.Of( () => Assume.IsLessThanOrEqualTo( param, value, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsLessThanOrEqualTo( param, value ) );
         action.Should().Throw<Exception>();
     }
 
@@ -247,7 +247,7 @@ public class AssumeTests : TestsBase
     public void IsInRange_ShouldPass_WhenParamIsBetweenMinAndMax()
     {
         var (min, param, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
-        var action = Lambda.Of( () => Assume.IsInRange( param, min, max, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsInRange( param, min, max ) );
         action.Should().NotThrow();
     }
 
@@ -256,7 +256,7 @@ public class AssumeTests : TestsBase
     public void IsInRange_ShouldPass_WhenParamIsEqualToMin()
     {
         var (param, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
-        var action = Lambda.Of( () => Assume.IsInRange( param, param, max, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsInRange( param, param, max ) );
         action.Should().NotThrow();
     }
 
@@ -265,7 +265,7 @@ public class AssumeTests : TestsBase
     public void IsInRange_ShouldPass_WhenParamIsEqualToMax()
     {
         var (min, param) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
-        var action = Lambda.Of( () => Assume.IsInRange( param, min, param, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsInRange( param, min, param ) );
         action.Should().NotThrow();
     }
 
@@ -274,7 +274,7 @@ public class AssumeTests : TestsBase
     public void IsInRange_ShouldFail_WhenParamIsLessThanMin()
     {
         var (param, min, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
-        var action = Lambda.Of( () => Assume.IsInRange( param, min, max, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsInRange( param, min, max ) );
         action.Should().Throw<Exception>();
     }
 
@@ -283,7 +283,7 @@ public class AssumeTests : TestsBase
     public void IsInRange_ShouldFail_WhenParamIsGreaterThanMin()
     {
         var (min, max, param) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
-        var action = Lambda.Of( () => Assume.IsInRange( param, min, max, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsInRange( param, min, max ) );
         action.Should().Throw<Exception>();
     }
 
@@ -292,7 +292,7 @@ public class AssumeTests : TestsBase
     public void IsNotInRange_ShouldFail_WhenParamIsBetweenMinAndMax()
     {
         var (min, param, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
-        var action = Lambda.Of( () => Assume.IsNotInRange( param, min, max, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsNotInRange( param, min, max ) );
         action.Should().Throw<Exception>();
     }
 
@@ -301,7 +301,7 @@ public class AssumeTests : TestsBase
     public void IsNotInRange_ShouldFail_WhenParamIsEqualToMin()
     {
         var (param, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
-        var action = Lambda.Of( () => Assume.IsNotInRange( param, param, max, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsNotInRange( param, param, max ) );
         action.Should().Throw<Exception>();
     }
 
@@ -310,7 +310,7 @@ public class AssumeTests : TestsBase
     public void IsNotInRange_ShouldFail_WhenParamIsEqualToMax()
     {
         var (min, param) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
-        var action = Lambda.Of( () => Assume.IsNotInRange( param, min, param, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsNotInRange( param, min, param ) );
         action.Should().Throw<Exception>();
     }
 
@@ -319,7 +319,7 @@ public class AssumeTests : TestsBase
     public void IsNotInRange_ShouldPass_WhenParamIsLessThanMin()
     {
         var (param, min, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
-        var action = Lambda.Of( () => Assume.IsNotInRange( param, min, max, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsNotInRange( param, min, max ) );
         action.Should().NotThrow();
     }
 
@@ -328,7 +328,7 @@ public class AssumeTests : TestsBase
     public void IsNotInRange_ShouldPass_WhenParamIsGreaterThanMin()
     {
         var (min, max, param) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
-        var action = Lambda.Of( () => Assume.IsNotInRange( param, min, max, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsNotInRange( param, min, max ) );
         action.Should().NotThrow();
     }
 
@@ -337,7 +337,7 @@ public class AssumeTests : TestsBase
     public void IsInExclusiveRange_ShouldPass_WhenParamIsBetweenMinAndMax()
     {
         var (min, param, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
-        var action = Lambda.Of( () => Assume.IsInExclusiveRange( param, min, max, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsInExclusiveRange( param, min, max ) );
         action.Should().NotThrow();
     }
 
@@ -346,7 +346,7 @@ public class AssumeTests : TestsBase
     public void IsInExclusiveRange_ShouldFail_WhenParamIsEqualToMin()
     {
         var (param, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
-        var action = Lambda.Of( () => Assume.IsInExclusiveRange( param, param, max, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsInExclusiveRange( param, param, max ) );
         action.Should().Throw<Exception>();
     }
 
@@ -355,7 +355,7 @@ public class AssumeTests : TestsBase
     public void IsInExclusiveRange_ShouldFail_WhenParamIsEqualToMax()
     {
         var (min, param) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
-        var action = Lambda.Of( () => Assume.IsInExclusiveRange( param, min, param, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsInExclusiveRange( param, min, param ) );
         action.Should().Throw<Exception>();
     }
 
@@ -364,7 +364,7 @@ public class AssumeTests : TestsBase
     public void IsInExclusiveRange_ShouldFail_WhenParamIsLessThanMin()
     {
         var (param, min, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
-        var action = Lambda.Of( () => Assume.IsInExclusiveRange( param, min, max, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsInExclusiveRange( param, min, max ) );
         action.Should().Throw<Exception>();
     }
 
@@ -373,7 +373,7 @@ public class AssumeTests : TestsBase
     public void IsInExclusiveRange_ShouldFail_WhenParamIsGreaterThanMin()
     {
         var (min, max, param) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
-        var action = Lambda.Of( () => Assume.IsInExclusiveRange( param, min, max, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsInExclusiveRange( param, min, max ) );
         action.Should().Throw<Exception>();
     }
 
@@ -382,7 +382,7 @@ public class AssumeTests : TestsBase
     public void IsNotInExclusiveRange_ShouldFail_WhenParamIsBetweenMinAndMax()
     {
         var (min, param, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
-        var action = Lambda.Of( () => Assume.IsNotInExclusiveRange( param, min, max, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsNotInExclusiveRange( param, min, max ) );
         action.Should().Throw<Exception>();
     }
 
@@ -391,7 +391,7 @@ public class AssumeTests : TestsBase
     public void IsNotInExclusiveRange_ShouldPass_WhenParamIsEqualToMin()
     {
         var (param, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
-        var action = Lambda.Of( () => Assume.IsNotInExclusiveRange( param, param, max, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsNotInExclusiveRange( param, param, max ) );
         action.Should().NotThrow();
     }
 
@@ -400,7 +400,7 @@ public class AssumeTests : TestsBase
     public void IsNotInExclusiveRange_ShouldPass_WhenParamIsEqualToMax()
     {
         var (min, param) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
-        var action = Lambda.Of( () => Assume.IsNotInExclusiveRange( param, min, param, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsNotInExclusiveRange( param, min, param ) );
         action.Should().NotThrow();
     }
 
@@ -409,7 +409,7 @@ public class AssumeTests : TestsBase
     public void IsNotInExclusiveRange_ShouldPass_WhenParamIsLessThanMin()
     {
         var (param, min, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
-        var action = Lambda.Of( () => Assume.IsNotInExclusiveRange( param, min, max, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsNotInExclusiveRange( param, min, max ) );
         action.Should().NotThrow();
     }
 
@@ -418,7 +418,7 @@ public class AssumeTests : TestsBase
     public void IsNotInExclusiveRange_ShouldPass_WhenParamIsGreaterThanMin()
     {
         var (min, max, param) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
-        var action = Lambda.Of( () => Assume.IsNotInExclusiveRange( param, min, max, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsNotInExclusiveRange( param, min, max ) );
         action.Should().NotThrow();
     }
 
@@ -427,7 +427,7 @@ public class AssumeTests : TestsBase
     public void IsEmpty_ShouldPass_WhenParamIsEmpty()
     {
         var param = string.Empty;
-        var action = Lambda.Of( () => Assume.IsEmpty( param, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsEmpty( param ) );
         action.Should().NotThrow();
     }
 
@@ -436,7 +436,7 @@ public class AssumeTests : TestsBase
     public void IsEmpty_ShouldFail_WhenParamIsNotEmpty()
     {
         var param = Fixture.Create<string>();
-        var action = Lambda.Of( () => Assume.IsEmpty( param, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsEmpty( param ) );
         action.Should().Throw<Exception>();
     }
 
@@ -445,7 +445,7 @@ public class AssumeTests : TestsBase
     public void IsNotEmpty_ShouldFail_WhenParamIsEmpty()
     {
         var param = string.Empty;
-        var action = Lambda.Of( () => Assume.IsNotEmpty( param, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsNotEmpty( param ) );
         action.Should().Throw<Exception>();
     }
 
@@ -454,7 +454,7 @@ public class AssumeTests : TestsBase
     public void IsNotEmpty_ShouldPass_WhenParamIsNotEmpty()
     {
         var param = Fixture.Create<string>();
-        var action = Lambda.Of( () => Assume.IsNotEmpty( param, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.IsNotEmpty( param ) );
         action.Should().NotThrow();
     }
 
@@ -468,7 +468,7 @@ public class AssumeTests : TestsBase
     public void ContainsAtLeast_ShouldPass_WhenParamContainsEnoughElements(int count)
     {
         var param = Fixture.CreateMany<int>( count: 3 );
-        var action = Lambda.Of( () => Assume.ContainsAtLeast( param, count, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.ContainsAtLeast( param, count ) );
         action.Should().NotThrow();
     }
 
@@ -479,7 +479,7 @@ public class AssumeTests : TestsBase
     public void ContainsAtLeast_ShouldFail_WhenParamDoesNotContainEnoughElements(int count)
     {
         var param = Fixture.CreateMany<int>( count: 3 );
-        var action = Lambda.Of( () => Assume.ContainsAtLeast( param, count, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.ContainsAtLeast( param, count ) );
         action.Should().Throw<Exception>();
     }
 
@@ -492,7 +492,7 @@ public class AssumeTests : TestsBase
     public void ContainsAtMost_ShouldFail_WhenParamContainsMoreElements(int count)
     {
         var param = Fixture.CreateMany<int>( count: 3 );
-        var action = Lambda.Of( () => Assume.ContainsAtMost( param, count, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.ContainsAtMost( param, count ) );
         action.Should().Throw<Exception>();
     }
 
@@ -504,7 +504,7 @@ public class AssumeTests : TestsBase
     public void ContainsAtMost_ShouldPass_WhenParamDoesNotContainMoreElements(int count)
     {
         var param = Fixture.CreateMany<int>( count: 3 );
-        var action = Lambda.Of( () => Assume.ContainsAtMost( param, count, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.ContainsAtMost( param, count ) );
         action.Should().NotThrow();
     }
 
@@ -523,7 +523,7 @@ public class AssumeTests : TestsBase
     public void ContainsInRange_ShouldPass_WhenParamContainsCorrectAmountOfElements(int min, int max)
     {
         var param = Fixture.CreateMany<int>( count: 3 );
-        var action = Lambda.Of( () => Assume.ContainsInRange( param, min, max, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.ContainsInRange( param, min, max ) );
         action.Should().NotThrow();
     }
 
@@ -539,7 +539,7 @@ public class AssumeTests : TestsBase
     public void ContainsInRange_ShouldFail_WhenParamDoesNotContainCorrectAmountOfElements(int min, int max)
     {
         var param = Fixture.CreateMany<int>( count: 3 );
-        var action = Lambda.Of( () => Assume.ContainsInRange( param, min, max, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.ContainsInRange( param, min, max ) );
         action.Should().Throw<Exception>();
     }
 
@@ -548,7 +548,7 @@ public class AssumeTests : TestsBase
     public void ContainsExactly_ShouldPass_WhenParamContainsExactAmountOfElements()
     {
         var param = Fixture.CreateMany<int>( count: 3 );
-        var action = Lambda.Of( () => Assume.ContainsExactly( param, count: 3, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.ContainsExactly( param, count: 3 ) );
         action.Should().NotThrow();
     }
 
@@ -561,7 +561,7 @@ public class AssumeTests : TestsBase
     public void ContainsExactly_ShouldFail_WhenParamContainsDifferentAmountOfElements(int count)
     {
         var param = Fixture.CreateMany<int>( count: 3 );
-        var action = Lambda.Of( () => Assume.ContainsExactly( param, count, nameof( param ) ) );
+        var action = Lambda.Of( () => Assume.ContainsExactly( param, count ) );
         action.Should().Throw<Exception>();
     }
 

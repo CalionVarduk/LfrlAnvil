@@ -20,7 +20,7 @@ public class IntSequenceGenerator : SequenceGeneratorBase<int>
     public IntSequenceGenerator(Bounds<int> bounds, int start, int step)
         : base( bounds, start, step )
     {
-        Ensure.NotEquals( step, 0, nameof( step ) );
+        Ensure.NotEquals( step, 0 );
     }
 
     protected sealed override int AddStep(int value)

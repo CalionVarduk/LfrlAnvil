@@ -51,7 +51,7 @@ public sealed class ParsedExpressionThrow : ParsedExpressionVariadicFunction
     private Expression CreateFormattedException(IReadOnlyList<Expression> parameters)
     {
         var format = parameters[0];
-        Ensure.Equals( format.Type, typeof( string ), EqualityComparer<Type>.Default, nameof( format ) );
+        Ensure.Equals( format.Type, typeof( string ), EqualityComparer<Type>.Default );
 
         if ( parameters.Count == 1 )
             return Expression.New( _exceptionCtor, format, Expression.Constant( Array.Empty<object?>() ) );

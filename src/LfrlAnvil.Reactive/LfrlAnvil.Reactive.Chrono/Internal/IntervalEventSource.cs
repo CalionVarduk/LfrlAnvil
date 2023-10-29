@@ -19,9 +19,9 @@ public sealed class IntervalEventSource : EventSource<WithInterval<long>>
         Duration spinWaitDurationHint,
         long count)
     {
-        Ensure.IsGreaterThan( count, 0, nameof( count ) );
-        Ensure.IsInRange( interval, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ), nameof( interval ) );
-        Ensure.IsGreaterThanOrEqualTo( spinWaitDurationHint, Duration.Zero, nameof( spinWaitDurationHint ) );
+        Ensure.IsGreaterThan( count, 0 );
+        Ensure.IsInRange( interval, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ) );
+        Ensure.IsGreaterThanOrEqualTo( spinWaitDurationHint, Duration.Zero );
 
         _timestampProvider = timestampProvider;
         _interval = interval;
@@ -72,7 +72,7 @@ public sealed class IntervalEventSource : EventSource<WithInterval<long>>
 
         public override void OnDispose(DisposalSource source)
         {
-            Assume.IsNotNull( _timer, nameof( _timer ) );
+            Assume.IsNotNull( _timer );
             _timer.Dispose();
             _timer = null;
             base.OnDispose( source );
@@ -92,13 +92,13 @@ public sealed class IntervalEventSource : EventSource<WithInterval<long>>
 
         public override void React(WithInterval<long> @event)
         {
-            Assume.IsNotNull( _mainListener, nameof( _mainListener ) );
+            Assume.IsNotNull( _mainListener );
             _mainListener.React( @event );
         }
 
         public override void OnDispose(DisposalSource _)
         {
-            Assume.IsNotNull( _mainSubscriber, nameof( _mainSubscriber ) );
+            Assume.IsNotNull( _mainSubscriber );
             _mainSubscriber.Dispose();
             _mainSubscriber = null;
             _mainListener = null;

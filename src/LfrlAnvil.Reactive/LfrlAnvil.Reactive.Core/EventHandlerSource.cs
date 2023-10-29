@@ -20,7 +20,7 @@ public sealed class EventHandlerSource<TEvent> : EventSource<WithSender<TEvent>>
 
     protected override void OnDispose()
     {
-        Assume.IsNotNull( Teardown, nameof( Teardown ) );
+        Assume.IsNotNull( Teardown );
         base.OnDispose();
         Teardown( Handle );
         Teardown = null;

@@ -2,8 +2,8 @@
 
 internal static class Resources
 {
-    internal const string KeyAlreadyExistsInForwardDictionary = "Key already exists in forward dictionary.";
-    internal const string KeyAlreadyExistsInReverseDictionary = "Key already exists in reverse dictionary.";
+    internal const string KeyExistenceInForwardDictionary = "key's existence in forward dictionary";
+    internal const string KeyExistenceInReverseDictionary = "key's existence in reverse dictionary.";
     internal const string NodeHasBeenRemovedFromGraph = "Node has been removed from the graph.";
     internal const string EdgeHasBeenRemovedFromGraph = "Edge has been removed from the graph.";
     internal const string NoneIsNotValidDirection = nameof( GraphDirection.None ) + " is not a valid direction.";

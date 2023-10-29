@@ -72,7 +72,7 @@ internal static class StateMachineOptimizer
                     break;
                 }
 
-                Assume.IsNotNull( @params.StateMerger, nameof( @params.StateMerger ) );
+                Assume.IsNotNull( @params.StateMerger );
                 var stateMappings = CreateEquivalentStateMappings( equivalency, @params.StateMerger, states.Comparer );
                 initialState = RecreateMinimizedStatesAndGetInitialState( states, stateNodes, stateMappings, deadStates, inputComparer );
                 break;
@@ -92,7 +92,7 @@ internal static class StateMachineOptimizer
         where TState : notnull
         where TInput : notnull
     {
-        Assume.IsLessThan( currentOptimization, @params.Level, nameof( currentOptimization ) );
+        Assume.IsLessThan( currentOptimization, @params.Level );
 
         switch ( @params.Level )
         {
@@ -126,7 +126,7 @@ internal static class StateMachineOptimizer
                 if ( ReferenceEquals( originalStates, states ) )
                     states = new Dictionary<TState, IStateMachineNode<TState, TInput, TResult>>( states.Comparer );
 
-                Assume.IsNotNull( @params.StateMerger, nameof( @params.StateMerger ) );
+                Assume.IsNotNull( @params.StateMerger );
                 var stateMappings = CreateEquivalentStateMappings( equivalency, @params.StateMerger!, states.Comparer );
                 initialState = RecreateMinimizedStatesAndGetInitialState( states, stateNodes, stateMappings, deadStates, inputComparer );
                 break;
@@ -411,8 +411,8 @@ internal static class StateMachineOptimizer
         var stateMappings = new Dictionary<TState, Ref<TState>>( stateComparer );
         foreach ( var (pair, _) in equivalency.StatePairs )
         {
-            Assume.Equals( pair.HasSecond, true, nameof( pair.HasSecond ) );
-            Assume.IsNotNull( pair.Second, nameof( pair.Second ) );
+            Assume.Equals( pair.HasSecond, true );
+            Assume.IsNotNull( pair.Second );
 
             if ( stateMappings.TryGetValue( pair.First, out var mapping ) )
             {
@@ -498,7 +498,7 @@ internal static class StateMachineOptimizer
             }
         }
 
-        Assume.IsNotNull( initialState, nameof( initialState ) );
+        Assume.IsNotNull( initialState );
         return initialState;
     }
 

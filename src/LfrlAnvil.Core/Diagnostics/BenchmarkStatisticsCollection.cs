@@ -15,8 +15,8 @@ public struct BenchmarkStatisticsCollection
 
     internal BenchmarkStatisticsCollection(int samples, int stepsPerSample)
     {
-        Assume.IsGreaterThan( samples, 0, nameof( samples ) );
-        Assume.IsGreaterThan( stepsPerSample, 0, nameof( stepsPerSample ) );
+        Assume.IsGreaterThan( samples, 0 );
+        Assume.IsGreaterThan( stepsPerSample, 0 );
 
         AllocatedBytes = new MemoryEntry[stepsPerSample];
         ElapsedTimeTicks = new long[samples, stepsPerSample];
@@ -35,7 +35,7 @@ public struct BenchmarkStatisticsCollection
             BenchmarkHelpers.CollectGarbage();
 
         var endAllocatedBytes = BenchmarkHelpers.GetAllocatedBytes();
-        Ensure.IsInRange( NextStepIndex, 0, AllocatedBytes.Length - 1, nameof( NextStepIndex ) );
+        Ensure.IsInRange( NextStepIndex, 0, AllocatedBytes.Length - 1 );
 
         AllocatedBytes[NextStepIndex] = GetNextMemoryEntry( AllocatedBytes[NextStepIndex], endAllocatedBytes - info.StartAllocatedBytes );
         ElapsedTimeTicks[SampleIndex, NextStepIndex] = StopwatchTimestamp.GetTicks( info.StartTimestamp, endTimestamp );
@@ -51,7 +51,7 @@ public struct BenchmarkStatisticsCollection
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void ResetSample(int sampleIndex)
     {
-        Assume.IsInRange( sampleIndex, 0, ElapsedTimeTicks.GetLength( 0 ) - 1, nameof( sampleIndex ) );
+        Assume.IsInRange( sampleIndex, 0, ElapsedTimeTicks.GetLength( 0 ) - 1 );
         SampleIndex = sampleIndex;
         NextStepIndex = 0;
     }

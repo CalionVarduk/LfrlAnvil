@@ -247,7 +247,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static SqliteTransaction CreateTransaction(SqliteCommand command)
     {
-        Assume.IsNotNull( command.Connection, nameof( command.Connection ) );
+        Assume.IsNotNull( command.Connection );
         var result = command.Connection.BeginTransaction( IsolationLevel.Serializable );
         command.Transaction = result;
         return result;

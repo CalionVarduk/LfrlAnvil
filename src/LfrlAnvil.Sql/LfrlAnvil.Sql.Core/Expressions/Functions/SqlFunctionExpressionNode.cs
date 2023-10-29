@@ -10,7 +10,7 @@ public abstract class SqlFunctionExpressionNode : SqlExpressionNode
     internal SqlFunctionExpressionNode(SqlFunctionType functionType, SqlExpressionNode[] arguments)
         : base( SqlNodeType.FunctionExpression )
     {
-        Assume.IsDefined( functionType, nameof( functionType ) );
+        Assume.IsDefined( functionType );
         FunctionType = functionType;
         Arguments = arguments;
     }

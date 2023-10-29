@@ -23,7 +23,7 @@ public sealed class SqlQueryRecordSetNode : SqlRecordSetNode
     {
         get
         {
-            Assume.IsNotNull( base.Alias, nameof( Alias ) );
+            Assume.IsNotNull( base.Alias );
             return base.Alias;
         }
     }

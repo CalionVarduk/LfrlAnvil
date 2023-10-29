@@ -20,7 +20,7 @@ public class LongSequenceGenerator : SequenceGeneratorBase<long>
     public LongSequenceGenerator(Bounds<long> bounds, long start, long step)
         : base( bounds, start, step )
     {
-        Ensure.NotEquals( step, 0, nameof( step ) );
+        Ensure.NotEquals( step, 0 );
     }
 
     protected sealed override long AddStep(long value)

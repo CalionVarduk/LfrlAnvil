@@ -51,7 +51,7 @@ internal struct ExpressionTokenizer
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private IntermediateToken ReadNextToken()
     {
-        Assume.IsLessThan( _index, _input.Length, nameof( _index ) );
+        Assume.IsLessThan( _index, _input.Length );
 
         if ( ! _subStream.IsFinished )
             return ReadNextTokenFromSubStream();
@@ -84,8 +84,7 @@ internal struct ExpressionTokenizer
 
     private IntermediateToken ReadNextTokenFromSubStream()
     {
-        Assume.False( _subStream.IsFinished, "Assumed sub stream to not be finished." );
-
+        Assume.False( _subStream.IsFinished );
         var result = _subStream.ReadNext( _configuration );
         return result;
     }

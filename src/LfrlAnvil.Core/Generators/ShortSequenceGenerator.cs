@@ -20,7 +20,7 @@ public class ShortSequenceGenerator : SequenceGeneratorBase<short>
     public ShortSequenceGenerator(Bounds<short> bounds, short start, short step)
         : base( bounds, start, step )
     {
-        Ensure.NotEquals( step, 0, nameof( step ) );
+        Ensure.NotEquals( step, 0 );
     }
 
     protected sealed override short AddStep(short value)

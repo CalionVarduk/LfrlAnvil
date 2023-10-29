@@ -35,8 +35,8 @@ internal sealed class ExpressionBuilder
         Type implementorType,
         Action<object, Type, IDependencyScope>? onCreatedCallback = null)
     {
-        Assume.IsGreaterThanOrEqualTo( dependencyCount, 0, nameof( dependencyCount ) );
-        Assume.IsInRange( defaultDependencyCount, 0, dependencyCount, nameof( defaultDependencyCount ) );
+        Assume.IsGreaterThanOrEqualTo( dependencyCount, 0 );
+        Assume.IsInRange( defaultDependencyCount, 0, dependencyCount );
 
         ScopeParameter = Expression.Parameter( typeof( DependencyScope ), "scope" );
 
@@ -45,11 +45,7 @@ internal sealed class ExpressionBuilder
 
         if ( hasRequiredValueTypeDependency )
         {
-            Assume.IsGreaterThan(
-                dependencyCount - defaultDependencyCount,
-                0,
-                nameof( dependencyCount ) + '-' + nameof( defaultDependencyCount ) );
-
+            Assume.IsGreaterThan( dependencyCount - defaultDependencyCount, 0 );
             BufferVariable = Expression.Variable( typeof( object ), "b" );
             ++variableCount;
         }
@@ -109,7 +105,7 @@ internal sealed class ExpressionBuilder
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal MemberBinding CreateMemberBindingForLastVariable(MemberInfo member, ConstructorInfo memberTypeCtor)
     {
-        Assume.IsGreaterThan( _variableIndex, 0, nameof( _variableIndex ) );
+        Assume.IsGreaterThan( _variableIndex, 0 );
         var variable = Variables[_variableIndex - 1];
         var result = Expression.Bind( member, Expression.New( memberTypeCtor, variable ) );
         return result;
@@ -158,14 +154,14 @@ internal sealed class ExpressionBuilder
         if ( ReferenceEquals( Block[^1], null ) )
         {
             AddBlockExpression( instance );
-            Assume.Equals( _blockIndex, Block.Length, nameof( _blockIndex ) );
+            Assume.Equals( _blockIndex, Block.Length );
         }
         else
         {
-            Assume.IsNotNull( Block[^2], nameof( Block ) + "[SecondToLast]" );
-            Assume.IsNotNull( BufferVariable, nameof( BufferVariable ) );
+            Assume.IsNotNull( Block[^2] );
+            Assume.IsNotNull( BufferVariable );
             AddAssignment( BufferVariable, instance );
-            Assume.Equals( _blockIndex, Block.Length - 2, nameof( _blockIndex ) );
+            Assume.Equals( _blockIndex, Block.Length - 2 );
         }
 
         var result = Expression.Lambda<Func<DependencyScope, object>>( Expression.Block( Variables, Block ), ScopeParameter );
@@ -290,7 +286,7 @@ internal sealed class ExpressionBuilder
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void AddRequiredStructRawValueAssignment(ParameterExpression variable, Expression rawValue)
     {
-        Assume.IsNotNull( BufferVariable, nameof( BufferVariable ) );
+        Assume.IsNotNull( BufferVariable );
 
         var typeCheck = Expression.TypeIs( BufferVariable, variable.Type );
         var value = Expression.Condition(
@@ -305,16 +301,16 @@ internal sealed class ExpressionBuilder
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void AddVariable(ParameterExpression variable)
     {
-        Assume.IsLessThan( _variableIndex, Variables.Length, nameof( _variableIndex ) );
-        Assume.IsNull( Variables[_variableIndex], nameof( Variables ) + '[' + _variableIndex + ']' );
+        Assume.IsLessThan( _variableIndex, Variables.Length );
+        Assume.IsNull( Variables[_variableIndex] );
         Variables[_variableIndex++] = variable;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void AddBlockExpression(Expression expression)
     {
-        Assume.IsLessThan( _blockIndex, Block.Length, nameof( _blockIndex ) );
-        Assume.IsNull( Block[_blockIndex], nameof( Block ) + '[' + _blockIndex + ']' );
+        Assume.IsLessThan( _blockIndex, Block.Length );
+        Assume.IsNull( Block[_blockIndex] );
         Block[_blockIndex++] = expression;
     }
 

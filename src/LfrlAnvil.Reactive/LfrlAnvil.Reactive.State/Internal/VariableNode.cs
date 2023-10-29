@@ -24,8 +24,8 @@ public abstract class VariableNode : IVariableNode
     {
         if ( ! ReferenceEquals( other.Parent, this ) )
         {
-            Ensure.IsNull( other.Parent, nameof( other ) + '.' + nameof( Parent ) );
-            Ensure.NotRefEquals( this, other, "this" );
+            Ensure.IsNull( other.Parent );
+            Ensure.NotRefEquals( this, other );
             other.Parent = this;
         }
     }

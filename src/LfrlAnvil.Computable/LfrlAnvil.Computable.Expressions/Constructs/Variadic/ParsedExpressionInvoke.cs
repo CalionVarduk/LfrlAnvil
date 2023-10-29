@@ -18,7 +18,7 @@ public sealed class ParsedExpressionInvoke : ParsedExpressionVariadicFunction
     [Pure]
     protected internal override Expression Process(IReadOnlyList<Expression> parameters)
     {
-        Ensure.ContainsAtLeast( parameters, 1, nameof( parameters ) );
+        Ensure.ContainsAtLeast( parameters, 1 );
 
         var target = parameters[0];
         var callParameters = parameters.Slice( 1 );

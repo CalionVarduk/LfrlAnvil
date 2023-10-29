@@ -11,7 +11,7 @@ internal static class OptionalValues
     {
         if ( exists )
         {
-            Assume.IsNotNull( obj, nameof( obj ) );
+            Assume.IsNotNull( obj );
             result = obj;
             return true;
         }

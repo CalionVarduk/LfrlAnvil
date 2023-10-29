@@ -23,8 +23,8 @@ internal static class ClosureHelpers
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static Type GetDelegateWithCaptureType(Expression body, ParameterExpression[] parameters)
     {
-        Assume.IsNotEmpty( parameters, nameof( parameters ) );
-        Assume.IsNull( parameters[0], nameof( parameters ) + "[0]" );
+        Assume.IsNotEmpty( parameters );
+        Assume.IsNull( parameters[0] );
 
         var bindMethodIndex = parameters.Length - 1;
         if ( bindMethodIndex >= OpenGenericBindMethods.Length )
@@ -46,7 +46,7 @@ internal static class ClosureHelpers
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MethodInfo GetBindClosureMethod(Expression body, ParameterExpression[] parameters)
     {
-        Assume.ContainsInRange( parameters, 1, 16, nameof( parameters ) );
+        Assume.ContainsInRange( parameters, 1, 16 );
 
         var genericArgs = new Type[parameters.Length + 1];
         for ( var i = 0; i < parameters.Length; ++i )
@@ -65,10 +65,10 @@ internal static class ClosureHelpers
         InlineDelegateCollectionState.ClosureInfo capturedParameters,
         InlineDelegateCollectionState.ClosureInfo? parentCapturedParameters)
     {
-        Assume.IsNotEmpty( capturedParameters.Parameters, nameof( capturedParameters ) );
+        Assume.IsNotEmpty( capturedParameters.Parameters );
         Assume.Conditional(
             parentCapturedParameters is not null,
-            () => Assume.IsNotEmpty( parentCapturedParameters!.Value.Parameters, nameof( parentCapturedParameters ) ) );
+            () => Assume.IsNotEmpty( parentCapturedParameters!.Value.Parameters ) );
 
         var parameters = new ExpressionReplacement[capturedParameters.Parameters.Count];
         for ( var i = 0; i < parameters.Length; ++i )
@@ -110,7 +110,7 @@ internal static class ClosureHelpers
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static (int SegmentCount, int LastSegmentLength) GetClosureTypeSegmentsCount(int parameterCount)
     {
-        Assume.IsGreaterThan( parameterCount, 0, nameof( parameterCount ) );
+        Assume.IsGreaterThan( parameterCount, 0 );
 
         var segmentCount = parameterCount / (MaxSegmentLength - 1) + 1;
         var lastSegmentLength = parameterCount % (MaxSegmentLength - 1);
@@ -173,7 +173,7 @@ internal static class ClosureHelpers
     {
         var memberName = GetParameterMemberAccessName( parameterIndex );
         var field = target.Type.GetField( memberName );
-        Assume.IsNotNull( field, nameof( field ) );
+        Assume.IsNotNull( field );
         var result = Expression.MakeMemberAccess( target, field );
         return result;
     }
@@ -220,7 +220,7 @@ internal static class ClosureHelpers
 
         var closedClosureType = openClosureType.MakeGenericType( types );
         var ctor = closedClosureType.GetConstructor( BindingFlags.Instance | BindingFlags.NonPublic, types );
-        Assume.IsNotNull( ctor, nameof( ctor ) );
+        Assume.IsNotNull( ctor );
         return ctor;
     }
 
@@ -240,7 +240,7 @@ internal static class ClosureHelpers
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static Type GetOpenGenericClosureType(int parameterCount)
     {
-        Assume.IsGreaterThan( parameterCount, 0, nameof( parameterCount ) );
+        Assume.IsGreaterThan( parameterCount, 0 );
 
         return parameterCount switch
         {
@@ -259,7 +259,7 @@ internal static class ClosureHelpers
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static string GetParameterMemberAccessName(int parameterIndex)
     {
-        Assume.IsInRange( parameterIndex, 0, MaxSegmentLength - 1, nameof( parameterIndex ) );
+        Assume.IsInRange( parameterIndex, 0, MaxSegmentLength - 1 );
 
         return parameterIndex switch
         {

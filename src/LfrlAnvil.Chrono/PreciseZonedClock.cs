@@ -20,7 +20,7 @@ public sealed class PreciseZonedClock : ZonedClockBase
     public PreciseZonedClock(TimeZoneInfo timeZone, Duration precisionResetTimeout)
         : base( timeZone )
     {
-        _maxPreciseMeasurementDuration = StopwatchTicks.GetStopwatchTicksOrThrow( precisionResetTimeout, nameof( precisionResetTimeout ) );
+        _maxPreciseMeasurementDuration = StopwatchTicks.GetStopwatchTicksOrThrow( precisionResetTimeout );
         PrecisionResetTimeout = precisionResetTimeout;
     }
 

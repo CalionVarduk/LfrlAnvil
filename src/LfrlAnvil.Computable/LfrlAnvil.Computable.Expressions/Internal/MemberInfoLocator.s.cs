@@ -34,7 +34,7 @@ internal static class MemberInfoLocator
             bindingAttr: BindingFlags.Public | BindingFlags.Static,
             types: new[] { typeof( string ), typeof( string ), typeof( StringComparison ) } );
 
-        Assume.IsNotNull( result, nameof( result ) );
+        Assume.IsNotNull( result );
         return result;
     }
 
@@ -46,7 +46,7 @@ internal static class MemberInfoLocator
             bindingAttr: BindingFlags.Public | BindingFlags.Static,
             types: new[] { typeof( string ), typeof( string ) } );
 
-        Assume.IsNotNull( result, nameof( result ) );
+        Assume.IsNotNull( result );
         return result;
     }
 
@@ -58,7 +58,7 @@ internal static class MemberInfoLocator
             bindingAttr: BindingFlags.Public | BindingFlags.Instance,
             types: Type.EmptyTypes );
 
-        Assume.IsNotNull( result, nameof( result ) );
+        Assume.IsNotNull( result );
         return result;
     }
 
@@ -70,7 +70,7 @@ internal static class MemberInfoLocator
             bindingAttr: BindingFlags.Public | BindingFlags.Instance,
             types: new[] { typeof( IFormatProvider ) } );
 
-        Assume.IsNotNull( result, nameof( result ) );
+        Assume.IsNotNull( result );
         return result;
     }
 
@@ -80,7 +80,7 @@ internal static class MemberInfoLocator
         var result = typeof( ParsedExpressionInvocationException )
             .GetConstructor( new[] { typeof( string ), typeof( object?[] ) } );
 
-        Assume.IsNotNull( result, nameof( result ) );
+        Assume.IsNotNull( result );
         return result;
     }
 
@@ -92,7 +92,7 @@ internal static class MemberInfoLocator
             bindingAttr: BindingFlags.Public | BindingFlags.Static,
             types: Type.EmptyTypes );
 
-        Assume.IsNotNull( genericMethod, nameof( genericMethod ) );
+        Assume.IsNotNull( genericMethod );
         var result = genericMethod.MakeGenericMethod( elementType );
         return result;
     }
@@ -101,7 +101,7 @@ internal static class MemberInfoLocator
     internal static ConstructorInfo FindArrayCtor(Type arrayType)
     {
         var result = arrayType.GetConstructor( new[] { typeof( int ) } );
-        Assume.IsNotNull( result, nameof( result ) );
+        Assume.IsNotNull( result );
         return result;
     }
 
@@ -109,7 +109,7 @@ internal static class MemberInfoLocator
     internal static MethodInfo FindArraySetMethod(Type arrayType)
     {
         var result = arrayType.GetMethod( "Set" );
-        Assume.IsNotNull( result, nameof( result ) );
+        Assume.IsNotNull( result );
         return result;
     }
 
@@ -133,7 +133,7 @@ internal static class MemberInfoLocator
         if ( type.IsArray )
         {
             var getMethod = type.GetMethod( "Get" );
-            Assume.IsNotNull( getMethod, nameof( getMethod ) );
+            Assume.IsNotNull( getMethod );
             var parameters = getMethod.GetParameters();
 
             if ( parameters.Length == parameterTypes.Length && AreParametersMatching( parameters, parameterTypes ) )
@@ -184,7 +184,7 @@ internal static class MemberInfoLocator
         for ( var i = 0; i < methods.Length; ++i )
         {
             var method = methods[i];
-            Assume.IsNotNull( method, nameof( method ) );
+            Assume.IsNotNull( method );
             nonGenericParameterCount[i] = -1;
 
             if ( ! filter( method, null ) )
@@ -257,7 +257,7 @@ internal static class MemberInfoLocator
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static bool AreParametersMatching(ParameterInfo[] parameters, Type[] expectedTypes)
     {
-        Assume.Equals( parameters.Length, expectedTypes.Length, nameof( parameters.Length ) );
+        Assume.Equals( parameters.Length, expectedTypes.Length );
 
         for ( var i = 0; i < parameters.Length; ++i )
         {
@@ -275,7 +275,7 @@ internal static class MemberInfoLocator
         ParameterInfo[] parameters,
         Type[] parameterTypes)
     {
-        Assume.Equals( method.IsGenericMethodDefinition, true, nameof( method.IsGenericMethodDefinition ) );
+        Assume.Equals( method.IsGenericMethodDefinition, true );
 
         const int nonGenericParameterIndex = int.MinValue;
         var genericArgs = method.GetGenericArguments();

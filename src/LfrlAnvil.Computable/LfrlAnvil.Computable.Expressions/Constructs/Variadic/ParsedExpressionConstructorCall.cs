@@ -24,7 +24,7 @@ public sealed class ParsedExpressionConstructorCall : ParsedExpressionVariadicFu
     [Pure]
     protected internal override Expression Process(IReadOnlyList<Expression> parameters)
     {
-        Ensure.ContainsAtLeast( parameters, 1, nameof( parameters ) );
+        Ensure.ContainsAtLeast( parameters, 1 );
 
         var type = parameters[0].GetConstantCtorTypeValue();
         var callParameters = parameters.Slice( 1 );

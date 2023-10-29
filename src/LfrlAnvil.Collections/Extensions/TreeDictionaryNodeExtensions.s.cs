@@ -99,7 +99,7 @@ public static class TreeDictionaryNodeExtensions
         result.SetRoot( node.Key, node.Value );
         foreach ( var descendant in node.VisitDescendants() )
         {
-            Assume.IsNotNull( descendant.Parent, nameof( descendant.Parent ) );
+            Assume.IsNotNull( descendant.Parent );
             result.AddTo( descendant.Parent.Key, descendant.Key, descendant.Value );
         }
 

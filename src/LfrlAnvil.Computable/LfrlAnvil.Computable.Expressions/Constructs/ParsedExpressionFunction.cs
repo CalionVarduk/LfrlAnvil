@@ -12,12 +12,7 @@ public class ParsedExpressionFunction
 {
     public ParsedExpressionFunction(LambdaExpression lambda, bool inlineIfPossible = true)
     {
-        Ensure.NotEquals(
-            lambda.ReturnType,
-            typeof( void ),
-            EqualityComparer<Type>.Default,
-            nameof( lambda ) + '.' + nameof( lambda.ReturnType ) );
-
+        Ensure.NotEquals( lambda.ReturnType, typeof( void ), EqualityComparer<Type>.Default );
         IsInlined = inlineIfPossible && lambda.Parameters.All( static p => p.Name is not null );
         Lambda = lambda;
     }
@@ -88,7 +83,7 @@ public class ParsedExpressionFunction
     [Pure]
     internal Expression Process(IReadOnlyList<Expression> parameters)
     {
-        Assume.Equals( parameters.Count, Lambda.Parameters.Count, nameof( parameters ) + '.' + nameof( parameters.Count ) );
+        Assume.Equals( parameters.Count, Lambda.Parameters.Count );
 
         if ( ! IsInlined )
             return Expression.Invoke( Lambda, parameters );
@@ -99,7 +94,7 @@ public class ParsedExpressionFunction
         var parametersToReplace = new Dictionary<string, Expression>();
         foreach ( var (parameter, value) in Lambda.Parameters.Zip( parameters ) )
         {
-            Assume.IsNotNull( parameter.Name, nameof( parameter.Name ) );
+            Assume.IsNotNull( parameter.Name );
             parametersToReplace.Add( parameter.Name, value );
         }
 

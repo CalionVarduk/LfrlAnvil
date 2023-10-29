@@ -522,7 +522,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Duration SetTicksInMillisecondForPositive(int value)
     {
-        Ensure.IsInRange( value, 0, ChronoConstants.TicksPerMillisecond - 1, nameof( value ) );
+        Ensure.IsInRange( value, 0, ChronoConstants.TicksPerMillisecond - 1 );
         return AddTicks( value - TicksInMillisecond );
     }
 
@@ -530,7 +530,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Duration SetTicksInMillisecondForNegative(int value)
     {
-        Ensure.IsInRange( value, -ChronoConstants.TicksPerMillisecond + 1, 0, nameof( value ) );
+        Ensure.IsInRange( value, -ChronoConstants.TicksPerMillisecond + 1, 0 );
         return AddTicks( value - TicksInMillisecond );
     }
 
@@ -538,7 +538,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Duration SetTicksInMillisecondForZero(int value)
     {
-        Ensure.IsInRange( value, -ChronoConstants.TicksPerMillisecond + 1, ChronoConstants.TicksPerMillisecond - 1, nameof( value ) );
+        Ensure.IsInRange( value, -ChronoConstants.TicksPerMillisecond + 1, ChronoConstants.TicksPerMillisecond - 1 );
         return AddTicks( value - TicksInMillisecond );
     }
 
@@ -546,7 +546,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Duration SetMillisecondsInSecondForPositive(int value)
     {
-        Ensure.IsInRange( value, 0, ChronoConstants.MillisecondsPerSecond - 1, nameof( value ) );
+        Ensure.IsInRange( value, 0, ChronoConstants.MillisecondsPerSecond - 1 );
         return AddMilliseconds( value - MillisecondsInSecond );
     }
 
@@ -554,7 +554,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Duration SetMillisecondsInSecondForNegative(int value)
     {
-        Ensure.IsInRange( value, -ChronoConstants.MillisecondsPerSecond + 1, 0, nameof( value ) );
+        Ensure.IsInRange( value, -ChronoConstants.MillisecondsPerSecond + 1, 0 );
         return AddMilliseconds( value - MillisecondsInSecond );
     }
 
@@ -562,12 +562,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Duration SetMillisecondsInSecondForZero(int value)
     {
-        Ensure.IsInRange(
-            value,
-            -ChronoConstants.MillisecondsPerSecond + 1,
-            ChronoConstants.MillisecondsPerSecond - 1,
-            nameof( value ) );
-
+        Ensure.IsInRange( value, -ChronoConstants.MillisecondsPerSecond + 1, ChronoConstants.MillisecondsPerSecond - 1 );
         return AddMilliseconds( value - MillisecondsInSecond );
     }
 
@@ -575,7 +570,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Duration SetSecondsInMinuteForPositive(int value)
     {
-        Ensure.IsInRange( value, 0, ChronoConstants.SecondsPerMinute - 1, nameof( value ) );
+        Ensure.IsInRange( value, 0, ChronoConstants.SecondsPerMinute - 1 );
         return AddSeconds( value - SecondsInMinute );
     }
 
@@ -583,7 +578,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Duration SetSecondsInMinuteForNegative(int value)
     {
-        Ensure.IsInRange( value, -ChronoConstants.SecondsPerMinute + 1, 0, nameof( value ) );
+        Ensure.IsInRange( value, -ChronoConstants.SecondsPerMinute + 1, 0 );
         return AddSeconds( value - SecondsInMinute );
     }
 
@@ -591,7 +586,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Duration SetSecondsInMinuteForZero(int value)
     {
-        Ensure.IsInRange( value, -ChronoConstants.SecondsPerMinute + 1, ChronoConstants.SecondsPerMinute - 1, nameof( value ) );
+        Ensure.IsInRange( value, -ChronoConstants.SecondsPerMinute + 1, ChronoConstants.SecondsPerMinute - 1 );
         return AddSeconds( value - SecondsInMinute );
     }
 
@@ -599,7 +594,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Duration SetMinutesInHourForPositive(int value)
     {
-        Ensure.IsInRange( value, 0, ChronoConstants.MinutesPerHour - 1, nameof( value ) );
+        Ensure.IsInRange( value, 0, ChronoConstants.MinutesPerHour - 1 );
         return AddMinutes( value - MinutesInHour );
     }
 
@@ -607,7 +602,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Duration SetMinutesInHourForNegative(int value)
     {
-        Ensure.IsInRange( value, -ChronoConstants.MinutesPerHour + 1, 0, nameof( value ) );
+        Ensure.IsInRange( value, -ChronoConstants.MinutesPerHour + 1, 0 );
         return AddMinutes( value - MinutesInHour );
     }
 
@@ -615,7 +610,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Duration SetMinutesInHourForZero(int value)
     {
-        Ensure.IsInRange( value, -ChronoConstants.MinutesPerHour + 1, ChronoConstants.MinutesPerHour - 1, nameof( value ) );
+        Ensure.IsInRange( value, -ChronoConstants.MinutesPerHour + 1, ChronoConstants.MinutesPerHour - 1 );
         return AddMinutes( value - MinutesInHour );
     }
 
@@ -623,7 +618,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Duration SetHoursForPositive(long value)
     {
-        Ensure.IsGreaterThanOrEqualTo( value, 0, nameof( value ) );
+        Ensure.IsGreaterThanOrEqualTo( value, 0 );
         return AddHours( value - FullHours );
     }
 
@@ -631,7 +626,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Duration SetHoursForNegative(long value)
     {
-        Ensure.IsLessThanOrEqualTo( value, 0, nameof( value ) );
+        Ensure.IsLessThanOrEqualTo( value, 0 );
         return AddHours( value - FullHours );
     }
 

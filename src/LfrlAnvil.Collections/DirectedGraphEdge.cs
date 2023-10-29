@@ -16,9 +16,9 @@ public sealed class DirectedGraphEdge<TKey, TNodeValue, TEdgeValue> : IDirectedG
         TEdgeValue value,
         GraphDirection direction)
     {
-        Assume.IsNotNull( source.Graph, nameof( source ) + '.' + nameof( source.Graph ) );
-        Assume.Equals( source.Graph, target.Graph, nameof( source ) + '.' + nameof( source.Graph ) );
-        Assume.IsInRange( direction, GraphDirection.In, GraphDirection.Both, nameof( direction ) );
+        Assume.IsNotNull( source.Graph );
+        Assume.Equals( source.Graph, target.Graph );
+        Assume.IsInRange( direction, GraphDirection.In, GraphDirection.Both );
         Source = source;
         Target = target;
         Value = value;

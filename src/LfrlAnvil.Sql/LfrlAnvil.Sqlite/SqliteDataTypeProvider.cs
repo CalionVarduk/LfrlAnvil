@@ -82,8 +82,8 @@ public sealed class SqliteDataTypeProvider : ISqlDataTypeProvider
     [Pure]
     public SqliteDataType GetDecimal(int precision, int scale)
     {
-        Ensure.IsGreaterThan( precision, 0, nameof( precision ) );
-        Ensure.IsInRange( scale, 0, precision, nameof( scale ) );
+        Ensure.IsGreaterThan( precision, 0 );
+        Ensure.IsInRange( scale, 0, precision );
         return SqliteDataType.Text;
     }
 
@@ -102,7 +102,7 @@ public sealed class SqliteDataTypeProvider : ISqlDataTypeProvider
     [Pure]
     public SqliteDataType GetString(int length)
     {
-        Ensure.IsGreaterThan( length, 0, nameof( length ) );
+        Ensure.IsGreaterThan( length, 0 );
         return SqliteDataType.Text;
     }
 
@@ -145,7 +145,7 @@ public sealed class SqliteDataTypeProvider : ISqlDataTypeProvider
     [Pure]
     public SqliteDataType GetBinary(int length)
     {
-        Ensure.IsGreaterThan( length, 0, nameof( length ) );
+        Ensure.IsGreaterThan( length, 0 );
         return SqliteDataType.Blob;
     }
 

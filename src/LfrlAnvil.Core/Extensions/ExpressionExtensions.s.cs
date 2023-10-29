@@ -15,12 +15,9 @@ public static class ExpressionExtensions
     {
         var body = source.Body;
 
-        Ensure.IsInstanceOfType<MemberExpression>( body, nameof( source.Body ) );
+        Ensure.IsInstanceOfType<MemberExpression>( body );
         var memberExpr = ReinterpretCast.To<MemberExpression>( body );
-
-        Ensure.True(
-            memberExpr.Expression == source.Parameters[0],
-            "Member expression's target must be the same as the expression's parameter." );
+        Ensure.True( memberExpr.Expression == source.Parameters[0] );
 
         return memberExpr.Member.Name;
     }

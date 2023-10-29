@@ -6,7 +6,7 @@ public sealed class MinLengthValidator<TResult> : IValidator<string, TResult>
 {
     public MinLengthValidator(int minLength, TResult failureResult)
     {
-        Ensure.IsGreaterThanOrEqualTo( minLength, 0, nameof( minLength ) );
+        Ensure.IsGreaterThanOrEqualTo( minLength, 0 );
         MinLength = minLength;
         FailureResult = failureResult;
     }

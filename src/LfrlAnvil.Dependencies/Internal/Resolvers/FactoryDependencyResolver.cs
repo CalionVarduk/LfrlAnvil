@@ -38,7 +38,7 @@ internal abstract class FactoryDependencyResolver : DependencyResolver
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     protected void ClearFactory()
     {
-        Assume.IsNotNull( Factory, nameof( Factory ) );
+        Assume.IsNotNull( Factory );
         Factory = null;
     }
 }

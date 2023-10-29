@@ -37,7 +37,7 @@ public sealed class EventListenerDebounceUntilDecorator<TEvent, TTargetEvent> : 
 
         public override void React(TEvent @event)
         {
-            Assume.IsNotNull( _target, nameof( _target ) );
+            Assume.IsNotNull( _target );
             _targetSubscriber?.Dispose();
             _targetSubscriber = new LazyDisposable<IEventSubscriber>();
             var targetListener = new TargetEventListener( this, @event );
@@ -57,7 +57,7 @@ public sealed class EventListenerDebounceUntilDecorator<TEvent, TTargetEvent> : 
         internal void OnTargetEvent(TEvent @event)
         {
             Next.React( @event );
-            Assume.IsNotNull( _targetSubscriber, nameof( _targetSubscriber ) );
+            Assume.IsNotNull( _targetSubscriber );
             _targetSubscriber.Dispose();
         }
 
@@ -87,14 +87,14 @@ public sealed class EventListenerDebounceUntilDecorator<TEvent, TTargetEvent> : 
 
         public override void React(TTargetEvent _)
         {
-            Assume.IsNotNull( _sourceListener, nameof( _sourceListener ) );
+            Assume.IsNotNull( _sourceListener );
             _sourceListener.OnTargetEvent( _sourceEvent! );
         }
 
         public override void OnDispose(DisposalSource source)
         {
             _sourceEvent = default;
-            Assume.IsNotNull( _sourceListener, nameof( _sourceListener ) );
+            Assume.IsNotNull( _sourceListener );
             _sourceListener.ClearTargetReferences();
 
             if ( source == DisposalSource.EventSource )

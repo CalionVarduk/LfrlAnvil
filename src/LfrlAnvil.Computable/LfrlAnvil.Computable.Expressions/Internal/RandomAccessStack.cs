@@ -34,25 +34,25 @@ internal sealed class RandomAccessStack<T> : IReadOnlyList<T>
 
     internal void Replace(T value)
     {
-        Assume.IsGreaterThan( Count, 0, nameof( Count ) );
+        Assume.IsGreaterThan( Count, 0 );
         _objects[Count - 1] = value;
     }
 
     [Pure]
     internal T Peek()
     {
-        Assume.IsGreaterThan( Count, 0, nameof( Count ) );
+        Assume.IsGreaterThan( Count, 0 );
         return _objects[Count - 1]!;
     }
 
     internal T Pop()
     {
-        Assume.IsGreaterThan( Count, 0, nameof( Count ) );
+        Assume.IsGreaterThan( Count, 0 );
 
         var index = Count-- - 1;
         var result = _objects[index];
         _objects[index] = default;
-        Assume.IsNotNull( result, nameof( result ) );
+        Assume.IsNotNull( result );
         return result;
     }
 
@@ -82,7 +82,7 @@ internal sealed class RandomAccessStack<T> : IReadOnlyList<T>
 
     internal void Pop(int count)
     {
-        Assume.IsInRange( count, 1, Count, nameof( count ) );
+        Assume.IsInRange( count, 1, Count );
 
         Count -= count;
         Array.Clear( _objects, Count, count );
@@ -90,8 +90,8 @@ internal sealed class RandomAccessStack<T> : IReadOnlyList<T>
 
     internal void PopInto(int count, T[] buffer, int startIndex)
     {
-        Assume.IsInRange( count, 0, Count, nameof( count ) );
-        Assume.IsLessThanOrEqualTo( startIndex + count, buffer.Length, nameof( startIndex ) + '+' + nameof( count ) );
+        Assume.IsInRange( count, 0, Count );
+        Assume.IsLessThanOrEqualTo( startIndex + count, buffer.Length );
 
         if ( count == 0 )
             return;

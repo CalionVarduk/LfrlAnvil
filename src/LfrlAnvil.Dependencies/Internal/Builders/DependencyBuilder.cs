@@ -31,7 +31,7 @@ internal sealed class DependencyBuilder : IDependencyBuilder
 
     public IDependencyBuilder SetLifetime(DependencyLifetime lifetime)
     {
-        Ensure.IsDefined( lifetime, nameof( lifetime ) );
+        Ensure.IsDefined( lifetime );
         Lifetime = lifetime;
         return this;
     }

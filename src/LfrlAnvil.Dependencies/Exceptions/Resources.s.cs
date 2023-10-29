@@ -304,7 +304,7 @@ internal static class Resources
         for ( var i = 0; i < path.Length; ++i )
         {
             var pathNode = path[i];
-            Assume.IsNotNull( pathNode.ReachedFrom, nameof( pathNode.ReachedFrom ) );
+            Assume.IsNotNull( pathNode.ReachedFrom );
 
             builder
                 .Append( "    " )

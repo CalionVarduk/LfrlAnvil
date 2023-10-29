@@ -5,6 +5,6 @@ public sealed class SqlMaxFunctionExpressionNode : SqlFunctionExpressionNode
     internal SqlMaxFunctionExpressionNode(SqlExpressionNode[] arguments)
         : base( SqlFunctionType.Max, arguments )
     {
-        Ensure.IsNotEmpty( arguments, nameof( arguments ) );
+        Ensure.IsNotEmpty( arguments );
     }
 }

@@ -16,7 +16,7 @@ public sealed class SqlCompoundQueryExpressionNode : SqlExtendableQueryExpressio
         SqlCompoundQueryComponentNode[] followingQueries)
         : base( SqlNodeType.CompoundQuery, Chain<SqlTraitNode>.Empty )
     {
-        Ensure.IsNotEmpty( followingQueries, nameof( followingQueries ) );
+        Ensure.IsNotEmpty( followingQueries );
         FirstQuery = firstQuery;
         FollowingQueries = followingQueries;
         _selection = null;
@@ -84,7 +84,7 @@ public sealed class SqlCompoundQueryExpressionNode : SqlExtendableQueryExpressio
 
         public void Handle(string name, SqlExpressionNode? expression)
         {
-            Assume.IsNotNull( Selection, nameof( Selection ) );
+            Assume.IsNotNull( Selection );
 
             ref var origins = ref CollectionsMarshal.GetValueRefOrAddDefault( _origins, name, out var exists )!;
             if ( ! exists )

@@ -118,7 +118,7 @@ internal static class ExpressionHelpers
 
         var @delegate = DynamicCast.To<Delegate>( operand.Value );
         var method = @delegate.GetType().GetMethod( nameof( Action.Invoke ) );
-        Assume.IsNotNull( method, nameof( method ) );
+        Assume.IsNotNull( method );
         var @params = parameters.GetConstantValues();
         return Expression.Constant( @delegate.DynamicInvoke( @params ), method.ReturnType );
     }
@@ -168,8 +168,8 @@ internal static class ExpressionHelpers
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static Expression[] Slice(this IReadOnlyList<Expression> expressions, int startIndex, int length)
     {
-        Assume.IsInRange( startIndex, 0, expressions.Count, nameof( startIndex ) );
-        Assume.IsInRange( length, 0, expressions.Count - startIndex, nameof( length ) );
+        Assume.IsInRange( startIndex, 0, expressions.Count );
+        Assume.IsInRange( length, 0, expressions.Count - startIndex );
 
         if ( length == 0 )
             return Array.Empty<Expression>();

@@ -17,6 +17,6 @@ public class EventPublisher<TEvent> : EventSource<TEvent>, IEventPublisher<TEven
 
     void IEventPublisher.Publish(object? @event)
     {
-        Publish( Argument.CastTo<TEvent>( @event, nameof( @event ) ) );
+        Publish( Argument.CastTo<TEvent>( @event ) );
     }
 }

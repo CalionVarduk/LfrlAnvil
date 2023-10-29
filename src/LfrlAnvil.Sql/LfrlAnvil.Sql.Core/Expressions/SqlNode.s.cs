@@ -596,7 +596,7 @@ public static partial class SqlNode
     [Pure]
     public static SqlCompoundQueryComponentNode CompoundWith(SqlCompoundQueryOperator @operator, SqlQueryExpressionNode query)
     {
-        Ensure.IsDefined( @operator, nameof( @operator ) );
+        Ensure.IsDefined( @operator );
         return new SqlCompoundQueryComponentNode( query, @operator );
     }
 

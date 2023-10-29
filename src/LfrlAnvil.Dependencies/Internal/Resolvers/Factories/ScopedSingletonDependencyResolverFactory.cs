@@ -15,7 +15,7 @@ internal sealed class ScopedSingletonDependencyResolverFactory : RegisteredDepen
         Expression<Func<DependencyScope, object>> expression,
         UlongSequenceGenerator idGenerator)
     {
-        Assume.IsNotNull( ImplementorBuilder, nameof( ImplementorBuilder ) );
+        Assume.IsNotNull( ImplementorBuilder );
 
         return new ScopedSingletonDependencyResolver(
             idGenerator.Generate(),
@@ -27,8 +27,8 @@ internal sealed class ScopedSingletonDependencyResolverFactory : RegisteredDepen
 
     protected override DependencyResolver CreateFromFactory(UlongSequenceGenerator idGenerator)
     {
-        Assume.IsNotNull( ImplementorBuilder, nameof( ImplementorBuilder ) );
-        Assume.IsNotNull( ImplementorBuilder.Factory, nameof( ImplementorBuilder.Factory ) );
+        Assume.IsNotNull( ImplementorBuilder );
+        Assume.IsNotNull( ImplementorBuilder.Factory );
 
         return new ScopedSingletonDependencyResolver(
             idGenerator.Generate(),

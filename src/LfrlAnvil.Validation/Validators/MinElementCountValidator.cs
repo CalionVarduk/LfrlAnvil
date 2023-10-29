@@ -7,7 +7,7 @@ public sealed class MinElementCountValidator<T, TResult> : IValidator<IReadOnlyC
 {
     public MinElementCountValidator(int minCount, TResult failureResult)
     {
-        Ensure.IsGreaterThanOrEqualTo( minCount, 0, nameof( minCount ) );
+        Ensure.IsGreaterThanOrEqualTo( minCount, 0 );
         MinCount = minCount;
         FailureResult = failureResult;
     }

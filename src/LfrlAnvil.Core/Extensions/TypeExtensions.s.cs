@@ -165,7 +165,7 @@ public static class TypeExtensions
 
     internal static StringBuilder AppendGenericArgumentsString(StringBuilder builder, Type[] openGenericArgs, Type[] closedGenericArgs)
     {
-        Assume.IsNotEmpty( openGenericArgs, nameof( openGenericArgs ) );
+        Assume.IsNotEmpty( openGenericArgs );
 
         builder.Append( '[' );
         if ( closedGenericArgs.Length == 0 )
@@ -175,7 +175,7 @@ public static class TypeExtensions
         }
         else
         {
-            Assume.ContainsExactly( closedGenericArgs, openGenericArgs.Length, nameof( closedGenericArgs ) );
+            Assume.ContainsExactly( closedGenericArgs, openGenericArgs.Length );
 
             for ( var i = 0; i < openGenericArgs.Length; ++i )
             {
@@ -191,7 +191,7 @@ public static class TypeExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static StringBuilder AppendOpenGenericArgumentString(StringBuilder builder, Type type)
     {
-        Assume.Equals( type.IsGenericParameter, true, nameof( type.IsGenericParameter ) );
+        Assume.Equals( type.IsGenericParameter, true );
         AppendDebugString( builder, type );
 
         if ( (type.GenericParameterAttributes & GenericParameterAttributes.Contravariant) != GenericParameterAttributes.None )

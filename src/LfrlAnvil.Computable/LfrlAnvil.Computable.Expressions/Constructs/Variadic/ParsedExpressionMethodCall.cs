@@ -24,7 +24,7 @@ public sealed class ParsedExpressionMethodCall : ParsedExpressionVariadicFunctio
     [Pure]
     protected internal override Expression Process(IReadOnlyList<Expression> parameters)
     {
-        Ensure.ContainsAtLeast( parameters, 2, nameof( parameters ) );
+        Ensure.ContainsAtLeast( parameters, 2 );
 
         var target = parameters[0];
         var methodName = parameters[1].GetConstantMemberNameValue();

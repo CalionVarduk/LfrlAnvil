@@ -36,9 +36,9 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
     public ReactiveTimer(ITimestampProvider timestampProvider, Duration interval, Duration spinWaitDurationHint, long count)
         : base( new EventPublisher<WithInterval<long>>() )
     {
-        Ensure.IsGreaterThan( count, 0, nameof( count ) );
-        Ensure.IsInRange( interval, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ), nameof( interval ) );
-        Ensure.IsGreaterThanOrEqualTo( spinWaitDurationHint, Duration.Zero, nameof( spinWaitDurationHint ) );
+        Ensure.IsGreaterThan( count, 0 );
+        Ensure.IsInRange( interval, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ) );
+        Ensure.IsGreaterThanOrEqualTo( spinWaitDurationHint, Duration.Zero );
 
         Interval = interval;
         Count = count;
@@ -67,7 +67,7 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
     public bool Start(Duration delay)
     {
         EnsureNotDisposed();
-        Ensure.IsInRange( delay, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ), nameof( delay ) );
+        Ensure.IsInRange( delay, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ) );
         return StartInternal( delay ) is not null;
     }
 
@@ -87,14 +87,14 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
     public Task? StartAsync(Duration delay)
     {
         EnsureNotDisposed();
-        Ensure.IsInRange( delay, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ), nameof( delay ) );
+        Ensure.IsInRange( delay, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ) );
         return StartInternal( delay, Task.Factory );
     }
 
     public Task? StartAsync(TaskScheduler scheduler, Duration delay)
     {
         EnsureNotDisposed();
-        Ensure.IsInRange( delay, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ), nameof( delay ) );
+        Ensure.IsInRange( delay, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ) );
 
         var taskFactory = new TaskFactory( scheduler );
         return StartInternal( delay, taskFactory );

@@ -298,7 +298,7 @@ public static class EnumerableExtensions
         if ( count == 1 )
             return source;
 
-        Ensure.IsGreaterThanOrEqualTo( count, 0, nameof( count ) );
+        Ensure.IsGreaterThanOrEqualTo( count, 0 );
 
         var memoizedSource = source.Memoize();
 
@@ -789,8 +789,8 @@ public static class EnumerableExtensions
     [Pure]
     private static IEnumerable<T> SliceIterator<T>(IEnumerable<T> source, int startIndex, int length)
     {
-        Assume.IsGreaterThanOrEqualTo( startIndex, 0, nameof( startIndex ) );
-        Assume.IsGreaterThanOrEqualTo( length, 1, nameof( length ) );
+        Assume.IsGreaterThanOrEqualTo( startIndex, 0 );
+        Assume.IsGreaterThanOrEqualTo( length, 1 );
 
         using var enumerator = source.GetEnumerator();
 

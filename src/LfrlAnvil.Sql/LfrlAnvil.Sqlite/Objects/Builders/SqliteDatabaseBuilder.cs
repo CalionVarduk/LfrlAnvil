@@ -100,7 +100,7 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
         foreach ( var obj in foreignKeys )
         {
             var fk = ReinterpretCast.To<SqliteForeignKeyBuilder>( obj );
-            Assume.Equals( table, fk.ReferencedIndex.Table, nameof( table ) );
+            Assume.Equals( table, fk.ReferencedIndex.Table );
             if ( ! fk.IsSelfReference() )
                 fk.Remove();
         }
@@ -111,7 +111,7 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
         SqliteObjectBuilder? objectWithOngoingChanges = null,
         SqliteTableBuilder? sourceTable = null)
     {
-        Assume.IsGreaterThan( foreignKeys.Length, 0, nameof( foreignKeys.Length ) );
+        Assume.IsGreaterThan( foreignKeys.Length, 0 );
 
         if ( objectWithOngoingChanges is not null && ! ReferenceEquals( objectWithOngoingChanges, sourceTable ) )
         {

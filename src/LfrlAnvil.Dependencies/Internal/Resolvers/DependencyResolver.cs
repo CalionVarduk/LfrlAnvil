@@ -65,7 +65,7 @@ internal abstract class DependencyResolver
             }
             case DependencyImplementorDisposalStrategyType.UseCallback:
             {
-                Assume.IsNotNull( DisposalStrategy.Callback, nameof( DisposalStrategy.Callback ) );
+                Assume.IsNotNull( DisposalStrategy.Callback );
                 scope.InternalDisposers.Add( new DependencyDisposer( instance, DisposalStrategy.Callback ) );
                 break;
             }

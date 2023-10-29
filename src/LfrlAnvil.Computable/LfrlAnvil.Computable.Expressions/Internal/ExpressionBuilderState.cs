@@ -9,7 +9,6 @@ using System.Text;
 using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Computable.Expressions.Errors;
 using LfrlAnvil.Computable.Expressions.Internal.Delegates;
-using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
 
@@ -115,7 +114,7 @@ internal class ExpressionBuilderState
 
     internal Chain<ParsedExpressionBuilderError> TryHandleExpressionEndAsInlineDelegate()
     {
-        Assume.Equals( IsRoot, false, nameof( IsRoot ) );
+        Assume.Equals( IsRoot, false );
 
         var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
         return self.ParentState.Expects( Expectation.InlineDelegateResolution ) && ! IsHandlingInlineDelegateParameters()
@@ -169,7 +168,7 @@ internal class ExpressionBuilderState
 
     protected UnsafeBuilderResult<Expression> ConvertResultToOutputType(Type outputType)
     {
-        Assume.ContainsExactly( _operandStack, 1, nameof( _operandStack ) );
+        Assume.ContainsExactly( _operandStack, 1 );
         var rawBody = _operandStack.Pop();
 
         if ( rawBody.Type == outputType )
@@ -326,7 +325,7 @@ internal class ExpressionBuilderState
     private Chain<ParsedExpressionBuilderError> HandleDelegateParameterName(IntermediateToken token)
     {
         AssumeTokenType( token, IntermediateTokenType.Argument );
-        Assume.IsNotNull( _delegateCollectionState, nameof( _delegateCollectionState ) );
+        Assume.IsNotNull( _delegateCollectionState );
 
         var parameterName = token.Symbol;
         var errors = Chain<ParsedExpressionBuilderError>.Empty;
@@ -340,11 +339,9 @@ internal class ExpressionBuilderState
         if ( errors.Count > 0 )
             return errors;
 
-        Assume.IsNotNull( LastHandledToken, nameof( LastHandledToken ) );
-        Assume.IsNotNull( LastHandledToken.Value.Constructs, nameof( LastHandledToken.Value.Constructs ) );
-        Assume.IsNotNull(
-            LastHandledToken.Value.Constructs.TypeDeclaration,
-            nameof( LastHandledToken.Value.Constructs.TypeDeclaration ) );
+        Assume.IsNotNull( LastHandledToken );
+        Assume.IsNotNull( LastHandledToken.Value.Constructs );
+        Assume.IsNotNull( LastHandledToken.Value.Constructs.TypeDeclaration );
 
         var parameterType = LastHandledToken.Value.Constructs.TypeDeclaration;
 
@@ -381,7 +378,7 @@ internal class ExpressionBuilderState
     {
         AssumeTokenType( token, IntermediateTokenType.Argument );
         AssumeStateExpectation( Expectation.MemberName );
-        Assume.IsNotEmpty( _operandStack, nameof( _operandStack ) );
+        Assume.IsNotEmpty( _operandStack );
 
         var operand = _operandStack[0];
         var handleAsMethod = Configuration.TypeContainsMethod( operand.Type, token.Symbol );
@@ -438,7 +435,7 @@ internal class ExpressionBuilderState
     private Chain<ParsedExpressionBuilderError> HandleConstructs(IntermediateToken token)
     {
         AssumeTokenType( token, IntermediateTokenType.Constructs );
-        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
+        Assume.IsNotNull( token.Constructs );
 
         var result = token.Constructs.Type switch
         {
@@ -455,7 +452,7 @@ internal class ExpressionBuilderState
     private Chain<ParsedExpressionBuilderError> HandleOperatorOrTypeConverter(IntermediateToken token)
     {
         AssumeTokenType( token, IntermediateTokenType.Constructs );
-        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
+        Assume.IsNotNull( token.Constructs );
 
         if ( Expects( Expectation.AmbiguousPrefixConstructResolution ) )
         {
@@ -522,7 +519,7 @@ internal class ExpressionBuilderState
     private Chain<ParsedExpressionBuilderError> HandleFunction(IntermediateToken token)
     {
         AssumeTokenType( token, IntermediateTokenType.Constructs );
-        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
+        Assume.IsNotNull( token.Constructs );
 
         var errors = HandleAmbiguousConstructAsBinaryOperator();
 
@@ -545,8 +542,8 @@ internal class ExpressionBuilderState
     private Chain<ParsedExpressionBuilderError> HandleConstant(IntermediateToken token)
     {
         AssumeTokenType( token, IntermediateTokenType.Constructs );
-        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
-        Assume.IsNotNull( token.Constructs.Constant, nameof( token.Constructs.Constant ) );
+        Assume.IsNotNull( token.Constructs );
+        Assume.IsNotNull( token.Constructs.Constant );
 
         var errors = HandleAmbiguousConstructAsBinaryOperator();
 
@@ -568,8 +565,8 @@ internal class ExpressionBuilderState
     private Chain<ParsedExpressionBuilderError> HandleTypeDeclaration(IntermediateToken token)
     {
         AssumeTokenType( token, IntermediateTokenType.Constructs );
-        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
-        Assume.IsNotNull( token.Constructs.TypeDeclaration, nameof( token.Constructs.TypeDeclaration ) );
+        Assume.IsNotNull( token.Constructs );
+        Assume.IsNotNull( token.Constructs.TypeDeclaration );
 
         if ( IsHandlingInlineDelegateParameters() )
             return HandleDelegateParameterType( token );
@@ -596,9 +593,9 @@ internal class ExpressionBuilderState
 
     private Chain<ParsedExpressionBuilderError> HandleDelegateParameterType(IntermediateToken token)
     {
-        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
-        Assume.IsNotNull( token.Constructs.TypeDeclaration, nameof( token.Constructs.TypeDeclaration ) );
-        Assume.IsNotNull( _delegateCollectionState, nameof( _delegateCollectionState ) );
+        Assume.IsNotNull( token.Constructs );
+        Assume.IsNotNull( token.Constructs.TypeDeclaration );
+        Assume.IsNotNull( _delegateCollectionState );
 
         if ( ! Expects( Expectation.ParameterType ) )
             return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedTypeDeclaration( token ) );
@@ -637,7 +634,7 @@ internal class ExpressionBuilderState
             return Chain<ParsedExpressionBuilderError>.Empty;
         }
 
-        Assume.Equals( IsRoot, false, nameof( IsRoot ) );
+        Assume.Equals( IsRoot, false );
 
         var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
         self.ParentState._expectation &= ~Expectation.ArrayResolution;
@@ -668,13 +665,13 @@ internal class ExpressionBuilderState
                 : Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedClosedParenthesis( token ) );
         }
 
-        Assume.IsNotEmpty( _tokenStack, nameof( _tokenStack ) );
+        Assume.IsNotEmpty( _tokenStack );
         var data = _tokenStack.Peek();
 
         while ( data.Expectation != Expectation.OpenedParenthesis )
         {
             AssumeExpectation( data.Expectation, Expectation.BinaryOperator | Expectation.PrefixUnaryConstruct );
-            Assume.IsNotNull( data.Token.Constructs, nameof( data.Token.Constructs ) );
+            Assume.IsNotNull( data.Token.Constructs );
 
             _tokenStack.Pop();
 
@@ -685,7 +682,7 @@ internal class ExpressionBuilderState
             if ( errors.Count > 0 )
                 return errors;
 
-            Assume.IsNotEmpty( _tokenStack, nameof( _tokenStack ) );
+            Assume.IsNotEmpty( _tokenStack );
             data = _tokenStack.Peek();
         }
 
@@ -707,7 +704,7 @@ internal class ExpressionBuilderState
 
         if ( Expects( Expectation.ArrayElementsStart ) )
         {
-            Assume.Equals( IsRoot, false, nameof( IsRoot ) );
+            Assume.Equals( IsRoot, false );
             var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
             self.ParentState._expectation &= ~Expectation.ConstructorResolution;
             _expectation = Expectation.Operand | Expectation.OpenedParenthesis | Expectation.PrefixUnaryConstruct;
@@ -775,7 +772,7 @@ internal class ExpressionBuilderState
 
     private Chain<ParsedExpressionBuilderError> HandleInlineDelegateParametersEnd(IntermediateToken token)
     {
-        Assume.IsNotNull( _delegateCollectionState, nameof( _delegateCollectionState ) );
+        Assume.IsNotNull( _delegateCollectionState );
         AssumeTokenType( token, IntermediateTokenType.ClosedSquareBracket );
 
         if ( ! Expects( Expectation.InlineParametersResolution ) )
@@ -788,8 +785,8 @@ internal class ExpressionBuilderState
 
     private Chain<ParsedExpressionBuilderError> HandleInlineDelegateBodyEnd(IntermediateToken? token)
     {
-        Assume.Equals( IsRoot, false, nameof( IsRoot ) );
-        Assume.IsNotNull( _delegateCollectionState, nameof( _delegateCollectionState ) );
+        Assume.Equals( IsRoot, false );
+        Assume.IsNotNull( _delegateCollectionState );
 
         var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
         var errors = HandleExpressionEnd( self.ParentState.LastHandledToken );
@@ -816,7 +813,7 @@ internal class ExpressionBuilderState
 
     private Chain<ParsedExpressionBuilderError> HandleCallParametersOrInlineDelegateBodyEnd(IntermediateToken token)
     {
-        Assume.Equals( IsRoot, false, nameof( IsRoot ) );
+        Assume.Equals( IsRoot, false );
         AssumeTokenType( token, IntermediateTokenType.ClosedParenthesis );
 
         var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
@@ -831,7 +828,7 @@ internal class ExpressionBuilderState
         if ( self.ParentState.Expects( Expectation.InlineDelegateResolution ) )
             return HandleInlineDelegateBodyEnd( token );
 
-        Assume.IsNotNull( LastHandledToken, nameof( LastHandledToken ) );
+        Assume.IsNotNull( LastHandledToken );
 
         var containsOneMoreElement = _tokenStack.Count > 0 ||
             _operandStack.Count > 0 ||
@@ -861,9 +858,9 @@ internal class ExpressionBuilderState
 
     private Chain<ParsedExpressionBuilderError> HandleFunctionResolution(IntermediateToken token, int parameterCount)
     {
-        Assume.IsGreaterThanOrEqualTo( parameterCount, 0, nameof( parameterCount ) );
-        Assume.IsNotNull( LastHandledToken, nameof( LastHandledToken ) );
-        Assume.IsNotNull( LastHandledToken.Value.Constructs, nameof( LastHandledToken.Value.Constructs ) );
+        Assume.IsGreaterThanOrEqualTo( parameterCount, 0 );
+        Assume.IsNotNull( LastHandledToken );
+        Assume.IsNotNull( LastHandledToken.Value.Constructs );
         AssumeConstructsType(
             LastHandledToken.Value.Constructs,
             ParsedExpressionConstructType.Function | ParsedExpressionConstructType.VariadicFunction );
@@ -885,8 +882,8 @@ internal class ExpressionBuilderState
 
     private Chain<ParsedExpressionBuilderError> HandleMethodResolution(IntermediateToken token, int parameterCount)
     {
-        Assume.IsGreaterThanOrEqualTo( parameterCount, 0, nameof( parameterCount ) );
-        Assume.IsNotNull( LastHandledToken, nameof( LastHandledToken ) );
+        Assume.IsGreaterThanOrEqualTo( parameterCount, 0 );
+        Assume.IsNotNull( LastHandledToken );
 
         AssumeStateExpectation( Expectation.MethodResolution );
         AddAssumedExpectation( Expectation.Operand );
@@ -897,7 +894,7 @@ internal class ExpressionBuilderState
 
         var parameters = new Expression[parameterCount + 2];
         _operandStack.PopInto( parameterCount, parameters, startIndex: 2 );
-        Assume.IsNotEmpty( _operandStack, nameof( _operandStack ) );
+        Assume.IsNotEmpty( _operandStack );
 
         --_operandCount;
         parameters[0] = _operandStack.Pop();
@@ -909,9 +906,9 @@ internal class ExpressionBuilderState
 
     private Chain<ParsedExpressionBuilderError> HandleConstructorResolution(IntermediateToken token, int parameterCount)
     {
-        Assume.IsGreaterThanOrEqualTo( parameterCount, 0, nameof( parameterCount ) );
-        Assume.IsNotNull( LastHandledToken, nameof( LastHandledToken ) );
-        Assume.IsNotNull( LastHandledToken.Value.Constructs, nameof( LastHandledToken.Value.Constructs ) );
+        Assume.IsGreaterThanOrEqualTo( parameterCount, 0 );
+        Assume.IsNotNull( LastHandledToken );
+        Assume.IsNotNull( LastHandledToken.Value.Constructs );
         AssumeConstructsType( LastHandledToken.Value.Constructs, ParsedExpressionConstructType.TypeDeclaration );
         AssumeStateExpectation( Expectation.ConstructorResolution );
         AddAssumedExpectation( Expectation.Operand );
@@ -930,8 +927,8 @@ internal class ExpressionBuilderState
 
     private Chain<ParsedExpressionBuilderError> HandleInvocationResolution(IntermediateToken token, int parameterCount)
     {
-        Assume.IsGreaterThanOrEqualTo( parameterCount, 0, nameof( parameterCount ) );
-        Assume.IsNotEmpty( _tokenStack, nameof( _tokenStack ) );
+        Assume.IsGreaterThanOrEqualTo( parameterCount, 0 );
+        Assume.IsNotEmpty( _tokenStack );
         AssumeStateExpectation( Expectation.InvocationResolution );
         AddAssumedExpectation( Expectation.Operand );
 
@@ -943,7 +940,7 @@ internal class ExpressionBuilderState
 
         var parameters = new Expression[parameterCount + 1];
         _operandStack.PopInto( parameterCount, parameters, startIndex: 1 );
-        Assume.IsNotEmpty( _operandStack, nameof( _operandStack ) );
+        Assume.IsNotEmpty( _operandStack );
 
         --_operandCount;
         parameters[0] = _operandStack.Pop();
@@ -977,9 +974,9 @@ internal class ExpressionBuilderState
 
     private Chain<ParsedExpressionBuilderError> HandleVariableResolution(IntermediateToken token, Expression expression)
     {
-        Assume.Equals( IsRoot, true, nameof( IsRoot ) );
+        Assume.Equals( IsRoot, true );
         AssumeStateExpectation( Expectation.VariableResolution );
-        Assume.IsNotNull( LastHandledToken, nameof( LastHandledToken ) );
+        Assume.IsNotNull( LastHandledToken );
 
         LastHandledToken = token;
         _rootState.ActiveState = this;
@@ -1000,11 +997,11 @@ internal class ExpressionBuilderState
 
     private Chain<ParsedExpressionBuilderError> HandleMacroResolution(IntermediateToken token)
     {
-        Assume.Equals( IsRoot, true, nameof( IsRoot ) );
+        Assume.Equals( IsRoot, true );
         AssumeStateExpectation( Expectation.MacroResolution );
-        Assume.IsNotNull( LastHandledToken, nameof( LastHandledToken ) );
-        Assume.IsEmpty( _operandStack, nameof( _operandStack ) );
-        Assume.IsEmpty( _tokenStack, nameof( _tokenStack ) );
+        Assume.IsNotNull( LastHandledToken );
+        Assume.IsEmpty( _operandStack );
+        Assume.IsEmpty( _tokenStack );
 
         LastHandledToken = token;
         _rootState.ActiveState = this;
@@ -1024,17 +1021,17 @@ internal class ExpressionBuilderState
     private Chain<ParsedExpressionBuilderError> HandleMacroParametersResolution(IntermediateToken token, int parameterCount)
     {
         AssumeStateExpectation( Expectation.MacroParametersResolution );
-        Assume.IsNotNull( LastHandledToken, nameof( LastHandledToken ) );
-        Assume.IsGreaterThanOrEqualTo( parameterCount, 0, nameof( parameterCount ) );
-        Assume.ContainsAtLeast( _operandStack, parameterCount, nameof( _operandStack ) );
-        Assume.IsNotEmpty( _tokenStack, nameof( _tokenStack ) );
+        Assume.IsNotNull( LastHandledToken );
+        Assume.IsGreaterThanOrEqualTo( parameterCount, 0 );
+        Assume.ContainsAtLeast( _operandStack, parameterCount );
+        Assume.IsNotEmpty( _tokenStack );
 
         var macroName = LastHandledToken.Value;
         LastHandledToken = token;
         _rootState.ActiveState = this;
 
         LocalTerms.TryGetMacro( macroName.Symbol, out var declaration );
-        Assume.IsNotNull( declaration, nameof( declaration ) );
+        Assume.IsNotNull( declaration );
 
         if ( declaration.ParameterCount != parameterCount )
         {
@@ -1050,9 +1047,9 @@ internal class ExpressionBuilderState
         for ( var i = parameters.Length - 1; i >= 0; --i )
         {
             var expression = _operandStack.Pop();
-            Assume.Equals( expression.NodeType, ExpressionType.Constant, nameof( expression.NodeType ) );
+            Assume.Equals( expression.NodeType, ExpressionType.Constant );
             var constant = ReinterpretCast.To<ConstantExpression>( expression );
-            Assume.IsNotNull( constant.Value, nameof( constant.Value ) );
+            Assume.IsNotNull( constant.Value );
             parameters[i] = DynamicCast.To<IntermediateToken[]>( constant.Value );
         }
 
@@ -1062,7 +1059,7 @@ internal class ExpressionBuilderState
 
     private Chain<ParsedExpressionBuilderError> HandleArrayElementsOrIndexerParametersOrInlineDelegateBodyEnd(IntermediateToken token)
     {
-        Assume.Equals( IsRoot, false, nameof( IsRoot ) );
+        Assume.Equals( IsRoot, false );
         AssumeTokenType( token, IntermediateTokenType.ClosedSquareBracket );
 
         var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
@@ -1073,7 +1070,7 @@ internal class ExpressionBuilderState
         if ( self.ParentState.Expects( Expectation.InlineDelegateResolution ) )
             return HandleInlineDelegateBodyEnd( token );
 
-        Assume.IsNotNull( LastHandledToken, nameof( LastHandledToken ) );
+        Assume.IsNotNull( LastHandledToken );
 
         var containsOneMoreElement = _tokenStack.Count > 0 ||
             _operandStack.Count > 0 ||
@@ -1096,9 +1093,9 @@ internal class ExpressionBuilderState
 
     private Chain<ParsedExpressionBuilderError> HandleArrayResolution(IntermediateToken token, int elementCount)
     {
-        Assume.IsGreaterThanOrEqualTo( elementCount, 0, nameof( elementCount ) );
-        Assume.IsNotNull( LastHandledToken, nameof( LastHandledToken ) );
-        Assume.IsNotNull( LastHandledToken.Value.Constructs, nameof( LastHandledToken.Value.Constructs ) );
+        Assume.IsGreaterThanOrEqualTo( elementCount, 0 );
+        Assume.IsNotNull( LastHandledToken );
+        Assume.IsNotNull( LastHandledToken.Value.Constructs );
         AssumeConstructsType( LastHandledToken.Value.Constructs, ParsedExpressionConstructType.TypeDeclaration );
         AssumeStateExpectation( Expectation.ArrayResolution );
         AddAssumedExpectation( Expectation.Operand );
@@ -1117,8 +1114,8 @@ internal class ExpressionBuilderState
 
     private Chain<ParsedExpressionBuilderError> HandleIndexerResolution(IntermediateToken token, int parameterCount)
     {
-        Assume.IsGreaterThanOrEqualTo( parameterCount, 0, nameof( parameterCount ) );
-        Assume.IsNotNull( LastHandledToken, nameof( LastHandledToken ) );
+        Assume.IsGreaterThanOrEqualTo( parameterCount, 0 );
+        Assume.IsNotNull( LastHandledToken );
         AssumeStateExpectation( Expectation.IndexerResolution );
         AddAssumedExpectation( Expectation.Operand );
 
@@ -1128,7 +1125,7 @@ internal class ExpressionBuilderState
 
         var parameters = new Expression[parameterCount + 1];
         _operandStack.PopInto( parameterCount, parameters, startIndex: 1 );
-        Assume.IsNotEmpty( _operandStack, nameof( _operandStack ) );
+        Assume.IsNotEmpty( _operandStack );
 
         --_operandCount;
         parameters[0] = _operandStack.Pop();
@@ -1211,7 +1208,7 @@ internal class ExpressionBuilderState
     private Chain<ParsedExpressionBuilderError> HandleInlineDelegateParameterSeparator(IntermediateToken token)
     {
         AssumeTokenType( token, IntermediateTokenType.ElementSeparator );
-        Assume.IsNotNull( _delegateCollectionState, nameof( _delegateCollectionState ) );
+        Assume.IsNotNull( _delegateCollectionState );
 
         if ( ! Expects( Expectation.InlineParameterSeparator ) )
             return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedElementSeparator( token ) );
@@ -1290,7 +1287,7 @@ internal class ExpressionBuilderState
 
         if ( Expects( Expectation.Assignment ) )
         {
-            Assume.Equals( IsRoot, false, nameof( IsRoot ) );
+            Assume.Equals( IsRoot, false );
 
             var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
             _expectation = self.ParentState.Expects( Expectation.VariableResolution )
@@ -1313,7 +1310,7 @@ internal class ExpressionBuilderState
 
     private Chain<ParsedExpressionBuilderError> HandleMacroToken(IntermediateToken token)
     {
-        Assume.Equals( IsRoot, false, nameof( IsRoot ) );
+        Assume.Equals( IsRoot, false );
         AssumeStateExpectation( Expectation.MacroEnd );
 
         var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
@@ -1353,7 +1350,7 @@ internal class ExpressionBuilderState
             return PushMacroParametersToken( token );
         }
 
-        Assume.IsNotNull( LastHandledToken, nameof( LastHandledToken ) );
+        Assume.IsNotNull( LastHandledToken );
 
         var containsOneMoreElement = _tokenStack.Count > 0 ||
             LastHandledToken.Value.Type == IntermediateTokenType.ElementSeparator;
@@ -1398,7 +1395,7 @@ internal class ExpressionBuilderState
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Chain<ParsedExpressionBuilderError> ProcessPrefixUnaryConstruct(IntermediateToken token)
     {
-        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
+        Assume.IsNotNull( token.Constructs );
         AssumeConstructsType( token.Constructs, ParsedExpressionConstructType.PrefixUnaryConstruct );
 
         return token.Constructs.IsAny( ParsedExpressionConstructType.Operator )
@@ -1409,8 +1406,8 @@ internal class ExpressionBuilderState
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Chain<ParsedExpressionBuilderError> ProcessPrefixUnaryOperator(IntermediateToken token)
     {
-        Assume.IsNotEmpty( _operandStack, nameof( _operandStack ) );
-        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
+        Assume.IsNotEmpty( _operandStack );
+        Assume.IsNotNull( token.Constructs );
         AssumeConstructsType( token.Constructs, ParsedExpressionConstructType.PrefixUnaryOperator );
 
         var argumentType = _operandStack[0].Type;
@@ -1424,8 +1421,8 @@ internal class ExpressionBuilderState
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Chain<ParsedExpressionBuilderError> ProcessPrefixTypeConverter(IntermediateToken token)
     {
-        Assume.IsNotEmpty( _operandStack, nameof( _operandStack ) );
-        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
+        Assume.IsNotEmpty( _operandStack );
+        Assume.IsNotNull( token.Constructs );
         AssumeConstructsType( token.Constructs, ParsedExpressionConstructType.PrefixTypeConverter );
 
         var sourceType = _operandStack[0].Type;
@@ -1439,7 +1436,7 @@ internal class ExpressionBuilderState
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Chain<ParsedExpressionBuilderError> ProcessPostfixUnaryConstruct(IntermediateToken token)
     {
-        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
+        Assume.IsNotNull( token.Constructs );
         AssumeConstructsType( token.Constructs, ParsedExpressionConstructType.PostfixUnaryConstruct );
 
         return token.Constructs.IsAny( ParsedExpressionConstructType.Operator )
@@ -1450,8 +1447,8 @@ internal class ExpressionBuilderState
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Chain<ParsedExpressionBuilderError> ProcessPostfixUnaryOperator(IntermediateToken token)
     {
-        Assume.IsNotEmpty( _operandStack, nameof( _operandStack ) );
-        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
+        Assume.IsNotEmpty( _operandStack );
+        Assume.IsNotNull( token.Constructs );
         AssumeConstructsType( token.Constructs, ParsedExpressionConstructType.PostfixUnaryOperator );
 
         var argumentType = _operandStack[0].Type;
@@ -1465,8 +1462,8 @@ internal class ExpressionBuilderState
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Chain<ParsedExpressionBuilderError> ProcessPostfixTypeConverter(IntermediateToken token)
     {
-        Assume.IsNotEmpty( _operandStack, nameof( _operandStack ) );
-        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
+        Assume.IsNotEmpty( _operandStack );
+        Assume.IsNotNull( token.Constructs );
         AssumeConstructsType( token.Constructs, ParsedExpressionConstructType.PostfixTypeConverter );
 
         var sourceType = _operandStack[0].Type;
@@ -1480,8 +1477,8 @@ internal class ExpressionBuilderState
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Chain<ParsedExpressionBuilderError> ProcessBinaryOperator(IntermediateToken token)
     {
-        Assume.ContainsAtLeast( _operandStack, 2, nameof( _operandStack ) );
-        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
+        Assume.ContainsAtLeast( _operandStack, 2 );
+        Assume.IsNotNull( token.Constructs );
         AssumeConstructsType( token.Constructs, ParsedExpressionConstructType.BinaryOperator );
 
         var rightArgumentType = _operandStack[0].Type;
@@ -1496,7 +1493,7 @@ internal class ExpressionBuilderState
 
     private Chain<ParsedExpressionBuilderError> ProcessUnaryOperator(IntermediateToken token, ParsedExpressionUnaryOperator @operator)
     {
-        Assume.IsNotEmpty( _operandStack, nameof( _operandStack ) );
+        Assume.IsNotEmpty( _operandStack );
 
         var operand = _operandStack.Pop();
         Expression result;
@@ -1516,7 +1513,7 @@ internal class ExpressionBuilderState
 
     private Chain<ParsedExpressionBuilderError> ProcessTypeConverter(IntermediateToken token, ParsedExpressionTypeConverter converter)
     {
-        Assume.IsNotEmpty( _operandStack, nameof( _operandStack ) );
+        Assume.IsNotEmpty( _operandStack );
 
         var operand = _operandStack.Pop();
         Expression result;
@@ -1536,7 +1533,7 @@ internal class ExpressionBuilderState
 
     private Chain<ParsedExpressionBuilderError> ProcessBinaryOperator(IntermediateToken token, ParsedExpressionBinaryOperator @operator)
     {
-        Assume.ContainsAtLeast( _operandStack, 2, nameof( _operandStack ) );
+        Assume.ContainsAtLeast( _operandStack, 2 );
 
         var rightOperand = _operandStack[0];
         var leftOperand = _operandStack[1];
@@ -1558,7 +1555,7 @@ internal class ExpressionBuilderState
 
     private Chain<ParsedExpressionBuilderError> ProcessOutputTypeConverter(ParsedExpressionTypeConverter converter, Expression rawBody)
     {
-        Assume.IsEmpty( _operandStack, nameof( _operandStack ) );
+        Assume.IsEmpty( _operandStack );
 
         Expression result;
 
@@ -1577,7 +1574,7 @@ internal class ExpressionBuilderState
 
     private Chain<ParsedExpressionBuilderError> ProcessFunction(IntermediateToken token, IReadOnlyList<Expression> parameters)
     {
-        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
+        Assume.IsNotNull( token.Constructs );
         AssumeConstructsType( token.Constructs, ParsedExpressionConstructType.Function );
 
         var function = token.Constructs.Functions.FindConstruct( parameters );
@@ -1603,8 +1600,8 @@ internal class ExpressionBuilderState
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Chain<ParsedExpressionBuilderError> ProcessVariadicFunction(IntermediateToken token, IReadOnlyList<Expression> parameters)
     {
-        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
-        Assume.IsNotNull( token.Constructs.VariadicFunction, nameof( token.Constructs.VariadicFunction ) );
+        Assume.IsNotNull( token.Constructs );
+        Assume.IsNotNull( token.Constructs.VariadicFunction );
         AssumeConstructsType( token.Constructs, ParsedExpressionConstructType.VariadicFunction );
 
         var function = token.Constructs.VariadicFunction;
@@ -1635,7 +1632,7 @@ internal class ExpressionBuilderState
     {
         AssumeTokenType( token, IntermediateTokenType.Constructs );
         AssumeStateExpectation( Expectation.BinaryOperator );
-        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
+        Assume.IsNotNull( token.Constructs );
 
         var errors = HandleAmbiguousConstructAsPostfixUnaryOperator();
         if ( errors.Count > 0 )
@@ -1643,7 +1640,7 @@ internal class ExpressionBuilderState
 
         if ( Expects( Expectation.PrefixUnaryConstructResolution ) )
         {
-            Assume.IsNotEmpty( _tokenStack, nameof( _tokenStack ) );
+            Assume.IsNotEmpty( _tokenStack );
             var data = _tokenStack.Pop();
 
             AssumeExpectation( data.Expectation, Expectation.PrefixUnaryConstruct );
@@ -1659,7 +1656,7 @@ internal class ExpressionBuilderState
 
         while ( _tokenStack.TryPeek( out var data ) && data.Expectation == Expectation.BinaryOperator )
         {
-            Assume.IsNotNull( data.Token.Constructs, nameof( data.Token.Constructs ) );
+            Assume.IsNotNull( data.Token.Constructs );
 
             var binaryOperatorsOnStack = data.Token.Constructs.BinaryOperators;
             if ( binaryOperators.Precedence < binaryOperatorsOnStack.Precedence )
@@ -1682,7 +1679,7 @@ internal class ExpressionBuilderState
     {
         AssumeTokenType( token, IntermediateTokenType.Constructs );
         AssumeStateExpectation( Expectation.PrefixUnaryConstruct );
-        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
+        Assume.IsNotNull( token.Constructs );
 
         var errors = HandleAmbiguousConstructAsBinaryOperator();
 
@@ -1702,16 +1699,16 @@ internal class ExpressionBuilderState
     {
         AssumeTokenType( token, IntermediateTokenType.Constructs );
         AssumeStateExpectation( Expectation.PostfixUnaryConstruct );
-        Assume.IsNotNull( token.Constructs, nameof( token.Constructs ) );
+        Assume.IsNotNull( token.Constructs );
         AssumeConstructsType( token.Constructs, ParsedExpressionConstructType.PostfixUnaryConstruct );
 
         if ( Expects( Expectation.PrefixUnaryConstructResolution ) )
         {
-            Assume.IsNotEmpty( _tokenStack, nameof( _tokenStack ) );
+            Assume.IsNotEmpty( _tokenStack );
             var prefixData = _tokenStack.Pop();
 
             AssumeExpectation( prefixData.Expectation, Expectation.PrefixUnaryConstruct );
-            Assume.IsNotNull( prefixData.Token.Constructs, nameof( prefixData.Token.Constructs ) );
+            Assume.IsNotNull( prefixData.Token.Constructs );
 
             var prefixPrecedence = prefixData.Token.Constructs.IsAny( ParsedExpressionConstructType.Operator )
                 ? prefixData.Token.Constructs.PrefixUnaryOperators.Precedence
@@ -1777,7 +1774,7 @@ internal class ExpressionBuilderState
         if ( ! Expects( Expectation.AmbiguousPostfixConstructResolution ) )
             return Chain<ParsedExpressionBuilderError>.Empty;
 
-        Assume.IsNotEmpty( _tokenStack, nameof( _tokenStack ) );
+        Assume.IsNotEmpty( _tokenStack );
         var data = _tokenStack.Pop();
 
         if ( Expects( Expectation.AmbiguousPrefixConstructResolution ) )
@@ -1795,7 +1792,7 @@ internal class ExpressionBuilderState
         if ( ! Expects( Expectation.AmbiguousPostfixConstructResolution ) )
             return Chain<ParsedExpressionBuilderError>.Empty;
 
-        Assume.IsNotEmpty( _tokenStack, nameof( _tokenStack ) );
+        Assume.IsNotEmpty( _tokenStack );
         var data = _tokenStack.Pop();
 
         AssumeExpectation( data.Expectation, Expectation.BinaryOperator );
@@ -1873,7 +1870,7 @@ internal class ExpressionBuilderState
     private ParsedExpressionVariadicFunction GetInternalVariadicFunction(string symbol)
     {
         var constructs = Configuration.Constructs[symbol];
-        Assume.IsNotNull( constructs.VariadicFunction, nameof( constructs.VariadicFunction ) );
+        Assume.IsNotNull( constructs.VariadicFunction );
         return constructs.VariadicFunction;
     }
 
@@ -1962,34 +1959,31 @@ internal class ExpressionBuilderState
     [Conditional( "DEBUG" )]
     private void AssumeStateExpectation(Expectation expectation)
     {
-        Assume.NotEquals( _expectation & expectation, Expectation.None, nameof( _expectation ) );
+        Assume.NotEquals( _expectation & expectation, Expectation.None );
     }
 
     [Conditional( "DEBUG" )]
     private static void AssumeExpectation(Expectation expectation, Expectation expected)
     {
-        Assume.NotEquals( expectation & expected, Expectation.None, nameof( expectation ) );
+        Assume.NotEquals( expectation & expected, Expectation.None );
     }
 
     [Conditional( "DEBUG" )]
     private static void AssumeAllExpectations(Expectation expectation, Expectation expected)
     {
-        Assume.Equals( expectation & expected, expected, nameof( expectation ) );
+        Assume.Equals( expectation & expected, expected );
     }
 
     [Conditional( "DEBUG" )]
     private static void AssumeTokenType(IntermediateToken token, IntermediateTokenType expected)
     {
-        Assume.Equals( token.Type, expected, nameof( token ) + '.' + nameof( token.Type ) );
+        Assume.Equals( token.Type, expected );
     }
 
     [Conditional( "DEBUG" )]
     private static void AssumeConstructsType(ConstructTokenDefinition constructs, ParsedExpressionConstructType expected)
     {
-        Assume.NotEquals(
-            constructs.Type & expected,
-            ParsedExpressionConstructType.None,
-            nameof( constructs ) + '.' + nameof( constructs.Type ) );
+        Assume.NotEquals( constructs.Type & expected, ParsedExpressionConstructType.None );
     }
 
     [Flags]

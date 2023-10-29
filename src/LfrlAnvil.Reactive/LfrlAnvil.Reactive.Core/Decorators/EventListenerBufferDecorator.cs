@@ -9,7 +9,7 @@ public sealed class EventListenerBufferDecorator<TEvent> : IEventListenerDecorat
 
     public EventListenerBufferDecorator(int bufferLength)
     {
-        Ensure.IsGreaterThan( bufferLength, 0, nameof( bufferLength ) );
+        Ensure.IsGreaterThan( bufferLength, 0 );
         _bufferLength = bufferLength;
     }
 

@@ -13,7 +13,7 @@ public sealed class ParsedExpressionIf : ParsedExpressionVariadicFunction
     [Pure]
     protected internal override Expression Process(IReadOnlyList<Expression> parameters)
     {
-        Ensure.ContainsExactly( parameters, count: 3, nameof( parameters ) );
+        Ensure.ContainsExactly( parameters, count: 3 );
 
         var test = parameters[0];
         var ifTrue = parameters[1];

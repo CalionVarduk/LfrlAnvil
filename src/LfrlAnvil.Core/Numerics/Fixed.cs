@@ -41,7 +41,7 @@ public readonly struct Fixed : IEquatable<Fixed>, IComparable<Fixed>, IComparabl
 
     private Fixed(long rawValue, byte precision)
     {
-        Assume.IsLessThanOrEqualTo( precision, MaxPrecision, nameof( precision ) );
+        Assume.IsLessThanOrEqualTo( precision, MaxPrecision );
         RawValue = rawValue;
         Precision = precision;
     }
@@ -212,7 +212,7 @@ public readonly struct Fixed : IEquatable<Fixed>, IComparable<Fixed>, IComparabl
         if ( precision >= Precision )
             return this;
 
-        Ensure.IsGreaterThanOrEqualTo( precision, 0, nameof( precision ) );
+        Ensure.IsGreaterThanOrEqualTo( precision, 0 );
         var precisionDelta = Precision - precision;
         var rawValue = GetRoundedRawValue( RawValue, precisionDelta );
         return new Fixed( rawValue, Precision );
@@ -514,7 +514,7 @@ public readonly struct Fixed : IEquatable<Fixed>, IComparable<Fixed>, IComparabl
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static void EnsureCorrectPrecision(byte precision)
     {
-        Ensure.IsInRange( precision, MinPrecision, MaxPrecision, nameof( precision ) );
+        Ensure.IsInRange( precision, MinPrecision, MaxPrecision );
     }
 
     [Pure]
@@ -535,7 +535,7 @@ public readonly struct Fixed : IEquatable<Fixed>, IComparable<Fixed>, IComparabl
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private long DecreasePrecisionRaw(byte precision)
     {
-        Assume.IsInRange( precision, MinPrecision, Precision - 1, nameof( precision ) );
+        Assume.IsInRange( precision, MinPrecision, Precision - 1 );
         var precisionDelta = Precision - precision;
         var rawValue = GetRoundedRawValue( RawValue, precisionDelta ) / PowersOfTen[precisionDelta];
         return rawValue;
@@ -545,7 +545,7 @@ public readonly struct Fixed : IEquatable<Fixed>, IComparable<Fixed>, IComparabl
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private long IncreasePrecisionRaw(byte precision)
     {
-        Assume.IsInRange( precision, Precision + 1, MaxPrecision, nameof( precision ) );
+        Assume.IsInRange( precision, Precision + 1, MaxPrecision );
         var precisionDelta = precision - Precision;
         var rawValue = checked( RawValue * PowersOfTen[precisionDelta] );
         return rawValue;
@@ -555,7 +555,7 @@ public readonly struct Fixed : IEquatable<Fixed>, IComparable<Fixed>, IComparabl
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static long GetRawValue(long value, byte precision)
     {
-        Assume.IsLessThanOrEqualTo( precision, MaxPrecision, nameof( precision ) );
+        Assume.IsLessThanOrEqualTo( precision, MaxPrecision );
         var rawValue = checked( value * PowersOfTen[precision] );
         return rawValue;
     }
@@ -564,7 +564,7 @@ public readonly struct Fixed : IEquatable<Fixed>, IComparable<Fixed>, IComparabl
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static long GetRawValue(decimal value, byte precision)
     {
-        Assume.IsLessThanOrEqualTo( precision, MaxPrecision, nameof( precision ) );
+        Assume.IsLessThanOrEqualTo( precision, MaxPrecision );
         var integerInputPart = Math.Truncate( value );
         var integerPart = checked( (long)integerInputPart * PowersOfTen[precision] );
         var fractionalInputPart = Math.Round( value - integerInputPart, precision, MidpointRounding.AwayFromZero );
@@ -577,7 +577,7 @@ public readonly struct Fixed : IEquatable<Fixed>, IComparable<Fixed>, IComparabl
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static long GetRawValue(double value, byte precision)
     {
-        Assume.IsLessThanOrEqualTo( precision, MaxPrecision, nameof( precision ) );
+        Assume.IsLessThanOrEqualTo( precision, MaxPrecision );
         var integerInputPart = Math.Truncate( value );
         var integerPart = checked( (long)integerInputPart * PowersOfTen[precision] );
         var fractionalInputPart = Math.Round( value - integerInputPart, precision, MidpointRounding.AwayFromZero );
@@ -590,7 +590,7 @@ public readonly struct Fixed : IEquatable<Fixed>, IComparable<Fixed>, IComparabl
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static long GetRoundedRawValue(long rawValue, int precisionDelta)
     {
-        Assume.IsGreaterThan( precisionDelta, 0, nameof( precisionDelta ) );
+        Assume.IsGreaterThan( precisionDelta, 0 );
         var discardedFractionalPart = rawValue % PowersOfTen[precisionDelta];
         var result = rawValue - discardedFractionalPart;
 

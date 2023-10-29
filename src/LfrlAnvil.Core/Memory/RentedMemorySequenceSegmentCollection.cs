@@ -34,9 +34,9 @@ public readonly ref struct RentedMemorySequenceSegmentCollection<T>
     {
         get
         {
-            Ensure.IsGreaterThanOrEqualTo( index, 0, nameof( index ) );
-            Ensure.IsLessThan( index, Length, nameof( index ) );
-            Assume.IsNotNull( _node, nameof( _node ) );
+            Ensure.IsGreaterThanOrEqualTo( index, 0 );
+            Ensure.IsLessThan( index, Length );
+            Assume.IsNotNull( _node );
 
             if ( index == 0 )
             {
@@ -110,7 +110,7 @@ public readonly ref struct RentedMemorySequenceSegmentCollection<T>
             {
                 case FirstSegmentState:
                 {
-                    Assume.IsNotNull( _node, nameof( _node ) );
+                    Assume.IsNotNull( _node );
                     var segment = _node.GetAbsoluteSegment( _nextIndex );
 
                     if ( _nextIndex == _last.Segment )
@@ -128,7 +128,7 @@ public readonly ref struct RentedMemorySequenceSegmentCollection<T>
                 }
                 case NextSegmentState:
                 {
-                    Assume.IsNotNull( _node, nameof( _node ) );
+                    Assume.IsNotNull( _node );
                     var segment = _node.GetAbsoluteSegment( _nextIndex );
 
                     if ( _nextIndex < _last.Segment )

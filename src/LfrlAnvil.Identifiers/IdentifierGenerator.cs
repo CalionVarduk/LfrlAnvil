@@ -22,13 +22,13 @@ public sealed class IdentifierGenerator : IIdentifierGenerator
     public IdentifierGenerator(ITimestampProvider timestampProvider, IdentifierGeneratorParams @params)
     {
         var timeEpsilon = @params.TimeEpsilon;
-        Ensure.IsInRange( timeEpsilon, Duration.FromTicks( 1 ), Duration.FromMilliseconds( 3 ), nameof( timeEpsilon ) );
+        Ensure.IsInRange( timeEpsilon, Duration.FromTicks( 1 ), Duration.FromMilliseconds( 3 ) );
 
         var startTimestamp = timestampProvider.GetNow();
-        Ensure.IsGreaterThanOrEqualTo( startTimestamp, Timestamp.Zero, nameof( startTimestamp ) );
+        Ensure.IsGreaterThanOrEqualTo( startTimestamp, Timestamp.Zero );
 
         var baseTimestamp = @params.BaseTimestamp;
-        Ensure.IsInRange( baseTimestamp, Timestamp.Zero, startTimestamp, nameof( baseTimestamp ) );
+        Ensure.IsInRange( baseTimestamp, Timestamp.Zero, startTimestamp );
 
         _timestampProvider = timestampProvider;
         BaseTimestamp = ConvertTimestamp( baseTimestamp, timeEpsilon );

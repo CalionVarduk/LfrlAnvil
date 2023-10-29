@@ -36,7 +36,7 @@ internal sealed class MacroDeclaration
         IntermediateToken token,
         IReadOnlyList<IReadOnlyList<IntermediateToken>> parameterTokens)
     {
-        Assume.ContainsExactly( parameterTokens, ParameterCount, nameof( parameterTokens ) );
+        Assume.ContainsExactly( parameterTokens, ParameterCount );
 
         foreach ( var macroToken in _tokens )
         {
@@ -60,7 +60,7 @@ internal sealed class MacroDeclaration
         ExpressionBuilderRootState state,
         IReadOnlyList<IntermediateToken> parameterTokens)
     {
-        Assume.Equals( token.IsFromParameter, true, nameof( token.IsFromParameter ) );
+        Assume.Equals( token.IsFromParameter, true );
 
         foreach ( var parameterToken in parameterTokens )
         {
@@ -95,7 +95,7 @@ internal sealed class MacroDeclaration
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal static Token CreateFromParameter(IntermediateToken value, int parameterIndex)
         {
-            Assume.IsGreaterThanOrEqualTo( parameterIndex, 0, nameof( parameterIndex ) );
+            Assume.IsGreaterThanOrEqualTo( parameterIndex, 0 );
             return new Token( value, parameterIndex );
         }
 

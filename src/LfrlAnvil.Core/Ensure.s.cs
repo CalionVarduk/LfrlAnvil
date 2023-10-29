@@ -11,10 +11,8 @@ namespace LfrlAnvil;
 
 public static class Ensure
 {
-    public const string DefaultParamName = "param";
-
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsNull<T>(T? param, string paramName = DefaultParamName)
+    public static void IsNull<T>(T? param, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : class
     {
         if ( param is not null )
@@ -22,7 +20,7 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsNull<T>(T? param, string paramName = DefaultParamName)
+    public static void IsNull<T>(T? param, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : struct
     {
         if ( param.HasValue )
@@ -30,7 +28,7 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsNull<T>(T? param, IEqualityComparer<T> comparer, string paramName = DefaultParamName)
+    public static void IsNull<T>(T? param, IEqualityComparer<T> comparer, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( typeof( T ).IsValueType && ! Generic<T>.IsNullableType )
             ExceptionThrower.Throw( Exceptions.NotNull( param, paramName ) );
@@ -40,7 +38,7 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsNotNull<T>([NotNull] T? param, string paramName = DefaultParamName)
+    public static void IsNotNull<T>([NotNull] T? param, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : class
     {
         if ( param is null )
@@ -48,7 +46,7 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsNotNull<T>([NotNull] T? param, string paramName = DefaultParamName)
+    public static void IsNotNull<T>([NotNull] T? param, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : struct
     {
         if ( ! param.HasValue )
@@ -56,7 +54,7 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsNotNull<T>(T? param, IEqualityComparer<T> comparer, string paramName = DefaultParamName)
+    public static void IsNotNull<T>(T? param, IEqualityComparer<T> comparer, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( typeof( T ).IsValueType && ! Generic<T>.IsNullableType )
             return;
@@ -66,27 +64,27 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsDefault<T>(T? param, string paramName = DefaultParamName)
+    public static void IsDefault<T>(T? param, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( Generic<T>.IsNotDefault( param ) )
             ExceptionThrower.Throw( Exceptions.NotDefault( param, paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsNotDefault<T>([NotNull] T? param, string paramName = DefaultParamName)
+    public static void IsNotDefault<T>([NotNull] T? param, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( Generic<T>.IsDefault( param ) )
             ExceptionThrower.Throw( Exceptions.Default( paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsOfType<T>(object param, string paramName = DefaultParamName)
+    public static void IsOfType<T>(object param, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         IsOfType( param, typeof( T ), paramName );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsOfType<T>(T param, Type type, string paramName = DefaultParamName)
+    public static void IsOfType<T>(T param, Type type, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : notnull
     {
         if ( type != param.GetType() )
@@ -94,13 +92,13 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsNotOfType<T>(object param, string paramName = DefaultParamName)
+    public static void IsNotOfType<T>(object param, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         IsNotOfType( param, typeof( T ), paramName );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsNotOfType<T>(T param, Type type, string paramName = DefaultParamName)
+    public static void IsNotOfType<T>(T param, Type type, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : notnull
     {
         if ( type == param.GetType() )
@@ -108,13 +106,13 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsInstanceOfType<T>(object param, string paramName = DefaultParamName)
+    public static void IsInstanceOfType<T>(object param, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         IsInstanceOfType( param, typeof( T ), paramName );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsInstanceOfType<T>(T param, Type type, string paramName = DefaultParamName)
+    public static void IsInstanceOfType<T>(T param, Type type, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : notnull
     {
         if ( ! type.IsInstanceOfType( param ) )
@@ -122,13 +120,13 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsNotInstanceOfType<T>(object param, string paramName = DefaultParamName)
+    public static void IsNotInstanceOfType<T>(object param, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         IsNotInstanceOfType( param, typeof( T ), paramName );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsNotInstanceOfType<T>(T param, Type type, string paramName = DefaultParamName)
+    public static void IsNotInstanceOfType<T>(T param, Type type, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : notnull
     {
         if ( type.IsInstanceOfType( param ) )
@@ -136,7 +134,7 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsDefined<T>(T param, string paramName = DefaultParamName)
+    public static void IsDefined<T>(T param, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : struct, Enum
     {
         if ( ! Enum.IsDefined( param ) )
@@ -144,7 +142,7 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void Equals<T>(T param, T? value, string paramName = DefaultParamName)
+    public static void Equals<T>(T param, T? value, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : IEquatable<T>
     {
         if ( ! param.Equals( value ) )
@@ -152,14 +150,18 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void Equals<T>(T param, T? value, IEqualityComparer<T> comparer, string paramName = DefaultParamName)
+    public static void Equals<T>(
+        T param,
+        T? value,
+        IEqualityComparer<T> comparer,
+        [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( ! comparer.Equals( param, value ) )
             ExceptionThrower.Throw( Exceptions.NotEqualTo( param, value, paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void NotEquals<T>(T param, T? value, string paramName = DefaultParamName)
+    public static void NotEquals<T>(T param, T? value, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : IEquatable<T>
     {
         if ( param.Equals( value ) )
@@ -167,14 +169,21 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void NotEquals<T>(T param, T? value, IEqualityComparer<T> comparer, string paramName = DefaultParamName)
+    public static void NotEquals<T>(
+        T param,
+        T? value,
+        IEqualityComparer<T> comparer,
+        [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( comparer.Equals( param, value ) )
             ExceptionThrower.Throw( Exceptions.EqualTo( value, paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void RefEquals<T>([NotNullIfNotNull( "value" )] T? param, T? value, string paramName = DefaultParamName)
+    public static void RefEquals<T>(
+        [NotNullIfNotNull( "value" )] T? param,
+        T? value,
+        [CallerArgumentExpression( "param" )] string paramName = "")
         where T : class
     {
         if ( ! ReferenceEquals( param, value ) )
@@ -182,7 +191,7 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void NotRefEquals<T>(T? param, T? value, string paramName = DefaultParamName)
+    public static void NotRefEquals<T>(T? param, T? value, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : class
     {
         if ( ReferenceEquals( param, value ) )
@@ -190,7 +199,7 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsGreaterThan<T>(T param, T? value, string paramName = DefaultParamName)
+    public static void IsGreaterThan<T>(T param, T? value, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : IComparable<T>
     {
         if ( param.CompareTo( value ) <= 0 )
@@ -198,14 +207,18 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsGreaterThan<T>(T param, T? value, IComparer<T> comparer, string paramName = DefaultParamName)
+    public static void IsGreaterThan<T>(
+        T param,
+        T? value,
+        IComparer<T> comparer,
+        [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( comparer.Compare( param, value ) <= 0 )
             ExceptionThrower.Throw( Exceptions.NotGreaterThan( param, value, paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsGreaterThanOrEqualTo<T>(T param, T? value, string paramName = DefaultParamName)
+    public static void IsGreaterThanOrEqualTo<T>(T param, T? value, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : IComparable<T>
     {
         if ( param.CompareTo( value ) < 0 )
@@ -213,14 +226,18 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsGreaterThanOrEqualTo<T>(T param, T? value, IComparer<T> comparer, string paramName = DefaultParamName)
+    public static void IsGreaterThanOrEqualTo<T>(
+        T param,
+        T? value,
+        IComparer<T> comparer,
+        [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( comparer.Compare( param, value ) < 0 )
             ExceptionThrower.Throw( Exceptions.NotGreaterThanOrEqual( param, value, paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsLessThan<T>(T param, T? value, string paramName = DefaultParamName)
+    public static void IsLessThan<T>(T param, T? value, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : IComparable<T>
     {
         if ( param.CompareTo( value ) >= 0 )
@@ -228,14 +245,14 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsLessThan<T>(T param, T? value, IComparer<T> comparer, string paramName = DefaultParamName)
+    public static void IsLessThan<T>(T param, T? value, IComparer<T> comparer, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( comparer.Compare( param, value ) >= 0 )
             ExceptionThrower.Throw( Exceptions.NotLessThan( param, value, paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsLessThanOrEqualTo<T>(T param, T? value, string paramName = DefaultParamName)
+    public static void IsLessThanOrEqualTo<T>(T param, T? value, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : IComparable<T>
     {
         if ( param.CompareTo( value ) > 0 )
@@ -243,14 +260,18 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsLessThanOrEqualTo<T>(T param, T? value, IComparer<T> comparer, string paramName = DefaultParamName)
+    public static void IsLessThanOrEqualTo<T>(
+        T param,
+        T? value,
+        IComparer<T> comparer,
+        [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( comparer.Compare( param, value ) > 0 )
             ExceptionThrower.Throw( Exceptions.NotLessThanOrEqual( param, value, paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsInRange<T>(T param, T min, T max, string paramName = DefaultParamName)
+    public static void IsInRange<T>(T param, T min, T max, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : IComparable<T>
     {
         if ( param.CompareTo( min ) < 0 || param.CompareTo( max ) > 0 )
@@ -258,14 +279,19 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsInRange<T>(T param, T min, T max, IComparer<T> comparer, string paramName = DefaultParamName)
+    public static void IsInRange<T>(
+        T param,
+        T min,
+        T max,
+        IComparer<T> comparer,
+        [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( comparer.Compare( param, min ) < 0 || comparer.Compare( param, max ) > 0 )
             ExceptionThrower.Throw( Exceptions.NotInRange( param, min, max, paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsNotInRange<T>(T param, T min, T max, string paramName = DefaultParamName)
+    public static void IsNotInRange<T>(T param, T min, T max, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : IComparable<T>
     {
         if ( param.CompareTo( min ) >= 0 && param.CompareTo( max ) <= 0 )
@@ -273,14 +299,19 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsNotInRange<T>(T param, T min, T max, IComparer<T> comparer, string paramName = DefaultParamName)
+    public static void IsNotInRange<T>(
+        T param,
+        T min,
+        T max,
+        IComparer<T> comparer,
+        [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( comparer.Compare( param, min ) >= 0 && comparer.Compare( param, max ) <= 0 )
             ExceptionThrower.Throw( Exceptions.InRange( param, min, max, paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsInExclusiveRange<T>(T param, T min, T max, string paramName = DefaultParamName)
+    public static void IsInExclusiveRange<T>(T param, T min, T max, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : IComparable<T>
     {
         if ( param.CompareTo( min ) <= 0 || param.CompareTo( max ) >= 0 )
@@ -288,14 +319,19 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsInExclusiveRange<T>(T param, T min, T max, IComparer<T> comparer, string paramName = DefaultParamName)
+    public static void IsInExclusiveRange<T>(
+        T param,
+        T min,
+        T max,
+        IComparer<T> comparer,
+        [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( comparer.Compare( param, min ) <= 0 || comparer.Compare( param, max ) >= 0 )
             ExceptionThrower.Throw( Exceptions.NotInExclusiveRange( param, min, max, paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsNotInExclusiveRange<T>(T param, T min, T max, string paramName = DefaultParamName)
+    public static void IsNotInExclusiveRange<T>(T param, T min, T max, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : IComparable<T>
     {
         if ( param.CompareTo( min ) > 0 && param.CompareTo( max ) < 0 )
@@ -303,105 +339,112 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsNotInExclusiveRange<T>(T param, T min, T max, IComparer<T> comparer, string paramName = DefaultParamName)
+    public static void IsNotInExclusiveRange<T>(
+        T param,
+        T min,
+        T max,
+        IComparer<T> comparer,
+        [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( comparer.Compare( param, min ) > 0 && comparer.Compare( param, max ) < 0 )
             ExceptionThrower.Throw( Exceptions.InExclusiveRange( param, min, max, paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsEmpty<T>(IEnumerable<T> param, string paramName = DefaultParamName)
+    public static void IsEmpty<T>(IEnumerable<T> param, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( param.Any() )
             ExceptionThrower.Throw( Exceptions.NotEmpty( paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsEmpty<T>(IReadOnlyCollection<T> param, string paramName = DefaultParamName)
+    public static void IsEmpty<T>(IReadOnlyCollection<T> param, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( ! param.IsEmpty() )
             ExceptionThrower.Throw( Exceptions.NotEmpty( paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsEmpty(string param, string paramName = DefaultParamName)
+    public static void IsEmpty(string param, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( param.Length > 0 )
             ExceptionThrower.Throw( Exceptions.NotEmpty( param, paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsNotEmpty<T>(IEnumerable<T> param, string paramName = DefaultParamName)
+    public static void IsNotEmpty<T>(IEnumerable<T> param, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( ! param.Any() )
             ExceptionThrower.Throw( Exceptions.Empty( paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsNotEmpty<T>(IReadOnlyCollection<T> param, string paramName = DefaultParamName)
+    public static void IsNotEmpty<T>(IReadOnlyCollection<T> param, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( param.IsEmpty() )
             ExceptionThrower.Throw( Exceptions.Empty( paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsNotEmpty(string param, string paramName = DefaultParamName)
+    public static void IsNotEmpty(string param, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( param.Length == 0 )
             ExceptionThrower.Throw( Exceptions.Empty( paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsNullOrEmpty<T>(IEnumerable<T>? param, string paramName = DefaultParamName)
+    public static void IsNullOrEmpty<T>(IEnumerable<T>? param, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( ! param.IsNullOrEmpty() )
             ExceptionThrower.Throw( Exceptions.NotNullOrEmpty( paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsNullOrEmpty<T>(IReadOnlyCollection<T>? param, string paramName = DefaultParamName)
+    public static void IsNullOrEmpty<T>(IReadOnlyCollection<T>? param, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( ! param.IsNullOrEmpty() )
             ExceptionThrower.Throw( Exceptions.NotNullOrEmpty( paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsNullOrEmpty(string? param, string paramName = DefaultParamName)
+    public static void IsNullOrEmpty(string? param, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( ! string.IsNullOrEmpty( param ) )
             ExceptionThrower.Throw( Exceptions.NotNullOrEmpty( param, paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsNotNullOrEmpty<T>([NotNull] IEnumerable<T>? param, string paramName = DefaultParamName)
+    public static void IsNotNullOrEmpty<T>([NotNull] IEnumerable<T>? param, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( param.IsNullOrEmpty() )
             ExceptionThrower.Throw( Exceptions.NullOrEmpty( paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsNotNullOrEmpty<T>([NotNull] IReadOnlyCollection<T>? param, string paramName = DefaultParamName)
+    public static void IsNotNullOrEmpty<T>(
+        [NotNull] IReadOnlyCollection<T>? param,
+        [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( param.IsNullOrEmpty() )
             ExceptionThrower.Throw( Exceptions.NullOrEmpty( paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsNotNullOrEmpty([NotNull] string? param, string paramName = DefaultParamName)
+    public static void IsNotNullOrEmpty([NotNull] string? param, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( string.IsNullOrEmpty( param ) )
             ExceptionThrower.Throw( Exceptions.NullOrEmpty( paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsNotNullOrWhiteSpace([NotNull] string? param, string paramName = DefaultParamName)
+    public static void IsNotNullOrWhiteSpace([NotNull] string? param, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( string.IsNullOrWhiteSpace( param ) )
             ExceptionThrower.Throw( Exceptions.NullOrWhiteSpace( paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void ContainsNull<T>(IEnumerable<T?> param, string paramName = DefaultParamName)
+    public static void ContainsNull<T>(IEnumerable<T?> param, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : class
     {
         if ( param.All( static e => e is not null ) )
@@ -409,7 +452,7 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void ContainsNull<T>(IEnumerable<T?> param, string paramName = DefaultParamName)
+    public static void ContainsNull<T>(IEnumerable<T?> param, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : struct
     {
         if ( param.All( static e => e.HasValue ) )
@@ -417,7 +460,10 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void ContainsNull<T>(IEnumerable<T?> param, IEqualityComparer<T> comparer, string paramName = DefaultParamName)
+    public static void ContainsNull<T>(
+        IEnumerable<T?> param,
+        IEqualityComparer<T> comparer,
+        [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( typeof( T ).IsValueType && ! Generic<T>.IsNullableType )
             ExceptionThrower.Throw( Exceptions.NotContainsNull( paramName ) );
@@ -427,7 +473,7 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void NotContainsNull<T>(IEnumerable<T?> param, string paramName = DefaultParamName)
+    public static void NotContainsNull<T>(IEnumerable<T?> param, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : class
     {
         if ( param.Any( static e => e is null ) )
@@ -435,7 +481,7 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void NotContainsNull<T>(IEnumerable<T?> param, string paramName = DefaultParamName)
+    public static void NotContainsNull<T>(IEnumerable<T?> param, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : struct
     {
         if ( param.Any( static e => ! e.HasValue ) )
@@ -443,7 +489,10 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void NotContainsNull<T>(IEnumerable<T?> param, IEqualityComparer<T> comparer, string paramName = DefaultParamName)
+    public static void NotContainsNull<T>(
+        IEnumerable<T?> param,
+        IEqualityComparer<T> comparer,
+        [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( typeof( T ).IsValueType && ! Generic<T>.IsNullableType )
             return;
@@ -453,63 +502,80 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void ContainsAtLeast<T>(IEnumerable<T> param, int count, string paramName = DefaultParamName)
+    public static void ContainsAtLeast<T>(IEnumerable<T> param, int count, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( ! param.ContainsAtLeast( count ) )
             ExceptionThrower.Throw( Exceptions.NotContainsAtLeast( count, paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void ContainsAtLeast<T>(IReadOnlyCollection<T> param, int count, string paramName = DefaultParamName)
+    public static void ContainsAtLeast<T>(
+        IReadOnlyCollection<T> param,
+        int count,
+        [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( ! param.ContainsAtLeast( count ) )
             ExceptionThrower.Throw( Exceptions.NotContainsAtLeast( count, paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void ContainsAtMost<T>(IEnumerable<T> param, int count, string paramName = DefaultParamName)
+    public static void ContainsAtMost<T>(IEnumerable<T> param, int count, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( ! param.ContainsAtMost( count ) )
             ExceptionThrower.Throw( Exceptions.NotContainsAtMost( count, paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void ContainsAtMost<T>(IReadOnlyCollection<T> param, int count, string paramName = DefaultParamName)
+    public static void ContainsAtMost<T>(
+        IReadOnlyCollection<T> param,
+        int count,
+        [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( ! param.ContainsAtMost( count ) )
             ExceptionThrower.Throw( Exceptions.NotContainsAtMost( count, paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void ContainsInRange<T>(IEnumerable<T> param, int minCount, int maxCount, string paramName = DefaultParamName)
+    public static void ContainsInRange<T>(
+        IEnumerable<T> param,
+        int minCount,
+        int maxCount,
+        [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( ! param.ContainsInRange( minCount, maxCount ) )
             ExceptionThrower.Throw( Exceptions.NotContainsInRange( minCount, maxCount, paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void ContainsInRange<T>(IReadOnlyCollection<T> param, int minCount, int maxCount, string paramName = DefaultParamName)
+    public static void ContainsInRange<T>(
+        IReadOnlyCollection<T> param,
+        int minCount,
+        int maxCount,
+        [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( ! param.ContainsInRange( minCount, maxCount ) )
             ExceptionThrower.Throw( Exceptions.NotContainsInRange( minCount, maxCount, paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void ContainsExactly<T>(IEnumerable<T> param, int count, string paramName = DefaultParamName)
+    public static void ContainsExactly<T>(IEnumerable<T> param, int count, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( ! param.ContainsExactly( count ) )
             ExceptionThrower.Throw( Exceptions.NotContainsExactly( count, paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void ContainsExactly<T>(IReadOnlyCollection<T> param, int count, string paramName = DefaultParamName)
+    public static void ContainsExactly<T>(
+        IReadOnlyCollection<T> param,
+        int count,
+        [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( ! param.ContainsExactly( count ) )
             ExceptionThrower.Throw( Exceptions.NotContainsExactly( count, paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void Contains<T>(IEnumerable<T> param, T value, string paramName = DefaultParamName)
+    public static void Contains<T>(IEnumerable<T> param, T value, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : IEquatable<T>
     {
         if ( ! param.Any( e => e.Equals( value ) ) )
@@ -517,14 +583,18 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void Contains<T>(IEnumerable<T> param, T value, IEqualityComparer<T> comparer, string paramName = DefaultParamName)
+    public static void Contains<T>(
+        IEnumerable<T> param,
+        T value,
+        IEqualityComparer<T> comparer,
+        [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( ! param.Any( e => comparer.Equals( e, value ) ) )
             ExceptionThrower.Throw( Exceptions.NotContains( value, paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void NotContains<T>(IEnumerable<T> param, T value, string paramName = DefaultParamName)
+    public static void NotContains<T>(IEnumerable<T> param, T value, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : IEquatable<T>
     {
         if ( param.Any( e => e.Equals( value ) ) )
@@ -532,7 +602,11 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void NotContains<T>(IEnumerable<T> param, T value, IEqualityComparer<T> comparer, string paramName = DefaultParamName)
+    public static void NotContains<T>(
+        IEnumerable<T> param,
+        T value,
+        IEqualityComparer<T> comparer,
+        [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( param.Any( e => comparer.Equals( e, value ) ) )
             ExceptionThrower.Throw( Exceptions.Contains( value, paramName ) );
@@ -543,7 +617,7 @@ public static class Ensure
         IEnumerable<T> param,
         Func<T, bool> predicate,
         string? description = null,
-        string paramName = DefaultParamName)
+        [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( ! param.Any( predicate ) )
             ExceptionThrower.Throw( Exceptions.NotAny( description, paramName ) );
@@ -554,7 +628,7 @@ public static class Ensure
         IEnumerable<T> param,
         Func<T, bool> predicate,
         Func<string>? descriptionProvider,
-        string paramName = DefaultParamName)
+        [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( ! param.Any( predicate ) )
             ExceptionThrower.Throw( Exceptions.NotAny( descriptionProvider?.Invoke(), paramName ) );
@@ -565,7 +639,7 @@ public static class Ensure
         IEnumerable<T> param,
         Func<T, bool> predicate,
         string? description = null,
-        string paramName = DefaultParamName)
+        [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( ! param.All( predicate ) )
             ExceptionThrower.Throw( Exceptions.NotAll( description, paramName ) );
@@ -576,14 +650,14 @@ public static class Ensure
         IEnumerable<T> param,
         Func<T, bool> predicate,
         Func<string>? descriptionProvider,
-        string paramName = DefaultParamName)
+        [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( ! param.All( predicate ) )
             ExceptionThrower.Throw( Exceptions.NotAll( descriptionProvider?.Invoke(), paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsOrdered<T>(IEnumerable<T> param, string paramName = DefaultParamName)
+    public static void IsOrdered<T>(IEnumerable<T> param, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : IComparable<T>
     {
         if ( ! param.IsOrdered() )
@@ -591,14 +665,17 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void IsOrdered<T>(IEnumerable<T> param, IComparer<T> comparer, string paramName = DefaultParamName)
+    public static void IsOrdered<T>(
+        IEnumerable<T> param,
+        IComparer<T> comparer,
+        [CallerArgumentExpression( "param" )] string paramName = "")
     {
         if ( ! param.IsOrdered( comparer ) )
             ExceptionThrower.Throw( Exceptions.NotOrdered( paramName ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void True(bool condition, string? description = null)
+    public static void True(bool condition, [CallerArgumentExpression( "condition" )] string description = "")
     {
         if ( ! condition )
             ExceptionThrower.Throw( Exceptions.False( description ) );
@@ -612,7 +689,7 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void False(bool condition, string? description = null)
+    public static void False(bool condition, [CallerArgumentExpression( "condition" )] string description = "")
     {
         if ( condition )
             ExceptionThrower.Throw( Exceptions.True( description ) );
@@ -834,12 +911,12 @@ public static class Ensure
 
         public static ArgumentException False(string? description)
         {
-            return new ArgumentException( description ?? ExceptionResources.ExpectedConditionToBeTrue );
+            return new ArgumentException( ExceptionResources.ExpectedToBeTrue( description ?? "condition" ) );
         }
 
         public static ArgumentException True(string? description)
         {
-            return new ArgumentException( description ?? ExceptionResources.ExpectedConditionToBeFalse );
+            return new ArgumentException( ExceptionResources.ExpectedToBeFalse( description ?? "condition" ) );
         }
     }
 }

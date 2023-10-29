@@ -97,11 +97,11 @@ public readonly struct IntegerPartition : IReadOnlyCollection<ulong>
         {
             if ( unchecked( (ulong)++_index ) >= _partCount )
             {
-                Assume.Equals( _offset, 0UL, nameof( _offset ) );
+                Assume.Equals( _offset, 0UL );
                 return false;
             }
 
-            Assume.IsNotNull( _parts, nameof( _parts ) );
+            Assume.IsNotNull( _parts );
             var numerator = unchecked( (ulong)_parts[_index].Numerator );
             (var q, _offset) = Math.DivRem( checked( _offset + _remainder * numerator ), _sumOfPartsNumerator );
             Current = unchecked( _quotient * numerator + q );

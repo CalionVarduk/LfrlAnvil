@@ -11,7 +11,7 @@ public abstract class SequenceGeneratorBase<T> : ISequenceGenerator<T>
 
     protected SequenceGeneratorBase(Bounds<T> bounds, T start, T step)
     {
-        Ensure.IsInRange( start, bounds.Min, bounds.Max, nameof( start ) );
+        Ensure.IsInRange( start, bounds.Min, bounds.Max );
         Bounds = bounds;
         Step = step;
         _next = new Next( start );
@@ -22,7 +22,7 @@ public abstract class SequenceGeneratorBase<T> : ISequenceGenerator<T>
 
     public void Reset(T start)
     {
-        Ensure.IsInRange( start, Bounds.Min, Bounds.Max, nameof( start ) );
+        Ensure.IsInRange( start, Bounds.Min, Bounds.Max );
         _next = new Next( start );
     }
 

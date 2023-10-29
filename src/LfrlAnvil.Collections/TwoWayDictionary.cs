@@ -47,8 +47,8 @@ public class TwoWayDictionary<T1, T2> : ITwoWayDictionary<T1, T2>
 
     public void Add(T1 first, T2 second)
     {
-        Ensure.False( _forward.ContainsKey( first ), Resources.KeyAlreadyExistsInForwardDictionary );
-        Ensure.False( _reverse.ContainsKey( second ), Resources.KeyAlreadyExistsInReverseDictionary );
+        Ensure.False( _forward.ContainsKey( first ), Resources.KeyExistenceInForwardDictionary );
+        Ensure.False( _reverse.ContainsKey( second ), Resources.KeyExistenceInReverseDictionary );
         _forward.Add( first, second );
         _reverse.Add( second, first );
     }
@@ -69,7 +69,7 @@ public class TwoWayDictionary<T1, T2> : ITwoWayDictionary<T1, T2>
 
     public void UpdateForward(T1 first, T2 second)
     {
-        Ensure.False( _reverse.ContainsKey( second ), Resources.KeyAlreadyExistsInReverseDictionary );
+        Ensure.False( _reverse.ContainsKey( second ), Resources.KeyExistenceInReverseDictionary );
         var other = _forward[first];
         _forward[first] = second;
         _reverse.Remove( other );
@@ -92,7 +92,7 @@ public class TwoWayDictionary<T1, T2> : ITwoWayDictionary<T1, T2>
 
     public void UpdateReverse(T2 second, T1 first)
     {
-        Ensure.False( _forward.ContainsKey( first ), Resources.KeyAlreadyExistsInForwardDictionary );
+        Ensure.False( _forward.ContainsKey( first ), Resources.KeyExistenceInForwardDictionary );
         var other = _reverse[second];
         _reverse[second] = first;
         _forward.Remove( other );

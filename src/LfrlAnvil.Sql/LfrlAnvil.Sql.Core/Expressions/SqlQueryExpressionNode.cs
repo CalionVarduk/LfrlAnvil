@@ -81,7 +81,7 @@ public abstract class SqlQueryExpressionNode : SqlExpressionNode, ISqlStatementN
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public void Handle(string name, SqlExpressionNode? expression)
         {
-            Assume.IsNotNull( Selection, nameof( Selection ) );
+            Assume.IsNotNull( Selection );
             var field = new SqlQueryDataFieldNode( _recordSet, name, Selection, expression );
             DataFields.Add( field.Name, field );
         }
@@ -100,7 +100,7 @@ public abstract class SqlQueryExpressionNode : SqlExpressionNode, ISqlStatementN
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public void Handle(string name, SqlExpressionNode? expression)
         {
-            Assume.IsNotNull( Selection, nameof( Selection ) );
+            Assume.IsNotNull( Selection );
             Callback( KeyValuePair.Create( name, new KnownDataFieldInfo( Selection, expression ) ) );
         }
     }
@@ -139,7 +139,7 @@ public abstract class SqlQueryExpressionNode : SqlExpressionNode, ISqlStatementN
 
         public void Handle(string name, SqlExpressionNode? expression)
         {
-            Assume.IsNotNull( Selection, nameof( Selection ) );
+            Assume.IsNotNull( Selection );
             if ( ! Name.Equals( name, StringComparison.OrdinalIgnoreCase ) )
                 return;
 

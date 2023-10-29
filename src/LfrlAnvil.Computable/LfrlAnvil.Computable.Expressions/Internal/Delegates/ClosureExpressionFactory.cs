@@ -30,7 +30,7 @@ internal readonly struct ClosureExpressionFactory
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal NewExpression CreateCtorCallForRootDelegate()
     {
-        Assume.IsNotEmpty( _parameterMappings, nameof( _parameterMappings ) );
+        Assume.IsNotEmpty( _parameterMappings );
 
         var result = CreateLastRootSegmentExpression();
         for ( var i = _segments.Length - 2; i >= 0; --i )
@@ -43,7 +43,7 @@ internal readonly struct ClosureExpressionFactory
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal NewExpression CreateCtorCallForNestedDelegate(ClosureExpressionFactory parentFactory)
     {
-        Assume.IsNotEmpty( _parameterMappings, nameof( _parameterMappings ) );
+        Assume.IsNotEmpty( _parameterMappings );
 
         var result = CreateLastNestedSegmentExpression( parentFactory );
         for ( var i = _segments.Length - 2; i >= 0; --i )
@@ -107,7 +107,7 @@ internal readonly struct ClosureExpressionFactory
     private Expression GetRootCtorParameter(int index)
     {
         var parameter = _parameterMappings[index].Parameter;
-        Assume.IsNotNull( parameter, nameof( parameter ) );
+        Assume.IsNotNull( parameter );
         return parameter;
     }
 
@@ -168,7 +168,7 @@ internal readonly struct ClosureExpressionFactory
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal static ParameterMapping CreateFromNestedClosure(int parentClosureIndex)
         {
-            Assume.IsGreaterThanOrEqualTo( parentClosureIndex, 0, nameof( parentClosureIndex ) );
+            Assume.IsGreaterThanOrEqualTo( parentClosureIndex, 0 );
             return new ParameterMapping( parentClosureIndex, null );
         }
     }

@@ -8,7 +8,7 @@ internal static class StopwatchTicks
 {
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static long GetStopwatchTicksOrThrow(Duration duration, string paramName)
+    internal static long GetStopwatchTicksOrThrow(Duration duration, [CallerArgumentExpression( "duration" )] string paramName = "")
     {
         Ensure.IsInExclusiveRange(
             duration,

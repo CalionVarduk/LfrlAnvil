@@ -802,7 +802,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
             new[]
             {
                 SqlNode.Column<int>( "x" ),
-                SqlNode.Column<DateTime>( "y", defaultValue: SqlNode.Literal("foo").Concat(SqlNode.Literal("bar")) )
+                SqlNode.Column<DateTime>( "y", defaultValue: SqlNode.Literal( "foo" ).Concat( SqlNode.Literal( "bar" ) ) )
             },
             constraintsProvider: t => SqlCreateTableConstraints.Empty
                 .WithPrimaryKey( SqlNode.PrimaryKey( "PK_test", t["x"].Asc() ) )

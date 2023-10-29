@@ -15,7 +15,7 @@ internal struct ExpressionTokenizerSubStream
 
     internal ExpressionTokenizerSubStream(string input, int index, ParsedExpressionFactoryInternalConfiguration configuration)
     {
-        Assume.IsLessThan( index, input.Length, nameof( index ) );
+        Assume.IsLessThan( index, input.Length );
 
         var startIndex = index++;
         _state = State.Started;
@@ -49,7 +49,7 @@ internal struct ExpressionTokenizerSubStream
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal IntermediateToken ReadNext(ParsedExpressionFactoryInternalConfiguration configuration)
     {
-        Assume.NotEquals( _state, State.Finished, nameof( _state ) );
+        Assume.NotEquals( _state, State.Finished );
 
         var result = _state switch
         {
@@ -65,7 +65,7 @@ internal struct ExpressionTokenizerSubStream
 
     private IntermediateToken HandleStartedState(ParsedExpressionFactoryInternalConfiguration configuration)
     {
-        Assume.Equals( _state, State.Started, nameof( _state ) );
+        Assume.Equals( _state, State.Started );
 
         var result = ExpressionTokenReader.TryReadConstructs( _remaining, configuration );
         if ( result is not null )
@@ -80,13 +80,13 @@ internal struct ExpressionTokenizerSubStream
 
     private IntermediateToken HandleReadingNonSymbolsState(ParsedExpressionFactoryInternalConfiguration configuration)
     {
-        Assume.Equals( _state, State.ReadingNonSymbols, nameof( _state ) );
-        Assume.IsNull( _bufferedToken, nameof( _bufferedToken ) );
+        Assume.Equals( _state, State.ReadingNonSymbols );
+        Assume.IsNull( _bufferedToken );
 
         var input = _remaining.Source;
         var index = _remaining.StartIndex;
 
-        Assume.IsLessThan( index, _endIndex, nameof( index ) );
+        Assume.IsLessThan( index, _endIndex );
 
         var c = input[index];
 
@@ -143,16 +143,16 @@ internal struct ExpressionTokenizerSubStream
 
     private IntermediateToken HandleStartReadingSymbolsState(ParsedExpressionFactoryInternalConfiguration configuration)
     {
-        Assume.Equals( _state, State.StartReadingSymbols, nameof( _state ) );
-        Assume.IsNull( _bufferedToken, nameof( _bufferedToken ) );
+        Assume.Equals( _state, State.StartReadingSymbols );
+        Assume.IsNull( _bufferedToken );
 
         var input = _remaining.Source;
         var index = _remaining.StartIndex + 1;
 
-        Assume.IsLessThan( _remaining.StartIndex, _endIndex, nameof( _remaining.StartIndex ) );
-        Assume.True( TokenConstants.InterpretAsSymbol( _remaining[0] ), "Assumed first remaining character to be a valid symbol." );
-        Assume.IsEmpty( _remainingSymbols, nameof( _remainingSymbols ) );
-        Assume.IsEmpty( _skippedSymbols, nameof( _skippedSymbols ) );
+        Assume.IsLessThan( _remaining.StartIndex, _endIndex );
+        Assume.True( TokenConstants.InterpretAsSymbol( _remaining[0] ) );
+        Assume.IsEmpty( _remainingSymbols );
+        Assume.IsEmpty( _skippedSymbols );
 
         while ( index < _endIndex )
         {
@@ -172,10 +172,10 @@ internal struct ExpressionTokenizerSubStream
 
     private IntermediateToken HandleSearchingForTokenSymbolsState(ParsedExpressionFactoryInternalConfiguration configuration)
     {
-        Assume.Equals( _state, State.SearchingForTokenSymbols, nameof( _state ) );
-        Assume.IsNotEmpty( _remainingSymbols, nameof( _remainingSymbols ) );
-        Assume.IsEmpty( _skippedSymbols, nameof( _skippedSymbols ) );
-        Assume.IsNull( _bufferedToken, nameof( _bufferedToken ) );
+        Assume.Equals( _state, State.SearchingForTokenSymbols );
+        Assume.IsNotEmpty( _remainingSymbols );
+        Assume.IsEmpty( _skippedSymbols );
+        Assume.IsNull( _bufferedToken );
 
         var token = ScanForTokenWithinRemainingSymbols( configuration );
         if ( token is not null )
@@ -198,9 +198,9 @@ internal struct ExpressionTokenizerSubStream
 
     private IntermediateToken HandleSearchingForTokenSymbolsWithSkippedState(ParsedExpressionFactoryInternalConfiguration configuration)
     {
-        Assume.Equals( _state, State.SearchingForTokenSymbols, nameof( _state ) );
-        Assume.IsNotEmpty( _skippedSymbols, nameof( _skippedSymbols ) );
-        Assume.IsNull( _bufferedToken, nameof( _bufferedToken ) );
+        Assume.Equals( _state, State.SearchingForTokenSymbols );
+        Assume.IsNotEmpty( _skippedSymbols );
+        Assume.IsNull( _bufferedToken );
 
         do
         {
@@ -222,9 +222,9 @@ internal struct ExpressionTokenizerSubStream
 
     private IntermediateToken HandleStoringBufferedTokenState()
     {
-        Assume.Equals( _state, State.StoringBufferedToken, nameof( _state ) );
-        Assume.IsEmpty( _skippedSymbols, nameof( _skippedSymbols ) );
-        Assume.IsNotNull( _bufferedToken, nameof( _bufferedToken ) );
+        Assume.Equals( _state, State.StoringBufferedToken );
+        Assume.IsEmpty( _skippedSymbols );
+        Assume.IsNotNull( _bufferedToken );
 
         var result = _bufferedToken.Value;
         _bufferedToken = null;
@@ -239,8 +239,8 @@ internal struct ExpressionTokenizerSubStream
 
     private IntermediateToken? ScanForTokenWithinRemainingSymbols(ParsedExpressionFactoryInternalConfiguration configuration)
     {
-        Assume.Equals( _state, State.SearchingForTokenSymbols, nameof( _state ) );
-        Assume.IsNotEmpty( _remainingSymbols, nameof( _remainingSymbols ) );
+        Assume.Equals( _state, State.SearchingForTokenSymbols );
+        Assume.IsNotEmpty( _remainingSymbols );
 
         for ( var length = _remainingSymbols.Length; length > 0; --length )
         {
@@ -298,7 +298,7 @@ internal struct ExpressionTokenizerSubStream
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private IntermediateToken ReadSkippedSymbols()
     {
-        Assume.IsNotEmpty( _skippedSymbols, nameof( _skippedSymbols ) );
+        Assume.IsNotEmpty( _skippedSymbols );
 
         var slice = _skippedSymbols;
         _skippedSymbols = _skippedSymbols.Slice( 0, 0 );

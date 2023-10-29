@@ -16,7 +16,7 @@ public sealed class PreciseTimestampProvider : TimestampProviderBase
 
     public PreciseTimestampProvider(Duration precisionResetTimeout)
     {
-        _maxPreciseMeasurementDuration = StopwatchTicks.GetStopwatchTicksOrThrow( precisionResetTimeout, nameof( precisionResetTimeout ) );
+        _maxPreciseMeasurementDuration = StopwatchTicks.GetStopwatchTicksOrThrow( precisionResetTimeout );
         PrecisionResetTimeout = precisionResetTimeout;
     }
 

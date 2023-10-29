@@ -17,7 +17,7 @@ public sealed class PreciseUtcDateTimeProvider : DateTimeProviderBase
     public PreciseUtcDateTimeProvider(Duration precisionResetTimeout)
         : base( DateTimeKind.Utc )
     {
-        _maxPreciseMeasurementDuration = StopwatchTicks.GetStopwatchTicksOrThrow( precisionResetTimeout, nameof( precisionResetTimeout ) );
+        _maxPreciseMeasurementDuration = StopwatchTicks.GetStopwatchTicksOrThrow( precisionResetTimeout );
         PrecisionResetTimeout = precisionResetTimeout;
     }
 

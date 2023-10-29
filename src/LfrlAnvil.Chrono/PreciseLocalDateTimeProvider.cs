@@ -17,7 +17,7 @@ public sealed class PreciseLocalDateTimeProvider : DateTimeProviderBase
     public PreciseLocalDateTimeProvider(Duration precisionResetTimeout)
         : base( DateTimeKind.Local )
     {
-        _maxPreciseMeasurementDuration = StopwatchTicks.GetStopwatchTicksOrThrow( precisionResetTimeout, nameof( precisionResetTimeout ) );
+        _maxPreciseMeasurementDuration = StopwatchTicks.GetStopwatchTicksOrThrow( precisionResetTimeout );
         PrecisionResetTimeout = precisionResetTimeout;
     }
 

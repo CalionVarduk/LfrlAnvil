@@ -5,6 +5,6 @@ public sealed class SqlCoalesceFunctionExpressionNode : SqlFunctionExpressionNod
     internal SqlCoalesceFunctionExpressionNode(SqlExpressionNode[] arguments)
         : base( SqlFunctionType.Coalesce, arguments )
     {
-        Ensure.IsNotEmpty( arguments, nameof( arguments ) );
+        Ensure.IsNotEmpty( arguments );
     }
 }

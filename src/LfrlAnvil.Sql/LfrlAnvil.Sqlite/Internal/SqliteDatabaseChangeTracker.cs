@@ -86,7 +86,7 @@ internal sealed class SqliteDatabaseChangeTracker
 
     internal void SetMode(SqlDatabaseCreateMode mode)
     {
-        Assume.IsDefined( mode, nameof( mode ) );
+        Assume.IsDefined( mode );
         _mode = (byte)((int)mode << 1);
     }
 
@@ -340,7 +340,7 @@ internal sealed class SqliteDatabaseChangeTracker
 
     private void AddChange(SqliteObjectBuilder obj, SqliteDatabasePropertyChange change)
     {
-        Assume.Equals( IsPreparingStatements, true, nameof( IsPreparingStatements ) );
+        Assume.Equals( IsPreparingStatements, true );
 
         if ( ! ReferenceEquals( CurrentObject, obj ) )
         {
@@ -355,8 +355,8 @@ internal sealed class SqliteDatabaseChangeTracker
 
     private void CompletePendingStatement()
     {
-        Assume.IsNotNull( CurrentObject, nameof( CurrentObject ) );
-        Assume.ContainsAtLeast( _ongoingPropertyChanges, 1, nameof( _ongoingPropertyChanges ) );
+        Assume.IsNotNull( CurrentObject );
+        Assume.ContainsAtLeast( _ongoingPropertyChanges, 1 );
 
         var changes = CollectionsMarshal.AsSpan( _ongoingPropertyChanges );
         var firstChange = changes[0];
@@ -399,7 +399,7 @@ internal sealed class SqliteDatabaseChangeTracker
 
     private void CompletePendingCreateObjectStatement()
     {
-        Assume.IsNotNull( CurrentObject, nameof( CurrentObject ) );
+        Assume.IsNotNull( CurrentObject );
 
         if ( CurrentObject.Type == SqlObjectType.Table )
         {
@@ -422,7 +422,7 @@ internal sealed class SqliteDatabaseChangeTracker
 
     private void CompletePendingDropObjectStatement()
     {
-        Assume.IsNotNull( CurrentObject, nameof( CurrentObject ) );
+        Assume.IsNotNull( CurrentObject );
 
         if ( CurrentObject.Type == SqlObjectType.Table )
         {
@@ -440,7 +440,7 @@ internal sealed class SqliteDatabaseChangeTracker
 
     private void CompletePendingAlterObjectStatement(ReadOnlySpan<SqliteDatabasePropertyChange> changes)
     {
-        Assume.IsNotNull( CurrentObject, nameof( CurrentObject ) );
+        Assume.IsNotNull( CurrentObject );
 
         if ( CurrentObject.Type == SqlObjectType.Table )
         {
@@ -457,7 +457,7 @@ internal sealed class SqliteDatabaseChangeTracker
                     var oldSchemaName = _alterTableBuffer.TryGetOldSchemaName( currentTable.Id ) ?? currentTable.Schema.Name;
                     var oldName = _alterTableBuffer.TryGetOldName( currentTable.Id ) ?? currentTable.Name;
                     var name = SqlSchemaObjectName.Create( oldSchemaName, oldName );
-                    Assume.NotEquals( name, currentTable.Info.Name, nameof( name ) );
+                    Assume.NotEquals( name, currentTable.Info.Name );
                     _ongoingStatements.Add( SqlNode.RenameTable( SqlRecordSetInfo.Create( name ), currentTable.Info.Name ) );
                 }
 
@@ -585,7 +585,7 @@ internal sealed class SqliteDatabaseChangeTracker
                 continue;
 
             ref var renameRef = ref CollectionsMarshal.GetValueRefOrNullRef( buffer.ColumnRenames, id );
-            Assume.False( Unsafe.IsNullRef( ref renameRef ), nameof( renameRef ) + " cannot be a null ref." );
+            Assume.False( Unsafe.IsNullRef( ref renameRef ) );
 
             renameRef = new SqliteAlterTableBuffer.ColumnRename( rename.OldName, rename.NewName, IsPending: false );
             HandleColumnRename( _ongoingStatements, table, buffer, id, ref renameRef );
@@ -601,12 +601,12 @@ internal sealed class SqliteDatabaseChangeTracker
             ulong id,
             ref SqliteAlterTableBuffer.ColumnRename rename)
         {
-            Assume.Equals( rename.IsPending, false, nameof( rename.IsPending ) );
+            Assume.Equals( rename.IsPending, false );
 
             if ( buffer.ColumnIdsByCurrentName.TryGetValue( rename.NewName, out var idByName ) )
             {
                 ref var conflictingRename = ref CollectionsMarshal.GetValueRefOrNullRef( buffer.ColumnRenames, idByName );
-                Assume.False( Unsafe.IsNullRef( ref conflictingRename ), nameof( conflictingRename ) + " cannot be a null ref." );
+                Assume.False( Unsafe.IsNullRef( ref conflictingRename ) );
 
                 if ( conflictingRename.IsPending )
                 {

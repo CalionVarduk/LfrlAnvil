@@ -208,7 +208,7 @@ internal static class Resources
             ? "prefix"
             : "postfix";
 
-        Assume.IsNotNull( converter.SourceType, nameof( converter.SourceType ) );
+        Assume.IsNotNull( converter.SourceType );
         return $"Found duplicate {typeText} type converter for symbol '{symbol}' (source type: {converter.SourceType.GetDebugString()}).";
     }
 

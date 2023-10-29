@@ -20,7 +20,7 @@ public readonly struct Fraction : IEquatable<Fraction>, IComparable<Fraction>, I
 
     public Fraction(long numerator, ulong denominator)
     {
-        Ensure.IsGreaterThan( denominator, 0UL, nameof( denominator ) );
+        Ensure.IsGreaterThan( denominator, 0UL );
         Numerator = numerator;
         _denominator = denominator;
     }

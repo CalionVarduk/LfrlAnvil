@@ -9,7 +9,7 @@ public readonly struct IntegerFixedPartition : IReadOnlyCollection<ulong>
 {
     public IntegerFixedPartition(ulong value, int partCount)
     {
-        Ensure.IsGreaterThanOrEqualTo( partCount, 0, nameof( partCount ) );
+        Ensure.IsGreaterThanOrEqualTo( partCount, 0 );
         Value = value;
         Count = partCount;
         (Quotient, Remainder) = Count > 0 ? Math.DivRem( Value, unchecked( (ulong)Count ) ) : (0, 0);
@@ -66,7 +66,7 @@ public readonly struct IntegerFixedPartition : IReadOnlyCollection<ulong>
         {
             if ( unchecked( (ulong)++_index ) >= _partCount )
             {
-                Assume.Equals( _offset, 0UL, nameof( _offset ) );
+                Assume.Equals( _offset, 0UL );
                 return false;
             }
 

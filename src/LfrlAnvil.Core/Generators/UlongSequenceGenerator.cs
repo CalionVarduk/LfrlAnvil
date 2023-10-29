@@ -20,7 +20,7 @@ public class UlongSequenceGenerator : SequenceGeneratorBase<ulong>
     public UlongSequenceGenerator(Bounds<ulong> bounds, ulong start, ulong step)
         : base( bounds, start, step )
     {
-        Ensure.NotEquals( step, 0U, nameof( step ) );
+        Ensure.NotEquals( step, 0U );
     }
 
     protected sealed override ulong AddStep(ulong value)

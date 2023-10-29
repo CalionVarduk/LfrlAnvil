@@ -22,7 +22,7 @@ public readonly struct ImplementorKey : IEquatable<ImplementorKey>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ImplementorKey Create(IDependencyKey value, int? rangeIndex = null)
     {
-        Assume.Conditional( rangeIndex is not null, () => Assume.IsGreaterThanOrEqualTo( rangeIndex!.Value, 0, nameof( rangeIndex ) ) );
+        Assume.Conditional( rangeIndex is not null, () => Assume.IsGreaterThanOrEqualTo( rangeIndex!.Value, 0 ) );
         return new ImplementorKey( value, rangeIndex ?? int.MinValue );
     }
 

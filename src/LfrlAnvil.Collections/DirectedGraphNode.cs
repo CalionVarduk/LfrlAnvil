@@ -104,7 +104,7 @@ public sealed class DirectedGraphNode<TKey, TNodeValue, TEdgeValue> : IDirectedG
         GraphDirection direction = GraphDirection.Out)
     {
         AssertNotRemoved();
-        Assume.IsNotNull( Graph, nameof( Graph ) );
+        Assume.IsNotNull( Graph );
         return AddEdgeInternal( Graph.GetNode( key ), value, direction );
     }
 
@@ -115,7 +115,7 @@ public sealed class DirectedGraphNode<TKey, TNodeValue, TEdgeValue> : IDirectedG
         [MaybeNullWhen( false )] out DirectedGraphEdge<TKey, TNodeValue, TEdgeValue> result)
     {
         AssertNotRemoved();
-        Assume.IsNotNull( Graph, nameof( Graph ) );
+        Assume.IsNotNull( Graph );
 
         if ( Graph.TryGetNode( key, out var target ) )
             return TryAddEdgeInternal( target, value, direction, out result );
@@ -226,7 +226,7 @@ public sealed class DirectedGraphNode<TKey, TNodeValue, TEdgeValue> : IDirectedG
         foreach ( var key in keysToRemove )
         {
             _edges.Remove( key, out var edge );
-            Assume.IsNotNull( edge, nameof( edge ) );
+            Assume.IsNotNull( edge );
             UnlinkEdge( edge );
         }
 
@@ -236,20 +236,20 @@ public sealed class DirectedGraphNode<TKey, TNodeValue, TEdgeValue> : IDirectedG
     public void Remove()
     {
         AssertNotRemoved();
-        Assume.IsNotNull( Graph, nameof( Graph ) );
+        Assume.IsNotNull( Graph );
         Graph.Remove( this );
     }
 
     internal void UnlinkFromGraph()
     {
-        Assume.IsNotNull( Graph, nameof( Graph ) );
+        Assume.IsNotNull( Graph );
         Graph = null;
         UnlinkAllEdges();
     }
 
     internal void ClearFromGraph()
     {
-        Assume.IsNotNull( Graph, nameof( Graph ) );
+        Assume.IsNotNull( Graph );
         Graph = null;
 
         foreach ( var edge in _edges.Values )
@@ -271,7 +271,7 @@ public sealed class DirectedGraphNode<TKey, TNodeValue, TEdgeValue> : IDirectedG
         TEdgeValue value,
         GraphDirection direction)
     {
-        Assume.IsNotNull( Graph, nameof( Graph ) );
+        Assume.IsNotNull( Graph );
 
         direction = direction.Sanitize();
         if ( direction == GraphDirection.None )
@@ -299,7 +299,7 @@ public sealed class DirectedGraphNode<TKey, TNodeValue, TEdgeValue> : IDirectedG
         GraphDirection direction,
         [MaybeNullWhen( false )] out DirectedGraphEdge<TKey, TNodeValue, TEdgeValue> result)
     {
-        Assume.IsNotNull( Graph, nameof( Graph ) );
+        Assume.IsNotNull( Graph );
 
         direction = direction.Sanitize();
         if ( direction == GraphDirection.None )

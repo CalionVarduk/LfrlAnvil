@@ -21,7 +21,7 @@ internal readonly struct UnsafeBuilderResult<T>
     [Pure]
     internal UnsafeBuilderResult<TOther> CastErrorsTo<TOther>()
     {
-        Assume.False( IsOk, "Assumed result to contain errors." );
+        Assume.False( IsOk );
         return UnsafeBuilderResult<TOther>.CreateErrors( Errors );
     }
 
@@ -40,7 +40,7 @@ internal readonly struct UnsafeBuilderResult<T>
     [Pure]
     internal static UnsafeBuilderResult<T> CreateErrors(Chain<ParsedExpressionBuilderError> errors)
     {
-        Assume.IsNotEmpty( errors, nameof( errors ) );
+        Assume.IsNotEmpty( errors );
         return new UnsafeBuilderResult<T>( default, errors );
     }
 }

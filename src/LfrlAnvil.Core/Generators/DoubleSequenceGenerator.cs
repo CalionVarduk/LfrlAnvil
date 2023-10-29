@@ -22,16 +22,16 @@ public class DoubleSequenceGenerator : SequenceGeneratorBase<double>
     public DoubleSequenceGenerator(Bounds<double> bounds, double start, double step)
         : base( bounds, start, step )
     {
-        Ensure.False( double.IsNaN( bounds.Min ), nameof( bounds ) + "." + nameof( bounds.Min ) + " cannot be NaN" );
-        Ensure.NotEquals( bounds.Min, double.NegativeInfinity, nameof( bounds ) + "." + nameof( bounds.Min ) );
-        Ensure.NotEquals( bounds.Min, double.PositiveInfinity, nameof( bounds ) + "." + nameof( bounds.Min ) );
-        Ensure.False( double.IsNaN( bounds.Max ), nameof( bounds ) + "." + nameof( bounds.Max ) + " cannot be NaN" );
-        Ensure.NotEquals( bounds.Max, double.NegativeInfinity, nameof( bounds ) + "." + nameof( bounds.Max ) );
-        Ensure.NotEquals( bounds.Max, double.PositiveInfinity, nameof( bounds ) + "." + nameof( bounds.Max ) );
-        Ensure.False( double.IsNaN( step ), nameof( step ) + " cannot be NaN" );
-        Ensure.NotEquals( step, double.NegativeInfinity, nameof( step ) );
-        Ensure.NotEquals( step, double.PositiveInfinity, nameof( step ) );
-        Ensure.NotEquals( step, 0, nameof( step ) );
+        Ensure.False( double.IsNaN( bounds.Min ) );
+        Ensure.NotEquals( bounds.Min, double.NegativeInfinity );
+        Ensure.NotEquals( bounds.Min, double.PositiveInfinity );
+        Ensure.False( double.IsNaN( bounds.Max ) );
+        Ensure.NotEquals( bounds.Max, double.NegativeInfinity );
+        Ensure.NotEquals( bounds.Max, double.PositiveInfinity );
+        Ensure.False( double.IsNaN( step ) );
+        Ensure.NotEquals( step, double.NegativeInfinity );
+        Ensure.NotEquals( step, double.PositiveInfinity );
+        Ensure.NotEquals( step, 0 );
     }
 
     protected sealed override double AddStep(double value)

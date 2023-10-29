@@ -12,7 +12,7 @@ public abstract class SqliteObjectBuilder : ISqlObjectBuilder
 {
     protected SqliteObjectBuilder(ulong id, string name, SqlObjectType type)
     {
-        Assume.IsDefined( type, nameof( type ) );
+        Assume.IsDefined( type );
         IsRemoved = false;
         Id = id;
         Name = name;

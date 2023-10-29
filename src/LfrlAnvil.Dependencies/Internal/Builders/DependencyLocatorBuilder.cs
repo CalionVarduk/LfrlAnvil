@@ -45,7 +45,7 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
 
     public IDependencyLocatorBuilder SetDefaultLifetime(DependencyLifetime lifetime)
     {
-        Ensure.IsDefined( lifetime, nameof( lifetime ) );
+        Ensure.IsDefined( lifetime );
         DefaultLifetime = lifetime;
         return this;
     }
@@ -120,8 +120,8 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
             var factoriesInRangeToCreate = rangeBuilderCount;
             if ( builder is not null && builder.IsIncludedInRange )
             {
-                Assume.IsNotNull( factoriesInRange, nameof( factoriesInRange ) );
-                Assume.IsNotNull( builderFactory, nameof( builderFactory ) );
+                Assume.IsNotNull( factoriesInRange );
+                Assume.IsNotNull( builderFactory );
                 factoriesInRange[^1] = builderFactory;
                 --factoriesInRangeToCreate;
             }
@@ -129,7 +129,7 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
             var builderIndex = 0;
             for ( var i = 0; i < factoriesInRangeToCreate; ++i )
             {
-                Assume.IsNotNull( factoriesInRange, nameof( factoriesInRange ) );
+                Assume.IsNotNull( factoriesInRange );
                 while ( ! builderSpan[builderIndex].IsIncludedInRange )
                     ++builderIndex;
 

@@ -146,7 +146,7 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
     {
         lock ( _sync )
         {
-            Assume.ContainsAtLeast( resolvers, 1, nameof( resolvers ) );
+            Assume.ContainsAtLeast( resolvers, 1 );
             var result = new Type[resolvers.Count];
             resolvers.Keys.CopyTo( result, 0 );
             return result;
@@ -166,7 +166,7 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void LinkChildScope(DependencyScope parentScope, ChildDependencyScope childScope)
     {
-        Assume.IsNotNull( childScope.ThreadId, nameof( childScope.ThreadId ) );
+        Assume.IsNotNull( childScope.ThreadId );
 
         _activeScopesPerThread[childScope.ThreadId.Value] = childScope;
 
@@ -178,17 +178,17 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
 
         var parentChildScope = ReinterpretCast.To<ChildDependencyScope>( parentScope );
 
-        Assume.IsNull( parentChildScope.Child, nameof( parentChildScope.Child ) );
-        Assume.IsNotNull( parentChildScope.ThreadId, nameof( parentChildScope.ThreadId ) );
-        Assume.Equals( childScope.ThreadId.Value, parentChildScope.ThreadId.Value, nameof( childScope.ThreadId ) );
+        Assume.IsNull( parentChildScope.Child );
+        Assume.IsNotNull( parentChildScope.ThreadId );
+        Assume.Equals( childScope.ThreadId.Value, parentChildScope.ThreadId.Value );
         parentChildScope.Child = childScope;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void UnlinkChildScope(ChildDependencyScope childScope)
     {
-        Assume.IsNotNull( childScope.InternalParentScope, nameof( childScope.InternalParentScope ) );
-        Assume.IsNotNull( childScope.ThreadId, nameof( childScope.ThreadId ) );
+        Assume.IsNotNull( childScope.InternalParentScope );
+        Assume.IsNotNull( childScope.ThreadId );
 
         if ( ReferenceEquals( childScope.InternalParentScope, InternalRootScope ) )
         {
@@ -200,8 +200,8 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
         var parentChildScope = ReinterpretCast.To<ChildDependencyScope>( childScope.InternalParentScope );
         parentChildScope.Child = null;
 
-        Assume.IsNotNull( parentChildScope.ThreadId, nameof( parentChildScope.ThreadId ) );
-        Assume.Equals( childScope.ThreadId.Value, parentChildScope.ThreadId.Value, nameof( childScope.ThreadId ) );
+        Assume.IsNotNull( parentChildScope.ThreadId );
+        Assume.Equals( childScope.ThreadId.Value, parentChildScope.ThreadId.Value );
         _activeScopesPerThread[childScope.ThreadId.Value] = parentChildScope;
     }
 
@@ -218,7 +218,7 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
 
     private void DisposeChildScope(ChildDependencyScope scope)
     {
-        Assume.IsNotNull( scope.ThreadId, nameof( scope.ThreadId ) );
+        Assume.IsNotNull( scope.ThreadId );
 
         var threadId = Environment.CurrentManagedThreadId;
         if ( threadId != scope.ThreadId.Value )
@@ -287,7 +287,7 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
             var underlyingType = dependencyType.GetGenericArguments()[0];
             var emptyArrayMethod = ExpressionBuilder.GetClosedArrayEmptyMethod( underlyingType );
             var emptyArray = emptyArrayMethod.Invoke( null, null );
-            Assume.IsNotNull( emptyArray, nameof( emptyArray ) );
+            Assume.IsNotNull( emptyArray );
 
             var resolver = new TransientDependencyResolver(
                 id: _idGenerator.Generate(),

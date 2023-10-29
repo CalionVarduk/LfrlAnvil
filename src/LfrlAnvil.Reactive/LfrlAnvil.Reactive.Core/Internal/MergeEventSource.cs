@@ -12,7 +12,7 @@ public sealed class MergeEventSource<TEvent> : EventSource<TEvent>
 
     internal MergeEventSource(IEnumerable<IEventStream<TEvent>> streams, int maxConcurrency)
     {
-        Ensure.IsGreaterThan( maxConcurrency, 0, nameof( maxConcurrency ) );
+        Ensure.IsGreaterThan( maxConcurrency, 0 );
         _maxConcurrency = maxConcurrency;
         _streams = streams.ToArray();
     }
@@ -123,13 +123,13 @@ public sealed class MergeEventSource<TEvent> : EventSource<TEvent>
 
         public override void React(TEvent @event)
         {
-            Assume.IsNotNull( _outerListener, nameof( _outerListener ) );
+            Assume.IsNotNull( _outerListener );
             _outerListener.OnInnerEvent( @event );
         }
 
         public override void OnDispose(DisposalSource _)
         {
-            Assume.IsNotNull( _outerListener, nameof( _outerListener ) );
+            Assume.IsNotNull( _outerListener );
             _outerListener.OnInnerDisposed( _subscriberNode );
             _outerListener = null;
         }

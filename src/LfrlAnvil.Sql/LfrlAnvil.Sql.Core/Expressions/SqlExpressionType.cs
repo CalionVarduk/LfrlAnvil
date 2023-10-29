@@ -115,7 +115,7 @@ public readonly struct SqlExpressionType : IEquatable<SqlExpressionType>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static SqlExpressionType CreateFromRefType(Type type, bool isNullable)
     {
-        Assume.Equals( type.IsValueType, false, nameof( type.IsValueType ) );
+        Assume.Equals( type.IsValueType, false );
         return new SqlExpressionType( type, type, isNullable && type != typeof( DBNull ) );
     }
 
@@ -123,7 +123,7 @@ public readonly struct SqlExpressionType : IEquatable<SqlExpressionType>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static SqlExpressionType CreateFromValueType(Type type, bool isNullable)
     {
-        Assume.Equals( type.IsValueType, true, nameof( type.IsValueType ) );
+        Assume.Equals( type.IsValueType, true );
 
         var underlyingNullableType = Nullable.GetUnderlyingType( type );
         return underlyingNullableType is not null
@@ -135,7 +135,7 @@ public readonly struct SqlExpressionType : IEquatable<SqlExpressionType>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static SqlExpressionType CreateFromNonNullValueType(Type type, bool isNullable)
     {
-        Assume.Equals( type.IsValueType, true, nameof( type.IsValueType ) );
+        Assume.Equals( type.IsValueType, true );
         var fullType = isNullable ? typeof( Nullable<> ).MakeGenericType( type ) : type;
         return new SqlExpressionType( type, fullType, isNullable );
     }

@@ -58,7 +58,7 @@ public static class TimeZoneInfoExtensions
             return null;
 
         var activeRule = timeZone.GetActiveAdjustmentRule( dateTime );
-        Assume.IsNotNull( activeRule, nameof( activeRule ) );
+        Assume.IsNotNull( activeRule );
         var transitionDateTime = GetInvalidityDateTimeRange( activeRule, dateTime.Year );
 
         if ( dateTime >= transitionDateTime.Start && dateTime < transitionDateTime.End )
@@ -82,7 +82,7 @@ public static class TimeZoneInfoExtensions
             return null;
 
         var activeRule = timeZone.GetActiveAdjustmentRule( dateTime );
-        Assume.IsNotNull( activeRule, nameof( activeRule ) );
+        Assume.IsNotNull( activeRule );
         var transitionDateTime = GetAmbiguityDateTimeRange( activeRule, dateTime.Year );
 
         if ( dateTime >= transitionDateTime.Start && dateTime < transitionDateTime.End )

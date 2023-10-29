@@ -20,7 +20,7 @@ public class SbyteSequenceGenerator : SequenceGeneratorBase<sbyte>
     public SbyteSequenceGenerator(Bounds<sbyte> bounds, sbyte start, sbyte step)
         : base( bounds, start, step )
     {
-        Ensure.NotEquals( step, 0, nameof( step ) );
+        Ensure.NotEquals( step, 0 );
     }
 
     protected sealed override sbyte AddStep(sbyte value)

@@ -76,6 +76,6 @@ public class ConcurrentEventSource<TEvent, TSource> : IEventSource<TEvent>
 
     IEventSubscriber IEventStream.Listen(IEventListener listener)
     {
-        return Listen( Argument.CastTo<IEventListener<TEvent>>( listener, nameof( listener ) ) );
+        return Listen( Argument.CastTo<IEventListener<TEvent>>( listener ) );
     }
 }

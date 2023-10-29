@@ -7,7 +7,7 @@ public abstract class SqlNodeBase
 {
     protected SqlNodeBase(SqlNodeType nodeType)
     {
-        Assume.IsDefined( nodeType, nameof( nodeType ) );
+        Assume.IsDefined( nodeType );
         NodeType = nodeType;
     }
 

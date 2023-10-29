@@ -6,7 +6,7 @@ public sealed class MaxLengthValidator<TResult> : IValidator<string, TResult>
 {
     public MaxLengthValidator(int maxLength, TResult failureResult)
     {
-        Ensure.IsGreaterThanOrEqualTo( maxLength, 0, nameof( maxLength ) );
+        Ensure.IsGreaterThanOrEqualTo( maxLength, 0 );
         MaxLength = maxLength;
         FailureResult = failureResult;
     }

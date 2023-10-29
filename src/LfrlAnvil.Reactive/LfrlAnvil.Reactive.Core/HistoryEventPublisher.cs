@@ -8,7 +8,7 @@ public class HistoryEventPublisher<TEvent> : EventPublisher<TEvent>, IHistoryEve
 
     public HistoryEventPublisher(int capacity)
     {
-        Ensure.IsGreaterThan( capacity, 0, nameof( capacity ) );
+        Ensure.IsGreaterThan( capacity, 0 );
         Capacity = capacity;
         _history = new Queue<TEvent>();
     }

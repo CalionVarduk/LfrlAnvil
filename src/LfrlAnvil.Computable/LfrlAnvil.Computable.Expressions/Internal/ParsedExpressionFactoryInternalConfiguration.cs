@@ -223,8 +223,8 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
         [Pure]
         public object GetFormat(Type? formatType)
         {
-            Assume.IsNotNull( formatType, nameof( formatType ) );
-            Assume.Equals( formatType, typeof( NumberFormatInfo ), nameof( formatType ) );
+            Assume.IsNotNull( formatType );
+            Assume.Equals( formatType, typeof( NumberFormatInfo ) );
             return _info;
         }
     }

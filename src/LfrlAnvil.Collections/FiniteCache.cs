@@ -15,8 +15,7 @@ public class FiniteCache<TKey, TValue> : IFiniteCache<TKey, TValue>
 
     public FiniteCache(int capacity, IEqualityComparer<TKey> comparer)
     {
-        Ensure.IsGreaterThan( capacity, 0, nameof( capacity ) );
-
+        Ensure.IsGreaterThan( capacity, 0 );
         Capacity = capacity;
         _map = new SequentialDictionary<TKey, TValue>( comparer );
     }
@@ -31,7 +30,7 @@ public class FiniteCache<TKey, TValue> : IFiniteCache<TKey, TValue>
             if ( Count <= Capacity )
                 return;
 
-            Assume.IsNotNull( Oldest, nameof( Oldest ) );
+            Assume.IsNotNull( Oldest );
             Remove( Oldest.Value.Key );
         }
     }
@@ -55,7 +54,7 @@ public class FiniteCache<TKey, TValue> : IFiniteCache<TKey, TValue>
         if ( Count <= Capacity )
             return;
 
-        Assume.IsNotNull( Oldest, nameof( Oldest ) );
+        Assume.IsNotNull( Oldest );
         _map.Remove( Oldest.Value.Key );
     }
 

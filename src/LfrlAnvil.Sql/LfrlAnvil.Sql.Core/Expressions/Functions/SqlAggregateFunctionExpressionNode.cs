@@ -15,7 +15,7 @@ public abstract class SqlAggregateFunctionExpressionNode : SqlExpressionNode
         Chain<SqlTraitNode> traits)
         : base( SqlNodeType.AggregateFunctionExpression )
     {
-        Assume.IsDefined( functionType, nameof( functionType ) );
+        Assume.IsDefined( functionType );
         FunctionType = functionType;
         Arguments = arguments;
         Traits = traits;

@@ -84,7 +84,7 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
         IReadOnlyDictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
         IDependencyContainerConfigurationBuilder configuration)
     {
-        Assume.IsNotNull( _constructorInfo, nameof( _constructorInfo ) );
+        Assume.IsNotNull( _constructorInfo );
 
         var captiveDependencies = Chain<string>.Empty;
         var invocationOptions = ImplementorBuilder.Constructor?.InvocationOptions;
@@ -99,7 +99,7 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
 
         for ( var i = 0; i < parameters.Length; ++i )
         {
-            Assume.IsNotNull( _parameterResolutions, nameof( _parameterResolutions ) );
+            Assume.IsNotNull( _parameterResolutions );
 
             var parameter = parameters[i];
             var customResolutionIndex = FindCustomResolutionIndex( explicitParameterResolutions, explicitResolutionsLength, parameter );
@@ -149,7 +149,7 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
 
         for ( var i = 0; i < injectableMembers.Length; ++i )
         {
-            Assume.IsNotNull( _memberResolutions, nameof( _memberResolutions ) );
+            Assume.IsNotNull( _memberResolutions );
 
             var member = injectableMembers[i];
             var customResolutionIndex = FindCustomResolutionIndex( explicitMemberResolutions, explicitResolutionsLength, member );
@@ -224,7 +224,7 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
 
     protected sealed override void DetectCircularDependenciesInChildren(List<DependencyGraphNode> path)
     {
-        Assume.ContainsAtLeast( path, 1, nameof( path ) );
+        Assume.ContainsAtLeast( path, 1 );
 
         if ( _parameterResolutions is not null )
         {
@@ -253,12 +253,12 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
 
     protected sealed override DependencyResolver CreateResolver(UlongSequenceGenerator idGenerator)
     {
-        Assume.IsNotNull( _constructorInfo, nameof( _constructorInfo ) );
+        Assume.IsNotNull( _constructorInfo );
         var (expressionBuilder, parameterCount, memberCount) = CreateExpressionBuilder();
 
         for ( var i = 0; i < parameterCount; ++i )
         {
-            Assume.IsNotNull( _parameterResolutions, nameof( _parameterResolutions ) );
+            Assume.IsNotNull( _parameterResolutions );
             var (parameter, resolution) = _parameterResolutions[i];
             var (instanceType, name) = (parameter.ParameterType, $"p{i}");
 
@@ -276,8 +276,8 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
         var memberBindings = memberCount > 0 ? new MemberBinding[memberCount] : null;
         for ( var i = 0; i < memberCount; ++i )
         {
-            Assume.IsNotNull( _memberResolutions, nameof( _memberResolutions ) );
-            Assume.IsNotNull( memberBindings, nameof( memberBindings ) );
+            Assume.IsNotNull( _memberResolutions );
+            Assume.IsNotNull( memberBindings );
 
             var (member, resolution) = _memberResolutions[i];
             var memberType = GetInjectableMemberType( member );
@@ -327,7 +327,7 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
     {
         for ( var i = 0; i < resolutionsLength; ++i )
         {
-            Assume.IsNotNull( resolutions, nameof( resolutions ) );
+            Assume.IsNotNull( resolutions );
             if ( resolutions[i].Predicate( target ) )
                 return i;
         }
@@ -342,8 +342,8 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
         int index)
         where T : class, ICustomAttributeProvider
     {
-        Assume.IsNotNull( resolutions, nameof( resolutions ) );
-        Assume.IsNotNull( usedResolutions, nameof( usedResolutions ) );
+        Assume.IsNotNull( resolutions );
+        Assume.IsNotNull( usedResolutions );
         usedResolutions[index] = true;
         return resolutions[index];
     }
@@ -352,7 +352,7 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
     private IDependencyKey ValidateDependencyImplementorType<T>(T target, Type dependencyType, IDependencyKey? implementorKey)
         where T : notnull
     {
-        Assume.IsNotNull( implementorKey, nameof( implementorKey ) );
+        Assume.IsNotNull( implementorKey );
 
         if ( ! implementorKey.Type.IsAssignableTo( dependencyType ) )
         {
@@ -389,12 +389,12 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
         int resolutionsLength)
         where T : class, ICustomAttributeProvider
     {
-        Assume.IsNotNull( _constructorInfo, nameof( _constructorInfo ) );
+        Assume.IsNotNull( _constructorInfo );
 
         for ( var i = 0; i < resolutionsLength; ++i )
         {
-            Assume.IsNotNull( resolutions, nameof( resolutions ) );
-            Assume.IsNotNull( usedResolutions, nameof( usedResolutions ) );
+            Assume.IsNotNull( resolutions );
+            Assume.IsNotNull( usedResolutions );
 
             if ( usedResolutions[i] )
                 continue;
@@ -407,7 +407,7 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
     [Pure]
     private MemberInfo[] FindInjectableMembers(IDependencyContainerConfigurationBuilder configuration)
     {
-        Assume.IsNotNull( _constructorInfo, nameof( _constructorInfo ) );
+        Assume.IsNotNull( _constructorInfo );
 
         var result = _constructorInfo.DeclaringType?.FindMembers(
                 MemberTypes.Field | MemberTypes.Property,
@@ -478,7 +478,7 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
         IReadOnlyDictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
         IDependencyContainerConfigurationBuilder configuration)
     {
-        Assume.IsNull( ImplementorBuilder.Factory, nameof( ImplementorBuilder.Factory ) );
+        Assume.IsNull( ImplementorBuilder.Factory );
 
         var errors = Chain<string>.Empty;
         var ctor = ImplementorBuilder.Constructor?.Info;
@@ -529,7 +529,7 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
 
         for ( var i = 0; i < parameterCount; ++i )
         {
-            Assume.IsNotNull( _parameterResolutions, nameof( _parameterResolutions ) );
+            Assume.IsNotNull( _parameterResolutions );
             var (parameter, resolution) = _parameterResolutions[i];
 
             if ( resolution is null )
@@ -546,7 +546,7 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
 
         for ( var i = 0; i < memberCount; ++i )
         {
-            Assume.IsNotNull( _memberResolutions, nameof( _memberResolutions ) );
+            Assume.IsNotNull( _memberResolutions );
             var (member, resolution) = _memberResolutions[i];
 
             if ( resolution is null )
@@ -604,7 +604,7 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
                     implementorKey = InternalImplementorKey.WithType( parameter.ParameterType );
                 else
                 {
-                    Assume.IsNotNull( explicitParameterResolutions, nameof( explicitParameterResolutions ) );
+                    Assume.IsNotNull( explicitParameterResolutions );
                     var resolution = explicitParameterResolutions[customResolutionIndex];
                     if ( resolution.Factory is not null )
                     {
@@ -612,7 +612,7 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
                         continue;
                     }
 
-                    Assume.IsNotNull( resolution.ImplementorKey, nameof( resolution.ImplementorKey ) );
+                    Assume.IsNotNull( resolution.ImplementorKey );
                     if ( ! resolution.ImplementorKey.Type.IsAssignableTo( parameter.ParameterType ) )
                     {
                         score = notEligibleScore;

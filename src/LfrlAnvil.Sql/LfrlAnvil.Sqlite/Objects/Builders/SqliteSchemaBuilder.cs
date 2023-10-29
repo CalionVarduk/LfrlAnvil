@@ -133,7 +133,7 @@ public sealed class SqliteSchemaBuilder : SqliteObjectBuilder, ISqlSchemaBuilder
 
     protected override void RemoveCore()
     {
-        Assume.Equals( CanRemove, true, nameof( CanRemove ) );
+        Assume.Equals( CanRemove, true );
 
         using var tableBuffer = Objects.CopyTablesIntoBuffer();
         using var viewBuffer = Objects.CopyViewsIntoBuffer();
@@ -148,7 +148,7 @@ public sealed class SqliteSchemaBuilder : SqliteObjectBuilder, ISqlSchemaBuilder
             foreach ( var obj in tableBuffer )
                 RemoveTable( ReinterpretCast.To<SqliteTableBuilder>( obj ), reachedTables );
 
-            Assume.ContainsExactly( reachedTables, tableBuffer.Length, nameof( reachedTables ) );
+            Assume.ContainsExactly( reachedTables, tableBuffer.Length );
         }
 
         Database.Schemas.Remove( Name );

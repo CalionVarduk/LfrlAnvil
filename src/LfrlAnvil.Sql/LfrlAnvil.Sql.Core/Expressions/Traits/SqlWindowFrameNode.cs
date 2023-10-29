@@ -8,7 +8,7 @@ public class SqlWindowFrameNode : SqlNodeBase
     internal SqlWindowFrameNode(SqlWindowFrameType frameType, SqlWindowFrameBoundary start, SqlWindowFrameBoundary end)
         : base( SqlNodeType.WindowFrame )
     {
-        Assume.IsDefined( frameType, nameof( frameType ) );
+        Assume.IsDefined( frameType );
         FrameType = frameType;
         Start = start;
         End = end;

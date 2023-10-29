@@ -110,7 +110,7 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
 
     internal void UnassignPrimaryKey()
     {
-        Assume.IsNotNull( PrimaryKey, nameof( PrimaryKey ) );
+        Assume.IsNotNull( PrimaryKey );
 
         var oldPrimaryKey = PrimaryKey;
         PrimaryKey = null;
@@ -130,7 +130,7 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
 
     internal void ForceRemove()
     {
-        Assume.Equals( IsRemoved, false, nameof( IsRemoved ) );
+        Assume.Equals( IsRemoved, false );
         IsRemoved = true;
 
         using ( var buffer = Database.ObjectPool.GreedyRent() )
@@ -173,7 +173,7 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
 
     protected override void RemoveCore()
     {
-        Assume.Equals( CanRemove, true, nameof( CanRemove ) );
+        Assume.Equals( CanRemove, true );
 
         _referencingViews = null;
         ForeignKeys.Clear();

@@ -16,7 +16,7 @@ public readonly struct SqlCreateDatabaseResult<TDatabase>
         SqlDatabaseVersionHistory.DatabaseComparisonResult versions,
         int appliedVersionCount)
     {
-        Assume.IsGreaterThanOrEqualTo( appliedVersionCount, 0, nameof( appliedVersionCount ) );
+        Assume.IsGreaterThanOrEqualTo( appliedVersionCount, 0 );
         Database = database;
         Exception = exception;
         _versions = versions;

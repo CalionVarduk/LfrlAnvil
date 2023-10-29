@@ -13,7 +13,7 @@ internal sealed class TransientDependencyResolverFactory : RegisteredDependencyR
         Expression<Func<DependencyScope, object>> expression,
         UlongSequenceGenerator idGenerator)
     {
-        Assume.IsNotNull( ImplementorBuilder, nameof( ImplementorBuilder ) );
+        Assume.IsNotNull( ImplementorBuilder );
 
         return new TransientDependencyResolver(
             idGenerator.Generate(),
@@ -25,8 +25,8 @@ internal sealed class TransientDependencyResolverFactory : RegisteredDependencyR
 
     protected override DependencyResolver CreateFromFactory(UlongSequenceGenerator idGenerator)
     {
-        Assume.IsNotNull( ImplementorBuilder, nameof( ImplementorBuilder ) );
-        Assume.IsNotNull( ImplementorBuilder.Factory, nameof( ImplementorBuilder.Factory ) );
+        Assume.IsNotNull( ImplementorBuilder );
+        Assume.IsNotNull( ImplementorBuilder.Factory );
 
         return new TransientDependencyResolver(
             idGenerator.Generate(),

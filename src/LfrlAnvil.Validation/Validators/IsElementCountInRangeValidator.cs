@@ -7,7 +7,7 @@ public sealed class IsElementCountInRangeValidator<T, TResult> : IValidator<IRea
 {
     public IsElementCountInRangeValidator(int minCount, int maxCount, TResult failureResult)
     {
-        Ensure.IsInRange( minCount, 0, maxCount, nameof( minCount ) );
+        Ensure.IsInRange( minCount, 0, maxCount );
         MinCount = minCount;
         MaxCount = maxCount;
         FailureResult = failureResult;

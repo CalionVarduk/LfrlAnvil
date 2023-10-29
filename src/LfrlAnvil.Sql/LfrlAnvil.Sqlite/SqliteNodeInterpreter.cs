@@ -1129,7 +1129,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         SqlDataSourceTraits traits,
         ComplexUpdateAssignmentsVisitor updateVisitor)
     {
-        Assume.IsNotNull( targetInfo.Target.Alias, nameof( targetInfo.Target.Alias ) );
+        Assume.IsNotNull( targetInfo.Target.Alias );
         var cteName = $"_{Guid.NewGuid():N}";
 
         if ( traits.CommonTableExpressions.Count == 0 )
@@ -1362,7 +1362,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         {
             get
             {
-                Assume.IsNotNull( _cteName, nameof( _cteName ) );
+                Assume.IsNotNull( _cteName );
                 return _cteName;
             }
         }
@@ -1377,7 +1377,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public void AppendIdentityColumnsFilter(SqliteNodeInterpreter interpreter)
         {
-            Assume.IsNotNull( TargetInfo.Target.Alias, nameof( TargetInfo.Target.Alias ) );
+            Assume.IsNotNull( TargetInfo.Target.Alias );
 
             foreach ( var identityColumnName in TargetInfo.IdentityColumnNames )
             {
@@ -1404,7 +1404,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
         public ComplexUpdateAssignmentsVisitor(SqlDataSourceNode dataSource)
         {
-            Assume.IsGreaterThan( dataSource.Joins.Length, 0, nameof( dataSource.Joins.Length ) );
+            Assume.IsGreaterThan( dataSource.Joins.Length, 0 );
 
             var index = 0;
             _joinedRecordSets = new SqlRecordSetNode[dataSource.Joins.Length];

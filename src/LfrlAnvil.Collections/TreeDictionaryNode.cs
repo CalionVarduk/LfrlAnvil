@@ -36,9 +36,9 @@ public sealed class TreeDictionaryNode<TKey, TValue> : ITreeDictionaryNode<TKey,
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void SetTree(TreeDictionary<TKey, TValue> tree)
     {
-        Assume.IsNull( Tree, nameof( Tree ) );
-        Assume.IsNull( Parent, nameof( Parent ) );
-        Assume.IsEmpty( _children, nameof( _children ) );
+        Assume.IsNull( Tree );
+        Assume.IsNull( Parent );
+        Assume.IsEmpty( _children );
 
         Tree = tree;
     }
@@ -46,7 +46,7 @@ public sealed class TreeDictionaryNode<TKey, TValue> : ITreeDictionaryNode<TKey,
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void SetParent(TreeDictionaryNode<TKey, TValue> parent)
     {
-        Assume.IsNotNull( Tree, nameof( Tree ) );
+        Assume.IsNotNull( Tree );
 
         Parent = parent;
         Parent._children.Add( this );
@@ -55,8 +55,8 @@ public sealed class TreeDictionaryNode<TKey, TValue> : ITreeDictionaryNode<TKey,
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void ClearParent()
     {
-        Assume.IsNotNull( Tree, nameof( Tree ) );
-        Assume.IsNotNull( Parent, nameof( Parent ) );
+        Assume.IsNotNull( Tree );
+        Assume.IsNotNull( Parent );
 
         Parent = null;
     }
@@ -64,8 +64,8 @@ public sealed class TreeDictionaryNode<TKey, TValue> : ITreeDictionaryNode<TKey,
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void RemoveFromParent()
     {
-        Assume.IsNotNull( Tree, nameof( Tree ) );
-        Assume.IsNotNull( Parent, nameof( Parent ) );
+        Assume.IsNotNull( Tree );
+        Assume.IsNotNull( Parent );
 
         Parent._children.Remove( this );
     }
@@ -73,7 +73,7 @@ public sealed class TreeDictionaryNode<TKey, TValue> : ITreeDictionaryNode<TKey,
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void Clear()
     {
-        Assume.IsNotNull( Tree, nameof( Tree ) );
+        Assume.IsNotNull( Tree );
 
         Tree = null;
         Parent = null;
@@ -83,16 +83,16 @@ public sealed class TreeDictionaryNode<TKey, TValue> : ITreeDictionaryNode<TKey,
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void SwapParentWith(TreeDictionaryNode<TKey, TValue> node)
     {
-        Assume.IsNotNull( Tree, nameof( Tree ) );
-        Assume.IsNotNull( node.Tree, nameof( node ) + '.' + nameof( Tree ) );
+        Assume.IsNotNull( Tree );
+        Assume.IsNotNull( node.Tree );
 
         (Parent, node.Parent) = (node.Parent, Parent);
     }
 
     internal void SwapChildrenWith(TreeDictionaryNode<TKey, TValue> node)
     {
-        Assume.IsNotNull( Tree, nameof( Tree ) );
-        Assume.IsNotNull( node.Tree, nameof( node ) + '.' + nameof( Tree ) );
+        Assume.IsNotNull( Tree );
+        Assume.IsNotNull( node.Tree );
 
         (_children, node._children) = (node._children, _children);
 
@@ -106,16 +106,16 @@ public sealed class TreeDictionaryNode<TKey, TValue> : ITreeDictionaryNode<TKey,
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void ReplaceChildAt(int index, TreeDictionaryNode<TKey, TValue> newChild)
     {
-        Assume.IsNotNull( Tree, nameof( Tree ) );
-        Assume.IsInRange( index, 0, _children.Count - 1, nameof( index ) );
+        Assume.IsNotNull( Tree );
+        Assume.IsInRange( index, 0, _children.Count - 1 );
 
         _children[index] = newChild;
     }
 
     internal void InheritChildrenFrom(TreeDictionaryNode<TKey, TValue> node)
     {
-        Assume.IsNotNull( Tree, nameof( Tree ) );
-        Assume.IsNotNull( node.Tree, nameof( node ) + '.' + nameof( Tree ) );
+        Assume.IsNotNull( Tree );
+        Assume.IsNotNull( node.Tree );
 
         _children.AddRange( node._children );
 

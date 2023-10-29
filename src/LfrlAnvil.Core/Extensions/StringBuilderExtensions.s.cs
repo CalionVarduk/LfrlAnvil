@@ -60,7 +60,7 @@ public static class StringBuilderExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static StringBuilder ShrinkBy(this StringBuilder builder, int length)
     {
-        Assume.IsGreaterThanOrEqualTo( length, 0, nameof( length ) );
+        Assume.IsGreaterThanOrEqualTo( length, 0 );
         builder.Length -= length;
         return builder;
     }

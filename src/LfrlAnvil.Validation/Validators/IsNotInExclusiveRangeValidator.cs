@@ -7,7 +7,7 @@ public sealed class IsNotInExclusiveRangeValidator<T, TResult> : IValidator<T, T
 {
     public IsNotInExclusiveRangeValidator(T min, T max, IComparer<T> comparer, TResult failureResult)
     {
-        Ensure.IsLessThanOrEqualTo( min, max, comparer, nameof( min ) );
+        Ensure.IsLessThanOrEqualTo( min, max, comparer );
         Min = min;
         Max = max;
         Comparer = comparer;

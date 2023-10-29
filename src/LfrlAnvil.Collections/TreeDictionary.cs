@@ -331,7 +331,7 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
             if ( ContainsKey( descendant.Key ) )
                 continue;
 
-            Assume.IsNotNull( descendant.Parent, nameof( descendant.Parent ) );
+            Assume.IsNotNull( descendant.Parent );
             AddTo( descendant.Parent.Key, descendant.Key, descendant.Value );
         }
 
@@ -360,7 +360,7 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
             return;
         }
 
-        Assume.IsNotNull( _root, nameof( _root ) );
+        Assume.IsNotNull( _root );
         var oldRoot = _root;
         _root = oldRoot.Children[0];
         _root.ClearParent();
@@ -375,7 +375,7 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
 
         for ( var i = 0; i < node.Children.Count; ++i )
         {
-            Assume.IsNotNull( node.Parent, nameof( node.Parent ) );
+            Assume.IsNotNull( node.Parent );
             node.Children[i].SetParent( node.Parent! );
         }
     }
@@ -436,8 +436,8 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
 
     private void SwapWithRoot(TreeDictionaryNode<TKey, TValue> node)
     {
-        Assume.IsNotNull( _root, nameof( _root ) );
-        Assume.IsNotNull( node.Parent, nameof( node.Parent ) );
+        Assume.IsNotNull( _root );
+        Assume.IsNotNull( node.Parent );
         var oldRoot = _root;
         var nodeIndex = node.Parent.GetChildIndex( node );
 
@@ -450,7 +450,7 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
 
     private static void SwapWithSameParent(TreeDictionaryNode<TKey, TValue> first, TreeDictionaryNode<TKey, TValue> second)
     {
-        Assume.IsNotNull( first.Parent, nameof( first.Parent ) );
+        Assume.IsNotNull( first.Parent );
         var parent = first.Parent;
         var firstNodeIndex = parent.GetChildIndex( first );
         var secondNodeIndex = parent.GetChildIndex( second );
@@ -462,8 +462,8 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
 
     private static void SwapWithDifferentParents(TreeDictionaryNode<TKey, TValue> first, TreeDictionaryNode<TKey, TValue> second)
     {
-        Assume.IsNotNull( first.Parent, nameof( first.Parent ) );
-        Assume.IsNotNull( second.Parent, nameof( second.Parent ) );
+        Assume.IsNotNull( first.Parent );
+        Assume.IsNotNull( second.Parent );
         var firstNodeIndex = first.Parent.GetChildIndex( first );
         var secondNodeIndex = second.Parent.GetChildIndex( second );
 
@@ -492,7 +492,7 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
 
     private void MoveRootTo(TreeDictionaryNode<TKey, TValue> parent)
     {
-        Assume.IsNotNull( _root, nameof( _root ) );
+        Assume.IsNotNull( _root );
         var oldRoot = _root;
         oldRoot.SetParent( parent );
 
@@ -505,7 +505,7 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
 
     private static void MoveNodeWithParentTo(TreeDictionaryNode<TKey, TValue> parent, TreeDictionaryNode<TKey, TValue> node)
     {
-        Assume.IsNotNull( node.Parent, nameof( node.Parent ) );
+        Assume.IsNotNull( node.Parent );
         var oldParent = node.Parent;
         node.RemoveFromParent();
         node.SetParent( parent );

@@ -5,6 +5,6 @@ public sealed class SqlMinFunctionExpressionNode : SqlFunctionExpressionNode
     internal SqlMinFunctionExpressionNode(SqlExpressionNode[] arguments)
         : base( SqlFunctionType.Min, arguments )
     {
-        Ensure.IsNotEmpty( arguments, nameof( arguments ) );
+        Ensure.IsNotEmpty( arguments );
     }
 }

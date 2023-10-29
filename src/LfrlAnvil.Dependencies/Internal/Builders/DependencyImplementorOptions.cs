@@ -37,7 +37,7 @@ internal sealed class DependencyImplementorOptions : IDependencyImplementorOptio
         configuration( options );
 
         var sharedImplementorKey = options.Key as IInternalDependencyKey;
-        Ensure.IsNotNull( sharedImplementorKey, nameof( sharedImplementorKey ) );
+        Ensure.IsNotNull( sharedImplementorKey );
         return sharedImplementorKey;
     }
 }

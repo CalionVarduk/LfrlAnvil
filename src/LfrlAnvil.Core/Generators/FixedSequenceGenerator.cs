@@ -22,7 +22,7 @@ public class FixedSequenceGenerator : SequenceGeneratorBase<Fixed>
     public FixedSequenceGenerator(Bounds<Fixed> bounds, Fixed start, Fixed step)
         : base( bounds, start, step )
     {
-        Ensure.NotEquals( step, Fixed.Zero, nameof( step ) );
+        Ensure.NotEquals( step, Fixed.Zero );
     }
 
     protected sealed override Fixed AddStep(Fixed value)

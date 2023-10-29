@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using LfrlAnvil.Exceptions;
 using LfrlAnvil.Extensions;
 
@@ -11,46 +12,46 @@ namespace LfrlAnvil;
 public static class Assume
 {
     [Conditional( "DEBUG" )]
-    public static void IsNull<T>(T? param, string paramName)
+    public static void IsNull<T>(T? param, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         Debug.Assert( param is null, ExceptionResources.AssumedNull( param, paramName ) );
     }
 
     [Conditional( "DEBUG" )]
-    public static void IsNotNull<T>([NotNull] T? param, string paramName)
+    public static void IsNotNull<T>([NotNull] T? param, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         Debug.Assert( param is not null, ExceptionResources.AssumedNotNull( paramName ) );
     }
 
     [Conditional( "DEBUG" )]
-    public static void IsDefined<T>(T param, string paramName)
+    public static void IsDefined<T>(T param, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : struct, Enum
     {
         Debug.Assert( Enum.IsDefined( param ), ExceptionResources.AssumedDefinedEnum( param, typeof( T ), paramName ) );
     }
 
     [Conditional( "DEBUG" )]
-    public static void Equals<T>(T param, T? value, string paramName)
+    public static void Equals<T>(T param, T? value, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : notnull
     {
         Debug.Assert( param.Equals( value ), ExceptionResources.AssumedEqualTo( param, value, paramName ) );
     }
 
     [Conditional( "DEBUG" )]
-    public static void NotEquals<T>(T param, T? value, string paramName)
+    public static void NotEquals<T>(T param, T? value, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : notnull
     {
         Debug.Assert( ! param.Equals( value ), ExceptionResources.AssumedNotEqualTo( param, paramName ) );
     }
 
     [Conditional( "DEBUG" )]
-    public static void IsGreaterThan<T>(T param, T? value, string paramName)
+    public static void IsGreaterThan<T>(T param, T? value, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         Debug.Assert( Comparer<T>.Default.Compare( param, value ) > 0, ExceptionResources.AssumedGreaterThan( param, value, paramName ) );
     }
 
     [Conditional( "DEBUG" )]
-    public static void IsGreaterThanOrEqualTo<T>(T param, T? value, string paramName)
+    public static void IsGreaterThanOrEqualTo<T>(T param, T? value, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         Debug.Assert(
             Comparer<T>.Default.Compare( param, value ) >= 0,
@@ -58,13 +59,13 @@ public static class Assume
     }
 
     [Conditional( "DEBUG" )]
-    public static void IsLessThan<T>(T param, T? value, string paramName)
+    public static void IsLessThan<T>(T param, T? value, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         Debug.Assert( Comparer<T>.Default.Compare( param, value ) < 0, ExceptionResources.AssumedLessThan( param, value, paramName ) );
     }
 
     [Conditional( "DEBUG" )]
-    public static void IsLessThanOrEqualTo<T>(T param, T? value, string paramName)
+    public static void IsLessThanOrEqualTo<T>(T param, T? value, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         Debug.Assert(
             Comparer<T>.Default.Compare( param, value ) <= 0,
@@ -72,7 +73,7 @@ public static class Assume
     }
 
     [Conditional( "DEBUG" )]
-    public static void IsInRange<T>(T param, T min, T max, string paramName)
+    public static void IsInRange<T>(T param, T min, T max, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         Debug.Assert(
             Comparer<T>.Default.Compare( param, min ) >= 0 && Comparer<T>.Default.Compare( param, max ) <= 0,
@@ -80,7 +81,7 @@ public static class Assume
     }
 
     [Conditional( "DEBUG" )]
-    public static void IsNotInRange<T>(T param, T min, T max, string paramName)
+    public static void IsNotInRange<T>(T param, T min, T max, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         Debug.Assert(
             Comparer<T>.Default.Compare( param, min ) < 0 || Comparer<T>.Default.Compare( param, max ) > 0,
@@ -88,7 +89,7 @@ public static class Assume
     }
 
     [Conditional( "DEBUG" )]
-    public static void IsInExclusiveRange<T>(T param, T min, T max, string paramName)
+    public static void IsInExclusiveRange<T>(T param, T min, T max, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         Debug.Assert(
             Comparer<T>.Default.Compare( param, min ) > 0 && Comparer<T>.Default.Compare( param, max ) < 0,
@@ -96,7 +97,7 @@ public static class Assume
     }
 
     [Conditional( "DEBUG" )]
-    public static void IsNotInExclusiveRange<T>(T param, T min, T max, string paramName)
+    public static void IsNotInExclusiveRange<T>(T param, T min, T max, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         Debug.Assert(
             Comparer<T>.Default.Compare( param, min ) <= 0 || Comparer<T>.Default.Compare( param, max ) >= 0,
@@ -104,31 +105,35 @@ public static class Assume
     }
 
     [Conditional( "DEBUG" )]
-    public static void IsEmpty<T>(IEnumerable<T> param, string paramName)
+    public static void IsEmpty<T>(IEnumerable<T> param, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         Debug.Assert( ! param.Any(), ExceptionResources.AssumedEmpty( paramName ) );
     }
 
     [Conditional( "DEBUG" )]
-    public static void IsNotEmpty<T>(IEnumerable<T> param, string paramName)
+    public static void IsNotEmpty<T>(IEnumerable<T> param, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         Debug.Assert( param.Any(), ExceptionResources.AssumedNotEmpty( paramName ) );
     }
 
     [Conditional( "DEBUG" )]
-    public static void ContainsAtLeast<T>(IEnumerable<T> param, int count, string paramName)
+    public static void ContainsAtLeast<T>(IEnumerable<T> param, int count, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         Debug.Assert( param.ContainsAtLeast( count ), ExceptionResources.AssumedToContainAtLeast( count, paramName ) );
     }
 
     [Conditional( "DEBUG" )]
-    public static void ContainsAtMost<T>(IEnumerable<T> param, int count, string paramName)
+    public static void ContainsAtMost<T>(IEnumerable<T> param, int count, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         Debug.Assert( param.ContainsAtMost( count ), ExceptionResources.AssumedToContainAtMost( count, paramName ) );
     }
 
     [Conditional( "DEBUG" )]
-    public static void ContainsInRange<T>(IEnumerable<T> param, int minCount, int maxCount, string paramName)
+    public static void ContainsInRange<T>(
+        IEnumerable<T> param,
+        int minCount,
+        int maxCount,
+        [CallerArgumentExpression( "param" )] string paramName = "")
     {
         Debug.Assert(
             param.ContainsInRange( minCount, maxCount ),
@@ -136,7 +141,7 @@ public static class Assume
     }
 
     [Conditional( "DEBUG" )]
-    public static void ContainsExactly<T>(IEnumerable<T> param, int count, string paramName)
+    public static void ContainsExactly<T>(IEnumerable<T> param, int count, [CallerArgumentExpression( "param" )] string paramName = "")
     {
         Debug.Assert( param.ContainsExactly( count ), ExceptionResources.AssumedToContainExactly( count, paramName ) );
     }
@@ -149,15 +154,15 @@ public static class Assume
     }
 
     [Conditional( "DEBUG" )]
-    public static void True(bool condition, string description)
+    public static void True(bool condition, [CallerArgumentExpression( "condition" )] string description = "")
     {
-        Debug.Assert( condition, description );
+        Debug.Assert( condition, ExceptionResources.AssumedToBeTrue( description ) );
     }
 
     [Conditional( "DEBUG" )]
-    public static void False(bool condition, string description)
+    public static void False(bool condition, [CallerArgumentExpression( "condition" )] string description = "")
     {
-        Debug.Assert( ! condition, description );
+        Debug.Assert( ! condition, ExceptionResources.AssumedToBeFalse( description ) );
     }
 
     [Conditional( "DEBUG" )]

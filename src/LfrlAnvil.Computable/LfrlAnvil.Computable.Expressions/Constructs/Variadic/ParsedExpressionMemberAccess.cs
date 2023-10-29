@@ -23,7 +23,7 @@ public sealed class ParsedExpressionMemberAccess : ParsedExpressionVariadicFunct
     [Pure]
     protected internal override Expression Process(IReadOnlyList<Expression> parameters)
     {
-        Ensure.ContainsExactly( parameters, 2, nameof( parameters ) );
+        Ensure.ContainsExactly( parameters, 2 );
 
         var target = parameters[0];
         var memberName = parameters[1].GetConstantMemberNameValue();

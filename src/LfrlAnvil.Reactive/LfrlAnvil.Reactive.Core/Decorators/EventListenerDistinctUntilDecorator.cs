@@ -79,13 +79,13 @@ public sealed class EventListenerDistinctUntilDecorator<TEvent, TKey, TTargetEve
 
         public override void React(TTargetEvent _)
         {
-            Assume.IsNotNull( _sourceListener, nameof( _sourceListener ) );
+            Assume.IsNotNull( _sourceListener );
             _sourceListener.OnTargetEvent();
         }
 
         public override void OnDispose(DisposalSource _)
         {
-            Assume.IsNotNull( _sourceListener, nameof( _sourceListener ) );
+            Assume.IsNotNull( _sourceListener );
             _sourceListener.OnTargetEvent();
             _sourceListener = null;
         }

@@ -59,7 +59,7 @@ public sealed class EventListenerSkipUntilDecorator<TEvent, TTargetEvent> : IEve
 
         public override void React(TTargetEvent _)
         {
-            Assume.IsNotNull( _sourceListener, nameof( _sourceListener ) );
+            Assume.IsNotNull( _sourceListener );
             _sourceListener.OnTargetEvent();
         }
 

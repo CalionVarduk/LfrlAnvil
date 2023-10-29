@@ -24,7 +24,7 @@ public sealed class ParsedExpressionSwitch : ParsedExpressionVariadicFunction
     [Pure]
     protected internal override Expression Process(IReadOnlyList<Expression> parameters)
     {
-        Ensure.ContainsAtLeast( parameters, count: 2, nameof( parameters ) );
+        Ensure.ContainsAtLeast( parameters, count: 2 );
 
         var switchValue = parameters[0];
         var (switchCases, defaultBody) = ExtractSwitchCases( parameters );

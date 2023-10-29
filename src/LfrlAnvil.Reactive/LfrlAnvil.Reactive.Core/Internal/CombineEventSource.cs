@@ -120,7 +120,7 @@ public sealed class CombineEventSource<TEvent> : EventSource<ReadOnlyMemory<TEve
 
         public override void React(TEvent @event)
         {
-            Assume.IsNotNull( _outerListener, nameof( _outerListener ) );
+            Assume.IsNotNull( _outerListener );
             var firstEvent = ! _hasValue;
             _hasValue = true;
             _outerListener.OnInnerEvent( _index, @event, firstEvent );
@@ -128,7 +128,7 @@ public sealed class CombineEventSource<TEvent> : EventSource<ReadOnlyMemory<TEve
 
         public override void OnDispose(DisposalSource source)
         {
-            Assume.IsNotNull( _outerListener, nameof( _outerListener ) );
+            Assume.IsNotNull( _outerListener );
             _outerListener.OnInnerDisposed();
             _outerListener = null;
         }

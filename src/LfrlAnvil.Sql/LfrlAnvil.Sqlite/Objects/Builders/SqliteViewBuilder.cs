@@ -75,7 +75,7 @@ public sealed class SqliteViewBuilder : SqliteObjectBuilder, ISqlViewBuilder
 
     protected override void RemoveCore()
     {
-        Assume.Equals( CanRemove, true, nameof( CanRemove ) );
+        Assume.Equals( CanRemove, true );
         ForceRemove();
     }
 
@@ -138,7 +138,7 @@ public sealed class SqliteViewBuilder : SqliteObjectBuilder, ISqlViewBuilder
 
     internal void Reactivate()
     {
-        Assume.Equals( IsRemoved, true, nameof( IsRemoved ) );
+        Assume.Equals( IsRemoved, true );
         IsRemoved = false;
         AddSelfToReferencedObjects();
         Schema.Objects.Reactivate( this );
@@ -170,7 +170,7 @@ public sealed class SqliteViewBuilder : SqliteObjectBuilder, ISqlViewBuilder
         foreach ( var view in views.Values )
             index = AddToBufferInReconstructOrder( views, view, buffer, reachedViews, index );
 
-        Assume.Equals( index, -1, nameof( index ) );
+        Assume.Equals( index, -1 );
 
         for ( var i = buffer.Length - 1; i >= 0; --i )
             ReinterpretCast.To<SqliteViewBuilder>( buffer[i] ).RemovePartially();
@@ -216,7 +216,7 @@ public sealed class SqliteViewBuilder : SqliteObjectBuilder, ISqlViewBuilder
 
     private void RemovePartially()
     {
-        Assume.Equals( IsRemoved, false, nameof( IsRemoved ) );
+        Assume.Equals( IsRemoved, false );
         IsRemoved = true;
         RemoveSelfFromReferencedObjects();
         Schema.Objects.ForceRemove( this );

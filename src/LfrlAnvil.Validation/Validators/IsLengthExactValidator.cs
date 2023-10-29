@@ -6,7 +6,7 @@ public sealed class IsLengthExactValidator<TResult> : IValidator<string, TResult
 {
     public IsLengthExactValidator(int length, TResult failureResult)
     {
-        Ensure.IsGreaterThanOrEqualTo( length, 0, nameof( length ) );
+        Ensure.IsGreaterThanOrEqualTo( length, 0 );
         Length = length;
         FailureResult = failureResult;
     }

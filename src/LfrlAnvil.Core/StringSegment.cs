@@ -23,7 +23,7 @@ public readonly struct StringSegment : IEquatable<StringSegment>, IComparable<St
 
     public StringSegment(string source, int startIndex)
     {
-        Ensure.IsGreaterThanOrEqualTo( startIndex, 0, nameof( startIndex ) );
+        Ensure.IsGreaterThanOrEqualTo( startIndex, 0 );
 
         _source = source;
         StartIndex = Math.Min( startIndex, source.Length );
@@ -32,8 +32,8 @@ public readonly struct StringSegment : IEquatable<StringSegment>, IComparable<St
 
     public StringSegment(string source, int startIndex, int length)
     {
-        Ensure.IsGreaterThanOrEqualTo( startIndex, 0, nameof( startIndex ) );
-        Ensure.IsGreaterThanOrEqualTo( length, 0, nameof( length ) );
+        Ensure.IsGreaterThanOrEqualTo( startIndex, 0 );
+        Ensure.IsGreaterThanOrEqualTo( length, 0 );
 
         _source = source;
         StartIndex = Math.Min( startIndex, source.Length );
@@ -111,7 +111,7 @@ public readonly struct StringSegment : IEquatable<StringSegment>, IComparable<St
     [Pure]
     public StringSegment Slice(int startIndex)
     {
-        Ensure.IsGreaterThanOrEqualTo( startIndex, 0, nameof( startIndex ) );
+        Ensure.IsGreaterThanOrEqualTo( startIndex, 0 );
 
         var endIndex = EndIndex;
 
@@ -123,8 +123,8 @@ public readonly struct StringSegment : IEquatable<StringSegment>, IComparable<St
     [Pure]
     public StringSegment Slice(int startIndex, int length)
     {
-        Ensure.IsGreaterThanOrEqualTo( startIndex, 0, nameof( startIndex ) );
-        Ensure.IsGreaterThanOrEqualTo( length, 0, nameof( length ) );
+        Ensure.IsGreaterThanOrEqualTo( startIndex, 0 );
+        Ensure.IsGreaterThanOrEqualTo( length, 0 );
 
         var endIndex = EndIndex;
 
@@ -142,7 +142,7 @@ public readonly struct StringSegment : IEquatable<StringSegment>, IComparable<St
     [Pure]
     public StringSegment SetEndIndex(int value)
     {
-        Ensure.IsGreaterThanOrEqualTo( value, 0, nameof( value ) );
+        Ensure.IsGreaterThanOrEqualTo( value, 0 );
         return Offset( value - EndIndex );
     }
 
@@ -170,7 +170,7 @@ public readonly struct StringSegment : IEquatable<StringSegment>, IComparable<St
     [Pure]
     public StringSegment Expand(int count)
     {
-        Ensure.IsGreaterThanOrEqualTo( count, 0, nameof( count ) );
+        Ensure.IsGreaterThanOrEqualTo( count, 0 );
 
         var startIndex = StartIndex - count;
         var length = Length + (count << 1);
@@ -187,7 +187,7 @@ public readonly struct StringSegment : IEquatable<StringSegment>, IComparable<St
     [Pure]
     public StringSegment Shrink(int count)
     {
-        Ensure.IsGreaterThanOrEqualTo( count, 0, nameof( count ) );
+        Ensure.IsGreaterThanOrEqualTo( count, 0 );
 
         var startIndex = StartIndex + count;
         var length = Length - (count << 1);

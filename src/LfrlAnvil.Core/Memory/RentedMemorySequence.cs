@@ -16,7 +16,7 @@ public struct RentedMemorySequence<T> : IReadOnlyList<T>, ICollection<T>, IDispo
 
     internal RentedMemorySequence(MemorySequencePool<T>.Node node)
     {
-        Assume.Equals( node.IsReusable, false, nameof( node.IsReusable ) );
+        Assume.Equals( node.IsReusable, false );
         _node = node;
         Length = _node.Length;
     }
@@ -37,9 +37,9 @@ public struct RentedMemorySequence<T> : IReadOnlyList<T>, ICollection<T>, IDispo
     {
         get
         {
-            Ensure.IsGreaterThanOrEqualTo( index, 0, nameof( index ) );
-            Ensure.IsLessThan( index, Length, nameof( index ) );
-            Assume.IsNotNull( _node, nameof( _node ) );
+            Ensure.IsGreaterThanOrEqualTo( index, 0 );
+            Ensure.IsLessThan( index, Length );
+            Assume.IsNotNull( _node );
             return _node.GetElement( index );
         }
         set => Set( index, value );
@@ -69,17 +69,17 @@ public struct RentedMemorySequence<T> : IReadOnlyList<T>, ICollection<T>, IDispo
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ref T GetRef(int index)
     {
-        Ensure.IsGreaterThanOrEqualTo( index, 0, nameof( index ) );
-        Ensure.IsLessThan( index, Length, nameof( index ) );
-        Assume.IsNotNull( _node, nameof( _node ) );
+        Ensure.IsGreaterThanOrEqualTo( index, 0 );
+        Ensure.IsLessThan( index, Length );
+        Assume.IsNotNull( _node );
         return ref _node.GetElementRef( index );
     }
 
     public void Set(int index, T item)
     {
-        Ensure.IsGreaterThanOrEqualTo( index, 0, nameof( index ) );
-        Ensure.IsLessThan( index, Length, nameof( index ) );
-        Assume.IsNotNull( _node, nameof( _node ) );
+        Ensure.IsGreaterThanOrEqualTo( index, 0 );
+        Ensure.IsLessThan( index, Length );
+        Assume.IsNotNull( _node );
         _node.SetElement( index, item );
     }
 
@@ -149,7 +149,7 @@ public struct RentedMemorySequence<T> : IReadOnlyList<T>, ICollection<T>, IDispo
         if ( _node is null || _node.IsReusable )
             return;
 
-        Ensure.IsGreaterThanOrEqualTo( span.Length, Length, nameof( span ) + '.' + nameof( span.Length ) );
+        Ensure.IsGreaterThanOrEqualTo( span.Length, Length );
         _node.CopyTo( span );
     }
 
@@ -164,7 +164,7 @@ public struct RentedMemorySequence<T> : IReadOnlyList<T>, ICollection<T>, IDispo
         if ( _node is null || _node.IsReusable || span.Length == 0 )
             return;
 
-        Ensure.IsGreaterThanOrEqualTo( Length, span.Length, nameof( Length ) );
+        Ensure.IsGreaterThanOrEqualTo( Length, span.Length );
         _node.CopyFrom( span );
     }
 
@@ -230,8 +230,8 @@ public struct RentedMemorySequence<T> : IReadOnlyList<T>, ICollection<T>, IDispo
             if ( _remaining == 0 )
                 return false;
 
-            Assume.IsNotNull( _node, nameof( _node ) );
-            Assume.Equals( _node.IsReusable, false, nameof( _node.IsReusable ) );
+            Assume.IsNotNull( _node );
+            Assume.Equals( _node.IsReusable, false );
 
             --_remaining;
             var elementIndex = _index.Element + 1;

@@ -7,7 +7,7 @@ public sealed class MaxElementCountValidator<T, TResult> : IValidator<IReadOnlyC
 {
     public MaxElementCountValidator(int maxCount, TResult failureResult)
     {
-        Ensure.IsGreaterThanOrEqualTo( maxCount, 0, nameof( maxCount ) );
+        Ensure.IsGreaterThanOrEqualTo( maxCount, 0 );
         MaxCount = maxCount;
         FailureResult = failureResult;
     }

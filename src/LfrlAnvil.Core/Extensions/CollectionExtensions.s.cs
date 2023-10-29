@@ -60,7 +60,7 @@ public static class CollectionExtensions
 
     public static void CopyTo<T>(this IReadOnlyCollection<T> source, RentedMemorySequenceSpan<T> span)
     {
-        Ensure.ContainsAtMost( source, span.Length, nameof( source ) );
+        Ensure.ContainsAtMost( source, span.Length );
 
         var index = 0;
         foreach ( var e in source )

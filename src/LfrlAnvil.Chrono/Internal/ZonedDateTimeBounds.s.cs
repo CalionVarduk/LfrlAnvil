@@ -51,7 +51,7 @@ internal static class ZonedDateTimeBounds
             return null;
 
         var activeRule = end.TimeZone.GetActiveAdjustmentRule( end.Value );
-        Assume.IsNotNull( activeRule, nameof( activeRule ) );
+        Assume.IsNotNull( activeRule );
         var transitionTime = activeRule.GetTransitionTimeWithAmbiguity();
 
         var startDelta = activeRule.DaylightDelta.Abs() - transitionTime.TimeOfDay.TimeOfDay - TimeSpan.FromTicks( 1 );
@@ -67,7 +67,7 @@ internal static class ZonedDateTimeBounds
             return null;
 
         var activeRule = start.TimeZone.GetActiveAdjustmentRule( start.Value );
-        Assume.IsNotNull( activeRule, nameof( activeRule ) );
+        Assume.IsNotNull( activeRule );
         var transitionTime = activeRule.GetTransitionTimeWithAmbiguity();
 
         var endDelta = transitionTime.TimeOfDay.TimeOfDay - TimeSpan.FromTicks( 1 );

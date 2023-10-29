@@ -14,7 +14,7 @@ internal class DependencyResolverFactory
 
     protected DependencyResolverFactory(ImplementorKey implementorKey, DependencyLifetime lifetime)
     {
-        Assume.IsDefined( lifetime, nameof( lifetime ) );
+        Assume.IsDefined( lifetime );
         Lifetime = lifetime;
         State = DependencyResolverFactoryState.Created;
         ImplementorKey = implementorKey;
@@ -102,12 +102,12 @@ internal class DependencyResolverFactory
         if ( State != DependencyResolverFactoryState.ValidatedRequiredDependencies )
             return;
 
-        Assume.IsEmpty( pathBuffer, nameof( pathBuffer ) );
+        Assume.IsEmpty( pathBuffer );
 
         pathBuffer.Add( new DependencyGraphNode( null, this ) );
         DetectCircularDependencies( pathBuffer );
 
-        Assume.ContainsExactly( pathBuffer, 1, nameof( pathBuffer ) );
+        Assume.ContainsExactly( pathBuffer, 1 );
         pathBuffer.Clear();
     }
 
@@ -146,7 +146,7 @@ internal class DependencyResolverFactory
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal DependencyResolver GetResolver()
     {
-        Assume.IsNotNull( _resolver, nameof( _resolver ) );
+        Assume.IsNotNull( _resolver );
         return _resolver;
     }
 
@@ -180,7 +180,7 @@ internal class DependencyResolverFactory
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     protected void SetState(DependencyResolverFactoryState state)
     {
-        Assume.Equals( IsFinished, false, nameof( IsFinished ) );
+        Assume.Equals( IsFinished, false );
         State = state;
     }
 
@@ -216,13 +216,13 @@ internal class DependencyResolverFactory
     {
         if ( HasAnyState( DependencyResolverFactoryState.CanRegisterCircularDependency ) )
         {
-            Assume.ContainsAtLeast( path, 2, nameof( path ) );
-            Assume.True( ReferenceEquals( this, path[^1].Factory ), "This and last node in the path must be the same." );
+            Assume.ContainsAtLeast( path, 2 );
+            Assume.True( ReferenceEquals( this, path[^1].Factory ) );
             OnCircularDependencyDetected( path );
             return;
         }
 
-        Assume.Equals( State, DependencyResolverFactoryState.ValidatedRequiredDependencies, nameof( State ) );
+        Assume.Equals( State, DependencyResolverFactoryState.ValidatedRequiredDependencies );
         SetState( DependencyResolverFactoryState.ValidatingCircularDependencies );
 
         path.Add( default );

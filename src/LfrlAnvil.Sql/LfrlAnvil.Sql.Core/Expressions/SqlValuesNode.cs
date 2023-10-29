@@ -12,7 +12,7 @@ public sealed class SqlValuesNode : SqlNodeBase
     internal SqlValuesNode(SqlExpressionNode[,] expressions)
         : base( SqlNodeType.Values )
     {
-        Ensure.IsGreaterThan( expressions.Length, 0, nameof( expressions ) + '.' + nameof( expressions.Length ) );
+        Ensure.IsGreaterThan( expressions.Length, 0 );
         _expressions = expressions;
         RowCount = expressions.GetLength( 0 );
         ColumnCount = expressions.GetLength( 1 );
@@ -21,7 +21,7 @@ public sealed class SqlValuesNode : SqlNodeBase
     internal SqlValuesNode(SqlExpressionNode[] expressions)
         : base( SqlNodeType.Values )
     {
-        Ensure.IsNotEmpty( expressions, nameof( expressions ) );
+        Ensure.IsNotEmpty( expressions );
         _expressions = expressions;
         RowCount = 1;
         ColumnCount = expressions.Length;
@@ -34,7 +34,7 @@ public sealed class SqlValuesNode : SqlNodeBase
     {
         get
         {
-            Ensure.IsInRange( rowIndex, 0, RowCount - 1, nameof( rowIndex ) );
+            Ensure.IsInRange( rowIndex, 0, RowCount - 1 );
             return GetRow( rowIndex );
         }
     }

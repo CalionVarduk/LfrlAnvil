@@ -39,7 +39,7 @@ public sealed class SqliteTable : SqliteObject, ISqlTable
     {
         get
         {
-            Assume.IsNotNull( _primaryKey, nameof( _primaryKey ) );
+            Assume.IsNotNull( _primaryKey );
             return _primaryKey;
         }
     }
@@ -54,7 +54,7 @@ public sealed class SqliteTable : SqliteObject, ISqlTable
 
     internal void SetPrimaryKey(SqliteTableBuilder builder)
     {
-        Assume.IsNull( _primaryKey, nameof( _primaryKey ) );
+        Assume.IsNull( _primaryKey );
 
         if ( builder.PrimaryKey is null )
             throw new SqliteObjectBuilderException( ExceptionResources.PrimaryKeyIsMissing( builder ) );

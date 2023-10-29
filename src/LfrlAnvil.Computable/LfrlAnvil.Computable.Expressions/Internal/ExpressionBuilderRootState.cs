@@ -55,7 +55,7 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
         if ( ! ActiveState.IsRoot )
         {
             var parentState = ReinterpretCast.To<ExpressionBuilderChildState>( ActiveState ).ParentState;
-            Assume.IsNotNull( parentState.LastHandledToken, nameof( parentState.LastHandledToken ) );
+            Assume.IsNotNull( parentState.LastHandledToken );
 
             var missingClosingSymbolError =
                 ParsedExpressionBuilderError.CreateMissingSubExpressionClosingSymbol( parentState.LastHandledToken.Value );
@@ -112,7 +112,7 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
         while ( ! state.IsRoot )
         {
             state = ReinterpretCast.To<ExpressionBuilderChildState>( state ).ParentState;
-            Assume.IsNotNull( state.LastHandledToken, nameof( state.LastHandledToken ) );
+            Assume.IsNotNull( state.LastHandledToken );
             errors = Chain.Create( ParsedExpressionBuilderError.CreateNestedExpressionFailure( state.LastHandledToken.Value, errors ) );
         }
 
@@ -173,8 +173,8 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
     [Pure]
     private (int DiscardedCount, bool RequiresReorganizing) GetArgumentUsageInfo(BitArray usage)
     {
-        Assume.IsNotEmpty( LocalTerms.ArgumentIndexes, nameof( LocalTerms.ArgumentIndexes ) );
-        Assume.ContainsExactly( LocalTerms.ArgumentIndexes, usage.Length, nameof( LocalTerms.ArgumentIndexes ) );
+        Assume.IsNotEmpty( LocalTerms.ArgumentIndexes );
+        Assume.ContainsExactly( LocalTerms.ArgumentIndexes, usage.Length );
 
         var discardedCount = usage[0] ? 0 : 1;
         var requiresReorganizing = false;
@@ -264,8 +264,8 @@ internal sealed class ExpressionBuilderRootState : ExpressionBuilderState
         CompilableInlineDelegate[] delegates,
         BitArray usage)
     {
-        Assume.IsNotEmpty( LocalTerms.ArgumentIndexes, nameof( LocalTerms.ArgumentIndexes ) );
-        Assume.ContainsExactly( LocalTerms.ArgumentIndexes, usage.Length, nameof( LocalTerms.ArgumentIndexes ) );
+        Assume.IsNotEmpty( LocalTerms.ArgumentIndexes );
+        Assume.ContainsExactly( LocalTerms.ArgumentIndexes, usage.Length );
 
         var argumentNames = LocalTerms.ArgumentIndexes.ToDictionary( static kv => kv.Value, static kv => kv.Key );
         var argumentAccessExpressions = new Dictionary<int, Expression>();

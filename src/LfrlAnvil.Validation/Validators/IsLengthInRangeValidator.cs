@@ -6,7 +6,7 @@ public sealed class IsLengthInRangeValidator<TResult> : IValidator<string, TResu
 {
     public IsLengthInRangeValidator(int minLength, int maxLength, TResult failureResult)
     {
-        Ensure.IsInRange( minLength, 0, maxLength, nameof( minLength ) );
+        Ensure.IsInRange( minLength, 0, maxLength );
         MinLength = minLength;
         MaxLength = maxLength;
         FailureResult = failureResult;

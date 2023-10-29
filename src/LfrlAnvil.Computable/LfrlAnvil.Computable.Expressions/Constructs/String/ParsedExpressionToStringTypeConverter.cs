@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics.Contracts;
+﻿using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
 using System.Reflection;
 using LfrlAnvil.Computable.Expressions.Internal;
@@ -18,9 +17,7 @@ public sealed class ParsedExpressionToStringTypeConverter : ParsedExpressionType
     [Pure]
     protected override Expression TryCreateFromConstant(ConstantExpression operand)
     {
-        if ( operand.Value is null )
-            throw new ArgumentNullException( nameof( operand ) + '.' + nameof( operand.Value ) );
-
+        Ensure.IsNotNull( operand.Value );
         return Expression.Constant( operand.Value.ToString() );
     }
 

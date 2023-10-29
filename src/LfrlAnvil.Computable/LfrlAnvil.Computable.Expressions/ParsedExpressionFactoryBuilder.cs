@@ -480,7 +480,7 @@ public sealed class ParsedExpressionFactoryBuilder
         ParsedExpressionConstructType type,
         ref Chain<string> errorMessages)
     {
-        Assume.NotEquals( type, ParsedExpressionConstructType.BinaryOperator, nameof( type ) );
+        Assume.NotEquals( type, ParsedExpressionConstructType.BinaryOperator );
 
         if ( buffer.Count == 0 )
             return UnaryOperatorCollection.Empty;
@@ -581,7 +581,7 @@ public sealed class ParsedExpressionFactoryBuilder
         ParsedExpressionConstructType type,
         ref Chain<string> errorMessages)
     {
-        Assume.NotEquals( type, ParsedExpressionConstructType.BinaryOperator, nameof( type ) );
+        Assume.NotEquals( type, ParsedExpressionConstructType.BinaryOperator );
 
         if ( buffer.Count == 0 )
             return TypeConverterCollection.Empty;

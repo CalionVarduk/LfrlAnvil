@@ -44,7 +44,7 @@ public readonly record struct SqlCreateDatabaseOptions
     [Pure]
     public SqlCreateDatabaseOptions SetMode(SqlDatabaseCreateMode mode)
     {
-        Ensure.IsDefined( mode, nameof( mode ) );
+        Ensure.IsDefined( mode );
         return new SqlCreateDatabaseOptions(
             mode,
             VersionHistorySchemaName,
@@ -68,7 +68,7 @@ public readonly record struct SqlCreateDatabaseOptions
     [Pure]
     public SqlCreateDatabaseOptions SetVersionHistoryPersistenceMode(SqlDatabaseVersionHistoryPersistenceMode mode)
     {
-        Ensure.IsDefined( mode, nameof( mode ) );
+        Ensure.IsDefined( mode );
         return new SqlCreateDatabaseOptions( Mode, VersionHistorySchemaName, VersionHistoryTableName, mode, _statementListeners );
     }
 

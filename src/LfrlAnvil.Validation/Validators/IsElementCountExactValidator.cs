@@ -7,7 +7,7 @@ public sealed class IsElementCountExactValidator<T, TResult> : IValidator<IReadO
 {
     public IsElementCountExactValidator(int count, TResult failureResult)
     {
-        Ensure.IsGreaterThanOrEqualTo( count, 0, nameof( count ) );
+        Ensure.IsGreaterThanOrEqualTo( count, 0 );
         Count = count;
         FailureResult = failureResult;
     }

@@ -300,7 +300,7 @@ public readonly struct ZonedMonth : IEquatable<ZonedMonth>, IComparable<ZonedMon
     public ZonedWeek GetWeekOfMonth(int weekOfMonth, IsoDayOfWeek weekStart = IsoDayOfWeek.Monday)
     {
         var weekCount = GetWeekCount( weekStart );
-        Ensure.IsInRange( weekOfMonth, 1, weekCount, nameof( weekOfMonth ) );
+        Ensure.IsInRange( weekOfMonth, 1, weekCount );
         return GetWeekOfMonthUnsafe( weekOfMonth, weekStart );
     }
 
@@ -331,7 +331,7 @@ public readonly struct ZonedMonth : IEquatable<ZonedMonth>, IComparable<ZonedMon
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public int GetWeekCount(IsoDayOfWeek weekStart = IsoDayOfWeek.Monday)
     {
-        Ensure.IsInRange( (int)weekStart, (int)IsoDayOfWeek.Monday, (int)IsoDayOfWeek.Sunday, nameof( weekStart ) );
+        Ensure.IsInRange( (int)weekStart, (int)IsoDayOfWeek.Monday, (int)IsoDayOfWeek.Sunday );
         return WeekCalculator.GetWeekCountInMonth( Start.Value, End.Value, weekStart.ToBcl() );
     }
 

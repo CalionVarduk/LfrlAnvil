@@ -26,11 +26,11 @@ public readonly struct TimeOfDay : IEquatable<TimeOfDay>, IComparable<TimeOfDay>
 
     public TimeOfDay(int hour, int minute, int second, int millisecond, int tick)
     {
-        Ensure.IsInRange( hour, 0, ChronoConstants.HoursPerStandardDay - 1, nameof( hour ) );
-        Ensure.IsInRange( minute, 0, ChronoConstants.MinutesPerHour - 1, nameof( minute ) );
-        Ensure.IsInRange( second, 0, ChronoConstants.SecondsPerMinute - 1, nameof( second ) );
-        Ensure.IsInRange( millisecond, 0, ChronoConstants.MillisecondsPerSecond - 1, nameof( millisecond ) );
-        Ensure.IsInRange( tick, 0, ChronoConstants.TicksPerMillisecond - 1, nameof( tick ) );
+        Ensure.IsInRange( hour, 0, ChronoConstants.HoursPerStandardDay - 1 );
+        Ensure.IsInRange( minute, 0, ChronoConstants.MinutesPerHour - 1 );
+        Ensure.IsInRange( second, 0, ChronoConstants.SecondsPerMinute - 1 );
+        Ensure.IsInRange( millisecond, 0, ChronoConstants.MillisecondsPerSecond - 1 );
+        Ensure.IsInRange( tick, 0, ChronoConstants.TicksPerMillisecond - 1 );
 
         _value = hour * ChronoConstants.TicksPerHour +
             minute * ChronoConstants.TicksPerMinute +
@@ -143,7 +143,7 @@ public readonly struct TimeOfDay : IEquatable<TimeOfDay>, IComparable<TimeOfDay>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public TimeOfDay SetTick(int value)
     {
-        Ensure.IsInRange( value, 0, ChronoConstants.TicksPerMillisecond - 1, nameof( value ) );
+        Ensure.IsInRange( value, 0, ChronoConstants.TicksPerMillisecond - 1 );
         return new TimeOfDay( _value + value - Tick );
     }
 
@@ -151,7 +151,7 @@ public readonly struct TimeOfDay : IEquatable<TimeOfDay>, IComparable<TimeOfDay>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public TimeOfDay SetMillisecond(int value)
     {
-        Ensure.IsInRange( value, 0, ChronoConstants.MillisecondsPerSecond - 1, nameof( value ) );
+        Ensure.IsInRange( value, 0, ChronoConstants.MillisecondsPerSecond - 1 );
         return new TimeOfDay( _value + (value - Millisecond) * ChronoConstants.TicksPerMillisecond );
     }
 
@@ -159,7 +159,7 @@ public readonly struct TimeOfDay : IEquatable<TimeOfDay>, IComparable<TimeOfDay>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public TimeOfDay SetSecond(int value)
     {
-        Ensure.IsInRange( value, 0, ChronoConstants.SecondsPerMinute - 1, nameof( value ) );
+        Ensure.IsInRange( value, 0, ChronoConstants.SecondsPerMinute - 1 );
         return new TimeOfDay( _value + (value - Second) * ChronoConstants.TicksPerSecond );
     }
 
@@ -167,7 +167,7 @@ public readonly struct TimeOfDay : IEquatable<TimeOfDay>, IComparable<TimeOfDay>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public TimeOfDay SetMinute(int value)
     {
-        Ensure.IsInRange( value, 0, ChronoConstants.MinutesPerHour - 1, nameof( value ) );
+        Ensure.IsInRange( value, 0, ChronoConstants.MinutesPerHour - 1 );
         return new TimeOfDay( _value + (value - Minute) * ChronoConstants.TicksPerMinute );
     }
 
@@ -175,7 +175,7 @@ public readonly struct TimeOfDay : IEquatable<TimeOfDay>, IComparable<TimeOfDay>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public TimeOfDay SetHour(int value)
     {
-        Ensure.IsInRange( value, 0, ChronoConstants.HoursPerStandardDay - 1, nameof( value ) );
+        Ensure.IsInRange( value, 0, ChronoConstants.HoursPerStandardDay - 1 );
         return new TimeOfDay( _value + (value - Hour) * ChronoConstants.TicksPerHour );
     }
 

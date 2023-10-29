@@ -129,14 +129,14 @@ internal sealed class LocalTermsCollection
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void StartVariable(StringSegment name)
     {
-        Assume.IsNull( _activeNewLocalTerm, nameof( _activeNewLocalTerm ) );
+        Assume.IsNull( _activeNewLocalTerm );
         _activeNewLocalTerm = name;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal Chain<ParsedExpressionBuilderError> StartMacro(IntermediateToken token)
     {
-        Assume.IsNull( _activeNewLocalTerm, nameof( _activeNewLocalTerm ) );
+        Assume.IsNull( _activeNewLocalTerm );
 
         if ( _macroParameters is not null && _macroParameters.ContainsKey( token.Symbol ) )
             return Chain.Create( ParsedExpressionBuilderError.CreateDuplicatedLocalTermName( token ) );
@@ -152,7 +152,7 @@ internal sealed class LocalTermsCollection
         Expression expression,
         IReadOnlyList<InlineDelegateCollectionState.Result> delegates)
     {
-        Assume.IsNotNull( _activeNewLocalTerm, nameof( _activeNewLocalTerm ) );
+        Assume.IsNotNull( _activeNewLocalTerm );
 
         var name = _activeNewLocalTerm.Value;
         _activeNewLocalTerm = null;
@@ -168,7 +168,7 @@ internal sealed class LocalTermsCollection
 
     internal Chain<ParsedExpressionBuilderError> AddMacroToken(IntermediateToken token)
     {
-        Assume.IsNotNull( _activeNewLocalTerm, nameof( _activeNewLocalTerm ) );
+        Assume.IsNotNull( _activeNewLocalTerm );
 
         var declaration = _macros[_activeNewLocalTerm.Value];
         declaration.AddToken( token );
@@ -177,7 +177,7 @@ internal sealed class LocalTermsCollection
 
     internal Chain<ParsedExpressionBuilderError> AddMacroParameter(IntermediateToken token)
     {
-        Assume.IsNull( _activeNewLocalTerm, nameof( _activeNewLocalTerm ) );
+        Assume.IsNull( _activeNewLocalTerm );
 
         _macroParameters ??= new Dictionary<StringSegment, int>();
         var index = _macroParameters.Count;
@@ -188,7 +188,7 @@ internal sealed class LocalTermsCollection
 
     internal Chain<ParsedExpressionBuilderError> FinalizeMacroDeclaration()
     {
-        Assume.IsNotNull( _activeNewLocalTerm, nameof( _activeNewLocalTerm ) );
+        Assume.IsNotNull( _activeNewLocalTerm );
 
         var name = _activeNewLocalTerm.Value;
         _activeNewLocalTerm = null;

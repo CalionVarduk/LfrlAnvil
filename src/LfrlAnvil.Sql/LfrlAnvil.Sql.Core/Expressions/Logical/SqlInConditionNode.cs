@@ -7,7 +7,7 @@ public sealed class SqlInConditionNode : SqlConditionNode
     internal SqlInConditionNode(SqlExpressionNode value, SqlExpressionNode[] expressions, bool isNegated)
         : base( SqlNodeType.In )
     {
-        Assume.IsNotEmpty( expressions, nameof( expressions ) );
+        Assume.IsNotEmpty( expressions );
         Value = value;
         Expressions = expressions;
         IsNegated = isNegated;

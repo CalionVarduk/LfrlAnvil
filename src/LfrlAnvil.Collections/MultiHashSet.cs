@@ -71,7 +71,7 @@ public class MultiHashSet<T> : IMultiSet<T>
 
     public int SetMultiplicity(T item, int value)
     {
-        Ensure.IsGreaterThanOrEqualTo( value, 0, nameof( value ) );
+        Ensure.IsGreaterThanOrEqualTo( value, 0 );
 
         if ( value == 0 )
         {
@@ -102,7 +102,7 @@ public class MultiHashSet<T> : IMultiSet<T>
 
     public int AddMany(T item, int count)
     {
-        Ensure.IsGreaterThan( count, 0, nameof( count ) );
+        Ensure.IsGreaterThan( count, 0 );
         return AddImpl( item, count );
     }
 
@@ -113,7 +113,7 @@ public class MultiHashSet<T> : IMultiSet<T>
 
     public int RemoveMany(T item, int count)
     {
-        Ensure.IsGreaterThan( count, 0, nameof( count ) );
+        Ensure.IsGreaterThan( count, 0 );
         return RemoveImpl( item, count );
     }
 

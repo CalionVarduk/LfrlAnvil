@@ -11,6 +11,6 @@ public abstract class EventListener<TEvent> : IEventListener<TEvent>
 
     void IEventListener.React(object? @event)
     {
-        React( Argument.CastTo<TEvent>( @event, nameof( @event ) ) );
+        React( Argument.CastTo<TEvent>( @event ) );
     }
 }

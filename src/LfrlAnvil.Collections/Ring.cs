@@ -13,7 +13,7 @@ public class Ring<T> : IRing<T>
 
     public Ring(int count)
     {
-        Ensure.IsGreaterThan( count, 0, nameof( count ) );
+        Ensure.IsGreaterThan( count, 0 );
         _items = new T?[count];
         _writeIndex = 0;
     }
@@ -21,7 +21,7 @@ public class Ring<T> : IRing<T>
     public Ring(IEnumerable<T?> range)
     {
         _items = range.ToArray();
-        Ensure.IsGreaterThan( _items.Length, 0, $"{nameof( range )}.{nameof( Enumerable.Count )}" );
+        Ensure.IsGreaterThan( _items.Length, 0 );
         _writeIndex = 0;
     }
 

@@ -11,8 +11,8 @@ internal readonly struct ArraySequenceIndex
 
     internal ArraySequenceIndex(int segment, int element)
     {
-        Assume.IsGreaterThanOrEqualTo( segment, -1, nameof( segment ) );
-        Assume.IsGreaterThanOrEqualTo( element, 0, nameof( element ) );
+        Assume.IsGreaterThanOrEqualTo( segment, -1 );
+        Assume.IsGreaterThanOrEqualTo( element, 0 );
         Segment = segment;
         Element = element;
     }
@@ -21,7 +21,7 @@ internal readonly struct ArraySequenceIndex
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ArraySequenceIndex MinusOne(int segmentLength)
     {
-        Assume.IsGreaterThan( segmentLength, 0, nameof( segmentLength ) );
+        Assume.IsGreaterThan( segmentLength, 0 );
         return new ArraySequenceIndex( -1, segmentLength - 1 );
     }
 
@@ -35,9 +35,9 @@ internal readonly struct ArraySequenceIndex
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ArraySequenceIndex Add(int offset, int segmentLengthLog2)
     {
-        Assume.IsGreaterThanOrEqualTo( offset, 0, nameof( offset ) );
-        Assume.IsGreaterThanOrEqualTo( segmentLengthLog2, 0, nameof( segmentLengthLog2 ) );
-        Assume.IsLessThan( Element, 1 << segmentLengthLog2, nameof( Element ) );
+        Assume.IsGreaterThanOrEqualTo( offset, 0 );
+        Assume.IsGreaterThanOrEqualTo( segmentLengthLog2, 0 );
+        Assume.IsLessThan( Element, 1 << segmentLengthLog2 );
 
         var nextElement = Element + offset;
         return new ArraySequenceIndex( Segment + (nextElement >> segmentLengthLog2), nextElement & ((1 << segmentLengthLog2) - 1) );
@@ -47,8 +47,8 @@ internal readonly struct ArraySequenceIndex
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ArraySequenceIndex Decrement(int segmentLength)
     {
-        Assume.IsGreaterThan( segmentLength, 0, nameof( segmentLength ) );
-        Assume.IsLessThan( Element, segmentLength, nameof( Element ) );
+        Assume.IsGreaterThan( segmentLength, 0 );
+        Assume.IsLessThan( Element, segmentLength );
         return Element == 0 ? new ArraySequenceIndex( Segment - 1, segmentLength - 1 ) : new ArraySequenceIndex( Segment, Element - 1 );
     }
 }

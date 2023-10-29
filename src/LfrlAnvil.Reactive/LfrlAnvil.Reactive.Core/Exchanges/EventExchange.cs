@@ -238,7 +238,7 @@ public sealed class EventExchange : IMutableEventExchange
 
         public override void OnDispose(DisposalSource source)
         {
-            Assume.IsNotNull( _exchange, nameof( _exchange ) );
+            Assume.IsNotNull( _exchange );
             if ( _exchange.IsDisposed )
                 return;
 

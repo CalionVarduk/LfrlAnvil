@@ -12,7 +12,7 @@ public sealed class ParsedExpressionBuilderAggregateError : ParsedExpressionBuil
         StringSegment? token = null)
         : base( type, token )
     {
-        Assume.IsNotEmpty( inner, nameof( inner ) );
+        Assume.IsNotEmpty( inner );
         Inner = inner;
     }
 

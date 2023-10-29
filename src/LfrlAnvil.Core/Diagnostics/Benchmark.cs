@@ -8,14 +8,14 @@ public abstract class Benchmark<TState>
 {
     protected Benchmark(BenchmarkOptions options, BenchmarkSampleOptions? warmupOptions = null)
     {
-        Ensure.IsGreaterThanOrEqualTo( options.Samples.Count, 0, nameof( options.Samples.Count ) );
-        Ensure.IsGreaterThanOrEqualTo( options.Samples.StepsPerSample, 0, nameof( options.Samples.StepsPerSample ) );
+        Ensure.IsGreaterThanOrEqualTo( options.Samples.Count, 0 );
+        Ensure.IsGreaterThanOrEqualTo( options.Samples.StepsPerSample, 0 );
 
         Options = options;
         if ( warmupOptions is not null )
         {
-            Ensure.IsGreaterThanOrEqualTo( warmupOptions.Value.Count, 0, nameof( warmupOptions.Value.Count ) );
-            Ensure.IsGreaterThanOrEqualTo( warmupOptions.Value.StepsPerSample, 0, nameof( warmupOptions.Value.StepsPerSample ) );
+            Ensure.IsGreaterThanOrEqualTo( warmupOptions.Value.Count, 0 );
+            Ensure.IsGreaterThanOrEqualTo( warmupOptions.Value.StepsPerSample, 0 );
             WarmupOptions = warmupOptions.Value;
         }
         else

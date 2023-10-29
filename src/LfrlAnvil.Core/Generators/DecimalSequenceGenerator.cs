@@ -20,7 +20,7 @@ public class DecimalSequenceGenerator : SequenceGeneratorBase<decimal>
     public DecimalSequenceGenerator(Bounds<decimal> bounds, decimal start, decimal step)
         : base( bounds, start, step )
     {
-        Ensure.NotEquals( step, 0, nameof( step ) );
+        Ensure.NotEquals( step, 0 );
     }
 
     protected sealed override decimal AddStep(decimal value)

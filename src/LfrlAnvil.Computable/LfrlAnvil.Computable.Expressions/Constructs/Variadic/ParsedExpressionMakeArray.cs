@@ -11,7 +11,7 @@ public sealed class ParsedExpressionMakeArray : ParsedExpressionVariadicFunction
     [Pure]
     protected internal override Expression Process(IReadOnlyList<Expression> parameters)
     {
-        Ensure.ContainsAtLeast( parameters, 1, nameof( parameters ) );
+        Ensure.ContainsAtLeast( parameters, 1 );
 
         var elementType = parameters[0].GetConstantArrayElementTypeValue();
         var elements = parameters.Slice( 1 );

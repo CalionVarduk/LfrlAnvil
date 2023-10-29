@@ -26,10 +26,7 @@ internal readonly struct IntermediateToken
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateOpenedParenthesis(StringSegment symbol)
     {
-        Assume.True(
-            TokenConstants.AreEqual( symbol, TokenConstants.OpenedParenthesis ),
-            "Assumed symbol to be " + nameof( TokenConstants.OpenedParenthesis ) + "." );
-
+        Assume.True( TokenConstants.AreEqual( symbol, TokenConstants.OpenedParenthesis ) );
         return new IntermediateToken( IntermediateTokenType.OpenedParenthesis, symbol );
     }
 
@@ -37,10 +34,7 @@ internal readonly struct IntermediateToken
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateClosedParenthesis(StringSegment symbol)
     {
-        Assume.True(
-            TokenConstants.AreEqual( symbol, TokenConstants.ClosedParenthesis ),
-            "Assumed symbol to be " + nameof( TokenConstants.ClosedParenthesis ) + "." );
-
+        Assume.True( TokenConstants.AreEqual( symbol, TokenConstants.ClosedParenthesis ) );
         return new IntermediateToken( IntermediateTokenType.ClosedParenthesis, symbol );
     }
 
@@ -48,10 +42,7 @@ internal readonly struct IntermediateToken
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateOpenedSquareBracket(StringSegment symbol)
     {
-        Assume.True(
-            TokenConstants.AreEqual( symbol, TokenConstants.OpenedSquareBracket ),
-            "Assumed symbol to be " + nameof( TokenConstants.OpenedSquareBracket ) + "." );
-
+        Assume.True( TokenConstants.AreEqual( symbol, TokenConstants.OpenedSquareBracket ) );
         return new IntermediateToken( IntermediateTokenType.OpenedSquareBracket, symbol );
     }
 
@@ -59,10 +50,7 @@ internal readonly struct IntermediateToken
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateClosedSquareBracket(StringSegment symbol)
     {
-        Assume.True(
-            TokenConstants.AreEqual( symbol, TokenConstants.ClosedSquareBracket ),
-            "Assumed symbol to be " + nameof( TokenConstants.ClosedSquareBracket ) + "." );
-
+        Assume.True( TokenConstants.AreEqual( symbol, TokenConstants.ClosedSquareBracket ) );
         return new IntermediateToken( IntermediateTokenType.ClosedSquareBracket, symbol );
     }
 
@@ -70,10 +58,7 @@ internal readonly struct IntermediateToken
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateLineSeparator(StringSegment symbol)
     {
-        Assume.True(
-            TokenConstants.AreEqual( symbol, TokenConstants.LineSeparator ),
-            "Assumed symbol to be " + nameof( TokenConstants.LineSeparator ) + "." );
-
+        Assume.True( TokenConstants.AreEqual( symbol, TokenConstants.LineSeparator ) );
         return new IntermediateToken( IntermediateTokenType.LineSeparator, symbol );
     }
 
@@ -81,10 +66,7 @@ internal readonly struct IntermediateToken
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateElementSeparator(StringSegment symbol)
     {
-        Assume.True(
-            TokenConstants.AreEqual( symbol, TokenConstants.ElementSeparator ),
-            "Assumed symbol to be " + nameof( TokenConstants.ElementSeparator ) + "." );
-
+        Assume.True( TokenConstants.AreEqual( symbol, TokenConstants.ElementSeparator ) );
         return new IntermediateToken( IntermediateTokenType.ElementSeparator, symbol );
     }
 
@@ -92,10 +74,7 @@ internal readonly struct IntermediateToken
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateMemberAccess(StringSegment symbol)
     {
-        Assume.True(
-            TokenConstants.AreEqual( symbol, TokenConstants.MemberAccess ),
-            "Assumed symbol to be " + nameof( TokenConstants.MemberAccess ) + "." );
-
+        Assume.True( TokenConstants.AreEqual( symbol, TokenConstants.MemberAccess ) );
         return new IntermediateToken( IntermediateTokenType.MemberAccess, symbol );
     }
 
@@ -103,7 +82,7 @@ internal readonly struct IntermediateToken
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateStringConstant(StringSegment symbol)
     {
-        Assume.IsNotEmpty( symbol, nameof( symbol ) );
+        Assume.IsNotEmpty( symbol );
         return new IntermediateToken( IntermediateTokenType.StringConstant, symbol );
     }
 
@@ -111,9 +90,9 @@ internal readonly struct IntermediateToken
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateNumberConstant(StringSegment symbol)
     {
-        Assume.IsNotEmpty( symbol, nameof( symbol ) );
+        Assume.IsNotEmpty( symbol );
         var firstChar = symbol[0];
-        Assume.True( char.IsDigit( firstChar ), "Assumed first symbol character to be a digit." );
+        Assume.True( char.IsDigit( firstChar ) );
 
         return new IntermediateToken( IntermediateTokenType.NumberConstant, symbol );
     }
@@ -122,10 +101,7 @@ internal readonly struct IntermediateToken
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateBooleanConstant(StringSegment symbol)
     {
-        Assume.True(
-            TokenConstants.IsBooleanTrue( symbol ) || TokenConstants.IsBooleanFalse( symbol ),
-            "Assumed symbol to be a boolean constant." );
-
+        Assume.True( TokenConstants.IsBooleanTrue( symbol ) || TokenConstants.IsBooleanFalse( symbol ) );
         return new IntermediateToken( IntermediateTokenType.BooleanConstant, symbol );
     }
 
@@ -133,7 +109,7 @@ internal readonly struct IntermediateToken
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateVariableDeclaration(StringSegment symbol)
     {
-        Assume.True( TokenConstants.IsVariableDeclaration( symbol ), "Assumed symbol to be a variable declaration." );
+        Assume.True( TokenConstants.IsVariableDeclaration( symbol ) );
         return new IntermediateToken( IntermediateTokenType.VariableDeclaration, symbol );
     }
 
@@ -141,7 +117,7 @@ internal readonly struct IntermediateToken
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateMacroDeclaration(StringSegment symbol)
     {
-        Assume.True( TokenConstants.IsMacroDeclaration( symbol ), "Assumed symbol to be a macro declaration." );
+        Assume.True( TokenConstants.IsMacroDeclaration( symbol ) );
         return new IntermediateToken( IntermediateTokenType.MacroDeclaration, symbol );
     }
 
@@ -149,7 +125,7 @@ internal readonly struct IntermediateToken
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateConstructs(StringSegment symbol, ConstructTokenDefinition constructs)
     {
-        Assume.IsNotEmpty( symbol, nameof( symbol ) );
+        Assume.IsNotEmpty( symbol );
         return new IntermediateToken( IntermediateTokenType.Constructs, symbol, constructs );
     }
 
@@ -157,10 +133,7 @@ internal readonly struct IntermediateToken
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateAssignment(StringSegment symbol)
     {
-        Assume.True(
-            TokenConstants.AreEqual( symbol, TokenConstants.Assignment ),
-            "Assumed symbol to be " + nameof( TokenConstants.Assignment ) + "." );
-
+        Assume.True( TokenConstants.AreEqual( symbol, TokenConstants.Assignment ) );
         return new IntermediateToken( IntermediateTokenType.Assignment, symbol );
     }
 
@@ -168,10 +141,7 @@ internal readonly struct IntermediateToken
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateAssignmentWithConstructs(StringSegment symbol, ConstructTokenDefinition constructs)
     {
-        Assume.True(
-            TokenConstants.AreEqual( symbol, TokenConstants.Assignment ),
-            "Assumed symbol to be " + nameof( TokenConstants.Assignment ) + "." );
-
+        Assume.True( TokenConstants.AreEqual( symbol, TokenConstants.Assignment ) );
         return new IntermediateToken( IntermediateTokenType.Assignment, symbol, constructs );
     }
 
@@ -179,7 +149,7 @@ internal readonly struct IntermediateToken
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static IntermediateToken CreateArgument(StringSegment symbol)
     {
-        Assume.IsNotEmpty( symbol, nameof( symbol ) );
+        Assume.IsNotEmpty( symbol );
         return new IntermediateToken( IntermediateTokenType.Argument, symbol );
     }
 }

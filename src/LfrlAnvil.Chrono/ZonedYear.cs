@@ -388,7 +388,7 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public int GetWeekCount(IsoDayOfWeek weekStart = IsoDayOfWeek.Monday)
     {
-        Ensure.IsInRange( (int)weekStart, (int)IsoDayOfWeek.Monday, (int)IsoDayOfWeek.Sunday, nameof( weekStart ) );
+        Ensure.IsInRange( (int)weekStart, (int)IsoDayOfWeek.Monday, (int)IsoDayOfWeek.Sunday );
         return WeekCalculator.GetWeekCountInYear( Year, weekStart.ToBcl() );
     }
 

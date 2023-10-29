@@ -40,7 +40,7 @@ internal sealed class ScopedSingletonDependencyResolver : FactoryDependencyResol
             parentScope = parentScope.InternalParentScope;
         }
 
-        Assume.IsNotNull( Factory, nameof( Factory ) );
+        Assume.IsNotNull( Factory );
         result = Factory( scope );
 
         scope.ScopedInstancesByResolverId.Add( Id, result );

@@ -28,6 +28,6 @@ internal abstract class ConcurrentDecoratedEventSourceBase<TRootEvent, TEvent, T
 
     IEventSubscriber IEventStream.Listen(IEventListener listener)
     {
-        return Listen( Argument.CastTo<IEventListener<TEvent>>( listener, nameof( listener ) ) );
+        return Listen( Argument.CastTo<IEventListener<TEvent>>( listener ) );
     }
 }

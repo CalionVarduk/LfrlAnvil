@@ -87,7 +87,7 @@ public readonly struct Chain<T> : IReadOnlyCollection<T>
             return new Chain<T>( headNode, headNode, count: 1 );
         }
 
-        Assume.IsNotNull( _tail, nameof( _tail ) );
+        Assume.IsNotNull( _tail );
 
         if ( _tail.Next is not null )
             throw new InvalidOperationException( ExceptionResources.ChainHasAlreadyBeenExtended );
@@ -118,7 +118,7 @@ public readonly struct Chain<T> : IReadOnlyCollection<T>
         }
         else
         {
-            Assume.IsNotNull( _tail, nameof( _tail ) );
+            Assume.IsNotNull( _tail );
 
             if ( _tail.Next is not null )
                 throw new InvalidOperationException( ExceptionResources.ChainHasAlreadyBeenExtended );
@@ -152,8 +152,8 @@ public readonly struct Chain<T> : IReadOnlyCollection<T>
         if ( other._head is null )
             return this;
 
-        Assume.IsNotNull( _tail, nameof( _tail ) );
-        Assume.IsNotNull( other._tail, nameof( other ) + '.' + nameof( _tail ) );
+        Assume.IsNotNull( _tail );
+        Assume.IsNotNull( other._tail );
 
         if ( _tail.Next is not null )
             throw new InvalidOperationException( ExceptionResources.ChainHasAlreadyBeenExtended );

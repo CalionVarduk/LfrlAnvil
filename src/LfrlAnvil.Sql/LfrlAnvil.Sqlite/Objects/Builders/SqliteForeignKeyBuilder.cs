@@ -79,7 +79,7 @@ public sealed class SqliteForeignKeyBuilder : SqliteObjectBuilder, ISqlForeignKe
 
     internal void Reactivate()
     {
-        Assume.Equals( IsRemoved, true, nameof( IsRemoved ) );
+        Assume.Equals( IsRemoved, true );
         IsRemoved = false;
 
         Index.AddForeignKey( this );
@@ -93,7 +93,7 @@ public sealed class SqliteForeignKeyBuilder : SqliteObjectBuilder, ISqlForeignKe
 
     protected override void RemoveCore()
     {
-        Assume.Equals( CanRemove, true, nameof( CanRemove ) );
+        Assume.Equals( CanRemove, true );
 
         Index.RemoveForeignKey( this );
         ReferencedIndex.RemoveReferencingForeignKey( this );

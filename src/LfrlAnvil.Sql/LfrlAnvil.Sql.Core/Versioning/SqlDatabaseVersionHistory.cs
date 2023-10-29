@@ -52,10 +52,10 @@ public class SqlDatabaseVersionHistory
         var errors = Chain<string>.Empty;
 
         var ordinalOffset = records[0].Ordinal - 1;
-        Assume.IsGreaterThanOrEqualTo( ordinalOffset, 0, nameof( ordinalOffset ) );
+        Assume.IsGreaterThanOrEqualTo( ordinalOffset, 0 );
         var dbVersion = records[^1].Version;
         var lastOrdinal = records[^1].Ordinal;
-        Assume.IsGreaterThanOrEqualTo( lastOrdinal, records[0].Ordinal, nameof( lastOrdinal ) );
+        Assume.IsGreaterThanOrEqualTo( lastOrdinal, records[0].Ordinal );
 
         var committedVersionCount = GetVersionCountUpTo( allVersions, dbVersion );
         if ( committedVersionCount == 0 )
@@ -105,7 +105,7 @@ public class SqlDatabaseVersionHistory
             Version current,
             int nextOrdinal)
         {
-            Assume.IsGreaterThanOrEqualTo( committedVersionCount, 0, nameof( committedVersionCount ) );
+            Assume.IsGreaterThanOrEqualTo( committedVersionCount, 0 );
             _allVersions = allVersions;
             _committedVersionCount = committedVersionCount;
             Current = current;

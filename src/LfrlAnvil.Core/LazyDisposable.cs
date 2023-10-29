@@ -28,7 +28,7 @@ public sealed class LazyDisposable<T> : IDisposable
 
         if ( _hasInner != 0 )
         {
-            Assume.IsNotNull( Inner, nameof( Inner ) );
+            Assume.IsNotNull( Inner );
             Inner.Dispose();
         }
     }
