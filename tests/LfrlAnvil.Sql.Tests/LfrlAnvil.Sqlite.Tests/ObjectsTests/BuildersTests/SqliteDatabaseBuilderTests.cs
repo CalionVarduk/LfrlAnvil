@@ -266,7 +266,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
         {
             result.Context.Sql.Capacity.Should().Be( 1024 );
             result.Context.Indent.Should().Be( 0 );
-            result.Context.ParentNode.Should().BeNull();
+            result.Context.ChildDepth.Should().Be( 0 );
             result.Context.Parameters.Should().BeEmpty();
             result.Should().BeOfType( typeof( SqliteNodeInterpreter ) );
         }

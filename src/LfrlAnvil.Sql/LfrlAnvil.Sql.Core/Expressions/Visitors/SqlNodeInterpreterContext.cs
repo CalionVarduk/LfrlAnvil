@@ -17,12 +17,12 @@ public sealed class SqlNodeInterpreterContext
         Sql = sql;
         Indent = 0;
         _parameters = null;
-        ParentNode = null;
+        ChildDepth = 0;
     }
 
     public StringBuilder Sql { get; }
     public int Indent { get; private set; }
-    public SqlNodeBase? ParentNode { get; private set; }
+    public int ChildDepth { get; private set; }
 
     public IReadOnlyCollection<KeyValuePair<string, SqlExpressionType?>> Parameters =>
         (IReadOnlyCollection<KeyValuePair<string, SqlExpressionType?>>?)_parameters ??
@@ -64,20 +64,21 @@ public sealed class SqlNodeInterpreterContext
         return new TemporaryIndentIncrease( this );
     }
 
-    public void SetParentNode(SqlNodeBase node)
+    public void IncreaseChildDepth()
     {
-        ParentNode = node;
+        ++ChildDepth;
     }
 
-    public void ClearParentNode()
+    public void DecreaseChildDepth()
     {
-        ParentNode = null;
+        if ( ChildDepth > 0 )
+            --ChildDepth;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public TemporaryParentNodeUpdate TempParentNodeUpdate(SqlNodeBase node)
+    public TemporaryChildDepthIncrease TempChildDepthIncrease()
     {
-        return new TemporaryParentNodeUpdate( this, node );
+        return new TemporaryChildDepthIncrease( this );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -127,26 +128,24 @@ public sealed class SqlNodeInterpreterContext
         Sql.Clear();
         _parameters?.Clear();
         Indent = 0;
-        ClearParentNode();
+        ChildDepth = 0;
     }
 
-    public readonly struct TemporaryParentNodeUpdate : IDisposable
+    public readonly struct TemporaryChildDepthIncrease : IDisposable
     {
         private readonly SqlNodeInterpreterContext _context;
-        private readonly SqlNodeBase? _prevParentNode;
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal TemporaryParentNodeUpdate(SqlNodeInterpreterContext context, SqlNodeBase parentNode)
+        internal TemporaryChildDepthIncrease(SqlNodeInterpreterContext context)
         {
             _context = context;
-            _prevParentNode = context.ParentNode;
-            context.SetParentNode( parentNode );
+            context.IncreaseChildDepth();
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public void Dispose()
         {
-            _context.ParentNode = _prevParentNode;
+            _context.DecreaseChildDepth();
         }
     }
 

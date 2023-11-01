@@ -17,6 +17,7 @@ public class SqlNodeInterpreterTests : TestsBase
         {
             sut.BeginNameDelimiter.Should().Be( '[' );
             sut.EndNameDelimiter.Should().Be( ']' );
+            sut.IgnoredRecordSet.Should().BeNull();
         }
     }
 
@@ -212,6 +213,63 @@ public class SqlNodeInterpreterTests : TestsBase
             result.Custom.ElementAtOrDefault( 5 ).Should().BeSameAs( cte );
             result.Custom.ElementAtOrDefault( 6 ).Should().BeSameAs( custom );
             result.Custom.ElementAtOrDefault( 7 ).Should().BeSameAs( offset );
+        }
+    }
+
+    [Fact]
+    public void TempIgnoreRecordSet_ShouldSetProvidedRecordSetAsIgnoredAndReturnObjectThatResetsIgnoredRecordSetRuleToPreviousWhenDisposed()
+    {
+        var set = SqlNode.RawRecordSet( "foo" );
+        var sut = new SqlNodeDebugInterpreter();
+
+        SqlNodeInterpreter.IgnoredRecordSetRule? rule;
+        using ( sut.TempIgnoreRecordSet( set ) )
+            rule = sut.IgnoredRecordSet;
+
+        using ( new AssertionScope() )
+        {
+            sut.IgnoredRecordSet.Should().BeNull();
+            rule.Should().NotBeNull();
+            (rule?.Node).Should().BeSameAs( set );
+            (rule?.IgnoresAll).Should().BeFalse();
+        }
+    }
+
+    [Fact]
+    public void
+        TempIgnoreAllRecordSets_ShouldSetIgnoredRecordSetRulToIgnoreAllAndReturnObjectThatResetsIgnoredRecordSetRuleToPreviousWhenDisposed()
+    {
+        var sut = new SqlNodeDebugInterpreter();
+
+        SqlNodeInterpreter.IgnoredRecordSetRule? rule;
+        using ( sut.TempIgnoreAllRecordSets() )
+            rule = sut.IgnoredRecordSet;
+
+        using ( new AssertionScope() )
+        {
+            sut.IgnoredRecordSet.Should().BeNull();
+            rule.Should().NotBeNull();
+            (rule?.Node).Should().BeNull();
+            (rule?.IgnoresAll).Should().BeTrue();
+        }
+    }
+
+    [Fact]
+    public void
+        TempIncludeAllRecordSets_ShouldSetIgnoredRecordSetRulToIncludeAllAndReturnObjectThatResetsIgnoredRecordSetRuleToPreviousWhenDisposed()
+    {
+        var sut = new SqlNodeDebugInterpreter();
+        _ = sut.TempIgnoreAllRecordSets();
+        var previous = sut.IgnoredRecordSet;
+
+        SqlNodeInterpreter.IgnoredRecordSetRule? rule;
+        using ( sut.TempIncludeAllRecordSets() )
+            rule = sut.IgnoredRecordSet;
+
+        using ( new AssertionScope() )
+        {
+            sut.IgnoredRecordSet.Should().BeEquivalentTo( previous );
+            rule.Should().BeNull();
         }
     }
 

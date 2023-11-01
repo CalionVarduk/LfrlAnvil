@@ -107,124 +107,105 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public virtual void VisitNegate(SqlNegateExpressionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-            VisitPrefixUnaryOperator( node.Value, symbol: "-" );
+        VisitPrefixUnaryOperator( node.Value, symbol: "-" );
     }
 
     public virtual void VisitAdd(SqlAddExpressionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-            VisitInfixBinaryOperator( node.Left, symbol: "+", node.Right );
+        VisitInfixBinaryOperator( node.Left, symbol: "+", node.Right );
     }
 
     public virtual void VisitConcat(SqlConcatExpressionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-            VisitInfixBinaryOperator( node.Left, symbol: "||", node.Right );
+        VisitInfixBinaryOperator( node.Left, symbol: "||", node.Right );
     }
 
     public virtual void VisitSubtract(SqlSubtractExpressionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-            VisitInfixBinaryOperator( node.Left, symbol: "-", node.Right );
+        VisitInfixBinaryOperator( node.Left, symbol: "-", node.Right );
     }
 
     public virtual void VisitMultiply(SqlMultiplyExpressionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-            VisitInfixBinaryOperator( node.Left, symbol: "*", node.Right );
+        VisitInfixBinaryOperator( node.Left, symbol: "*", node.Right );
     }
 
     public virtual void VisitDivide(SqlDivideExpressionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-            VisitInfixBinaryOperator( node.Left, symbol: "/", node.Right );
+        VisitInfixBinaryOperator( node.Left, symbol: "/", node.Right );
     }
 
     public virtual void VisitModulo(SqlModuloExpressionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-            VisitInfixBinaryOperator( node.Left, symbol: "%", node.Right );
+        VisitInfixBinaryOperator( node.Left, symbol: "%", node.Right );
     }
 
     public virtual void VisitBitwiseNot(SqlBitwiseNotExpressionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-            VisitPrefixUnaryOperator( node.Value, symbol: "~" );
+        VisitPrefixUnaryOperator( node.Value, symbol: "~" );
     }
 
     public virtual void VisitBitwiseAnd(SqlBitwiseAndExpressionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-            VisitInfixBinaryOperator( node.Left, symbol: "&", node.Right );
+        VisitInfixBinaryOperator( node.Left, symbol: "&", node.Right );
     }
 
     public virtual void VisitBitwiseOr(SqlBitwiseOrExpressionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-            VisitInfixBinaryOperator( node.Left, symbol: "|", node.Right );
+        VisitInfixBinaryOperator( node.Left, symbol: "|", node.Right );
     }
 
     public virtual void VisitBitwiseXor(SqlBitwiseXorExpressionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-            VisitInfixBinaryOperator( node.Left, symbol: "^", node.Right );
+        VisitInfixBinaryOperator( node.Left, symbol: "^", node.Right );
     }
 
     public virtual void VisitBitwiseLeftShift(SqlBitwiseLeftShiftExpressionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-            VisitInfixBinaryOperator( node.Left, symbol: "<<", node.Right );
+        VisitInfixBinaryOperator( node.Left, symbol: "<<", node.Right );
     }
 
     public virtual void VisitBitwiseRightShift(SqlBitwiseRightShiftExpressionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-            VisitInfixBinaryOperator( node.Left, symbol: ">>", node.Right );
+        VisitInfixBinaryOperator( node.Left, symbol: ">>", node.Right );
     }
 
     public virtual void VisitSwitchCase(SqlSwitchCaseNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-        {
-            Context.Sql.Append( "WHEN" ).AppendSpace();
-            this.Visit( node.Condition );
+        Context.Sql.Append( "WHEN" ).AppendSpace();
+        this.Visit( node.Condition );
 
-            using ( Context.TempIndentIncrease() )
-            {
-                Context.AppendIndent().Append( "THEN" ).AppendSpace();
-                VisitChild( node.Expression );
-            }
+        using ( Context.TempIndentIncrease() )
+        {
+            Context.AppendIndent().Append( "THEN" ).AppendSpace();
+            VisitChild( node.Expression );
         }
     }
 
     public virtual void VisitSwitch(SqlSwitchExpressionNode node)
     {
-        var hasParentNode = Context.ParentNode is not null;
-        if ( hasParentNode )
+        var isChild = Context.ChildDepth > 0;
+        if ( isChild )
             Context.AppendIndent();
 
-        using ( Context.TempParentNodeUpdate( node ) )
+        Context.Sql.Append( "CASE" );
+
+        using ( Context.TempIndentIncrease() )
         {
-            Context.Sql.Append( "CASE" );
-
-            using ( Context.TempIndentIncrease() )
+            foreach ( var @case in node.Cases )
             {
-                foreach ( var @case in node.Cases )
-                {
-                    Context.AppendIndent();
-                    VisitSwitchCase( @case );
-                }
-
-                Context.AppendIndent().Append( "ELSE" ).AppendSpace();
-                VisitChild( node.Default );
+                Context.AppendIndent();
+                VisitSwitchCase( @case );
             }
 
-            Context.AppendIndent().Append( "END" );
-
-            if ( hasParentNode )
-                Context.AppendShortIndent();
+            Context.AppendIndent().Append( "ELSE" ).AppendSpace();
+            VisitChild( node.Default );
         }
+
+        Context.AppendIndent().Append( "END" );
+
+        if ( isChild )
+            Context.AppendShortIndent();
     }
 
     public abstract void VisitRecordsAffectedFunction(SqlRecordsAffectedFunctionExpressionNode node);
@@ -232,10 +213,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     public virtual void VisitCoalesceFunction(SqlCoalesceFunctionExpressionNode node)
     {
         if ( node.Arguments.Length == 1 )
-        {
-            using ( Context.TempParentNodeUpdate( node ) )
-                VisitChild( node.Arguments.Span[0] );
-        }
+            VisitChild( node.Arguments.Span[0] );
         else
             VisitSimpleFunction( "COALESCE", node );
     }
@@ -312,68 +290,56 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public virtual void VisitEqualTo(SqlEqualToConditionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
+        if ( node.Right.NodeType == SqlNodeType.Null )
         {
-            if ( node.Right.NodeType == SqlNodeType.Null )
-            {
-                VisitChild( node.Left );
-                Context.Sql.AppendSpace().Append( "IS" ).AppendSpace();
-                VisitNull( ReinterpretCast.To<SqlNullNode>( node.Right ) );
-            }
-            else
-                VisitInfixBinaryOperator( node.Left, symbol: "=", node.Right );
+            VisitChild( node.Left );
+            Context.Sql.AppendSpace().Append( "IS" ).AppendSpace();
+            VisitNull( ReinterpretCast.To<SqlNullNode>( node.Right ) );
         }
+        else
+            VisitInfixBinaryOperator( node.Left, symbol: "=", node.Right );
     }
 
     public virtual void VisitNotEqualTo(SqlNotEqualToConditionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
+        if ( node.Right.NodeType == SqlNodeType.Null )
         {
-            if ( node.Right.NodeType == SqlNodeType.Null )
-            {
-                VisitChild( node.Left );
-                Context.Sql.AppendSpace().Append( "IS" ).AppendSpace().Append( "NOT" ).AppendSpace();
-                VisitNull( ReinterpretCast.To<SqlNullNode>( node.Right ) );
-            }
-            else
-                VisitInfixBinaryOperator( node.Left, symbol: "<>", node.Right );
+            VisitChild( node.Left );
+            Context.Sql.AppendSpace().Append( "IS" ).AppendSpace().Append( "NOT" ).AppendSpace();
+            VisitNull( ReinterpretCast.To<SqlNullNode>( node.Right ) );
         }
+        else
+            VisitInfixBinaryOperator( node.Left, symbol: "<>", node.Right );
     }
 
     public virtual void VisitGreaterThan(SqlGreaterThanConditionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-            VisitInfixBinaryOperator( node.Left, symbol: ">", node.Right );
+        VisitInfixBinaryOperator( node.Left, symbol: ">", node.Right );
     }
 
     public virtual void VisitLessThan(SqlLessThanConditionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-            VisitInfixBinaryOperator( node.Left, symbol: "<", node.Right );
+        VisitInfixBinaryOperator( node.Left, symbol: "<", node.Right );
     }
 
     public virtual void VisitGreaterThanOrEqualTo(SqlGreaterThanOrEqualToConditionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-            VisitInfixBinaryOperator( node.Left, symbol: ">=", node.Right );
+        VisitInfixBinaryOperator( node.Left, symbol: ">=", node.Right );
     }
 
     public virtual void VisitLessThanOrEqualTo(SqlLessThanOrEqualToConditionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-            VisitInfixBinaryOperator( node.Left, symbol: "<=", node.Right );
+        VisitInfixBinaryOperator( node.Left, symbol: "<=", node.Right );
     }
 
     public virtual void VisitAnd(SqlAndConditionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-            VisitInfixBinaryOperator( node.Left, symbol: "AND", node.Right );
+        VisitInfixBinaryOperator( node.Left, symbol: "AND", node.Right );
     }
 
     public virtual void VisitOr(SqlOrConditionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-            VisitInfixBinaryOperator( node.Left, symbol: "OR", node.Right );
+        VisitInfixBinaryOperator( node.Left, symbol: "OR", node.Right );
     }
 
     public virtual void VisitConditionValue(SqlConditionValueNode node)
@@ -386,91 +352,76 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public virtual void VisitBetween(SqlBetweenConditionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-        {
-            VisitChild( node.Value );
+        VisitChild( node.Value );
 
-            Context.Sql.AppendSpace();
-            if ( node.IsNegated )
-                Context.Sql.Append( "NOT" ).AppendSpace();
+        Context.Sql.AppendSpace();
+        if ( node.IsNegated )
+            Context.Sql.Append( "NOT" ).AppendSpace();
 
-            Context.Sql.Append( "BETWEEN" ).AppendSpace();
+        Context.Sql.Append( "BETWEEN" ).AppendSpace();
 
-            VisitChild( node.Min );
-            Context.Sql.AppendSpace().Append( "AND" ).AppendSpace();
-            VisitChild( node.Max );
-        }
+        VisitChild( node.Min );
+        Context.Sql.AppendSpace().Append( "AND" ).AppendSpace();
+        VisitChild( node.Max );
     }
 
     public virtual void VisitExists(SqlExistsConditionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-        {
-            if ( node.IsNegated )
-                Context.Sql.Append( "NOT" ).AppendSpace();
+        if ( node.IsNegated )
+            Context.Sql.Append( "NOT" ).AppendSpace();
 
-            Context.Sql.Append( "EXISTS" ).AppendSpace();
-            VisitChild( node.Query );
-        }
+        Context.Sql.Append( "EXISTS" ).AppendSpace();
+        VisitChild( node.Query );
     }
 
     public virtual void VisitLike(SqlLikeConditionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
+        VisitChild( node.Value );
+
+        Context.Sql.AppendSpace();
+        if ( node.IsNegated )
+            Context.Sql.Append( "NOT" ).AppendSpace();
+
+        Context.Sql.Append( "LIKE" ).AppendSpace();
+
+        VisitChild( node.Pattern );
+
+        if ( node.Escape is not null )
         {
-            VisitChild( node.Value );
-
-            Context.Sql.AppendSpace();
-            if ( node.IsNegated )
-                Context.Sql.Append( "NOT" ).AppendSpace();
-
-            Context.Sql.Append( "LIKE" ).AppendSpace();
-
-            VisitChild( node.Pattern );
-
-            if ( node.Escape is not null )
-            {
-                Context.Sql.AppendSpace().Append( "ESCAPE" ).AppendSpace();
-                VisitChild( node.Escape );
-            }
+            Context.Sql.AppendSpace().Append( "ESCAPE" ).AppendSpace();
+            VisitChild( node.Escape );
         }
     }
 
     public virtual void VisitIn(SqlInConditionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
+        VisitChild( node.Value );
+
+        Context.Sql.AppendSpace();
+        if ( node.IsNegated )
+            Context.Sql.Append( "NOT" ).AppendSpace();
+
+        Context.Sql.Append( "IN" ).AppendSpace().Append( '(' );
+
+        foreach ( var expr in node.Expressions )
         {
-            VisitChild( node.Value );
-
-            Context.Sql.AppendSpace();
-            if ( node.IsNegated )
-                Context.Sql.Append( "NOT" ).AppendSpace();
-
-            Context.Sql.Append( "IN" ).AppendSpace().Append( '(' );
-
-            foreach ( var expr in node.Expressions )
-            {
-                VisitChild( expr );
-                Context.Sql.AppendComma().AppendSpace();
-            }
-
-            Context.Sql.ShrinkBy( 2 ).Append( ')' );
+            VisitChild( expr );
+            Context.Sql.AppendComma().AppendSpace();
         }
+
+        Context.Sql.ShrinkBy( 2 ).Append( ')' );
     }
 
     public virtual void VisitInQuery(SqlInQueryConditionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-        {
-            VisitChild( node.Value );
+        VisitChild( node.Value );
 
-            Context.Sql.AppendSpace();
-            if ( node.IsNegated )
-                Context.Sql.Append( "NOT" ).AppendSpace();
+        Context.Sql.AppendSpace();
+        if ( node.IsNegated )
+            Context.Sql.Append( "NOT" ).AppendSpace();
 
-            Context.Sql.Append( "IN" ).AppendSpace();
-            VisitChild( node.Query );
-        }
+        Context.Sql.Append( "IN" ).AppendSpace();
+        VisitChild( node.Query );
     }
 
     public virtual void VisitRawRecordSet(SqlRawRecordSetNode node)
@@ -505,11 +456,8 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public virtual void VisitQueryRecordSet(SqlQueryRecordSetNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-        {
-            VisitChild( node.Query );
-            AppendDelimitedAlias( node.Alias );
-        }
+        VisitChild( node.Query );
+        AppendDelimitedAlias( node.Alias );
     }
 
     public virtual void VisitCommonTableExpressionRecordSet(SqlCommonTableExpressionRecordSetNode node)
@@ -532,42 +480,36 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public virtual void VisitJoinOn(SqlDataSourceJoinOnNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
+        var joinType = node.JoinType switch
         {
-            var joinType = node.JoinType switch
-            {
-                SqlJoinType.Left => "LEFT",
-                SqlJoinType.Right => "RIGHT",
-                SqlJoinType.Full => "FULL",
-                SqlJoinType.Cross => "CROSS",
-                _ => "INNER"
-            };
+            SqlJoinType.Left => "LEFT",
+            SqlJoinType.Right => "RIGHT",
+            SqlJoinType.Full => "FULL",
+            SqlJoinType.Cross => "CROSS",
+            _ => "INNER"
+        };
 
-            Context.Sql.Append( joinType ).AppendSpace().Append( "JOIN" ).AppendSpace();
-            this.Visit( node.InnerRecordSet );
+        Context.Sql.Append( joinType ).AppendSpace().Append( "JOIN" ).AppendSpace();
+        this.Visit( node.InnerRecordSet );
 
-            if ( node.JoinType == SqlJoinType.Cross )
-                return;
+        if ( node.JoinType == SqlJoinType.Cross )
+            return;
 
-            Context.Sql.AppendSpace().Append( "ON" ).AppendSpace();
-            this.Visit( node.OnExpression );
-        }
+        Context.Sql.AppendSpace().Append( "ON" ).AppendSpace();
+        this.Visit( node.OnExpression );
     }
 
     public abstract void VisitDataSource(SqlDataSourceNode node);
 
     public virtual void VisitSelectField(SqlSelectFieldNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
+        if ( node.Alias is not null )
         {
-            if ( node.Alias is not null )
-            {
-                VisitChild( node.Expression );
-                AppendDelimitedAlias( node.Alias );
-            }
-            else
-                this.Visit( node.Expression );
+            VisitChild( node.Expression );
+            AppendDelimitedAlias( node.Alias );
         }
+        else
+            this.Visit( node.Expression );
     }
 
     public virtual void VisitSelectCompoundField(SqlSelectCompoundFieldNode node)
@@ -599,7 +541,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         foreach ( var parameter in node.Parameters )
             Context.AddParameter( parameter.Name, parameter.Type );
 
-        if ( Context.ParentNode is not null )
+        if ( Context.ChildDepth > 0 )
         {
             Context.AppendIndent();
             AppendMultilineSql( node.Sql );
@@ -614,20 +556,17 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public virtual void VisitCompoundQueryComponent(SqlCompoundQueryComponentNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
+        var operatorText = node.Operator switch
         {
-            var operatorText = node.Operator switch
-            {
-                SqlCompoundQueryOperator.UnionAll => "UNION ALL",
-                SqlCompoundQueryOperator.Intersect => "INTERSECT",
-                SqlCompoundQueryOperator.Except => "EXCEPT",
-                _ => "UNION"
-            };
+            SqlCompoundQueryOperator.UnionAll => "UNION ALL",
+            SqlCompoundQueryOperator.Intersect => "INTERSECT",
+            SqlCompoundQueryOperator.Except => "EXCEPT",
+            _ => "UNION"
+        };
 
-            Context.Sql.Append( operatorText );
-            Context.AppendIndent();
-            VisitChild( node.Query );
-        }
+        Context.Sql.Append( operatorText );
+        Context.AppendIndent();
+        VisitChild( node.Query );
     }
 
     public virtual void VisitDistinctTrait(SqlDistinctTraitNode node)
@@ -637,58 +576,46 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public virtual void VisitFilterTrait(SqlFilterTraitNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-        {
-            Context.Sql.Append( "WHERE" ).AppendSpace();
-            this.Visit( node.Filter );
-        }
+        Context.Sql.Append( "WHERE" ).AppendSpace();
+        this.Visit( node.Filter );
     }
 
     public virtual void VisitAggregationTrait(SqlAggregationTraitNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
+        Context.Sql.Append( "GROUP BY" );
+        if ( node.Expressions.Length == 0 )
+            return;
+
+        Context.Sql.AppendSpace();
+        foreach ( var expr in node.Expressions )
         {
-            Context.Sql.Append( "GROUP BY" );
-            if ( node.Expressions.Length == 0 )
-                return;
-
-            Context.Sql.AppendSpace();
-            foreach ( var expr in node.Expressions )
-            {
-                VisitChild( expr );
-                Context.Sql.AppendComma().AppendSpace();
-            }
-
-            Context.Sql.ShrinkBy( 2 );
+            VisitChild( expr );
+            Context.Sql.AppendComma().AppendSpace();
         }
+
+        Context.Sql.ShrinkBy( 2 );
     }
 
     public virtual void VisitAggregationFilterTrait(SqlAggregationFilterTraitNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-        {
-            Context.Sql.Append( "HAVING" ).AppendSpace();
-            this.Visit( node.Filter );
-        }
+        Context.Sql.Append( "HAVING" ).AppendSpace();
+        this.Visit( node.Filter );
     }
 
     public virtual void VisitSortTrait(SqlSortTraitNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
+        Context.Sql.Append( "ORDER BY" );
+        if ( node.Ordering.Length == 0 )
+            return;
+
+        Context.Sql.AppendSpace();
+        foreach ( var orderBy in node.Ordering )
         {
-            Context.Sql.Append( "ORDER BY" );
-            if ( node.Ordering.Length == 0 )
-                return;
-
-            Context.Sql.AppendSpace();
-            foreach ( var orderBy in node.Ordering )
-            {
-                VisitOrderBy( orderBy );
-                Context.Sql.AppendComma().AppendSpace();
-            }
-
-            Context.Sql.ShrinkBy( 2 );
+            VisitOrderBy( orderBy );
+            Context.Sql.AppendComma().AppendSpace();
         }
+
+        Context.Sql.ShrinkBy( 2 );
     }
 
     public abstract void VisitLimitTrait(SqlLimitTraitNode node);
@@ -696,44 +623,38 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public virtual void VisitCommonTableExpressionTrait(SqlCommonTableExpressionTraitNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-        {
-            Context.Sql.Append( "WITH" );
-            if ( node.CommonTableExpressions.Length == 0 )
-                return;
+        Context.Sql.Append( "WITH" );
+        if ( node.CommonTableExpressions.Length == 0 )
+            return;
 
-            Context.Sql.AppendSpace();
-            foreach ( var cte in node.CommonTableExpressions )
+        Context.Sql.AppendSpace();
+        foreach ( var cte in node.CommonTableExpressions )
+        {
+            VisitCommonTableExpression( cte );
+            Context.Sql.AppendComma();
+            Context.AppendIndent();
+        }
+
+        Context.Sql.ShrinkBy( Environment.NewLine.Length + Context.Indent + 1 );
+    }
+
+    public virtual void VisitWindowDefinitionTrait(SqlWindowDefinitionTraitNode node)
+    {
+        Context.Sql.Append( "WINDOW" );
+        if ( node.Windows.Length == 0 )
+            return;
+
+        Context.Sql.AppendSpace();
+        using ( Context.TempIndentIncrease() )
+        {
+            foreach ( var definition in node.Windows )
             {
-                VisitCommonTableExpression( cte );
+                VisitWindowDefinition( definition );
                 Context.Sql.AppendComma();
                 Context.AppendIndent();
             }
 
             Context.Sql.ShrinkBy( Environment.NewLine.Length + Context.Indent + 1 );
-        }
-    }
-
-    public virtual void VisitWindowDefinitionTrait(SqlWindowDefinitionTraitNode node)
-    {
-        using ( Context.TempParentNodeUpdate( node ) )
-        {
-            Context.Sql.Append( "WINDOW" );
-            if ( node.Windows.Length == 0 )
-                return;
-
-            Context.Sql.AppendSpace();
-            using ( Context.TempIndentIncrease() )
-            {
-                foreach ( var definition in node.Windows )
-                {
-                    VisitWindowDefinition( definition );
-                    Context.Sql.AppendComma();
-                    Context.AppendIndent();
-                }
-
-                Context.Sql.ShrinkBy( Environment.NewLine.Length + Context.Indent + 1 );
-            }
         }
     }
 
@@ -745,77 +666,68 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public virtual void VisitOrderBy(SqlOrderByNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-        {
-            VisitChild( node.Expression );
-            Context.Sql.AppendSpace().Append( node.Ordering.Name );
-        }
+        VisitChild( node.Expression );
+        Context.Sql.AppendSpace().Append( node.Ordering.Name );
     }
 
     public abstract void VisitCommonTableExpression(SqlCommonTableExpressionNode node);
 
     public virtual void VisitWindowDefinition(SqlWindowDefinitionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
+        AppendDelimitedName( node.Name );
+        Context.Sql.AppendSpace().Append( "AS" ).AppendSpace().Append( '(' );
+
+        if ( node.Partitioning.Length > 0 )
         {
-            AppendDelimitedName( node.Name );
-            Context.Sql.AppendSpace().Append( "AS" ).AppendSpace().Append( '(' );
-
-            if ( node.Partitioning.Length > 0 )
+            Context.Sql.Append( "PARTITION" ).AppendSpace().Append( "BY" ).AppendSpace();
+            foreach ( var partition in node.Partitioning )
             {
-                Context.Sql.Append( "PARTITION" ).AppendSpace().Append( "BY" ).AppendSpace();
-                foreach ( var partition in node.Partitioning )
-                {
-                    VisitChild( partition );
-                    Context.Sql.AppendComma().AppendSpace();
-                }
-
-                Context.Sql.ShrinkBy( 2 );
+                VisitChild( partition );
+                Context.Sql.AppendComma().AppendSpace();
             }
 
-            if ( node.Ordering.Length > 0 )
-            {
-                if ( node.Partitioning.Length > 0 )
-                    Context.Sql.AppendSpace();
-
-                Context.Sql.Append( "ORDER" ).AppendSpace().Append( "BY" ).AppendSpace();
-                foreach ( var orderBy in node.Ordering )
-                {
-                    VisitOrderBy( orderBy );
-                    Context.Sql.AppendComma().AppendSpace();
-                }
-
-                Context.Sql.ShrinkBy( 2 );
-            }
-
-            if ( node.Frame is not null )
-            {
-                if ( node.Partitioning.Length > 0 || node.Ordering.Length > 0 )
-                    Context.Sql.AppendSpace();
-
-                VisitWindowFrame( node.Frame );
-            }
-
-            Context.Sql.Append( ')' );
+            Context.Sql.ShrinkBy( 2 );
         }
+
+        if ( node.Ordering.Length > 0 )
+        {
+            if ( node.Partitioning.Length > 0 )
+                Context.Sql.AppendSpace();
+
+            Context.Sql.Append( "ORDER" ).AppendSpace().Append( "BY" ).AppendSpace();
+            foreach ( var orderBy in node.Ordering )
+            {
+                VisitOrderBy( orderBy );
+                Context.Sql.AppendComma().AppendSpace();
+            }
+
+            Context.Sql.ShrinkBy( 2 );
+        }
+
+        if ( node.Frame is not null )
+        {
+            if ( node.Partitioning.Length > 0 || node.Ordering.Length > 0 )
+                Context.Sql.AppendSpace();
+
+            VisitWindowFrame( node.Frame );
+        }
+
+        Context.Sql.Append( ')' );
     }
 
     public void VisitWindowFrame(SqlWindowFrameNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
+        switch ( node.FrameType )
         {
-            switch ( node.FrameType )
-            {
-                case SqlWindowFrameType.Rows:
-                    VisitRowsWindowFrame( node );
-                    break;
-                case SqlWindowFrameType.Range:
-                    VisitRangeWindowFrame( node );
-                    break;
-                default:
-                    VisitCustomWindowFrame( node );
-                    break;
-            }
+            case SqlWindowFrameType.Rows:
+                VisitRowsWindowFrame( node );
+                break;
+            case SqlWindowFrameType.Range:
+                VisitRangeWindowFrame( node );
+                break;
+            default:
+                VisitCustomWindowFrame( node );
+                break;
         }
     }
 
@@ -823,26 +735,23 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public virtual void VisitValues(SqlValuesNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
+        Context.Sql.Append( "VALUES" );
+
+        for ( var i = 0; i < node.RowCount; ++i )
         {
-            Context.Sql.Append( "VALUES" );
+            Context.AppendIndent().Append( '(' );
 
-            for ( var i = 0; i < node.RowCount; ++i )
+            var row = node[i];
+            foreach ( var expr in row )
             {
-                Context.AppendIndent().Append( '(' );
-
-                var row = node[i];
-                foreach ( var expr in row )
-                {
-                    VisitChild( expr );
-                    Context.Sql.AppendComma().AppendSpace();
-                }
-
-                Context.Sql.ShrinkBy( 2 ).Append( ')' ).AppendComma();
+                VisitChild( expr );
+                Context.Sql.AppendComma().AppendSpace();
             }
 
-            Context.Sql.ShrinkBy( 1 );
+            Context.Sql.ShrinkBy( 2 ).Append( ')' ).AppendComma();
         }
+
+        Context.Sql.ShrinkBy( 1 );
     }
 
     public virtual void VisitRawStatement(SqlRawStatementNode node)
@@ -858,14 +767,11 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public virtual void VisitValueAssignment(SqlValueAssignmentNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-        {
-            AppendDelimitedName( node.DataField.Name );
-            Context.Sql.AppendSpace().Append( '=' ).AppendSpace();
+        AppendDelimitedName( node.DataField.Name );
+        Context.Sql.AppendSpace().Append( '=' ).AppendSpace();
 
-            using ( SwapIgnoredRecordSet( node.DataField.RecordSet ) )
-                VisitChild( node.Value );
-        }
+        using ( TempIgnoreRecordSet( node.DataField.RecordSet ) )
+            VisitChild( node.Value );
     }
 
     public abstract void VisitDeleteFrom(SqlDeleteFromNode node);
@@ -1225,23 +1131,23 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public IgnoredRecordSetRuleSwapper SwapIgnoredRecordSet(SqlRecordSetNode node)
+    public TemporaryIgnoredRecordSetRuleChange TempIgnoreRecordSet(SqlRecordSetNode node)
     {
-        return new IgnoredRecordSetRuleSwapper( this, new IgnoredRecordSetRule( node ) );
+        return new TemporaryIgnoredRecordSetRuleChange( this, new IgnoredRecordSetRule( node ) );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public IgnoredRecordSetRuleSwapper SwapIgnoreAllRecordSets()
+    public TemporaryIgnoredRecordSetRuleChange TempIgnoreAllRecordSets()
     {
-        return new IgnoredRecordSetRuleSwapper( this, new IgnoredRecordSetRule( null ) );
+        return new TemporaryIgnoredRecordSetRuleChange( this, new IgnoredRecordSetRule( null ) );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public IgnoredRecordSetRuleSwapper SwapDoNotIgnoreRecordSets()
+    public TemporaryIgnoredRecordSetRuleChange TempIncludeAllRecordSets()
     {
-        return new IgnoredRecordSetRuleSwapper( this, null );
+        return new TemporaryIgnoredRecordSetRuleChange( this, null );
     }
 
     public readonly struct IgnoredRecordSetRule
@@ -1264,13 +1170,13 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         }
     }
 
-    public readonly struct IgnoredRecordSetRuleSwapper : IDisposable
+    public readonly struct TemporaryIgnoredRecordSetRuleChange : IDisposable
     {
         private readonly IgnoredRecordSetRule? _previous;
         private readonly SqlNodeInterpreter _interpreter;
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal IgnoredRecordSetRuleSwapper(SqlNodeInterpreter interpreter, IgnoredRecordSetRule? rule)
+        internal TemporaryIgnoredRecordSetRuleChange(SqlNodeInterpreter interpreter, IgnoredRecordSetRule? rule)
         {
             _interpreter = interpreter;
             _previous = interpreter.IgnoredRecordSet;
@@ -1301,6 +1207,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     {
         Context.Sql.Append( '(' );
 
+        using ( Context.TempChildDepthIncrease() )
         using ( Context.TempIndentIncrease() )
             this.Visit( node );
 
@@ -1316,26 +1223,23 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     protected void VisitSimpleFunction(string functionName, SqlFunctionExpressionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
+        Context.Sql.Append( functionName ).Append( '(' );
+
+        if ( node.Arguments.Length > 0 )
         {
-            Context.Sql.Append( functionName ).Append( '(' );
-
-            if ( node.Arguments.Length > 0 )
+            using ( Context.TempIndentIncrease() )
             {
-                using ( Context.TempIndentIncrease() )
+                foreach ( var arg in node.Arguments )
                 {
-                    foreach ( var arg in node.Arguments )
-                    {
-                        VisitChild( arg );
-                        Context.Sql.AppendComma().AppendSpace();
-                    }
+                    VisitChild( arg );
+                    Context.Sql.AppendComma().AppendSpace();
                 }
-
-                Context.Sql.ShrinkBy( 2 );
             }
 
-            Context.Sql.Append( ')' );
+            Context.Sql.ShrinkBy( 2 );
         }
+
+        Context.Sql.Append( ')' );
     }
 
     protected virtual void VisitRowsWindowFrame(SqlWindowFrameNode node)

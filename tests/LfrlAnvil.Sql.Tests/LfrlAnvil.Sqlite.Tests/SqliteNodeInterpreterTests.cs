@@ -526,7 +526,6 @@ END" );
     [Fact]
     public void VisitChild_ShouldInterpretSwitchWithParentheses()
     {
-        _sut.Context.SetParentNode( SqlNode.Null() );
         _sut.VisitChild(
             SqlNode.Switch(
                 new[]
@@ -1679,7 +1678,6 @@ LEFT JOIN qux ON qux.b = foo.b" );
     [Fact]
     public void VisitChild_ShouldInterpretRawQueryWithParentheses()
     {
-        _sut.Context.SetParentNode( SqlNode.Null() );
         _sut.VisitChild( SqlNode.RawQuery( "SELECT * FROM foo" ) );
         _sut.Context.Sql.ToString()
             .Should()
@@ -1847,7 +1845,6 @@ LIMIT -1 OFFSET 100" );
     [Fact]
     public void VisitChild_ShouldInterpretDataSourceQueryWithParentheses()
     {
-        _sut.Context.SetParentNode( SqlNode.Null() );
         var query = CreateTable( string.Empty, "foo", "a" )
             .ToRecordSet()
             .ToDataSource()
@@ -1926,7 +1923,6 @@ LIMIT 50 OFFSET 75" );
     [Fact]
     public void VisitChild_ShouldInterpretCompoundQueryWithParentheses()
     {
-        _sut.Context.SetParentNode( SqlNode.Null() );
         var query = SqlNode.RawQuery( "SELECT * FROM foo" )
             .CompoundWith( SqlNode.RawQuery( "SELECT * FROM bar" ).ToUnionAll(), SqlNode.RawQuery( "SELECT * FROM qux" ).ToUnion() );
 

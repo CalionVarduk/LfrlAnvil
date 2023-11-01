@@ -71,30 +71,24 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitModulo(SqlModuloExpressionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-        {
-            Context.Sql.Append( "MOD" ).Append( '(' );
-            VisitChild( node.Left );
-            Context.Sql.AppendComma().AppendSpace();
-            VisitChild( node.Right );
-            Context.Sql.Append( ')' );
-        }
+        Context.Sql.Append( "MOD" ).Append( '(' );
+        VisitChild( node.Left );
+        Context.Sql.AppendComma().AppendSpace();
+        VisitChild( node.Right );
+        Context.Sql.Append( ')' );
     }
 
     public override void VisitBitwiseXor(SqlBitwiseXorExpressionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-        {
-            Context.Sql.Append( '(' );
-            VisitChild( node.Left );
-            Context.Sql.AppendSpace().Append( '|' ).AppendSpace();
-            VisitChild( node.Right );
-            Context.Sql.Append( ')' ).AppendSpace().Append( '&' ).AppendSpace().Append( '~' ).Append( '(' );
-            VisitChild( node.Left );
-            Context.Sql.AppendSpace().Append( '&' ).AppendSpace();
-            VisitChild( node.Right );
-            Context.Sql.Append( ')' );
-        }
+        Context.Sql.Append( '(' );
+        VisitChild( node.Left );
+        Context.Sql.AppendSpace().Append( '|' ).AppendSpace();
+        VisitChild( node.Right );
+        Context.Sql.Append( ')' ).AppendSpace().Append( '&' ).AppendSpace().Append( '~' ).Append( '(' );
+        VisitChild( node.Left );
+        Context.Sql.AppendSpace().Append( '&' ).AppendSpace();
+        VisitChild( node.Right );
+        Context.Sql.Append( ')' );
     }
 
     public override void VisitRecordsAffectedFunction(SqlRecordsAffectedFunctionExpressionNode node)
@@ -215,10 +209,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
     public override void VisitMinFunction(SqlMinFunctionExpressionNode node)
     {
         if ( node.Arguments.Length == 1 )
-        {
-            using ( Context.TempParentNodeUpdate( node ) )
-                VisitChild( node.Arguments.Span[0] );
-        }
+            VisitChild( node.Arguments.Span[0] );
         else
             VisitSimpleFunction( "MIN", node );
     }
@@ -226,10 +217,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
     public override void VisitMaxFunction(SqlMaxFunctionExpressionNode node)
     {
         if ( node.Arguments.Length == 1 )
-        {
-            using ( Context.TempParentNodeUpdate( node ) )
-                VisitChild( node.Arguments.Span[0] );
-        }
+            VisitChild( node.Arguments.Span[0] );
         else
             VisitSimpleFunction( "MAX", node );
     }
@@ -334,156 +322,126 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         if ( node is SqlDummyDataSourceNode )
             return;
 
-        using ( Context.TempParentNodeUpdate( node ) )
-        {
-            Context.Sql.Append( "FROM" ).AppendSpace();
-            this.Visit( node.From );
+        Context.Sql.Append( "FROM" ).AppendSpace();
+        this.Visit( node.From );
 
-            foreach ( var join in node.Joins )
-            {
-                Context.AppendIndent();
-                VisitJoinOn( join );
-            }
+        foreach ( var join in node.Joins )
+        {
+            Context.AppendIndent();
+            VisitJoinOn( join );
         }
     }
 
     public override void VisitDataSourceQuery(SqlDataSourceQueryExpressionNode node)
     {
-        var hasParentNode = Context.ParentNode is not null;
-        if ( hasParentNode )
+        var isChild = Context.ChildDepth > 0;
+        if ( isChild )
             Context.AppendIndent();
 
-        using ( Context.TempParentNodeUpdate( node ) )
-        {
-            var traits = ExtractDataSourceTraits( ExtractDataSourceTraits( node.DataSource.Traits ), node.Traits );
-            VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions );
-            VisitDataSourceQuerySelection( node, traits.Distinct );
-            VisitDataSource( node.DataSource );
-            VisitOptionalFilterCondition( traits.Filter );
-            VisitOptionalAggregationRange( traits.Aggregations );
-            VisitOptionalAggregationFilterCondition( traits.AggregationFilter );
-            VisitOptionalWindowRange( traits.Windows );
-            VisitOptionalOrderingRange( traits.Ordering );
-            VisitOptionalLimitAndOffsetExpressions( traits.Limit, traits.Offset );
-        }
+        var traits = ExtractDataSourceTraits( ExtractDataSourceTraits( node.DataSource.Traits ), node.Traits );
+        VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions );
+        VisitDataSourceQuerySelection( node, traits.Distinct );
+        VisitDataSource( node.DataSource );
+        VisitOptionalFilterCondition( traits.Filter );
+        VisitOptionalAggregationRange( traits.Aggregations );
+        VisitOptionalAggregationFilterCondition( traits.AggregationFilter );
+        VisitOptionalWindowRange( traits.Windows );
+        VisitOptionalOrderingRange( traits.Ordering );
+        VisitOptionalLimitAndOffsetExpressions( traits.Limit, traits.Offset );
 
-        if ( hasParentNode )
+        if ( isChild )
             Context.AppendShortIndent();
     }
 
     public override void VisitCompoundQuery(SqlCompoundQueryExpressionNode node)
     {
-        var hasParentNode = Context.ParentNode is not null;
-        if ( hasParentNode )
+        var isChild = Context.ChildDepth > 0;
+        if ( isChild )
             Context.AppendIndent();
 
-        using ( Context.TempParentNodeUpdate( node ) )
-        {
-            var traits = ExtractQueryTraits( default, node.Traits );
-            VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions );
-            VisitCompoundQueryComponents( node );
-            VisitOptionalOrderingRange( traits.Ordering );
-            VisitOptionalLimitAndOffsetExpressions( traits.Limit, traits.Offset );
-        }
+        var traits = ExtractQueryTraits( default, node.Traits );
+        VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions );
+        VisitCompoundQueryComponents( node );
+        VisitOptionalOrderingRange( traits.Ordering );
+        VisitOptionalLimitAndOffsetExpressions( traits.Limit, traits.Offset );
 
-        if ( hasParentNode )
+        if ( isChild )
             Context.AppendShortIndent();
     }
 
     public override void VisitLimitTrait(SqlLimitTraitNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-        {
-            Context.Sql.Append( "LIMIT" ).AppendSpace();
-            VisitChild( node.Value );
-        }
+        Context.Sql.Append( "LIMIT" ).AppendSpace();
+        VisitChild( node.Value );
     }
 
     public override void VisitOffsetTrait(SqlOffsetTraitNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-        {
-            Context.Sql.Append( "OFFSET" ).AppendSpace();
-            VisitChild( node.Value );
-        }
+        Context.Sql.Append( "OFFSET" ).AppendSpace();
+        VisitChild( node.Value );
     }
 
     public override void VisitCommonTableExpression(SqlCommonTableExpressionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-        {
-            if ( node.IsRecursive )
-                Context.Sql.Append( "RECURSIVE" ).AppendSpace();
+        if ( node.IsRecursive )
+            Context.Sql.Append( "RECURSIVE" ).AppendSpace();
 
-            AppendDelimitedName( node.Name );
-            Context.Sql.AppendSpace().Append( "AS" ).AppendSpace();
-            VisitChild( node.Query );
-        }
+        AppendDelimitedName( node.Name );
+        Context.Sql.AppendSpace().Append( "AS" ).AppendSpace();
+        VisitChild( node.Query );
     }
 
     public override void VisitTypeCast(SqlTypeCastExpressionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-        {
-            Context.Sql.Append( "CAST" ).Append( '(' );
-            VisitChild( node.Value );
-            Context.Sql.AppendSpace().Append( "AS" ).AppendSpace();
+        Context.Sql.Append( "CAST" ).Append( '(' );
+        VisitChild( node.Value );
+        Context.Sql.AppendSpace().Append( "AS" ).AppendSpace();
 
-            var typeDefinition = ColumnTypeDefinitions.GetByType( node.TargetType );
-            Context.Sql.Append( typeDefinition.DbType.Name ).Append( ')' );
-        }
+        var typeDefinition = ColumnTypeDefinitions.GetByType( node.TargetType );
+        Context.Sql.Append( typeDefinition.DbType.Name ).Append( ')' );
     }
 
     public override void VisitInsertInto(SqlInsertIntoNode node)
     {
+        // TODO: refactor
         switch ( node.Source.NodeType )
         {
             case SqlNodeType.DataSourceQuery:
             {
-                using ( Context.TempParentNodeUpdate( node ) )
-                {
-                    var query = ReinterpretCast.To<SqlDataSourceQueryExpressionNode>( node.Source );
-                    var traits = ExtractDataSourceTraits( ExtractDataSourceTraits( query.DataSource.Traits ), query.Traits );
+                var query = ReinterpretCast.To<SqlDataSourceQueryExpressionNode>( node.Source );
+                var traits = ExtractDataSourceTraits( ExtractDataSourceTraits( query.DataSource.Traits ), query.Traits );
 
-                    VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions );
-                    VisitInsertIntoFields( node );
+                VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions );
+                VisitInsertIntoFields( node );
 
-                    Context.AppendIndent();
-                    VisitDataSourceQuerySelection( query, traits.Distinct );
-                    VisitDataSource( query.DataSource );
-                    VisitOptionalFilterCondition( traits.Filter );
-                    VisitOptionalAggregationRange( traits.Aggregations );
-                    VisitOptionalAggregationFilterCondition( traits.AggregationFilter );
-                    VisitOptionalWindowRange( traits.Windows );
-                    VisitOptionalOrderingRange( traits.Ordering );
-                    VisitOptionalLimitAndOffsetExpressions( traits.Limit, traits.Offset );
-                }
-
+                Context.AppendIndent();
+                VisitDataSourceQuerySelection( query, traits.Distinct );
+                VisitDataSource( query.DataSource );
+                VisitOptionalFilterCondition( traits.Filter );
+                VisitOptionalAggregationRange( traits.Aggregations );
+                VisitOptionalAggregationFilterCondition( traits.AggregationFilter );
+                VisitOptionalWindowRange( traits.Windows );
+                VisitOptionalOrderingRange( traits.Ordering );
+                VisitOptionalLimitAndOffsetExpressions( traits.Limit, traits.Offset );
                 break;
             }
             case SqlNodeType.CompoundQuery:
             {
-                using ( Context.TempParentNodeUpdate( node ) )
-                {
-                    var query = ReinterpretCast.To<SqlCompoundQueryExpressionNode>( node.Source );
-                    var traits = ExtractQueryTraits( query.Traits );
+                var query = ReinterpretCast.To<SqlCompoundQueryExpressionNode>( node.Source );
+                var traits = ExtractQueryTraits( query.Traits );
 
-                    VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions );
-                    VisitInsertIntoFields( node );
+                VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions );
+                VisitInsertIntoFields( node );
 
-                    Context.AppendIndent();
-                    VisitCompoundQueryComponents( query );
-                    VisitOptionalOrderingRange( traits.Ordering );
-                    VisitOptionalLimitAndOffsetExpressions( traits.Limit, traits.Offset );
-                }
-
+                Context.AppendIndent();
+                VisitCompoundQueryComponents( query );
+                VisitOptionalOrderingRange( traits.Ordering );
+                VisitOptionalLimitAndOffsetExpressions( traits.Limit, traits.Offset );
                 break;
             }
             default:
             {
-                using ( Context.TempParentNodeUpdate( node ) )
-                    VisitInsertIntoFields( node );
-
+                VisitInsertIntoFields( node );
                 Context.AppendIndent();
                 this.Visit( node.Source );
                 break;
@@ -493,61 +451,57 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitUpdate(SqlUpdateNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
+        // TODO: refactor
+        var traits = ExtractDataSourceTraits( node.DataSource.Traits );
+        VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions );
+
+        if ( IsUpdateOrDeleteDataSourceSimple( node.DataSource, traits ) )
         {
-            var traits = ExtractDataSourceTraits( node.DataSource.Traits );
-            VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions );
-
-            if ( IsUpdateOrDeleteDataSourceSimple( node.DataSource, traits ) )
-            {
-                Context.Sql.Append( "UPDATE" ).AppendSpace();
-                AppendDelimitedRecordSetName( node.DataSource.From );
-                VisitUpdateAssignmentRange( node.Assignments.Span );
-                VisitOptionalFilterCondition( traits.Filter );
-                return;
-            }
-
-            var targetInfo = ExtractTargetUpdateInfo( node );
-
-            ComplexUpdateAssignmentsVisitor? updateVisitor = null;
-            if ( node.DataSource.Joins.Length > 0 )
-            {
-                updateVisitor = new ComplexUpdateAssignmentsVisitor( node.DataSource );
-                foreach ( var assignment in node.Assignments )
-                    updateVisitor.Visit( assignment.Value );
-            }
-
-            if ( updateVisitor is null || ! updateVisitor.ContainsDataFieldsToReplace() )
-            {
-                Context.Sql.Append( "UPDATE" ).AppendSpace();
-                AppendDelimitedRecordSetName( targetInfo.BaseTarget );
-                VisitUpdateAssignmentRange( node.Assignments.Span );
-                VisitComplexDeleteOrUpdateDataSourceFilter( targetInfo, node.DataSource, traits );
-            }
-            else
-                VisitUpdateWithComplexAssignments( targetInfo, node, traits, updateVisitor );
+            Context.Sql.Append( "UPDATE" ).AppendSpace();
+            AppendDelimitedRecordSetName( node.DataSource.From );
+            VisitUpdateAssignmentRange( node.Assignments.Span );
+            VisitOptionalFilterCondition( traits.Filter );
+            return;
         }
+
+        var targetInfo = ExtractTargetUpdateInfo( node );
+
+        ComplexUpdateAssignmentsVisitor? updateVisitor = null;
+        if ( node.DataSource.Joins.Length > 0 )
+        {
+            updateVisitor = new ComplexUpdateAssignmentsVisitor( node.DataSource );
+            foreach ( var assignment in node.Assignments )
+                updateVisitor.Visit( assignment.Value );
+        }
+
+        if ( updateVisitor is null || ! updateVisitor.ContainsDataFieldsToReplace() )
+        {
+            Context.Sql.Append( "UPDATE" ).AppendSpace();
+            AppendDelimitedRecordSetName( targetInfo.BaseTarget );
+            VisitUpdateAssignmentRange( node.Assignments.Span );
+            VisitComplexDeleteOrUpdateDataSourceFilter( targetInfo, node.DataSource, traits );
+        }
+        else
+            VisitUpdateWithComplexAssignments( targetInfo, node, traits, updateVisitor );
     }
 
     public override void VisitDeleteFrom(SqlDeleteFromNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
+        // TODO: refactor
+        var traits = ExtractDataSourceTraits( node.DataSource.Traits );
+        VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions );
+        Context.Sql.Append( "DELETE" ).AppendSpace().Append( "FROM" ).AppendSpace();
+
+        if ( IsUpdateOrDeleteDataSourceSimple( node.DataSource, traits ) )
         {
-            var traits = ExtractDataSourceTraits( node.DataSource.Traits );
-            VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions );
-            Context.Sql.Append( "DELETE" ).AppendSpace().Append( "FROM" ).AppendSpace();
-
-            if ( IsUpdateOrDeleteDataSourceSimple( node.DataSource, traits ) )
-            {
-                AppendDelimitedRecordSetName( node.DataSource.From );
-                VisitOptionalFilterCondition( traits.Filter );
-                return;
-            }
-
-            var targetInfo = ExtractTargetDeleteInfo( node );
-            AppendDelimitedRecordSetName( targetInfo.BaseTarget );
-            VisitComplexDeleteOrUpdateDataSourceFilter( targetInfo, node.DataSource, traits );
+            AppendDelimitedRecordSetName( node.DataSource.From );
+            VisitOptionalFilterCondition( traits.Filter );
+            return;
         }
+
+        var targetInfo = ExtractTargetDeleteInfo( node );
+        AppendDelimitedRecordSetName( targetInfo.BaseTarget );
+        VisitComplexDeleteOrUpdateDataSourceFilter( targetInfo, node.DataSource, traits );
     }
 
     public override void VisitTruncate(SqlTruncateNode node)
@@ -585,9 +539,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         if ( node.DefaultValue is not null )
         {
             Context.Sql.AppendSpace().Append( "DEFAULT" ).AppendSpace();
-
-            using ( Context.TempParentNodeUpdate( node ) )
-                VisitChildWrappedInParentheses( node.DefaultValue );
+            VisitChildWrappedInParentheses( node.DefaultValue );
         }
     }
 
@@ -650,19 +602,15 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitCheckDefinition(SqlCheckDefinitionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
-        {
-            Context.Sql.Append( "CONSTRAINT" ).AppendSpace();
-            AppendDelimitedName( node.Name );
-            Context.Sql.AppendSpace().Append( "CHECK" ).AppendSpace();
-            VisitChildWrappedInParentheses( node.Condition );
-        }
+        Context.Sql.Append( "CONSTRAINT" ).AppendSpace();
+        AppendDelimitedName( node.Name );
+        Context.Sql.AppendSpace().Append( "CHECK" ).AppendSpace();
+        VisitChildWrappedInParentheses( node.Condition );
     }
 
     public override void VisitCreateTable(SqlCreateTableNode node)
     {
-        using ( SwapIgnoreAllRecordSets() )
-        using ( Context.TempParentNodeUpdate( node ) )
+        using ( TempIgnoreAllRecordSets() )
         {
             Context.Sql.Append( "CREATE" ).AppendSpace().Append( "TABLE" ).AppendSpace();
             if ( node.IfNotExists )
@@ -723,8 +671,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitCreateIndex(SqlCreateIndexNode node)
     {
-        using ( SwapIgnoreAllRecordSets() )
-        using ( Context.TempParentNodeUpdate( node ) )
+        using ( TempIgnoreAllRecordSets() )
         {
             Context.Sql.Append( "CREATE" ).AppendSpace();
             if ( node.IsUnique )
@@ -917,45 +864,42 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
     protected void VisitSimpleAggregateFunction(string functionName, SqlAggregateFunctionExpressionNode node)
     {
-        using ( Context.TempParentNodeUpdate( node ) )
+        var traits = ExtractAggregateFunctionTraits( node.Traits );
+        Context.Sql.Append( functionName ).Append( '(' );
+
+        if ( node.Arguments.Length > 0 )
         {
-            var traits = ExtractAggregateFunctionTraits( node.Traits );
-            Context.Sql.Append( functionName ).Append( '(' );
-
-            if ( node.Arguments.Length > 0 )
+            using ( Context.TempIndentIncrease() )
             {
-                using ( Context.TempIndentIncrease() )
+                if ( traits.Distinct is not null )
                 {
-                    if ( traits.Distinct is not null )
-                    {
-                        VisitDistinctTrait( traits.Distinct );
-                        Context.Sql.AppendSpace();
-                    }
-
-                    foreach ( var arg in node.Arguments )
-                    {
-                        VisitChild( arg );
-                        Context.Sql.AppendComma().AppendSpace();
-                    }
+                    VisitDistinctTrait( traits.Distinct );
+                    Context.Sql.AppendSpace();
                 }
 
-                Context.Sql.ShrinkBy( 2 );
+                foreach ( var arg in node.Arguments )
+                {
+                    VisitChild( arg );
+                    Context.Sql.AppendComma().AppendSpace();
+                }
             }
 
+            Context.Sql.ShrinkBy( 2 );
+        }
+
+        Context.Sql.Append( ')' );
+
+        if ( traits.Filter is not null )
+        {
+            Context.Sql.AppendSpace().Append( "FILTER" ).AppendSpace().Append( '(' ).Append( "WHERE" ).AppendSpace();
+            this.Visit( traits.Filter );
             Context.Sql.Append( ')' );
+        }
 
-            if ( traits.Filter is not null )
-            {
-                Context.Sql.AppendSpace().Append( "FILTER" ).AppendSpace().Append( '(' ).Append( "WHERE" ).AppendSpace();
-                this.Visit( traits.Filter );
-                Context.Sql.Append( ')' );
-            }
-
-            if ( traits.Window is not null )
-            {
-                Context.Sql.AppendSpace().Append( "OVER" ).AppendSpace();
-                AppendDelimitedName( traits.Window.Name );
-            }
+        if ( traits.Window is not null )
+        {
+            Context.Sql.AppendSpace().Append( "OVER" ).AppendSpace();
+            AppendDelimitedName( traits.Window.Name );
         }
     }
 

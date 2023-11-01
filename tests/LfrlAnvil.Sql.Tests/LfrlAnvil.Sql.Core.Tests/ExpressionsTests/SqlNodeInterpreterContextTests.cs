@@ -15,7 +15,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.Indent.Should().Be( 0 );
-            sut.ParentNode.Should().BeNull();
+            sut.ChildDepth.Should().Be( 0 );
             sut.Parameters.Should().BeEmpty();
             sut.Sql.Length.Should().Be( 0 );
             sut.Sql.Capacity.Should().Be( 1024 );
@@ -31,7 +31,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.Indent.Should().Be( 0 );
-            sut.ParentNode.Should().BeNull();
+            sut.ChildDepth.Should().Be( 0 );
             sut.Parameters.Should().BeEmpty();
             sut.Sql.Should().BeSameAs( builder );
         }
@@ -104,63 +104,68 @@ public class SqlNodeInterpreterContextTests : TestsBase
     }
 
     [Fact]
-    public void SetParentNode_ShouldUpdateParentNode()
+    public void IncreaseChildDepth_ShouldSetChildDepthToOne_WhenCurrentChildDepthIsZero()
     {
-        var parentNode = SqlNode.Null();
         var sut = SqlNodeInterpreterContext.Create();
-
-        sut.SetParentNode( parentNode );
-
-        sut.ParentNode.Should().BeSameAs( parentNode );
+        sut.IncreaseChildDepth();
+        sut.ChildDepth.Should().Be( 1 );
     }
 
     [Fact]
-    public void ClearParentNode_ShouldResetParentNodeToNull()
+    public void IncreaseChildDepth_ShouldIncrementCurrentChildDepth()
     {
-        var parentNode = SqlNode.Null();
         var sut = SqlNodeInterpreterContext.Create();
-        sut.SetParentNode( parentNode );
+        sut.IncreaseChildDepth();
 
-        sut.ClearParentNode();
+        sut.IncreaseChildDepth();
 
-        sut.ParentNode.Should().BeNull();
+        sut.ChildDepth.Should().Be( 2 );
     }
 
     [Fact]
-    public void
-        TempParentNodeUpdate_ShouldUpdateParentNodeAndReturnObjectThatResetsParentNodeToPreviousOneWhenDisposed_WhenCurrentParentNodeIsNotNull()
+    public void DecreaseChildDepth_ShouldDoNothing_WhenCurrentChildDepthIsZero()
     {
-        var node = SqlNode.Null();
-        var current = SqlNode.True();
         var sut = SqlNodeInterpreterContext.Create();
-        sut.SetParentNode( current );
+        sut.DecreaseChildDepth();
+        sut.ChildDepth.Should().Be( 0 );
+    }
 
-        SqlNodeBase? parentNode;
-        using ( sut.TempParentNodeUpdate( node ) )
-            parentNode = sut.ParentNode;
+    [Fact]
+    public void DecreaseChildDepth_ShouldSetChildDepthToZero_WhenCurrentChildDepthIsEqualToOn()
+    {
+        var sut = SqlNodeInterpreterContext.Create();
+        sut.IncreaseChildDepth();
+
+        sut.DecreaseChildDepth();
+
+        sut.ChildDepth.Should().Be( 0 );
+    }
+
+    [Fact]
+    public void DecreaseChildDepth_ShouldRemoveDecrementCurrentChildDepth_WhenCurrentChildDepthIsGreaterThanZero()
+    {
+        var sut = SqlNodeInterpreterContext.Create();
+        sut.IncreaseChildDepth();
+        sut.IncreaseChildDepth();
+
+        sut.DecreaseChildDepth();
+
+        sut.ChildDepth.Should().Be( 1 );
+    }
+
+    [Fact]
+    public void TempChildDepthIncrease_ShouldIncrementChildDepthAndReturnObjectThatDecrementsChildDepthWhenDisposed()
+    {
+        var sut = SqlNodeInterpreterContext.Create();
+
+        int depth;
+        using ( sut.TempChildDepthIncrease() )
+            depth = sut.ChildDepth;
 
         using ( new AssertionScope() )
         {
-            sut.ParentNode.Should().BeSameAs( current );
-            parentNode.Should().BeSameAs( node );
-        }
-    }
-
-    [Fact]
-    public void
-        TempParentNodeUpdate_ShouldUpdateParentNodeAndReturnObjectThatResetsParentNodeToPreviousOneWhenDisposed_WhenCurrentParentNodeIsNull()
-    {
-        var node = SqlNode.Null();
-        var sut = SqlNodeInterpreterContext.Create();
-
-        SqlNodeBase? parentNode;
-        using ( sut.TempParentNodeUpdate( node ) )
-            parentNode = sut.ParentNode;
-
-        using ( new AssertionScope() )
-        {
-            sut.ParentNode.Should().BeNull();
-            parentNode.Should().BeSameAs( node );
+            sut.ChildDepth.Should().Be( 0 );
+            depth.Should().Be( 1 );
         }
     }
 
@@ -333,7 +338,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
     {
         var sut = SqlNodeInterpreterContext.Create();
         sut.IncreaseIndent();
-        sut.SetParentNode( SqlNode.Null() );
+        sut.IncreaseChildDepth();
         sut.AddParameter( "foo", SqlExpressionType.Create<int>() );
         sut.Sql.Append( "SELECT * FROM bar" );
 
@@ -342,7 +347,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.Indent.Should().Be( 0 );
-            sut.ParentNode.Should().BeNull();
+            sut.ChildDepth.Should().Be( 0 );
             sut.Sql.Length.Should().Be( 0 );
             sut.Parameters.Should().BeEmpty();
         }
