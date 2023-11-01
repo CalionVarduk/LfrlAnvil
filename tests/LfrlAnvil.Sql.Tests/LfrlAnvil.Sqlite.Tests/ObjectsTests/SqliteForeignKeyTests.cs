@@ -35,7 +35,7 @@ public class SqliteForeignKeyTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.Database.Should().BeSameAs( db );
-            sut.Index.Should().BeSameAs( index );
+            sut.OriginIndex.Should().BeSameAs( index );
             sut.ReferencedIndex.Should().BeSameAs( refIndex );
             sut.OnDeleteBehavior.Should().BeSameAs( onDeleteBehavior );
             sut.OnUpdateBehavior.Should().BeSameAs( onUpdateBehavior );
@@ -77,7 +77,7 @@ public class SqliteForeignKeyTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.Database.Should().BeSameAs( db );
-            sut.Index.Should().BeSameAs( index );
+            sut.OriginIndex.Should().BeSameAs( index );
             sut.ReferencedIndex.Should().BeSameAs( refIndex );
             sut.OnDeleteBehavior.Should().BeSameAs( onDeleteBehavior );
             sut.OnUpdateBehavior.Should().BeSameAs( onUpdateBehavior );
@@ -122,7 +122,7 @@ public class SqliteForeignKeyTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.Database.Should().BeSameAs( db );
-            sut.Index.Should().BeSameAs( index );
+            sut.OriginIndex.Should().BeSameAs( index );
             sut.ReferencedIndex.Should().BeSameAs( refIndex );
             sut.OnDeleteBehavior.Should().BeSameAs( onDeleteBehavior );
             sut.OnUpdateBehavior.Should().BeSameAs( onUpdateBehavior );

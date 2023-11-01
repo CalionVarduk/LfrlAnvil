@@ -606,7 +606,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
             table.ForeignKeys.Should().BeEmpty();
             schema.Objects.Contains( sut.Name ).Should().BeFalse();
             sut.IsRemoved.Should().BeTrue();
-            ix1.ForeignKeys.Should().BeEmpty();
+            ix1.OriginatingForeignKeys.Should().BeEmpty();
             ix2.ReferencingForeignKeys.Should().BeEmpty();
 
             statements.Should().HaveCount( 1 );

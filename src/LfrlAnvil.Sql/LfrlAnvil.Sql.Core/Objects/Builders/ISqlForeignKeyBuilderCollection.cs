@@ -9,14 +9,14 @@ public interface ISqlForeignKeyBuilderCollection : IReadOnlyCollection<ISqlForei
     ISqlTableBuilder Table { get; }
 
     [Pure]
-    bool Contains(ISqlIndexBuilder index, ISqlIndexBuilder referencedIndex);
+    bool Contains(ISqlIndexBuilder originIndex, ISqlIndexBuilder referencedIndex);
 
     [Pure]
-    ISqlForeignKeyBuilder Get(ISqlIndexBuilder index, ISqlIndexBuilder referencedIndex);
+    ISqlForeignKeyBuilder Get(ISqlIndexBuilder originIndex, ISqlIndexBuilder referencedIndex);
 
-    bool TryGet(ISqlIndexBuilder index, ISqlIndexBuilder referencedIndex, [MaybeNullWhen( false )] out ISqlForeignKeyBuilder result);
+    bool TryGet(ISqlIndexBuilder originIndex, ISqlIndexBuilder referencedIndex, [MaybeNullWhen( false )] out ISqlForeignKeyBuilder result);
 
-    ISqlForeignKeyBuilder Create(ISqlIndexBuilder index, ISqlIndexBuilder referencedIndex);
-    ISqlForeignKeyBuilder GetOrCreate(ISqlIndexBuilder index, ISqlIndexBuilder referencedIndex);
-    bool Remove(ISqlIndexBuilder index, ISqlIndexBuilder referencedIndex);
+    ISqlForeignKeyBuilder Create(ISqlIndexBuilder originIndex, ISqlIndexBuilder referencedIndex);
+    ISqlForeignKeyBuilder GetOrCreate(ISqlIndexBuilder originIndex, ISqlIndexBuilder referencedIndex);
+    bool Remove(ISqlIndexBuilder originIndex, ISqlIndexBuilder referencedIndex);
 }

@@ -3,7 +3,7 @@
 public interface ISqlForeignKey : ISqlObject
 {
     ISqlIndex ReferencedIndex { get; }
-    ISqlIndex Index { get; }
+    ISqlIndex OriginIndex { get; }
     ReferenceBehavior OnDeleteBehavior { get; }
     ReferenceBehavior OnUpdateBehavior { get; }
 }

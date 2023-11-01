@@ -340,7 +340,7 @@ public class SqliteTableTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            result.Index.Should().BeSameAs( index1 );
+            result.OriginIndex.Should().BeSameAs( index1 );
             result.ReferencedIndex.Should().BeSameAs( index2 );
         }
     }
@@ -385,7 +385,7 @@ public class SqliteTableTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Should().BeTrue();
-            (outResult?.Index).Should().BeSameAs( index1 );
+            (outResult?.OriginIndex).Should().BeSameAs( index1 );
             (outResult?.ReferencedIndex).Should().BeSameAs( index2 );
         }
     }

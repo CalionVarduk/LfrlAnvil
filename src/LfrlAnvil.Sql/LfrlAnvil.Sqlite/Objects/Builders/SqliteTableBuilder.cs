@@ -193,9 +193,9 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
         foreach ( var obj in indexes )
         {
             var index = ReinterpretCast.To<SqliteIndexBuilder>( obj );
-            var count = index.ForeignKeys.Count;
+            var count = index.OriginatingForeignKeys.Count;
             buffer.Expand( count );
-            index.ClearForeignKeysInto( buffer.Slice( buffer.Length - count ) );
+            index.ClearOriginatingForeignKeysInto( buffer.Slice( buffer.Length - count ) );
         }
 
         var foreignKeys = buffer.Slice( checks.StartIndex + checks.Length );

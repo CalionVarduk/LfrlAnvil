@@ -26,54 +26,54 @@ public sealed class SqliteForeignKeyBuilderCollection : ISqlForeignKeyBuilderCol
     ISqlTableBuilder ISqlForeignKeyBuilderCollection.Table => Table;
 
     [Pure]
-    public bool Contains(ISqlIndexBuilder index, ISqlIndexBuilder referencedIndex)
+    public bool Contains(ISqlIndexBuilder originIndex, ISqlIndexBuilder referencedIndex)
     {
-        return _map.ContainsKey( Pair.Create( index, referencedIndex ) );
+        return _map.ContainsKey( Pair.Create( originIndex, referencedIndex ) );
     }
 
     [Pure]
-    public SqliteForeignKeyBuilder Get(ISqlIndexBuilder index, ISqlIndexBuilder referencedIndex)
+    public SqliteForeignKeyBuilder Get(ISqlIndexBuilder originIndex, ISqlIndexBuilder referencedIndex)
     {
-        return _map[Pair.Create( index, referencedIndex )];
+        return _map[Pair.Create( originIndex, referencedIndex )];
     }
 
     public bool TryGet(
-        ISqlIndexBuilder index,
+        ISqlIndexBuilder originIndex,
         ISqlIndexBuilder referencedIndex,
         [MaybeNullWhen( false )] out SqliteForeignKeyBuilder result)
     {
-        return _map.TryGetValue( Pair.Create( index, referencedIndex ), out result );
+        return _map.TryGetValue( Pair.Create( originIndex, referencedIndex ), out result );
     }
 
-    public SqliteForeignKeyBuilder Create(SqliteIndexBuilder index, SqliteIndexBuilder referencedIndex)
+    public SqliteForeignKeyBuilder Create(SqliteIndexBuilder originIndex, SqliteIndexBuilder referencedIndex)
     {
         Table.EnsureNotRemoved();
 
-        var key = Pair.Create<ISqlIndexBuilder, ISqlIndexBuilder>( index, referencedIndex );
+        var key = Pair.Create<ISqlIndexBuilder, ISqlIndexBuilder>( originIndex, referencedIndex );
         if ( _map.ContainsKey( key ) )
-            throw new SqliteObjectBuilderException( ExceptionResources.ForeignKeyAlreadyExists( index, referencedIndex ) );
+            throw new SqliteObjectBuilderException( ExceptionResources.ForeignKeyAlreadyExists( originIndex, referencedIndex ) );
 
-        var foreignKey = Table.Schema.Objects.CreateForeignKey( Table, index, referencedIndex );
+        var foreignKey = Table.Schema.Objects.CreateForeignKey( Table, originIndex, referencedIndex );
         _map.Add( key, foreignKey );
         return foreignKey;
     }
 
-    public SqliteForeignKeyBuilder GetOrCreate(SqliteIndexBuilder index, SqliteIndexBuilder referencedIndex)
+    public SqliteForeignKeyBuilder GetOrCreate(SqliteIndexBuilder originIndex, SqliteIndexBuilder referencedIndex)
     {
         Table.EnsureNotRemoved();
 
-        var key = Pair.Create<ISqlIndexBuilder, ISqlIndexBuilder>( index, referencedIndex );
+        var key = Pair.Create<ISqlIndexBuilder, ISqlIndexBuilder>( originIndex, referencedIndex );
         if ( _map.TryGetValue( key, out var foreignKey ) )
             return foreignKey;
 
-        foreignKey = Table.Schema.Objects.CreateForeignKey( Table, index, referencedIndex );
+        foreignKey = Table.Schema.Objects.CreateForeignKey( Table, originIndex, referencedIndex );
         _map.Add( key, foreignKey );
         return foreignKey;
     }
 
-    public bool Remove(ISqlIndexBuilder index, ISqlIndexBuilder referencedIndex)
+    public bool Remove(ISqlIndexBuilder originIndex, ISqlIndexBuilder referencedIndex)
     {
-        if ( ! _map.Remove( Pair.Create( index, referencedIndex ), out var removed ) )
+        if ( ! _map.Remove( Pair.Create( originIndex, referencedIndex ), out var removed ) )
             return false;
 
         removed.Remove();
@@ -123,21 +123,21 @@ public sealed class SqliteForeignKeyBuilderCollection : ISqlForeignKeyBuilderCol
 
     internal void Reactivate(SqliteForeignKeyBuilder foreignKey)
     {
-        _map.Add( Pair.Create<ISqlIndexBuilder, ISqlIndexBuilder>( foreignKey.Index, foreignKey.ReferencedIndex ), foreignKey );
+        _map.Add( Pair.Create<ISqlIndexBuilder, ISqlIndexBuilder>( foreignKey.OriginIndex, foreignKey.ReferencedIndex ), foreignKey );
     }
 
     [Pure]
-    ISqlForeignKeyBuilder ISqlForeignKeyBuilderCollection.Get(ISqlIndexBuilder index, ISqlIndexBuilder referencedIndex)
+    ISqlForeignKeyBuilder ISqlForeignKeyBuilderCollection.Get(ISqlIndexBuilder originIndex, ISqlIndexBuilder referencedIndex)
     {
-        return Get( index, referencedIndex );
+        return Get( originIndex, referencedIndex );
     }
 
     bool ISqlForeignKeyBuilderCollection.TryGet(
-        ISqlIndexBuilder index,
+        ISqlIndexBuilder originIndex,
         ISqlIndexBuilder referencedIndex,
         [MaybeNullWhen( false )] out ISqlForeignKeyBuilder result)
     {
-        if ( TryGet( index, referencedIndex, out var fk ) )
+        if ( TryGet( originIndex, referencedIndex, out var fk ) )
         {
             result = fk;
             return true;
@@ -147,17 +147,17 @@ public sealed class SqliteForeignKeyBuilderCollection : ISqlForeignKeyBuilderCol
         return false;
     }
 
-    ISqlForeignKeyBuilder ISqlForeignKeyBuilderCollection.Create(ISqlIndexBuilder index, ISqlIndexBuilder referencedIndex)
+    ISqlForeignKeyBuilder ISqlForeignKeyBuilderCollection.Create(ISqlIndexBuilder originIndex, ISqlIndexBuilder referencedIndex)
     {
         return Create(
-            SqliteHelpers.CastOrThrow<SqliteIndexBuilder>( index ),
+            SqliteHelpers.CastOrThrow<SqliteIndexBuilder>( originIndex ),
             SqliteHelpers.CastOrThrow<SqliteIndexBuilder>( referencedIndex ) );
     }
 
-    ISqlForeignKeyBuilder ISqlForeignKeyBuilderCollection.GetOrCreate(ISqlIndexBuilder index, ISqlIndexBuilder referencedIndex)
+    ISqlForeignKeyBuilder ISqlForeignKeyBuilderCollection.GetOrCreate(ISqlIndexBuilder originIndex, ISqlIndexBuilder referencedIndex)
     {
         return GetOrCreate(
-            SqliteHelpers.CastOrThrow<SqliteIndexBuilder>( index ),
+            SqliteHelpers.CastOrThrow<SqliteIndexBuilder>( originIndex ),
             SqliteHelpers.CastOrThrow<SqliteIndexBuilder>( referencedIndex ) );
     }
 

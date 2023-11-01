@@ -16,9 +16,9 @@ namespace LfrlAnvil.Sqlite.Objects.Builders;
 
 public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
 {
-    private Dictionary<ulong, SqliteForeignKeyBuilder>? _foreignKeys;
+    private Dictionary<ulong, SqliteForeignKeyBuilder>? _originatingForeignKeys;
     private Dictionary<ulong, SqliteForeignKeyBuilder>? _referencingForeignKeys;
-    private Dictionary<ulong, SqliteColumnBuilder>? _filterColumns;
+    private Dictionary<ulong, SqliteColumnBuilder>? _referencedFilterColumns;
     private SqliteIndexColumnBuilder[] _columns;
     private string _fullName;
 
@@ -30,14 +30,14 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
         _columns = columns;
         PrimaryKey = null;
         Filter = null;
-        _foreignKeys = null;
+        _originatingForeignKeys = null;
         _referencingForeignKeys = null;
-        _filterColumns = null;
+        _referencedFilterColumns = null;
         _fullName = string.Empty;
         UpdateFullName();
 
         foreach ( var c in _columns )
-            c.Column.AddIndex( this );
+            c.Column.AddReferencingIndex( this );
     }
 
     public SqliteTableBuilder Table { get; }
@@ -45,9 +45,9 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
     public bool IsUnique { get; private set; }
     public SqlConditionNode? Filter { get; private set; }
     public ReadOnlyMemory<SqliteIndexColumnBuilder> Columns => _columns;
-    public IReadOnlyCollection<SqliteForeignKeyBuilder> ForeignKeys => (_foreignKeys?.Values).EmptyIfNull();
+    public IReadOnlyCollection<SqliteForeignKeyBuilder> OriginatingForeignKeys => (_originatingForeignKeys?.Values).EmptyIfNull();
     public IReadOnlyCollection<SqliteForeignKeyBuilder> ReferencingForeignKeys => (_referencingForeignKeys?.Values).EmptyIfNull();
-    public IReadOnlyCollection<SqliteColumnBuilder> FilterColumns => (_filterColumns?.Values).EmptyIfNull();
+    public IReadOnlyCollection<SqliteColumnBuilder> ReferencedFilterColumns => (_referencedFilterColumns?.Values).EmptyIfNull();
     public override SqliteDatabaseBuilder Database => Table.Database;
     public override string FullName => _fullName;
 
@@ -72,9 +72,9 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
     ISqlPrimaryKeyBuilder? ISqlIndexBuilder.PrimaryKey => PrimaryKey;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
     ReadOnlyMemory<ISqlIndexColumnBuilder> ISqlIndexBuilder.Columns => _columns;
-    IReadOnlyCollection<ISqlForeignKeyBuilder> ISqlIndexBuilder.ForeignKeys => ForeignKeys;
+    IReadOnlyCollection<ISqlForeignKeyBuilder> ISqlIndexBuilder.OriginatingForeignKeys => OriginatingForeignKeys;
     IReadOnlyCollection<ISqlForeignKeyBuilder> ISqlIndexBuilder.ReferencingForeignKeys => ReferencingForeignKeys;
-    IReadOnlyCollection<ISqlColumnBuilder> ISqlIndexBuilder.FilterColumns => FilterColumns;
+    IReadOnlyCollection<ISqlColumnBuilder> ISqlIndexBuilder.ReferencedFilterColumns => ReferencedFilterColumns;
 
     public SqliteIndexBuilder SetDefaultName()
     {
@@ -122,11 +122,11 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
                 if ( errors.Count > 0 )
                     throw new SqliteObjectBuilderException( errors );
 
-                ClearFilterColumns();
-                RegisterFilterColumns( validator.ReferencedColumns );
+                ClearReferencedFilterColumns();
+                RegisterReferencedFilterColumns( validator.ReferencedColumns );
             }
             else
-                ClearFilterColumns();
+                ClearReferencedFilterColumns();
 
             var oldValue = Filter;
             Filter = filter;
@@ -146,10 +146,10 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
         Database.ChangeTracker.PrimaryKeyUpdated( this, null );
     }
 
-    internal void AddForeignKey(SqliteForeignKeyBuilder foreignKey)
+    internal void AddOriginatingForeignKey(SqliteForeignKeyBuilder foreignKey)
     {
-        _foreignKeys ??= new Dictionary<ulong, SqliteForeignKeyBuilder>();
-        _foreignKeys.Add( foreignKey.Id, foreignKey );
+        _originatingForeignKeys ??= new Dictionary<ulong, SqliteForeignKeyBuilder>();
+        _originatingForeignKeys.Add( foreignKey.Id, foreignKey );
     }
 
     internal void AddReferencingForeignKey(SqliteForeignKeyBuilder foreignKey)
@@ -159,9 +159,9 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
         _referencingForeignKeys.Add( foreignKey.Id, foreignKey );
     }
 
-    internal void RemoveForeignKey(SqliteForeignKeyBuilder foreignKey)
+    internal void RemoveOriginatingForeignKey(SqliteForeignKeyBuilder foreignKey)
     {
-        _foreignKeys?.Remove( foreignKey.Id );
+        _originatingForeignKeys?.Remove( foreignKey.Id );
     }
 
     internal void RemoveReferencingForeignKey(SqliteForeignKeyBuilder foreignKey)
@@ -180,10 +180,10 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
         _fullName = SqliteHelpers.GetFullName( Table.Schema.Name, Name );
     }
 
-    internal void ClearForeignKeysInto(RentedMemorySequenceSpan<SqliteObjectBuilder> buffer)
+    internal void ClearOriginatingForeignKeysInto(RentedMemorySequenceSpan<SqliteObjectBuilder> buffer)
     {
-        _foreignKeys?.Values.CopyTo( buffer );
-        _foreignKeys = null;
+        _originatingForeignKeys?.Values.CopyTo( buffer );
+        _originatingForeignKeys = null;
     }
 
     internal void ClearReferencingForeignKeysInto(RentedMemorySequenceSpan<SqliteObjectBuilder> buffer)
@@ -213,9 +213,9 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
     {
         Assume.Equals( CanRemove, true );
 
-        var fkCount = ForeignKeys.Count;
+        var fkCount = OriginatingForeignKeys.Count;
         using var buffer = Database.ObjectPool.Rent( fkCount + ReferencingForeignKeys.Count );
-        ClearForeignKeysInto( buffer );
+        ClearOriginatingForeignKeysInto( buffer );
         ClearReferencingForeignKeysInto( buffer.Slice( fkCount ) );
 
         foreach ( var fk in buffer )
@@ -231,14 +231,14 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
 
         var columns = _columns;
         foreach ( var c in _columns )
-            c.Column.RemoveIndex( this );
+            c.Column.RemoveReferencingIndex( this );
 
         _columns = Array.Empty<SqliteIndexColumnBuilder>();
 
         if ( Filter is not null )
         {
             var filter = Filter;
-            ClearFilterColumns();
+            ClearReferencedFilterColumns();
             Filter = null;
             Database.ChangeTracker.IsFilterUpdated( this, filter );
         }
@@ -279,27 +279,27 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
             throw new SqliteObjectBuilderException( errors );
     }
 
-    private void ClearFilterColumns()
+    private void ClearReferencedFilterColumns()
     {
-        if ( _filterColumns is not null && _filterColumns.Count > 0 )
+        if ( _referencedFilterColumns is not null && _referencedFilterColumns.Count > 0 )
         {
-            foreach ( var column in _filterColumns.Values )
-                column.RemoveIndexFilter( this );
+            foreach ( var column in _referencedFilterColumns.Values )
+                column.RemoveReferencingIndexFilter( this );
         }
 
-        _filterColumns = null;
+        _referencedFilterColumns = null;
     }
 
-    private void RegisterFilterColumns(Dictionary<ulong, SqliteColumnBuilder> columns)
+    private void RegisterReferencedFilterColumns(Dictionary<ulong, SqliteColumnBuilder> columns)
     {
-        Assume.IsNull( _filterColumns );
+        Assume.IsNull( _referencedFilterColumns );
 
         if ( columns.Count == 0 )
             return;
 
-        _filterColumns = columns;
-        foreach ( var column in _filterColumns.Values )
-            column.AddIndexFilter( this );
+        _referencedFilterColumns = columns;
+        foreach ( var column in _referencedFilterColumns.Values )
+            column.AddReferencingIndexFilter( this );
     }
 
     ISqlIndexBuilder ISqlIndexBuilder.SetDefaultName()

@@ -119,7 +119,7 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
             while ( i < foreignKeys.Length )
             {
                 var fk = ReinterpretCast.To<SqliteForeignKeyBuilder>( foreignKeys[i] );
-                if ( ! ReferenceEquals( fk.Index.Table, objectWithOngoingChanges ) )
+                if ( ! ReferenceEquals( fk.OriginIndex.Table, objectWithOngoingChanges ) )
                     break;
 
                 ++i;
@@ -129,7 +129,7 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
             while ( i < foreignKeys.Length )
             {
                 var fk = ReinterpretCast.To<SqliteForeignKeyBuilder>( foreignKeys[i] );
-                if ( ReferenceEquals( fk.Index.Table, objectWithOngoingChanges ) )
+                if ( ReferenceEquals( fk.OriginIndex.Table, objectWithOngoingChanges ) )
                 {
                     foreignKeys[i] = foreignKeys[j];
                     foreignKeys[j++] = fk;
@@ -146,7 +146,7 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
             {
                 var fk1 = ReinterpretCast.To<SqliteForeignKeyBuilder>( a );
                 var fk2 = ReinterpretCast.To<SqliteForeignKeyBuilder>( b );
-                return fk1.Index.Table.Id.CompareTo( fk2.Index.Table.Id );
+                return fk1.OriginIndex.Table.Id.CompareTo( fk2.OriginIndex.Table.Id );
             } );
     }
 

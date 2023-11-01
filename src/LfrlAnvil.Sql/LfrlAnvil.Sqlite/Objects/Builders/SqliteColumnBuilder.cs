@@ -15,9 +15,8 @@ namespace LfrlAnvil.Sqlite.Objects.Builders;
 
 public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
 {
-    // TODO: all these objects could be merged into one dictionary
-    private Dictionary<ulong, SqliteIndexBuilder>? _indexes;
-    private Dictionary<ulong, SqliteIndexBuilder>? _indexFilters;
+    private Dictionary<ulong, SqliteIndexBuilder>? _referencingIndexes;
+    private Dictionary<ulong, SqliteIndexBuilder>? _referencingIndexFilters;
     private Dictionary<ulong, SqliteViewBuilder>? _referencingViews;
     private Dictionary<ulong, SqliteCheckBuilder>? _referencingChecks;
     private string? _fullName;
@@ -32,8 +31,8 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
         IsNullable = false;
         DefaultValue = null;
         _fullName = null;
-        _indexes = null;
-        _indexFilters = null;
+        _referencingIndexes = null;
+        _referencingIndexFilters = null;
         _referencingViews = null;
         _referencingChecks = null;
         _node = null;
@@ -46,20 +45,20 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
     public override SqliteDatabaseBuilder Database => Table.Database;
     public override string FullName => _fullName ??= SqliteHelpers.GetFullFieldName( Table.FullName, Name );
     public SqlColumnBuilderNode Node => _node ??= Table.RecordSet[Name];
-    public IReadOnlyCollection<SqliteIndexBuilder> Indexes => (_indexes?.Values).EmptyIfNull();
-    public IReadOnlyCollection<SqliteIndexBuilder> IndexFilters => (_indexFilters?.Values).EmptyIfNull();
+    public IReadOnlyCollection<SqliteIndexBuilder> ReferencingIndexes => (_referencingIndexes?.Values).EmptyIfNull();
+    public IReadOnlyCollection<SqliteIndexBuilder> ReferencingIndexFilters => (_referencingIndexFilters?.Values).EmptyIfNull();
     public IReadOnlyCollection<SqliteViewBuilder> ReferencingViews => (_referencingViews?.Values).EmptyIfNull();
     public IReadOnlyCollection<SqliteCheckBuilder> ReferencingChecks => (_referencingChecks?.Values).EmptyIfNull();
 
     internal override bool CanRemove =>
-        (_indexes is null || _indexes.Count == 0) &&
-        (_indexFilters is null || _indexFilters.Count == 0) &&
+        (_referencingIndexes is null || _referencingIndexes.Count == 0) &&
+        (_referencingIndexFilters is null || _referencingIndexFilters.Count == 0) &&
         (_referencingViews is null || _referencingViews.Count == 0) &&
         (_referencingChecks is null || _referencingChecks.Count == 0);
 
     ISqlTableBuilder ISqlColumnBuilder.Table => Table;
-    IReadOnlyCollection<ISqlIndexBuilder> ISqlColumnBuilder.Indexes => Indexes;
-    IReadOnlyCollection<ISqlIndexBuilder> ISqlColumnBuilder.IndexFilters => IndexFilters;
+    IReadOnlyCollection<ISqlIndexBuilder> ISqlColumnBuilder.ReferencingIndexes => ReferencingIndexes;
+    IReadOnlyCollection<ISqlIndexBuilder> ISqlColumnBuilder.ReferencingIndexFilters => ReferencingIndexFilters;
     ISqlColumnTypeDefinition ISqlColumnBuilder.TypeDefinition => TypeDefinition;
     IReadOnlyCollection<ISqlViewBuilder> ISqlColumnBuilder.ReferencingViews => ReferencingViews;
     IReadOnlyCollection<ISqlCheckBuilder> ISqlColumnBuilder.ReferencingChecks => ReferencingChecks;
@@ -142,26 +141,26 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
         return SqliteIndexColumnBuilder.Desc( this );
     }
 
-    internal void AddIndex(SqliteIndexBuilder index)
+    internal void AddReferencingIndex(SqliteIndexBuilder index)
     {
-        _indexes ??= new Dictionary<ulong, SqliteIndexBuilder>();
-        _indexes.Add( index.Id, index );
+        _referencingIndexes ??= new Dictionary<ulong, SqliteIndexBuilder>();
+        _referencingIndexes.Add( index.Id, index );
     }
 
-    internal void RemoveIndex(SqliteIndexBuilder index)
+    internal void RemoveReferencingIndex(SqliteIndexBuilder index)
     {
-        _indexes?.Remove( index.Id );
+        _referencingIndexes?.Remove( index.Id );
     }
 
-    internal void AddIndexFilter(SqliteIndexBuilder index)
+    internal void AddReferencingIndexFilter(SqliteIndexBuilder index)
     {
-        _indexFilters ??= new Dictionary<ulong, SqliteIndexBuilder>();
-        _indexFilters.Add( index.Id, index );
+        _referencingIndexFilters ??= new Dictionary<ulong, SqliteIndexBuilder>();
+        _referencingIndexFilters.Add( index.Id, index );
     }
 
-    internal void RemoveIndexFilter(SqliteIndexBuilder index)
+    internal void RemoveReferencingIndexFilter(SqliteIndexBuilder index)
     {
-        _indexFilters?.Remove( index.Id );
+        _referencingIndexFilters?.Remove( index.Id );
     }
 
     internal void AddReferencingView(SqliteViewBuilder view)
@@ -201,8 +200,8 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
     {
         Assume.Equals( CanRemove, true );
 
-        _indexes = null;
-        _indexFilters = null;
+        _referencingIndexes = null;
+        _referencingIndexFilters = null;
         _referencingViews = null;
         _referencingChecks = null;
 
@@ -241,15 +240,15 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
     {
         var errors = Chain<string>.Empty;
 
-        if ( _indexes is not null && _indexes.Count > 0 )
+        if ( _referencingIndexes is not null && _referencingIndexes.Count > 0 )
         {
-            foreach ( var index in _indexes.Values )
+            foreach ( var index in _referencingIndexes.Values )
                 errors = errors.Extend( ExceptionResources.ColumnIsReferencedByObject( index ) );
         }
 
-        if ( _indexFilters is not null && _indexFilters.Count > 0 )
+        if ( _referencingIndexFilters is not null && _referencingIndexFilters.Count > 0 )
         {
-            foreach ( var index in _indexFilters.Values )
+            foreach ( var index in _referencingIndexFilters.Values )
                 errors = errors.Extend( ExceptionResources.ColumnIsReferencedByIndexFilter( index ) );
         }
 

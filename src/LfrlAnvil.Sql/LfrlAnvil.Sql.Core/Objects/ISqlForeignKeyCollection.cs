@@ -9,10 +9,10 @@ public interface ISqlForeignKeyCollection : IReadOnlyCollection<ISqlForeignKey>
     ISqlTable Table { get; }
 
     [Pure]
-    bool Contains(ISqlIndex index, ISqlIndex referencedIndex);
+    bool Contains(ISqlIndex originIndex, ISqlIndex referencedIndex);
 
     [Pure]
-    ISqlForeignKey Get(ISqlIndex index, ISqlIndex referencedIndex);
+    ISqlForeignKey Get(ISqlIndex originIndex, ISqlIndex referencedIndex);
 
-    bool TryGet(ISqlIndex index, ISqlIndex referencedIndex, [MaybeNullWhen( false )] out ISqlForeignKey result);
+    bool TryGet(ISqlIndex originIndex, ISqlIndex referencedIndex, [MaybeNullWhen( false )] out ISqlForeignKey result);
 }

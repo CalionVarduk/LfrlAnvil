@@ -17,10 +17,10 @@ public static class ExceptionResources
     public const string IndexMustHaveAtLeastOneColumn = "Index must have at least one column.";
     public const string PrimaryKeyIndexMustRemainUnique = "Primary key index must remain unique.";
     public const string PrimaryKeyIndexCannotBePartial = "Primary key index cannot be partial.";
-    public const string ForeignKeyIndexAndReferencedIndexAreTheSame = "Foreign key index and referenced index are the same.";
+    public const string ForeignKeyOriginIndexAndReferencedIndexAreTheSame = "Foreign key origin index and referenced index are the same.";
 
-    public const string ForeignKeyIndexAndReferencedIndexMustHaveTheSameAmountOfColumns =
-        "Foreign key index and referenced index must have the same amount of columns.";
+    public const string ForeignKeyOriginIndexAndReferencedIndexMustHaveTheSameAmountOfColumns =
+        "Foreign key origin index and referenced index must have the same amount of columns.";
 
     public const string DummyDataSourceDoesNotContainAnyRecordSets = "Dummy data source does not contain any record sets.";
 

@@ -8,27 +8,27 @@ public sealed class SqliteForeignKeyBuilder : SqliteObjectBuilder, ISqlForeignKe
 {
     private string _fullName;
 
-    internal SqliteForeignKeyBuilder(SqliteIndexBuilder index, SqliteIndexBuilder referencedIndex, string name)
-        : base( index.Database.GetNextId(), name, SqlObjectType.ForeignKey )
+    internal SqliteForeignKeyBuilder(SqliteIndexBuilder originIndex, SqliteIndexBuilder referencedIndex, string name)
+        : base( originIndex.Database.GetNextId(), name, SqlObjectType.ForeignKey )
     {
-        Index = index;
+        OriginIndex = originIndex;
         ReferencedIndex = referencedIndex;
         OnDeleteBehavior = ReferenceBehavior.Restrict;
         OnUpdateBehavior = ReferenceBehavior.Restrict;
-        Index.AddForeignKey( this );
+        OriginIndex.AddOriginatingForeignKey( this );
         ReferencedIndex.AddReferencingForeignKey( this );
         _fullName = string.Empty;
         UpdateFullName();
     }
 
-    public SqliteIndexBuilder Index { get; }
+    public SqliteIndexBuilder OriginIndex { get; }
     public SqliteIndexBuilder ReferencedIndex { get; }
     public ReferenceBehavior OnDeleteBehavior { get; private set; }
     public ReferenceBehavior OnUpdateBehavior { get; private set; }
     public override string FullName => _fullName;
-    public override SqliteDatabaseBuilder Database => Index.Database;
+    public override SqliteDatabaseBuilder Database => OriginIndex.Database;
 
-    ISqlIndexBuilder ISqlForeignKeyBuilder.Index => Index;
+    ISqlIndexBuilder ISqlForeignKeyBuilder.OriginIndex => OriginIndex;
     ISqlIndexBuilder ISqlForeignKeyBuilder.ReferencedIndex => ReferencedIndex;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
 
@@ -41,7 +41,7 @@ public sealed class SqliteForeignKeyBuilder : SqliteObjectBuilder, ISqlForeignKe
 
     public SqliteForeignKeyBuilder SetDefaultName()
     {
-        return SetName( SqliteHelpers.GetDefaultForeignKeyName( Index, ReferencedIndex ) );
+        return SetName( SqliteHelpers.GetDefaultForeignKeyName( OriginIndex, ReferencedIndex ) );
     }
 
     public SqliteForeignKeyBuilder SetOnDeleteBehavior(ReferenceBehavior behavior)
@@ -74,7 +74,7 @@ public sealed class SqliteForeignKeyBuilder : SqliteObjectBuilder, ISqlForeignKe
 
     internal void UpdateFullName()
     {
-        _fullName = SqliteHelpers.GetFullName( Index.Table.Schema.Name, Name );
+        _fullName = SqliteHelpers.GetFullName( OriginIndex.Table.Schema.Name, Name );
     }
 
     internal void Reactivate()
@@ -82,26 +82,26 @@ public sealed class SqliteForeignKeyBuilder : SqliteObjectBuilder, ISqlForeignKe
         Assume.Equals( IsRemoved, true );
         IsRemoved = false;
 
-        Index.AddForeignKey( this );
+        OriginIndex.AddOriginatingForeignKey( this );
         ReferencedIndex.AddReferencingForeignKey( this );
 
-        Index.Table.ForeignKeys.Reactivate( this );
-        Index.Table.Schema.Objects.Reactivate( this );
+        OriginIndex.Table.ForeignKeys.Reactivate( this );
+        OriginIndex.Table.Schema.Objects.Reactivate( this );
 
-        Database.ChangeTracker.ObjectCreated( Index.Table, this );
+        Database.ChangeTracker.ObjectCreated( OriginIndex.Table, this );
     }
 
     protected override void RemoveCore()
     {
         Assume.Equals( CanRemove, true );
 
-        Index.RemoveForeignKey( this );
+        OriginIndex.RemoveOriginatingForeignKey( this );
         ReferencedIndex.RemoveReferencingForeignKey( this );
 
-        Index.Table.Schema.Objects.Remove( Name );
-        Index.Table.ForeignKeys.Remove( Index, ReferencedIndex );
+        OriginIndex.Table.Schema.Objects.Remove( Name );
+        OriginIndex.Table.ForeignKeys.Remove( OriginIndex, ReferencedIndex );
 
-        Database.ChangeTracker.ObjectRemoved( Index.Table, this );
+        Database.ChangeTracker.ObjectRemoved( OriginIndex.Table, this );
     }
 
     protected override void SetNameCore(string name)
@@ -110,12 +110,12 @@ public sealed class SqliteForeignKeyBuilder : SqliteObjectBuilder, ISqlForeignKe
             return;
 
         SqliteHelpers.AssertName( name );
-        Index.Table.Schema.Objects.ChangeName( this, name );
+        OriginIndex.Table.Schema.Objects.ChangeName( this, name );
 
         var oldName = Name;
         Name = name;
         UpdateFullName();
-        Database.ChangeTracker.NameUpdated( Index.Table, this, oldName );
+        Database.ChangeTracker.NameUpdated( OriginIndex.Table, this, oldName );
     }
 
     ISqlForeignKeyBuilder ISqlForeignKeyBuilder.SetName(string name)

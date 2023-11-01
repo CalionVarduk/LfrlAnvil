@@ -24,23 +24,23 @@ public sealed class SqliteForeignKeyCollection : ISqlForeignKeyCollection
     ISqlTable ISqlForeignKeyCollection.Table => Table;
 
     [Pure]
-    public bool Contains(ISqlIndex index, ISqlIndex referencedIndex)
+    public bool Contains(ISqlIndex originIndex, ISqlIndex referencedIndex)
     {
-        return _map.ContainsKey( Pair.Create( index, referencedIndex ) );
+        return _map.ContainsKey( Pair.Create( originIndex, referencedIndex ) );
     }
 
     [Pure]
-    public SqliteForeignKey Get(ISqlIndex index, ISqlIndex referencedIndex)
+    public SqliteForeignKey Get(ISqlIndex originIndex, ISqlIndex referencedIndex)
     {
-        return _map[Pair.Create( index, referencedIndex )];
+        return _map[Pair.Create( originIndex, referencedIndex )];
     }
 
     public bool TryGet(
-        ISqlIndex index,
+        ISqlIndex originIndex,
         ISqlIndex referencedIndex,
         [MaybeNullWhen( false )] out SqliteForeignKey result)
     {
-        return _map.TryGetValue( Pair.Create( index, referencedIndex ), out result );
+        return _map.TryGetValue( Pair.Create( originIndex, referencedIndex ), out result );
     }
 
     [Pure]
@@ -83,9 +83,9 @@ public sealed class SqliteForeignKeyCollection : ISqlForeignKeyCollection
     {
         foreach ( var b in foreignKeys )
         {
-            var indexSchemaBuilder = b.Index.Table.Schema;
+            var indexSchemaBuilder = b.OriginIndex.Table.Schema;
             var schema = schemas.Get( indexSchemaBuilder.Name );
-            var index = schema.Objects.GetIndex( b.Index.Name );
+            var index = schema.Objects.GetIndex( b.OriginIndex.Name );
 
             var refIndexSchemaBuilder = b.ReferencedIndex.Table.Schema;
             if ( ! ReferenceEquals( indexSchemaBuilder, refIndexSchemaBuilder ) )
@@ -100,17 +100,17 @@ public sealed class SqliteForeignKeyCollection : ISqlForeignKeyCollection
     }
 
     [Pure]
-    ISqlForeignKey ISqlForeignKeyCollection.Get(ISqlIndex index, ISqlIndex referencedIndex)
+    ISqlForeignKey ISqlForeignKeyCollection.Get(ISqlIndex originIndex, ISqlIndex referencedIndex)
     {
-        return Get( index, referencedIndex );
+        return Get( originIndex, referencedIndex );
     }
 
     bool ISqlForeignKeyCollection.TryGet(
-        ISqlIndex index,
+        ISqlIndex originIndex,
         ISqlIndex referencedIndex,
         [MaybeNullWhen( false )] out ISqlForeignKey result)
     {
-        if ( TryGet( index, referencedIndex, out var fk ) )
+        if ( TryGet( originIndex, referencedIndex, out var fk ) )
         {
             result = fk;
             return true;

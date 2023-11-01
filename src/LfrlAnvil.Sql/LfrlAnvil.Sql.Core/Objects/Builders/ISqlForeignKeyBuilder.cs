@@ -3,7 +3,7 @@
 public interface ISqlForeignKeyBuilder : ISqlObjectBuilder
 {
     ISqlIndexBuilder ReferencedIndex { get; }
-    ISqlIndexBuilder Index { get; }
+    ISqlIndexBuilder OriginIndex { get; }
     ReferenceBehavior OnDeleteBehavior { get; }
     ReferenceBehavior OnUpdateBehavior { get; }
 

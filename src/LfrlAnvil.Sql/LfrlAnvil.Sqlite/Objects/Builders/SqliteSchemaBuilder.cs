@@ -48,7 +48,7 @@ public sealed class SqliteSchemaBuilder : SqliteObjectBuilder, ISqlSchemaBuilder
                         var ix = ReinterpretCast.To<SqliteIndexBuilder>( obj );
                         foreach ( var fk in ix.ReferencingForeignKeys )
                         {
-                            if ( ! ReferenceEquals( fk.Index.Table.Schema, this ) )
+                            if ( ! ReferenceEquals( fk.OriginIndex.Table.Schema, this ) )
                                 return false;
                         }
 
@@ -107,7 +107,7 @@ public sealed class SqliteSchemaBuilder : SqliteObjectBuilder, ISqlSchemaBuilder
                     var ix = ReinterpretCast.To<SqliteIndexBuilder>( obj );
                     foreach ( var fk in ix.ReferencingForeignKeys )
                     {
-                        if ( ! ReferenceEquals( fk.Index.Table.Schema, this ) )
+                        if ( ! ReferenceEquals( fk.OriginIndex.Table.Schema, this ) )
                             errors = errors.Extend( ExceptionResources.DetectedExternalForeignKey( fk ) );
                     }
 
@@ -163,7 +163,7 @@ public sealed class SqliteSchemaBuilder : SqliteObjectBuilder, ISqlSchemaBuilder
                 foreach ( var fk in ix.ReferencingForeignKeys )
                 {
                     if ( ! fk.IsSelfReference() )
-                        RemoveTable( fk.Index.Table, reachedTables );
+                        RemoveTable( fk.OriginIndex.Table, reachedTables );
                 }
             }
 

@@ -1096,7 +1096,7 @@ public class SqliteColumnBuilderTests : TestsBase
         {
             table.Columns.Contains( sut.Name ).Should().BeFalse();
             sut.IsRemoved.Should().BeTrue();
-            sut.Indexes.Should().BeEmpty();
+            sut.ReferencingIndexes.Should().BeEmpty();
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 ).Should().SatisfySql( "ALTER TABLE \"foo_T\" DROP COLUMN \"C2\";" );

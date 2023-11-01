@@ -27,7 +27,7 @@ public partial class SqliteTableBuilderTests
 
             using ( new AssertionScope() )
             {
-                result.Index.Should().BeSameAs( ix1 );
+                result.OriginIndex.Should().BeSameAs( ix1 );
                 result.ReferencedIndex.Should().BeSameAs( ix2 );
                 result.Name.Should().Be( "FK_T_C1_REF_T" );
                 result.FullName.Should().Be( "foo_FK_T_C1_REF_T" );
@@ -39,10 +39,10 @@ public partial class SqliteTableBuilderTests
                 sut.Should().BeEquivalentTo( result );
                 schema.Objects.Contains( result.Name ).Should().BeTrue();
 
-                ((ISqlIndexBuilder)ix1).ForeignKeys.Should().BeSequentiallyEqualTo( result );
+                ((ISqlIndexBuilder)ix1).OriginatingForeignKeys.Should().BeSequentiallyEqualTo( result );
                 ix1.ReferencingForeignKeys.Should().BeEmpty();
 
-                ix2.ForeignKeys.Should().BeEmpty();
+                ix2.OriginatingForeignKeys.Should().BeEmpty();
                 ((ISqlIndexBuilder)ix2).ReferencingForeignKeys.Should().BeSequentiallyEqualTo( result );
             }
         }
@@ -61,7 +61,7 @@ public partial class SqliteTableBuilderTests
 
             using ( new AssertionScope() )
             {
-                result.Index.Should().BeSameAs( ix1 );
+                result.OriginIndex.Should().BeSameAs( ix1 );
                 result.ReferencedIndex.Should().BeSameAs( ix2 );
                 result.Name.Should().Be( "FK_T2_C2_REF_T1" );
                 result.FullName.Should().Be( "foo_FK_T2_C2_REF_T1" );
@@ -73,10 +73,10 @@ public partial class SqliteTableBuilderTests
                 sut.Should().BeEquivalentTo( result );
                 schema.Objects.Contains( result.Name ).Should().BeTrue();
 
-                ((ISqlIndexBuilder)ix1).ForeignKeys.Should().BeSequentiallyEqualTo( result );
+                ((ISqlIndexBuilder)ix1).OriginatingForeignKeys.Should().BeSequentiallyEqualTo( result );
                 ix1.ReferencingForeignKeys.Should().BeEmpty();
 
-                ix2.ForeignKeys.Should().BeEmpty();
+                ix2.OriginatingForeignKeys.Should().BeEmpty();
                 ((ISqlIndexBuilder)ix2).ReferencingForeignKeys.Should().BeSequentiallyEqualTo( result );
             }
         }
@@ -97,7 +97,7 @@ public partial class SqliteTableBuilderTests
 
             using ( new AssertionScope() )
             {
-                result.Index.Should().BeSameAs( ix1 );
+                result.OriginIndex.Should().BeSameAs( ix1 );
                 result.ReferencedIndex.Should().BeSameAs( ix2 );
                 result.Name.Should().Be( "FK_T2_C2_REF_foo_T1" );
                 result.FullName.Should().Be( "bar_FK_T2_C2_REF_foo_T1" );
@@ -109,10 +109,10 @@ public partial class SqliteTableBuilderTests
                 sut.Should().BeEquivalentTo( result );
                 schema2.Objects.Contains( result.Name ).Should().BeTrue();
 
-                ((ISqlIndexBuilder)ix1).ForeignKeys.Should().BeSequentiallyEqualTo( result );
+                ((ISqlIndexBuilder)ix1).OriginatingForeignKeys.Should().BeSequentiallyEqualTo( result );
                 ix1.ReferencingForeignKeys.Should().BeEmpty();
 
-                ix2.ForeignKeys.Should().BeEmpty();
+                ix2.OriginatingForeignKeys.Should().BeEmpty();
                 ((ISqlIndexBuilder)ix2).ReferencingForeignKeys.Should().BeSequentiallyEqualTo( result );
             }
         }
@@ -370,7 +370,7 @@ public partial class SqliteTableBuilderTests
 
             using ( new AssertionScope() )
             {
-                result.Index.Should().BeSameAs( ix1 );
+                result.OriginIndex.Should().BeSameAs( ix1 );
                 result.ReferencedIndex.Should().BeSameAs( ix2 );
                 result.Name.Should().Be( "FK_T_C1_REF_T" );
                 result.FullName.Should().Be( "foo_FK_T_C1_REF_T" );
@@ -382,10 +382,10 @@ public partial class SqliteTableBuilderTests
                 sut.Should().BeEquivalentTo( result );
                 schema.Objects.Contains( result.Name ).Should().BeTrue();
 
-                ((ISqlIndexBuilder)ix1).ForeignKeys.Should().BeSequentiallyEqualTo( result );
+                ((ISqlIndexBuilder)ix1).OriginatingForeignKeys.Should().BeSequentiallyEqualTo( result );
                 ix1.ReferencingForeignKeys.Should().BeEmpty();
 
-                ix2.ForeignKeys.Should().BeEmpty();
+                ix2.OriginatingForeignKeys.Should().BeEmpty();
                 ((ISqlIndexBuilder)ix2).ReferencingForeignKeys.Should().BeSequentiallyEqualTo( result );
             }
         }
@@ -525,7 +525,7 @@ public partial class SqliteTableBuilderTests
                 result.Should().BeTrue();
                 fk.IsRemoved.Should().BeTrue();
                 sut.Count.Should().Be( 0 );
-                ix1.ForeignKeys.Should().BeEmpty();
+                ix1.OriginatingForeignKeys.Should().BeEmpty();
                 ix2.ReferencingForeignKeys.Should().BeEmpty();
                 schema.Objects.Contains( fk.Name ).Should().BeFalse();
             }

@@ -262,18 +262,18 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
 
     internal SqliteForeignKeyBuilder CreateForeignKey(
         SqliteTableBuilder table,
-        SqliteIndexBuilder index,
+        SqliteIndexBuilder originIndex,
         SqliteIndexBuilder referencedIndex)
     {
-        SqliteHelpers.AssertForeignKey( table, index, referencedIndex );
+        SqliteHelpers.AssertForeignKey( table, originIndex, referencedIndex );
 
-        var name = SqliteHelpers.GetDefaultForeignKeyName( index, referencedIndex );
+        var name = SqliteHelpers.GetDefaultForeignKeyName( originIndex, referencedIndex );
         ref var obj = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, name, out var exists )!;
         if ( exists )
             throw new SqliteObjectBuilderException( ExceptionResources.NameIsAlreadyTaken( obj, name ) );
 
-        var result = new SqliteForeignKeyBuilder( index, referencedIndex, name );
-        Schema.Database.ChangeTracker.ObjectCreated( index.Table, result );
+        var result = new SqliteForeignKeyBuilder( originIndex, referencedIndex, name );
+        Schema.Database.ChangeTracker.ObjectCreated( originIndex.Table, result );
         obj = result;
         return result;
     }

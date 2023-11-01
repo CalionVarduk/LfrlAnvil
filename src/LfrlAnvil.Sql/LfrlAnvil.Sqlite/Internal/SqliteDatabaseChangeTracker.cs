@@ -195,7 +195,7 @@ internal sealed class SqliteDatabaseChangeTracker
             oldValue,
             foreignKey.OnDeleteBehavior );
 
-        AddChange( foreignKey.Index.Table, change );
+        AddChange( foreignKey.OriginIndex.Table, change );
     }
 
     internal void OnUpdateBehaviorUpdated(SqliteForeignKeyBuilder foreignKey, ReferenceBehavior oldValue)
@@ -210,7 +210,7 @@ internal sealed class SqliteDatabaseChangeTracker
             oldValue,
             foreignKey.OnUpdateBehavior );
 
-        AddChange( foreignKey.Index.Table, change );
+        AddChange( foreignKey.OriginIndex.Table, change );
     }
 
     internal void IsUniqueUpdated(SqliteIndexBuilder index)

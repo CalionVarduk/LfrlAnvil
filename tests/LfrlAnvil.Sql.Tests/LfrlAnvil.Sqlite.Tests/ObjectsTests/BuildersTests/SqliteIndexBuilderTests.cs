@@ -657,8 +657,8 @@ public class SqliteIndexBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             result.Filter.Should().BeEquivalentTo( table.ToRecordSet().GetField( "C2" ) != null );
-            result.FilterColumns.Should().BeSequentiallyEqualTo( column );
-            column.IndexFilters.Should().BeSequentiallyEqualTo( sut );
+            result.ReferencedFilterColumns.Should().BeSequentiallyEqualTo( column );
+            column.ReferencingIndexFilters.Should().BeSequentiallyEqualTo( sut );
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
                 .Should()
@@ -686,8 +686,8 @@ public class SqliteIndexBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             result.Filter.Should().BeNull();
-            result.FilterColumns.Should().BeEmpty();
-            column.IndexFilters.Should().BeEmpty();
+            result.ReferencedFilterColumns.Should().BeEmpty();
+            column.ReferencingIndexFilters.Should().BeEmpty();
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
                 .Should()
@@ -784,11 +784,11 @@ public class SqliteIndexBuilderTests : TestsBase
             table.Indexes.Contains( c2.Asc() ).Should().BeFalse();
             schema.Objects.Contains( sut.Name ).Should().BeFalse();
             sut.IsRemoved.Should().BeTrue();
-            sut.ForeignKeys.Should().BeEmpty();
+            sut.OriginatingForeignKeys.Should().BeEmpty();
             sut.ReferencingForeignKeys.Should().BeEmpty();
             fk1.IsRemoved.Should().BeTrue();
             fk2.IsRemoved.Should().BeTrue();
-            c2.Indexes.Should().BeEmpty();
+            c2.ReferencingIndexes.Should().BeEmpty();
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
@@ -831,9 +831,9 @@ public class SqliteIndexBuilderTests : TestsBase
             schema.Objects.Contains( sut.Name ).Should().BeFalse();
             schema.Objects.Contains( pk.Name ).Should().BeFalse();
             sut.IsRemoved.Should().BeTrue();
-            sut.ForeignKeys.Should().BeEmpty();
+            sut.OriginatingForeignKeys.Should().BeEmpty();
             sut.ReferencingForeignKeys.Should().BeEmpty();
-            column.Indexes.Should().BeEmpty();
+            column.ReferencingIndexes.Should().BeEmpty();
             pk.IsRemoved.Should().BeTrue();
             table.PrimaryKey.Should().BeNull();
         }
@@ -854,11 +854,11 @@ public class SqliteIndexBuilderTests : TestsBase
             table.Indexes.Contains( column.Asc() ).Should().BeFalse();
             schema.Objects.Contains( sut.Name ).Should().BeFalse();
             sut.IsRemoved.Should().BeTrue();
-            sut.ForeignKeys.Should().BeEmpty();
+            sut.OriginatingForeignKeys.Should().BeEmpty();
             sut.ReferencingForeignKeys.Should().BeEmpty();
-            sut.FilterColumns.Should().BeEmpty();
-            column.Indexes.Should().BeEmpty();
-            column.IndexFilters.Should().BeEmpty();
+            sut.ReferencedFilterColumns.Should().BeEmpty();
+            column.ReferencingIndexes.Should().BeEmpty();
+            column.ReferencingIndexFilters.Should().BeEmpty();
             table.PrimaryKey.Should().BeNull();
         }
     }

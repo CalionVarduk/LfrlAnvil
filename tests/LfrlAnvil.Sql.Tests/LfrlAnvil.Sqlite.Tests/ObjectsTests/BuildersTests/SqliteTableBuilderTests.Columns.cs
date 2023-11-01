@@ -32,9 +32,9 @@ public partial class SqliteTableBuilderTests
                 result.IsNullable.Should().BeFalse();
                 result.TypeDefinition.Should().BeSameAs( sut.DefaultTypeDefinition );
                 result.DefaultValue.Should().BeNull();
-                result.Indexes.Should().BeEmpty();
+                result.ReferencingIndexes.Should().BeEmpty();
                 result.ReferencingViews.Should().BeEmpty();
-                result.IndexFilters.Should().BeEmpty();
+                result.ReferencingIndexFilters.Should().BeEmpty();
                 result.ReferencingChecks.Should().BeEmpty();
                 result.Node.Should().BeEquivalentTo( table.RecordSet["C"] );
                 sut.Count.Should().Be( 1 );
@@ -109,9 +109,9 @@ public partial class SqliteTableBuilderTests
                 result.IsNullable.Should().BeFalse();
                 result.TypeDefinition.Should().BeSameAs( sut.DefaultTypeDefinition );
                 result.DefaultValue.Should().BeNull();
-                result.Indexes.Should().BeEmpty();
+                result.ReferencingIndexes.Should().BeEmpty();
                 result.ReferencingViews.Should().BeEmpty();
-                result.IndexFilters.Should().BeEmpty();
+                result.ReferencingIndexFilters.Should().BeEmpty();
                 result.ReferencingChecks.Should().BeEmpty();
                 result.Node.Should().BeEquivalentTo( table.RecordSet["C"] );
                 sut.Count.Should().Be( 1 );

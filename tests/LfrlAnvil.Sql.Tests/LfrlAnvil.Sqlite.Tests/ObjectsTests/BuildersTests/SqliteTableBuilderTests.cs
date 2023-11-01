@@ -825,7 +825,7 @@ public partial class SqliteTableBuilderTests : TestsBase
             result.Index.IsUnique.Should().BeTrue();
             result.Index.Name.Should().Be( "UIX_T_CA" );
             result.Index.FullName.Should().Be( "foo_UIX_T_CA" );
-            result.Index.ForeignKeys.Should().BeEmpty();
+            result.Index.OriginatingForeignKeys.Should().BeEmpty();
             result.Index.ReferencingForeignKeys.Should().BeEmpty();
             result.Index.Columns.ToArray().Should().BeSequentiallyEqualTo( column.Asc() );
             result.Index.PrimaryKey.Should().BeSameAs( result );
@@ -878,7 +878,7 @@ public partial class SqliteTableBuilderTests : TestsBase
             result.Index.IsUnique.Should().BeTrue();
             result.Index.Name.Should().Be( "UIX_T_C1A" );
             result.Index.FullName.Should().Be( "foo_UIX_T_C1A" );
-            result.Index.ForeignKeys.Should().BeEmpty();
+            result.Index.OriginatingForeignKeys.Should().BeEmpty();
             result.Index.ReferencingForeignKeys.Should().BeEmpty();
             result.Index.Columns.ToArray().Should().BeSequentiallyEqualTo( c1.Asc() );
             result.Index.PrimaryKey.Should().BeSameAs( result );
@@ -933,7 +933,7 @@ public partial class SqliteTableBuilderTests : TestsBase
             result.Index.IsUnique.Should().BeTrue();
             result.Index.Name.Should().Be( "UIX_T_C1A_C2D" );
             result.Index.FullName.Should().Be( "foo_UIX_T_C1A_C2D" );
-            result.Index.ForeignKeys.Should().BeEmpty();
+            result.Index.OriginatingForeignKeys.Should().BeEmpty();
             result.Index.ReferencingForeignKeys.Should().BeEmpty();
             result.Index.Columns.ToArray().Should().BeSequentiallyEqualTo( c1.Asc(), c2.Desc() );
             result.Index.PrimaryKey.Should().BeSameAs( result );

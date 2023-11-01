@@ -93,7 +93,7 @@ public static class SqlObjectExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool IsSelfReference(this ISqlForeignKeyBuilder foreignKey)
     {
-        return ReferenceEquals( foreignKey.Index.Table, foreignKey.ReferencedIndex.Table );
+        return ReferenceEquals( foreignKey.OriginIndex.Table, foreignKey.ReferencedIndex.Table );
     }
 
     [Pure]
@@ -114,7 +114,7 @@ public static class SqlObjectExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool IsSelfReference(this ISqlForeignKey foreignKey)
     {
-        return ReferenceEquals( foreignKey.Index.Table, foreignKey.ReferencedIndex.Table );
+        return ReferenceEquals( foreignKey.OriginIndex.Table, foreignKey.ReferencedIndex.Table );
     }
 
     [Pure]
@@ -229,7 +229,7 @@ public static class SqlObjectExtensions
         bool useFullName)
     {
         var refIndex = foreignKey.ReferencedIndex;
-        var fkColumns = foreignKey.Index.Columns;
+        var fkColumns = foreignKey.OriginIndex.Columns;
         var fkReferencedColumns = refIndex.Columns;
         var isSelfReference = foreignKey.IsSelfReference();
 

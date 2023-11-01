@@ -11,8 +11,8 @@ public interface ISqlColumnBuilder : ISqlObjectBuilder
     ISqlColumnTypeDefinition TypeDefinition { get; }
     bool IsNullable { get; }
     SqlExpressionNode? DefaultValue { get; }
-    IReadOnlyCollection<ISqlIndexBuilder> Indexes { get; }
-    IReadOnlyCollection<ISqlIndexBuilder> IndexFilters { get; }
+    IReadOnlyCollection<ISqlIndexBuilder> ReferencingIndexes { get; }
+    IReadOnlyCollection<ISqlIndexBuilder> ReferencingIndexFilters { get; }
     IReadOnlyCollection<ISqlViewBuilder> ReferencingViews { get; }
     IReadOnlyCollection<ISqlCheckBuilder> ReferencingChecks { get; }
     SqlColumnBuilderNode Node { get; }

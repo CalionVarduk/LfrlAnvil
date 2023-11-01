@@ -55,15 +55,15 @@ public static class SqliteHelpers
     }
 
     [Pure]
-    public static string GetDefaultForeignKeyName(SqliteIndexBuilder index, SqliteIndexBuilder referencedIndex)
+    public static string GetDefaultForeignKeyName(SqliteIndexBuilder originIndex, SqliteIndexBuilder referencedIndex)
     {
         var builder = new StringBuilder( 32 );
-        builder.Append( "FK_" ).Append( index.Table.Name );
+        builder.Append( "FK_" ).Append( originIndex.Table.Name );
 
-        foreach ( var c in index.Columns )
+        foreach ( var c in originIndex.Columns )
             builder.Append( '_' ).Append( c.Column.Name );
 
-        var refName = ReferenceEquals( index.Table.Schema, referencedIndex.Table.Schema )
+        var refName = ReferenceEquals( originIndex.Table.Schema, referencedIndex.Table.Schema )
             ? referencedIndex.Table.Name
             : referencedIndex.Table.FullName;
 
@@ -249,21 +249,21 @@ public static class SqliteHelpers
         return result;
     }
 
-    internal static void AssertForeignKey(SqliteTableBuilder table, SqliteIndexBuilder index, SqliteIndexBuilder referencedIndex)
+    internal static void AssertForeignKey(SqliteTableBuilder table, SqliteIndexBuilder originIndex, SqliteIndexBuilder referencedIndex)
     {
         var errors = Chain<string>.Empty;
 
-        if ( ReferenceEquals( index, referencedIndex ) )
-            errors = errors.Extend( ExceptionResources.ForeignKeyIndexAndReferencedIndexAreTheSame );
+        if ( ReferenceEquals( originIndex, referencedIndex ) )
+            errors = errors.Extend( ExceptionResources.ForeignKeyOriginIndexAndReferencedIndexAreTheSame );
 
-        if ( ! ReferenceEquals( table, index.Table ) )
-            errors = errors.Extend( ExceptionResources.ObjectDoesNotBelongToTable( index, table ) );
+        if ( ! ReferenceEquals( table, originIndex.Table ) )
+            errors = errors.Extend( ExceptionResources.ObjectDoesNotBelongToTable( originIndex, table ) );
 
-        if ( ! ReferenceEquals( index.Database, referencedIndex.Database ) )
+        if ( ! ReferenceEquals( originIndex.Database, referencedIndex.Database ) )
             errors = errors.Extend( ExceptionResources.ObjectBelongsToAnotherDatabase( referencedIndex ) );
 
-        if ( index.IsRemoved )
-            errors = errors.Extend( ExceptionResources.ObjectHasBeenRemoved( index ) );
+        if ( originIndex.IsRemoved )
+            errors = errors.Extend( ExceptionResources.ObjectHasBeenRemoved( originIndex ) );
 
         if ( referencedIndex.IsRemoved )
             errors = errors.Extend( ExceptionResources.ObjectHasBeenRemoved( referencedIndex ) );
@@ -271,7 +271,7 @@ public static class SqliteHelpers
         if ( ! referencedIndex.IsUnique )
             errors = errors.Extend( ExceptionResources.IndexIsNotMarkedAsUnique( referencedIndex ) );
 
-        var indexColumns = index.Columns.Span;
+        var indexColumns = originIndex.Columns.Span;
         var referencedIndexColumns = referencedIndex.Columns.Span;
 
         foreach ( var c in referencedIndexColumns )
@@ -281,7 +281,7 @@ public static class SqliteHelpers
         }
 
         if ( indexColumns.Length != referencedIndexColumns.Length )
-            errors = errors.Extend( ExceptionResources.ForeignKeyIndexAndReferencedIndexMustHaveTheSameAmountOfColumns );
+            errors = errors.Extend( ExceptionResources.ForeignKeyOriginIndexAndReferencedIndexMustHaveTheSameAmountOfColumns );
         else
         {
             for ( var i = 0; i < indexColumns.Length; ++i )

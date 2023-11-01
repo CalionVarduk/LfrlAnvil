@@ -34,9 +34,9 @@ public partial class SqliteTableBuilderTests
                 result.Table.Should().BeSameAs( table );
                 result.Database.Should().BeSameAs( table.Database );
                 result.Type.Should().Be( SqlObjectType.Index );
-                result.ForeignKeys.Should().BeEmpty();
+                result.OriginatingForeignKeys.Should().BeEmpty();
                 result.ReferencingForeignKeys.Should().BeEmpty();
-                result.FilterColumns.Should().BeEmpty();
+                result.ReferencedFilterColumns.Should().BeEmpty();
                 result.PrimaryKey.Should().BeNull();
                 result.IsUnique.Should().BeFalse();
                 result.Filter.Should().BeNull();
@@ -44,8 +44,8 @@ public partial class SqliteTableBuilderTests
                 sut.Should().BeEquivalentTo( result );
                 schema.Objects.Contains( result.Name ).Should().BeTrue();
 
-                ((ISqlColumnBuilder)c1.Column).Indexes.Should().BeSequentiallyEqualTo( result );
-                ((ISqlColumnBuilder)c2.Column).Indexes.Should().BeSequentiallyEqualTo( result );
+                ((ISqlColumnBuilder)c1.Column).ReferencingIndexes.Should().BeSequentiallyEqualTo( result );
+                ((ISqlColumnBuilder)c2.Column).ReferencingIndexes.Should().BeSequentiallyEqualTo( result );
             }
         }
 
@@ -179,9 +179,9 @@ public partial class SqliteTableBuilderTests
                 result.Table.Should().BeSameAs( table );
                 result.Database.Should().BeSameAs( table.Database );
                 result.Type.Should().Be( SqlObjectType.Index );
-                result.ForeignKeys.Should().BeEmpty();
+                result.OriginatingForeignKeys.Should().BeEmpty();
                 result.ReferencingForeignKeys.Should().BeEmpty();
-                result.FilterColumns.Should().BeEmpty();
+                result.ReferencedFilterColumns.Should().BeEmpty();
                 result.PrimaryKey.Should().BeNull();
                 result.IsUnique.Should().BeFalse();
                 result.Filter.Should().BeNull();
@@ -189,8 +189,8 @@ public partial class SqliteTableBuilderTests
                 sut.Should().BeEquivalentTo( result );
                 schema.Objects.Contains( result.Name ).Should().BeTrue();
 
-                ((ISqlColumnBuilder)c1.Column).Indexes.Should().BeSequentiallyEqualTo( result );
-                ((ISqlColumnBuilder)c2.Column).Indexes.Should().BeSequentiallyEqualTo( result );
+                ((ISqlColumnBuilder)c1.Column).ReferencingIndexes.Should().BeSequentiallyEqualTo( result );
+                ((ISqlColumnBuilder)c2.Column).ReferencingIndexes.Should().BeSequentiallyEqualTo( result );
             }
         }
 
@@ -327,8 +327,8 @@ public partial class SqliteTableBuilderTests
             {
                 result.Should().BeTrue();
                 index.IsRemoved.Should().BeTrue();
-                c1.Column.Indexes.Should().BeEmpty();
-                c2.Column.Indexes.Should().BeEmpty();
+                c1.Column.ReferencingIndexes.Should().BeEmpty();
+                c2.Column.ReferencingIndexes.Should().BeEmpty();
                 sut.Count.Should().Be( 0 );
                 schema.Objects.Contains( index.Name ).Should().BeFalse();
             }
