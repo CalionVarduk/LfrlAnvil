@@ -387,7 +387,7 @@ public class DependencyScopeTests : DependencyTestsBase
     {
         var container = new DependencyContainerBuilder().Build();
         var sut = container.RootScope.BeginScope( "foo" );
-        var _ = sut.BeginScope( "bar" );
+        _ = sut.BeginScope( "bar" );
 
         sut.Dispose();
 
@@ -516,7 +516,7 @@ public class DependencyScopeTests : DependencyTestsBase
         var parent = container.RootScope.BeginScope();
         var sut = parent.BeginScope();
 
-        var _ = parent.Locator.Resolve<IDisposable>();
+        _ = parent.Locator.Resolve<IDisposable>();
         var resolved = sut.Locator.Resolve<IDisposable>();
 
         sut.Dispose();

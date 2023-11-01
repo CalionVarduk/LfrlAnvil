@@ -15,9 +15,11 @@ namespace LfrlAnvil.Sqlite.Objects.Builders;
 
 public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
 {
+    // TODO: all these objects could be merged into one dictionary
     private Dictionary<ulong, SqliteIndexBuilder>? _indexes;
     private Dictionary<ulong, SqliteIndexBuilder>? _indexFilters;
     private Dictionary<ulong, SqliteViewBuilder>? _referencingViews;
+    private Dictionary<ulong, SqliteCheckBuilder>? _referencingChecks;
     private string? _fullName;
     private SqlColumnBuilderNode? _node;
 
@@ -33,6 +35,7 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
         _indexes = null;
         _indexFilters = null;
         _referencingViews = null;
+        _referencingChecks = null;
         _node = null;
     }
 
@@ -46,17 +49,20 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
     public IReadOnlyCollection<SqliteIndexBuilder> Indexes => (_indexes?.Values).EmptyIfNull();
     public IReadOnlyCollection<SqliteIndexBuilder> IndexFilters => (_indexFilters?.Values).EmptyIfNull();
     public IReadOnlyCollection<SqliteViewBuilder> ReferencingViews => (_referencingViews?.Values).EmptyIfNull();
+    public IReadOnlyCollection<SqliteCheckBuilder> ReferencingChecks => (_referencingChecks?.Values).EmptyIfNull();
 
     internal override bool CanRemove =>
         (_indexes is null || _indexes.Count == 0) &&
         (_indexFilters is null || _indexFilters.Count == 0) &&
-        (_referencingViews is null || _referencingViews.Count == 0);
+        (_referencingViews is null || _referencingViews.Count == 0) &&
+        (_referencingChecks is null || _referencingChecks.Count == 0);
 
     ISqlTableBuilder ISqlColumnBuilder.Table => Table;
     IReadOnlyCollection<ISqlIndexBuilder> ISqlColumnBuilder.Indexes => Indexes;
     IReadOnlyCollection<ISqlIndexBuilder> ISqlColumnBuilder.IndexFilters => IndexFilters;
     ISqlColumnTypeDefinition ISqlColumnBuilder.TypeDefinition => TypeDefinition;
     IReadOnlyCollection<ISqlViewBuilder> ISqlColumnBuilder.ReferencingViews => ReferencingViews;
+    IReadOnlyCollection<ISqlCheckBuilder> ISqlColumnBuilder.ReferencingChecks => ReferencingChecks;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
 
     public SqliteColumnBuilder SetName(string name)
@@ -108,7 +114,7 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
         {
             if ( value is not null )
             {
-                var validator = new SqliteDefaultValueSourceValidator();
+                var validator = new SqliteConstantExpressionValidator();
                 validator.Visit( value );
 
                 var errors = validator.GetErrors();
@@ -169,6 +175,17 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
         _referencingViews?.Remove( view.Id );
     }
 
+    internal void AddReferencingCheck(SqliteCheckBuilder check)
+    {
+        _referencingChecks ??= new Dictionary<ulong, SqliteCheckBuilder>();
+        _referencingChecks.Add( check.Id, check );
+    }
+
+    internal void RemoveReferencingCheck(SqliteCheckBuilder check)
+    {
+        _referencingChecks?.Remove( check.Id );
+    }
+
     internal void UpdateDefaultValueBasedOnDataType()
     {
         Assume.IsNull( DefaultValue );
@@ -187,6 +204,7 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
         _indexes = null;
         _indexFilters = null;
         _referencingViews = null;
+        _referencingChecks = null;
 
         Table.Columns.Remove( Name );
         Database.ChangeTracker.ObjectRemoved( Table, this );
@@ -239,6 +257,12 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
         {
             foreach ( var view in _referencingViews.Values )
                 errors = errors.Extend( ExceptionResources.ColumnIsReferencedByObject( view ) );
+        }
+
+        if ( _referencingChecks is not null && _referencingChecks.Count > 0 )
+        {
+            foreach ( var check in _referencingChecks.Values )
+                errors = errors.Extend( ExceptionResources.ColumnIsReferencedByObject( check ) );
         }
 
         if ( errors.Count > 0 )

@@ -1465,7 +1465,7 @@ public class SqlNodeVisitorTests : TestsBase
     }
 
     [Fact]
-    public void VisitCheckDefinition_ShouldVisitPredicate()
+    public void VisitCheckDefinition_ShouldVisitCondition()
     {
         var sut = new VisitorMock();
         var parameter = SqlNode.Parameter( "a" );

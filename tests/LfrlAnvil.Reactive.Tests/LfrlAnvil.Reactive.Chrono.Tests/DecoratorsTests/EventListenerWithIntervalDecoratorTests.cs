@@ -19,7 +19,7 @@ public class EventListenerWithIntervalDecoratorTests : TestsBase
         var subscriber = Substitute.For<IEventSubscriber>();
         var sut = new EventListenerWithIntervalDecorator<int>( timestampProvider );
 
-        var _ = sut.Decorate( next, subscriber );
+        _ = sut.Decorate( next, subscriber );
 
         subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
     }

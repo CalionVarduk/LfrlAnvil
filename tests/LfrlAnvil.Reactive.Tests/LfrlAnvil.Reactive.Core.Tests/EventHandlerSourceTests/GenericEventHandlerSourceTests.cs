@@ -30,7 +30,7 @@ public abstract class GenericEventHandlerSourceTests<TEvent> : TestsBase
         var sut = new EventHandlerSource<TEvent>( h => target.Handler += h, h => target.Handler -= h );
         var listener = EventListener.Create<WithSender<TEvent>>( actualValues.Add );
 
-        var _ = sut.Listen( listener );
+        _ = sut.Listen( listener );
 
         foreach ( var value in values )
             target.Emit( sender, value );
@@ -63,7 +63,7 @@ public abstract class GenericEventHandlerSourceTests<TEvent> : TestsBase
         var sut = EventSource.FromEvent<TEvent>( h => target.Handler += h, h => target.Handler -= h );
         var listener = EventListener.Create<WithSender<TEvent>>( actualValues.Add );
 
-        var _ = sut.Listen( listener );
+        _ = sut.Listen( listener );
 
         foreach ( var value in values )
             target.Emit( sender, value );

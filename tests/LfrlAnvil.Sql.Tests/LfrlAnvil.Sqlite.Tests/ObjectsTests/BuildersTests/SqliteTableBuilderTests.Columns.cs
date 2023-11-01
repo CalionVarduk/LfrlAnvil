@@ -35,6 +35,7 @@ public partial class SqliteTableBuilderTests
                 result.Indexes.Should().BeEmpty();
                 result.ReferencingViews.Should().BeEmpty();
                 result.IndexFilters.Should().BeEmpty();
+                result.ReferencingChecks.Should().BeEmpty();
                 result.Node.Should().BeEquivalentTo( table.RecordSet["C"] );
                 sut.Count.Should().Be( 1 );
                 sut.Should().BeSequentiallyEqualTo( result );
@@ -109,7 +110,9 @@ public partial class SqliteTableBuilderTests
                 result.TypeDefinition.Should().BeSameAs( sut.DefaultTypeDefinition );
                 result.DefaultValue.Should().BeNull();
                 result.Indexes.Should().BeEmpty();
+                result.ReferencingViews.Should().BeEmpty();
                 result.IndexFilters.Should().BeEmpty();
+                result.ReferencingChecks.Should().BeEmpty();
                 result.Node.Should().BeEquivalentTo( table.RecordSet["C"] );
                 sut.Count.Should().Be( 1 );
                 sut.Should().BeSequentiallyEqualTo( result );
@@ -321,6 +324,25 @@ public partial class SqliteTableBuilderTests
             sut.Create( "A" );
             table.SetPrimaryKey( sut.Create( "B" ).Asc() );
             schema.Objects.CreateView( "V", table.ToRecordSet().ToDataSource().Select( s => new[] { s.From["A"].AsSelf() } ) );
+
+            var result = sut.Remove( "A" );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeFalse();
+                sut.Count.Should().Be( 2 );
+            }
+        }
+
+        [Fact]
+        public void Remove_ShouldReturnFalse_WhenColumnExistsButIsUsedByAtLeastOneCheck()
+        {
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var table = schema.Objects.CreateTable( "T" );
+            var sut = table.Columns;
+            sut.Create( "A" );
+            table.SetPrimaryKey( sut.Create( "B" ).Asc() );
+            table.Checks.Create( table.RecordSet["A"] > SqlNode.Literal( 0 ) );
 
             var result = sut.Remove( "A" );
 

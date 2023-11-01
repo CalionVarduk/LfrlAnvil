@@ -14,7 +14,7 @@ public class EventListenerFirstDecoratorTests : TestsBase
         var subscriber = Substitute.For<IEventSubscriber>();
         var sut = new EventListenerFirstDecorator<int>();
 
-        var _ = sut.Decorate( next, subscriber );
+        _ = sut.Decorate( next, subscriber );
 
         subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
     }

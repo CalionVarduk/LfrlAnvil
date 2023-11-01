@@ -12,15 +12,15 @@ using LfrlAnvil.Sqlite.Tests.Helpers;
 
 namespace LfrlAnvil.Sqlite.Tests;
 
-public class SqliteViewSourceValidatorTests : TestsBase
+public class SqliteDatabaseScopeExpressionValidatorTests : TestsBase
 {
     private readonly SqliteDatabaseBuilder _db;
-    private readonly SqliteViewSourceValidator _sut;
+    private readonly SqliteDatabaseScopeExpressionValidator _sut;
 
-    public SqliteViewSourceValidatorTests()
+    public SqliteDatabaseScopeExpressionValidatorTests()
     {
         _db = SqliteDatabaseBuilderMock.Create();
-        _sut = new SqliteViewSourceValidator( _db );
+        _sut = new SqliteDatabaseScopeExpressionValidator( _db );
     }
 
     [Fact]

@@ -1111,7 +1111,7 @@ public class SqliteColumnBuilderTests : TestsBase
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
-        var _ = schema.Database.GetPendingStatements();
+        _ = schema.Database.GetPendingStatements();
         sut.Remove();
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -1157,6 +1157,20 @@ public class SqliteColumnBuilderTests : TestsBase
         t1.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() );
         var sut = t1.Columns.Create( "C2" );
         schema.Objects.CreateView( "V", t1.ToRecordSet().ToDataSource().Select( s => new[] { s.From["C2"].AsSelf() } ) );
+
+        var action = Lambda.Of( () => sut.Remove() );
+
+        action.Should().ThrowExactly<SqliteObjectBuilderException>();
+    }
+
+    [Fact]
+    public void Remove_ShouldThrowSqliteObjectBuilderException_WhenColumnIsReferencedByChecks()
+    {
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var t1 = schema.Objects.CreateTable( "T1" );
+        t1.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() );
+        var sut = t1.Columns.Create( "C2" );
+        t1.Checks.Create( t1.RecordSet["C2"] != SqlNode.Literal( 0 ) );
 
         var action = Lambda.Of( () => sut.Remove() );
 

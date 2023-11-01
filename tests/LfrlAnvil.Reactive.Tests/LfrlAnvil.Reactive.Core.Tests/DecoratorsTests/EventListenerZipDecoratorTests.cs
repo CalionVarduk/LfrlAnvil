@@ -15,7 +15,7 @@ public class EventListenerZipDecoratorTests : TestsBase
         var subscriber = Substitute.For<IEventSubscriber>();
         var sut = new EventListenerZipDecorator<int, string, (int, string)>( target, (a, b) => (a, b) );
 
-        var _ = sut.Decorate( next, subscriber );
+        _ = sut.Decorate( next, subscriber );
 
         using ( new AssertionScope() )
         {
@@ -34,7 +34,7 @@ public class EventListenerZipDecoratorTests : TestsBase
         var subscriber = Substitute.For<IEventSubscriber>();
         var sut = new EventListenerZipDecorator<int, string, (int, string)>( target, (a, b) => (a, b) );
 
-        var _ = sut.Decorate( next, subscriber );
+        _ = sut.Decorate( next, subscriber );
 
         using ( new AssertionScope() )
         {
@@ -71,7 +71,7 @@ public class EventListenerZipDecoratorTests : TestsBase
         var next = EventListener.Create<(int, string)>( actualEvents.Add );
         var subscriber = Substitute.For<IEventSubscriber>();
         var sut = new EventListenerZipDecorator<int, string, (int, string)>( target, (a, b) => (a, b) );
-        var _ = sut.Decorate( next, subscriber );
+        _ = sut.Decorate( next, subscriber );
 
         foreach ( var e in targetEvents )
             target.Publish( e );

@@ -112,6 +112,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
         var ix1 = table.Indexes.Create( table.Columns.Create( "D" ).Asc() ).MarkAsUnique().SetFilter( SqlNode.True() );
         var ix2 = table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
         var fk = table.ForeignKeys.Create( ix1, ix2 );
+        table.Checks.Create( table.RecordSet["C"] != SqlNode.Literal( 0 ) );
         fk.SetOnDeleteBehavior( ReferenceBehavior.Cascade ).SetOnUpdateBehavior( ReferenceBehavior.Cascade );
         var column = table.Columns.Create( "E" );
         column.SetName( "F" ).MarkAsNullable().SetType<int>().SetDefaultValue( 123 );
@@ -131,6 +132,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
         var ix1 = table.Indexes.Create( table.Columns.Create( "D" ).Asc() ).MarkAsUnique().SetFilter( SqlNode.True() );
         var ix2 = table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
         var fk = table.ForeignKeys.Create( ix1, ix2 );
+        table.Checks.Create( table.RecordSet["C"] != SqlNode.Literal( 0 ) );
         fk.SetOnDeleteBehavior( ReferenceBehavior.Cascade ).SetOnUpdateBehavior( ReferenceBehavior.Cascade );
         var column = table.Columns.Create( "E" );
         column.SetName( "F" ).MarkAsNullable().SetType<string>().SetDefaultValue( "123" );

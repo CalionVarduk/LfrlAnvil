@@ -38,6 +38,11 @@ public interface ISqlObjectBuilderCollection : IReadOnlyCollection<ISqlObjectBui
     bool TryGetForeignKey(string name, [MaybeNullWhen( false )] out ISqlForeignKeyBuilder result);
 
     [Pure]
+    ISqlCheckBuilder GetCheck(string name);
+
+    bool TryGetCheck(string name, [MaybeNullWhen( false )] out ISqlCheckBuilder result);
+
+    [Pure]
     ISqlViewBuilder GetView(string name);
 
     bool TryGetView(string name, [MaybeNullWhen( false )] out ISqlViewBuilder result);

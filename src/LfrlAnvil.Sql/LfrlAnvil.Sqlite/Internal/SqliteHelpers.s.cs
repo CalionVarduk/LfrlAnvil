@@ -72,6 +72,12 @@ public static class SqliteHelpers
     }
 
     [Pure]
+    public static string GetDefaultCheckName(SqliteTableBuilder table)
+    {
+        return $"CHK_{table.Name}_{table.Checks.Count}";
+    }
+
+    [Pure]
     public static string GetDefaultIndexName(SqliteTableBuilder table, ReadOnlyMemory<SqliteIndexColumnBuilder> columns, bool isUnique)
     {
         var builder = new StringBuilder( 32 );

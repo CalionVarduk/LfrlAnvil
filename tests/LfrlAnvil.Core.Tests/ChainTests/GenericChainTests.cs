@@ -179,7 +179,7 @@ public abstract class GenericChainTests<T> : TestsBase
         var value = Fixture.Create<T>();
         var sut = Chain<T>.Empty;
 
-        var _ = sut.Extend( value );
+        _ = sut.Extend( value );
 
         using ( new AssertionScope() )
         {
@@ -217,7 +217,7 @@ public abstract class GenericChainTests<T> : TestsBase
         var value = allValues[^1];
         var sut = Chain.Create( initialValues.AsEnumerable() );
 
-        var _ = sut.Extend( value );
+        _ = sut.Extend( value );
 
         using ( new AssertionScope() )
         {
@@ -233,7 +233,7 @@ public abstract class GenericChainTests<T> : TestsBase
     {
         var values = Fixture.CreateDistinctCollection<T>( count: 3 );
         var sut = Chain.Create( values[0] );
-        var _ = sut.Extend( values[1] );
+        _ = sut.Extend( values[1] );
 
         var action = Lambda.Of( () => sut.Extend( values[2] ) );
         action.Should().ThrowExactly<InvalidOperationException>();
@@ -244,7 +244,7 @@ public abstract class GenericChainTests<T> : TestsBase
     {
         var values = Fixture.CreateDistinctCollection<T>( count: 3 );
         var sut = Chain.Create( values[0] );
-        var _ = Chain.Create( values[1] ).Extend( sut );
+        _ = Chain.Create( values[1] ).Extend( sut );
 
         var action = Lambda.Of( () => sut.Extend( values[2] ) );
         action.Should().ThrowExactly<InvalidOperationException>();
@@ -273,7 +273,7 @@ public abstract class GenericChainTests<T> : TestsBase
         var values = Fixture.CreateDistinctCollection<T>( count: 3 );
         var sut = Chain<T>.Empty;
 
-        var _ = sut.Extend( values );
+        _ = sut.Extend( values );
 
         using ( new AssertionScope() )
         {
@@ -311,7 +311,7 @@ public abstract class GenericChainTests<T> : TestsBase
         var values = allValues.Skip( 3 );
         var sut = Chain.Create( initialValues.AsEnumerable() );
 
-        var _ = sut.Extend( values );
+        _ = sut.Extend( values );
 
         using ( new AssertionScope() )
         {
@@ -345,7 +345,7 @@ public abstract class GenericChainTests<T> : TestsBase
     {
         var values = Fixture.CreateDistinctCollection<T>( count: 4 );
         var sut = Chain.Create( values[0] );
-        var _ = sut.Extend( values[1] );
+        _ = sut.Extend( values[1] );
 
         var action = Lambda.Of( () => sut.Extend( values.Skip( 2 ) ) );
         action.Should().ThrowExactly<InvalidOperationException>();
@@ -356,7 +356,7 @@ public abstract class GenericChainTests<T> : TestsBase
     {
         var values = Fixture.CreateDistinctCollection<T>( count: 4 );
         var sut = Chain.Create( values[0] );
-        var _ = Chain.Create( values[1] ).Extend( sut );
+        _ = Chain.Create( values[1] ).Extend( sut );
 
         var action = Lambda.Of( () => sut.Extend( values.Skip( 2 ) ) );
         action.Should().ThrowExactly<InvalidOperationException>();
@@ -387,7 +387,7 @@ public abstract class GenericChainTests<T> : TestsBase
         var sut = Chain<T>.Empty;
         var other = Chain.Create( values.AsEnumerable() );
 
-        var _ = sut.Extend( other );
+        _ = sut.Extend( other );
 
         using ( new AssertionScope() )
         {
@@ -405,7 +405,7 @@ public abstract class GenericChainTests<T> : TestsBase
         var sut = Chain<T>.Empty;
         var other = Chain.Create( values.AsEnumerable() );
 
-        var _ = sut.Extend( other );
+        _ = sut.Extend( other );
 
         using ( new AssertionScope() )
         {
@@ -445,7 +445,7 @@ public abstract class GenericChainTests<T> : TestsBase
         var sut = Chain.Create( initialValues.AsEnumerable() );
         var other = Chain.Create( values );
 
-        var _ = sut.Extend( other );
+        _ = sut.Extend( other );
 
         using ( new AssertionScope() )
         {
@@ -465,7 +465,7 @@ public abstract class GenericChainTests<T> : TestsBase
         var sut = Chain.Create( initialValues );
         var other = Chain.Create( values.AsEnumerable() );
 
-        var _ = sut.Extend( other );
+        _ = sut.Extend( other );
 
         using ( new AssertionScope() )
         {
@@ -502,7 +502,7 @@ public abstract class GenericChainTests<T> : TestsBase
         var values = allValues.Skip( 3 ).Take( 2 );
         var sut = Chain.Create( initialValues );
         var other = Chain.Create( values );
-        var _ = other.Extend( allValues[^1] );
+        _ = other.Extend( allValues[^1] );
 
         var result = sut.Extend( other );
 
@@ -523,7 +523,7 @@ public abstract class GenericChainTests<T> : TestsBase
         var values = allValues.Skip( 3 ).Take( 2 );
         var sut = Chain.Create( initialValues );
         var other = Chain.Create( values );
-        var _ = Chain.Create( allValues[^1] ).Extend( other );
+        _ = Chain.Create( allValues[^1] ).Extend( other );
 
         var result = sut.Extend( other );
 
@@ -559,7 +559,7 @@ public abstract class GenericChainTests<T> : TestsBase
         var values = Fixture.CreateDistinctCollection<T>( count: 3 );
         var sut = Chain.Create( values.AsEnumerable() );
 
-        var _ = sut.Extend( sut );
+        _ = sut.Extend( sut );
 
         using ( new AssertionScope() )
         {
@@ -575,7 +575,7 @@ public abstract class GenericChainTests<T> : TestsBase
     {
         var values = Fixture.CreateDistinctCollection<T>( count: 4 );
         var sut = Chain.Create( values[0] );
-        var _ = sut.Extend( values[1] );
+        _ = sut.Extend( values[1] );
 
         var action = Lambda.Of( () => sut.Extend( Chain.Create( values.Skip( 2 ) ) ) );
         action.Should().ThrowExactly<InvalidOperationException>();
@@ -586,7 +586,7 @@ public abstract class GenericChainTests<T> : TestsBase
     {
         var values = Fixture.CreateDistinctCollection<T>( count: 4 );
         var sut = Chain.Create( values[0] );
-        var _ = Chain.Create( values[1] ).Extend( sut );
+        _ = Chain.Create( values[1] ).Extend( sut );
 
         var action = Lambda.Of( () => sut.Extend( Chain.Create( values.Skip( 2 ) ) ) );
         action.Should().ThrowExactly<InvalidOperationException>();
@@ -608,7 +608,7 @@ public abstract class GenericChainTests<T> : TestsBase
     {
         var values = Fixture.CreateDistinctCollection<T>( count: 3 );
         var sut = Chain.Create( values.AsEnumerable() );
-        var _ = Chain.Create( Fixture.Create<T>() ).Extend( sut );
+        _ = Chain.Create( Fixture.Create<T>() ).Extend( sut );
 
         var result = sut.ToExtendable();
 

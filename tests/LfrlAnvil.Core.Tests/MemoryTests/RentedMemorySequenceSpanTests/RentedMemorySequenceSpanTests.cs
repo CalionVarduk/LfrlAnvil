@@ -64,7 +64,7 @@ public class RentedMemorySequenceSpanTests : TestsBase
         ArgumentOutOfRangeException? exception = null;
         try
         {
-            var _ = sut[index];
+            _ = sut[index];
         }
         catch ( ArgumentOutOfRangeException e )
         {
@@ -216,7 +216,7 @@ public class RentedMemorySequenceSpanTests : TestsBase
         ArgumentOutOfRangeException? exception = null;
         try
         {
-            var _ = sut.Slice( startIndex );
+            _ = sut.Slice( startIndex );
         }
         catch ( ArgumentOutOfRangeException e )
         {
@@ -311,7 +311,7 @@ public class RentedMemorySequenceSpanTests : TestsBase
         ArgumentOutOfRangeException? exception = null;
         try
         {
-            var _ = sut.Slice( startIndex, length );
+            _ = sut.Slice( startIndex, length );
         }
         catch ( ArgumentOutOfRangeException e )
         {

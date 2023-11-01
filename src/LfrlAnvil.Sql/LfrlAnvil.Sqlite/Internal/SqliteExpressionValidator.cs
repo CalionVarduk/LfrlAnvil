@@ -8,7 +8,7 @@ using LfrlAnvil.Sql.Expressions.Visitors;
 
 namespace LfrlAnvil.Sqlite.Internal;
 
-internal abstract class SqliteSourceNodeValidator : SqlNodeVisitor
+internal abstract class SqliteExpressionValidator : SqlNodeVisitor
 {
     private List<SqlNodeBase>? _forbiddenNodes;
 

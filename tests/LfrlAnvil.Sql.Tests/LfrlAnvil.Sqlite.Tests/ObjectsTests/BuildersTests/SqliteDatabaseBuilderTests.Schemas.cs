@@ -225,6 +225,7 @@ public partial class SqliteDatabaseBuilderTests
             var otherColumn = table.Columns.Create( "C2" ).MarkAsNullable();
             var pk = table.SetPrimaryKey( column.Asc() );
             var fk = table.ForeignKeys.Create( table.Indexes.Create( otherColumn.Asc() ), table.PrimaryKey!.Index );
+            var chk = table.Checks.Create( table.RecordSet["C1"] != SqlNode.Literal( 0 ) );
             var view = schema.Objects.CreateView( "V1", table.ToRecordSet().ToDataSource().Select( s => new[] { s.From["C1"].AsSelf() } ) );
             var otherView = schema.Objects.CreateView( "V2", view.ToRecordSet().ToDataSource().Select( s => new[] { s.GetAll() } ) );
 
@@ -242,6 +243,7 @@ public partial class SqliteDatabaseBuilderTests
                 pk.IsRemoved.Should().BeTrue();
                 pk.Index.IsRemoved.Should().BeTrue();
                 fk.IsRemoved.Should().BeTrue();
+                chk.IsRemoved.Should().BeTrue();
                 view.IsRemoved.Should().BeTrue();
                 otherView.IsRemoved.Should().BeTrue();
             }

@@ -46,6 +46,13 @@ public static class ExceptionResources
     }
 
     [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string CheckAlreadyExists(string name)
+    {
+        return $"Check '{name}' already exists.";
+    }
+
+    [Pure]
     public static string IndexAlreadyExists(ReadOnlyMemory<ISqlIndexColumnBuilder> columns)
     {
         var builder = new StringBuilder( 48 );

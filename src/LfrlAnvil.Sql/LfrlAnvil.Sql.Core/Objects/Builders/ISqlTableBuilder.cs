@@ -11,6 +11,7 @@ public interface ISqlTableBuilder : ISqlObjectBuilder
     ISqlColumnBuilderCollection Columns { get; }
     ISqlIndexBuilderCollection Indexes { get; }
     ISqlForeignKeyBuilderCollection ForeignKeys { get; }
+    ISqlCheckBuilderCollection Checks { get; }
     IReadOnlyCollection<ISqlViewBuilder> ReferencingViews { get; }
     SqlRecordSetInfo Info { get; }
     SqlTableBuilderNode RecordSet { get; }

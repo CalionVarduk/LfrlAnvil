@@ -17,7 +17,7 @@ public class EventListenerSkipDecoratorTests : TestsBase
         var subscriber = Substitute.For<IEventSubscriber>();
         var sut = new EventListenerSkipDecorator<int>( count );
 
-        var _ = sut.Decorate( next, subscriber );
+        _ = sut.Decorate( next, subscriber );
 
         subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
     }

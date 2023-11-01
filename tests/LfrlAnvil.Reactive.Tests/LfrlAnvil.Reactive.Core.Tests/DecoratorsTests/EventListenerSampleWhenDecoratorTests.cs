@@ -15,7 +15,7 @@ public class EventListenerSampleWhenDecoratorTests : TestsBase
         var subscriber = Substitute.For<IEventSubscriber>();
         var sut = new EventListenerSampleWhenDecorator<int, string>( target );
 
-        var _ = sut.Decorate( next, subscriber );
+        _ = sut.Decorate( next, subscriber );
 
         using ( new AssertionScope() )
         {
@@ -34,7 +34,7 @@ public class EventListenerSampleWhenDecoratorTests : TestsBase
         var subscriber = Substitute.For<IEventSubscriber>();
         var sut = new EventListenerSampleWhenDecorator<int, string>( target );
 
-        var _ = sut.Decorate( next, subscriber );
+        _ = sut.Decorate( next, subscriber );
 
         using ( new AssertionScope() )
         {

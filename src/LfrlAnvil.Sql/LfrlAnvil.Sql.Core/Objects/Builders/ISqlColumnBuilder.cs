@@ -14,6 +14,7 @@ public interface ISqlColumnBuilder : ISqlObjectBuilder
     IReadOnlyCollection<ISqlIndexBuilder> Indexes { get; }
     IReadOnlyCollection<ISqlIndexBuilder> IndexFilters { get; }
     IReadOnlyCollection<ISqlViewBuilder> ReferencingViews { get; }
+    IReadOnlyCollection<ISqlCheckBuilder> ReferencingChecks { get; }
     SqlColumnBuilderNode Node { get; }
 
     new ISqlColumnBuilder SetName(string name);

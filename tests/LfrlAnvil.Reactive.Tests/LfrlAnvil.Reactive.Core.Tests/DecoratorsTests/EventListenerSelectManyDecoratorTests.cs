@@ -14,7 +14,7 @@ public class EventListenerSelectManyDecoratorTests : TestsBase
         var subscriber = Substitute.For<IEventSubscriber>();
         var sut = new EventListenerSelectManyDecorator<int, string>( x => new[] { x.ToString(), (x * 2).ToString() } );
 
-        var _ = sut.Decorate( next, subscriber );
+        _ = sut.Decorate( next, subscriber );
 
         subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
     }

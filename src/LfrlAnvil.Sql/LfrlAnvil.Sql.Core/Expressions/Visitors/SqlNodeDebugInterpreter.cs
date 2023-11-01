@@ -599,7 +599,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
             Context.Sql.Append( "CHECK" ).AppendSpace();
             AppendDelimitedName( node.Name );
             Context.Sql.AppendSpace();
-            VisitChildWrappedInParentheses( node.Predicate );
+            VisitChildWrappedInParentheses( node.Condition );
         }
     }
 

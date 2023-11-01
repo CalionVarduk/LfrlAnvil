@@ -182,7 +182,7 @@ public class RentedMemorySequenceTests : TestsBase
         var action = Lambda.Of(
             () =>
             {
-                var _ = sut.Slice( startIndex );
+                _ = sut.Slice( startIndex );
             } );
 
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
@@ -257,7 +257,7 @@ public class RentedMemorySequenceTests : TestsBase
         var action = Lambda.Of(
             () =>
             {
-                var _ = sut.Slice( startIndex, length );
+                _ = sut.Slice( startIndex, length );
             } );
 
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();

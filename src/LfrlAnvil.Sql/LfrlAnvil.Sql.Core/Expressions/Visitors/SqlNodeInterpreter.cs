@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Extensions;
@@ -26,7 +27,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     }
 
     public SqlNodeInterpreterContext Context { get; }
-    public SqlRecordSetNode? IgnoredRecordSet { get; private set; }
+    public IgnoredRecordSetRule? IgnoredRecordSet { get; private set; }
 
     public virtual void VisitRawExpression(SqlRawExpressionNode node)
     {
@@ -38,7 +39,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public virtual void VisitRawDataField(SqlRawDataFieldNode node)
     {
-        if ( ! ReferenceEquals( IgnoredRecordSet, node.RecordSet ) )
+        if ( ! ShouldIgnoreRecordSetName( node.RecordSet ) )
         {
             AppendDelimitedRecordSetName( node.RecordSet );
             Context.Sql.AppendDot();
@@ -62,7 +63,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public virtual void VisitColumn(SqlColumnNode node)
     {
-        if ( ! ReferenceEquals( IgnoredRecordSet, node.RecordSet ) )
+        if ( ! ShouldIgnoreRecordSetName( node.RecordSet ) )
         {
             AppendDelimitedRecordSetName( node.RecordSet );
             Context.Sql.AppendDot();
@@ -73,7 +74,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public virtual void VisitColumnBuilder(SqlColumnBuilderNode node)
     {
-        if ( ! ReferenceEquals( IgnoredRecordSet, node.RecordSet ) )
+        if ( ! ShouldIgnoreRecordSetName( node.RecordSet ) )
         {
             AppendDelimitedRecordSetName( node.RecordSet );
             Context.Sql.AppendDot();
@@ -84,7 +85,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public virtual void VisitQueryDataField(SqlQueryDataFieldNode node)
     {
-        if ( ! ReferenceEquals( IgnoredRecordSet, node.RecordSet ) )
+        if ( ! ShouldIgnoreRecordSetName( node.RecordSet ) )
         {
             AppendDelimitedRecordSetName( node.RecordSet );
             Context.Sql.AppendDot();
@@ -95,7 +96,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public virtual void VisitViewDataField(SqlViewDataFieldNode node)
     {
-        if ( ! ReferenceEquals( IgnoredRecordSet, node.RecordSet ) )
+        if ( ! ShouldIgnoreRecordSetName( node.RecordSet ) )
         {
             AppendDelimitedRecordSetName( node.RecordSet );
             Context.Sql.AppendDot();
@@ -818,55 +819,6 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         }
     }
 
-    protected virtual void VisitRowsWindowFrame(SqlWindowFrameNode node)
-    {
-        Context.Sql.Append( "ROWS" ).AppendSpace().Append( "BETWEEN" ).AppendSpace();
-        AppendWindowFrameBoundary( node.Start );
-        Context.Sql.AppendSpace().Append( "AND" ).AppendSpace();
-        AppendWindowFrameBoundary( node.End );
-    }
-
-    protected virtual void VisitRangeWindowFrame(SqlWindowFrameNode node)
-    {
-        Context.Sql.Append( "RANGE" ).AppendSpace().Append( "BETWEEN" ).AppendSpace();
-        AppendWindowFrameBoundary( node.Start );
-        Context.Sql.AppendSpace().Append( "AND" ).AppendSpace();
-        AppendWindowFrameBoundary( node.End );
-    }
-
-    protected virtual void AppendWindowFrameBoundary(SqlWindowFrameBoundary boundary)
-    {
-        switch ( boundary.Direction )
-        {
-            case SqlWindowFrameBoundaryDirection.Preceding:
-                if ( boundary.Expression is null )
-                    Context.Sql.Append( "UNBOUNDED" );
-                else
-                    VisitChild( boundary.Expression );
-
-                Context.Sql.AppendSpace().Append( "PRECEDING" );
-                break;
-
-            case SqlWindowFrameBoundaryDirection.Following:
-                if ( boundary.Expression is null )
-                    Context.Sql.Append( "UNBOUNDED" );
-                else
-                    VisitChild( boundary.Expression );
-
-                Context.Sql.AppendSpace().Append( "FOLLOWING" );
-                break;
-
-            default:
-                Context.Sql.Append( "CURRENT" ).AppendSpace().Append( "ROW" );
-                break;
-        }
-    }
-
-    protected virtual void VisitCustomWindowFrame(SqlWindowFrameNode node)
-    {
-        throw new UnrecognizedSqlNodeException( this, node );
-    }
-
     public abstract void VisitTypeCast(SqlTypeCastExpressionNode node);
 
     public virtual void VisitValues(SqlValuesNode node)
@@ -1273,22 +1225,56 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public IgnoredRecordSetSwapper SwapIgnoredRecordSet(SqlRecordSetNode? node)
+    public IgnoredRecordSetRuleSwapper SwapIgnoredRecordSet(SqlRecordSetNode node)
     {
-        return new IgnoredRecordSetSwapper( this, node );
+        return new IgnoredRecordSetRuleSwapper( this, new IgnoredRecordSetRule( node ) );
     }
 
-    public readonly struct IgnoredRecordSetSwapper : IDisposable
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public IgnoredRecordSetRuleSwapper SwapIgnoreAllRecordSets()
     {
-        private readonly SqlRecordSetNode? _previous;
+        return new IgnoredRecordSetRuleSwapper( this, new IgnoredRecordSetRule( null ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public IgnoredRecordSetRuleSwapper SwapDoNotIgnoreRecordSets()
+    {
+        return new IgnoredRecordSetRuleSwapper( this, null );
+    }
+
+    public readonly struct IgnoredRecordSetRule
+    {
+        public readonly SqlRecordSetNode? Node;
+
+        internal IgnoredRecordSetRule(SqlRecordSetNode? node)
+        {
+            Node = node;
+        }
+
+        [MemberNotNullWhen( false, nameof( Node ) )]
+        public bool IgnoresAll => Node is null;
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public bool ShouldIgnore(SqlRecordSetNode recordSet)
+        {
+            return IgnoresAll || ReferenceEquals( Node, recordSet );
+        }
+    }
+
+    public readonly struct IgnoredRecordSetRuleSwapper : IDisposable
+    {
+        private readonly IgnoredRecordSetRule? _previous;
         private readonly SqlNodeInterpreter _interpreter;
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal IgnoredRecordSetSwapper(SqlNodeInterpreter interpreter, SqlRecordSetNode? node)
+        internal IgnoredRecordSetRuleSwapper(SqlNodeInterpreter interpreter, IgnoredRecordSetRule? rule)
         {
             _interpreter = interpreter;
             _previous = interpreter.IgnoredRecordSet;
-            interpreter.IgnoredRecordSet = node;
+            interpreter.IgnoredRecordSet = rule;
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -1321,6 +1307,13 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         Context.Sql.Append( ')' );
     }
 
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    protected bool ShouldIgnoreRecordSetName(SqlRecordSetNode recordSet)
+    {
+        return IgnoredRecordSet?.ShouldIgnore( recordSet ) == true;
+    }
+
     protected void VisitSimpleFunction(string functionName, SqlFunctionExpressionNode node)
     {
         using ( Context.TempParentNodeUpdate( node ) )
@@ -1343,6 +1336,55 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
             Context.Sql.Append( ')' );
         }
+    }
+
+    protected virtual void VisitRowsWindowFrame(SqlWindowFrameNode node)
+    {
+        Context.Sql.Append( "ROWS" ).AppendSpace().Append( "BETWEEN" ).AppendSpace();
+        AppendWindowFrameBoundary( node.Start );
+        Context.Sql.AppendSpace().Append( "AND" ).AppendSpace();
+        AppendWindowFrameBoundary( node.End );
+    }
+
+    protected virtual void VisitRangeWindowFrame(SqlWindowFrameNode node)
+    {
+        Context.Sql.Append( "RANGE" ).AppendSpace().Append( "BETWEEN" ).AppendSpace();
+        AppendWindowFrameBoundary( node.Start );
+        Context.Sql.AppendSpace().Append( "AND" ).AppendSpace();
+        AppendWindowFrameBoundary( node.End );
+    }
+
+    protected virtual void AppendWindowFrameBoundary(SqlWindowFrameBoundary boundary)
+    {
+        switch ( boundary.Direction )
+        {
+            case SqlWindowFrameBoundaryDirection.Preceding:
+                if ( boundary.Expression is null )
+                    Context.Sql.Append( "UNBOUNDED" );
+                else
+                    VisitChild( boundary.Expression );
+
+                Context.Sql.AppendSpace().Append( "PRECEDING" );
+                break;
+
+            case SqlWindowFrameBoundaryDirection.Following:
+                if ( boundary.Expression is null )
+                    Context.Sql.Append( "UNBOUNDED" );
+                else
+                    VisitChild( boundary.Expression );
+
+                Context.Sql.AppendSpace().Append( "FOLLOWING" );
+                break;
+
+            default:
+                Context.Sql.Append( "CURRENT" ).AppendSpace().Append( "ROW" );
+                break;
+        }
+    }
+
+    protected virtual void VisitCustomWindowFrame(SqlWindowFrameNode node)
+    {
+        throw new UnrecognizedSqlNodeException( this, node );
     }
 
     protected void VisitOptionalCommonTableExpressionRange(Chain<ReadOnlyMemory<SqlCommonTableExpressionNode>> commonTableExpressions)

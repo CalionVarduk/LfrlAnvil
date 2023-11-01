@@ -1155,7 +1155,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
     public void TryBuild_ShouldReturnFailureResult_WhenDependencyIsImplementedByNonExistingKeyedSharedImplementorAndCachedKeyType()
     {
         var sut = new DependencyContainerBuilder();
-        var _ = sut.GetKeyedLocator( 1 );
+        _ = sut.GetKeyedLocator( 1 );
         sut.Add<IFoo>().FromSharedImplementor<Implementor>( o => o.Keyed( 2 ) );
 
         var result = sut.TryBuild();

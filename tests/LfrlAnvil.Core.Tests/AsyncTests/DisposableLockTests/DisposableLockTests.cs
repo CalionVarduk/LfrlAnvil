@@ -18,7 +18,7 @@ public class DisposableLockTests : TestsBase
     public void Ctor_ShouldAcquireLockOnTheParameter()
     {
         var sync = new object();
-        var _ = new DisposableLock( sync );
+        _ = new DisposableLock( sync );
 
         var hasLock = Monitor.IsEntered( sync );
 

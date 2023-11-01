@@ -15,7 +15,7 @@ public class EventListenerDistinctUntilDecoratorTests : TestsBase
         var subscriber = Substitute.For<IEventSubscriber>();
         var sut = new EventListenerDistinctUntilDecorator<int, int, string>( v => v, EqualityComparer<int>.Default, target );
 
-        var _ = sut.Decorate( next, subscriber );
+        _ = sut.Decorate( next, subscriber );
 
         using ( new AssertionScope() )
         {

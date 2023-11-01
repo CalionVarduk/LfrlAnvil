@@ -1,4 +1,5 @@
 ﻿using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Tests.Helpers;
@@ -32,7 +33,36 @@ public class SqliteColumnTests : TestsBase
             sut.Name.Should().Be( "C" );
             sut.FullName.Should().Be( "T.C" );
             sut.IsNullable.Should().Be( isNullable );
+            sut.HasDefaultValue.Should().BeFalse();
             sut.TypeDefinition.Should().BeSameAs( db.TypeDefinitions.GetByType( type ) );
+            sut.Node.Should().BeSameAs( table.RecordSet["C"] );
+            sut.ToString().Should().Be( "[Column] T.C" );
+        }
+    }
+
+    [Fact]
+    public void Properties_ShouldBeCorrectlyCopiedFromBuilder_WithDefaultValue()
+    {
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Default;
+        var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
+        tableBuilder.Columns.Create( "C" ).SetDefaultValue( SqlNode.Literal( 0 ) );
+        tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "X" ).Asc() );
+
+        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        var table = db.Schemas.Default.Objects.GetTable( "T" );
+
+        ISqlColumn sut = table.Columns.Get( "C" );
+
+        using ( new AssertionScope() )
+        {
+            sut.Database.Should().BeSameAs( db );
+            sut.Table.Should().BeSameAs( table );
+            sut.Type.Should().Be( SqlObjectType.Column );
+            sut.Name.Should().Be( "C" );
+            sut.FullName.Should().Be( "T.C" );
+            sut.IsNullable.Should().BeFalse();
+            sut.HasDefaultValue.Should().BeTrue();
+            sut.TypeDefinition.Should().BeSameAs( db.TypeDefinitions.GetByType<object>() );
             sut.Node.Should().BeSameAs( table.RecordSet["C"] );
             sut.ToString().Should().Be( "[Column] T.C" );
         }

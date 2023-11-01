@@ -23,7 +23,7 @@ public abstract class GenericEnumerableEventSourceTests<TEvent> : TestsBase
         var listener = EventListener.Create<TEvent>( actualValues.Add );
         var sut = new EnumerableEventSource<TEvent>( values );
 
-        var _ = sut.Listen( listener );
+        _ = sut.Listen( listener );
 
         actualValues.Should().BeSequentiallyEqualTo( values );
     }
@@ -57,7 +57,7 @@ public abstract class GenericEnumerableEventSourceTests<TEvent> : TestsBase
                 sut.Dispose();
             } );
 
-        var _ = sut.Listen( listener );
+        _ = sut.Listen( listener );
 
         using ( new AssertionScope() )
         {
@@ -74,7 +74,7 @@ public abstract class GenericEnumerableEventSourceTests<TEvent> : TestsBase
         var listener = EventListener.Create<TEvent>( actualValues.Add );
         var sut = EventSource.From( values );
 
-        var _ = sut.Listen( listener );
+        _ = sut.Listen( listener );
 
         actualValues.Should().BeSequentiallyEqualTo( values );
     }

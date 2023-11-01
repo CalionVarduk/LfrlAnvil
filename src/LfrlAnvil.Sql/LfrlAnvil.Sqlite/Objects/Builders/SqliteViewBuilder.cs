@@ -22,7 +22,11 @@ public sealed class SqliteViewBuilder : SqliteObjectBuilder, ISqlViewBuilder
     private SqlRecordSetInfo? _info;
     private SqlViewBuilderNode? _recordSet;
 
-    internal SqliteViewBuilder(SqliteSchemaBuilder schema, string name, SqlQueryExpressionNode source, SqliteViewSourceValidator visitor)
+    internal SqliteViewBuilder(
+        SqliteSchemaBuilder schema,
+        string name,
+        SqlQueryExpressionNode source,
+        SqliteDatabaseScopeExpressionValidator visitor)
         : base( schema.Database.GetNextId(), name, SqlObjectType.View )
     {
         Schema = schema;
@@ -202,9 +206,9 @@ public sealed class SqliteViewBuilder : SqliteObjectBuilder, ISqlViewBuilder
     }
 
     [Pure]
-    internal static SqliteViewSourceValidator AssertSourceNode(SqliteDatabaseBuilder database, SqlQueryExpressionNode source)
+    internal static SqliteDatabaseScopeExpressionValidator AssertSourceNode(SqliteDatabaseBuilder database, SqlQueryExpressionNode source)
     {
-        var visitor = new SqliteViewSourceValidator( database );
+        var visitor = new SqliteDatabaseScopeExpressionValidator( database );
         visitor.Visit( source );
 
         var errors = visitor.GetErrors();

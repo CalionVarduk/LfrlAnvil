@@ -118,6 +118,11 @@ public static class SqliteObjectExtensions
         return ForSqliteImpl( builder, action );
     }
 
+    public static ISqlCheckBuilder ForSqlite(this ISqlCheckBuilder builder, Action<SqliteCheckBuilder> action)
+    {
+        return ForSqliteImpl( builder, action );
+    }
+
     public static ISqlViewBuilder ForSqlite(this ISqlViewBuilder builder, Action<SqliteViewBuilder> action)
     {
         return ForSqliteImpl( builder, action );

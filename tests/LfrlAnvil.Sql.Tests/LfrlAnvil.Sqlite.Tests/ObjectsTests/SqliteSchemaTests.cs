@@ -785,4 +785,138 @@ public class SqliteSchemaTests : TestsBase
             outResult.Should().BeSameAs( outExpected );
         }
     }
+
+    [Fact]
+    public void Objects_GetCheck_ShouldReturnCorrectCheck()
+    {
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
+        tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C" ).Asc() );
+        tableBuilder.Checks.Create( tableBuilder.RecordSet["C"] > SqlNode.Literal( 0 ) );
+
+        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
+
+        var result = sut.GetCheck( "CHK_T_0" );
+
+        using ( new AssertionScope() )
+        {
+            result.Type.Should().Be( SqlObjectType.Check );
+            result.Name.Should().Be( "CHK_T_0" );
+        }
+    }
+
+    [Fact]
+    public void Objects_GetCheck_ShouldThrowKeyNotFoundException_WhenObjectDoesNotExist()
+    {
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
+        tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C" ).Asc() );
+        tableBuilder.Checks.Create( tableBuilder.RecordSet["C"] > SqlNode.Literal( 0 ) );
+
+        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
+
+        var action = Lambda.Of( () => sut.GetCheck( "U" ) );
+
+        action.Should().ThrowExactly<KeyNotFoundException>();
+    }
+
+    [Fact]
+    public void Objects_GetCheck_ShouldThrowSqliteObjectCastException_WhenObjectExistsButIsNotCheck()
+    {
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
+        tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C" ).Asc() );
+        tableBuilder.Checks.Create( tableBuilder.RecordSet["C"] > SqlNode.Literal( 0 ) );
+
+        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
+
+        var action = Lambda.Of( () => sut.GetCheck( "T" ) );
+
+        action.Should().ThrowExactly<SqliteObjectCastException>();
+    }
+
+    [Fact]
+    public void Objects_TryGetCheck_ShouldReturnCorrectCheck()
+    {
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
+        tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C" ).Asc() );
+        tableBuilder.Checks.Create( tableBuilder.RecordSet["C"] > SqlNode.Literal( 0 ) );
+
+        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        var sut = db.Schemas.Get( "foo" ).Objects;
+
+        var result = sut.TryGetCheck( "CHK_T_0", out var outResult );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeTrue();
+            (outResult?.Type).Should().Be( SqlObjectType.Check );
+            (outResult?.Name).Should().Be( "CHK_T_0" );
+        }
+    }
+
+    [Fact]
+    public void Objects_TryGetCheck_ShouldReturnFalse_WhenObjectDoesNotExist()
+    {
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
+        tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C" ).Asc() );
+        tableBuilder.Checks.Create( tableBuilder.RecordSet["C"] > SqlNode.Literal( 0 ) );
+
+        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        var sut = db.Schemas.Get( "foo" ).Objects;
+
+        var result = sut.TryGetCheck( "U", out var outResult );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeFalse();
+            outResult.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void Objects_TryGetCheck_ShouldReturnFalse_WhenObjectExistsButIsNotCheck()
+    {
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
+        tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C" ).Asc() );
+        tableBuilder.Checks.Create( tableBuilder.RecordSet["C"] > SqlNode.Literal( 0 ) );
+
+        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        var sut = db.Schemas.Get( "foo" ).Objects;
+
+        var result = sut.TryGetCheck( "T", out var outResult );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeFalse();
+            outResult.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void ISqlObjectCollection_TryGetCheck_ShouldBeEquivalentToTryGetCheck()
+    {
+        var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
+        tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C" ).Asc() );
+        tableBuilder.Checks.Create( tableBuilder.RecordSet["C"] > SqlNode.Literal( 0 ) );
+
+        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        var sut = db.Schemas.Get( "foo" ).Objects;
+        var expected = sut.TryGetCheck( "CHK_T_0", out var outExpected );
+
+        var result = ((ISqlObjectCollection)sut).TryGetCheck( "CHK_T_0", out var outResult );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().Be( expected );
+            outResult.Should().BeSameAs( outExpected );
+        }
+    }
 }

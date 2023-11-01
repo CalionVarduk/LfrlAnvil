@@ -15,7 +15,7 @@ public class EventListenerAuditUntilDecoratorTests : TestsBase
         var subscriber = Substitute.For<IEventSubscriber>();
         var sut = new EventListenerAuditUntilDecorator<int, string>( target );
 
-        var _ = sut.Decorate( next, subscriber );
+        _ = sut.Decorate( next, subscriber );
 
         using ( new AssertionScope() )
         {
@@ -34,7 +34,7 @@ public class EventListenerAuditUntilDecoratorTests : TestsBase
         var subscriber = Substitute.For<IEventSubscriber>();
         var sut = new EventListenerAuditUntilDecorator<int, string>( target );
 
-        var _ = sut.Decorate( next, subscriber );
+        _ = sut.Decorate( next, subscriber );
 
         using ( new AssertionScope() )
         {
@@ -50,7 +50,7 @@ public class EventListenerAuditUntilDecoratorTests : TestsBase
         var next = Substitute.For<IEventListener<int>>();
         var subscriber = Substitute.For<IEventSubscriber>();
         var sut = new EventListenerAuditUntilDecorator<int, string>( target );
-        var _ = sut.Decorate( next, subscriber );
+        _ = sut.Decorate( next, subscriber );
 
         target.Publish( Fixture.Create<string>() );
 

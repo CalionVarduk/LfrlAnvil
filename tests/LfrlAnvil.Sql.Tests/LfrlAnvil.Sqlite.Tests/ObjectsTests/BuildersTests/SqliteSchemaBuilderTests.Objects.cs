@@ -49,6 +49,10 @@ public partial class SqliteSchemaBuilderTests
                 result.ForeignKeys.Table.Should().BeSameAs( result );
                 result.ForeignKeys.Count.Should().Be( 0 );
 
+                result.Checks.Should().BeEmpty();
+                result.Checks.Table.Should().BeSameAs( result );
+                result.Checks.Count.Should().Be( 0 );
+
                 result.Info.Should().Be( SqlRecordSetInfo.Create( "foo", name ) );
                 result.RecordSet.Table.Should().BeSameAs( result );
                 result.RecordSet.Info.Should().Be( result.Info );
@@ -135,6 +139,10 @@ public partial class SqliteSchemaBuilderTests
                 result.Indexes.Should().BeEmpty();
                 result.Indexes.Table.Should().BeSameAs( result );
                 result.Indexes.Count.Should().Be( 0 );
+
+                result.Checks.Should().BeEmpty();
+                result.Checks.Table.Should().BeSameAs( result );
+                result.Checks.Count.Should().Be( 0 );
 
                 result.ForeignKeys.Should().BeEmpty();
                 result.ForeignKeys.Table.Should().BeSameAs( result );
@@ -353,6 +361,7 @@ public partial class SqliteSchemaBuilderTests
         [InlineData( "PK", true )]
         [InlineData( "IX", true )]
         [InlineData( "V", true )]
+        [InlineData( "CHK", true )]
         public void Contains_ShouldReturnTrue_WhenObjectExists(string name, bool expected)
         {
             var db = SqliteDatabaseBuilderMock.Create();
@@ -360,6 +369,7 @@ public partial class SqliteSchemaBuilderTests
             var t = sut.CreateTable( "T" );
             var c = t.Columns.Create( "C" );
             t.SetPrimaryKey( c.Asc() ).SetName( "PK" ).Index.SetName( "IX" );
+            t.Checks.Create( t.RecordSet["C"] != null ).SetName( "CHK" );
             sut.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
 
             var result = sut.Contains( name );
@@ -913,6 +923,103 @@ public partial class SqliteSchemaBuilderTests
         }
 
         [Fact]
+        public void GetCheck_ShouldReturnExistingCheck()
+        {
+            var name = Fixture.Create<string>();
+            var db = SqliteDatabaseBuilderMock.Create();
+            var sut = db.Schemas.Create( "foo" ).Objects;
+            var t = sut.CreateTable( "T" );
+            var c = t.Columns.Create( "C" );
+            var expected = t.Checks.Create( c.Node != null ).SetName( name );
+
+            var result = sut.GetCheck( name );
+
+            result.Should().BeSameAs( expected );
+        }
+
+        [Fact]
+        public void GetCheck_ShouldThrowKeyNotFoundException_WhenObjectDoesNotExist()
+        {
+            var name = Fixture.Create<string>();
+            var db = SqliteDatabaseBuilderMock.Create();
+            var sut = db.Schemas.Create( "foo" ).Objects;
+
+            var action = Lambda.Of( () => sut.GetCheck( name ) );
+
+            action.Should().ThrowExactly<KeyNotFoundException>();
+        }
+
+        [Fact]
+        public void GetCheck_ShouldThrowSqliteObjectCastException_WhenObjectExistsButNotAsCheck()
+        {
+            var name = Fixture.Create<string>();
+            var db = SqliteDatabaseBuilderMock.Create();
+            var sut = db.Schemas.Create( "foo" ).Objects;
+            sut.CreateTable( name );
+
+            var action = Lambda.Of( () => sut.GetCheck( name ) );
+
+            action.Should()
+                .ThrowExactly<SqliteObjectCastException>()
+                .AndMatch(
+                    e => e.Dialect == SqliteDialect.Instance &&
+                        e.Expected == typeof( SqliteCheckBuilder ) &&
+                        e.Actual == typeof( SqliteTableBuilder ) );
+        }
+
+        [Fact]
+        public void TryGetCheck_ShouldReturnExistingCheck()
+        {
+            var name = Fixture.Create<string>();
+            var db = SqliteDatabaseBuilderMock.Create();
+            var sut = db.Schemas.Create( "foo" ).Objects;
+            var t = sut.CreateTable( "T" );
+            var c = t.Columns.Create( "C" );
+            var expected = t.Checks.Create( c.Node != null ).SetName( name );
+
+            var result = sut.TryGetCheck( name, out var outResult );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeTrue();
+                outResult.Should().BeSameAs( expected );
+            }
+        }
+
+        [Fact]
+        public void TryGetCheck_ShouldReturnFalse_WhenObjectDoesNotExist()
+        {
+            var name = Fixture.Create<string>();
+            var db = SqliteDatabaseBuilderMock.Create();
+            var sut = db.Schemas.Create( "foo" ).Objects;
+
+            var result = sut.TryGetCheck( name, out var outResult );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeFalse();
+                outResult.Should().BeNull();
+            }
+        }
+
+        [Fact]
+        public void TryGetCheck_ShouldReturnFalse_WhenObjectExistsButNotAsCheck()
+        {
+            var name = Fixture.Create<string>();
+            var db = SqliteDatabaseBuilderMock.Create();
+            var sut = db.Schemas.Create( "foo" ).Objects;
+            sut.CreateTable( name );
+
+            var result = sut.TryGetCheck( name, out var outResult );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeFalse();
+                outResult.Should().BeNull();
+            }
+        }
+
+        [Fact]
         public void Remove_ShouldRemoveExistingEmptyTable()
         {
             var db = SqliteDatabaseBuilderMock.Create();
@@ -939,6 +1046,7 @@ public partial class SqliteSchemaBuilderTests
             var pk = table.SetPrimaryKey( column.Asc() );
             var ix = table.Indexes.Create( otherColumn.Asc() );
             var fk = table.ForeignKeys.Create( ix, pk.Index );
+            var chk = table.Checks.Create( column.Node != null );
 
             var result = sut.Remove( table.Name );
 
@@ -954,6 +1062,7 @@ public partial class SqliteSchemaBuilderTests
                 pk.Index.IsRemoved.Should().BeTrue();
                 ix.IsRemoved.Should().BeTrue();
                 fk.IsRemoved.Should().BeTrue();
+                chk.IsRemoved.Should().BeTrue();
             }
         }
 
@@ -965,6 +1074,7 @@ public partial class SqliteSchemaBuilderTests
             var table = sut.CreateTable( "T" );
             var column = table.Columns.Create( "C" );
             var pk = table.SetPrimaryKey( column.Asc() );
+            var chk = table.Checks.Create( column.Node != null );
 
             var otherTable = sut.CreateTable( "U" );
             var otherColumn = otherTable.Columns.Create( "D" );
@@ -976,12 +1086,13 @@ public partial class SqliteSchemaBuilderTests
             using ( new AssertionScope() )
             {
                 result.Should().BeFalse();
-                sut.Count.Should().Be( 7 );
-                sut.Should().BeEquivalentTo( table, pk, pk.Index, otherTable, otherPk, otherPk.Index, fk );
+                sut.Count.Should().Be( 8 );
+                sut.Should().BeEquivalentTo( table, pk, pk.Index, chk, otherTable, otherPk, otherPk.Index, fk );
                 table.IsRemoved.Should().BeFalse();
                 column.IsRemoved.Should().BeFalse();
                 pk.IsRemoved.Should().BeFalse();
                 pk.Index.IsRemoved.Should().BeFalse();
+                chk.IsRemoved.Should().BeFalse();
             }
         }
 
@@ -1170,6 +1281,27 @@ public partial class SqliteSchemaBuilderTests
         }
 
         [Fact]
+        public void Remove_ShouldRemoveExistingCheck()
+        {
+            var db = SqliteDatabaseBuilderMock.Create();
+            var sut = db.Schemas.Create( "foo" ).Objects;
+            var table = sut.CreateTable( "T" );
+            var column = table.Columns.Create( "C" );
+            var pk = table.SetPrimaryKey( column.Asc() );
+            var chk = table.Checks.Create( column.Node != null );
+
+            var result = sut.Remove( chk.Name );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeTrue();
+                sut.Count.Should().Be( 3 );
+                sut.Should().BeEquivalentTo( table, pk, pk.Index );
+                chk.IsRemoved.Should().BeTrue();
+            }
+        }
+
+        [Fact]
         public void Remove_ShouldReturnFalse_WhenObjectDoesNotExist()
         {
             var db = SqliteDatabaseBuilderMock.Create();
@@ -1342,6 +1474,40 @@ public partial class SqliteSchemaBuilderTests
             using ( new AssertionScope() )
             {
                 result.Should().Be( sut.TryGetView( name, out var outExpected ) );
+                outResult.Should().BeSameAs( outExpected );
+            }
+        }
+
+        [Fact]
+        public void ISqlObjectBuilderCollection_GetCheck_ShouldBeEquivalentToGetCheck()
+        {
+            var name = Fixture.Create<string>();
+            var db = SqliteDatabaseBuilderMock.Create();
+            var sut = db.Schemas.Create( "foo" ).Objects;
+            var t = sut.CreateTable( "T" );
+            var c = t.Columns.Create( "C" );
+            t.Checks.Create( c.Node != null ).SetName( name );
+
+            var result = ((ISqlObjectBuilderCollection)sut).GetCheck( name );
+
+            result.Should().BeSameAs( sut.GetCheck( name ) );
+        }
+
+        [Fact]
+        public void ISqlObjectBuilderCollection_TryGetCheck_ShouldBeEquivalentToTryGetCheck()
+        {
+            var name = Fixture.Create<string>();
+            var db = SqliteDatabaseBuilderMock.Create();
+            var sut = db.Schemas.Create( "foo" ).Objects;
+            var t = sut.CreateTable( "T" );
+            var c = t.Columns.Create( "C" );
+            t.Checks.Create( c.Node != null ).SetName( name );
+
+            var result = ((ISqlObjectBuilderCollection)sut).TryGetCheck( name, out var outResult );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().Be( sut.TryGetCheck( name, out var outExpected ) );
                 outResult.Should().BeSameAs( outExpected );
             }
         }

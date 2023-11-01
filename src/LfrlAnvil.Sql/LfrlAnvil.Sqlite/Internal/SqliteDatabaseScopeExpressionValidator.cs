@@ -8,9 +8,9 @@ using LfrlAnvil.Sqlite.Objects.Builders;
 
 namespace LfrlAnvil.Sqlite.Internal;
 
-internal sealed class SqliteViewSourceValidator : SqliteSourceNodeValidator
+internal sealed class SqliteDatabaseScopeExpressionValidator : SqliteExpressionValidator
 {
-    internal SqliteViewSourceValidator(SqliteDatabaseBuilder database)
+    internal SqliteDatabaseScopeExpressionValidator(SqliteDatabaseBuilder database)
     {
         Database = database;
         ReferencedObjects = new Dictionary<ulong, SqliteObjectBuilder>();

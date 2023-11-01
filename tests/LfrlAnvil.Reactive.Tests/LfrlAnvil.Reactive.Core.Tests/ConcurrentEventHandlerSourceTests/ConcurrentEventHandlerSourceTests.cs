@@ -31,7 +31,7 @@ public class ConcurrentEventHandlerSourceTests : TestsBase
         var sut = new ConcurrentEventHandlerSource<int>( h => target.Handler += h, h => target.Handler -= h );
         var listener = EventListener.Create<WithSender<int>>( actualValues.Add );
 
-        var _ = sut.Listen( listener );
+        _ = sut.Listen( listener );
 
         foreach ( var value in values )
             target.Emit( sender, value );
@@ -54,7 +54,7 @@ public class ConcurrentEventHandlerSourceTests : TestsBase
         var hasLock = false;
         var listener = EventListener.Create<WithSender<int>>( _ => hasLock = Monitor.IsEntered( sync ) );
 
-        var _ = sut.Listen( listener );
+        _ = sut.Listen( listener );
         target.Emit( sender, @event );
 
         hasLock.Should().BeTrue();
@@ -81,7 +81,7 @@ public class ConcurrentEventHandlerSourceTests : TestsBase
         var sut = EventSource.ConcurrentFromEvent<int>( h => target.Handler += h, h => target.Handler -= h );
         var listener = EventListener.Create<WithSender<int>>( actualValues.Add );
 
-        var _ = sut.Listen( listener );
+        _ = sut.Listen( listener );
 
         foreach ( var value in values )
             target.Emit( sender, value );

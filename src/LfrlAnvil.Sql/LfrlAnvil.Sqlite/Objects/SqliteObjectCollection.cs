@@ -89,6 +89,17 @@ public sealed class SqliteObjectCollection : ISqlObjectCollection
     }
 
     [Pure]
+    public SqliteCheck GetCheck(string name)
+    {
+        return GetTypedObject<SqliteCheck>( name, SqlObjectType.Check );
+    }
+
+    public bool TryGetCheck(string name, [MaybeNullWhen( false )] out SqliteCheck result)
+    {
+        return TryGetTypedObject( name, SqlObjectType.Check, out result );
+    }
+
+    [Pure]
     public SqliteView GetView(string name)
     {
         return GetTypedObject<SqliteView>( name, SqlObjectType.View );
@@ -150,6 +161,9 @@ public sealed class SqliteObjectCollection : ISqlObjectCollection
 
                     foreach ( var ix in table.Indexes )
                         _map.Add( ix.Name, ix );
+
+                    foreach ( var chk in table.Checks )
+                        _map.Add( chk.Name, chk );
 
                     table.SetPrimaryKey( tableBuilder );
                     _map.Add( table.PrimaryKey.Name, table.PrimaryKey );
@@ -256,6 +270,17 @@ public sealed class SqliteObjectCollection : ISqlObjectCollection
     bool ISqlObjectCollection.TryGetForeignKey(string name, [MaybeNullWhen( false )] out ISqlForeignKey result)
     {
         return TryGetTypedObject( name, SqlObjectType.ForeignKey, out result );
+    }
+
+    [Pure]
+    ISqlCheck ISqlObjectCollection.GetCheck(string name)
+    {
+        return GetCheck( name );
+    }
+
+    bool ISqlObjectCollection.TryGetCheck(string name, [MaybeNullWhen( false )] out ISqlCheck result)
+    {
+        return TryGetTypedObject( name, SqlObjectType.Check, out result );
     }
 
     [Pure]

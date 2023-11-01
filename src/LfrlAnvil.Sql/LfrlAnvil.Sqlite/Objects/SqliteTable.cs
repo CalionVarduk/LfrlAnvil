@@ -23,6 +23,7 @@ public sealed class SqliteTable : SqliteObject, ISqlTable
         Columns = new SqliteColumnCollection( this, builder.Columns );
         Indexes = new SqliteIndexCollection( this, builder.Indexes );
         ForeignKeys = new SqliteForeignKeyCollection( this, builder.ForeignKeys.Count );
+        Checks = new SqliteCheckCollection( this, builder.Checks );
         _info = builder.GetCachedInfo();
         _recordSet = null;
     }
@@ -31,6 +32,7 @@ public sealed class SqliteTable : SqliteObject, ISqlTable
     public SqliteColumnCollection Columns { get; }
     public SqliteIndexCollection Indexes { get; }
     public SqliteForeignKeyCollection ForeignKeys { get; }
+    public SqliteCheckCollection Checks { get; }
     public override string FullName { get; }
     public SqlRecordSetInfo Info => _info ??= SqlRecordSetInfo.Create( Schema.Name, Name );
     public SqlTableNode RecordSet => _recordSet ??= SqlNode.Table( this );
@@ -51,6 +53,7 @@ public sealed class SqliteTable : SqliteObject, ISqlTable
     ISqlColumnCollection ISqlTable.Columns => Columns;
     ISqlIndexCollection ISqlTable.Indexes => Indexes;
     ISqlForeignKeyCollection ISqlTable.ForeignKeys => ForeignKeys;
+    ISqlCheckCollection ISqlTable.Checks => Checks;
 
     internal void SetPrimaryKey(SqliteTableBuilder builder)
     {

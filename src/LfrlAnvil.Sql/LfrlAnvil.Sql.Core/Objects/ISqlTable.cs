@@ -9,6 +9,7 @@ public interface ISqlTable : ISqlObject
     ISqlColumnCollection Columns { get; }
     ISqlIndexCollection Indexes { get; }
     ISqlForeignKeyCollection ForeignKeys { get; }
+    ISqlCheckCollection Checks { get; }
     SqlRecordSetInfo Info { get; }
     SqlTableNode RecordSet { get; }
 }

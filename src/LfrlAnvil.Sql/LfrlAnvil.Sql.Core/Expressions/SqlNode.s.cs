@@ -714,9 +714,9 @@ public static partial class SqlNode
     }
 
     [Pure]
-    public static SqlCheckDefinitionNode Check(string name, SqlConditionNode predicate)
+    public static SqlCheckDefinitionNode Check(string name, SqlConditionNode condition)
     {
-        return new SqlCheckDefinitionNode( name, predicate );
+        return new SqlCheckDefinitionNode( name, condition );
     }
 
     [Pure]

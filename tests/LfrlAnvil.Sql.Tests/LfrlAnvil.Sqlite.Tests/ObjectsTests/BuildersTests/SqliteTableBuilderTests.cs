@@ -23,6 +23,7 @@ public partial class SqliteTableBuilderTests : TestsBase
         var ix2 = sut.SetPrimaryKey( sut.Columns.Create( "C2" ).Asc() ).Index;
         sut.Indexes.Create( sut.Columns.Create( "C3" ).Asc(), sut.Columns.Create( "C4" ).Desc() );
         sut.ForeignKeys.Create( ix1, ix2 );
+        sut.Checks.Create( sut.RecordSet["C1"] > SqlNode.Literal( 0 ) );
 
         var statements = db.GetPendingStatements().ToArray();
 
@@ -38,7 +39,8 @@ public partial class SqliteTableBuilderTests : TestsBase
                       ""C3"" ANY NOT NULL,
                       ""C4"" ANY NOT NULL,
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C2"" ASC),
-                      CONSTRAINT ""foo_FK_T_C1_REF_T"" FOREIGN KEY (""C1"") REFERENCES ""foo_T"" (""C2"") ON DELETE RESTRICT ON UPDATE RESTRICT
+                      CONSTRAINT ""foo_FK_T_C1_REF_T"" FOREIGN KEY (""C1"") REFERENCES ""foo_T"" (""C2"") ON DELETE RESTRICT ON UPDATE RESTRICT,
+                      CONSTRAINT ""foo_CHK_T_0"" CHECK (""C1"" > 0)
                     ) WITHOUT ROWID;",
                     "CREATE INDEX \"foo_IX_T_C1A\" ON \"foo_T\" (\"C1\" ASC);",
                     "CREATE INDEX \"foo_IX_T_C3A_C4D\" ON \"foo_T\" (\"C3\" ASC, \"C4\" DESC);" );
@@ -66,10 +68,7 @@ public partial class SqliteTableBuilderTests : TestsBase
         sut.Columns.Create( "C" );
 
         var action = Lambda.Of(
-            () =>
-            {
-                var _ = db.GetPendingStatements();
-            } );
+            () => { _ = db.GetPendingStatements(); } );
 
         action.Should()
             .ThrowExactly<SqliteObjectBuilderException>()
@@ -167,6 +166,7 @@ public partial class SqliteTableBuilderTests : TestsBase
         var c2 = sut.Columns.Create( "C2" );
         var pk = sut.SetPrimaryKey( c1.Asc() );
         var fk = sut.ForeignKeys.Create( sut.Indexes.Create( c2.Asc() ), pk.Index );
+        sut.Checks.Create( c1.Node > SqlNode.Literal( 0 ) );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -191,7 +191,8 @@ public partial class SqliteTableBuilderTests : TestsBase
                       ""C1"" ANY NOT NULL,
                       ""C2"" ANY NOT NULL,
                       CONSTRAINT ""s_PK_foo"" PRIMARY KEY (""C1"" ASC),
-                      CONSTRAINT ""s_FK_foo_C2_REF_foo"" FOREIGN KEY (""C2"") REFERENCES ""s_bar"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
+                      CONSTRAINT ""s_FK_foo_C2_REF_foo"" FOREIGN KEY (""C2"") REFERENCES ""s_bar"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT,
+                      CONSTRAINT ""s_CHK_foo_0"" CHECK (""C1"" > 0)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__s_bar__{GUID}__"" (""C1"", ""C2"")
                     SELECT
@@ -1230,6 +1231,7 @@ public partial class SqliteTableBuilderTests : TestsBase
         var pk = sut.SetPrimaryKey( column.Asc() );
         var ix = sut.Indexes.Create( otherColumn.Asc() );
         var fk = sut.ForeignKeys.Create( ix, pk.Index );
+        var chk = sut.Checks.Create( column.Node > SqlNode.Literal( 0 ) );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -1246,6 +1248,7 @@ public partial class SqliteTableBuilderTests : TestsBase
             pk.Index.IsRemoved.Should().BeTrue();
             ix.IsRemoved.Should().BeTrue();
             fk.IsRemoved.Should().BeTrue();
+            chk.IsRemoved.Should().BeTrue();
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 ).Should().SatisfySql( "DROP TABLE \"foo_T\";" );
         }

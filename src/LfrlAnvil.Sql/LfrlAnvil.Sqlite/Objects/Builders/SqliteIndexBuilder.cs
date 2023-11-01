@@ -115,7 +115,7 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
                 if ( PrimaryKey is not null )
                     throw new SqliteObjectBuilderException( ExceptionResources.PrimaryKeyIndexCannotBePartial );
 
-                var validator = new SqliteIndexFilterSourceValidator( Table );
+                var validator = new SqliteTableScopeExpressionValidator( Table );
                 validator.Visit( filter );
 
                 var errors = validator.GetErrors();

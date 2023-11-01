@@ -741,7 +741,7 @@ public abstract class SqlNodeVisitor : ISqlNodeVisitor
 
     public virtual void VisitCheckDefinition(SqlCheckDefinitionNode node)
     {
-        this.Visit( node.Predicate );
+        this.Visit( node.Condition );
     }
 
     public virtual void VisitCreateTable(SqlCreateTableNode node)

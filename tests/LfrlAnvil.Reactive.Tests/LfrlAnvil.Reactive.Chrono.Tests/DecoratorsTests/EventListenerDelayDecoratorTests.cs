@@ -21,7 +21,7 @@ public class EventListenerDelayDecoratorTests : TestsBase
         var subscriber = Substitute.For<IEventSubscriber>();
         var sut = new EventListenerDelayDecorator<int>( timestampProvider, delay, scheduler, spinWaitDurationHint );
 
-        var _ = sut.Decorate( next, subscriber );
+        _ = sut.Decorate( next, subscriber );
 
         subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
     }

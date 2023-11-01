@@ -639,7 +639,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
         var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var sut = table.ForeignKeys.Create( ix1, ix2 );
 
-        var _ = schema.Database.GetPendingStatements();
+        _ = schema.Database.GetPendingStatements();
         sut.Remove();
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 

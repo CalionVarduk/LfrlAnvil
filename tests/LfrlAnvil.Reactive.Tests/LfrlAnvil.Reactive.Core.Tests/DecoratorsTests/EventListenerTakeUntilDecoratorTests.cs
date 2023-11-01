@@ -16,7 +16,7 @@ public class EventListenerTakeUntilDecoratorTests : TestsBase
         var subscriber = Substitute.For<IEventSubscriber>();
         var sut = new EventListenerTakeUntilDecorator<int, string>( target );
 
-        var _ = sut.Decorate( next, subscriber );
+        _ = sut.Decorate( next, subscriber );
 
         using ( new AssertionScope() )
         {
@@ -35,7 +35,7 @@ public class EventListenerTakeUntilDecoratorTests : TestsBase
         var subscriber = Substitute.For<IEventSubscriber>();
         var sut = new EventListenerTakeUntilDecorator<int, string>( target );
 
-        var _ = sut.Decorate( next, subscriber );
+        _ = sut.Decorate( next, subscriber );
 
         subscriber.VerifyCalls().Received( x => x.Dispose() );
     }
@@ -50,7 +50,7 @@ public class EventListenerTakeUntilDecoratorTests : TestsBase
         var subscriber = Substitute.For<IEventSubscriber>();
         var sut = new EventListenerTakeUntilDecorator<int, string>( target );
 
-        var _ = sut.Decorate( next, subscriber );
+        _ = sut.Decorate( next, subscriber );
 
         subscriber.VerifyCalls().Received( x => x.Dispose() );
     }
@@ -62,7 +62,7 @@ public class EventListenerTakeUntilDecoratorTests : TestsBase
         var next = Substitute.For<IEventListener<int>>();
         var subscriber = Substitute.For<IEventSubscriber>();
         var sut = new EventListenerTakeUntilDecorator<int, string>( target );
-        var _ = sut.Decorate( next, subscriber );
+        _ = sut.Decorate( next, subscriber );
 
         target.Publish( Fixture.Create<string>() );
 
@@ -76,7 +76,7 @@ public class EventListenerTakeUntilDecoratorTests : TestsBase
         var next = Substitute.For<IEventListener<int>>();
         var subscriber = Substitute.For<IEventSubscriber>();
         var sut = new EventListenerTakeUntilDecorator<int, string>( target );
-        var _ = sut.Decorate( next, subscriber );
+        _ = sut.Decorate( next, subscriber );
 
         target.Dispose();
 

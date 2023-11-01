@@ -30,6 +30,7 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
         Columns = new SqliteColumnBuilderCollection( this );
         Indexes = new SqliteIndexBuilderCollection( this );
         ForeignKeys = new SqliteForeignKeyBuilderCollection( this );
+        Checks = new SqliteCheckBuilderCollection( this );
         _fullName = string.Empty;
         _info = null;
         UpdateFullName();
@@ -40,6 +41,7 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
     public SqliteColumnBuilderCollection Columns { get; }
     public SqliteIndexBuilderCollection Indexes { get; }
     public SqliteForeignKeyBuilderCollection ForeignKeys { get; }
+    public SqliteCheckBuilderCollection Checks { get; }
     public SqlitePrimaryKeyBuilder? PrimaryKey { get; private set; }
     public IReadOnlyCollection<SqliteViewBuilder> ReferencingViews => (_referencingViews?.Values).EmptyIfNull();
 
@@ -70,6 +72,7 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
     ISqlColumnBuilderCollection ISqlTableBuilder.Columns => Columns;
     ISqlIndexBuilderCollection ISqlTableBuilder.Indexes => Indexes;
     ISqlForeignKeyBuilderCollection ISqlTableBuilder.ForeignKeys => ForeignKeys;
+    ISqlCheckBuilderCollection ISqlTableBuilder.Checks => Checks;
     IReadOnlyCollection<ISqlViewBuilder> ISqlTableBuilder.ReferencingViews => ReferencingViews;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
 
@@ -178,12 +181,14 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
         _referencingViews = null;
         ForeignKeys.Clear();
 
-        using var buffer = Database.ObjectPool.GreedyRent( Columns.Count + Indexes.Count );
+        using var buffer = Database.ObjectPool.GreedyRent( Columns.Count + Indexes.Count + Checks.Count );
         var columns = buffer.Slice( 0, Columns.Count );
         var indexes = buffer.Slice( columns.Length, Indexes.Count );
+        var checks = buffer.Slice( columns.Length + indexes.Length, Checks.Count );
 
         Columns.ClearInto( columns );
         Indexes.ClearInto( indexes );
+        Checks.ClearInto( checks );
 
         foreach ( var obj in indexes )
         {
@@ -193,12 +198,15 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
             index.ClearForeignKeysInto( buffer.Slice( buffer.Length - count ) );
         }
 
-        var foreignKeys = buffer.Slice( indexes.StartIndex + indexes.Length );
+        var foreignKeys = buffer.Slice( checks.StartIndex + checks.Length );
         foreach ( var fk in foreignKeys )
             fk.Remove();
 
         foreach ( var index in indexes )
             index.Remove();
+
+        foreach ( var check in checks )
+            check.Remove();
 
         foreach ( var column in columns )
             column.Remove();
@@ -247,6 +255,12 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
                 {
                     fk.UpdateFullName();
                     t.Database.ChangeTracker.SchemaNameUpdated( t, fk, oldName );
+                }
+
+                foreach ( var chk in t.Checks )
+                {
+                    chk.UpdateFullName();
+                    t.Database.ChangeTracker.SchemaNameUpdated( t, chk, oldName );
                 }
 
                 foreach ( var ix in t.Indexes )

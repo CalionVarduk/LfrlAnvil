@@ -9,6 +9,7 @@ using LfrlAnvil.Memory;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
+using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Internal;
@@ -89,6 +90,17 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
     public bool TryGetForeignKey(string name, [MaybeNullWhen( false )] out SqliteForeignKeyBuilder result)
     {
         return TryGetTypedObject( name, SqlObjectType.ForeignKey, out result );
+    }
+
+    [Pure]
+    public SqliteCheckBuilder GetCheck(string name)
+    {
+        return GetTypedObject<SqliteCheckBuilder>( name, SqlObjectType.Check );
+    }
+
+    public bool TryGetCheck(string name, [MaybeNullWhen( false )] out SqliteCheckBuilder result)
+    {
+        return TryGetTypedObject( name, SqlObjectType.Check, out result );
     }
 
     [Pure]
@@ -266,6 +278,22 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
         return result;
     }
 
+    internal SqliteCheckBuilder CreateCheck(SqliteTableBuilder table, string name, SqlConditionNode condition)
+    {
+        Schema.EnsureNotRemoved();
+        SqliteHelpers.AssertName( name );
+        var visitor = SqliteCheckBuilder.AssertConditionNode( table, condition );
+
+        ref var obj = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, name, out var exists )!;
+        if ( exists )
+            throw new SqliteObjectBuilderException( ExceptionResources.NameIsAlreadyTaken( obj, name ) );
+
+        var result = new SqliteCheckBuilder( name, condition, visitor );
+        Schema.Database.ChangeTracker.ObjectCreated( table, result );
+        obj = result;
+        return result;
+    }
+
     internal void Clear()
     {
         _map.Clear();
@@ -395,6 +423,17 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
     bool ISqlObjectBuilderCollection.TryGetForeignKey(string name, [MaybeNullWhen( false )] out ISqlForeignKeyBuilder result)
     {
         return TryGetTypedObject( name, SqlObjectType.ForeignKey, out result );
+    }
+
+    [Pure]
+    ISqlCheckBuilder ISqlObjectBuilderCollection.GetCheck(string name)
+    {
+        return GetCheck( name );
+    }
+
+    bool ISqlObjectBuilderCollection.TryGetCheck(string name, [MaybeNullWhen( false )] out ISqlCheckBuilder result)
+    {
+        return TryGetTypedObject( name, SqlObjectType.Check, out result );
     }
 
     [Pure]

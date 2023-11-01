@@ -34,7 +34,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         var sut = builder.Build();
 
-        var _ = sut.Create<decimal, string>( "[string] 0" );
+        _ = sut.Create<decimal, string>( "[string] 0" );
 
         using ( new AssertionScope() )
         {

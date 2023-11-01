@@ -655,13 +655,13 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             Context.Sql.Append( "CONSTRAINT" ).AppendSpace();
             AppendDelimitedName( node.Name );
             Context.Sql.AppendSpace().Append( "CHECK" ).AppendSpace();
-            VisitChildWrappedInParentheses( node.Predicate );
+            VisitChildWrappedInParentheses( node.Condition );
         }
     }
 
     public override void VisitCreateTable(SqlCreateTableNode node)
     {
-        using ( SwapIgnoredRecordSet( node.RecordSet ) )
+        using ( SwapIgnoreAllRecordSets() )
         using ( Context.TempParentNodeUpdate( node ) )
         {
             Context.Sql.Append( "CREATE" ).AppendSpace().Append( "TABLE" ).AppendSpace();
@@ -723,7 +723,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitCreateIndex(SqlCreateIndexNode node)
     {
-        using ( SwapIgnoredRecordSet( node.Table ) )
+        using ( SwapIgnoreAllRecordSets() )
         using ( Context.TempParentNodeUpdate( node ) )
         {
             Context.Sql.Append( "CREATE" ).AppendSpace();

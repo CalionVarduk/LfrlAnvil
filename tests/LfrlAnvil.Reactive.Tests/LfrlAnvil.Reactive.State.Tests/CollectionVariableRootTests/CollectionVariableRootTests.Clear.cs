@@ -114,7 +114,7 @@ public partial class CollectionVariableRootTests
                 .Received(
                     v =>
                     {
-                        var _ = v.Validate( sut.Elements );
+                        _ = v.Validate( sut.Elements );
                     },
                     1 );
 
@@ -122,7 +122,7 @@ public partial class CollectionVariableRootTests
                 .Received(
                     v =>
                     {
-                        var _ = v.Validate( sut.Elements );
+                        _ = v.Validate( sut.Elements );
                     },
                     1 );
         }

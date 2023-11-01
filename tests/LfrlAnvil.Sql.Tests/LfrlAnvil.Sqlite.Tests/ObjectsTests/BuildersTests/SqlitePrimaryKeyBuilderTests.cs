@@ -286,7 +286,7 @@ public class SqlitePrimaryKeyBuilderTests : TestsBase
         var c2 = table.Columns.Create( "C2" );
         var sut = table.SetPrimaryKey( c1.Asc() );
 
-        var _ = schema.Database.GetPendingStatements();
+        _ = schema.Database.GetPendingStatements();
         sut.Remove();
         table.SetPrimaryKey( c2.Asc() );
         var startStatementCount = schema.Database.GetPendingStatements().Length;

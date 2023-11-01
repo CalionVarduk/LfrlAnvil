@@ -15,7 +15,7 @@ public class EventListenerGroupByDecoratorTests : TestsBase
         var subscriber = Substitute.For<IEventSubscriber>();
         var sut = new EventListenerGroupByDecorator<int, int>( e => e / 10, EqualityComparer<int>.Default );
 
-        var _ = sut.Decorate( next, subscriber );
+        _ = sut.Decorate( next, subscriber );
 
         subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
     }

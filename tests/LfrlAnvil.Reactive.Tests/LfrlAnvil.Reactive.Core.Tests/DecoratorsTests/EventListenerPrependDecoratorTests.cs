@@ -16,7 +16,7 @@ public class EventListenerPrependDecoratorTests : TestsBase
         var subscriber = Substitute.For<IEventSubscriber>();
         var sut = new EventListenerPrependDecorator<int>( values );
 
-        var _ = sut.Decorate( next, subscriber );
+        _ = sut.Decorate( next, subscriber );
 
         subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
     }
@@ -30,7 +30,7 @@ public class EventListenerPrependDecoratorTests : TestsBase
         var next = EventListener.Create<int>( actualEvents.Add );
         var subscriber = Substitute.For<IEventSubscriber>();
         var sut = new EventListenerPrependDecorator<int>( values );
-        var _ = sut.Decorate( next, subscriber );
+        _ = sut.Decorate( next, subscriber );
 
         actualEvents.Should().BeSequentiallyEqualTo( values );
     }

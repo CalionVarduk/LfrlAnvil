@@ -650,8 +650,8 @@ public class DependencyContainerTests : DependencyTestsBase
         var sut = builder.Build();
         var scope = sut.RootScope.BeginScope();
 
-        var _ = scope.Locator.Resolve<IFoo>();
-        var __ = scope.Locator.Resolve<IFoo>();
+        _ = scope.Locator.Resolve<IFoo>();
+        _ = scope.Locator.Resolve<IFoo>();
 
         using ( new AssertionScope() )
         {
@@ -1644,7 +1644,7 @@ public class DependencyContainerTests : DependencyTestsBase
         var sut = builder.Build();
 
         var result = sut.ActiveScope.Locator.Resolve<IFoo>();
-        var _ = sut.ActiveScope.Locator.Resolve<IFoo>();
+        _ = sut.ActiveScope.Locator.Resolve<IFoo>();
 
         using ( new AssertionScope() )
         {
@@ -1667,7 +1667,7 @@ public class DependencyContainerTests : DependencyTestsBase
         var sut = builder.Build();
 
         var result = sut.ActiveScope.Locator.Resolve<IFoo>();
-        var _ = sut.ActiveScope.Locator.Resolve<IFoo>();
+        _ = sut.ActiveScope.Locator.Resolve<IFoo>();
 
         using ( new AssertionScope() )
         {
@@ -1691,7 +1691,7 @@ public class DependencyContainerTests : DependencyTestsBase
         var sut = builder.Build();
 
         var result = sut.ActiveScope.Locator.Resolve<IWithText>();
-        var _ = sut.ActiveScope.Locator.Resolve<IWithText>();
+        _ = sut.ActiveScope.Locator.Resolve<IWithText>();
 
         using ( new AssertionScope() )
         {
@@ -1714,8 +1714,8 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var sut = builder.Build();
 
-        var _ = sut.ActiveScope.Locator.Resolve<IEnumerable<IFoo>>();
-        var __ = sut.ActiveScope.Locator.Resolve<IEnumerable<IFoo>>();
+        _ = sut.ActiveScope.Locator.Resolve<IEnumerable<IFoo>>();
+        _ = sut.ActiveScope.Locator.Resolve<IEnumerable<IFoo>>();
 
         using ( new AssertionScope() )
         {

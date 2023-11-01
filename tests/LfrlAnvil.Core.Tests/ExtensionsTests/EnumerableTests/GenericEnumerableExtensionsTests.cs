@@ -455,7 +455,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
 
         var sut = Enumerable.Range( 0, 1 ).Select( @delegate );
 
-        var _ = sut.Repeat( count );
+        _ = sut.Repeat( count );
 
         @delegate.Verify().CallCount.Should().Be( 0 );
     }
@@ -468,7 +468,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
 
         var sut = Enumerable.Range( 0, 1 ).Select( @delegate );
 
-        var _ = sut.Repeat( count ).ToList();
+        _ = sut.Repeat( count ).ToList();
 
         @delegate.Verify().CallCount.Should().Be( 1 );
     }

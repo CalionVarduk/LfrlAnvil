@@ -12,7 +12,7 @@ public class ConcurrentReadOnlyCollectionTests : TestsBase
     public void Ctor_ShouldCreateWithoutAcquiringAnyLocks()
     {
         var sync = new object();
-        var _ = new ConcurrentReadOnlyCollection<int>( Array.Empty<int>(), sync );
+        _ = new ConcurrentReadOnlyCollection<int>( Array.Empty<int>(), sync );
 
         var hasLock = Monitor.IsEntered( sync );
 
@@ -50,7 +50,7 @@ public class ConcurrentReadOnlyCollectionTests : TestsBase
 
         var sut = new ConcurrentReadOnlyCollection<int>( collection, sync );
 
-        var _ = sut.Count;
+        _ = sut.Count;
 
         hasLock.Should().BeTrue();
     }

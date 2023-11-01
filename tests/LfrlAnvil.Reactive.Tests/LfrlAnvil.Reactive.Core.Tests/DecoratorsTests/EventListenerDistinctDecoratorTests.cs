@@ -14,7 +14,7 @@ public class EventListenerDistinctDecoratorTests : TestsBase
         var subscriber = Substitute.For<IEventSubscriber>();
         var sut = new EventListenerDistinctDecorator<int, int>( v => v, EqualityComparer<int>.Default );
 
-        var _ = sut.Decorate( next, subscriber );
+        _ = sut.Decorate( next, subscriber );
 
         subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
     }

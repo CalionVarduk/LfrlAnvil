@@ -12,17 +12,10 @@ using LfrlAnvil.Sqlite.Tests.Helpers;
 
 namespace LfrlAnvil.Sqlite.Tests;
 
-public class SqliteIndexFilterSourceValidatorTests : TestsBase
+public class SqliteConstantExpressionValidatorTests : TestsBase
 {
-    private readonly SqliteTableBuilder _table;
-    private readonly SqliteIndexFilterSourceValidator _sut;
-
-    public SqliteIndexFilterSourceValidatorTests()
-    {
-        _table = SqliteDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
-        _table.SetPrimaryKey( _table.Columns.Create( "X" ).Asc() );
-        _sut = new SqliteIndexFilterSourceValidator( _table );
-    }
+    private readonly SqliteDatabaseBuilder _db = SqliteDatabaseBuilderMock.Create();
+    private readonly SqliteConstantExpressionValidator _sut = new SqliteConstantExpressionValidator();
 
     [Fact]
     public void VisitRawExpression_ShouldVisitParameters()
@@ -65,9 +58,9 @@ public class SqliteIndexFilterSourceValidatorTests : TestsBase
     [Fact]
     public void VisitColumn_ShouldRegisterError()
     {
-        var table = _table.Database.Schemas.Default.Objects.CreateTable( "T2" );
+        var table = _db.Schemas.Default.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "A" ).Asc() );
-        var node = new SqliteDatabaseMock( _table.Database ).Schemas.Default.Objects.GetTable( "T2" ).ToRecordSet().GetField( "A" );
+        var node = new SqliteDatabaseMock( _db ).Schemas.Default.Objects.GetTable( "T" ).ToRecordSet().GetField( "A" );
 
         _sut.VisitColumn( node );
 
@@ -75,50 +68,15 @@ public class SqliteIndexFilterSourceValidatorTests : TestsBase
     }
 
     [Fact]
-    public void VisitColumnBuilder_ShouldBeSuccessful_WhenColumnBelongsToTheSameTableAndIsNotRemoved()
+    public void VisitColumnBuilder_ShouldRegisterError()
     {
-        var column = _table.Columns.Create( "A" );
-        var node = _table.ToRecordSet().GetField( "A" );
-
-        _sut.VisitColumnBuilder( node );
-
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().BeEmpty();
-            _sut.ReferencedColumns.Values.Should().BeEquivalentTo( column );
-        }
-    }
-
-    [Fact]
-    public void VisitColumnBuilder_ShouldRegisterError_WhenColumnDoesNotBelongToTheSameTable()
-    {
-        var table = _table.Database.Schemas.Default.Objects.CreateTable( "T2" );
+        var table = _db.Schemas.Default.Objects.CreateTable( "T" );
         table.Columns.Create( "A" );
         var node = table.ToRecordSet().GetField( "A" );
 
         _sut.VisitColumnBuilder( node );
 
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.ReferencedColumns.Should().BeEmpty();
-        }
-    }
-
-    [Fact]
-    public void VisitColumnBuilder_ShouldRegisterError_WhenColumnBelongsToTheSameTableAndIsRemoved()
-    {
-        var column = _table.Columns.Create( "A" );
-        var node = _table.ToRecordSet().GetField( "A" );
-        column.Remove();
-
-        _sut.VisitColumnBuilder( node );
-
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().HaveCount( 1 );
-            _sut.ReferencedColumns.Values.Should().BeEmpty();
-        }
+        _sut.GetErrors().Should().HaveCount( 1 );
     }
 
     [Fact]
@@ -138,11 +96,11 @@ public class SqliteIndexFilterSourceValidatorTests : TestsBase
     [Fact]
     public void VisitViewDataField_ShouldRegisterError()
     {
-        _table.Database.Schemas.Default.Objects.CreateView(
+        _db.Schemas.Default.Objects.CreateView(
             "V",
             SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["a"].AsSelf() } ) );
 
-        var node = new SqliteDatabaseMock( _table.Database ).Schemas.Default.Objects.GetView( "V" ).ToRecordSet().GetField( "a" );
+        var node = new SqliteDatabaseMock( _db ).Schemas.Default.Objects.GetView( "V" ).ToRecordSet().GetField( "a" );
 
         _sut.VisitViewDataField( node );
 
@@ -278,10 +236,10 @@ public class SqliteIndexFilterSourceValidatorTests : TestsBase
     }
 
     [Fact]
-    public void VisitRecordsAffectedFunction_ShouldRegisterError()
+    public void VisitRecordsAffectedFunction_ShouldDoNothing()
     {
         _sut.VisitRecordsAffectedFunction( SqlNode.Functions.RecordsAffected() );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Should().BeEmpty();
     }
 
     [Fact]
@@ -293,38 +251,38 @@ public class SqliteIndexFilterSourceValidatorTests : TestsBase
     }
 
     [Fact]
-    public void VisitCurrentDateFunction_ShouldRegisterError()
+    public void VisitCurrentDateFunction_ShouldDoNothing()
     {
         _sut.VisitCurrentDateFunction( SqlNode.Functions.CurrentDate() );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Should().BeEmpty();
     }
 
     [Fact]
-    public void VisitCurrentTimeFunction_ShouldRegisterError()
+    public void VisitCurrentTimeFunction_ShouldDoNothing()
     {
         _sut.VisitCurrentTimeFunction( SqlNode.Functions.CurrentTime() );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Should().BeEmpty();
     }
 
     [Fact]
-    public void VisitCurrentDateTimeFunction_ShouldRegisterError()
+    public void VisitCurrentDateTimeFunction_ShouldDoNothing()
     {
         _sut.VisitCurrentDateTimeFunction( SqlNode.Functions.CurrentDateTime() );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Should().BeEmpty();
     }
 
     [Fact]
-    public void VisitCurrentTimestampFunction_ShouldRegisterError()
+    public void VisitCurrentTimestampFunction_ShouldDoNothing()
     {
         _sut.VisitCurrentTimestampFunction( SqlNode.Functions.CurrentTimestamp() );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Should().BeEmpty();
     }
 
     [Fact]
-    public void VisitNewGuidFunction_ShouldRegisterError()
+    public void VisitNewGuidFunction_ShouldDoNothing()
     {
         _sut.VisitNewGuidFunction( SqlNode.Functions.NewGuid() );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Should().BeEmpty();
     }
 
     [Fact]
@@ -778,9 +736,9 @@ public class SqliteIndexFilterSourceValidatorTests : TestsBase
     [Fact]
     public void VisitTable_ShouldRegisterError()
     {
-        var table = _table.Database.Schemas.Default.Objects.CreateTable( "T2" );
+        var table = _db.Schemas.Default.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
-        var node = new SqliteDatabaseMock( _table.Database ).Schemas.Default.Objects.GetTable( "T2" ).ToRecordSet();
+        var node = new SqliteDatabaseMock( _db ).Schemas.Default.Objects.GetTable( "T" ).ToRecordSet();
 
         _sut.VisitTable( node );
 
@@ -788,17 +746,9 @@ public class SqliteIndexFilterSourceValidatorTests : TestsBase
     }
 
     [Fact]
-    public void VisitTableBuilder_ShouldDoNothing_WhenTableIsTheSame()
+    public void VisitTableBuilder_ShouldRegisterError()
     {
-        var node = _table.ToRecordSet();
-        _sut.VisitTableBuilder( node );
-        _sut.GetErrors().Should().BeEmpty();
-    }
-
-    [Fact]
-    public void VisitTableBuilder_ShouldRegisterError_WhenTableIsDifferent()
-    {
-        var table = _table.Database.Schemas.Default.Objects.CreateTable( "T2" );
+        var table = _db.Schemas.Default.Objects.CreateTable( "T" );
         var node = table.ToRecordSet();
 
         _sut.VisitTableBuilder( node );
@@ -809,11 +759,8 @@ public class SqliteIndexFilterSourceValidatorTests : TestsBase
     [Fact]
     public void VisitView_ShouldRegisterError()
     {
-        _table.Database.Schemas.Default.Objects.CreateView(
-            "V",
-            SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.GetAll() } ) );
-
-        var node = new SqliteDatabaseMock( _table.Database ).Schemas.Default.Objects.GetView( "V" ).ToRecordSet();
+        _db.Schemas.Default.Objects.CreateView( "V", SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.GetAll() } ) );
+        var node = new SqliteDatabaseMock( _db ).Schemas.Default.Objects.GetView( "V" ).ToRecordSet();
 
         _sut.VisitView( node );
 
@@ -823,7 +770,7 @@ public class SqliteIndexFilterSourceValidatorTests : TestsBase
     [Fact]
     public void VisitViewBuilder_ShouldRegisterError()
     {
-        var view = _table.Database.Schemas.Default.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
+        var view = _db.Schemas.Default.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
         var node = view.ToRecordSet();
 
         _sut.VisitViewBuilder( node );

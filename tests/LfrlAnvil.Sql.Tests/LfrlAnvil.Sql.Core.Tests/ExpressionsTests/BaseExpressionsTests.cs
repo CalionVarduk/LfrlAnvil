@@ -815,7 +815,7 @@ VALUES
         {
             sut.NodeType.Should().Be( SqlNodeType.CheckDefinition );
             sut.Name.Should().Be( "CHK_foo" );
-            sut.Predicate.Should().BeSameAs( predicate );
+            sut.Condition.Should().BeSameAs( predicate );
             text.Should().Be( "CHECK [CHK_foo] (([foo].[x] : ?) > (\"10\" : System.Int32))" );
         }
     }

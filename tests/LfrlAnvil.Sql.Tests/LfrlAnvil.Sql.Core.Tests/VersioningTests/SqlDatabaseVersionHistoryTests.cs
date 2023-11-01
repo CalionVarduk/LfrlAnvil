@@ -233,7 +233,7 @@ public class SqlDatabaseVersionHistoryTests : TestsBase
         var action = Lambda.Of(
             () =>
             {
-                var _ = sut.CompareToDatabase( records );
+                _ = sut.CompareToDatabase( records );
             } );
 
         action.Should().ThrowExactly<SqlDatabaseVersionHistoryException>();
@@ -252,7 +252,7 @@ public class SqlDatabaseVersionHistoryTests : TestsBase
         var action = Lambda.Of(
             () =>
             {
-                var _ = sut.CompareToDatabase( records );
+                _ = sut.CompareToDatabase( records );
             } );
 
         action.Should().ThrowExactly<SqlDatabaseVersionHistoryException>();
@@ -277,7 +277,7 @@ public class SqlDatabaseVersionHistoryTests : TestsBase
         var action = Lambda.Of(
             () =>
             {
-                var _ = sut.CompareToDatabase( records );
+                _ = sut.CompareToDatabase( records );
             } );
 
         action.Should().ThrowExactly<SqlDatabaseVersionHistoryException>();
@@ -301,7 +301,7 @@ public class SqlDatabaseVersionHistoryTests : TestsBase
         var action = Lambda.Of(
             () =>
             {
-                var _ = sut.CompareToDatabase( records );
+                _ = sut.CompareToDatabase( records );
             } );
 
         action.Should().ThrowExactly<SqlDatabaseVersionHistoryException>();
@@ -325,7 +325,7 @@ public class SqlDatabaseVersionHistoryTests : TestsBase
         var action = Lambda.Of(
             () =>
             {
-                var _ = sut.CompareToDatabase( records );
+                _ = sut.CompareToDatabase( records );
             } );
 
         action.Should().ThrowExactly<SqlDatabaseVersionHistoryException>();
@@ -349,7 +349,7 @@ public class SqlDatabaseVersionHistoryTests : TestsBase
         var action = Lambda.Of(
             () =>
             {
-                var _ = sut.CompareToDatabase( records );
+                _ = sut.CompareToDatabase( records );
             } );
 
         action.Should().ThrowExactly<SqlDatabaseVersionHistoryException>();
@@ -371,7 +371,7 @@ public class SqlDatabaseVersionHistoryTests : TestsBase
         var action = Lambda.Of(
             () =>
             {
-                var _ = sut.CompareToDatabase( records );
+                _ = sut.CompareToDatabase( records );
             } );
 
         action.Should().ThrowExactly<SqlDatabaseVersionHistoryException>();
@@ -395,7 +395,7 @@ public class SqlDatabaseVersionHistoryTests : TestsBase
         var action = Lambda.Of(
             () =>
             {
-                var _ = sut.CompareToDatabase( records );
+                _ = sut.CompareToDatabase( records );
             } );
 
         action.Should().ThrowExactly<SqlDatabaseVersionHistoryException>();
@@ -419,7 +419,7 @@ public class SqlDatabaseVersionHistoryTests : TestsBase
         var action = Lambda.Of(
             () =>
             {
-                var _ = sut.CompareToDatabase( records );
+                _ = sut.CompareToDatabase( records );
             } );
 
         action.Should().ThrowExactly<SqlDatabaseVersionHistoryException>();

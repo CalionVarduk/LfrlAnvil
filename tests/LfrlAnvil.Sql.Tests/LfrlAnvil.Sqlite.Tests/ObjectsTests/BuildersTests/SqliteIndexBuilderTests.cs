@@ -871,7 +871,7 @@ public class SqliteIndexBuilderTests : TestsBase
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
 
-        var _ = schema.Database.GetPendingStatements();
+        _ = schema.Database.GetPendingStatements();
         sut.Remove();
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 

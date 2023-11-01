@@ -16,7 +16,7 @@ public class EventListenerBufferUntilDecoratorTests : TestsBase
         var subscriber = Substitute.For<IEventSubscriber>();
         var sut = new EventListenerBufferUntilDecorator<int, string>( target );
 
-        var _ = sut.Decorate( next, subscriber );
+        _ = sut.Decorate( next, subscriber );
 
         using ( new AssertionScope() )
         {
@@ -35,7 +35,7 @@ public class EventListenerBufferUntilDecoratorTests : TestsBase
         var subscriber = Substitute.For<IEventSubscriber>();
         var sut = new EventListenerBufferUntilDecorator<int, string>( target );
 
-        var _ = sut.Decorate( next, subscriber );
+        _ = sut.Decorate( next, subscriber );
 
         using ( new AssertionScope() )
         {
@@ -145,7 +145,7 @@ public class EventListenerBufferUntilDecoratorTests : TestsBase
         var next = Substitute.For<IEventListener<ReadOnlyMemory<int>>>();
         var subscriber = Substitute.For<IEventSubscriber>();
         var sut = new EventListenerBufferUntilDecorator<int, string>( target );
-        var _ = sut.Decorate( next, subscriber );
+        _ = sut.Decorate( next, subscriber );
 
         target.Dispose();
 
@@ -266,7 +266,7 @@ public class EventListenerBufferUntilDecoratorTests : TestsBase
         var next = EventListener.Create<ReadOnlyMemory<int>>( e => actualEvents.Add( e.ToArray() ) );
         var sut = new EventPublisher<int>();
         var decorated = sut.BufferUntil( sut );
-        var _ = decorated.Listen( next );
+        _ = decorated.Listen( next );
 
         foreach ( var e in sourceEvents )
             sut.Publish( e );
