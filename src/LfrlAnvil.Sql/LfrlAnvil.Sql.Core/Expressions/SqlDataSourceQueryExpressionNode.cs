@@ -60,7 +60,12 @@ public sealed class SqlDataSourceQueryExpressionNode<TDataSourceNode> : SqlDataS
     [Pure]
     public override SqlDataSourceQueryExpressionNode<TDataSourceNode> AddTrait(SqlTraitNode trait)
     {
-        var traits = Traits.ToExtendable().Extend( trait );
+        return SetTraits( Traits.ToExtendable().Extend( trait ) );
+    }
+
+    [Pure]
+    public override SqlDataSourceQueryExpressionNode<TDataSourceNode> SetTraits(Chain<SqlTraitNode> traits)
+    {
         return new SqlDataSourceQueryExpressionNode<TDataSourceNode>( this, traits );
     }
 }

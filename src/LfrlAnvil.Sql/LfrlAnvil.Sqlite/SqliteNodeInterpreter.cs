@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -21,52 +20,18 @@ namespace LfrlAnvil.Sqlite;
 
 public class SqliteNodeInterpreter : SqlNodeInterpreter
 {
-    private ComplexUpdateInfo _updateInfo;
-
     public SqliteNodeInterpreter(SqliteColumnTypeDefinitionProvider columnTypeDefinitions, SqlNodeInterpreterContext context)
         : base( context, beginNameDelimiter: '"', endNameDelimiter: '"' )
     {
         ColumnTypeDefinitions = columnTypeDefinitions;
-        _updateInfo = default;
     }
 
     public SqliteColumnTypeDefinitionProvider ColumnTypeDefinitions { get; }
-    protected ComplexUpdateInfo UpdateInfo => _updateInfo;
-
-    public override void VisitRawDataField(SqlRawDataFieldNode node)
-    {
-        if ( ! TryReplaceDataField( node ) )
-            base.VisitRawDataField( node );
-    }
 
     public override void VisitLiteral(SqlLiteralNode node)
     {
         var sql = node.GetSql( ColumnTypeDefinitions );
         Context.Sql.Append( sql );
-    }
-
-    public override void VisitColumn(SqlColumnNode node)
-    {
-        if ( ! TryReplaceDataField( node ) )
-            base.VisitColumn( node );
-    }
-
-    public override void VisitColumnBuilder(SqlColumnBuilderNode node)
-    {
-        if ( ! TryReplaceDataField( node ) )
-            base.VisitColumnBuilder( node );
-    }
-
-    public override void VisitQueryDataField(SqlQueryDataFieldNode node)
-    {
-        if ( ! TryReplaceDataField( node ) )
-            base.VisitQueryDataField( node );
-    }
-
-    public override void VisitViewDataField(SqlViewDataFieldNode node)
-    {
-        if ( ! TryReplaceDataField( node ) )
-            base.VisitViewDataField( node );
     }
 
     public override void VisitModulo(SqlModuloExpressionNode node)
@@ -403,7 +368,6 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitInsertInto(SqlInsertIntoNode node)
     {
-        // TODO: refactor
         switch ( node.Source.NodeType )
         {
             case SqlNodeType.DataSourceQuery:
@@ -411,18 +375,12 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
                 var query = ReinterpretCast.To<SqlDataSourceQueryExpressionNode>( node.Source );
                 var traits = ExtractDataSourceTraits( ExtractDataSourceTraits( query.DataSource.Traits ), query.Traits );
 
-                VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions );
+                VisitDataSourceBeforeTraits( in traits );
                 VisitInsertIntoFields( node );
-
                 Context.AppendIndent();
                 VisitDataSourceQuerySelection( query, traits.Distinct );
                 VisitDataSource( query.DataSource );
-                VisitOptionalFilterCondition( traits.Filter );
-                VisitOptionalAggregationRange( traits.Aggregations );
-                VisitOptionalAggregationFilterCondition( traits.AggregationFilter );
-                VisitOptionalWindowRange( traits.Windows );
-                VisitOptionalOrderingRange( traits.Ordering );
-                VisitOptionalLimitAndOffsetExpressions( traits.Limit, traits.Offset );
+                VisitDataSourceAfterTraits( in traits );
                 break;
             }
             case SqlNodeType.CompoundQuery:
@@ -430,13 +388,11 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
                 var query = ReinterpretCast.To<SqlCompoundQueryExpressionNode>( node.Source );
                 var traits = ExtractQueryTraits( query.Traits );
 
-                VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions );
+                VisitQueryBeforeTraits( in traits );
                 VisitInsertIntoFields( node );
-
                 Context.AppendIndent();
                 VisitCompoundQueryComponents( query );
-                VisitOptionalOrderingRange( traits.Ordering );
-                VisitOptionalLimitAndOffsetExpressions( traits.Limit, traits.Offset );
+                VisitQueryAfterTraits( in traits );
                 break;
             }
             default:
@@ -451,57 +407,76 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitUpdate(SqlUpdateNode node)
     {
-        // TODO: refactor
         var traits = ExtractDataSourceTraits( node.DataSource.Traits );
-        VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions );
 
-        if ( IsUpdateOrDeleteDataSourceSimple( node.DataSource, traits ) )
+        if ( IsUpdateOrDeleteDataSourceSimple( node.DataSource, in traits ) )
         {
+            VisitDataSourceBeforeTraits( in traits );
             Context.Sql.Append( "UPDATE" ).AppendSpace();
             AppendDelimitedRecordSetName( node.DataSource.From );
             VisitUpdateAssignmentRange( node.Assignments.Span );
-            VisitOptionalFilterCondition( traits.Filter );
+            VisitDataSourceAfterTraits( in traits );
             return;
         }
 
         var targetInfo = ExtractTargetUpdateInfo( node );
-
         ComplexUpdateAssignmentsVisitor? updateVisitor = null;
         if ( node.DataSource.Joins.Length > 0 )
         {
             updateVisitor = new ComplexUpdateAssignmentsVisitor( node.DataSource );
-            foreach ( var assignment in node.Assignments )
-                updateVisitor.Visit( assignment.Value );
+            updateVisitor.VisitAssignmentRange( node.Assignments.Span );
         }
 
-        if ( updateVisitor is null || ! updateVisitor.ContainsDataFieldsToReplace() )
+        if ( updateVisitor is null || ! updateVisitor.ContainsComplexAssignments() )
         {
+            VisitDataSourceBeforeTraits( in traits );
             Context.Sql.Append( "UPDATE" ).AppendSpace();
             AppendDelimitedRecordSetName( targetInfo.BaseTarget );
-            VisitUpdateAssignmentRange( node.Assignments.Span );
-            VisitComplexDeleteOrUpdateDataSourceFilter( targetInfo, node.DataSource, traits );
+
+            using ( TempReplaceRecordSet( targetInfo.Target, targetInfo.BaseTarget ) )
+                VisitUpdateAssignmentRange( node.Assignments.Span );
+
+            var filter = CreateComplexDeleteOrUpdateFilter( targetInfo, node.DataSource );
+            Context.AppendIndent();
+            VisitFilterTrait( filter );
+            return;
         }
-        else
-            VisitUpdateWithComplexAssignments( targetInfo, node, traits, updateVisitor );
+
+        node = CreateSimplifiedUpdateWithComplexAssignments( targetInfo, node, updateVisitor );
+        traits = ExtractDataSourceTraits( node.DataSource.Traits );
+        Assume.True( IsUpdateOrDeleteDataSourceSimple( node.DataSource, in traits ) );
+
+        VisitDataSourceBeforeTraits( in traits );
+        Context.Sql.Append( "UPDATE" ).AppendSpace();
+        AppendDelimitedRecordSetName( node.DataSource.From );
+
+        using ( TempReplaceRecordSet( targetInfo.Target, targetInfo.BaseTarget ) )
+            VisitUpdateAssignmentRange( node.Assignments.Span );
+
+        VisitDataSourceAfterTraits( in traits );
     }
 
     public override void VisitDeleteFrom(SqlDeleteFromNode node)
     {
-        // TODO: refactor
         var traits = ExtractDataSourceTraits( node.DataSource.Traits );
-        VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions );
-        Context.Sql.Append( "DELETE" ).AppendSpace().Append( "FROM" ).AppendSpace();
 
-        if ( IsUpdateOrDeleteDataSourceSimple( node.DataSource, traits ) )
+        if ( IsUpdateOrDeleteDataSourceSimple( node.DataSource, in traits ) )
         {
+            VisitDataSourceBeforeTraits( in traits );
+            Context.Sql.Append( "DELETE" ).AppendSpace().Append( "FROM" ).AppendSpace();
             AppendDelimitedRecordSetName( node.DataSource.From );
-            VisitOptionalFilterCondition( traits.Filter );
+            VisitDataSourceAfterTraits( in traits );
             return;
         }
 
         var targetInfo = ExtractTargetDeleteInfo( node );
+        VisitDataSourceBeforeTraits( in traits );
+        Context.Sql.Append( "DELETE" ).AppendSpace().Append( "FROM" ).AppendSpace();
         AppendDelimitedRecordSetName( targetInfo.BaseTarget );
-        VisitComplexDeleteOrUpdateDataSourceFilter( targetInfo, node.DataSource, traits );
+
+        var filter = CreateComplexDeleteOrUpdateFilter( targetInfo, node.DataSource );
+        Context.AppendIndent();
+        VisitFilterTrait( filter );
     }
 
     public override void VisitTruncate(SqlTruncateNode node)
@@ -927,7 +902,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         VisitChild( offset );
     }
 
-    protected void VisitInsertIntoFields(SqlInsertIntoNode node)
+    protected virtual void VisitInsertIntoFields(SqlInsertIntoNode node)
     {
         Context.Sql.Append( "INSERT INTO" ).AppendSpace();
         AppendDelimitedRecordSetName( node.RecordSet );
@@ -976,8 +951,34 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         }
     }
 
+    protected virtual void VisitDataSourceBeforeTraits(in SqlDataSourceTraits traits)
+    {
+        VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions );
+    }
+
+    protected virtual void VisitDataSourceAfterTraits(in SqlDataSourceTraits traits)
+    {
+        VisitOptionalFilterCondition( traits.Filter );
+        VisitOptionalAggregationRange( traits.Aggregations );
+        VisitOptionalAggregationFilterCondition( traits.AggregationFilter );
+        VisitOptionalWindowRange( traits.Windows );
+        VisitOptionalOrderingRange( traits.Ordering );
+        VisitOptionalLimitAndOffsetExpressions( traits.Limit, traits.Offset );
+    }
+
+    protected virtual void VisitQueryBeforeTraits(in SqlQueryTraits traits)
+    {
+        VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions );
+    }
+
+    protected virtual void VisitQueryAfterTraits(in SqlQueryTraits traits)
+    {
+        VisitOptionalOrderingRange( traits.Ordering );
+        VisitOptionalLimitAndOffsetExpressions( traits.Limit, traits.Offset );
+    }
+
     [Pure]
-    protected static bool IsUpdateOrDeleteDataSourceSimple(SqlDataSourceNode node, SqlDataSourceTraits traits)
+    protected static bool IsUpdateOrDeleteDataSourceSimple(SqlDataSourceNode node, in SqlDataSourceTraits traits)
     {
         return ! node.From.IsAliased &&
             node.RecordSets.Count == 1 &&
@@ -991,212 +992,116 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             traits.Custom.Count == 0;
     }
 
-    protected void VisitComplexDeleteOrUpdateDataSourceFilter(
-        TargetDeleteOrUpdateInfo targetInfo,
-        SqlDataSourceNode dataSource,
-        SqlDataSourceTraits traits)
+    [Pure]
+    protected static SqlFilterTraitNode CreateComplexDeleteOrUpdateFilter(TargetDeleteOrUpdateInfo targetInfo, SqlDataSourceNode dataSource)
     {
-        Context.AppendIndent().Append( "WHERE" ).AppendSpace();
+        var traits = Chain<SqlTraitNode>.Empty;
+        foreach ( var trait in dataSource.Traits )
+        {
+            if ( trait.NodeType != SqlNodeType.CommonTableExpressionTrait )
+                traits = traits.Extend( trait );
+        }
+
+        var pkBaseColumnNode = targetInfo.BaseTarget.GetUnsafeField( targetInfo.IdentityColumnNames[0] );
+        var pkColumnNode = targetInfo.Target.GetUnsafeField( targetInfo.IdentityColumnNames[0] );
 
         if ( targetInfo.IdentityColumnNames.Length == 1 )
         {
-            AppendDelimitedRecordSetName( targetInfo.BaseTarget );
-            Context.Sql.AppendDot();
-            AppendDelimitedName( targetInfo.IdentityColumnNames[0] );
-            Context.Sql.AppendSpace().Append( "IN" ).AppendSpace().Append( '(' );
-
-            using ( Context.TempIndentIncrease() )
-            {
-                Context.AppendIndent().Append( "SELECT" );
-                VisitOptionalDistinctMarker( traits.Distinct );
-                Context.Sql.AppendSpace();
-                AppendDelimitedRecordSetName( targetInfo.Target );
-                Context.Sql.AppendDot();
-                AppendDelimitedName( targetInfo.IdentityColumnNames[0] );
-
-                Context.AppendIndent();
-                VisitDataSource( dataSource );
-                VisitOptionalFilterCondition( traits.Filter );
-                VisitOptionalAggregationRange( traits.Aggregations );
-                VisitOptionalAggregationFilterCondition( traits.AggregationFilter );
-                VisitOptionalWindowRange( traits.Windows );
-                VisitOptionalOrderingRange( traits.Ordering );
-                VisitOptionalLimitAndOffsetExpressions( traits.Limit, traits.Offset );
-            }
+            dataSource = dataSource.SetTraits( traits );
+            return SqlNode.FilterTrait( pkBaseColumnNode.InQuery( dataSource.Select( pkColumnNode.AsSelf() ) ), isConjunction: true );
         }
-        else
+
+        var pkFilter = pkBaseColumnNode == pkColumnNode;
+        foreach ( var name in targetInfo.IdentityColumnNames.AsSpan( 1 ) )
         {
-            Context.Sql.Append( "EXISTS" ).AppendSpace().Append( '(' );
-
-            using ( Context.TempIndentIncrease() )
-            {
-                Context.AppendIndent().Append( "SELECT" );
-                VisitOptionalDistinctMarker( traits.Distinct );
-                Context.Sql.AppendSpace().Append( '*' );
-
-                Context.AppendIndent();
-                VisitDataSource( dataSource );
-                Context.AppendIndent().Append( "WHERE" ).AppendSpace();
-
-                foreach ( var columnName in targetInfo.IdentityColumnNames )
-                {
-                    Context.Sql.Append( '(' );
-                    AppendDelimitedRecordSetName( targetInfo.BaseTarget );
-                    Context.Sql.AppendDot();
-                    AppendDelimitedName( columnName );
-                    Context.Sql.AppendSpace().Append( '=' ).AppendSpace();
-                    AppendDelimitedRecordSetName( targetInfo.Target );
-                    Context.Sql.AppendDot();
-                    AppendDelimitedName( columnName );
-                    Context.Sql.Append( ')' ).AppendSpace().Append( "AND" ).AppendSpace();
-                }
-
-                if ( traits.Filter is null )
-                    Context.Sql.ShrinkBy( 5 );
-                else
-                    VisitChild( traits.Filter );
-
-                VisitOptionalAggregationRange( traits.Aggregations );
-                VisitOptionalAggregationFilterCondition( traits.AggregationFilter );
-                VisitOptionalWindowRange( traits.Windows );
-                VisitOptionalOrderingRange( traits.Ordering );
-                VisitOptionalLimitAndOffsetExpressions( traits.Limit, traits.Offset );
-            }
+            pkBaseColumnNode = targetInfo.BaseTarget.GetUnsafeField( name );
+            pkColumnNode = targetInfo.Target.GetUnsafeField( name );
+            pkFilter = pkFilter.And( pkBaseColumnNode == pkColumnNode );
         }
 
-        Context.AppendIndent().Append( ')' );
+        traits = traits.Extend( SqlNode.FilterTrait( pkFilter, isConjunction: true ) );
+        dataSource = dataSource.SetTraits( traits );
+        return SqlNode.FilterTrait( dataSource.Exists(), isConjunction: true );
     }
 
-    protected void VisitUpdateWithComplexAssignments(
+    [Pure]
+    protected static SqlUpdateNode CreateSimplifiedUpdateWithComplexAssignments(
         TargetDeleteOrUpdateInfo targetInfo,
         SqlUpdateNode node,
-        SqlDataSourceTraits traits,
         ComplexUpdateAssignmentsVisitor updateVisitor)
     {
-        Assume.IsNotNull( targetInfo.Target.Alias );
-        var cteName = $"_{Guid.NewGuid():N}";
+        Ensure.IsNotNull( targetInfo.Target.Alias );
 
-        if ( traits.CommonTableExpressions.Count == 0 )
-            Context.Sql.Append( "WITH" ).AppendSpace();
-        else
+        var updateTraits = Chain<SqlTraitNode>.Empty;
+        var cteTraits = Chain<SqlTraitNode>.Empty;
+        foreach ( var trait in node.DataSource.Traits )
         {
-            Context.Sql.ShrinkBy( Environment.NewLine.Length + Context.Indent ).AppendComma();
-            Context.AppendIndent();
-        }
-
-        AppendDelimitedName( cteName );
-        Context.Sql.AppendSpace().Append( "AS" ).AppendSpace().Append( '(' );
-
-        using ( Context.TempIndentIncrease() )
-        {
-            Context.AppendIndent().Append( "SELECT" );
-            VisitOptionalDistinctMarker( traits.Distinct );
-
-            using ( Context.TempIndentIncrease() )
-            {
-                foreach ( var identityColumnName in targetInfo.IdentityColumnNames )
-                {
-                    Context.AppendIndent();
-                    AppendDelimitedRecordSetName( targetInfo.Target );
-                    Context.Sql.AppendDot();
-                    AppendDelimitedName( identityColumnName );
-                    Context.Sql.AppendSpace().Append( "AS" ).AppendSpace().Append( BeginNameDelimiter );
-                    Context.Sql.Append( targetInfo.Target.Alias ).Append( '_' ).Append( identityColumnName );
-                    Context.Sql.Append( EndNameDelimiter ).AppendComma();
-                }
-
-                foreach ( var dataField in updateVisitor.GetDataFieldsToReplace() )
-                {
-                    Context.AppendIndent();
-                    this.Visit( dataField );
-                    Context.Sql.AppendSpace().Append( "AS" ).AppendSpace();
-                    AppendDelimitedPrefixedReplacementDataFieldName( dataField );
-                    Context.Sql.AppendComma();
-                }
-
-                Context.Sql.ShrinkBy( 1 );
-            }
-
-            Context.AppendIndent();
-            VisitDataSource( node.DataSource );
-            VisitOptionalFilterCondition( traits.Filter );
-            VisitOptionalAggregationRange( traits.Aggregations );
-            VisitOptionalAggregationFilterCondition( traits.AggregationFilter );
-            VisitOptionalWindowRange( traits.Windows );
-            VisitOptionalOrderingRange( traits.Ordering );
-            VisitOptionalLimitAndOffsetExpressions( traits.Limit, traits.Offset );
-        }
-
-        Context.AppendIndent().Append( ')' );
-        Context.AppendIndent();
-
-        Context.Sql.Append( "UPDATE" ).AppendSpace();
-        AppendDelimitedRecordSetName( targetInfo.BaseTarget );
-
-        if ( ! UpdateInfo.IsDefault )
-            throw new SqlNodeVisitorException( Resources.NestedUpdateAttempt, this, node );
-
-        try
-        {
-            _updateInfo = new ComplexUpdateInfo( updateVisitor, targetInfo, cteName );
-            VisitUpdateAssignmentRange( node.Assignments.Span );
-            Context.AppendIndent().Append( "WHERE" ).AppendSpace();
-
-            if ( targetInfo.IdentityColumnNames.Length == 1 )
-            {
-                AppendDelimitedRecordSetName( targetInfo.BaseTarget );
-                Context.Sql.AppendDot();
-                AppendDelimitedName( targetInfo.IdentityColumnNames[0] );
-                Context.Sql.AppendSpace().Append( "IN" ).AppendSpace().Append( '(' ).Append( "SELECT" ).AppendSpace();
-                Context.Sql.Append( BeginNameDelimiter ).Append( targetInfo.Target.Alias ).Append( '_' );
-                Context.Sql.Append( targetInfo.IdentityColumnNames[0] ).Append( EndNameDelimiter );
-                Context.Sql.AppendSpace().Append( "FROM" ).AppendSpace();
-                AppendDelimitedName( cteName );
-                Context.Sql.Append( ')' );
-            }
+            if ( trait.NodeType == SqlNodeType.CommonTableExpressionTrait )
+                updateTraits = updateTraits.Extend( trait );
             else
-            {
-                Context.Sql.Append( "EXISTS" ).AppendSpace().Append( '(' );
-                Context.Sql.Append( "SELECT" ).AppendSpace().Append( '*' ).AppendSpace().Append( "FROM" ).AppendSpace();
-                AppendDelimitedName( cteName );
-                Context.Sql.AppendSpace().Append( "WHERE" ).AppendSpace();
-                _updateInfo.AppendIdentityColumnsFilter( this );
-                Context.Sql.Append( ')' );
-            }
+                cteTraits = cteTraits.Extend( trait );
         }
-        finally
+
+        var indexesOfComplexAssignments = updateVisitor.GetIndexesOfComplexAssignments();
+        var cteIdentityFieldNames = new string[targetInfo.IdentityColumnNames.Length];
+        var cteComplexAssignmentFieldNames = new string[indexesOfComplexAssignments.Length];
+        var cteSelection = new SqlSelectNode[targetInfo.IdentityColumnNames.Length + indexesOfComplexAssignments.Length];
+        var assignments = node.Assignments.ToArray();
+
+        var i = 0;
+        foreach ( var name in targetInfo.IdentityColumnNames )
         {
-            _updateInfo = default;
+            var fieldName = $"ID_{name}_{i}";
+            cteIdentityFieldNames[i] = fieldName;
+            cteSelection[i] = targetInfo.Target.GetUnsafeField( name ).As( fieldName );
+            ++i;
         }
-    }
 
-    protected void AppendDelimitedPrefixedReplacementDataFieldName(SqlDataFieldNode node)
-    {
-        Context.Sql.Append( BeginNameDelimiter );
+        foreach ( var assignmentIndex in indexesOfComplexAssignments )
+        {
+            var assignment = assignments[assignmentIndex];
+            var fieldName = $"VAL_{assignment.DataField.Name}_{assignmentIndex}";
+            cteComplexAssignmentFieldNames[i - cteIdentityFieldNames.Length] = fieldName;
+            cteSelection[i++] = assignment.Value.As( fieldName );
+        }
 
-        if ( node.RecordSet.IsAliased )
-            Context.Sql.Append( node.RecordSet.Alias );
-        else if ( node.RecordSet.Info.IsTemporary )
-            Context.Sql.Append( "temp" ).Append( '_' ).Append( node.RecordSet.Info.Name.Object );
-        else
-            AppendSchemaObjectName( node.RecordSet.Info.Name.Schema, node.RecordSet.Info.Name.Object );
+        var cte = node.DataSource.SetTraits( cteTraits ).Select( cteSelection ).ToCte( $"_{Guid.NewGuid():N}" );
+        var cteDataSource = cte.RecordSet.ToDataSource();
 
-        Context.Sql.Append( '_' ).Append( node.Name ).Append( EndNameDelimiter );
-    }
+        var pkBaseColumnNode = targetInfo.BaseTarget.GetUnsafeField( targetInfo.IdentityColumnNames[0] );
+        var pkCteColumnNode = cteDataSource.From.GetUnsafeField( cteIdentityFieldNames[0] );
+        var pkFilter = pkBaseColumnNode == pkCteColumnNode;
 
-    protected bool TryReplaceDataField(SqlDataFieldNode node)
-    {
-        if ( ! _updateInfo.ShouldReplaceDataField( node ) )
-            return false;
+        i = 1;
+        foreach ( var name in targetInfo.IdentityColumnNames.AsSpan( 1 ) )
+        {
+            pkBaseColumnNode = targetInfo.BaseTarget.GetUnsafeField( name );
+            pkCteColumnNode = cteDataSource.From.GetUnsafeField( cteIdentityFieldNames[i++] );
+            pkFilter = pkFilter.And( pkBaseColumnNode == pkCteColumnNode );
+        }
 
-        Context.Sql.Append( '(' ).Append( "SELECT" ).AppendSpace();
-        AppendDelimitedPrefixedReplacementDataFieldName( node );
-        Context.Sql.AppendSpace().Append( "FROM" ).AppendSpace();
-        AppendDelimitedName( _updateInfo.CteName );
-        Context.Sql.AppendSpace().Append( "WHERE" ).AppendSpace();
-        _updateInfo.AppendIdentityColumnsFilter( this );
-        Context.Sql.AppendSpace().Append( "LIMIT" ).AppendSpace().Append( '1' ).Append( ')' );
-        return true;
+        var pkFilterTrait = SqlNode.FilterTrait( pkFilter, isConjunction: true );
+        var filteredCteDataSource = cteDataSource.SetTraits(
+            Chain.Create<SqlTraitNode>( pkFilterTrait ).Extend( SqlNode.LimitTrait( SqlNode.Literal( 1 ) ) ) );
+
+        i = 0;
+        foreach ( var assignmentIndex in indexesOfComplexAssignments )
+        {
+            var assignment = assignments[assignmentIndex];
+            var selection = filteredCteDataSource.From.GetUnsafeField( cteComplexAssignmentFieldNames[i++] ).AsSelf();
+            assignments[assignmentIndex] = assignment.DataField.Assign( filteredCteDataSource.Select( selection ) );
+        }
+
+        SqlConditionNode updateFilter = cteIdentityFieldNames.Length == 1
+            ? targetInfo.BaseTarget.GetUnsafeField( targetInfo.IdentityColumnNames[0] )
+                .InQuery( cteDataSource.Select( cteDataSource.From.GetUnsafeField( cteIdentityFieldNames[0] ).AsSelf() ) )
+            : cteDataSource.AddTrait( pkFilterTrait ).Exists();
+
+        updateTraits = updateTraits
+            .Extend( SqlNode.CommonTableExpressionTrait( cte ) )
+            .Extend( SqlNode.FilterTrait( updateFilter, isConjunction: true ) );
+
+        return targetInfo.BaseTarget.ToDataSource().SetTraits( updateTraits ).ToUpdate( assignments );
     }
 
     [Pure]
@@ -1285,66 +1190,11 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         SqlRecordSetNode BaseTarget,
         string[] IdentityColumnNames);
 
-    protected readonly struct ComplexUpdateInfo
-    {
-        private readonly string? _cteName;
-
-        public ComplexUpdateInfo(ComplexUpdateAssignmentsVisitor visitor, TargetDeleteOrUpdateInfo targetInfo, string cteName)
-        {
-            Visitor = visitor;
-            TargetInfo = targetInfo;
-            _cteName = cteName;
-        }
-
-        [MemberNotNullWhen( false, nameof( Visitor ) )]
-        public bool IsDefault => Visitor is null;
-
-        public ComplexUpdateAssignmentsVisitor? Visitor { get; }
-        public TargetDeleteOrUpdateInfo TargetInfo { get; }
-
-        public string CteName
-        {
-            get
-            {
-                Assume.IsNotNull( _cteName );
-                return _cteName;
-            }
-        }
-
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public bool ShouldReplaceDataField(SqlDataFieldNode node)
-        {
-            return Visitor?.ShouldReplaceDataField( node ) == true;
-        }
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public void AppendIdentityColumnsFilter(SqliteNodeInterpreter interpreter)
-        {
-            Assume.IsNotNull( TargetInfo.Target.Alias );
-
-            foreach ( var identityColumnName in TargetInfo.IdentityColumnNames )
-            {
-                interpreter.Context.Sql.Append( '(' );
-                interpreter.AppendDelimitedRecordSetName( TargetInfo.BaseTarget );
-                interpreter.Context.Sql.AppendDot();
-                interpreter.AppendDelimitedName( identityColumnName );
-                interpreter.Context.Sql.AppendSpace().Append( '=' ).AppendSpace();
-                interpreter.AppendDelimitedName( CteName );
-                interpreter.Context.Sql.AppendDot().Append( interpreter.BeginNameDelimiter );
-                interpreter.Context.Sql.Append( TargetInfo.Target.Alias ).Append( '_' );
-                interpreter.Context.Sql.Append( identityColumnName ).Append( interpreter.EndNameDelimiter );
-                interpreter.Context.Sql.Append( ')' ).AppendSpace().Append( "AND" ).AppendSpace();
-            }
-
-            interpreter.Context.Sql.ShrinkBy( 5 );
-        }
-    }
-
     protected sealed class ComplexUpdateAssignmentsVisitor : SqlNodeVisitor
     {
         private readonly SqlRecordSetNode[] _joinedRecordSets;
-        private List<SqlDataFieldNode>? _dataFieldsToReplace;
+        private List<int>? _indexesOfComplexAssignments;
+        private int _nextAssignmentIndex;
 
         public ComplexUpdateAssignmentsVisitor(SqlDataSourceNode dataSource)
         {
@@ -1355,28 +1205,32 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             foreach ( var join in dataSource.Joins )
                 _joinedRecordSets[index++] = join.InnerRecordSet;
 
-            _dataFieldsToReplace = null;
+            _indexesOfComplexAssignments = null;
+            _nextAssignmentIndex = 0;
+        }
+
+        public void VisitAssignmentRange(ReadOnlySpan<SqlValueAssignmentNode> assignments)
+        {
+            Assume.Equals( _nextAssignmentIndex, 0 );
+            foreach ( var assignment in assignments )
+            {
+                this.Visit( assignment.Value );
+                ++_nextAssignmentIndex;
+            }
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public bool ContainsDataFieldsToReplace()
+        public bool ContainsComplexAssignments()
         {
-            return _dataFieldsToReplace is not null;
+            return _indexesOfComplexAssignments is not null;
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public bool ShouldReplaceDataField(SqlDataFieldNode node)
+        public ReadOnlySpan<int> GetIndexesOfComplexAssignments()
         {
-            return _dataFieldsToReplace is not null && _dataFieldsToReplace.Contains( node );
-        }
-
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public ReadOnlySpan<SqlDataFieldNode> GetDataFieldsToReplace()
-        {
-            return CollectionsMarshal.AsSpan( _dataFieldsToReplace );
+            return CollectionsMarshal.AsSpan( _indexesOfComplexAssignments );
         }
 
         public override void VisitRawDataField(SqlRawDataFieldNode node)
@@ -1409,14 +1263,14 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             if ( Array.IndexOf( _joinedRecordSets, node.RecordSet ) == -1 )
                 return;
 
-            if ( _dataFieldsToReplace is null )
+            if ( _indexesOfComplexAssignments is null )
             {
-                _dataFieldsToReplace = new List<SqlDataFieldNode> { node };
+                _indexesOfComplexAssignments = new List<int> { _nextAssignmentIndex };
                 return;
             }
 
-            if ( ! _dataFieldsToReplace.Contains( node ) )
-                _dataFieldsToReplace.Add( node );
+            if ( _indexesOfComplexAssignments[^1] != _nextAssignmentIndex )
+                _indexesOfComplexAssignments.Add( _nextAssignmentIndex );
         }
     }
 

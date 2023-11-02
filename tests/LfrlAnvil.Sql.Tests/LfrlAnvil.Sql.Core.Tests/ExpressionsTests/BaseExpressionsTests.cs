@@ -4,9 +4,9 @@ using System.Linq;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Expressions;
-using LfrlAnvil.Sql.Expressions.Functions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
+using LfrlAnvil.Sql.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 
@@ -47,7 +47,7 @@ public partial class BaseExpressionsTests : TestsBase
     [Fact]
     public void CustomWindowFrameToString_ShouldReturnTypeInfoAndBoundaries()
     {
-        var sut = new WindowFrameMock();
+        var sut = new WindowFrameMock( SqlWindowFrameBoundary.UnboundedPreceding, SqlWindowFrameBoundary.UnboundedFollowing );
         var result = sut.ToString();
         result.Should().Be( $"{{{sut.GetType().GetDebugString()}}} BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING" );
     }
@@ -1257,35 +1257,5 @@ SELECT * FROM qux" );
             ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
             text.Should().Be( "ROLLBACK" );
         }
-    }
-
-    private sealed class NodeMock : SqlNodeBase
-    {
-        public NodeMock()
-            : base( SqlNodeType.Unknown ) { }
-    }
-
-    private sealed class FunctionNodeMock : SqlFunctionExpressionNode
-    {
-        public FunctionNodeMock(SqlExpressionNode[] arguments)
-            : base( SqlFunctionType.Custom, arguments ) { }
-    }
-
-    private sealed class AggregateFunctionNodeMock : SqlAggregateFunctionExpressionNode
-    {
-        public AggregateFunctionNodeMock(ReadOnlyMemory<SqlExpressionNode> arguments, Chain<SqlTraitNode> traits)
-            : base( SqlFunctionType.Custom, arguments, traits ) { }
-
-        public override AggregateFunctionNodeMock AddTrait(SqlTraitNode trait)
-        {
-            var traits = Traits.ToExtendable().Extend( trait );
-            return new AggregateFunctionNodeMock( Arguments, traits );
-        }
-    }
-
-    private sealed class WindowFrameMock : SqlWindowFrameNode
-    {
-        public WindowFrameMock()
-            : base( SqlWindowFrameBoundary.UnboundedPreceding, SqlWindowFrameBoundary.UnboundedFollowing ) { }
     }
 }

@@ -39,7 +39,12 @@ public sealed class SqlSingleDataSourceNode<TRecordSetNode> : SqlDataSourceNode
     [Pure]
     public override SqlSingleDataSourceNode<TRecordSetNode> AddTrait(SqlTraitNode trait)
     {
-        var traits = Traits.ToExtendable().Extend( trait );
+        return SetTraits( Traits.ToExtendable().Extend( trait ) );
+    }
+
+    [Pure]
+    public override SqlSingleDataSourceNode<TRecordSetNode> SetTraits(Chain<SqlTraitNode> traits)
+    {
         return new SqlSingleDataSourceNode<TRecordSetNode>( this, traits );
     }
 }

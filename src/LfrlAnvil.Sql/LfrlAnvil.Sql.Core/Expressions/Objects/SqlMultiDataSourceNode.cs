@@ -147,7 +147,12 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
     [Pure]
     public override SqlMultiDataSourceNode AddTrait(SqlTraitNode trait)
     {
-        var traits = Traits.ToExtendable().Extend( trait );
+        return SetTraits( Traits.ToExtendable().Extend( trait ) );
+    }
+
+    [Pure]
+    public override SqlMultiDataSourceNode SetTraits(Chain<SqlTraitNode> traits)
+    {
         return new SqlMultiDataSourceNode( this, traits );
     }
 

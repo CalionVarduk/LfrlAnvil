@@ -12,7 +12,12 @@ public sealed class SqlMaxAggregateFunctionExpressionNode : SqlAggregateFunction
     [Pure]
     public override SqlMaxAggregateFunctionExpressionNode AddTrait(SqlTraitNode trait)
     {
-        var traits = Traits.ToExtendable().Extend( trait );
+        return SetTraits( Traits.ToExtendable().Extend( trait ) );
+    }
+
+    [Pure]
+    public override SqlMaxAggregateFunctionExpressionNode SetTraits(Chain<SqlTraitNode> traits)
+    {
         return new SqlMaxAggregateFunctionExpressionNode( Arguments, traits );
     }
 }

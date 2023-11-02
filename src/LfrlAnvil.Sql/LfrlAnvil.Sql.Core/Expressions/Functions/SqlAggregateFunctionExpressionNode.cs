@@ -26,5 +26,11 @@ public abstract class SqlAggregateFunctionExpressionNode : SqlExpressionNode
     public Chain<SqlTraitNode> Traits { get; }
 
     [Pure]
-    public abstract SqlAggregateFunctionExpressionNode AddTrait(SqlTraitNode trait);
+    public virtual SqlAggregateFunctionExpressionNode AddTrait(SqlTraitNode trait)
+    {
+        return SetTraits( Traits.ToExtendable().Extend( trait ) );
+    }
+
+    [Pure]
+    public abstract SqlAggregateFunctionExpressionNode SetTraits(Chain<SqlTraitNode> traits);
 }

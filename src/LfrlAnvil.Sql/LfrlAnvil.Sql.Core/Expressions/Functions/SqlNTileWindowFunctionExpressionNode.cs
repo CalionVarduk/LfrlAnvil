@@ -12,7 +12,12 @@ public sealed class SqlNTileWindowFunctionExpressionNode : SqlAggregateFunctionE
     [Pure]
     public override SqlNTileWindowFunctionExpressionNode AddTrait(SqlTraitNode trait)
     {
-        var traits = Traits.ToExtendable().Extend( trait );
+        return SetTraits( Traits.ToExtendable().Extend( trait ) );
+    }
+
+    [Pure]
+    public override SqlNTileWindowFunctionExpressionNode SetTraits(Chain<SqlTraitNode> traits)
+    {
         return new SqlNTileWindowFunctionExpressionNode( Arguments, traits );
     }
 }

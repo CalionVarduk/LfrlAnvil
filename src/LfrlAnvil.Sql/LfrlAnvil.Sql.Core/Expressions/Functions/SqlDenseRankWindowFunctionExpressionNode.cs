@@ -12,7 +12,12 @@ public sealed class SqlDenseRankWindowFunctionExpressionNode : SqlAggregateFunct
     [Pure]
     public override SqlDenseRankWindowFunctionExpressionNode AddTrait(SqlTraitNode trait)
     {
-        var traits = Traits.ToExtendable().Extend( trait );
+        return SetTraits( Traits.ToExtendable().Extend( trait ) );
+    }
+
+    [Pure]
+    public override SqlDenseRankWindowFunctionExpressionNode SetTraits(Chain<SqlTraitNode> traits)
+    {
         return new SqlDenseRankWindowFunctionExpressionNode( traits );
     }
 }

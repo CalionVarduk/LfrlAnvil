@@ -12,7 +12,12 @@ public sealed class SqlRowNumberWindowFunctionExpressionNode : SqlAggregateFunct
     [Pure]
     public override SqlRowNumberWindowFunctionExpressionNode AddTrait(SqlTraitNode trait)
     {
-        var traits = Traits.ToExtendable().Extend( trait );
+        return SetTraits( Traits.ToExtendable().Extend( trait ) );
+    }
+
+    [Pure]
+    public override SqlRowNumberWindowFunctionExpressionNode SetTraits(Chain<SqlTraitNode> traits)
+    {
         return new SqlRowNumberWindowFunctionExpressionNode( traits );
     }
 }

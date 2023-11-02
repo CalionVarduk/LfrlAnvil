@@ -12,7 +12,12 @@ public sealed class SqlAverageAggregateFunctionExpressionNode : SqlAggregateFunc
     [Pure]
     public override SqlAverageAggregateFunctionExpressionNode AddTrait(SqlTraitNode trait)
     {
-        var traits = Traits.ToExtendable().Extend( trait );
+        return SetTraits( Traits.ToExtendable().Extend( trait ) );
+    }
+
+    [Pure]
+    public override SqlAverageAggregateFunctionExpressionNode SetTraits(Chain<SqlTraitNode> traits)
+    {
         return new SqlAverageAggregateFunctionExpressionNode( Arguments, traits );
     }
 }

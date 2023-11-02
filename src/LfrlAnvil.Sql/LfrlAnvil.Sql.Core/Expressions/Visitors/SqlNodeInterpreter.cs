@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Extensions;
@@ -23,11 +22,11 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         Context = context;
         BeginNameDelimiter = beginNameDelimiter;
         EndNameDelimiter = endNameDelimiter;
-        IgnoredRecordSet = null;
+        RecordSetNameBehavior = null;
     }
 
     public SqlNodeInterpreterContext Context { get; }
-    public IgnoredRecordSetRule? IgnoredRecordSet { get; private set; }
+    public RecordSetNameBehaviorRule? RecordSetNameBehavior { get; private set; }
 
     public virtual void VisitRawExpression(SqlRawExpressionNode node)
     {
@@ -39,12 +38,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public virtual void VisitRawDataField(SqlRawDataFieldNode node)
     {
-        if ( ! ShouldIgnoreRecordSetName( node.RecordSet ) )
-        {
-            AppendDelimitedRecordSetName( node.RecordSet );
-            Context.Sql.AppendDot();
-        }
-
+        TryAppendDataFieldRecordSetNameBasedOnNameBehavior( node );
         AppendDelimitedName( node.Name );
     }
 
@@ -63,45 +57,25 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public virtual void VisitColumn(SqlColumnNode node)
     {
-        if ( ! ShouldIgnoreRecordSetName( node.RecordSet ) )
-        {
-            AppendDelimitedRecordSetName( node.RecordSet );
-            Context.Sql.AppendDot();
-        }
-
+        TryAppendDataFieldRecordSetNameBasedOnNameBehavior( node );
         AppendDelimitedName( node.Name );
     }
 
     public virtual void VisitColumnBuilder(SqlColumnBuilderNode node)
     {
-        if ( ! ShouldIgnoreRecordSetName( node.RecordSet ) )
-        {
-            AppendDelimitedRecordSetName( node.RecordSet );
-            Context.Sql.AppendDot();
-        }
-
+        TryAppendDataFieldRecordSetNameBasedOnNameBehavior( node );
         AppendDelimitedName( node.Name );
     }
 
     public virtual void VisitQueryDataField(SqlQueryDataFieldNode node)
     {
-        if ( ! ShouldIgnoreRecordSetName( node.RecordSet ) )
-        {
-            AppendDelimitedRecordSetName( node.RecordSet );
-            Context.Sql.AppendDot();
-        }
-
+        TryAppendDataFieldRecordSetNameBasedOnNameBehavior( node );
         AppendDelimitedName( node.Name );
     }
 
     public virtual void VisitViewDataField(SqlViewDataFieldNode node)
     {
-        if ( ! ShouldIgnoreRecordSetName( node.RecordSet ) )
-        {
-            AppendDelimitedRecordSetName( node.RecordSet );
-            Context.Sql.AppendDot();
-        }
-
+        TryAppendDataFieldRecordSetNameBasedOnNameBehavior( node );
         AppendDelimitedName( node.Name );
     }
 
@@ -769,9 +743,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     {
         AppendDelimitedName( node.DataField.Name );
         Context.Sql.AppendSpace().Append( '=' ).AppendSpace();
-
-        using ( TempIgnoreRecordSet( node.DataField.RecordSet ) )
-            VisitChild( node.Value );
+        VisitChild( node.Value );
     }
 
     public abstract void VisitDeleteFrom(SqlDeleteFromNode node);
@@ -1131,62 +1103,68 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public TemporaryIgnoredRecordSetRuleChange TempIgnoreRecordSet(SqlRecordSetNode node)
+    public TemporaryRecordSetNameBehaviorRuleChange TempIgnoreRecordSet(SqlRecordSetNode node)
     {
-        return new TemporaryIgnoredRecordSetRuleChange( this, new IgnoredRecordSetRule( node ) );
+        return new TemporaryRecordSetNameBehaviorRuleChange( this, new RecordSetNameBehaviorRule( node, null ) );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public TemporaryIgnoredRecordSetRuleChange TempIgnoreAllRecordSets()
+    public TemporaryRecordSetNameBehaviorRuleChange TempReplaceRecordSet(SqlRecordSetNode node, SqlRecordSetNode replacementNode)
     {
-        return new TemporaryIgnoredRecordSetRuleChange( this, new IgnoredRecordSetRule( null ) );
+        return new TemporaryRecordSetNameBehaviorRuleChange( this, new RecordSetNameBehaviorRule( node, replacementNode ) );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public TemporaryIgnoredRecordSetRuleChange TempIncludeAllRecordSets()
+    public TemporaryRecordSetNameBehaviorRuleChange TempIgnoreAllRecordSets()
     {
-        return new TemporaryIgnoredRecordSetRuleChange( this, null );
+        return new TemporaryRecordSetNameBehaviorRuleChange( this, new RecordSetNameBehaviorRule( null, null ) );
     }
 
-    public readonly struct IgnoredRecordSetRule
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public TemporaryRecordSetNameBehaviorRuleChange TempIncludeAllRecordSets()
+    {
+        return new TemporaryRecordSetNameBehaviorRuleChange( this, null );
+    }
+
+    public readonly struct RecordSetNameBehaviorRule
     {
         public readonly SqlRecordSetNode? Node;
+        public readonly SqlRecordSetNode? ReplacementNode;
 
-        internal IgnoredRecordSetRule(SqlRecordSetNode? node)
+        internal RecordSetNameBehaviorRule(SqlRecordSetNode? node, SqlRecordSetNode? replacementNode)
         {
             Node = node;
+            ReplacementNode = replacementNode;
         }
-
-        [MemberNotNullWhen( false, nameof( Node ) )]
-        public bool IgnoresAll => Node is null;
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public bool ShouldIgnore(SqlRecordSetNode recordSet)
+        public SqlRecordSetNode? GetRecordSet(SqlRecordSetNode recordSet)
         {
-            return IgnoresAll || ReferenceEquals( Node, recordSet );
+            return Node is null || ReferenceEquals( Node, recordSet ) ? ReplacementNode : recordSet;
         }
     }
 
-    public readonly struct TemporaryIgnoredRecordSetRuleChange : IDisposable
+    public readonly struct TemporaryRecordSetNameBehaviorRuleChange : IDisposable
     {
-        private readonly IgnoredRecordSetRule? _previous;
+        private readonly RecordSetNameBehaviorRule? _previous;
         private readonly SqlNodeInterpreter _interpreter;
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal TemporaryIgnoredRecordSetRuleChange(SqlNodeInterpreter interpreter, IgnoredRecordSetRule? rule)
+        internal TemporaryRecordSetNameBehaviorRuleChange(SqlNodeInterpreter interpreter, RecordSetNameBehaviorRule? rule)
         {
             _interpreter = interpreter;
-            _previous = interpreter.IgnoredRecordSet;
-            interpreter.IgnoredRecordSet = rule;
+            _previous = interpreter.RecordSetNameBehavior;
+            interpreter.RecordSetNameBehavior = rule;
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public void Dispose()
         {
-            _interpreter.IgnoredRecordSet = _previous;
+            _interpreter.RecordSetNameBehavior = _previous;
         }
     }
 
@@ -1214,11 +1192,17 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         Context.Sql.Append( ')' );
     }
 
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    protected bool ShouldIgnoreRecordSetName(SqlRecordSetNode recordSet)
+    protected void TryAppendDataFieldRecordSetNameBasedOnNameBehavior(SqlDataFieldNode node)
     {
-        return IgnoredRecordSet?.ShouldIgnore( recordSet ) == true;
+        var recordSet = node.RecordSet;
+        if ( RecordSetNameBehavior is not null )
+            recordSet = RecordSetNameBehavior.Value.GetRecordSet( recordSet );
+
+        if ( recordSet is null )
+            return;
+
+        AppendDelimitedRecordSetName( recordSet );
+        Context.Sql.AppendDot();
     }
 
     protected void VisitSimpleFunction(string functionName, SqlFunctionExpressionNode node)

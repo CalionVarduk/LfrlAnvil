@@ -5,7 +5,10 @@ namespace LfrlAnvil.Sql.Expressions;
 
 public abstract class SqlNodeBase
 {
-    protected SqlNodeBase(SqlNodeType nodeType)
+    protected SqlNodeBase()
+        : this( SqlNodeType.Unknown ) { }
+
+    internal SqlNodeBase(SqlNodeType nodeType)
     {
         Assume.IsDefined( nodeType );
         NodeType = nodeType;

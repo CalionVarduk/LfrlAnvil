@@ -37,7 +37,12 @@ public sealed class SqlCompoundQueryExpressionNode : SqlExtendableQueryExpressio
     [Pure]
     public override SqlCompoundQueryExpressionNode AddTrait(SqlTraitNode trait)
     {
-        var traits = Traits.ToExtendable().Extend( trait );
+        return SetTraits( Traits.ToExtendable().Extend( trait ) );
+    }
+
+    [Pure]
+    public override SqlCompoundQueryExpressionNode SetTraits(Chain<SqlTraitNode> traits)
+    {
         return new SqlCompoundQueryExpressionNode( this, traits );
     }
 

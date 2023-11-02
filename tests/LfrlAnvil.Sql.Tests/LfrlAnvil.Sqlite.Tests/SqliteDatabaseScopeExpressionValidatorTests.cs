@@ -2151,15 +2151,11 @@ public class SqliteDatabaseScopeExpressionValidatorTests : TestsBase
         public AggregateFunctionMock(SqlExpressionNode[] arguments, Chain<SqlTraitNode> traits)
             : base( arguments, traits ) { }
 
-        public override SqlAggregateFunctionExpressionNode AddTrait(SqlTraitNode trait)
+        public override SqlAggregateFunctionExpressionNode SetTraits(Chain<SqlTraitNode> traits)
         {
-            return new AggregateFunctionMock( Arguments.ToArray(), Traits.Extend( trait ) );
+            return new AggregateFunctionMock( Arguments.ToArray(), traits );
         }
     }
 
-    private sealed class NodeMock : SqlNodeBase
-    {
-        public NodeMock()
-            : base( SqlNodeType.Unknown ) { }
-    }
+    private sealed class NodeMock : SqlNodeBase { }
 }

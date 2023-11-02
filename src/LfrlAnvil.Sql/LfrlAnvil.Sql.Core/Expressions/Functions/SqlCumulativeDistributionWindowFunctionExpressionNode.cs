@@ -12,7 +12,12 @@ public sealed class SqlCumulativeDistributionWindowFunctionExpressionNode : SqlA
     [Pure]
     public override SqlCumulativeDistributionWindowFunctionExpressionNode AddTrait(SqlTraitNode trait)
     {
-        var traits = Traits.ToExtendable().Extend( trait );
+        return SetTraits( Traits.ToExtendable().Extend( trait ) );
+    }
+
+    [Pure]
+    public override SqlCumulativeDistributionWindowFunctionExpressionNode SetTraits(Chain<SqlTraitNode> traits)
+    {
         return new SqlCumulativeDistributionWindowFunctionExpressionNode( traits );
     }
 }

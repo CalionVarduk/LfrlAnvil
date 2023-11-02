@@ -12,7 +12,12 @@ public sealed class SqlCountAggregateFunctionExpressionNode : SqlAggregateFuncti
     [Pure]
     public override SqlCountAggregateFunctionExpressionNode AddTrait(SqlTraitNode trait)
     {
-        var traits = Traits.ToExtendable().Extend( trait );
+        return SetTraits( Traits.ToExtendable().Extend( trait ) );
+    }
+
+    [Pure]
+    public override SqlCountAggregateFunctionExpressionNode SetTraits(Chain<SqlTraitNode> traits)
+    {
         return new SqlCountAggregateFunctionExpressionNode( Arguments, traits );
     }
 }

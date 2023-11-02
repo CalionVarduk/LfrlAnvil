@@ -15,4 +15,7 @@ public abstract class SqlExtendableQueryExpressionNode : SqlQueryExpressionNode
 
     [Pure]
     public abstract SqlExtendableQueryExpressionNode AddTrait(SqlTraitNode trait);
+
+    [Pure]
+    public abstract SqlExtendableQueryExpressionNode SetTraits(Chain<SqlTraitNode> traits);
 }

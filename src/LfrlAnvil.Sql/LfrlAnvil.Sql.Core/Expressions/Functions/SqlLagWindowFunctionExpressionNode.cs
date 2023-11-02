@@ -12,7 +12,12 @@ public sealed class SqlLagWindowFunctionExpressionNode : SqlAggregateFunctionExp
     [Pure]
     public override SqlLagWindowFunctionExpressionNode AddTrait(SqlTraitNode trait)
     {
-        var traits = Traits.ToExtendable().Extend( trait );
+        return SetTraits( Traits.ToExtendable().Extend( trait ) );
+    }
+
+    [Pure]
+    public override SqlLagWindowFunctionExpressionNode SetTraits(Chain<SqlTraitNode> traits)
+    {
         return new SqlLagWindowFunctionExpressionNode( Arguments, traits );
     }
 }

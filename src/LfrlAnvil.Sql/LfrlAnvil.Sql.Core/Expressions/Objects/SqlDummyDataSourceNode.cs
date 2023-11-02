@@ -26,7 +26,12 @@ public sealed class SqlDummyDataSourceNode : SqlDataSourceNode
     [Pure]
     public override SqlDummyDataSourceNode AddTrait(SqlTraitNode trait)
     {
-        var traits = Traits.ToExtendable().Extend( trait );
+        return SetTraits( Traits.ToExtendable().Extend( trait ) );
+    }
+
+    [Pure]
+    public override SqlDummyDataSourceNode SetTraits(Chain<SqlTraitNode> traits)
+    {
         return new SqlDummyDataSourceNode( traits );
     }
 }

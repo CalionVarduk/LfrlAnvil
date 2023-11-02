@@ -2,6 +2,9 @@
 
 public abstract class SqlTraitNode : SqlNodeBase
 {
-    protected SqlTraitNode(SqlNodeType nodeType)
+    protected SqlTraitNode()
+        : this( SqlNodeType.Unknown ) { }
+
+    internal SqlTraitNode(SqlNodeType nodeType)
         : base( nodeType ) { }
 }

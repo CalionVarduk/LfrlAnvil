@@ -1229,4 +1229,17 @@ INNER JOIN [qux] ON FALSE" );
 )" );
         }
     }
+
+    [Fact]
+    public void BaseDataSourceNodeAddTrait_ShouldCallSetTraits()
+    {
+        var sut = new DataSourceNodeMock().AddTrait( SqlNode.DistinctTrait() );
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.DataSource );
+            sut.Traits.Should().HaveCount( 1 );
+            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
+        }
+    }
 }

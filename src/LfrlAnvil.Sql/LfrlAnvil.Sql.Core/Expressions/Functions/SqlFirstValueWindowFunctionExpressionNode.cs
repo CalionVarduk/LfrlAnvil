@@ -12,7 +12,12 @@ public sealed class SqlFirstValueWindowFunctionExpressionNode : SqlAggregateFunc
     [Pure]
     public override SqlFirstValueWindowFunctionExpressionNode AddTrait(SqlTraitNode trait)
     {
-        var traits = Traits.ToExtendable().Extend( trait );
+        return SetTraits( Traits.ToExtendable().Extend( trait ) );
+    }
+
+    [Pure]
+    public override SqlFirstValueWindowFunctionExpressionNode SetTraits(Chain<SqlTraitNode> traits)
+    {
         return new SqlFirstValueWindowFunctionExpressionNode( Arguments, traits );
     }
 }

@@ -23,5 +23,11 @@ public abstract class SqlDataSourceNode : SqlNodeBase
     public abstract SqlRecordSetNode GetRecordSet(string name);
 
     [Pure]
-    public abstract SqlDataSourceNode AddTrait(SqlTraitNode trait);
+    public virtual SqlDataSourceNode AddTrait(SqlTraitNode trait)
+    {
+        return SetTraits( Traits.ToExtendable().Extend( trait ) );
+    }
+
+    [Pure]
+    public abstract SqlDataSourceNode SetTraits(Chain<SqlTraitNode> traits);
 }

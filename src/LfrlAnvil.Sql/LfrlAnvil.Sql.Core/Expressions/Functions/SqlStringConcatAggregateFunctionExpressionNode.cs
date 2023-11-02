@@ -12,7 +12,12 @@ public sealed class SqlStringConcatAggregateFunctionExpressionNode : SqlAggregat
     [Pure]
     public override SqlStringConcatAggregateFunctionExpressionNode AddTrait(SqlTraitNode trait)
     {
-        var traits = Traits.ToExtendable().Extend( trait );
+        return SetTraits( Traits.ToExtendable().Extend( trait ) );
+    }
+
+    [Pure]
+    public override SqlStringConcatAggregateFunctionExpressionNode SetTraits(Chain<SqlTraitNode> traits)
+    {
         return new SqlStringConcatAggregateFunctionExpressionNode( Arguments, traits );
     }
 }

@@ -2,6 +2,7 @@
 using System.Linq;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
+using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 
@@ -88,6 +89,32 @@ SELECT
             {
                 result.Should().NotBeSameAs( sut );
                 result.Traits.Should().BeSequentiallyEqualTo( firstTrait, secondTrait );
+                text.Should()
+                    .Be(
+                        @"FROM [foo]
+LIMIT (""10"" : System.Int32)
+OFFSET (""15"" : System.Int32)
+SELECT
+  *" );
+            }
+        }
+
+        [Fact]
+        public void SetTraits_ShouldCreateCompoundQueryWithOverriddenTraits()
+        {
+            var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
+            var sut = dataSource.Select( dataSource.GetAll() ).AddTrait( SqlNode.DistinctTrait() );
+
+            var traits = Chain.Create<SqlTraitNode>( SqlNode.LimitTrait( SqlNode.Literal( 10 ) ) )
+                .Extend( SqlNode.OffsetTrait( SqlNode.Literal( 15 ) ) );
+
+            var result = sut.SetTraits( traits );
+            var text = result.ToString();
+
+            using ( new AssertionScope() )
+            {
+                result.Should().NotBeSameAs( sut );
+                result.Traits.Should().BeSequentiallyEqualTo( traits );
                 text.Should()
                     .Be(
                         @"FROM [foo]

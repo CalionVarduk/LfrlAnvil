@@ -2,6 +2,7 @@
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
+using LfrlAnvil.Sql.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
@@ -17,7 +18,7 @@ public class SqlNodeInterpreterTests : TestsBase
         {
             sut.BeginNameDelimiter.Should().Be( '[' );
             sut.EndNameDelimiter.Should().Be( ']' );
-            sut.IgnoredRecordSet.Should().BeNull();
+            sut.RecordSetNameBehavior.Should().BeNull();
         }
     }
 
@@ -48,8 +49,8 @@ public class SqlNodeInterpreterTests : TestsBase
         var limit = SqlNode.Literal( 11 );
         var offset = SqlNode.Literal( 21 );
         var over = SqlNode.WindowTrait( windows1 );
-        var custom1 = new TraitMock();
-        var custom2 = new TraitMock();
+        var custom1 = new TraitNodeMock();
+        var custom2 = new TraitNodeMock();
 
         var traits = Chain.Create<SqlTraitNode>(
             new SqlTraitNode[]
@@ -121,7 +122,7 @@ public class SqlNodeInterpreterTests : TestsBase
         var aggregation = SqlNode.AggregationTrait( SqlNode.RawExpression( "B" ) );
         var aggregationFilter = SqlNode.AggregationFilterTrait( SqlNode.RawCondition( "B > 15" ), isConjunction: true );
         var over = SqlNode.WindowTrait( windows.Windows.Span[0] );
-        var custom = new TraitMock();
+        var custom = new TraitNodeMock();
 
         var traits = Chain.Create<SqlTraitNode>(
             new SqlTraitNode[]
@@ -177,7 +178,7 @@ public class SqlNodeInterpreterTests : TestsBase
         var windows = SqlNode.WindowDefinitionTrait( SqlNode.WindowDefinition( "W", new[] { SqlNode.RawExpression( "C" ).Asc() } ) );
         var over = SqlNode.WindowTrait( windows.Windows.Span[0] );
         var sort = SqlNode.SortTrait( SqlNode.OrderByAsc( SqlNode.RawExpression( "A" ) ) );
-        var custom = new TraitMock();
+        var custom = new TraitNodeMock();
 
         var traits = Chain.Create<SqlTraitNode>(
             new SqlTraitNode[]
@@ -217,65 +218,78 @@ public class SqlNodeInterpreterTests : TestsBase
     }
 
     [Fact]
-    public void TempIgnoreRecordSet_ShouldSetProvidedRecordSetAsIgnoredAndReturnObjectThatResetsIgnoredRecordSetRuleToPreviousWhenDisposed()
+    public void TempIgnoreRecordSet_ShouldSetRecordSetNameBehaviorToIgnoreAndReturnObjectThatResetsTheRuleToPreviousWhenDisposed()
     {
         var set = SqlNode.RawRecordSet( "foo" );
         var sut = new SqlNodeDebugInterpreter();
 
-        SqlNodeInterpreter.IgnoredRecordSetRule? rule;
+        SqlNodeInterpreter.RecordSetNameBehaviorRule? rule;
         using ( sut.TempIgnoreRecordSet( set ) )
-            rule = sut.IgnoredRecordSet;
+            rule = sut.RecordSetNameBehavior;
 
         using ( new AssertionScope() )
         {
-            sut.IgnoredRecordSet.Should().BeNull();
+            sut.RecordSetNameBehavior.Should().BeNull();
             rule.Should().NotBeNull();
             (rule?.Node).Should().BeSameAs( set );
-            (rule?.IgnoresAll).Should().BeFalse();
+            (rule?.ReplacementNode).Should().BeNull();
         }
     }
 
     [Fact]
-    public void
-        TempIgnoreAllRecordSets_ShouldSetIgnoredRecordSetRulToIgnoreAllAndReturnObjectThatResetsIgnoredRecordSetRuleToPreviousWhenDisposed()
+    public void TempReplaceRecordSet_ShouldSetRecordSetNameBehaviorToReplaceAndReturnObjectThatResetsTheRuleToPreviousWhenDisposed()
+    {
+        var set = SqlNode.RawRecordSet( "foo" );
+        var replacement = SqlNode.RawRecordSet( "bar" );
+        var sut = new SqlNodeDebugInterpreter();
+
+        SqlNodeInterpreter.RecordSetNameBehaviorRule? rule;
+        using ( sut.TempReplaceRecordSet( set, replacement ) )
+            rule = sut.RecordSetNameBehavior;
+
+        using ( new AssertionScope() )
+        {
+            sut.RecordSetNameBehavior.Should().BeNull();
+            rule.Should().NotBeNull();
+            (rule?.Node).Should().BeSameAs( set );
+            (rule?.ReplacementNode).Should().BeSameAs( replacement );
+        }
+    }
+
+    [Fact]
+    public void TempIgnoreAllRecordSets_ShouldSetRecordSetNameBehaviorToIgnoreAllAndReturnObjectThatResetsTheRuleToPreviousWhenDisposed()
     {
         var sut = new SqlNodeDebugInterpreter();
 
-        SqlNodeInterpreter.IgnoredRecordSetRule? rule;
+        SqlNodeInterpreter.RecordSetNameBehaviorRule? rule;
         using ( sut.TempIgnoreAllRecordSets() )
-            rule = sut.IgnoredRecordSet;
+            rule = sut.RecordSetNameBehavior;
 
         using ( new AssertionScope() )
         {
-            sut.IgnoredRecordSet.Should().BeNull();
+            sut.RecordSetNameBehavior.Should().BeNull();
             rule.Should().NotBeNull();
             (rule?.Node).Should().BeNull();
-            (rule?.IgnoresAll).Should().BeTrue();
+            (rule?.ReplacementNode).Should().BeNull();
         }
     }
 
     [Fact]
-    public void
-        TempIncludeAllRecordSets_ShouldSetIgnoredRecordSetRulToIncludeAllAndReturnObjectThatResetsIgnoredRecordSetRuleToPreviousWhenDisposed()
+    public void TempIncludeAllRecordSets_ShouldSetRecordSetNameBehaviorToIncludeAllAndReturnObjectThatResetsTheRuleToPreviousWhenDisposed()
     {
         var sut = new SqlNodeDebugInterpreter();
         _ = sut.TempIgnoreAllRecordSets();
-        var previous = sut.IgnoredRecordSet;
+        var previous = sut.RecordSetNameBehavior;
 
-        SqlNodeInterpreter.IgnoredRecordSetRule? rule;
+        SqlNodeInterpreter.RecordSetNameBehaviorRule? rule;
         using ( sut.TempIncludeAllRecordSets() )
-            rule = sut.IgnoredRecordSet;
+            rule = sut.RecordSetNameBehavior;
 
         using ( new AssertionScope() )
         {
-            sut.IgnoredRecordSet.Should().BeEquivalentTo( previous );
+            sut.RecordSetNameBehavior.Should().BeEquivalentTo( previous );
             rule.Should().BeNull();
+            (rule?.ReplacementNode).Should().BeNull();
         }
-    }
-
-    private sealed class TraitMock : SqlTraitNode
-    {
-        public TraitMock()
-            : base( SqlNodeType.Unknown ) { }
     }
 }

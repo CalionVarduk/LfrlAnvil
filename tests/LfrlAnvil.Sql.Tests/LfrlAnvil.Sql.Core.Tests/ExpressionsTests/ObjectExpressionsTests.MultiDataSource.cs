@@ -4,6 +4,7 @@ using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Objects;
+using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
@@ -180,6 +181,32 @@ AND WHERE a > 10" );
             {
                 result.Should().NotBeSameAs( sut );
                 result.Traits.Should().BeSequentiallyEqualTo( firstTrait, secondTrait );
+                text.Should()
+                    .Be(
+                        @"FROM [foo]
+INNER JOIN [bar] ON TRUE
+AND WHERE a > 10
+OR WHERE b > 15" );
+            }
+        }
+
+        [Fact]
+        public void SetTraits_ShouldCreateMultiDataSourceWithOverriddenTraits()
+        {
+            var sut = SqlNode.RawRecordSet( "foo" )
+                .Join( SqlNode.RawRecordSet( "bar" ).InnerOn( SqlNode.True() ) )
+                .AddTrait( SqlNode.DistinctTrait() );
+
+            var traits = Chain.Create<SqlTraitNode>( SqlNode.FilterTrait( SqlNode.RawCondition( "a > 10" ), isConjunction: true ) )
+                .Extend( SqlNode.FilterTrait( SqlNode.RawCondition( "b > 15" ), isConjunction: false ) );
+
+            var result = sut.SetTraits( traits );
+            var text = result.ToString();
+
+            using ( new AssertionScope() )
+            {
+                result.Should().NotBeSameAs( sut );
+                result.Traits.Should().BeSequentiallyEqualTo( traits );
                 text.Should()
                     .Be(
                         @"FROM [foo]

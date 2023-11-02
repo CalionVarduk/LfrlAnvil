@@ -2,6 +2,7 @@
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Functions;
+using LfrlAnvil.Sql.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
@@ -1317,6 +1318,21 @@ public class FunctionExpressionTests : TestsBase
                 .Be(
                     @"WND_NTH_VALUE((@a : System.String), (@b : System.Int32))
   DISTINCT" );
+        }
+    }
+
+    [Fact]
+    public void BaseAggregateFunctionNodeAddTrait_ShouldCallSetTraits()
+    {
+        var sut = new AggregateFunctionNodeMock().AddTrait( SqlNode.DistinctTrait() );
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.Custom );
+            sut.Arguments.ToArray().Should().BeEmpty();
+            sut.Traits.Should().HaveCount( 1 );
+            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
         }
     }
 }

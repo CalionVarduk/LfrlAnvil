@@ -12,7 +12,12 @@ public sealed class SqlLastValueWindowFunctionExpressionNode : SqlAggregateFunct
     [Pure]
     public override SqlLastValueWindowFunctionExpressionNode AddTrait(SqlTraitNode trait)
     {
-        var traits = Traits.ToExtendable().Extend( trait );
+        return SetTraits( Traits.ToExtendable().Extend( trait ) );
+    }
+
+    [Pure]
+    public override SqlLastValueWindowFunctionExpressionNode SetTraits(Chain<SqlTraitNode> traits)
+    {
         return new SqlLastValueWindowFunctionExpressionNode( Arguments, traits );
     }
 }
