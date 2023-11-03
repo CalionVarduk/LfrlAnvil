@@ -708,6 +708,30 @@ public partial class ObjectExpressionsTests : TestsBase
     }
 
     [Fact]
+    public void NamedFunctionRecordSet_ShouldCreateNamedFunctionRecordSetNode()
+    {
+        var function = SqlNode.Functions.Named(
+            SqlSchemaObjectName.Create( "foo", "bar" ),
+            SqlNode.Literal( 1 ),
+            SqlNode.Parameter( "a" ) );
+
+        var sut = function.AsSet( "qux" );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.NamedFunctionRecordSet );
+            sut.Info.Should().Be( SqlRecordSetInfo.Create( "qux" ) );
+            sut.Alias.Should().Be( "qux" );
+            sut.Identifier.Should().Be( "qux" );
+            sut.IsAliased.Should().BeTrue();
+            sut.IsOptional.Should().BeFalse();
+            sut.Function.Should().BeSameAs( function );
+            text.Should().Be( "[foo].[bar]((\"1\" : System.Int32), (@a : ?)) AS [qux]" );
+        }
+    }
+
+    [Fact]
     public void QueryRecordSet_FromDataSourceQuery_ShouldCreateQueryRecordSetNode()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();

@@ -425,6 +425,19 @@ public class SqliteDatabaseScopeExpressionValidatorTests : TestsBase
     }
 
     [Fact]
+    public void VisitNamedFunction_ShouldVisitArguments()
+    {
+        var node = SqlNode.Functions.Named( SqlSchemaObjectName.Create( "foo" ), SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) );
+        _sut.VisitNamedFunction( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 2 );
+            _sut.ReferencedObjects.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
     public void VisitRecordsAffectedFunction_ShouldDoNothing()
     {
         _sut.VisitRecordsAffectedFunction( SqlNode.Functions.RecordsAffected() );
@@ -765,6 +778,22 @@ public class SqliteDatabaseScopeExpressionValidatorTests : TestsBase
         using ( new AssertionScope() )
         {
             _sut.GetErrors().Should().HaveCount( 2 );
+            _sut.ReferencedObjects.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void VisitNamedAggregateFunction_ShouldVisitArgumentsAndTraits()
+    {
+        var node = SqlNode.AggregateFunctions
+            .Named( SqlSchemaObjectName.Create( "foo" ), SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) )
+            .AndWhere( SqlNode.RawCondition( "foo.a > @c", SqlNode.Parameter( "c" ) ) );
+
+        _sut.VisitNamedAggregateFunction( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 3 );
             _sut.ReferencedObjects.Should().BeEmpty();
         }
     }
@@ -1243,6 +1272,19 @@ public class SqliteDatabaseScopeExpressionValidatorTests : TestsBase
         {
             _sut.GetErrors().Should().BeEmpty();
             _sut.ReferencedObjects.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void VisitNamedFunctionRecordSet_ShouldVisitFunction()
+    {
+        var node = SqlNode.Functions.Named( SqlSchemaObjectName.Create( "foo" ), SqlNode.Parameter( "a" ) ).AsSet( "bar" );
+        _sut.VisitNamedFunctionRecordSet( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 1 );
+            _sut.ReferencedObjects.Values.Should().BeEmpty();
         }
     }
 

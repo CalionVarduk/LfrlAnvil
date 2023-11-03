@@ -236,6 +236,14 @@ public class SqliteConstantExpressionValidatorTests : TestsBase
     }
 
     [Fact]
+    public void VisitNamedFunction_ShouldVisitArguments()
+    {
+        var node = SqlNode.Functions.Named( SqlSchemaObjectName.Create( "foo" ), SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) );
+        _sut.VisitNamedFunction( node );
+        _sut.GetErrors().Should().HaveCount( 2 );
+    }
+
+    [Fact]
     public void VisitRecordsAffectedFunction_ShouldDoNothing()
     {
         _sut.VisitRecordsAffectedFunction( SqlNode.Functions.RecordsAffected() );
@@ -443,6 +451,19 @@ public class SqliteConstantExpressionValidatorTests : TestsBase
         var node = new FunctionMock( SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) );
         _sut.VisitCustomFunction( node );
         _sut.GetErrors().Should().HaveCount( 2 );
+    }
+
+    [Fact]
+    public void VisitNamedAggregateFunction_ShouldRegisterError()
+    {
+        var node = SqlNode.AggregateFunctions.Named(
+            SqlSchemaObjectName.Create( "foo" ),
+            SqlNode.Parameter( "a" ),
+            SqlNode.Parameter( "b" ) );
+
+        _sut.VisitNamedAggregateFunction( node );
+
+        _sut.GetErrors().Should().HaveCount( 1 );
     }
 
     [Fact]
@@ -730,6 +751,14 @@ public class SqliteConstantExpressionValidatorTests : TestsBase
     {
         var node = SqlNode.RawRecordSet( "foo" );
         _sut.VisitRawRecordSet( node );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
+    public void VisitNamedFunctionRecordSet_ShouldRegisterError()
+    {
+        var node = SqlNode.Functions.Named( SqlSchemaObjectName.Create( "foo" ) ).AsSet( "bar" );
+        _sut.VisitNamedFunctionRecordSet( node );
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 

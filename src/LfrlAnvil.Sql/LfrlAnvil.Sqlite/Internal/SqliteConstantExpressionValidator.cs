@@ -9,6 +9,11 @@ namespace LfrlAnvil.Sqlite.Internal;
 
 internal sealed class SqliteConstantExpressionValidator : SqliteExpressionValidator
 {
+    public override void VisitNamedAggregateFunction(SqlNamedAggregateFunctionExpressionNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
     public override void VisitMinAggregateFunction(SqlMinAggregateFunctionExpressionNode node)
     {
         AddForbiddenNode( node );
@@ -95,6 +100,11 @@ internal sealed class SqliteConstantExpressionValidator : SqliteExpressionValida
     }
 
     public override void VisitRawRecordSet(SqlRawRecordSetNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
+    public override void VisitNamedFunctionRecordSet(SqlNamedFunctionRecordSetNode node)
     {
         AddForbiddenNode( node );
     }

@@ -178,6 +178,16 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
         VisitSimpleFunction( $"{{{node.GetType().GetDebugString()}}}", node );
     }
 
+    public override void VisitNamedAggregateFunction(SqlNamedAggregateFunctionExpressionNode node)
+    {
+        Context.Sql.Append( "AGG" ).Append( '_' );
+        AppendDelimitedSchemaObjectName( node.Name );
+        VisitFunctionArguments( node.Arguments.Span );
+
+        using ( Context.TempIndentIncrease() )
+            VisitTraits( node.Traits );
+    }
+
     public override void VisitMinAggregateFunction(SqlMinAggregateFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "AGG", "MIN", node );
@@ -779,23 +789,8 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
 
     private void VisitSimpleAggregateFunction(string prefix, string functionName, SqlAggregateFunctionExpressionNode node)
     {
-        Context.Sql.Append( prefix ).Append( '_' ).Append( functionName ).Append( '(' );
-
-        if ( node.Arguments.Length > 0 )
-        {
-            using ( Context.TempIndentIncrease() )
-            {
-                foreach ( var arg in node.Arguments )
-                {
-                    VisitChild( arg );
-                    Context.Sql.AppendComma().AppendSpace();
-                }
-            }
-
-            Context.Sql.ShrinkBy( 2 );
-        }
-
-        Context.Sql.Append( ')' );
+        Context.Sql.Append( prefix ).Append( '_' ).Append( functionName );
+        VisitFunctionArguments( node.Arguments.Span );
 
         using ( Context.TempIndentIncrease() )
             VisitTraits( node.Traits );

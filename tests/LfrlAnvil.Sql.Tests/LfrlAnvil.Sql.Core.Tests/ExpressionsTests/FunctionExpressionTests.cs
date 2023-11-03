@@ -10,6 +10,43 @@ namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
 public class FunctionExpressionTests : TestsBase
 {
     [Fact]
+    public void Named_ShouldCreateNamedFunctionExpressionNode()
+    {
+        var arguments = new[] { SqlNode.Literal( 10 ), SqlNode.Literal( 20 ) };
+        var sut = SqlNode.Functions.Named( SqlSchemaObjectName.Create( "foo", "bar" ), arguments );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.Named );
+            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arguments );
+            text.Should().Be( "[foo].[bar]((\"10\" : System.Int32), (\"20\" : System.Int32))" );
+        }
+    }
+
+    [Fact]
+    public void Named_ShouldCreateNamedAggregateFunctionExpressionNode()
+    {
+        var arguments = new[] { SqlNode.Literal( 10 ), SqlNode.Literal( 20 ) };
+        var trait = SqlNode.DistinctTrait();
+        var sut = SqlNode.AggregateFunctions.Named( SqlSchemaObjectName.Create( "foo", "bar" ), arguments ).AddTrait( trait );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.Named );
+            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arguments );
+            sut.Traits.Should().BeSequentiallyEqualTo( trait );
+            text.Should()
+                .Be(
+                    @"AGG_[foo].[bar]((""10"" : System.Int32), (""20"" : System.Int32))
+  DISTINCT" );
+        }
+    }
+
+    [Fact]
     public void RecordsAffected_ShouldCreateRecordsAffectedFunctionExpressionNode()
     {
         var sut = SqlNode.Functions.RecordsAffected();

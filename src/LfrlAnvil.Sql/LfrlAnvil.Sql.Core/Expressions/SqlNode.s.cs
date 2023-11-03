@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Internal;
 using LfrlAnvil.Sql.Expressions.Arithmetic;
+using LfrlAnvil.Sql.Expressions.Functions;
 using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Persistence;
@@ -462,6 +463,12 @@ public static partial class SqlNode
         params SqlCompoundQueryComponentNode[] followingQueries)
     {
         return new SqlCompoundQueryExpressionNode( firstQuery, followingQueries );
+    }
+
+    [Pure]
+    public static SqlNamedFunctionRecordSetNode NamedFunctionRecordSet(SqlNamedFunctionExpressionNode function, string alias)
+    {
+        return new SqlNamedFunctionRecordSetNode( function, alias, isOptional: false );
     }
 
     [Pure]

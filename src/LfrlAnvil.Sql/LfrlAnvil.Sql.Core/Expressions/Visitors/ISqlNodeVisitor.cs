@@ -33,6 +33,7 @@ public interface ISqlNodeVisitor
     void VisitBitwiseRightShift(SqlBitwiseRightShiftExpressionNode node);
     void VisitSwitchCase(SqlSwitchCaseNode node);
     void VisitSwitch(SqlSwitchExpressionNode node);
+    void VisitNamedFunction(SqlNamedFunctionExpressionNode node);
     void VisitRecordsAffectedFunction(SqlRecordsAffectedFunctionExpressionNode node);
     void VisitCoalesceFunction(SqlCoalesceFunctionExpressionNode node);
     void VisitCurrentDateFunction(SqlCurrentDateFunctionExpressionNode node);
@@ -60,6 +61,7 @@ public interface ISqlNodeVisitor
     void VisitMinFunction(SqlMinFunctionExpressionNode node);
     void VisitMaxFunction(SqlMaxFunctionExpressionNode node);
     void VisitCustomFunction(SqlFunctionExpressionNode node);
+    void VisitNamedAggregateFunction(SqlNamedAggregateFunctionExpressionNode node);
     void VisitMinAggregateFunction(SqlMinAggregateFunctionExpressionNode node);
     void VisitMaxAggregateFunction(SqlMaxAggregateFunctionExpressionNode node);
     void VisitAverageAggregateFunction(SqlAverageAggregateFunctionExpressionNode node);
@@ -95,6 +97,7 @@ public interface ISqlNodeVisitor
     void VisitIn(SqlInConditionNode node);
     void VisitInQuery(SqlInQueryConditionNode node);
     void VisitRawRecordSet(SqlRawRecordSetNode node);
+    void VisitNamedFunctionRecordSet(SqlNamedFunctionRecordSetNode node);
     void VisitTable(SqlTableNode node);
     void VisitTableBuilder(SqlTableBuilderNode node);
     void VisitView(SqlViewNode node);

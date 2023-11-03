@@ -550,6 +550,18 @@ END" );
     }
 
     [Fact]
+    public void Visit_ShouldInterpretNamedFunction()
+    {
+        _sut.Visit(
+            SqlNode.Functions.Named(
+                SqlSchemaObjectName.Create( "foo", "bar" ),
+                SqlNode.Parameter<int>( "a" ),
+                SqlNode.RawExpression( "qux.a" ) ) );
+
+        _sut.Context.Sql.ToString().Should().Be( "\"foo_bar\"(@a, (qux.a))" );
+    }
+
+    [Fact]
     public void Visit_ShouldInterpretRecordsAffectedFunction()
     {
         _sut.Visit( SqlNode.Functions.RecordsAffected() );
@@ -804,6 +816,32 @@ END" );
         action.Should()
             .ThrowExactly<UnrecognizedSqlNodeException>()
             .AndMatch( e => ReferenceEquals( e.Node, function ) && ReferenceEquals( e.Visitor, _sut ) );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretNamedAggregateFunction()
+    {
+        _sut.Visit(
+            SqlNode.AggregateFunctions.Named(
+                SqlSchemaObjectName.Create( "foo", "bar" ),
+                SqlNode.Parameter<int>( "a" ),
+                SqlNode.RawExpression( "qux.a" ) ) );
+
+        _sut.Context.Sql.ToString().Should().Be( "\"foo_bar\"(@a, (qux.a))" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretNamedAggregateFunctionWithTraits()
+    {
+        _sut.Visit(
+            SqlNode.AggregateFunctions.Named(
+                    SqlSchemaObjectName.Create( "foo", "bar" ),
+                    SqlNode.Parameter<int>( "a" ),
+                    SqlNode.RawExpression( "qux.a" ) )
+                .Distinct()
+                .AndWhere( SqlNode.RawCondition( "foo.a > 10" ) ) );
+
+        _sut.Context.Sql.ToString().Should().Be( "\"foo_bar\"(DISTINCT @a, (qux.a)) FILTER (WHERE foo.a > 10)" );
     }
 
     [Fact]

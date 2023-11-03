@@ -60,6 +60,13 @@ public static class SqlNodeExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlNamedFunctionRecordSetNode AsSet(this SqlNamedFunctionExpressionNode node, string alias)
+    {
+        return SqlNode.NamedFunctionRecordSet( node, alias );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlSelectFieldNode As(this SqlExpressionNode node, string alias)
     {
         return SqlNode.Select( node, alias );

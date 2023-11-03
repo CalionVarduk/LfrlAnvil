@@ -19,15 +19,15 @@ internal sealed class SqliteDatabaseScopeExpressionValidator : SqliteExpressionV
     internal SqliteDatabaseBuilder Database { get; }
     internal Dictionary<ulong, SqliteObjectBuilder> ReferencedObjects { get; }
 
-    public void VisitNonQueryRecordSet(SqlRecordSetNode node)
+    public void VisitDataFieldRecordSet(SqlRecordSetNode node)
     {
-        if ( node.NodeType != SqlNodeType.QueryRecordSet )
+        if ( node.NodeType != SqlNodeType.QueryRecordSet && node.NodeType != SqlNodeType.NamedFunctionRecordSet )
             this.Visit( node );
     }
 
     public override void VisitRawDataField(SqlRawDataFieldNode node)
     {
-        VisitNonQueryRecordSet( node.RecordSet );
+        VisitDataFieldRecordSet( node.RecordSet );
     }
 
     public override void VisitColumnBuilder(SqlColumnBuilderNode node)
@@ -44,12 +44,12 @@ internal sealed class SqliteDatabaseScopeExpressionValidator : SqliteExpressionV
         else
             ReferencedObjects.TryAdd( column.Id, column );
 
-        VisitNonQueryRecordSet( node.RecordSet );
+        VisitDataFieldRecordSet( node.RecordSet );
     }
 
     public override void VisitQueryDataField(SqlQueryDataFieldNode node)
     {
-        VisitNonQueryRecordSet( node.RecordSet );
+        VisitDataFieldRecordSet( node.RecordSet );
     }
 
     public override void VisitTableBuilder(SqlTableBuilderNode node)

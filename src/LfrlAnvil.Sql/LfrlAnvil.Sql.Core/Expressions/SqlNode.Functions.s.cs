@@ -15,6 +15,12 @@ public static partial class SqlNode
         private static SqlNewGuidFunctionExpressionNode? _newGuid;
 
         [Pure]
+        public static SqlNamedFunctionExpressionNode Named(SqlSchemaObjectName name, params SqlExpressionNode[] arguments)
+        {
+            return new SqlNamedFunctionExpressionNode( name, arguments );
+        }
+
+        [Pure]
         public static SqlRecordsAffectedFunctionExpressionNode RecordsAffected()
         {
             return _recordsAffected ??= new SqlRecordsAffectedFunctionExpressionNode();

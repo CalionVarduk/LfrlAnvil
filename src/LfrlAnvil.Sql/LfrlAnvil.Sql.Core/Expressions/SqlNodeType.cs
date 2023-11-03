@@ -47,6 +47,7 @@ public enum SqlNodeType : byte
     In,
     InQuery,
     RawRecordSet,
+    NamedFunctionRecordSet,
     Table,
     TableBuilder,
     View,

@@ -9,6 +9,12 @@ public static partial class SqlNode
     public static class AggregateFunctions
     {
         [Pure]
+        public static SqlNamedAggregateFunctionExpressionNode Named(SqlSchemaObjectName name, params SqlExpressionNode[] arguments)
+        {
+            return new SqlNamedAggregateFunctionExpressionNode( name, arguments, Chain<SqlTraitNode>.Empty );
+        }
+
+        [Pure]
         public static SqlCountAggregateFunctionExpressionNode Count(SqlExpressionNode argument)
         {
             return new SqlCountAggregateFunctionExpressionNode( new[] { argument }, Chain<SqlTraitNode>.Empty );

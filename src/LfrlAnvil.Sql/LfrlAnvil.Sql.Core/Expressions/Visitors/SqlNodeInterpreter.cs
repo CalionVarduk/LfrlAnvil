@@ -182,6 +182,12 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             Context.AppendShortIndent();
     }
 
+    public virtual void VisitNamedFunction(SqlNamedFunctionExpressionNode node)
+    {
+        AppendDelimitedSchemaObjectName( node.Name );
+        VisitFunctionArguments( node.Arguments.Span );
+    }
+
     public abstract void VisitRecordsAffectedFunction(SqlRecordsAffectedFunctionExpressionNode node);
 
     public virtual void VisitCoalesceFunction(SqlCoalesceFunctionExpressionNode node)
@@ -222,6 +228,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         throw new UnrecognizedSqlNodeException( this, node );
     }
 
+    public abstract void VisitNamedAggregateFunction(SqlNamedAggregateFunctionExpressionNode node);
     public abstract void VisitMinAggregateFunction(SqlMinAggregateFunctionExpressionNode node);
     public abstract void VisitMaxAggregateFunction(SqlMaxAggregateFunctionExpressionNode node);
     public abstract void VisitAverageAggregateFunction(SqlAverageAggregateFunctionExpressionNode node);
@@ -404,27 +411,33 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         AppendDelimitedAlias( node.Alias );
     }
 
+    public virtual void VisitNamedFunctionRecordSet(SqlNamedFunctionRecordSetNode node)
+    {
+        VisitNamedFunction( node.Function );
+        AppendDelimitedAlias( node.Alias );
+    }
+
     public virtual void VisitTable(SqlTableNode node)
     {
-        AppendDelimitedSchemaObjectName( node.Table.Schema.Name, node.Table.Name );
+        AppendDelimitedSchemaObjectName( node.Table.Info.Name );
         AppendDelimitedAlias( node.Alias );
     }
 
     public virtual void VisitTableBuilder(SqlTableBuilderNode node)
     {
-        AppendDelimitedSchemaObjectName( node.Table.Schema.Name, node.Table.Name );
+        AppendDelimitedSchemaObjectName( node.Table.Info.Name );
         AppendDelimitedAlias( node.Alias );
     }
 
     public virtual void VisitView(SqlViewNode node)
     {
-        AppendDelimitedSchemaObjectName( node.View.Schema.Name, node.View.Name );
+        AppendDelimitedSchemaObjectName( node.View.Info.Name );
         AppendDelimitedAlias( node.Alias );
     }
 
     public virtual void VisitViewBuilder(SqlViewBuilderNode node)
     {
-        AppendDelimitedSchemaObjectName( node.View.Schema.Name, node.View.Name );
+        AppendDelimitedSchemaObjectName( node.View.Info.Name );
         AppendDelimitedAlias( node.Alias );
     }
 
@@ -1207,13 +1220,19 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     protected void VisitSimpleFunction(string functionName, SqlFunctionExpressionNode node)
     {
-        Context.Sql.Append( functionName ).Append( '(' );
+        Context.Sql.Append( functionName );
+        VisitFunctionArguments( node.Arguments.Span );
+    }
 
-        if ( node.Arguments.Length > 0 )
+    protected void VisitFunctionArguments(ReadOnlySpan<SqlExpressionNode> arguments)
+    {
+        Context.Sql.Append( '(' );
+
+        if ( arguments.Length > 0 )
         {
             using ( Context.TempIndentIncrease() )
             {
-                foreach ( var arg in node.Arguments )
+                foreach ( var arg in arguments )
                 {
                     VisitChild( arg );
                     Context.Sql.AppendComma().AppendSpace();

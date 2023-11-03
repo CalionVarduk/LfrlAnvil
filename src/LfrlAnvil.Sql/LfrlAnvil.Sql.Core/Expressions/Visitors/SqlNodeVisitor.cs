@@ -135,6 +135,12 @@ public abstract class SqlNodeVisitor : ISqlNodeVisitor
         this.Visit( node.Default );
     }
 
+    public virtual void VisitNamedFunction(SqlNamedFunctionExpressionNode node)
+    {
+        foreach ( var arg in node.Arguments )
+            this.Visit( arg );
+    }
+
     public virtual void VisitRecordsAffectedFunction(SqlRecordsAffectedFunctionExpressionNode node) { }
 
     public virtual void VisitCoalesceFunction(SqlCoalesceFunctionExpressionNode node)
@@ -267,6 +273,15 @@ public abstract class SqlNodeVisitor : ISqlNodeVisitor
     {
         foreach ( var arg in node.Arguments )
             this.Visit( arg );
+    }
+
+    public virtual void VisitNamedAggregateFunction(SqlNamedAggregateFunctionExpressionNode node)
+    {
+        foreach ( var arg in node.Arguments )
+            this.Visit( arg );
+
+        foreach ( var trait in node.Traits )
+            this.Visit( trait );
     }
 
     public virtual void VisitMinAggregateFunction(SqlMinAggregateFunctionExpressionNode node)
@@ -506,6 +521,12 @@ public abstract class SqlNodeVisitor : ISqlNodeVisitor
     }
 
     public virtual void VisitRawRecordSet(SqlRawRecordSetNode node) { }
+
+    public virtual void VisitNamedFunctionRecordSet(SqlNamedFunctionRecordSetNode node)
+    {
+        VisitNamedFunction( node.Function );
+    }
+
     public virtual void VisitTable(SqlTableNode node) { }
     public virtual void VisitTableBuilder(SqlTableBuilderNode node) { }
     public virtual void VisitView(SqlViewNode node) { }

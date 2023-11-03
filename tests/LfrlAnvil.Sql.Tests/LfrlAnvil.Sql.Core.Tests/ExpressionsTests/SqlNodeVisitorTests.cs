@@ -279,6 +279,17 @@ public class SqlNodeVisitorTests : TestsBase
     }
 
     [Fact]
+    public void VisitNamedFunction_ShouldVisitArguments()
+    {
+        var sut = new VisitorMock();
+        var arguments = new[] { SqlNode.Literal( "foo" ), SqlNode.Literal( "bar" ) };
+
+        sut.VisitNamedFunction( SqlNode.Functions.Named( SqlSchemaObjectName.Create( "func" ), arguments ) );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1] );
+    }
+
+    [Fact]
     public void VisitRecordsAffectedFunction_ShouldDoNothing()
     {
         var sut = new Visitor();
@@ -555,6 +566,19 @@ public class SqlNodeVisitorTests : TestsBase
         sut.VisitCustomFunction( arguments[0].Coalesce( arguments[1] ) );
 
         sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1] );
+    }
+
+    [Fact]
+    public void VisitNamedAggregateFunction_ShouldVisitArgumentsAndTraits()
+    {
+        var sut = new VisitorMock();
+        var arguments = new[] { SqlNode.Literal( "foo" ), SqlNode.Literal( "bar" ) };
+        var trait = SqlNode.DistinctTrait();
+
+        sut.VisitNamedAggregateFunction(
+            SqlNode.AggregateFunctions.Named( SqlSchemaObjectName.Create( "func" ), arguments ).AddTrait( trait ) );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1], trait );
     }
 
     [Fact]
@@ -945,6 +969,17 @@ public class SqlNodeVisitorTests : TestsBase
         var sut = new Visitor();
         var action = Lambda.Of( () => sut.VisitRawRecordSet( SqlNode.RawRecordSet( "foo" ) ) );
         action.Should().NotThrow();
+    }
+
+    [Fact]
+    public void VisitNamedFunctionRecordSet_ShouldVisitFunction()
+    {
+        var sut = new VisitorMock();
+        var function = SqlNode.Functions.Named( SqlSchemaObjectName.Create( "foo" ), SqlNode.Parameter( "a" ) );
+
+        sut.VisitNamedFunctionRecordSet( function.AsSet( "bar" ) );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( function.Arguments.Span[0] );
     }
 
     [Fact]

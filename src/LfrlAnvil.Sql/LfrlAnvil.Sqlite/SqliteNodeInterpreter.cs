@@ -187,6 +187,13 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             VisitSimpleFunction( "MAX", node );
     }
 
+    public override void VisitNamedAggregateFunction(SqlNamedAggregateFunctionExpressionNode node)
+    {
+        var traits = ExtractAggregateFunctionTraits( node.Traits );
+        AppendDelimitedSchemaObjectName( node.Name );
+        VisitAggregateFunctionArgumentsAndTraits( node.Arguments.Span, traits );
+    }
+
     public override void VisitMinAggregateFunction(SqlMinAggregateFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "MIN", node );
@@ -840,9 +847,15 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
     protected void VisitSimpleAggregateFunction(string functionName, SqlAggregateFunctionExpressionNode node)
     {
         var traits = ExtractAggregateFunctionTraits( node.Traits );
-        Context.Sql.Append( functionName ).Append( '(' );
+        Context.Sql.Append( functionName );
+        VisitAggregateFunctionArgumentsAndTraits( node.Arguments.Span, traits );
+    }
 
-        if ( node.Arguments.Length > 0 )
+    protected void VisitAggregateFunctionArgumentsAndTraits(ReadOnlySpan<SqlExpressionNode> arguments, SqlAggregateFunctionTraits traits)
+    {
+        Context.Sql.Append( '(' );
+
+        if ( arguments.Length > 0 )
         {
             using ( Context.TempIndentIncrease() )
             {
@@ -852,7 +865,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
                     Context.Sql.AppendSpace();
                 }
 
-                foreach ( var arg in node.Arguments )
+                foreach ( var arg in arguments )
                 {
                     VisitChild( arg );
                     Context.Sql.AppendComma().AppendSpace();

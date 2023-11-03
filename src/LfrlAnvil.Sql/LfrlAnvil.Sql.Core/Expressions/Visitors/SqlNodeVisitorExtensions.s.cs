@@ -191,6 +191,10 @@ public static class SqlNodeVisitorExtensions
                 visitor.VisitRawRecordSet( ReinterpretCast.To<SqlRawRecordSetNode>( node ) );
                 break;
 
+            case SqlNodeType.NamedFunctionRecordSet:
+                visitor.VisitNamedFunctionRecordSet( ReinterpretCast.To<SqlNamedFunctionRecordSetNode>( node ) );
+                break;
+
             case SqlNodeType.Table:
                 visitor.VisitTable( ReinterpretCast.To<SqlTableNode>( node ) );
                 break;
@@ -437,6 +441,10 @@ public static class SqlNodeVisitorExtensions
     {
         switch ( node.FunctionType )
         {
+            case SqlFunctionType.Named:
+                visitor.VisitNamedFunction( ReinterpretCast.To<SqlNamedFunctionExpressionNode>( node ) );
+                break;
+
             case SqlFunctionType.RecordsAffected:
                 visitor.VisitRecordsAffectedFunction( ReinterpretCast.To<SqlRecordsAffectedFunctionExpressionNode>( node ) );
                 break;
@@ -551,6 +559,10 @@ public static class SqlNodeVisitorExtensions
     {
         switch ( node.FunctionType )
         {
+            case SqlFunctionType.Named:
+                visitor.VisitNamedAggregateFunction( ReinterpretCast.To<SqlNamedAggregateFunctionExpressionNode>( node ) );
+                break;
+
             case SqlFunctionType.Min:
                 visitor.VisitMinAggregateFunction( ReinterpretCast.To<SqlMinAggregateFunctionExpressionNode>( node ) );
                 break;
