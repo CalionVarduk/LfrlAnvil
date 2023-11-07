@@ -156,7 +156,7 @@ public class ExpressionExtensionsTests : TestsBase
     }
 
     [Fact]
-    public void ReplaceParameters_ShouldInjectNewExpressionsInPlaceOfSpecifiedNamedParameterExpressions()
+    public void ReplaceParametersByName_ShouldInjectNewExpressionsInPlaceOfSpecifiedNamedParameterExpressions()
     {
         var p1 = Expression.Parameter( typeof( int ), "p1" );
         var p2 = Expression.Parameter( typeof( int ), "p2" );
@@ -181,7 +181,7 @@ public class ExpressionExtensionsTests : TestsBase
         var sut = Expression.Add( c1, p1P2P3PNoNameAdd );
 
         // 0 + ((10 + p2) + (20 + pNoName))
-        var result = sut.ReplaceParameters( parametersToReplace );
+        var result = sut.ReplaceParametersByName( parametersToReplace );
 
         using ( new AssertionScope() )
         {
@@ -207,6 +207,58 @@ public class ExpressionExtensionsTests : TestsBase
             newP1P2Add.Right.Should().BeSameAs( p2 );
             newP3PNoNameAdd.Left.Should().BeSameAs( p3Replacement );
             newP3PNoNameAdd.Right.Should().BeSameAs( pNoName );
+        }
+    }
+
+    [Fact]
+    public void ReplaceParameters_ShouldInjectNewExpressionsInPlaceOfSpecifiedParameterExpressions()
+    {
+        var p1 = Expression.Parameter( typeof( int ), "p" );
+        var p2 = Expression.Parameter( typeof( int ), "p" );
+        var p3 = Expression.Parameter( typeof( int ), "q" );
+        var pNoName = Expression.Parameter( typeof( int ) );
+        var c1 = Expression.Constant( 0 );
+
+        var p1Replacement = Expression.Constant( 10 );
+        var pNoNameReplacement = Expression.Constant( 20 );
+
+        var parametersToReplace = new[] { p1, pNoName };
+        var replacements = new Expression[] { p1Replacement, pNoNameReplacement };
+
+        var p1P2Add = Expression.Add( p1, p2 );
+        var p3PNoNameAdd = Expression.Add( p3, pNoName );
+        var p1P2P3PNoNameAdd = Expression.Add( p1P2Add, p3PNoNameAdd );
+
+        // 0 + ((p1 + p2) + (p3 + pNoName))
+        var sut = Expression.Add( c1, p1P2P3PNoNameAdd );
+
+        // 0 + ((10 + p2) + (p3 + 20))
+        var result = sut.ReplaceParameters( parametersToReplace, replacements );
+
+        using ( new AssertionScope() )
+        {
+            result.NodeType.Should().Be( ExpressionType.Add );
+            result.Should().BeAssignableTo<BinaryExpression>();
+            if ( result is not BinaryExpression newSut )
+                return;
+
+            newSut.Left.Should().BeSameAs( c1 );
+            newSut.Right.NodeType.Should().Be( ExpressionType.Add );
+            newSut.Right.Should().BeAssignableTo<BinaryExpression>();
+            if ( newSut.Right is not BinaryExpression newP1P2P3PNoNameAdd )
+                return;
+
+            newP1P2P3PNoNameAdd.Left.NodeType.Should().Be( ExpressionType.Add );
+            newP1P2P3PNoNameAdd.Right.NodeType.Should().Be( ExpressionType.Add );
+
+            if ( newP1P2P3PNoNameAdd.Left is not BinaryExpression newP1P2Add ||
+                newP1P2P3PNoNameAdd.Right is not BinaryExpression newP3PNoNameAdd )
+                return;
+
+            newP1P2Add.Left.Should().BeSameAs( p1Replacement );
+            newP1P2Add.Right.Should().BeSameAs( p2 );
+            newP3PNoNameAdd.Left.Should().BeSameAs( p3 );
+            newP3PNoNameAdd.Right.Should().BeSameAs( pNoNameReplacement );
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 
@@ -6,21 +6,26 @@ namespace LfrlAnvil.Expressions;
 
 public class ExpressionParameterReplacer : ExpressionVisitor
 {
-    private readonly IReadOnlyDictionary<string, Expression> _parametersToReplace;
+    private readonly ParameterExpression[] _parametersToReplace;
+    private readonly Expression[] _replacements;
 
-    public ExpressionParameterReplacer(IReadOnlyDictionary<string, Expression> parametersToReplace)
+    public ExpressionParameterReplacer(ParameterExpression[] parametersToReplace, Expression[] replacements)
     {
         _parametersToReplace = parametersToReplace;
+        _replacements = replacements;
     }
 
     [return: NotNullIfNotNull( "node" )]
     public override Expression? Visit(Expression? node)
     {
-        if ( node is not ParameterExpression parameterExpression || parameterExpression.Name is null )
+        if ( node is null ||
+            node.NodeType != ExpressionType.Parameter ||
+            node is not ParameterExpression parameterExpression )
             return base.Visit( node );
 
-        return _parametersToReplace.TryGetValue( parameterExpression.Name, out var expression )
-            ? expression
+        var index = Array.IndexOf( _parametersToReplace, parameterExpression );
+        return index >= 0 && index < _replacements.Length
+            ? _replacements[index]
             : base.Visit( node );
     }
 }

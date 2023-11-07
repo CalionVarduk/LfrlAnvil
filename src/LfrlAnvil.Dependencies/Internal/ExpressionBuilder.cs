@@ -217,13 +217,7 @@ internal sealed class ExpressionBuilder
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Expression GetExpressionResolutionRawValue(Expression<Func<IDependencyScope, object>> expression)
     {
-        var expressionParameter = expression.Parameters[0];
-
-        var result = expressionParameter.Name is not null
-            ? expression.Body.ReplaceParameters(
-                new Dictionary<string, Expression> { { expressionParameter.Name, AbstractScopeParameter } } )
-            : Expression.Invoke( expression, AbstractScopeParameter );
-
+        var result = expression.Body.ReplaceParameter( expression.Parameters[0], AbstractScopeParameter );
         return result;
     }
 

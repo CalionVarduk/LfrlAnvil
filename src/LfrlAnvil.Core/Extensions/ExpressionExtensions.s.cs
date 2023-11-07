@@ -43,10 +43,30 @@ public static class ExpressionExtensions
     }
 
     [Pure]
-    public static Expression ReplaceParameters(this Expression expression, IReadOnlyDictionary<string, Expression> parametersToReplace)
+    public static Expression ReplaceParametersByName(
+        this Expression expression,
+        IReadOnlyDictionary<string, Expression> parametersToReplace)
     {
-        var injector = new ExpressionParameterReplacer( parametersToReplace );
-        var result = injector.Visit( expression );
+        var replacer = new ExpressionParameterByNameReplacer( parametersToReplace );
+        var result = replacer.Visit( expression );
+        return result;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static Expression ReplaceParameter(this Expression expression, ParameterExpression parameterToReplace, Expression replacement)
+    {
+        return expression.ReplaceParameters( new[] { parameterToReplace }, new[] { replacement } );
+    }
+
+    [Pure]
+    public static Expression ReplaceParameters(
+        this Expression expression,
+        ParameterExpression[] parametersToReplace,
+        Expression[] replacements)
+    {
+        var replacer = new ExpressionParameterReplacer( parametersToReplace, replacements );
+        var result = replacer.Visit( expression );
         return result;
     }
 }

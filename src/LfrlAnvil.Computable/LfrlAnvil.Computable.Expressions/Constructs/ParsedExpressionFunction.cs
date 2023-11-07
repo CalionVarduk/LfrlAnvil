@@ -98,7 +98,7 @@ public class ParsedExpressionFunction
             parametersToReplace.Add( parameter.Name, value );
         }
 
-        var result = Lambda.Body.ReplaceParameters( parametersToReplace );
+        var result = Lambda.Body.ReplaceParametersByName( parametersToReplace );
         return result;
     }
 }
