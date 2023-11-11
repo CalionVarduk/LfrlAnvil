@@ -197,7 +197,9 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
         [MaybeNullWhen( false )] out ParsedExpression<TArg, TResult> result,
         out Chain<ParsedExpressionBuilderError> errors)
     {
-        var boundArguments = bindingInfo?.Arguments.ToDictionary( kv => kv.Key, kv => Expression.Constant( kv.Value, typeof( TArg ) ) );
+        var boundArguments = bindingInfo?.Arguments.ToDictionary(
+            static kv => kv.Key,
+            static kv => Expression.Constant( kv.Value, typeof( TArg ) ) );
 
         var state = new ExpressionBuilderRootState(
             typeof( TArg ),

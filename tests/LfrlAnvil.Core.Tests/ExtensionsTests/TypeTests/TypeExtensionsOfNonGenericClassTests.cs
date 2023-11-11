@@ -1,4 +1,7 @@
-﻿using LfrlAnvil.Extensions;
+﻿using System.Collections;
+using System.Collections.Generic;
+using System.Reflection;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Tests.ExtensionsTests.TypeTests;
 
@@ -195,4 +198,89 @@ public class NonGenericClassTests : TypeTestsBase
         var result = sut.GetAllExtendedGenericDefinitions();
         result.Should().BeEmpty();
     }
+
+    [Fact]
+    public void FindMember_ShouldReturnCorrectMember_WhenMemberExistsDirectlyInProvidedType()
+    {
+        var sut = typeof( FindMemberClass );
+        var result = sut.FindMember( t => t.GetMethod( "GetEnumerator", BindingFlags.Public | BindingFlags.Instance ) );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().NotBeNull();
+            (result?.DeclaringType).Should().Be( sut );
+            (result?.ReturnType).Should().Be( typeof( IEnumerator<char> ) );
+        }
+    }
+
+    [Fact]
+    public void FindMember_ShouldReturnCorrectMember_WhenMemberExistsInBaseType()
+    {
+        var sut = typeof( FindMemberSubClass );
+        var result = sut.FindMember(
+            t => t != typeof( FindMemberSubClass ) ? t.GetMethod( "GetEnumerator", BindingFlags.Public | BindingFlags.Instance ) : null );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().NotBeNull();
+            (result?.DeclaringType).Should().Be( typeof( FindMemberClass ) );
+            (result?.ReturnType).Should().Be( typeof( IEnumerator<char> ) );
+        }
+    }
+
+    [Fact]
+    public void FindMember_ShouldReturnCorrectMember_WhenMemberIsImplementedExplicitlyFromInterface()
+    {
+        var sut = typeof( FindMemberClass );
+        var result = sut.FindMember( t => t.GetMethod( "Dispose", BindingFlags.Public | BindingFlags.Instance ) );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().NotBeNull();
+            (result?.DeclaringType).Should().Be( typeof( IDisposable ) );
+        }
+    }
+
+    [Fact]
+    public void FindMember_ShouldReturnCorrectMember_WhenMemberIsImplementedExplicitlyFromNestedInterface()
+    {
+        var sut = typeof( FindMemberClass );
+        var result = sut.FindMember(
+            t =>
+            {
+                var m = t.GetMethod( "GetEnumerator", BindingFlags.Public | BindingFlags.Instance );
+                return m is not null && m.ReturnType == typeof( IEnumerator ) ? m : null;
+            } );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().NotBeNull();
+            (result?.DeclaringType).Should().Be( typeof( IEnumerable ) );
+        }
+    }
+
+    [Fact]
+    public void FindMember_ShouldReturnNull_WhenMemberDoesNotExist()
+    {
+        var sut = typeof( FindMemberClass );
+        var result = sut.FindMember( t => t.GetMethod( "MoveNext", BindingFlags.Public | BindingFlags.Instance ) );
+        result.Should().BeNull();
+    }
+
+    private class FindMemberClass : IEnumerable<char>, IDisposable
+    {
+        void IDisposable.Dispose() { }
+
+        public IEnumerator<char> GetEnumerator()
+        {
+            yield break;
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+    }
+
+    private sealed class FindMemberSubClass : FindMemberClass { }
 }

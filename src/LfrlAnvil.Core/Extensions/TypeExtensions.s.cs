@@ -132,6 +132,32 @@ public static class TypeExtensions
     }
 
     [Pure]
+    public static T? FindMember<T>(this Type type, Func<Type, T?> memberSelector)
+        where T : class
+    {
+        var t = type;
+        do
+        {
+            var member = memberSelector( t );
+            if ( member is not null )
+                return member;
+
+            t = t.BaseType;
+        }
+        while ( t is not null );
+
+        var interfaces = type.GetInterfaces();
+        foreach ( var i in interfaces )
+        {
+            var member = memberSelector( i );
+            if ( member is not null )
+                return member;
+        }
+
+        return null;
+    }
+
+    [Pure]
     public static string GetDebugString(this Type type)
     {
         return AppendDebugString( new StringBuilder(), type ).ToString();
