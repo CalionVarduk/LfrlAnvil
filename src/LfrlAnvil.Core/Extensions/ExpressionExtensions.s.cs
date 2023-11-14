@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -82,14 +83,22 @@ public static class ExpressionExtensions
         {
             var elementType = enumerable.Type.GetElementType();
             if ( elementType is not null )
-                enumerable = Expression.Convert( enumerable, typeof( IEnumerable<> ).MakeGenericType( elementType ) );
+            {
+                var arraySegmentType = typeof( ArraySegment<> ).MakeGenericType( elementType );
+                var arraySegmentCtor = arraySegmentType.GetConstructor( new[] { enumerable.Type } );
+                Assume.IsNotNull( arraySegmentCtor );
+                enumerable = Expression.New( arraySegmentCtor, enumerable );
+            }
         }
 
         var getEnumeratorMethod = enumerable.Type.FindMember(
-            static t => t.GetMethod(
-                nameof( IEnumerable.GetEnumerator ),
-                BindingFlags.Public | BindingFlags.Instance,
-                Type.EmptyTypes ) );
+            static t =>
+                t.GetMethods( BindingFlags.Public | BindingFlags.Instance )
+                    .FirstOrDefault(
+                        static m => ! m.IsGenericMethod &&
+                            m.ReturnType != typeof( void ) &&
+                            m.Name == nameof( IEnumerable.GetEnumerator ) &&
+                            m.GetParameters().Length == 0 ) );
 
         Ensure.IsNotNull( getEnumeratorMethod );
         Assume.IsNotNull( getEnumeratorMethod.DeclaringType );
@@ -100,31 +109,30 @@ public static class ExpressionExtensions
             Expression.Call( enumerable.GetOrConvert( getEnumeratorMethod.DeclaringType ), getEnumeratorMethod ) );
 
         var currentProperty = enumerator.Type.FindMember(
-            static t => t.GetProperty(
-                nameof( IEnumerator.Current ),
-                BindingFlags.Public | BindingFlags.Instance,
-                null,
-                null,
-                Type.EmptyTypes,
-                null ) );
+            static t => t.GetProperties( BindingFlags.Public | BindingFlags.Instance )
+                .FirstOrDefault(
+                    static p => p.GetGetMethod() is not null &&
+                        p.Name == nameof( IEnumerator.Current ) &&
+                        p.GetIndexParameters().Length == 0 ) );
 
         Ensure.IsNotNull( currentProperty );
         Assume.IsNotNull( currentProperty.DeclaringType );
 
         var moveNextMethod = enumerator.Type.FindMember(
-            static t => t.GetMethod(
-                nameof( IEnumerator.MoveNext ),
-                BindingFlags.Public | BindingFlags.Instance,
-                Type.EmptyTypes ) );
+            static t => t.GetMethods( BindingFlags.Public | BindingFlags.Instance )
+                .FirstOrDefault(
+                    static m => ! m.IsGenericMethod &&
+                        m.ReturnType == typeof( bool ) &&
+                        m.Name == nameof( IEnumerator.MoveNext ) &&
+                        m.GetParameters().Length == 0 ) );
 
         Ensure.IsNotNull( moveNextMethod );
         Assume.IsNotNull( moveNextMethod.DeclaringType );
 
         var disposeMethod = enumerator.Type.FindMember(
-            static t => t.GetMethod(
-                nameof( IDisposable.Dispose ),
-                BindingFlags.Public | BindingFlags.Instance,
-                Type.EmptyTypes ) );
+            static t => t.GetMethods( BindingFlags.Public | BindingFlags.Instance )
+                .FirstOrDefault(
+                    static m => ! m.IsGenericMethod && m.Name == nameof( IDisposable.Dispose ) && m.GetParameters().Length == 0 ) );
 
         var current = Expression.Variable( currentProperty.PropertyType, currentVariableName );
         var currentMemberAccess = Expression.MakeMemberAccess( enumerator.GetOrConvert( currentProperty.DeclaringType ), currentProperty );
