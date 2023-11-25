@@ -34,7 +34,7 @@ public sealed class SqlValuesNode : SqlNodeBase
     {
         get
         {
-            Ensure.IsInRange( rowIndex, 0, RowCount - 1 );
+            Ensure.IsInIndexRange( rowIndex, RowCount );
             return GetRow( rowIndex );
         }
     }

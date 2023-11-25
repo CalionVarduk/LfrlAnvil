@@ -137,7 +137,7 @@ public readonly struct Bitmask<T> : IEquatable<Bitmask<T>>, IComparable<Bitmask<
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public bool ContainsBit(int bitIndex)
     {
-        Ensure.IsInRange( bitIndex, 0, BitCount - 1 );
+        Ensure.IsInIndexRange( bitIndex, BitCount );
         return ContainsAll( FromLongValue( 1UL << bitIndex ) );
     }
 
@@ -160,7 +160,7 @@ public readonly struct Bitmask<T> : IEquatable<Bitmask<T>>, IComparable<Bitmask<
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Bitmask<T> SetBit(int bitIndex)
     {
-        Ensure.IsInRange( bitIndex, 0, BitCount - 1 );
+        Ensure.IsInIndexRange( bitIndex, BitCount );
         return Set( FromLongValue( 1UL << bitIndex ) );
     }
 
@@ -183,7 +183,7 @@ public readonly struct Bitmask<T> : IEquatable<Bitmask<T>>, IComparable<Bitmask<
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Bitmask<T> UnsetBit(int bitIndex)
     {
-        Ensure.IsInRange( bitIndex, 0, BitCount - 1 );
+        Ensure.IsInIndexRange( bitIndex, BitCount );
         return Unset( FromLongValue( 1UL << bitIndex ) );
     }
 

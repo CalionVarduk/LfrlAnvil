@@ -35,7 +35,7 @@ public struct BenchmarkStatisticsCollection
             BenchmarkHelpers.CollectGarbage();
 
         var endAllocatedBytes = BenchmarkHelpers.GetAllocatedBytes();
-        Ensure.IsInRange( NextStepIndex, 0, AllocatedBytes.Length - 1 );
+        Ensure.IsInIndexRange( NextStepIndex, AllocatedBytes.Length );
 
         AllocatedBytes[NextStepIndex] = GetNextMemoryEntry( AllocatedBytes[NextStepIndex], endAllocatedBytes - info.StartAllocatedBytes );
         ElapsedTimeTicks[SampleIndex, NextStepIndex] = StopwatchTimestamp.GetTicks( info.StartTimestamp, endTimestamp );

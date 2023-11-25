@@ -271,6 +271,13 @@ public static class Ensure
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static void IsInIndexRange(int param, int count, [CallerArgumentExpression( "param" )] string paramName = "")
+    {
+        if ( param < 0 || param >= count )
+            ExceptionThrower.Throw( Exceptions.NotInRange( param, 0, count - 1, paramName ) );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static void IsInRange<T>(T param, T min, T max, [CallerArgumentExpression( "param" )] string paramName = "")
         where T : IComparable<T>
     {
