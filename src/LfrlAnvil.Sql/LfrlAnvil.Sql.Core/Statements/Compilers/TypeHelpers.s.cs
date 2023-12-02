@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics.Contracts;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Sql.Statements.Compilers;
@@ -11,6 +13,13 @@ internal static class TypeHelpers
 {
     internal const BindingFlags PublicMember = BindingFlags.Public | BindingFlags.Instance;
     internal const BindingFlags PublicDeclaredMember = PublicMember | BindingFlags.DeclaredOnly;
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static bool IsReducibleCollection(Type type)
+    {
+        return type != typeof( byte[] ) && type != typeof( string ) && type.IsAssignableTo( typeof( IEnumerable ) );
+    }
 
     [Pure]
     internal static ConstructorInfo GetResultSetFieldCtor(Type type)

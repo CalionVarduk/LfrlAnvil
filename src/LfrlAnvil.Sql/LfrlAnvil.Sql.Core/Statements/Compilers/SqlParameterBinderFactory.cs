@@ -97,7 +97,7 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
     private readonly record struct StatementParameterInfo(
         string Name,
         object Source,
-        SqlStatementTypeInfo Type,
+        TypeNullability Type,
         bool IgnoreWhenNull,
         bool IsReducibleCollection);
 
@@ -166,13 +166,17 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
     {
         Assume.IsNull( configuration.CustomSelector );
         Assume.IsNotNull( configuration.TargetParameterName );
-        var type = SqlStatementTypeInfo.Create( member, _toolbox.NullContext );
+
+        var type = member.MemberType == MemberTypes.Field
+            ? _toolbox.NullContext.GetTypeNullability( ReinterpretCast.To<FieldInfo>( member ) )
+            : _toolbox.NullContext.GetTypeNullability( ReinterpretCast.To<PropertyInfo>( member ) );
+
         return new StatementParameterInfo(
             configuration.TargetParameterName,
             member,
             type,
             configuration.IsIgnoredWhenNull ?? ignoreNullValues,
-            reduceCollections && type.IsReducibleCollection );
+            reduceCollections && TypeHelpers.IsReducibleCollection( type.ActualType ) );
     }
 
     [Pure]
@@ -184,13 +188,13 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
     {
         Assume.IsNotNull( configuration.CustomSelector );
         Assume.IsNotNull( configuration.TargetParameterName );
-        var type = SqlStatementTypeInfo.Create( configuration.CustomSelector.Body.Type );
+        var type = TypeNullability.Create( configuration.CustomSelector.Body.Type );
         return new StatementParameterInfo(
             configuration.TargetParameterName,
             configuration.CustomSelector,
             type,
             configuration.IsIgnoredWhenNull ?? ignoreNullValues,
-            reduceCollections && type.IsReducibleCollection );
+            reduceCollections && TypeHelpers.IsReducibleCollection( type.ActualType ) );
     }
 
     private void ValidateParameterNameDuplicates(ReadOnlySpan<StatementParameterInfo> sources)
@@ -621,7 +625,7 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
         {
             var elementName = CreateCollectionElementName( name );
             var forEachLoopCreator = parameterSource.ToForEachLoop( currentVariableName: "element" );
-            var elementType = SqlStatementTypeInfo.Create( forEachLoopCreator.CurrentProperty, NullContext );
+            var elementType = NullContext.GetTypeNullability( forEachLoopCreator.CurrentProperty );
 
             BlockExpression forEachLoopBlock;
             if ( elementType.IsNullable )

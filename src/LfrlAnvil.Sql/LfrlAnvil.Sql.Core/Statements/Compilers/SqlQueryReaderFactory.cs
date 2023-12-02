@@ -78,7 +78,8 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
 
         var (ctor, ctorParameters) = FindRowTypeConstructor( rowType, creationOptions.RowTypeConstructorPredicate );
         var queryFields = CreateQueryFields( rowType, ctorParameters, in creationOptions );
-        var (memberReadExpressions, ordinalsByFieldName) = CreateMemberReadExpressionsAndQueryFieldOrdinalsLookup( queryFields );
+        var (memberReadExpressions, ordinalsByFieldName) =
+            CreateMemberReadExpressionsAndQueryFieldOrdinalsLookup( queryFields, creationOptions.AlwaysTestForNull );
 
         var persistResultSetFields = creationOptions.ResultSetFieldsPersistenceMode != SqlQueryReaderResultSetFieldsPersistenceMode.Ignore;
         var persistResultSetFieldTypes = creationOptions.ResultSetFieldsPersistenceMode ==
@@ -193,7 +194,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         {
             result = new QueryFieldInfo[ctorParameters.Length];
             for ( var i = 0; i < ctorParameters.Length; ++i )
-                result[i] = CreateQueryField( ctorParameters[i], creationOptions.AlwaysTestForNull, memberConfigurationsByName );
+                result[i] = CreateQueryField( ctorParameters[i], memberConfigurationsByName );
         }
         else
         {
@@ -237,7 +238,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
             for ( i = 0; i < result.Length; ++i )
             {
                 var (member, name) = members[i];
-                result[i] = CreateQueryField( member, name, creationOptions.AlwaysTestForNull, memberConfigurationsByName );
+                result[i] = CreateQueryField( member, name, memberConfigurationsByName );
             }
         }
 
@@ -246,7 +247,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
 
     [Pure]
     private (Expression[] MemberReadExpressions, Dictionary<string, ParameterExpression> OrdinalsByFieldName)
-        CreateMemberReadExpressionsAndQueryFieldOrdinalsLookup(ReadOnlySpan<QueryFieldInfo> dataFields)
+        CreateMemberReadExpressionsAndQueryFieldOrdinalsLookup(ReadOnlySpan<QueryFieldInfo> dataFields, bool alwaysTestForNull)
     {
         var readerCallsToolbox = new ReaderCallsToolbox( this, dataFields.Length );
         for ( var i = 0; i < dataFields.Length; ++i )
@@ -267,10 +268,10 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
             }
 
             var ordinal = readerCallsToolbox.GetOrAddOrdinal( field.Name );
-            Assume.True( mapping.Body.Type.IsAssignableTo( field.Type.NormalizedType ) );
+            Assume.True( mapping.Body.Type.IsAssignableTo( field.Type.UnderlyingType ) );
             var columnRead = readerCallsToolbox.ApplyTypeDefMapping( mapping, ordinal, field.Type.ActualType );
 
-            if ( field.Type.IsNullable )
+            if ( alwaysTestForNull || field.Type.IsNullable )
                 columnRead = _toolbox.CreateNullableRead( ordinal, Expression.Default( field.Type.ActualType ), columnRead );
 
             readerCallsToolbox.SetReadExpression( i, columnRead );
@@ -281,13 +282,10 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private QueryFieldInfo CreateQueryField(
-        ParameterInfo parameter,
-        bool alwaysTestForNull,
-        Dictionary<string, SqlQueryMemberConfiguration>? memberConfigurations)
+    private QueryFieldInfo CreateQueryField(ParameterInfo parameter, Dictionary<string, SqlQueryMemberConfiguration>? memberConfigurations)
     {
         Assume.IsNotNull( parameter.Name );
-        var type = SqlStatementTypeInfo.Create( parameter, _toolbox.NullContext, alwaysTestForNull );
+        var type = _toolbox.NullContext.GetTypeNullability( parameter );
         return CreateQueryField( parameter.Name, parameter, type, memberConfigurations );
     }
 
@@ -296,10 +294,12 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
     private QueryFieldInfo CreateQueryField(
         MemberInfo member,
         string name,
-        bool alwaysTestForNull,
         Dictionary<string, SqlQueryMemberConfiguration>? memberConfigurations)
     {
-        var type = SqlStatementTypeInfo.Create( member, _toolbox.NullContext, alwaysTestForNull );
+        var type = member.MemberType == MemberTypes.Field
+            ? _toolbox.NullContext.GetTypeNullability( ReinterpretCast.To<FieldInfo>( member ) )
+            : _toolbox.NullContext.GetTypeNullability( ReinterpretCast.To<PropertyInfo>( member ) );
+
         return CreateQueryField( name, member, type, memberConfigurations );
     }
 
@@ -307,12 +307,12 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
     private QueryFieldInfo CreateQueryField(
         string name,
         object target,
-        SqlStatementTypeInfo type,
+        TypeNullability type,
         Dictionary<string, SqlQueryMemberConfiguration>? memberConfigurations)
     {
         if ( memberConfigurations is null || ! memberConfigurations.TryGetValue( name, out var cfg ) )
         {
-            var typeDef = ColumnTypeDefinitions.GetByType( type.NormalizedType );
+            var typeDef = ColumnTypeDefinitions.GetByType( type.UnderlyingType );
             return new QueryFieldInfo( name, target, type, HasCustomMapping: false, typeDef.OutputMapping );
         }
 
@@ -322,7 +322,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
 
         if ( ! cfg.IsIgnored )
         {
-            var typeDef = ColumnTypeDefinitions.GetByType( type.NormalizedType );
+            var typeDef = ColumnTypeDefinitions.GetByType( type.UnderlyingType );
             return new QueryFieldInfo( cfg.SourceFieldName ?? name, target, type, HasCustomMapping: false, typeDef.OutputMapping );
         }
 
@@ -402,7 +402,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
     private readonly record struct QueryFieldInfo(
         string Name,
         object Target,
-        SqlStatementTypeInfo Type,
+        TypeNullability Type,
         bool HasCustomMapping,
         LambdaExpression? Mapping)
     {
