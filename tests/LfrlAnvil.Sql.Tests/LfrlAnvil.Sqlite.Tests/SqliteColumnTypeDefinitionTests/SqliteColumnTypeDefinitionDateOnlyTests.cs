@@ -34,45 +34,50 @@ public class SqliteColumnTypeDefinitionDateOnlyTests : TestsBase
     [InlineData( "1970-01-01" )]
     [InlineData( "2023-04-09" )]
     [InlineData( "2022-11-23" )]
-    public void TrySetParameter_ShouldUpdateParameterCorrectly(string dt)
+    public void TryToParameterValue_ShouldReturnCorrectResult(string dt)
     {
         var value = DateOnly.Parse( dt );
-        var parameter = new SqliteParameter();
         var sut = _provider.GetByType<DateOnly>();
-
-        var result = sut.TrySetParameter( parameter, value );
-
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            parameter.DbType.Should().Be( DbType.String );
-            parameter.Value.Should().Be( dt );
-        }
+        var result = sut.TryToParameterValue( value );
+        result.Should().Be( dt );
     }
 
     [Fact]
-    public void TrySetParameter_ShouldReturnFalse_WhenValueIsNotOfDateOnlyType()
+    public void TryToParameterValue_ShouldReturnNull_WhenValueIsNotOfDateOnlyType()
+    {
+        var sut = _provider.GetByType<DateOnly>();
+        var result = sut.TryToParameterValue( string.Empty );
+        result.Should().BeNull();
+    }
+
+    [Theory]
+    [InlineData( true )]
+    [InlineData( false )]
+    public void SetParameterInfo_ShouldUpdateSqliteParameterProperties(bool isNullable)
     {
         var parameter = new SqliteParameter();
         var sut = _provider.GetByType<DateOnly>();
 
-        var result = sut.TrySetParameter( parameter, string.Empty );
-
-        result.Should().BeFalse();
-    }
-
-    [Fact]
-    public void SetNullParameter_ShouldUpdateParameterCorrectly()
-    {
-        var parameter = new SqliteParameter();
-        var sut = _provider.GetByType<DateOnly>();
-
-        sut.SetNullParameter( parameter );
+        sut.SetParameterInfo( parameter, isNullable );
 
         using ( new AssertionScope() )
         {
-            parameter.DbType.Should().Be( DbType.String );
-            parameter.Value.Should().BeSameAs( DBNull.Value );
+            parameter.DbType.Should().Be( sut.DataType.DbType );
+            parameter.SqliteType.Should().Be( SqliteType.Text );
+            parameter.IsNullable.Should().Be( isNullable );
         }
+    }
+
+    [Theory]
+    [InlineData( true )]
+    [InlineData( false )]
+    public void SetParameterInfo_ShouldUpdateNonSqliteParameterDbTypeProperty(bool isNullable)
+    {
+        var parameter = Substitute.For<IDbDataParameter>();
+        var sut = _provider.GetByType<DateOnly>();
+
+        sut.SetParameterInfo( parameter, isNullable );
+
+        parameter.DbType.Should().Be( sut.DataType.DbType );
     }
 }

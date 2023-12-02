@@ -1,24 +1,25 @@
 ﻿using System;
 using System.Data;
 using System.Diagnostics.Contracts;
+using System.Linq.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
 
 namespace LfrlAnvil.Sql;
 
 public interface ISqlColumnTypeDefinition
 {
-    ISqlDataType DbType { get; }
+    ISqlDataType DataType { get; }
     Type RuntimeType { get; }
     SqlLiteralNode DefaultValue { get; }
+    LambdaExpression OutputMapping { get; }
 
     [Pure]
     string? TryToDbLiteral(object value);
 
-    bool TrySetParameter(IDbDataParameter parameter, object value);
-    void SetNullParameter(IDbDataParameter parameter);
-
     [Pure]
-    IDbDataParameter CreateParameter(string name);
+    object? TryToParameterValue(object value);
+
+    void SetParameterInfo(IDbDataParameter parameter, bool isNullable);
 }
 
 public interface ISqlColumnTypeDefinition<T> : ISqlColumnTypeDefinition
@@ -29,9 +30,13 @@ public interface ISqlColumnTypeDefinition<T> : ISqlColumnTypeDefinition
     [Pure]
     string ToDbLiteral(T value);
 
-    void SetParameter(IDbDataParameter parameter, T value);
+    [Pure]
+    object ToParameterValue(T value);
 
     [Pure]
-    ISqlColumnTypeDefinition<TTarget> Extend<TTarget>(Func<TTarget, T> mapper, TTarget defaultValue)
+    ISqlColumnTypeDefinition<TTarget> Extend<TTarget>(
+        Func<TTarget, T> mapper,
+        Expression<Func<T, TTarget>> outputMapper,
+        TTarget defaultValue)
         where TTarget : notnull;
 }

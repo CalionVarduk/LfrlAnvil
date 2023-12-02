@@ -29,48 +29,53 @@ public class SqliteColumnTypeDefinitionEnumTests : TestsBase
     }
 
     [Theory]
-    [InlineData( Values.A )]
-    [InlineData( Values.B )]
-    [InlineData( Values.C )]
-    public void TrySetParameter_ShouldUpdateParameterCorrectly(Values value)
+    [InlineData( Values.A, -10 )]
+    [InlineData( Values.B, 0 )]
+    [InlineData( Values.C, 123 )]
+    public void TryToParameterValue_ShouldReturnCorrectResult(Values value, long expected)
     {
-        var parameter = new SqliteParameter();
         var sut = _provider.GetByType<Values>();
-
-        var result = sut.TrySetParameter( parameter, value );
-
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            parameter.DbType.Should().Be( DbType.Int64 );
-            parameter.Value.Should().Be( (long)value );
-        }
+        var result = sut.TryToParameterValue( value );
+        result.Should().Be( expected );
     }
 
     [Fact]
-    public void TrySetParameter_ShouldReturnFalse_WhenValueIsNotOfEnumType()
+    public void TryToParameterValue_ShouldReturnNull_WhenValueIsNotOfEnumType()
     {
-        var parameter = new SqliteParameter();
         var sut = _provider.GetByType<Values>();
-
-        var result = sut.TrySetParameter( parameter, string.Empty );
-
-        result.Should().BeFalse();
+        var result = sut.TryToParameterValue( string.Empty );
+        result.Should().BeNull();
     }
 
-    [Fact]
-    public void SetNullParameter_ShouldUpdateParameterCorrectly()
+    [Theory]
+    [InlineData( true )]
+    [InlineData( false )]
+    public void SetParameterInfo_ShouldUpdateSqliteParameterProperties(bool isNullable)
     {
         var parameter = new SqliteParameter();
         var sut = _provider.GetByType<Values>();
 
-        sut.SetNullParameter( parameter );
+        sut.SetParameterInfo( parameter, isNullable );
 
         using ( new AssertionScope() )
         {
-            parameter.DbType.Should().Be( DbType.Int64 );
-            parameter.Value.Should().BeSameAs( DBNull.Value );
+            parameter.DbType.Should().Be( sut.DataType.DbType );
+            parameter.SqliteType.Should().Be( SqliteType.Integer );
+            parameter.IsNullable.Should().Be( isNullable );
         }
+    }
+
+    [Theory]
+    [InlineData( true )]
+    [InlineData( false )]
+    public void SetParameterInfo_ShouldUpdateNonSqliteParameterDbTypeProperty(bool isNullable)
+    {
+        var parameter = Substitute.For<IDbDataParameter>();
+        var sut = _provider.GetByType<Values>();
+
+        sut.SetParameterInfo( parameter, isNullable );
+
+        parameter.DbType.Should().Be( sut.DataType.DbType );
     }
 
     public enum Values : sbyte

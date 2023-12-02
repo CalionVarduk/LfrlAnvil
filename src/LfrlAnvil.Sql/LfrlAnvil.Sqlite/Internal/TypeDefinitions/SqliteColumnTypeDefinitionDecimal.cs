@@ -1,6 +1,4 @@
-﻿using System;
-using System.Data;
-using System.Diagnostics.Contracts;
+﻿using System.Diagnostics.Contracts;
 using System.Globalization;
 
 namespace LfrlAnvil.Sqlite.Internal.TypeDefinitions;
@@ -8,7 +6,13 @@ namespace LfrlAnvil.Sqlite.Internal.TypeDefinitions;
 internal sealed class SqliteColumnTypeDefinitionDecimal : SqliteColumnTypeDefinition<decimal>
 {
     internal SqliteColumnTypeDefinitionDecimal()
-        : base( SqliteDataType.Text, 0m ) { }
+        : base(
+            SqliteDataType.Text,
+            0m,
+            static (reader, ordinal) => decimal.Parse(
+                reader.GetString( ordinal ),
+                NumberStyles.Number | NumberStyles.AllowExponent,
+                CultureInfo.InvariantCulture ) ) { }
 
     [Pure]
     public override string ToDbLiteral(decimal value)
@@ -18,15 +22,11 @@ internal sealed class SqliteColumnTypeDefinitionDecimal : SqliteColumnTypeDefini
             : (-value).ToString( "\\'-0.0###########################\\'", CultureInfo.InvariantCulture );
     }
 
-    public override void SetParameter(IDbDataParameter parameter, decimal value)
+    [Pure]
+    public override object ToParameterValue(decimal value)
     {
-        parameter.DbType = System.Data.DbType.String;
-        parameter.Value = value.ToString( "0.0###########################", CultureInfo.InvariantCulture );
-    }
-
-    public override void SetNullParameter(IDbDataParameter parameter)
-    {
-        parameter.DbType = System.Data.DbType.String;
-        parameter.Value = DBNull.Value;
+        return value >= 0
+            ? value.ToString( "0.0###########################", CultureInfo.InvariantCulture )
+            : (-value).ToString( "-0.0###########################", CultureInfo.InvariantCulture );
     }
 }

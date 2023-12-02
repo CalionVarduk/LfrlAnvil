@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Tests.Helpers;
@@ -143,6 +144,34 @@ public partial class ObjectExpressionsTests : TestsBase
             sut.Type.Should().BeNull();
             text.Should().Be( "@foo : ?" );
         }
+    }
+
+    [Fact]
+    public void ParameterRange_ShouldReturnArrayOfParameters_WhenCountIsGreaterThanZero()
+    {
+        var result = SqlNode.ParameterRange<int>( "foo", count: 3 );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().HaveCount( 3 );
+            result.ElementAtOrDefault( 0 ).Should().BeEquivalentTo( SqlNode.Parameter<int>( "foo1" ) );
+            result.ElementAtOrDefault( 1 ).Should().BeEquivalentTo( SqlNode.Parameter<int>( "foo2" ) );
+            result.ElementAtOrDefault( 2 ).Should().BeEquivalentTo( SqlNode.Parameter<int>( "foo3" ) );
+        }
+    }
+
+    [Fact]
+    public void ParameterRange_ShouldReturnEmptyArray_WhenCountEqualsZero()
+    {
+        var result = SqlNode.ParameterRange<int>( "foo", count: 0 );
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ParameterRange_ShouldThrowArgumentOutOfRangeException_WhenCountIsLessThanZero()
+    {
+        var action = Lambda.Of( () => SqlNode.ParameterRange<int>( "foo", count: -1 ) );
+        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
 
     [Fact]

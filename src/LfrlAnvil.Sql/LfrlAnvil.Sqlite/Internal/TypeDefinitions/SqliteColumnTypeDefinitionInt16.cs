@@ -1,13 +1,11 @@
-﻿using System;
-using System.Data;
-using System.Diagnostics.Contracts;
+﻿using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Sqlite.Internal.TypeDefinitions;
 
 internal sealed class SqliteColumnTypeDefinitionInt16 : SqliteColumnTypeDefinition<short>
 {
     internal SqliteColumnTypeDefinitionInt16()
-        : base( SqliteDataType.Integer, 0 ) { }
+        : base( SqliteDataType.Integer, 0, static (reader, ordinal) => (short)reader.GetInt64( ordinal ) ) { }
 
     [Pure]
     public override string ToDbLiteral(short value)
@@ -15,15 +13,9 @@ internal sealed class SqliteColumnTypeDefinitionInt16 : SqliteColumnTypeDefiniti
         return SqliteHelpers.GetDbLiteral( value );
     }
 
-    public override void SetParameter(IDbDataParameter parameter, short value)
+    [Pure]
+    public override object ToParameterValue(short value)
     {
-        parameter.DbType = System.Data.DbType.Int64;
-        parameter.Value = (long)value;
-    }
-
-    public override void SetNullParameter(IDbDataParameter parameter)
-    {
-        parameter.DbType = System.Data.DbType.Int64;
-        parameter.Value = DBNull.Value;
+        return (long)value;
     }
 }

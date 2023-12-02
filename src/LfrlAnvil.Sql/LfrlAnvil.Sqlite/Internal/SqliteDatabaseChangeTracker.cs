@@ -147,8 +147,8 @@ internal sealed class SqliteDatabaseChangeTracker
             column,
             SqliteObjectChangeDescriptor.DataType,
             SqliteObjectStatus.Modified,
-            oldValue.DbType,
-            column.TypeDefinition.DbType );
+            oldValue.DataType,
+            column.TypeDefinition.DataType );
 
         AddChange( column.Table, change );
     }
@@ -535,9 +535,9 @@ internal sealed class SqliteDatabaseChangeTracker
 
             var oldName = buffer.TryGetOldName( column.Id ) ?? column.Name;
             var oldIsNullable = buffer.TryGetOldIsNullable( column.Id ) ?? column.IsNullable;
-            var oldDataType = buffer.TryGetOldDataType( column.Id ) ?? column.TypeDefinition.DbType;
+            var oldDataType = buffer.TryGetOldDataType( column.Id ) ?? column.TypeDefinition.DataType;
 
-            SqlExpressionNode oldDataField = oldDataType == column.TypeDefinition.DbType
+            SqlExpressionNode oldDataField = oldDataType == column.TypeDefinition.DataType
                 ? column.Node
                 : table.RecordSet.GetRawField(
                         oldName,

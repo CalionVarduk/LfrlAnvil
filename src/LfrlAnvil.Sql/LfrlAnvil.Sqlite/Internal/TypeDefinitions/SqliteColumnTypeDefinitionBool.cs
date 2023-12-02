@@ -1,6 +1,4 @@
-﻿using System;
-using System.Data;
-using System.Diagnostics.Contracts;
+﻿using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Sqlite.Internal.TypeDefinitions;
 
@@ -10,7 +8,7 @@ internal sealed class SqliteColumnTypeDefinitionBool : SqliteColumnTypeDefinitio
     private static readonly object One = 1L;
 
     internal SqliteColumnTypeDefinitionBool()
-        : base( SqliteDataType.Integer, false ) { }
+        : base( SqliteDataType.Integer, false, static (reader, ordinal) => reader.GetInt64( ordinal ) != 0 ) { }
 
     [Pure]
     public override string ToDbLiteral(bool value)
@@ -18,15 +16,9 @@ internal sealed class SqliteColumnTypeDefinitionBool : SqliteColumnTypeDefinitio
         return SqliteHelpers.GetDbLiteral( value );
     }
 
-    public override void SetParameter(IDbDataParameter parameter, bool value)
+    [Pure]
+    public override object ToParameterValue(bool value)
     {
-        parameter.DbType = System.Data.DbType.Int64;
-        parameter.Value = value ? One : Zero;
-    }
-
-    public override void SetNullParameter(IDbDataParameter parameter)
-    {
-        parameter.DbType = System.Data.DbType.Int64;
-        parameter.Value = DBNull.Value;
+        return value ? One : Zero;
     }
 }

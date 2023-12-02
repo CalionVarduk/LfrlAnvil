@@ -28,48 +28,50 @@ public class SqliteColumnTypeDefinitionInt32Tests : TestsBase
         result.Should().BeNull();
     }
 
+    [Fact]
+    public void TryToParameterValue_ShouldReturnCorrectResult()
+    {
+        var sut = _provider.GetByType<int>();
+        var result = sut.TryToParameterValue( 1234567 );
+        result.Should().Be( 1234567L );
+    }
+
+    [Fact]
+    public void TryToParameterValue_ShouldReturnNull_WhenValueIsNotOfInt32Type()
+    {
+        var sut = _provider.GetByType<int>();
+        var result = sut.TryToParameterValue( string.Empty );
+        result.Should().BeNull();
+    }
+
     [Theory]
-    [InlineData( 1234567 )]
-    [InlineData( 0 )]
-    [InlineData( -1234567 )]
-    public void TrySetParameter_ShouldUpdateParameterCorrectly(int value)
+    [InlineData( true )]
+    [InlineData( false )]
+    public void SetParameterInfo_ShouldUpdateSqliteParameterProperties(bool isNullable)
     {
         var parameter = new SqliteParameter();
         var sut = _provider.GetByType<int>();
 
-        var result = sut.TrySetParameter( parameter, value );
+        sut.SetParameterInfo( parameter, isNullable );
 
         using ( new AssertionScope() )
         {
-            result.Should().BeTrue();
-            parameter.DbType.Should().Be( DbType.Int64 );
-            parameter.Value.Should().Be( (long)value );
+            parameter.DbType.Should().Be( sut.DataType.DbType );
+            parameter.SqliteType.Should().Be( SqliteType.Integer );
+            parameter.IsNullable.Should().Be( isNullable );
         }
     }
 
-    [Fact]
-    public void TrySetParameter_ShouldReturnFalse_WhenValueIsNotOfInt32Type()
+    [Theory]
+    [InlineData( true )]
+    [InlineData( false )]
+    public void SetParameterInfo_ShouldUpdateNonSqliteParameterDbTypeProperty(bool isNullable)
     {
-        var parameter = new SqliteParameter();
+        var parameter = Substitute.For<IDbDataParameter>();
         var sut = _provider.GetByType<int>();
 
-        var result = sut.TrySetParameter( parameter, string.Empty );
+        sut.SetParameterInfo( parameter, isNullable );
 
-        result.Should().BeFalse();
-    }
-
-    [Fact]
-    public void SetNullParameter_ShouldUpdateParameterCorrectly()
-    {
-        var parameter = new SqliteParameter();
-        var sut = _provider.GetByType<int>();
-
-        sut.SetNullParameter( parameter );
-
-        using ( new AssertionScope() )
-        {
-            parameter.DbType.Should().Be( DbType.Int64 );
-            parameter.Value.Should().BeSameAs( DBNull.Value );
-        }
+        parameter.DbType.Should().Be( sut.DataType.DbType );
     }
 }

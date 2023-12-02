@@ -32,52 +32,50 @@ public class SqliteColumnTypeDefinitionDoubleTests : TestsBase
         result.Should().BeNull();
     }
 
+    [Fact]
+    public void TryToParameterValue_ShouldReturnCorrectResult()
+    {
+        var sut = _provider.GetByType<double>();
+        var result = sut.TryToParameterValue( 123.625 );
+        result.Should().Be( 123.625 );
+    }
+
+    [Fact]
+    public void TryToParameterValue_ShouldReturnNull_WhenValueIsNotOfDoubleType()
+    {
+        var sut = _provider.GetByType<double>();
+        var result = sut.TryToParameterValue( string.Empty );
+        result.Should().BeNull();
+    }
+
     [Theory]
-    [InlineData( 123.625 )]
-    [InlineData( 123 )]
-    [InlineData( 0 )]
-    [InlineData( -123.625 )]
-    [InlineData( -123 )]
-    [InlineData( double.Epsilon )]
-    [InlineData( 1234567890987654321 )]
-    public void TrySetParameter_ShouldUpdateParameterCorrectly(double value)
+    [InlineData( true )]
+    [InlineData( false )]
+    public void SetParameterInfo_ShouldUpdateSqliteParameterProperties(bool isNullable)
     {
         var parameter = new SqliteParameter();
         var sut = _provider.GetByType<double>();
 
-        var result = sut.TrySetParameter( parameter, value );
+        sut.SetParameterInfo( parameter, isNullable );
 
         using ( new AssertionScope() )
         {
-            result.Should().BeTrue();
-            parameter.DbType.Should().Be( DbType.Double );
-            parameter.Value.Should().Be( value );
+            parameter.DbType.Should().Be( sut.DataType.DbType );
+            parameter.SqliteType.Should().Be( SqliteType.Real );
+            parameter.IsNullable.Should().Be( isNullable );
         }
     }
 
-    [Fact]
-    public void TrySetParameter_ShouldReturnFalse_WhenValueIsNotOfDoubleType()
+    [Theory]
+    [InlineData( true )]
+    [InlineData( false )]
+    public void SetParameterInfo_ShouldUpdateNonSqliteParameterDbTypeProperty(bool isNullable)
     {
-        var parameter = new SqliteParameter();
+        var parameter = Substitute.For<IDbDataParameter>();
         var sut = _provider.GetByType<double>();
 
-        var result = sut.TrySetParameter( parameter, string.Empty );
+        sut.SetParameterInfo( parameter, isNullable );
 
-        result.Should().BeFalse();
-    }
-
-    [Fact]
-    public void SetNullParameter_ShouldUpdateParameterCorrectly()
-    {
-        var parameter = new SqliteParameter();
-        var sut = _provider.GetByType<double>();
-
-        sut.SetNullParameter( parameter );
-
-        using ( new AssertionScope() )
-        {
-            parameter.DbType.Should().Be( DbType.Double );
-            parameter.Value.Should().BeSameAs( DBNull.Value );
-        }
+        parameter.DbType.Should().Be( sut.DataType.DbType );
     }
 }

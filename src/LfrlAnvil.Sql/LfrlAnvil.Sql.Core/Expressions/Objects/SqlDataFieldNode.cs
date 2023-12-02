@@ -1,4 +1,6 @@
-﻿namespace LfrlAnvil.Sql.Expressions.Objects;
+﻿using System.Diagnostics.Contracts;
+
+namespace LfrlAnvil.Sql.Expressions.Objects;
 
 public abstract class SqlDataFieldNode : SqlExpressionNode
 {
@@ -10,4 +12,10 @@ public abstract class SqlDataFieldNode : SqlExpressionNode
 
     public SqlRecordSetNode RecordSet { get; }
     public abstract string Name { get; }
+
+    [Pure]
+    public static implicit operator SqlSelectFieldNode(SqlDataFieldNode node)
+    {
+        return node.AsSelf();
+    }
 }

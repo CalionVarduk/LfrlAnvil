@@ -29,49 +29,51 @@ public class SqliteColumnTypeDefinitionTimeSpanTests : TestsBase
         result.Should().BeNull();
     }
 
+    [Fact]
+    public void TryToParameterValue_ShouldReturnCorrectResult()
+    {
+        var value = TimeSpan.FromTicks( 1234567 );
+        var sut = _provider.GetByType<TimeSpan>();
+        var result = sut.TryToParameterValue( value );
+        result.Should().Be( 1234567L );
+    }
+
+    [Fact]
+    public void TryToParameterValue_ShouldReturnNull_WhenValueIsNotOfTimeSpanType()
+    {
+        var sut = _provider.GetByType<TimeSpan>();
+        var result = sut.TryToParameterValue( 0L );
+        result.Should().BeNull();
+    }
+
     [Theory]
-    [InlineData( 1234567 )]
-    [InlineData( 0 )]
-    [InlineData( -1234567 )]
-    public void TrySetParameter_ShouldUpdateParameterCorrectly(long ticks)
+    [InlineData( true )]
+    [InlineData( false )]
+    public void SetParameterInfo_ShouldUpdateSqliteParameterProperties(bool isNullable)
     {
-        var value = TimeSpan.FromTicks( ticks );
         var parameter = new SqliteParameter();
         var sut = _provider.GetByType<TimeSpan>();
 
-        var result = sut.TrySetParameter( parameter, value );
+        sut.SetParameterInfo( parameter, isNullable );
 
         using ( new AssertionScope() )
         {
-            result.Should().BeTrue();
-            parameter.DbType.Should().Be( DbType.Int64 );
-            parameter.Value.Should().Be( ticks );
+            parameter.DbType.Should().Be( sut.DataType.DbType );
+            parameter.SqliteType.Should().Be( SqliteType.Integer );
+            parameter.IsNullable.Should().Be( isNullable );
         }
     }
 
-    [Fact]
-    public void TrySetParameter_ShouldReturnFalse_WhenValueIsNotOfTimeSpanType()
+    [Theory]
+    [InlineData( true )]
+    [InlineData( false )]
+    public void SetParameterInfo_ShouldUpdateNonSqliteParameterDbTypeProperty(bool isNullable)
     {
-        var parameter = new SqliteParameter();
+        var parameter = Substitute.For<IDbDataParameter>();
         var sut = _provider.GetByType<TimeSpan>();
 
-        var result = sut.TrySetParameter( parameter, 0L );
+        sut.SetParameterInfo( parameter, isNullable );
 
-        result.Should().BeFalse();
-    }
-
-    [Fact]
-    public void SetNullParameter_ShouldUpdateParameterCorrectly()
-    {
-        var parameter = new SqliteParameter();
-        var sut = _provider.GetByType<TimeSpan>();
-
-        sut.SetNullParameter( parameter );
-
-        using ( new AssertionScope() )
-        {
-            parameter.DbType.Should().Be( DbType.Int64 );
-            parameter.Value.Should().BeSameAs( DBNull.Value );
-        }
+        parameter.DbType.Should().Be( sut.DataType.DbType );
     }
 }

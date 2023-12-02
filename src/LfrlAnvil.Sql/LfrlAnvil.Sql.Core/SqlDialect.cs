@@ -7,6 +7,7 @@ public class SqlDialect : IEquatable<SqlDialect>
 {
     public SqlDialect(string name)
     {
+        Ensure.IsNotEmpty( name );
         Name = name;
     }
 

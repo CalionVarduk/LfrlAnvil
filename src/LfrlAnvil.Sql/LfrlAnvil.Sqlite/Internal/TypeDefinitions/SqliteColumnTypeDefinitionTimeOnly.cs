@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Data;
 using System.Diagnostics.Contracts;
 using System.Globalization;
 
@@ -8,7 +7,10 @@ namespace LfrlAnvil.Sqlite.Internal.TypeDefinitions;
 internal sealed class SqliteColumnTypeDefinitionTimeOnly : SqliteColumnTypeDefinition<TimeOnly>
 {
     internal SqliteColumnTypeDefinitionTimeOnly()
-        : base( SqliteDataType.Text, TimeOnly.MinValue ) { }
+        : base(
+            SqliteDataType.Text,
+            TimeOnly.MinValue,
+            static (reader, ordinal) => TimeOnly.Parse( reader.GetString( ordinal ), CultureInfo.InvariantCulture ) ) { }
 
     [Pure]
     public override string ToDbLiteral(TimeOnly value)
@@ -16,15 +18,9 @@ internal sealed class SqliteColumnTypeDefinitionTimeOnly : SqliteColumnTypeDefin
         return value.ToString( "\\'HH:mm:ss.fffffff\\'", CultureInfo.InvariantCulture );
     }
 
-    public override void SetParameter(IDbDataParameter parameter, TimeOnly value)
+    [Pure]
+    public override object ToParameterValue(TimeOnly value)
     {
-        parameter.DbType = System.Data.DbType.String;
-        parameter.Value = value.ToString( "HH:mm:ss.fffffff", CultureInfo.InvariantCulture );
-    }
-
-    public override void SetNullParameter(IDbDataParameter parameter)
-    {
-        parameter.DbType = System.Data.DbType.String;
-        parameter.Value = DBNull.Value;
+        return value.ToString( "HH:mm:ss.fffffff", CultureInfo.InvariantCulture );
     }
 }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Data;
 using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Sqlite.Internal.TypeDefinitions;
@@ -7,7 +6,7 @@ namespace LfrlAnvil.Sqlite.Internal.TypeDefinitions;
 internal sealed class SqliteColumnTypeDefinitionTimeSpan : SqliteColumnTypeDefinition<TimeSpan>
 {
     internal SqliteColumnTypeDefinitionTimeSpan()
-        : base( SqliteDataType.Integer, TimeSpan.Zero ) { }
+        : base( SqliteDataType.Integer, TimeSpan.Zero, static (reader, ordinal) => TimeSpan.FromTicks( reader.GetInt64( ordinal ) ) ) { }
 
     [Pure]
     public override string ToDbLiteral(TimeSpan value)
@@ -15,15 +14,9 @@ internal sealed class SqliteColumnTypeDefinitionTimeSpan : SqliteColumnTypeDefin
         return SqliteHelpers.GetDbLiteral( value.Ticks );
     }
 
-    public override void SetParameter(IDbDataParameter parameter, TimeSpan value)
+    [Pure]
+    public override object ToParameterValue(TimeSpan value)
     {
-        parameter.DbType = System.Data.DbType.Int64;
-        parameter.Value = value.Ticks;
-    }
-
-    public override void SetNullParameter(IDbDataParameter parameter)
-    {
-        parameter.DbType = System.Data.DbType.Int64;
-        parameter.Value = DBNull.Value;
+        return value.Ticks;
     }
 }

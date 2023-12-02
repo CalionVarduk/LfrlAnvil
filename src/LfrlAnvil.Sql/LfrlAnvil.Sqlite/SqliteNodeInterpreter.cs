@@ -370,7 +370,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         Context.Sql.AppendSpace().Append( "AS" ).AppendSpace();
 
         var typeDefinition = ColumnTypeDefinitions.GetByType( node.TargetType );
-        Context.Sql.Append( typeDefinition.DbType.Name ).Append( ')' );
+        Context.Sql.Append( typeDefinition.DataType.Name ).Append( ')' );
     }
 
     public override void VisitInsertInto(SqlInsertIntoNode node)
@@ -513,7 +513,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
     {
         var typeDefinition = ColumnTypeDefinitions.GetByType( node.Type.BaseType );
         AppendDelimitedName( node.Name );
-        Context.Sql.AppendSpace().Append( typeDefinition.DbType.Name );
+        Context.Sql.AppendSpace().Append( typeDefinition.DataType.Name );
 
         if ( ! node.Type.IsNullable )
             Context.Sql.AppendSpace().Append( "NOT" ).AppendSpace().Append( "NULL" );

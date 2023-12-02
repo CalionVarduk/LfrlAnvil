@@ -1,4 +1,4 @@
-﻿using System.Data;
+﻿using System;
 using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Sql.Extensions;
@@ -12,30 +12,23 @@ public static class SqlColumnTypeDefinitionExtensions
         return (ISqlColumnTypeDefinition<T>)provider.GetByType( typeof( T ) );
     }
 
-    public static bool TrySetNullableParameter(this ISqlColumnTypeDefinition definition, IDbDataParameter parameter, object? value)
+    [Pure]
+    public static object? TryToNullableParameterValue(this ISqlColumnTypeDefinition definition, object? value)
     {
-        if ( value is not null )
-            return definition.TrySetParameter( parameter, value );
-
-        definition.SetNullParameter( parameter );
-        return true;
+        return value is null ? DBNull.Value : definition.TryToParameterValue( value );
     }
 
-    public static void SetNullableParameter<T>(this ISqlColumnTypeDefinition<T> definition, IDbDataParameter parameter, T? value)
+    [Pure]
+    public static object ToNullableParameterValue<T>(this ISqlColumnTypeDefinition<T> definition, T? value)
         where T : class
     {
-        if ( value is null )
-            definition.SetNullParameter( parameter );
-        else
-            definition.SetParameter( parameter, value );
+        return value is null ? DBNull.Value : definition.ToParameterValue( value );
     }
 
-    public static void SetNullableParameter<T>(this ISqlColumnTypeDefinition<T> definition, IDbDataParameter parameter, T? value)
+    [Pure]
+    public static object ToNullableParameterValue<T>(this ISqlColumnTypeDefinition<T> definition, T? value)
         where T : struct
     {
-        if ( value is null )
-            definition.SetNullParameter( parameter );
-        else
-            definition.SetParameter( parameter, value.Value );
+        return value is null ? DBNull.Value : definition.ToParameterValue( value.Value );
     }
 }

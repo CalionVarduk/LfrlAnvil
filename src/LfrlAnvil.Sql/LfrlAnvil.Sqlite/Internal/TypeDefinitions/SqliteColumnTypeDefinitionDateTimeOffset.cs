@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Data;
 using System.Diagnostics.Contracts;
 using System.Globalization;
 
@@ -8,7 +7,10 @@ namespace LfrlAnvil.Sqlite.Internal.TypeDefinitions;
 internal sealed class SqliteColumnTypeDefinitionDateTimeOffset : SqliteColumnTypeDefinition<DateTimeOffset>
 {
     internal SqliteColumnTypeDefinitionDateTimeOffset()
-        : base( SqliteDataType.Text, DateTimeOffset.UnixEpoch ) { }
+        : base(
+            SqliteDataType.Text,
+            DateTimeOffset.UnixEpoch,
+            static (reader, ordinal) => DateTimeOffset.Parse( reader.GetString( ordinal ), CultureInfo.InvariantCulture ) ) { }
 
     [Pure]
     public override string ToDbLiteral(DateTimeOffset value)
@@ -16,15 +18,9 @@ internal sealed class SqliteColumnTypeDefinitionDateTimeOffset : SqliteColumnTyp
         return value.ToString( "\\'yyyy-MM-dd HH:mm:ss.fffffffzzz\\'", CultureInfo.InvariantCulture );
     }
 
-    public override void SetParameter(IDbDataParameter parameter, DateTimeOffset value)
+    [Pure]
+    public override object ToParameterValue(DateTimeOffset value)
     {
-        parameter.DbType = System.Data.DbType.String;
-        parameter.Value = value.ToString( "yyyy-MM-dd HH:mm:ss.fffffffzzz", CultureInfo.InvariantCulture );
-    }
-
-    public override void SetNullParameter(IDbDataParameter parameter)
-    {
-        parameter.DbType = System.Data.DbType.String;
-        parameter.Value = DBNull.Value;
+        return value.ToString( "yyyy-MM-dd HH:mm:ss.fffffffzzz", CultureInfo.InvariantCulture );
     }
 }

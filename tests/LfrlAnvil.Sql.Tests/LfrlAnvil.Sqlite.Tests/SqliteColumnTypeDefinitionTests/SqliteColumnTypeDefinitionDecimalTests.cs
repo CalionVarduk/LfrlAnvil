@@ -43,45 +43,50 @@ public class SqliteColumnTypeDefinitionDecimalTests : TestsBase
     [InlineData( "-123.0" )]
     [InlineData( "1.2345678901234567890123456789" )]
     [InlineData( "-1.2345678901234567890123456789" )]
-    public void TrySetParameter_ShouldUpdateParameterCorrectly(string dec)
+    public void TryToParameterValue_ShouldReturnCorrectResult(string dec)
     {
         var value = decimal.Parse( dec, CultureInfo.InvariantCulture );
-        var parameter = new SqliteParameter();
         var sut = _provider.GetByType<decimal>();
-
-        var result = sut.TrySetParameter( parameter, value );
-
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            parameter.DbType.Should().Be( DbType.String );
-            parameter.Value.Should().Be( dec );
-        }
+        var result = sut.TryToParameterValue( value );
+        result.Should().Be( dec );
     }
 
     [Fact]
-    public void TrySetParameter_ShouldReturnFalse_WhenValueIsNotOfDecimalType()
+    public void TryToParameterValue_ShouldReturnNull_WhenValueIsNotOfDecimalType()
+    {
+        var sut = _provider.GetByType<decimal>();
+        var result = sut.TryToParameterValue( string.Empty );
+        result.Should().BeNull();
+    }
+
+    [Theory]
+    [InlineData( true )]
+    [InlineData( false )]
+    public void SetParameterInfo_ShouldUpdateSqliteParameterProperties(bool isNullable)
     {
         var parameter = new SqliteParameter();
         var sut = _provider.GetByType<decimal>();
 
-        var result = sut.TrySetParameter( parameter, string.Empty );
-
-        result.Should().BeFalse();
-    }
-
-    [Fact]
-    public void SetNullParameter_ShouldUpdateParameterCorrectly()
-    {
-        var parameter = new SqliteParameter();
-        var sut = _provider.GetByType<decimal>();
-
-        sut.SetNullParameter( parameter );
+        sut.SetParameterInfo( parameter, isNullable );
 
         using ( new AssertionScope() )
         {
-            parameter.DbType.Should().Be( DbType.String );
-            parameter.Value.Should().BeSameAs( DBNull.Value );
+            parameter.DbType.Should().Be( sut.DataType.DbType );
+            parameter.SqliteType.Should().Be( SqliteType.Text );
+            parameter.IsNullable.Should().Be( isNullable );
         }
+    }
+
+    [Theory]
+    [InlineData( true )]
+    [InlineData( false )]
+    public void SetParameterInfo_ShouldUpdateNonSqliteParameterDbTypeProperty(bool isNullable)
+    {
+        var parameter = Substitute.For<IDbDataParameter>();
+        var sut = _provider.GetByType<decimal>();
+
+        sut.SetParameterInfo( parameter, isNullable );
+
+        parameter.DbType.Should().Be( sut.DataType.DbType );
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace LfrlAnvil.Sql.Tests;
+﻿using LfrlAnvil.Functional;
+
+namespace LfrlAnvil.Sql.Tests;
 
 public class SqlDialectTests : TestsBase
 {
@@ -8,6 +10,13 @@ public class SqlDialectTests : TestsBase
         var name = Fixture.Create<string>();
         var sut = new SqlDialect( name );
         sut.Name.Should().BeSameAs( name );
+    }
+
+    [Fact]
+    public void Ctor_ShouldThrowArgumentException_WhenNameIsEmpty()
+    {
+        var action = Lambda.Of( () => new SqlDialect( string.Empty ) );
+        action.Should().ThrowExactly<ArgumentException>();
     }
 
     [Fact]

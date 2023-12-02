@@ -14,7 +14,6 @@ using LfrlAnvil.Sql.Events;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Visitors;
-using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Versioning;
 using LfrlAnvil.Sqlite.Exceptions;
@@ -438,15 +437,20 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
                             SqlDatabaseFactoryStatementType.VersionHistory );
                     }
 
-                    var versionBuild = version.Value.Build >= 0 ? version.Value.Build : (int?)null;
-                    var versionRevision = version.Value.Revision >= 0 ? version.Value.Revision : (int?)null;
-                    versionHistory.Ordinal.Type.SetParameter( pOrdinal, versionOrdinal );
-                    versionHistory.VersionMajor.Type.SetParameter( pVersionMajor, version.Value.Major );
-                    versionHistory.VersionMinor.Type.SetParameter( pVersionMinor, version.Value.Minor );
-                    versionHistory.VersionBuild.Type.SetNullableParameter( pVersionBuild, versionBuild );
-                    versionHistory.VersionRevision.Type.SetNullableParameter( pVersionRevision, versionRevision );
-                    versionHistory.Description.Type.SetParameter( pDescription, version.Description );
-                    versionHistory.CommitDateUtc.Type.SetParameter( pCommitDateUtc, DateTime.UtcNow );
+                    pOrdinal.Value = versionHistory.Ordinal.Type.ToParameterValue( versionOrdinal );
+                    pVersionMajor.Value = versionHistory.VersionMajor.Type.ToParameterValue( version.Value.Major );
+                    pVersionMinor.Value = versionHistory.VersionMinor.Type.ToParameterValue( version.Value.Minor );
+
+                    pVersionBuild.Value = version.Value.Build >= 0
+                        ? versionHistory.VersionBuild.Type.ToParameterValue( version.Value.Build )
+                        : DBNull.Value;
+
+                    pVersionRevision.Value = version.Value.Revision >= 0
+                        ? versionHistory.VersionRevision.Type.ToParameterValue( version.Value.Revision )
+                        : DBNull.Value;
+
+                    pDescription.Value = versionHistory.Description.Type.ToParameterValue( version.Description );
+                    pCommitDateUtc.Value = versionHistory.CommitDateUtc.Type.ToParameterValue( DateTime.UtcNow );
 
                     statementKey = statementKey.NextOrdinal();
                     statementExecutor.ExecuteNonQuery( insertVersionCommand, statementKey, SqlDatabaseFactoryStatementType.VersionHistory );
@@ -587,13 +591,13 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
             command.CommandText = info.Interpreter.Context.Sql.AppendSemicolon().ToString();
             info.Interpreter.Context.Clear();
 
-            command.Parameters.Add( info.Ordinal.Type.CreateParameter( pOrdinal.Name ) );
-            command.Parameters.Add( info.VersionMajor.Type.CreateParameter( pVersionMajor.Name ) );
-            command.Parameters.Add( info.VersionMinor.Type.CreateParameter( pVersionMinor.Name ) );
-            command.Parameters.Add( info.VersionBuild.Type.CreateParameter( pVersionBuild.Name ) );
-            command.Parameters.Add( info.VersionRevision.Type.CreateParameter( pVersionRevision.Name ) );
-            command.Parameters.Add( info.Description.Type.CreateParameter( pDescription.Name ) );
-            command.Parameters.Add( info.CommitDateUtc.Type.CreateParameter( pCommitDateUtc.Name ) );
+            AddCommandParameter( command, info.Ordinal );
+            AddCommandParameter( command, info.VersionMajor );
+            AddCommandParameter( command, info.VersionMinor );
+            AddCommandParameter( command, info.VersionBuild );
+            AddCommandParameter( command, info.VersionRevision );
+            AddCommandParameter( command, info.Description );
+            AddCommandParameter( command, info.CommitDateUtc );
             command.Prepare();
         }
         catch
@@ -644,8 +648,8 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
 
         foreach ( var (ordinal, elapsedTime) in elapsedTimes )
         {
-            pCommitDurationInTicks.Value = elapsedTime.Ticks;
-            pOrdinal.Value = ordinal;
+            pCommitDurationInTicks.Value = info.CommitDurationInTicks.Type.ToParameterValue( elapsedTime.Ticks );
+            pOrdinal.Value = info.Ordinal.Type.ToParameterValue( ordinal );
             statementExecutor.ExecuteVersionHistoryNonQuery( command );
         }
 
@@ -671,8 +675,8 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
             command.CommandText = info.Interpreter.Context.Sql.AppendSemicolon().ToString();
             info.Interpreter.Context.Clear();
 
-            command.Parameters.Add( info.CommitDurationInTicks.Type.CreateParameter( pCommitDuration.Name ) );
-            command.Parameters.Add( info.Ordinal.Type.CreateParameter( pOrdinal.Name ) );
+            AddCommandParameter( command, info.CommitDurationInTicks );
+            AddCommandParameter( command, info.Ordinal );
             command.Prepare();
         }
         catch
@@ -682,6 +686,16 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         }
 
         return command;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static void AddCommandParameter<T>(SqliteCommand command, VersionHistoryColumn<T> column)
+        where T : notnull
+    {
+        var parameter = command.CreateParameter();
+        column.Type.SetParameterInfo( parameter, column.Node.Type.IsNullable );
+        parameter.ParameterName = column.Node.Name;
+        command.Parameters.Add( parameter );
     }
 
     private static void FunctionInitializer(SqlDatabaseConnectionChangeEvent @event)

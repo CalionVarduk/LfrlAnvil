@@ -156,6 +156,23 @@ public partial class BaseExpressionsTests : TestsBase
     }
 
     [Fact]
+    public void DataField_SelectFieldNodeConversionOperator_ShouldReturnCorrectNode()
+    {
+        var dataField = SqlNode.RawRecordSet( "foo" ).GetField( "bar" );
+        var sut = (SqlSelectFieldNode)dataField;
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.SelectField );
+            sut.Alias.Should().BeNull();
+            sut.Expression.Should().BeSameAs( dataField );
+            sut.FieldName.Should().Be( "bar" );
+            text.Should().Be( $"({dataField})" );
+        }
+    }
+
+    [Fact]
     public void SelectAll_ShouldCreateSelectRecordSetNode_WithRecordSet()
     {
         var recordSet = SqlNode.RawRecordSet( "foo" );

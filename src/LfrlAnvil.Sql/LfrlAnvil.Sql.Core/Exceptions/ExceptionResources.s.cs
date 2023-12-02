@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using System.Text;
 using LfrlAnvil.Extensions;
@@ -23,6 +25,14 @@ public static class ExceptionResources
         "Foreign key origin index and referenced index must have the same amount of columns.";
 
     public const string DummyDataSourceDoesNotContainAnyRecordSets = "Dummy data source does not contain any record sets.";
+    public const string RowTypeCannotBeAbstract = "Row type cannot be abstract.";
+    public const string RowTypeCannotBeOpenGeneric = "Row type cannot be an open generic type.";
+    public const string RowTypeCannotBeNullable = "Row type cannot be nullable.";
+    public const string RowTypeDoesNotHaveValidCtor = "Row type doesn't have a valid constructor.";
+    public const string RowTypeDoesNotHaveAnyValidMembers = "Row type doesn't have any valid members.";
+    public const string SourceTypeCannotBeAbstract = "Source type cannot be abstract.";
+    public const string SourceTypeCannotBeOpenGeneric = "Source type cannot be an open generic type.";
+    public const string SourceTypeCannotBeNullable = "Source type cannot be nullable.";
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -198,13 +208,6 @@ public static class ExceptionResources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string ValueCannotBeUsedInParameter(Type type)
-    {
-        return $"Value cannot be used in database parameter through definition of '{type.GetDebugString()}' type.";
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string UnrecognizedSqlNode(Type visitorType, SqlNodeBase node)
     {
         return $@"Visitor of '{visitorType.GetDebugString()}' type doesn't recognize the following node:
@@ -292,6 +295,44 @@ public static class ExceptionResources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string UnexpectedStatementParameter(string name, Type type)
+    {
+        return $"Found unexpected statement parameter '{name}' of type '{type.GetDebugString()}'.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string IncompatibleStatementParameterType(string name, SqlExpressionType expectedType, Type actualType)
+    {
+        return
+            $"Found statement parameter '{name}' with expected type '{expectedType}' but actual type is '{actualType.GetDebugString()}'.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string RequiredStatementParameterIsIgnoredWhenNull(string name, Type actualType)
+    {
+        return $"Found nullable statement parameter '{name}' of '{actualType.GetDebugString()}' type which is ignored when value is null.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string MissingStatementParameter(string name, SqlExpressionType? type)
+    {
+        return type is null
+            ? $"Found missing statement parameter '{name}'."
+            : $"Found missing statement parameter '{name}' of type '{type.Value}'.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string ParameterAppearsMoreThanOnce(string name)
+    {
+        return $"Parameter '{name}' appears more than once.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string FieldDoesNotExist(string name)
     {
         return $"Field with name '{name}' does not exist.";
@@ -363,12 +404,9 @@ public static class ExceptionResources
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string GetObjectBuilderErrors(SqlDialect dialect, Chain<string> errors)
     {
-        if ( errors.Count == 0 )
-            return $"An unexpected error has occurred for {dialect} object builder.";
-
-        var headerText = $"Encountered {errors.Count} error(s) for {dialect} object builder:";
-        var errorsText = string.Join( Environment.NewLine, errors.Select( (e, i) => $"{i + 1}. {e}" ) );
-        return $"{headerText}{Environment.NewLine}{errorsText}";
+        return errors.Count == 0
+            ? $"An unexpected error has occurred for {dialect} object builder."
+            : MergeErrors( $"Encountered {errors.Count} error(s) for {dialect} object builder:", errors );
     }
 
     [Pure]
@@ -382,11 +420,41 @@ public static class ExceptionResources
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string GetVersionHistoryErrors(Chain<string> errors)
     {
-        if ( errors.Count == 0 )
-            return $"An unexpected error has occurred during version history validation.";
+        return errors.Count == 0
+            ? "An unexpected error has occurred during version history validation."
+            : MergeErrors( $"Encountered {errors.Count} version history validation error(s):", errors );
+    }
 
-        var headerText = $"Encountered {errors.Count} version history validation error(s):";
-        var errorsText = string.Join( Environment.NewLine, errors.Select( (e, i) => $"{i + 1}. {e}" ) );
-        return $"{headerText}{Environment.NewLine}{errorsText}";
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string CompilerErrorsHaveOccurred(SqlDialect dialect, Chain<string> errors)
+    {
+        return errors.Count == 0
+            ? $"An unexpected error has occurred during {dialect} compilation."
+            : MergeErrors( $"Encountered {errors.Count} error(s) during {dialect} compilation:", errors );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string CompilerConfigurationErrorsHaveOccurred(Chain<Pair<Expression, Exception>> errors)
+    {
+        return errors.Count == 0
+            ? "An unexpected error has occurred during compiler configuration."
+            : MergeErrors(
+                $"Encountered {errors.Count} error(s) during compiler configuration:",
+                errors.Select( GetCompilerConfigurationError ) );
+    }
+
+    [Pure]
+    private static string MergeErrors(string header, IEnumerable<string> elements)
+    {
+        var errorsText = string.Join( Environment.NewLine, elements.Select( static (e, i) => $"{i + 1}. {e}" ) );
+        return $"{header}{Environment.NewLine}{errorsText}";
+    }
+
+    [Pure]
+    private static string GetCompilerConfigurationError(Pair<Expression, Exception> error)
+    {
+        return $"Extraction of '{error.First}' expression's value has failed with reason: {error.Second.Message}.";
     }
 }

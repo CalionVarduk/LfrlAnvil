@@ -32,44 +32,49 @@ public class SqliteColumnTypeDefinitionCharTests : TestsBase
     [InlineData( 'a', "a" )]
     [InlineData( '0', "0" )]
     [InlineData( 'Z', "Z" )]
-    public void TrySetParameter_ShouldUpdateParameterCorrectly(char value, string expectedValue)
+    public void TryToParameterValue_ShouldReturnCorrectResult(char value, string expected)
     {
-        var parameter = new SqliteParameter();
         var sut = _provider.GetByType<char>();
-
-        var result = sut.TrySetParameter( parameter, value );
-
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            parameter.DbType.Should().Be( DbType.String );
-            parameter.Value.Should().Be( expectedValue );
-        }
+        var result = sut.TryToParameterValue( value );
+        result.Should().Be( expected );
     }
 
     [Fact]
-    public void TrySetParameter_ShouldReturnFalse_WhenValueIsNotOfCharType()
+    public void TryToParameterValue_ShouldReturnNull_WhenValueIsNotOfCharType()
     {
-        var parameter = new SqliteParameter();
         var sut = _provider.GetByType<char>();
-
-        var result = sut.TrySetParameter( parameter, string.Empty );
-
-        result.Should().BeFalse();
+        var result = sut.TryToParameterValue( string.Empty );
+        result.Should().BeNull();
     }
 
-    [Fact]
-    public void SetNullParameter_ShouldUpdateParameterCorrectly()
+    [Theory]
+    [InlineData( true )]
+    [InlineData( false )]
+    public void SetParameterInfo_ShouldUpdateSqliteParameterProperties(bool isNullable)
     {
         var parameter = new SqliteParameter();
         var sut = _provider.GetByType<char>();
 
-        sut.SetNullParameter( parameter );
+        sut.SetParameterInfo( parameter, isNullable );
 
         using ( new AssertionScope() )
         {
-            parameter.DbType.Should().Be( DbType.String );
-            parameter.Value.Should().BeSameAs( DBNull.Value );
+            parameter.DbType.Should().Be( sut.DataType.DbType );
+            parameter.SqliteType.Should().Be( SqliteType.Text );
+            parameter.IsNullable.Should().Be( isNullable );
         }
+    }
+
+    [Theory]
+    [InlineData( true )]
+    [InlineData( false )]
+    public void SetParameterInfo_ShouldUpdateNonSqliteParameterDbTypeProperty(bool isNullable)
+    {
+        var parameter = Substitute.For<IDbDataParameter>();
+        var sut = _provider.GetByType<char>();
+
+        sut.SetParameterInfo( parameter, isNullable );
+
+        parameter.DbType.Should().Be( sut.DataType.DbType );
     }
 }

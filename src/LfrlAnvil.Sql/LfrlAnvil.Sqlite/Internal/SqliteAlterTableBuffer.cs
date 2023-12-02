@@ -291,9 +291,9 @@ internal sealed class SqliteAlterTableBuffer
             PropertyChanges[key] = new ChangeValue( oldValue, Boxed.GetBool( column.IsNullable ) );
 
             oldKey = new ChangeKey( removed.Id, SqliteObjectChangeDescriptor.DataType );
-            oldValue = PropertyChanges.TryGetValue( oldKey, out oldChange ) ? oldChange.OldValue : removed.TypeDefinition.DbType;
+            oldValue = PropertyChanges.TryGetValue( oldKey, out oldChange ) ? oldChange.OldValue : removed.TypeDefinition.DataType;
             key = new ChangeKey( column.Id, SqliteObjectChangeDescriptor.DataType );
-            PropertyChanges[key] = new ChangeValue( oldValue, column.TypeDefinition.DbType );
+            PropertyChanges[key] = new ChangeValue( oldValue, column.TypeDefinition.DataType );
         }
     }
 

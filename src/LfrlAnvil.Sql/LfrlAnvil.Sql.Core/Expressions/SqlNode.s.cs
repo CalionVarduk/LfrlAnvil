@@ -59,6 +59,26 @@ public static partial class SqlNode
     }
 
     [Pure]
+    public static SqlParameterNode[] ParameterRange<T>(string name, int count, bool isNullable = false)
+    {
+        return ParameterRange( name, count, SqlExpressionType.Create( typeof( T ), isNullable ) );
+    }
+
+    [Pure]
+    public static SqlParameterNode[] ParameterRange(string name, int count, SqlExpressionType? type = null)
+    {
+        Ensure.IsGreaterThanOrEqualTo( count, 0 );
+        if ( count == 0 )
+            return Array.Empty<SqlParameterNode>();
+
+        var result = new SqlParameterNode[count];
+        for ( var i = 0; i < count; ++i )
+            result[i] = Parameter( $"{name}{i + 1}", type );
+
+        return result;
+    }
+
+    [Pure]
     public static SqlTypeCastExpressionNode TypeCast(SqlExpressionNode expression, Type type)
     {
         return new SqlTypeCastExpressionNode( expression, type );

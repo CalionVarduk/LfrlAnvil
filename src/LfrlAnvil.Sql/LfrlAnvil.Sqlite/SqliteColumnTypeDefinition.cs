@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Data;
 using System.Diagnostics.Contracts;
+using System.Linq.Expressions;
 using LfrlAnvil.Extensions;
-using LfrlAnvil.Internal;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
@@ -12,76 +12,95 @@ namespace LfrlAnvil.Sqlite;
 
 public abstract class SqliteColumnTypeDefinition : ISqlColumnTypeDefinition
 {
-    internal SqliteColumnTypeDefinition(SqliteDataType dbType, SqlLiteralNode defaultValue)
+    internal SqliteColumnTypeDefinition(SqliteDataType dataType, SqlLiteralNode defaultValue, LambdaExpression outputMapping)
     {
-        DbType = dbType;
+        DataType = dataType;
         DefaultValue = defaultValue;
+        OutputMapping = outputMapping;
     }
 
-    public SqliteDataType DbType { get; }
+    public SqliteDataType DataType { get; }
     public SqlLiteralNode DefaultValue { get; }
+    public LambdaExpression OutputMapping { get; }
     public abstract Type RuntimeType { get; }
-    ISqlDataType ISqlColumnTypeDefinition.DbType => DbType;
+    ISqlDataType ISqlColumnTypeDefinition.DataType => DataType;
 
     [Pure]
     public sealed override string ToString()
     {
-        return $"{RuntimeType.GetDebugString()} <=> {DbType}, {nameof( DefaultValue )}: [{DefaultValue}]";
+        return $"{RuntimeType.GetDebugString()} <=> {DataType}, {nameof( DefaultValue )}: [{DefaultValue}]";
     }
 
     [Pure]
     public abstract string? TryToDbLiteral(object value);
 
-    public abstract bool TrySetParameter(IDbDataParameter parameter, object value);
-    public abstract void SetNullParameter(IDbDataParameter parameter);
-
     [Pure]
-    public virtual IDbDataParameter CreateParameter(string name)
+    public abstract object? TryToParameterValue(object value);
+
+    public virtual void SetParameterInfo(SqliteParameter parameter, bool isNullable)
     {
-        return new SqliteParameter( name, DbType.Value );
+        parameter.IsNullable = isNullable;
+        parameter.SqliteType = DataType.Value;
+        parameter.DbType = DataType.DbType;
+    }
+
+    void ISqlColumnTypeDefinition.SetParameterInfo(IDbDataParameter parameter, bool isNullable)
+    {
+        if ( parameter is SqliteParameter sqlite )
+            SetParameterInfo( sqlite, isNullable );
+        else
+            parameter.DbType = DataType.DbType;
     }
 }
 
 public abstract class SqliteColumnTypeDefinition<T> : SqliteColumnTypeDefinition, ISqlColumnTypeDefinition<T>
     where T : notnull
 {
-    protected SqliteColumnTypeDefinition(SqliteDataType dbType, T defaultValue)
-        : base( dbType, (SqlLiteralNode)SqlNode.Literal( defaultValue ) ) { }
+    protected SqliteColumnTypeDefinition(SqliteDataType dataType, T defaultValue, Expression<Func<SqliteDataReader, int, T>> outputMapping)
+        : base( dataType, (SqlLiteralNode)SqlNode.Literal( defaultValue ), outputMapping ) { }
 
     public new SqlLiteralNode<T> DefaultValue => ReinterpretCast.To<SqlLiteralNode<T>>( base.DefaultValue );
+
+    public new Expression<Func<SqliteDataReader, int, T>> OutputMapping =>
+        ReinterpretCast.To<Expression<Func<SqliteDataReader, int, T>>>( base.OutputMapping );
+
     public sealed override Type RuntimeType => typeof( T );
 
     [Pure]
-    public SqliteColumnTypeDefinition<TTarget> Extend<TTarget>(Func<TTarget, T> mapper, TTarget defaultValue)
+    public SqliteColumnTypeDefinition<TTarget> Extend<TTarget>(
+        Func<TTarget, T> mapper,
+        Expression<Func<T, TTarget>> outputMapper,
+        TTarget defaultValue)
         where TTarget : notnull
     {
-        return new SqliteColumnTypeDefinitionLambda<TTarget, T>( this, defaultValue, mapper );
+        return new SqliteColumnTypeDefinitionLambda<TTarget, T>( this, defaultValue, mapper, outputMapper );
     }
 
     [Pure]
     public abstract string ToDbLiteral(T value);
 
-    public abstract void SetParameter(IDbDataParameter parameter, T value);
+    [Pure]
+    public abstract object ToParameterValue(T value);
 
     [Pure]
-    public override string? TryToDbLiteral(object value)
+    public sealed override string? TryToDbLiteral(object value)
     {
         return value is T t ? ToDbLiteral( t ) : null;
     }
 
-    public override bool TrySetParameter(IDbDataParameter parameter, object value)
+    [Pure]
+    public sealed override object? TryToParameterValue(object value)
     {
-        if ( value is not T t )
-            return false;
-
-        SetParameter( parameter, t );
-        return true;
+        return value is T t ? ToParameterValue( t ) : null;
     }
 
     [Pure]
-    ISqlColumnTypeDefinition<TTarget> ISqlColumnTypeDefinition<T>.Extend<TTarget>(Func<TTarget, T> mapper, TTarget defaultValue)
+    ISqlColumnTypeDefinition<TTarget> ISqlColumnTypeDefinition<T>.Extend<TTarget>(
+        Func<TTarget, T> mapper,
+        Expression<Func<T, TTarget>> outputMapper,
+        TTarget defaultValue)
     {
-        return Extend( mapper, defaultValue );
+        return Extend( mapper, outputMapper, defaultValue );
     }
 }
 
@@ -89,8 +108,11 @@ public abstract class SqliteColumnTypeDefinition<T, TBase> : SqliteColumnTypeDef
     where T : notnull
     where TBase : notnull
 {
-    protected SqliteColumnTypeDefinition(SqliteColumnTypeDefinition<TBase> @base, T defaultValue)
-        : base( @base.DbType, defaultValue )
+    protected SqliteColumnTypeDefinition(
+        SqliteColumnTypeDefinition<TBase> @base,
+        T defaultValue,
+        Expression<Func<SqliteDataReader, int, T>> outputMapping)
+        : base( @base.DataType, defaultValue, outputMapping )
     {
         Base = @base;
     }
@@ -104,15 +126,11 @@ public abstract class SqliteColumnTypeDefinition<T, TBase> : SqliteColumnTypeDef
         return Base.ToDbLiteral( baseValue );
     }
 
-    public sealed override void SetParameter(IDbDataParameter parameter, T value)
+    [Pure]
+    public sealed override object ToParameterValue(T value)
     {
         var baseValue = MapToBaseType( value );
-        Base.SetParameter( parameter, baseValue );
-    }
-
-    public sealed override void SetNullParameter(IDbDataParameter parameter)
-    {
-        Base.SetNullParameter( parameter );
+        return Base.ToParameterValue( baseValue );
     }
 
     [Pure]
@@ -125,8 +143,12 @@ internal sealed class SqliteColumnTypeDefinitionLambda<T, TBase> : SqliteColumnT
 {
     private readonly Func<T, TBase> _mapper;
 
-    internal SqliteColumnTypeDefinitionLambda(SqliteColumnTypeDefinition<TBase> @base, T defaultValue, Func<T, TBase> mapper)
-        : base( @base, defaultValue )
+    internal SqliteColumnTypeDefinitionLambda(
+        SqliteColumnTypeDefinition<TBase> @base,
+        T defaultValue,
+        Func<T, TBase> mapper,
+        Expression<Func<TBase, T>> outputMapper)
+        : base( @base, defaultValue, CreateOutputExpression( @base.OutputMapping, outputMapper ) )
     {
         _mapper = mapper;
     }
@@ -136,31 +158,13 @@ internal sealed class SqliteColumnTypeDefinitionLambda<T, TBase> : SqliteColumnT
     {
         return _mapper( value );
     }
-}
-
-internal sealed class SqliteColumnTypeEnumDefinition<TEnum, T> : SqliteColumnTypeDefinition<TEnum, T>
-    where TEnum : struct, Enum
-    where T : unmanaged
-{
-    internal SqliteColumnTypeEnumDefinition(SqliteColumnTypeDefinition<T> @base)
-        : base( @base, FindDefaultValue() ) { }
 
     [Pure]
-    protected override T MapToBaseType(TEnum value)
+    private static Expression<Func<SqliteDataReader, int, T>> CreateOutputExpression(
+        Expression<Func<SqliteDataReader, int, TBase>> baseOutputMapping,
+        Expression<Func<TBase, T>> outputMapper)
     {
-        return (T)(object)value;
-    }
-
-    [Pure]
-    private static TEnum FindDefaultValue()
-    {
-        var values = Enum.GetValues<TEnum>();
-        foreach ( var value in values )
-        {
-            if ( Generic<TEnum>.IsDefault( value ) )
-                return value;
-        }
-
-        return values.Length > 0 ? values[0] : default;
+        var body = outputMapper.Body.ReplaceParameter( outputMapper.Parameters[0], baseOutputMapping.Body );
+        return Expression.Lambda<Func<SqliteDataReader, int, T>>( body, baseOutputMapping.Parameters );
     }
 }

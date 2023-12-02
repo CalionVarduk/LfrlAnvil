@@ -47,225 +47,85 @@ public class SqliteColumnTypeDefinitionObjectTests : TestsBase
     }
 
     [Fact]
-    public void TryToDbLiteral_ShouldReturnNull_WhenValueIsNotOfSupportedType()
+    public void TryToDbLiteral_ShouldThrowArgumentException_WhenValueIsNotOfSupportedType()
     {
         var sut = _provider.GetByType<object>();
-        var result = sut.TryToDbLiteral( new object() );
-        result.Should().BeNull();
-    }
-
-    [Fact]
-    public void ToDbLiteral_ShouldReturnCorrectResult_WhenValueIsInteger()
-    {
-        var value = 12345L;
-        var sut = _provider.GetByType<object>();
-        var result = sut.ToDbLiteral( value );
-        result.Should().Be( "12345" );
-    }
-
-    [Fact]
-    public void ToDbLiteral_ShouldReturnCorrectResult_WhenValueIsReal()
-    {
-        var value = 12345.0625;
-        var sut = _provider.GetByType<object>();
-        var result = sut.ToDbLiteral( value );
-        result.Should().Be( "12345.0625" );
-    }
-
-    [Fact]
-    public void ToDbLiteral_ShouldReturnCorrectResult_WhenValueIsText()
-    {
-        var value = "foo'bar";
-        var sut = _provider.GetByType<object>();
-        var result = sut.ToDbLiteral( value );
-        result.Should().Be( "'foo''bar'" );
-    }
-
-    [Fact]
-    public void ToDbLiteral_ShouldReturnCorrectResult_WhenValueIsBlob()
-    {
-        var value = new byte[] { 123, 45, 6 };
-        var sut = _provider.GetByType<object>();
-        var result = sut.ToDbLiteral( value );
-        result.Should().Be( "X'7B2D06'" );
-    }
-
-    [Fact]
-    public void ToDbLiteral_ShouldThrowArgumentException_WhenValueIsNotOfSupportedType()
-    {
-        var sut = _provider.GetByType<object>();
-        var action = Lambda.Of( () => sut.ToDbLiteral( new object() ) );
+        var action = Lambda.Of( () => sut.TryToDbLiteral( new object() ) );
         action.Should().ThrowExactly<ArgumentException>();
     }
 
     [Fact]
-    public void TrySetParameter_ShouldUpdateParameterCorrectly_WhenValueIsInteger()
+    public void TryToParameterValue_ShouldReturnCorrectResult_WhenValueIsInteger()
     {
-        var parameter = new SqliteParameter();
         var value = 12345L;
         var sut = _provider.GetByType<object>();
-
-        var result = sut.TrySetParameter( parameter, value );
-
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            parameter.DbType.Should().Be( DbType.Int64 );
-            parameter.Value.Should().Be( value );
-        }
+        var result = sut.TryToParameterValue( value );
+        result.Should().Be( value );
     }
 
     [Fact]
-    public void TrySetParameter_ShouldUpdateParameterCorrectly_WhenValueIsReal()
+    public void TryToParameterValue_ShouldReturnCorrectResult_WhenValueIsReal()
     {
-        var parameter = new SqliteParameter();
         var value = 12345.0625;
         var sut = _provider.GetByType<object>();
-
-        var result = sut.TrySetParameter( parameter, value );
-
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            parameter.DbType.Should().Be( DbType.Double );
-            parameter.Value.Should().Be( value );
-        }
+        var result = sut.TryToParameterValue( value );
+        result.Should().Be( value );
     }
 
     [Fact]
-    public void TrySetParameter_ShouldUpdateParameterCorrectly_WhenValueIsText()
+    public void TryToParameterValue_ShouldReturnCorrectResult_WhenValueIsText()
     {
-        var parameter = new SqliteParameter();
         var value = "foo'bar";
         var sut = _provider.GetByType<object>();
-
-        var result = sut.TrySetParameter( parameter, value );
-
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            parameter.DbType.Should().Be( DbType.String );
-            parameter.Value.Should().Be( value );
-        }
+        var result = sut.TryToParameterValue( value );
+        result.Should().BeSameAs( value );
     }
 
     [Fact]
-    public void TrySetParameter_ShouldUpdateParameterCorrectly_WhenValueIsBlob()
+    public void TryToParameterValue_ShouldReturnCorrectResult_WhenValueIsBlob()
     {
-        var parameter = new SqliteParameter();
         var value = new byte[] { 123, 45, 6 };
         var sut = _provider.GetByType<object>();
-
-        var result = sut.TrySetParameter( parameter, value );
-
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            parameter.DbType.Should().Be( DbType.Binary );
-            parameter.Value.Should().BeSameAs( value );
-        }
+        var result = sut.TryToParameterValue( value );
+        result.Should().BeSameAs( value );
     }
 
     [Fact]
-    public void TrySetParameter_ShouldReturnFalse_WhenValueIsNotOfSupportedType()
+    public void TryToParameterValue_ShouldReturnValue_WhenValueIsNotOfSupportedType()
     {
-        var parameter = new SqliteParameter();
         var value = new object();
         var sut = _provider.GetByType<object>();
-
-        var result = sut.TrySetParameter( parameter, value );
-
-        result.Should().BeFalse();
+        var result = sut.TryToParameterValue( value );
+        result.Should().BeSameAs( value );
     }
 
-    [Fact]
-    public void SetParameter_ShouldUpdateParameterCorrectly_WhenValueIsInteger()
+    [Theory]
+    [InlineData( true )]
+    [InlineData( false )]
+    public void SetParameterInfo_ShouldUpdateSqliteParameterProperties(bool isNullable)
     {
         var parameter = new SqliteParameter();
-        var value = 12345L;
         var sut = _provider.GetByType<object>();
 
-        sut.SetParameter( parameter, value );
+        sut.SetParameterInfo( parameter, isNullable );
 
         using ( new AssertionScope() )
         {
-            parameter.DbType.Should().Be( DbType.Int64 );
-            parameter.Value.Should().Be( value );
+            parameter.DbType.Should().Be( sut.DataType.DbType );
+            parameter.IsNullable.Should().Be( isNullable );
         }
     }
 
-    [Fact]
-    public void SetParameter_ShouldUpdateParameterCorrectly_WhenValueIsReal()
+    [Theory]
+    [InlineData( true )]
+    [InlineData( false )]
+    public void SetParameterInfo_ShouldUpdateNonSqliteParameterDbTypeProperty(bool isNullable)
     {
-        var parameter = new SqliteParameter();
-        var value = 12345.0625;
+        var parameter = Substitute.For<IDbDataParameter>();
         var sut = _provider.GetByType<object>();
 
-        sut.SetParameter( parameter, value );
+        sut.SetParameterInfo( parameter, isNullable );
 
-        using ( new AssertionScope() )
-        {
-            parameter.DbType.Should().Be( DbType.Double );
-            parameter.Value.Should().Be( value );
-        }
-    }
-
-    [Fact]
-    public void SetParameter_ShouldUpdateParameterCorrectly_WhenValueIsText()
-    {
-        var parameter = new SqliteParameter();
-        var value = "foo'bar";
-        var sut = _provider.GetByType<object>();
-
-        sut.SetParameter( parameter, value );
-
-        using ( new AssertionScope() )
-        {
-            parameter.DbType.Should().Be( DbType.String );
-            parameter.Value.Should().Be( value );
-        }
-    }
-
-    [Fact]
-    public void SetParameter_ShouldUpdateParameterCorrectly_WhenValueIsBlob()
-    {
-        var parameter = new SqliteParameter();
-        var value = new byte[] { 123, 45, 6 };
-        var sut = _provider.GetByType<object>();
-
-        sut.SetParameter( parameter, value );
-
-        using ( new AssertionScope() )
-        {
-            parameter.DbType.Should().Be( DbType.Binary );
-            parameter.Value.Should().BeSameAs( value );
-        }
-    }
-
-    [Fact]
-    public void SetParameter_ShouldThrowArgumentException_WhenValueIsNotOfSupportedType()
-    {
-        var parameter = new SqliteParameter();
-        var value = new object();
-        var sut = _provider.GetByType<object>();
-
-        var action = Lambda.Of( () => sut.SetParameter( parameter, value ) );
-
-        action.Should().ThrowExactly<ArgumentException>();
-    }
-
-    [Fact]
-    public void SetNullParameter_ShouldUpdateParameterCorrectly()
-    {
-        var parameter = new SqliteParameter();
-        var sut = _provider.GetByType<object>();
-
-        sut.SetNullParameter( parameter );
-
-        using ( new AssertionScope() )
-        {
-            parameter.DbType.Should().Be( DbType.Object );
-            parameter.Value.Should().BeSameAs( DBNull.Value );
-        }
+        parameter.DbType.Should().Be( sut.DataType.DbType );
     }
 }

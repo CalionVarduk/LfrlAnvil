@@ -28,48 +28,51 @@ public class SqliteColumnTypeDefinitionGuidTests : TestsBase
         result.Should().BeNull();
     }
 
+    [Fact]
+    public void TryToParameterValue_ShouldReturnCorrectResult()
+    {
+        var value = Guid.NewGuid();
+        var sut = _provider.GetByType<Guid>();
+        var result = sut.TryToParameterValue( value );
+        result.Should().BeEquivalentTo( value.ToByteArray() );
+    }
+
+    [Fact]
+    public void TryToParameterValue_ShouldReturnNull_WhenValueIsNotOfGuidType()
+    {
+        var sut = _provider.GetByType<Guid>();
+        var result = sut.TryToParameterValue( string.Empty );
+        result.Should().BeNull();
+    }
+
     [Theory]
-    [InlineData( "00000000-0000-0000-0000-000000000000" )]
-    [InlineData( "DE4E2141-D9C0-48E3-B3E1-B783C99CF921" )]
-    public void TrySetParameter_ShouldUpdateParameterCorrectly(string guid)
+    [InlineData( true )]
+    [InlineData( false )]
+    public void SetParameterInfo_ShouldUpdateSqliteParameterProperties(bool isNullable)
     {
-        var value = Guid.Parse( guid );
         var parameter = new SqliteParameter();
         var sut = _provider.GetByType<Guid>();
 
-        var result = sut.TrySetParameter( parameter, value );
+        sut.SetParameterInfo( parameter, isNullable );
 
         using ( new AssertionScope() )
         {
-            result.Should().BeTrue();
-            parameter.DbType.Should().Be( DbType.Binary );
-            parameter.Value.Should().BeEquivalentTo( value.ToByteArray() );
+            parameter.DbType.Should().Be( sut.DataType.DbType );
+            parameter.SqliteType.Should().Be( SqliteType.Blob );
+            parameter.IsNullable.Should().Be( isNullable );
         }
     }
 
-    [Fact]
-    public void TrySetParameter_ShouldReturnFalse_WhenValueIsNotOfGuidType()
+    [Theory]
+    [InlineData( true )]
+    [InlineData( false )]
+    public void SetParameterInfo_ShouldUpdateNonSqliteParameterDbTypeProperty(bool isNullable)
     {
-        var parameter = new SqliteParameter();
+        var parameter = Substitute.For<IDbDataParameter>();
         var sut = _provider.GetByType<Guid>();
 
-        var result = sut.TrySetParameter( parameter, string.Empty );
+        sut.SetParameterInfo( parameter, isNullable );
 
-        result.Should().BeFalse();
-    }
-
-    [Fact]
-    public void SetNullParameter_ShouldUpdateParameterCorrectly()
-    {
-        var parameter = new SqliteParameter();
-        var sut = _provider.GetByType<Guid>();
-
-        sut.SetNullParameter( parameter );
-
-        using ( new AssertionScope() )
-        {
-            parameter.DbType.Should().Be( DbType.Binary );
-            parameter.Value.Should().BeSameAs( DBNull.Value );
-        }
+        parameter.DbType.Should().Be( sut.DataType.DbType );
     }
 }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Data;
 using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Sqlite.Internal.TypeDefinitions;
@@ -7,7 +6,7 @@ namespace LfrlAnvil.Sqlite.Internal.TypeDefinitions;
 internal sealed class SqliteColumnTypeDefinitionGuid : SqliteColumnTypeDefinition<Guid>
 {
     internal SqliteColumnTypeDefinitionGuid()
-        : base( SqliteDataType.Blob, Guid.Empty ) { }
+        : base( SqliteDataType.Blob, Guid.Empty, static (reader, ordinal) => new Guid( (byte[])reader.GetValue( ordinal ) ) ) { }
 
     [Pure]
     public override string ToDbLiteral(Guid value)
@@ -15,15 +14,9 @@ internal sealed class SqliteColumnTypeDefinitionGuid : SqliteColumnTypeDefinitio
         return SqliteHelpers.GetDbLiteral( value.ToByteArray() );
     }
 
-    public override void SetParameter(IDbDataParameter parameter, Guid value)
+    [Pure]
+    public override object ToParameterValue(Guid value)
     {
-        parameter.DbType = System.Data.DbType.Binary;
-        parameter.Value = value.ToByteArray();
-    }
-
-    public override void SetNullParameter(IDbDataParameter parameter)
-    {
-        parameter.DbType = System.Data.DbType.Binary;
-        parameter.Value = DBNull.Value;
+        return value.ToByteArray();
     }
 }

@@ -29,111 +29,65 @@ public class SqliteColumnTypeDefinitionUInt64Tests : TestsBase
     }
 
     [Fact]
-    public void TryToDbLiteral_ShouldReturnNull_WhenValueIsGreaterThanInt64MaxValue()
+    public void TryToDbLiteral_ShouldThrowOverflowException_WhenValueIsGreaterThanInt64MaxValue()
     {
         var sut = _provider.GetByType<ulong>();
-        var result = sut.TryToDbLiteral( (ulong)long.MaxValue + 1 );
+        var action = Lambda.Of( () => sut.TryToDbLiteral( (ulong)long.MaxValue + 1 ) );
+        action.Should().ThrowExactly<OverflowException>();
+    }
+
+    [Fact]
+    public void TryToParameterValue_ShouldReturnCorrectResult()
+    {
+        var sut = _provider.GetByType<ulong>();
+        var result = sut.TryToParameterValue( (ulong)1234567 );
+        result.Should().Be( 1234567L );
+    }
+
+    [Fact]
+    public void TryToParameterValue_ShouldReturnNull_WhenValueIsNotOfUInt64Type()
+    {
+        var sut = _provider.GetByType<ulong>();
+        var result = sut.TryToParameterValue( string.Empty );
         result.Should().BeNull();
     }
 
-    [Theory]
-    [InlineData( 1234567, "1234567" )]
-    [InlineData( 0, "0" )]
-    public void ToDbLiteral_ShouldReturnCorrectResult(ulong value, string expected)
-    {
-        var sut = _provider.GetByType<ulong>();
-        var result = sut.ToDbLiteral( value );
-        result.Should().Be( expected );
-    }
-
     [Fact]
-    public void ToDbLiteral_ShouldThrowOverflowException_WhenValueIsGreaterThanInt64MaxValue()
+    public void TryToParameterValue_ShouldThrowOverflowException_WhenValueIsGreaterThanInt64MaxValue()
     {
         var sut = _provider.GetByType<ulong>();
-        var action = Lambda.Of( () => sut.ToDbLiteral( (ulong)long.MaxValue + 1 ) );
+        var action = Lambda.Of( () => sut.TryToParameterValue( (ulong)long.MaxValue + 1 ) );
         action.Should().ThrowExactly<OverflowException>();
     }
 
     [Theory]
-    [InlineData( 1234567 )]
-    [InlineData( 0 )]
-    public void TrySetParameter_ShouldUpdateParameterCorrectly(ulong value)
+    [InlineData( true )]
+    [InlineData( false )]
+    public void SetParameterInfo_ShouldUpdateSqliteParameterProperties(bool isNullable)
     {
         var parameter = new SqliteParameter();
         var sut = _provider.GetByType<ulong>();
 
-        var result = sut.TrySetParameter( parameter, value );
+        sut.SetParameterInfo( parameter, isNullable );
 
         using ( new AssertionScope() )
         {
-            result.Should().BeTrue();
-            parameter.DbType.Should().Be( DbType.Int64 );
-            parameter.Value.Should().Be( (long)value );
+            parameter.DbType.Should().Be( sut.DataType.DbType );
+            parameter.SqliteType.Should().Be( SqliteType.Integer );
+            parameter.IsNullable.Should().Be( isNullable );
         }
-    }
-
-    [Fact]
-    public void TrySetParameter_ShouldReturnFalse_WhenValueIsNotOfUInt64Type()
-    {
-        var parameter = new SqliteParameter();
-        var sut = _provider.GetByType<ulong>();
-
-        var result = sut.TrySetParameter( parameter, string.Empty );
-
-        result.Should().BeFalse();
-    }
-
-    [Fact]
-    public void TrySetParameter_ShouldReturnFalse_WhenValueIsGreaterThanInt64MaxValue()
-    {
-        var parameter = new SqliteParameter();
-        var sut = _provider.GetByType<ulong>();
-
-        var result = sut.TrySetParameter( parameter, (ulong)long.MaxValue + 1 );
-
-        result.Should().BeFalse();
     }
 
     [Theory]
-    [InlineData( 1234567 )]
-    [InlineData( 0 )]
-    public void SetParameter_ShouldUpdateParameterCorrectly(ulong value)
+    [InlineData( true )]
+    [InlineData( false )]
+    public void SetParameterInfo_ShouldUpdateNonSqliteParameterDbTypeProperty(bool isNullable)
     {
-        var parameter = new SqliteParameter();
+        var parameter = Substitute.For<IDbDataParameter>();
         var sut = _provider.GetByType<ulong>();
 
-        sut.SetParameter( parameter, value );
+        sut.SetParameterInfo( parameter, isNullable );
 
-        using ( new AssertionScope() )
-        {
-            parameter.DbType.Should().Be( DbType.Int64 );
-            parameter.Value.Should().Be( (long)value );
-        }
-    }
-
-    [Fact]
-    public void SetParameter_ShouldThrowOverflowException_WhenValueIsGreaterThanInt64MaxValue()
-    {
-        var parameter = new SqliteParameter();
-        var sut = _provider.GetByType<ulong>();
-
-        var action = Lambda.Of( () => sut.SetParameter( parameter, (ulong)long.MaxValue + 1 ) );
-
-        action.Should().ThrowExactly<OverflowException>();
-    }
-
-    [Fact]
-    public void SetNullParameter_ShouldUpdateParameterCorrectly()
-    {
-        var parameter = new SqliteParameter();
-        var sut = _provider.GetByType<ulong>();
-
-        sut.SetNullParameter( parameter );
-
-        using ( new AssertionScope() )
-        {
-            parameter.DbType.Should().Be( DbType.Int64 );
-            parameter.Value.Should().BeSameAs( DBNull.Value );
-        }
+        parameter.DbType.Should().Be( sut.DataType.DbType );
     }
 }
