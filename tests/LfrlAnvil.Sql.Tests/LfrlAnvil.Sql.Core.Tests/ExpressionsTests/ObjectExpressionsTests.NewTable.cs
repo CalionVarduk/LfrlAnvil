@@ -100,7 +100,7 @@ public partial class ObjectExpressionsTests
                 result.Name.Should().Be( "Col0" );
                 result.RecordSet.Should().BeSameAs( sut );
                 var dataField = result as SqlRawDataFieldNode;
-                (dataField?.Type).Should().Be( SqlExpressionType.Create<int>() );
+                (dataField?.Type).Should().Be( TypeNullability.Create<int>() );
                 text.Should().Be( expectedText );
             }
         }
@@ -143,7 +143,7 @@ public partial class ObjectExpressionsTests
                 result.NodeType.Should().Be( SqlNodeType.RawDataField );
                 result.Name.Should().Be( "Col0" );
                 result.RecordSet.Should().BeSameAs( sut );
-                result.Type.Should().Be( SqlExpressionType.Create<int>() );
+                result.Type.Should().Be( TypeNullability.Create<int>() );
                 text.Should().Be( expected );
             }
         }
@@ -165,7 +165,7 @@ public partial class ObjectExpressionsTests
                 result.NodeType.Should().Be( SqlNodeType.RawDataField );
                 result.Name.Should().Be( "Col0" );
                 result.RecordSet.Should().BeSameAs( sut );
-                result.Type.Should().Be( SqlExpressionType.Create<int>( isNullable: true ) );
+                result.Type.Should().Be( TypeNullability.Create<int>( isNullable: true ) );
                 text.Should().Be( expected );
             }
         }
@@ -186,7 +186,7 @@ public partial class ObjectExpressionsTests
                 result.NodeType.Should().Be( SqlNodeType.RawDataField );
                 result.Name.Should().Be( "Col0" );
                 result.RecordSet.Should().BeSameAs( sut );
-                result.Type.Should().Be( SqlExpressionType.Create<int>( isNullable: true ) );
+                result.Type.Should().Be( TypeNullability.Create<int>( isNullable: true ) );
                 text.Should().Be( expected );
             }
         }
@@ -207,7 +207,7 @@ public partial class ObjectExpressionsTests
                 result.NodeType.Should().Be( SqlNodeType.RawDataField );
                 result.Name.Should().Be( "Col0" );
                 result.RecordSet.Should().BeSameAs( sut );
-                result.Type.Should().Be( SqlExpressionType.Create<int>() );
+                result.Type.Should().Be( TypeNullability.Create<int>() );
                 text.Should().Be( "[qux].[Col0] : System.Int32" );
             }
         }
@@ -242,7 +242,7 @@ public partial class ObjectExpressionsTests
             var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
             var table = SqlNode.CreateTable( info, new[] { SqlNode.Column<int>( "Col0" ) } );
             var sut = table.AsSet();
-            var result = sut.GetRawField( "x", SqlExpressionType.Create<int>() );
+            var result = sut.GetRawField( "x", TypeNullability.Create<int>() );
             var text = result.ToString();
 
             using ( new AssertionScope() )
@@ -250,7 +250,7 @@ public partial class ObjectExpressionsTests
                 result.NodeType.Should().Be( SqlNodeType.RawDataField );
                 result.Name.Should().Be( "x" );
                 result.RecordSet.Should().BeSameAs( sut );
-                result.Type.Should().Be( SqlExpressionType.Create<int>() );
+                result.Type.Should().Be( TypeNullability.Create<int>() );
                 text.Should().Be( expected );
             }
         }

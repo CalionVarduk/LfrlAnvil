@@ -49,11 +49,11 @@ public static partial class SqlNode
     [Pure]
     public static SqlParameterNode Parameter<T>(string name, bool isNullable = false)
     {
-        return Parameter( name, SqlExpressionType.Create( typeof( T ), isNullable ) );
+        return Parameter( name, TypeNullability.Create( typeof( T ), isNullable ) );
     }
 
     [Pure]
-    public static SqlParameterNode Parameter(string name, SqlExpressionType? type = null)
+    public static SqlParameterNode Parameter(string name, TypeNullability? type = null)
     {
         return new SqlParameterNode( name, type );
     }
@@ -61,11 +61,11 @@ public static partial class SqlNode
     [Pure]
     public static SqlParameterNode[] ParameterRange<T>(string name, int count, bool isNullable = false)
     {
-        return ParameterRange( name, count, SqlExpressionType.Create( typeof( T ), isNullable ) );
+        return ParameterRange( name, count, TypeNullability.Create( typeof( T ), isNullable ) );
     }
 
     [Pure]
-    public static SqlParameterNode[] ParameterRange(string name, int count, SqlExpressionType? type = null)
+    public static SqlParameterNode[] ParameterRange(string name, int count, TypeNullability? type = null)
     {
         Ensure.IsGreaterThanOrEqualTo( count, 0 );
         if ( count == 0 )
@@ -170,7 +170,7 @@ public static partial class SqlNode
     }
 
     [Pure]
-    public static SqlRawExpressionNode RawExpression(string sql, SqlExpressionType? type, params SqlParameterNode[] parameters)
+    public static SqlRawExpressionNode RawExpression(string sql, TypeNullability? type, params SqlParameterNode[] parameters)
     {
         return new SqlRawExpressionNode( sql, type, parameters );
     }
@@ -338,7 +338,7 @@ public static partial class SqlNode
     }
 
     [Pure]
-    public static SqlRawDataFieldNode RawDataField(SqlRecordSetNode recordSet, string name, SqlExpressionType? type = null)
+    public static SqlRawDataFieldNode RawDataField(SqlRecordSetNode recordSet, string name, TypeNullability? type = null)
     {
         return new SqlRawDataFieldNode( recordSet, name, type );
     }
@@ -707,11 +707,11 @@ public static partial class SqlNode
     public static SqlColumnDefinitionNode Column<T>(string name, bool isNullable = false, SqlExpressionNode? defaultValue = null)
         where T : notnull
     {
-        return Column( name, SqlExpressionType.Create<T>( isNullable ), defaultValue );
+        return Column( name, TypeNullability.Create<T>( isNullable ), defaultValue );
     }
 
     [Pure]
-    public static SqlColumnDefinitionNode Column(string name, SqlExpressionType type, SqlExpressionNode? defaultValue = null)
+    public static SqlColumnDefinitionNode Column(string name, TypeNullability type, SqlExpressionNode? defaultValue = null)
     {
         return new SqlColumnDefinitionNode( name, type, defaultValue );
     }

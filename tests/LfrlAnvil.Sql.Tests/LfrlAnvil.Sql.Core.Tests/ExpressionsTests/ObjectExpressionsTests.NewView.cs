@@ -217,7 +217,7 @@ public partial class ObjectExpressionsTests
             var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
             var dataSource = TableMock.Create( "t", ColumnMock.Create<int>( "a" ) ).ToRecordSet().ToDataSource();
             var sut = dataSource.Select( dataSource.GetAll() ).ToCreateView( info ).AsSet( "qux" );
-            var result = sut.GetRawField( "x", SqlExpressionType.Create<int>() );
+            var result = sut.GetRawField( "x", TypeNullability.Create<int>() );
             var text = result.ToString();
 
             using ( new AssertionScope() )
@@ -225,7 +225,7 @@ public partial class ObjectExpressionsTests
                 result.NodeType.Should().Be( SqlNodeType.RawDataField );
                 result.Name.Should().Be( "x" );
                 result.RecordSet.Should().BeSameAs( sut );
-                result.Type.Should().Be( SqlExpressionType.Create<int>() );
+                result.Type.Should().Be( TypeNullability.Create<int>() );
                 text.Should().Be( "[qux].[x] : System.Int32" );
             }
         }

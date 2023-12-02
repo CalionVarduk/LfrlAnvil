@@ -302,7 +302,7 @@ public static class ExceptionResources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string IncompatibleStatementParameterType(string name, SqlExpressionType expectedType, Type actualType)
+    public static string IncompatibleStatementParameterType(string name, TypeNullability expectedType, Type actualType)
     {
         return
             $"Found statement parameter '{name}' with expected type '{expectedType}' but actual type is '{actualType.GetDebugString()}'.";
@@ -317,7 +317,7 @@ public static class ExceptionResources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string MissingStatementParameter(string name, SqlExpressionType? type)
+    public static string MissingStatementParameter(string name, TypeNullability? type)
     {
         return type is null
             ? $"Found missing statement parameter '{name}'."

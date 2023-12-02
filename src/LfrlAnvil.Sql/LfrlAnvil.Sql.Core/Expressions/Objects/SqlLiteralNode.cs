@@ -5,13 +5,13 @@ namespace LfrlAnvil.Sql.Expressions.Objects;
 
 public abstract class SqlLiteralNode : SqlExpressionNode
 {
-    internal SqlLiteralNode(SqlExpressionType type)
+    internal SqlLiteralNode(TypeNullability type)
         : base( SqlNodeType.Literal )
     {
         Type = type;
     }
 
-    public SqlExpressionType Type { get; }
+    public TypeNullability Type { get; }
 
     [Pure]
     public abstract object GetValue();
@@ -24,7 +24,7 @@ public sealed class SqlLiteralNode<T> : SqlLiteralNode
     where T : notnull
 {
     internal SqlLiteralNode(T value)
-        : base( SqlExpressionType.Create<T>() )
+        : base( TypeNullability.Create<T>() )
     {
         Value = value;
     }

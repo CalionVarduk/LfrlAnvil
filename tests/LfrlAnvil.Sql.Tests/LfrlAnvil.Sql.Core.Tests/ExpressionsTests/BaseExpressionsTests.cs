@@ -74,14 +74,14 @@ public partial class BaseExpressionsTests : TestsBase
     public void RawExpression_ShouldCreateRawExpressionNode()
     {
         var parameters = new[] { SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) };
-        var sut = SqlNode.RawExpression( "foo(@a, @b, 10) + 15", SqlExpressionType.Create<int>(), parameters );
+        var sut = SqlNode.RawExpression( "foo(@a, @b, 10) + 15", TypeNullability.Create<int>(), parameters );
         var text = sut.ToString();
 
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.RawExpression );
             sut.Sql.Should().Be( "foo(@a, @b, 10) + 15" );
-            sut.Type.Should().Be( SqlExpressionType.Create<int>() );
+            sut.Type.Should().Be( TypeNullability.Create<int>() );
             sut.Parameters.ToArray().Should().BeSequentiallyEqualTo( parameters );
             text.Should().Be( "foo(@a, @b, 10) + 15" );
         }
@@ -256,7 +256,7 @@ SELECT" );
     public void Query_ShouldCreateDataSourceQueryExpressionNode_FromDataSourceNode_WithSingleSelection()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
-        var selection = dataSource.From.GetRawField( "bar", SqlExpressionType.Create<int>() ).AsSelf();
+        var selection = dataSource.From.GetRawField( "bar", TypeNullability.Create<int>() ).AsSelf();
         var sut = dataSource.Select( selection );
         var text = sut.ToString();
 
@@ -580,7 +580,7 @@ END" );
     public void SelectExpression_ShouldCreateSelectExpressionNode()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
-        var selection = dataSource.From.GetRawField( "bar", SqlExpressionType.Create<int>() ).AsSelf();
+        var selection = dataSource.From.GetRawField( "bar", TypeNullability.Create<int>() ).AsSelf();
         var sut = selection.ToExpression();
         var text = sut.ToString();
 
@@ -687,7 +687,7 @@ VALUES
             sut.NodeType.Should().Be( SqlNodeType.ColumnDefinition );
             sut.Name.Should().Be( "foo" );
             sut.DefaultValue.Should().BeNull();
-            sut.Type.Should().BeEquivalentTo( SqlExpressionType.Create<string>( isNullable: false ) );
+            sut.Type.Should().BeEquivalentTo( TypeNullability.Create<string>( isNullable: false ) );
             text.Should().Be( "[foo] : System.String" );
         }
     }
@@ -703,7 +703,7 @@ VALUES
             sut.NodeType.Should().Be( SqlNodeType.ColumnDefinition );
             sut.Name.Should().Be( "foo" );
             sut.DefaultValue.Should().BeNull();
-            sut.Type.Should().BeEquivalentTo( SqlExpressionType.Create<string>( isNullable: true ) );
+            sut.Type.Should().BeEquivalentTo( TypeNullability.Create<string>( isNullable: true ) );
             text.Should().Be( "[foo] : Nullable<System.String>" );
         }
     }
@@ -720,7 +720,7 @@ VALUES
             sut.NodeType.Should().Be( SqlNodeType.ColumnDefinition );
             sut.Name.Should().Be( "foo" );
             sut.DefaultValue.Should().BeSameAs( defaultValue );
-            sut.Type.Should().BeEquivalentTo( SqlExpressionType.Create<string>() );
+            sut.Type.Should().BeEquivalentTo( TypeNullability.Create<string>() );
             text.Should().Be( "[foo] : System.String DEFAULT ((\"abc\" : System.String) || (\"def\" : System.String))" );
         }
     }

@@ -541,7 +541,7 @@ internal sealed class SqliteDatabaseChangeTracker
                 ? column.Node
                 : table.RecordSet.GetRawField(
                         oldName,
-                        SqlExpressionType.Create(
+                        TypeNullability.Create(
                             _database.TypeDefinitions.GetDefaultForDataType( oldDataType ).RuntimeType,
                             oldIsNullable ) )
                     .CastTo( column.TypeDefinition.RuntimeType );

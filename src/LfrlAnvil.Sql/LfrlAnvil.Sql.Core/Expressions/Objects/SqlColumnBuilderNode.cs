@@ -14,6 +14,6 @@ public sealed class SqlColumnBuilderNode : SqlDataFieldNode
     }
 
     public ISqlColumnBuilder Value { get; }
-    public SqlExpressionType Type => SqlExpressionType.Create( Value.TypeDefinition.RuntimeType, _isOptional || Value.IsNullable );
+    public TypeNullability Type => TypeNullability.Create( Value.TypeDefinition.RuntimeType, _isOptional || Value.IsNullable );
     public override string Name => Value.Name;
 }

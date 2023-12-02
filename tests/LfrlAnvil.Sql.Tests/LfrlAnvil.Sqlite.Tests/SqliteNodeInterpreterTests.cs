@@ -43,7 +43,7 @@ public class SqliteNodeInterpreterTests : TestsBase
             _sut.Context.Sql.ToString().Should().Be( "foo.a + @bar" );
             _sut.Context.Parameters.Should().HaveCount( 1 );
             _sut.Context.Parameters.Should()
-                .BeEquivalentTo( KeyValuePair.Create( "bar", (SqlExpressionType?)SqlExpressionType.Create<int>() ) );
+                .BeEquivalentTo( KeyValuePair.Create( "bar", (TypeNullability?)TypeNullability.Create<int>() ) );
         }
     }
 
@@ -126,7 +126,7 @@ public class SqliteNodeInterpreterTests : TestsBase
             _sut.Context.Sql.ToString().Should().Be( "@a" );
             _sut.Context.Parameters.Should().HaveCount( 1 );
             _sut.Context.Parameters.Should()
-                .BeEquivalentTo( KeyValuePair.Create( "a", (SqlExpressionType?)SqlExpressionType.Create<int>() ) );
+                .BeEquivalentTo( KeyValuePair.Create( "a", (TypeNullability?)TypeNullability.Create<int>() ) );
         }
     }
 
@@ -140,7 +140,7 @@ public class SqliteNodeInterpreterTests : TestsBase
             _sut.Context.Sql.ToString().Should().Be( "@b" );
             _sut.Context.Parameters.Should().HaveCount( 1 );
             _sut.Context.Parameters.Should()
-                .BeEquivalentTo( KeyValuePair.Create( "b", (SqlExpressionType?)SqlExpressionType.Create<string>( isNullable: true ) ) );
+                .BeEquivalentTo( KeyValuePair.Create( "b", (TypeNullability?)TypeNullability.Create<string>( isNullable: true ) ) );
         }
     }
 
@@ -1060,7 +1060,7 @@ END" );
         {
             _sut.Context.Parameters.Should().HaveCount( 1 );
             _sut.Context.Parameters.Should()
-                .BeEquivalentTo( KeyValuePair.Create( "a", (SqlExpressionType?)SqlExpressionType.Create<int>() ) );
+                .BeEquivalentTo( KeyValuePair.Create( "a", (TypeNullability?)TypeNullability.Create<int>() ) );
 
             _sut.Context.Sql.ToString().Should().Be( "foo.a > @a" );
         }
@@ -1707,7 +1707,7 @@ LEFT JOIN qux ON qux.b = foo.b" );
         {
             _sut.Context.Parameters.Should().HaveCount( 1 );
             _sut.Context.Parameters.Should()
-                .BeEquivalentTo( KeyValuePair.Create( "a", (SqlExpressionType?)SqlExpressionType.Create<int>() ) );
+                .BeEquivalentTo( KeyValuePair.Create( "a", (TypeNullability?)TypeNullability.Create<int>() ) );
 
             _sut.Context.Sql.ToString().Should().Be( "SELECT * FROM foo WHERE foo.a = @a" );
         }
@@ -1751,7 +1751,7 @@ LEFT JOIN qux ON qux.b = foo.b" );
         {
             _sut.Context.Parameters.Should().HaveCount( 1 );
             _sut.Context.Parameters.Should()
-                .BeEquivalentTo( KeyValuePair.Create( "p", (SqlExpressionType?)SqlExpressionType.Create<int>() ) );
+                .BeEquivalentTo( KeyValuePair.Create( "p", (TypeNullability?)TypeNullability.Create<int>() ) );
 
             _sut.Context.Sql.ToString()
                 .Should()
@@ -2226,7 +2226,7 @@ VALUES (@a, 1)" );
 
             _sut.Context.Parameters.Should().HaveCount( 1 );
             _sut.Context.Parameters.Should()
-                .BeEquivalentTo( KeyValuePair.Create( "a", (SqlExpressionType?)SqlExpressionType.Create<int>() ) );
+                .BeEquivalentTo( KeyValuePair.Create( "a", (TypeNullability?)TypeNullability.Create<int>() ) );
         }
     }
 

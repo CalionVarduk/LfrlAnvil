@@ -511,7 +511,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitColumnDefinition(SqlColumnDefinitionNode node)
     {
-        var typeDefinition = ColumnTypeDefinitions.GetByType( node.Type.BaseType );
+        var typeDefinition = ColumnTypeDefinitions.GetByType( node.Type.UnderlyingType );
         AppendDelimitedName( node.Name );
         Context.Sql.AppendSpace().Append( typeDefinition.DataType.Name );
 

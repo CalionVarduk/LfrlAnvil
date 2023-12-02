@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Text;
-using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Visitors;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
@@ -218,7 +217,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
     public void AddParameter_ShouldAddNewParameter()
     {
         var name = "foo";
-        var type = SqlExpressionType.Create<int>();
+        var type = TypeNullability.Create<int>();
         var sut = SqlNodeInterpreterContext.Create();
 
         sut.AddParameter( name, type );
@@ -226,7 +225,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.Parameters.Should().HaveCount( 1 );
-            sut.Parameters.Should().BeEquivalentTo( KeyValuePair.Create( name, (SqlExpressionType?)type ) );
+            sut.Parameters.Should().BeEquivalentTo( KeyValuePair.Create( name, (TypeNullability?)type ) );
         }
     }
 
@@ -234,7 +233,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
     public void AddParameter_ShouldDoNothing_WhenParameterWithExactlyTheSameTypeAlreadyExists()
     {
         var name = "foo";
-        var type = SqlExpressionType.Create<int>();
+        var type = TypeNullability.Create<int>();
         var sut = SqlNodeInterpreterContext.Create();
         sut.AddParameter( name, type );
 
@@ -243,7 +242,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.Parameters.Should().HaveCount( 1 );
-            sut.Parameters.Should().BeEquivalentTo( KeyValuePair.Create( name, (SqlExpressionType?)type ) );
+            sut.Parameters.Should().BeEquivalentTo( KeyValuePair.Create( name, (TypeNullability?)type ) );
         }
     }
 
@@ -251,8 +250,8 @@ public class SqlNodeInterpreterContextTests : TestsBase
     public void AddParameter_ShouldChangeTypeToNull_WhenParameterAlreadyExistsAndHasDifferentType()
     {
         var name = "foo";
-        var originalType = SqlExpressionType.Create<int>();
-        var newType = SqlExpressionType.Create<int>( isNullable: true );
+        var originalType = TypeNullability.Create<int>();
+        var newType = TypeNullability.Create<int>( isNullable: true );
         var sut = SqlNodeInterpreterContext.Create();
         sut.AddParameter( name, originalType );
 
@@ -261,7 +260,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.Parameters.Should().HaveCount( 1 );
-            sut.Parameters.Should().BeEquivalentTo( KeyValuePair.Create( name, (SqlExpressionType?)null ) );
+            sut.Parameters.Should().BeEquivalentTo( KeyValuePair.Create( name, (TypeNullability?)null ) );
         }
     }
 
@@ -269,9 +268,9 @@ public class SqlNodeInterpreterContextTests : TestsBase
     public void AddParameter_ShouldAddSecondParameterCorrectly()
     {
         var firstName = "foo";
-        var firstType = SqlExpressionType.Create<int>();
+        var firstType = TypeNullability.Create<int>();
         var secondName = "bar";
-        var secondType = SqlExpressionType.Create<string>();
+        var secondType = TypeNullability.Create<string>();
         var sut = SqlNodeInterpreterContext.Create();
         sut.AddParameter( firstName, firstType );
 
@@ -282,8 +281,8 @@ public class SqlNodeInterpreterContextTests : TestsBase
             sut.Parameters.Should().HaveCount( 2 );
             sut.Parameters.Should()
                 .BeEquivalentTo(
-                    KeyValuePair.Create( firstName, (SqlExpressionType?)firstType ),
-                    KeyValuePair.Create( secondName, (SqlExpressionType?)secondType ) );
+                    KeyValuePair.Create( firstName, (TypeNullability?)firstType ),
+                    KeyValuePair.Create( secondName, (TypeNullability?)secondType ) );
         }
     }
 
@@ -305,7 +304,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
     public void TryGetParameterType_ShouldReturnFalse_WhenParameterDoesNotExist()
     {
         var sut = SqlNodeInterpreterContext.Create();
-        sut.AddParameter( "foo", SqlExpressionType.Create<int>() );
+        sut.AddParameter( "foo", TypeNullability.Create<int>() );
 
         var result = sut.TryGetParameterType( "bar", out var outResult );
 
@@ -320,7 +319,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
     public void TryGetParameterType_ShouldReturnTrue_WhenParameterExists()
     {
         var name = "foo";
-        var type = SqlExpressionType.Create<int>();
+        var type = TypeNullability.Create<int>();
         var sut = SqlNodeInterpreterContext.Create();
         sut.AddParameter( name, type );
 
@@ -339,7 +338,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
         var sut = SqlNodeInterpreterContext.Create();
         sut.IncreaseIndent();
         sut.IncreaseChildDepth();
-        sut.AddParameter( "foo", SqlExpressionType.Create<int>() );
+        sut.AddParameter( "foo", TypeNullability.Create<int>() );
         sut.Sql.Append( "SELECT * FROM bar" );
 
         sut.Clear();

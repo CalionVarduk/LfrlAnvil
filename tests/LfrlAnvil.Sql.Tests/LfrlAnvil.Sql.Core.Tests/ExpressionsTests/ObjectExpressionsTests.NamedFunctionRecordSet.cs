@@ -86,7 +86,7 @@ public partial class ObjectExpressionsTests
         public void GetRawField_ShouldReturnRawDataFieldNode()
         {
             var sut = SqlNode.Functions.Named( SqlSchemaObjectName.Create( "foo" ) ).AsSet( "bar" );
-            var result = sut.GetRawField( "qux", SqlExpressionType.Create<int>() );
+            var result = sut.GetRawField( "qux", TypeNullability.Create<int>() );
             var text = result.ToString();
 
             using ( new AssertionScope() )
@@ -94,7 +94,7 @@ public partial class ObjectExpressionsTests
                 result.NodeType.Should().Be( SqlNodeType.RawDataField );
                 result.Name.Should().Be( "qux" );
                 result.RecordSet.Should().BeSameAs( sut );
-                result.Type.Should().Be( SqlExpressionType.Create<int>() );
+                result.Type.Should().Be( TypeNullability.Create<int>() );
                 text.Should().Be( "[bar].[qux] : System.Int32" );
             }
         }

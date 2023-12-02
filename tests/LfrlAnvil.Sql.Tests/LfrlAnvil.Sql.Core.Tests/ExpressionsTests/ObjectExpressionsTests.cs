@@ -23,7 +23,7 @@ public partial class ObjectExpressionsTests : TestsBase
             text.Should().Be( "\"foo\" : System.String" );
             var literalNode = sut as SqlLiteralNode<string>;
             (literalNode?.Value).Should().Be( "foo" );
-            (literalNode?.Type).Should().Be( SqlExpressionType.Create<string>() );
+            (literalNode?.Type).Should().Be( TypeNullability.Create<string>() );
         }
     }
 
@@ -52,7 +52,7 @@ public partial class ObjectExpressionsTests : TestsBase
             text.Should().Be( "\"42\" : System.Int32" );
             var literalNode = sut as SqlLiteralNode<int>;
             (literalNode?.Value).Should().Be( 42 );
-            (literalNode?.Type).Should().Be( SqlExpressionType.Create<int>() );
+            (literalNode?.Type).Should().Be( TypeNullability.Create<int>() );
         }
     }
 
@@ -68,7 +68,7 @@ public partial class ObjectExpressionsTests : TestsBase
             text.Should().Be( "\"42\" : System.Int32" );
             var literalNode = sut as SqlLiteralNode<int>;
             (literalNode?.Value).Should().Be( 42 );
-            (literalNode?.Type).Should().Be( SqlExpressionType.Create<int>() );
+            (literalNode?.Type).Should().Be( TypeNullability.Create<int>() );
         }
     }
 
@@ -103,7 +103,7 @@ public partial class ObjectExpressionsTests : TestsBase
     [InlineData( true )]
     public void Parameter_ShouldCreateParameterNode_WithNonNullableType(bool isNullable)
     {
-        var expectedType = SqlExpressionType.Create<string>( isNullable );
+        var expectedType = TypeNullability.Create<string>( isNullable );
         var sut = SqlNode.Parameter<string>( "foo", isNullable );
         var text = sut.ToString();
 
@@ -126,7 +126,7 @@ public partial class ObjectExpressionsTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.Parameter );
             sut.Name.Should().Be( "foo" );
-            sut.Type.Should().Be( SqlExpressionType.Create<int>( isNullable: true ) );
+            sut.Type.Should().Be( TypeNullability.Create<int>( isNullable: true ) );
             text.Should().Be( "@foo : Nullable<System.Int32>" );
         }
     }
@@ -723,7 +723,7 @@ public partial class ObjectExpressionsTests : TestsBase
     public void RawDataField_ShouldCreateRawDataFieldNode_WithType()
     {
         var recordSet = SqlNode.RawRecordSet( "foo" );
-        var sut = SqlNode.RawDataField( recordSet, "bar", SqlExpressionType.Create<int>() );
+        var sut = SqlNode.RawDataField( recordSet, "bar", TypeNullability.Create<int>() );
         var text = sut.ToString();
 
         using ( new AssertionScope() )
@@ -731,7 +731,7 @@ public partial class ObjectExpressionsTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.RawDataField );
             sut.RecordSet.Should().BeSameAs( recordSet );
             sut.Name.Should().Be( "bar" );
-            sut.Type.Should().Be( SqlExpressionType.Create<int>() );
+            sut.Type.Should().Be( TypeNullability.Create<int>() );
             text.Should().Be( "[foo].[bar] : System.Int32" );
         }
     }

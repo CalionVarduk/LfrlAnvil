@@ -201,7 +201,7 @@ public static class SqlNodeExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlRawDataFieldNode GetRawField(this SqlRecordSetNode node, string name, SqlExpressionType? type)
+    public static SqlRawDataFieldNode GetRawField(this SqlRecordSetNode node, string name, TypeNullability? type)
     {
         return SqlNode.RawDataField( node, name, type );
     }

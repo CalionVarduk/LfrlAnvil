@@ -78,7 +78,7 @@ public partial class ObjectExpressionsTests
                 result.RecordSet.Should().BeSameAs( sut );
                 var column = result as SqlColumnNode;
                 (column?.Value).Should().BeSameAs( table.Columns.Get( "Col0" ) );
-                (column?.Type).Should().Be( SqlExpressionType.Create<int>() );
+                (column?.Type).Should().Be( TypeNullability.Create<int>() );
                 text.Should().Be( "[foo].[Col0] : System.Int32" );
             }
         }
@@ -116,7 +116,7 @@ public partial class ObjectExpressionsTests
                 result.Value.Should().BeSameAs( table.Columns.Get( "Col0" ) );
                 result.Name.Should().Be( "Col0" );
                 result.RecordSet.Should().BeSameAs( sut );
-                result.Type.Should().Be( SqlExpressionType.Create<int>() );
+                result.Type.Should().Be( TypeNullability.Create<int>() );
                 text.Should().Be( "[foo].[Col0] : System.Int32" );
             }
         }
@@ -135,7 +135,7 @@ public partial class ObjectExpressionsTests
                 result.Value.Should().BeSameAs( table.Columns.Get( "Col0" ) );
                 result.Name.Should().Be( "Col0" );
                 result.RecordSet.Should().BeSameAs( sut );
-                result.Type.Should().Be( SqlExpressionType.Create<int>( isNullable: true ) );
+                result.Type.Should().Be( TypeNullability.Create<int>( isNullable: true ) );
                 text.Should().Be( "[foo].[Col0] : Nullable<System.Int32>" );
             }
         }
@@ -154,7 +154,7 @@ public partial class ObjectExpressionsTests
                 result.Value.Should().BeSameAs( table.Columns.Get( "Col0" ) );
                 result.Name.Should().Be( "Col0" );
                 result.RecordSet.Should().BeSameAs( sut );
-                result.Type.Should().Be( SqlExpressionType.Create<int>( isNullable: true ) );
+                result.Type.Should().Be( TypeNullability.Create<int>( isNullable: true ) );
                 text.Should().Be( "[foo].[Col0] : Nullable<System.Int32>" );
             }
         }
@@ -173,7 +173,7 @@ public partial class ObjectExpressionsTests
                 result.Value.Should().BeSameAs( table.Columns.Get( "Col0" ) );
                 result.Name.Should().Be( "Col0" );
                 result.RecordSet.Should().BeSameAs( sut );
-                result.Type.Should().Be( SqlExpressionType.Create<int>() );
+                result.Type.Should().Be( TypeNullability.Create<int>() );
                 text.Should().Be( "[bar].[Col0] : System.Int32" );
             }
         }
@@ -205,7 +205,7 @@ public partial class ObjectExpressionsTests
         {
             var table = TableMock.Create( "foo" );
             var sut = SqlNode.Table( table );
-            var result = sut.GetRawField( "bar", SqlExpressionType.Create<int>() );
+            var result = sut.GetRawField( "bar", TypeNullability.Create<int>() );
             var text = result.ToString();
 
             using ( new AssertionScope() )
@@ -213,7 +213,7 @@ public partial class ObjectExpressionsTests
                 result.NodeType.Should().Be( SqlNodeType.RawDataField );
                 result.Name.Should().Be( "bar" );
                 result.RecordSet.Should().BeSameAs( sut );
-                result.Type.Should().Be( SqlExpressionType.Create<int>() );
+                result.Type.Should().Be( TypeNullability.Create<int>() );
                 text.Should().Be( "[foo].[bar] : System.Int32" );
             }
         }

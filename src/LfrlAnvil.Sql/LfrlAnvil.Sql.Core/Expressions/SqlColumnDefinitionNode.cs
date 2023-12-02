@@ -2,7 +2,7 @@
 
 public class SqlColumnDefinitionNode : SqlNodeBase
 {
-    protected internal SqlColumnDefinitionNode(string name, SqlExpressionType type, SqlExpressionNode? defaultValue)
+    protected internal SqlColumnDefinitionNode(string name, TypeNullability type, SqlExpressionNode? defaultValue)
         : base( SqlNodeType.ColumnDefinition )
     {
         Name = name;
@@ -11,6 +11,6 @@ public class SqlColumnDefinitionNode : SqlNodeBase
     }
 
     public string Name { get; }
-    public SqlExpressionType Type { get; }
+    public TypeNullability Type { get; }
     public SqlExpressionNode? DefaultValue { get; }
 }

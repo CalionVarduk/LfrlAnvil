@@ -2,7 +2,7 @@
 
 public sealed class SqlRawDataFieldNode : SqlDataFieldNode
 {
-    internal SqlRawDataFieldNode(SqlRecordSetNode recordSet, string name, SqlExpressionType? type)
+    internal SqlRawDataFieldNode(SqlRecordSetNode recordSet, string name, TypeNullability? type)
         : base( recordSet, SqlNodeType.RawDataField )
     {
         Name = name;
@@ -10,5 +10,5 @@ public sealed class SqlRawDataFieldNode : SqlDataFieldNode
     }
 
     public override string Name { get; }
-    public SqlExpressionType? Type { get; }
+    public TypeNullability? Type { get; }
 }

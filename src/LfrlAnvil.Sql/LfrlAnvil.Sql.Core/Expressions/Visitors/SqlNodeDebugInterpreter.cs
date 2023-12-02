@@ -778,7 +778,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
         AppendWindowFrameBoundary( node.End );
     }
 
-    private void AppendExpressionType(SqlExpressionType? type)
+    private void AppendExpressionType(TypeNullability? type)
     {
         Context.Sql.AppendSpace().Append( ':' ).AppendSpace();
         if ( type is null )

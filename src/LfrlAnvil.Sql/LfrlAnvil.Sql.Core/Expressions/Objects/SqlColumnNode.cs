@@ -8,10 +8,10 @@ public sealed class SqlColumnNode : SqlDataFieldNode
         : base( recordSet, SqlNodeType.Column )
     {
         Value = value;
-        Type = SqlExpressionType.Create( Value.TypeDefinition.RuntimeType, isOptional || Value.IsNullable );
+        Type = TypeNullability.Create( Value.TypeDefinition.RuntimeType, isOptional || Value.IsNullable );
     }
 
     public ISqlColumn Value { get; }
-    public SqlExpressionType Type { get; }
+    public TypeNullability Type { get; }
     public override string Name => Value.Name;
 }

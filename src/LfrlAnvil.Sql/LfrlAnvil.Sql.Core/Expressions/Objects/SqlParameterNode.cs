@@ -2,7 +2,7 @@
 
 public sealed class SqlParameterNode : SqlExpressionNode
 {
-    internal SqlParameterNode(string name, SqlExpressionType? type)
+    internal SqlParameterNode(string name, TypeNullability? type)
         : base( SqlNodeType.Parameter )
     {
         Name = name;
@@ -10,5 +10,5 @@ public sealed class SqlParameterNode : SqlExpressionNode
     }
 
     public string Name { get; }
-    public SqlExpressionType? Type { get; }
+    public TypeNullability? Type { get; }
 }

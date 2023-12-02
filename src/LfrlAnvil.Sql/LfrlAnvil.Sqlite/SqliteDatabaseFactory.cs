@@ -194,8 +194,8 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         ref SqlStatementExecutor statementExecutor)
     {
         var master = SqlNode.RawRecordSet( "\"sqlite_master\"" );
-        var masterType = master.GetRawField( "type", SqlExpressionType.Create<string>() );
-        var masterName = master.GetRawField( "name", SqlExpressionType.Create<string>() );
+        var masterType = master.GetRawField( "type", TypeNullability.Create<string>() );
+        var masterName = master.GetRawField( "name", TypeNullability.Create<string>() );
 
         var query = SqlNode.DummyDataSource()
             .Select(

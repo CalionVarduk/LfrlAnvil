@@ -199,7 +199,7 @@ public static class SqlObjectExtensions
     {
         return SqlNode.Column(
             column.Name,
-            SqlExpressionType.Create( column.TypeDefinition.RuntimeType, column.IsNullable ),
+            TypeNullability.Create( column.TypeDefinition.RuntimeType, column.IsNullable ),
             column.DefaultValue );
     }
 

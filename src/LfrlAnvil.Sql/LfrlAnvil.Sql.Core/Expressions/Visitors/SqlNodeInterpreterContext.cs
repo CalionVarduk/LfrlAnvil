@@ -10,7 +10,7 @@ namespace LfrlAnvil.Sql.Expressions.Visitors;
 
 public sealed class SqlNodeInterpreterContext
 {
-    private Dictionary<string, SqlExpressionType?>? _parameters;
+    private Dictionary<string, TypeNullability?>? _parameters;
 
     private SqlNodeInterpreterContext(StringBuilder sql)
     {
@@ -24,9 +24,9 @@ public sealed class SqlNodeInterpreterContext
     public int Indent { get; private set; }
     public int ChildDepth { get; private set; }
 
-    public IReadOnlyCollection<KeyValuePair<string, SqlExpressionType?>> Parameters =>
-        (IReadOnlyCollection<KeyValuePair<string, SqlExpressionType?>>?)_parameters ??
-        Array.Empty<KeyValuePair<string, SqlExpressionType?>>();
+    public IReadOnlyCollection<KeyValuePair<string, TypeNullability?>> Parameters =>
+        (IReadOnlyCollection<KeyValuePair<string, TypeNullability?>>?)_parameters ??
+        Array.Empty<KeyValuePair<string, TypeNullability?>>();
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -93,11 +93,11 @@ public sealed class SqlNodeInterpreterContext
         return Sql.Indent( Math.Max( Indent - 2, 0 ) );
     }
 
-    public void AddParameter(string name, SqlExpressionType? type)
+    public void AddParameter(string name, TypeNullability? type)
     {
         if ( _parameters is null )
         {
-            _parameters = new Dictionary<string, SqlExpressionType?>( comparer: StringComparer.OrdinalIgnoreCase );
+            _parameters = new Dictionary<string, TypeNullability?>( comparer: StringComparer.OrdinalIgnoreCase );
             _parameters.Add( name, type );
             return;
         }
@@ -114,7 +114,7 @@ public sealed class SqlNodeInterpreterContext
             typeRef = null;
     }
 
-    public bool TryGetParameterType(string name, out SqlExpressionType? result)
+    public bool TryGetParameterType(string name, out TypeNullability? result)
     {
         if ( _parameters is not null )
             return _parameters.TryGetValue( name, out result );

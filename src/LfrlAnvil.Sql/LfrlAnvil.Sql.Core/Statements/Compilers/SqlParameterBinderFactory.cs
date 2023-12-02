@@ -236,7 +236,7 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
                 continue;
 
             if ( (s.Type.IsNullable && ! parameterType.Value.IsNullable) ||
-                ! s.Type.ActualType.IsAssignableTo( parameterType.Value.FullType ) )
+                ! s.Type.ActualType.IsAssignableTo( parameterType.Value.ActualType ) )
             {
                 var error = ExceptionResources.IncompatibleStatementParameterType( s.Name, parameterType.Value, s.Type.ActualType );
                 parameterErrors = parameterErrors.Extend( error );

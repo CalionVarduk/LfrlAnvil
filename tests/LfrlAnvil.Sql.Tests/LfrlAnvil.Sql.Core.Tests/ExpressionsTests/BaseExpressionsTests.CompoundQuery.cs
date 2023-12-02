@@ -14,16 +14,16 @@ public partial class BaseExpressionsTests
         public void Selection_ShouldContainTypedSelections_WhenAllQueriesHaveSimilarSelections()
         {
             var set1 = SqlNode.RawRecordSet( "foo" ).ToDataSource();
-            var a1 = set1.From.GetRawField( "a", SqlExpressionType.Create<int>() );
+            var a1 = set1.From.GetRawField( "a", TypeNullability.Create<int>() );
             var a1Select = a1.AsSelf();
-            var b1 = set1.From.GetRawField( "b", SqlExpressionType.Create<string>() );
+            var b1 = set1.From.GetRawField( "b", TypeNullability.Create<string>() );
             var b1Select = b1.AsSelf();
             var query1 = set1.Select( a1Select, b1Select );
 
             var set2 = SqlNode.RawRecordSet( "bar" ).ToDataSource();
-            var a2 = set2.From.GetRawField( "a", SqlExpressionType.Create<int>( isNullable: true ) );
+            var a2 = set2.From.GetRawField( "a", TypeNullability.Create<int>( isNullable: true ) );
             var a2Select = a2.AsSelf();
-            var b2 = set2.From.GetRawField( "b", SqlExpressionType.Create<string>() );
+            var b2 = set2.From.GetRawField( "b", TypeNullability.Create<string>() );
             var b2Select = b2.AsSelf();
             var query2 = set2.Select( a2Select, b2Select );
 
