@@ -18,6 +18,8 @@ public sealed class DbDataReader : IDataReader
         _rowIndex = -1;
     }
 
+    public DbCommand? Command { get; set; }
+    public bool ThrowOnDispose { get; set; } = false;
     public ResultSet[] Sets { get; }
     public bool IsClosed => _setIndex >= Sets.Length;
     public int Depth => 0;
@@ -176,6 +178,9 @@ public sealed class DbDataReader : IDataReader
 
     public void Dispose()
     {
+        if ( ThrowOnDispose )
+            throw new Exception();
+
         Close();
     }
 
@@ -183,6 +188,7 @@ public sealed class DbDataReader : IDataReader
     {
         _setIndex = Sets.Length;
         _rowIndex = -1;
+        ((IList<string>?)Command?.Audit)?.Add( "DbDataReader.Close" );
     }
 
     [Pure]

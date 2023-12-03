@@ -1,33 +1,32 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics.Contracts;
+using System.Threading;
+using System.Threading.Tasks;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Objects;
+using LfrlAnvil.Sql.Statements;
 using LfrlAnvil.Sql.Versioning;
-using LfrlAnvil.Sqlite.Internal;
 using LfrlAnvil.Sqlite.Objects;
 using LfrlAnvil.Sqlite.Objects.Builders;
-using SqliteConnection = Microsoft.Data.Sqlite.SqliteConnection;
+using Microsoft.Data.Sqlite;
 
 namespace LfrlAnvil.Sqlite;
 
 public abstract class SqliteDatabase : ISqlDatabase
 {
-    private readonly SqlQueryDefinition<List<SqlDatabaseVersionRecord>> _versionRecordsReader;
-
     internal SqliteDatabase(
         SqliteDatabaseBuilder builder,
-        SqlQueryDefinition<List<SqlDatabaseVersionRecord>> versionRecordsReader,
+        SqlQueryReaderExecutor<SqlDatabaseVersionRecord> versionRecordsQuery,
         Version version)
     {
-        _versionRecordsReader = versionRecordsReader;
         Version = version;
         DataTypes = builder.DataTypes;
         TypeDefinitions = builder.TypeDefinitions;
         NodeInterpreterFactory = builder.NodeInterpreterFactory;
         ServerVersion = builder.ServerVersion;
+        VersionRecordsQuery = versionRecordsQuery;
         Schemas = new SqliteSchemaCollection( this, builder.Schemas );
     }
 
@@ -37,6 +36,7 @@ public abstract class SqliteDatabase : ISqlDatabase
     public SqliteColumnTypeDefinitionProvider TypeDefinitions { get; }
     public SqliteNodeInterpreterFactory NodeInterpreterFactory { get; }
     public string ServerVersion { get; }
+    public SqlQueryReaderExecutor<SqlDatabaseVersionRecord> VersionRecordsQuery { get; }
 
     ISqlSchemaCollection ISqlDatabase.Schemas => Schemas;
     ISqlDataTypeProvider ISqlDatabase.DataTypes => DataTypes;
@@ -47,11 +47,15 @@ public abstract class SqliteDatabase : ISqlDatabase
     public abstract SqliteConnection Connect();
 
     [Pure]
+    public abstract ValueTask<SqliteConnection> ConnectAsync(CancellationToken cancellationToken = default);
+
+    [Pure]
     public SqlDatabaseVersionRecord[] GetRegisteredVersions()
     {
         using var connection = Connect();
         using var command = connection.CreateCommand();
-        return _versionRecordsReader.Execute( command ).ToArray();
+        var result = VersionRecordsQuery.Execute( command );
+        return result.IsEmpty ? Array.Empty<SqlDatabaseVersionRecord>() : result.Rows.ToArray();
     }
 
     public virtual void Dispose() { }
@@ -60,5 +64,11 @@ public abstract class SqliteDatabase : ISqlDatabase
     IDbConnection ISqlDatabase.Connect()
     {
         return Connect();
+    }
+
+    [Pure]
+    async ValueTask<IDbConnection> ISqlDatabase.ConnectAsync(CancellationToken cancellationToken)
+    {
+        return await ConnectAsync( cancellationToken );
     }
 }

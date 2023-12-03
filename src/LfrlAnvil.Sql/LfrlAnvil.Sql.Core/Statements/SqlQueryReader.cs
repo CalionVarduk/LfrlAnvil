@@ -20,7 +20,7 @@ public readonly record struct SqlQueryReader(
 public readonly struct SqlQueryReader<TRow>
     where TRow : notnull
 {
-    internal SqlQueryReader(SqlDialect dialect, Func<IDataReader, SqlQueryReaderOptions, SqlQueryReaderResult<TRow>> @delegate)
+    public SqlQueryReader(SqlDialect dialect, Func<IDataReader, SqlQueryReaderOptions, SqlQueryReaderResult<TRow>> @delegate)
     {
         Dialect = dialect;
         Delegate = @delegate;

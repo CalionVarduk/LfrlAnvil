@@ -50,14 +50,14 @@ public sealed class DbCommand : IDbCommand
     public DbDataReader ExecuteReader()
     {
         _audit.Add( nameof( ExecuteReader ) );
-        return new DbDataReader( ResultSets );
+        return new DbDataReader( ResultSets ) { Command = this };
     }
 
     [Pure]
     public object? ExecuteScalar()
     {
         _audit.Add( nameof( ExecuteScalar ) );
-        using var reader = new DbDataReader( ResultSets );
+        using var reader = new DbDataReader( ResultSets ) { Command = this };
         return reader.Read() ? reader.GetValue( 0 ) : null;
     }
 

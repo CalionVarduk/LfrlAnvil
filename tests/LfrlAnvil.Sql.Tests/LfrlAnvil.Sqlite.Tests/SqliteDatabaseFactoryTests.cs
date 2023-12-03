@@ -2,11 +2,10 @@
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Events;
-using LfrlAnvil.Sql.Expressions;
-using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Versioning;
@@ -722,153 +721,6 @@ public class SqliteDatabaseFactoryTests : TestsBase
         }
     }
 
-    //[Fact]
-    [Fact( Skip = "x" )]
-    public void X()
-    {
-        var sut = new SqliteDatabaseFactory();
-        var history = new SqlDatabaseVersionHistory(
-            SqlDatabaseVersion.Create(
-                Version.Parse( "0.1" ),
-                "1st version",
-                db =>
-                {
-                    var s = db.Schemas.Default;
-                    var t = s.Objects.CreateTable( "T" );
-                    var a = t.Columns.Create( "A" );
-                    var b = t.Columns.Create( "B" ).MarkAsNullable();
-                    var c = t.Columns.Create( "C" );
-
-                    t.SetPrimaryKey( a.Asc(), c.Asc() );
-
-                    t.Indexes.Create( b.Asc() ).SetFilter( x => x["B"] != null );
-
-                    t = s.Objects.CreateTable( "X" );
-                    a = t.Columns.Create( "A" );
-                    b = t.Columns.Create( "B" ).MarkAsNullable();
-
-                    t.SetPrimaryKey( a.Asc() );
-                } ) );
-
-        var result = sut.Create(
-            "DataSource=:memory:",
-            history,
-            SqlCreateDatabaseOptions.Default.SetMode( SqlDatabaseCreateMode.Commit ) );
-
-        var interpreter = result.Database.NodeInterpreterFactory.Create();
-        var table = result.Database.Schemas.Default.Objects.GetTable( "T" ).ToRecordSet();
-        var xTable = result.Database.Schemas.Default.Objects.GetTable( "X" ).ToRecordSet();
-        var aliasedTable = table.As( "U" );
-
-        var insertInto = SqlNode.Batch(
-            SqlNode.Values(
-                    new[,]
-                    {
-                        { SqlNode.Literal( 1 ), SqlNode.Literal( 101 ), SqlNode.Literal( 1 ) },
-                        { SqlNode.Literal( 2 ), SqlNode.Null(), SqlNode.Literal( 1 ) }
-                    } )
-                .ToInsertInto( table, table["A"], table["B"], table["C"] ),
-            SqlNode.Values( SqlNode.Literal( 1 ), SqlNode.Literal( 11 ) )
-                .ToInsertInto( xTable, xTable["A"], xTable["B"] ) );
-
-        var update2 = aliasedTable.Join( xTable.InnerOn( xTable["A"] == aliasedTable["A"] ) )
-            .ToUpdate( table["B"].Assign( table["B"] + xTable["B"] + SqlNode.Literal( 1 ) ) );
-
-        var cte = aliasedTable.Join( xTable.InnerOn( xTable["A"] == aliasedTable["A"] ) )
-            .Select( aliasedTable["A"].AsSelf(), xTable["B"].AsSelf() )
-            .ToCte( "_X" );
-
-        var cteUpdate = aliasedTable.Join( xTable.InnerOn( xTable["A"] == aliasedTable["A"] ) )
-            .With( cte )
-            .ToUpdate(
-                table["B"]
-                    .Assign(
-                        table["B"] +
-                        cte.RecordSet.ToDataSource().AndWhere( cte.RecordSet["A"] == table["A"] ).Select( cte.RecordSet["B"].AsSelf() ) +
-                        SqlNode.Literal( 1 ) ) );
-
-        var update = aliasedTable.ToDataSource()
-            .AndWhere( aliasedTable["B"] != null )
-            .OrderBy( aliasedTable["A"].Asc() )
-            .ToUpdate( table["B"].Assign( table["B"] + SqlNode.Literal( 1 ) ) );
-
-        var query = table.ToDataSource().Select( table.GetAll() ).OrderBy( table["A"].Asc() );
-
-        using var connection = result.Database.Connect();
-        using var cmd = connection.CreateCommand();
-
-        var createTable = SqlNode.CreateTable(
-            SqlRecordSetInfo.Create( "test" ),
-            new[]
-            {
-                SqlNode.Column<int>( "x" ),
-                SqlNode.Column<DateTime>( "y", defaultValue: SqlNode.Literal( "foo" ).Concat( SqlNode.Literal( "bar" ) ) )
-            },
-            constraintsProvider: t => SqlCreateTableConstraints.Empty
-                .WithPrimaryKey( SqlNode.PrimaryKey( "PK_test", t["x"].Asc() ) )
-                .WithChecks( SqlNode.Check( "CHK_test", t["x"] > SqlNode.Literal( 0 ) ) ) );
-
-        interpreter.Visit( createTable );
-        //interpreter.Visit( insertInto );
-        cmd.CommandText = interpreter.Context.Sql.ToString();
-        interpreter.Context.Clear();
-
-        var dt = DateTime.Now;
-        cmd.ExecuteNonQuery();
-
-        cmd.CommandText = "INSERT INTO test (x) VALUES (1);";
-        cmd.ExecuteNonQuery();
-
-        cmd.CommandText = "SELECT * FROM test;";
-        using ( var reader = cmd.ExecuteReader() )
-        {
-            var x = new List<Dictionary<string, object?>>();
-            while ( reader.Read() )
-            {
-                var dict = new Dictionary<string, object?>();
-                for ( var i = 0; i < reader.FieldCount; ++i )
-                    dict[reader.GetName( i )] = reader.GetValue( i );
-
-                x.Add( dict );
-            }
-        }
-
-        interpreter.Visit( update2 );
-        cmd.CommandText = interpreter.Context.Sql.ToString();
-        interpreter.Context.Clear();
-
-        cmd.ExecuteNonQuery();
-
-        interpreter.Visit( query );
-        cmd.CommandText = interpreter.Context.Sql.ToString();
-
-        var values = new List<Dictionary<string, object?>>();
-        using ( var reader = cmd.ExecuteReader() )
-        {
-            while ( reader.Read() )
-            {
-                var row = new Dictionary<string, object?>();
-                row["A"] = reader.GetValue( reader.GetOrdinal( "A" ) );
-                row["B"] = reader.GetValue( reader.GetOrdinal( "B" ) );
-                values.Add( row );
-            }
-        }
-
-        cmd.CommandText = "SELECT NEW_GUID() AS A, GET_CURRENT_DATETIME() AS B, GET_CURRENT_TIMESTAMP() AS C";
-
-        using ( var reader = cmd.ExecuteReader() )
-        {
-            while ( reader.Read() )
-            {
-                var row = new Dictionary<string, object?>();
-                row["A"] = reader.GetGuid( reader.GetOrdinal( "A" ) );
-                row["B"] = DateTime.Parse( reader.GetString( reader.GetOrdinal( "B" ) ) );
-                row["C"] = reader.GetInt64( reader.GetOrdinal( "C" ) );
-                values.Add( row );
-            }
-        }
-    }
-
     public class Persistent : TestsBase
     {
         [Fact]
@@ -1003,7 +855,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         }
 
         [Fact]
-        public void AddConnectionChangeCallback_ShouldRegisterCallbackAndInvokeItOnEachConnectionOpenAndClose()
+        public async Task AddConnectionChangeCallback_ShouldRegisterCallbackAndInvokeItOnEachConnectionOpenAndClose()
         {
             const string dbName = ".test_2.db";
             const string connectionString = $"DataSource=./{dbName};Pooling=false";
@@ -1021,7 +873,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
                     history,
                     SqlCreateDatabaseOptions.Default.SetMode( SqlDatabaseCreateMode.Commit ) );
 
-                var connection = result.Database.Connect();
+                var connection = await result.Database.ConnectAsync();
                 connection.Dispose();
 
                 using ( new AssertionScope() )

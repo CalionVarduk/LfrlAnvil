@@ -1,8 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
+using System.Threading;
+using System.Threading.Tasks;
 using LfrlAnvil.Sql.Objects.Builders;
+using LfrlAnvil.Sql.Statements;
 using LfrlAnvil.Sql.Versioning;
 using LfrlAnvil.Sqlite.Objects.Builders;
 
@@ -18,9 +20,9 @@ internal sealed class SqlitePersistentDatabase : SqliteDatabase
     internal SqlitePersistentDatabase(
         string connectionString,
         SqliteDatabaseBuilder builder,
-        SqlQueryDefinition<List<SqlDatabaseVersionRecord>> versionRecordsReader,
+        SqlQueryReaderExecutor<SqlDatabaseVersionRecord> versionRecordsQuery,
         Version version)
-        : base( builder, versionRecordsReader, version )
+        : base( builder, versionRecordsQuery, version )
     {
         _connectionString = connectionString;
         _connectionChangeCallbacks = builder.ConnectionChanges.GetCallbacksArray();
@@ -31,6 +33,14 @@ internal sealed class SqlitePersistentDatabase : SqliteDatabase
     {
         var result = new SqliteConnection( _connectionString ) { ChangeCallbacks = _connectionChangeCallbacks };
         result.Open();
+        return result;
+    }
+
+    [Pure]
+    public override async ValueTask<Microsoft.Data.Sqlite.SqliteConnection> ConnectAsync(CancellationToken cancellationToken = default)
+    {
+        var result = new SqliteConnection( _connectionString ) { ChangeCallbacks = _connectionChangeCallbacks };
+        await result.OpenAsync( cancellationToken ).ConfigureAwait( false );
         return result;
     }
 }

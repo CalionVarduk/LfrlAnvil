@@ -23,7 +23,7 @@ public readonly record struct SqlParameterBinder(
 public readonly struct SqlParameterBinder<TSource>
     where TSource : notnull
 {
-    internal SqlParameterBinder(SqlDialect dialect, Action<IDbCommand, TSource> @delegate)
+    public SqlParameterBinder(SqlDialect dialect, Action<IDbCommand, TSource> @delegate)
     {
         Dialect = dialect;
         Delegate = @delegate;

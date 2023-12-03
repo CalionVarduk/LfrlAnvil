@@ -1,6 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Threading;
+using System.Threading.Tasks;
+using LfrlAnvil.Sql.Statements;
 using LfrlAnvil.Sql.Versioning;
 using LfrlAnvil.Sqlite.Objects.Builders;
 
@@ -13,9 +15,9 @@ internal sealed class SqlitePermanentlyConnectedDatabase : SqliteDatabase
     internal SqlitePermanentlyConnectedDatabase(
         SqlitePermanentConnection connection,
         SqliteDatabaseBuilder builder,
-        SqlQueryDefinition<List<SqlDatabaseVersionRecord>> versionRecordsReader,
+        SqlQueryReaderExecutor<SqlDatabaseVersionRecord> versionRecordsQuery,
         Version version)
-        : base( builder, versionRecordsReader, version )
+        : base( builder, versionRecordsQuery, version )
     {
         _connection = connection;
     }
@@ -30,5 +32,11 @@ internal sealed class SqlitePermanentlyConnectedDatabase : SqliteDatabase
     public override Microsoft.Data.Sqlite.SqliteConnection Connect()
     {
         return _connection;
+    }
+
+    [Pure]
+    public override ValueTask<Microsoft.Data.Sqlite.SqliteConnection> ConnectAsync(CancellationToken cancellationToken = default)
+    {
+        return ValueTask.FromResult<Microsoft.Data.Sqlite.SqliteConnection>( _connection );
     }
 }

@@ -15,6 +15,7 @@ using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Objects.Builders;
+using LfrlAnvil.Sql.Statements;
 using LfrlAnvil.Sql.Versioning;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Extensions;
@@ -57,8 +58,8 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
             var statementExecutor = new SqlStatementExecutor( options );
             CreateVersionHistoryTableInDatabaseIfNotExists( connection, in versionHistoryInfo, ref statementExecutor );
 
-            var versionRecordsReader = CreateVersionRecordsReader( in versionHistoryInfo );
-            var versions = CompareVersionHistoryToDatabase( connection, versionHistory, versionRecordsReader, ref statementExecutor );
+            var versionRecordsQuery = CreateVersionRecordsQuery( in versionHistoryInfo );
+            var versions = CompareVersionHistoryToDatabase( connection, versionHistory, versionRecordsQuery, ref statementExecutor );
 
             foreach ( var version in versions.Committed )
             {
@@ -84,8 +85,8 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
             connection.ChangeCallbacks = connectionChangeCallbacks.ToArray();
 
             SqliteDatabase database = connection is SqlitePermanentConnection permanentConnection
-                ? new SqlitePermanentlyConnectedDatabase( permanentConnection, builder, versionRecordsReader, newDbVersion )
-                : new SqlitePersistentDatabase( connectionString, builder, versionRecordsReader, newDbVersion );
+                ? new SqlitePermanentlyConnectedDatabase( permanentConnection, builder, versionRecordsQuery, newDbVersion )
+                : new SqlitePersistentDatabase( connectionString, builder, versionRecordsQuery, newDbVersion );
 
             return new SqlCreateDatabaseResult<SqliteDatabase>( database, exception, versions, appliedVersionCount );
         }
@@ -109,12 +110,22 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
     private static SqlDatabaseVersionHistory.DatabaseComparisonResult CompareVersionHistoryToDatabase(
         SqliteConnection connection,
         SqlDatabaseVersionHistory versionHistory,
-        SqlQueryDefinition<List<SqlDatabaseVersionRecord>> versionRecordsReader,
+        SqlQueryReaderExecutor<SqlDatabaseVersionRecord> versionRecordsQuery,
         ref SqlStatementExecutor statementExecutor)
     {
         using var command = connection.CreateCommand();
-        command.CommandText = versionRecordsReader.Sql;
-        var registeredVersionRecords = statementExecutor.ExecuteVersionHistoryQuery( command, versionRecordsReader.Executor );
+        command.CommandText = versionRecordsQuery.Sql;
+        var @delegate = versionRecordsQuery.Reader.Delegate;
+
+        var registeredVersionRecords = statementExecutor.ExecuteVersionHistoryQuery(
+                command,
+                cmd =>
+                {
+                    using var reader = cmd.ExecuteReader();
+                    return @delegate( reader, default );
+                } )
+            .Rows;
+
         return versionHistory.CompareToDatabase( CollectionsMarshal.AsSpan( registeredVersionRecords ) );
     }
 
@@ -253,7 +264,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
     }
 
     [Pure]
-    private static SqlQueryDefinition<List<SqlDatabaseVersionRecord>> CreateVersionRecordsReader(in VersionHistoryInfo info)
+    private static SqlQueryReaderExecutor<SqlDatabaseVersionRecord> CreateVersionRecordsQuery(in VersionHistoryInfo info)
     {
         var dataSource = info.Table.RecordSet.ToDataSource();
         var query = dataSource.Select( dataSource.GetAll() ).OrderBy( info.Ordinal.Node.Asc() );
@@ -262,51 +273,53 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         var sql = info.Interpreter.Context.Sql.AppendSemicolon().ToString();
         info.Interpreter.Context.Clear();
 
-        return new SqlQueryDefinition<List<SqlDatabaseVersionRecord>>( sql, Executor );
+        return new SqlQueryReader<SqlDatabaseVersionRecord>( SqliteDialect.Instance, Executor ).Bind( sql );
 
         [Pure]
-        static List<SqlDatabaseVersionRecord> Executor(SqliteCommand c)
+        static SqlQueryReaderResult<SqlDatabaseVersionRecord> Executor(IDataReader reader, SqlQueryReaderOptions options)
         {
-            var result = new List<SqlDatabaseVersionRecord>();
-            using var reader = c.ExecuteReader();
+            var sqliteReader = (SqliteDataReader)reader;
+            if ( ! sqliteReader.Read() )
+                return SqlQueryReaderResult<SqlDatabaseVersionRecord>.Empty;
 
-            if ( ! reader.Read() )
-                return result;
+            var rows = options.InitialBufferCapacity is not null
+                ? new List<SqlDatabaseVersionRecord>( capacity: options.InitialBufferCapacity.Value )
+                : new List<SqlDatabaseVersionRecord>();
 
-            var iOrdinal = reader.GetOrdinal( VersionHistoryInfo.OrdinalName );
-            var iVersionMajor = reader.GetOrdinal( VersionHistoryInfo.VersionMajorName );
-            var iVersionMinor = reader.GetOrdinal( VersionHistoryInfo.VersionMinorName );
-            var iVersionBuild = reader.GetOrdinal( VersionHistoryInfo.VersionBuildName );
-            var iVersionRevision = reader.GetOrdinal( VersionHistoryInfo.VersionRevisionName );
-            var iDescription = reader.GetOrdinal( VersionHistoryInfo.DescriptionName );
-            var iCommitDateUtc = reader.GetOrdinal( VersionHistoryInfo.CommitDateUtcName );
-            var iCommitDurationInTicks = reader.GetOrdinal( VersionHistoryInfo.CommitDurationInTicksName );
+            var iOrdinal = sqliteReader.GetOrdinal( VersionHistoryInfo.OrdinalName );
+            var iVersionMajor = sqliteReader.GetOrdinal( VersionHistoryInfo.VersionMajorName );
+            var iVersionMinor = sqliteReader.GetOrdinal( VersionHistoryInfo.VersionMinorName );
+            var iVersionBuild = sqliteReader.GetOrdinal( VersionHistoryInfo.VersionBuildName );
+            var iVersionRevision = sqliteReader.GetOrdinal( VersionHistoryInfo.VersionRevisionName );
+            var iDescription = sqliteReader.GetOrdinal( VersionHistoryInfo.DescriptionName );
+            var iCommitDateUtc = sqliteReader.GetOrdinal( VersionHistoryInfo.CommitDateUtcName );
+            var iCommitDurationInTicks = sqliteReader.GetOrdinal( VersionHistoryInfo.CommitDurationInTicksName );
 
             do
             {
-                var versionMajor = reader.GetInt32( iVersionMajor );
-                var versionMinor = reader.GetInt32( iVersionMinor );
-                var versionBuild = reader.IsDBNull( iVersionBuild ) ? (int?)null : reader.GetInt32( iVersionBuild );
-                var versionRevision = versionBuild is null || reader.IsDBNull( iVersionRevision )
+                var versionMajor = sqliteReader.GetInt32( iVersionMajor );
+                var versionMinor = sqliteReader.GetInt32( iVersionMinor );
+                var versionBuild = sqliteReader.IsDBNull( iVersionBuild ) ? (int?)null : sqliteReader.GetInt32( iVersionBuild );
+                var versionRevision = versionBuild is null || sqliteReader.IsDBNull( iVersionRevision )
                     ? (int?)null
-                    : reader.GetInt32( iVersionRevision );
+                    : sqliteReader.GetInt32( iVersionRevision );
 
                 var record = new SqlDatabaseVersionRecord(
-                    Ordinal: reader.GetInt32( iOrdinal ),
+                    Ordinal: sqliteReader.GetInt32( iOrdinal ),
                     Version: versionBuild is null
                         ? new Version( versionMajor, versionMinor )
                         : versionRevision is null
                             ? new Version( versionMajor, versionMinor, versionBuild.Value )
                             : new Version( versionMajor, versionMinor, versionBuild.Value, versionRevision.Value ),
-                    Description: reader.GetString( iDescription ),
-                    CommitDateUtc: DateTime.Parse( reader.GetString( iCommitDateUtc ) ),
-                    CommitDuration: TimeSpan.FromTicks( reader.GetInt64( iCommitDurationInTicks ) ) );
+                    Description: sqliteReader.GetString( iDescription ),
+                    CommitDateUtc: DateTime.Parse( sqliteReader.GetString( iCommitDateUtc ) ),
+                    CommitDuration: TimeSpan.FromTicks( sqliteReader.GetInt64( iCommitDurationInTicks ) ) );
 
-                result.Add( record );
+                rows.Add( record );
             }
-            while ( reader.Read() );
+            while ( sqliteReader.Read() );
 
-            return result;
+            return new SqlQueryReaderResult<SqlDatabaseVersionRecord>( resultSetFields: null, rows );
         }
     }
 

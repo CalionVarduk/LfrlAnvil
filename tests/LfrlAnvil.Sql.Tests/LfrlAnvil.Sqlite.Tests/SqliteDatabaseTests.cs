@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Data;
+using System.Threading.Tasks;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Objects;
@@ -113,6 +114,18 @@ public class SqliteDatabaseTests : TestsBase
 
         var first = sut.Connect();
         var second = sut.Connect();
+
+        first.Should().BeSameAs( second );
+    }
+
+    [Fact]
+    public async Task ConnectAsync_ForInMemoryDatabase_ShouldAlwaysReturnTheSameObject()
+    {
+        var factory = new SqliteDatabaseFactory();
+        ISqlDatabase sut = factory.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        var first = await sut.ConnectAsync();
+        var second = await sut.ConnectAsync();
 
         first.Should().BeSameAs( second );
     }
