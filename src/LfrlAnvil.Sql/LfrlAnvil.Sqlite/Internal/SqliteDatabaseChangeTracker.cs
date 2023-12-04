@@ -11,6 +11,7 @@ using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Extensions;
+using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Objects.Builders;
 using ExceptionResources = LfrlAnvil.Sql.Exceptions.ExceptionResources;
@@ -23,7 +24,7 @@ internal sealed class SqliteDatabaseChangeTracker
     private const byte ModeMask = (1 << 8) - 2;
 
     private readonly SqliteDatabaseBuilder _database;
-    private readonly List<string> _pendingStatements;
+    private readonly List<SqlDatabaseBuilderStatement> _pendingStatements;
     private readonly List<ISqlStatementNode> _ongoingStatements;
     private readonly List<SqliteDatabasePropertyChange> _ongoingPropertyChanges;
     private readonly Dictionary<ulong, SqliteTableBuilder> _modifiedTables;
@@ -34,7 +35,7 @@ internal sealed class SqliteDatabaseChangeTracker
     internal SqliteDatabaseChangeTracker(SqliteDatabaseBuilder database)
     {
         _database = database;
-        _pendingStatements = new List<string>();
+        _pendingStatements = new List<SqlDatabaseBuilderStatement>();
         _ongoingStatements = new List<ISqlStatementNode>();
         _ongoingPropertyChanges = new List<SqliteDatabasePropertyChange>();
         _modifiedTables = new Dictionary<ulong, SqliteTableBuilder>();
@@ -50,7 +51,7 @@ internal sealed class SqliteDatabaseChangeTracker
     internal bool IsPreparingStatements => _mode > 0 && IsAttached;
     internal IEnumerable<string> ModifiedTableNames => _modifiedTables.Values.Select( t => t.FullName );
 
-    internal ReadOnlySpan<string> GetPendingStatements()
+    internal ReadOnlySpan<SqlDatabaseBuilderStatement> GetPendingStatements()
     {
         if ( _ongoingPropertyChanges.Count > 0 )
             CompletePendingStatement();
@@ -58,7 +59,7 @@ internal sealed class SqliteDatabaseChangeTracker
         return CollectionsMarshal.AsSpan( _pendingStatements );
     }
 
-    internal void AddRawStatement(string statement)
+    internal void AddStatement(SqlDatabaseBuilderStatement statement)
     {
         if ( _ongoingPropertyChanges.Count > 0 )
             CompletePendingStatement();
@@ -385,11 +386,11 @@ internal sealed class SqliteDatabaseChangeTracker
             }
 
             _interpreterContext ??= SqlNodeInterpreterContext.Create( capacity: 2048 );
-            var interpreter = _database.NodeInterpreterFactory.Create( _interpreterContext );
+            var interpreter = _database.NodeInterpreters.Create( _interpreterContext );
             var batch = SqlNode.Batch( changeStatements.ToArray() );
             interpreter.VisitStatementBatch( batch );
 
-            _pendingStatements.Add( _interpreterContext.Sql.AppendLine().ToString() );
+            _pendingStatements.Add( SqlDatabaseBuilderStatement.Create( _interpreterContext ) );
             _interpreterContext.Sql.Clear();
             _ongoingStatements.Clear();
         }

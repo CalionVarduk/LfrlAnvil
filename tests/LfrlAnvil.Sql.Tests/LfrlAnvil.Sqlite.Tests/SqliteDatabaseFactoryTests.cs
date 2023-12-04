@@ -82,7 +82,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
     public void Create_ShouldCorrectlyResetBuilderStateBetweenVersions(SqlDatabaseCreateMode mode)
     {
         bool? isAttached = null;
-        string[]? pendingStatements = null;
+        SqlDatabaseBuilderStatement[]? pendingStatements = null;
 
         var sut = new SqliteDatabaseFactory();
         var history = new SqlDatabaseVersionHistory(
@@ -278,7 +278,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
                     var t = b.Schemas.Default.Objects.CreateTable( "T" );
                     t.SetPrimaryKey( t.Columns.Create( "C1" ).SetType<int>().Asc() );
                     t.Columns.Create( "C2" ).SetType<int>().MarkAsNullable();
-                    b.AddRawStatement( "INSERT INTO T (C1, C2) VALUES (1, NULL), (2, 1), (3, 5), (4, 6);" );
+                    b.AddStatement( "INSERT INTO T (C1, C2) VALUES (1, NULL), (2, 1), (3, 5), (4, 6)" );
                 } ),
             SqlDatabaseVersion.Create(
                 Version.Parse( "0.2" ),
@@ -605,7 +605,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
                 } ),
             SqlDatabaseVersion.Create(
                 Version.Parse( "0.0.2" ),
-                b => b.AddRawStatement( "INSERT INTO T (A, B) VALUES (1, 1);" ) ) );
+                b => b.AddStatement( "INSERT INTO T (A, B) VALUES (1, 1)" ) ) );
 
         var min = DateTime.UtcNow;
 
@@ -625,7 +625,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
 
             @event.Key.Version.Should().BeEquivalentTo( Version.Parse( "0.0.2" ) );
             @event.Key.Ordinal.Should().Be( 2 );
-            @event.Sql.Should().Be( "INSERT INTO T (A, B) VALUES (1, 1);" );
+            @event.Sql.Should().Be( $"INSERT INTO T (A, B) VALUES (1, 1){Environment.NewLine}" );
             @event.Parameters.Should().BeEmpty();
             @event.Type.Should().Be( SqlDatabaseFactoryStatementType.Change );
             @event.UtcStartDate.Should().BeOnOrAfter( min );

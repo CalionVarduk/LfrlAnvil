@@ -126,31 +126,31 @@ public partial class SqliteSchemaBuilderTests : TestsBase
             v1.FullName.Should().Be( "bar_V1" );
             v2.FullName.Should().Be( "bar_V2" );
 
-            statements.Should().Contain( s => s.Contains( "DROP VIEW \"foo_V1\";" ) );
+            statements.Should().Contain( s => s.Sql.Contains( "DROP VIEW \"foo_V1\";" ) );
             statements.Should()
                 .Contain(
-                    s => s.Contains(
+                    s => s.Sql.Contains(
                         @"CREATE VIEW ""bar_V1"" AS
 SELECT
   *
 FROM ""bar_T2""
 INNER JOIN ""bar_T3"" ON TRUE;" ) );
 
-            statements.Should().Contain( s => s.Contains( "DROP VIEW \"foo_V2\";" ) );
+            statements.Should().Contain( s => s.Sql.Contains( "DROP VIEW \"foo_V2\";" ) );
             statements.Should()
                 .Contain(
-                    s => s.Contains(
+                    s => s.Sql.Contains(
                         @"CREATE VIEW ""bar_V2"" AS
 SELECT
   *
 FROM ""bar_T1""
 INNER JOIN ""bar_V1"" ON TRUE;" ) );
 
-            statements.Should().Contain( s => s.Contains( "DROP INDEX \"foo_IX_T1_C2A\";" ) );
-            statements.Should().Contain( s => s.Contains( "CREATE INDEX \"bar_IX_T1_C2A\" ON \"bar_T1\" (\"C2\" ASC);" ) );
-            statements.Should().Contain( s => s.Contains( "ALTER TABLE \"foo_T1\" RENAME TO \"bar_T1\";" ) );
-            statements.Should().Contain( s => s.Contains( "ALTER TABLE \"foo_T2\" RENAME TO \"bar_T2\";" ) );
-            statements.Should().Contain( s => s.Contains( "ALTER TABLE \"foo_T3\" RENAME TO \"bar_T3\";" ) );
+            statements.Should().Contain( s => s.Sql.Contains( "DROP INDEX \"foo_IX_T1_C2A\";" ) );
+            statements.Should().Contain( s => s.Sql.Contains( "CREATE INDEX \"bar_IX_T1_C2A\" ON \"bar_T1\" (\"C2\" ASC);" ) );
+            statements.Should().Contain( s => s.Sql.Contains( "ALTER TABLE \"foo_T1\" RENAME TO \"bar_T1\";" ) );
+            statements.Should().Contain( s => s.Sql.Contains( "ALTER TABLE \"foo_T2\" RENAME TO \"bar_T2\";" ) );
+            statements.Should().Contain( s => s.Sql.Contains( "ALTER TABLE \"foo_T3\" RENAME TO \"bar_T3\";" ) );
         }
     }
 
@@ -322,10 +322,11 @@ INNER JOIN ""bar_V1"" ON TRUE;" ) );
 
             statements.Should().HaveCount( 7 );
 
-            statements.ElementAtOrDefault( 0 ).Should().SatisfySql( "DROP VIEW \"foo_V1\";" );
-            statements.ElementAtOrDefault( 1 ).Should().SatisfySql( "DROP VIEW \"foo_V2\";" );
+            statements.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "DROP VIEW \"foo_V1\";" );
+            statements.ElementAtOrDefault( 1 ).Sql.Should().SatisfySql( "DROP VIEW \"foo_V2\";" );
 
             statements.ElementAtOrDefault( 2 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T3_C6A\";",
@@ -345,10 +346,10 @@ INNER JOIN ""bar_V1"" ON TRUE;" ) );
                     "ALTER TABLE \"__foo_T3__{GUID}__\" RENAME TO \"foo_T3\";",
                     "CREATE INDEX \"foo_IX_T3_C6A\" ON \"foo_T3\" (\"C6\" ASC);" );
 
-            statements.ElementAtOrDefault( 3 ).Should().SatisfySql( "DROP TABLE \"foo_T4\";" );
-            statements.ElementAtOrDefault( 4 ).Should().SatisfySql( "DROP TABLE \"foo_T3\";" );
-            statements.ElementAtOrDefault( 5 ).Should().SatisfySql( "DROP TABLE \"foo_T2\";" );
-            statements.ElementAtOrDefault( 6 ).Should().SatisfySql( "DROP TABLE \"foo_T1\";" );
+            statements.ElementAtOrDefault( 3 ).Sql.Should().SatisfySql( "DROP TABLE \"foo_T4\";" );
+            statements.ElementAtOrDefault( 4 ).Sql.Should().SatisfySql( "DROP TABLE \"foo_T3\";" );
+            statements.ElementAtOrDefault( 5 ).Sql.Should().SatisfySql( "DROP TABLE \"foo_T2\";" );
+            statements.ElementAtOrDefault( 6 ).Sql.Should().SatisfySql( "DROP TABLE \"foo_T1\";" );
         }
     }
 

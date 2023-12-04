@@ -196,7 +196,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
             new VersionHistoryColumn<string>( description.Node, stringType ),
             new VersionHistoryColumn<DateTime>( commitDateUtc.Node, dateTimeType ),
             new VersionHistoryColumn<long>( commitDurationInTicks.Node, longType ),
-            builder.NodeInterpreterFactory.Create( SqlNodeInterpreterContext.Create( capacity: 256 ) ) );
+            builder.NodeInterpreters.Create( SqlNodeInterpreterContext.Create( capacity: 256 ) ) );
     }
 
     private static void CreateVersionHistoryTableInDatabaseIfNotExists(
@@ -233,7 +233,8 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
                     var statements = info.Table.Database.GetPendingStatements();
                     foreach ( var statement in statements )
                     {
-                        command.CommandText = statement;
+                        command.CommandText = statement.Sql;
+                        statement.BeforeCallback?.Invoke( command );
                         statementExecutor.ExecuteVersionHistoryNonQuery( command );
                     }
 
@@ -412,7 +413,8 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
                     foreach ( var statement in statements )
                     {
                         statementKey = statementKey.NextOrdinal();
-                        statementCommand.CommandText = statement;
+                        statementCommand.CommandText = statement.Sql;
+                        statement.BeforeCallback?.Invoke( statementCommand );
                         statementExecutor.ExecuteNonQuery( statementCommand, statementKey, SqlDatabaseFactoryStatementType.Change );
                     }
 

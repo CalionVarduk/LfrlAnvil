@@ -87,6 +87,7 @@ public class SqlitePrimaryKeyBuilderTests : TestsBase
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
@@ -227,6 +228,7 @@ public class SqlitePrimaryKeyBuilderTests : TestsBase
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (

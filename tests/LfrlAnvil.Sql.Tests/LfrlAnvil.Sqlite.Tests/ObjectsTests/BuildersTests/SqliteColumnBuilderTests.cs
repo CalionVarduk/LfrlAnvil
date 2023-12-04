@@ -81,6 +81,7 @@ public class SqliteColumnBuilderTests : TestsBase
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
@@ -119,6 +120,7 @@ public class SqliteColumnBuilderTests : TestsBase
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
@@ -156,6 +158,7 @@ public class SqliteColumnBuilderTests : TestsBase
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
@@ -197,6 +200,7 @@ public class SqliteColumnBuilderTests : TestsBase
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
@@ -298,7 +302,7 @@ public class SqliteColumnBuilderTests : TestsBase
             node.Name.Should().Be( "bar" );
 
             statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 ).Should().SatisfySql( "ALTER TABLE \"foo_T\" RENAME COLUMN \"C2\" TO \"bar\";" );
+            statements.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo_T\" RENAME COLUMN \"C2\" TO \"bar\";" );
         }
     }
 
@@ -448,6 +452,7 @@ public class SqliteColumnBuilderTests : TestsBase
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
@@ -632,6 +637,7 @@ public class SqliteColumnBuilderTests : TestsBase
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
@@ -669,6 +675,7 @@ public class SqliteColumnBuilderTests : TestsBase
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
@@ -706,6 +713,7 @@ public class SqliteColumnBuilderTests : TestsBase
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
@@ -743,6 +751,7 @@ public class SqliteColumnBuilderTests : TestsBase
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
@@ -877,6 +886,7 @@ public class SqliteColumnBuilderTests : TestsBase
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
@@ -914,6 +924,7 @@ public class SqliteColumnBuilderTests : TestsBase
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
@@ -953,6 +964,7 @@ public class SqliteColumnBuilderTests : TestsBase
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
@@ -991,6 +1003,7 @@ public class SqliteColumnBuilderTests : TestsBase
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
@@ -1031,6 +1044,7 @@ public class SqliteColumnBuilderTests : TestsBase
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
@@ -1099,7 +1113,7 @@ public class SqliteColumnBuilderTests : TestsBase
             sut.ReferencingIndexes.Should().BeEmpty();
 
             statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 ).Should().SatisfySql( "ALTER TABLE \"foo_T\" DROP COLUMN \"C2\";" );
+            statements.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo_T\" DROP COLUMN \"C2\";" );
         }
     }
 

@@ -25,6 +25,7 @@ public class SqliteViewBuilderTests : TestsBase
         {
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE VIEW ""foo_V"" AS
@@ -120,6 +121,7 @@ public class SqliteViewBuilderTests : TestsBase
             schema.Objects.Contains( oldName ).Should().BeFalse();
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "DROP VIEW \"s_foo\";",
@@ -154,9 +156,10 @@ public class SqliteViewBuilderTests : TestsBase
             schema.Objects.Contains( oldName ).Should().BeFalse();
 
             statements.Should().HaveCount( 5 );
-            statements.ElementAtOrDefault( 0 ).Should().SatisfySql( "DROP VIEW \"s_W3\";" );
-            statements.ElementAtOrDefault( 1 ).Should().SatisfySql( "DROP VIEW \"s_W1\";" );
+            statements.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "DROP VIEW \"s_W3\";" );
+            statements.ElementAtOrDefault( 1 ).Sql.Should().SatisfySql( "DROP VIEW \"s_W1\";" );
             statements.ElementAtOrDefault( 2 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "DROP VIEW \"s_V1\";",
@@ -164,6 +167,7 @@ public class SqliteViewBuilderTests : TestsBase
                     SELECT * FROM foo;" );
 
             statements.ElementAtOrDefault( 3 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE VIEW ""s_W1"" AS
@@ -172,6 +176,7 @@ public class SqliteViewBuilderTests : TestsBase
                     FROM ""s_V2"";" );
 
             statements.ElementAtOrDefault( 4 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE VIEW ""s_W3"" AS
@@ -249,7 +254,7 @@ public class SqliteViewBuilderTests : TestsBase
             otherView.ReferencingViews.Should().BeEmpty();
             sut.ReferencedObjects.Should().BeEmpty();
             statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 ).Should().SatisfySql( "DROP VIEW \"foo_V\";" );
+            statements.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "DROP VIEW \"foo_V\";" );
         }
     }
 
@@ -294,7 +299,7 @@ public class SqliteViewBuilderTests : TestsBase
         sut.SetName( "bar" );
         sut.Remove();
 
-        var result = builder.GetPendingStatements()[^1];
+        var result = builder.GetPendingStatements()[^1].Sql;
 
         result.Should().SatisfySql( "DROP VIEW \"s_foo\";" );
     }

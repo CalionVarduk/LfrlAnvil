@@ -22,7 +22,9 @@ public class SqliteDatabaseTests : TestsBase
         {
             sut.DataTypes.Should().BeSameAs( dbBuilder.DataTypes );
             sut.TypeDefinitions.Should().BeSameAs( dbBuilder.TypeDefinitions );
-            sut.NodeInterpreterFactory.Should().BeSameAs( dbBuilder.NodeInterpreterFactory );
+            sut.NodeInterpreters.Should().BeSameAs( dbBuilder.NodeInterpreters );
+            sut.QueryReaders.Should().BeSameAs( dbBuilder.QueryReaders );
+            sut.ParameterBinders.Should().BeSameAs( dbBuilder.ParameterBinders );
             sut.Schemas.Database.Should().BeSameAs( sut );
             sut.Schemas.Count.Should().Be( 1 );
             sut.Schemas.Default.Name.Should().BeEmpty();

@@ -117,6 +117,12 @@ public static class SqlObjectExtensions
         return ReferenceEquals( foreignKey.OriginIndex.Table, foreignKey.ReferencedIndex.Table );
     }
 
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static void AddStatement(this ISqlDatabaseBuilder database, string statement)
+    {
+        database.AddStatement( SqlNode.RawStatement( statement ) );
+    }
+
     [Pure]
     public static SqlCreateViewNode ToCreateNode(this ISqlViewBuilder view)
     {

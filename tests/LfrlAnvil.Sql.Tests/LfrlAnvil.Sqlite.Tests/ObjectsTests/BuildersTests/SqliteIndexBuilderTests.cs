@@ -41,7 +41,7 @@ public class SqliteIndexBuilderTests : TestsBase
         using ( new AssertionScope() )
         {
             statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 ).Should().SatisfySql( "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" );
+            statements.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" );
         }
     }
 
@@ -80,6 +80,7 @@ public class SqliteIndexBuilderTests : TestsBase
         {
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
@@ -116,6 +117,7 @@ public class SqliteIndexBuilderTests : TestsBase
         {
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
@@ -224,6 +226,7 @@ public class SqliteIndexBuilderTests : TestsBase
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
@@ -370,6 +373,7 @@ public class SqliteIndexBuilderTests : TestsBase
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_bar\";",
@@ -401,6 +405,7 @@ public class SqliteIndexBuilderTests : TestsBase
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_bar\";",
@@ -500,6 +505,7 @@ public class SqliteIndexBuilderTests : TestsBase
             result.Should().BeSameAs( sut );
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
@@ -525,6 +531,7 @@ public class SqliteIndexBuilderTests : TestsBase
             result.Should().BeSameAs( sut );
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
@@ -592,6 +599,7 @@ public class SqliteIndexBuilderTests : TestsBase
             result.Should().BeSameAs( sut );
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
@@ -661,6 +669,7 @@ public class SqliteIndexBuilderTests : TestsBase
             column.ReferencingIndexFilters.Should().BeSequentiallyEqualTo( sut );
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
@@ -690,6 +699,7 @@ public class SqliteIndexBuilderTests : TestsBase
             column.ReferencingIndexFilters.Should().BeEmpty();
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
@@ -756,6 +766,7 @@ public class SqliteIndexBuilderTests : TestsBase
             result.Should().BeSameAs( sut );
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
@@ -792,6 +803,7 @@ public class SqliteIndexBuilderTests : TestsBase
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",

@@ -31,6 +31,7 @@ public partial class SqliteTableBuilderTests : TestsBase
         {
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""foo_T"" (
@@ -152,7 +153,7 @@ public partial class SqliteTableBuilderTests : TestsBase
             schema.Objects.Contains( newName ).Should().BeTrue();
             schema.Objects.Contains( oldName ).Should().BeFalse();
             statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 ).Should().SatisfySql( "ALTER TABLE \"s_foo\" RENAME TO \"s_bar\";" );
+            statements.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE \"s_foo\" RENAME TO \"s_bar\";" );
         }
     }
 
@@ -183,6 +184,7 @@ public partial class SqliteTableBuilderTests : TestsBase
             fk.IsRemoved.Should().BeFalse();
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "ALTER TABLE \"s_foo\" RENAME TO \"s_bar\";",
@@ -246,6 +248,7 @@ public partial class SqliteTableBuilderTests : TestsBase
             statements.Should().HaveCount( 5 );
 
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T2__{GUID}__"" (
@@ -260,6 +263,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                     "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" );
 
             statements.ElementAtOrDefault( 1 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T3_C4A\";",
@@ -277,9 +281,10 @@ public partial class SqliteTableBuilderTests : TestsBase
                     "ALTER TABLE \"__foo_T3__{GUID}__\" RENAME TO \"foo_T3\";",
                     "CREATE INDEX \"foo_IX_T3_C4A\" ON \"foo_T3\" (\"C4\" ASC);" );
 
-            statements.ElementAtOrDefault( 2 ).Should().SatisfySql( "ALTER TABLE \"foo_T1\" RENAME TO \"foo_U\";" );
+            statements.ElementAtOrDefault( 2 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo_T1\" RENAME TO \"foo_U\";" );
 
             statements.ElementAtOrDefault( 3 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T2__{GUID}__"" (
@@ -295,6 +300,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                     "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" );
 
             statements.ElementAtOrDefault( 4 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T3_C4A\";",
@@ -363,6 +369,7 @@ public partial class SqliteTableBuilderTests : TestsBase
             statements.Should().HaveCount( 7 );
 
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T3_C4A\";",
@@ -383,6 +390,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                     "CREATE INDEX \"foo_IX_T3_C4A\" ON \"foo_T3\" (\"C4\" ASC);" );
 
             statements.ElementAtOrDefault( 1 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T2__{GUID}__"" (
@@ -397,6 +405,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                     "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" );
 
             statements.ElementAtOrDefault( 2 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T4__{GUID}__"" (
@@ -410,9 +419,10 @@ public partial class SqliteTableBuilderTests : TestsBase
                     "DROP TABLE \"foo_T4\";",
                     "ALTER TABLE \"__foo_T4__{GUID}__\" RENAME TO \"foo_T4\";" );
 
-            statements.ElementAtOrDefault( 3 ).Should().SatisfySql( "ALTER TABLE \"foo_T1\" RENAME TO \"foo_U\";" );
+            statements.ElementAtOrDefault( 3 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo_T1\" RENAME TO \"foo_U\";" );
 
             statements.ElementAtOrDefault( 4 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T3_C4A\";",
@@ -435,6 +445,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                     "CREATE INDEX \"foo_IX_T3_C4A\" ON \"foo_T3\" (\"C4\" ASC);" );
 
             statements.ElementAtOrDefault( 5 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T2__{GUID}__"" (
@@ -450,6 +461,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                     "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" );
 
             statements.ElementAtOrDefault( 6 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T4__{GUID}__"" (
@@ -497,6 +509,7 @@ public partial class SqliteTableBuilderTests : TestsBase
             statements.Should().HaveCount( 4 );
 
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T1__{GUID}__"" (
@@ -513,6 +526,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                     "ALTER TABLE \"__foo_T1__{GUID}__\" RENAME TO \"foo_T1\";" );
 
             statements.ElementAtOrDefault( 1 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T2__{GUID}__"" (
@@ -526,9 +540,10 @@ public partial class SqliteTableBuilderTests : TestsBase
                     "DROP TABLE \"foo_T2\";",
                     "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" );
 
-            statements.ElementAtOrDefault( 2 ).Should().SatisfySql( "ALTER TABLE \"foo_T1\" RENAME TO \"foo_U\";" );
+            statements.ElementAtOrDefault( 2 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo_T1\" RENAME TO \"foo_U\";" );
 
             statements.ElementAtOrDefault( 3 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T2__{GUID}__"" (
@@ -579,6 +594,7 @@ public partial class SqliteTableBuilderTests : TestsBase
             statements.Should().HaveCount( 4 );
 
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T3__{GUID}__"" (
@@ -595,6 +611,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                     "ALTER TABLE \"__foo_T3__{GUID}__\" RENAME TO \"foo_T3\";" );
 
             statements.ElementAtOrDefault( 1 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T2__{GUID}__"" (
@@ -608,9 +625,10 @@ public partial class SqliteTableBuilderTests : TestsBase
                     "DROP TABLE \"foo_T2\";",
                     "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" );
 
-            statements.ElementAtOrDefault( 2 ).Should().SatisfySql( "ALTER TABLE \"foo_T1\" RENAME TO \"foo_U\";" );
+            statements.ElementAtOrDefault( 2 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo_T1\" RENAME TO \"foo_U\";" );
 
             statements.ElementAtOrDefault( 3 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T2__{GUID}__"" (
@@ -660,12 +678,13 @@ public partial class SqliteTableBuilderTests : TestsBase
 
             statements.Should().HaveCount( 5 );
 
-            statements.ElementAtOrDefault( 0 ).Should().SatisfySql( "DROP VIEW \"foo_V2\";" );
-            statements.ElementAtOrDefault( 1 ).Should().SatisfySql( "DROP VIEW \"foo_V1\";" );
+            statements.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "DROP VIEW \"foo_V2\";" );
+            statements.ElementAtOrDefault( 1 ).Sql.Should().SatisfySql( "DROP VIEW \"foo_V1\";" );
 
-            statements.ElementAtOrDefault( 2 ).Should().SatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_U\";" );
+            statements.ElementAtOrDefault( 2 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_U\";" );
 
             statements.ElementAtOrDefault( 3 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE VIEW ""foo_V1"" AS
@@ -674,6 +693,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                     FROM ""foo_U"";" );
 
             statements.ElementAtOrDefault( 4 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE VIEW ""foo_V2"" AS
@@ -719,6 +739,7 @@ public partial class SqliteTableBuilderTests : TestsBase
             statements.Should().HaveCount( 6 );
 
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
@@ -734,12 +755,13 @@ public partial class SqliteTableBuilderTests : TestsBase
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
 
-            statements.ElementAtOrDefault( 1 ).Should().SatisfySql( "DROP VIEW \"foo_V2\";" );
-            statements.ElementAtOrDefault( 2 ).Should().SatisfySql( "DROP VIEW \"foo_V1\";" );
+            statements.ElementAtOrDefault( 1 ).Sql.Should().SatisfySql( "DROP VIEW \"foo_V2\";" );
+            statements.ElementAtOrDefault( 2 ).Sql.Should().SatisfySql( "DROP VIEW \"foo_V1\";" );
 
-            statements.ElementAtOrDefault( 3 ).Should().SatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_U\";" );
+            statements.ElementAtOrDefault( 3 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_U\";" );
 
             statements.ElementAtOrDefault( 4 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE VIEW ""foo_V1"" AS
@@ -748,6 +770,7 @@ public partial class SqliteTableBuilderTests : TestsBase
                     FROM ""foo_U"";" );
 
             statements.ElementAtOrDefault( 5 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE VIEW ""foo_V2"" AS
@@ -891,6 +914,7 @@ public partial class SqliteTableBuilderTests : TestsBase
             statements.Should().HaveCount( 1 );
 
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
@@ -946,6 +970,7 @@ public partial class SqliteTableBuilderTests : TestsBase
             statements.Should().HaveCount( 1 );
 
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
@@ -994,6 +1019,7 @@ public partial class SqliteTableBuilderTests : TestsBase
             statements.Should().HaveCount( 1 );
 
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C1A_C2D\";",
@@ -1044,6 +1070,7 @@ public partial class SqliteTableBuilderTests : TestsBase
             statements.Should().HaveCount( 1 );
 
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
@@ -1250,7 +1277,7 @@ public partial class SqliteTableBuilderTests : TestsBase
             fk.IsRemoved.Should().BeTrue();
             chk.IsRemoved.Should().BeTrue();
             statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 ).Should().SatisfySql( "DROP TABLE \"foo_T\";" );
+            statements.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "DROP TABLE \"foo_T\";" );
         }
     }
 
@@ -1328,6 +1355,7 @@ public partial class SqliteTableBuilderTests : TestsBase
         {
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "ALTER TABLE \"foo_T\" RENAME COLUMN \"A\" TO \"__A__{GUID}__\";",
@@ -1361,6 +1389,7 @@ public partial class SqliteTableBuilderTests : TestsBase
         {
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "ALTER TABLE \"foo_T\" RENAME COLUMN \"A\" TO \"__A__{GUID}__\";",
@@ -1395,6 +1424,7 @@ public partial class SqliteTableBuilderTests : TestsBase
         {
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "ALTER TABLE \"foo_T\" RENAME COLUMN \"C\" TO \"D\";",
@@ -1428,6 +1458,7 @@ public partial class SqliteTableBuilderTests : TestsBase
         {
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "ALTER TABLE \"foo_T\" RENAME TO \"foo_U\";",
@@ -1449,7 +1480,7 @@ public partial class SqliteTableBuilderTests : TestsBase
         sut.SetName( "bar" );
         sut.Remove();
 
-        var result = builder.GetPendingStatements()[^1];
+        var result = builder.GetPendingStatements()[^1].Sql;
 
         result.Should().SatisfySql( "DROP TABLE \"s_foo\";" );
     }

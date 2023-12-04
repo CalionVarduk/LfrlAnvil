@@ -1,7 +1,13 @@
-﻿using LfrlAnvil.Sql;
+﻿using System.Collections.Generic;
+using System.Linq;
+using LfrlAnvil.Functional;
+using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Visitors;
+using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
+using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Tests.Helpers;
@@ -42,25 +48,27 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
 
             ((ISqlDatabaseBuilder)sut).DataTypes.Should().BeSameAs( sut.DataTypes );
             ((ISqlDatabaseBuilder)sut).TypeDefinitions.Should().BeSameAs( sut.TypeDefinitions );
-            ((ISqlDatabaseBuilder)sut).NodeInterpreterFactory.Should().BeSameAs( sut.NodeInterpreterFactory );
+            ((ISqlDatabaseBuilder)sut).NodeInterpreters.Should().BeSameAs( sut.NodeInterpreters );
+            ((ISqlDatabaseBuilder)sut).QueryReaders.Should().BeSameAs( sut.QueryReaders );
+            ((ISqlDatabaseBuilder)sut).ParameterBinders.Should().BeSameAs( sut.ParameterBinders );
             ((ISqlDatabaseBuilder)sut).Schemas.Should().BeSameAs( sut.Schemas );
         }
     }
 
     [Fact]
-    public void AddRawStatement_ShouldAddNewStatement_WhenThereAreNoPendingChanges()
+    public void AddStatement_ShouldAddNewStatement_WhenThereAreNoPendingChanges()
     {
         var statement = Fixture.Create<string>();
         var sut = SqliteDatabaseBuilderMock.Create();
 
-        sut.AddRawStatement( statement );
+        sut.AddStatement( statement );
         var result = sut.GetPendingStatements().ToArray();
 
-        result.Should().BeSequentiallyEqualTo( statement );
+        result.Select( s => s.Sql ).Should().BeSequentiallyEqualTo( $"{statement}{Environment.NewLine}" );
     }
 
     [Fact]
-    public void AddRawStatement_ShouldAddNewStatement_WhenThereAreSomePendingChanges()
+    public void AddStatement_ShouldAddNewStatement_WhenThereAreSomePendingChanges()
     {
         var statement = Fixture.Create<string>();
         var sut = SqliteDatabaseBuilderMock.Create();
@@ -70,37 +78,189 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
         var column = table.Columns.Create( "C" );
         table.SetPrimaryKey( column.Asc() );
 
-        sut.AddRawStatement( statement );
+        sut.AddStatement( statement );
         var result = sut.GetPendingStatements().ToArray();
 
         using ( new AssertionScope() )
         {
             result.Should().HaveCount( 2 );
-            result[^1].Should().Be( statement );
+            result[^1].Sql.Should().Be( $"{statement}{Environment.NewLine}" );
         }
     }
 
     [Fact]
-    public void AddRawStatement_ShouldDoNothing_WhenBuilderIsDetached()
+    public void AddStatement_ShouldDoNothing_WhenBuilderIsDetached()
     {
         var statement = Fixture.Create<string>();
         var sut = SqliteDatabaseBuilderMock.Create().SetDetachedMode();
 
-        sut.AddRawStatement( statement );
+        sut.AddStatement( statement );
 
         sut.GetPendingStatements().Length.Should().Be( 0 );
     }
 
     [Fact]
-    public void AddRawStatement_ShouldDoNothing_WhenBuilderIsInNoChangesMode()
+    public void AddStatement_ShouldDoNothing_WhenBuilderIsInNoChangesMode()
     {
         var statement = Fixture.Create<string>();
         var sut = SqliteDatabaseBuilderMock.Create();
         sut.ChangeTracker.SetMode( SqlDatabaseCreateMode.NoChanges );
 
-        sut.AddRawStatement( statement );
+        sut.AddStatement( statement );
 
         sut.GetPendingStatements().Length.Should().Be( 0 );
+    }
+
+    [Fact]
+    public void AddStatement_ShouldThrowSqliteObjectBuilderException_WhenStatementContainsParameters()
+    {
+        var sut = SqliteDatabaseBuilderMock.Create();
+        var action = Lambda.Of( () => sut.AddStatement( SqlNode.RawStatement( Fixture.Create<string>(), SqlNode.Parameter( "a" ) ) ) );
+        action.Should().ThrowExactly<SqliteObjectBuilderException>();
+    }
+
+    [Fact]
+    public void AddParameterizedStatement_TypeErased_ShouldAddNewStatement_WhenThereAreNoPendingChanges()
+    {
+        var statement = Fixture.Create<string>();
+        var sut = SqliteDatabaseBuilderMock.Create();
+
+        sut.AddParameterizedStatement(
+            SqlNode.RawStatement( statement, SqlNode.Parameter( "a" ) ),
+            new[] { KeyValuePair.Create( "a", (object?)1 ) }.AsEnumerable() );
+
+        var result = sut.GetPendingStatements().ToArray();
+
+        using ( new AssertionScope() )
+        {
+            result.Select( s => s.Sql ).Should().BeSequentiallyEqualTo( $"{statement}{Environment.NewLine}" );
+            result.ElementAtOrDefault( 0 ).BeforeCallback.Should().NotBeNull();
+        }
+    }
+
+    [Fact]
+    public void AddParameterizedStatement_TypeErased_ShouldAddNewStatement_WhenThereAreSomePendingChanges()
+    {
+        var statement = Fixture.Create<string>();
+        var sut = SqliteDatabaseBuilderMock.Create();
+        sut.ChangeTracker.SetMode( SqlDatabaseCreateMode.Commit );
+
+        var table = sut.Schemas.Default.Objects.CreateTable( "T" );
+        var column = table.Columns.Create( "C" );
+        table.SetPrimaryKey( column.Asc() );
+
+        sut.AddParameterizedStatement(
+            SqlNode.RawStatement( statement, SqlNode.Parameter( "a" ) ),
+            new[] { KeyValuePair.Create( "a", (object?)1 ) }.AsEnumerable() );
+
+        var result = sut.GetPendingStatements().ToArray();
+
+        using ( new AssertionScope() )
+        {
+            result.Should().HaveCount( 2 );
+            result[^1].Sql.Should().Be( $"{statement}{Environment.NewLine}" );
+            result[^1].BeforeCallback.Should().NotBeNull();
+        }
+    }
+
+    [Fact]
+    public void AddParameterizedStatement_TypeErased_ShouldDoNothing_WhenBuilderIsDetached()
+    {
+        var statement = Fixture.Create<string>();
+        var sut = SqliteDatabaseBuilderMock.Create().SetDetachedMode();
+
+        sut.AddParameterizedStatement(
+            SqlNode.RawStatement( statement, SqlNode.Parameter( "a" ) ),
+            new[] { KeyValuePair.Create( "a", (object?)1 ) }.AsEnumerable() );
+
+        sut.GetPendingStatements().Length.Should().Be( 0 );
+    }
+
+    [Fact]
+    public void AddParameterizedStatement_TypeErased_ShouldDoNothing_WhenBuilderIsInNoChangesMode()
+    {
+        var statement = Fixture.Create<string>();
+        var sut = SqliteDatabaseBuilderMock.Create();
+        sut.ChangeTracker.SetMode( SqlDatabaseCreateMode.NoChanges );
+
+        sut.AddParameterizedStatement(
+            SqlNode.RawStatement( statement, SqlNode.Parameter( "a" ) ),
+            new[] { KeyValuePair.Create( "a", (object?)1 ) }.AsEnumerable() );
+
+        sut.GetPendingStatements().Length.Should().Be( 0 );
+    }
+
+    [Fact]
+    public void AddParameterizedStatement_Generic_ShouldAddNewStatement_WhenThereAreNoPendingChanges()
+    {
+        var statement = Fixture.Create<string>();
+        var sut = SqliteDatabaseBuilderMock.Create();
+
+        sut.AddParameterizedStatement( SqlNode.RawStatement( statement, SqlNode.Parameter<int>( "a" ) ), new Source { A = 1 } );
+        var result = sut.GetPendingStatements().ToArray();
+
+        using ( new AssertionScope() )
+        {
+            result.Select( s => s.Sql ).Should().BeSequentiallyEqualTo( $"{statement}{Environment.NewLine}" );
+            result.ElementAtOrDefault( 0 ).BeforeCallback.Should().NotBeNull();
+        }
+    }
+
+    [Fact]
+    public void AddParameterizedStatement_Generic_ShouldAddNewStatement_WhenThereAreSomePendingChanges()
+    {
+        var statement = Fixture.Create<string>();
+        var sut = SqliteDatabaseBuilderMock.Create();
+        sut.ChangeTracker.SetMode( SqlDatabaseCreateMode.Commit );
+
+        var table = sut.Schemas.Default.Objects.CreateTable( "T" );
+        var column = table.Columns.Create( "C" );
+        table.SetPrimaryKey( column.Asc() );
+
+        sut.AddParameterizedStatement( SqlNode.RawStatement( statement, SqlNode.Parameter<int>( "a" ) ), new Source { A = 1 } );
+        var result = sut.GetPendingStatements().ToArray();
+
+        using ( new AssertionScope() )
+        {
+            result.Should().HaveCount( 2 );
+            result[^1].Sql.Should().Be( $"{statement}{Environment.NewLine}" );
+            result[^1].BeforeCallback.Should().NotBeNull();
+        }
+    }
+
+    [Fact]
+    public void AddParameterizedStatement_Generic_ShouldDoNothing_WhenBuilderIsDetached()
+    {
+        var statement = Fixture.Create<string>();
+        var sut = SqliteDatabaseBuilderMock.Create().SetDetachedMode();
+
+        sut.AddParameterizedStatement( SqlNode.RawStatement( statement, SqlNode.Parameter<int>( "a" ) ), new Source { A = 1 } );
+
+        sut.GetPendingStatements().Length.Should().Be( 0 );
+    }
+
+    [Fact]
+    public void AddParameterizedStatement_Generic_ShouldDoNothing_WhenBuilderIsInNoChangesMode()
+    {
+        var statement = Fixture.Create<string>();
+        var sut = SqliteDatabaseBuilderMock.Create();
+        sut.ChangeTracker.SetMode( SqlDatabaseCreateMode.NoChanges );
+
+        sut.AddParameterizedStatement( SqlNode.RawStatement( statement, SqlNode.Parameter<int>( "a" ) ), new Source { A = 1 } );
+
+        sut.GetPendingStatements().Length.Should().Be( 0 );
+    }
+
+    [Fact]
+    public void AddParameterizedStatement_ShouldThrowSqlCompilerException_WhenParametersAreInvalid()
+    {
+        var sut = SqliteDatabaseBuilderMock.Create();
+        var action = Lambda.Of(
+            () => sut.AddParameterizedStatement(
+                SqlNode.RawStatement( Fixture.Create<string>(), SqlNode.Parameter<string>( "a" ) ),
+                new Source { A = 1 } ) );
+
+        action.Should().ThrowExactly<SqlCompilerException>();
     }
 
     [Fact]
@@ -153,7 +313,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            result.NodeInterpreterFactory.Should().BeSameAs( expected );
+            result.NodeInterpreters.Should().BeSameAs( expected );
         }
     }
 
@@ -259,7 +419,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
     [Fact]
     public void DefaultNodeInterpreterFactory_ShouldCreateCorrectInterpreter()
     {
-        var sut = SqliteDatabaseBuilderMock.Create().NodeInterpreterFactory;
+        var sut = SqliteDatabaseBuilderMock.Create().NodeInterpreters;
         var result = sut.Create();
 
         using ( new AssertionScope() )
@@ -270,5 +430,10 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
             result.Context.Parameters.Should().BeEmpty();
             result.Should().BeOfType( typeof( SqliteNodeInterpreter ) );
         }
+    }
+
+    public sealed class Source
+    {
+        public int A { get; init; }
     }
 }

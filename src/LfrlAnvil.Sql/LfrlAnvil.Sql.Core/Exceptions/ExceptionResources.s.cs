@@ -8,6 +8,7 @@ using System.Text;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
+using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Versioning;
 
@@ -329,6 +330,21 @@ public static class ExceptionResources
     public static string ParameterAppearsMoreThanOnce(string name)
     {
         return $"Parameter '{name}' appears more than once.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string StatementIsParameterized(ISqlStatementNode statement, SqlNodeInterpreterContext context)
+    {
+        var parameters = context.Parameters;
+        var parametersText = string.Join(
+            Environment.NewLine,
+            parameters.Select( (p, i) => $"{i + 1}. @{p.Key} : {p.Value?.ToString() ?? "?"}" ) );
+
+        return $@"Statement
+{statement.Node}
+contains {parameters.Count} parameter(s):
+{parametersText}";
     }
 
     [Pure]

@@ -46,6 +46,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
         {
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T2__{GUID}__"" (
@@ -96,6 +97,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
         {
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
@@ -186,6 +188,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
@@ -329,6 +332,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
@@ -404,6 +408,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
@@ -506,6 +511,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
@@ -611,6 +617,7 @@ public class SqliteForeignKeyBuilderTests : TestsBase
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
+                .Sql
                 .Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",

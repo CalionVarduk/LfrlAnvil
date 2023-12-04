@@ -1,11 +1,17 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Generators;
 using LfrlAnvil.Memory;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Exceptions;
+using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
+using LfrlAnvil.Sql.Statements;
+using LfrlAnvil.Sql.Statements.Compilers;
+using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Internal;
 
 namespace LfrlAnvil.Sqlite.Objects.Builders;
@@ -20,7 +26,9 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
         _idGenerator = new UlongSequenceGenerator();
         DataTypes = new SqliteDataTypeProvider();
         TypeDefinitions = new SqliteColumnTypeDefinitionProvider();
-        NodeInterpreterFactory = new SqliteNodeInterpreterFactory( TypeDefinitions );
+        NodeInterpreters = new SqliteNodeInterpreterFactory( TypeDefinitions );
+        QueryReaders = new SqliteQueryReaderFactory( TypeDefinitions );
+        ParameterBinders = new SqliteParameterBinderFactory( TypeDefinitions );
         Schemas = new SqliteSchemaBuilderCollection( this );
         ChangeTracker = new SqliteDatabaseChangeTracker( this );
         ObjectPool = new MemorySequencePool<SqliteObjectBuilder>( minSegmentLength: 32 );
@@ -29,7 +37,9 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
 
     public SqliteDataTypeProvider DataTypes { get; }
     public SqliteColumnTypeDefinitionProvider TypeDefinitions { get; }
-    public SqliteNodeInterpreterFactory NodeInterpreterFactory { get; private set; }
+    public SqliteNodeInterpreterFactory NodeInterpreters { get; private set; }
+    public SqliteQueryReaderFactory QueryReaders { get; }
+    public SqliteParameterBinderFactory ParameterBinders { get; }
     public SqliteSchemaBuilderCollection Schemas { get; }
     public string ServerVersion { get; }
     public SqlDialect Dialect => SqliteDialect.Instance;
@@ -40,22 +50,51 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
     internal SqlDatabaseConnectionChangeCallbacks ConnectionChanges { get; private set; }
     ISqlDataTypeProvider ISqlDatabaseBuilder.DataTypes => DataTypes;
     ISqlColumnTypeDefinitionProvider ISqlDatabaseBuilder.TypeDefinitions => TypeDefinitions;
-    ISqlNodeInterpreterFactory ISqlDatabaseBuilder.NodeInterpreterFactory => NodeInterpreterFactory;
+    ISqlNodeInterpreterFactory ISqlDatabaseBuilder.NodeInterpreters => NodeInterpreters;
+    ISqlQueryReaderFactory ISqlDatabaseBuilder.QueryReaders => QueryReaders;
+    ISqlParameterBinderFactory ISqlDatabaseBuilder.ParameterBinders => ParameterBinders;
     ISqlSchemaBuilderCollection ISqlDatabaseBuilder.Schemas => Schemas;
 
-    public ReadOnlySpan<string> GetPendingStatements()
+    public ReadOnlySpan<SqlDatabaseBuilderStatement> GetPendingStatements()
     {
         return ChangeTracker.GetPendingStatements();
     }
 
-    public void AddRawStatement(string statement)
+    public void AddStatement(ISqlStatementNode statement)
     {
-        ChangeTracker.AddRawStatement( statement );
+        var context = NodeInterpreters.Create().Interpret( statement.Node );
+        if ( context.Parameters.Count > 0 )
+            throw new SqliteObjectBuilderException( Chain.Create( ExceptionResources.StatementIsParameterized( statement, context ) ) );
+
+        ChangeTracker.AddStatement( SqlDatabaseBuilderStatement.Create( context ) );
+    }
+
+    public void AddParameterizedStatement(
+        ISqlStatementNode statement,
+        IEnumerable<KeyValuePair<string, object?>> parameters,
+        SqlParameterBinderCreationOptions? options = null)
+    {
+        var context = NodeInterpreters.Create().Interpret( statement.Node );
+        var opt = options ?? SqlParameterBinderCreationOptions.Default;
+        var executor = ParameterBinders.Create( opt.SetContext( context ) ).Bind( parameters );
+        ChangeTracker.AddStatement( SqlDatabaseBuilderStatement.Create( context, executor ) );
+    }
+
+    public void AddParameterizedStatement<TSource>(
+        ISqlStatementNode statement,
+        TSource parameters,
+        SqlParameterBinderCreationOptions? options = null)
+        where TSource : notnull
+    {
+        var context = NodeInterpreters.Create().Interpret( statement.Node );
+        var opt = options ?? SqlParameterBinderCreationOptions.Default;
+        var executor = ParameterBinders.Create<TSource>( opt.SetContext( context ) ).Bind( parameters );
+        ChangeTracker.AddStatement( SqlDatabaseBuilderStatement.Create( context, executor ) );
     }
 
     public SqliteDatabaseBuilder SetNodeInterpreterFactory(SqliteNodeInterpreterFactory factory)
     {
-        NodeInterpreterFactory = factory;
+        NodeInterpreters = factory;
         return this;
     }
 
