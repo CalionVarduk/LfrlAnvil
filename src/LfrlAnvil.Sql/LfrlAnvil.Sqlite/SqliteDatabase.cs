@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data;
+using System.Data.Common;
 using System.Diagnostics.Contracts;
 using System.Threading;
 using System.Threading.Tasks;
@@ -74,7 +75,7 @@ public abstract class SqliteDatabase : ISqlDatabase
     }
 
     [Pure]
-    async ValueTask<IDbConnection> ISqlDatabase.ConnectAsync(CancellationToken cancellationToken)
+    async ValueTask<DbConnection> ISqlDatabase.ConnectAsync(CancellationToken cancellationToken)
     {
         return await ConnectAsync( cancellationToken ).ConfigureAwait( false );
     }

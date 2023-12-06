@@ -10,8 +10,20 @@ using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sql.Tests.StatementsTests;
 
-public class SqlCommandExtensionsTests : TestsBase
+public class SqlStatementObjectExtensionsTests : TestsBase
 {
+    [Fact]
+    public async Task BeginTransactionAsync_ShouldReturnTransaction()
+    {
+        var expected = Substitute.ForPartsOf<System.Data.Common.DbTransaction>();
+        var sut = Substitute.ForPartsOf<System.Data.Common.DbConnection>();
+        sut.BeginTransaction( Arg.Any<IsolationLevel>() ).Returns( expected );
+
+        var result = await sut.BeginTransactionAsync( IsolationLevel.Serializable );
+
+        result.Should().BeSameAs( expected );
+    }
+
     [Fact]
     public void Query_TypeErased_WithReader_ShouldInvokeReader()
     {
@@ -174,6 +186,28 @@ public class SqlCommandExtensionsTests : TestsBase
             command.CommandText.Should().BeSameAs( sql );
             result.Rows.Should().BeSequentiallyEqualTo( new Row( 1, "foo" ), new Row( 2, "bar" ) );
         }
+    }
+
+    [Fact]
+    public void Execute_ShouldInvokeStatementExecution()
+    {
+        var expected = Fixture.Create<int>();
+        var command = new DbCommand { NonQueryResult = expected };
+
+        var result = command.Execute();
+
+        result.Should().Be( expected );
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ShouldInvokeStatementExecution()
+    {
+        var expected = Fixture.Create<int>();
+        var command = new DbCommand { NonQueryResult = expected };
+
+        var result = await command.ExecuteAsync();
+
+        result.Should().Be( expected );
     }
 
     [Fact]

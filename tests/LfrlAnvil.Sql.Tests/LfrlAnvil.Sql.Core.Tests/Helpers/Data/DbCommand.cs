@@ -18,6 +18,7 @@ public sealed class DbCommand : System.Data.Common.DbCommand
     public override UpdateRowSource UpdatedRowSource { get; set; }
     public override bool DesignTimeVisible { get; set; }
     public ResultSet[] ResultSets { get; init; } = Array.Empty<ResultSet>();
+    public int NonQueryResult { get; init; }
     public new DbDataParameterCollection Parameters { get; } = new DbDataParameterCollection();
     public IReadOnlyList<string> Audit => _audit;
 
@@ -40,7 +41,7 @@ public sealed class DbCommand : System.Data.Common.DbCommand
     public override int ExecuteNonQuery()
     {
         _audit.Add( nameof( ExecuteNonQuery ) );
-        return 0;
+        return NonQueryResult;
     }
 
     [Pure]

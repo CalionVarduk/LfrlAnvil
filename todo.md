@@ -1,12 +1,12 @@
 # TODO
 | Priority |       Project       |                            Title                            |                                   Details                                   |                    Requirements                    |
 |:--------:|:-------------------:|:-----------------------------------------------------------:|:---------------------------------------------------------------------------:|:--------------------------------------------------:|
-|    1     |      Sql.Core       |                  Cancellable Async support                  |                                      -                                      |                         -                          |
-|    2     |        Sql.*        |                            MySql                            |                             [link](#sql-mysql)                              |                         -                          |
-|    3     |      Sql.Core       | Create generic abstractions based on Sqlite & MySql objects | [link](#sqlcore-create-generic-abstractions-based-on-sqlite--mysql-objects) |                [MySql](#sql-mysql)                 |
-|    4     |      Sql.Core       |               Add DateTime related functions                |               [link](#sqlcore-add-datetime-related-functions)               |                         -                          |
-|    5     |       Sqlite        |                Add node interpreter options                 |                [link](#sqlite-add-node-interpreter-options)                 |                         -                          |
-|    6     |      Sql.Core       |                       Add Upsert node                       |                      [link](#sqlcore-add-upsert-node)                       |                         -                          |
+|    1     |        Sql.*        |                            MySql                            |                             [link](#sql-mysql)                              |                         -                          |
+|    2     |      Sql.Core       | Create generic abstractions based on Sqlite & MySql objects | [link](#sqlcore-create-generic-abstractions-based-on-sqlite--mysql-objects) |                [MySql](#sql-mysql)                 |
+|    3     |      Sql.Core       |               Add DateTime related functions                |               [link](#sqlcore-add-datetime-related-functions)               |                         -                          |
+|    4     |       Sqlite        |                Add node interpreter options                 |                [link](#sqlite-add-node-interpreter-options)                 |                         -                          |
+|    5     |      Sql.Core       |                       Add Upsert node                       |                      [link](#sqlcore-add-upsert-node)                       |                         -                          |
+|    6     |      Sql.Core       |                       Add JSON nodes                        |                       [link](#sqlcore-add-json-nodes)                       |                         -                          |
 |    7     |        Sql.*        |                         PostgreSql                          |                           [link](#sql-postgresql)                           |                         -                          |
 |    8     |      Sql.Core       |                 Add Attach/Detach DB nodes                  |                 [link](#sqlcore-add-attachdetach-db-nodes)                  |                         -                          |
 |    9     |       Sqlite        |                      Improvement ideas                      |                      [link](#sqlite-improvement-ideas)                      |                         -                          |
@@ -127,6 +127,10 @@ Add upsert node? or sth more akin to insert or update on duplicate key
 - this could be an extension to insert node, rather than sth completely new?
 - this, however, would move the oldest supported version for Sqlite to 3.24.0 (2018-06-04), unless upsert isn't used
 - or an alternative statement can be constructed, that may not be as efficient, but will work pretty much like an upsert
+
+### Sql.Core: Add JSON nodes
+Add nodes for JSON column manipulation (read value, set value etc.)
+- this heavily depends on all sql providers' support for json
 
 ### Sqlite: Improvement ideas
 - Add column script can be handled with ALTER TABLE

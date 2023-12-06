@@ -13,6 +13,16 @@ public static class SqlStatementObjectExtensions
 {
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static async ValueTask<DbTransaction> BeginTransactionAsync(
+        this IDbConnection connection,
+        IsolationLevel isolationLevel,
+        CancellationToken cancellationToken = default)
+    {
+        return await ((DbConnection)connection).BeginTransactionAsync( isolationLevel, cancellationToken ).ConfigureAwait( false );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlMultiDataReader Multi(this IDataReader reader)
     {
         return new SqlMultiDataReader( reader );
@@ -64,6 +74,12 @@ public static class SqlStatementObjectExtensions
         where TRow : notnull
     {
         return executor.Execute( command, options );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static int Execute(this IDbCommand command)
+    {
+        return command.ExecuteNonQuery();
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -191,6 +207,12 @@ public static class SqlStatementObjectExtensions
         where TRow : notnull
     {
         return executor.ExecuteAsync( command, options, cancellationToken );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static async ValueTask<int> ExecuteAsync(this IDbCommand command, CancellationToken cancellationToken = default)
+    {
+        return await ((DbCommand)command).ExecuteNonQueryAsync( cancellationToken ).ConfigureAwait( false );
     }
 
     [Pure]

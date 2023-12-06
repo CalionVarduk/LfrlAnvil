@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data;
+using System.Data.Common;
 using System.Diagnostics.Contracts;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,7 +28,7 @@ public interface ISqlDatabase : IDisposable
     IDbConnection Connect();
 
     [Pure]
-    ValueTask<IDbConnection> ConnectAsync(CancellationToken cancellationToken = default);
+    ValueTask<DbConnection> ConnectAsync(CancellationToken cancellationToken = default);
 
     [Pure]
     SqlDatabaseVersionRecord[] GetRegisteredVersions();
