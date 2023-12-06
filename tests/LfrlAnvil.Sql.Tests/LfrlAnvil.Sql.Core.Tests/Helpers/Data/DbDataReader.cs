@@ -1,12 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
 
 namespace LfrlAnvil.Sql.Tests.Helpers.Data;
 
-public sealed class DbDataReader : IDataReader
+public sealed class DbDataReader : System.Data.Common.DbDataReader
 {
     private int _setIndex;
     private int _rowIndex;
@@ -18,151 +18,145 @@ public sealed class DbDataReader : IDataReader
         _rowIndex = -1;
     }
 
-    public DbCommand? Command { get; set; }
-    public bool ThrowOnDispose { get; set; } = false;
+    public DbCommand? Command { get; init; }
+    public bool ThrowOnDispose { get; init; }
     public ResultSet[] Sets { get; }
-    public bool IsClosed => _setIndex >= Sets.Length;
-    public int Depth => 0;
-    public int RecordsAffected => 0;
-    public int FieldCount => IsClosed ? 0 : Sets[_setIndex].FieldNames.Length;
-    public object this[int i] => GetValue( i );
-    public object this[string name] => GetValue( GetOrdinal( name ) );
+    public override bool HasRows => _rowIndex < FieldCount;
+    public override bool IsClosed => _setIndex >= Sets.Length;
+    public override int Depth => 0;
+    public override int RecordsAffected => 0;
+    public override int FieldCount => IsClosed ? 0 : Sets[_setIndex].FieldNames.Length;
+    public override object this[int i] => GetValue( i );
+    public override object this[string name] => GetValue( GetOrdinal( name ) );
 
     [Pure]
-    public bool GetBoolean(int i)
+    public override bool GetBoolean(int ordinal)
     {
-        return Convert.ToBoolean( GetValue( i ) );
+        return Convert.ToBoolean( GetValue( ordinal ) );
     }
 
     [Pure]
-    public byte GetByte(int i)
+    public override byte GetByte(int ordinal)
     {
-        return Convert.ToByte( GetValue( i ) );
+        return Convert.ToByte( GetValue( ordinal ) );
     }
 
     [Pure]
-    public byte[] GetBytes(int i)
+    public byte[] GetBytes(int ordinal)
     {
-        return (byte[])GetValue( i );
+        return (byte[])GetValue( ordinal );
     }
 
-    public long GetBytes(int i, long fieldOffset, byte[]? buffer, int bufferoffset, int length)
+    public override long GetBytes(int ordinal, long dataOffset, byte[]? buffer, int bufferOffset, int length)
     {
-        var source = GetBytes( i ).AsSpan( (int)fieldOffset, length );
+        var source = GetBytes( ordinal ).AsSpan( (int)dataOffset, length );
         if ( buffer is not null )
-            source.CopyTo( buffer.AsSpan( bufferoffset, length ) );
+            source.CopyTo( buffer.AsSpan( bufferOffset, length ) );
 
         return source.Length;
     }
 
     [Pure]
-    public char GetChar(int i)
+    public override char GetChar(int ordinal)
     {
-        return Convert.ToChar( GetValue( i ) );
+        return Convert.ToChar( GetValue( ordinal ) );
     }
 
-    public long GetChars(int i, long fieldoffset, char[]? buffer, int bufferoffset, int length)
+    public override long GetChars(int ordinal, long dataOffset, char[]? buffer, int bufferOffset, int length)
     {
-        var source = ((IEnumerable<char>)GetValue( i )).ToArray().AsSpan( (int)fieldoffset, length );
+        var source = ((IEnumerable<char>)GetValue( ordinal )).ToArray().AsSpan( (int)dataOffset, length );
         if ( buffer is not null )
-            source.CopyTo( buffer.AsSpan( bufferoffset, length ) );
+            source.CopyTo( buffer.AsSpan( bufferOffset, length ) );
 
         return source.Length;
     }
 
     [Pure]
-    [DoesNotReturn]
-    public IDataReader GetData(int i)
+    public override string GetDataTypeName(int ordinal)
     {
-        throw new NotSupportedException();
+        return GetFieldType( ordinal ).Name.ToLowerInvariant();
     }
 
     [Pure]
-    public string GetDataTypeName(int i)
+    public override DateTime GetDateTime(int ordinal)
     {
-        return GetFieldType( i ).Name.ToLowerInvariant();
+        return (DateTime)GetValue( ordinal );
     }
 
     [Pure]
-    public DateTime GetDateTime(int i)
+    public override decimal GetDecimal(int ordinal)
     {
-        return (DateTime)GetValue( i );
+        return Convert.ToDecimal( GetValue( ordinal ) );
     }
 
     [Pure]
-    public decimal GetDecimal(int i)
+    public override double GetDouble(int ordinal)
     {
-        return Convert.ToDecimal( GetValue( i ) );
+        return Convert.ToDouble( GetValue( ordinal ) );
     }
 
     [Pure]
-    public double GetDouble(int i)
+    public override Type GetFieldType(int ordinal)
     {
-        return Convert.ToDouble( GetValue( i ) );
+        return GetValue( ordinal ).GetType();
     }
 
     [Pure]
-    public Type GetFieldType(int i)
+    public override float GetFloat(int ordinal)
     {
-        return GetValue( i ).GetType();
+        return Convert.ToSingle( GetValue( ordinal ) );
     }
 
     [Pure]
-    public float GetFloat(int i)
+    public override Guid GetGuid(int ordinal)
     {
-        return Convert.ToSingle( GetValue( i ) );
+        return (Guid)GetValue( ordinal );
     }
 
     [Pure]
-    public Guid GetGuid(int i)
+    public override short GetInt16(int ordinal)
     {
-        return (Guid)GetValue( i );
+        return Convert.ToInt16( GetValue( ordinal ) );
     }
 
     [Pure]
-    public short GetInt16(int i)
+    public override int GetInt32(int ordinal)
     {
-        return Convert.ToInt16( GetValue( i ) );
+        return Convert.ToInt32( GetValue( ordinal ) );
     }
 
     [Pure]
-    public int GetInt32(int i)
+    public override long GetInt64(int ordinal)
     {
-        return Convert.ToInt32( GetValue( i ) );
+        return Convert.ToInt64( GetValue( ordinal ) );
     }
 
     [Pure]
-    public long GetInt64(int i)
+    public override string GetName(int ordinal)
     {
-        return Convert.ToInt64( GetValue( i ) );
+        return Sets[_setIndex].FieldNames[ordinal];
     }
 
     [Pure]
-    public string GetName(int i)
-    {
-        return Sets[_setIndex].FieldNames[i];
-    }
-
-    [Pure]
-    public int GetOrdinal(string name)
+    public override int GetOrdinal(string name)
     {
         return Array.FindIndex( Sets[_setIndex].FieldNames, n => n.Equals( name, StringComparison.OrdinalIgnoreCase ) );
     }
 
     [Pure]
-    public string GetString(int i)
+    public override string GetString(int ordinal)
     {
-        return (string)GetValue( i );
+        return (string)GetValue( ordinal );
     }
 
     [Pure]
-    public object GetValue(int i)
+    public override object GetValue(int ordinal)
     {
-        return Sets[_setIndex].Rows[_rowIndex][i] ?? DBNull.Value;
+        return Sets[_setIndex].Rows[_rowIndex][ordinal] ?? DBNull.Value;
     }
 
     [Pure]
-    public int GetValues(object[] values)
+    public override int GetValues(object[] values)
     {
         var row = Sets[_setIndex].Rows[_rowIndex];
         var length = Math.Min( row.Length, values.Length );
@@ -171,33 +165,28 @@ public sealed class DbDataReader : IDataReader
     }
 
     [Pure]
-    public bool IsDBNull(int i)
+    public override bool IsDBNull(int ordinal)
     {
-        return GetValue( i ) is DBNull;
+        return GetValue( ordinal ) is DBNull;
     }
 
-    public void Dispose()
+    public override void Close()
     {
         if ( ThrowOnDispose )
             throw new Exception();
 
-        Close();
-    }
-
-    public void Close()
-    {
         _setIndex = Sets.Length;
         _rowIndex = -1;
         ((IList<string>?)Command?.Audit)?.Add( "DbDataReader.Close" );
     }
 
     [Pure]
-    public DataTable? GetSchemaTable()
+    public override DataTable? GetSchemaTable()
     {
         return null;
     }
 
-    public bool NextResult()
+    public override bool NextResult()
     {
         if ( IsClosed )
             return false;
@@ -206,7 +195,7 @@ public sealed class DbDataReader : IDataReader
         return ++_setIndex < Sets.Length;
     }
 
-    public bool Read()
+    public override bool Read()
     {
         if ( IsClosed )
             return false;
@@ -216,5 +205,12 @@ public sealed class DbDataReader : IDataReader
             return false;
 
         return ++_rowIndex < set.Rows.Length;
+    }
+
+    [Pure]
+    public override IEnumerator GetEnumerator()
+    {
+        var set = Sets[_setIndex];
+        return set.Rows.Skip( _rowIndex ).GetEnumerator();
     }
 }

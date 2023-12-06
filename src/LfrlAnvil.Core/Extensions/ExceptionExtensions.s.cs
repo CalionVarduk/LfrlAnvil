@@ -11,8 +11,9 @@ public static class ExceptionExtensions
     [DoesNotReturn]
     [StackTraceHidden]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void Rethrow(this Exception exception)
+    public static Exception Rethrow(this Exception exception)
     {
         ExceptionDispatchInfo.Throw( exception );
+        return exception;
     }
 }

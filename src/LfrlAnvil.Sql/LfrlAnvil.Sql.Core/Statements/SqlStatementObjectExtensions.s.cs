@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace LfrlAnvil.Sql.Statements;
 
@@ -124,5 +127,84 @@ public static class SqlStatementObjectExtensions
         where TSource : notnull
     {
         return new SqlParameterBinderExecutor<TSource>( binder, source );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlAsyncMultiDataReader MultiAsync(this IDataReader reader)
+    {
+        return new SqlAsyncMultiDataReader( reader );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static async ValueTask<SqlAsyncMultiDataReader> MultiQueryAsync(
+        this IDbCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        return (await ((DbCommand)command).ExecuteReaderAsync( cancellationToken ).ConfigureAwait( false )).MultiAsync();
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static async ValueTask<SqlQueryReaderResult> QueryAsync(
+        this IDbCommand command,
+        SqlAsyncQueryReader reader,
+        SqlQueryReaderOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        await using var r = await ((DbCommand)command).ExecuteReaderAsync( cancellationToken ).ConfigureAwait( false );
+        return await reader.ReadAsync( r, options, cancellationToken ).ConfigureAwait( false );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static async ValueTask<SqlQueryReaderResult<TRow>> QueryAsync<TRow>(
+        this IDbCommand command,
+        SqlAsyncQueryReader<TRow> reader,
+        SqlQueryReaderOptions? options = null,
+        CancellationToken cancellationToken = default)
+        where TRow : notnull
+    {
+        await using var r = await ((DbCommand)command).ExecuteReaderAsync( cancellationToken ).ConfigureAwait( false );
+        return await reader.ReadAsync( r, options, cancellationToken ).ConfigureAwait( false );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static ValueTask<SqlQueryReaderResult> QueryAsync(
+        this IDbCommand command,
+        SqlAsyncQueryReaderExecutor executor,
+        SqlQueryReaderOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        return executor.ExecuteAsync( command, options, cancellationToken );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static ValueTask<SqlQueryReaderResult<TRow>> QueryAsync<TRow>(
+        this IDbCommand command,
+        SqlAsyncQueryReaderExecutor<TRow> executor,
+        SqlQueryReaderOptions? options = null,
+        CancellationToken cancellationToken = default)
+        where TRow : notnull
+    {
+        return executor.ExecuteAsync( command, options, cancellationToken );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlAsyncQueryReaderExecutor Bind(this SqlAsyncQueryReader reader, string sql)
+    {
+        return new SqlAsyncQueryReaderExecutor( reader, sql );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlAsyncQueryReaderExecutor<TRow> Bind<TRow>(this SqlAsyncQueryReader<TRow> reader, string sql)
+        where TRow : notnull
+    {
+        return new SqlAsyncQueryReaderExecutor<TRow>( reader, sql );
     }
 }

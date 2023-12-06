@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
@@ -34,6 +35,9 @@ public static class ExceptionResources
     public const string SourceTypeCannotBeAbstract = "Source type cannot be abstract.";
     public const string SourceTypeCannotBeOpenGeneric = "Source type cannot be an open generic type.";
     public const string SourceTypeCannotBeNullable = "Source type cannot be nullable.";
+
+    internal static readonly string DataReaderDoesNotSupportAsyncQueries =
+        $"Only data readers of type '{typeof( DbDataReader ).GetDebugString()}' support asynchronous queries.";
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -134,7 +138,7 @@ public static class ExceptionResources
     {
         var type = column.TypeDefinition.RuntimeType.GetDebugString();
         var otherType = otherColumn.TypeDefinition.RuntimeType.GetDebugString();
-        return $"Type {type} of column '{column.FullName}' is incompatible with type {otherType} of column '{otherColumn.FullName}'.";
+        return $"Type '{type}' of column '{column.FullName}' is incompatible with type '{otherType}' of column '{otherColumn.FullName}'.";
     }
 
     [Pure]
@@ -429,7 +433,7 @@ contains {parameters.Count} parameter(s):
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string GetObjectCastMessage(SqlDialect dialect, Type expected, Type actual)
     {
-        return $"Expected {dialect} object of type {expected.GetDebugString()} but found object of type {actual.GetDebugString()}.";
+        return $"Expected {dialect} object of type '{expected.GetDebugString()}' but found object of type '{actual.GetDebugString()}'.";
     }
 
     [Pure]

@@ -166,7 +166,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
         using ( new AssertionScope() )
         {
             parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Audit.Should().BeSequentiallyEqualTo( "[explicit]", "get: [indexer](0)", "RemoveAt(2)", "RemoveAt(1)" );
+            command.Parameters.Audit.Should().BeSequentiallyEqualTo( "GetParameter('0')", "RemoveAt(2)", "RemoveAt(1)" );
             command.Parameters.Should().HaveCount( 1 );
             command.Parameters[0].Should().BeSameAs( p1 );
             command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
@@ -424,7 +424,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
         using ( new AssertionScope() )
         {
             parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Audit.Should().BeSequentiallyEqualTo( "[explicit]", "get: [indexer](0)", "RemoveAt(2)", "RemoveAt(1)" );
+            command.Parameters.Audit.Should().BeSequentiallyEqualTo( "GetParameter('0')", "RemoveAt(2)", "RemoveAt(1)" );
             command.Parameters.Should().HaveCount( 1 );
             command.Parameters[0].Should().BeSameAs( p1 );
             command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );

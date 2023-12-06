@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
@@ -8,6 +9,8 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 using LfrlAnvil.Expressions;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Exceptions;
@@ -19,6 +22,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
     private readonly object _sync = new object();
     private Toolbox _toolbox;
     private ResultSetToolbox _resultSetToolbox;
+    private MethodInfo? _createAsyncQueryReaderExpressionMethod;
 
     internal SqlQueryReaderFactory(Type dataReaderType, SqlDialect dialect, ISqlColumnTypeDefinitionProvider columnTypeDefinitions)
     {
@@ -28,8 +32,11 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         ColumnTypeDefinitions = columnTypeDefinitions;
         _toolbox = default;
         _resultSetToolbox = default;
+        _createAsyncQueryReaderExpressionMethod = null;
+        SupportsAsync = DataReaderType.IsAssignableTo( typeof( DbDataReader ) );
     }
 
+    public bool SupportsAsync { get; }
     public Type DataReaderType { get; }
     public SqlDialect Dialect { get; }
     public ISqlColumnTypeDefinitionProvider ColumnTypeDefinitions { get; }
@@ -42,6 +49,16 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
             options?.ResultSetFieldsPersistenceMode == SqlQueryReaderResultSetFieldsPersistenceMode.PersistWithTypes
                 ? ReadRowsWithFieldTypes
                 : ReadRows );
+    }
+
+    [Pure]
+    public SqlAsyncQueryReader CreateAsync(SqlQueryReaderCreationOptions? options = null)
+    {
+        return new SqlAsyncQueryReader(
+            Dialect,
+            options?.ResultSetFieldsPersistenceMode == SqlQueryReaderResultSetFieldsPersistenceMode.PersistWithTypes
+                ? ReadRowsWithFieldTypesAsync
+                : ReadRowsAsync );
     }
 
     [Pure]
@@ -68,6 +85,135 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
     }
 
     [Pure]
+    public SqlAsyncQueryReaderExpression CreateAsyncExpression(Type rowType, SqlQueryReaderCreationOptions? options = null)
+    {
+        var errors = Chain<string>.Empty;
+        if ( ! SupportsAsync )
+            errors = errors.Extend( ExceptionResources.DataReaderDoesNotSupportAsyncQueries );
+
+        if ( rowType.IsAbstract )
+            errors = errors.Extend( ExceptionResources.RowTypeCannotBeAbstract );
+
+        if ( rowType.IsGenericTypeDefinition )
+            errors = errors.Extend( ExceptionResources.RowTypeCannotBeOpenGeneric );
+
+        if ( rowType.IsValueType && Nullable.GetUnderlyingType( rowType ) is not null )
+            errors = errors.Extend( ExceptionResources.RowTypeCannotBeNullable );
+
+        if ( errors.Count > 0 )
+            throw new SqlCompilerException( Dialect, errors );
+
+        var expression = CreateAsyncQueryReaderExpression( rowType, options ?? SqlQueryReaderCreationOptions.Default );
+        return new SqlAsyncQueryReaderExpression( Dialect, rowType, expression );
+    }
+
+    private ISqlAsyncLambdaExpression CreateAsyncQueryReaderExpression(Type rowType, SqlQueryReaderCreationOptions options)
+    {
+        if ( _createAsyncQueryReaderExpressionMethod is null )
+        {
+            var methods = typeof( SqlQueryReaderFactory ).GetMethods(
+                BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly );
+
+            foreach ( var m in methods )
+            {
+                if ( m.IsGenericMethod && m.Name == nameof( CreateAsyncQueryReaderExpression ) )
+                {
+                    _createAsyncQueryReaderExpressionMethod = m;
+                    break;
+                }
+            }
+
+            Assume.IsNotNull( _createAsyncQueryReaderExpressionMethod );
+        }
+
+        var closedAsyncQueryReaderExpressionMethod = _createAsyncQueryReaderExpressionMethod.MakeGenericMethod( DataReaderType, rowType );
+        try
+        {
+            var result = closedAsyncQueryReaderExpressionMethod.Invoke( this, new object[] { options } );
+            Assume.IsNotNull( result );
+            return ReinterpretCast.To<ISqlAsyncLambdaExpression>( result );
+        }
+        catch ( TargetInvocationException e )
+        {
+            e.InnerException?.Rethrow();
+            throw;
+        }
+    }
+
+    private SqlAsyncLambdaExpression<TDataReader, TRow> CreateAsyncQueryReaderExpression<TDataReader, TRow>(
+        SqlQueryReaderCreationOptions creationOptions)
+        where TDataReader : DbDataReader
+        where TRow : notnull
+    {
+        Assume.Equals( typeof( TDataReader ), DataReaderType );
+
+        lock ( _sync )
+        {
+            if ( ! _toolbox.IsInitialized )
+                _toolbox = Toolbox.Create( DataReaderType, Dialect );
+        }
+
+        var (ctor, ctorParameters) = FindRowTypeConstructor( typeof( TRow ), creationOptions.RowTypeConstructorPredicate );
+        var queryFields = CreateQueryFields( typeof( TRow ), ctorParameters, in creationOptions );
+        var ordinals = new AsyncOrdinalsCollection( this, queryFields.Length );
+        var memberReadExpressions = CreateMemberReadExpressionsAndPopulateOrdinals(
+            queryFields,
+            ordinals,
+            creationOptions.AlwaysTestForNull );
+
+        var persistResultSetFields = creationOptions.ResultSetFieldsPersistenceMode != SqlQueryReaderResultSetFieldsPersistenceMode.Ignore;
+        var persistResultSetFieldTypes = creationOptions.ResultSetFieldsPersistenceMode ==
+            SqlQueryReaderResultSetFieldsPersistenceMode.PersistWithTypes;
+
+        Expression<Func<TDataReader, SqlAsyncReaderInitResult>> initExpression;
+        if ( persistResultSetFields )
+        {
+            lock ( _sync )
+            {
+                if ( ! _resultSetToolbox.IsInitialized )
+                    _resultSetToolbox = ResultSetToolbox.Create( in _toolbox );
+            }
+
+            initExpression = Expression.Lambda<Func<TDataReader, SqlAsyncReaderInitResult>>(
+                Expression.Block(
+                    new[] { _resultSetToolbox.ResultSetFields },
+                    _resultSetToolbox.CreateResultSetFieldsInitLoop( ordinals.GetUsedFieldNames(), persistResultSetFieldTypes ),
+                    Expression.New(
+                        _toolbox.AsyncReaderInitResultCtor,
+                        ordinals.CreateOrdinalsArray(),
+                        _resultSetToolbox.ResultSetFields ) ),
+                _toolbox.Reader );
+        }
+        else
+        {
+            initExpression = Expression.Lambda<Func<TDataReader, SqlAsyncReaderInitResult>>(
+                Expression.New( _toolbox.AsyncReaderInitResultCtor, ordinals.CreateOrdinalsArray(), _toolbox.DefaultResultSetArray ),
+                _toolbox.Reader );
+        }
+
+        var createRow = CreateRowInitExpression( ctor, ctorParameters.Length == 0, queryFields, memberReadExpressions );
+        if ( persistResultSetFieldTypes )
+        {
+            var createRowExpression = Expression.Lambda<Func<TDataReader, int[], SqlResultSetField[], TRow>>(
+                Expression.Block( _resultSetToolbox.ResultSetFieldsTypeAssignmentBlock, createRow ),
+                _toolbox.Reader,
+                _toolbox.AsyncOrdinals,
+                _resultSetToolbox.ResultSetFields );
+
+            return SqlAsyncLambdaExpression<TDataReader, TRow>.Create( initExpression, createRowExpression );
+        }
+        else
+        {
+            var createRowExpression = Expression.Lambda<Func<TDataReader, int[], TRow>>(
+                createRow,
+                _toolbox.Reader,
+                _toolbox.AsyncOrdinals );
+
+            return SqlAsyncLambdaExpression<TDataReader, TRow>.Create( initExpression, createRowExpression );
+        }
+    }
+
+    [Pure]
     private Expression CreateLambdaExpressionBody(Type rowType, in SqlQueryReaderCreationOptions creationOptions)
     {
         lock ( _sync )
@@ -78,15 +224,18 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
 
         var (ctor, ctorParameters) = FindRowTypeConstructor( rowType, creationOptions.RowTypeConstructorPredicate );
         var queryFields = CreateQueryFields( rowType, ctorParameters, in creationOptions );
-        var (memberReadExpressions, ordinalsByFieldName) =
-            CreateMemberReadExpressionsAndQueryFieldOrdinalsLookup( queryFields, creationOptions.AlwaysTestForNull );
+        var ordinals = new SyncOrdinalsCollection( queryFields.Length );
+        var memberReadExpressions = CreateMemberReadExpressionsAndPopulateOrdinals(
+            queryFields,
+            ordinals,
+            creationOptions.AlwaysTestForNull );
 
         var persistResultSetFields = creationOptions.ResultSetFieldsPersistenceMode != SqlQueryReaderResultSetFieldsPersistenceMode.Ignore;
         var persistResultSetFieldTypes = creationOptions.ResultSetFieldsPersistenceMode ==
             SqlQueryReaderResultSetFieldsPersistenceMode.PersistWithTypes;
 
         var rowTypeToolbox = new RowTypeToolbox( rowType, in _toolbox );
-        var readVariables = new ParameterExpression[ordinalsByFieldName.Count + (persistResultSetFields ? 1 : 0) + 1];
+        var readVariables = new ParameterExpression[ordinals.Source.Count + (persistResultSetFields ? 1 : 0) + 1];
         var readBlock = new Expression[readVariables.Length + (persistResultSetFieldTypes ? 1 : 0) + 4];
         readBlock[0] = rowTypeToolbox.RowsAssignment;
 
@@ -104,7 +253,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         readVariables[^1] = rowTypeToolbox.Rows;
 
         var index = 0;
-        foreach ( var (name, ordinal) in ordinalsByFieldName )
+        foreach ( var (name, ordinal) in ordinals.Source )
         {
             readVariables[index++] = ordinal;
             var getOrdinalCall = _toolbox.CreateGetOrdinalCall( name );
@@ -112,22 +261,12 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         }
 
         if ( persistResultSetFields )
-        {
-            var usedColumnNames = new HashSet<string>( ordinalsByFieldName.Keys, comparer: StringComparer.OrdinalIgnoreCase );
-            readBlock[++index] = _resultSetToolbox.CreateResultSetFieldsInitLoop( usedColumnNames, persistResultSetFieldTypes );
-        }
+            readBlock[++index] = _resultSetToolbox.CreateResultSetFieldsInitLoop(
+                ordinals.GetUsedFieldNames(),
+                persistResultSetFieldTypes );
 
-        Expression addRow;
-        if ( ctorParameters.Length > 0 )
-            addRow = rowTypeToolbox.CreateAddRow( Expression.New( ctor, memberReadExpressions ) );
-        else
-        {
-            var memberBindings = new MemberBinding[queryFields.Length];
-            for ( var i = 0; i < queryFields.Length; ++i )
-                memberBindings[i] = Expression.Bind( ReinterpretCast.To<MemberInfo>( queryFields[i].Target ), memberReadExpressions[i] );
-
-            addRow = rowTypeToolbox.CreateAddRow( Expression.MemberInit( Expression.New( ctor ), memberBindings ) );
-        }
+        var addRow = rowTypeToolbox.CreateAddRow(
+            CreateRowInitExpression( ctor, ctorParameters.Length == 0, queryFields, memberReadExpressions ) );
 
         readBlock[++index] = _toolbox.ReadRowLabel;
         readBlock[++index] = addRow;
@@ -151,6 +290,23 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         };
 
         return Expression.Block( new[] { _toolbox.Reader, rowTypeToolbox.QueryResult }, block );
+    }
+
+    [Pure]
+    private static Expression CreateRowInitExpression(
+        ConstructorInfo ctor,
+        bool isCtorParameterless,
+        QueryFieldInfo[] queryFields,
+        Expression[] memberReadExpressions)
+    {
+        if ( ! isCtorParameterless )
+            return Expression.New( ctor, memberReadExpressions );
+
+        var memberBindings = new MemberBinding[queryFields.Length];
+        for ( var i = 0; i < queryFields.Length; ++i )
+            memberBindings[i] = Expression.Bind( ReinterpretCast.To<MemberInfo>( queryFields[i].Target ), memberReadExpressions[i] );
+
+        return Expression.MemberInit( Expression.New( ctor ), memberBindings );
     }
 
     [Pure]
@@ -246,10 +402,12 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
     }
 
     [Pure]
-    private (Expression[] MemberReadExpressions, Dictionary<string, ParameterExpression> OrdinalsByFieldName)
-        CreateMemberReadExpressionsAndQueryFieldOrdinalsLookup(ReadOnlySpan<QueryFieldInfo> dataFields, bool alwaysTestForNull)
+    private Expression[] CreateMemberReadExpressionsAndPopulateOrdinals(
+        ReadOnlySpan<QueryFieldInfo> dataFields,
+        IOrdinalsCollection ordinals,
+        bool alwaysTestForNull)
     {
-        var readerCallsToolbox = new ReaderCallsToolbox( this, dataFields.Length );
+        var readerCallsToolbox = new ReaderCallsToolbox( this, ordinals, dataFields.Length );
         for ( var i = 0; i < dataFields.Length; ++i )
         {
             var field = dataFields[i];
@@ -267,7 +425,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
                 continue;
             }
 
-            var ordinal = readerCallsToolbox.GetOrAddOrdinal( field.Name );
+            var ordinal = ordinals.GetOrAddOrdinal( field.Name );
             Assume.True( mapping.Body.Type.IsAssignableTo( field.Type.UnderlyingType ) );
             var columnRead = readerCallsToolbox.ApplyTypeDefMapping( mapping, ordinal, field.Type.ActualType );
 
@@ -277,7 +435,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
             readerCallsToolbox.SetReadExpression( i, columnRead );
         }
 
-        return readerCallsToolbox.GetResult();
+        return readerCallsToolbox.GetMemberExpressions();
     }
 
     [Pure]
@@ -327,13 +485,6 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         }
 
         return new QueryFieldInfo( name, target, type, HasCustomMapping: false, Mapping: null );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static ParameterExpression CreateOrdinalVariable(string name)
-    {
-        return Expression.Variable( typeof( int ), $"ord_{name}" );
     }
 
     [Pure]
@@ -397,6 +548,138 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         while ( reader.Read() );
 
         return new SqlQueryReaderResult( fields, cells );
+    }
+
+    [Pure]
+    private static async ValueTask<SqlQueryReaderResult> ReadRowsAsync(
+        IDataReader reader,
+        SqlQueryReaderOptions options,
+        CancellationToken cancellationToken)
+    {
+        var dbReader = (DbDataReader)reader;
+        if ( ! await dbReader.ReadAsync( cancellationToken ).ConfigureAwait( false ) )
+            return SqlQueryReaderResult.Empty;
+
+        var fields = CreateResultSetFields( dbReader, includeTypeNames: false );
+        var cells = CreateCellsBuffer( options, fields.Length );
+
+        do
+        {
+            for ( var i = 0; i < fields.Length; ++i )
+            {
+                var value = dbReader.GetValue( i );
+                cells.Add( ReferenceEquals( value, DBNull.Value ) ? null : value );
+            }
+        }
+        while ( await dbReader.ReadAsync( cancellationToken ).ConfigureAwait( false ) );
+
+        return new SqlQueryReaderResult( fields, cells );
+    }
+
+    [Pure]
+    private static async ValueTask<SqlQueryReaderResult> ReadRowsWithFieldTypesAsync(
+        IDataReader reader,
+        SqlQueryReaderOptions options,
+        CancellationToken cancellationToken)
+    {
+        var dbReader = (DbDataReader)reader;
+        if ( ! await dbReader.ReadAsync( cancellationToken ).ConfigureAwait( false ) )
+            return SqlQueryReaderResult.Empty;
+
+        var fields = CreateResultSetFields( dbReader, includeTypeNames: true );
+        var cells = CreateCellsBuffer( options, fields.Length );
+
+        do
+        {
+            for ( var i = 0; i < fields.Length; ++i )
+            {
+                var isDbNull = dbReader.IsDBNull( i );
+                cells.Add( isDbNull ? null : dbReader.GetValue( i ) );
+                fields[i].TryAddTypeName( isDbNull ? "NULL" : dbReader.GetDataTypeName( i ) );
+            }
+        }
+        while ( await dbReader.ReadAsync( cancellationToken ).ConfigureAwait( false ) );
+
+        return new SqlQueryReaderResult( fields, cells );
+    }
+
+    private interface IOrdinalsCollection
+    {
+        Expression GetOrAddOrdinal(string name);
+    }
+
+    private sealed class SyncOrdinalsCollection : IOrdinalsCollection
+    {
+        internal readonly Dictionary<string, ParameterExpression> Source;
+
+        internal SyncOrdinalsCollection(int count)
+        {
+            Source = new Dictionary<string, ParameterExpression>( capacity: count, comparer: StringComparer.OrdinalIgnoreCase );
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public ParameterExpression GetOrAddOrdinal(string name)
+        {
+            ref var result = ref CollectionsMarshal.GetValueRefOrAddDefault( Source, name, out var exists )!;
+            if ( ! exists )
+                result = Expression.Variable( typeof( int ), $"ord_{name}" );
+
+            return result;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public HashSet<string> GetUsedFieldNames()
+        {
+            return new HashSet<string>( Source.Keys, Source.Comparer );
+        }
+
+        Expression IOrdinalsCollection.GetOrAddOrdinal(string name)
+        {
+            return GetOrAddOrdinal( name );
+        }
+    }
+
+    private sealed class AsyncOrdinalsCollection : IOrdinalsCollection
+    {
+        private readonly SqlQueryReaderFactory _factory;
+        private readonly Dictionary<string, Expression> _source;
+        private readonly List<Expression> _getOrdinalCalls;
+
+        internal AsyncOrdinalsCollection(SqlQueryReaderFactory factory, int count)
+        {
+            _factory = factory;
+            _source = new Dictionary<string, Expression>( capacity: count, comparer: StringComparer.OrdinalIgnoreCase );
+            _getOrdinalCalls = new List<Expression>( capacity: count );
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public Expression GetOrAddOrdinal(string name)
+        {
+            ref var result = ref CollectionsMarshal.GetValueRefOrAddDefault( _source, name, out var exists )!;
+            if ( ! exists )
+            {
+                result = Expression.ArrayAccess( _factory._toolbox.AsyncOrdinals, Expression.Constant( _getOrdinalCalls.Count ) );
+                var getOrdinalCall = _factory._toolbox.CreateGetOrdinalCall( name );
+                _getOrdinalCalls.Add( getOrdinalCall );
+            }
+
+            return result;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public HashSet<string> GetUsedFieldNames()
+        {
+            return new HashSet<string>( _source.Keys, _source.Comparer );
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public NewArrayExpression CreateOrdinalsArray()
+        {
+            return Expression.NewArrayInit( typeof( int ), _getOrdinalCalls );
+        }
     }
 
     private readonly record struct QueryFieldInfo(
@@ -594,6 +877,8 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         internal readonly Type ResultSetFieldType;
         internal readonly Type ResultSetFieldArrayType;
         internal readonly DefaultExpression DefaultResultSetArray;
+        internal readonly ParameterExpression AsyncOrdinals;
+        internal readonly ConstructorInfo AsyncReaderInitResultCtor;
 
         private Toolbox(Type dataReaderType, SqlDialect dialect)
         {
@@ -633,6 +918,9 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
             ResultSetFieldType = typeof( SqlResultSetField );
             ResultSetFieldArrayType = ResultSetFieldType.MakeArrayType();
             DefaultResultSetArray = Expression.Default( ResultSetFieldArrayType );
+
+            AsyncOrdinals = Expression.Variable( typeof( int[] ), "ordinals" );
+            AsyncReaderInitResultCtor = TypeHelpers.GetAsyncReaderInitResultCtor();
         }
 
         [Pure]
@@ -648,13 +936,13 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         }
 
         [Pure]
-        internal MethodCallExpression CreateIsDbNullCall(ParameterExpression ordinal)
+        internal MethodCallExpression CreateIsDbNullCall(Expression ordinal)
         {
             return Expression.Call( ReaderForIsDbNull, ReaderIsDbNullMethod, ordinal );
         }
 
         [Pure]
-        internal ConditionalExpression CreateNullableRead(ParameterExpression ordinal, Expression ifNull, Expression ifNotNull)
+        internal ConditionalExpression CreateNullableRead(Expression ordinal, Expression ifNull, Expression ifNotNull)
         {
             var nullTest = CreateIsDbNullCall( ordinal );
             return Expression.Condition( nullTest, ifNull, ifNotNull );
@@ -664,14 +952,14 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
     private struct ReaderCallsToolbox
     {
         internal readonly SqlQueryReaderFactory Factory;
+        internal readonly IOrdinalsCollection Ordinals;
         private readonly Expression[] _memberReadExpressions;
-        private readonly Dictionary<string, ParameterExpression> _ordinalsByFieldName;
         private ExpressionParameterReplacer? _parameterReplacer;
         private ParameterExpression[]? _parametersToReplace;
         private Expression[]? _parameterReplacements;
         private ReaderFacadeTransformer? _readerFacadeTransformer;
 
-        internal ReaderCallsToolbox(SqlQueryReaderFactory factory, int fieldCount)
+        internal ReaderCallsToolbox(SqlQueryReaderFactory factory, IOrdinalsCollection ordinals, int fieldCount)
         {
             Factory = factory;
             _parameterReplacer = null;
@@ -679,20 +967,18 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
             _parameterReplacements = null;
             _readerFacadeTransformer = null;
             _memberReadExpressions = new Expression[fieldCount];
-            _ordinalsByFieldName = new Dictionary<string, ParameterExpression>(
-                capacity: fieldCount,
-                comparer: StringComparer.OrdinalIgnoreCase );
+            Ordinals = ordinals;
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal (Expression[] MemberReadExpressions, Dictionary<string, ParameterExpression> OrdinalsByFieldName) GetResult()
+        internal Expression[] GetMemberExpressions()
         {
-            return (_memberReadExpressions, _ordinalsByFieldName);
+            return _memberReadExpressions;
         }
 
         [Pure]
-        internal Expression ApplyTypeDefMapping(LambdaExpression mapping, ParameterExpression ordinal, Type expectedType)
+        internal Expression ApplyTypeDefMapping(LambdaExpression mapping, Expression ordinal, Type expectedType)
         {
             Assume.ContainsExactly( mapping.Parameters, 2 );
             var readerParameter = mapping.Parameters[0];
@@ -727,17 +1013,6 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
             _readerFacadeTransformer.SetParameter( mapping.Parameters[0] );
             var result = _readerFacadeTransformer.Visit( mapping.Body ).GetOrConvert( expectedType );
             return result;
-        }
-
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal ParameterExpression GetOrAddOrdinal(string fieldName)
-        {
-            ref var ordinal = ref CollectionsMarshal.GetValueRefOrAddDefault( _ordinalsByFieldName, fieldName, out var exists )!;
-            if ( ! exists )
-                ordinal = CreateOrdinalVariable( fieldName );
-
-            return ordinal;
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -815,7 +1090,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
 
             var fieldName = ReinterpretCast.To<string>( nameArgument.Value );
             Assume.IsNotNull( fieldName );
-            var ordinal = _readerCallsToolbox.GetOrAddOrdinal( fieldName );
+            var ordinal = _readerCallsToolbox.Ordinals.GetOrAddOrdinal( fieldName );
 
             if ( node.Method.Name == nameof( ISqlDataRecordFacade<IDataReader>.GetOrdinal ) )
             {

@@ -21,4 +21,10 @@ public static class DelegateSubstituteExtensions
         source.Invoke( Arg.Any<T1>(), Arg.Any<T2>() ).Returns( returnValueProvider );
         return source;
     }
+
+    public static Func<T1, T2, T3, T4> WithAnyArgs<T1, T2, T3, T4>(this Func<T1, T2, T3, T4> source, Func<CallInfo, T4> returnValueProvider)
+    {
+        source.Invoke( Arg.Any<T1>(), Arg.Any<T2>(), Arg.Any<T3>() ).Returns( returnValueProvider );
+        return source;
+    }
 }

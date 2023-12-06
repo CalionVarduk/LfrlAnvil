@@ -18,6 +18,13 @@ public readonly struct SqlDatabaseBuilderStatement
     public string Sql { get; }
     public Action<IDbCommand>? BeforeCallback { get; }
 
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public void Apply(IDbCommand command)
+    {
+        command.CommandText = Sql;
+        BeforeCallback?.Invoke( command );
+    }
+
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlDatabaseBuilderStatement Create(SqlNodeInterpreterContext context)

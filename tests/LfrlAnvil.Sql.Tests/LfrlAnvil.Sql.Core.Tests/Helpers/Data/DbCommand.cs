@@ -1,67 +1,64 @@
 ﻿using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Sql.Tests.Helpers.Data;
 
-public sealed class DbCommand : IDbCommand
+public sealed class DbCommand : System.Data.Common.DbCommand
 {
     private readonly List<string> _audit = new List<string>();
 
     [AllowNull]
-    public string CommandText { get; set; }
+    public override string CommandText { get; set; }
 
-    public int CommandTimeout { get; set; }
-    public CommandType CommandType { get; set; }
-    public IDbConnection? Connection { get; set; }
-    public IDbTransaction? Transaction { get; set; }
-    public UpdateRowSource UpdatedRowSource { get; set; }
-    public ResultSet[] ResultSets { get; set; } = Array.Empty<ResultSet>();
-    public DbDataParameterCollection Parameters { get; } = new DbDataParameterCollection();
+    public override int CommandTimeout { get; set; }
+    public override CommandType CommandType { get; set; }
+    public override UpdateRowSource UpdatedRowSource { get; set; }
+    public override bool DesignTimeVisible { get; set; }
+    public ResultSet[] ResultSets { get; init; } = Array.Empty<ResultSet>();
+    public new DbDataParameterCollection Parameters { get; } = new DbDataParameterCollection();
     public IReadOnlyList<string> Audit => _audit;
 
-    IDataParameterCollection IDbCommand.Parameters => Parameters;
+    protected override DbConnection? DbConnection { get; set; }
+    protected override DbTransaction? DbTransaction { get; set; }
+    protected override DbParameterCollection DbParameterCollection => Parameters;
 
-    public void Dispose()
-    {
-        _audit.Add( nameof( Dispose ) );
-    }
-
-    public void Cancel()
+    public override void Cancel()
     {
         _audit.Add( nameof( Cancel ) );
     }
 
     [Pure]
-    public DbDataParameter CreateParameter()
+    public new DbDataParameter CreateParameter()
     {
         _audit.Add( nameof( CreateParameter ) );
         return new DbDataParameter();
     }
 
-    public int ExecuteNonQuery()
+    public override int ExecuteNonQuery()
     {
         _audit.Add( nameof( ExecuteNonQuery ) );
         return 0;
     }
 
     [Pure]
-    public DbDataReader ExecuteReader()
+    public new DbDataReader ExecuteReader()
     {
         _audit.Add( nameof( ExecuteReader ) );
         return new DbDataReader( ResultSets ) { Command = this };
     }
 
     [Pure]
-    public object? ExecuteScalar()
+    public override object? ExecuteScalar()
     {
         _audit.Add( nameof( ExecuteScalar ) );
         using var reader = new DbDataReader( ResultSets ) { Command = this };
         return reader.Read() ? reader.GetValue( 0 ) : null;
     }
 
-    public void Prepare()
+    public override void Prepare()
     {
         _audit.Add( nameof( Prepare ) );
     }
@@ -72,23 +69,20 @@ public sealed class DbCommand : IDbCommand
     }
 
     [Pure]
-    IDbDataParameter IDbCommand.CreateParameter()
+    protected override DbParameter CreateDbParameter()
     {
-        _audit.Add( "[explicit]" );
         return CreateParameter();
     }
 
     [Pure]
-    IDataReader IDbCommand.ExecuteReader()
+    protected override System.Data.Common.DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
     {
-        _audit.Add( "[explicit]" );
         return ExecuteReader();
     }
 
-    [Pure]
-    IDataReader IDbCommand.ExecuteReader(CommandBehavior behavior)
+    protected override void Dispose(bool disposing)
     {
-        _audit.Add( $"[explicit]({behavior})" );
-        return ExecuteReader();
+        _audit.Add( $"{nameof( Dispose )}({disposing})" );
+        base.Dispose( disposing );
     }
 }

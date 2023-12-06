@@ -24,6 +24,26 @@ public static class SqlStatementCompilerFactoryExtensions
     }
 
     [Pure]
+    public static SqlAsyncQueryReaderExpression<TRow> CreateAsyncExpression<TRow>(
+        this ISqlQueryReaderFactory factory,
+        SqlQueryReaderCreationOptions? options = null)
+        where TRow : notnull
+    {
+        var expression = factory.CreateAsyncExpression( typeof( TRow ), options );
+        return new SqlAsyncQueryReaderExpression<TRow>( expression );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlAsyncQueryReader<TRow> CreateAsync<TRow>(
+        this ISqlQueryReaderFactory factory,
+        SqlQueryReaderCreationOptions? options = null)
+        where TRow : notnull
+    {
+        return factory.CreateAsyncExpression<TRow>( options ).Compile();
+    }
+
+    [Pure]
     public static SqlParameterBinderExpression<TSource> CreateExpression<TSource>(
         this ISqlParameterBinderFactory factory,
         SqlParameterBinderCreationOptions? options = null)

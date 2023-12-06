@@ -16,7 +16,10 @@ public class SqlParameterBinderExpressionTests : TestsBase
         var sourceType = typeof( string );
 
         var createParameterMethod = typeof( DbCommand ).GetMethod( nameof( DbCommand.CreateParameter ) )!;
-        var parametersProperty = typeof( DbCommand ).GetProperty( nameof( DbCommand.Parameters ) )!;
+        var parametersProperty = typeof( DbCommand ).GetProperty(
+            nameof( DbCommand.Parameters ),
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly )!;
+
         var addMethod = typeof( DbDataParameterCollection ).GetMethod(
             nameof( DbDataParameterCollection.Add ),
             BindingFlags.Public | BindingFlags.Instance,

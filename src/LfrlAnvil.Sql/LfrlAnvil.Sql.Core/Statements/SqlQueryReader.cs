@@ -17,18 +17,11 @@ public readonly record struct SqlQueryReader(
     }
 }
 
-public readonly struct SqlQueryReader<TRow>
+public readonly record struct SqlQueryReader<TRow>(
+    SqlDialect Dialect,
+    Func<IDataReader, SqlQueryReaderOptions, SqlQueryReaderResult<TRow>> Delegate)
     where TRow : notnull
 {
-    public SqlQueryReader(SqlDialect dialect, Func<IDataReader, SqlQueryReaderOptions, SqlQueryReaderResult<TRow>> @delegate)
-    {
-        Dialect = dialect;
-        Delegate = @delegate;
-    }
-
-    public SqlDialect Dialect { get; }
-    public Func<IDataReader, SqlQueryReaderOptions, SqlQueryReaderResult<TRow>> Delegate { get; }
-
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public SqlQueryReaderResult<TRow> Read(IDataReader reader, SqlQueryReaderOptions? options = null)

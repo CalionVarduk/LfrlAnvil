@@ -54,6 +54,17 @@ internal static class TypeHelpers
     }
 
     [Pure]
+    internal static ConstructorInfo GetAsyncReaderInitResultCtor()
+    {
+        var result = typeof( SqlAsyncReaderInitResult ).GetConstructor(
+            PublicMember,
+            new[] { typeof( int[] ), typeof( SqlResultSetField[] ) } );
+
+        Assume.IsNotNull( result );
+        return result;
+    }
+
+    [Pure]
     internal static PropertyInfo GetNullableHasValueProperty(Type type)
     {
         var result = type.GetProperty( nameof( Nullable<int>.HasValue ) );

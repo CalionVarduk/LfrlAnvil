@@ -76,6 +76,6 @@ public abstract class SqliteDatabase : ISqlDatabase
     [Pure]
     async ValueTask<IDbConnection> ISqlDatabase.ConnectAsync(CancellationToken cancellationToken)
     {
-        return await ConnectAsync( cancellationToken );
+        return await ConnectAsync( cancellationToken ).ConfigureAwait( false );
     }
 }

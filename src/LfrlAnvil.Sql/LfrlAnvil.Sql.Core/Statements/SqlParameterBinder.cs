@@ -20,18 +20,9 @@ public readonly record struct SqlParameterBinder(
     }
 }
 
-public readonly struct SqlParameterBinder<TSource>
+public readonly record struct SqlParameterBinder<TSource>(SqlDialect Dialect, Action<IDbCommand, TSource> Delegate)
     where TSource : notnull
 {
-    public SqlParameterBinder(SqlDialect dialect, Action<IDbCommand, TSource> @delegate)
-    {
-        Dialect = dialect;
-        Delegate = @delegate;
-    }
-
-    public SqlDialect Dialect { get; }
-    public Action<IDbCommand, TSource> Delegate { get; }
-
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public void Bind(IDbCommand command, TSource? source = default)
     {

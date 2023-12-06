@@ -233,8 +233,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
                     var statements = info.Table.Database.GetPendingStatements();
                     foreach ( var statement in statements )
                     {
-                        command.CommandText = statement.Sql;
-                        statement.BeforeCallback?.Invoke( command );
+                        statement.Apply( command );
                         statementExecutor.ExecuteVersionHistoryNonQuery( command );
                     }
 
@@ -413,8 +412,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
                     foreach ( var statement in statements )
                     {
                         statementKey = statementKey.NextOrdinal();
-                        statementCommand.CommandText = statement.Sql;
-                        statement.BeforeCallback?.Invoke( statementCommand );
+                        statement.Apply( statementCommand );
                         statementExecutor.ExecuteNonQuery( statementCommand, statementKey, SqlDatabaseFactoryStatementType.Change );
                     }
 
