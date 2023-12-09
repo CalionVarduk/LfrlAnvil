@@ -12,7 +12,7 @@ public static class ColumnTypeDefinitionProviderMock
         var result = Substitute.For<ISqlColumnTypeDefinitionProvider>();
         result.GetAll().Returns( definitions );
         result.GetByType( Arg.Any<Type>() ).Returns( i => definitions.Single( d => d.RuntimeType == i.ArgAt<Type>( 0 ) ) );
-        result.GetDefaultForDataType( Arg.Any<ISqlDataType>() )
+        result.GetByDataType( Arg.Any<ISqlDataType>() )
             .Returns( i => definitions.Single( d => d.DataType == i.ArgAt<ISqlDataType>( 0 ) ) );
 
         return result;

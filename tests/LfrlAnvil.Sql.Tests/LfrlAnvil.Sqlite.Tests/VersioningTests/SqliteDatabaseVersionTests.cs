@@ -1,6 +1,6 @@
 ﻿using LfrlAnvil.Functional;
+using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Tests.Helpers;
 using LfrlAnvil.Sqlite.Versioning;
@@ -48,7 +48,7 @@ public class SqliteDatabaseVersionTests : TestsBase
     }
 
     [Fact]
-    public void Apply_ShouldThrowSqliteObjectCastException_WhenDatabaseBuilderIsOfInvalidType()
+    public void Apply_ShouldThrowSqlObjectCastException_WhenDatabaseBuilderIsOfInvalidType()
     {
         var version = Version.Parse( "1.2.3.4" );
         var apply = Substitute.For<Action<SqliteDatabaseBuilder>>();
@@ -57,6 +57,6 @@ public class SqliteDatabaseVersionTests : TestsBase
 
         var action = Lambda.Of( () => sut.Apply( builder ) );
 
-        action.Should().ThrowExactly<SqliteObjectCastException>();
+        action.Should().ThrowExactly<SqlObjectCastException>();
     }
 }

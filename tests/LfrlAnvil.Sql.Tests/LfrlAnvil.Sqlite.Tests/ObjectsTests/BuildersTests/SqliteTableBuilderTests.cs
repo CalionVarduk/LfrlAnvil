@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
@@ -1110,7 +1111,7 @@ public partial class SqliteTableBuilderTests : TestsBase
     }
 
     [Fact]
-    public void SetPrimaryKey_ShouldThrowSqliteObjectCastException_WhenAtLeastOneColumnIsOfInvalidType()
+    public void SetPrimaryKey_ShouldThrowSqlObjectCastException_WhenAtLeastOneColumnIsOfInvalidType()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
         var sut = schema.Objects.CreateTable( "foo" );
@@ -1120,7 +1121,7 @@ public partial class SqliteTableBuilderTests : TestsBase
         var action = Lambda.Of( () => sut.SetPrimaryKey( c1.Asc(), c2 ) );
 
         action.Should()
-            .ThrowExactly<SqliteObjectCastException>()
+            .ThrowExactly<SqlObjectCastException>()
             .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Expected == typeof( SqliteIndexColumnBuilder ) );
     }
 

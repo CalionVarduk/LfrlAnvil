@@ -6,8 +6,8 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Memory;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Objects;
-using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Objects.Builders;
 
 namespace LfrlAnvil.Sqlite.Objects;
@@ -192,7 +192,7 @@ public sealed class SqliteObjectCollection : ISqlObjectCollection
     {
         var obj = _map[name];
         if ( obj.Type != type )
-            throw new SqliteObjectCastException( typeof( T ), obj.GetType() );
+            throw new SqlObjectCastException( SqliteDialect.Instance, typeof( T ), obj.GetType() );
 
         return ReinterpretCast.To<T>( obj );
     }

@@ -22,7 +22,7 @@ public sealed class SqliteColumnBuilderCollection : ISqlColumnBuilderCollection
     internal SqliteColumnBuilderCollection(SqliteTableBuilder table)
     {
         Table = table;
-        DefaultTypeDefinition = table.Database.TypeDefinitions.GetDefaultForDataType( SqliteDataType.Any );
+        DefaultTypeDefinition = table.Database.TypeDefinitions.GetByDataType( SqliteDataType.Any );
         _map = new Dictionary<string, SqliteColumnBuilder>( StringComparer.OrdinalIgnoreCase );
     }
 

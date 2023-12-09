@@ -1,6 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Data;
-using System.Globalization;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sqlite.Extensions;
 using Microsoft.Data.Sqlite;
@@ -22,29 +20,6 @@ public class SqliteColumnTypeDefinitionTests : TestsBase
         var result = sut.ToString();
 
         result.Should().Be( expected );
-    }
-
-    [Fact]
-    public void Extend_ShouldReturnCorrectDefinition()
-    {
-        var isNullable = Fixture.Create<bool>();
-        var parameter = new SqliteParameter();
-        var provider = new SqliteColumnTypeDefinitionProvider();
-        var sut = provider.GetByType<string>();
-        var definition = sut.Extend( v => v.ToString(), s => int.Parse( s, CultureInfo.InvariantCulture ), 123 );
-
-        var dbLiteral = definition.ToDbLiteral( 10 );
-        var parameterValue = definition.ToParameterValue( 10 );
-        definition.SetParameterInfo( parameter, isNullable );
-
-        using ( new AssertionScope() )
-        {
-            dbLiteral.Should().Be( "'10'" );
-            parameterValue.Should().Be( "10" );
-            parameter.DbType.Should().Be( DbType.String );
-            parameter.SqliteType.Should().Be( SqliteType.Text );
-            parameter.IsNullable.Should().Be( isNullable );
-        }
     }
 
     [Fact]

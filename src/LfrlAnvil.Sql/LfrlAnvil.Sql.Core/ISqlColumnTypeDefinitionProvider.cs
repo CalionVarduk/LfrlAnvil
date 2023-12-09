@@ -10,7 +10,7 @@ public interface ISqlColumnTypeDefinitionProvider
     IEnumerable<ISqlColumnTypeDefinition> GetAll();
 
     [Pure]
-    ISqlColumnTypeDefinition GetDefaultForDataType(ISqlDataType dataType);
+    ISqlColumnTypeDefinition GetByDataType(ISqlDataType dataType);
 
     [Pure]
     ISqlColumnTypeDefinition GetByType(Type type);

@@ -47,7 +47,7 @@ public static class SqliteObjectExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqliteColumnBuilder SetType(this SqliteColumnBuilder column, SqliteDataType dataType)
     {
-        return column.SetType( column.Database.TypeDefinitions.GetDefaultForDataType( dataType ) );
+        return column.SetType( column.Database.TypeDefinitions.GetByDataType( dataType ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

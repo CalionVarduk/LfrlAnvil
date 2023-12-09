@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
@@ -556,7 +557,7 @@ public class SqliteColumnBuilderTests : TestsBase
     }
 
     [Fact]
-    public void SetType_ShouldThrowSqliteObjectCastException_WhenTypeDefinitionIsOfInvalidType()
+    public void SetType_ShouldThrowSqlObjectCastException_WhenTypeDefinitionIsOfInvalidType()
     {
         var definition = Substitute.For<ISqlColumnTypeDefinition>();
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
@@ -567,7 +568,7 @@ public class SqliteColumnBuilderTests : TestsBase
         var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetType( definition ) );
 
         action.Should()
-            .ThrowExactly<SqliteObjectCastException>()
+            .ThrowExactly<SqlObjectCastException>()
             .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Expected == typeof( SqliteColumnTypeDefinition ) );
     }
 

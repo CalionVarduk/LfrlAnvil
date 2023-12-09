@@ -6,17 +6,28 @@ using Microsoft.Data.Sqlite;
 
 namespace LfrlAnvil.Sqlite.Internal.TypeDefinitions;
 
-internal sealed class SqliteColumnTypeEnumDefinition<TEnum, T> : SqliteColumnTypeDefinition<TEnum, T>
+internal sealed class SqliteColumnTypeEnumDefinition<TEnum, T> : SqliteColumnTypeDefinition<TEnum>
     where TEnum : struct, Enum
     where T : unmanaged
 {
+    private readonly SqliteColumnTypeDefinition<T> _base;
+
     internal SqliteColumnTypeEnumDefinition(SqliteColumnTypeDefinition<T> @base)
-        : base( @base, FindDefaultValue(), CreateOutputExpression( @base.OutputMapping ) ) { }
+        : base( @base.DataType, FindDefaultValue(), CreateOutputExpression( @base.OutputMapping ) )
+    {
+        _base = @base;
+    }
 
     [Pure]
-    protected override T MapToBaseType(TEnum value)
+    public override string ToDbLiteral(TEnum value)
     {
-        return (T)(object)value;
+        return _base.ToDbLiteral( (T)(object)value );
+    }
+
+    [Pure]
+    public override object ToParameterValue(TEnum value)
+    {
+        return _base.ToParameterValue( (T)(object)value );
     }
 
     [Pure]

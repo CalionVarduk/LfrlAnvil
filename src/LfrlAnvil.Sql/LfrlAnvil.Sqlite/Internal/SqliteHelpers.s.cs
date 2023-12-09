@@ -7,6 +7,7 @@ using System.Text;
 using LfrlAnvil.Exceptions;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Objects.Builders;
@@ -29,7 +30,7 @@ public static class SqliteHelpers
         if ( obj is T t )
             return t;
 
-        ExceptionThrower.Throw( new SqliteObjectCastException( typeof( T ), obj.GetType() ) );
+        ExceptionThrower.Throw( new SqlObjectCastException( SqliteDialect.Instance, typeof( T ), obj.GetType() ) );
         return default!;
     }
 

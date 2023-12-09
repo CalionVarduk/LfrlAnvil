@@ -137,7 +137,7 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
         if ( exists )
         {
             if ( obj.Type != SqlObjectType.Table )
-                throw new SqliteObjectCastException( typeof( SqliteTableBuilder ), obj.GetType() );
+                throw new SqlObjectCastException( SqliteDialect.Instance, typeof( SqliteTableBuilder ), obj.GetType() );
 
             return ReinterpretCast.To<SqliteTableBuilder>( obj );
         }
@@ -345,7 +345,7 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
     {
         var obj = _map[name];
         if ( obj.Type != type )
-            throw new SqliteObjectCastException( typeof( T ), obj.GetType() );
+            throw new SqlObjectCastException( SqliteDialect.Instance, typeof( T ), obj.GetType() );
 
         return ReinterpretCast.To<T>( obj );
     }

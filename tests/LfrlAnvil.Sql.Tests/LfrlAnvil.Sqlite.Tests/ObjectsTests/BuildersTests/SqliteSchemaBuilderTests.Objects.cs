@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
@@ -185,7 +186,7 @@ public partial class SqliteSchemaBuilderTests
         }
 
         [Fact]
-        public void GetOrCreateTable_ShouldThrowSqliteObjectCastException_WhenNonTableObjectWithNameAlreadyExists()
+        public void GetOrCreateTable_ShouldThrowSqlObjectCastException_WhenNonTableObjectWithNameAlreadyExists()
         {
             var name = Fixture.Create<string>();
             var db = SqliteDatabaseBuilderMock.Create();
@@ -197,7 +198,7 @@ public partial class SqliteSchemaBuilderTests
             var action = Lambda.Of( () => sut.GetOrCreateTable( name ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectCastException>()
+                .ThrowExactly<SqlObjectCastException>()
                 .AndMatch(
                     e => e.Dialect == SqliteDialect.Instance &&
                         e.Expected == typeof( SqliteTableBuilder ) &&
@@ -461,7 +462,7 @@ public partial class SqliteSchemaBuilderTests
         }
 
         [Fact]
-        public void GetTable_ShouldThrowSqliteObjectCastException_WhenObjectExistsButNotAsTable()
+        public void GetTable_ShouldThrowSqlObjectCastException_WhenObjectExistsButNotAsTable()
         {
             var name = Fixture.Create<string>();
             var db = SqliteDatabaseBuilderMock.Create();
@@ -473,7 +474,7 @@ public partial class SqliteSchemaBuilderTests
             var action = Lambda.Of( () => sut.GetTable( name ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectCastException>()
+                .ThrowExactly<SqlObjectCastException>()
                 .AndMatch(
                     e => e.Dialect == SqliteDialect.Instance &&
                         e.Expected == typeof( SqliteTableBuilder ) &&
@@ -560,7 +561,7 @@ public partial class SqliteSchemaBuilderTests
         }
 
         [Fact]
-        public void GetIndex_ShouldThrowSqliteObjectCastException_WhenObjectExistsButNotAsIndex()
+        public void GetIndex_ShouldThrowSqlObjectCastException_WhenObjectExistsButNotAsIndex()
         {
             var name = Fixture.Create<string>();
             var db = SqliteDatabaseBuilderMock.Create();
@@ -570,7 +571,7 @@ public partial class SqliteSchemaBuilderTests
             var action = Lambda.Of( () => sut.GetIndex( name ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectCastException>()
+                .ThrowExactly<SqlObjectCastException>()
                 .AndMatch(
                     e => e.Dialect == SqliteDialect.Instance &&
                         e.Expected == typeof( SqliteIndexBuilder ) &&
@@ -657,7 +658,7 @@ public partial class SqliteSchemaBuilderTests
         }
 
         [Fact]
-        public void GetPrimaryKey_ShouldThrowSqliteObjectCastException_WhenObjectExistsButNotAsPrimaryKey()
+        public void GetPrimaryKey_ShouldThrowSqlObjectCastException_WhenObjectExistsButNotAsPrimaryKey()
         {
             var name = Fixture.Create<string>();
             var db = SqliteDatabaseBuilderMock.Create();
@@ -667,7 +668,7 @@ public partial class SqliteSchemaBuilderTests
             var action = Lambda.Of( () => sut.GetPrimaryKey( name ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectCastException>()
+                .ThrowExactly<SqlObjectCastException>()
                 .AndMatch(
                     e => e.Dialect == SqliteDialect.Instance &&
                         e.Expected == typeof( SqlitePrimaryKeyBuilder ) &&
@@ -757,7 +758,7 @@ public partial class SqliteSchemaBuilderTests
         }
 
         [Fact]
-        public void GetForeignKey_ShouldThrowSqliteObjectCastException_WhenObjectExistsButNotAsForeignKey()
+        public void GetForeignKey_ShouldThrowSqlObjectCastException_WhenObjectExistsButNotAsForeignKey()
         {
             var name = Fixture.Create<string>();
             var db = SqliteDatabaseBuilderMock.Create();
@@ -767,7 +768,7 @@ public partial class SqliteSchemaBuilderTests
             var action = Lambda.Of( () => sut.GetForeignKey( name ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectCastException>()
+                .ThrowExactly<SqlObjectCastException>()
                 .AndMatch(
                     e => e.Dialect == SqliteDialect.Instance &&
                         e.Expected == typeof( SqliteForeignKeyBuilder ) &&
@@ -855,7 +856,7 @@ public partial class SqliteSchemaBuilderTests
         }
 
         [Fact]
-        public void GetView_ShouldThrowSqliteObjectCastException_WhenObjectExistsButNotAsView()
+        public void GetView_ShouldThrowSqlObjectCastException_WhenObjectExistsButNotAsView()
         {
             var name = Fixture.Create<string>();
             var db = SqliteDatabaseBuilderMock.Create();
@@ -865,7 +866,7 @@ public partial class SqliteSchemaBuilderTests
             var action = Lambda.Of( () => sut.GetView( name ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectCastException>()
+                .ThrowExactly<SqlObjectCastException>()
                 .AndMatch(
                     e => e.Dialect == SqliteDialect.Instance &&
                         e.Expected == typeof( SqliteViewBuilder ) &&
@@ -950,7 +951,7 @@ public partial class SqliteSchemaBuilderTests
         }
 
         [Fact]
-        public void GetCheck_ShouldThrowSqliteObjectCastException_WhenObjectExistsButNotAsCheck()
+        public void GetCheck_ShouldThrowSqlObjectCastException_WhenObjectExistsButNotAsCheck()
         {
             var name = Fixture.Create<string>();
             var db = SqliteDatabaseBuilderMock.Create();
@@ -960,7 +961,7 @@ public partial class SqliteSchemaBuilderTests
             var action = Lambda.Of( () => sut.GetCheck( name ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectCastException>()
+                .ThrowExactly<SqlObjectCastException>()
                 .AndMatch(
                     e => e.Dialect == SqliteDialect.Instance &&
                         e.Expected == typeof( SqliteCheckBuilder ) &&

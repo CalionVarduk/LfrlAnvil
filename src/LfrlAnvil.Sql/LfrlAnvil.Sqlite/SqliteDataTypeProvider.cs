@@ -82,8 +82,6 @@ public sealed class SqliteDataTypeProvider : ISqlDataTypeProvider
     [Pure]
     public SqliteDataType GetDecimal(int precision, int scale)
     {
-        Ensure.IsGreaterThan( precision, 0 );
-        Ensure.IsInRange( scale, 0, precision );
         return SqliteDataType.Text;
     }
 
@@ -102,7 +100,18 @@ public sealed class SqliteDataTypeProvider : ISqlDataTypeProvider
     [Pure]
     public SqliteDataType GetString(int length)
     {
-        Ensure.IsGreaterThan( length, 0 );
+        return SqliteDataType.Text;
+    }
+
+    [Pure]
+    public SqliteDataType GetFixedString()
+    {
+        return SqliteDataType.Text;
+    }
+
+    [Pure]
+    public SqliteDataType GetFixedString(int length)
+    {
         return SqliteDataType.Text;
     }
 
@@ -145,7 +154,18 @@ public sealed class SqliteDataTypeProvider : ISqlDataTypeProvider
     [Pure]
     public SqliteDataType GetBinary(int length)
     {
-        Ensure.IsGreaterThan( length, 0 );
+        return SqliteDataType.Blob;
+    }
+
+    [Pure]
+    public SqliteDataType GetFixedBinary()
+    {
+        return SqliteDataType.Blob;
+    }
+
+    [Pure]
+    public SqliteDataType GetFixedBinary(int length)
+    {
         return SqliteDataType.Blob;
     }
 
@@ -252,6 +272,18 @@ public sealed class SqliteDataTypeProvider : ISqlDataTypeProvider
     }
 
     [Pure]
+    ISqlDataType ISqlDataTypeProvider.GetFixedString()
+    {
+        return GetFixedString();
+    }
+
+    [Pure]
+    ISqlDataType ISqlDataTypeProvider.GetFixedString(int length)
+    {
+        return GetFixedString( length );
+    }
+
+    [Pure]
     ISqlDataType ISqlDataTypeProvider.GetTimestamp()
     {
         return GetTimestamp();
@@ -291,5 +323,17 @@ public sealed class SqliteDataTypeProvider : ISqlDataTypeProvider
     ISqlDataType ISqlDataTypeProvider.GetBinary(int length)
     {
         return GetBinary( length );
+    }
+
+    [Pure]
+    ISqlDataType ISqlDataTypeProvider.GetFixedBinary()
+    {
+        return GetFixedBinary();
+    }
+
+    [Pure]
+    ISqlDataType ISqlDataTypeProvider.GetFixedBinary(int length)
+    {
+        return GetFixedBinary( length );
     }
 }

@@ -1,9 +1,8 @@
 ﻿using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Extensions;
-using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Extensions;
-using LfrlAnvil.Sqlite.Internal.TypeDefinitions;
 
 namespace LfrlAnvil.Sqlite.Tests.SqliteColumnTypeDefinitionTests;
 
@@ -12,9 +11,9 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
     private readonly ISqlColumnTypeDefinitionProvider _sut = new SqliteColumnTypeDefinitionProvider();
 
     [Fact]
-    public void GetDefaultForDataType_ShouldReturnInt64ForInteger()
+    public void GetByDataType_ShouldReturnInt64ForInteger()
     {
-        var result = _sut.GetDefaultForDataType( SqliteDataType.Integer );
+        var result = _sut.GetByDataType( SqliteDataType.Integer );
 
         using ( new AssertionScope() )
         {
@@ -25,9 +24,9 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
     }
 
     [Fact]
-    public void GetDefaultForDataType_ShouldReturnDoubleForReal()
+    public void GetByDataType_ShouldReturnDoubleForReal()
     {
-        var result = _sut.GetDefaultForDataType( SqliteDataType.Real );
+        var result = _sut.GetByDataType( SqliteDataType.Real );
 
         using ( new AssertionScope() )
         {
@@ -38,9 +37,9 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
     }
 
     [Fact]
-    public void GetDefaultForDataType_ShouldReturnStringForText()
+    public void GetByDataType_ShouldReturnStringForText()
     {
-        var result = _sut.GetDefaultForDataType( SqliteDataType.Text );
+        var result = _sut.GetByDataType( SqliteDataType.Text );
 
         using ( new AssertionScope() )
         {
@@ -51,9 +50,9 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
     }
 
     [Fact]
-    public void GetDefaultForDataType_ShouldReturnByteArrayForBlob()
+    public void GetByDataType_ShouldReturnByteArrayForBlob()
     {
-        var result = _sut.GetDefaultForDataType( SqliteDataType.Blob );
+        var result = _sut.GetByDataType( SqliteDataType.Blob );
 
         using ( new AssertionScope() )
         {
@@ -64,9 +63,9 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
     }
 
     [Fact]
-    public void GetDefaultForDataType_ShouldReturnObjectForAny()
+    public void GetByDataType_ShouldReturnObjectForAny()
     {
-        var result = _sut.GetDefaultForDataType( SqliteDataType.Any );
+        var result = _sut.GetByDataType( SqliteDataType.Any );
 
         using ( new AssertionScope() )
         {
@@ -410,6 +409,34 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
     }
 
     [Fact]
+    public void RegisterDefinition_ShouldAddNewTypeDefinition()
+    {
+        var definition = new CodeTypeDefinition();
+        var result = _sut.RegisterDefinition( definition );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( _sut );
+            _sut.GetByType( typeof( Code ) ).Should().BeSameAs( definition );
+        }
+    }
+
+    [Fact]
+    public void RegisterDefinition_ShouldOverrideExistingTypeDefinition()
+    {
+        var previousDefinition = _sut.GetByType<long>();
+        var definition = new NewInt64TypeDefinition();
+        var result = _sut.RegisterDefinition( definition );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( _sut );
+            _sut.GetByType( typeof( long ) ).Should().BeSameAs( definition );
+            _sut.GetByDataType( SqliteDataType.Integer ).Should().BeSameAs( previousDefinition );
+        }
+    }
+
+    [Fact]
     public void GetAll_ShouldReturnAllRegisteredDefinitions()
     {
         var sut = (SqliteColumnTypeDefinitionProvider)_sut;
@@ -442,81 +469,80 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
     }
 
     [Fact]
-    public void RegisterDefinition_ShouldAddNewTypeDefinition()
+    public void GetAll_ShouldReturnAllRegisteredDefinitions_WhenBaseTypeDefinitionWasChanged()
     {
-        var baseDefinition = _sut.GetByType<string>();
-        var definition = baseDefinition.Extend( c => c.Value, s => new Code( s ), new Code( string.Empty ) );
-        var result = _sut.RegisterDefinition( definition );
+        var baseDefinition = _sut.GetByType<long>();
+        _sut.RegisterDefinition( new NewInt64TypeDefinition() );
+        var sut = (SqliteColumnTypeDefinitionProvider)_sut;
+        var result = _sut.GetAll();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( _sut );
-            definition.DataType.Should().BeSameAs( baseDefinition.DataType );
-            definition.RuntimeType.Should().Be( typeof( Code ) );
-            definition.DefaultValue.Value.Should().Be( new Code( string.Empty ) );
-            _sut.GetByType( typeof( Code ) ).Should().BeSameAs( definition );
-        }
+        result.Should()
+            .BeEquivalentTo(
+                sut.GetByType<bool>(),
+                sut.GetByType<byte>(),
+                sut.GetByType<sbyte>(),
+                sut.GetByType<ushort>(),
+                sut.GetByType<short>(),
+                sut.GetByType<uint>(),
+                sut.GetByType<int>(),
+                sut.GetByType<ulong>(),
+                sut.GetByType<long>(),
+                sut.GetByType<TimeSpan>(),
+                sut.GetByType<float>(),
+                sut.GetByType<double>(),
+                sut.GetByType<DateTime>(),
+                sut.GetByType<DateTimeOffset>(),
+                sut.GetByType<DateOnly>(),
+                sut.GetByType<TimeOnly>(),
+                sut.GetByType<decimal>(),
+                sut.GetByType<char>(),
+                sut.GetByType<string>(),
+                sut.GetByType<Guid>(),
+                sut.GetByType<byte[]>(),
+                sut.GetByType<object>(),
+                baseDefinition );
     }
 
     [Fact]
-    public void RegisterDefinition_ShouldOverrideExistingTypeDefinition()
-    {
-        var baseDefinition = _sut.GetByType<double>();
-        var definition = baseDefinition.Extend( v => (double)v, v => (decimal)v, 1m );
-        var result = _sut.RegisterDefinition( definition );
-
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( _sut );
-            definition.DataType.Should().BeSameAs( baseDefinition.DataType );
-            definition.RuntimeType.Should().Be( typeof( decimal ) );
-            definition.DefaultValue.Value.Should().Be( 1m );
-            _sut.GetByType( typeof( decimal ) ).Should().BeSameAs( definition );
-        }
-    }
-
-    [Fact]
-    public void RegisterDefinition_ShouldThrowInvalidOperationException_WhenAttemptingToOverrideInt64()
-    {
-        var action = Lambda.Of( () => _sut.RegisterDefinition( new SqliteColumnTypeDefinitionInt64() ) );
-        action.Should().ThrowExactly<InvalidOperationException>();
-    }
-
-    [Fact]
-    public void RegisterDefinition_ShouldThrowInvalidOperationException_WhenAttemptingToOverrideDouble()
-    {
-        var action = Lambda.Of( () => _sut.RegisterDefinition( new SqliteColumnTypeDefinitionDouble() ) );
-        action.Should().ThrowExactly<InvalidOperationException>();
-    }
-
-    [Fact]
-    public void RegisterDefinition_ShouldThrowInvalidOperationException_WhenAttemptingToOverrideString()
-    {
-        var action = Lambda.Of( () => _sut.RegisterDefinition( new SqliteColumnTypeDefinitionString() ) );
-        action.Should().ThrowExactly<InvalidOperationException>();
-    }
-
-    [Fact]
-    public void RegisterDefinition_ShouldThrowInvalidOperationException_WhenAttemptingToOverrideByteArray()
-    {
-        var action = Lambda.Of( () => _sut.RegisterDefinition( new SqliteColumnTypeDefinitionByteArray() ) );
-        action.Should().ThrowExactly<InvalidOperationException>();
-    }
-
-    [Fact]
-    public void RegisterDefinition_ShouldThrowInvalidOperationException_WhenAttemptingToOverrideObject()
-    {
-        var action = Lambda.Of(
-            () => _sut.RegisterDefinition( new SqliteColumnTypeDefinitionObject( (SqliteColumnTypeDefinitionProvider)_sut ) ) );
-
-        action.Should().ThrowExactly<InvalidOperationException>();
-    }
-
-    [Fact]
-    public void RegisterDefinition_ShouldThrowSqliteObjectCastException_WhenTypeDefinitionTypeIsInvalid()
+    public void RegisterDefinition_ShouldThrowSqlObjectCastException_WhenTypeDefinitionTypeIsInvalid()
     {
         var action = Lambda.Of( () => _sut.RegisterDefinition( Substitute.For<ISqlColumnTypeDefinition<Code>>() ) );
-        action.Should().ThrowExactly<SqliteObjectCastException>();
+        action.Should().ThrowExactly<SqlObjectCastException>();
+    }
+
+    private sealed class NewInt64TypeDefinition : SqliteColumnTypeDefinition<long>
+    {
+        internal NewInt64TypeDefinition()
+            : base( SqliteDataType.Text, 0L, static (reader, ordinal) => long.Parse( reader.GetString( ordinal ) ) ) { }
+
+        public override string ToDbLiteral(long value)
+        {
+            return $"'{value}'";
+        }
+
+        public override object ToParameterValue(long value)
+        {
+            return value.ToString();
+        }
+    }
+
+    private sealed class CodeTypeDefinition : SqliteColumnTypeDefinition<Code>
+    {
+        internal CodeTypeDefinition()
+            : base(
+                SqliteDataType.Text,
+                new Code( string.Empty ),
+                static (reader, ordinal) => new Code( reader.GetString( ordinal ) ) ) { }
+
+        public override string ToDbLiteral(Code value)
+        {
+            return $"'{value.Value}'";
+        }
+
+        public override object ToParameterValue(Code value)
+        {
+            return value.Value;
+        }
     }
 }
 

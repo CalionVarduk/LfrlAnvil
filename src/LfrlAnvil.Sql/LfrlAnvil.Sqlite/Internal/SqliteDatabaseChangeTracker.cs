@@ -543,7 +543,7 @@ internal sealed class SqliteDatabaseChangeTracker
                 : table.RecordSet.GetRawField(
                         oldName,
                         TypeNullability.Create(
-                            _database.TypeDefinitions.GetDefaultForDataType( oldDataType ).RuntimeType,
+                            _database.TypeDefinitions.GetByDataType( oldDataType ).RuntimeType,
                             oldIsNullable ) )
                     .CastTo( column.TypeDefinition.RuntimeType );
 

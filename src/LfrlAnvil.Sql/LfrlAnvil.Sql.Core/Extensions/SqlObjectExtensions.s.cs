@@ -60,7 +60,7 @@ public static class SqlObjectExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ISqlColumnBuilder SetType(this ISqlColumnBuilder column, ISqlDataType dataType)
     {
-        return column.SetType( column.Database.TypeDefinitions.GetDefaultForDataType( dataType ) );
+        return column.SetType( column.Database.TypeDefinitions.GetByDataType( dataType ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

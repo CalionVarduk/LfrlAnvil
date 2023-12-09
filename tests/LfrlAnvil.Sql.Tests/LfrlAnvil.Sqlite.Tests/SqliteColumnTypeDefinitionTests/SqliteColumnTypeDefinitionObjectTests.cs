@@ -99,20 +99,35 @@ public class SqliteColumnTypeDefinitionObjectTests : TestsBase
         result.Should().BeSameAs( value );
     }
 
-    [Theory]
-    [InlineData( true )]
-    [InlineData( false )]
-    public void SetParameterInfo_ShouldUpdateSqliteParameterProperties(bool isNullable)
+    [Fact]
+    public void SetParameterInfo_ShouldUpdateSqliteParameterProperties_WhenIsNullable()
     {
         var parameter = new SqliteParameter();
         var sut = _provider.GetByType<object>();
 
-        sut.SetParameterInfo( parameter, isNullable );
+        sut.SetParameterInfo( parameter, isNullable: true );
 
         using ( new AssertionScope() )
         {
             parameter.DbType.Should().Be( sut.DataType.DbType );
-            parameter.IsNullable.Should().Be( isNullable );
+            parameter.SqliteType.Should().Be( SqliteType.Text );
+            parameter.IsNullable.Should().BeTrue();
+        }
+    }
+
+    [Fact]
+    public void SetParameterInfo_ShouldUpdateSqliteParameterProperties_WhenIsNotNullable()
+    {
+        var parameter = new SqliteParameter();
+        var sut = _provider.GetByType<object>();
+
+        sut.SetParameterInfo( parameter, isNullable: false );
+
+        using ( new AssertionScope() )
+        {
+            parameter.DbType.Should().Be( DbType.String );
+            parameter.SqliteType.Should().Be( SqliteType.Text );
+            parameter.IsNullable.Should().BeFalse();
         }
     }
 

@@ -32,11 +32,4 @@ public interface ISqlColumnTypeDefinition<T> : ISqlColumnTypeDefinition
 
     [Pure]
     object ToParameterValue(T value);
-
-    [Pure]
-    ISqlColumnTypeDefinition<TTarget> Extend<TTarget>(
-        Func<TTarget, T> mapper,
-        Expression<Func<T, TTarget>> outputMapper,
-        TTarget defaultValue)
-        where TTarget : notnull;
 }

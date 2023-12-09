@@ -1,5 +1,4 @@
-﻿using LfrlAnvil.Functional;
-using LfrlAnvil.Sql;
+﻿using LfrlAnvil.Sql;
 
 namespace LfrlAnvil.Sqlite.Tests;
 
@@ -91,39 +90,11 @@ public class SqliteDataTypeProviderTests : TestsBase
         result.Should().BeSameAs( SqliteDataType.Text );
     }
 
-    [Theory]
-    [InlineData( 1, 0 )]
-    [InlineData( 1, 1 )]
-    [InlineData( 10, 0 )]
-    [InlineData( 10, 5 )]
-    [InlineData( 10, 10 )]
-    public void GetDecimal_WithParameters_ShouldReturnText(int precision, int scale)
+    [Fact]
+    public void GetDecimal_WithParameters_ShouldReturnText()
     {
-        var result = _sut.GetDecimal( precision, scale );
+        var result = _sut.GetDecimal( Fixture.Create<int>(), Fixture.Create<int>() );
         result.Should().BeSameAs( SqliteDataType.Text );
-    }
-
-    [Theory]
-    [InlineData( 0 )]
-    [InlineData( -1 )]
-    public void GetDecimal_WithParameters_ShouldThrowArgumentOutOfRangeException_WhenPrecisionIsLessThanOne(int precision)
-    {
-        var action = Lambda.Of( () => _sut.GetDecimal( precision, 0 ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
-    }
-
-    [Fact]
-    public void GetDecimal_WithParameters_ShouldThrowArgumentOutOfRangeException_WhenScaleIsLessThanZero()
-    {
-        var action = Lambda.Of( () => _sut.GetDecimal( 1, -1 ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
-    }
-
-    [Fact]
-    public void GetDecimal_WithParameters_ShouldThrowArgumentOutOfRangeException_WhenScaleIsGreaterThanPrecision()
-    {
-        var action = Lambda.Of( () => _sut.GetDecimal( 1, 2 ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
 
     [Fact]
@@ -140,23 +111,25 @@ public class SqliteDataTypeProviderTests : TestsBase
         result.Should().BeSameAs( SqliteDataType.Text );
     }
 
-    [Theory]
-    [InlineData( 1 )]
-    [InlineData( 10 )]
-    [InlineData( 100 )]
-    public void GetString_WithLength_ShouldReturnText(int length)
+    [Fact]
+    public void GetString_WithLength_ShouldReturnText()
     {
-        var result = _sut.GetString( length );
+        var result = _sut.GetString( Fixture.Create<int>() );
         result.Should().BeSameAs( SqliteDataType.Text );
     }
 
-    [Theory]
-    [InlineData( 0 )]
-    [InlineData( -1 )]
-    public void GetString_WithLength_ShouldThrowArgumentOutOfRangeException_WhenLengthIsLessThanOne(int length)
+    [Fact]
+    public void GetFixedString_ShouldReturnText()
     {
-        var action = Lambda.Of( () => _sut.GetString( length ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        var result = _sut.GetFixedString();
+        result.Should().BeSameAs( SqliteDataType.Text );
+    }
+
+    [Fact]
+    public void GetFixedString_WithLength_ShouldReturnText()
+    {
+        var result = _sut.GetFixedString( Fixture.Create<int>() );
+        result.Should().BeSameAs( SqliteDataType.Text );
     }
 
     [Fact]
@@ -201,23 +174,25 @@ public class SqliteDataTypeProviderTests : TestsBase
         result.Should().BeSameAs( SqliteDataType.Blob );
     }
 
-    [Theory]
-    [InlineData( 1 )]
-    [InlineData( 10 )]
-    [InlineData( 100 )]
-    public void GetBinary_WithLength_ShouldReturnBlob(int length)
+    [Fact]
+    public void GetBinary_WithLength_ShouldReturnBlob()
     {
-        var result = _sut.GetBinary( length );
+        var result = _sut.GetBinary( Fixture.Create<int>() );
         result.Should().BeSameAs( SqliteDataType.Blob );
     }
 
-    [Theory]
-    [InlineData( 0 )]
-    [InlineData( -1 )]
-    public void GetBinary_WithLength_ShouldThrowArgumentOutOfRangeException_WhenLengthIsLessThanOne(int length)
+    [Fact]
+    public void GetFixedBinary_ShouldReturnBlob()
     {
-        var action = Lambda.Of( () => _sut.GetBinary( length ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        var result = _sut.GetFixedBinary();
+        result.Should().BeSameAs( SqliteDataType.Blob );
+    }
+
+    [Fact]
+    public void GetFixedBinary_WithLength_ShouldReturnBlob()
+    {
+        var result = _sut.GetFixedBinary( Fixture.Create<int>() );
+        result.Should().BeSameAs( SqliteDataType.Blob );
     }
 
     [Fact]

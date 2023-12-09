@@ -199,13 +199,6 @@ public static class ExceptionResources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string DefaultTypeDefinitionCannotBeOverriden(Type type)
-    {
-        return $"Default registration for type '{type.GetDebugString()}' cannot be overriden.";
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string ValueCannotBeConvertedToDbLiteral(Type type)
     {
         return $"Value cannot be converted to database literal through definition of '{type.GetDebugString()}' type.";
@@ -466,6 +459,15 @@ contains {parameters.Count} parameter(s):
     }
 
     [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidDataTypeParameters(Chain<Pair<SqlDataTypeParameter, int>> parameters)
+    {
+        return parameters.Count == 0
+            ? "Some parameters are invalid."
+            : MergeErrors( $"Encountered {parameters.Count} invalid parameter(s):", parameters.Select( GetInvalidParameterError ) );
+    }
+
+    [Pure]
     private static string MergeErrors(string header, IEnumerable<string> elements)
     {
         var errorsText = string.Join( Environment.NewLine, elements.Select( static (e, i) => $"{i + 1}. {e}" ) );
@@ -476,5 +478,11 @@ contains {parameters.Count} parameter(s):
     private static string GetCompilerConfigurationError(Pair<Expression, Exception> error)
     {
         return $"Extraction of '{error.First}' expression's value has failed with reason: {error.Second.Message}.";
+    }
+
+    [Pure]
+    private static string GetInvalidParameterError(Pair<SqlDataTypeParameter, int> parameter)
+    {
+        return $"Invalid value {parameter.Second} for parameter {parameter.First}.";
     }
 }

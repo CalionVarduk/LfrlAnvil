@@ -67,16 +67,6 @@ public abstract class SqliteColumnTypeDefinition<T> : SqliteColumnTypeDefinition
     public sealed override Type RuntimeType => typeof( T );
 
     [Pure]
-    public SqliteColumnTypeDefinition<TTarget> Extend<TTarget>(
-        Func<TTarget, T> mapper,
-        Expression<Func<T, TTarget>> outputMapper,
-        TTarget defaultValue)
-        where TTarget : notnull
-    {
-        return new SqliteColumnTypeDefinitionLambda<TTarget, T>( this, defaultValue, mapper, outputMapper );
-    }
-
-    [Pure]
     public abstract string ToDbLiteral(T value);
 
     [Pure]
@@ -92,79 +82,5 @@ public abstract class SqliteColumnTypeDefinition<T> : SqliteColumnTypeDefinition
     public sealed override object? TryToParameterValue(object value)
     {
         return value is T t ? ToParameterValue( t ) : null;
-    }
-
-    [Pure]
-    ISqlColumnTypeDefinition<TTarget> ISqlColumnTypeDefinition<T>.Extend<TTarget>(
-        Func<TTarget, T> mapper,
-        Expression<Func<T, TTarget>> outputMapper,
-        TTarget defaultValue)
-    {
-        return Extend( mapper, outputMapper, defaultValue );
-    }
-}
-
-public abstract class SqliteColumnTypeDefinition<T, TBase> : SqliteColumnTypeDefinition<T>
-    where T : notnull
-    where TBase : notnull
-{
-    protected SqliteColumnTypeDefinition(
-        SqliteColumnTypeDefinition<TBase> @base,
-        T defaultValue,
-        Expression<Func<SqliteDataReader, int, T>> outputMapping)
-        : base( @base.DataType, defaultValue, outputMapping )
-    {
-        Base = @base;
-    }
-
-    protected SqliteColumnTypeDefinition<TBase> Base { get; }
-
-    [Pure]
-    public sealed override string ToDbLiteral(T value)
-    {
-        var baseValue = MapToBaseType( value );
-        return Base.ToDbLiteral( baseValue );
-    }
-
-    [Pure]
-    public sealed override object ToParameterValue(T value)
-    {
-        var baseValue = MapToBaseType( value );
-        return Base.ToParameterValue( baseValue );
-    }
-
-    [Pure]
-    protected abstract TBase MapToBaseType(T value);
-}
-
-internal sealed class SqliteColumnTypeDefinitionLambda<T, TBase> : SqliteColumnTypeDefinition<T, TBase>
-    where T : notnull
-    where TBase : notnull
-{
-    private readonly Func<T, TBase> _mapper;
-
-    internal SqliteColumnTypeDefinitionLambda(
-        SqliteColumnTypeDefinition<TBase> @base,
-        T defaultValue,
-        Func<T, TBase> mapper,
-        Expression<Func<TBase, T>> outputMapper)
-        : base( @base, defaultValue, CreateOutputExpression( @base.OutputMapping, outputMapper ) )
-    {
-        _mapper = mapper;
-    }
-
-    [Pure]
-    protected override TBase MapToBaseType(T value)
-    {
-        return _mapper( value );
-    }
-
-    [Pure]
-    private static Expression<Func<SqliteDataReader, int, T>> CreateOutputExpression(
-        Expression<Func<SqliteDataReader, int, TBase>> baseOutputMapping,
-        Expression<Func<TBase, T>> outputMapper)
-    {
-        var body = outputMapper.Body.ReplaceParameter( outputMapper.Parameters[0], baseOutputMapping.Body );
-        return Expression.Lambda<Func<SqliteDataReader, int, T>>( body, baseOutputMapping.Parameters );
     }
 }

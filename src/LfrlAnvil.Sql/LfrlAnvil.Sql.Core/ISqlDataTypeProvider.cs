@@ -53,6 +53,12 @@ public interface ISqlDataTypeProvider
     ISqlDataType GetString(int length);
 
     [Pure]
+    ISqlDataType GetFixedString();
+
+    [Pure]
+    ISqlDataType GetFixedString(int length);
+
+    [Pure]
     ISqlDataType GetTimestamp();
 
     [Pure]
@@ -72,4 +78,10 @@ public interface ISqlDataTypeProvider
 
     [Pure]
     ISqlDataType GetBinary(int length);
+
+    [Pure]
+    ISqlDataType GetFixedBinary();
+
+    [Pure]
+    ISqlDataType GetFixedBinary(int length);
 }

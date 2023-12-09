@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects;
-using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Tests.Helpers;
 
@@ -167,7 +167,7 @@ public class SqliteSchemaTests : TestsBase
     }
 
     [Fact]
-    public void Objects_GetTable_ShouldThrowSqliteObjectCastException_WhenObjectExistsButIsNotTable()
+    public void Objects_GetTable_ShouldThrowSqlObjectCastException_WhenObjectExistsButIsNotTable()
     {
         var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
@@ -178,7 +178,7 @@ public class SqliteSchemaTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetTable( "PK_T" ) );
 
-        action.Should().ThrowExactly<SqliteObjectCastException>();
+        action.Should().ThrowExactly<SqlObjectCastException>();
     }
 
     [Fact]
@@ -296,7 +296,7 @@ public class SqliteSchemaTests : TestsBase
     }
 
     [Fact]
-    public void Objects_GetPrimaryKey_ShouldThrowSqliteObjectCastException_WhenObjectExistsButIsNotPrimaryKey()
+    public void Objects_GetPrimaryKey_ShouldThrowSqlObjectCastException_WhenObjectExistsButIsNotPrimaryKey()
     {
         var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
@@ -307,7 +307,7 @@ public class SqliteSchemaTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetPrimaryKey( "T" ) );
 
-        action.Should().ThrowExactly<SqliteObjectCastException>();
+        action.Should().ThrowExactly<SqlObjectCastException>();
     }
 
     [Fact]
@@ -425,7 +425,7 @@ public class SqliteSchemaTests : TestsBase
     }
 
     [Fact]
-    public void Objects_GetIndex_ShouldThrowSqliteObjectCastException_WhenObjectExistsButIsNotIndex()
+    public void Objects_GetIndex_ShouldThrowSqlObjectCastException_WhenObjectExistsButIsNotIndex()
     {
         var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
@@ -436,7 +436,7 @@ public class SqliteSchemaTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetIndex( "T" ) );
 
-        action.Should().ThrowExactly<SqliteObjectCastException>();
+        action.Should().ThrowExactly<SqlObjectCastException>();
     }
 
     [Fact]
@@ -558,7 +558,7 @@ public class SqliteSchemaTests : TestsBase
     }
 
     [Fact]
-    public void Objects_GetForeignKey_ShouldThrowSqliteObjectCastException_WhenObjectExistsButIsNotForeignKey()
+    public void Objects_GetForeignKey_ShouldThrowSqlObjectCastException_WhenObjectExistsButIsNotForeignKey()
     {
         var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
@@ -571,7 +571,7 @@ public class SqliteSchemaTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetForeignKey( "T" ) );
 
-        action.Should().ThrowExactly<SqliteObjectCastException>();
+        action.Should().ThrowExactly<SqlObjectCastException>();
     }
 
     [Fact]
@@ -694,7 +694,7 @@ public class SqliteSchemaTests : TestsBase
     }
 
     [Fact]
-    public void Objects_GetView_ShouldThrowSqliteObjectCastException_WhenObjectExistsButIsNotView()
+    public void Objects_GetView_ShouldThrowSqlObjectCastException_WhenObjectExistsButIsNotView()
     {
         var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
@@ -705,7 +705,7 @@ public class SqliteSchemaTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetView( "T" ) );
 
-        action.Should().ThrowExactly<SqliteObjectCastException>();
+        action.Should().ThrowExactly<SqlObjectCastException>();
     }
 
     [Fact]
@@ -823,7 +823,7 @@ public class SqliteSchemaTests : TestsBase
     }
 
     [Fact]
-    public void Objects_GetCheck_ShouldThrowSqliteObjectCastException_WhenObjectExistsButIsNotCheck()
+    public void Objects_GetCheck_ShouldThrowSqlObjectCastException_WhenObjectExistsButIsNotCheck()
     {
         var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
@@ -835,7 +835,7 @@ public class SqliteSchemaTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetCheck( "T" ) );
 
-        action.Should().ThrowExactly<SqliteObjectCastException>();
+        action.Should().ThrowExactly<SqlObjectCastException>();
     }
 
     [Fact]

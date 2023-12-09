@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sqlite.Internal;
@@ -27,7 +27,7 @@ public sealed class SqliteColumnTypeDefinitionProvider : ISqlColumnTypeDefinitio
         _defaultReal = new SqliteColumnTypeDefinitionDouble();
         _defaultText = new SqliteColumnTypeDefinitionString();
         _defaultBlob = new SqliteColumnTypeDefinitionByteArray();
-        _defaultAny = new SqliteColumnTypeDefinitionObject( this );
+        _defaultAny = new SqliteColumnTypeDefinitionObject( this, _defaultBlob );
 
         _definitionsByType = new Dictionary<Type, SqliteColumnTypeDefinition>
         {
@@ -59,7 +59,6 @@ public sealed class SqliteColumnTypeDefinitionProvider : ISqlColumnTypeDefinitio
     public SqliteColumnTypeDefinitionProvider RegisterDefinition<T>(SqliteColumnTypeDefinition<T> definition)
         where T : notnull
     {
-        EnsureTypeMutability( typeof( T ) );
         _definitionsByType[typeof( T )] = definition;
         return this;
     }
@@ -67,11 +66,17 @@ public sealed class SqliteColumnTypeDefinitionProvider : ISqlColumnTypeDefinitio
     [Pure]
     public IEnumerable<SqliteColumnTypeDefinition> GetAll()
     {
-        return _definitionsByType.Values;
+        return _definitionsByType.Values
+            .Append( _defaultInteger )
+            .Append( _defaultReal )
+            .Append( _defaultText )
+            .Append( _defaultBlob )
+            .Append( _defaultAny )
+            .Distinct();
     }
 
     [Pure]
-    public SqliteColumnTypeDefinition GetDefaultForDataType(SqliteDataType dataType)
+    public SqliteColumnTypeDefinition GetByDataType(SqliteDataType dataType)
     {
         return dataType.Value switch
         {
@@ -103,23 +108,12 @@ public sealed class SqliteColumnTypeDefinitionProvider : ISqlColumnTypeDefinitio
 
             var definitionType = typeof( SqliteColumnTypeEnumDefinition<,> ).MakeGenericType( type, underlyingType );
             var definitionTypeCtor = definitionType.GetConstructors( BindingFlags.Instance | BindingFlags.NonPublic )[0];
-            var definition = (SqliteColumnTypeDefinition)definitionTypeCtor.Invoke( new object[] { baseDefinition } );
+            var definition = ReinterpretCast.To<SqliteColumnTypeDefinition>( definitionTypeCtor.Invoke( new object[] { baseDefinition } ) );
             _definitionsByType.Add( type, definition );
             return definition;
         }
 
         return null;
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void EnsureTypeMutability(Type type)
-    {
-        if ( type == _defaultInteger.RuntimeType ||
-            type == _defaultReal.RuntimeType ||
-            type == _defaultText.RuntimeType ||
-            type == _defaultBlob.RuntimeType ||
-            type == _defaultAny.RuntimeType )
-            throw new InvalidOperationException( ExceptionResources.DefaultTypeDefinitionCannotBeOverriden( type ) );
     }
 
     [Pure]
@@ -129,9 +123,9 @@ public sealed class SqliteColumnTypeDefinitionProvider : ISqlColumnTypeDefinitio
     }
 
     [Pure]
-    ISqlColumnTypeDefinition ISqlColumnTypeDefinitionProvider.GetDefaultForDataType(ISqlDataType dataType)
+    ISqlColumnTypeDefinition ISqlColumnTypeDefinitionProvider.GetByDataType(ISqlDataType dataType)
     {
-        return GetDefaultForDataType( SqliteHelpers.CastOrThrow<SqliteDataType>( dataType ) );
+        return GetByDataType( SqliteHelpers.CastOrThrow<SqliteDataType>( dataType ) );
     }
 
     [Pure]

@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System;
+using System.Data;
 using LfrlAnvil.Sql;
 using Microsoft.Data.Sqlite;
 
@@ -20,4 +21,6 @@ public sealed class SqliteDataType : Enumeration<SqliteDataType, SqliteType>, IS
 
     public DbType DbType { get; }
     public SqlDialect Dialect => SqliteDialect.Instance;
+    ReadOnlySpan<int> ISqlDataType.Parameters => ReadOnlySpan<int>.Empty;
+    ReadOnlySpan<SqlDataTypeParameter> ISqlDataType.ParameterDefinitions => ReadOnlySpan<SqlDataTypeParameter>.Empty;
 }

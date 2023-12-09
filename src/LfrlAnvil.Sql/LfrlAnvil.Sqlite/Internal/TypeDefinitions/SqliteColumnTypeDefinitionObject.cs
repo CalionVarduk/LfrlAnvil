@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql.Exceptions;
 using Microsoft.Data.Sqlite;
@@ -9,11 +10,8 @@ internal sealed class SqliteColumnTypeDefinitionObject : SqliteColumnTypeDefinit
 {
     private readonly SqliteColumnTypeDefinitionProvider _provider;
 
-    internal SqliteColumnTypeDefinitionObject(SqliteColumnTypeDefinitionProvider provider)
-        : base(
-            SqliteDataType.Any,
-            provider.GetDefaultForDataType( SqliteDataType.Blob ).DefaultValue.GetValue(),
-            static (reader, ordinal) => reader.GetValue( ordinal ) )
+    internal SqliteColumnTypeDefinitionObject(SqliteColumnTypeDefinitionProvider provider, SqliteColumnTypeDefinitionByteArray @base)
+        : base( SqliteDataType.Any, @base.DefaultValue.GetValue(), static (reader, ordinal) => reader.GetValue( ordinal ) )
     {
         _provider = provider;
     }
@@ -41,7 +39,8 @@ internal sealed class SqliteColumnTypeDefinitionObject : SqliteColumnTypeDefinit
     public override void SetParameterInfo(SqliteParameter parameter, bool isNullable)
     {
         parameter.IsNullable = isNullable;
-        parameter.ResetSqliteType();
-        parameter.DbType = DataType.DbType;
+        parameter.ResetDbType();
+        if ( isNullable )
+            parameter.DbType = DbType.Object;
     }
 }

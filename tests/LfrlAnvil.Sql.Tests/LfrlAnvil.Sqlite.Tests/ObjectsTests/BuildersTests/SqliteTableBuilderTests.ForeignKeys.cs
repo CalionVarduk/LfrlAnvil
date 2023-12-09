@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Extensions;
@@ -326,7 +327,7 @@ public partial class SqliteTableBuilderTests
         }
 
         [Fact]
-        public void Create_ShouldThrowSqliteObjectCastException_WhenIndexIsOfInvalidType()
+        public void Create_ShouldThrowSqlObjectCastException_WhenIndexIsOfInvalidType()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
@@ -337,12 +338,12 @@ public partial class SqliteTableBuilderTests
             var action = Lambda.Of( () => ((ISqlForeignKeyBuilderCollection)sut).Create( ix1, ix2 ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectCastException>()
+                .ThrowExactly<SqlObjectCastException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Expected == typeof( SqliteIndexBuilder ) );
         }
 
         [Fact]
-        public void Create_ShouldThrowSqliteObjectCastException_WhenReferencedIndexIsOfInvalidType()
+        public void Create_ShouldThrowSqlObjectCastException_WhenReferencedIndexIsOfInvalidType()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
@@ -353,7 +354,7 @@ public partial class SqliteTableBuilderTests
             var action = Lambda.Of( () => ((ISqlForeignKeyBuilderCollection)sut).Create( ix1, ix2 ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectCastException>()
+                .ThrowExactly<SqlObjectCastException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Expected == typeof( SqliteIndexBuilder ) );
         }
 
