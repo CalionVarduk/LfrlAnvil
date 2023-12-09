@@ -50,7 +50,7 @@ public interface ISqlDataTypeProvider
     ISqlDataType GetString();
 
     [Pure]
-    ISqlDataType GetString(int length);
+    ISqlDataType GetString(int maxLength);
 
     [Pure]
     ISqlDataType GetFixedString();
@@ -77,7 +77,7 @@ public interface ISqlDataTypeProvider
     ISqlDataType GetBinary();
 
     [Pure]
-    ISqlDataType GetBinary(int length);
+    ISqlDataType GetBinary(int maxLength);
 
     [Pure]
     ISqlDataType GetFixedBinary();

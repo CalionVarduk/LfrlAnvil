@@ -1,178 +1,182 @@
 ﻿using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql;
 
-namespace LfrlAnvil.Sqlite;
+namespace LfrlAnvil.MySql;
 
-public sealed class SqliteDataTypeProvider : ISqlDataTypeProvider
+public sealed class MySqlDataTypeProvider : ISqlDataTypeProvider
 {
-    internal SqliteDataTypeProvider() { }
+    private readonly MySqlDataType _guid = MySqlDataType.CreateBinary( 16 );
+
+    internal MySqlDataTypeProvider() { }
 
     [Pure]
-    public SqliteDataType GetBool()
+    public MySqlDataType GetBool()
     {
-        return SqliteDataType.Integer;
+        return MySqlDataType.Bool;
     }
 
     [Pure]
-    public SqliteDataType GetInt8()
+    public MySqlDataType GetInt8()
     {
-        return SqliteDataType.Integer;
+        return MySqlDataType.TinyInt;
     }
 
     [Pure]
-    public SqliteDataType GetInt16()
+    public MySqlDataType GetInt16()
     {
-        return SqliteDataType.Integer;
+        return MySqlDataType.SmallInt;
     }
 
     [Pure]
-    public SqliteDataType GetInt32()
+    public MySqlDataType GetInt32()
     {
-        return SqliteDataType.Integer;
+        return MySqlDataType.Int;
     }
 
     [Pure]
-    public SqliteDataType GetInt64()
+    public MySqlDataType GetInt64()
     {
-        return SqliteDataType.Integer;
+        return MySqlDataType.BigInt;
     }
 
     [Pure]
-    public SqliteDataType GetUInt8()
+    public MySqlDataType GetUInt8()
     {
-        return SqliteDataType.Integer;
+        return MySqlDataType.UnsignedTinyInt;
     }
 
     [Pure]
-    public SqliteDataType GetUInt16()
+    public MySqlDataType GetUInt16()
     {
-        return SqliteDataType.Integer;
+        return MySqlDataType.UnsignedSmallInt;
     }
 
     [Pure]
-    public SqliteDataType GetUInt32()
+    public MySqlDataType GetUInt32()
     {
-        return SqliteDataType.Integer;
+        return MySqlDataType.UnsignedInt;
     }
 
     [Pure]
-    public SqliteDataType GetUInt64()
+    public MySqlDataType GetUInt64()
     {
-        return SqliteDataType.Integer;
+        return MySqlDataType.UnsignedBigInt;
     }
 
     [Pure]
-    public SqliteDataType GetFloat()
+    public MySqlDataType GetFloat()
     {
-        return SqliteDataType.Real;
+        return MySqlDataType.Float;
     }
 
     [Pure]
-    public SqliteDataType GetDouble()
+    public MySqlDataType GetDouble()
     {
-        return SqliteDataType.Real;
+        return MySqlDataType.Double;
     }
 
     [Pure]
-    public SqliteDataType GetDecimal()
+    public MySqlDataType GetDecimal()
     {
-        return SqliteDataType.Text;
+        return MySqlDataType.Decimal;
     }
 
     [Pure]
-    public SqliteDataType GetDecimal(int precision, int scale)
+    public MySqlDataType GetDecimal(int precision, int scale)
     {
-        return SqliteDataType.Text;
+        return MySqlDataType.CreateDecimal( precision, scale );
     }
 
     [Pure]
-    public SqliteDataType GetGuid()
+    public MySqlDataType GetGuid()
     {
-        return SqliteDataType.Blob;
+        return _guid;
     }
 
     [Pure]
-    public SqliteDataType GetString()
+    public MySqlDataType GetString()
     {
-        return SqliteDataType.Text;
+        return MySqlDataType.VarChar;
     }
 
     [Pure]
-    public SqliteDataType GetString(int maxLength)
+    public MySqlDataType GetString(int maxLength)
     {
-        return SqliteDataType.Text;
+        return maxLength <= MySqlDataType.VarChar.ParameterDefinitions[0].Bounds.Max
+            ? MySqlDataType.CreateVarChar( maxLength )
+            : MySqlDataType.Text;
     }
 
     [Pure]
-    public SqliteDataType GetFixedString()
+    public MySqlDataType GetFixedString()
     {
-        return SqliteDataType.Text;
+        return MySqlDataType.Char;
     }
 
     [Pure]
-    public SqliteDataType GetFixedString(int length)
+    public MySqlDataType GetFixedString(int length)
     {
-        return SqliteDataType.Text;
+        return length <= MySqlDataType.Char.ParameterDefinitions[0].Bounds.Max
+            ? MySqlDataType.CreateChar( length )
+            : GetString( length );
     }
 
     [Pure]
-    public SqliteDataType GetTimestamp()
+    public MySqlDataType GetTimestamp()
     {
-        return SqliteDataType.Integer;
+        return MySqlDataType.BigInt;
     }
 
     [Pure]
-    public SqliteDataType GetDateTime()
+    public MySqlDataType GetDateTime()
     {
-        return SqliteDataType.Text;
+        return MySqlDataType.DateTime;
     }
 
     [Pure]
-    public SqliteDataType GetTimeSpan()
+    public MySqlDataType GetTimeSpan()
     {
-        return SqliteDataType.Integer;
+        return MySqlDataType.BigInt;
     }
 
     [Pure]
-    public SqliteDataType GetDate()
+    public MySqlDataType GetDate()
     {
-        return SqliteDataType.Text;
+        return MySqlDataType.Date;
     }
 
     [Pure]
-    public SqliteDataType GetTime()
+    public MySqlDataType GetTime()
     {
-        return SqliteDataType.Text;
+        return MySqlDataType.Time;
     }
 
     [Pure]
-    public SqliteDataType GetBinary()
+    public MySqlDataType GetBinary()
     {
-        return SqliteDataType.Blob;
+        return MySqlDataType.VarBinary;
     }
 
     [Pure]
-    public SqliteDataType GetBinary(int maxLength)
+    public MySqlDataType GetBinary(int maxLength)
     {
-        return SqliteDataType.Blob;
+        return maxLength <= MySqlDataType.VarBinary.ParameterDefinitions[0].Bounds.Max
+            ? MySqlDataType.CreateVarBinary( maxLength )
+            : MySqlDataType.Blob;
     }
 
     [Pure]
-    public SqliteDataType GetFixedBinary()
+    public MySqlDataType GetFixedBinary()
     {
-        return SqliteDataType.Blob;
+        return MySqlDataType.Binary;
     }
 
     [Pure]
-    public SqliteDataType GetFixedBinary(int length)
+    public MySqlDataType GetFixedBinary(int length)
     {
-        return SqliteDataType.Blob;
-    }
-
-    [Pure]
-    public SqliteDataType GetAny()
-    {
-        return SqliteDataType.Any;
+        return length <= MySqlDataType.Binary.ParameterDefinitions[0].Bounds.Max
+            ? MySqlDataType.CreateBinary( length )
+            : GetBinary( length );
     }
 
     [Pure]

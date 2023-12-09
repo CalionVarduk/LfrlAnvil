@@ -109,6 +109,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "external", "external", "{28
 		todo.md = todo.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.MySql", "src\LfrlAnvil.Sql\LfrlAnvil.MySql\LfrlAnvil.MySql.csproj", "{2F38DCB8-8304-48E7-B3D6-3A5ACD4B5A96}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.MySql.Tests", "tests\LfrlAnvil.Sql.Tests\LfrlAnvil.MySql.Tests\LfrlAnvil.MySql.Tests.csproj", "{FE2169AD-6B04-4572-B901-35D45689CCC4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -263,6 +267,14 @@ Global
 		{5D025DE8-88F2-44A7-B0B9-D2972BD4A616}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5D025DE8-88F2-44A7-B0B9-D2972BD4A616}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5D025DE8-88F2-44A7-B0B9-D2972BD4A616}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2F38DCB8-8304-48E7-B3D6-3A5ACD4B5A96}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2F38DCB8-8304-48E7-B3D6-3A5ACD4B5A96}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2F38DCB8-8304-48E7-B3D6-3A5ACD4B5A96}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2F38DCB8-8304-48E7-B3D6-3A5ACD4B5A96}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FE2169AD-6B04-4572-B901-35D45689CCC4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FE2169AD-6B04-4572-B901-35D45689CCC4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FE2169AD-6B04-4572-B901-35D45689CCC4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FE2169AD-6B04-4572-B901-35D45689CCC4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -311,6 +323,8 @@ Global
 		{8A1D7AD5-2FB3-41C5-8F38-7120106B427B} = {09DABFA2-E13A-419B-9EEC-11A014E1243C}
 		{7EB76C79-EABF-4C6C-9B7B-46E8141E996C} = {8A1D7AD5-2FB3-41C5-8F38-7120106B427B}
 		{5D025DE8-88F2-44A7-B0B9-D2972BD4A616} = {8A1D7AD5-2FB3-41C5-8F38-7120106B427B}
+		{2F38DCB8-8304-48E7-B3D6-3A5ACD4B5A96} = {0BAE0616-F6DE-418E-A8A1-D64775B3A16B}
+		{FE2169AD-6B04-4572-B901-35D45689CCC4} = {8A1D7AD5-2FB3-41C5-8F38-7120106B427B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3FEF45BB-2269-4080-B6FD-C782F257A901}
