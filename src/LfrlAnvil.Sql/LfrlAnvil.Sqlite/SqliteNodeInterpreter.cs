@@ -311,7 +311,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             Context.AppendIndent();
 
         var traits = ExtractDataSourceTraits( ExtractDataSourceTraits( node.DataSource.Traits ), node.Traits );
-        VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions );
+        VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions, traits.ContainsRecursiveCommonTableExpression );
         VisitDataSourceQuerySelection( node, traits.Distinct );
         VisitDataSource( node.DataSource );
         VisitOptionalFilterCondition( traits.Filter );
@@ -332,7 +332,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             Context.AppendIndent();
 
         var traits = ExtractQueryTraits( default, node.Traits );
-        VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions );
+        VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions, traits.ContainsRecursiveCommonTableExpression );
         VisitCompoundQueryComponents( node );
         VisitOptionalOrderingRange( traits.Ordering );
         VisitOptionalLimitAndOffsetExpressions( traits.Limit, traits.Offset );
@@ -351,16 +351,6 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
     {
         Context.Sql.Append( "OFFSET" ).AppendSpace();
         VisitChild( node.Value );
-    }
-
-    public override void VisitCommonTableExpression(SqlCommonTableExpressionNode node)
-    {
-        if ( node.IsRecursive )
-            Context.Sql.Append( "RECURSIVE" ).AppendSpace();
-
-        AppendDelimitedName( node.Name );
-        Context.Sql.AppendSpace().Append( "AS" ).AppendSpace();
-        VisitChild( node.Query );
     }
 
     public override void VisitTypeCast(SqlTypeCastExpressionNode node)
@@ -966,7 +956,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
     protected virtual void VisitDataSourceBeforeTraits(in SqlDataSourceTraits traits)
     {
-        VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions );
+        VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions, traits.ContainsRecursiveCommonTableExpression );
     }
 
     protected virtual void VisitDataSourceAfterTraits(in SqlDataSourceTraits traits)
@@ -981,7 +971,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
     protected virtual void VisitQueryBeforeTraits(in SqlQueryTraits traits)
     {
-        VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions );
+        VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions, traits.ContainsRecursiveCommonTableExpression );
     }
 
     protected virtual void VisitQueryAfterTraits(in SqlQueryTraits traits)

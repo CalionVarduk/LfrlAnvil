@@ -615,6 +615,9 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             return;
 
         Context.Sql.AppendSpace();
+        if ( node.ContainsRecursive )
+            Context.Sql.Append( "RECURSIVE" ).AppendSpace();
+
         foreach ( var cte in node.CommonTableExpressions )
         {
             VisitCommonTableExpression( cte );
@@ -657,7 +660,12 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         Context.Sql.AppendSpace().Append( node.Ordering.Name );
     }
 
-    public abstract void VisitCommonTableExpression(SqlCommonTableExpressionNode node);
+    public virtual void VisitCommonTableExpression(SqlCommonTableExpressionNode node)
+    {
+        AppendDelimitedName( node.Name );
+        Context.Sql.AppendSpace().Append( "AS" ).AppendSpace();
+        VisitChild( node.Query );
+    }
 
     public virtual void VisitWindowDefinition(SqlWindowDefinitionNode node)
     {
@@ -899,6 +907,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     public static SqlDataSourceTraits ExtractDataSourceTraits(SqlDataSourceTraits @base, Chain<SqlTraitNode> traits)
     {
         var commonTableExpressions = @base.CommonTableExpressions.ToExtendable();
+        var containsRecursiveCommonTableExpression = @base.ContainsRecursiveCommonTableExpression;
         var distinct = @base.Distinct;
         var filter = @base.Filter;
         var aggregations = @base.Aggregations.ToExtendable();
@@ -972,7 +981,10 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
                 {
                     var cteTrait = ReinterpretCast.To<SqlCommonTableExpressionTraitNode>( trait );
                     if ( cteTrait.CommonTableExpressions.Length > 0 )
+                    {
                         commonTableExpressions = commonTableExpressions.Extend( cteTrait.CommonTableExpressions );
+                        containsRecursiveCommonTableExpression = containsRecursiveCommonTableExpression || cteTrait.ContainsRecursive;
+                    }
 
                     break;
                 }
@@ -994,6 +1006,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
         return new SqlDataSourceTraits(
             commonTableExpressions,
+            containsRecursiveCommonTableExpression,
             distinct,
             filter,
             aggregations,
@@ -1016,6 +1029,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     public static SqlQueryTraits ExtractQueryTraits(SqlQueryTraits @base, Chain<SqlTraitNode> traits)
     {
         var commonTableExpressions = @base.CommonTableExpressions.ToExtendable();
+        var containsRecursiveCommonTableExpression = @base.ContainsRecursiveCommonTableExpression;
         var ordering = @base.Ordering.ToExtendable();
         var limit = @base.Limit;
         var offset = @base.Offset;
@@ -1047,7 +1061,10 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
                 {
                     var cteTrait = ReinterpretCast.To<SqlCommonTableExpressionTraitNode>( trait );
                     if ( cteTrait.CommonTableExpressions.Length > 0 )
+                    {
                         commonTableExpressions = commonTableExpressions.Extend( cteTrait.CommonTableExpressions );
+                        containsRecursiveCommonTableExpression = containsRecursiveCommonTableExpression || cteTrait.ContainsRecursive;
+                    }
 
                     break;
                 }
@@ -1059,7 +1076,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             }
         }
 
-        return new SqlQueryTraits( commonTableExpressions, ordering, limit, offset, custom );
+        return new SqlQueryTraits( commonTableExpressions, containsRecursiveCommonTableExpression, ordering, limit, offset, custom );
     }
 
     [Pure]
@@ -1075,6 +1092,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         var distinct = @base.Distinct;
         var filter = @base.Filter;
         var window = @base.Window;
+        var ordering = @base.Ordering.ToExtendable();
         var custom = @base.Custom.ToExtendable();
 
         foreach ( var trait in traits )
@@ -1103,6 +1121,14 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
                     window = ReinterpretCast.To<SqlWindowTraitNode>( trait ).Definition;
                     break;
                 }
+                case SqlNodeType.SortTrait:
+                {
+                    var sortTrait = ReinterpretCast.To<SqlSortTraitNode>( trait );
+                    if ( sortTrait.Ordering.Length > 0 )
+                        ordering = ordering.Extend( sortTrait.Ordering );
+
+                    break;
+                }
                 default:
                 {
                     custom = custom.Extend( trait );
@@ -1111,7 +1137,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             }
         }
 
-        return new SqlAggregateFunctionTraits( distinct, filter, window, custom );
+        return new SqlAggregateFunctionTraits( distinct, filter, window, ordering, custom );
     }
 
     [Pure]
@@ -1294,12 +1320,16 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         throw new UnrecognizedSqlNodeException( this, node );
     }
 
-    protected void VisitOptionalCommonTableExpressionRange(Chain<ReadOnlyMemory<SqlCommonTableExpressionNode>> commonTableExpressions)
+    protected void VisitOptionalCommonTableExpressionRange(
+        Chain<ReadOnlyMemory<SqlCommonTableExpressionNode>> commonTableExpressions,
+        bool addRecursiveKeyword)
     {
         if ( commonTableExpressions.Count == 0 )
             return;
 
         Context.Sql.Append( "WITH" ).AppendSpace();
+        if ( addRecursiveKeyword )
+            Context.Sql.Append( "RECURSIVE" ).AppendSpace();
 
         foreach ( var cteRange in commonTableExpressions )
         {

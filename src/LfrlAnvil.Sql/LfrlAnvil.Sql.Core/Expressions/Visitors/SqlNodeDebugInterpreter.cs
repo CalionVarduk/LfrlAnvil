@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.Contracts;
+﻿using System;
+using System.Diagnostics.Contracts;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Expressions.Functions;
 using LfrlAnvil.Sql.Expressions.Logical;
@@ -403,6 +404,23 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
     {
         Context.Sql.Append( "OFFSET" ).AppendSpace();
         VisitChild( node.Value );
+    }
+
+    public override void VisitCommonTableExpressionTrait(SqlCommonTableExpressionTraitNode node)
+    {
+        Context.Sql.Append( "WITH" );
+        if ( node.CommonTableExpressions.Length == 0 )
+            return;
+
+        Context.Sql.AppendSpace();
+        foreach ( var cte in node.CommonTableExpressions )
+        {
+            VisitCommonTableExpression( cte );
+            Context.Sql.AppendComma();
+            Context.AppendIndent();
+        }
+
+        Context.Sql.ShrinkBy( Environment.NewLine.Length + Context.Indent + 1 );
     }
 
     public override void VisitWindowTrait(SqlWindowTraitNode node)

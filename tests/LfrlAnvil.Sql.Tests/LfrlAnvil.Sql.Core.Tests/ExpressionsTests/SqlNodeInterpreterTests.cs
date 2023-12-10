@@ -39,7 +39,9 @@ public class SqlNodeInterpreterTests : TestsBase
     public void ExtractDataSourceTraits_ShouldReturnCorrectResult()
     {
         var cte1 = SqlNode.OrdinalCommonTableExpression( SqlNode.RawQuery( "SELECT * FROM X" ), "Z1" );
-        var cte2 = SqlNode.OrdinalCommonTableExpression( SqlNode.RawQuery( "SELECT * FROM Y" ), "Z2" );
+        var cte2 = SqlNode.OrdinalCommonTableExpression( SqlNode.RawQuery( "SELECT * FROM Y" ), "Z2" )
+            .ToRecursive( SqlNode.RawQuery( "SELECT * FROM Z2" ).ToUnion() );
+
         var aggregation1 = SqlNode.RawExpression( "B" );
         var aggregation2 = SqlNode.RawExpression( "D" );
         var windows1 = SqlNode.WindowDefinition( "W1", new[] { SqlNode.RawExpression( "C1" ).Asc() } );
@@ -86,6 +88,7 @@ public class SqlNodeInterpreterTests : TestsBase
             result.CommonTableExpressions.Should().HaveCount( 2 );
             result.CommonTableExpressions.ElementAtOrDefault( 0 ).ToArray().Should().BeSequentiallyEqualTo( cte1 );
             result.CommonTableExpressions.ElementAtOrDefault( 1 ).ToArray().Should().BeSequentiallyEqualTo( cte2 );
+            result.ContainsRecursiveCommonTableExpression.Should().BeTrue();
             result.Distinct.Should().NotBeNull();
             (result.Filter?.ToString()).Should().Be( "((A > 10) AND (C > 11)) OR (E > 12)" );
             result.Aggregations.Should().HaveCount( 2 );
@@ -151,6 +154,7 @@ public class SqlNodeInterpreterTests : TestsBase
             result.CommonTableExpressions.Should().HaveCount( 2 );
             result.CommonTableExpressions.ElementAtOrDefault( 0 ).ToArray().Should().BeSequentiallyEqualTo( cte1 );
             result.CommonTableExpressions.ElementAtOrDefault( 1 ).ToArray().Should().BeSequentiallyEqualTo( cte2 );
+            result.ContainsRecursiveCommonTableExpression.Should().BeFalse();
             result.Ordering.Should().HaveCount( 2 );
             result.Ordering.ElementAtOrDefault( 0 ).ToArray().Should().BeSequentiallyEqualTo( ordering1 );
             result.Ordering.ElementAtOrDefault( 1 ).ToArray().Should().BeSequentiallyEqualTo( ordering2 );
@@ -205,15 +209,15 @@ public class SqlNodeInterpreterTests : TestsBase
             result.Distinct.Should().NotBeNull();
             (result.Filter?.ToString()).Should().Be( "((A > 10) AND (C > 11)) OR (E > 12)" );
             (result.Window?.ToString()).Should().Be( "[W] AS (ORDER BY (C) ASC)" );
-            result.Custom.Should().HaveCount( 8 );
+            result.Ordering.Should().BeSequentiallyEqualTo( sort.Ordering );
+            result.Custom.Should().HaveCount( 7 );
             result.Custom.ElementAtOrDefault( 0 ).Should().BeSameAs( aggregation );
             result.Custom.ElementAtOrDefault( 1 ).Should().BeSameAs( aggregationFilter );
             result.Custom.ElementAtOrDefault( 2 ).Should().BeSameAs( windows );
-            result.Custom.ElementAtOrDefault( 3 ).Should().BeSameAs( sort );
-            result.Custom.ElementAtOrDefault( 4 ).Should().BeSameAs( limit );
-            result.Custom.ElementAtOrDefault( 5 ).Should().BeSameAs( cte );
-            result.Custom.ElementAtOrDefault( 6 ).Should().BeSameAs( custom );
-            result.Custom.ElementAtOrDefault( 7 ).Should().BeSameAs( offset );
+            result.Custom.ElementAtOrDefault( 3 ).Should().BeSameAs( limit );
+            result.Custom.ElementAtOrDefault( 4 ).Should().BeSameAs( cte );
+            result.Custom.ElementAtOrDefault( 5 ).Should().BeSameAs( custom );
+            result.Custom.ElementAtOrDefault( 6 ).Should().BeSameAs( offset );
         }
     }
 

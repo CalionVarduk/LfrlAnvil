@@ -6,6 +6,7 @@ namespace LfrlAnvil.Sql.Expressions.Visitors;
 
 public readonly record struct SqlQueryTraits(
     Chain<ReadOnlyMemory<SqlCommonTableExpressionNode>> CommonTableExpressions,
+    bool ContainsRecursiveCommonTableExpression,
     Chain<ReadOnlyMemory<SqlOrderByNode>> Ordering,
     SqlExpressionNode? Limit,
     SqlExpressionNode? Offset,

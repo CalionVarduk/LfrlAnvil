@@ -1843,6 +1843,41 @@ LIMIT 50 OFFSET 100" );
     }
 
     [Fact]
+    public void Visit_ShouldInterpretDataSourceQuery_WithRecursiveCommonTableExpression()
+    {
+        var cba = SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" );
+        var zyx = SqlNode.RawQuery( "SELECT * FROM xyz JOIN cba ON cba.h = xyz.h" )
+            .ToCte( "zyx" )
+            .ToRecursive( SqlNode.RawQuery( "SELECT * FROM zyx" ).ToUnion() );
+
+        var query = SqlNode.RawRecordSet( "foo" )
+            .ToDataSource()
+            .Select( s => new[] { s.From["a"].AsSelf() } )
+            .With( cba, zyx );
+
+        _sut.Visit( query );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                @"WITH RECURSIVE ""cba"" AS (
+  SELECT * FROM abc
+),
+""zyx"" AS (
+  (
+    SELECT * FROM xyz JOIN cba ON cba.h = xyz.h
+  )
+  UNION
+  (
+    SELECT * FROM zyx
+  )
+)
+SELECT
+  foo.""a""
+FROM foo" );
+    }
+
+    [Fact]
     public void Visit_ShouldInterpretDataSourceQuery_WithLimitOnly()
     {
         var query = SqlNode.RawRecordSet( "foo" )
@@ -2081,6 +2116,38 @@ LIMIT 50 OFFSET 75" );
     }
 
     [Fact]
+    public void Visit_ShouldInterpretCommonTableExpressionTrait_WithRecursive()
+    {
+        _sut.Visit(
+            SqlNode.CommonTableExpressionTrait(
+                SqlNode.RawQuery( "SELECT * FROM foo" ).ToCte( "A" ),
+                SqlNode.RawQuery( "SELECT * FROM bar" ).ToCte( "B" ).ToRecursive( SqlNode.RawQuery( "SELECT * FROM B" ).ToUnion() ) ) );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                @"WITH RECURSIVE ""A"" AS (
+  SELECT * FROM foo
+),
+""B"" AS (
+  (
+    SELECT * FROM bar
+  )
+  UNION
+  (
+    SELECT * FROM B
+  )
+)" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretEmptyCommonTableExpressionTrait()
+    {
+        _sut.Visit( SqlNode.CommonTableExpressionTrait() );
+        _sut.Context.Sql.ToString().Should().Be( "WITH" );
+    }
+
+    [Fact]
     public void Visit_ShouldInterpretWindowDefinitionTrait()
     {
         _sut.Visit(
@@ -2124,7 +2191,7 @@ LIMIT 50 OFFSET 75" );
         _sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"RECURSIVE ""A"" AS (
+                @"""A"" AS (
   (
     SELECT * FROM foo
   )

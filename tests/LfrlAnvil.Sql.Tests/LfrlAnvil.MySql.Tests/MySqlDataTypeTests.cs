@@ -316,7 +316,7 @@ public class MySqlDataTypeTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            sut.Name.Should().Be( "DATE" );
+            sut.Name.Should().Be( "DATE(6)" );
             sut.Value.Should().Be( MySqlDbType.Newdate );
             sut.DbType.Should().Be( DbType.Date );
             sut.Dialect.Should().BeSameAs( MySqlDialect.Instance );
@@ -332,7 +332,7 @@ public class MySqlDataTypeTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            sut.Name.Should().Be( "TIME" );
+            sut.Name.Should().Be( "TIME(6)" );
             sut.Value.Should().Be( MySqlDbType.Time );
             sut.DbType.Should().Be( DbType.Time );
             sut.Dialect.Should().BeSameAs( MySqlDialect.Instance );
@@ -348,7 +348,7 @@ public class MySqlDataTypeTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            sut.Name.Should().Be( "DATETIME" );
+            sut.Name.Should().Be( "DATETIME(6)" );
             sut.Value.Should().Be( MySqlDbType.DateTime );
             sut.DbType.Should().Be( DbType.DateTime );
             sut.Dialect.Should().BeSameAs( MySqlDialect.Instance );

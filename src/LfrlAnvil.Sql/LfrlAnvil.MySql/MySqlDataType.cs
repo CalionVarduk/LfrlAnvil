@@ -65,9 +65,9 @@ public sealed class MySqlDataType : ISqlDataType, IEquatable<MySqlDataType>, ICo
 
     public static readonly MySqlDataType Blob = new MySqlDataType( "LONGBLOB", MySqlDbType.LongBlob, DbType.Binary );
     public static readonly MySqlDataType Text = new MySqlDataType( "LONGTEXT", MySqlDbType.LongText, DbType.String );
-    public static readonly MySqlDataType Date = new MySqlDataType( "DATE", MySqlDbType.Newdate, DbType.Date );
-    public static readonly MySqlDataType Time = new MySqlDataType( "TIME", MySqlDbType.Time, DbType.Time );
-    public static readonly MySqlDataType DateTime = new MySqlDataType( "DATETIME", MySqlDbType.DateTime, DbType.DateTime );
+    public static readonly MySqlDataType Date = new MySqlDataType( "DATE(6)", MySqlDbType.Newdate, DbType.Date );
+    public static readonly MySqlDataType Time = new MySqlDataType( "TIME(6)", MySqlDbType.Time, DbType.Time );
+    public static readonly MySqlDataType DateTime = new MySqlDataType( "DATETIME(6)", MySqlDbType.DateTime, DbType.DateTime );
 
     private readonly int[] _parameters;
     private readonly SqlDataTypeParameter[] _parameterDefinitions;

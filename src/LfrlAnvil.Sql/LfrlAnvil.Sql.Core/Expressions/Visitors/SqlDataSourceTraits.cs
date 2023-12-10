@@ -7,6 +7,7 @@ namespace LfrlAnvil.Sql.Expressions.Visitors;
 
 public readonly record struct SqlDataSourceTraits(
     Chain<ReadOnlyMemory<SqlCommonTableExpressionNode>> CommonTableExpressions,
+    bool ContainsRecursiveCommonTableExpression,
     SqlDistinctTraitNode? Distinct,
     SqlConditionNode? Filter,
     Chain<ReadOnlyMemory<SqlExpressionNode>> Aggregations,

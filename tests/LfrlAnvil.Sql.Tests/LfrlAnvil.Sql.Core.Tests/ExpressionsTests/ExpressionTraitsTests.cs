@@ -192,6 +192,7 @@ public class ExpressionTraitsTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.CommonTableExpressionTrait );
             sut.CommonTableExpressions.ToArray().Should().BeSequentiallyEqualTo( cte );
+            sut.ContainsRecursive.Should().BeFalse();
             text.Should()
                 .Be(
                     @"WITH ORDINAL [A] (
@@ -199,6 +200,41 @@ public class ExpressionTraitsTests : TestsBase
 ),
 ORDINAL [B] (
   SELECT * FROM bar
+)" );
+        }
+    }
+
+    [Fact]
+    public void CommonTableExpressionTrait_ShouldCreateCommonTableExpressionTraitNode_WithRecursive()
+    {
+        var cte = new SqlCommonTableExpressionNode[]
+        {
+            SqlNode.OrdinalCommonTableExpression( SqlNode.RawQuery( "SELECT * FROM foo" ), "A" ),
+            SqlNode.OrdinalCommonTableExpression( SqlNode.RawQuery( "SELECT * FROM bar" ), "B" )
+                .ToRecursive( SqlNode.RawQuery( "SELECT * FROM B" ).ToUnion() )
+        };
+
+        var sut = SqlNode.CommonTableExpressionTrait( cte );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.CommonTableExpressionTrait );
+            sut.CommonTableExpressions.ToArray().Should().BeSequentiallyEqualTo( cte );
+            sut.ContainsRecursive.Should().BeTrue();
+            text.Should()
+                .Be(
+                    @"WITH ORDINAL [A] (
+  SELECT * FROM foo
+),
+RECURSIVE [B] (
+  (
+    SELECT * FROM bar
+  )
+  UNION
+  (
+    SELECT * FROM B
+  )
 )" );
         }
     }
@@ -213,6 +249,7 @@ ORDINAL [B] (
         {
             sut.NodeType.Should().Be( SqlNodeType.CommonTableExpressionTrait );
             sut.CommonTableExpressions.ToArray().Should().BeEmpty();
+            sut.ContainsRecursive.Should().BeFalse();
             text.Should().Be( "WITH" );
         }
     }
