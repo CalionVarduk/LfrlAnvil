@@ -22,6 +22,7 @@ using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Internal;
 using LfrlAnvil.Sqlite.Objects.Builders;
 using Microsoft.Data.Sqlite;
+using Microsoft.VisualBasic;
 using SqliteConnection = LfrlAnvil.Sqlite.Internal.SqliteConnection;
 
 namespace LfrlAnvil.Sqlite;
@@ -732,6 +733,8 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         connection.CreateFunction<string?, string?>( "TO_LOWER", ToLowerImpl, isDeterministic: true );
         connection.CreateFunction<string?, string?>( "TO_UPPER", ToUpperImpl, isDeterministic: true );
         connection.CreateFunction<string?, string?, long?>( "INSTR_LAST", InstrLastImpl, isDeterministic: true );
+        connection.CreateFunction<string?, string?>( "REVERSE", ReverseImpl, isDeterministic: true );
+        connection.CreateFunction<double?, int?, double?>( "TRUNC2", Trunc2Impl, isDeterministic: true );
     }
 
     [Pure]
@@ -780,6 +783,18 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
     private static long? InstrLastImpl(string? s, string? v)
     {
         return s is not null && v is not null ? s.LastIndexOf( v, StringComparison.Ordinal ) + 1 : null;
+    }
+
+    [Pure]
+    private static string? ReverseImpl(string? s)
+    {
+        return s is null ? null : Strings.StrReverse( s );
+    }
+
+    [Pure]
+    private static double? Trunc2Impl(double? d, int? p)
+    {
+        return d is not null ? Math.Round( d.Value, p ?? 0, MidpointRounding.ToZero ) : null;
     }
 
     private readonly record struct VersionHistoryColumn<T>(SqlColumnBuilderNode Node, SqliteColumnTypeDefinition<T> Type)

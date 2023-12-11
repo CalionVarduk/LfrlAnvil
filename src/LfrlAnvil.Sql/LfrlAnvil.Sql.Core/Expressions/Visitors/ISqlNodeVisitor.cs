@@ -42,6 +42,7 @@ public interface ISqlNodeVisitor
     void VisitCurrentTimestampFunction(SqlCurrentTimestampFunctionExpressionNode node);
     void VisitNewGuidFunction(SqlNewGuidFunctionExpressionNode node);
     void VisitLengthFunction(SqlLengthFunctionExpressionNode node);
+    void VisitByteLengthFunction(SqlByteLengthFunctionExpressionNode node);
     void VisitToLowerFunction(SqlToLowerFunctionExpressionNode node);
     void VisitToUpperFunction(SqlToUpperFunctionExpressionNode node);
     void VisitTrimStartFunction(SqlTrimStartFunctionExpressionNode node);
@@ -49,6 +50,7 @@ public interface ISqlNodeVisitor
     void VisitTrimFunction(SqlTrimFunctionExpressionNode node);
     void VisitSubstringFunction(SqlSubstringFunctionExpressionNode node);
     void VisitReplaceFunction(SqlReplaceFunctionExpressionNode node);
+    void VisitReverseFunction(SqlReverseFunctionExpressionNode node);
     void VisitIndexOfFunction(SqlIndexOfFunctionExpressionNode node);
     void VisitLastIndexOfFunction(SqlLastIndexOfFunctionExpressionNode node);
     void VisitSignFunction(SqlSignFunctionExpressionNode node);
@@ -56,6 +58,7 @@ public interface ISqlNodeVisitor
     void VisitCeilingFunction(SqlCeilingFunctionExpressionNode node);
     void VisitFloorFunction(SqlFloorFunctionExpressionNode node);
     void VisitTruncateFunction(SqlTruncateFunctionExpressionNode node);
+    void VisitRoundFunction(SqlRoundFunctionExpressionNode node);
     void VisitPowerFunction(SqlPowerFunctionExpressionNode node);
     void VisitSquareRootFunction(SqlSquareRootFunctionExpressionNode node);
     void VisitMinFunction(SqlMinFunctionExpressionNode node);

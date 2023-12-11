@@ -204,6 +204,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     public abstract void VisitCurrentTimestampFunction(SqlCurrentTimestampFunctionExpressionNode node);
     public abstract void VisitNewGuidFunction(SqlNewGuidFunctionExpressionNode node);
     public abstract void VisitLengthFunction(SqlLengthFunctionExpressionNode node);
+    public abstract void VisitByteLengthFunction(SqlByteLengthFunctionExpressionNode node);
     public abstract void VisitToLowerFunction(SqlToLowerFunctionExpressionNode node);
     public abstract void VisitToUpperFunction(SqlToUpperFunctionExpressionNode node);
     public abstract void VisitTrimStartFunction(SqlTrimStartFunctionExpressionNode node);
@@ -211,6 +212,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     public abstract void VisitTrimFunction(SqlTrimFunctionExpressionNode node);
     public abstract void VisitSubstringFunction(SqlSubstringFunctionExpressionNode node);
     public abstract void VisitReplaceFunction(SqlReplaceFunctionExpressionNode node);
+    public abstract void VisitReverseFunction(SqlReverseFunctionExpressionNode node);
     public abstract void VisitIndexOfFunction(SqlIndexOfFunctionExpressionNode node);
     public abstract void VisitLastIndexOfFunction(SqlLastIndexOfFunctionExpressionNode node);
     public abstract void VisitSignFunction(SqlSignFunctionExpressionNode node);
@@ -218,6 +220,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     public abstract void VisitCeilingFunction(SqlCeilingFunctionExpressionNode node);
     public abstract void VisitFloorFunction(SqlFloorFunctionExpressionNode node);
     public abstract void VisitTruncateFunction(SqlTruncateFunctionExpressionNode node);
+    public abstract void VisitRoundFunction(SqlRoundFunctionExpressionNode node);
     public abstract void VisitPowerFunction(SqlPowerFunctionExpressionNode node);
     public abstract void VisitSquareRootFunction(SqlSquareRootFunctionExpressionNode node);
     public abstract void VisitMinFunction(SqlMinFunctionExpressionNode node);

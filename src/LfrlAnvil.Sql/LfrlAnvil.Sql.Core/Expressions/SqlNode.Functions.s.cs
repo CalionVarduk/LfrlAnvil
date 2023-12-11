@@ -69,6 +69,12 @@ public static partial class SqlNode
         }
 
         [Pure]
+        public static SqlByteLengthFunctionExpressionNode ByteLength(SqlExpressionNode argument)
+        {
+            return new SqlByteLengthFunctionExpressionNode( argument );
+        }
+
+        [Pure]
         public static SqlToLowerFunctionExpressionNode ToLower(SqlExpressionNode argument)
         {
             return new SqlToLowerFunctionExpressionNode( argument );
@@ -117,6 +123,12 @@ public static partial class SqlNode
         }
 
         [Pure]
+        public static SqlReverseFunctionExpressionNode Reverse(SqlExpressionNode argument)
+        {
+            return new SqlReverseFunctionExpressionNode( argument );
+        }
+
+        [Pure]
         public static SqlIndexOfFunctionExpressionNode IndexOf(SqlExpressionNode argument, SqlExpressionNode value)
         {
             return new SqlIndexOfFunctionExpressionNode( argument, value );
@@ -153,9 +165,15 @@ public static partial class SqlNode
         }
 
         [Pure]
-        public static SqlTruncateFunctionExpressionNode Truncate(SqlExpressionNode argument)
+        public static SqlTruncateFunctionExpressionNode Truncate(SqlExpressionNode argument, SqlExpressionNode? precision = null)
         {
-            return new SqlTruncateFunctionExpressionNode( argument );
+            return new SqlTruncateFunctionExpressionNode( argument, precision );
+        }
+
+        [Pure]
+        public static SqlRoundFunctionExpressionNode Round(SqlExpressionNode argument, SqlExpressionNode precision)
+        {
+            return new SqlRoundFunctionExpressionNode( argument, precision );
         }
 
         [Pure]

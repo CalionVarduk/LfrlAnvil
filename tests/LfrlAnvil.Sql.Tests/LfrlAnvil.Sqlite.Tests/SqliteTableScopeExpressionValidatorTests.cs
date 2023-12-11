@@ -344,6 +344,14 @@ public class SqliteTableScopeExpressionValidatorTests : TestsBase
     }
 
     [Fact]
+    public void VisitByteLengthFunction_ShouldVisitArguments()
+    {
+        var node = SqlNode.Parameter( "a" ).ByteLength();
+        _sut.VisitByteLengthFunction( node );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
     public void VisitToLowerFunction_ShouldVisitArguments()
     {
         var node = SqlNode.Parameter( "a" ).ToLower();
@@ -400,6 +408,14 @@ public class SqliteTableScopeExpressionValidatorTests : TestsBase
     }
 
     [Fact]
+    public void VisitReverseFunction_ShouldVisitArguments()
+    {
+        var node = SqlNode.Parameter( "a" ).Reverse();
+        _sut.VisitReverseFunction( node );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
     public void VisitIndexOfFunction_ShouldVisitArguments()
     {
         var node = SqlNode.Parameter( "a" ).IndexOf( SqlNode.Parameter( "b" ) );
@@ -450,9 +466,17 @@ public class SqliteTableScopeExpressionValidatorTests : TestsBase
     [Fact]
     public void VisitTruncateFunction_ShouldVisitArguments()
     {
-        var node = SqlNode.Parameter( "a" ).Truncate();
+        var node = SqlNode.Parameter( "a" ).Truncate( SqlNode.Parameter( "b" ) );
         _sut.VisitTruncateFunction( node );
-        _sut.GetErrors().Should().HaveCount( 1 );
+        _sut.GetErrors().Should().HaveCount( 2 );
+    }
+
+    [Fact]
+    public void VisitRoundFunction_ShouldVisitArguments()
+    {
+        var node = SqlNode.Parameter( "a" ).Round( SqlNode.Parameter( "b" ) );
+        _sut.VisitRoundFunction( node );
+        _sut.GetErrors().Should().HaveCount( 2 );
     }
 
     [Fact]

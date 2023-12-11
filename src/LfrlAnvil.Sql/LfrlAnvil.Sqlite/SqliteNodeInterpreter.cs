@@ -91,6 +91,11 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         VisitSimpleFunction( "LENGTH", node );
     }
 
+    public override void VisitByteLengthFunction(SqlByteLengthFunctionExpressionNode node)
+    {
+        VisitSimpleFunction( "OCTET_LENGTH", node );
+    }
+
     public override void VisitToLowerFunction(SqlToLowerFunctionExpressionNode node)
     {
         VisitSimpleFunction( "TO_LOWER", node );
@@ -126,6 +131,11 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         VisitSimpleFunction( "REPLACE", node );
     }
 
+    public override void VisitReverseFunction(SqlReverseFunctionExpressionNode node)
+    {
+        VisitSimpleFunction( "REVERSE", node );
+    }
+
     public override void VisitIndexOfFunction(SqlIndexOfFunctionExpressionNode node)
     {
         VisitSimpleFunction( "INSTR", node );
@@ -158,7 +168,12 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitTruncateFunction(SqlTruncateFunctionExpressionNode node)
     {
-        VisitSimpleFunction( "TRUNC", node );
+        VisitSimpleFunction( node.Arguments.Length == 1 ? "TRUNC" : "TRUNC2", node );
+    }
+
+    public override void VisitRoundFunction(SqlRoundFunctionExpressionNode node)
+    {
+        VisitSimpleFunction( "ROUND", node );
     }
 
     public override void VisitPowerFunction(SqlPowerFunctionExpressionNode node)

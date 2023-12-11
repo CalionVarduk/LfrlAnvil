@@ -477,6 +477,10 @@ public static class SqlNodeVisitorExtensions
                 visitor.VisitLengthFunction( ReinterpretCast.To<SqlLengthFunctionExpressionNode>( node ) );
                 break;
 
+            case SqlFunctionType.ByteLength:
+                visitor.VisitByteLengthFunction( ReinterpretCast.To<SqlByteLengthFunctionExpressionNode>( node ) );
+                break;
+
             case SqlFunctionType.ToLower:
                 visitor.VisitToLowerFunction( ReinterpretCast.To<SqlToLowerFunctionExpressionNode>( node ) );
                 break;
@@ -505,6 +509,10 @@ public static class SqlNodeVisitorExtensions
                 visitor.VisitReplaceFunction( ReinterpretCast.To<SqlReplaceFunctionExpressionNode>( node ) );
                 break;
 
+            case SqlFunctionType.Reverse:
+                visitor.VisitReverseFunction( ReinterpretCast.To<SqlReverseFunctionExpressionNode>( node ) );
+                break;
+
             case SqlFunctionType.IndexOf:
                 visitor.VisitIndexOfFunction( ReinterpretCast.To<SqlIndexOfFunctionExpressionNode>( node ) );
                 break;
@@ -531,6 +539,10 @@ public static class SqlNodeVisitorExtensions
 
             case SqlFunctionType.Truncate:
                 visitor.VisitTruncateFunction( ReinterpretCast.To<SqlTruncateFunctionExpressionNode>( node ) );
+                break;
+
+            case SqlFunctionType.Round:
+                visitor.VisitRoundFunction( ReinterpretCast.To<SqlRoundFunctionExpressionNode>( node ) );
                 break;
 
             case SqlFunctionType.Power:

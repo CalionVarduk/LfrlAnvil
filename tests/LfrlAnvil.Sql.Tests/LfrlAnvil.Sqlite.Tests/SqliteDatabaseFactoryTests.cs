@@ -551,6 +551,91 @@ public class SqliteDatabaseFactoryTests : TestsBase
     }
 
     [Fact]
+    public void Create_ShouldReturnDatabaseWithCustomReverseFunction()
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT REVERSE('foo.bar.qux')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetString( 0 );
+
+        result.Should().Be( "xuq.rab.oof" );
+    }
+
+    [Fact]
+    public void Create_ShouldReturnDatabaseWithCustomReverseFunction_ThatReturnsNullWhenParameterIsNull()
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT REVERSE(NULL)";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetValue( 0 );
+
+        result.Should().BeOfType<DBNull>();
+    }
+
+    [Fact]
+    public void Create_ShouldReturnDatabaseWithCustomTrunc2Function()
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT TRUNC2(10.5678, 2)";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetDouble( 0 );
+
+        result.Should().Be( 10.56 );
+    }
+
+    [Fact]
+    public void Create_ShouldReturnDatabaseWithCustomTrunc2Function_ThatReturnsNullWhenFirstParameterIsNull()
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT TRUNC2(NULL, 2)";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetValue( 0 );
+
+        result.Should().BeOfType<DBNull>();
+    }
+
+    [Fact]
+    public void Create_ShouldReturnDatabaseWithCustomTrunc2Function_ThatSubstitutesZeroInPlaceOfNullSecondParameter()
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT TRUNC2(10.5678, NULL)";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetDouble( 0 );
+
+        result.Should().Be( 10.0 );
+    }
+
+    [Fact]
     public void Create_ShouldInvokeStatementListenersWithCorrectEvents_WhenModeIsCommit()
     {
         var onBefore = Substitute.For<Action<SqlDatabaseFactoryStatementEvent>>();

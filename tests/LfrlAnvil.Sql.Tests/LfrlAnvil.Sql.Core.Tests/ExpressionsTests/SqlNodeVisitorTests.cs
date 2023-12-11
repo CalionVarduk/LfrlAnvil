@@ -360,6 +360,17 @@ public class SqlNodeVisitorTests : TestsBase
     }
 
     [Fact]
+    public void VisitByteLengthFunction_ShouldVisitArgument()
+    {
+        var sut = new VisitorMock();
+        var argument = SqlNode.Literal( "foo" );
+
+        sut.VisitByteLengthFunction( argument.ByteLength() );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( argument );
+    }
+
+    [Fact]
     public void VisitToLowerFunction_ShouldVisitArgument()
     {
         var sut = new VisitorMock();
@@ -437,6 +448,17 @@ public class SqlNodeVisitorTests : TestsBase
     }
 
     [Fact]
+    public void VisitReverseFunction_ShouldVisitArgument()
+    {
+        var sut = new VisitorMock();
+        var argument = SqlNode.Literal( "foo" );
+
+        sut.VisitReverseFunction( argument.Reverse() );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( argument );
+    }
+
+    [Fact]
     public void VisitIndexOfFunction_ShouldVisitArguments()
     {
         var sut = new VisitorMock();
@@ -503,14 +525,25 @@ public class SqlNodeVisitorTests : TestsBase
     }
 
     [Fact]
-    public void VisitTruncateFunction_ShouldVisitArgument()
+    public void VisitTruncateFunction_ShouldVisitArguments()
     {
         var sut = new VisitorMock();
-        var argument = SqlNode.Literal( 10 );
+        var arguments = new[] { SqlNode.Literal( 10 ), SqlNode.Literal( 2 ) };
 
-        sut.VisitTruncateFunction( argument.Truncate() );
+        sut.VisitTruncateFunction( arguments[0].Truncate( arguments[1] ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( argument );
+        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1] );
+    }
+
+    [Fact]
+    public void VisitRoundFunction_ShouldVisitArguments()
+    {
+        var sut = new VisitorMock();
+        var arguments = new[] { SqlNode.Literal( 10 ), SqlNode.Literal( 2 ) };
+
+        sut.VisitRoundFunction( arguments[0].Round( arguments[1] ) );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1] );
     }
 
     [Fact]

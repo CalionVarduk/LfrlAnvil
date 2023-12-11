@@ -84,6 +84,11 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
         VisitSimpleFunction( "LENGTH", node );
     }
 
+    public override void VisitByteLengthFunction(SqlByteLengthFunctionExpressionNode node)
+    {
+        VisitSimpleFunction( "BYTE_LENGTH", node );
+    }
+
     public override void VisitToLowerFunction(SqlToLowerFunctionExpressionNode node)
     {
         VisitSimpleFunction( "TO_LOWER", node );
@@ -119,6 +124,11 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
         VisitSimpleFunction( "REPLACE", node );
     }
 
+    public override void VisitReverseFunction(SqlReverseFunctionExpressionNode node)
+    {
+        VisitSimpleFunction( "REVERSE", node );
+    }
+
     public override void VisitIndexOfFunction(SqlIndexOfFunctionExpressionNode node)
     {
         VisitSimpleFunction( "INDEX_OF", node );
@@ -152,6 +162,11 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
     public override void VisitTruncateFunction(SqlTruncateFunctionExpressionNode node)
     {
         VisitSimpleFunction( "TRUNCATE", node );
+    }
+
+    public override void VisitRoundFunction(SqlRoundFunctionExpressionNode node)
+    {
+        VisitSimpleFunction( "ROUND", node );
     }
 
     public override void VisitPowerFunction(SqlPowerFunctionExpressionNode node)

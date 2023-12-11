@@ -198,6 +198,22 @@ public class FunctionExpressionTests : TestsBase
     }
 
     [Fact]
+    public void ByteLength_ShouldCreateByteLengthFunctionExpressionNode()
+    {
+        var arg = SqlNode.Literal( "foo" );
+        var sut = arg.ByteLength();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.ByteLength );
+            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
+            text.Should().Be( "BYTE_LENGTH((\"foo\" : System.String))" );
+        }
+    }
+
+    [Fact]
     public void ToLower_ShouldCreateToLowerFunctionExpressionNode()
     {
         var arg = SqlNode.Literal( "FOO" );
@@ -382,6 +398,22 @@ public class FunctionExpressionTests : TestsBase
     }
 
     [Fact]
+    public void Reverse_ShouldCreateReverseFunctionExpressionNode()
+    {
+        var arg = SqlNode.Literal( "foo" );
+        var sut = arg.Reverse();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.Reverse );
+            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
+            text.Should().Be( "REVERSE((\"foo\" : System.String))" );
+        }
+    }
+
+    [Fact]
     public void IndexOf_ShouldCreateIndexOfFunctionExpressionNode()
     {
         var arg = SqlNode.Literal( "foo" );
@@ -492,6 +524,40 @@ public class FunctionExpressionTests : TestsBase
             sut.FunctionType.Should().Be( SqlFunctionType.Truncate );
             sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
             text.Should().Be( "TRUNCATE((@a : System.Double))" );
+        }
+    }
+
+    [Fact]
+    public void Truncate_ShouldCreateTruncateFunctionExpressionNode_WithPrecision()
+    {
+        var arg = SqlNode.Parameter<double>( "a" );
+        var precision = SqlNode.Parameter<int>( "p" );
+        var sut = arg.Truncate( precision );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.Truncate );
+            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg, precision );
+            text.Should().Be( "TRUNCATE((@a : System.Double), (@p : System.Int32))" );
+        }
+    }
+
+    [Fact]
+    public void Round_ShouldCreateRoundFunctionExpressionNode()
+    {
+        var arg = SqlNode.Parameter<double>( "a" );
+        var precision = SqlNode.Parameter<int>( "p" );
+        var sut = arg.Round( precision );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.Round );
+            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg, precision );
+            text.Should().Be( "ROUND((@a : System.Double), (@p : System.Int32))" );
         }
     }
 
@@ -1057,9 +1123,11 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Lag );
-            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
+            sut.Arguments.Length.Should().Be( 2 );
+            sut.Arguments.ToArray().ElementAtOrDefault( 0 ).Should().BeSameAs( arg );
+            sut.Arguments.ToArray().ElementAtOrDefault( 1 ).Should().BeEquivalentTo( SqlNode.Literal( 1 ) );
             sut.Traits.Should().BeEmpty();
-            text.Should().Be( "WND_LAG((@a : System.String))" );
+            text.Should().Be( "WND_LAG((@a : System.String), (\"1\" : System.Int32))" );
         }
     }
 
@@ -1155,9 +1223,11 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Lead );
-            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( arg );
+            sut.Arguments.Length.Should().Be( 2 );
+            sut.Arguments.ToArray().ElementAtOrDefault( 0 ).Should().BeSameAs( arg );
+            sut.Arguments.ToArray().ElementAtOrDefault( 1 ).Should().BeEquivalentTo( SqlNode.Literal( 1 ) );
             sut.Traits.Should().BeEmpty();
-            text.Should().Be( "WND_LEAD((@a : System.String))" );
+            text.Should().Be( "WND_LEAD((@a : System.String), (\"1\" : System.Int32))" );
         }
     }
 

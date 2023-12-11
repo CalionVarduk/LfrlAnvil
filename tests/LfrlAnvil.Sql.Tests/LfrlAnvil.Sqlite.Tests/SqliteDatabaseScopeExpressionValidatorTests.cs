@@ -536,6 +536,19 @@ public class SqliteDatabaseScopeExpressionValidatorTests : TestsBase
     }
 
     [Fact]
+    public void VisitByteLengthFunction_ShouldVisitArguments()
+    {
+        var node = SqlNode.Parameter( "a" ).ByteLength();
+        _sut.VisitByteLengthFunction( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 1 );
+            _sut.ReferencedObjects.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
     public void VisitToLowerFunction_ShouldVisitArguments()
     {
         var node = SqlNode.Parameter( "a" ).ToLower();
@@ -627,6 +640,19 @@ public class SqliteDatabaseScopeExpressionValidatorTests : TestsBase
     }
 
     [Fact]
+    public void VisitReverseFunction_ShouldVisitArguments()
+    {
+        var node = SqlNode.Parameter( "a" ).Reverse();
+        _sut.VisitReverseFunction( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 1 );
+            _sut.ReferencedObjects.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
     public void VisitIndexOfFunction_ShouldVisitArguments()
     {
         var node = SqlNode.Parameter( "a" ).IndexOf( SqlNode.Parameter( "b" ) );
@@ -707,12 +733,25 @@ public class SqliteDatabaseScopeExpressionValidatorTests : TestsBase
     [Fact]
     public void VisitTruncateFunction_ShouldVisitArguments()
     {
-        var node = SqlNode.Parameter( "a" ).Truncate();
+        var node = SqlNode.Parameter( "a" ).Truncate( SqlNode.Parameter( "b" ) );
         _sut.VisitTruncateFunction( node );
 
         using ( new AssertionScope() )
         {
-            _sut.GetErrors().Should().HaveCount( 1 );
+            _sut.GetErrors().Should().HaveCount( 2 );
+            _sut.ReferencedObjects.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void VisitRoundFunction_ShouldVisitArguments()
+    {
+        var node = SqlNode.Parameter( "a" ).Round( SqlNode.Parameter( "b" ) );
+        _sut.VisitRoundFunction( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 2 );
             _sut.ReferencedObjects.Should().BeEmpty();
         }
     }

@@ -53,7 +53,7 @@ public static partial class SqlNode
                 ? new[] { expression, offset ?? Literal( 1 ), @default }
                 : offset is not null
                     ? new[] { expression, offset }
-                    : new[] { expression };
+                    : new[] { expression, Literal( 1 ) };
 
             return new SqlLagWindowFunctionExpressionNode( arguments, Chain<SqlTraitNode>.Empty );
         }
@@ -68,7 +68,7 @@ public static partial class SqlNode
                 ? new[] { expression, offset ?? Literal( 1 ), @default }
                 : offset is not null
                     ? new[] { expression, offset }
-                    : new[] { expression };
+                    : new[] { expression, Literal( 1 ) };
 
             return new SqlLeadWindowFunctionExpressionNode( arguments, Chain<SqlTraitNode>.Empty );
         }

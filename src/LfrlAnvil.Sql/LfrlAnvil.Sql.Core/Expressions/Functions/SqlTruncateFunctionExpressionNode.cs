@@ -2,6 +2,6 @@
 
 public sealed class SqlTruncateFunctionExpressionNode : SqlFunctionExpressionNode
 {
-    internal SqlTruncateFunctionExpressionNode(SqlExpressionNode argument)
-        : base( SqlFunctionType.Truncate, new[] { argument } ) { }
+    internal SqlTruncateFunctionExpressionNode(SqlExpressionNode argument, SqlExpressionNode? precision)
+        : base( SqlFunctionType.Truncate, precision is null ? new[] { argument } : new[] { argument, precision } ) { }
 }

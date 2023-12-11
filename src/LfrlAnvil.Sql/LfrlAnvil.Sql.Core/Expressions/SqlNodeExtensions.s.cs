@@ -519,6 +519,13 @@ public static class SqlNodeExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlByteLengthFunctionExpressionNode ByteLength(this SqlExpressionNode node)
+    {
+        return SqlNode.Functions.ByteLength( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlToLowerFunctionExpressionNode ToLower(this SqlExpressionNode node)
     {
         return SqlNode.Functions.ToLower( node );
@@ -574,6 +581,13 @@ public static class SqlNodeExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlReverseFunctionExpressionNode Reverse(this SqlExpressionNode node)
+    {
+        return SqlNode.Functions.Reverse( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlIndexOfFunctionExpressionNode IndexOf(this SqlExpressionNode node, SqlExpressionNode value)
     {
         return SqlNode.Functions.IndexOf( node, value );
@@ -616,9 +630,16 @@ public static class SqlNodeExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlTruncateFunctionExpressionNode Truncate(this SqlExpressionNode node)
+    public static SqlTruncateFunctionExpressionNode Truncate(this SqlExpressionNode node, SqlExpressionNode? precision = null)
     {
-        return SqlNode.Functions.Truncate( node );
+        return SqlNode.Functions.Truncate( node, precision );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlRoundFunctionExpressionNode Round(this SqlExpressionNode node, SqlExpressionNode precision)
+    {
+        return SqlNode.Functions.Round( node, precision );
     }
 
     [Pure]

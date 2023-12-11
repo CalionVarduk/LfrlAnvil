@@ -161,6 +161,12 @@ public abstract class SqlNodeVisitor : ISqlNodeVisitor
             this.Visit( arg );
     }
 
+    public virtual void VisitByteLengthFunction(SqlByteLengthFunctionExpressionNode node)
+    {
+        foreach ( var arg in node.Arguments )
+            this.Visit( arg );
+    }
+
     public virtual void VisitToLowerFunction(SqlToLowerFunctionExpressionNode node)
     {
         foreach ( var arg in node.Arguments )
@@ -203,6 +209,12 @@ public abstract class SqlNodeVisitor : ISqlNodeVisitor
             this.Visit( arg );
     }
 
+    public virtual void VisitReverseFunction(SqlReverseFunctionExpressionNode node)
+    {
+        foreach ( var arg in node.Arguments )
+            this.Visit( arg );
+    }
+
     public virtual void VisitIndexOfFunction(SqlIndexOfFunctionExpressionNode node)
     {
         foreach ( var arg in node.Arguments )
@@ -240,6 +252,12 @@ public abstract class SqlNodeVisitor : ISqlNodeVisitor
     }
 
     public virtual void VisitTruncateFunction(SqlTruncateFunctionExpressionNode node)
+    {
+        foreach ( var arg in node.Arguments )
+            this.Visit( arg );
+    }
+
+    public virtual void VisitRoundFunction(SqlRoundFunctionExpressionNode node)
     {
         foreach ( var arg in node.Arguments )
             this.Visit( arg );

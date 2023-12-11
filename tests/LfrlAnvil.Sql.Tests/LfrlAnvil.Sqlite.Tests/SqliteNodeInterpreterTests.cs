@@ -646,6 +646,13 @@ END" );
     }
 
     [Fact]
+    public void Visit_ShouldInterpretByteLengthFunction()
+    {
+        _sut.Visit( SqlNode.Functions.ByteLength( SqlNode.Literal( "foo" ) ) );
+        _sut.Context.Sql.ToString().Should().Be( "OCTET_LENGTH('foo')" );
+    }
+
+    [Fact]
     public void Visit_ShouldInterpretToLowerFunction()
     {
         _sut.Visit( SqlNode.Functions.ToLower( SqlNode.Literal( "FOO" ) ) );
@@ -695,6 +702,13 @@ END" );
     }
 
     [Fact]
+    public void Visit_ShouldInterpretReverseFunction()
+    {
+        _sut.Visit( SqlNode.Functions.Reverse( SqlNode.RawExpression( "foo.a" ) ) );
+        _sut.Context.Sql.ToString().Should().Be( "REVERSE((foo.a))" );
+    }
+
+    [Fact]
     public void Visit_ShouldInterpretIndexOfFunction()
     {
         _sut.Visit( SqlNode.Functions.IndexOf( SqlNode.RawExpression( "foo.a" ), SqlNode.Literal( "bar" ) ) );
@@ -741,6 +755,20 @@ END" );
     {
         _sut.Visit( SqlNode.Functions.Truncate( SqlNode.Parameter<int>( "a" ) ) );
         _sut.Context.Sql.ToString().Should().Be( "TRUNC(@a)" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretTruncateFunction_WithPrecision()
+    {
+        _sut.Visit( SqlNode.Functions.Truncate( SqlNode.Parameter<int>( "a" ), SqlNode.Parameter<int>( "p" ) ) );
+        _sut.Context.Sql.ToString().Should().Be( "TRUNC2(@a, @p)" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretRoundFunction()
+    {
+        _sut.Visit( SqlNode.Functions.Round( SqlNode.Parameter<int>( "a" ), SqlNode.Parameter<int>( "p" ) ) );
+        _sut.Context.Sql.ToString().Should().Be( "ROUND(@a, @p)" );
     }
 
     [Fact]
