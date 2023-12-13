@@ -93,4 +93,15 @@ public class StringExtensionsTests : TestsBase
         var action = Lambda.Of( () => Fixture.Create<string>().AsSegment( startIndex: 0, length: -1 ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
+
+    [Theory]
+    [InlineData( "", "" )]
+    [InlineData( "a", "a" )]
+    [InlineData( "\u20ac", "\u20ac" )]
+    [InlineData( "$\u00a3\u20ac\ud800\udf48", "\ud800\udf48\u20ac\u00a3$" )]
+    public void Reverse_ShouldReturnCorrectlyReversedString(string sut, string expected)
+    {
+        var result = sut.Reverse();
+        result.Should().Be( expected );
+    }
 }
