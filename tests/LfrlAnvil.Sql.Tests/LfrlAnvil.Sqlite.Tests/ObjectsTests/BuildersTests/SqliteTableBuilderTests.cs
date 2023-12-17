@@ -41,8 +41,8 @@ public partial class SqliteTableBuilderTests : TestsBase
                       ""C3"" ANY NOT NULL,
                       ""C4"" ANY NOT NULL,
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C2"" ASC),
-                      CONSTRAINT ""foo_FK_T_C1_REF_T"" FOREIGN KEY (""C1"") REFERENCES ""foo_T"" (""C2"") ON DELETE RESTRICT ON UPDATE RESTRICT,
-                      CONSTRAINT ""foo_CHK_T_0"" CHECK (""C1"" > 0)
+                      CONSTRAINT ""foo_CHK_T_0"" CHECK (""C1"" > 0),
+                      CONSTRAINT ""foo_FK_T_C1_REF_T"" FOREIGN KEY (""C1"") REFERENCES ""foo_T"" (""C2"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     "CREATE INDEX \"foo_IX_T_C1A\" ON \"foo_T\" (\"C1\" ASC);",
                     "CREATE INDEX \"foo_IX_T_C3A_C4D\" ON \"foo_T\" (\"C3\" ASC, \"C4\" DESC);" );
@@ -194,8 +194,8 @@ public partial class SqliteTableBuilderTests : TestsBase
                       ""C1"" ANY NOT NULL,
                       ""C2"" ANY NOT NULL,
                       CONSTRAINT ""s_PK_foo"" PRIMARY KEY (""C1"" ASC),
-                      CONSTRAINT ""s_FK_foo_C2_REF_foo"" FOREIGN KEY (""C2"") REFERENCES ""s_bar"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT,
-                      CONSTRAINT ""s_CHK_foo_0"" CHECK (""C1"" > 0)
+                      CONSTRAINT ""s_CHK_foo_0"" CHECK (""C1"" > 0),
+                      CONSTRAINT ""s_FK_foo_C2_REF_foo"" FOREIGN KEY (""C2"") REFERENCES ""s_bar"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__s_bar__{GUID}__"" (""C1"", ""C2"")
                     SELECT

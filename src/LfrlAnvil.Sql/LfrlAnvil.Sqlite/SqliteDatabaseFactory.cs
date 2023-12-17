@@ -22,7 +22,6 @@ using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Internal;
 using LfrlAnvil.Sqlite.Objects.Builders;
 using Microsoft.Data.Sqlite;
-using Microsoft.VisualBasic;
 using SqliteConnection = LfrlAnvil.Sqlite.Internal.SqliteConnection;
 
 namespace LfrlAnvil.Sqlite;
@@ -437,6 +436,8 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
                     }
 
                     // TODO: can use PRAGMA quick_check(TABLENAME) to run similar tests, but for CHECK constrains
+                    // use PRAGMA integrity_check(TABLENAME) to run fill verification (configurable in the future)
+                    // also, PRAGMA ignore_check_constraints = 1/0;
 
                     if ( fkCheckFailures.Count > 0 )
                         throw new SqliteForeignKeyCheckException( version.Value, fkCheckFailures );
@@ -788,7 +789,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
     [Pure]
     private static string? ReverseImpl(string? s)
     {
-        return s is null ? null : Strings.StrReverse( s );
+        return s?.Reverse();
     }
 
     [Pure]

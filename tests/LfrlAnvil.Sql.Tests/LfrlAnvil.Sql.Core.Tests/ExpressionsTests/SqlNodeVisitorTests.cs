@@ -1670,7 +1670,9 @@ public class SqlNodeVisitorTests : TestsBase
     public void VisitDropIndex_ShouldDoNothing()
     {
         var sut = new Visitor();
-        var action = Lambda.Of( () => sut.VisitDropIndex( SqlNode.DropIndex( SqlSchemaObjectName.Create( "a" ) ) ) );
+        var action = Lambda.Of(
+            () => sut.VisitDropIndex( SqlNode.DropIndex( SqlRecordSetInfo.Create( "foo" ), SqlSchemaObjectName.Create( "a" ) ) ) );
+
         action.Should().NotThrow();
     }
 

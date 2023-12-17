@@ -52,8 +52,6 @@ internal static class Resources
         nameof( SqlDataSourceNode.From ) +
         ") does not have any columns";
 
-    internal const string NestedUpdateAttempt = "of nested update attempt";
-
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string ForeignKeyCheckFailure(Version version, IReadOnlySet<string> failedTableNames)

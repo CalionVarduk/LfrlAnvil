@@ -492,7 +492,7 @@ internal sealed class SqliteDatabaseChangeTracker
     private void AddAlterTableReconstructionStatements(SqliteTableBuilder table, SqliteAlterTableBuffer buffer)
     {
         foreach ( var ix in buffer.DroppedIndexNames )
-            _ongoingStatements.Add( SqlNode.DropIndex( ix ) );
+            _ongoingStatements.Add( SqlNode.DropIndex( table.Info, ix ) );
 
         foreach ( var ix in table.Indexes )
         {
@@ -501,7 +501,7 @@ internal sealed class SqliteDatabaseChangeTracker
 
             var ixSchemaName = buffer.TryGetOldSchemaName( ix.Id ) ?? ix.Table.Schema.Name;
             var ixName = buffer.TryGetOldName( ix.Id ) ?? ix.Name;
-            _ongoingStatements.Add( SqlNode.DropIndex( SqlSchemaObjectName.Create( ixSchemaName, ixName ) ) );
+            _ongoingStatements.Add( SqlNode.DropIndex( table.Info, SqlSchemaObjectName.Create( ixSchemaName, ixName ) ) );
         }
 
         foreach ( var column in buffer.CreatedColumns.Values )
@@ -575,7 +575,7 @@ internal sealed class SqliteDatabaseChangeTracker
     private void AddAlterTableStatementsWithoutReconstruction(SqliteTableBuilder table, SqliteAlterTableBuffer buffer)
     {
         foreach ( var ix in buffer.DroppedIndexNames )
-            _ongoingStatements.Add( SqlNode.DropIndex( ix ) );
+            _ongoingStatements.Add( SqlNode.DropIndex( table.Info, ix ) );
 
         foreach ( var column in buffer.DroppedColumnsByName.Keys )
             _ongoingStatements.Add( SqlNode.DropColumn( table.Info, column ) );

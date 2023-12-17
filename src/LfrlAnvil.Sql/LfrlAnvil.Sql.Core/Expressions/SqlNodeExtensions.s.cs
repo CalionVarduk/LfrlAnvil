@@ -838,7 +838,7 @@ public static class SqlNodeExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlDropIndexNode ToDropIndex(this SqlCreateIndexNode node, bool ifExists = false)
     {
-        return SqlNode.DropIndex( node.Name, ifExists );
+        return SqlNode.DropIndex( node.Table.Info, node.Name, ifExists );
     }
 
     [Pure]

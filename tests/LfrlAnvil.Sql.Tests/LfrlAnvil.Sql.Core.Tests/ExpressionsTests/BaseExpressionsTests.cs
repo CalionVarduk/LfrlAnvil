@@ -935,22 +935,22 @@ VALUES
     }
 
     [Theory]
-    [InlineData( false, true, "CREATE VIEW IF NOT EXISTS [foo].[bar] AS" )]
-    [InlineData( true, true, "CREATE VIEW IF NOT EXISTS TEMP.[foo] AS" )]
+    [InlineData( false, true, "CREATE OR REPLACE VIEW [foo].[bar] AS" )]
+    [InlineData( true, true, "CREATE OR REPLACE VIEW TEMP.[foo] AS" )]
     [InlineData( false, false, "CREATE VIEW [foo].[bar] AS" )]
     [InlineData( true, false, "CREATE VIEW TEMP.[foo] AS" )]
-    public void CreateView_ShouldCreateCreateViewNode(bool isTemporary, bool ifNotExists, string expectedHeader)
+    public void CreateView_ShouldCreateCreateViewNode(bool isTemporary, bool replaceIfExists, string expectedHeader)
     {
         var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
         var source = SqlNode.RawQuery( "SELECT * FROM qux" );
-        var sut = source.ToCreateView( info, ifNotExists );
+        var sut = source.ToCreateView( info, replaceIfExists );
         var text = sut.ToString();
 
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.CreateView );
             sut.Info.Should().Be( info );
-            sut.IfNotExists.Should().Be( ifNotExists );
+            sut.ReplaceIfExists.Should().Be( replaceIfExists );
             sut.Source.Should().BeSameAs( source );
             ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
             ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
@@ -981,7 +981,7 @@ SELECT * FROM qux" );
         {
             sut.NodeType.Should().Be( SqlNodeType.CreateIndex );
             sut.Name.Should().Be( name );
-            sut.IfNotExists.Should().BeFalse();
+            sut.ReplaceIfExists.Should().BeFalse();
             sut.IsUnique.Should().BeFalse();
             sut.Table.Should().BeSameAs( table );
             sut.Columns.ToArray().Should().BeSequentiallyEqualTo( columns );
@@ -993,16 +993,55 @@ SELECT * FROM qux" );
         }
     }
 
+    [Fact]
+    public void CreateIndex_ShouldCreateCreateIndexNode_WithTemporaryRecordSet()
+    {
+        var table = SqlNode.CreateTable(
+                SqlRecordSetInfo.CreateTemporary( "qux" ),
+                new[] { SqlNode.Column<int>( "x" ), SqlNode.Column<int>( "y" ) } )
+            .RecordSet;
+
+        var columns = new[]
+        {
+            table["x"].Asc(),
+            table["y"].Desc()
+        };
+
+        var filter = table["x"] > table["y"];
+        var name = SqlSchemaObjectName.Create( "foo", "bar" );
+
+        var sut = SqlNode.CreateIndex( name, isUnique: false, table, columns, filter: filter );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.CreateIndex );
+            sut.Name.Should().Be( name );
+            sut.ReplaceIfExists.Should().BeFalse();
+            sut.IsUnique.Should().BeFalse();
+            sut.Table.Should().BeSameAs( table );
+            sut.Columns.ToArray().Should().BeSequentiallyEqualTo( columns );
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
+            text.Should()
+                .Be(
+                    "CREATE INDEX [foo].[bar] ON TEMP.[qux] ((TEMP.[qux].[x] : System.Int32) ASC, (TEMP.[qux].[y] : System.Int32) DESC) WHERE ((TEMP.[qux].[x] : System.Int32) > (TEMP.[qux].[y] : System.Int32))" );
+        }
+    }
+
     [Theory]
     [InlineData( false, false, "CREATE INDEX [foo] ON [bar] ()" )]
     [InlineData( false, true, "CREATE UNIQUE INDEX [foo] ON [bar] ()" )]
-    [InlineData( true, false, "CREATE INDEX IF NOT EXISTS [foo] ON [bar] ()" )]
-    [InlineData( true, true, "CREATE UNIQUE INDEX IF NOT EXISTS [foo] ON [bar] ()" )]
-    public void CreateIndex_ShouldCreateCreateIndexNode_WithEmptyColumnsAndNoFilter(bool ifNotExists, bool isUnique, string expectedText)
+    [InlineData( true, false, "CREATE OR REPLACE INDEX [foo] ON [bar] ()" )]
+    [InlineData( true, true, "CREATE OR REPLACE UNIQUE INDEX [foo] ON [bar] ()" )]
+    public void CreateIndex_ShouldCreateCreateIndexNode_WithEmptyColumnsAndNoFilter(
+        bool replaceIfExists,
+        bool isUnique,
+        string expectedText)
     {
         var name = SqlSchemaObjectName.Create( "foo" );
         var table = SqlNode.RawRecordSet( "bar" );
-        var sut = SqlNode.CreateIndex( name, isUnique, table, Array.Empty<SqlOrderByNode>(), ifNotExists );
+        var sut = SqlNode.CreateIndex( name, isUnique, table, Array.Empty<SqlOrderByNode>(), replaceIfExists );
 
         var text = sut.ToString();
 
@@ -1010,7 +1049,7 @@ SELECT * FROM qux" );
         {
             sut.NodeType.Should().Be( SqlNodeType.CreateIndex );
             sut.Name.Should().Be( name );
-            sut.IfNotExists.Should().Be( ifNotExists );
+            sut.ReplaceIfExists.Should().Be( replaceIfExists );
             sut.IsUnique.Should().Be( isUnique );
             sut.Table.Should().BeSameAs( table );
             sut.Columns.ToArray().Should().BeEmpty();
@@ -1149,16 +1188,18 @@ SELECT * FROM qux" );
     }
 
     [Theory]
-    [InlineData( false, "DROP INDEX [foo].[bar]" )]
-    [InlineData( true, "DROP INDEX IF EXISTS [foo].[bar]" )]
-    public void DropIndex_ShouldCreateDropIndexNode(bool ifExists, string expectedText)
+    [InlineData( false, false, "DROP INDEX [foo].[bar] ON [qux]" )]
+    [InlineData( true, false, "DROP INDEX IF EXISTS [foo].[bar] ON [qux]" )]
+    [InlineData( false, true, "DROP INDEX [foo].[bar] ON TEMP.[qux]" )]
+    [InlineData( true, true, "DROP INDEX IF EXISTS [foo].[bar] ON TEMP.[qux]" )]
+    public void DropIndex_ShouldCreateDropIndexNode(bool ifExists, bool isRecordSetTemporary, string expectedText)
     {
+        SqlRecordSetNode recordSet = isRecordSetTemporary
+            ? SqlNode.CreateTable( SqlRecordSetInfo.CreateTemporary( "qux" ), Array.Empty<SqlColumnDefinitionNode>() ).RecordSet
+            : SqlNode.RawRecordSet( "qux" );
+
         var name = SqlSchemaObjectName.Create( "foo", "bar" );
-        var sut = SqlNode.CreateIndex(
-                name,
-                isUnique: Fixture.Create<bool>(),
-                SqlNode.RawRecordSet( "qux" ),
-                Array.Empty<SqlOrderByNode>() )
+        var sut = SqlNode.CreateIndex( name, isUnique: Fixture.Create<bool>(), recordSet, Array.Empty<SqlOrderByNode>() )
             .ToDropIndex( ifExists );
 
         var text = sut.ToString();
@@ -1166,6 +1207,7 @@ SELECT * FROM qux" );
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.DropIndex );
+            sut.Table.Should().Be( recordSet.Info );
             sut.Name.Should().Be( name );
             sut.IfExists.Should().Be( ifExists );
             ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );

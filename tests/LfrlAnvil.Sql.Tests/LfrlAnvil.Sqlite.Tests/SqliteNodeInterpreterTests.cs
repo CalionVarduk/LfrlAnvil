@@ -3505,12 +3505,61 @@ WHERE ""foo"".""a"" IN (
     }
 
     [Fact]
-    public void Visit_ShouldInterpretDeleteFromWithSimpleDataSource()
+    public void Visit_ShouldInterpretDeleteFromSingleDataSource_WithoutTraits()
+    {
+        var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();
+        _sut.Visit( dataSource.ToDeleteFrom() );
+        _sut.Context.Sql.ToString().Should().Be( "DELETE FROM foo" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretDeleteFromSingleDataSource_WithWhere()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" )
             .ToDataSource()
+            .AndWhere( s => s["foo"]["a"] < SqlNode.Literal( 10 ) );
+
+        _sut.Visit( dataSource.ToDeleteFrom() );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                @"DELETE FROM foo
+WHERE foo.""a"" < 10" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretDeleteFromWithSimpleDataSource_WithWhereAndAlias()
+    {
+        var dataSource = CreateTable( string.Empty, "foo", "a" )
+            .ToRecordSet( "bar" )
+            .ToDataSource()
+            .AndWhere( s => s["bar"]["a"] < SqlNode.Literal( 10 ) );
+
+        _sut.Visit( dataSource.ToDeleteFrom() );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                @"DELETE FROM ""foo""
+WHERE ""foo"".""a"" IN (
+  SELECT
+    ""bar"".""a""
+  FROM ""foo"" AS ""bar""
+  WHERE ""bar"".""a"" < 10
+)" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretDeleteFromSingleDataSource_WithCteAndWhereAndOrderByAndLimit()
+    {
+        var dataSource = CreateTable( string.Empty, "foo", "a" )
+            .ToRecordSet( "f" )
+            .ToDataSource()
             .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
-            .AndWhere( s => s["foo"]["a"].InQuery( SqlNode.RawQuery( "SELECT cba.c FROM cba" ) ) );
+            .AndWhere( s => s["f"]["a"].InQuery( SqlNode.RawQuery( "SELECT cba.c FROM cba" ) ) )
+            .OrderBy( s => new[] { s["f"]["a"].Asc() } )
+            .Limit( SqlNode.Literal( 5 ) );
 
         _sut.Visit( dataSource.ToDeleteFrom() );
 
@@ -3520,257 +3569,330 @@ WHERE ""foo"".""a"" IN (
                 @"WITH ""cba"" AS (
   SELECT * FROM abc
 )
-DELETE FROM foo
-WHERE foo.""a"" IN (
-  SELECT cba.c FROM cba
+DELETE FROM ""foo""
+WHERE ""foo"".""a"" IN (
+  SELECT
+    ""f"".""a""
+  FROM ""foo"" AS ""f""
+  WHERE ""f"".""a"" IN (
+    SELECT cba.c FROM cba
+  )
+  ORDER BY ""f"".""a"" ASC
+  LIMIT 5
 )" );
     }
 
     [Fact]
-    public void Visit_ShouldInterpretDeleteFromWithComplexDataSourceAndTargetTableWithSingleColumnPrimaryKey()
+    public void Visit_ShouldInterpretDeleteFromSingleDataSource_WithAllTraits()
+    {
+        var table = CreateTable( "s", "foo", new[] { "a", "b" }, "a" );
+        var foo = table.ToRecordSet( "f" );
+
+        var dataSource = foo
+            .ToDataSource()
+            .Distinct()
+            .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
+            .AndWhere( s => s["f"]["a"].InQuery( SqlNode.RawQuery( "SELECT cba.c FROM cba" ) ) )
+            .GroupBy( s => new[] { s["f"]["b"] } )
+            .AndHaving( s => s["f"]["b"] > SqlNode.Literal( 20 ) )
+            .Window( SqlNode.WindowDefinition( "wnd", Array.Empty<SqlOrderByNode>() ) )
+            .OrderBy( s => new[] { s["f"]["a"].Asc() } )
+            .Limit( SqlNode.Literal( 5 ) )
+            .Offset( SqlNode.Literal( 10 ) );
+
+        _sut.Visit( dataSource.ToDeleteFrom() );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                @"WITH ""cba"" AS (
+  SELECT * FROM abc
+)
+DELETE FROM ""s_foo""
+WHERE ""s_foo"".""a"" IN (
+  SELECT DISTINCT
+    ""f"".""a""
+  FROM ""s_foo"" AS ""f""
+  WHERE ""f"".""a"" IN (
+    SELECT cba.c FROM cba
+  )
+  GROUP BY ""f"".""b""
+  HAVING ""f"".""b"" > 20
+  WINDOW ""wnd"" AS ()
+  ORDER BY ""f"".""a"" ASC
+  LIMIT 5 OFFSET 10
+)" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretDeleteFromMultiDataSource_WithoutTraits()
+    {
+        var foo = CreateTable( string.Empty, "foo", "a" ).ToRecordSet( "f" );
+        var other = SqlNode.RawRecordSet( "bar" );
+        var dataSource = foo.Join( other.InnerOn( foo["a"] == other["a"] ) );
+
+        _sut.Visit( dataSource.ToDeleteFrom() );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                @"DELETE FROM ""foo""
+WHERE ""foo"".""a"" IN (
+  SELECT
+    ""f"".""a""
+  FROM ""foo"" AS ""f""
+  INNER JOIN bar ON ""f"".""a"" = bar.""a""
+)" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretDeleteFromMultiDataSource_WithCteAndWhere()
+    {
+        var foo = CreateTable( string.Empty, "foo", "a" ).ToRecordSet( "f" );
+        var other = SqlNode.RawRecordSet( "bar", "b" );
+
+        var dataSource = foo
+            .Join( other.InnerOn( foo["a"] == other["a"] ) )
+            .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
+            .AndWhere( s => s["f"]["a"] < SqlNode.Literal( 10 ) );
+
+        _sut.Visit( dataSource.ToDeleteFrom() );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                @"WITH ""cba"" AS (
+  SELECT * FROM abc
+)
+DELETE FROM ""foo""
+WHERE ""foo"".""a"" IN (
+  SELECT
+    ""f"".""a""
+  FROM ""foo"" AS ""f""
+  INNER JOIN bar AS ""b"" ON ""f"".""a"" = ""b"".""a""
+  WHERE ""f"".""a"" < 10
+)" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretDeleteFromMultiDataSource_WithCteAndWhereAndOrderByAndLimit()
+    {
+        var table = CreateTable( "s", "foo", new[] { "a", "b" }, "a" );
+        var foo = table.ToRecordSet( "f" );
+        var other = SqlNode.RawRecordSet( "bar" );
+
+        var dataSource = foo
+            .Join( other.InnerOn( foo["a"] == other["a"] ) )
+            .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
+            .AndWhere( s => s["f"]["a"].InQuery( SqlNode.RawQuery( "SELECT cba.c FROM cba" ) ) )
+            .OrderBy( s => new[] { s["f"]["a"].Asc() } )
+            .Limit( SqlNode.Literal( 5 ) );
+
+        _sut.Visit( dataSource.ToDeleteFrom() );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                @"WITH ""cba"" AS (
+  SELECT * FROM abc
+)
+DELETE FROM ""s_foo""
+WHERE ""s_foo"".""a"" IN (
+  SELECT
+    ""f"".""a""
+  FROM ""s_foo"" AS ""f""
+  INNER JOIN bar ON ""f"".""a"" = bar.""a""
+  WHERE ""f"".""a"" IN (
+    SELECT cba.c FROM cba
+  )
+  ORDER BY ""f"".""a"" ASC
+  LIMIT 5
+)" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretDeleteFromMultiDataSource_WithAllTraits()
+    {
+        var table = CreateTable( "s", "foo", new[] { "a", "b" }, "a" );
+        var foo = table.ToRecordSet( "f" );
+        var other = SqlNode.RawRecordSet( "bar" );
+
+        var dataSource = foo
+            .Join( other.InnerOn( foo["a"] == other["a"] ) )
+            .Distinct()
+            .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
+            .AndWhere( s => s["f"]["a"].InQuery( SqlNode.RawQuery( "SELECT cba.c FROM cba" ) ) )
+            .GroupBy( s => new[] { s["f"]["b"] } )
+            .AndHaving( s => s["f"]["b"] > SqlNode.Literal( 20 ) )
+            .Window( SqlNode.WindowDefinition( "wnd", Array.Empty<SqlOrderByNode>() ) )
+            .OrderBy( s => new[] { s["f"]["a"].Asc() } )
+            .Limit( SqlNode.Literal( 5 ) )
+            .Offset( SqlNode.Literal( 10 ) );
+
+        _sut.Visit( dataSource.ToDeleteFrom() );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                @"WITH ""cba"" AS (
+  SELECT * FROM abc
+)
+DELETE FROM ""s_foo""
+WHERE ""s_foo"".""a"" IN (
+  SELECT DISTINCT
+    ""f"".""a""
+  FROM ""s_foo"" AS ""f""
+  INNER JOIN bar ON ""f"".""a"" = bar.""a""
+  WHERE ""f"".""a"" IN (
+    SELECT cba.c FROM cba
+  )
+  GROUP BY ""f"".""b""
+  HAVING ""f"".""b"" > 20
+  WINDOW ""wnd"" AS ()
+  ORDER BY ""f"".""a"" ASC
+  LIMIT 5 OFFSET 10
+)" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretDeleteFromWithComplexDataSource_WhenTargetIsTableWithSingleColumnPrimaryKey()
     {
         var table = CreateTable( string.Empty, "foo", new[] { "a", "b" }, "a" );
         var foo = table.ToRecordSet( "f" );
+        var other = SqlNode.RawRecordSet( "bar" );
 
         var dataSource = foo
-            .Join( SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ), x => x.Inner["a"] == foo["a"] ) )
-            .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
-            .Distinct()
-            .AndWhere( s => s["bar"]["c"].InQuery( SqlNode.RawQuery( "SELECT cba.c FROM cba" ) ) )
-            .GroupBy( s => new[] { s["f"]["b"] } )
-            .AndHaving( s => s["f"]["b"] < SqlNode.Literal( 100 ) )
-            .Window( s => new[] { SqlNode.WindowDefinition( "wnd", new[] { s["f"]["b"].Asc() } ) } )
-            .OrderBy( s => new[] { s["f"]["b"].Asc() } )
-            .Limit( SqlNode.Literal( 50 ) )
-            .Offset( SqlNode.Literal( 100 ) );
+            .Join( other.InnerOn( foo["a"] == other["a"] ) )
+            .GroupBy( s => new[] { s["f"]["b"] } );
 
         _sut.Visit( dataSource.ToDeleteFrom() );
 
         _sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-DELETE FROM ""foo""
+                @"DELETE FROM ""foo""
 WHERE ""foo"".""a"" IN (
-  SELECT DISTINCT
+  SELECT
     ""f"".""a""
   FROM ""foo"" AS ""f""
-  INNER JOIN bar ON bar.""a"" = ""f"".""a""
-  WHERE bar.""c"" IN (
-    SELECT cba.c FROM cba
-  )
+  INNER JOIN bar ON ""f"".""a"" = bar.""a""
   GROUP BY ""f"".""b""
-  HAVING ""f"".""b"" < 100
-  WINDOW ""wnd"" AS (ORDER BY ""f"".""b"" ASC)
-  ORDER BY ""f"".""b"" ASC
-  LIMIT 50 OFFSET 100
 )" );
     }
 
     [Fact]
-    public void Visit_ShouldInterpretDeleteFromWithComplexDataSourceAndTargetTableWithMultipleColumnPrimaryKey_WithFilter()
+    public void Visit_ShouldInterpretDeleteFromWithComplexDataSource_WhenTargetIsTableWithMultiColumnPrimaryKey()
     {
         var table = CreateTable( string.Empty, "foo", "a", "b" );
         var foo = table.ToRecordSet( "f" );
+        var other = SqlNode.RawRecordSet( "bar" );
 
         var dataSource = foo
-            .Join( SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ), x => x.Inner["a"] == foo["a"] ) )
-            .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
-            .Distinct()
-            .AndWhere( s => s["bar"]["c"].InQuery( SqlNode.RawQuery( "SELECT cba.c FROM cba" ) ) )
-            .GroupBy( s => new[] { s["f"]["b"] } )
-            .AndHaving( s => s["f"]["b"] < SqlNode.Literal( 100 ) )
-            .OrderBy( s => new[] { s["f"]["b"].Asc() } )
-            .Limit( SqlNode.Literal( 50 ) )
-            .Offset( SqlNode.Literal( 100 ) );
+            .Join( other.InnerOn( foo["a"] == other["a"] ) )
+            .GroupBy( s => new[] { s["f"]["b"] } );
 
         _sut.Visit( dataSource.ToDeleteFrom() );
 
         _sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-DELETE FROM ""foo""
+                @"DELETE FROM ""foo""
 WHERE EXISTS (
-  SELECT DISTINCT
+  SELECT
     *
   FROM ""foo"" AS ""f""
-  INNER JOIN bar ON bar.""a"" = ""f"".""a""
-  WHERE (bar.""c"" IN (
-      SELECT cba.c FROM cba
-    )) AND ((""foo"".""a"" = ""f"".""a"") AND (""foo"".""b"" = ""f"".""b""))
-  GROUP BY ""f"".""b""
-  HAVING ""f"".""b"" < 100
-  ORDER BY ""f"".""b"" ASC
-  LIMIT 50 OFFSET 100
-)" );
-    }
-
-    [Fact]
-    public void Visit_ShouldInterpretDeleteFromWithComplexDataSourceAndTargetTableWithMultipleColumnPrimaryKey_WithoutFilter()
-    {
-        var table = CreateTable( string.Empty, "foo", new[] { "a", "b", "c" }, "a", "b" );
-        var foo = table.ToRecordSet( "f" );
-
-        var dataSource = foo
-            .Join( SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ), x => x.Inner["a"] == foo["a"] ) )
-            .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
-            .Distinct()
-            .GroupBy( s => new[] { s["f"]["b"] } )
-            .AndHaving( s => s["f"]["b"] < SqlNode.Literal( 100 ) )
-            .OrderBy( s => new[] { s["f"]["b"].Asc() } )
-            .Limit( SqlNode.Literal( 50 ) )
-            .Offset( SqlNode.Literal( 100 ) );
-
-        _sut.Visit( dataSource.ToDeleteFrom() );
-
-        _sut.Context.Sql.ToString()
-            .Should()
-            .Be(
-                @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-DELETE FROM ""foo""
-WHERE EXISTS (
-  SELECT DISTINCT
-    *
-  FROM ""foo"" AS ""f""
-  INNER JOIN bar ON bar.""a"" = ""f"".""a""
+  INNER JOIN bar ON ""f"".""a"" = bar.""a""
   WHERE (""foo"".""a"" = ""f"".""a"") AND (""foo"".""b"" = ""f"".""b"")
   GROUP BY ""f"".""b""
-  HAVING ""f"".""b"" < 100
-  ORDER BY ""f"".""b"" ASC
-  LIMIT 50 OFFSET 100
 )" );
     }
 
     [Fact]
-    public void Visit_ShouldInterpretDeleteFromWithComplexDataSourceAndTargetTableBuilderWithSingleColumnPrimaryKey()
+    public void Visit_ShouldInterpretDeleteFromWithComplexDataSource_WhenTargetIsTableBuilderWithSingleColumnPrimaryKey()
     {
         var table = CreateTableBuilder( string.Empty, "foo", new[] { "a", "b" }, "a" );
         var foo = table.ToRecordSet( "f" );
+        var other = SqlNode.RawRecordSet( "bar" );
 
         var dataSource = foo
-            .Join( SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ), x => x.Inner["a"] == foo["a"] ) )
-            .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
-            .Distinct()
-            .AndWhere( s => s["bar"]["c"].InQuery( SqlNode.RawQuery( "SELECT cba.c FROM cba" ) ) )
-            .GroupBy( s => new[] { s["f"]["b"] } )
-            .AndHaving( s => s["f"]["b"] < SqlNode.Literal( 100 ) )
-            .OrderBy( s => new[] { s["f"]["b"].Asc() } )
-            .Limit( SqlNode.Literal( 50 ) )
-            .Offset( SqlNode.Literal( 100 ) );
+            .Join( other.InnerOn( foo["a"] == other["a"] ) )
+            .GroupBy( s => new[] { s["f"]["b"] } );
 
         _sut.Visit( dataSource.ToDeleteFrom() );
 
         _sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-DELETE FROM ""foo""
+                @"DELETE FROM ""foo""
 WHERE ""foo"".""a"" IN (
-  SELECT DISTINCT
+  SELECT
     ""f"".""a""
   FROM ""foo"" AS ""f""
-  INNER JOIN bar ON bar.""a"" = ""f"".""a""
-  WHERE bar.""c"" IN (
-    SELECT cba.c FROM cba
-  )
+  INNER JOIN bar ON ""f"".""a"" = bar.""a""
   GROUP BY ""f"".""b""
-  HAVING ""f"".""b"" < 100
-  ORDER BY ""f"".""b"" ASC
-  LIMIT 50 OFFSET 100
 )" );
     }
 
     [Fact]
-    public void Visit_ShouldInterpretDeleteFromWithComplexDataSourceAndTargetTableBuilderWithMultipleColumnPrimaryKey()
+    public void Visit_ShouldInterpretDeleteFromWithComplexDataSource_WhenTargetIsTableBuilderWithMultiColumnPrimaryKey()
     {
-        var table = CreateTableBuilder( string.Empty, "foo", new[] { "a", "b", "c" }, "a", "b" );
+        var table = CreateTableBuilder( string.Empty, "foo", "a", "b" );
         var foo = table.ToRecordSet( "f" );
+        var other = SqlNode.RawRecordSet( "bar" );
 
         var dataSource = foo
-            .Join( SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ), x => x.Inner["a"] == foo["a"] ) )
-            .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
-            .Distinct()
-            .GroupBy( s => new[] { s["f"]["b"] } )
-            .AndHaving( s => s["f"]["b"] < SqlNode.Literal( 100 ) )
-            .OrderBy( s => new[] { s["f"]["b"].Asc() } )
-            .Limit( SqlNode.Literal( 50 ) )
-            .Offset( SqlNode.Literal( 100 ) );
+            .Join( other.InnerOn( foo["a"] == other["a"] ) )
+            .GroupBy( s => new[] { s["f"]["b"] } );
 
         _sut.Visit( dataSource.ToDeleteFrom() );
 
         _sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-DELETE FROM ""foo""
+                @"DELETE FROM ""foo""
 WHERE EXISTS (
-  SELECT DISTINCT
+  SELECT
     *
   FROM ""foo"" AS ""f""
-  INNER JOIN bar ON bar.""a"" = ""f"".""a""
+  INNER JOIN bar ON ""f"".""a"" = bar.""a""
   WHERE (""foo"".""a"" = ""f"".""a"") AND (""foo"".""b"" = ""f"".""b"")
   GROUP BY ""f"".""b""
-  HAVING ""f"".""b"" < 100
-  ORDER BY ""f"".""b"" ASC
-  LIMIT 50 OFFSET 100
 )" );
     }
 
     [Fact]
-    public void Visit_ShouldInterpretDeleteFromWithComplexDataSourceAndTargetTableBuilderWithoutPrimaryKey()
+    public void Visit_ShouldInterpretDeleteFromWithComplexDataSource_WhenTargetIsTableBuilderWithoutPrimaryKey()
     {
         var table = CreateEmptyTableBuilder( string.Empty, "foo" );
         table.Columns.Create( "a" );
         table.Columns.Create( "b" );
         var foo = table.ToRecordSet( "f" );
+        var other = SqlNode.RawRecordSet( "bar" );
 
         var dataSource = foo
-            .Join( SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ), x => x.Inner["a"] == foo["a"] ) )
-            .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
-            .Distinct()
-            .GroupBy( s => new[] { s["f"]["b"] } )
-            .AndHaving( s => s["f"]["b"] < SqlNode.Literal( 100 ) )
-            .OrderBy( s => new[] { s["f"]["b"].Asc() } )
-            .Limit( SqlNode.Literal( 50 ) )
-            .Offset( SqlNode.Literal( 100 ) );
+            .Join( other.InnerOn( foo["a"] == other["a"] ) )
+            .GroupBy( s => new[] { s["f"]["b"] } );
 
         _sut.Visit( dataSource.ToDeleteFrom() );
 
         _sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-DELETE FROM ""foo""
+                @"DELETE FROM ""foo""
 WHERE EXISTS (
-  SELECT DISTINCT
+  SELECT
     *
   FROM ""foo"" AS ""f""
-  INNER JOIN bar ON bar.""a"" = ""f"".""a""
+  INNER JOIN bar ON ""f"".""a"" = bar.""a""
   WHERE (""foo"".""a"" = ""f"".""a"") AND (""foo"".""b"" = ""f"".""b"")
   GROUP BY ""f"".""b""
-  HAVING ""f"".""b"" < 100
-  ORDER BY ""f"".""b"" ASC
-  LIMIT 50 OFFSET 100
 )" );
     }
 
     [Theory]
     [InlineData( false, "\"foo_bar\"" )]
     [InlineData( true, "temp.\"foo\"" )]
-    public void Visit_ShouldInterpretDeleteFromWithComplexDataSourceAndTargetNewTableWithSingleColumnPrimaryKey(
+    public void Visit_ShouldInterpretDeleteFromWithComplexDataSource_WhenTargetIsNewTableWithSingleColumnPrimaryKey(
         bool isTemporary,
         string expectedName)
     {
@@ -3780,139 +3902,102 @@ WHERE EXISTS (
             new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ) },
             constraintsProvider: t => SqlCreateTableConstraints.Empty.WithPrimaryKey( SqlNode.PrimaryKey( "PK", t["a"].Asc() ) ) );
 
-        var foo = table.AsSet( "f" );
+        var foo = table.RecordSet.As( "f" );
+        var other = SqlNode.RawRecordSet( "bar" );
 
         var dataSource = foo
-            .Join( SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ), x => x.Inner["a"] == foo["a"] ) )
-            .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
-            .Distinct()
-            .AndWhere( s => s["bar"]["c"].InQuery( SqlNode.RawQuery( "SELECT cba.c FROM cba" ) ) )
-            .GroupBy( s => new[] { s["f"].GetUnsafeField( "b" ) } )
-            .AndHaving( s => s["f"].GetUnsafeField( "b" ) < SqlNode.Literal( 100 ) )
-            .OrderBy( s => new[] { s["f"].GetUnsafeField( "b" ).Asc() } )
-            .Limit( SqlNode.Literal( 50 ) )
-            .Offset( SqlNode.Literal( 100 ) );
+            .Join( other.InnerOn( foo["a"] == other["a"] ) )
+            .GroupBy( s => new[] { s["f"]["b"] } );
 
         _sut.Visit( dataSource.ToDeleteFrom() );
 
         _sut.Context.Sql.ToString()
             .Should()
             .Be(
-                $@"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-DELETE FROM {expectedName}
+                $@"DELETE FROM {expectedName}
 WHERE {expectedName}.""a"" IN (
-  SELECT DISTINCT
+  SELECT
     ""f"".""a""
   FROM {expectedName} AS ""f""
-  INNER JOIN bar ON bar.""a"" = ""f"".""a""
-  WHERE bar.""c"" IN (
-    SELECT cba.c FROM cba
-  )
+  INNER JOIN bar ON ""f"".""a"" = bar.""a""
   GROUP BY ""f"".""b""
-  HAVING ""f"".""b"" < 100
-  ORDER BY ""f"".""b"" ASC
-  LIMIT 50 OFFSET 100
 )" );
     }
 
     [Theory]
     [InlineData( false, "\"foo_bar\"" )]
     [InlineData( true, "temp.\"foo\"" )]
-    public void Visit_ShouldInterpretDeleteFromWithComplexDataSourceAndTargetNewTableWithMultipleColumnPrimaryKey(
+    public void Visit_ShouldInterpretDeleteFromWithComplexDataSource_WhenTargetIsNewTableWithMultiColumnPrimaryKey(
         bool isTemporary,
         string expectedName)
     {
         var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
         var table = SqlNode.CreateTable(
             info,
-            new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ), SqlNode.Column<int>( "c" ) },
+            new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ) },
             constraintsProvider: t =>
-                SqlCreateTableConstraints.Empty.WithPrimaryKey( SqlNode.PrimaryKey( "PK", t["a"].Asc(), t["b"].Desc() ) ) );
+                SqlCreateTableConstraints.Empty.WithPrimaryKey( SqlNode.PrimaryKey( "PK", t["a"].Asc(), t["b"].Asc() ) ) );
 
-        var foo = table.AsSet( "f" );
+        var foo = table.RecordSet.As( "f" );
+        var other = SqlNode.RawRecordSet( "bar" );
 
         var dataSource = foo
-            .Join( SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ), x => x.Inner["a"] == foo["a"] ) )
-            .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
-            .Distinct()
-            .GroupBy( s => new[] { s["f"]["b"] } )
-            .AndHaving( s => s["f"]["b"] < SqlNode.Literal( 100 ) )
-            .OrderBy( s => new[] { s["f"]["b"].Asc() } )
-            .Limit( SqlNode.Literal( 50 ) )
-            .Offset( SqlNode.Literal( 100 ) );
+            .Join( other.InnerOn( foo["a"] == other["a"] ) )
+            .GroupBy( s => new[] { s["f"]["b"] } );
 
         _sut.Visit( dataSource.ToDeleteFrom() );
 
         _sut.Context.Sql.ToString()
             .Should()
             .Be(
-                $@"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-DELETE FROM {expectedName}
+                $@"DELETE FROM {expectedName}
 WHERE EXISTS (
-  SELECT DISTINCT
+  SELECT
     *
   FROM {expectedName} AS ""f""
-  INNER JOIN bar ON bar.""a"" = ""f"".""a""
+  INNER JOIN bar ON ""f"".""a"" = bar.""a""
   WHERE ({expectedName}.""a"" = ""f"".""a"") AND ({expectedName}.""b"" = ""f"".""b"")
   GROUP BY ""f"".""b""
-  HAVING ""f"".""b"" < 100
-  ORDER BY ""f"".""b"" ASC
-  LIMIT 50 OFFSET 100
 )" );
     }
 
     [Theory]
     [InlineData( false, "\"foo_bar\"" )]
     [InlineData( true, "temp.\"foo\"" )]
-    public void Visit_ShouldInterpretDeleteFromWithComplexDataSourceAndTargetNewTableWithoutPrimaryKey(
+    public void Visit_ShouldInterpretDeleteFromWithComplexDataSource_WhenTargetIsNewTableWithoutPrimaryKey(
         bool isTemporary,
         string expectedName)
     {
         var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
         var table = SqlNode.CreateTable( info, new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ) } );
-
-        var foo = table.AsSet( "f" );
+        var foo = table.RecordSet.As( "f" );
+        var other = SqlNode.RawRecordSet( "bar" );
 
         var dataSource = foo
-            .Join( SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ), x => x.Inner["a"] == foo["a"] ) )
-            .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
-            .Distinct()
-            .GroupBy( s => new[] { s["f"]["b"] } )
-            .AndHaving( s => s["f"]["b"] < SqlNode.Literal( 100 ) )
-            .OrderBy( s => new[] { s["f"]["b"].Asc() } )
-            .Limit( SqlNode.Literal( 50 ) )
-            .Offset( SqlNode.Literal( 100 ) );
+            .Join( other.InnerOn( foo["a"] == other["a"] ) )
+            .GroupBy( s => new[] { s["f"]["b"] } );
 
         _sut.Visit( dataSource.ToDeleteFrom() );
 
         _sut.Context.Sql.ToString()
             .Should()
             .Be(
-                $@"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-DELETE FROM {expectedName}
+                $@"DELETE FROM {expectedName}
 WHERE EXISTS (
-  SELECT DISTINCT
+  SELECT
     *
   FROM {expectedName} AS ""f""
-  INNER JOIN bar ON bar.""a"" = ""f"".""a""
+  INNER JOIN bar ON ""f"".""a"" = bar.""a""
   WHERE ({expectedName}.""a"" = ""f"".""a"") AND ({expectedName}.""b"" = ""f"".""b"")
   GROUP BY ""f"".""b""
-  HAVING ""f"".""b"" < 100
-  ORDER BY ""f"".""b"" ASC
-  LIMIT 50 OFFSET 100
 )" );
     }
 
     [Fact]
     public void Visit_ShouldThrowSqlNodeVisitorException_WhenDeleteFromIsComplexAndDataSourceFromIsNotTable()
     {
-        var node = SqlNode.RawRecordSet( "foo" ).Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToDeleteFrom();
+        var foo = SqlNode.RawRecordSet( "foo" );
+        var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
         var action = Lambda.Of( () => _sut.Visit( node ) );
 
         action.Should()
@@ -3924,7 +4009,7 @@ WHERE EXISTS (
     public void Visit_ShouldThrowSqlNodeVisitorException_WhenDeleteFromIsComplexAndDataSourceFromIsTableWithoutAlias()
     {
         var foo = CreateTable( string.Empty, "foo" ).ToRecordSet();
-        var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToDeleteFrom();
+        var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
         var action = Lambda.Of( () => _sut.Visit( node ) );
 
         action.Should()
@@ -3936,7 +4021,7 @@ WHERE EXISTS (
     public void Visit_ShouldThrowSqlNodeVisitorException_WhenDeleteFromIsComplexAndDataSourceFromIsTableBuilderWithoutColumns()
     {
         var foo = CreateEmptyTableBuilder( string.Empty, "foo" ).ToRecordSet( "f" );
-        var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToDeleteFrom();
+        var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
         var action = Lambda.Of( () => _sut.Visit( node ) );
 
         action.Should()
@@ -3949,7 +4034,7 @@ WHERE EXISTS (
         Visit_ShouldThrowSqlNodeVisitorException_WhenDeleteFromIsComplexAndDataSourceFromIsNewTableWithoutPrimaryKeyAndColumns()
     {
         var foo = SqlNode.CreateTable( SqlRecordSetInfo.Create( "foo" ), Array.Empty<SqlColumnDefinitionNode>() ).AsSet( "f" );
-        var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToDeleteFrom();
+        var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
         var action = Lambda.Of( () => _sut.Visit( node ) );
 
         action.Should()
@@ -3958,8 +4043,7 @@ WHERE EXISTS (
     }
 
     [Fact]
-    public void
-        Visit_ShouldThrowSqlNodeVisitorException_WhenDeleteFromIsComplexAndDataSourceFromIsNewTableWithPrimaryKeyWithoutColumns()
+    public void Visit_ShouldThrowSqlNodeVisitorException_WhenDeleteFromIsComplexAndDataSourceFromIsNewTableWithPrimaryKeyWithoutColumns()
     {
         var foo = SqlNode.CreateTable(
                 SqlRecordSetInfo.Create( "foo" ),
@@ -3967,7 +4051,7 @@ WHERE EXISTS (
                 constraintsProvider: _ => SqlCreateTableConstraints.Empty.WithPrimaryKey( SqlNode.PrimaryKey( "PK" ) ) )
             .AsSet( "f" );
 
-        var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToDeleteFrom();
+        var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
         var action = Lambda.Of( () => _sut.Visit( node ) );
 
         action.Should()
@@ -3986,7 +4070,7 @@ WHERE EXISTS (
                     SqlCreateTableConstraints.Empty.WithPrimaryKey( SqlNode.PrimaryKey( "PK", (t["a"] + SqlNode.Literal( 1 )).Asc() ) ) )
             .AsSet( "f" );
 
-        var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).ToDeleteFrom();
+        var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
         var action = Lambda.Of( () => _sut.Visit( node ) );
 
         action.Should()
@@ -4157,59 +4241,92 @@ DELETE FROM ""SQLITE_SEQUENCE"" WHERE ""name"" = 'qux'" );
   ""y"" TEXT,
   ""z"" REAL NOT NULL DEFAULT (10.5),
   CONSTRAINT ""PK_foobar"" PRIMARY KEY (""x"" ASC),
-  CONSTRAINT ""FK_foobar_REF_qux"" FOREIGN KEY (""y"") REFERENCES qux (""y"") ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT ""CHK_foobar"" CHECK (""z"" > 100.0)
+  CONSTRAINT ""CHK_foobar"" CHECK (""z"" > 100.0),
+  CONSTRAINT ""FK_foobar_REF_qux"" FOREIGN KEY (""y"") REFERENCES qux (""y"") ON DELETE RESTRICT ON UPDATE RESTRICT
 ) WITHOUT ROWID" );
     }
 
     [Theory]
-    [InlineData( false, false, "\"foo_bar\"" )]
-    [InlineData( true, false, "temp.\"foo\"" )]
-    [InlineData( false, true, "\"foo_bar\"" )]
-    [InlineData( true, true, "temp.\"foo\"" )]
-    public void Visit_ShouldInterpretCreateView(bool isTemporary, bool ifNotExists, string expectedName)
+    [InlineData( false, "\"foo_bar\"" )]
+    [InlineData( true, "temp.\"foo\"" )]
+    public void Visit_ShouldInterpretCreateView(bool isTemporary, string expectedName)
     {
         var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
-        var node = SqlNode.CreateView( info, ifNotExists: ifNotExists, source: SqlNode.RawQuery( "SELECT * FROM qux" ) );
+        var node = SqlNode.CreateView( info, replaceIfExists: false, source: SqlNode.RawQuery( "SELECT * FROM qux" ) );
         _sut.Visit( node );
 
         _sut.Context.Sql.ToString()
             .Should()
             .Be(
-                $@"CREATE VIEW{(ifNotExists ? " IF NOT EXISTS" : string.Empty)} {expectedName} AS
+                $@"CREATE VIEW {expectedName} AS
 SELECT * FROM qux" );
     }
 
     [Theory]
-    [InlineData( false )]
-    [InlineData( true )]
-    public void Visit_ShouldInterpretCreateIndex(bool ifNotExists)
+    [InlineData( false, "\"foo_bar\"" )]
+    [InlineData( true, "temp.\"foo\"" )]
+    public void Visit_ShouldInterpretCreateView_WithReplaceIfExists(bool isTemporary, string expectedName)
+    {
+        var info = isTemporary ? SqlRecordSetInfo.CreateTemporary( "foo" ) : SqlRecordSetInfo.Create( "foo", "bar" );
+        var node = SqlNode.CreateView( info, replaceIfExists: true, source: SqlNode.RawQuery( "SELECT * FROM qux" ) );
+        _sut.Visit( node );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                $@"DROP VIEW IF EXISTS {expectedName};
+CREATE VIEW {expectedName} AS
+SELECT * FROM qux" );
+    }
+
+    [Theory]
+    [InlineData( false, "INDEX" )]
+    [InlineData( true, "UNIQUE INDEX" )]
+    public void Visit_ShouldInterpretCreateIndex(bool isUnique, string expectedType)
     {
         var qux = SqlNode.RawRecordSet( "qux" );
         var node = SqlNode.CreateIndex(
             SqlSchemaObjectName.Create( "foo", "bar" ),
-            isUnique: false,
-            ifNotExists: ifNotExists,
+            isUnique: isUnique,
+            replaceIfExists: false,
             table: qux,
             columns: new[] { qux["a"].Asc(), qux["b"].Desc() } );
 
         _sut.Visit( node );
 
-        _sut.Context.Sql.ToString()
-            .Should()
-            .Be( $"CREATE INDEX{(ifNotExists ? " IF NOT EXISTS" : string.Empty)} \"foo_bar\" ON qux (\"a\" ASC, \"b\" DESC)" );
+        _sut.Context.Sql.ToString().Should().Be( $"CREATE {expectedType} \"foo_bar\" ON qux (\"a\" ASC, \"b\" DESC)" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretCreateIndex_WithTemporaryTable()
+    {
+        var qux = SqlNode.CreateTable(
+                SqlRecordSetInfo.CreateTemporary( "qux" ),
+                new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ) } )
+            .RecordSet;
+
+        var node = SqlNode.CreateIndex(
+            SqlSchemaObjectName.Create( "bar" ),
+            isUnique: false,
+            replaceIfExists: false,
+            table: qux,
+            columns: new[] { qux["a"].Asc(), qux["b"].Desc() } );
+
+        _sut.Visit( node );
+
+        _sut.Context.Sql.ToString().Should().Be( "CREATE INDEX temp.\"bar\" ON \"qux\" (\"a\" ASC, \"b\" DESC)" );
     }
 
     [Theory]
-    [InlineData( false )]
-    [InlineData( true )]
-    public void Visit_ShouldInterpretCreateUniqueIndex(bool ifNotExists)
+    [InlineData( false, "INDEX" )]
+    [InlineData( true, "UNIQUE INDEX" )]
+    public void Visit_ShouldInterpretCreateIndex_WithReplaceIfExists(bool isUnique, string expectedType)
     {
         var qux = SqlNode.RawRecordSet( "qux" );
         var node = SqlNode.CreateIndex(
             SqlSchemaObjectName.Create( "foo", "bar" ),
-            isUnique: true,
-            ifNotExists: ifNotExists,
+            isUnique: isUnique,
+            replaceIfExists: true,
             table: qux,
             columns: new[] { qux["a"].Asc(), qux["b"].Desc() } );
 
@@ -4218,7 +4335,8 @@ SELECT * FROM qux" );
         _sut.Context.Sql.ToString()
             .Should()
             .Be(
-                $"CREATE UNIQUE INDEX{(ifNotExists ? " IF NOT EXISTS" : string.Empty)} \"foo_bar\" ON qux (\"a\" ASC, \"b\" DESC)" );
+                $@"DROP INDEX IF EXISTS ""foo_bar"";
+CREATE {expectedType} ""foo_bar"" ON qux (""a"" ASC, ""b"" DESC)" );
     }
 
     [Fact]
@@ -4228,7 +4346,7 @@ SELECT * FROM qux" );
         var node = SqlNode.CreateIndex(
             SqlSchemaObjectName.Create( "foo", "bar" ),
             isUnique: false,
-            ifNotExists: false,
+            replaceIfExists: false,
             table: qux,
             columns: new[] { qux["a"].Asc(), qux["b"].Desc() },
             filter: qux["a"] != null );
@@ -4305,11 +4423,17 @@ SELECT * FROM qux" );
     }
 
     [Theory]
-    [InlineData( false, "DROP INDEX \"foo_bar\"" )]
-    [InlineData( true, "DROP INDEX IF EXISTS \"foo_bar\"" )]
-    public void Visit_ShouldInterpretDropIndex(bool ifExists, string expected)
+    [InlineData( false, false, "DROP INDEX \"foo_bar\"" )]
+    [InlineData( true, false, "DROP INDEX IF EXISTS \"foo_bar\"" )]
+    [InlineData( false, true, "DROP INDEX temp.\"bar\"" )]
+    [InlineData( true, true, "DROP INDEX IF EXISTS temp.\"bar\"" )]
+    public void Visit_ShouldInterpretDropIndex(bool ifExists, bool isRecordSetTemporary, string expected)
     {
-        _sut.Visit( SqlNode.DropIndex( SqlSchemaObjectName.Create( "foo", "bar" ), ifExists ) );
+        var recordSet = isRecordSetTemporary ? SqlRecordSetInfo.CreateTemporary( "qux" ) : SqlRecordSetInfo.Create( "foo", "qux" );
+        var name = isRecordSetTemporary ? SqlSchemaObjectName.Create( "bar" ) : SqlSchemaObjectName.Create( "foo", "bar" );
+
+        _sut.Visit( SqlNode.DropIndex( recordSet, name, ifExists ) );
+
         _sut.Context.Sql.ToString().Should().Be( expected );
     }
 

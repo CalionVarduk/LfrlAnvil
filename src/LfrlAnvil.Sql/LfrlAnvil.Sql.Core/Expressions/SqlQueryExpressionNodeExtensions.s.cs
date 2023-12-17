@@ -371,8 +371,8 @@ public static class SqlQueryExpressionNodeExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlCreateViewNode ToCreateView(this SqlQueryExpressionNode node, SqlRecordSetInfo view, bool ifNotExists = false)
+    public static SqlCreateViewNode ToCreateView(this SqlQueryExpressionNode node, SqlRecordSetInfo view, bool replaceIfExists = false)
     {
-        return SqlNode.CreateView( view, node, ifNotExists );
+        return SqlNode.CreateView( view, node, replaceIfExists );
     }
 }

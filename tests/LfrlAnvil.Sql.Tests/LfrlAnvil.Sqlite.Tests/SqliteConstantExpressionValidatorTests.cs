@@ -1256,7 +1256,7 @@ public class SqliteConstantExpressionValidatorTests : TestsBase
     [Fact]
     public void VisitDropIndex_ShouldRegisterError()
     {
-        _sut.VisitDropIndex( SqlNode.DropIndex( SqlSchemaObjectName.Create( "foo" ) ) );
+        _sut.VisitDropIndex( SqlNode.DropIndex( SqlRecordSetInfo.Create( "bar" ), SqlSchemaObjectName.Create( "foo" ) ) );
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 

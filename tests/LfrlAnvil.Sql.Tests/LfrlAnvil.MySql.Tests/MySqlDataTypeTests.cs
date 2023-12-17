@@ -316,7 +316,7 @@ public class MySqlDataTypeTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            sut.Name.Should().Be( "DATE(6)" );
+            sut.Name.Should().Be( "DATE" );
             sut.Value.Should().Be( MySqlDbType.Newdate );
             sut.DbType.Should().Be( DbType.Date );
             sut.Dialect.Should().BeSameAs( MySqlDialect.Instance );

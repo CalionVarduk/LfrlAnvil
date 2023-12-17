@@ -649,10 +649,11 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
 
     public override void VisitCreateView(SqlCreateViewNode node)
     {
-        Context.Sql.Append( "CREATE" ).AppendSpace().Append( "VIEW" ).AppendSpace();
-        if ( node.IfNotExists )
-            Context.Sql.Append( "IF" ).AppendSpace().Append( "NOT" ).AppendSpace().Append( "EXISTS" ).AppendSpace();
+        Context.Sql.Append( "CREATE" ).AppendSpace();
+        if ( node.ReplaceIfExists )
+            Context.Sql.Append( "OR" ).AppendSpace().Append( "REPLACE" ).AppendSpace();
 
+        Context.Sql.Append( "VIEW" ).AppendSpace();
         AppendDelimitedRecordSetInfo( node.Info );
         Context.Sql.AppendSpace().Append( "AS" );
         Context.AppendIndent();
@@ -662,13 +663,13 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
     public override void VisitCreateIndex(SqlCreateIndexNode node)
     {
         Context.Sql.Append( "CREATE" ).AppendSpace();
+        if ( node.ReplaceIfExists )
+            Context.Sql.Append( "OR" ).AppendSpace().Append( "REPLACE" ).AppendSpace();
+
         if ( node.IsUnique )
             Context.Sql.Append( "UNIQUE" ).AppendSpace();
 
         Context.Sql.Append( "INDEX" ).AppendSpace();
-        if ( node.IfNotExists )
-            Context.Sql.Append( "IF" ).AppendSpace().Append( "NOT" ).AppendSpace().Append( "EXISTS" ).AppendSpace();
-
         AppendDelimitedSchemaObjectName( node.Name );
         Context.Sql.AppendSpace().Append( "ON" ).AppendSpace();
         AppendDelimitedRecordSetName( node.Table );
@@ -756,6 +757,8 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
             Context.Sql.Append( "IF" ).AppendSpace().Append( "EXISTS" ).AppendSpace();
 
         AppendDelimitedSchemaObjectName( node.Name );
+        Context.Sql.AppendSpace().Append( "ON" ).AppendSpace();
+        AppendDelimitedRecordSetInfo( node.Table );
     }
 
     public override void VisitStatementBatch(SqlStatementBatchNode node)

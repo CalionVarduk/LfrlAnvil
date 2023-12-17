@@ -196,7 +196,7 @@ public static class SqlObjectExtensions
             index.IsUnique,
             ixTable.RecordSet,
             columns,
-            ifNotExists: false,
+            replaceIfExists: false,
             index.Filter );
     }
 

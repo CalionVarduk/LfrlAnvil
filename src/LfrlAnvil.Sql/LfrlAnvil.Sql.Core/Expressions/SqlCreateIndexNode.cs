@@ -10,7 +10,7 @@ public sealed class SqlCreateIndexNode : SqlNodeBase, ISqlStatementNode
     internal SqlCreateIndexNode(
         SqlSchemaObjectName name,
         bool isUnique,
-        bool ifNotExists,
+        bool replaceIfExists,
         SqlRecordSetNode table,
         SqlOrderByNode[] columns,
         SqlConditionNode? filter)
@@ -18,7 +18,7 @@ public sealed class SqlCreateIndexNode : SqlNodeBase, ISqlStatementNode
     {
         Name = name;
         IsUnique = isUnique;
-        IfNotExists = ifNotExists;
+        ReplaceIfExists = replaceIfExists;
         Table = table;
         Columns = columns;
         Filter = filter;
@@ -26,7 +26,7 @@ public sealed class SqlCreateIndexNode : SqlNodeBase, ISqlStatementNode
 
     public SqlSchemaObjectName Name { get; }
     public bool IsUnique { get; }
-    public bool IfNotExists { get; }
+    public bool ReplaceIfExists { get; }
     public SqlRecordSetNode Table { get; }
     public ReadOnlyMemory<SqlOrderByNode> Columns { get; }
     public SqlConditionNode? Filter { get; }

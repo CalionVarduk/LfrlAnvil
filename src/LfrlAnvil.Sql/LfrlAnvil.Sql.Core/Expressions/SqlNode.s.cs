@@ -757,9 +757,9 @@ public static partial class SqlNode
     }
 
     [Pure]
-    public static SqlCreateViewNode CreateView(SqlRecordSetInfo info, SqlQueryExpressionNode source, bool ifNotExists = false)
+    public static SqlCreateViewNode CreateView(SqlRecordSetInfo info, SqlQueryExpressionNode source, bool replaceIfExists = false)
     {
-        return new SqlCreateViewNode( info, ifNotExists, source );
+        return new SqlCreateViewNode( info, replaceIfExists, source );
     }
 
     [Pure]
@@ -768,10 +768,10 @@ public static partial class SqlNode
         bool isUnique,
         SqlRecordSetNode table,
         SqlOrderByNode[] columns,
-        bool ifNotExists = false,
+        bool replaceIfExists = false,
         SqlConditionNode? filter = null)
     {
-        return new SqlCreateIndexNode( name, isUnique, ifNotExists, table, columns, filter );
+        return new SqlCreateIndexNode( name, isUnique, replaceIfExists, table, columns, filter );
     }
 
     [Pure]
@@ -811,9 +811,9 @@ public static partial class SqlNode
     }
 
     [Pure]
-    public static SqlDropIndexNode DropIndex(SqlSchemaObjectName name, bool ifExists = false)
+    public static SqlDropIndexNode DropIndex(SqlRecordSetInfo table, SqlSchemaObjectName name, bool ifExists = false)
     {
-        return new SqlDropIndexNode( name, ifExists );
+        return new SqlDropIndexNode( table, name, ifExists );
     }
 
     [Pure]

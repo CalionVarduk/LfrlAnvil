@@ -326,15 +326,10 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             Context.AppendIndent();
 
         var traits = ExtractDataSourceTraits( ExtractDataSourceTraits( node.DataSource.Traits ), node.Traits );
-        VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions, traits.ContainsRecursiveCommonTableExpression );
+        VisitDataSourceBeforeTraits( in traits );
         VisitDataSourceQuerySelection( node, traits.Distinct );
         VisitDataSource( node.DataSource );
-        VisitOptionalFilterCondition( traits.Filter );
-        VisitOptionalAggregationRange( traits.Aggregations );
-        VisitOptionalAggregationFilterCondition( traits.AggregationFilter );
-        VisitOptionalWindowRange( traits.Windows );
-        VisitOptionalOrderingRange( traits.Ordering );
-        VisitOptionalLimitAndOffsetExpressions( traits.Limit, traits.Offset );
+        VisitDataSourceAfterTraits( in traits );
 
         if ( isChild )
             Context.AppendShortIndent();
@@ -347,10 +342,9 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             Context.AppendIndent();
 
         var traits = ExtractQueryTraits( default, node.Traits );
-        VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions, traits.ContainsRecursiveCommonTableExpression );
+        VisitQueryBeforeTraits( in traits );
         VisitCompoundQueryComponents( node );
-        VisitOptionalOrderingRange( traits.Ordering );
-        VisitOptionalLimitAndOffsetExpressions( traits.Limit, traits.Offset );
+        VisitQueryAfterTraits( in traits );
 
         if ( isChild )
             Context.AppendShortIndent();
@@ -622,17 +616,17 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
                     Context.Sql.AppendComma();
                 }
 
-                foreach ( var foreignKey in node.ForeignKeys )
-                {
-                    Context.AppendIndent();
-                    VisitForeignKeyDefinition( foreignKey );
-                    Context.Sql.AppendComma();
-                }
-
                 foreach ( var check in node.Checks )
                 {
                     Context.AppendIndent();
                     VisitCheckDefinition( check );
+                    Context.Sql.AppendComma();
+                }
+
+                foreach ( var foreignKey in node.ForeignKeys )
+                {
+                    Context.AppendIndent();
+                    VisitForeignKeyDefinition( foreignKey );
                     Context.Sql.AppendComma();
                 }
 
@@ -646,10 +640,14 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitCreateView(SqlCreateViewNode node)
     {
-        Context.Sql.Append( "CREATE" ).AppendSpace().Append( "VIEW" ).AppendSpace();
-        if ( node.IfNotExists )
-            Context.Sql.Append( "IF" ).AppendSpace().Append( "NOT" ).AppendSpace().Append( "EXISTS" ).AppendSpace();
+        if ( node.ReplaceIfExists )
+        {
+            VisitDropView( node.ToDropView( ifExists: true ) );
+            Context.Sql.AppendSemicolon();
+            Context.AppendIndent();
+        }
 
+        Context.Sql.Append( "CREATE" ).AppendSpace().Append( "VIEW" ).AppendSpace();
         AppendDelimitedRecordSetInfo( node.Info );
         Context.Sql.AppendSpace().Append( "AS" );
         Context.AppendIndent();
@@ -660,17 +658,30 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
     {
         using ( TempIgnoreAllRecordSets() )
         {
+            if ( node.ReplaceIfExists )
+            {
+                VisitDropIndex( node.ToDropIndex( ifExists: true ) );
+                Context.Sql.AppendSemicolon();
+                Context.AppendIndent();
+            }
+
             Context.Sql.Append( "CREATE" ).AppendSpace();
             if ( node.IsUnique )
                 Context.Sql.Append( "UNIQUE" ).AppendSpace();
 
             Context.Sql.Append( "INDEX" ).AppendSpace();
-            if ( node.IfNotExists )
-                Context.Sql.Append( "IF" ).AppendSpace().Append( "NOT" ).AppendSpace().Append( "EXISTS" ).AppendSpace();
-
-            AppendDelimitedSchemaObjectName( node.Name );
-            Context.Sql.AppendSpace().Append( "ON" ).AppendSpace();
-            AppendDelimitedRecordSetName( node.Table );
+            if ( node.Table.Info.IsTemporary )
+            {
+                AppendDelimitedTemporaryObjectName( node.Name.Object );
+                Context.Sql.AppendSpace().Append( "ON" ).AppendSpace();
+                AppendDelimitedSchemaObjectName( node.Table.Info.Name );
+            }
+            else
+            {
+                AppendDelimitedSchemaObjectName( node.Name );
+                Context.Sql.AppendSpace().Append( "ON" ).AppendSpace();
+                AppendDelimitedRecordSetName( node.Table );
+            }
 
             Context.Sql.AppendSpace().Append( '(' );
             if ( node.Columns.Length > 0 )
@@ -755,7 +766,10 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         if ( node.IfExists )
             Context.Sql.Append( "IF" ).AppendSpace().Append( "EXISTS" ).AppendSpace();
 
-        AppendDelimitedSchemaObjectName( node.Name );
+        if ( node.Table.IsTemporary )
+            AppendDelimitedTemporaryObjectName( node.Name.Object );
+        else
+            AppendDelimitedSchemaObjectName( node.Name );
     }
 
     public override void VisitBeginTransaction(SqlBeginTransactionNode node)
