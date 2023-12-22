@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Text;
+using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Visitors;
+using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
 
@@ -349,6 +351,117 @@ public class SqlNodeInterpreterContextTests : TestsBase
             sut.ChildDepth.Should().Be( 0 );
             sut.Sql.Length.Should().Be( 0 );
             sut.Parameters.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void ToSnapshot_ShouldCreateReadonlySnapshotOfCurrentContextState()
+    {
+        var sut = SqlNodeInterpreterContext.Create();
+        sut.AddParameter( "a", TypeNullability.Create<int>() );
+        sut.AddParameter( "b", TypeNullability.Create<string>( isNullable: true ) );
+        sut.AddParameter( "c", null );
+        sut.Sql.Append( "SELECT * FROM bar" );
+
+        var result = sut.ToSnapshot();
+
+        using ( new AssertionScope() )
+        {
+            result.Sql.Should().Be( "SELECT * FROM bar" );
+            result.Parameters.ToArray().Should().HaveCount( 3 );
+            result.Parameters[0].Should().BeEquivalentTo( SqlNode.Parameter( "a", TypeNullability.Create<int>() ) );
+            result.Parameters[1].Should().BeEquivalentTo( SqlNode.Parameter( "b", TypeNullability.Create<string>( isNullable: true ) ) );
+            result.Parameters[2].Should().BeEquivalentTo( SqlNode.Parameter( "c" ) );
+            result.ToString().Should().Be( result.Sql );
+            sut.Sql.ToString().Should().Be( result.Sql );
+            sut.Parameters.Should().HaveCount( 3 );
+        }
+    }
+
+    [Fact]
+    public void Snapshot_ToExpression_ShouldCreateRawExpressionNode()
+    {
+        var context = SqlNodeInterpreterContext.Create();
+        context.AddParameter( "a", TypeNullability.Create<int>() );
+        context.Sql.Append( "SELECT * FROM bar" );
+        var sut = context.ToSnapshot();
+
+        var result = sut.ToExpression();
+
+        using ( new AssertionScope() )
+        {
+            result.Sql.Should().Be( "SELECT * FROM bar" );
+            result.Parameters.ToArray().Should().BeSequentiallyEqualTo( result.Parameters.ToArray() );
+            result.Type.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void Snapshot_ToExpression_ShouldCreateRawExpressionNode_WithType()
+    {
+        var context = SqlNodeInterpreterContext.Create();
+        context.AddParameter( "a", TypeNullability.Create<int>() );
+        context.Sql.Append( "SELECT * FROM bar" );
+        var sut = context.ToSnapshot();
+
+        var result = sut.ToExpression( TypeNullability.Create<string>() );
+
+        using ( new AssertionScope() )
+        {
+            result.Sql.Should().Be( "SELECT * FROM bar" );
+            result.Parameters.ToArray().Should().BeSequentiallyEqualTo( result.Parameters.ToArray() );
+            result.Type.Should().Be( TypeNullability.Create<string>() );
+        }
+    }
+
+    [Fact]
+    public void Snapshot_ToCondition_ShouldCreateRawConditionNode()
+    {
+        var context = SqlNodeInterpreterContext.Create();
+        context.AddParameter( "a", TypeNullability.Create<int>() );
+        context.Sql.Append( "SELECT * FROM bar" );
+        var sut = context.ToSnapshot();
+
+        var result = sut.ToCondition();
+
+        using ( new AssertionScope() )
+        {
+            result.Sql.Should().Be( "SELECT * FROM bar" );
+            result.Parameters.ToArray().Should().BeSequentiallyEqualTo( result.Parameters.ToArray() );
+        }
+    }
+
+    [Fact]
+    public void Snapshot_ToStatement_ShouldCreateRawStatementNode()
+    {
+        var context = SqlNodeInterpreterContext.Create();
+        context.AddParameter( "a", TypeNullability.Create<int>() );
+        context.Sql.Append( "SELECT * FROM bar" );
+        var sut = context.ToSnapshot();
+
+        var result = sut.ToStatement();
+
+        using ( new AssertionScope() )
+        {
+            result.Sql.Should().Be( "SELECT * FROM bar" );
+            result.Parameters.ToArray().Should().BeSequentiallyEqualTo( result.Parameters.ToArray() );
+        }
+    }
+
+    [Fact]
+    public void Snapshot_ToQuery_ShouldCreateRawQueryNode()
+    {
+        var context = SqlNodeInterpreterContext.Create();
+        context.AddParameter( "a", TypeNullability.Create<int>() );
+        context.Sql.Append( "SELECT * FROM bar" );
+        var sut = context.ToSnapshot();
+
+        var result = sut.ToQuery();
+
+        using ( new AssertionScope() )
+        {
+            result.Sql.Should().Be( "SELECT * FROM bar" );
+            result.Parameters.ToArray().Should().BeSequentiallyEqualTo( result.Parameters.ToArray() );
         }
     }
 }

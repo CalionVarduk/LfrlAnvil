@@ -209,16 +209,28 @@ public class SqlNodeInterpreterTests : TestsBase
             result.Distinct.Should().NotBeNull();
             (result.Filter?.ToString()).Should().Be( "((A > 10) AND (C > 11)) OR (E > 12)" );
             (result.Window?.ToString()).Should().Be( "[W] AS (ORDER BY (C) ASC)" );
-            result.Ordering.Should().BeSequentiallyEqualTo( sort.Ordering );
-            result.Custom.Should().HaveCount( 7 );
+            result.Custom.Should().HaveCount( 8 );
             result.Custom.ElementAtOrDefault( 0 ).Should().BeSameAs( aggregation );
             result.Custom.ElementAtOrDefault( 1 ).Should().BeSameAs( aggregationFilter );
             result.Custom.ElementAtOrDefault( 2 ).Should().BeSameAs( windows );
-            result.Custom.ElementAtOrDefault( 3 ).Should().BeSameAs( limit );
-            result.Custom.ElementAtOrDefault( 4 ).Should().BeSameAs( cte );
-            result.Custom.ElementAtOrDefault( 5 ).Should().BeSameAs( custom );
-            result.Custom.ElementAtOrDefault( 6 ).Should().BeSameAs( offset );
+            result.Custom.ElementAtOrDefault( 3 ).Should().BeSameAs( sort );
+            result.Custom.ElementAtOrDefault( 4 ).Should().BeSameAs( limit );
+            result.Custom.ElementAtOrDefault( 5 ).Should().BeSameAs( cte );
+            result.Custom.ElementAtOrDefault( 6 ).Should().BeSameAs( custom );
+            result.Custom.ElementAtOrDefault( 7 ).Should().BeSameAs( offset );
         }
+    }
+
+    [Fact]
+    public void FilterTraits_ShouldReturnedFilteredCollectionOfTraits()
+    {
+        var limit = SqlNode.LimitTrait( SqlNode.Literal( 10 ) );
+        var offset = SqlNode.OffsetTrait( SqlNode.Literal( 20 ) );
+        var traits = Chain.Create<SqlTraitNode>( limit ).Extend( offset );
+
+        var result = SqlNodeInterpreter.FilterTraits( traits, t => t.NodeType == SqlNodeType.LimitTrait );
+
+        result.Should().BeSequentiallyEqualTo( limit );
     }
 
     [Fact]

@@ -131,6 +131,13 @@ public sealed class SqlNodeInterpreterContext
         ChildDepth = 0;
     }
 
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public SqlNodeInterpreterContextSnapshot ToSnapshot()
+    {
+        return new SqlNodeInterpreterContextSnapshot( this );
+    }
+
     public readonly struct TemporaryChildDepthIncrease : IDisposable
     {
         private readonly SqlNodeInterpreterContext _context;
