@@ -26,6 +26,93 @@
 |    23    |    Dependencies     |                    Generic builder types                    |                 [link](#dependencies-generic-builder-types)                 |                         -                          |
 |    24    |   Reactive.State    |                       Extension ideas                       |                   [link](#reactivestate-extension-ideas)                    |                         -                          |
 
+
+### Scribbles:
+- MySql GUID function setup:
+  - DROP FUNCTION IF EXISTS GUID;
+  - CREATE FUNCTION GUID() RETURNS BINARY(16)
+  - BEGIN
+    - SET @value = UNHEX(REPLACE(UUID(), '-', ''));
+    - RETURN CONCAT(REVERSE(SUBSTRING(@value, 1, 4)), REVERSE(SUBSTRING(@value, 5, 2)), REVERSE(SUBSTRING(@value, 7, 2)), SUBSTRING(@value, 9));
+  - END;
+
+
+- MySql _DROP_INDEX_IF_EXISTS procedure setup:
+  - DROP PROCEDURE IF EXISTS \`_DROP_INDEX_IF_EXISTS\`;
+  - CREATE PROCEDURE \`_DROP_INDEX_IF_EXISTS\`(schema_name VARCHAR(128), table_name VARCHAR(128), index_name VARCHAR(128))
+  - BEGIN
+    - SET @schema_name = COALESCE(schema_name, database());
+    - IF EXISTS (
+      - SELECT *
+      - FROM information_schema.statistics AS s
+      - WHERE s.table_schema = @schema_name AND s.table_name = table_name AND s.index_name = index_name
+    - ) THEN
+      - SET @text = CONCAT('DROP INDEX \`', index_name, '\` ON \`', @schema_name, '\`.\`', table_name, '\`;');
+      - PREPARE stmt FROM @text;
+      - EXECUTE stmt;
+    - END IF;
+  - END;
+
+
+- MySql string concat operator ||:
+  - SET SESSION sql_mode = 'PIPES_AS_CONCAT';
+
+
+- SqlNodeInterpreter:
+  - True, False & ConditionValue maybe should by default be TRUE, FALSE & node.Condition?
+  - for sqlite & mysql that would be fine, postgresql is probably also fine with that
+
+
+- MySqlNodeInterpreter:
+  - allow to disable IX prefixes altogether? so blob/text would be added to sql without prefix, which will throw mysql exception
+  - also, IX prefix value should be configurable
+  - VisitJoinOn => base should have sealed template method impl with protected virtual methods per join type
+  - configure FULL JOIN for MySql: append anyway or throw exception
+  - VisitDataSource => base impl, protected virtual for dummy & non-dummy sources
+  - VisitInsertInto => base impl, protected virtual for data source query, compound query & other
+  - VisitUpdate/VisitDeleteFrom => base impl(?) & a lot of code is the same for mysql & sqlite (wacky data sources) => move to Sql.Core
+  - VisitForeignKeyDefinition => builder should create tables without FKs initially & blob/text columns are invalid
+  - IX filter configuration: ignore silently, throw exception or add anyway
+  - create/drop TEMP view configuration: ignore temp silently or throw exception
+  - AppendDelimitedRecordSetName is the same for sqlite => move to Sql.Core?
+  - not every aggregate function supports every trait (applies to sqlite too) => configurable?
+    - options: add anyway, silently ignore or throw exception
+  - custom traits handling configuration (sqlite too): silently ignore or throw exception
+  - configuration for aggregate function filter trait: silently ignore, throw exception or append as switch
+  - VisitInsertIntoFields & VisitCompoundQueryComponents => move to Sql.Core?
+  - Visit[X]BeforeTraits & Visit[X]AfterTraits (sqlite too) => could be moved to Sql.Core as virtual & could receive the source node as parameter
+    - this would help e.g. for MySql with the different CTE handling between insert into & delete from/update
+  - configurable offset without limit (sqlite too): add implicit max limit or throw exception
+
+
+- SqlStringConcatAggregateFunctionExpressionNode: add OrderBy extension method only for this node?
+
+
+- ISqlDatabaseBuilder:
+  - TypeDefinitions, NodeInterpreters, QueryReaders, ParameterBinders
+  - should be provided through ctor, and be immutable
+  - TypeDefinitions should, in addition, have a dedicated builder that allows to register custom types, instead of mutable methods
+  - also, add IDefaultNameProvider => allows to override default name generation (PK, FK, IX, CHK, anything else?)
+
+
+- MySqlColumnTypeDefinition:
+  - this is pretty much the same, compared to sqlite implementation
+  - create a base SqlColumnTypeDefinition<TDataType> where TDataType : ISqlDataType
+  - create a base SqlColumnTypeDefinition<TDataType, TDataReader, T> where TDataType : ISqlDataType where TDataReader : IDataReader
+  - concrete types can extend SqlColumnTypeDefinition<,,> directly
+  - it may be a little bit awkward with type definition provider, since its implementations should return type definitions
+  - of type linked to the dialect type
+  - & there are generic extension methods for that, so be careful there
+
+
+- MySqlHelpers & sqlite versions are pretty much the same => move to Sql.Core?
+
+
+- MySqlHelpers.GetDbLiteral:
+  - SET SESSION sql_mode = 'ANSI';
+  - SET SESSION sql_mode = 'NO_BACKSLASH_ESCAPES'; <= this will disable '\' as an escape character
+  - setting multiple modes can be done by simply separating their names with ',' (no spaces)
+
 ### Reactive.Scheduling
 project idea:
 - combines Reactive.Chrono & Reactive.Queues

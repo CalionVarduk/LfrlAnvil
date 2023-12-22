@@ -10,15 +10,6 @@ using MySqlConnector;
 
 namespace LfrlAnvil.MySql;
 
-// TODO:
-// this is pretty much the same, compared to sqlite implementation
-// create a base SqlColumnTypeDefinition<TDataType> where TDataType : ISqlDataType
-// create a base SqlColumnTypeDefinition<TDataType, TDataReader, T> where TDataType : ISqlDataType where TDataReader : IDataReader
-// similar with extended & lambda versions
-// concrete types can extend SqlColumnTypeDefinition<,,> directly
-// it may be a little bit awkward with type definition provider, since its implementations should return type definitions
-// of type linked to the dialect type
-// + there are generic extension methods for that, so be careful there
 public abstract class MySqlColumnTypeDefinition : ISqlColumnTypeDefinition
 {
     internal MySqlColumnTypeDefinition(MySqlDataType dataType, SqlLiteralNode defaultValue, LambdaExpression outputMapping)

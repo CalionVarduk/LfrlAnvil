@@ -7,9 +7,6 @@ using LfrlAnvil.Sql.Exceptions;
 
 namespace LfrlAnvil.MySql.Internal;
 
-// TODO:
-// GetDbLiteral methods are the same for MySql & SQLite
-// move to Sql.Core?
 internal static class MySqlHelpers
 {
     private const int StackallocThreshold = 64;
