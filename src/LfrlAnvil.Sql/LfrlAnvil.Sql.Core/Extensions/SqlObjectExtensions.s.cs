@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Extensions;
@@ -133,44 +134,20 @@ public static class SqlObjectExtensions
     public static SqlCreateTableNode ToCreateNode(
         this ISqlTableBuilder table,
         SqlRecordSetInfo? customInfo = null,
-        bool useFullConstraintNames = false)
+        bool useFullConstraintNames = false,
+        bool includeForeignKeys = true)
     {
-        var i = 0;
-        var tableColumns = table.Columns;
-        var columns = Array.Empty<SqlColumnDefinitionNode>();
-        if ( tableColumns.Count > 0 )
-        {
-            columns = new SqlColumnDefinitionNode[tableColumns.Count];
-            foreach ( var column in tableColumns )
-                columns[i++] = column.ToDefinitionNode();
-        }
-
         return SqlNode.CreateTable(
             customInfo ?? table.Info,
-            columns,
+            table.Columns.ToDefinitionRange(),
             ifNotExists: false,
             t =>
             {
-                var tableForeignKeys = table.ForeignKeys;
-                var tableChecks = table.Checks;
                 var primaryKey = table.PrimaryKey?.ToDefinitionNode( t, useFullConstraintNames );
-                var foreignKeys = Array.Empty<SqlForeignKeyDefinitionNode>();
-                var checks = Array.Empty<SqlCheckDefinitionNode>();
-                if ( tableForeignKeys.Count > 0 )
-                {
-                    var j = 0;
-                    foreignKeys = new SqlForeignKeyDefinitionNode[tableForeignKeys.Count];
-                    foreach ( var foreignKey in tableForeignKeys )
-                        foreignKeys[j++] = foreignKey.ToDefinitionNode( t, useFullConstraintNames );
-                }
-
-                if ( tableChecks.Count > 0 )
-                {
-                    var j = 0;
-                    checks = new SqlCheckDefinitionNode[tableChecks.Count];
-                    foreach ( var check in tableChecks )
-                        checks[j++] = check.ToDefinitionNode( useFullConstraintNames );
-                }
+                var checks = table.Checks.ToDefinitionRange( useFullConstraintNames );
+                var foreignKeys = includeForeignKeys
+                    ? table.ForeignKeys.ToDefinitionRange( t, useFullConstraintNames )
+                    : Array.Empty<SqlForeignKeyDefinitionNode>();
 
                 var result = SqlCreateTableConstraints.Empty.WithForeignKeys( foreignKeys ).WithChecks( checks );
                 return primaryKey is not null ? result.WithPrimaryKey( primaryKey ) : result;
@@ -180,17 +157,9 @@ public static class SqlObjectExtensions
     [Pure]
     public static SqlCreateIndexNode ToCreateNode(this ISqlIndexBuilder index)
     {
-        var ixColumns = index.Columns;
-        var columns = Array.Empty<SqlOrderByNode>();
-        if ( ixColumns.Length > 0 )
-        {
-            var i = 0;
-            columns = new SqlOrderByNode[ixColumns.Length];
-            foreach ( var column in ixColumns )
-                columns[i++] = SqlNode.OrderBy( column.Column.Node, column.Ordering );
-        }
-
         var ixTable = index.Table;
+        var columns = index.Columns.ToDefinitionNode( ixTable.RecordSet );
+
         return SqlNode.CreateIndex(
             SqlSchemaObjectName.Create( ixTable.Schema.Name, index.Name ),
             index.IsUnique,
@@ -201,7 +170,7 @@ public static class SqlObjectExtensions
     }
 
     [Pure]
-    private static SqlColumnDefinitionNode ToDefinitionNode(this ISqlColumnBuilder column)
+    public static SqlColumnDefinitionNode ToDefinitionNode(this ISqlColumnBuilder column)
     {
         return SqlNode.Column(
             column.Name,
@@ -210,28 +179,19 @@ public static class SqlObjectExtensions
     }
 
     [Pure]
-    private static SqlPrimaryKeyDefinitionNode ToDefinitionNode(
+    public static SqlPrimaryKeyDefinitionNode ToDefinitionNode(
         this ISqlPrimaryKeyBuilder primaryKey,
-        SqlNewTableNode table,
-        bool useFullName)
+        SqlRecordSetNode table,
+        bool useFullName = false)
     {
-        var pkColumns = primaryKey.Index.Columns;
-        var columns = Array.Empty<SqlOrderByNode>();
-        if ( pkColumns.Length > 0 )
-        {
-            var i = 0;
-            columns = new SqlOrderByNode[pkColumns.Length];
-            foreach ( var column in pkColumns )
-                columns[i++] = SqlNode.OrderBy( table[column.Column.Name], column.Ordering );
-        }
-
+        var columns = primaryKey.Index.Columns.ToDefinitionNode( table );
         return SqlNode.PrimaryKey( useFullName ? primaryKey.FullName : primaryKey.Name, columns );
     }
 
     [Pure]
-    private static SqlForeignKeyDefinitionNode ToDefinitionNode(
+    public static SqlForeignKeyDefinitionNode ToDefinitionNode(
         this ISqlForeignKeyBuilder foreignKey,
-        SqlNewTableNode table,
+        SqlRecordSetNode table,
         bool useFullName)
     {
         var refIndex = foreignKey.ReferencedIndex;
@@ -275,8 +235,67 @@ public static class SqlObjectExtensions
     }
 
     [Pure]
-    private static SqlCheckDefinitionNode ToDefinitionNode(this ISqlCheckBuilder check, bool useFullName)
+    public static SqlCheckDefinitionNode ToDefinitionNode(this ISqlCheckBuilder check, bool useFullName)
     {
         return SqlNode.Check( useFullName ? check.FullName : check.Name, check.Condition );
+    }
+
+    [Pure]
+    public static SqlColumnDefinitionNode[] ToDefinitionRange(this IReadOnlyCollection<ISqlColumnBuilder> columns)
+    {
+        if ( columns.Count == 0 )
+            return Array.Empty<SqlColumnDefinitionNode>();
+
+        var i = 0;
+        var result = new SqlColumnDefinitionNode[columns.Count];
+        foreach ( var column in columns )
+            result[i++] = column.ToDefinitionNode();
+
+        return result;
+    }
+
+    [Pure]
+    public static SqlOrderByNode[] ToDefinitionNode(this ReadOnlyMemory<ISqlIndexColumnBuilder> columns, SqlRecordSetNode table)
+    {
+        if ( columns.Length == 0 )
+            return Array.Empty<SqlOrderByNode>();
+
+        var i = 0;
+        var result = new SqlOrderByNode[columns.Length];
+        foreach ( var column in columns )
+            result[i++] = SqlNode.OrderBy( table[column.Column.Name], column.Ordering );
+
+        return result;
+    }
+
+    [Pure]
+    public static SqlForeignKeyDefinitionNode[] ToDefinitionRange(
+        this IReadOnlyCollection<ISqlForeignKeyBuilder> foreignKeys,
+        SqlRecordSetNode table,
+        bool useFullName = false)
+    {
+        if ( foreignKeys.Count == 0 )
+            return Array.Empty<SqlForeignKeyDefinitionNode>();
+
+        var i = 0;
+        var result = new SqlForeignKeyDefinitionNode[foreignKeys.Count];
+        foreach ( var fk in foreignKeys )
+            result[i++] = fk.ToDefinitionNode( table, useFullName );
+
+        return result;
+    }
+
+    [Pure]
+    public static SqlCheckDefinitionNode[] ToDefinitionRange(this IReadOnlyCollection<ISqlCheckBuilder> checks, bool useFullName = false)
+    {
+        if ( checks.Count == 0 )
+            return Array.Empty<SqlCheckDefinitionNode>();
+
+        var i = 0;
+        var result = new SqlCheckDefinitionNode[checks.Count];
+        foreach ( var chk in checks )
+            result[i++] = chk.ToDefinitionNode( useFullName );
+
+        return result;
     }
 }

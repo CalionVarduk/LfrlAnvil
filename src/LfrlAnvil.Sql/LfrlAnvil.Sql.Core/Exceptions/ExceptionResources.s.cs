@@ -150,6 +150,13 @@ public static class ExceptionResources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string IndexIsPartial(ISqlIndexBuilder index)
+    {
+        return $"{index} is partial.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string UnrecognizedTypeDefinition(ISqlColumnTypeDefinition definition)
     {
         return $"Column type definition {definition} is unrecognized in this database.";
@@ -167,6 +174,13 @@ public static class ExceptionResources
     public static string IndexMustRemainUniqueBecauseItIsReferencedByForeignKey(ISqlForeignKeyBuilder foreignKey)
     {
         return $"Index must remain unique because it is referenced by {foreignKey}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string IndexMustRemainNonPartialBecauseItIsReferencedByForeignKey(ISqlForeignKeyBuilder foreignKey)
+    {
+        return $"Index must remain non-partial because it is referenced by {foreignKey}.";
     }
 
     [Pure]

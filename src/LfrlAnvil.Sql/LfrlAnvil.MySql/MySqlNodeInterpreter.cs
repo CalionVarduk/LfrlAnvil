@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.MySql.Exceptions;
+using LfrlAnvil.MySql.Internal.Expressions;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Functions;
@@ -999,6 +1000,134 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         Context.Sql.Append( "START" ).AppendSpace().Append( "TRANSACTION" );
         if ( node.IsolationLevel == IsolationLevel.Snapshot )
             Context.Sql.AppendSpace().Append( "WITH" ).AppendSpace().Append( "CONSISTENT" ).AppendSpace().Append( "SNAPSHOT" );
+    }
+
+    public override void VisitCustom(SqlNodeBase node)
+    {
+        if ( node is MySqlCreateSchemaNode createSchema )
+            VisitCreateSchema( createSchema );
+        else if ( node is MySqlDropSchemaNode dropSchema )
+            VisitDropSchema( dropSchema );
+        else if ( node is MySqlAlterTableNode alterTable )
+            VisitAlterTable( alterTable );
+        else
+            base.VisitCustom( node );
+    }
+
+    public void VisitCreateSchema(MySqlCreateSchemaNode node)
+    {
+        Context.Sql.Append( "CREATE" ).AppendSpace().Append( "SCHEMA" ).AppendSpace();
+        if ( node.IfNotExists )
+            Context.Sql.Append( "IF" ).AppendSpace().Append( "NOT" ).AppendSpace().Append( "EXISTS" ).AppendSpace();
+
+        AppendDelimitedName( node.Name );
+    }
+
+    public void VisitDropSchema(MySqlDropSchemaNode node)
+    {
+        Context.Sql.Append( "DROP" ).AppendSpace().Append( "SCHEMA" ).AppendSpace();
+        AppendDelimitedName( node.Name );
+    }
+
+    public void VisitAlterTable(MySqlAlterTableNode node)
+    {
+        using ( TempIgnoreAllRecordSets() )
+        {
+            Context.Sql.Append( "ALTER" ).AppendSpace().Append( "TABLE" ).AppendSpace();
+            AppendDelimitedRecordSetInfo( node.Info );
+
+            using ( Context.TempIndentIncrease() )
+            {
+                var containsChange = false;
+
+                foreach ( var name in node.OldForeignKeys )
+                {
+                    Context.AppendIndent().Append( "DROP" ).AppendSpace().Append( "FOREIGN" ).AppendSpace().Append( "KEY" ).AppendSpace();
+                    AppendDelimitedName( name );
+                    Context.Sql.AppendComma();
+                    containsChange = true;
+                }
+
+                if ( node.NewPrimaryKey is not null )
+                {
+                    Context.AppendIndent();
+                    Context.Sql.Append( "DROP" ).AppendSpace().Append( "PRIMARY" ).AppendSpace().Append( "KEY" ).AppendComma();
+                    containsChange = true;
+                }
+
+                foreach ( var name in node.OldChecks )
+                {
+                    Context.AppendIndent().Append( "DROP" ).AppendSpace().Append( "CHECK" ).AppendSpace();
+                    AppendDelimitedName( name );
+                    Context.Sql.AppendComma();
+                    containsChange = true;
+                }
+
+                foreach ( var (oldName, newName) in node.RenamedIndexes )
+                {
+                    Context.AppendIndent();
+                    Context.Sql.Append( "RENAME" ).AppendSpace().Append( "INDEX" ).AppendSpace();
+                    AppendDelimitedName( oldName );
+                    Context.Sql.AppendSpace().Append( "TO" ).AppendSpace();
+                    AppendDelimitedName( newName );
+                    Context.Sql.AppendComma();
+                    containsChange = true;
+                }
+
+                foreach ( var name in node.OldColumns )
+                {
+                    Context.AppendIndent().Append( "DROP" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
+                    AppendDelimitedName( name );
+                    Context.Sql.AppendComma();
+                    containsChange = true;
+                }
+
+                foreach ( var (oldName, column) in node.ChangedColumns )
+                {
+                    Context.AppendIndent().Append( "CHANGE" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
+                    AppendDelimitedName( oldName );
+                    Context.Sql.AppendSpace();
+                    VisitColumnDefinition( column );
+                    Context.Sql.AppendComma();
+                    containsChange = true;
+                }
+
+                foreach ( var column in node.NewColumns )
+                {
+                    Context.AppendIndent().Append( "ADD" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
+                    VisitColumnDefinition( column );
+                    Context.Sql.AppendComma();
+                    containsChange = true;
+                }
+
+                if ( node.NewPrimaryKey is not null )
+                {
+                    Context.AppendIndent();
+                    Context.Sql.Append( "ADD" ).AppendSpace();
+                    VisitPrimaryKeyDefinition( node.NewPrimaryKey );
+                    Context.Sql.AppendComma();
+                }
+
+                foreach ( var check in node.NewChecks )
+                {
+                    Context.AppendIndent().Append( "ADD" ).AppendSpace();
+                    VisitCheckDefinition( check );
+                    Context.Sql.AppendComma();
+                    containsChange = true;
+                }
+
+                foreach ( var foreignKey in node.NewForeignKeys )
+                {
+                    Context.AppendIndent().Append( "ADD" ).AppendSpace();
+                    VisitForeignKeyDefinition( foreignKey );
+                    Context.Sql.AppendComma();
+                    containsChange = true;
+                }
+
+                if ( containsChange )
+                    Context.Sql.ShrinkBy( 1 );
+            }
+        }
     }
 
     public override void AppendDelimitedRecordSetName(SqlRecordSetNode node)

@@ -26,11 +26,11 @@ internal sealed class SqliteAlterTableBuffer
         PropertyChanges = new Dictionary<ChangeKey, ChangeValue>();
         DroppedIndexNames = new HashSet<SqlSchemaObjectName>();
         CreatedIndexes = new Dictionary<ulong, SqliteIndexBuilder>();
-        DroppedColumnsByName = new Dictionary<string, SqliteColumnBuilder>();
+        DroppedColumnsByName = new Dictionary<string, SqliteColumnBuilder>( StringComparer.OrdinalIgnoreCase );
         CreatedColumns = new Dictionary<ulong, SqliteColumnBuilder>();
         ModifiedColumns = new HashSet<ulong>();
         ColumnRenames = new Dictionary<ulong, ColumnRename>();
-        ColumnIdsByCurrentName = new Dictionary<string, ulong>();
+        ColumnIdsByCurrentName = new Dictionary<string, ulong>( StringComparer.OrdinalIgnoreCase );
     }
 
     internal ParseResult ParseChanges(SqliteTableBuilder table, ReadOnlySpan<SqliteDatabasePropertyChange> changes)

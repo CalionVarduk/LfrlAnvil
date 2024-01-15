@@ -26,7 +26,6 @@
 |    23    |    Dependencies     |                    Generic builder types                    |                 [link](#dependencies-generic-builder-types)                 |                         -                          |
 |    24    |   Reactive.State    |                       Extension ideas                       |                   [link](#reactivestate-extension-ideas)                    |                         -                          |
 
-
 ### Scribbles:
 - MySql GUID function setup:
   - DROP FUNCTION IF EXISTS GUID;
@@ -72,7 +71,7 @@
   - VisitInsertInto => base impl, protected virtual for data source query, compound query & other
   - VisitUpdate/VisitDeleteFrom => base impl(?) & a lot of code is the same for mysql & sqlite (wacky data sources) => move to Sql.Core
   - VisitForeignKeyDefinition => builder should create tables without FKs initially & blob/text columns are invalid
-  - IX filter configuration: ignore silently, throw exception or add anyway
+  - IX filter configuration: ignore silently, throw exception or add anyway (applies to DB builder as well)
   - create/drop TEMP view configuration: ignore temp silently or throw exception
   - AppendDelimitedRecordSetName is the same for sqlite => move to Sql.Core?
   - not every aggregate function supports every trait (applies to sqlite too) => configurable?

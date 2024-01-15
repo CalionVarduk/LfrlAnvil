@@ -1,9 +1,17 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Text;
 using LfrlAnvil.Exceptions;
+using LfrlAnvil.Extensions;
+using LfrlAnvil.MySql.Exceptions;
+using LfrlAnvil.MySql.Objects.Builders;
+using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
+using LfrlAnvil.Sql.Objects.Builders;
+using ExceptionResources = LfrlAnvil.Sql.Exceptions.ExceptionResources;
 
 namespace LfrlAnvil.MySql.Internal;
 
@@ -24,6 +32,69 @@ internal static class MySqlHelpers
 
         ExceptionThrower.Throw( new SqlObjectCastException( MySqlDialect.Instance, typeof( T ), obj.GetType() ) );
         return default!;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string GetFullName(string schemaName, string name)
+    {
+        return schemaName.Length > 0 ? $"{schemaName}.{name}" : name;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string GetFullFieldName(string fullTableName, string name)
+    {
+        return $"{fullTableName}.{name}";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string GetDefaultPrimaryKeyName(MySqlTableBuilder table)
+    {
+        return $"PK_{table.Name}";
+    }
+
+    [Pure]
+    public static string GetDefaultForeignKeyName(MySqlIndexBuilder originIndex, MySqlIndexBuilder referencedIndex)
+    {
+        var builder = new StringBuilder( 32 );
+        builder.Append( "FK_" ).Append( originIndex.Table.Name );
+
+        foreach ( var c in originIndex.Columns )
+            builder.Append( '_' ).Append( c.Column.Name );
+
+        builder.Append( "_REF_" );
+        if ( ! ReferenceEquals( originIndex.Table.Schema, referencedIndex.Table.Schema ) )
+            builder.Append( referencedIndex.Table.Schema.Name ).Append( '_' );
+
+        builder.Append( referencedIndex.Table.Name );
+        return builder.ToString();
+    }
+
+    [Pure]
+    public static string GetDefaultCheckName(MySqlTableBuilder table)
+    {
+        return $"CHK_{table.Name}_{table.Checks.Count}";
+    }
+
+    [Pure]
+    public static string GetDefaultIndexName(MySqlTableBuilder table, ReadOnlyMemory<MySqlIndexColumnBuilder> columns, bool isUnique)
+    {
+        var builder = new StringBuilder( 32 );
+        builder.Append( isUnique ? "UIX_" : "IX_" ).Append( table.Name );
+
+        foreach ( var c in columns )
+            builder.Append( '_' ).Append( c.Column.Name ).Append( c.Ordering == OrderBy.Asc ? 'A' : 'D' );
+
+        return builder.ToString();
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static void AssertName(string name)
+    {
+        if ( string.IsNullOrWhiteSpace( name ) || name.Contains( '`' ) || name.Contains( '\'' ) )
+            ExceptionThrower.Throw( new MySqlObjectBuilderException( ExceptionResources.InvalidName( name ) ) );
     }
 
     [Pure]
@@ -139,6 +210,98 @@ internal static class MySqlHelpers
             Assume.IsInRange( value, 0, 15 );
             return (char)(value < 10 ? '0' + value : 'A' + value - 10);
         }
+    }
+
+    [Pure]
+    internal static MySqlIndexColumnBuilder[] CreateIndexColumns(
+        MySqlTableBuilder table,
+        ReadOnlyMemory<ISqlIndexColumnBuilder> columns,
+        bool allowNullableColumns = true)
+    {
+        if ( columns.Length == 0 )
+            throw new MySqlObjectBuilderException( ExceptionResources.IndexMustHaveAtLeastOneColumn );
+
+        var errors = Chain<string>.Empty;
+        var uniqueColumnIds = new HashSet<ulong>();
+
+        var span = columns.Span;
+        var result = new MySqlIndexColumnBuilder[span.Length];
+        for ( var i = 0; i < span.Length; ++i )
+        {
+            var c = CastOrThrow<MySqlIndexColumnBuilder>( span[i] );
+            result[i] = c;
+
+            if ( ! uniqueColumnIds.Add( c.Column.Id ) )
+            {
+                errors = errors.Extend( ExceptionResources.ColumnIsDuplicated( c.Column ) );
+                continue;
+            }
+
+            if ( ! ReferenceEquals( c.Column.Table, table ) )
+                errors = errors.Extend( ExceptionResources.ObjectDoesNotBelongToTable( c.Column, table ) );
+
+            if ( c.Column.IsRemoved )
+                errors = errors.Extend( ExceptionResources.ObjectHasBeenRemoved( c.Column ) );
+
+            if ( ! allowNullableColumns && c.Column.IsNullable )
+                errors = errors.Extend( ExceptionResources.ColumnIsNullable( c.Column ) );
+        }
+
+        if ( errors.Count > 0 )
+            throw new MySqlObjectBuilderException( errors );
+
+        return result;
+    }
+
+    internal static void AssertForeignKey(MySqlTableBuilder table, MySqlIndexBuilder originIndex, MySqlIndexBuilder referencedIndex)
+    {
+        var errors = Chain<string>.Empty;
+
+        if ( ReferenceEquals( originIndex, referencedIndex ) )
+            errors = errors.Extend( ExceptionResources.ForeignKeyOriginIndexAndReferencedIndexAreTheSame );
+
+        if ( ! ReferenceEquals( table, originIndex.Table ) )
+            errors = errors.Extend( ExceptionResources.ObjectDoesNotBelongToTable( originIndex, table ) );
+
+        if ( ! ReferenceEquals( originIndex.Database, referencedIndex.Database ) )
+            errors = errors.Extend( ExceptionResources.ObjectBelongsToAnotherDatabase( referencedIndex ) );
+
+        if ( originIndex.IsRemoved )
+            errors = errors.Extend( ExceptionResources.ObjectHasBeenRemoved( originIndex ) );
+
+        if ( referencedIndex.IsRemoved )
+            errors = errors.Extend( ExceptionResources.ObjectHasBeenRemoved( referencedIndex ) );
+
+        if ( ! referencedIndex.IsUnique )
+            errors = errors.Extend( ExceptionResources.IndexIsNotMarkedAsUnique( referencedIndex ) );
+
+        if ( referencedIndex.Filter is not null )
+            errors = errors.Extend( ExceptionResources.IndexIsPartial( referencedIndex ) );
+
+        var indexColumns = originIndex.Columns.Span;
+        var referencedIndexColumns = referencedIndex.Columns.Span;
+
+        foreach ( var c in referencedIndexColumns )
+        {
+            if ( c.Column.IsNullable )
+                errors = errors.Extend( ExceptionResources.ColumnIsNullable( c.Column ) );
+        }
+
+        if ( indexColumns.Length != referencedIndexColumns.Length )
+            errors = errors.Extend( ExceptionResources.ForeignKeyOriginIndexAndReferencedIndexMustHaveTheSameAmountOfColumns );
+        else
+        {
+            for ( var i = 0; i < indexColumns.Length; ++i )
+            {
+                var column = indexColumns[i].Column;
+                var refColumn = referencedIndexColumns[i].Column;
+                if ( column.TypeDefinition.RuntimeType != refColumn.TypeDefinition.RuntimeType )
+                    errors = errors.Extend( ExceptionResources.ColumnTypesAreIncompatible( column, refColumn ) );
+            }
+        }
+
+        if ( errors.Count > 0 )
+            throw new MySqlObjectBuilderException( errors );
     }
 
     [Pure]

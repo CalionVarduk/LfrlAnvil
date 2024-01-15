@@ -1,37 +1,37 @@
 ﻿using System.Linq;
 using LfrlAnvil.Functional;
+using LfrlAnvil.MySql.Exceptions;
+using LfrlAnvil.MySql.Extensions;
+using LfrlAnvil.MySql.Objects.Builders;
+using LfrlAnvil.MySql.Tests.Helpers;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.Sqlite.Exceptions;
-using LfrlAnvil.Sqlite.Extensions;
-using LfrlAnvil.Sqlite.Objects.Builders;
-using LfrlAnvil.Sqlite.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
-namespace LfrlAnvil.Sqlite.Tests.ObjectsTests.BuildersTests;
+namespace LfrlAnvil.MySql.Tests.ObjectsTests.BuildersTests;
 
-public class SqliteIndexBuilderTests : TestsBase
+public class MySqlIndexBuilderTests : TestsBase
 {
     [Fact]
     public void ToString_ShouldReturnCorrectResult()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.Indexes.Create( table.Columns.Create( "C" ).Asc() ).SetName( "bar" );
 
         var result = sut.ToString();
 
-        result.Should().Be( "[Index] foo_bar" );
+        result.Should().Be( "[Index] foo.bar" );
     }
 
     [Fact]
-    public void Create_ShouldNotMarkTableForReconstruction()
+    public void Create_ShouldNotMarkTableForAlteration()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var c2 = table.Columns.Create( "C2" );
+        var c2 = table.Columns.Create( "C2" ).SetType<int>();
 
         var startStatementsCount = schema.Database.GetPendingStatements().Length;
 
@@ -41,14 +41,14 @@ public class SqliteIndexBuilderTests : TestsBase
         using ( new AssertionScope() )
         {
             statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" );
+            statements.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "CREATE INDEX `IX_T_C2A` ON `foo`.`T` (`C2` ASC);" );
         }
     }
 
     [Fact]
     public void Create_FollowedByRemove_ShouldDoNothing()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var c2 = table.Columns.Create( "C2" );
@@ -65,10 +65,10 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void Create_ShouldNotCreateIndex_WhenIndexIsAttachedToPrimaryKey()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var c2 = table.Columns.Create( "C2" );
+        table.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
+        var c2 = table.Columns.Create( "C2" ).SetType<int>();
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -80,32 +80,21 @@ public class SqliteIndexBuilderTests : TestsBase
         {
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+                .Sql.Should()
                 .SatisfySql(
-                    @"CREATE TABLE ""__foo_T__{GUID}__"" (
-                      ""C1"" ANY NOT NULL,
-                      ""C2"" ANY NOT NULL,
-                      CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C2"" ASC)
-                    ) WITHOUT ROWID;",
-                    @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
-                    SELECT
-                      ""foo_T"".""C1"",
-                      ""foo_T"".""C2""
-                    FROM ""foo_T"";",
-                    "DROP TABLE \"foo_T\";",
-                    "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";"
-                );
+                    @"ALTER TABLE `foo`.`T`
+                      DROP PRIMARY KEY,
+                      ADD CONSTRAINT `PK_T` PRIMARY KEY (`C2` ASC);" );
         }
     }
 
     [Fact]
     public void AssigningToPrimaryKey_ShouldDropIndexByItsOldName_WhenIndexNameAlsoChanges()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
+        table.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
+        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).SetType<int>().Asc() );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -117,30 +106,19 @@ public class SqliteIndexBuilderTests : TestsBase
         {
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+                .Sql.Should()
                 .SatisfySql(
-                    "DROP INDEX \"foo_IX_T_C2A\";",
-                    @"CREATE TABLE ""__foo_T__{GUID}__"" (
-                      ""C1"" ANY NOT NULL,
-                      ""C2"" ANY NOT NULL,
-                      CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C2"" ASC)
-                    ) WITHOUT ROWID;",
-                    @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
-                    SELECT
-                      ""foo_T"".""C1"",
-                      ""foo_T"".""C2""
-                    FROM ""foo_T"";",
-                    "DROP TABLE \"foo_T\";",
-                    "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";"
-                );
+                    "DROP INDEX `IX_T_C2A` ON `foo`.`T`;",
+                    @"ALTER TABLE `foo`.`T`
+                      DROP PRIMARY KEY,
+                      ADD CONSTRAINT `PK_T` PRIMARY KEY (`C2` ASC);" );
         }
     }
 
     [Fact]
     public void SetName_ShouldDoNothing_WhenNewNameEqualsOldName()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -160,7 +138,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldDoNothing_WhenNameChangeIsFollowedByChangeToOriginal()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -183,7 +161,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldDoNothing_WhenIndexIsAssignedToPrimaryKey()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var oldName = sut.Name;
@@ -205,7 +183,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldUpdateName_WhenNewNameIsDifferentFromOldName()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -220,24 +198,23 @@ public class SqliteIndexBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "bar" );
-            sut.FullName.Should().Be( "foo_bar" );
+            sut.FullName.Should().Be( "foo.bar" );
             schema.Objects.Get( "bar" ).Should().BeSameAs( sut );
             schema.Objects.Contains( oldName ).Should().BeFalse();
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+                .Sql.Should()
                 .SatisfySql(
-                    "DROP INDEX \"foo_IX_T_C2A\";",
-                    "CREATE INDEX \"foo_bar\" ON \"foo_T\" (\"C2\" ASC);" );
+                    @"ALTER TABLE `foo`.`T`
+                      RENAME INDEX `IX_T_C2A` TO `bar`;" );
         }
     }
 
     [Fact]
     public void SetName_ShouldUpdateNameAndNotRecreateOriginatingForeignKeys()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var pk = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -254,20 +231,20 @@ public class SqliteIndexBuilderTests : TestsBase
             statements.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    "DROP INDEX \"foo_IX_T_C2A\";",
-                    "CREATE INDEX \"foo_bar\" ON \"foo_T\" (\"C2\" ASC);" );
+                    @"ALTER TABLE `foo`.`T`
+                      RENAME INDEX `IX_T_C2A` TO `bar`;" );
         }
     }
 
     [Theory]
     [InlineData( "" )]
     [InlineData( " " )]
-    [InlineData( "\"" )]
+    [InlineData( "`" )]
     [InlineData( "'" )]
-    [InlineData( "f\"oo" )]
-    public void SetName_ShouldThrowSqliteObjectBuilderException_WhenNameIsInvalid(string name)
+    [InlineData( "f`oo" )]
+    public void SetName_ShouldThrowMySqlObjectBuilderException_WhenNameIsInvalid(string name)
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -275,14 +252,14 @@ public class SqliteIndexBuilderTests : TestsBase
         var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).SetName( name ) );
 
         action.Should()
-            .ThrowExactly<SqliteObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+            .ThrowExactly<MySqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]
-    public void SetName_ShouldThrowSqliteObjectBuilderException_WhenIndexIsRemoved()
+    public void SetName_ShouldThrowMySqlObjectBuilderException_WhenIndexIsRemoved()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -291,14 +268,14 @@ public class SqliteIndexBuilderTests : TestsBase
         var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).SetName( "bar" ) );
 
         action.Should()
-            .ThrowExactly<SqliteObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+            .ThrowExactly<MySqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]
-    public void SetName_ShouldThrowSqliteObjectBuilderException_WhenNewNameAlreadyExistsInSchema()
+    public void SetName_ShouldThrowMySqlObjectBuilderException_WhenNewNameAlreadyExistsInSchema()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -306,14 +283,14 @@ public class SqliteIndexBuilderTests : TestsBase
         var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).SetName( "T" ) );
 
         action.Should()
-            .ThrowExactly<SqliteObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+            .ThrowExactly<MySqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]
     public void SetDefaultName_ShouldDoNothing_WhenNewNameEqualsOldName()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -333,7 +310,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void SetDefaultName_ShouldDoNothing_WhenNameChangeIsFollowedByChangeToOriginal()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -355,7 +332,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void SetDefaultName_ShouldDoNothing_WhenIndexIsAssignedToPrimaryKey()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index.SetName( "bar" );
         var oldName = sut.Name;
@@ -377,7 +354,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void SetDefaultName_ShouldUpdateName_WhenNewNameIsDifferentFromOldName()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" );
@@ -392,24 +369,23 @@ public class SqliteIndexBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "IX_T_C2A" );
-            sut.FullName.Should().Be( "foo_IX_T_C2A" );
+            sut.FullName.Should().Be( "foo.IX_T_C2A" );
             schema.Objects.Get( "IX_T_C2A" ).Should().BeSameAs( sut );
             schema.Objects.Contains( oldName ).Should().BeFalse();
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+                .Sql.Should()
                 .SatisfySql(
-                    "DROP INDEX \"foo_bar\";",
-                    "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" );
+                    @"ALTER TABLE `foo`.`T`
+                      RENAME INDEX `bar` TO `IX_T_C2A`;" );
         }
     }
 
     [Fact]
     public void SetDefaultName_ShouldUpdateName_WhenNewNameIsDifferentFromOldNameAndIndexIsUnique()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" ).MarkAsUnique();
@@ -424,24 +400,23 @@ public class SqliteIndexBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "UIX_T_C2A" );
-            sut.FullName.Should().Be( "foo_UIX_T_C2A" );
+            sut.FullName.Should().Be( "foo.UIX_T_C2A" );
             schema.Objects.Get( "UIX_T_C2A" ).Should().BeSameAs( sut );
             schema.Objects.Contains( oldName ).Should().BeFalse();
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+                .Sql.Should()
                 .SatisfySql(
-                    "DROP INDEX \"foo_bar\";",
-                    "CREATE UNIQUE INDEX \"foo_UIX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" );
+                    @"ALTER TABLE `foo`.`T`
+                      RENAME INDEX `bar` TO `UIX_T_C2A`;" );
         }
     }
 
     [Fact]
-    public void SetDefaultName_ShouldThrowSqliteObjectBuilderException_WhenIndexIsRemoved()
+    public void SetDefaultName_ShouldThrowMySqlObjectBuilderException_WhenIndexIsRemoved()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" );
@@ -450,14 +425,14 @@ public class SqliteIndexBuilderTests : TestsBase
         var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).SetDefaultName() );
 
         action.Should()
-            .ThrowExactly<SqliteObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+            .ThrowExactly<MySqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]
-    public void SetDefaultName_ShouldThrowSqliteObjectBuilderException_WhenNewNameAlreadyExistsInSchema()
+    public void SetDefaultName_ShouldThrowMySqlObjectBuilderException_WhenNewNameAlreadyExistsInSchema()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var pk = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" );
@@ -466,8 +441,8 @@ public class SqliteIndexBuilderTests : TestsBase
         var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).SetDefaultName() );
 
         action.Should()
-            .ThrowExactly<SqliteObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+            .ThrowExactly<MySqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Theory]
@@ -475,7 +450,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [InlineData( false )]
     public void MarkAsUnique_ShouldDoNothing_WhenUniquenessFlagDoesNotChange(bool value)
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique( value );
@@ -495,7 +470,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void MarkAsUnique_ShouldDoNothing_WhenValueChangeIsFollowedByChangeToOriginal()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -515,10 +490,10 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void MarkAsUnique_ShouldUpdateIsUnique_WhenValueChangesToTrue()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
+        table.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
+        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).SetType<int>().Asc() );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -530,21 +505,20 @@ public class SqliteIndexBuilderTests : TestsBase
             result.Should().BeSameAs( sut );
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+                .Sql.Should()
                 .SatisfySql(
-                    "DROP INDEX \"foo_IX_T_C2A\";",
-                    "CREATE UNIQUE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" );
+                    "DROP INDEX `IX_T_C2A` ON `foo`.`T`;",
+                    "CREATE UNIQUE INDEX `IX_T_C2A` ON `foo`.`T` (`C2` ASC);" );
         }
     }
 
     [Fact]
     public void MarkAsUnique_ShouldUpdateIsUnique_WhenValueChangesToFalse()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
+        table.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
+        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).SetType<int>().Asc() ).MarkAsUnique();
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -556,21 +530,20 @@ public class SqliteIndexBuilderTests : TestsBase
             result.Should().BeSameAs( sut );
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+                .Sql.Should()
                 .SatisfySql(
-                    "DROP INDEX \"foo_IX_T_C2A\";",
-                    "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" );
+                    "DROP INDEX `IX_T_C2A` ON `foo`.`T`;",
+                    "CREATE INDEX `IX_T_C2A` ON `foo`.`T` (`C2` ASC);" );
         }
     }
 
     [Fact]
-    public void MarkAsUnique_ShouldNotRecreateOriginatingForeignKeys_WhenValueChanges()
+    public void MarkAsUnique_ShouldRecreateOriginatingForeignKeys_WhenValueChanges()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var pk = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
+        var pk = table.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
+        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).SetType<int>().Asc() );
         table.ForeignKeys.Create( sut, pk.Index );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -584,27 +557,31 @@ public class SqliteIndexBuilderTests : TestsBase
             statements.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    "DROP INDEX \"foo_IX_T_C2A\";",
-                    "CREATE UNIQUE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" );
+                    @"ALTER TABLE `foo`.`T`
+                      DROP FOREIGN KEY `FK_T_C2_REF_T`;",
+                    "DROP INDEX `IX_T_C2A` ON `foo`.`T`;",
+                    "CREATE UNIQUE INDEX `IX_T_C2A` ON `foo`.`T` (`C2` ASC);",
+                    @"ALTER TABLE `foo`.`T`
+                      ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;" );
         }
     }
 
     [Fact]
-    public void MarkAsUnique_ShouldThrowSqliteObjectBuilderException_WhenPrimaryKeyIndexUniquenessChangesToFalse()
+    public void MarkAsUnique_ShouldThrowMySqlObjectBuilderException_WhenPrimaryKeyIndexUniquenessChangesToFalse()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
 
         var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).MarkAsUnique( false ) );
 
-        action.Should().ThrowExactly<SqliteObjectBuilderException>();
+        action.Should().ThrowExactly<MySqlObjectBuilderException>();
     }
 
     [Fact]
-    public void MarkAsUnique_ShouldThrowSqliteObjectBuilderException_WhenUniquenessChangesToFalseAndIndexIsReferencedByForeignKey()
+    public void MarkAsUnique_ShouldThrowMySqlObjectBuilderException_WhenUniquenessChangesToFalseAndIndexIsReferencedByForeignKey()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
@@ -612,13 +589,13 @@ public class SqliteIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).MarkAsUnique( false ) );
 
-        action.Should().ThrowExactly<SqliteObjectBuilderException>();
+        action.Should().ThrowExactly<MySqlObjectBuilderException>();
     }
 
     [Fact]
-    public void MarkAsUnique_ShouldThrowSqliteObjectBuilderException_WhenIndexIsRemoved()
+    public void MarkAsUnique_ShouldThrowMySqlObjectBuilderException_WhenIndexIsRemoved()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -627,17 +604,17 @@ public class SqliteIndexBuilderTests : TestsBase
         var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).MarkAsUnique() );
 
         action.Should()
-            .ThrowExactly<SqliteObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+            .ThrowExactly<MySqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]
     public void MarkAsUnique_ShouldUpdateIsUniqueAndNameCorrectly_WhenIsUniqueAndNameChangeAtTheSameTime()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
+        table.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
+        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).SetType<int>().Asc() );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -649,18 +626,17 @@ public class SqliteIndexBuilderTests : TestsBase
             result.Should().BeSameAs( sut );
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+                .Sql.Should()
                 .SatisfySql(
-                    "DROP INDEX \"foo_IX_T_C2A\";",
-                    "CREATE UNIQUE INDEX \"foo_bar\" ON \"foo_T\" (\"C2\" ASC);" );
+                    "DROP INDEX `IX_T_C2A` ON `foo`.`T`;",
+                    "CREATE UNIQUE INDEX `bar` ON `foo`.`T` (`C2` ASC);" );
         }
     }
 
     [Fact]
     public void SetFilter_ShouldDoNothing_WhenValueDoesNotChange()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).SetFilter( SqlNode.True() );
@@ -680,7 +656,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void SetFilter_ShouldDoNothing_WhenValueChangeIsFollowedByChangeToOriginal()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -700,10 +676,10 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void SetFilter_ShouldUpdateFilterAndFilterColumns_WhenValueChangesToNonNull()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var column = table.Columns.Create( "C2" );
+        table.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
+        var column = table.Columns.Create( "C2" ).SetType<int>();
         var sut = table.Indexes.Create( column.Asc() );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -719,21 +695,20 @@ public class SqliteIndexBuilderTests : TestsBase
             column.ReferencingIndexFilters.Should().BeSequentiallyEqualTo( sut );
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+                .Sql.Should()
                 .SatisfySql(
-                    "DROP INDEX \"foo_IX_T_C2A\";",
-                    "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC) WHERE (\"C2\" IS NOT NULL);" );
+                    "DROP INDEX `IX_T_C2A` ON `foo`.`T`;",
+                    "CREATE INDEX `IX_T_C2A` ON `foo`.`T` (`C2` ASC) WHERE (`C2` IS NOT NULL);" );
         }
     }
 
     [Fact]
     public void SetFilter_ShouldUpdateFilterAndFilterColumns_WhenValueChangesToNull()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var column = table.Columns.Create( "C2" );
+        table.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
+        var column = table.Columns.Create( "C2" ).SetType<int>();
         var sut = table.Indexes.Create( column.Asc() ).SetFilter( t => t["C2"] != null );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -749,43 +724,42 @@ public class SqliteIndexBuilderTests : TestsBase
             column.ReferencingIndexFilters.Should().BeEmpty();
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+                .Sql.Should()
                 .SatisfySql(
-                    "DROP INDEX \"foo_IX_T_C2A\";",
-                    "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" );
+                    "DROP INDEX `IX_T_C2A` ON `foo`.`T`;",
+                    "CREATE INDEX `IX_T_C2A` ON `foo`.`T` (`C2` ASC);" );
         }
     }
 
     [Fact]
-    public void SetFilter_ShouldThrowSqliteObjectBuilderException_WhenFilterIsInvalid()
+    public void SetFilter_ShouldThrowMySqlObjectBuilderException_WhenFilterIsInvalid()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.Indexes.Create( table.Columns.Create( "C" ).Asc() );
 
         var action = Lambda.Of(
             () => ((ISqlIndexBuilder)sut).SetFilter( _ => SqlNode.Functions.RecordsAffected() == SqlNode.Literal( 0 ) ) );
 
-        action.Should().ThrowExactly<SqliteObjectBuilderException>();
+        action.Should().ThrowExactly<MySqlObjectBuilderException>();
     }
 
     [Fact]
-    public void SetFilter_ShouldThrowSqliteObjectBuilderException_WhenPrimaryKeyIndexFilterChangesToNonNull()
+    public void SetFilter_ShouldThrowMySqlObjectBuilderException_WhenPrimaryKeyIndexFilterChangesToNonNull()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
 
         var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).SetFilter( SqlNode.True() ) );
 
-        action.Should().ThrowExactly<SqliteObjectBuilderException>();
+        action.Should().ThrowExactly<MySqlObjectBuilderException>();
     }
 
     [Fact]
     public void SetFilter_ShouldThrowSqliteObjectBuilderException_WhenReferencedIndexFilterChangesToNonNull()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var ix = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
@@ -793,13 +767,13 @@ public class SqliteIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).SetFilter( SqlNode.True() ) );
 
-        action.Should().ThrowExactly<SqliteObjectBuilderException>();
+        action.Should().ThrowExactly<MySqlObjectBuilderException>();
     }
 
     [Fact]
-    public void SetFilter_ShouldThrowSqliteObjectBuilderException_WhenIndexIsRemoved()
+    public void SetFilter_ShouldThrowMySqlObjectBuilderException_WhenIndexIsRemoved()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -808,17 +782,17 @@ public class SqliteIndexBuilderTests : TestsBase
         var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).SetFilter( null ) );
 
         action.Should()
-            .ThrowExactly<SqliteObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+            .ThrowExactly<MySqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]
-    public void SetFilter_ShouldNotRecreateOriginatingForeignKeys_WhenValueChanges()
+    public void SetFilter_ShouldRecreateOriginatingForeignKeys_WhenValueChanges()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var pk = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
+        var pk = table.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
+        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).SetType<int>().Asc() );
         table.ForeignKeys.Create( sut, pk.Index );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -832,18 +806,22 @@ public class SqliteIndexBuilderTests : TestsBase
             statements.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    "DROP INDEX \"foo_IX_T_C2A\";",
-                    "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC) WHERE TRUE;" );
+                    @"ALTER TABLE `foo`.`T`
+                      DROP FOREIGN KEY `FK_T_C2_REF_T`;",
+                    "DROP INDEX `IX_T_C2A` ON `foo`.`T`;",
+                    "CREATE INDEX `IX_T_C2A` ON `foo`.`T` (`C2` ASC) WHERE TRUE;",
+                    @"ALTER TABLE `foo`.`T`
+                      ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;" );
         }
     }
 
     [Fact]
     public void SetFilter_ShouldUpdateFilterAndIsUniqueAndNameCorrectly_WhenFilterAndIsUniqueAndNameChangeAtTheSameTime()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
+        table.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
+        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).SetType<int>().Asc() );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -855,18 +833,17 @@ public class SqliteIndexBuilderTests : TestsBase
             result.Should().BeSameAs( sut );
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+                .Sql.Should()
                 .SatisfySql(
-                    "DROP INDEX \"foo_IX_T_C2A\";",
-                    "CREATE UNIQUE INDEX \"foo_bar\" ON \"foo_T\" (\"C2\" ASC) WHERE (\"C2\" IS NOT NULL);" );
+                    "DROP INDEX `IX_T_C2A` ON `foo`.`T`;",
+                    "CREATE UNIQUE INDEX `bar` ON `foo`.`T` (`C2` ASC) WHERE (`C2` IS NOT NULL);" );
         }
     }
 
     [Fact]
-    public void PrimaryKeyAssignment_ShouldRecreateTableWithOriginatingForeignKeys()
+    public void PrimaryKeyAssignment_ShouldRecreateOriginatingForeignKeys()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
         var ix = table.Indexes.Create( table.Columns.Create( "C2" ).SetType<int>().Asc() ).MarkAsUnique();
@@ -884,31 +861,21 @@ public class SqliteIndexBuilderTests : TestsBase
             statements.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    "DROP INDEX \"foo_IX_T_C3A\";",
-                    "DROP INDEX \"foo_IX_T_C2A\";",
-                    @"CREATE TABLE ""__foo_T__{GUID}__"" (
-                      ""C1"" INTEGER NOT NULL,
-                      ""C2"" INTEGER NOT NULL,
-                      ""C3"" INTEGER NOT NULL,
-                      CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C3"" ASC),
-                      CONSTRAINT ""foo_FK_T_C3_REF_T"" FOREIGN KEY (""C3"") REFERENCES ""foo_T"" (""C2"") ON DELETE RESTRICT ON UPDATE RESTRICT
-                    ) WITHOUT ROWID;",
-                    @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"", ""C3"")
-                    SELECT
-                      ""foo_T"".""C1"",
-                      ""foo_T"".""C2"",
-                      ""foo_T"".""C3""
-                    FROM ""foo_T"";",
-                    "DROP TABLE \"foo_T\";",
-                    "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";",
-                    "CREATE UNIQUE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" );
+                    @"ALTER TABLE `foo`.`T`
+                      DROP FOREIGN KEY `FK_T_C3_REF_T`;",
+                    "DROP INDEX `IX_T_C3A` ON `foo`.`T`;",
+                    @"ALTER TABLE `foo`.`T`
+                      DROP PRIMARY KEY,
+                      ADD CONSTRAINT `PK_T` PRIMARY KEY (`C3` ASC);",
+                    @"ALTER TABLE `foo`.`T`
+                      ADD CONSTRAINT `FK_T_C3_REF_T` FOREIGN KEY (`C3`) REFERENCES `foo`.`T` (`C2`) ON DELETE RESTRICT ON UPDATE RESTRICT;" );
         }
     }
 
     [Fact]
     public void Remove_ShouldRemoveIndexAndSelfReferencingForeignKeys()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var pk = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var c2 = table.Columns.Create( "C2" );
@@ -934,33 +901,19 @@ public class SqliteIndexBuilderTests : TestsBase
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+                .Sql.Should()
                 .SatisfySql(
-                    "DROP INDEX \"foo_IX_T_C2A\";",
-                    "DROP INDEX \"foo_IX_T_C3A\";",
-                    @"CREATE TABLE ""__foo_T__{GUID}__"" (
-                      ""C1"" ANY NOT NULL,
-                      ""C2"" ANY NOT NULL,
-                      ""C3"" ANY NOT NULL,
-                      CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
-                    ) WITHOUT ROWID;",
-                    @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"", ""C3"")
-                    SELECT
-                      ""foo_T"".""C1"",
-                      ""foo_T"".""C2"",
-                      ""foo_T"".""C3""
-                    FROM ""foo_T"";",
-                    "DROP TABLE \"foo_T\";",
-                    "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";",
-                    "CREATE INDEX \"foo_IX_T_C3A\" ON \"foo_T\" (\"C3\" ASC);" );
+                    @"ALTER TABLE `foo`.`T`
+                      DROP FOREIGN KEY `FK_T_C2_REF_T`,
+                      DROP FOREIGN KEY `FK_T_C3_REF_T`;",
+                    "DROP INDEX `IX_T_C2A` ON `foo`.`T`;" );
         }
     }
 
     [Fact]
     public void Remove_ShouldRemoveIndexAndAssignedPrimaryKey()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C" );
         var pk = table.SetPrimaryKey( column.Asc() );
@@ -985,7 +938,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldRemoveIndexAndClearAssignedFilterColumns()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C" );
         var sut = table.Indexes.Create( column.Asc() ).SetFilter( t => t["C"] != null );
@@ -1009,7 +962,7 @@ public class SqliteIndexBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldDoNothing_WhenIndexIsRemoved()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
@@ -1025,9 +978,9 @@ public class SqliteIndexBuilderTests : TestsBase
     }
 
     [Fact]
-    public void Remove_ShouldThrowSqliteObjectBuilderException_WhenIndexHasExternalReferences()
+    public void Remove_ShouldThrowMySqlObjectBuilderException_WhenIndexHasExternalReferences()
     {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var t1 = schema.Objects.CreateTable( "T1" );
         t1.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() );
         var sut = t1.Indexes.Create( t1.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
@@ -1037,29 +990,29 @@ public class SqliteIndexBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should().ThrowExactly<SqliteObjectBuilderException>();
+        action.Should().ThrowExactly<MySqlObjectBuilderException>();
     }
 
     [Fact]
-    public void ForSqlite_ShouldInvokeAction_WhenIndexIsSqlite()
+    public void ForMySql_ShouldInvokeAction_WhenIndexIsMySql()
     {
-        var action = Substitute.For<Action<SqliteIndexBuilder>>();
-        var table = SqliteDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
+        var action = Substitute.For<Action<MySqlIndexBuilder>>();
+        var table = MySqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
         var sut = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
 
-        var result = sut.ForSqlite( action );
+        var result = sut.ForMySql( action );
 
         result.Should().BeSameAs( sut );
         action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( sut );
     }
 
     [Fact]
-    public void ForSqlite_ShouldNotInvokeAction_WhenIndexIsNotSqlite()
+    public void ForMySql_ShouldNotInvokeAction_WhenIndexIsNotMySql()
     {
-        var action = Substitute.For<Action<SqliteIndexBuilder>>();
+        var action = Substitute.For<Action<MySqlIndexBuilder>>();
         var sut = Substitute.For<ISqlIndexBuilder>();
 
-        var result = sut.ForSqlite( action );
+        var result = sut.ForMySql( action );
 
         result.Should().BeSameAs( sut );
         action.Verify().CallCount.Should().Be( 0 );

@@ -2,27 +2,27 @@
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Extensions;
+using LfrlAnvil.MySql.Exceptions;
+using LfrlAnvil.MySql.Internal;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.Sqlite.Exceptions;
-using LfrlAnvil.Sqlite.Internal;
 
-namespace LfrlAnvil.Sqlite.Objects.Builders;
+namespace LfrlAnvil.MySql.Objects.Builders;
 
-public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
+public sealed class MySqlColumnBuilder : MySqlObjectBuilder, ISqlColumnBuilder
 {
-    private Dictionary<ulong, SqliteIndexBuilder>? _referencingIndexes;
-    private Dictionary<ulong, SqliteIndexBuilder>? _referencingIndexFilters;
-    private Dictionary<ulong, SqliteViewBuilder>? _referencingViews;
-    private Dictionary<ulong, SqliteCheckBuilder>? _referencingChecks;
+    private Dictionary<ulong, MySqlIndexBuilder>? _referencingIndexes;
+    private Dictionary<ulong, MySqlIndexBuilder>? _referencingIndexFilters;
+    private Dictionary<ulong, MySqlViewBuilder>? _referencingViews;
+    private Dictionary<ulong, MySqlCheckBuilder>? _referencingChecks;
     private string? _fullName;
     private SqlColumnBuilderNode? _node;
 
-    internal SqliteColumnBuilder(SqliteTableBuilder table, string name, SqliteColumnTypeDefinition typeDefinition)
+    internal MySqlColumnBuilder(MySqlTableBuilder table, string name, MySqlColumnTypeDefinition typeDefinition)
         : base( table.Database.GetNextId(), name, SqlObjectType.Column )
     {
         Table = table;
@@ -38,17 +38,17 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
         _node = null;
     }
 
-    public SqliteTableBuilder Table { get; }
-    public SqliteColumnTypeDefinition TypeDefinition { get; private set; }
+    public MySqlTableBuilder Table { get; }
+    public MySqlColumnTypeDefinition TypeDefinition { get; private set; }
     public bool IsNullable { get; private set; }
     public SqlExpressionNode? DefaultValue { get; private set; }
-    public override SqliteDatabaseBuilder Database => Table.Database;
-    public override string FullName => _fullName ??= SqliteHelpers.GetFullFieldName( Table.FullName, Name );
+    public override MySqlDatabaseBuilder Database => Table.Database;
+    public override string FullName => _fullName ??= MySqlHelpers.GetFullFieldName( Table.FullName, Name );
     public SqlColumnBuilderNode Node => _node ??= Table.RecordSet[Name];
-    public IReadOnlyCollection<SqliteIndexBuilder> ReferencingIndexes => (_referencingIndexes?.Values).EmptyIfNull();
-    public IReadOnlyCollection<SqliteIndexBuilder> ReferencingIndexFilters => (_referencingIndexFilters?.Values).EmptyIfNull();
-    public IReadOnlyCollection<SqliteViewBuilder> ReferencingViews => (_referencingViews?.Values).EmptyIfNull();
-    public IReadOnlyCollection<SqliteCheckBuilder> ReferencingChecks => (_referencingChecks?.Values).EmptyIfNull();
+    public IReadOnlyCollection<MySqlIndexBuilder> ReferencingIndexes => (_referencingIndexes?.Values).EmptyIfNull();
+    public IReadOnlyCollection<MySqlIndexBuilder> ReferencingIndexFilters => (_referencingIndexFilters?.Values).EmptyIfNull();
+    public IReadOnlyCollection<MySqlViewBuilder> ReferencingViews => (_referencingViews?.Values).EmptyIfNull();
+    public IReadOnlyCollection<MySqlCheckBuilder> ReferencingChecks => (_referencingChecks?.Values).EmptyIfNull();
 
     internal override bool CanRemove =>
         (_referencingIndexes is null || _referencingIndexes.Count == 0) &&
@@ -64,14 +64,14 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
     IReadOnlyCollection<ISqlCheckBuilder> ISqlColumnBuilder.ReferencingChecks => ReferencingChecks;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
 
-    public SqliteColumnBuilder SetName(string name)
+    public MySqlColumnBuilder SetName(string name)
     {
         EnsureNotRemoved();
         SetNameCore( name );
         return this;
     }
 
-    public SqliteColumnBuilder SetType(SqliteColumnTypeDefinition definition)
+    public MySqlColumnBuilder SetType(MySqlColumnTypeDefinition definition)
     {
         EnsureNotRemoved();
 
@@ -81,7 +81,7 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
 
             if ( ! ReferenceEquals( Database.TypeDefinitions.TryGetByType( definition.RuntimeType ), definition ) &&
                 ! ReferenceEquals( Database.TypeDefinitions.GetByDataType( definition.DataType ), definition ) )
-                throw new SqliteObjectBuilderException( ExceptionResources.UnrecognizedTypeDefinition( definition ) );
+                throw new MySqlObjectBuilderException( ExceptionResources.UnrecognizedTypeDefinition( definition ) );
 
             SetDefaultValue( null );
             var oldDefinition = TypeDefinition;
@@ -92,7 +92,7 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
         return this;
     }
 
-    public SqliteColumnBuilder MarkAsNullable(bool enabled = true)
+    public MySqlColumnBuilder MarkAsNullable(bool enabled = true)
     {
         EnsureNotRemoved();
 
@@ -106,7 +106,7 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
         return this;
     }
 
-    public SqliteColumnBuilder SetDefaultValue(SqlExpressionNode? value)
+    public MySqlColumnBuilder SetDefaultValue(SqlExpressionNode? value)
     {
         EnsureNotRemoved();
 
@@ -114,12 +114,12 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
         {
             if ( value is not null )
             {
-                var validator = new SqliteConstantExpressionValidator();
+                var validator = new MySqlConstantExpressionValidator();
                 validator.Visit( value );
 
                 var errors = validator.GetErrors();
                 if ( errors.Count > 0 )
-                    throw new SqliteObjectBuilderException( errors );
+                    throw new MySqlObjectBuilderException( errors );
             }
 
             var oldValue = DefaultValue;
@@ -131,57 +131,57 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
     }
 
     [Pure]
-    public SqliteIndexColumnBuilder Asc()
+    public MySqlIndexColumnBuilder Asc()
     {
-        return SqliteIndexColumnBuilder.Asc( this );
+        return MySqlIndexColumnBuilder.Asc( this );
     }
 
     [Pure]
-    public SqliteIndexColumnBuilder Desc()
+    public MySqlIndexColumnBuilder Desc()
     {
-        return SqliteIndexColumnBuilder.Desc( this );
+        return MySqlIndexColumnBuilder.Desc( this );
     }
 
-    internal void AddReferencingIndex(SqliteIndexBuilder index)
+    internal void AddReferencingIndex(MySqlIndexBuilder index)
     {
-        _referencingIndexes ??= new Dictionary<ulong, SqliteIndexBuilder>();
+        _referencingIndexes ??= new Dictionary<ulong, MySqlIndexBuilder>();
         _referencingIndexes.Add( index.Id, index );
     }
 
-    internal void RemoveReferencingIndex(SqliteIndexBuilder index)
+    internal void RemoveReferencingIndex(MySqlIndexBuilder index)
     {
         _referencingIndexes?.Remove( index.Id );
     }
 
-    internal void AddReferencingIndexFilter(SqliteIndexBuilder index)
+    internal void AddReferencingIndexFilter(MySqlIndexBuilder index)
     {
-        _referencingIndexFilters ??= new Dictionary<ulong, SqliteIndexBuilder>();
+        _referencingIndexFilters ??= new Dictionary<ulong, MySqlIndexBuilder>();
         _referencingIndexFilters.Add( index.Id, index );
     }
 
-    internal void RemoveReferencingIndexFilter(SqliteIndexBuilder index)
+    internal void RemoveReferencingIndexFilter(MySqlIndexBuilder index)
     {
         _referencingIndexFilters?.Remove( index.Id );
     }
 
-    internal void AddReferencingView(SqliteViewBuilder view)
+    internal void AddReferencingView(MySqlViewBuilder view)
     {
-        _referencingViews ??= new Dictionary<ulong, SqliteViewBuilder>();
+        _referencingViews ??= new Dictionary<ulong, MySqlViewBuilder>();
         _referencingViews.Add( view.Id, view );
     }
 
-    internal void RemoveReferencingView(SqliteViewBuilder view)
+    internal void RemoveReferencingView(MySqlViewBuilder view)
     {
         _referencingViews?.Remove( view.Id );
     }
 
-    internal void AddReferencingCheck(SqliteCheckBuilder check)
+    internal void AddReferencingCheck(MySqlCheckBuilder check)
     {
-        _referencingChecks ??= new Dictionary<ulong, SqliteCheckBuilder>();
+        _referencingChecks ??= new Dictionary<ulong, MySqlCheckBuilder>();
         _referencingChecks.Add( check.Id, check );
     }
 
-    internal void RemoveReferencingCheck(SqliteCheckBuilder check)
+    internal void RemoveReferencingCheck(MySqlCheckBuilder check)
     {
         _referencingChecks?.Remove( check.Id );
     }
@@ -190,6 +190,17 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
     {
         Assume.IsNull( DefaultValue );
         DefaultValue = TypeDefinition.DefaultValue;
+    }
+
+    internal void MarkAsRemoved()
+    {
+        Assume.Equals( IsRemoved, false );
+        IsRemoved = true;
+
+        _referencingIndexes = null;
+        _referencingIndexFilters = null;
+        _referencingViews = null;
+        _referencingChecks = null;
     }
 
     protected override void AssertRemoval()
@@ -216,7 +227,7 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
             return;
 
         EnsureMutable();
-        SqliteHelpers.AssertName( name );
+        MySqlHelpers.AssertName( name );
         Table.Columns.ChangeName( this, name );
 
         var oldName = Name;
@@ -266,7 +277,7 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
         }
 
         if ( errors.Count > 0 )
-            throw new SqliteObjectBuilderException( errors );
+            throw new MySqlObjectBuilderException( errors );
     }
 
     ISqlColumnBuilder ISqlColumnBuilder.SetName(string name)
@@ -276,7 +287,7 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
 
     ISqlColumnBuilder ISqlColumnBuilder.SetType(ISqlColumnTypeDefinition definition)
     {
-        return SetType( SqliteHelpers.CastOrThrow<SqliteColumnTypeDefinition>( definition ) );
+        return SetType( MySqlHelpers.CastOrThrow<MySqlColumnTypeDefinition>( definition ) );
     }
 
     ISqlColumnBuilder ISqlColumnBuilder.MarkAsNullable(bool enabled)

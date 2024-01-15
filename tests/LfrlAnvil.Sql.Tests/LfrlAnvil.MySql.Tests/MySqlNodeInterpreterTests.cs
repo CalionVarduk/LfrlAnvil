@@ -3,6 +3,7 @@ using System.Data;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using LfrlAnvil.Functional;
+using LfrlAnvil.MySql.Internal.Expressions;
 using LfrlAnvil.MySql.Tests.Helpers;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
@@ -4594,6 +4595,73 @@ COMMIT;" );
     {
         _sut.Visit( SqlNode.RollbackTransaction() );
         _sut.Context.Sql.ToString().Should().Be( "ROLLBACK" );
+    }
+
+    [Theory]
+    [InlineData( true, "CREATE SCHEMA IF NOT EXISTS `foo`" )]
+    [InlineData( false, "CREATE SCHEMA `foo`" )]
+    public void Visit_ShouldInterpretCreateSchema(bool ifNotExists, string expected)
+    {
+        _sut.Visit( new MySqlCreateSchemaNode( "foo", ifNotExists ) );
+        _sut.Context.Sql.ToString().Should().Be( expected );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretDropSchema()
+    {
+        _sut.Visit( new MySqlDropSchemaNode( "foo" ) );
+        _sut.Context.Sql.ToString().Should().Be( "DROP SCHEMA `foo`" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretAlterTable()
+    {
+        var table = SqlNode.RawRecordSet( "foo.bar" );
+        var other = SqlNode.RawRecordSet( "foo.qux" );
+
+        _sut.Visit(
+            new MySqlAlterTableNode(
+                info: SqlRecordSetInfo.Create( "foo", "bar" ),
+                oldColumns: new[] { "a", "b" },
+                oldForeignKeys: new[] { "FK_1", "FK_2" },
+                oldChecks: new[] { "CHK_1", "CHK_2" },
+                renamedIndexes: new[] { KeyValuePair.Create( "IX_A", "IX_1" ), KeyValuePair.Create( "IX_B", "IX_2" ) },
+                changedColumns: new[]
+                {
+                    KeyValuePair.Create( "CA", SqlNode.Column<int>( "C1" ) ),
+                    KeyValuePair.Create( "CB", SqlNode.Column<int>( "C2", isNullable: true ) )
+                },
+                newColumns: new[] { SqlNode.Column<long>( "C3" ), SqlNode.Column<long>( "C4", isNullable: true ) },
+                newPrimaryKey: SqlNode.PrimaryKey( "PK", SqlNode.OrderByAsc( table["C5"] ) ),
+                newForeignKeys: new[]
+                {
+                    SqlNode.ForeignKey( "FK_3", new SqlDataFieldNode[] { table["C6"] }, other, new SqlDataFieldNode[] { other["C1"] } ),
+                    SqlNode.ForeignKey( "FK_4", new SqlDataFieldNode[] { table["C7"] }, other, new SqlDataFieldNode[] { other["C2"] } )
+                },
+                newChecks: new[] { SqlNode.Check( "CHK_3", SqlNode.True() ), SqlNode.Check( "CHK_4", SqlNode.False() ) } ) );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                @"ALTER TABLE `foo`.`bar`
+  DROP FOREIGN KEY `FK_1`,
+  DROP FOREIGN KEY `FK_2`,
+  DROP PRIMARY KEY,
+  DROP CHECK `CHK_1`,
+  DROP CHECK `CHK_2`,
+  RENAME INDEX `IX_A` TO `IX_1`,
+  RENAME INDEX `IX_B` TO `IX_2`,
+  DROP COLUMN `a`,
+  DROP COLUMN `b`,
+  CHANGE COLUMN `CA` `C1` INT NOT NULL,
+  CHANGE COLUMN `CB` `C2` INT,
+  ADD COLUMN `C3` BIGINT NOT NULL,
+  ADD COLUMN `C4` BIGINT,
+  ADD CONSTRAINT `PK` PRIMARY KEY (`C5` ASC),
+  ADD CONSTRAINT `CHK_3` CHECK (TRUE),
+  ADD CONSTRAINT `CHK_4` CHECK (FALSE),
+  ADD CONSTRAINT `FK_3` FOREIGN KEY (`C6`) REFERENCES foo.qux (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  ADD CONSTRAINT `FK_4` FOREIGN KEY (`C7`) REFERENCES foo.qux (`C2`) ON DELETE RESTRICT ON UPDATE RESTRICT" );
     }
 
     [Fact]

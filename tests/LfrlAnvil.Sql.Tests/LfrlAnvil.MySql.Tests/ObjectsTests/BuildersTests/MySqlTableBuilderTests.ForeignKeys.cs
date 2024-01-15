@@ -1,25 +1,25 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Functional;
+using LfrlAnvil.MySql.Exceptions;
+using LfrlAnvil.MySql.Extensions;
+using LfrlAnvil.MySql.Objects.Builders;
+using LfrlAnvil.MySql.Tests.Helpers;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.Sqlite.Exceptions;
-using LfrlAnvil.Sqlite.Extensions;
-using LfrlAnvil.Sqlite.Objects.Builders;
-using LfrlAnvil.Sqlite.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
-namespace LfrlAnvil.Sqlite.Tests.ObjectsTests.BuildersTests;
+namespace LfrlAnvil.MySql.Tests.ObjectsTests.BuildersTests;
 
-public partial class SqliteTableBuilderTests
+public partial class MySqlTableBuilderTests
 {
     public class ForeignKeys : TestsBase
     {
         [Fact]
         public void Create_ShouldCreateNewForeignKey_WhenIndexesBelongToTheSameTable()
         {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -32,7 +32,7 @@ public partial class SqliteTableBuilderTests
                 result.OriginIndex.Should().BeSameAs( ix1 );
                 result.ReferencedIndex.Should().BeSameAs( ix2 );
                 result.Name.Should().Be( "FK_T_C1_REF_T" );
-                result.FullName.Should().Be( "foo_FK_T_C1_REF_T" );
+                result.FullName.Should().Be( "foo.FK_T_C1_REF_T" );
                 result.Database.Should().BeSameAs( table.Database );
                 result.Type.Should().Be( SqlObjectType.ForeignKey );
                 result.OnUpdateBehavior.Should().Be( ReferenceBehavior.Restrict );
@@ -52,7 +52,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldCreateNewForeignKey_WhenIndexesDoNotBelongToTheSameTable()
         {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var t1 = schema.Objects.CreateTable( "T1" );
             var ix2 = t1.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() ).Index;
             var t2 = schema.Objects.CreateTable( "T2" );
@@ -66,7 +66,7 @@ public partial class SqliteTableBuilderTests
                 result.OriginIndex.Should().BeSameAs( ix1 );
                 result.ReferencedIndex.Should().BeSameAs( ix2 );
                 result.Name.Should().Be( "FK_T2_C2_REF_T1" );
-                result.FullName.Should().Be( "foo_FK_T2_C2_REF_T1" );
+                result.FullName.Should().Be( "foo.FK_T2_C2_REF_T1" );
                 result.Database.Should().BeSameAs( t1.Database );
                 result.Type.Should().Be( SqlObjectType.ForeignKey );
                 result.OnUpdateBehavior.Should().Be( ReferenceBehavior.Restrict );
@@ -86,7 +86,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Create_ShouldCreateNewForeignKey_WhenIndexesDoNotBelongToTheSameSchema()
         {
-            var db = SqliteDatabaseBuilderMock.Create();
+            var db = MySqlDatabaseBuilderMock.Create();
             var schema1 = db.Schemas.Create( "foo" );
             var schema2 = db.Schemas.Create( "bar" );
             var t1 = schema1.Objects.CreateTable( "T1" );
@@ -102,7 +102,7 @@ public partial class SqliteTableBuilderTests
                 result.OriginIndex.Should().BeSameAs( ix1 );
                 result.ReferencedIndex.Should().BeSameAs( ix2 );
                 result.Name.Should().Be( "FK_T2_C2_REF_foo_T1" );
-                result.FullName.Should().Be( "bar_FK_T2_C2_REF_foo_T1" );
+                result.FullName.Should().Be( "bar.FK_T2_C2_REF_foo_T1" );
                 result.Database.Should().BeSameAs( t1.Database );
                 result.Type.Should().Be( SqlObjectType.ForeignKey );
                 result.OnUpdateBehavior.Should().Be( ReferenceBehavior.Restrict );
@@ -120,9 +120,9 @@ public partial class SqliteTableBuilderTests
         }
 
         [Fact]
-        public void Create_ShouldThrowSqliteObjectBuilderException_WhenTableIsRemoved()
+        public void Create_ShouldThrowMySqlObjectBuilderException_WhenTableIsRemoved()
         {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -132,14 +132,14 @@ public partial class SqliteTableBuilderTests
             var action = Lambda.Of( () => sut.Create( ix1, ix2 ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
-                .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+                .ThrowExactly<MySqlObjectBuilderException>()
+                .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void Create_ShouldThrowSqliteObjectBuilderException_WhenForeignKeyAlreadyExists()
+        public void Create_ShouldThrowMySqlObjectBuilderException_WhenForeignKeyAlreadyExists()
         {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -149,14 +149,14 @@ public partial class SqliteTableBuilderTests
             var action = Lambda.Of( () => sut.Create( ix1, ix2 ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
-                .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+                .ThrowExactly<MySqlObjectBuilderException>()
+                .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void Create_ShouldThrowSqliteObjectBuilderException_WhenSchemaObjectWithDefaultForeignKeyNameAlreadyExists()
+        public void Create_ShouldThrowMySqlObjectBuilderException_WhenSchemaObjectWithDefaultForeignKeyNameAlreadyExists()
         {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() ).SetName( "FK_T_C1_REF_T" );
@@ -165,14 +165,14 @@ public partial class SqliteTableBuilderTests
             var action = Lambda.Of( () => sut.Create( ix1, ix2 ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
-                .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+                .ThrowExactly<MySqlObjectBuilderException>()
+                .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void Create_ShouldThrowSqliteObjectBuilderException_WhenIndexAndReferencedIndexAreTheSame()
+        public void Create_ShouldThrowMySqlObjectBuilderException_WhenIndexAndReferencedIndexAreTheSame()
         {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() ).MarkAsUnique();
@@ -180,14 +180,14 @@ public partial class SqliteTableBuilderTests
             var action = Lambda.Of( () => sut.Create( ix1, ix1 ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
-                .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+                .ThrowExactly<MySqlObjectBuilderException>()
+                .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void Create_ShouldThrowSqliteObjectBuilderException_WhenReferencedIndexIsNotUnique()
+        public void Create_ShouldThrowMySqlObjectBuilderException_WhenReferencedIndexIsNotUnique()
         {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -196,14 +196,14 @@ public partial class SqliteTableBuilderTests
             var action = Lambda.Of( () => sut.Create( ix1, ix2 ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
-                .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+                .ThrowExactly<MySqlObjectBuilderException>()
+                .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
         public void Create_ShouldThrowSqliteObjectBuilderException_WhenReferencedIndexHasFilter()
         {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -212,14 +212,14 @@ public partial class SqliteTableBuilderTests
             var action = Lambda.Of( () => sut.Create( ix1, ix2 ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
-                .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+                .ThrowExactly<MySqlObjectBuilderException>()
+                .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void Create_ShouldThrowSqliteObjectBuilderException_WhenIndexBelongsToAnotherTable()
+        public void Create_ShouldThrowMySqlObjectBuilderException_WhenIndexBelongsToAnotherTable()
         {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var t1 = schema.Objects.CreateTable( "T1" );
             var sut = t1.ForeignKeys;
             var ix1 = t1.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() ).Index;
@@ -229,15 +229,15 @@ public partial class SqliteTableBuilderTests
             var action = Lambda.Of( () => sut.Create( ix2, ix1 ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
-                .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+                .ThrowExactly<MySqlObjectBuilderException>()
+                .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void Create_ShouldThrowSqliteObjectBuilderException_WhenReferencedIndexBelongsToAnotherDatabase()
+        public void Create_ShouldThrowMySqlObjectBuilderException_WhenReferencedIndexBelongsToAnotherDatabase()
         {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
-            var otherSchema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
+            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var otherSchema = MySqlDatabaseBuilderMock.Create().Schemas.Default;
             var t1 = schema.Objects.CreateTable( "T1" );
             var sut = t1.ForeignKeys;
             var ix1 = t1.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() ).Index;
@@ -247,14 +247,14 @@ public partial class SqliteTableBuilderTests
             var action = Lambda.Of( () => sut.Create( ix1, ix2 ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
-                .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+                .ThrowExactly<MySqlObjectBuilderException>()
+                .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void Create_ShouldThrowSqliteObjectBuilderException_WhenIndexIsRemoved()
+        public void Create_ShouldThrowMySqlObjectBuilderException_WhenIndexIsRemoved()
         {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -264,14 +264,14 @@ public partial class SqliteTableBuilderTests
             var action = Lambda.Of( () => sut.Create( ix1, ix2 ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
-                .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 2 );
+                .ThrowExactly<MySqlObjectBuilderException>()
+                .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 2 );
         }
 
         [Fact]
-        public void Create_ShouldThrowSqliteObjectBuilderException_WhenReferencedIndexIsRemoved()
+        public void Create_ShouldThrowMySqlObjectBuilderException_WhenReferencedIndexIsRemoved()
         {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -281,14 +281,14 @@ public partial class SqliteTableBuilderTests
             var action = Lambda.Of( () => sut.Create( ix1, ix2 ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
-                .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 2 );
+                .ThrowExactly<MySqlObjectBuilderException>()
+                .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 2 );
         }
 
         [Fact]
-        public void Create_ShouldThrowSqliteObjectBuilderException_WhenReferencedIndexContainsNullableColumn()
+        public void Create_ShouldThrowMySqlObjectBuilderException_WhenReferencedIndexContainsNullableColumn()
         {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc(), table.Columns.Create( "C2" ).Asc() );
@@ -301,14 +301,14 @@ public partial class SqliteTableBuilderTests
             var action = Lambda.Of( () => sut.Create( ix1, ix2 ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
-                .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+                .ThrowExactly<MySqlObjectBuilderException>()
+                .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void Create_ShouldThrowSqliteObjectBuilderException_WhenIndexAndReferencedIndexHaveDifferentAmountOfColumns()
+        public void Create_ShouldThrowMySqlObjectBuilderException_WhenIndexAndReferencedIndexHaveDifferentAmountOfColumns()
         {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc(), table.Columns.Create( "C2" ).Asc() );
@@ -317,14 +317,14 @@ public partial class SqliteTableBuilderTests
             var action = Lambda.Of( () => sut.Create( ix1, ix2 ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
-                .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+                .ThrowExactly<MySqlObjectBuilderException>()
+                .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void Create_ShouldThrowSqliteObjectBuilderException_WhenAtLeastOneIndexAndReferencedIndexColumnPairHasIncompatibleTypes()
+        public void Create_ShouldThrowMySqlObjectBuilderException_WhenAtLeastOneIndexAndReferencedIndexColumnPairHasIncompatibleTypes()
         {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create(
@@ -339,14 +339,14 @@ public partial class SqliteTableBuilderTests
             var action = Lambda.Of( () => sut.Create( ix1, ix2 ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
-                .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+                .ThrowExactly<MySqlObjectBuilderException>()
+                .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
         public void Create_ShouldThrowSqlObjectCastException_WhenIndexIsOfInvalidType()
         {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = Substitute.For<ISqlIndexBuilder>();
@@ -356,13 +356,13 @@ public partial class SqliteTableBuilderTests
 
             action.Should()
                 .ThrowExactly<SqlObjectCastException>()
-                .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Expected == typeof( SqliteIndexBuilder ) );
+                .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Expected == typeof( MySqlIndexBuilder ) );
         }
 
         [Fact]
         public void Create_ShouldThrowSqlObjectCastException_WhenReferencedIndexIsOfInvalidType()
         {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -372,13 +372,13 @@ public partial class SqliteTableBuilderTests
 
             action.Should()
                 .ThrowExactly<SqlObjectCastException>()
-                .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Expected == typeof( SqliteIndexBuilder ) );
+                .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Expected == typeof( MySqlIndexBuilder ) );
         }
 
         [Fact]
         public void GetOrCreate_ShouldCreateNewForeignKey_WhenForeignKeyDoesNotExist()
         {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -391,7 +391,7 @@ public partial class SqliteTableBuilderTests
                 result.OriginIndex.Should().BeSameAs( ix1 );
                 result.ReferencedIndex.Should().BeSameAs( ix2 );
                 result.Name.Should().Be( "FK_T_C1_REF_T" );
-                result.FullName.Should().Be( "foo_FK_T_C1_REF_T" );
+                result.FullName.Should().Be( "foo.FK_T_C1_REF_T" );
                 result.Database.Should().BeSameAs( table.Database );
                 result.Type.Should().Be( SqlObjectType.ForeignKey );
                 result.OnUpdateBehavior.Should().Be( ReferenceBehavior.Restrict );
@@ -411,7 +411,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void GetOrCreate_ShouldReturnExistingForeignKey_WhenForeignKeyAlreadyExists()
         {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -430,7 +430,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Contains_ShouldReturnTrue_WhenForeignKeyExists()
         {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -445,7 +445,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Contains_ShouldReturnFalse_WhenForeignKeyDoesNotExist()
         {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -460,7 +460,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Get_ShouldReturnExistingForeignKey()
         {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -475,7 +475,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Get_ShouldThrowKeyNotFoundException_WhenForeignKeyDoesNotExist()
         {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -490,7 +490,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void TryGet_ShouldReturnExistingForeignKey()
         {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -509,7 +509,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void TryGet_ShouldReturnFalse_WhenForeignKeyDoesNotExist()
         {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -528,7 +528,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Remove_ShouldRemoveExistingForeignKey()
         {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
@@ -552,7 +552,7 @@ public partial class SqliteTableBuilderTests
         [Fact]
         public void Remove_ShouldReturnFalse_WhenForeignKeyDoesNotExist()
         {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.ForeignKeys;
             var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );

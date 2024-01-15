@@ -272,6 +272,9 @@ public static class SqliteHelpers
         if ( ! referencedIndex.IsUnique )
             errors = errors.Extend( ExceptionResources.IndexIsNotMarkedAsUnique( referencedIndex ) );
 
+        if ( referencedIndex.Filter is not null )
+            errors = errors.Extend( ExceptionResources.IndexIsPartial( referencedIndex ) );
+
         var indexColumns = originIndex.Columns.Span;
         var referencedIndexColumns = referencedIndex.Columns.Span;
 

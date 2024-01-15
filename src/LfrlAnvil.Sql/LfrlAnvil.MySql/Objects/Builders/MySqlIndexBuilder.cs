@@ -3,26 +3,26 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Memory;
+using LfrlAnvil.MySql.Exceptions;
+using LfrlAnvil.MySql.Internal;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.Sqlite.Exceptions;
-using LfrlAnvil.Sqlite.Internal;
 
-namespace LfrlAnvil.Sqlite.Objects.Builders;
+namespace LfrlAnvil.MySql.Objects.Builders;
 
-public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
+public sealed class MySqlIndexBuilder : MySqlObjectBuilder, ISqlIndexBuilder
 {
-    private Dictionary<ulong, SqliteForeignKeyBuilder>? _originatingForeignKeys;
-    private Dictionary<ulong, SqliteForeignKeyBuilder>? _referencingForeignKeys;
-    private Dictionary<ulong, SqliteColumnBuilder>? _referencedFilterColumns;
-    private SqliteIndexColumnBuilder[] _columns;
-    private string _fullName;
+    private Dictionary<ulong, MySqlForeignKeyBuilder>? _originatingForeignKeys;
+    private Dictionary<ulong, MySqlForeignKeyBuilder>? _referencingForeignKeys;
+    private Dictionary<ulong, MySqlColumnBuilder>? _referencedFilterColumns;
+    private MySqlIndexColumnBuilder[] _columns;
+    private string? _fullName;
 
-    internal SqliteIndexBuilder(SqliteTableBuilder table, SqliteIndexColumnBuilder[] columns, string name, bool isUnique)
+    internal MySqlIndexBuilder(MySqlTableBuilder table, MySqlIndexColumnBuilder[] columns, string name, bool isUnique)
         : base( table.Database.GetNextId(), name, SqlObjectType.Index )
     {
         Table = table;
@@ -33,23 +33,22 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
         _originatingForeignKeys = null;
         _referencingForeignKeys = null;
         _referencedFilterColumns = null;
-        _fullName = string.Empty;
-        UpdateFullName();
+        _fullName = null;
 
         foreach ( var c in _columns )
             c.Column.AddReferencingIndex( this );
     }
 
-    public SqliteTableBuilder Table { get; }
-    public SqlitePrimaryKeyBuilder? PrimaryKey { get; private set; }
+    public MySqlTableBuilder Table { get; }
+    public MySqlPrimaryKeyBuilder? PrimaryKey { get; private set; }
     public bool IsUnique { get; private set; }
     public SqlConditionNode? Filter { get; private set; }
-    public ReadOnlyMemory<SqliteIndexColumnBuilder> Columns => _columns;
-    public IReadOnlyCollection<SqliteForeignKeyBuilder> OriginatingForeignKeys => (_originatingForeignKeys?.Values).EmptyIfNull();
-    public IReadOnlyCollection<SqliteForeignKeyBuilder> ReferencingForeignKeys => (_referencingForeignKeys?.Values).EmptyIfNull();
-    public IReadOnlyCollection<SqliteColumnBuilder> ReferencedFilterColumns => (_referencedFilterColumns?.Values).EmptyIfNull();
-    public override SqliteDatabaseBuilder Database => Table.Database;
-    public override string FullName => _fullName;
+    public ReadOnlyMemory<MySqlIndexColumnBuilder> Columns => _columns;
+    public IReadOnlyCollection<MySqlForeignKeyBuilder> OriginatingForeignKeys => (_originatingForeignKeys?.Values).EmptyIfNull();
+    public IReadOnlyCollection<MySqlForeignKeyBuilder> ReferencingForeignKeys => (_referencingForeignKeys?.Values).EmptyIfNull();
+    public IReadOnlyCollection<MySqlColumnBuilder> ReferencedFilterColumns => (_referencedFilterColumns?.Values).EmptyIfNull();
+    public override MySqlDatabaseBuilder Database => Table.Database;
+    public override string FullName => _fullName ??= MySqlHelpers.GetFullName( Table.Schema.Name, Name );
 
     internal override bool CanRemove
     {
@@ -76,19 +75,19 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
     IReadOnlyCollection<ISqlForeignKeyBuilder> ISqlIndexBuilder.ReferencingForeignKeys => ReferencingForeignKeys;
     IReadOnlyCollection<ISqlColumnBuilder> ISqlIndexBuilder.ReferencedFilterColumns => ReferencedFilterColumns;
 
-    public SqliteIndexBuilder SetDefaultName()
+    public MySqlIndexBuilder SetDefaultName()
     {
-        return SetName( SqliteHelpers.GetDefaultIndexName( Table, _columns, IsUnique ) );
+        return SetName( MySqlHelpers.GetDefaultIndexName( Table, _columns, IsUnique ) );
     }
 
-    public SqliteIndexBuilder SetName(string name)
+    public MySqlIndexBuilder SetName(string name)
     {
         EnsureNotRemoved();
         SetNameCore( name );
         return this;
     }
 
-    public SqliteIndexBuilder MarkAsUnique(bool enabled = true)
+    public MySqlIndexBuilder MarkAsUnique(bool enabled = true)
     {
         EnsureNotRemoved();
 
@@ -104,7 +103,7 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
         return this;
     }
 
-    public SqliteIndexBuilder SetFilter(SqlConditionNode? filter)
+    public MySqlIndexBuilder SetFilter(SqlConditionNode? filter)
     {
         EnsureNotRemoved();
 
@@ -119,16 +118,17 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
 
                 if ( _referencingForeignKeys is not null )
                 {
+                    // TODO: test
                     foreach ( var fk in _referencingForeignKeys.Values )
                         errors = errors.Extend( ExceptionResources.IndexMustRemainNonPartialBecauseItIsReferencedByForeignKey( fk ) );
                 }
 
-                var validator = new SqliteTableScopeExpressionValidator( Table );
+                var validator = new MySqlTableScopeExpressionValidator( Table );
                 validator.Visit( filter );
 
                 errors = errors.Extend( validator.GetErrors() );
                 if ( errors.Count > 0 )
-                    throw new SqliteObjectBuilderException( errors );
+                    throw new MySqlObjectBuilderException( errors );
 
                 ClearReferencedFilterColumns();
                 RegisterReferencedFilterColumns( validator.ReferencedColumns );
@@ -144,7 +144,7 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
         return this;
     }
 
-    internal void AssignPrimaryKey(SqlitePrimaryKeyBuilder primaryKey)
+    internal void AssignPrimaryKey(MySqlPrimaryKeyBuilder primaryKey)
     {
         Assume.IsNull( PrimaryKey );
         Assume.Equals( IsUnique, true );
@@ -154,25 +154,25 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
         Database.ChangeTracker.PrimaryKeyUpdated( this, null );
     }
 
-    internal void AddOriginatingForeignKey(SqliteForeignKeyBuilder foreignKey)
+    internal void AddOriginatingForeignKey(MySqlForeignKeyBuilder foreignKey)
     {
-        _originatingForeignKeys ??= new Dictionary<ulong, SqliteForeignKeyBuilder>();
+        _originatingForeignKeys ??= new Dictionary<ulong, MySqlForeignKeyBuilder>();
         _originatingForeignKeys.Add( foreignKey.Id, foreignKey );
     }
 
-    internal void AddReferencingForeignKey(SqliteForeignKeyBuilder foreignKey)
+    internal void AddReferencingForeignKey(MySqlForeignKeyBuilder foreignKey)
     {
         Assume.Equals( IsUnique, true );
-        _referencingForeignKeys ??= new Dictionary<ulong, SqliteForeignKeyBuilder>();
+        _referencingForeignKeys ??= new Dictionary<ulong, MySqlForeignKeyBuilder>();
         _referencingForeignKeys.Add( foreignKey.Id, foreignKey );
     }
 
-    internal void RemoveOriginatingForeignKey(SqliteForeignKeyBuilder foreignKey)
+    internal void RemoveOriginatingForeignKey(MySqlForeignKeyBuilder foreignKey)
     {
         _originatingForeignKeys?.Remove( foreignKey.Id );
     }
 
-    internal void RemoveReferencingForeignKey(SqliteForeignKeyBuilder foreignKey)
+    internal void RemoveReferencingForeignKey(MySqlForeignKeyBuilder foreignKey)
     {
         _referencingForeignKeys?.Remove( foreignKey.Id );
     }
@@ -183,21 +183,47 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
         return Table.Indexes.Comparer.Equals( _columns, columns );
     }
 
-    internal void UpdateFullName()
+    internal void ResetFullName()
     {
-        _fullName = SqliteHelpers.GetFullName( Table.Schema.Name, Name );
+        _fullName = null;
     }
 
-    internal void ClearOriginatingForeignKeysInto(RentedMemorySequenceSpan<SqliteObjectBuilder> buffer)
+    internal void ClearOriginatingForeignKeysInto(RentedMemorySequenceSpan<MySqlObjectBuilder> buffer)
     {
         _originatingForeignKeys?.Values.CopyTo( buffer );
         _originatingForeignKeys = null;
     }
 
-    internal void ClearReferencingForeignKeysInto(RentedMemorySequenceSpan<SqliteObjectBuilder> buffer)
+    internal void ClearReferencingForeignKeysInto(RentedMemorySequenceSpan<MySqlObjectBuilder> buffer)
     {
         _referencingForeignKeys?.Values.CopyTo( buffer );
-        _referencingForeignKeys?.Clear();
+        _referencingForeignKeys = null;
+    }
+
+    internal void MarkAsRemoved()
+    {
+        Assume.Equals( IsRemoved, false );
+        IsRemoved = true;
+
+        _originatingForeignKeys = null;
+        _referencingForeignKeys = null;
+
+        if ( PrimaryKey is not null )
+        {
+            PrimaryKey.MarkAsRemoved();
+            PrimaryKey = null;
+        }
+
+        foreach ( var c in _columns )
+            c.Column.RemoveReferencingIndex( this );
+
+        _columns = Array.Empty<MySqlIndexColumnBuilder>();
+
+        if ( Filter is not null )
+        {
+            ClearReferencedFilterColumns();
+            Filter = null;
+        }
     }
 
     protected override void AssertRemoval()
@@ -214,7 +240,7 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
         }
 
         if ( errors.Count > 0 )
-            throw new SqliteObjectBuilderException( errors );
+            throw new MySqlObjectBuilderException( errors );
     }
 
     protected override void RemoveCore()
@@ -241,7 +267,7 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
         foreach ( var c in _columns )
             c.Column.RemoveReferencingIndex( this );
 
-        _columns = Array.Empty<SqliteIndexColumnBuilder>();
+        _columns = Array.Empty<MySqlIndexColumnBuilder>();
 
         if ( Filter is not null )
         {
@@ -261,12 +287,12 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
         if ( Name == name )
             return;
 
-        SqliteHelpers.AssertName( name );
+        MySqlHelpers.AssertName( name );
         Table.Schema.Objects.ChangeName( this, name );
 
         var oldName = Name;
         Name = name;
-        UpdateFullName();
+        ResetFullName();
         Database.ChangeTracker.NameUpdated( Table, this, oldName );
     }
 
@@ -284,7 +310,7 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
         }
 
         if ( errors.Count > 0 )
-            throw new SqliteObjectBuilderException( errors );
+            throw new MySqlObjectBuilderException( errors );
     }
 
     private void ClearReferencedFilterColumns()
@@ -298,7 +324,7 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
         _referencedFilterColumns = null;
     }
 
-    private void RegisterReferencedFilterColumns(Dictionary<ulong, SqliteColumnBuilder> columns)
+    private void RegisterReferencedFilterColumns(Dictionary<ulong, MySqlColumnBuilder> columns)
     {
         Assume.IsNull( _referencedFilterColumns );
 
