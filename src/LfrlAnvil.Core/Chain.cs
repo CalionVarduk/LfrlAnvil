@@ -55,15 +55,17 @@ public readonly struct Chain<T> : IReadOnlyCollection<T>
 
         _head = new HeadNode( other._head.Value );
         _tail = _head;
-        Count = other.Count;
+        Count = 1;
 
         var otherNode = other._head.Next;
-        while ( otherNode is not null )
+        while ( Count < other.Count )
         {
+            Assume.IsNotNull( otherNode );
             var node = new Node( otherNode.Value );
             _tail.Next = node;
             _tail = node;
             otherNode = otherNode.Next;
+            ++Count;
         }
     }
 

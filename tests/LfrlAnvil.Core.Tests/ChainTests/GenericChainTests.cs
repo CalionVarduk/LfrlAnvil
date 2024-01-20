@@ -81,6 +81,25 @@ public abstract class GenericChainTests<T> : TestsBase
     }
 
     [Fact]
+    public void Create_WithOtherPartialChain_ShouldReturnCorrectChain()
+    {
+        var values = Fixture.CreateDistinctCollection<T>( count: 4 );
+        var other = Chain.Create( values.Take( 3 ).AsEnumerable() );
+        _ = other.Extend( values.Last() );
+        var sut = Chain.Create( other );
+
+        using ( new AssertionScope() )
+        {
+            sut.Count.Should().Be( other.Count );
+            sut.IsAttached.Should().BeFalse();
+            sut.IsExtendable.Should().BeTrue();
+            sut.Should().BeSequentiallyEqualTo( other );
+            other.IsAttached.Should().BeFalse();
+            other.IsExtendable.Should().BeFalse();
+        }
+    }
+
+    [Fact]
     public void Ctor_WithOneValue_ShouldReturnCorrectChain()
     {
         var value = Fixture.Create<T>();
@@ -139,6 +158,25 @@ public abstract class GenericChainTests<T> : TestsBase
             sut.Should().BeSequentiallyEqualTo( other );
             other.IsAttached.Should().BeFalse();
             other.IsExtendable.Should().BeTrue();
+        }
+    }
+
+    [Fact]
+    public void Ctor_WithOtherPartialChain_ShouldReturnCorrectChain()
+    {
+        var values = Fixture.CreateDistinctCollection<T>( count: 4 );
+        var other = Chain.Create( values.Take( 3 ).AsEnumerable() );
+        _ = other.Extend( values.Last() );
+        var sut = new Chain<T>( other );
+
+        using ( new AssertionScope() )
+        {
+            sut.Count.Should().Be( other.Count );
+            sut.IsAttached.Should().BeFalse();
+            sut.IsExtendable.Should().BeTrue();
+            sut.Should().BeSequentiallyEqualTo( other );
+            other.IsAttached.Should().BeFalse();
+            other.IsExtendable.Should().BeFalse();
         }
     }
 
@@ -608,6 +646,24 @@ public abstract class GenericChainTests<T> : TestsBase
     {
         var values = Fixture.CreateDistinctCollection<T>( count: 3 );
         var sut = Chain.Create( values.AsEnumerable() );
+        _ = Chain.Create( Fixture.Create<T>() ).Extend( sut );
+
+        var result = sut.ToExtendable();
+
+        using ( new AssertionScope() )
+        {
+            sut.IsExtendable.Should().BeFalse();
+            result.Should().BeSequentiallyEqualTo( sut );
+            result.IsExtendable.Should().BeTrue();
+        }
+    }
+
+    [Fact]
+    public void ToExtendable_ShouldReturnCopy_WhenPartialChainIsNotExtendable()
+    {
+        var values = Fixture.CreateDistinctCollection<T>( count: 4 );
+        var sut = Chain.Create( values.Take( 3 ).AsEnumerable() );
+        _ = sut.Extend( values.Last() );
         _ = Chain.Create( Fixture.Create<T>() ).Extend( sut );
 
         var result = sut.ToExtendable();
