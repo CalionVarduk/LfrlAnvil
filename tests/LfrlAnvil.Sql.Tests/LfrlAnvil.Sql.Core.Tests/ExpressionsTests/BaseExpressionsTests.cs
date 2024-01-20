@@ -688,6 +688,7 @@ VALUES
             sut.Name.Should().Be( "foo" );
             sut.DefaultValue.Should().BeNull();
             sut.Type.Should().BeEquivalentTo( TypeNullability.Create<string>( isNullable: false ) );
+            sut.TypeDefinition.Should().BeNull();
             text.Should().Be( "[foo] : System.String" );
         }
     }
@@ -704,6 +705,7 @@ VALUES
             sut.Name.Should().Be( "foo" );
             sut.DefaultValue.Should().BeNull();
             sut.Type.Should().BeEquivalentTo( TypeNullability.Create<string>( isNullable: true ) );
+            sut.TypeDefinition.Should().BeNull();
             text.Should().Be( "[foo] : Nullable<System.String>" );
         }
     }
@@ -721,7 +723,63 @@ VALUES
             sut.Name.Should().Be( "foo" );
             sut.DefaultValue.Should().BeSameAs( defaultValue );
             sut.Type.Should().BeEquivalentTo( TypeNullability.Create<string>() );
+            sut.TypeDefinition.Should().BeNull();
             text.Should().Be( "[foo] : System.String DEFAULT ((\"abc\" : System.String) || (\"def\" : System.String))" );
+        }
+    }
+
+    [Fact]
+    public void Column_ShouldCreateColumnDefinitionNode_WithDbType()
+    {
+        var typeDef = ColumnTypeDefinitionMock.Create( DataTypeMock.Create( new SqlDialect( "foo" ), "INT" ), (r, o) => r.GetInt32( o ) );
+        var sut = SqlNode.Column( "foo", typeDef );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.ColumnDefinition );
+            sut.Name.Should().Be( "foo" );
+            sut.DefaultValue.Should().BeNull();
+            sut.Type.Should().BeEquivalentTo( TypeNullability.Create<int>( isNullable: false ) );
+            sut.TypeDefinition.Should().BeSameAs( typeDef );
+            text.Should().Be( "[foo] : System.Int32" );
+        }
+    }
+
+    [Fact]
+    public void Column_ShouldCreateColumnDefinitionNode_WithDbTypeAndNullableType()
+    {
+        var typeDef = ColumnTypeDefinitionMock.Create( DataTypeMock.Create( new SqlDialect( "foo" ), "INT" ), (r, o) => r.GetInt32( o ) );
+        var sut = SqlNode.Column( "foo", typeDef, isNullable: true );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.ColumnDefinition );
+            sut.Name.Should().Be( "foo" );
+            sut.DefaultValue.Should().BeNull();
+            sut.Type.Should().BeEquivalentTo( TypeNullability.Create<int>( isNullable: true ) );
+            sut.TypeDefinition.Should().BeSameAs( typeDef );
+            text.Should().Be( "[foo] : Nullable<System.Int32>" );
+        }
+    }
+
+    [Fact]
+    public void Column_ShouldCreateColumnDefinitionNode_WithDbTypeAndDefaultValue()
+    {
+        var typeDef = ColumnTypeDefinitionMock.Create( DataTypeMock.Create( new SqlDialect( "foo" ), "INT" ), (r, o) => r.GetInt32( o ) );
+        var defaultValue = SqlNode.Literal( "abc" ).Concat( SqlNode.Literal( "def" ) );
+        var sut = SqlNode.Column( "foo", typeDef, defaultValue: defaultValue );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.ColumnDefinition );
+            sut.Name.Should().Be( "foo" );
+            sut.DefaultValue.Should().BeSameAs( defaultValue );
+            sut.Type.Should().BeEquivalentTo( TypeNullability.Create<int>() );
+            sut.TypeDefinition.Should().BeSameAs( typeDef );
+            text.Should().Be( "[foo] : System.Int32 DEFAULT ((\"abc\" : System.String) || (\"def\" : System.String))" );
         }
     }
 

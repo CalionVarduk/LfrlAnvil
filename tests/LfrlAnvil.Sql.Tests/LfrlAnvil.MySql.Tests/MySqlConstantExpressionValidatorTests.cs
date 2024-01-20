@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using LfrlAnvil.MySql.Extensions;
 using LfrlAnvil.MySql.Internal;
 using LfrlAnvil.MySql.Objects.Builders;
 using LfrlAnvil.MySql.Tests.Helpers;
@@ -54,18 +55,17 @@ public class MySqlConstantExpressionValidatorTests : TestsBase
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 
-    // TODO
-    // [Fact]
-    // public void VisitColumn_ShouldRegisterError()
-    // {
-    //     var table = _db.Schemas.Default.Objects.CreateTable( "T" );
-    //     table.SetPrimaryKey( table.Columns.Create( "A" ).Asc() );
-    //     var node = new MySqlDatabaseMock( _db ).Schemas.Default.Objects.GetTable( "T" ).ToRecordSet().GetField( "A" );
-    //
-    //     _sut.VisitColumn( node );
-    //
-    //     _sut.GetErrors().Should().HaveCount( 1 );
-    // }
+    [Fact]
+    public void VisitColumn_ShouldRegisterError()
+    {
+        var table = _db.Schemas.Default.Objects.CreateTable( "T" );
+        table.SetPrimaryKey( table.Columns.Create( "A" ).Asc() );
+        var node = MySqlDatabaseMock.Create( _db ).Schemas.Default.Objects.GetTable( "T" ).ToRecordSet().GetField( "A" );
+
+        _sut.VisitColumn( node );
+
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
 
     [Fact]
     public void VisitColumnBuilder_ShouldRegisterError()
@@ -93,20 +93,19 @@ public class MySqlConstantExpressionValidatorTests : TestsBase
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 
-    // TODO
-    // [Fact]
-    // public void VisitViewDataField_ShouldRegisterError()
-    // {
-    //     _db.Schemas.Default.Objects.CreateView(
-    //         "V",
-    //         SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["a"].AsSelf() } ) );
-    //
-    //     var node = new MySqlDatabaseMock( _db ).Schemas.Default.Objects.GetView( "V" ).ToRecordSet().GetField( "a" );
-    //
-    //     _sut.VisitViewDataField( node );
-    //
-    //     _sut.GetErrors().Should().HaveCount( 1 );
-    // }
+    [Fact]
+    public void VisitViewDataField_ShouldRegisterError()
+    {
+        _db.Schemas.Default.Objects.CreateView(
+            "V",
+            SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["a"].AsSelf() } ) );
+
+        var node = MySqlDatabaseMock.Create( _db ).Schemas.Default.Objects.GetView( "V" ).ToRecordSet().GetField( "a" );
+
+        _sut.VisitViewDataField( node );
+
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
 
     [Fact]
     public void VisitNegate_ShouldVisitValue()
@@ -787,18 +786,17 @@ public class MySqlConstantExpressionValidatorTests : TestsBase
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 
-    // TODO
-    // [Fact]
-    // public void VisitTable_ShouldRegisterError()
-    // {
-    //     var table = _db.Schemas.Default.Objects.CreateTable( "T" );
-    //     table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
-    //     var node = new MySqlDatabaseMock( _db ).Schemas.Default.Objects.GetTable( "T" ).ToRecordSet();
-    //
-    //     _sut.VisitTable( node );
-    //
-    //     _sut.GetErrors().Should().HaveCount( 1 );
-    // }
+    [Fact]
+    public void VisitTable_ShouldRegisterError()
+    {
+        var table = _db.Schemas.Default.Objects.CreateTable( "T" );
+        table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
+        var node = MySqlDatabaseMock.Create( _db ).Schemas.Default.Objects.GetTable( "T" ).ToRecordSet();
+
+        _sut.VisitTable( node );
+
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
 
     [Fact]
     public void VisitTableBuilder_ShouldRegisterError()
@@ -811,17 +809,16 @@ public class MySqlConstantExpressionValidatorTests : TestsBase
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 
-    // TODO
-    // [Fact]
-    // public void VisitView_ShouldRegisterError()
-    // {
-    //     _db.Schemas.Default.Objects.CreateView( "V", SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.GetAll() } ) );
-    //     var node = new MySqlDatabaseMock( _db ).Schemas.Default.Objects.GetView( "V" ).ToRecordSet();
-    //
-    //     _sut.VisitView( node );
-    //
-    //     _sut.GetErrors().Should().HaveCount( 1 );
-    // }
+    [Fact]
+    public void VisitView_ShouldRegisterError()
+    {
+        _db.Schemas.Default.Objects.CreateView( "V", SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.GetAll() } ) );
+        var node = MySqlDatabaseMock.Create( _db ).Schemas.Default.Objects.GetView( "V" ).ToRecordSet();
+
+        _sut.VisitView( node );
+
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
 
     [Fact]
     public void VisitViewBuilder_ShouldRegisterError()

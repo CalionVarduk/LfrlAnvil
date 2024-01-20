@@ -129,7 +129,7 @@ public partial class MySqlDatabaseBuilderTests
         }
 
         [Theory]
-        [InlineData( "dbo", true )]
+        [InlineData( "common", true )]
         [InlineData( "foo", true )]
         [InlineData( "bar", false )]
         public void Contains_ShouldReturnTrue_WhenSchemaExists(string name, bool expected)

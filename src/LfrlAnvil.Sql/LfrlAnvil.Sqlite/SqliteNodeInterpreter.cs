@@ -510,7 +510,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitColumnDefinition(SqlColumnDefinitionNode node)
     {
-        var typeDefinition = ColumnTypeDefinitions.GetByType( node.Type.UnderlyingType );
+        var typeDefinition = node.TypeDefinition ?? ColumnTypeDefinitions.GetByType( node.Type.UnderlyingType );
         AppendDelimitedName( node.Name );
         Context.Sql.AppendSpace().Append( typeDefinition.DataType.Name );
 
@@ -794,7 +794,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             return;
         }
 
-        if ( node.NodeType == SqlNodeType.RawRecordSet )
+        if ( node.NodeType == SqlNodeType.RawRecordSet && ReinterpretCast.To<SqlRawRecordSetNode>( node ).IsInfoRaw )
         {
             Context.Sql.Append( node.Info.Name.Object );
             return;

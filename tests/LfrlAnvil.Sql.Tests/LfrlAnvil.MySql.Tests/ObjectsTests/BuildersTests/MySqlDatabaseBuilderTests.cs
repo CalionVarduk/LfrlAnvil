@@ -31,8 +31,8 @@ public partial class MySqlDatabaseBuilderTests : TestsBase
             ((ISqlSchemaBuilderCollection)sut.Schemas).Database.Should().BeSameAs( sut.Schemas.Database );
 
             sut.Schemas.Default.Database.Should().BeSameAs( sut );
-            sut.Schemas.Default.Name.Should().Be( "dbo" );
-            sut.Schemas.Default.FullName.Should().Be( "dbo" );
+            sut.Schemas.Default.Name.Should().Be( "common" );
+            sut.Schemas.Default.FullName.Should().Be( "common" );
             ((ISqlSchemaBuilder)sut.Schemas.Default).Database.Should().BeSameAs( sut.Schemas.Default.Database );
             ((ISqlSchemaBuilder)sut.Schemas.Default).Objects.Should().BeSameAs( sut.Schemas.Default.Objects );
 
@@ -308,7 +308,7 @@ public partial class MySqlDatabaseBuilderTests : TestsBase
     public void SetNodeInterpreterFactory_ShouldUpdateNodeInterpreterFactory()
     {
         var sut = MySqlDatabaseBuilderMock.Create();
-        var expected = new MySqlNodeInterpreterFactory( sut.TypeDefinitions );
+        var expected = new MySqlNodeInterpreterFactory( sut.TypeDefinitions, "common" );
 
         var result = ((ISqlDatabaseBuilder)sut).SetNodeInterpreterFactory( expected );
 

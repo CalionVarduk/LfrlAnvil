@@ -17,6 +17,8 @@ namespace LfrlAnvil.MySql.Internal;
 
 internal static class MySqlHelpers
 {
+    public const string GuidFunctionName = "GUID";
+    public const string DropIndexIfExistsProcedureName = "_DROP_INDEX_IF_EXISTS";
     private const int StackallocThreshold = 64;
     private const char TextDelimiter = '\'';
     private const char BlobMarker = 'X';
@@ -210,6 +212,133 @@ internal static class MySqlHelpers
             Assume.IsInRange( value, 0, 15 );
             return (char)(value < 10 ? '0' + value : 'A' + value - 10);
         }
+    }
+
+    public static void AppendCreateSchemaStatement(MySqlNodeInterpreter interpreter, string name)
+    {
+        interpreter.Context.Sql.Append( "CREATE" ).AppendSpace().Append( "SCHEMA" ).AppendSpace();
+        interpreter.AppendDelimitedName( name );
+        interpreter.Context.Sql.AppendSemicolon();
+    }
+
+    public static void AppendDropSchemaStatement(MySqlNodeInterpreter interpreter, string name)
+    {
+        interpreter.Context.Sql.Append( "DROP" ).AppendSpace().Append( "SCHEMA" ).AppendSpace();
+        interpreter.AppendDelimitedName( name );
+        interpreter.Context.Sql.AppendSemicolon();
+    }
+
+    public static void AppendCreateGuidFunctionStatement(MySqlNodeInterpreter interpreter, string schemaName)
+    {
+        interpreter.Context.Sql.Append( "CREATE" ).AppendSpace().Append( "FUNCTION" ).AppendSpace();
+        interpreter.AppendDelimitedSchemaObjectName( schemaName, GuidFunctionName );
+        interpreter.Context.Sql.Append( '(' ).Append( ')' ).AppendSpace();
+        interpreter.Context.Sql.Append( "RETURNS" ).AppendSpace().Append( MySqlDataType.CreateBinary( 16 ).Name );
+        interpreter.Context.AppendIndent().Append( "BEGIN" );
+
+        using ( interpreter.Context.TempIndentIncrease() )
+        {
+            const string vValue = "@value";
+            interpreter.Context.AppendIndent().Append( "SET" ).AppendSpace().Append( vValue ).AppendSpace();
+            interpreter.Context.Sql.Append( '=' ).AppendSpace().Append( "UNHEX" ).Append( '(' );
+            interpreter.Context.Sql.Append( "REPLACE" ).Append( '(' );
+            interpreter.Context.Sql.Append( "UUID" ).Append( '(' ).Append( ')' ).AppendComma().AppendSpace();
+            interpreter.Context.Sql.Append( TextDelimiter ).Append( '-' ).Append( TextDelimiter ).AppendComma().AppendSpace();
+            interpreter.Context.Sql.Append( EmptyTextLiteral ).Append( ')' ).Append( ')' ).AppendSemicolon();
+
+            interpreter.Context.AppendIndent().Append( "RETURN" ).AppendSpace().Append( "CONCAT" ).Append( '(' );
+            interpreter.Context.Sql.Append( "REVERSE" ).Append( '(' ).Append( "SUBSTRING" ).Append( '(' );
+            interpreter.Context.Sql.Append( vValue ).AppendComma().AppendSpace().Append( '1' ).AppendComma().AppendSpace();
+            interpreter.Context.Sql.Append( '4' ).Append( ')' ).Append( ')' ).AppendComma().AppendSpace();
+            interpreter.Context.Sql.Append( "REVERSE" ).Append( '(' ).Append( "SUBSTRING" ).Append( '(' );
+            interpreter.Context.Sql.Append( vValue ).AppendComma().AppendSpace().Append( '5' ).AppendComma().AppendSpace();
+            interpreter.Context.Sql.Append( '2' ).Append( ')' ).Append( ')' ).AppendComma().AppendSpace();
+            interpreter.Context.Sql.Append( "REVERSE" ).Append( '(' ).Append( "SUBSTRING" ).Append( '(' );
+            interpreter.Context.Sql.Append( vValue ).AppendComma().AppendSpace().Append( '7' ).AppendComma().AppendSpace();
+            interpreter.Context.Sql.Append( '2' ).Append( ')' ).Append( ')' ).AppendComma().AppendSpace();
+            interpreter.Context.Sql.Append( "SUBSTRING" ).Append( '(' );
+            interpreter.Context.Sql.Append( vValue ).AppendComma().AppendSpace().Append( '9' ).Append( ')' );
+            interpreter.Context.Sql.Append( ')' ).AppendSemicolon();
+        }
+
+        interpreter.Context.AppendIndent().Append( "END" ).AppendSemicolon();
+    }
+
+    public static void AppendDropIndexIfExistsProcedureStatement(MySqlNodeInterpreter interpreter, string schemaName)
+    {
+        const string pSchemaName = "schema_name";
+        const string pTableName = "table_name";
+        const string pIndexName = "index_name";
+
+        interpreter.Context.Sql.Append( "CREATE" ).AppendSpace().Append( "PROCEDURE" ).AppendSpace();
+        interpreter.AppendDelimitedSchemaObjectName( schemaName, DropIndexIfExistsProcedureName );
+        interpreter.Context.Sql.Append( '(' );
+
+        var parameterType = MySqlDataType.CreateVarChar( 128 );
+        interpreter.AppendDelimitedName( pSchemaName );
+        interpreter.Context.Sql.AppendSpace().Append( parameterType.Name ).AppendComma().AppendSpace();
+        interpreter.AppendDelimitedName( pTableName );
+        interpreter.Context.Sql.AppendSpace().Append( parameterType.Name ).AppendComma().AppendSpace();
+        interpreter.AppendDelimitedName( pIndexName );
+        interpreter.Context.Sql.AppendSpace().Append( parameterType.Name ).Append( ')' );
+        interpreter.Context.AppendIndent().Append( "BEGIN" );
+
+        using ( interpreter.Context.TempIndentIncrease() )
+        {
+            const string vSchemaName = "@schema_name";
+            interpreter.Context.AppendIndent().Append( "SET" ).AppendSpace().Append( vSchemaName ).AppendSpace();
+            interpreter.Context.Sql.Append( '=' ).AppendSpace().Append( "COALESCE" ).Append( '(' );
+            interpreter.AppendDelimitedName( pSchemaName );
+            interpreter.Context.Sql.AppendComma().AppendSpace().Append( "DATABASE" ).Append( '(' ).Append( ')' );
+            interpreter.Context.Sql.Append( ')' ).AppendSemicolon();
+
+            var statistics = SqlRecordSetInfo.Create( "s" );
+            interpreter.Context.AppendIndent().Append( "IF" ).AppendSpace().Append( "EXISTS" ).AppendSpace().Append( '(' );
+            interpreter.Context.Sql.Append( "SELECT" ).AppendSpace().Append( '*' ).AppendSpace().Append( "FROM" ).AppendSpace();
+            interpreter.AppendDelimitedSchemaObjectName( "information_schema", "statistics" );
+            interpreter.AppendDelimitedAlias( "s" );
+            interpreter.Context.Sql.AppendSpace().Append( "WHERE" ).AppendSpace();
+            interpreter.AppendDelimitedDataFieldName( statistics, "table_schema" );
+            interpreter.Context.Sql.AppendSpace().Append( '=' ).AppendSpace().Append( vSchemaName );
+            interpreter.Context.Sql.AppendSpace().Append( "AND" ).AppendSpace();
+            interpreter.AppendDelimitedDataFieldName( statistics, "table_name" );
+            interpreter.Context.Sql.AppendSpace().Append( '=' ).AppendSpace();
+            interpreter.AppendDelimitedName( pTableName );
+            interpreter.Context.Sql.AppendSpace().Append( "AND" ).AppendSpace();
+            interpreter.AppendDelimitedDataFieldName( statistics, "index_name" );
+            interpreter.Context.Sql.AppendSpace().Append( '=' ).AppendSpace();
+            interpreter.AppendDelimitedName( pIndexName );
+            interpreter.Context.Sql.Append( ')' ).AppendSpace().Append( "THEN" );
+
+            using ( interpreter.Context.TempIndentIncrease() )
+            {
+                const string vText = "@text";
+                interpreter.Context.AppendIndent().Append( "SET" ).AppendSpace().Append( vText ).AppendSpace();
+                interpreter.Context.Sql.Append( '=' ).AppendSpace().Append( "CONCAT" ).Append( '(' );
+                interpreter.Context.Sql.Append( TextDelimiter ).Append( "DROP" ).AppendSpace().Append( "INDEX" ).AppendSpace();
+                interpreter.Context.Sql.Append( interpreter.BeginNameDelimiter ).Append( TextDelimiter ).AppendComma().AppendSpace();
+                interpreter.AppendDelimitedName( pIndexName );
+                interpreter.Context.Sql.AppendComma().AppendSpace().Append( TextDelimiter );
+                interpreter.Context.Sql.Append( interpreter.EndNameDelimiter ).AppendSpace().Append( "ON" ).AppendSpace();
+                interpreter.Context.Sql.Append( interpreter.BeginNameDelimiter ).Append( TextDelimiter ).AppendComma().AppendSpace();
+                interpreter.Context.Sql.Append( vSchemaName ).AppendComma().AppendSpace().Append( TextDelimiter );
+                interpreter.Context.Sql.Append( interpreter.EndNameDelimiter ).AppendDot();
+                interpreter.Context.Sql.Append( interpreter.BeginNameDelimiter ).Append( TextDelimiter ).AppendComma().AppendSpace();
+                interpreter.AppendDelimitedName( pTableName );
+                interpreter.Context.Sql.AppendComma().AppendSpace().Append( TextDelimiter );
+                interpreter.Context.Sql.Append( interpreter.EndNameDelimiter ).AppendSemicolon().Append( TextDelimiter );
+                interpreter.Context.Sql.Append( ')' ).AppendSemicolon();
+
+                const string vStmt = "stmt";
+                interpreter.Context.AppendIndent().Append( "PREPARE" ).AppendSpace().Append( vStmt ).AppendSpace();
+                interpreter.Context.Sql.Append( "FROM" ).AppendSpace().Append( vText ).AppendSemicolon();
+                interpreter.Context.AppendIndent().Append( "EXECUTE" ).AppendSpace().Append( vStmt ).AppendSemicolon();
+            }
+
+            interpreter.Context.AppendIndent().Append( "END" ).AppendSpace().Append( "IF" ).AppendSemicolon();
+        }
+
+        interpreter.Context.AppendIndent().Append( "END" ).AppendSemicolon();
     }
 
     [Pure]

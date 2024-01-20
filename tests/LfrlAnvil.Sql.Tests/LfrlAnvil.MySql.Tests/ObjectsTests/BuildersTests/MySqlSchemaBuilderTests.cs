@@ -62,8 +62,61 @@ public partial class MySqlSchemaBuilderTests : TestsBase
             db.Schemas.Contains( oldName ).Should().BeFalse();
 
             statements.Should().HaveCount( 2 );
-            statements.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( $"CREATE SCHEMA IF NOT EXISTS `{newName}`;" );
+            statements.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( $"CREATE SCHEMA `{newName}`;" );
             statements.ElementAtOrDefault( 1 ).Sql.Should().SatisfySql( $"DROP SCHEMA `{oldName}`;" );
+        }
+    }
+
+    [Fact]
+    public void SetName_ShouldUpdateName_WhenNameChangesAndSchemaIsOriginallyCommon()
+    {
+        var oldName = "common";
+        var newName = Fixture.Create<string>();
+        var db = MySqlDatabaseBuilderMock.Create();
+        var sut = db.Schemas.Get( oldName );
+
+        var startStatementCount = db.GetPendingStatements().Length;
+
+        var result = ((ISqlSchemaBuilder)sut).SetName( newName );
+        var statements = db.GetPendingStatements().Slice( startStatementCount ).ToArray();
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.Name.Should().Be( newName );
+            sut.FullName.Should().Be( newName );
+            db.Schemas.Contains( newName ).Should().BeTrue();
+            db.Schemas.Contains( oldName ).Should().BeFalse();
+
+            statements.Should().HaveCount( 1 );
+            statements.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( $"CREATE SCHEMA `{newName}`;" );
+        }
+    }
+
+    [Fact]
+    public void SetName_ShouldUpdateName_WhenNameChangesToCommon()
+    {
+        var oldName = Fixture.Create<string>();
+        var newName = "common";
+        var db = MySqlDatabaseBuilderMock.Create();
+        db.Schemas.Default.SetName( "x" );
+        var sut = db.Schemas.Create( oldName );
+
+        var startStatementCount = db.GetPendingStatements().Length;
+
+        var result = ((ISqlSchemaBuilder)sut).SetName( newName );
+        var statements = db.GetPendingStatements().Slice( startStatementCount ).ToArray();
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.Name.Should().Be( newName );
+            sut.FullName.Should().Be( newName );
+            db.Schemas.Contains( newName ).Should().BeTrue();
+            db.Schemas.Contains( oldName ).Should().BeFalse();
+
+            statements.Should().HaveCount( 1 );
+            statements.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( $"DROP SCHEMA `{oldName}`;" );
         }
     }
 
@@ -137,7 +190,7 @@ public partial class MySqlSchemaBuilderTests : TestsBase
 
             statements.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "DROP VIEW `foo`.`V2`;" );
             statements.ElementAtOrDefault( 1 ).Sql.Should().SatisfySql( "DROP VIEW `foo`.`V1`;" );
-            statements.ElementAtOrDefault( 2 ).Sql.Should().SatisfySql( "CREATE SCHEMA IF NOT EXISTS `bar`;" );
+            statements.ElementAtOrDefault( 2 ).Sql.Should().SatisfySql( "CREATE SCHEMA `bar`;" );
 
             statements.Should()
                 .Contain( s => s.Sql.Replace( Environment.NewLine, string.Empty ) == "ALTER TABLE `foo`.`T1` RENAME TO `bar`.`T1`;" );
@@ -345,7 +398,21 @@ INNER JOIN `bar`.`V1` ON TRUE;" );
     public void Remove_ShouldThrowMySqlObjectBuilderException_WhenAttemptingToRemoveDefaultSchema()
     {
         var db = MySqlDatabaseBuilderMock.Create();
-        var sut = db.Schemas.Default;
+        var sut = db.Schemas.Default.SetName( "foo" );
+
+        var action = Lambda.Of( () => sut.Remove() );
+
+        action.Should()
+            .ThrowExactly<MySqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+    }
+
+    [Fact]
+    public void Remove_ShouldThrowMySqlObjectBuilderException_WhenAttemptingToRemoveCommonSchema()
+    {
+        var db = MySqlDatabaseBuilderMock.Create();
+        db.Schemas.Default.SetName( "foo" );
+        var sut = db.Schemas.Create( db.CommonSchemaName );
 
         var action = Lambda.Of( () => sut.Remove() );
 

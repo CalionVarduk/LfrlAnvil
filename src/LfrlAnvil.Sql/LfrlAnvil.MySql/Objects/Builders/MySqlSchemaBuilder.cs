@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using LfrlAnvil.Memory;
 using LfrlAnvil.MySql.Exceptions;
 using LfrlAnvil.MySql.Internal;
@@ -25,7 +26,8 @@ public sealed class MySqlSchemaBuilder : MySqlObjectBuilder, ISqlSchemaBuilder
     {
         get
         {
-            if ( ReferenceEquals( this, Database.Schemas.Default ) )
+            if ( ReferenceEquals( this, Database.Schemas.Default ) ||
+                Name.Equals( Database.CommonSchemaName, StringComparison.OrdinalIgnoreCase ) )
                 return false;
 
             foreach ( var obj in Objects )
@@ -86,6 +88,9 @@ public sealed class MySqlSchemaBuilder : MySqlObjectBuilder, ISqlSchemaBuilder
         var errors = Chain<string>.Empty;
         if ( ReferenceEquals( this, Database.Schemas.Default ) )
             errors = errors.Extend( ExceptionResources.DefaultSchemaCannotBeRemoved );
+
+        if ( Name.Equals( Database.CommonSchemaName, StringComparison.OrdinalIgnoreCase ) )
+            errors = errors.Extend( ExceptionResources.CommonSchemaCannotBeRemoved );
 
         foreach ( var obj in Objects )
         {
@@ -165,7 +170,9 @@ public sealed class MySqlSchemaBuilder : MySqlObjectBuilder, ISqlSchemaBuilder
         Database.Schemas.ChangeName( this, name );
         var oldName = Name;
         Name = name;
-        Database.ChangeTracker.SchemaCreated( Name );
+
+        if ( ! Name.Equals( Database.CommonSchemaName, StringComparison.OrdinalIgnoreCase ) )
+            Database.ChangeTracker.SchemaCreated( Name );
 
         foreach ( var obj in Objects )
         {
@@ -173,7 +180,8 @@ public sealed class MySqlSchemaBuilder : MySqlObjectBuilder, ISqlSchemaBuilder
                 ReinterpretCast.To<MySqlTableBuilder>( obj ).OnSchemaNameChange( oldName );
         }
 
-        Database.ChangeTracker.SchemaDropped( oldName );
+        if ( ! oldName.Equals( Database.CommonSchemaName, StringComparison.OrdinalIgnoreCase ) )
+            Database.ChangeTracker.SchemaDropped( oldName );
 
         foreach ( var obj in viewBuffer )
         {

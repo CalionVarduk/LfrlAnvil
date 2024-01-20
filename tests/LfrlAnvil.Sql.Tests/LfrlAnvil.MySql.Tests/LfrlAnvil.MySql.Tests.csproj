@@ -4,7 +4,6 @@
         <ProjectReference Include="..\..\..\src\LfrlAnvil.Functional\LfrlAnvil.Functional.csproj" />
         <ProjectReference Include="..\..\..\src\LfrlAnvil.Sql\LfrlAnvil.MySql\LfrlAnvil.MySql.csproj" />
         <ProjectReference Include="..\..\LfrlAnvil.TestExtensions\LfrlAnvil.TestExtensions.csproj" />
-        <ProjectReference Include="..\LfrlAnvil.Sql.Core.Tests\LfrlAnvil.Sql.Core.Tests.csproj" />
     </ItemGroup>
 
 </Project>

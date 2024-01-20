@@ -170,8 +170,8 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         var stringType = builder.TypeDefinitions.GetByType<string>();
         var dateTimeType = builder.TypeDefinitions.GetByType<DateTime>();
 
-        var schemaName = options.VersionHistorySchemaName ?? string.Empty;
-        var tableName = options.VersionHistoryTableName ?? "__VersionHistory";
+        var schemaName = options.VersionHistoryName?.Schema ?? string.Empty;
+        var tableName = options.VersionHistoryName?.Object ?? "__VersionHistory";
 
         var table = builder.Schemas.GetOrCreate( schemaName ).Objects.CreateTable( tableName );
         var columns = table.Columns;
@@ -204,7 +204,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         in VersionHistoryInfo info,
         ref SqlStatementExecutor statementExecutor)
     {
-        var master = SqlNode.RawRecordSet( "\"sqlite_master\"" );
+        var master = SqlNode.RawRecordSet( SqlRecordSetInfo.Create( "sqlite_master" ) );
         var masterType = master.GetRawField( "type", TypeNullability.Create<string>() );
         var masterName = master.GetRawField( "name", TypeNullability.Create<string>() );
 
@@ -312,7 +312,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
                             ? new Version( versionMajor, versionMinor, versionBuild.Value )
                             : new Version( versionMajor, versionMinor, versionBuild.Value, versionRevision.Value ),
                     Description: sqliteReader.GetString( iDescription ),
-                    CommitDateUtc: DateTime.Parse( sqliteReader.GetString( iCommitDateUtc ) ),
+                    CommitDateUtc: DateTime.SpecifyKind( DateTime.Parse( sqliteReader.GetString( iCommitDateUtc ) ), DateTimeKind.Utc ),
                     CommitDuration: TimeSpan.FromTicks( sqliteReader.GetInt64( iCommitDurationInTicks ) ) );
 
                 rows.Add( record );

@@ -7,7 +7,9 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.MySql.Exceptions;
+using LfrlAnvil.MySql.Internal;
 using LfrlAnvil.MySql.Internal.Expressions;
+using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Functions;
@@ -25,16 +27,21 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
     private readonly string _maxLimit;
     private readonly string _indexPrefixLength;
 
-    public MySqlNodeInterpreter(MySqlColumnTypeDefinitionProvider columnTypeDefinitions, SqlNodeInterpreterContext context)
+    public MySqlNodeInterpreter(
+        MySqlColumnTypeDefinitionProvider columnTypeDefinitions,
+        string commonSchemaName,
+        SqlNodeInterpreterContext context)
         : base( context, beginNameDelimiter: '`', endNameDelimiter: '`' )
     {
         ColumnTypeDefinitions = columnTypeDefinitions;
+        CommonSchemaName = commonSchemaName;
         _maxLimit = ulong.MaxValue.ToString( CultureInfo.InvariantCulture );
         _indexPrefixLength = IndexPrefixLength.ToString( CultureInfo.InvariantCulture );
     }
 
     public MySqlColumnTypeDefinitionProvider ColumnTypeDefinitions { get; }
     public int IndexPrefixLength { get; } = 500;
+    public string CommonSchemaName { get; }
 
     public override void VisitLiteral(SqlLiteralNode node)
     {
@@ -72,7 +79,8 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitNewGuidFunction(SqlNewGuidFunctionExpressionNode node)
     {
-        VisitSimpleFunction( "GUID", node );
+        AppendDelimitedSchemaObjectName( SqlSchemaObjectName.Create( CommonSchemaName, MySqlHelpers.GuidFunctionName ) );
+        VisitFunctionArguments( node.Arguments.Span );
     }
 
     public override void VisitLengthFunction(SqlLengthFunctionExpressionNode node)
@@ -704,7 +712,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitColumnDefinition(SqlColumnDefinitionNode node)
     {
-        var typeDefinition = ColumnTypeDefinitions.GetByType( node.Type.UnderlyingType );
+        var typeDefinition = node.TypeDefinition ?? ColumnTypeDefinitions.GetByType( node.Type.UnderlyingType );
         AppendDelimitedName( node.Name );
         Context.Sql.AppendSpace().Append( typeDefinition.DataType.Name );
 
@@ -715,7 +723,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         {
             Context.Sql.AppendSpace().Append( "DEFAULT" ).AppendSpace();
             var requiresWrappingInParentheses = node.DefaultValue.NodeType is not SqlNodeType.Literal and not SqlNodeType.Null ||
-                IsTextOrBlobType( typeDefinition.DataType );
+                (typeDefinition.DataType is MySqlDataType mySqlDataType && IsTextOrBlobType( mySqlDataType ));
 
             if ( requiresWrappingInParentheses )
                 VisitChildWrappedInParentheses( node.DefaultValue );
@@ -961,7 +969,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         if ( node.IfExists )
         {
             Context.Sql.Append( "CALL" ).AppendSpace();
-            AppendDelimitedName( "_DROP_INDEX_IF_EXISTS" );
+            AppendDelimitedSchemaObjectName( SqlSchemaObjectName.Create( CommonSchemaName, MySqlHelpers.DropIndexIfExistsProcedureName ) );
             Context.Sql.Append( '(' );
 
             if ( node.Name.Schema.Length == 0 )
@@ -1004,29 +1012,10 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitCustom(SqlNodeBase node)
     {
-        if ( node is MySqlCreateSchemaNode createSchema )
-            VisitCreateSchema( createSchema );
-        else if ( node is MySqlDropSchemaNode dropSchema )
-            VisitDropSchema( dropSchema );
-        else if ( node is MySqlAlterTableNode alterTable )
+        if ( node is MySqlAlterTableNode alterTable )
             VisitAlterTable( alterTable );
         else
             base.VisitCustom( node );
-    }
-
-    public void VisitCreateSchema(MySqlCreateSchemaNode node)
-    {
-        Context.Sql.Append( "CREATE" ).AppendSpace().Append( "SCHEMA" ).AppendSpace();
-        if ( node.IfNotExists )
-            Context.Sql.Append( "IF" ).AppendSpace().Append( "NOT" ).AppendSpace().Append( "EXISTS" ).AppendSpace();
-
-        AppendDelimitedName( node.Name );
-    }
-
-    public void VisitDropSchema(MySqlDropSchemaNode node)
-    {
-        Context.Sql.Append( "DROP" ).AppendSpace().Append( "SCHEMA" ).AppendSpace();
-        AppendDelimitedName( node.Name );
     }
 
     public void VisitAlterTable(MySqlAlterTableNode node)
@@ -1138,7 +1127,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
             return;
         }
 
-        if ( node.NodeType == SqlNodeType.RawRecordSet )
+        if ( node.NodeType == SqlNodeType.RawRecordSet && ReinterpretCast.To<SqlRawRecordSetNode>( node ).IsInfoRaw )
         {
             Context.Sql.Append( node.Info.Name.Object );
             return;

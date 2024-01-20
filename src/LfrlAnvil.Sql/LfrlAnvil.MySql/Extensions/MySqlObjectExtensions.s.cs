@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.MySql.Objects;
 using LfrlAnvil.MySql.Objects.Builders;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Objects;
+using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.MySql.Extensions;
@@ -74,12 +76,12 @@ public static class MySqlObjectExtensions
         return column.SetDefaultValue( SqlNode.Literal( value ) );
     }
 
-    // [Pure]
-    // [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    // public static MySqlIndex Get(this MySqlIndexCollection indexes, params ISqlIndexColumn[] columns)
-    // {
-    //     return indexes.Get( columns );
-    // }
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static MySqlIndex Get(this MySqlIndexCollection indexes, params ISqlIndexColumn[] columns)
+    {
+        return indexes.Get( columns );
+    }
 
     public static ISqlDatabaseBuilder ForMySql(this ISqlDatabaseBuilder builder, Action<MySqlDatabaseBuilder> action)
     {

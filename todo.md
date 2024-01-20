@@ -1,60 +1,33 @@
 # TODO
 | Priority |       Project       |                            Title                            |                                   Details                                   |                    Requirements                    |
 |:--------:|:-------------------:|:-----------------------------------------------------------:|:---------------------------------------------------------------------------:|:--------------------------------------------------:|
-|    1     |        Sql.*        |                            MySql                            |                             [link](#sql-mysql)                              |                         -                          |
-|    2     |      Sql.Core       | Create generic abstractions based on Sqlite & MySql objects | [link](#sqlcore-create-generic-abstractions-based-on-sqlite--mysql-objects) |                [MySql](#sql-mysql)                 |
-|    3     |      Sql.Core       |               Add DateTime related functions                |               [link](#sqlcore-add-datetime-related-functions)               |                         -                          |
-|    4     |       Sqlite        |                Add node interpreter options                 |                [link](#sqlite-add-node-interpreter-options)                 |                         -                          |
-|    5     |      Sql.Core       |                       Add Upsert node                       |                      [link](#sqlcore-add-upsert-node)                       |                         -                          |
-|    6     |      Sql.Core       |                       Add JSON nodes                        |                       [link](#sqlcore-add-json-nodes)                       |                         -                          |
-|    7     |        Sql.*        |                         PostgreSql                          |                           [link](#sql-postgresql)                           |                         -                          |
-|    8     |      Sql.Core       |                 Add Attach/Detach DB nodes                  |                 [link](#sqlcore-add-attachdetach-db-nodes)                  |                         -                          |
-|    9     |       Sqlite        |                      Improvement ideas                      |                      [link](#sqlite-improvement-ideas)                      |                         -                          |
-|    10    |          -          |                     Reactive.Scheduling                     |                         [link](#reactivescheduling)                         |                         -                          |
-|    11    |   Dependencies.*    |                   Dependencies.AspNetCore                   |                      [link](#dependencies-aspnetcore)                       |                         -                          |
-|    12    |          -          |                          Terminal                           |                              [link](#terminal)                              |                         -                          |
-|    13    |          -          |                         Diagnostics                         |                            [link](#diagnostics)                             |                         -                          |
-|    14    |          -          |                    Diagnostics.Terminal                     |                        [link](#diagnosticsterminal)                         | [Terminal](#terminal), [Diagnostics](#diagnostics) |
-|    15    |    Dependencies     |                     Reader/Writer Lock                      |                   [link](#dependencies-readerwriter-lock)                   |                         -                          |
-|    16    |    Computable.*     |                    Math/Physics structs                     |                   [link](#computable-mathphysics-structs)                   |                         -                          |
-|    17    | Computable.Automata |                  Add Context-free grammar                   |                                      -                                      |                         -                          |
-|    18    |     Collections     |                        Add SkipList                         |                                      -                                      |                         -                          |
-|    19    |      Sql.Core       |          Add Visitor for node CLR type extraction           |          [link](#sqlcore-add-visitor-for-node-clr-type-extraction)          |                         -                          |
-|    20    |      Sql.Core       |               Add Custom node tree validators               |              [link](#sqlcore-add-custom-node-tree-validators)               |                         -                          |
-|    21    |    Dependencies     |                  Generic dependency types                   |               [link](#dependencies-generic-dependency-types)                |                         -                          |
-|    22    |      Sql.Core       |                  Pin/Unpin builder methods                  |                  [link](#sqlcore-pinunpin-builder-methods)                  |                         -                          |
-|    23    |    Dependencies     |                    Generic builder types                    |                 [link](#dependencies-generic-builder-types)                 |                         -                          |
-|    24    |   Reactive.State    |                       Extension ideas                       |                   [link](#reactivestate-extension-ideas)                    |                         -                          |
+|    1     |      Sql.Core       | Create generic abstractions based on Sqlite & MySql objects | [link](#sqlcore-create-generic-abstractions-based-on-sqlite--mysql-objects) |                         -                          |
+|    2     |      Sql.Core       |               Add DateTime related functions                |               [link](#sqlcore-add-datetime-related-functions)               |                         -                          |
+|    3     |       Sqlite        |                Add node interpreter options                 |                [link](#sqlite-add-node-interpreter-options)                 |                         -                          |
+|    4     |      Sql.Core       |                       Add Upsert node                       |                      [link](#sqlcore-add-upsert-node)                       |                         -                          |
+|    5     |      Sql.Core       |                       Add JSON nodes                        |                       [link](#sqlcore-add-json-nodes)                       |                         -                          |
+|    6     |        Sql.*        |                         PostgreSql                          |                           [link](#sql-postgresql)                           |                         -                          |
+|    7     |      Sql.Core       |                 Add Attach/Detach DB nodes                  |                 [link](#sqlcore-add-attachdetach-db-nodes)                  |                         -                          |
+|    8     |       Sqlite        |                      Improvement ideas                      |                      [link](#sqlite-improvement-ideas)                      |                         -                          |
+|    9     |          -          |                     Reactive.Scheduling                     |                         [link](#reactivescheduling)                         |                         -                          |
+|    10    |   Dependencies.*    |                   Dependencies.AspNetCore                   |                      [link](#dependencies-aspnetcore)                       |                         -                          |
+|    11    |          -          |                          Terminal                           |                              [link](#terminal)                              |                         -                          |
+|    12    |          -          |                         Diagnostics                         |                            [link](#diagnostics)                             |                         -                          |
+|    13    |          -          |                    Diagnostics.Terminal                     |                        [link](#diagnosticsterminal)                         | [Terminal](#terminal), [Diagnostics](#diagnostics) |
+|    14    |    Dependencies     |                     Reader/Writer Lock                      |                   [link](#dependencies-readerwriter-lock)                   |                         -                          |
+|    15    |    Computable.*     |                    Math/Physics structs                     |                   [link](#computable-mathphysics-structs)                   |                         -                          |
+|    16    | Computable.Automata |                  Add Context-free grammar                   |                                      -                                      |                         -                          |
+|    17    |     Collections     |                        Add SkipList                         |                                      -                                      |                         -                          |
+|    18    |      Sql.Core       |          Add Visitor for node CLR type extraction           |          [link](#sqlcore-add-visitor-for-node-clr-type-extraction)          |                         -                          |
+|    19    |      Sql.Core       |               Add Custom node tree validators               |              [link](#sqlcore-add-custom-node-tree-validators)               |                         -                          |
+|    20    |    Dependencies     |                  Generic dependency types                   |               [link](#dependencies-generic-dependency-types)                |                         -                          |
+|    21    |      Sql.Core       |                  Pin/Unpin builder methods                  |                  [link](#sqlcore-pinunpin-builder-methods)                  |                         -                          |
+|    22    |    Dependencies     |                    Generic builder types                    |                 [link](#dependencies-generic-builder-types)                 |                         -                          |
+|    23    |   Reactive.State    |                       Extension ideas                       |                   [link](#reactivestate-extension-ideas)                    |                         -                          |
 
 ### Scribbles:
-- MySql GUID function setup:
-  - DROP FUNCTION IF EXISTS GUID;
-  - CREATE FUNCTION GUID() RETURNS BINARY(16)
-  - BEGIN
-    - SET @value = UNHEX(REPLACE(UUID(), '-', ''));
-    - RETURN CONCAT(REVERSE(SUBSTRING(@value, 1, 4)), REVERSE(SUBSTRING(@value, 5, 2)), REVERSE(SUBSTRING(@value, 7, 2)), SUBSTRING(@value, 9));
-  - END;
-
-
-- MySql _DROP_INDEX_IF_EXISTS procedure setup:
-  - DROP PROCEDURE IF EXISTS \`_DROP_INDEX_IF_EXISTS\`;
-  - CREATE PROCEDURE \`_DROP_INDEX_IF_EXISTS\`(schema_name VARCHAR(128), table_name VARCHAR(128), index_name VARCHAR(128))
-  - BEGIN
-    - SET @schema_name = COALESCE(schema_name, database());
-    - IF EXISTS (
-      - SELECT *
-      - FROM information_schema.statistics AS s
-      - WHERE s.table_schema = @schema_name AND s.table_name = table_name AND s.index_name = index_name
-    - ) THEN
-      - SET @text = CONCAT('DROP INDEX \`', index_name, '\` ON \`', @schema_name, '\`.\`', table_name, '\`;');
-      - PREPARE stmt FROM @text;
-      - EXECUTE stmt;
-    - END IF;
-  - END;
-
-
-- MySql string concat operator ||:
-  - SET SESSION sql_mode = 'PIPES_AS_CONCAT';
+- Sql objects/builders:
+  - try to get rid of FullName property
 
 
 - SqlNodeInterpreter:
@@ -82,6 +55,7 @@
   - Visit[X]BeforeTraits & Visit[X]AfterTraits (sqlite too) => could be moved to Sql.Core as virtual & could receive the source node as parameter
     - this would help e.g. for MySql with the different CTE handling between insert into & delete from/update
   - configurable offset without limit (sqlite too): add implicit max limit or throw exception
+  - remove MySqlAlterTableNode? change tracker's _ongoingStatements needs it right now
 
 
 - SqlStringConcatAggregateFunctionExpressionNode: add OrderBy extension method only for this node?
@@ -107,10 +81,26 @@
 - MySqlHelpers & sqlite versions are pretty much the same => move to Sql.Core?
 
 
-- MySqlHelpers.GetDbLiteral:
-  - SET SESSION sql_mode = 'ANSI';
-  - SET SESSION sql_mode = 'NO_BACKSLASH_ESCAPES'; <= this will disable '\' as an escape character
-  - setting multiple modes can be done by simply separating their names with ',' (no spaces)
+- Connection strings:
+  - Some options will be hardcoded (like e.g. mysql GuidFormat=None),
+  - DB objects should have an additional method that allows to provide custom user/password & maybe other options as well
+
+
+- Initial DB factory connection change event:
+  - a collection of all published events by the connection object should be memorized
+  - and replayed for each registered callback, instead of the Closed=>Open event mock
+  - event listening should start right after ctor invocation & end right after Open invocation
+
+
+- Version history table:
+  - DB builder should allow to customize the table (& the reader...?)
+  - or at least should know about it => default schema name equals version history table's schema name
+  - also, MySql requires custom functions & procedures, which have to be global
+  - they should be created only when version history table doesn't exist
+  - however, they have to belong to a schema, the default one
+  - so whenever default schema is renamed, they also have to be renamed
+  - & mysql node interpreter needs to know about the default schema name as well
+
 
 ### Reactive.Scheduling
 project idea:
@@ -185,9 +175,6 @@ ideas for other LfrlAnvil.Computable projects:
 - postgresql will be awkward, since dblink would have to be used,
   - which requires that all result set column names & types are defined explicitly
   - https://www.postgresql.org/docs/current/postgres-fdw.html
-
-### Sql: MySql
-Implement Sql.Core for MySql
 
 ### Sql: PostgreSql
 Implement Sql.Core for PostgreSql

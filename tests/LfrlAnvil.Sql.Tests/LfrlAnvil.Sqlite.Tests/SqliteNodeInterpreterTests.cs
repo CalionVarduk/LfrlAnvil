@@ -62,6 +62,13 @@ public class SqliteNodeInterpreterTests : TestsBase
     }
 
     [Fact]
+    public void Visit_ShouldInterpretRawDataField_FromRawRecordSetWithInfo()
+    {
+        _sut.Visit( SqlNode.RawDataField( SqlNode.RawRecordSet( SqlRecordSetInfo.Create( "foo", "bar" ) ), "qux" ) );
+        _sut.Context.Sql.ToString().Should().Be( "\"foo_bar\".\"qux\"" );
+    }
+
+    [Fact]
     public void VisitChild_ShouldInterpretRawDataFieldWithoutParentheses()
     {
         _sut.VisitChild( SqlNode.RawDataField( SqlNode.RawRecordSet( "foo" ), "bar" ) );
@@ -1409,6 +1416,13 @@ END" );
     {
         _sut.Visit( SqlNode.RawRecordSet( "foo", "bar" ) );
         _sut.Context.Sql.ToString().Should().Be( "foo AS \"bar\"" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretRawRecordSet_WithInfo()
+    {
+        _sut.Visit( SqlNode.RawRecordSet( SqlRecordSetInfo.Create( "foo", "bar" ), "qux" ) );
+        _sut.Context.Sql.ToString().Should().Be( "\"foo_bar\" AS \"qux\"" );
     }
 
     [Fact]
@@ -4004,6 +4018,22 @@ DELETE FROM ""SQLITE_SEQUENCE"" WHERE ""name"" = 'qux'" );
     {
         _sut.Visit( SqlNode.Column<string>( "a", defaultValue: SqlNode.Literal( "abc" ).Concat( SqlNode.Literal( "def" ) ) ) );
         _sut.Context.Sql.ToString().Should().Be( "\"a\" TEXT NOT NULL DEFAULT ('abc' || 'def')" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretColumnDefinition_WithDbType_WhenNullable()
+    {
+        var typeDef = _sut.ColumnTypeDefinitions.GetByDataType( SqliteDataType.Integer );
+        _sut.Visit( SqlNode.Column( "a", typeDef, isNullable: true ) );
+        _sut.Context.Sql.ToString().Should().Be( "\"a\" INTEGER" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretColumnDefinition_WithDbType_WhenNonNullable()
+    {
+        var typeDef = _sut.ColumnTypeDefinitions.GetByDataType( SqliteDataType.Text );
+        _sut.Visit( SqlNode.Column( "a", typeDef, isNullable: false ) );
+        _sut.Context.Sql.ToString().Should().Be( "\"a\" TEXT NOT NULL" );
     }
 
     [Fact]

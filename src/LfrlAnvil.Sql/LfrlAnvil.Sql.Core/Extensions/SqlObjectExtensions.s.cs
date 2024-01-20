@@ -172,10 +172,7 @@ public static class SqlObjectExtensions
     [Pure]
     public static SqlColumnDefinitionNode ToDefinitionNode(this ISqlColumnBuilder column)
     {
-        return SqlNode.Column(
-            column.Name,
-            TypeNullability.Create( column.TypeDefinition.RuntimeType, column.IsNullable ),
-            column.DefaultValue );
+        return SqlNode.Column( column.Name, column.TypeDefinition, column.IsNullable, column.DefaultValue );
     }
 
     [Pure]

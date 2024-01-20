@@ -12,8 +12,7 @@ public readonly record struct SqlCreateDatabaseOptions
     public static readonly SqlCreateDatabaseOptions Default = new SqlCreateDatabaseOptions();
 
     public readonly SqlDatabaseCreateMode Mode;
-    public readonly string? VersionHistorySchemaName;
-    public readonly string? VersionHistoryTableName;
+    public readonly SqlSchemaObjectName? VersionHistoryName;
     public readonly SqlDatabaseVersionHistoryPersistenceMode VersionHistoryPersistenceMode;
 
     private readonly List<ISqlDatabaseFactoryStatementListener>? _statementListeners;
@@ -21,14 +20,12 @@ public readonly record struct SqlCreateDatabaseOptions
 
     private SqlCreateDatabaseOptions(
         SqlDatabaseCreateMode mode,
-        string? versionHistorySchemaName,
-        string? versionHistoryTableName,
+        SqlSchemaObjectName? versionHistoryName,
         SqlDatabaseVersionHistoryPersistenceMode versionHistoryPersistenceMode,
         List<ISqlDatabaseFactoryStatementListener>? statementListeners)
     {
         Mode = mode;
-        VersionHistorySchemaName = versionHistorySchemaName;
-        VersionHistoryTableName = versionHistoryTableName;
+        VersionHistoryName = versionHistoryName;
         VersionHistoryPersistenceMode = versionHistoryPersistenceMode;
         _statementListeners = statementListeners;
         _statementListenerCount = statementListeners?.Count ?? 0;
@@ -45,31 +42,20 @@ public readonly record struct SqlCreateDatabaseOptions
     public SqlCreateDatabaseOptions SetMode(SqlDatabaseCreateMode mode)
     {
         Ensure.IsDefined( mode );
-        return new SqlCreateDatabaseOptions(
-            mode,
-            VersionHistorySchemaName,
-            VersionHistoryTableName,
-            VersionHistoryPersistenceMode,
-            _statementListeners );
+        return new SqlCreateDatabaseOptions( mode, VersionHistoryName, VersionHistoryPersistenceMode, _statementListeners );
     }
 
     [Pure]
-    public SqlCreateDatabaseOptions SetVersionHistorySchemaName(string? name)
+    public SqlCreateDatabaseOptions SetVersionHistoryName(SqlSchemaObjectName? name)
     {
-        return new SqlCreateDatabaseOptions( Mode, name, VersionHistoryTableName, VersionHistoryPersistenceMode, _statementListeners );
-    }
-
-    [Pure]
-    public SqlCreateDatabaseOptions SetVersionHistoryTableName(string? name)
-    {
-        return new SqlCreateDatabaseOptions( Mode, VersionHistorySchemaName, name, VersionHistoryPersistenceMode, _statementListeners );
+        return new SqlCreateDatabaseOptions( Mode, name, VersionHistoryPersistenceMode, _statementListeners );
     }
 
     [Pure]
     public SqlCreateDatabaseOptions SetVersionHistoryPersistenceMode(SqlDatabaseVersionHistoryPersistenceMode mode)
     {
         Ensure.IsDefined( mode );
-        return new SqlCreateDatabaseOptions( Mode, VersionHistorySchemaName, VersionHistoryTableName, mode, _statementListeners );
+        return new SqlCreateDatabaseOptions( Mode, VersionHistoryName, mode, _statementListeners );
     }
 
     [Pure]
@@ -77,12 +63,6 @@ public readonly record struct SqlCreateDatabaseOptions
     {
         var listeners = _statementListeners ?? new List<ISqlDatabaseFactoryStatementListener>();
         listeners.Add( listener );
-
-        return new SqlCreateDatabaseOptions(
-            Mode,
-            VersionHistorySchemaName,
-            VersionHistoryTableName,
-            VersionHistoryPersistenceMode,
-            listeners );
+        return new SqlCreateDatabaseOptions( Mode, VersionHistoryName, VersionHistoryPersistenceMode, listeners );
     }
 }

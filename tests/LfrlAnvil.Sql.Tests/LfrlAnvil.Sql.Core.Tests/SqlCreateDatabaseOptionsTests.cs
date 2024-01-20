@@ -13,8 +13,7 @@ public class SqlCreateDatabaseOptionsTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.Mode.Should().Be( SqlDatabaseCreateMode.NoChanges );
-            sut.VersionHistorySchemaName.Should().BeNull();
-            sut.VersionHistoryTableName.Should().BeNull();
+            sut.VersionHistoryName.Should().BeNull();
             sut.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryPersistenceMode.AllRecords );
             sut.GetStatementListeners().ToArray().Should().BeEmpty();
         }
@@ -32,44 +31,38 @@ public class SqlCreateDatabaseOptionsTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Mode.Should().Be( mode );
-            result.VersionHistorySchemaName.Should().BeNull();
-            result.VersionHistoryTableName.Should().BeNull();
+            result.VersionHistoryName.Should().BeNull();
             result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryPersistenceMode.AllRecords );
             result.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( sut.GetStatementListeners().ToArray() );
         }
     }
 
-    [Theory]
-    [InlineData( "foo" )]
-    [InlineData( null )]
-    public void SetVersionHistorySchemaName_ShouldUpdateNameCorrectly(string? name)
+    [Fact]
+    public void SetVersionHistoryName_ShouldUpdateNameCorrectly()
     {
+        var name = SqlSchemaObjectName.Create( "foo", "bar" );
         var sut = SqlCreateDatabaseOptions.Default;
-        var result = sut.SetVersionHistorySchemaName( name );
+        var result = sut.SetVersionHistoryName( name );
 
         using ( new AssertionScope() )
         {
             result.Mode.Should().Be( SqlDatabaseCreateMode.NoChanges );
-            result.VersionHistorySchemaName.Should().BeSameAs( name );
-            result.VersionHistoryTableName.Should().BeNull();
+            result.VersionHistoryName.Should().Be( name );
             result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryPersistenceMode.AllRecords );
             result.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( sut.GetStatementListeners().ToArray() );
         }
     }
 
-    [Theory]
-    [InlineData( "foo" )]
-    [InlineData( null )]
-    public void SetVersionHistoryTableName_ShouldUpdateNameCorrectly(string? name)
+    [Fact]
+    public void SetVersionHistoryName_ShouldResetNameCorrectly()
     {
         var sut = SqlCreateDatabaseOptions.Default;
-        var result = sut.SetVersionHistoryTableName( name );
+        var result = sut.SetVersionHistoryName( null );
 
         using ( new AssertionScope() )
         {
             result.Mode.Should().Be( SqlDatabaseCreateMode.NoChanges );
-            result.VersionHistorySchemaName.Should().BeNull();
-            result.VersionHistoryTableName.Should().BeSameAs( name );
+            result.VersionHistoryName.Should().BeNull();
             result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryPersistenceMode.AllRecords );
             result.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( sut.GetStatementListeners().ToArray() );
         }
@@ -86,8 +79,7 @@ public class SqlCreateDatabaseOptionsTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Mode.Should().Be( SqlDatabaseCreateMode.NoChanges );
-            result.VersionHistorySchemaName.Should().BeNull();
-            result.VersionHistoryTableName.Should().BeNull();
+            result.VersionHistoryName.Should().BeNull();
             result.VersionHistoryPersistenceMode.Should().Be( mode );
             result.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( sut.GetStatementListeners().ToArray() );
         }
@@ -104,8 +96,7 @@ public class SqlCreateDatabaseOptionsTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Mode.Should().Be( SqlDatabaseCreateMode.NoChanges );
-            result.VersionHistorySchemaName.Should().BeNull();
-            result.VersionHistoryTableName.Should().BeNull();
+            result.VersionHistoryName.Should().BeNull();
             result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryPersistenceMode.AllRecords );
             result.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( listener );
         }
@@ -123,8 +114,7 @@ public class SqlCreateDatabaseOptionsTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Mode.Should().Be( SqlDatabaseCreateMode.NoChanges );
-            result.VersionHistorySchemaName.Should().BeNull();
-            result.VersionHistoryTableName.Should().BeNull();
+            result.VersionHistoryName.Should().BeNull();
             result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryPersistenceMode.AllRecords );
             result.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( listener1, listener2 );
             sut.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( listener1 );

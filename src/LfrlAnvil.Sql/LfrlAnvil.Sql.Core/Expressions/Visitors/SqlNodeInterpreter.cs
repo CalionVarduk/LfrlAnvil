@@ -410,7 +410,11 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public virtual void VisitRawRecordSet(SqlRawRecordSetNode node)
     {
-        Context.Sql.Append( node.Info.Name.Object );
+        if ( node.IsInfoRaw )
+            Context.Sql.Append( node.Info.Name.Object );
+        else
+            AppendDelimitedRecordSetInfo( node.Info );
+
         AppendDelimitedAlias( node.Alias );
     }
 
@@ -867,6 +871,13 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     public virtual void AppendDelimitedTemporaryObjectName(string name)
     {
         Context.Sql.Append( "TEMP" ).AppendDot();
+        AppendDelimitedName( name );
+    }
+
+    public void AppendDelimitedDataFieldName(SqlRecordSetInfo recordSet, string name)
+    {
+        AppendDelimitedRecordSetInfo( recordSet );
+        Context.Sql.AppendDot();
         AppendDelimitedName( name );
     }
 

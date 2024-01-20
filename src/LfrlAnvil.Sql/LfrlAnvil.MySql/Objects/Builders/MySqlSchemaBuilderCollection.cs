@@ -16,10 +16,11 @@ public sealed class MySqlSchemaBuilderCollection : ISqlSchemaBuilderCollection
 {
     private readonly Dictionary<string, MySqlSchemaBuilder> _map;
 
-    internal MySqlSchemaBuilderCollection(MySqlDatabaseBuilder database)
+    internal MySqlSchemaBuilderCollection(MySqlDatabaseBuilder database, string defaultSchemaName)
     {
         Database = database;
-        Default = new MySqlSchemaBuilder( Database, "dbo" );
+        MySqlHelpers.AssertName( defaultSchemaName );
+        Default = new MySqlSchemaBuilder( Database, defaultSchemaName );
         _map = new Dictionary<string, MySqlSchemaBuilder>( StringComparer.OrdinalIgnoreCase ) { { Default.Name, Default } };
     }
 

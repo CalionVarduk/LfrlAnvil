@@ -24,6 +24,7 @@ public partial class ObjectExpressionsTests
             {
                 result.Should().NotBeSameAs( sut );
                 result.Info.Should().Be( SqlRecordSetInfo.Create( "foo" ) );
+                result.IsInfoRaw.Should().Be( sut.IsInfoRaw );
                 result.Alias.Should().Be( "bar" );
                 result.Identifier.Should().Be( "bar" );
                 result.IsOptional.Should().Be( sut.IsOptional );
@@ -41,6 +42,7 @@ public partial class ObjectExpressionsTests
             {
                 result.Should().NotBeSameAs( sut );
                 result.Info.Should().Be( SqlRecordSetInfo.Create( "foo" ) );
+                result.IsInfoRaw.Should().Be( sut.IsInfoRaw );
                 result.Alias.Should().BeNull();
                 result.Identifier.Should().Be( "foo" );
                 result.IsOptional.Should().Be( sut.IsOptional );
@@ -145,6 +147,7 @@ public partial class ObjectExpressionsTests
             using ( new AssertionScope() )
             {
                 result.Info.Should().Be( SqlRecordSetInfo.Create( "foo" ) );
+                result.IsInfoRaw.Should().Be( sut.IsInfoRaw );
                 result.Alias.Should().BeNull();
                 result.Identifier.Should().Be( "foo" );
                 result.IsAliased.Should().BeFalse();
@@ -164,6 +167,7 @@ public partial class ObjectExpressionsTests
             {
                 result.Should().NotBeSameAs( sut );
                 result.Info.Should().Be( SqlRecordSetInfo.Create( "foo" ) );
+                result.IsInfoRaw.Should().Be( sut.IsInfoRaw );
                 result.Alias.Should().Be( "bar" );
                 result.Identifier.Should().Be( "bar" );
                 result.IsAliased.Should().BeTrue();

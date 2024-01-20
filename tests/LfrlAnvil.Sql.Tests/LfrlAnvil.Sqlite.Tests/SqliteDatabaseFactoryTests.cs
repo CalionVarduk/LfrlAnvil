@@ -59,8 +59,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
             history,
             SqlCreateDatabaseOptions.Default
                 .SetMode( SqlDatabaseCreateMode.NoChanges )
-                .SetVersionHistorySchemaName( "vs" )
-                .SetVersionHistoryTableName( "history" ) );
+                .SetVersionHistoryName( SqlSchemaObjectName.Create( "vs", "history" ) ) );
 
         var versions = result.Database.GetRegisteredVersions();
 

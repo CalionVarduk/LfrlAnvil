@@ -338,6 +338,12 @@ public static partial class SqlNode
     }
 
     [Pure]
+    public static SqlRawRecordSetNode RawRecordSet(SqlRecordSetInfo info, string? alias = null)
+    {
+        return new SqlRawRecordSetNode( info, alias, isOptional: false );
+    }
+
+    [Pure]
     public static SqlRawDataFieldNode RawDataField(SqlRecordSetNode recordSet, string name, TypeNullability? type = null)
     {
         return new SqlRawDataFieldNode( recordSet, name, type );
@@ -714,6 +720,16 @@ public static partial class SqlNode
     public static SqlColumnDefinitionNode Column(string name, TypeNullability type, SqlExpressionNode? defaultValue = null)
     {
         return new SqlColumnDefinitionNode( name, type, defaultValue );
+    }
+
+    [Pure]
+    public static SqlColumnDefinitionNode Column(
+        string name,
+        ISqlColumnTypeDefinition typeDefinition,
+        bool isNullable = false,
+        SqlExpressionNode? defaultValue = null)
+    {
+        return new SqlColumnDefinitionNode( name, typeDefinition, isNullable, defaultValue );
     }
 
     [Pure]

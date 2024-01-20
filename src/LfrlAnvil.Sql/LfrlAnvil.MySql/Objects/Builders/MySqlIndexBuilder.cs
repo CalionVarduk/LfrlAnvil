@@ -118,7 +118,6 @@ public sealed class MySqlIndexBuilder : MySqlObjectBuilder, ISqlIndexBuilder
 
                 if ( _referencingForeignKeys is not null )
                 {
-                    // TODO: test
                     foreach ( var fk in _referencingForeignKeys.Values )
                         errors = errors.Extend( ExceptionResources.IndexMustRemainNonPartialBecauseItIsReferencedByForeignKey( fk ) );
                 }

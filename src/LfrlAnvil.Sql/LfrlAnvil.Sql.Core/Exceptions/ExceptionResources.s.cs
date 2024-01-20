@@ -18,6 +18,7 @@ namespace LfrlAnvil.Sql.Exceptions;
 public static class ExceptionResources
 {
     public const string DefaultSchemaCannotBeRemoved = "Default schema cannot be removed.";
+    public const string CommonSchemaCannotBeRemoved = "Common schema cannot be removed.";
     public const string IndexMustHaveAtLeastOneColumn = "Index must have at least one column.";
     public const string PrimaryKeyIndexMustRemainUnique = "Primary key index must remain unique.";
     public const string PrimaryKeyIndexCannotBePartial = "Primary key index cannot be partial.";

@@ -508,6 +508,7 @@ public partial class ObjectExpressionsTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.RawRecordSet );
             sut.Info.Should().Be( SqlRecordSetInfo.Create( "foo" ) );
+            sut.IsInfoRaw.Should().BeTrue();
             sut.Alias.Should().BeNull();
             sut.Identifier.Should().Be( "foo" );
             sut.IsAliased.Should().BeFalse();
@@ -526,11 +527,50 @@ public partial class ObjectExpressionsTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.RawRecordSet );
             sut.Info.Should().Be( SqlRecordSetInfo.Create( "foo" ) );
+            sut.IsInfoRaw.Should().BeTrue();
             sut.Alias.Should().Be( "bar" );
             sut.Identifier.Should().Be( "bar" );
             sut.IsAliased.Should().BeTrue();
             sut.IsOptional.Should().BeFalse();
             text.Should().Be( "[foo] AS [bar]" );
+        }
+    }
+
+    [Fact]
+    public void RawRecordSet_ShouldCreateRawRecordSetNode_WithInfo()
+    {
+        var sut = SqlNode.RawRecordSet( SqlRecordSetInfo.Create( "foo", "bar" ) );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.RawRecordSet );
+            sut.Info.Should().Be( SqlRecordSetInfo.Create( "foo", "bar" ) );
+            sut.IsInfoRaw.Should().BeFalse();
+            sut.Alias.Should().BeNull();
+            sut.Identifier.Should().Be( "foo.bar" );
+            sut.IsAliased.Should().BeFalse();
+            sut.IsOptional.Should().BeFalse();
+            text.Should().Be( "[foo].[bar]" );
+        }
+    }
+
+    [Fact]
+    public void RawRecordSet_ShouldCreateRawRecordSetNode_WithInfoAndAlias()
+    {
+        var sut = SqlNode.RawRecordSet( SqlRecordSetInfo.Create( "foo", "bar" ), "qux" );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.RawRecordSet );
+            sut.Info.Should().Be( SqlRecordSetInfo.Create( "foo", "bar" ) );
+            sut.IsInfoRaw.Should().BeFalse();
+            sut.Alias.Should().Be( "qux" );
+            sut.Identifier.Should().Be( "qux" );
+            sut.IsAliased.Should().BeTrue();
+            sut.IsOptional.Should().BeFalse();
+            text.Should().Be( "[foo].[bar] AS [qux]" );
         }
     }
 

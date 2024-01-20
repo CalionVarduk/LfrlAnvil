@@ -8,7 +8,7 @@ internal sealed class MySqlDatabaseBuilderMock
     [Pure]
     internal static MySqlDatabaseBuilder Create()
     {
-        var result = new MySqlDatabaseBuilder( "0.0.0" );
+        var result = new MySqlDatabaseBuilder( "0.0.0", "common" );
         result.ChangeTracker.ClearStatements();
         return result;
     }

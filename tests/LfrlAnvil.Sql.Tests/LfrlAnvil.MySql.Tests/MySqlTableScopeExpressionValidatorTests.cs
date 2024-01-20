@@ -62,18 +62,17 @@ public class MySqlTableScopeExpressionValidatorTests : TestsBase
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 
-    // TODO
-    // [Fact]
-    // public void VisitColumn_ShouldRegisterError()
-    // {
-    //     var table = _table.Database.Schemas.Default.Objects.CreateTable( "T2" );
-    //     table.SetPrimaryKey( table.Columns.Create( "A" ).Asc() );
-    //     var node = new MySqlDatabaseMock( _table.Database ).Schemas.Default.Objects.GetTable( "T2" ).ToRecordSet().GetField( "A" );
-    //
-    //     _sut.VisitColumn( node );
-    //
-    //     _sut.GetErrors().Should().HaveCount( 1 );
-    // }
+    [Fact]
+    public void VisitColumn_ShouldRegisterError()
+    {
+        var table = _table.Database.Schemas.Default.Objects.CreateTable( "T2" );
+        table.SetPrimaryKey( table.Columns.Create( "A" ).Asc() );
+        var node = MySqlDatabaseMock.Create( _table.Database ).Schemas.Default.Objects.GetTable( "T2" ).ToRecordSet().GetField( "A" );
+
+        _sut.VisitColumn( node );
+
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
 
     [Fact]
     public void VisitColumnBuilder_ShouldBeSuccessful_WhenColumnBelongsToTheSameTableAndIsNotRemoved()
@@ -136,20 +135,19 @@ public class MySqlTableScopeExpressionValidatorTests : TestsBase
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 
-    // TODO
-    // [Fact]
-    // public void VisitViewDataField_ShouldRegisterError()
-    // {
-    //     _table.Database.Schemas.Default.Objects.CreateView(
-    //         "V",
-    //         SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["a"].AsSelf() } ) );
-    //
-    //     var node = new MySqlDatabaseMock( _table.Database ).Schemas.Default.Objects.GetView( "V" ).ToRecordSet().GetField( "a" );
-    //
-    //     _sut.VisitViewDataField( node );
-    //
-    //     _sut.GetErrors().Should().HaveCount( 1 );
-    // }
+    [Fact]
+    public void VisitViewDataField_ShouldRegisterError()
+    {
+        _table.Database.Schemas.Default.Objects.CreateView(
+            "V",
+            SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["a"].AsSelf() } ) );
+
+        var node = MySqlDatabaseMock.Create( _table.Database ).Schemas.Default.Objects.GetView( "V" ).ToRecordSet().GetField( "a" );
+
+        _sut.VisitViewDataField( node );
+
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
 
     [Fact]
     public void VisitNegate_ShouldVisitValue()
@@ -830,18 +828,17 @@ public class MySqlTableScopeExpressionValidatorTests : TestsBase
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 
-    // TODO
-    // [Fact]
-    // public void VisitTable_ShouldRegisterError()
-    // {
-    //     var table = _table.Database.Schemas.Default.Objects.CreateTable( "T2" );
-    //     table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
-    //     var node = new MySqlDatabaseMock( _table.Database ).Schemas.Default.Objects.GetTable( "T2" ).ToRecordSet();
-    //
-    //     _sut.VisitTable( node );
-    //
-    //     _sut.GetErrors().Should().HaveCount( 1 );
-    // }
+    [Fact]
+    public void VisitTable_ShouldRegisterError()
+    {
+        var table = _table.Database.Schemas.Default.Objects.CreateTable( "T2" );
+        table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
+        var node = MySqlDatabaseMock.Create( _table.Database ).Schemas.Default.Objects.GetTable( "T2" ).ToRecordSet();
+
+        _sut.VisitTable( node );
+
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
 
     [Fact]
     public void VisitTableBuilder_ShouldDoNothing_WhenTableIsTheSame()
@@ -862,20 +859,19 @@ public class MySqlTableScopeExpressionValidatorTests : TestsBase
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 
-    // TODO
-    // [Fact]
-    // public void VisitView_ShouldRegisterError()
-    // {
-    //     _table.Database.Schemas.Default.Objects.CreateView(
-    //         "V",
-    //         SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.GetAll() } ) );
-    //
-    //     var node = new MySqlDatabaseMock( _table.Database ).Schemas.Default.Objects.GetView( "V" ).ToRecordSet();
-    //
-    //     _sut.VisitView( node );
-    //
-    //     _sut.GetErrors().Should().HaveCount( 1 );
-    // }
+    [Fact]
+    public void VisitView_ShouldRegisterError()
+    {
+        _table.Database.Schemas.Default.Objects.CreateView(
+            "V",
+            SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.GetAll() } ) );
+
+        var node = MySqlDatabaseMock.Create( _table.Database ).Schemas.Default.Objects.GetView( "V" ).ToRecordSet();
+
+        _sut.VisitView( node );
+
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
 
     [Fact]
     public void VisitViewBuilder_ShouldRegisterError()

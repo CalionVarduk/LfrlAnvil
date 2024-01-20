@@ -105,7 +105,7 @@ public partial class MySqlTableBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( name );
-            sut.FullName.Should().Be( $"dbo.{name}" );
+            sut.FullName.Should().Be( $"common.{name}" );
             schema.Objects.Contains( name ).Should().BeTrue();
         }
     }
@@ -127,7 +127,7 @@ public partial class MySqlTableBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( oldName );
-            sut.FullName.Should().Be( $"dbo.{oldName}" );
+            sut.FullName.Should().Be( $"common.{oldName}" );
             schema.Objects.Contains( oldName ).Should().BeTrue();
             schema.Objects.Contains( newName ).Should().BeFalse();
             statements.Should().BeEmpty();

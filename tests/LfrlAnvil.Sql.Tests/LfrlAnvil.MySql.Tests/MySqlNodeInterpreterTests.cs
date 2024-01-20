@@ -3,7 +3,11 @@ using System.Data;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using LfrlAnvil.Functional;
+using LfrlAnvil.MySql.Extensions;
+using LfrlAnvil.MySql.Internal;
 using LfrlAnvil.MySql.Internal.Expressions;
+using LfrlAnvil.MySql.Objects;
+using LfrlAnvil.MySql.Objects.Builders;
 using LfrlAnvil.MySql.Tests.Helpers;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
@@ -12,9 +16,6 @@ using LfrlAnvil.Sql.Expressions.Functions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
-using LfrlAnvil.Sql.Objects;
-using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.Sql.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using MySqlConnector;
 
@@ -29,7 +30,7 @@ public class MySqlNodeInterpreterTests : TestsBase
 
     public MySqlNodeInterpreterTests()
     {
-        _sut = new MySqlNodeInterpreter( _typeDefinitions, SqlNodeInterpreterContext.Create() );
+        _sut = new MySqlNodeInterpreter( _typeDefinitions, "common", SqlNodeInterpreterContext.Create() );
     }
 
     [Fact]
@@ -68,6 +69,13 @@ public class MySqlNodeInterpreterTests : TestsBase
     {
         _sut.Visit( SqlNode.RawDataField( SqlNode.RawRecordSet( "foo" ), "bar" ) );
         _sut.Context.Sql.ToString().Should().Be( "foo.`bar`" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretRawDataField_FromRawRecordSetWithInfo()
+    {
+        _sut.Visit( SqlNode.RawDataField( SqlNode.RawRecordSet( SqlRecordSetInfo.Create( "foo", "bar" ) ), "qux" ) );
+        _sut.Context.Sql.ToString().Should().Be( "`foo`.`bar`.`qux`" );
     }
 
     [Fact]
@@ -156,33 +164,33 @@ public class MySqlNodeInterpreterTests : TestsBase
     [Fact]
     public void Visit_ShouldInterpretColumn()
     {
-        var table = CreateTable( string.Empty, "foo", "bar" ).ToRecordSet();
+        var table = CreateTable( "s", "foo", "bar" ).ToRecordSet();
         _sut.Visit( table.GetField( "bar" ) );
-        _sut.Context.Sql.ToString().Should().Be( "`foo`.`bar`" );
+        _sut.Context.Sql.ToString().Should().Be( "`s`.`foo`.`bar`" );
     }
 
     [Fact]
     public void VisitChild_ShouldInterpretColumnWithoutParentheses()
     {
-        var table = SqlNode.Table( CreateTable( string.Empty, "foo", "bar" ) );
+        var table = SqlNode.Table( CreateTable( "s", "foo", "bar" ) );
         _sut.VisitChild( table.GetField( "bar" ) );
-        _sut.Context.Sql.ToString().Should().Be( "`foo`.`bar`" );
+        _sut.Context.Sql.ToString().Should().Be( "`s`.`foo`.`bar`" );
     }
 
     [Fact]
     public void Visit_ShouldInterpretColumnBuilder()
     {
-        var table = SqlNode.Table( CreateTableBuilder( string.Empty, "foo", "bar" ) );
+        var table = SqlNode.Table( CreateTableBuilder( "s", "foo", "bar" ) );
         _sut.Visit( table.GetField( "bar" ) );
-        _sut.Context.Sql.ToString().Should().Be( "`foo`.`bar`" );
+        _sut.Context.Sql.ToString().Should().Be( "`s`.`foo`.`bar`" );
     }
 
     [Fact]
     public void VisitChild_ShouldInterpretColumnBuilderWithoutParentheses()
     {
-        var table = SqlNode.Table( CreateTableBuilder( string.Empty, "foo", "bar" ) );
+        var table = SqlNode.Table( CreateTableBuilder( "s", "foo", "bar" ) );
         _sut.VisitChild( table.GetField( "bar" ) );
-        _sut.Context.Sql.ToString().Should().Be( "`foo`.`bar`" );
+        _sut.Context.Sql.ToString().Should().Be( "`s`.`foo`.`bar`" );
     }
 
     [Fact]
@@ -205,26 +213,20 @@ public class MySqlNodeInterpreterTests : TestsBase
     public void Visit_ShouldInterpretViewDataField()
     {
         var view = SqlNode.View(
-            CreateView(
-                string.Empty,
-                "foo",
-                SqlNode.RawRecordSet( "bar" ).ToDataSource().Select( s => new[] { s.From["qux"].AsSelf() } ) ) );
+            CreateView( "s", "foo", SqlNode.RawRecordSet( "bar" ).ToDataSource().Select( s => new[] { s.From["qux"].AsSelf() } ) ) );
 
         _sut.Visit( view.GetField( "qux" ) );
-        _sut.Context.Sql.ToString().Should().Be( "`foo`.`qux`" );
+        _sut.Context.Sql.ToString().Should().Be( "`s`.`foo`.`qux`" );
     }
 
     [Fact]
     public void VisitChild_ShouldInterpretViewDataFieldWithoutParentheses()
     {
         var view = SqlNode.View(
-            CreateView(
-                string.Empty,
-                "foo",
-                SqlNode.RawRecordSet( "bar" ).ToDataSource().Select( s => new[] { s.From["qux"].AsSelf() } ) ) );
+            CreateView( "s", "foo", SqlNode.RawRecordSet( "bar" ).ToDataSource().Select( s => new[] { s.From["qux"].AsSelf() } ) ) );
 
         _sut.VisitChild( view.GetField( "qux" ) );
-        _sut.Context.Sql.ToString().Should().Be( "`foo`.`qux`" );
+        _sut.Context.Sql.ToString().Should().Be( "`s`.`foo`.`qux`" );
     }
 
     [Fact]
@@ -644,7 +646,7 @@ END" );
     public void Visit_ShouldInterpretNewGuidFunction()
     {
         _sut.Visit( SqlNode.Functions.NewGuid() );
-        _sut.Context.Sql.ToString().Should().Be( "GUID()" );
+        _sut.Context.Sql.ToString().Should().Be( "`common`.`GUID`()" );
     }
 
     [Fact]
@@ -1503,6 +1505,13 @@ END" );
     }
 
     [Fact]
+    public void Visit_ShouldInterpretRawRecordSet_WithInfo()
+    {
+        _sut.Visit( SqlNode.RawRecordSet( SqlRecordSetInfo.Create( "foo", "bar" ), "qux" ) );
+        _sut.Context.Sql.ToString().Should().Be( "`foo`.`bar` AS `qux`" );
+    }
+
+    [Fact]
     public void VisitChild_ShouldInterpretRawRecordSetWithParentheses()
     {
         _sut.VisitChild( SqlNode.RawRecordSet( "foo" ) );
@@ -1512,57 +1521,57 @@ END" );
     [Fact]
     public void Visit_ShouldInterpretTable()
     {
-        _sut.Visit( CreateTable( string.Empty, "foo" ).ToRecordSet( "bar" ) );
-        _sut.Context.Sql.ToString().Should().Be( "`foo` AS `bar`" );
+        _sut.Visit( CreateTable( "s", "foo" ).ToRecordSet( "bar" ) );
+        _sut.Context.Sql.ToString().Should().Be( "`s`.`foo` AS `bar`" );
     }
 
     [Fact]
     public void VisitChild_ShouldInterpretTableWithParentheses()
     {
-        _sut.VisitChild( CreateTable( string.Empty, "foo" ).ToRecordSet() );
-        _sut.Context.Sql.ToString().Should().Be( "(`foo`)" );
+        _sut.VisitChild( CreateTable( "s", "foo" ).ToRecordSet() );
+        _sut.Context.Sql.ToString().Should().Be( "(`s`.`foo`)" );
     }
 
     [Fact]
     public void Visit_ShouldInterpretTableBuilder()
     {
-        _sut.Visit( CreateTableBuilder( string.Empty, "foo" ).ToRecordSet( "bar" ) );
-        _sut.Context.Sql.ToString().Should().Be( "`foo` AS `bar`" );
+        _sut.Visit( CreateTableBuilder( "s", "foo" ).ToRecordSet( "bar" ) );
+        _sut.Context.Sql.ToString().Should().Be( "`s`.`foo` AS `bar`" );
     }
 
     [Fact]
     public void VisitChild_ShouldInterpretTableBuilderWithParentheses()
     {
-        _sut.VisitChild( CreateTableBuilder( string.Empty, "foo" ).ToRecordSet() );
-        _sut.Context.Sql.ToString().Should().Be( "(`foo`)" );
+        _sut.VisitChild( CreateTableBuilder( "s", "foo" ).ToRecordSet() );
+        _sut.Context.Sql.ToString().Should().Be( "(`s`.`foo`)" );
     }
 
     [Fact]
     public void Visit_ShouldInterpretView()
     {
-        _sut.Visit( CreateView( string.Empty, "foo" ).ToRecordSet( "bar" ) );
-        _sut.Context.Sql.ToString().Should().Be( "`foo` AS `bar`" );
+        _sut.Visit( CreateView( "s", "foo" ).ToRecordSet( "bar" ) );
+        _sut.Context.Sql.ToString().Should().Be( "`s`.`foo` AS `bar`" );
     }
 
     [Fact]
     public void VisitChild_ShouldInterpretViewWithParentheses()
     {
-        _sut.VisitChild( CreateView( string.Empty, "foo" ).ToRecordSet() );
-        _sut.Context.Sql.ToString().Should().Be( "(`foo`)" );
+        _sut.VisitChild( CreateView( "s", "foo" ).ToRecordSet() );
+        _sut.Context.Sql.ToString().Should().Be( "(`s`.`foo`)" );
     }
 
     [Fact]
     public void Visit_ShouldInterpretViewBuilder()
     {
-        _sut.Visit( CreateViewBuilder( string.Empty, "foo" ).ToRecordSet( "bar" ) );
-        _sut.Context.Sql.ToString().Should().Be( "`foo` AS `bar`" );
+        _sut.Visit( CreateViewBuilder( "s", "foo" ).ToRecordSet( "bar" ) );
+        _sut.Context.Sql.ToString().Should().Be( "`s`.`foo` AS `bar`" );
     }
 
     [Fact]
     public void VisitChild_ShouldInterpretViewBuilderWithParentheses()
     {
-        _sut.VisitChild( CreateViewBuilder( string.Empty, "foo" ).ToRecordSet() );
-        _sut.Context.Sql.ToString().Should().Be( "(`foo`)" );
+        _sut.VisitChild( CreateViewBuilder( "s", "foo" ).ToRecordSet() );
+        _sut.Context.Sql.ToString().Should().Be( "(`s`.`foo`)" );
     }
 
     [Fact]
@@ -1736,12 +1745,12 @@ LEFT JOIN qux ON qux.b = foo.b" );
     [Fact]
     public void Visit_ShouldInterpretSelectCompoundField()
     {
-        var query = CreateTable( string.Empty, "foo", "a" )
+        var query = CreateTable( "s", "foo", "a" )
             .ToRecordSet()
             .ToDataSource()
             .Select( t => new[] { t.From["a"].AsSelf() } )
             .CompoundWith(
-                CreateTable( string.Empty, "bar", "a" )
+                CreateTable( "s", "bar", "a" )
                     .ToRecordSet()
                     .ToDataSource()
                     .Select( t => new[] { t.From["a"].AsSelf() } )
@@ -1755,12 +1764,12 @@ LEFT JOIN qux ON qux.b = foo.b" );
     [Fact]
     public void VisitChild_ShouldInterpretSelectCompoundFieldWithoutParentheses()
     {
-        var query = CreateTable( string.Empty, "foo", "a" )
+        var query = CreateTable( "s", "foo", "a" )
             .ToRecordSet()
             .ToDataSource()
             .Select( t => new[] { t.From["a"].AsSelf() } )
             .CompoundWith(
-                CreateTable( string.Empty, "bar", "a" )
+                CreateTable( "s", "bar", "a" )
                     .ToRecordSet()
                     .ToDataSource()
                     .Select( t => new[] { t.From["a"].AsSelf() } )
@@ -1850,20 +1859,20 @@ LEFT JOIN qux ON qux.b = foo.b" );
     [Fact]
     public void Visit_ShouldInterpretDataSourceQuery_WithoutTraits()
     {
-        var foo = CreateTable( string.Empty, "foo", "a", "b" ).ToRecordSet();
-        var bar = CreateTable( string.Empty, "bar", "c", "d" ).ToRecordSet( "lorem" );
-        var qux = CreateTable( string.Empty, "qux", "e", "f" ).ToRecordSet();
+        var foo = CreateTable( "s", "foo", "a", "b" ).ToRecordSet();
+        var bar = CreateTable( "s", "bar", "c", "d" ).ToRecordSet( "lorem" );
+        var qux = CreateTable( "s", "qux", "e", "f" ).ToRecordSet();
 
         var query = foo
             .Join( bar.InnerOn( bar["c"] == foo["a"] ), qux.LeftOn( qux["e"] == foo["b"] ) )
             .Select(
                 s => new SqlSelectNode[]
                 {
-                    s["foo"]["a"].AsSelf(),
-                    s["foo"]["b"].As( "x" ),
+                    s["s.foo"]["a"].AsSelf(),
+                    s["s.foo"]["b"].As( "x" ),
                     s["lorem"].GetAll(),
-                    s["qux"]["e"].AsSelf(),
-                    s["qux"]["f"].As( "y" ),
+                    s["s.qux"]["e"].AsSelf(),
+                    s["s.qux"]["f"].As( "y" ),
                     SqlNode.Parameter<int>( "p" ).As( "z" )
                 } );
 
@@ -1879,15 +1888,15 @@ LEFT JOIN qux ON qux.b = foo.b" );
                 .Should()
                 .Be(
                     @"SELECT
-  `foo`.`a`,
-  `foo`.`b` AS `x`,
+  `s`.`foo`.`a`,
+  `s`.`foo`.`b` AS `x`,
   `lorem`.*,
-  `qux`.`e`,
-  `qux`.`f` AS `y`,
+  `s`.`qux`.`e`,
+  `s`.`qux`.`f` AS `y`,
   @p AS `z`
-FROM `foo`
-INNER JOIN `bar` AS `lorem` ON `lorem`.`c` = `foo`.`a`
-LEFT JOIN `qux` ON `qux`.`e` = `foo`.`b`" );
+FROM `s`.`foo`
+INNER JOIN `s`.`bar` AS `lorem` ON `lorem`.`c` = `s`.`foo`.`a`
+LEFT JOIN `s`.`qux` ON `s`.`qux`.`e` = `s`.`foo`.`b`" );
         }
     }
 
@@ -1897,9 +1906,9 @@ LEFT JOIN `qux` ON `qux`.`e` = `foo`.`b`" );
         var cba = SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" );
         var zyx = SqlNode.RawQuery( "SELECT * FROM xyz JOIN cba ON cba.h = xyz.h" ).ToCte( "zyx" );
 
-        var foo = CreateTable( string.Empty, "foo", "a", "b" ).ToRecordSet();
-        var bar = CreateTable( string.Empty, "bar", "c", "d" ).ToRecordSet( "lorem" );
-        var qux = CreateTable( string.Empty, "qux", "e", "f" ).ToRecordSet();
+        var foo = CreateTable( "s", "foo", "a", "b" ).ToRecordSet();
+        var bar = CreateTable( "s", "bar", "c", "d" ).ToRecordSet( "lorem" );
+        var qux = CreateTable( "s", "qux", "e", "f" ).ToRecordSet();
 
         var wnd1 = SqlNode.WindowDefinition( "wnd1", new SqlExpressionNode[] { foo["a"], qux["e"] }, new[] { foo["b"].Asc() } );
         var wnd2 = SqlNode.WindowDefinition(
@@ -1911,23 +1920,24 @@ LEFT JOIN `qux` ON `qux`.`e` = `foo`.`b`" );
             .Join( bar.InnerOn( bar["c"] == foo["a"] ), qux.LeftOn( qux["e"] == foo["b"] ) )
             .With( cba, zyx )
             .Distinct()
-            .AndWhere( s => s["qux"]["f"] > SqlNode.Literal( 50 ) )
+            .AndWhere( s => s["s.qux"]["f"] > SqlNode.Literal( 50 ) )
             .AndWhere(
-                s => s["foo"]["a"].InQuery( zyx.RecordSet.ToDataSource().Select( z => new[] { z.From.GetUnsafeField( "h" ).AsSelf() } ) ) )
-            .GroupBy( s => new[] { s["foo"]["b"] } )
+                s => s["s.foo"]["a"]
+                    .InQuery( zyx.RecordSet.ToDataSource().Select( z => new[] { z.From.GetUnsafeField( "h" ).AsSelf() } ) ) )
+            .GroupBy( s => new[] { s["s.foo"]["b"] } )
             .GroupBy( s => new[] { s["lorem"]["c"] } )
-            .AndHaving( s => s["foo"]["b"] < SqlNode.Literal( 100 ) )
+            .AndHaving( s => s["s.foo"]["b"] < SqlNode.Literal( 100 ) )
             .OrHaving( s => s["lorem"]["c"].IsBetween( SqlNode.Literal( 0 ), SqlNode.Literal( 75 ) ) )
             .Window( wnd1, wnd2 )
             .Select(
                 s => new SqlSelectNode[]
                 {
-                    s["foo"]["b"].As( "x" ),
+                    s["s.foo"]["b"].As( "x" ),
                     s["lorem"]["c"].AsSelf(),
                     SqlNode.AggregateFunctions.Count( s.GetAll().ToExpression() ).As( "v" ),
-                    SqlNode.AggregateFunctions.Sum( s["foo"]["a"] ).Over( wnd1 ).As( "w" )
+                    SqlNode.AggregateFunctions.Sum( s["s.foo"]["a"] ).Over( wnd1 ).As( "w" )
                 } )
-            .OrderBy( s => new[] { s.DataSource["foo"]["b"].Asc() } )
+            .OrderBy( s => new[] { s.DataSource["s.foo"]["b"].Asc() } )
             .OrderBy( s => new[] { s.DataSource["lorem"]["c"].Desc() } )
             .Limit( SqlNode.Literal( 50 ) )
             .Offset( SqlNode.Literal( 100 ) );
@@ -1944,23 +1954,23 @@ LEFT JOIN `qux` ON `qux`.`e` = `foo`.`b`" );
   SELECT * FROM xyz JOIN cba ON cba.h = xyz.h
 )
 SELECT DISTINCT
-  `foo`.`b` AS `x`,
+  `s`.`foo`.`b` AS `x`,
   `lorem`.`c`,
   COUNT(*) AS `v`,
-  (SUM(`foo`.`a`) OVER `wnd1`) AS `w`
-FROM `foo`
-INNER JOIN `bar` AS `lorem` ON `lorem`.`c` = `foo`.`a`
-LEFT JOIN `qux` ON `qux`.`e` = `foo`.`b`
-WHERE (`qux`.`f` > 50) AND (`foo`.`a` IN (
+  (SUM(`s`.`foo`.`a`) OVER `wnd1`) AS `w`
+FROM `s`.`foo`
+INNER JOIN `s`.`bar` AS `lorem` ON `lorem`.`c` = `s`.`foo`.`a`
+LEFT JOIN `s`.`qux` ON `s`.`qux`.`e` = `s`.`foo`.`b`
+WHERE (`s`.`qux`.`f` > 50) AND (`s`.`foo`.`a` IN (
     SELECT
       `zyx`.`h`
     FROM `zyx`
   ))
-GROUP BY `foo`.`b`, `lorem`.`c`
-HAVING (`foo`.`b` < 100) OR (`lorem`.`c` BETWEEN 0 AND 75)
-WINDOW `wnd1` AS (PARTITION BY `foo`.`a`, `qux`.`e` ORDER BY `foo`.`b` ASC),
-  `wnd2` AS (ORDER BY `qux`.`e` ASC, `qux`.`f` DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
-ORDER BY `foo`.`b` ASC, `lorem`.`c` DESC
+GROUP BY `s`.`foo`.`b`, `lorem`.`c`
+HAVING (`s`.`foo`.`b` < 100) OR (`lorem`.`c` BETWEEN 0 AND 75)
+WINDOW `wnd1` AS (PARTITION BY `s`.`foo`.`a`, `s`.`qux`.`e` ORDER BY `s`.`foo`.`b` ASC),
+  `wnd2` AS (ORDER BY `s`.`qux`.`e` ASC, `s`.`qux`.`f` DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
+ORDER BY `s`.`foo`.`b` ASC, `lorem`.`c` DESC
 LIMIT 50 OFFSET 100" );
     }
 
@@ -2040,7 +2050,7 @@ LIMIT 18446744073709551615 OFFSET 100" );
     [Fact]
     public void VisitChild_ShouldInterpretDataSourceQueryWithParentheses()
     {
-        var query = CreateTable( string.Empty, "foo", "a" )
+        var query = CreateTable( "s", "foo", "a" )
             .ToRecordSet()
             .ToDataSource()
             .Select( s => new[] { s.GetAll() } );
@@ -2053,7 +2063,7 @@ LIMIT 18446744073709551615 OFFSET 100" );
                 @"(
   SELECT
     *
-  FROM `foo`
+  FROM `s`.`foo`
 )" );
     }
 
@@ -2498,25 +2508,25 @@ SELECT a, b FROM foo" );
     [Fact]
     public void Visit_ShouldInterpretInsertIntoWithDataSourceQuery()
     {
-        var foo = CreateTable( string.Empty, "foo", "a", "b" ).ToRecordSet();
-        var bar = CreateTable( string.Empty, "bar", "c", "d" ).ToRecordSet();
+        var foo = CreateTable( "s", "foo", "a", "b" ).ToRecordSet();
+        var bar = CreateTable( "s", "bar", "c", "d" ).ToRecordSet();
         var wnd = SqlNode.WindowDefinition( "wnd", new[] { foo["a"].Asc() } );
 
         var query = foo
             .Join( bar.InnerOn( bar["c"] == foo["a"] ) )
             .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
             .Distinct()
-            .AndWhere( s => s["bar"]["c"].InQuery( SqlNode.RawQuery( "SELECT cba.c FROM cba" ) ) )
-            .GroupBy( s => new[] { s["foo"]["b"] } )
-            .AndHaving( s => s["foo"]["b"] < SqlNode.Literal( 100 ) )
+            .AndWhere( s => s["s.bar"]["c"].InQuery( SqlNode.RawQuery( "SELECT cba.c FROM cba" ) ) )
+            .GroupBy( s => new[] { s["s.foo"]["b"] } )
+            .AndHaving( s => s["s.foo"]["b"] < SqlNode.Literal( 100 ) )
             .Window( wnd )
             .Select(
                 s => new SqlSelectNode[]
                 {
-                    s["foo"]["b"].As( "a" ),
+                    s["s.foo"]["b"].As( "a" ),
                     SqlNode.AggregateFunctions.Count( s.GetAll().ToExpression() ).Over( wnd ).As( "b" )
                 } )
-            .OrderBy( s => new[] { s.DataSource["foo"]["b"].Asc() } )
+            .OrderBy( s => new[] { s.DataSource["s.foo"]["b"].Asc() } )
             .Limit( SqlNode.Literal( 50 ) )
             .Offset( SqlNode.Literal( 100 ) );
 
@@ -2530,17 +2540,17 @@ WITH `cba` AS (
   SELECT * FROM abc
 )
 SELECT DISTINCT
-  `foo`.`b` AS `a`,
+  `s`.`foo`.`b` AS `a`,
   (COUNT(*) OVER `wnd`) AS `b`
-FROM `foo`
-INNER JOIN `bar` ON `bar`.`c` = `foo`.`a`
-WHERE `bar`.`c` IN (
+FROM `s`.`foo`
+INNER JOIN `s`.`bar` ON `s`.`bar`.`c` = `s`.`foo`.`a`
+WHERE `s`.`bar`.`c` IN (
   SELECT cba.c FROM cba
 )
-GROUP BY `foo`.`b`
-HAVING `foo`.`b` < 100
-WINDOW `wnd` AS (ORDER BY `foo`.`a` ASC)
-ORDER BY `foo`.`b` ASC
+GROUP BY `s`.`foo`.`b`
+HAVING `s`.`foo`.`b` < 100
+WINDOW `wnd` AS (ORDER BY `s`.`foo`.`a` ASC)
+ORDER BY `s`.`foo`.`b` ASC
 LIMIT 50 OFFSET 100" );
     }
 
@@ -2612,7 +2622,7 @@ WHERE foo.`a` < 10" );
     [Fact]
     public void Visit_ShouldInterpretUpdateSimpleDataSource_WithWhereAndAlias()
     {
-        var dataSource = CreateTable( string.Empty, "foo", "a" )
+        var dataSource = CreateTable( "s", "foo", "a" )
             .ToRecordSet( "bar" )
             .ToDataSource()
             .AndWhere( s => s["bar"]["a"] < SqlNode.Literal( 10 ) );
@@ -2622,7 +2632,7 @@ WHERE foo.`a` < 10" );
         _sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"UPDATE `foo` AS `bar` SET
+                @"UPDATE `s`.`foo` AS `bar` SET
   `a` = 10
 WHERE `bar`.`a` < 10" );
     }
@@ -2630,15 +2640,15 @@ WHERE `bar`.`a` < 10" );
     [Fact]
     public void Visit_ShouldInterpretUpdateSingleDataSource_WithCteAndWhereAndOrderByAndLimit()
     {
-        var dataSource = CreateTable( string.Empty, "foo", "a" )
+        var dataSource = CreateTable( "s", "foo", "a" )
             .RecordSet
             .ToDataSource()
             .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
-            .AndWhere( s => s["foo"]["a"].InQuery( SqlNode.RawQuery( "SELECT cba.c FROM cba" ) ) )
-            .OrderBy( s => new[] { s["foo"]["a"].Asc() } )
+            .AndWhere( s => s["s.foo"]["a"].InQuery( SqlNode.RawQuery( "SELECT cba.c FROM cba" ) ) )
+            .OrderBy( s => new[] { s["s.foo"]["a"].Asc() } )
             .Limit( SqlNode.Literal( 5 ) );
 
-        _sut.Visit( dataSource.ToUpdate( s => new[] { s["foo"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
+        _sut.Visit( dataSource.ToUpdate( s => new[] { s["s.foo"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
         _sut.Context.Sql.ToString()
             .Should()
@@ -2646,12 +2656,12 @@ WHERE `bar`.`a` < 10" );
                 @"WITH `cba` AS (
   SELECT * FROM abc
 )
-UPDATE `foo` SET
+UPDATE `s`.`foo` SET
   `a` = 10
-WHERE `foo`.`a` IN (
+WHERE `s`.`foo`.`a` IN (
   SELECT cba.c FROM cba
 )
-ORDER BY `foo`.`a` ASC
+ORDER BY `s`.`foo`.`a` ASC
 LIMIT 5" );
     }
 
@@ -2755,7 +2765,7 @@ WHERE `s`.`foo`.`a` IN (
     [Fact]
     public void Visit_ShouldInterpretUpdateMultiDataSource_WithoutTraits()
     {
-        var foo = CreateTable( string.Empty, "foo", "a" ).ToRecordSet( "f" );
+        var foo = CreateTable( "s", "foo", "a" ).ToRecordSet( "f" );
         var other = SqlNode.RawRecordSet( "bar" );
         var dataSource = foo.Join( other.InnerOn( foo["a"] == other["a"] ) );
 
@@ -2764,7 +2774,7 @@ WHERE `s`.`foo`.`a` IN (
         _sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"UPDATE `foo` AS `f`
+                @"UPDATE `s`.`foo` AS `f`
 INNER JOIN bar ON `f`.`a` = bar.`a` SET
   `f`.`a` = 10" );
     }
@@ -2772,7 +2782,7 @@ INNER JOIN bar ON `f`.`a` = bar.`a` SET
     [Fact]
     public void Visit_ShouldInterpretUpdateMultiDataSource_WithCteAndWhere()
     {
-        var foo = CreateTable( string.Empty, "foo", "a" ).ToRecordSet( "f" );
+        var foo = CreateTable( "s", "foo", "a" ).ToRecordSet( "f" );
         var other = SqlNode.RawRecordSet( "bar", "b" );
 
         var dataSource = foo
@@ -2788,7 +2798,7 @@ INNER JOIN bar ON `f`.`a` = bar.`a` SET
                 @"WITH `cba` AS (
   SELECT * FROM abc
 )
-UPDATE `foo` AS `f`
+UPDATE `s`.`foo` AS `f`
 INNER JOIN bar AS `b` ON `f`.`a` = `b`.`a` SET
   `f`.`a` = 10
 WHERE `f`.`a` < 10" );
@@ -2887,7 +2897,7 @@ WHERE `s`.`foo`.`a` IN (
     [Fact]
     public void Visit_ShouldInterpretUpdateComplexDataSource_WhenTargetIsTableWithSingleColumnPrimaryKey()
     {
-        var table = CreateTable( string.Empty, "foo", new[] { "a", "b" }, "a" );
+        var table = CreateTable( "s", "foo", new[] { "a", "b" }, "a" );
         var foo = table.ToRecordSet( "f" );
         var other = SqlNode.RawRecordSet( "bar" );
 
@@ -2900,15 +2910,15 @@ WHERE `s`.`foo`.`a` IN (
         _sut.Context.Sql.ToString()
             .Should()
             .SatisfySql(
-                @"UPDATE `foo` SET
+                @"UPDATE `s`.`foo` SET
   `a` = 10
-WHERE `foo`.`a` IN (
+WHERE `s`.`foo`.`a` IN (
   SELECT
     *
   FROM (
     SELECT
       `f`.`a`
-    FROM `foo` AS `f`
+    FROM `s`.`foo` AS `f`
     INNER JOIN bar ON `f`.`a` = bar.`a`
     GROUP BY `f`.`b`
   ) AS `_{GUID}`
@@ -2918,7 +2928,7 @@ WHERE `foo`.`a` IN (
     [Fact]
     public void Visit_ShouldInterpretUpdateComplexDataSource_WhenTargetIsTableWithMultiColumnPrimaryKey()
     {
-        var table = CreateTable( string.Empty, "foo", "a", "b" );
+        var table = CreateTable( "s", "foo", "a", "b" );
         var foo = table.ToRecordSet( "f" );
         var other = SqlNode.RawRecordSet( "bar" );
 
@@ -2931,7 +2941,7 @@ WHERE `foo`.`a` IN (
         _sut.Context.Sql.ToString()
             .Should()
             .SatisfySql(
-                @"UPDATE `foo` SET
+                @"UPDATE `s`.`foo` SET
   `a` = 10
 WHERE EXISTS (
   SELECT
@@ -2940,18 +2950,18 @@ WHERE EXISTS (
     SELECT
       `f`.`a`,
       `f`.`b`
-    FROM `foo` AS `f`
+    FROM `s`.`foo` AS `f`
     INNER JOIN bar ON `f`.`a` = bar.`a`
     GROUP BY `f`.`b`
   ) AS `_{GUID}`
-  WHERE (`foo`.`a` = `_{GUID}`.`a`) AND (`foo`.`b` = `_{GUID}`.`b`)
+  WHERE (`s`.`foo`.`a` = `_{GUID}`.`a`) AND (`s`.`foo`.`b` = `_{GUID}`.`b`)
 );" );
     }
 
     [Fact]
     public void Visit_ShouldInterpretUpdateComplexDataSource_WhenTargetIsTableBuilderWithSingleColumnPrimaryKey()
     {
-        var table = CreateTableBuilder<int>( string.Empty, "foo", new[] { "a", "b" }, "a" );
+        var table = CreateTableBuilder<int>( "s", "foo", new[] { "a", "b" }, "a" );
         var foo = table.ToRecordSet( "f" );
         var other = SqlNode.RawRecordSet( "bar" );
 
@@ -2964,15 +2974,15 @@ WHERE EXISTS (
         _sut.Context.Sql.ToString()
             .Should()
             .SatisfySql(
-                @"UPDATE `foo` SET
+                @"UPDATE `s`.`foo` SET
   `a` = 10
-WHERE `foo`.`a` IN (
+WHERE `s`.`foo`.`a` IN (
   SELECT
     *
   FROM (
     SELECT
       `f`.`a`
-    FROM `foo` AS `f`
+    FROM `s`.`foo` AS `f`
     INNER JOIN bar ON `f`.`a` = bar.`a`
     GROUP BY `f`.`b`
   ) AS `_{GUID}`
@@ -2982,7 +2992,7 @@ WHERE `foo`.`a` IN (
     [Fact]
     public void Visit_ShouldInterpretUpdateComplexDataSource_WhenTargetIsTableBuilderWithMultiColumnPrimaryKey()
     {
-        var table = CreateTableBuilder( string.Empty, "foo", "a", "b" );
+        var table = CreateTableBuilder( "s", "foo", "a", "b" );
         var foo = table.ToRecordSet( "f" );
         var other = SqlNode.RawRecordSet( "bar" );
 
@@ -2995,7 +3005,7 @@ WHERE `foo`.`a` IN (
         _sut.Context.Sql.ToString()
             .Should()
             .SatisfySql(
-                @"UPDATE `foo` SET
+                @"UPDATE `s`.`foo` SET
   `a` = 10
 WHERE EXISTS (
   SELECT
@@ -3004,18 +3014,18 @@ WHERE EXISTS (
     SELECT
       `f`.`a`,
       `f`.`b`
-    FROM `foo` AS `f`
+    FROM `s`.`foo` AS `f`
     INNER JOIN bar ON `f`.`a` = bar.`a`
     GROUP BY `f`.`b`
   ) AS `_{GUID}`
-  WHERE (`foo`.`a` = `_{GUID}`.`a`) AND (`foo`.`b` = `_{GUID}`.`b`)
+  WHERE (`s`.`foo`.`a` = `_{GUID}`.`a`) AND (`s`.`foo`.`b` = `_{GUID}`.`b`)
 );" );
     }
 
     [Fact]
     public void Visit_ShouldInterpretUpdateComplexDataSource_WhenTargetIsTableBuilderWithoutPrimaryKey()
     {
-        var table = CreateTableBuilderWithoutPrimaryKey( string.Empty, "foo", "a", "b" );
+        var table = CreateTableBuilderWithoutPrimaryKey( "s", "foo", "a", "b" );
         var foo = table.ToRecordSet( "f" );
         var other = SqlNode.RawRecordSet( "bar" );
 
@@ -3029,7 +3039,7 @@ WHERE EXISTS (
         _sut.Context.Sql.ToString()
             .Should()
             .SatisfySql(
-                @"UPDATE `foo` SET
+                @"UPDATE `s`.`foo` SET
   `a` = 10
 WHERE EXISTS (
   SELECT
@@ -3038,12 +3048,12 @@ WHERE EXISTS (
     SELECT
       `f`.`a`,
       `f`.`b`
-    FROM `foo` AS `f`
+    FROM `s`.`foo` AS `f`
     INNER JOIN bar ON `f`.`a` = bar.`a`
     WHERE `f`.`a` > 10
     GROUP BY `f`.`b`
   ) AS `_{GUID}`
-  WHERE (`foo`.`a` = `_{GUID}`.`a`) AND (`foo`.`b` = `_{GUID}`.`b`)
+  WHERE (`s`.`foo`.`a` = `_{GUID}`.`a`) AND (`s`.`foo`.`b` = `_{GUID}`.`b`)
 );" );
     }
 
@@ -3169,7 +3179,7 @@ WHERE EXISTS (
     [Fact]
     public void Visit_ShouldInterpretUpdateComplexDataSource_WhenTargetHasSingleColumnPrimaryKey_WithDataSourceFieldsAsAssignedValues()
     {
-        var table = CreateTableBuilder<int>( string.Empty, "foo", new[] { "a", "b", "c", "d" }, "a" );
+        var table = CreateTableBuilder<int>( "s", "foo", new[] { "a", "b", "c", "d" }, "a" );
         var foo = table.ToRecordSet( "f" );
         var other = SqlNode.RawRecordSet( "bar" );
 
@@ -3193,21 +3203,21 @@ WHERE EXISTS (
         _sut.Context.Sql.ToString()
             .Should()
             .SatisfySql(
-                @"UPDATE `foo` SET
+                @"UPDATE `s`.`foo` SET
   `a` = (
     SELECT
       `x`.`b`
-    FROM `foo` AS `x`
-    WHERE `x`.`a` > `foo`.`a`
+    FROM `s`.`foo` AS `x`
+    WHERE `x`.`a` > `s`.`foo`.`a`
   ),
-  `b` = (`foo`.`c` * `foo`.`d`)
-WHERE `foo`.`a` IN (
+  `b` = (`s`.`foo`.`c` * `s`.`foo`.`d`)
+WHERE `s`.`foo`.`a` IN (
   SELECT
     *
   FROM (
     SELECT
       `f`.`a`
-    FROM `foo` AS `f`
+    FROM `s`.`foo` AS `f`
     INNER JOIN bar ON `f`.`a` = bar.`a`
     GROUP BY `f`.`b`
   ) AS `_{GUID}`
@@ -3217,7 +3227,7 @@ WHERE `foo`.`a` IN (
     [Fact]
     public void Visit_ShouldInterpretUpdateComplexDataSource_WhenTargetHasMultiColumnPrimaryKey_WithDataSourceFieldsAsAssignedValues()
     {
-        var table = CreateTableBuilder<int>( string.Empty, "foo", new[] { "a", "b", "c", "d" }, "a", "b" );
+        var table = CreateTableBuilder<int>( "s", "foo", new[] { "a", "b", "c", "d" }, "a", "b" );
         var foo = table.ToRecordSet( "f" );
         var other = SqlNode.RawRecordSet( "bar" );
 
@@ -3241,14 +3251,14 @@ WHERE `foo`.`a` IN (
         _sut.Context.Sql.ToString()
             .Should()
             .SatisfySql(
-                @"UPDATE `foo` SET
+                @"UPDATE `s`.`foo` SET
   `a` = (
     SELECT
       `x`.`b`
-    FROM `foo` AS `x`
-    WHERE `x`.`a` > `foo`.`a`
+    FROM `s`.`foo` AS `x`
+    WHERE `x`.`a` > `s`.`foo`.`a`
   ),
-  `b` = (`foo`.`c` * `foo`.`d`)
+  `b` = (`s`.`foo`.`c` * `s`.`foo`.`d`)
 WHERE EXISTS (
   SELECT
     *
@@ -3256,18 +3266,18 @@ WHERE EXISTS (
     SELECT
       `f`.`a`,
       `f`.`b`
-    FROM `foo` AS `f`
+    FROM `s`.`foo` AS `f`
     INNER JOIN bar ON `f`.`a` = bar.`a`
     GROUP BY `f`.`b`
   ) AS `_{GUID}`
-  WHERE (`foo`.`a` = `_{GUID}`.`a`) AND (`foo`.`b` = `_{GUID}`.`b`)
+  WHERE (`s`.`foo`.`a` = `_{GUID}`.`a`) AND (`s`.`foo`.`b` = `_{GUID}`.`b`)
 );" );
     }
 
     [Fact]
     public void Visit_ShouldInterpretUpdateComplexDataSource_WithComplexAssignmentAndSingleColumnPrimaryKey()
     {
-        var table = CreateTable( string.Empty, "foo", new[] { "a", "b" }, "a" );
+        var table = CreateTable( "s", "foo", new[] { "a", "b" }, "a" );
         var foo = table.ToRecordSet( "f" );
         var dataSource = foo
             .Join( SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ), x => x.Inner["a"] == foo["a"] ) )
@@ -3282,19 +3292,19 @@ WHERE EXISTS (
   SELECT
     `f`.`a` AS `ID_a_0`,
     (`f`.`b` + bar.`b`) AS `VAL_b_0`
-  FROM `foo` AS `f`
+  FROM `s`.`foo` AS `f`
   INNER JOIN bar ON bar.`a` = `f`.`a`
   GROUP BY `f`.`b`
 )
-UPDATE `foo` SET
+UPDATE `s`.`foo` SET
   `b` = (
     SELECT
       `_{GUID}`.`VAL_b_0`
     FROM `_{GUID}`
-    WHERE `foo`.`a` = `_{GUID}`.`ID_a_0`
+    WHERE `s`.`foo`.`a` = `_{GUID}`.`ID_a_0`
     LIMIT 1
   )
-WHERE `foo`.`a` IN (
+WHERE `s`.`foo`.`a` IN (
   SELECT
     `_{GUID}`.`ID_a_0`
     FROM `_{GUID}`
@@ -3304,7 +3314,7 @@ WHERE `foo`.`a` IN (
     [Fact]
     public void Visit_ShouldInterpretUpdateComplexDataSource_WithComplexAssignmentAndMultipleColumnPrimaryKey()
     {
-        var table = CreateTable( string.Empty, "foo", new[] { "a", "b", "c" }, "a", "b" );
+        var table = CreateTable( "s", "foo", new[] { "a", "b", "c" }, "a", "b" );
         var foo = table.ToRecordSet( "f" );
         var dataSource = foo
             .Join( SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ), x => x.Inner["a"] == foo["a"] ) )
@@ -3320,32 +3330,32 @@ WHERE `foo`.`a` IN (
     `f`.`a` AS `ID_a_0`,
     `f`.`b` AS `ID_b_1`,
     (`f`.`c` + bar.`c`) AS `VAL_c_0`
-  FROM `foo` AS `f`
+  FROM `s`.`foo` AS `f`
   INNER JOIN bar ON bar.`a` = `f`.`a`
   GROUP BY `f`.`b`
 )
-UPDATE `foo` SET
+UPDATE `s`.`foo` SET
   `c` = (
     SELECT
       `_{GUID}`.`VAL_c_0`
     FROM `_{GUID}`
-    WHERE (`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`foo`.`b` = `_{GUID}`.`ID_b_1`)
+    WHERE (`s`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`s`.`foo`.`b` = `_{GUID}`.`ID_b_1`)
     LIMIT 1
   )
 WHERE EXISTS (
   SELECT
     *
   FROM `_{GUID}`
-  WHERE (`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`foo`.`b` = `_{GUID}`.`ID_b_1`)
+  WHERE (`s`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`s`.`foo`.`b` = `_{GUID}`.`ID_b_1`)
 );" );
     }
 
     [Fact]
     public void Visit_ShouldInterpretUpdateComplexDataSource_WithCteAndComplexAssignment()
     {
-        var table = CreateTable( string.Empty, "foo", new[] { "a", "b" }, "a" );
+        var table = CreateTable( "s", "foo", new[] { "a", "b" }, "a" );
         var view = CreateView(
-                string.Empty,
+                "s",
                 "v",
                 SqlNode.RawRecordSet( "bar" ).ToDataSource().Select( s => new[] { s.From["a"].AsSelf(), s.From["b"].AsSelf() } ) )
             .RecordSet;
@@ -3357,7 +3367,7 @@ WHERE EXISTS (
             .With( SqlNode.RawQuery( "SELECT * FROM lorem" ).ToCte( "ipsum" ) )
             .GroupBy( s => new[] { s["f"]["b"] } );
 
-        _sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["b"].Assign( s["f"]["b"] + s["v"]["b"] ) } ) );
+        _sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["b"].Assign( s["f"]["b"] + s["s.v"]["b"] ) } ) );
 
         _sut.Context.Sql.ToString()
             .Should()
@@ -3368,20 +3378,20 @@ WHERE EXISTS (
 `_{GUID}` AS (
   SELECT
     `f`.`a` AS `ID_a_0`,
-    (`f`.`b` + `v`.`b`) AS `VAL_b_0`
-  FROM `foo` AS `f`
-  INNER JOIN `v` ON `v`.`a` = `f`.`a`
+    (`f`.`b` + `s`.`v`.`b`) AS `VAL_b_0`
+  FROM `s`.`foo` AS `f`
+  INNER JOIN `s`.`v` ON `s`.`v`.`a` = `f`.`a`
   GROUP BY `f`.`b`
 )
-UPDATE `foo` SET
+UPDATE `s`.`foo` SET
   `b` = (
     SELECT
       `_{GUID}`.`VAL_b_0`
     FROM `_{GUID}`
-    WHERE `foo`.`a` = `_{GUID}`.`ID_a_0`
+    WHERE `s`.`foo`.`a` = `_{GUID}`.`ID_a_0`
     LIMIT 1
   )
-WHERE `foo`.`a` IN (
+WHERE `s`.`foo`.`a` IN (
   SELECT
     `_{GUID}`.`ID_a_0`
   FROM `_{GUID}`
@@ -3462,7 +3472,7 @@ WHERE `s`.`foo`.`a` IN (
     [Fact]
     public void Visit_ShouldThrowSqlNodeVisitorException_WhenUpdateIsComplexAndDataSourceFromIsTableWithoutAlias()
     {
-        var foo = CreateTable( string.Empty, "foo" ).ToRecordSet();
+        var foo = CreateTable( "s", "foo" ).ToRecordSet();
         var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).GroupBy( s => new[] { s["bar"]["x"] } ).ToUpdate();
         var action = Lambda.Of( () => _sut.Visit( node ) );
 
@@ -3474,7 +3484,7 @@ WHERE `s`.`foo`.`a` IN (
     [Fact]
     public void Visit_ShouldThrowSqlNodeVisitorException_WhenUpdateIsComplexAndDataSourceFromIsTableBuilderWithoutColumns()
     {
-        var foo = CreateTableBuilderWithoutPrimaryKey( string.Empty, "foo" ).ToRecordSet( "f" );
+        var foo = CreateTableBuilderWithoutPrimaryKey( "s", "foo" ).ToRecordSet( "f" );
         var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).GroupBy( s => new[] { s["bar"]["x"] } ).ToUpdate();
         var action = Lambda.Of( () => _sut.Visit( node ) );
 
@@ -3786,7 +3796,7 @@ WHERE `s`.`foo`.`a` IN (
     [Fact]
     public void Visit_ShouldInterpretDeleteFromComplexDataSource_WhenTargetIsTableWithSingleColumnPrimaryKey()
     {
-        var table = CreateTable( string.Empty, "foo", new[] { "a", "b" }, "a" );
+        var table = CreateTable( "s", "foo", new[] { "a", "b" }, "a" );
         var foo = table.ToRecordSet( "f" );
         var other = SqlNode.RawRecordSet( "bar" );
 
@@ -3799,14 +3809,14 @@ WHERE `s`.`foo`.`a` IN (
         _sut.Context.Sql.ToString()
             .Should()
             .SatisfySql(
-                @"DELETE FROM `foo`
-WHERE `foo`.`a` IN (
+                @"DELETE FROM `s`.`foo`
+WHERE `s`.`foo`.`a` IN (
   SELECT
     *
   FROM (
     SELECT
       `f`.`a`
-    FROM `foo` AS `f`
+    FROM `s`.`foo` AS `f`
     INNER JOIN bar ON `f`.`a` = bar.`a`
     GROUP BY `f`.`b`
   ) AS `_{GUID}`
@@ -3816,7 +3826,7 @@ WHERE `foo`.`a` IN (
     [Fact]
     public void Visit_ShouldInterpretDeleteFromComplexDataSource_WhenTargetIsTableWithMultiColumnPrimaryKey()
     {
-        var table = CreateTable( string.Empty, "foo", "a", "b" );
+        var table = CreateTable( "s", "foo", "a", "b" );
         var foo = table.ToRecordSet( "f" );
         var other = SqlNode.RawRecordSet( "bar" );
 
@@ -3829,7 +3839,7 @@ WHERE `foo`.`a` IN (
         _sut.Context.Sql.ToString()
             .Should()
             .SatisfySql(
-                @"DELETE FROM `foo`
+                @"DELETE FROM `s`.`foo`
 WHERE EXISTS (
   SELECT
     *
@@ -3837,18 +3847,18 @@ WHERE EXISTS (
     SELECT
       `f`.`a`,
       `f`.`b`
-    FROM `foo` AS `f`
+    FROM `s`.`foo` AS `f`
     INNER JOIN bar ON `f`.`a` = bar.`a`
     GROUP BY `f`.`b`
   ) AS `_{GUID}`
-  WHERE (`foo`.`a` = `_{GUID}`.`a`) AND (`foo`.`b` = `_{GUID}`.`b`)
+  WHERE (`s`.`foo`.`a` = `_{GUID}`.`a`) AND (`s`.`foo`.`b` = `_{GUID}`.`b`)
 );" );
     }
 
     [Fact]
     public void Visit_ShouldInterpretDeleteFromComplexDataSource_WhenTargetIsTableBuilderWithSingleColumnPrimaryKey()
     {
-        var table = CreateTableBuilder<int>( string.Empty, "foo", new[] { "a", "b" }, "a" );
+        var table = CreateTableBuilder<int>( "s", "foo", new[] { "a", "b" }, "a" );
         var foo = table.ToRecordSet( "f" );
         var other = SqlNode.RawRecordSet( "bar" );
 
@@ -3861,14 +3871,14 @@ WHERE EXISTS (
         _sut.Context.Sql.ToString()
             .Should()
             .SatisfySql(
-                @"DELETE FROM `foo`
-WHERE `foo`.`a` IN (
+                @"DELETE FROM `s`.`foo`
+WHERE `s`.`foo`.`a` IN (
   SELECT
     *
   FROM (
     SELECT
       `f`.`a`
-    FROM `foo` AS `f`
+    FROM `s`.`foo` AS `f`
     INNER JOIN bar ON `f`.`a` = bar.`a`
     GROUP BY `f`.`b`
   ) AS `_{GUID}`
@@ -3878,7 +3888,7 @@ WHERE `foo`.`a` IN (
     [Fact]
     public void Visit_ShouldInterpretDeleteFromComplexDataSource_WhenTargetIsTableBuilderWithMultiColumnPrimaryKey()
     {
-        var table = CreateTableBuilder( string.Empty, "foo", "a", "b" );
+        var table = CreateTableBuilder( "s", "foo", "a", "b" );
         var foo = table.ToRecordSet( "f" );
         var other = SqlNode.RawRecordSet( "bar" );
 
@@ -3891,7 +3901,7 @@ WHERE `foo`.`a` IN (
         _sut.Context.Sql.ToString()
             .Should()
             .SatisfySql(
-                @"DELETE FROM `foo`
+                @"DELETE FROM `s`.`foo`
 WHERE EXISTS (
   SELECT
     *
@@ -3899,18 +3909,18 @@ WHERE EXISTS (
     SELECT
       `f`.`a`,
       `f`.`b`
-    FROM `foo` AS `f`
+    FROM `s`.`foo` AS `f`
     INNER JOIN bar ON `f`.`a` = bar.`a`
     GROUP BY `f`.`b`
   ) AS `_{GUID}`
-  WHERE (`foo`.`a` = `_{GUID}`.`a`) AND (`foo`.`b` = `_{GUID}`.`b`)
+  WHERE (`s`.`foo`.`a` = `_{GUID}`.`a`) AND (`s`.`foo`.`b` = `_{GUID}`.`b`)
 );" );
     }
 
     [Fact]
     public void Visit_ShouldInterpretDeleteFromComplexDataSource_WhenTargetIsTableBuilderWithoutPrimaryKey()
     {
-        var table = CreateTableBuilderWithoutPrimaryKey( string.Empty, "foo", "a", "b" );
+        var table = CreateTableBuilderWithoutPrimaryKey( "s", "foo", "a", "b" );
         var foo = table.ToRecordSet( "f" );
         var other = SqlNode.RawRecordSet( "bar" );
 
@@ -3924,7 +3934,7 @@ WHERE EXISTS (
         _sut.Context.Sql.ToString()
             .Should()
             .SatisfySql(
-                @"DELETE FROM `foo`
+                @"DELETE FROM `s`.`foo`
 WHERE EXISTS (
   SELECT
     *
@@ -3932,12 +3942,12 @@ WHERE EXISTS (
     SELECT
       `f`.`a`,
       `f`.`b`
-    FROM `foo` AS `f`
+    FROM `s`.`foo` AS `f`
     INNER JOIN bar ON `f`.`a` = bar.`a`
     WHERE `f`.`a` > 10
     GROUP BY `f`.`b`
   ) AS `_{GUID}`
-  WHERE (`foo`.`a` = `_{GUID}`.`a`) AND (`foo`.`b` = `_{GUID}`.`b`)
+  WHERE (`s`.`foo`.`a` = `_{GUID}`.`a`) AND (`s`.`foo`.`b` = `_{GUID}`.`b`)
 );" );
     }
 
@@ -4074,7 +4084,7 @@ WHERE EXISTS (
     [Fact]
     public void Visit_ShouldThrowSqlNodeVisitorException_WhenDeleteFromIsComplexAndDataSourceFromIsTableWithoutAlias()
     {
-        var foo = CreateTable( string.Empty, "foo" ).ToRecordSet();
+        var foo = CreateTable( "s", "foo" ).ToRecordSet();
         var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
         var action = Lambda.Of( () => _sut.Visit( node ) );
 
@@ -4086,7 +4096,7 @@ WHERE EXISTS (
     [Fact]
     public void Visit_ShouldThrowSqlNodeVisitorException_WhenDeleteFromIsComplexAndDataSourceFromIsTableBuilderWithoutColumns()
     {
-        var foo = CreateTableBuilderWithoutPrimaryKey( string.Empty, "foo" ).ToRecordSet( "f" );
+        var foo = CreateTableBuilderWithoutPrimaryKey( "s", "foo" ).ToRecordSet( "f" );
         var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
         var action = Lambda.Of( () => _sut.Visit( node ) );
 
@@ -4214,6 +4224,22 @@ WHERE EXISTS (
     }
 
     [Fact]
+    public void Visit_ShouldInterpretColumnDefinition_WithDbType_WhenNullable()
+    {
+        var typeDef = _typeDefinitions.GetByDataType( MySqlDataType.Int );
+        _sut.Visit( SqlNode.Column( "a", typeDef, isNullable: true ) );
+        _sut.Context.Sql.ToString().Should().Be( "`a` INT" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretColumnDefinition_WithDbType_WhenNonNullable()
+    {
+        var typeDef = _typeDefinitions.GetByDataType( MySqlDataType.VarChar );
+        _sut.Visit( SqlNode.Column( "a", typeDef, isNullable: false ) );
+        _sut.Context.Sql.ToString().Should().Be( "`a` VARCHAR(65535) NOT NULL" );
+    }
+
+    [Fact]
     public void Visit_ShouldInterpretPrimaryKeyDefinition()
     {
         var table = SqlNode.CreateTable(
@@ -4237,7 +4263,7 @@ WHERE EXISTS (
         var onDeleteBehavior = onDelete == ReferenceBehavior.Values.Cascade ? ReferenceBehavior.Cascade : ReferenceBehavior.Restrict;
         var onUpdateBehavior = onUpdate == ReferenceBehavior.Values.Cascade ? ReferenceBehavior.Cascade : ReferenceBehavior.Restrict;
 
-        var qux = CreateTable( string.Empty, "qux", "a", "b" ).ToRecordSet();
+        var qux = CreateTable( "s", "qux", "a", "b" ).ToRecordSet();
         var table = SqlNode.CreateTable(
                 SqlRecordSetInfo.Create( "foo", "bar" ),
                 new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ) } )
@@ -4256,7 +4282,7 @@ WHERE EXISTS (
         _sut.Context.Sql.ToString()
             .Should()
             .Be(
-                $"CONSTRAINT `FK_foobar_REF_qux` FOREIGN KEY (`a`, `b`) REFERENCES `qux` (`a`, `b`) ON DELETE {onDeleteBehavior.Name} ON UPDATE {onUpdateBehavior.Name}" );
+                $"CONSTRAINT `FK_foobar_REF_qux` FOREIGN KEY (`a`, `b`) REFERENCES `s`.`qux` (`a`, `b`) ON DELETE {onDeleteBehavior.Name} ON UPDATE {onUpdateBehavior.Name}" );
     }
 
     [Fact]
@@ -4403,7 +4429,7 @@ SELECT * FROM qux" );
         _sut.Context.Sql.ToString()
             .Should()
             .Be(
-                $@"CALL `_DROP_INDEX_IF_EXISTS`('foo', 'qux', 'bar');
+                $@"CALL `common`.`_DROP_INDEX_IF_EXISTS`('foo', 'qux', 'bar');
 CREATE {expectedType} `bar` ON `foo`.`qux` (`a` ASC, `b` DESC)" );
     }
 
@@ -4522,9 +4548,9 @@ CREATE {expectedType} `bar` ON `foo`.`qux` (`a` ASC, `b` DESC)" );
 
     [Theory]
     [InlineData( false, false, "DROP INDEX `bar` ON `foo`.`qux`" )]
-    [InlineData( true, false, "CALL `_DROP_INDEX_IF_EXISTS`('foo', 'qux', 'bar')" )]
+    [InlineData( true, false, "CALL `common`.`_DROP_INDEX_IF_EXISTS`('foo', 'qux', 'bar')" )]
     [InlineData( false, true, "DROP INDEX `bar` ON `qux`" )]
-    [InlineData( true, true, "CALL `_DROP_INDEX_IF_EXISTS`(NULL, 'qux', 'bar')" )]
+    [InlineData( true, true, "CALL `common`.`_DROP_INDEX_IF_EXISTS`(NULL, 'qux', 'bar')" )]
     public void Visit_ShouldInterpretDropIndex(bool ifExists, bool isRecordSetTemporary, string expected)
     {
         var recordSet = isRecordSetTemporary ? SqlRecordSetInfo.CreateTemporary( "qux" ) : SqlRecordSetInfo.Create( "foo", "qux" );
@@ -4597,22 +4623,6 @@ COMMIT;" );
         _sut.Context.Sql.ToString().Should().Be( "ROLLBACK" );
     }
 
-    [Theory]
-    [InlineData( true, "CREATE SCHEMA IF NOT EXISTS `foo`" )]
-    [InlineData( false, "CREATE SCHEMA `foo`" )]
-    public void Visit_ShouldInterpretCreateSchema(bool ifNotExists, string expected)
-    {
-        _sut.Visit( new MySqlCreateSchemaNode( "foo", ifNotExists ) );
-        _sut.Context.Sql.ToString().Should().Be( expected );
-    }
-
-    [Fact]
-    public void Visit_ShouldInterpretDropSchema()
-    {
-        _sut.Visit( new MySqlDropSchemaNode( "foo" ) );
-        _sut.Context.Sql.ToString().Should().Be( "DROP SCHEMA `foo`" );
-    }
-
     [Fact]
     public void Visit_ShouldInterpretAlterTable()
     {
@@ -4676,16 +4686,62 @@ COMMIT;" );
             .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, _sut ) );
     }
 
-    // TODO:
-    // replace all those mocks with MySql objects & remove reference to Sql.Core.Tests
+    [Fact]
+    public void AppendCreateSchemaStatement_ShouldAddCorrectSql()
+    {
+        MySqlHelpers.AppendCreateSchemaStatement( _sut, "foo" );
+        _sut.Context.Sql.ToString().Should().Be( "CREATE SCHEMA `foo`;" );
+    }
+
+    [Fact]
+    public void AppendDropSchemaStatement_ShouldAddCorrectSql()
+    {
+        MySqlHelpers.AppendDropSchemaStatement( _sut, "foo" );
+        _sut.Context.Sql.ToString().Should().Be( "DROP SCHEMA `foo`;" );
+    }
+
+    [Fact]
+    public void AppendCreateGuidFunctionStatement_ShouldAddCorrectSql()
+    {
+        MySqlHelpers.AppendCreateGuidFunctionStatement( _sut, "foo" );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                @"CREATE FUNCTION `foo`.`GUID`() RETURNS BINARY(16)
+BEGIN
+  SET @value = UNHEX(REPLACE(UUID(), '-', ''));
+  RETURN CONCAT(REVERSE(SUBSTRING(@value, 1, 4)), REVERSE(SUBSTRING(@value, 5, 2)), REVERSE(SUBSTRING(@value, 7, 2)), SUBSTRING(@value, 9));
+END;" );
+    }
+
+    [Fact]
+    public void AppendDropIndexIfExistsProcedureStatement_ShouldAddCorrectSql()
+    {
+        MySqlHelpers.AppendDropIndexIfExistsProcedureStatement( _sut, "foo" );
+
+        _sut.Context.Sql.ToString()
+            .Should()
+            .Be(
+                @"CREATE PROCEDURE `foo`.`_DROP_INDEX_IF_EXISTS`(`schema_name` VARCHAR(128), `table_name` VARCHAR(128), `index_name` VARCHAR(128))
+BEGIN
+  SET @schema_name = COALESCE(`schema_name`, DATABASE());
+  IF EXISTS (SELECT * FROM `information_schema`.`statistics` AS `s` WHERE `s`.`table_schema` = @schema_name AND `s`.`table_name` = `table_name` AND `s`.`index_name` = `index_name`) THEN
+    SET @text = CONCAT('DROP INDEX `', `index_name`, '` ON `', @schema_name, '`.`', `table_name`, '`;');
+    PREPARE stmt FROM @text;
+    EXECUTE stmt;
+  END IF;
+END;" );
+    }
+
     [Pure]
-    private static ISqlTableBuilder CreateTableBuilder(string schemaName, string tableName, params string[] columnNames)
+    private static MySqlTableBuilder CreateTableBuilder(string schemaName, string tableName, params string[] columnNames)
     {
         return CreateTableBuilder<int>( schemaName, tableName, columnNames, Array.Empty<string>() );
     }
 
     [Pure]
-    private static ISqlTableBuilder CreateTableBuilder<TColumnType>(
+    private static MySqlTableBuilder CreateTableBuilder<TColumnType>(
         string schemaName,
         string tableName,
         string[] columnNames,
@@ -4698,66 +4754,59 @@ COMMIT;" );
         if ( pkColumnNames.Length == 0 )
             pkColumnNames = columnNames;
 
-        var schema = SchemaMock.CreateBuilder( schemaName );
-        var columns = ColumnMock.CreateManyBuilders<TColumnType>( areNullable: true, columnNames );
-        var table = TableMock.CreateBuilder(
-            tableName,
-            schema,
-            c => PrimaryKeyMock.CreateBuilder( pkColumnNames.Select( n => c.Get( n ).Asc() ).ToArray() ),
-            columns );
+        var db = MySqlDatabaseBuilderMock.Create();
+        var schema = db.Schemas.GetOrCreate( schemaName );
+        var table = schema.Objects.CreateTable( tableName );
 
+        foreach ( var c in columnNames )
+            table.Columns.Create( c ).SetType<TColumnType>();
+
+        table.SetPrimaryKey( pkColumnNames.Select( n => table.Columns.Get( n ).Asc() ).ToArray() );
         return table;
     }
 
     [Pure]
-    private static ISqlTableBuilder CreateTableBuilderWithoutPrimaryKey(string schemaName, string tableName, params string[] columnNames)
+    private static MySqlTableBuilder CreateTableBuilderWithoutPrimaryKey(string schemaName, string tableName, params string[] columnNames)
     {
-        var schema = SchemaMock.CreateBuilder( schemaName );
-        var columns = ColumnMock.CreateManyBuilders<int>( areNullable: true, columnNames );
-        var table = TableMock.CreateBuilder( tableName, schema, null, columns );
+        var db = MySqlDatabaseBuilderMock.Create();
+        var schema = db.Schemas.GetOrCreate( schemaName );
+        var table = schema.Objects.CreateTable( tableName );
+
+        foreach ( var c in columnNames )
+            table.Columns.Create( c ).SetType<int>();
+
         return table;
     }
 
     [Pure]
-    private static ISqlTable CreateTable(string schemaName, string tableName, params string[] columnNames)
+    private static MySqlTable CreateTable(string schemaName, string tableName, params string[] columnNames)
     {
         return CreateTable( schemaName, tableName, columnNames, Array.Empty<string>() );
     }
 
     [Pure]
-    private static ISqlTable CreateTable(string schemaName, string tableName, string[] columnNames, params string[] pkColumnNames)
+    private static MySqlTable CreateTable(string schemaName, string tableName, string[] columnNames, params string[] pkColumnNames)
     {
-        if ( columnNames.Length == 0 )
-            columnNames = new[] { "X" };
-
-        if ( pkColumnNames.Length == 0 )
-            pkColumnNames = columnNames;
-
-        var schema = SchemaMock.Create( schemaName );
-        var columns = ColumnMock.CreateMany<int>( areNullable: true, columnNames );
-        var table = TableMock.Create(
-            tableName,
-            schema,
-            c => PrimaryKeyMock.Create( pkColumnNames.Select( n => c.Get( n ).Asc() ).ToArray() ),
-            columns );
-
-        return table;
+        var builder = CreateTableBuilder<int>( schemaName, tableName, columnNames, pkColumnNames );
+        var db = MySqlDatabaseMock.Create( builder.Database );
+        return db.Schemas.Get( schemaName ).Objects.GetTable( tableName );
     }
 
     [Pure]
-    private static ISqlViewBuilder CreateViewBuilder(string schemaName, string viewName, SqlQueryExpressionNode? source = null)
+    private static MySqlViewBuilder CreateViewBuilder(string schemaName, string viewName, SqlQueryExpressionNode? source = null)
     {
-        var schema = SchemaMock.CreateBuilder( schemaName );
-        var view = ViewMock.CreateBuilder( viewName, schema, source ?? SqlNode.RawQuery( "SELECT * FROM foo" ) );
+        var db = MySqlDatabaseBuilderMock.Create();
+        var schema = db.Schemas.GetOrCreate( schemaName );
+        var view = schema.Objects.CreateView( viewName, source ?? SqlNode.RawQuery( "SELECT * FROM foo" ) );
         return view;
     }
 
     [Pure]
-    private static ISqlView CreateView(string schemaName, string viewName, SqlQueryExpressionNode? source = null)
+    private static MySqlView CreateView(string schemaName, string viewName, SqlQueryExpressionNode? source = null)
     {
-        var schema = SchemaMock.Create( schemaName );
-        var view = ViewMock.Create( viewName, schema, source ?? SqlNode.RawQuery( "SELECT * FROM foo" ) );
-        return view;
+        var builder = CreateViewBuilder( schemaName, viewName, source );
+        var db = MySqlDatabaseMock.Create( builder.Database );
+        return db.Schemas.Get( schemaName ).Objects.GetView( viewName );
     }
 
     private sealed class FunctionMock : SqlFunctionExpressionNode

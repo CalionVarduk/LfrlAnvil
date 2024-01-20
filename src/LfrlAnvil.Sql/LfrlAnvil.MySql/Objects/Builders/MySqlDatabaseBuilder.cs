@@ -19,20 +19,20 @@ public sealed class MySqlDatabaseBuilder : ISqlDatabaseBuilder
 {
     private readonly UlongSequenceGenerator _idGenerator;
 
-    internal MySqlDatabaseBuilder(string serverVersion)
+    internal MySqlDatabaseBuilder(string serverVersion, string commonSchemaName)
     {
         ServerVersion = serverVersion;
+        CommonSchemaName = commonSchemaName;
         _idGenerator = new UlongSequenceGenerator();
         DataTypes = new MySqlDataTypeProvider();
         TypeDefinitions = new MySqlColumnTypeDefinitionProvider( DataTypes );
-        NodeInterpreters = new MySqlNodeInterpreterFactory( TypeDefinitions );
+        NodeInterpreters = new MySqlNodeInterpreterFactory( TypeDefinitions, CommonSchemaName );
         QueryReaders = new MySqlQueryReaderFactory( TypeDefinitions );
         ParameterBinders = new MySqlParameterBinderFactory( TypeDefinitions );
-        Schemas = new MySqlSchemaBuilderCollection( this );
+        Schemas = new MySqlSchemaBuilderCollection( this, CommonSchemaName );
         ChangeTracker = new MySqlDatabaseChangeTracker( this );
         ObjectPool = new MemorySequencePool<MySqlObjectBuilder>( minSegmentLength: 32 );
         ConnectionChanges = SqlDatabaseConnectionChangeCallbacks.Create();
-        ChangeTracker.SchemaCreated( Schemas.Default.Name ); // TODO: if not exists? also, not sure if this will be respected here
     }
 
     public MySqlDataTypeProvider DataTypes { get; }
@@ -42,6 +42,7 @@ public sealed class MySqlDatabaseBuilder : ISqlDatabaseBuilder
     public MySqlParameterBinderFactory ParameterBinders { get; }
     public MySqlSchemaBuilderCollection Schemas { get; }
     public string ServerVersion { get; }
+    public string CommonSchemaName { get; }
     public SqlDialect Dialect => MySqlDialect.Instance;
     public SqlDatabaseCreateMode Mode => ChangeTracker.Mode;
     public bool IsAttached => ChangeTracker.IsAttached;

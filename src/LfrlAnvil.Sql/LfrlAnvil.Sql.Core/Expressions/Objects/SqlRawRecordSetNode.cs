@@ -9,12 +9,20 @@ public class SqlRawRecordSetNode : SqlRecordSetNode
     private readonly SqlRecordSetInfo _info;
 
     protected internal SqlRawRecordSetNode(string name, string? alias, bool isOptional)
+        : this( SqlRecordSetInfo.Create( name ), alias, isOptional, isInfoRaw: true ) { }
+
+    protected internal SqlRawRecordSetNode(SqlRecordSetInfo info, string? alias, bool isOptional)
+        : this( info, alias, isOptional, isInfoRaw: false ) { }
+
+    private SqlRawRecordSetNode(SqlRecordSetInfo info, string? alias, bool isOptional, bool isInfoRaw)
         : base( SqlNodeType.RawRecordSet, alias, isOptional )
     {
-        _info = SqlRecordSetInfo.Create( name );
+        _info = info;
+        IsInfoRaw = isInfoRaw;
     }
 
     public sealed override SqlRecordSetInfo Info => _info;
+    public bool IsInfoRaw { get; }
     public new SqlRawDataFieldNode this[string fieldName] => GetField( fieldName );
 
     [Pure]
@@ -26,13 +34,13 @@ public class SqlRawRecordSetNode : SqlRecordSetNode
     [Pure]
     public override SqlRawRecordSetNode As(string alias)
     {
-        return new SqlRawRecordSetNode( Info.Name.Object, alias, IsOptional );
+        return new SqlRawRecordSetNode( Info, alias, IsOptional, IsInfoRaw );
     }
 
     [Pure]
     public override SqlRawRecordSetNode AsSelf()
     {
-        return new SqlRawRecordSetNode( Info.Name.Object, alias: null, IsOptional );
+        return new SqlRawRecordSetNode( Info, alias: null, IsOptional, IsInfoRaw );
     }
 
     [Pure]
@@ -51,7 +59,7 @@ public class SqlRawRecordSetNode : SqlRecordSetNode
     public override SqlRawRecordSetNode MarkAsOptional(bool optional = true)
     {
         return IsOptional != optional
-            ? new SqlRawRecordSetNode( Info.Name.Object, alias: Alias, isOptional: optional )
+            ? new SqlRawRecordSetNode( Info, alias: Alias, isOptional: optional, IsInfoRaw )
             : this;
     }
 }

@@ -274,9 +274,7 @@ internal sealed class MySqlDatabaseChangeTracker
             return;
 
         var interpreter = _database.NodeInterpreters.Create( GetNodeInterpreterContext() );
-        var batch = SqlNode.Batch( new MySqlCreateSchemaNode( name, ifNotExists: true ) );
-        interpreter.VisitStatementBatch( batch );
-
+        MySqlHelpers.AppendCreateSchemaStatement( interpreter, name );
         _pendingStatements.Add( SqlDatabaseBuilderStatement.Create( interpreter.Context ) );
         interpreter.Context.Sql.Clear();
     }
@@ -290,9 +288,27 @@ internal sealed class MySqlDatabaseChangeTracker
             return;
 
         var interpreter = _database.NodeInterpreters.Create( GetNodeInterpreterContext() );
-        var batch = SqlNode.Batch( new MySqlDropSchemaNode( name ) );
-        interpreter.VisitStatementBatch( batch );
+        MySqlHelpers.AppendDropSchemaStatement( interpreter, name );
+        _pendingStatements.Add( SqlDatabaseBuilderStatement.Create( interpreter.Context ) );
+        interpreter.Context.Sql.Clear();
+    }
 
+    internal void CreateGuidFunction()
+    {
+        Assume.IsEmpty( _ongoingPropertyChanges );
+        Assume.Equals( IsPreparingStatements, true );
+        var interpreter = _database.NodeInterpreters.Create( GetNodeInterpreterContext() );
+        MySqlHelpers.AppendCreateGuidFunctionStatement( interpreter, _database.CommonSchemaName );
+        _pendingStatements.Add( SqlDatabaseBuilderStatement.Create( interpreter.Context ) );
+        interpreter.Context.Sql.Clear();
+    }
+
+    internal void CreateDropIndexIfExistsProcedure()
+    {
+        Assume.IsEmpty( _ongoingPropertyChanges );
+        Assume.Equals( IsPreparingStatements, true );
+        var interpreter = _database.NodeInterpreters.Create( GetNodeInterpreterContext() );
+        MySqlHelpers.AppendDropIndexIfExistsProcedureStatement( interpreter, _database.CommonSchemaName );
         _pendingStatements.Add( SqlDatabaseBuilderStatement.Create( interpreter.Context ) );
         interpreter.Context.Sql.Clear();
     }
