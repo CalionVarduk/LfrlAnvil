@@ -3,10 +3,10 @@ using LfrlAnvil.MySql.Objects.Builders;
 
 namespace LfrlAnvil.MySql.Objects;
 
-public sealed class MySqlPrimaryKey : MySqlObject, ISqlPrimaryKey
+public sealed class MySqlPrimaryKey : MySqlConstraint, ISqlPrimaryKey
 {
     internal MySqlPrimaryKey(MySqlIndex index, MySqlPrimaryKeyBuilder builder)
-        : base( builder )
+        : base( index.Table, builder )
     {
         Index = index;
         FullName = builder.FullName;

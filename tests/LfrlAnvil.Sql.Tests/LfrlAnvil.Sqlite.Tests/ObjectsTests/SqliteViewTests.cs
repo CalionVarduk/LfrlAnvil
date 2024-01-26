@@ -22,12 +22,12 @@ public class SqliteViewTests : TestsBase
                 .Select( s => new[] { s.From["a"].AsSelf(), s.From["b"].As( "x" ), s.From["c"].AsSelf() } ) );
 
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
-        var schema = db.Schemas.Get( "foo" );
+        var schema = db.Schemas.GetSchema( "foo" );
 
         ISqlView sut = schema.Objects.GetView( "V" );
-        var a = sut.DataFields.Get( "a" );
-        var x = sut.DataFields.Get( "x" );
-        var c = sut.DataFields.Get( "c" );
+        var a = sut.DataFields.GetField( "a" );
+        var x = sut.DataFields.GetField( "x" );
+        var c = sut.DataFields.GetField( "c" );
 
         using ( new AssertionScope() )
         {
@@ -70,7 +70,7 @@ public class SqliteViewTests : TestsBase
     }
 
     [Fact]
-    public void DataFields_Get_ShouldReturnCorrectField()
+    public void DataFields_GetField_ShouldReturnCorrectField()
     {
         var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Default;
         schemaBuilder.Objects.CreateView(
@@ -80,13 +80,13 @@ public class SqliteViewTests : TestsBase
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
         ISqlViewDataFieldCollection sut = db.Schemas.Default.Objects.GetView( "V" ).DataFields;
 
-        var result = sut.Get( "F2" );
+        var result = sut.GetField( "F2" );
 
         result.Should().BeSameAs( sut.First( f => f.Name == "F2" ) );
     }
 
     [Fact]
-    public void DataFields_Get_ShouldThrowKeyNotFoundException_WhenFieldDoesNotExist()
+    public void DataFields_GetField_ShouldThrowKeyNotFoundException_WhenFieldDoesNotExist()
     {
         var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Default;
         schemaBuilder.Objects.CreateView(
@@ -96,13 +96,13 @@ public class SqliteViewTests : TestsBase
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
         ISqlViewDataFieldCollection sut = db.Schemas.Default.Objects.GetView( "V" ).DataFields;
 
-        var action = Lambda.Of( () => sut.Get( "F2" ) );
+        var action = Lambda.Of( () => sut.GetField( "F2" ) );
 
         action.Should().ThrowExactly<KeyNotFoundException>();
     }
 
     [Fact]
-    public void DataFields_TryGet_ShouldReturnCorrectField()
+    public void DataFields_TryGetField_ShouldReturnCorrectField()
     {
         var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Default;
         schemaBuilder.Objects.CreateView(
@@ -112,17 +112,13 @@ public class SqliteViewTests : TestsBase
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
         ISqlViewDataFieldCollection sut = db.Schemas.Default.Objects.GetView( "V" ).DataFields;
 
-        var result = sut.TryGet( "F2", out var outResult );
+        var result = sut.TryGetField( "F2" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().BeSameAs( sut.First( f => f.Name == "F2" ) );
-        }
+        result.Should().BeSameAs( sut.First( f => f.Name == "F2" ) );
     }
 
     [Fact]
-    public void DataFields_TryGet_ShouldReturnFalse_WhenFieldDoesNotExist()
+    public void DataFields_TryGetField_ShouldReturnNull_WhenFieldDoesNotExist()
     {
         var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Default;
         schemaBuilder.Objects.CreateView(
@@ -132,12 +128,8 @@ public class SqliteViewTests : TestsBase
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
         ISqlViewDataFieldCollection sut = db.Schemas.Default.Objects.GetView( "V" ).DataFields;
 
-        var result = sut.TryGet( "F2", out var outResult );
+        var result = sut.TryGetField( "F2" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().BeNull();
-        }
+        result.Should().BeNull();
     }
 }

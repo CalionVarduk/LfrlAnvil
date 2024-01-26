@@ -260,7 +260,7 @@ internal sealed class MySqlDatabaseChangeTracker
             MySqlObjectChangeDescriptor.PrimaryKey,
             MySqlObjectStatus.Modified,
             oldValue,
-            table.PrimaryKey );
+            table.Constraints.TryGetPrimaryKey() );
 
         AddChange( table, change );
     }
@@ -424,20 +424,32 @@ internal sealed class MySqlDatabaseChangeTracker
 
             var createTable = currentTable.ToCreateNode( includeForeignKeys: false );
             _ongoingStatements.Add( createTable );
-            foreach ( var ix in currentTable.Indexes )
+
+            List<MySqlForeignKeyBuilder>? foreignKeys = null;
+            foreach ( var constraint in currentTable.Constraints )
             {
+                if ( constraint.Type == SqlObjectType.ForeignKey )
+                {
+                    foreignKeys ??= new List<MySqlForeignKeyBuilder>();
+                    foreignKeys.Add( ReinterpretCast.To<MySqlForeignKeyBuilder>( constraint ) );
+                    continue;
+                }
+
+                if ( constraint.Type != SqlObjectType.Index )
+                    continue;
+
+                var ix = ReinterpretCast.To<MySqlIndexBuilder>( constraint );
                 if ( ix.PrimaryKey is null )
                     _ongoingStatements.Add( ix.ToCreateNode() );
             }
 
-            if ( currentTable.ForeignKeys.Count > 0 )
+            if ( foreignKeys is not null )
             {
-                var i = 0;
-                var foreignKeys = new SqlForeignKeyDefinitionNode[currentTable.ForeignKeys.Count];
-                foreach ( var foreignKey in currentTable.ForeignKeys )
-                    foreignKeys[i++] = foreignKey.ToDefinitionNode( createTable.RecordSet, useFullName: false );
+                var foreignKeyDefinitions = new SqlForeignKeyDefinitionNode[foreignKeys.Count];
+                for ( var i = 0; i < foreignKeyDefinitions.Length; ++i )
+                    foreignKeyDefinitions[i] = foreignKeys[i].ToDefinitionNode( createTable.RecordSet, useFullName: false );
 
-                _ongoingStatements.Add( MySqlAlterTableNode.CreateAddForeignKeys( currentTable.Info, foreignKeys ) );
+                _ongoingStatements.Add( MySqlAlterTableNode.CreateAddForeignKeys( currentTable.Info, foreignKeyDefinitions ) );
             }
         }
         else
@@ -508,7 +520,7 @@ internal sealed class MySqlDatabaseChangeTracker
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static void ValidateTable(MySqlTableBuilder table)
     {
-        if ( table.PrimaryKey is null )
+        if ( table.Constraints.TryGetPrimaryKey() is null )
             ExceptionThrower.Throw( new MySqlObjectBuilderException( ExceptionResources.PrimaryKeyIsMissing( table ) ) );
     }
 
@@ -555,7 +567,7 @@ internal sealed class MySqlDatabaseChangeTracker
                     renamedIndexes: buffer.RenamedIndexes.ToArray(),
                     changedColumns: changedColumns,
                     newColumns: buffer.CreatedColumns.Values.ToDefinitionRange(),
-                    newPrimaryKey: hasPrimaryKeyChanged ? table.PrimaryKey?.ToDefinitionNode( table.RecordSet ) : null,
+                    newPrimaryKey: hasPrimaryKeyChanged ? table.Constraints.TryGetPrimaryKey()?.ToDefinitionNode( table.RecordSet ) : null,
                     newForeignKeys: Array.Empty<SqlForeignKeyDefinitionNode>(),
                     newChecks: buffer.CreatedChecks.Values.ToDefinitionRange() ) );
         }

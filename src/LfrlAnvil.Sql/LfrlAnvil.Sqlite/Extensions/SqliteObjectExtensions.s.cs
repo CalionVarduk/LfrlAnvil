@@ -1,37 +1,15 @@
 ﻿using System;
-using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Objects;
-using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.Sqlite.Objects;
 using LfrlAnvil.Sqlite.Objects.Builders;
 
 namespace LfrlAnvil.Sqlite.Extensions;
 
 public static class SqliteObjectExtensions
 {
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqliteIndexBuilder Get(this SqliteIndexBuilderCollection indexes, params ISqlIndexColumnBuilder[] columns)
-    {
-        return indexes.Get( columns );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqliteIndexBuilder Create(this SqliteIndexBuilderCollection indexes, params ISqlIndexColumnBuilder[] columns)
-    {
-        return indexes.Create( columns );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqliteIndexBuilder GetOrCreate(this SqliteIndexBuilderCollection indexes, params ISqlIndexColumnBuilder[] columns)
-    {
-        return indexes.GetOrCreate( columns );
-    }
-
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqliteIndexBuilder SetFilter(this SqliteIndexBuilder index, Func<SqlTableBuilderNode, SqlConditionNode?> filter)
     {
@@ -39,9 +17,56 @@ public static class SqliteObjectExtensions
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlitePrimaryKeyBuilder SetPrimaryKey(this SqliteTableBuilder table, params ISqlIndexColumnBuilder[] columns)
+    public static SqlitePrimaryKeyBuilder SetPrimaryKey(
+        this SqliteConstraintBuilderCollection constraints,
+        params SqliteIndexColumnBuilder[] columns)
     {
-        return table.SetPrimaryKey( columns );
+        var index = constraints.CreateUniqueIndex( columns );
+        return constraints.SetPrimaryKey( index );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlitePrimaryKeyBuilder SetPrimaryKey(
+        this SqliteConstraintBuilderCollection constraints,
+        string name,
+        params SqliteIndexColumnBuilder[] columns)
+    {
+        var index = constraints.CreateUniqueIndex( columns );
+        return constraints.SetPrimaryKey( name, index );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqliteIndexBuilder CreateIndex(
+        this SqliteConstraintBuilderCollection constraints,
+        params SqliteIndexColumnBuilder[] columns)
+    {
+        return constraints.CreateIndex( columns );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqliteIndexBuilder CreateIndex(
+        this SqliteConstraintBuilderCollection constraints,
+        string name,
+        params SqliteIndexColumnBuilder[] columns)
+    {
+        return constraints.CreateIndex( name, columns );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqliteIndexBuilder CreateUniqueIndex(
+        this SqliteConstraintBuilderCollection constraints,
+        params SqliteIndexColumnBuilder[] columns)
+    {
+        return constraints.CreateIndex( columns, isUnique: true );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqliteIndexBuilder CreateUniqueIndex(
+        this SqliteConstraintBuilderCollection constraints,
+        string name,
+        params SqliteIndexColumnBuilder[] columns)
+    {
+        return constraints.CreateIndex( name, columns, isUnique: true );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -74,13 +99,6 @@ public static class SqliteObjectExtensions
         where T : struct
     {
         return column.SetDefaultValue( SqlNode.Literal( value ) );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqliteIndex Get(this SqliteIndexCollection indexes, params ISqlIndexColumn[] columns)
-    {
-        return indexes.Get( columns );
     }
 
     public static ISqlDatabaseBuilder ForSqlite(this ISqlDatabaseBuilder builder, Action<SqliteDatabaseBuilder> action)

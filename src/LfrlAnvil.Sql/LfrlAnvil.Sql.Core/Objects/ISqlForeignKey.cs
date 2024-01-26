@@ -1,6 +1,6 @@
 ﻿namespace LfrlAnvil.Sql.Objects;
 
-public interface ISqlForeignKey : ISqlObject
+public interface ISqlForeignKey : ISqlConstraint
 {
     ISqlIndex ReferencedIndex { get; }
     ISqlIndex OriginIndex { get; }

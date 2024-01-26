@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -37,14 +36,15 @@ public sealed class MySqlObjectBuilderCollection : ISqlObjectBuilderCollection
     }
 
     [Pure]
-    public MySqlObjectBuilder Get(string name)
+    public MySqlObjectBuilder GetObject(string name)
     {
         return _map[name];
     }
 
-    public bool TryGet(string name, [MaybeNullWhen( false )] out MySqlObjectBuilder result)
+    [Pure]
+    public MySqlObjectBuilder? TryGetObject(string name)
     {
-        return _map.TryGetValue( name, out result );
+        return _map.GetValueOrDefault( name );
     }
 
     [Pure]
@@ -53,9 +53,10 @@ public sealed class MySqlObjectBuilderCollection : ISqlObjectBuilderCollection
         return GetTypedObject<MySqlTableBuilder>( name, SqlObjectType.Table );
     }
 
-    public bool TryGetTable(string name, [MaybeNullWhen( false )] out MySqlTableBuilder result)
+    [Pure]
+    public MySqlTableBuilder? TryGetTable(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.Table, out result );
+        return TryGetTypedObject<MySqlTableBuilder>( name, SqlObjectType.Table );
     }
 
     [Pure]
@@ -64,9 +65,10 @@ public sealed class MySqlObjectBuilderCollection : ISqlObjectBuilderCollection
         return GetTypedObject<MySqlIndexBuilder>( name, SqlObjectType.Index );
     }
 
-    public bool TryGetIndex(string name, [MaybeNullWhen( false )] out MySqlIndexBuilder result)
+    [Pure]
+    public MySqlIndexBuilder? TryGetIndex(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.Index, out result );
+        return TryGetTypedObject<MySqlIndexBuilder>( name, SqlObjectType.Index );
     }
 
     [Pure]
@@ -75,9 +77,10 @@ public sealed class MySqlObjectBuilderCollection : ISqlObjectBuilderCollection
         return GetTypedObject<MySqlPrimaryKeyBuilder>( name, SqlObjectType.PrimaryKey );
     }
 
-    public bool TryGetPrimaryKey(string name, [MaybeNullWhen( false )] out MySqlPrimaryKeyBuilder result)
+    [Pure]
+    public MySqlPrimaryKeyBuilder? TryGetPrimaryKey(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.PrimaryKey, out result );
+        return TryGetTypedObject<MySqlPrimaryKeyBuilder>( name, SqlObjectType.PrimaryKey );
     }
 
     [Pure]
@@ -86,9 +89,10 @@ public sealed class MySqlObjectBuilderCollection : ISqlObjectBuilderCollection
         return GetTypedObject<MySqlForeignKeyBuilder>( name, SqlObjectType.ForeignKey );
     }
 
-    public bool TryGetForeignKey(string name, [MaybeNullWhen( false )] out MySqlForeignKeyBuilder result)
+    [Pure]
+    public MySqlForeignKeyBuilder? TryGetForeignKey(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.ForeignKey, out result );
+        return TryGetTypedObject<MySqlForeignKeyBuilder>( name, SqlObjectType.ForeignKey );
     }
 
     [Pure]
@@ -97,9 +101,10 @@ public sealed class MySqlObjectBuilderCollection : ISqlObjectBuilderCollection
         return GetTypedObject<MySqlCheckBuilder>( name, SqlObjectType.Check );
     }
 
-    public bool TryGetCheck(string name, [MaybeNullWhen( false )] out MySqlCheckBuilder result)
+    [Pure]
+    public MySqlCheckBuilder? TryGetCheck(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.Check, out result );
+        return TryGetTypedObject<MySqlCheckBuilder>( name, SqlObjectType.Check );
     }
 
     [Pure]
@@ -108,9 +113,10 @@ public sealed class MySqlObjectBuilderCollection : ISqlObjectBuilderCollection
         return GetTypedObject<MySqlViewBuilder>( name, SqlObjectType.View );
     }
 
-    public bool TryGetView(string name, [MaybeNullWhen( false )] out MySqlViewBuilder result)
+    [Pure]
+    public MySqlViewBuilder? TryGetView(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.View, out result );
+        return TryGetTypedObject<MySqlViewBuilder>( name, SqlObjectType.View );
     }
 
     public MySqlTableBuilder CreateTable(string name)
@@ -208,78 +214,83 @@ public sealed class MySqlObjectBuilderCollection : ISqlObjectBuilderCollection
         }
     }
 
-    internal void ChangeName(MySqlObjectBuilder obj, string name)
+    internal void ChangeName(MySqlTableBuilder table, string name)
     {
-        ref var objRef = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, name, out var exists )!;
-        if ( exists )
-            throw new MySqlObjectBuilderException( ExceptionResources.NameIsAlreadyTaken( objRef, name ) );
-
-        objRef = obj;
-        _map.Remove( obj.Name );
+        ChangeNameCore( table, name );
     }
 
-    internal MySqlIndexBuilder CreateIndex(MySqlTableBuilder table, MySqlIndexColumnBuilder[] columns, bool isUnique)
+    internal void ChangeName(MySqlViewBuilder view, string name)
     {
-        var name = MySqlHelpers.GetDefaultIndexName( table, columns, isUnique );
+        ChangeNameCore( view, name );
+    }
+
+    internal void ChangeName(MySqlConstraintBuilder constraint, string name)
+    {
+        ChangeNameCore( constraint, name );
+        constraint.Table.Constraints.ChangeName( constraint, name );
+    }
+
+    internal MySqlIndexBuilder CreateIndex(
+        MySqlTableBuilder table,
+        string name,
+        ReadOnlyMemory<ISqlIndexColumnBuilder> columns,
+        bool isUnique)
+    {
+        MySqlHelpers.AssertName( name );
+        var indexColumns = MySqlHelpers.CreateIndexColumns( table, columns );
+
         ref var obj = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, name, out var exists )!;
         if ( exists )
             throw new MySqlObjectBuilderException( ExceptionResources.NameIsAlreadyTaken( obj, name ) );
 
-        var result = new MySqlIndexBuilder( table, columns, name, isUnique );
+        var result = new MySqlIndexBuilder( table, indexColumns, name, isUnique );
         obj = result;
         Schema.Database.ChangeTracker.ObjectCreated( table, result );
         return result;
     }
 
-    internal MySqlPrimaryKeyBuilder CreatePrimaryKey(MySqlTableBuilder table, MySqlIndexColumnBuilder[] columns)
+    internal MySqlPrimaryKeyBuilder CreatePrimaryKey(
+        MySqlTableBuilder table,
+        string name,
+        MySqlIndexBuilder index,
+        MySqlPrimaryKeyBuilder? oldPrimaryKey)
     {
-        var name = MySqlHelpers.GetDefaultPrimaryKeyName( table );
-        if ( _map.TryGetValue( name, out var obj ) )
+        MySqlHelpers.AssertName( name );
+        MySqlHelpers.AssertPrimaryKey( table, index );
+
+        if ( _map.TryGetValue( name, out var obj ) && ! CanReplaceWithPrimaryKey( obj, oldPrimaryKey ) )
             throw new MySqlObjectBuilderException( ExceptionResources.NameIsAlreadyTaken( obj, name ) );
 
-        var index = table.Indexes.GetOrCreateForPrimaryKey( columns );
+        oldPrimaryKey?.Remove();
+
         var primaryKey = new MySqlPrimaryKeyBuilder( index, name );
-        _map.Add( name, primaryKey );
+        _map[name] = primaryKey;
         Schema.Database.ChangeTracker.ObjectCreated( table, primaryKey );
-        index.AssignPrimaryKey( primaryKey );
-        return primaryKey;
-    }
-
-    internal MySqlPrimaryKeyBuilder ReplacePrimaryKey(
-        MySqlTableBuilder table,
-        MySqlIndexColumnBuilder[] columns,
-        MySqlPrimaryKeyBuilder oldKey)
-    {
-        oldKey.Remove();
-        var index = table.Indexes.GetOrCreateForPrimaryKey( columns );
-
-        var primaryKey = new MySqlPrimaryKeyBuilder( index, oldKey.Name );
-        _map[primaryKey.Name] = primaryKey;
         index.AssignPrimaryKey( primaryKey );
         return primaryKey;
     }
 
     internal MySqlForeignKeyBuilder CreateForeignKey(
         MySqlTableBuilder table,
+        string name,
         MySqlIndexBuilder originIndex,
         MySqlIndexBuilder referencedIndex)
     {
+        MySqlHelpers.AssertName( name );
         MySqlHelpers.AssertForeignKey( table, originIndex, referencedIndex );
 
-        var name = MySqlHelpers.GetDefaultForeignKeyName( originIndex, referencedIndex );
         ref var obj = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, name, out var exists )!;
         if ( exists )
             throw new MySqlObjectBuilderException( ExceptionResources.NameIsAlreadyTaken( obj, name ) );
 
         var result = new MySqlForeignKeyBuilder( originIndex, referencedIndex, name );
-        Schema.Database.ChangeTracker.ObjectCreated( originIndex.Table, result );
         obj = result;
+        Schema.Database.ChangeTracker.ObjectCreated( originIndex.Table, result );
         return result;
     }
 
     internal MySqlCheckBuilder CreateCheck(MySqlTableBuilder table, string name, SqlConditionNode condition)
     {
-        Schema.EnsureNotRemoved();
         MySqlHelpers.AssertName( name );
         var visitor = MySqlCheckBuilder.AssertConditionNode( table, condition );
 
@@ -288,8 +299,8 @@ public sealed class MySqlObjectBuilderCollection : ISqlObjectBuilderCollection
             throw new MySqlObjectBuilderException( ExceptionResources.NameIsAlreadyTaken( obj, name ) );
 
         var result = new MySqlCheckBuilder( name, condition, visitor );
-        Schema.Database.ChangeTracker.ObjectCreated( table, result );
         obj = result;
+        Schema.Database.ChangeTracker.ObjectCreated( table, result );
         return result;
     }
 
@@ -309,6 +320,30 @@ public sealed class MySqlObjectBuilderCollection : ISqlObjectBuilderCollection
     }
 
     [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static bool CanReplaceWithPrimaryKey(MySqlObjectBuilder obj, MySqlPrimaryKeyBuilder? oldPrimaryKey)
+    {
+        if ( oldPrimaryKey is null )
+            return false;
+
+        if ( ReferenceEquals( obj, oldPrimaryKey ) )
+            return true;
+
+        return obj.Type == SqlObjectType.Index &&
+            ReferenceEquals( ReinterpretCast.To<MySqlIndexBuilder>( obj ).PrimaryKey, oldPrimaryKey );
+    }
+
+    private void ChangeNameCore(MySqlObjectBuilder obj, string name)
+    {
+        ref var objRef = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, name, out var exists )!;
+        if ( exists )
+            throw new MySqlObjectBuilderException( ExceptionResources.NameIsAlreadyTaken( objRef, name ) );
+
+        objRef = obj;
+        _map.Remove( obj.Name );
+    }
+
+    [Pure]
     private MySqlTableBuilder CreateNewTable(string name)
     {
         var result = new MySqlTableBuilder( Schema, name );
@@ -318,44 +353,31 @@ public sealed class MySqlObjectBuilderCollection : ISqlObjectBuilderCollection
 
     [Pure]
     private T GetTypedObject<T>(string name, SqlObjectType type)
-        where T : class, ISqlObjectBuilder
+        where T : MySqlObjectBuilder
     {
         var obj = _map[name];
-        if ( obj.Type != type )
-            throw new SqlObjectCastException( MySqlDialect.Instance, typeof( T ), obj.GetType() );
-
-        return ReinterpretCast.To<T>( obj );
-    }
-
-    private bool TryGetTypedObject<T>(string name, SqlObjectType type, [MaybeNullWhen( false )] out T result)
-        where T : class, ISqlObjectBuilder
-    {
-        if ( _map.TryGetValue( name, out var obj ) && obj.Type == type )
-        {
-            result = ReinterpretCast.To<T>( obj );
-            return true;
-        }
-
-        result = null;
-        return false;
+        return obj.Type == type
+            ? ReinterpretCast.To<T>( obj )
+            : throw new SqlObjectCastException( MySqlDialect.Instance, typeof( T ), obj.GetType() );
     }
 
     [Pure]
-    ISqlObjectBuilder ISqlObjectBuilderCollection.Get(string name)
+    private T? TryGetTypedObject<T>(string name, SqlObjectType type)
+        where T : MySqlObjectBuilder
     {
-        return Get( name );
+        return _map.TryGetValue( name, out var obj ) && obj.Type == type ? ReinterpretCast.To<T>( obj ) : null;
     }
 
-    bool ISqlObjectBuilderCollection.TryGet(string name, [MaybeNullWhen( false )] out ISqlObjectBuilder result)
+    [Pure]
+    ISqlObjectBuilder ISqlObjectBuilderCollection.GetObject(string name)
     {
-        if ( TryGet( name, out var obj ) )
-        {
-            result = obj;
-            return true;
-        }
+        return GetObject( name );
+    }
 
-        result = null;
-        return false;
+    [Pure]
+    ISqlObjectBuilder? ISqlObjectBuilderCollection.TryGetObject(string name)
+    {
+        return TryGetObject( name );
     }
 
     [Pure]
@@ -364,9 +386,10 @@ public sealed class MySqlObjectBuilderCollection : ISqlObjectBuilderCollection
         return GetTable( name );
     }
 
-    bool ISqlObjectBuilderCollection.TryGetTable(string name, [MaybeNullWhen( false )] out ISqlTableBuilder result)
+    [Pure]
+    ISqlTableBuilder? ISqlObjectBuilderCollection.TryGetTable(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.Table, out result );
+        return TryGetTable( name );
     }
 
     [Pure]
@@ -375,9 +398,10 @@ public sealed class MySqlObjectBuilderCollection : ISqlObjectBuilderCollection
         return GetIndex( name );
     }
 
-    bool ISqlObjectBuilderCollection.TryGetIndex(string name, [MaybeNullWhen( false )] out ISqlIndexBuilder result)
+    [Pure]
+    ISqlIndexBuilder? ISqlObjectBuilderCollection.TryGetIndex(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.Index, out result );
+        return TryGetIndex( name );
     }
 
     [Pure]
@@ -386,9 +410,10 @@ public sealed class MySqlObjectBuilderCollection : ISqlObjectBuilderCollection
         return GetPrimaryKey( name );
     }
 
-    bool ISqlObjectBuilderCollection.TryGetPrimaryKey(string name, [MaybeNullWhen( false )] out ISqlPrimaryKeyBuilder result)
+    [Pure]
+    ISqlPrimaryKeyBuilder? ISqlObjectBuilderCollection.TryGetPrimaryKey(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.PrimaryKey, out result );
+        return TryGetPrimaryKey( name );
     }
 
     [Pure]
@@ -397,9 +422,10 @@ public sealed class MySqlObjectBuilderCollection : ISqlObjectBuilderCollection
         return GetForeignKey( name );
     }
 
-    bool ISqlObjectBuilderCollection.TryGetForeignKey(string name, [MaybeNullWhen( false )] out ISqlForeignKeyBuilder result)
+    [Pure]
+    ISqlForeignKeyBuilder? ISqlObjectBuilderCollection.TryGetForeignKey(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.ForeignKey, out result );
+        return TryGetForeignKey( name );
     }
 
     [Pure]
@@ -408,9 +434,10 @@ public sealed class MySqlObjectBuilderCollection : ISqlObjectBuilderCollection
         return GetCheck( name );
     }
 
-    bool ISqlObjectBuilderCollection.TryGetCheck(string name, [MaybeNullWhen( false )] out ISqlCheckBuilder result)
+    [Pure]
+    ISqlCheckBuilder? ISqlObjectBuilderCollection.TryGetCheck(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.Check, out result );
+        return TryGetCheck( name );
     }
 
     [Pure]
@@ -419,9 +446,10 @@ public sealed class MySqlObjectBuilderCollection : ISqlObjectBuilderCollection
         return GetView( name );
     }
 
-    bool ISqlObjectBuilderCollection.TryGetView(string name, [MaybeNullWhen( false )] out ISqlViewBuilder result)
+    [Pure]
+    ISqlViewBuilder? ISqlObjectBuilderCollection.TryGetView(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.View, out result );
+        return TryGetView( name );
     }
 
     ISqlTableBuilder ISqlObjectBuilderCollection.CreateTable(string name)

@@ -94,7 +94,8 @@ public sealed class MySqlViewBuilder : MySqlObjectBuilder, ISqlViewBuilder
             return;
 
         MySqlHelpers.AssertName( name );
-        if ( Schema.Objects.TryGet( name, out var obj ) )
+        var obj = Schema.Objects.TryGetObject( name );
+        if ( obj is not null )
             throw new MySqlObjectBuilderException( ExceptionResources.NameIsAlreadyTaken( obj, name ) );
 
         using var buffer = RemoveReferencingViewsIntoBuffer( Database, _referencingViews );

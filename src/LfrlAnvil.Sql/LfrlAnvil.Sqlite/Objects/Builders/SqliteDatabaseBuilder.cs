@@ -20,7 +20,7 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
 {
     private readonly UlongSequenceGenerator _idGenerator;
 
-    internal SqliteDatabaseBuilder(string serverVersion)
+    internal SqliteDatabaseBuilder(string serverVersion, string defaultSchemaName)
     {
         ServerVersion = serverVersion;
         _idGenerator = new UlongSequenceGenerator();
@@ -29,7 +29,7 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
         NodeInterpreters = new SqliteNodeInterpreterFactory( TypeDefinitions );
         QueryReaders = new SqliteQueryReaderFactory( TypeDefinitions );
         ParameterBinders = new SqliteParameterBinderFactory( TypeDefinitions );
-        Schemas = new SqliteSchemaBuilderCollection( this );
+        Schemas = new SqliteSchemaBuilderCollection( this, defaultSchemaName );
         ChangeTracker = new SqliteDatabaseChangeTracker( this );
         ObjectPool = new MemorySequencePool<SqliteObjectBuilder>( minSegmentLength: 32 );
         ConnectionChanges = SqlDatabaseConnectionChangeCallbacks.Create();

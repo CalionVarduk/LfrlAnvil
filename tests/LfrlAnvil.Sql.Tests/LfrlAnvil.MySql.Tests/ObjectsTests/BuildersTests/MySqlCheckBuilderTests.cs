@@ -18,31 +18,31 @@ public class MySqlCheckBuilderTests : TestsBase
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C" );
-        var sut = table.Checks.Create( column.Node > SqlNode.Literal( 0 ) );
+        var sut = table.Constraints.CreateCheck( column.Node > SqlNode.Literal( 0 ) );
 
         var result = sut.ToString();
 
-        result.Should().Be( "[Check] foo.CHK_T_0" );
+        result.Should().MatchRegex( "\\[Check\\] foo.CHK_T_[0-9a-fA-F]{32}" );
     }
 
     [Fact]
-    public void Create_ShouldMarkTableForAlteration()
+    public void Creation_ShouldMarkTableForAlteration()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C" );
-        table.SetPrimaryKey( column.Asc() );
+        table.Constraints.SetPrimaryKey( column.Asc() );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
-        var sut = table.Checks.Create( column.Node > SqlNode.Literal( 0 ) );
+        var sut = table.Constraints.CreateCheck( column.Node > SqlNode.Literal( 0 ) );
         var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
-            table.Checks.Get( sut.Name ).Should().BeSameAs( sut );
-            sut.Name.Should().Be( "CHK_T_0" );
-            sut.FullName.Should().Be( "foo.CHK_T_0" );
+            table.Constraints.GetCheck( sut.Name ).Should().BeSameAs( sut );
+            sut.Name.Should().MatchRegex( "CHK_T_[0-9a-fA-F]{32}" );
+            sut.FullName.Should().Be( $"foo.{sut.Name}" );
             sut.ReferencedColumns.Should().BeSequentiallyEqualTo( column );
             column.ReferencingChecks.Should().BeSequentiallyEqualTo( sut );
 
@@ -51,20 +51,20 @@ public class MySqlCheckBuilderTests : TestsBase
                 .Sql.Should()
                 .SatisfySql(
                     @"ALTER TABLE `foo`.`T`
-                      ADD CONSTRAINT `CHK_T_0` CHECK (`C` > 0);" );
+                      ADD CONSTRAINT `CHK_T_{GUID}` CHECK (`C` > 0);" );
         }
     }
 
     [Fact]
-    public void Create_FollowedByRemove_ShouldDoNothing()
+    public void Creation_FollowedByRemoval_ShouldDoNothing()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
-        var sut = table.Checks.Create( table.RecordSet["C"] > SqlNode.Literal( 0 ) );
+        var sut = table.Constraints.CreateCheck( table.RecordSet["C"] > SqlNode.Literal( 0 ) );
         sut.Remove();
         var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
 
@@ -76,8 +76,8 @@ public class MySqlCheckBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
-        var sut = table.Checks.Create( table.RecordSet["C"] > SqlNode.Literal( 0 ) );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
+        var sut = table.Constraints.CreateCheck( table.RecordSet["C"] > SqlNode.Literal( 0 ) );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -96,8 +96,8 @@ public class MySqlCheckBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
-        var sut = table.Checks.Create( table.RecordSet["C"] > SqlNode.Literal( 0 ) );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
+        var sut = table.Constraints.CreateCheck( table.RecordSet["C"] > SqlNode.Literal( 0 ) );
         var oldName = sut.Name;
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -119,8 +119,8 @@ public class MySqlCheckBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
-        var sut = table.Checks.Create( table.RecordSet["C"] > SqlNode.Literal( 0 ) );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
+        var sut = table.Constraints.CreateCheck( table.RecordSet["C"] > SqlNode.Literal( 0 ) );
         var oldName = sut.Name;
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -133,15 +133,17 @@ public class MySqlCheckBuilderTests : TestsBase
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "bar" );
             sut.FullName.Should().Be( "foo.bar" );
-            table.Checks.Get( "bar" ).Should().BeSameAs( sut );
-            table.Checks.Contains( oldName ).Should().BeFalse();
+            table.Constraints.GetConstraint( "bar" ).Should().BeSameAs( sut );
+            table.Constraints.Contains( oldName ).Should().BeFalse();
+            schema.Objects.GetObject( "bar" ).Should().BeSameAs( sut );
+            schema.Objects.Contains( oldName ).Should().BeFalse();
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
                     @"ALTER TABLE `foo`.`T`
-                      DROP CHECK `CHK_T_0`,
+                      DROP CHECK `CHK_T_{GUID}`,
                       ADD CONSTRAINT `bar` CHECK (`C` > 0);" );
         }
     }
@@ -156,8 +158,8 @@ public class MySqlCheckBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
-        var sut = table.Checks.Create( table.RecordSet["C"] > SqlNode.Literal( 0 ) );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
+        var sut = table.Constraints.CreateCheck( table.RecordSet["C"] > SqlNode.Literal( 0 ) );
 
         var action = Lambda.Of( () => ((ISqlCheckBuilder)sut).SetName( name ) );
 
@@ -171,8 +173,8 @@ public class MySqlCheckBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
-        var sut = table.Checks.Create( table.RecordSet["C"] > SqlNode.Literal( 0 ) );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
+        var sut = table.Constraints.CreateCheck( table.RecordSet["C"] > SqlNode.Literal( 0 ) );
         sut.Remove();
 
         var action = Lambda.Of( () => ((ISqlCheckBuilder)sut).SetName( "bar" ) );
@@ -187,11 +189,11 @@ public class MySqlCheckBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
-        table.Checks.Create( table.RecordSet["C"] != null );
-        var sut = table.Checks.Create( table.RecordSet["C"] > SqlNode.Literal( 0 ) );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
+        var other = table.Constraints.CreateCheck( table.RecordSet["C"] != null );
+        var sut = table.Constraints.CreateCheck( table.RecordSet["C"] > SqlNode.Literal( 0 ) );
 
-        var action = Lambda.Of( () => ((ISqlCheckBuilder)sut).SetName( "CHK_T_0" ) );
+        var action = Lambda.Of( () => ((ISqlCheckBuilder)sut).SetName( other.Name ) );
 
         action.Should()
             .ThrowExactly<MySqlObjectBuilderException>()
@@ -203,11 +205,61 @@ public class MySqlCheckBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
-        table.Checks.Create( table.RecordSet["C"] != null );
-        var sut = table.Checks.Create( table.RecordSet["C"] > SqlNode.Literal( 0 ) );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
+        table.Constraints.CreateCheck( table.RecordSet["C"] != null );
+        var sut = table.Constraints.CreateCheck( table.RecordSet["C"] > SqlNode.Literal( 0 ) );
 
         var action = Lambda.Of( () => ((ISqlCheckBuilder)sut).SetName( "PK_T" ) );
+
+        action.Should()
+            .ThrowExactly<MySqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+    }
+
+    [Fact]
+    public void SetDefaultName_ShouldUpdateName_WhenNewNameIsDifferentFromOldName()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateCheck( SqlNode.True() ).SetName( "bar" );
+        var oldName = sut.Name;
+
+        var startStatementCount = schema.Database.GetPendingStatements().Length;
+
+        var result = ((ISqlCheckBuilder)sut).SetDefaultName();
+        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.Name.Should().MatchRegex( "CHK_T_[0-9a-fA-F]{32}" );
+            sut.FullName.Should().Be( $"foo.{result.Name}" );
+            table.Constraints.GetConstraint( result.Name ).Should().BeSameAs( sut );
+            table.Constraints.Contains( oldName ).Should().BeFalse();
+            schema.Objects.GetObject( result.Name ).Should().BeSameAs( sut );
+            schema.Objects.Contains( oldName ).Should().BeFalse();
+
+            statements.Should().HaveCount( 1 );
+            statements.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .SatisfySql(
+                    @"ALTER TABLE `foo`.`T`
+                      DROP CHECK `bar`,
+                      ADD CONSTRAINT `CHK_T_{GUID}` CHECK (TRUE);" );
+        }
+    }
+
+    [Fact]
+    public void SetDefaultName_ShouldThrowMySqlObjectBuilderException_WhenCheckIsRemoved()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateCheck( SqlNode.True() ).SetName( "bar" );
+        sut.Remove();
+
+        var action = Lambda.Of( () => ((ISqlCheckBuilder)sut).SetDefaultName() );
 
         action.Should()
             .ThrowExactly<MySqlObjectBuilderException>()
@@ -220,8 +272,8 @@ public class MySqlCheckBuilderTests : TestsBase
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C" );
-        table.SetPrimaryKey( column.Asc() );
-        var sut = table.Checks.Create( column.Node > SqlNode.Literal( 0 ) );
+        table.Constraints.SetPrimaryKey( column.Asc() );
+        var sut = table.Constraints.CreateCheck( column.Node > SqlNode.Literal( 0 ) );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -230,7 +282,7 @@ public class MySqlCheckBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            table.Checks.Contains( sut.Name ).Should().BeFalse();
+            table.Constraints.Contains( sut.Name ).Should().BeFalse();
             sut.IsRemoved.Should().BeTrue();
             sut.ReferencedColumns.Should().BeEmpty();
             column.ReferencingChecks.Should().BeEmpty();
@@ -240,7 +292,7 @@ public class MySqlCheckBuilderTests : TestsBase
                 .Sql.Should()
                 .SatisfySql(
                     @"ALTER TABLE `foo`.`T`
-                      DROP CHECK `CHK_T_0`;" );
+                      DROP CHECK `CHK_T_{GUID}`;" );
         }
     }
 
@@ -249,8 +301,8 @@ public class MySqlCheckBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
-        var sut = table.Checks.Create( table.RecordSet["C"] > SqlNode.Literal( 0 ) );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
+        var sut = table.Constraints.CreateCheck( table.RecordSet["C"] > SqlNode.Literal( 0 ) );
 
         _ = schema.Database.GetPendingStatements();
         sut.Remove();
@@ -268,7 +320,7 @@ public class MySqlCheckBuilderTests : TestsBase
         var action = Substitute.For<Action<MySqlCheckBuilder>>();
         var table = MySqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C" );
-        var sut = table.Checks.Create( column.Node > SqlNode.Literal( 0 ) );
+        var sut = table.Constraints.CreateCheck( column.Node > SqlNode.Literal( 0 ) );
 
         var result = sut.ForMySql( action );
 

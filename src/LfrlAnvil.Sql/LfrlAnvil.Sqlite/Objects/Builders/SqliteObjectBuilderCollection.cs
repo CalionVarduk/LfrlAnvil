@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -38,14 +37,15 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
     }
 
     [Pure]
-    public SqliteObjectBuilder Get(string name)
+    public SqliteObjectBuilder GetObject(string name)
     {
         return _map[name];
     }
 
-    public bool TryGet(string name, [MaybeNullWhen( false )] out SqliteObjectBuilder result)
+    [Pure]
+    public SqliteObjectBuilder? TryGetObject(string name)
     {
-        return _map.TryGetValue( name, out result );
+        return _map.GetValueOrDefault( name );
     }
 
     [Pure]
@@ -54,9 +54,10 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
         return GetTypedObject<SqliteTableBuilder>( name, SqlObjectType.Table );
     }
 
-    public bool TryGetTable(string name, [MaybeNullWhen( false )] out SqliteTableBuilder result)
+    [Pure]
+    public SqliteTableBuilder? TryGetTable(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.Table, out result );
+        return TryGetTypedObject<SqliteTableBuilder>( name, SqlObjectType.Table );
     }
 
     [Pure]
@@ -65,9 +66,10 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
         return GetTypedObject<SqliteIndexBuilder>( name, SqlObjectType.Index );
     }
 
-    public bool TryGetIndex(string name, [MaybeNullWhen( false )] out SqliteIndexBuilder result)
+    [Pure]
+    public SqliteIndexBuilder? TryGetIndex(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.Index, out result );
+        return TryGetTypedObject<SqliteIndexBuilder>( name, SqlObjectType.Index );
     }
 
     [Pure]
@@ -76,9 +78,10 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
         return GetTypedObject<SqlitePrimaryKeyBuilder>( name, SqlObjectType.PrimaryKey );
     }
 
-    public bool TryGetPrimaryKey(string name, [MaybeNullWhen( false )] out SqlitePrimaryKeyBuilder result)
+    [Pure]
+    public SqlitePrimaryKeyBuilder? TryGetPrimaryKey(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.PrimaryKey, out result );
+        return TryGetTypedObject<SqlitePrimaryKeyBuilder>( name, SqlObjectType.PrimaryKey );
     }
 
     [Pure]
@@ -87,9 +90,10 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
         return GetTypedObject<SqliteForeignKeyBuilder>( name, SqlObjectType.ForeignKey );
     }
 
-    public bool TryGetForeignKey(string name, [MaybeNullWhen( false )] out SqliteForeignKeyBuilder result)
+    [Pure]
+    public SqliteForeignKeyBuilder? TryGetForeignKey(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.ForeignKey, out result );
+        return TryGetTypedObject<SqliteForeignKeyBuilder>( name, SqlObjectType.ForeignKey );
     }
 
     [Pure]
@@ -98,9 +102,10 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
         return GetTypedObject<SqliteCheckBuilder>( name, SqlObjectType.Check );
     }
 
-    public bool TryGetCheck(string name, [MaybeNullWhen( false )] out SqliteCheckBuilder result)
+    [Pure]
+    public SqliteCheckBuilder? TryGetCheck(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.Check, out result );
+        return TryGetTypedObject<SqliteCheckBuilder>( name, SqlObjectType.Check );
     }
 
     [Pure]
@@ -109,9 +114,10 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
         return GetTypedObject<SqliteViewBuilder>( name, SqlObjectType.View );
     }
 
-    public bool TryGetView(string name, [MaybeNullWhen( false )] out SqliteViewBuilder result)
+    [Pure]
+    public SqliteViewBuilder? TryGetView(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.View, out result );
+        return TryGetTypedObject<SqliteViewBuilder>( name, SqlObjectType.View );
     }
 
     public SqliteTableBuilder CreateTable(string name)
@@ -209,78 +215,83 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
         }
     }
 
-    internal void ChangeName(SqliteObjectBuilder obj, string name)
+    internal void ChangeName(SqliteTableBuilder table, string name)
     {
-        ref var objRef = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, name, out var exists )!;
-        if ( exists )
-            throw new SqliteObjectBuilderException( ExceptionResources.NameIsAlreadyTaken( objRef, name ) );
-
-        objRef = obj;
-        _map.Remove( obj.Name );
+        ChangeNameCore( table, name );
     }
 
-    internal SqliteIndexBuilder CreateIndex(SqliteTableBuilder table, SqliteIndexColumnBuilder[] columns, bool isUnique)
+    internal void ChangeName(SqliteViewBuilder view, string name)
     {
-        var name = SqliteHelpers.GetDefaultIndexName( table, columns, isUnique );
+        ChangeNameCore( view, name );
+    }
+
+    internal void ChangeName(SqliteConstraintBuilder constraint, string name)
+    {
+        ChangeNameCore( constraint, name );
+        constraint.Table.Constraints.ChangeName( constraint, name );
+    }
+
+    internal SqliteIndexBuilder CreateIndex(
+        SqliteTableBuilder table,
+        string name,
+        ReadOnlyMemory<ISqlIndexColumnBuilder> columns,
+        bool isUnique)
+    {
+        SqliteHelpers.AssertName( name );
+        var indexColumns = SqliteHelpers.CreateIndexColumns( table, columns );
+
         ref var obj = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, name, out var exists )!;
         if ( exists )
             throw new SqliteObjectBuilderException( ExceptionResources.NameIsAlreadyTaken( obj, name ) );
 
-        var result = new SqliteIndexBuilder( table, columns, name, isUnique );
+        var result = new SqliteIndexBuilder( table, indexColumns, name, isUnique );
         obj = result;
         Schema.Database.ChangeTracker.ObjectCreated( table, result );
         return result;
     }
 
-    internal SqlitePrimaryKeyBuilder CreatePrimaryKey(SqliteTableBuilder table, SqliteIndexColumnBuilder[] columns)
+    internal SqlitePrimaryKeyBuilder CreatePrimaryKey(
+        SqliteTableBuilder table,
+        string name,
+        SqliteIndexBuilder index,
+        SqlitePrimaryKeyBuilder? oldPrimaryKey)
     {
-        var name = SqliteHelpers.GetDefaultPrimaryKeyName( table );
-        if ( _map.TryGetValue( name, out var obj ) )
+        SqliteHelpers.AssertName( name );
+        SqliteHelpers.AssertPrimaryKey( table, index );
+
+        if ( _map.TryGetValue( name, out var obj ) && ! CanReplaceWithPrimaryKey( obj, oldPrimaryKey ) )
             throw new SqliteObjectBuilderException( ExceptionResources.NameIsAlreadyTaken( obj, name ) );
 
-        var index = table.Indexes.GetOrCreateForPrimaryKey( columns );
+        oldPrimaryKey?.Remove();
+
         var primaryKey = new SqlitePrimaryKeyBuilder( index, name );
-        _map.Add( name, primaryKey );
+        _map[name] = primaryKey;
         Schema.Database.ChangeTracker.ObjectCreated( table, primaryKey );
-        index.AssignPrimaryKey( primaryKey );
-        return primaryKey;
-    }
-
-    internal SqlitePrimaryKeyBuilder ReplacePrimaryKey(
-        SqliteTableBuilder table,
-        SqliteIndexColumnBuilder[] columns,
-        SqlitePrimaryKeyBuilder oldKey)
-    {
-        oldKey.Remove();
-        var index = table.Indexes.GetOrCreateForPrimaryKey( columns );
-
-        var primaryKey = new SqlitePrimaryKeyBuilder( index, oldKey.Name );
-        _map[primaryKey.Name] = primaryKey;
         index.AssignPrimaryKey( primaryKey );
         return primaryKey;
     }
 
     internal SqliteForeignKeyBuilder CreateForeignKey(
         SqliteTableBuilder table,
+        string name,
         SqliteIndexBuilder originIndex,
         SqliteIndexBuilder referencedIndex)
     {
+        SqliteHelpers.AssertName( name );
         SqliteHelpers.AssertForeignKey( table, originIndex, referencedIndex );
 
-        var name = SqliteHelpers.GetDefaultForeignKeyName( originIndex, referencedIndex );
         ref var obj = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, name, out var exists )!;
         if ( exists )
             throw new SqliteObjectBuilderException( ExceptionResources.NameIsAlreadyTaken( obj, name ) );
 
         var result = new SqliteForeignKeyBuilder( originIndex, referencedIndex, name );
-        Schema.Database.ChangeTracker.ObjectCreated( originIndex.Table, result );
         obj = result;
+        Schema.Database.ChangeTracker.ObjectCreated( originIndex.Table, result );
         return result;
     }
 
     internal SqliteCheckBuilder CreateCheck(SqliteTableBuilder table, string name, SqlConditionNode condition)
     {
-        Schema.EnsureNotRemoved();
         SqliteHelpers.AssertName( name );
         var visitor = SqliteCheckBuilder.AssertConditionNode( table, condition );
 
@@ -289,8 +300,8 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
             throw new SqliteObjectBuilderException( ExceptionResources.NameIsAlreadyTaken( obj, name ) );
 
         var result = new SqliteCheckBuilder( name, condition, visitor );
-        Schema.Database.ChangeTracker.ObjectCreated( table, result );
         obj = result;
+        Schema.Database.ChangeTracker.ObjectCreated( table, result );
         return result;
     }
 
@@ -319,6 +330,30 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
         _map.Add( obj.Name, obj );
     }
 
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static bool CanReplaceWithPrimaryKey(SqliteObjectBuilder obj, SqlitePrimaryKeyBuilder? oldPrimaryKey)
+    {
+        if ( oldPrimaryKey is null )
+            return false;
+
+        if ( ReferenceEquals( obj, oldPrimaryKey ) )
+            return true;
+
+        return obj.Type == SqlObjectType.Index &&
+            ReferenceEquals( ReinterpretCast.To<SqliteIndexBuilder>( obj ).PrimaryKey, oldPrimaryKey );
+    }
+
+    private void ChangeNameCore(SqliteObjectBuilder obj, string name)
+    {
+        ref var objRef = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, name, out var exists )!;
+        if ( exists )
+            throw new SqliteObjectBuilderException( ExceptionResources.NameIsAlreadyTaken( objRef, name ) );
+
+        objRef = obj;
+        _map.Remove( obj.Name );
+    }
+
     private RentedMemorySequence<SqliteObjectBuilder> CopyObjectsIntoBuffer(SqlObjectType type)
     {
         var buffer = Schema.Database.ObjectPool.GreedyRent();
@@ -341,44 +376,31 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
 
     [Pure]
     private T GetTypedObject<T>(string name, SqlObjectType type)
-        where T : class, ISqlObjectBuilder
+        where T : SqliteObjectBuilder
     {
         var obj = _map[name];
-        if ( obj.Type != type )
-            throw new SqlObjectCastException( SqliteDialect.Instance, typeof( T ), obj.GetType() );
-
-        return ReinterpretCast.To<T>( obj );
-    }
-
-    private bool TryGetTypedObject<T>(string name, SqlObjectType type, [MaybeNullWhen( false )] out T result)
-        where T : class, ISqlObjectBuilder
-    {
-        if ( _map.TryGetValue( name, out var obj ) && obj.Type == type )
-        {
-            result = ReinterpretCast.To<T>( obj );
-            return true;
-        }
-
-        result = null;
-        return false;
+        return obj.Type == type
+            ? ReinterpretCast.To<T>( obj )
+            : throw new SqlObjectCastException( SqliteDialect.Instance, typeof( T ), obj.GetType() );
     }
 
     [Pure]
-    ISqlObjectBuilder ISqlObjectBuilderCollection.Get(string name)
+    private T? TryGetTypedObject<T>(string name, SqlObjectType type)
+        where T : SqliteObjectBuilder
     {
-        return Get( name );
+        return _map.TryGetValue( name, out var obj ) && obj.Type == type ? ReinterpretCast.To<T>( obj ) : null;
     }
 
-    bool ISqlObjectBuilderCollection.TryGet(string name, [MaybeNullWhen( false )] out ISqlObjectBuilder result)
+    [Pure]
+    ISqlObjectBuilder ISqlObjectBuilderCollection.GetObject(string name)
     {
-        if ( TryGet( name, out var obj ) )
-        {
-            result = obj;
-            return true;
-        }
+        return GetObject( name );
+    }
 
-        result = null;
-        return false;
+    [Pure]
+    ISqlObjectBuilder? ISqlObjectBuilderCollection.TryGetObject(string name)
+    {
+        return TryGetObject( name );
     }
 
     [Pure]
@@ -387,9 +409,10 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
         return GetTable( name );
     }
 
-    bool ISqlObjectBuilderCollection.TryGetTable(string name, [MaybeNullWhen( false )] out ISqlTableBuilder result)
+    [Pure]
+    ISqlTableBuilder? ISqlObjectBuilderCollection.TryGetTable(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.Table, out result );
+        return TryGetTable( name );
     }
 
     [Pure]
@@ -398,9 +421,10 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
         return GetIndex( name );
     }
 
-    bool ISqlObjectBuilderCollection.TryGetIndex(string name, [MaybeNullWhen( false )] out ISqlIndexBuilder result)
+    [Pure]
+    ISqlIndexBuilder? ISqlObjectBuilderCollection.TryGetIndex(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.Index, out result );
+        return TryGetIndex( name );
     }
 
     [Pure]
@@ -409,9 +433,10 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
         return GetPrimaryKey( name );
     }
 
-    bool ISqlObjectBuilderCollection.TryGetPrimaryKey(string name, [MaybeNullWhen( false )] out ISqlPrimaryKeyBuilder result)
+    [Pure]
+    ISqlPrimaryKeyBuilder? ISqlObjectBuilderCollection.TryGetPrimaryKey(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.PrimaryKey, out result );
+        return TryGetPrimaryKey( name );
     }
 
     [Pure]
@@ -420,9 +445,10 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
         return GetForeignKey( name );
     }
 
-    bool ISqlObjectBuilderCollection.TryGetForeignKey(string name, [MaybeNullWhen( false )] out ISqlForeignKeyBuilder result)
+    [Pure]
+    ISqlForeignKeyBuilder? ISqlObjectBuilderCollection.TryGetForeignKey(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.ForeignKey, out result );
+        return TryGetForeignKey( name );
     }
 
     [Pure]
@@ -431,9 +457,10 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
         return GetCheck( name );
     }
 
-    bool ISqlObjectBuilderCollection.TryGetCheck(string name, [MaybeNullWhen( false )] out ISqlCheckBuilder result)
+    [Pure]
+    ISqlCheckBuilder? ISqlObjectBuilderCollection.TryGetCheck(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.Check, out result );
+        return TryGetCheck( name );
     }
 
     [Pure]
@@ -442,9 +469,10 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
         return GetView( name );
     }
 
-    bool ISqlObjectBuilderCollection.TryGetView(string name, [MaybeNullWhen( false )] out ISqlViewBuilder result)
+    [Pure]
+    ISqlViewBuilder? ISqlObjectBuilderCollection.TryGetView(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.View, out result );
+        return TryGetView( name );
     }
 
     ISqlTableBuilder ISqlObjectBuilderCollection.CreateTable(string name)

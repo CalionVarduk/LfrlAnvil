@@ -46,63 +46,55 @@ public class MySqlDatabaseTests : TestsBase
     }
 
     [Fact]
-    public void Schemas_Get_ShouldReturnExistingSchema()
+    public void Schemas_GetSchema_ShouldReturnExistingSchema()
     {
         var dbBuilder = MySqlDatabaseBuilderMock.Create();
         dbBuilder.Schemas.Default.SetName( "foo" );
         var db = MySqlDatabaseMock.Create( dbBuilder );
         ISqlSchemaCollection sut = db.Schemas;
 
-        var result = sut.Get( "foo" );
+        var result = sut.GetSchema( "foo" );
 
         result.Should().BeSameAs( sut.Default );
     }
 
     [Fact]
-    public void Schemas_Get_ShouldThrowKeyNotFoundException_WhenSchemaDoesNotExist()
+    public void Schemas_GetSchema_ShouldThrowKeyNotFoundException_WhenSchemaDoesNotExist()
     {
         var dbBuilder = MySqlDatabaseBuilderMock.Create();
         dbBuilder.Schemas.Default.SetName( "foo" );
         var db = MySqlDatabaseMock.Create( dbBuilder );
         ISqlSchemaCollection sut = db.Schemas;
 
-        var action = Lambda.Of( () => sut.Get( "bar" ) );
+        var action = Lambda.Of( () => sut.GetSchema( "bar" ) );
 
         action.Should().ThrowExactly<KeyNotFoundException>();
     }
 
     [Fact]
-    public void Schemas_TryGet_ShouldReturnExistingSchema()
+    public void Schemas_TryGetSchema_ShouldReturnExistingSchema()
     {
         var dbBuilder = MySqlDatabaseBuilderMock.Create();
         dbBuilder.Schemas.Default.SetName( "foo" );
         var db = MySqlDatabaseMock.Create( dbBuilder );
         ISqlSchemaCollection sut = db.Schemas;
 
-        var result = sut.TryGet( "foo", out var outResult );
+        var result = sut.TryGetSchema( "foo" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().BeSameAs( sut.Default );
-        }
+        result.Should().BeSameAs( sut.Default );
     }
 
     [Fact]
-    public void Schemas_TryGet_ShouldReturnFalse_WhenSchemaDoesNotExist()
+    public void Schemas_TryGetSchema_ShouldReturnNull_WhenSchemaDoesNotExist()
     {
         var dbBuilder = MySqlDatabaseBuilderMock.Create();
         dbBuilder.Schemas.Default.SetName( "foo" );
         var db = MySqlDatabaseMock.Create( dbBuilder );
         ISqlSchemaCollection sut = db.Schemas;
 
-        var result = sut.TryGet( "bar", out var outResult );
+        var result = sut.TryGetSchema( "bar" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().BeNull();
-        }
+        result.Should().BeNull();
     }
 
     [Fact]

@@ -9,43 +9,45 @@ using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.MySql.Objects.Builders;
 
-public sealed class MySqlCheckBuilder : MySqlObjectBuilder, ISqlCheckBuilder
+public sealed class MySqlCheckBuilder : MySqlConstraintBuilder, ISqlCheckBuilder
 {
     private readonly Dictionary<ulong, MySqlColumnBuilder> _referencedColumns;
     private string? _fullName;
 
     internal MySqlCheckBuilder(string name, SqlConditionNode condition, MySqlTableScopeExpressionValidator visitor)
-        : base( visitor.Table.Database.GetNextId(), name, SqlObjectType.Check )
+        : base( visitor.Table, name, SqlObjectType.Check )
     {
-        Table = visitor.Table;
         Condition = condition;
         _referencedColumns = visitor.ReferencedColumns;
         _fullName = null;
         AddSelfToReferencedColumns();
     }
 
-    public MySqlTableBuilder Table { get; }
     public SqlConditionNode Condition { get; }
     public override string FullName => _fullName ??= MySqlHelpers.GetFullName( Table.Schema.Name, Name );
     public IReadOnlyCollection<MySqlColumnBuilder> ReferencedColumns => _referencedColumns.Values;
     public override MySqlDatabaseBuilder Database => Table.Database;
     IReadOnlyCollection<ISqlColumnBuilder> ISqlCheckBuilder.ReferencedColumns => ReferencedColumns;
-    ISqlTableBuilder ISqlCheckBuilder.Table => Table;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
 
-    public MySqlCheckBuilder SetName(string name)
+    public new MySqlCheckBuilder SetName(string name)
     {
-        EnsureNotRemoved();
-        SetNameCore( name );
+        base.SetName( name );
         return this;
     }
 
-    internal void ResetFullName()
+    public new MySqlCheckBuilder SetDefaultName()
+    {
+        base.SetDefaultName();
+        return this;
+    }
+
+    internal override void ResetFullName()
     {
         _fullName = null;
     }
 
-    internal void MarkAsRemoved()
+    internal override void MarkAsRemoved()
     {
         Assume.Equals( IsRemoved, false );
         IsRemoved = true;
@@ -69,6 +71,12 @@ public sealed class MySqlCheckBuilder : MySqlObjectBuilder, ISqlCheckBuilder
         return visitor;
     }
 
+    [Pure]
+    protected override string GetDefaultName()
+    {
+        return MySqlHelpers.GetDefaultCheckName( Table );
+    }
+
     protected override void RemoveCore()
     {
         Assume.Equals( CanRemove, true );
@@ -78,7 +86,7 @@ public sealed class MySqlCheckBuilder : MySqlObjectBuilder, ISqlCheckBuilder
 
         _referencedColumns.Clear();
         Table.Schema.Objects.Remove( Name );
-        Table.Checks.Remove( Name );
+        Table.Constraints.Remove( Name );
 
         Database.ChangeTracker.ObjectRemoved( Table, this );
     }
@@ -90,7 +98,6 @@ public sealed class MySqlCheckBuilder : MySqlObjectBuilder, ISqlCheckBuilder
 
         MySqlHelpers.AssertName( name );
         Table.Schema.Objects.ChangeName( this, name );
-        Table.Checks.ChangeName( this, name );
 
         var oldName = Name;
         Name = name;
@@ -107,5 +114,10 @@ public sealed class MySqlCheckBuilder : MySqlObjectBuilder, ISqlCheckBuilder
     ISqlCheckBuilder ISqlCheckBuilder.SetName(string name)
     {
         return SetName( name );
+    }
+
+    ISqlCheckBuilder ISqlCheckBuilder.SetDefaultName()
+    {
+        return SetDefaultName();
     }
 }

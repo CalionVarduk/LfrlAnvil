@@ -14,38 +14,6 @@ namespace LfrlAnvil.Sql.Extensions;
 
 public static class SqlObjectExtensions
 {
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static bool Contains(this ISqlIndexBuilderCollection indexes, params ISqlIndexColumnBuilder[] columns)
-    {
-        return indexes.Contains( columns );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static ISqlIndexBuilder Get(this ISqlIndexBuilderCollection indexes, params ISqlIndexColumnBuilder[] columns)
-    {
-        return indexes.Get( columns );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static ISqlIndexBuilder Create(this ISqlIndexBuilderCollection indexes, params ISqlIndexColumnBuilder[] columns)
-    {
-        return indexes.Create( columns );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static ISqlIndexBuilder GetOrCreate(this ISqlIndexBuilderCollection indexes, params ISqlIndexColumnBuilder[] columns)
-    {
-        return indexes.GetOrCreate( columns );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static bool Remove(this ISqlIndexBuilderCollection indexes, params ISqlIndexColumnBuilder[] columns)
-    {
-        return indexes.Remove( columns );
-    }
-
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ISqlIndexBuilder SetFilter(this ISqlIndexBuilder index, Func<SqlTableBuilderNode, SqlConditionNode?> filter)
     {
@@ -53,9 +21,56 @@ public static class SqlObjectExtensions
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static ISqlPrimaryKeyBuilder SetPrimaryKey(this ISqlTableBuilder table, params ISqlIndexColumnBuilder[] columns)
+    public static ISqlPrimaryKeyBuilder SetPrimaryKey(
+        this ISqlConstraintBuilderCollection constraints,
+        params ISqlIndexColumnBuilder[] columns)
     {
-        return table.SetPrimaryKey( columns );
+        var index = constraints.CreateUniqueIndex( columns );
+        return constraints.SetPrimaryKey( index );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static ISqlPrimaryKeyBuilder SetPrimaryKey(
+        this ISqlConstraintBuilderCollection constraints,
+        string name,
+        params ISqlIndexColumnBuilder[] columns)
+    {
+        var index = constraints.CreateUniqueIndex( columns );
+        return constraints.SetPrimaryKey( name, index );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static ISqlIndexBuilder CreateIndex(
+        this ISqlConstraintBuilderCollection constraints,
+        params ISqlIndexColumnBuilder[] columns)
+    {
+        return constraints.CreateIndex( columns );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static ISqlIndexBuilder CreateIndex(
+        this ISqlConstraintBuilderCollection constraints,
+        string name,
+        params ISqlIndexColumnBuilder[] columns)
+    {
+        return constraints.CreateIndex( name, columns );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static ISqlIndexBuilder CreateUniqueIndex(
+        this ISqlConstraintBuilderCollection constraints,
+        params ISqlIndexColumnBuilder[] columns)
+    {
+        return constraints.CreateIndex( columns, isUnique: true );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static ISqlIndexBuilder CreateUniqueIndex(
+        this ISqlConstraintBuilderCollection constraints,
+        string name,
+        params ISqlIndexColumnBuilder[] columns)
+    {
+        return constraints.CreateIndex( name, columns, isUnique: true );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -99,20 +114,6 @@ public static class SqlObjectExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static bool Contains(this ISqlIndexCollection indexes, params ISqlIndexColumn[] columns)
-    {
-        return indexes.Contains( columns );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static ISqlIndex Get(this ISqlIndexCollection indexes, params ISqlIndexColumn[] columns)
-    {
-        return indexes.Get( columns );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool IsSelfReference(this ISqlForeignKey foreignKey)
     {
         return ReferenceEquals( foreignKey.OriginIndex.Table, foreignKey.ReferencedIndex.Table );
@@ -143,14 +144,37 @@ public static class SqlObjectExtensions
             ifNotExists: false,
             t =>
             {
-                var primaryKey = table.PrimaryKey?.ToDefinitionNode( t, useFullConstraintNames );
-                var checks = table.Checks.ToDefinitionRange( useFullConstraintNames );
-                var foreignKeys = includeForeignKeys
-                    ? table.ForeignKeys.ToDefinitionRange( t, useFullConstraintNames )
-                    : Array.Empty<SqlForeignKeyDefinitionNode>();
+                var constraints = table.Constraints;
+                var primaryKey = constraints.TryGetPrimaryKey()?.ToDefinitionNode( t, useFullConstraintNames );
 
-                var result = SqlCreateTableConstraints.Empty.WithForeignKeys( foreignKeys ).WithChecks( checks );
-                return primaryKey is not null ? result.WithPrimaryKey( primaryKey ) : result;
+                var result = primaryKey is not null
+                    ? SqlCreateTableConstraints.Empty.WithPrimaryKey( primaryKey )
+                    : SqlCreateTableConstraints.Empty;
+
+                var checks = new List<SqlCheckDefinitionNode>();
+                var foreignKeys = includeForeignKeys ? new List<SqlForeignKeyDefinitionNode>() : null;
+
+                foreach ( var constraint in constraints )
+                {
+                    switch ( constraint.Type )
+                    {
+                        case SqlObjectType.Check:
+                            checks.Add( ReinterpretCast.To<ISqlCheckBuilder>( constraint ).ToDefinitionNode( useFullConstraintNames ) );
+                            break;
+
+                        case SqlObjectType.ForeignKey:
+                            foreignKeys?.Add(
+                                ReinterpretCast.To<ISqlForeignKeyBuilder>( constraint ).ToDefinitionNode( t, useFullConstraintNames ) );
+
+                            break;
+                    }
+                }
+
+                result = result.WithChecks( checks.ToArray() );
+                if ( foreignKeys is not null )
+                    result = result.WithForeignKeys( foreignKeys.ToArray() );
+
+                return result;
             } );
     }
 

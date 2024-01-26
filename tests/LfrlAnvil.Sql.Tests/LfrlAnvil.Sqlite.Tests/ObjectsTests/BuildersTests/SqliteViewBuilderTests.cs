@@ -14,7 +14,7 @@ namespace LfrlAnvil.Sqlite.Tests.ObjectsTests.BuildersTests;
 public class SqliteViewBuilderTests : TestsBase
 {
     [Fact]
-    public void Create_ShouldPrepareCorrectStatement()
+    public void Creation_ShouldPrepareCorrectStatement()
     {
         var db = SqliteDatabaseBuilderMock.Create();
         db.Schemas.Create( "foo" ).Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
@@ -34,7 +34,7 @@ public class SqliteViewBuilderTests : TestsBase
     }
 
     [Fact]
-    public void Create_FollowedByRemove_ShouldDoNothing()
+    public void Creation_FollowedByRemoval_ShouldDoNothing()
     {
         var db = SqliteDatabaseBuilderMock.Create();
         var sut = db.Schemas.Create( "foo" ).Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
@@ -210,7 +210,7 @@ public class SqliteViewBuilderTests : TestsBase
         var (name1, name2) = Fixture.CreateDistinctCollection<string>( count: 2 );
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
         var other = schema.Objects.CreateTable( name2 );
-        other.SetPrimaryKey( other.Columns.Create( "C" ).Asc() );
+        other.Constraints.SetPrimaryKey( other.Columns.Create( "C" ).Asc() );
         var sut = schema.Objects.CreateView( name1, SqlNode.RawQuery( "SELECT * FROM foo" ) );
 
         var action = Lambda.Of( () => sut.SetName( name2 ) );

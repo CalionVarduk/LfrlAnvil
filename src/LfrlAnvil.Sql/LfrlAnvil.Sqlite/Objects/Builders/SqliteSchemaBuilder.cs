@@ -158,8 +158,12 @@ public sealed class SqliteSchemaBuilder : SqliteObjectBuilder, ISqlSchemaBuilder
             if ( table.IsRemoved || ! reachedTables.Add( table.Id ) )
                 return;
 
-            foreach ( var ix in table.Indexes )
+            foreach ( var constraint in table.Constraints )
             {
+                if ( constraint.Type != SqlObjectType.Index )
+                    continue;
+
+                var ix = ReinterpretCast.To<SqliteIndexBuilder>( constraint );
                 foreach ( var fk in ix.ReferencingForeignKeys )
                 {
                     if ( ! fk.IsSelfReference() )
@@ -177,7 +181,9 @@ public sealed class SqliteSchemaBuilder : SqliteObjectBuilder, ISqlSchemaBuilder
         if ( Name == name )
             return;
 
-        SqliteHelpers.AssertName( name );
+        if ( name.Length > 0 )
+            SqliteHelpers.AssertName( name );
+
         Database.Schemas.ChangeName( this, name );
         var oldName = Name;
         Name = name;

@@ -1,15 +1,16 @@
-﻿using LfrlAnvil.MySql.Internal;
+﻿using System.Diagnostics.Contracts;
+using LfrlAnvil.MySql.Internal;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.MySql.Objects.Builders;
 
-public sealed class MySqlPrimaryKeyBuilder : MySqlObjectBuilder, ISqlPrimaryKeyBuilder
+public sealed class MySqlPrimaryKeyBuilder : MySqlConstraintBuilder, ISqlPrimaryKeyBuilder
 {
     private string? _fullName;
 
     internal MySqlPrimaryKeyBuilder(MySqlIndexBuilder index, string name)
-        : base( index.Database.GetNextId(), name, SqlObjectType.PrimaryKey )
+        : base( index.Table, name, SqlObjectType.PrimaryKey )
     {
         Index = index;
         _fullName = null;
@@ -23,34 +24,39 @@ public sealed class MySqlPrimaryKeyBuilder : MySqlObjectBuilder, ISqlPrimaryKeyB
     ISqlIndexBuilder ISqlPrimaryKeyBuilder.Index => Index;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
 
-    public MySqlPrimaryKeyBuilder SetName(string name)
+    public new MySqlPrimaryKeyBuilder SetName(string name)
     {
-        EnsureNotRemoved();
-        SetNameCore( name );
+        base.SetName( name );
         return this;
     }
 
-    public MySqlPrimaryKeyBuilder SetDefaultName()
+    public new MySqlPrimaryKeyBuilder SetDefaultName()
     {
-        return SetName( MySqlHelpers.GetDefaultPrimaryKeyName( Index.Table ) );
+        base.SetDefaultName();
+        return this;
     }
 
-    internal void ResetFullName()
+    internal override void ResetFullName()
     {
         _fullName = null;
     }
 
-    internal void MarkAsRemoved()
+    internal override void MarkAsRemoved()
     {
-        Assume.Equals( IsRemoved, false );
         IsRemoved = true;
+    }
+
+    [Pure]
+    protected override string GetDefaultName()
+    {
+        return MySqlHelpers.GetDefaultPrimaryKeyName( Table );
     }
 
     protected override void RemoveCore()
     {
         Index.Remove();
-        Index.Table.UnassignPrimaryKey();
         Index.Table.Schema.Objects.Remove( Name );
+        Index.Table.Constraints.Remove( Name );
         Database.ChangeTracker.ObjectRemoved( Index.Table, this );
     }
 

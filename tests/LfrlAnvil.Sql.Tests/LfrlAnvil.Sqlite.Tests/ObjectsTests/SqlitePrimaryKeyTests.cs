@@ -12,12 +12,12 @@ public class SqlitePrimaryKeyTests : TestsBase
     {
         var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
-        tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() ).SetName( "PK_TEST" );
+        tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() ).SetName( "PK_TEST" );
 
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
-        var schema = db.Schemas.Get( "foo" );
+        var schema = db.Schemas.GetSchema( "foo" );
 
-        ISqlPrimaryKey sut = schema.Objects.GetTable( "T" ).PrimaryKey;
+        ISqlPrimaryKey sut = schema.Objects.GetTable( "T" ).Constraints.PrimaryKey;
         var index = schema.Objects.GetIndex( "UIX_T_C1A" );
 
         using ( new AssertionScope() )

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -16,10 +15,11 @@ public sealed class SqliteSchemaBuilderCollection : ISqlSchemaBuilderCollection
 {
     private readonly Dictionary<string, SqliteSchemaBuilder> _map;
 
-    internal SqliteSchemaBuilderCollection(SqliteDatabaseBuilder database)
+    internal SqliteSchemaBuilderCollection(SqliteDatabaseBuilder database, string defaultSchemaName)
     {
         Database = database;
-        Default = new SqliteSchemaBuilder( Database, string.Empty );
+        AssertName( defaultSchemaName );
+        Default = new SqliteSchemaBuilder( Database, defaultSchemaName );
         _map = new Dictionary<string, SqliteSchemaBuilder>( StringComparer.OrdinalIgnoreCase ) { { Default.Name, Default } };
     }
 
@@ -37,19 +37,20 @@ public sealed class SqliteSchemaBuilderCollection : ISqlSchemaBuilderCollection
     }
 
     [Pure]
-    public SqliteSchemaBuilder Get(string name)
+    public SqliteSchemaBuilder GetSchema(string name)
     {
         return _map[name];
     }
 
-    public bool TryGet(string name, [MaybeNullWhen( false )] out SqliteSchemaBuilder result)
+    [Pure]
+    public SqliteSchemaBuilder? TryGetSchema(string name)
     {
-        return _map.TryGetValue( name, out result );
+        return _map.GetValueOrDefault( name );
     }
 
     public SqliteSchemaBuilder Create(string name)
     {
-        SqliteHelpers.AssertName( name );
+        AssertName( name );
         ref var schema = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, name, out var exists )!;
         if ( exists )
             throw new SqliteObjectBuilderException( ExceptionResources.NameIsAlreadyTaken( schema, name ) );
@@ -60,10 +61,7 @@ public sealed class SqliteSchemaBuilderCollection : ISqlSchemaBuilderCollection
 
     public SqliteSchemaBuilder GetOrCreate(string name)
     {
-        if ( name.Length == 0 )
-            return Default;
-
-        SqliteHelpers.AssertName( name );
+        AssertName( name );
         ref var schema = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, name, out var exists )!;
         if ( exists )
             return schema;
@@ -134,22 +132,22 @@ public sealed class SqliteSchemaBuilderCollection : ISqlSchemaBuilderCollection
         return new SqliteSchemaBuilder( Database, name );
     }
 
-    [Pure]
-    ISqlSchemaBuilder ISqlSchemaBuilderCollection.Get(string name)
+    private static void AssertName(string name)
     {
-        return Get( name );
+        if ( name.Length > 0 )
+            SqliteHelpers.AssertName( name );
     }
 
-    bool ISqlSchemaBuilderCollection.TryGet(string name, [MaybeNullWhen( false )] out ISqlSchemaBuilder result)
+    [Pure]
+    ISqlSchemaBuilder ISqlSchemaBuilderCollection.GetSchema(string name)
     {
-        if ( TryGet( name, out var schema ) )
-        {
-            result = schema;
-            return true;
-        }
+        return GetSchema( name );
+    }
 
-        result = null;
-        return false;
+    [Pure]
+    ISqlSchemaBuilder? ISqlSchemaBuilderCollection.TryGetSchema(string name)
+    {
+        return TryGetSchema( name );
     }
 
     ISqlSchemaBuilder ISqlSchemaBuilderCollection.Create(string name)

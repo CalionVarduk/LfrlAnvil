@@ -17,6 +17,7 @@ namespace LfrlAnvil.MySql.Internal;
 
 internal static class MySqlHelpers
 {
+    public static readonly SqlSchemaObjectName DefaultVersionHistoryName = SqlSchemaObjectName.Create( "common", "__VersionHistory" );
     public const string GuidFunctionName = "GUID";
     public const string DropIndexIfExistsProcedureName = "_DROP_INDEX_IF_EXISTS";
     private const int StackallocThreshold = 64;
@@ -77,14 +78,17 @@ internal static class MySqlHelpers
     [Pure]
     public static string GetDefaultCheckName(MySqlTableBuilder table)
     {
-        return $"CHK_{table.Name}_{table.Checks.Count}";
+        return $"CHK_{table.Name}_{Guid.NewGuid():N}";
     }
 
     [Pure]
-    public static string GetDefaultIndexName(MySqlTableBuilder table, ReadOnlyMemory<MySqlIndexColumnBuilder> columns, bool isUnique)
+    public static string GetDefaultIndexName(MySqlTableBuilder table, ReadOnlyMemory<ISqlIndexColumnBuilder> columns, bool isUnique)
     {
         var builder = new StringBuilder( 32 );
-        builder.Append( isUnique ? "UIX_" : "IX_" ).Append( table.Name );
+        if ( isUnique )
+            builder.Append( 'U' );
+
+        builder.Append( "IX_" ).Append( table.Name );
 
         foreach ( var c in columns )
             builder.Append( '_' ).Append( c.Column.Name ).Append( c.Ordering == OrderBy.Asc ? 'A' : 'D' );
@@ -342,10 +346,7 @@ internal static class MySqlHelpers
     }
 
     [Pure]
-    internal static MySqlIndexColumnBuilder[] CreateIndexColumns(
-        MySqlTableBuilder table,
-        ReadOnlyMemory<ISqlIndexColumnBuilder> columns,
-        bool allowNullableColumns = true)
+    internal static MySqlIndexColumnBuilder[] CreateIndexColumns(MySqlTableBuilder table, ReadOnlyMemory<ISqlIndexColumnBuilder> columns)
     {
         if ( columns.Length == 0 )
             throw new MySqlObjectBuilderException( ExceptionResources.IndexMustHaveAtLeastOneColumn );
@@ -371,15 +372,37 @@ internal static class MySqlHelpers
 
             if ( c.Column.IsRemoved )
                 errors = errors.Extend( ExceptionResources.ObjectHasBeenRemoved( c.Column ) );
-
-            if ( ! allowNullableColumns && c.Column.IsNullable )
-                errors = errors.Extend( ExceptionResources.ColumnIsNullable( c.Column ) );
         }
 
         if ( errors.Count > 0 )
             throw new MySqlObjectBuilderException( errors );
 
         return result;
+    }
+
+    internal static void AssertPrimaryKey(MySqlTableBuilder table, MySqlIndexBuilder index)
+    {
+        var errors = Chain<string>.Empty;
+        if ( index.IsRemoved )
+            errors = errors.Extend( ExceptionResources.ObjectHasBeenRemoved( index ) );
+
+        if ( ! index.IsUnique )
+            errors = errors.Extend( ExceptionResources.IndexIsNotMarkedAsUnique( index ) );
+
+        if ( index.Filter is not null )
+            errors = errors.Extend( ExceptionResources.IndexIsPartial( index ) );
+
+        if ( ! ReferenceEquals( index.Table, table ) )
+            errors = errors.Extend( ExceptionResources.ObjectDoesNotBelongToTable( index, table ) );
+
+        foreach ( var c in index.Columns )
+        {
+            if ( c.Column.IsNullable )
+                errors = errors.Extend( ExceptionResources.ColumnIsNullable( c.Column ) );
+        }
+
+        if ( errors.Count > 0 )
+            throw new MySqlObjectBuilderException( errors );
     }
 
     internal static void AssertForeignKey(MySqlTableBuilder table, MySqlIndexBuilder originIndex, MySqlIndexBuilder referencedIndex)

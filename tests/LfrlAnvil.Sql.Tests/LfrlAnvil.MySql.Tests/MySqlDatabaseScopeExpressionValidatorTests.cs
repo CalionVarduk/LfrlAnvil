@@ -53,7 +53,7 @@ public class MySqlDatabaseScopeExpressionValidatorTests : TestsBase
     public void VisitRawDataField_ShouldVisitRecordSet_WithErrors()
     {
         var table = _db.Schemas.Default.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "A" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "A" ).Asc() );
         var node = SqlNode.RawDataField( MySqlDatabaseMock.Create( _db ).Schemas.Default.Objects.GetTable( "T" ).ToRecordSet(), "b" );
 
         _sut.VisitRawDataField( node );
@@ -106,7 +106,7 @@ public class MySqlDatabaseScopeExpressionValidatorTests : TestsBase
     public void VisitColumn_ShouldRegisterError()
     {
         var table = _db.Schemas.Default.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "A" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "A" ).Asc() );
         var node = MySqlDatabaseMock.Create( _db ).Schemas.Default.Objects.GetTable( "T" ).ToRecordSet().GetField( "A" );
 
         _sut.VisitColumn( node );
@@ -1331,7 +1331,7 @@ public class MySqlDatabaseScopeExpressionValidatorTests : TestsBase
     public void VisitTable_ShouldRegisterError()
     {
         var table = _db.Schemas.Default.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         var node = MySqlDatabaseMock.Create( _db ).Schemas.Default.Objects.GetTable( "T" ).ToRecordSet();
 
         _sut.VisitTable( node );

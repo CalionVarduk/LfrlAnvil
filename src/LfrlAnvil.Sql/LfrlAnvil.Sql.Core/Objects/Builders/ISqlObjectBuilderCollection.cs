@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql.Expressions;
 
@@ -13,39 +12,46 @@ public interface ISqlObjectBuilderCollection : IReadOnlyCollection<ISqlObjectBui
     bool Contains(string name);
 
     [Pure]
-    ISqlObjectBuilder Get(string name);
+    ISqlObjectBuilder GetObject(string name);
 
-    bool TryGet(string name, [MaybeNullWhen( false )] out ISqlObjectBuilder result);
+    [Pure]
+    ISqlObjectBuilder? TryGetObject(string name);
 
     [Pure]
     ISqlTableBuilder GetTable(string name);
 
-    bool TryGetTable(string name, [MaybeNullWhen( false )] out ISqlTableBuilder result);
+    [Pure]
+    ISqlTableBuilder? TryGetTable(string name);
 
     [Pure]
     ISqlIndexBuilder GetIndex(string name);
 
-    bool TryGetIndex(string name, [MaybeNullWhen( false )] out ISqlIndexBuilder result);
+    [Pure]
+    ISqlIndexBuilder? TryGetIndex(string name);
 
     [Pure]
     ISqlPrimaryKeyBuilder GetPrimaryKey(string name);
 
-    bool TryGetPrimaryKey(string name, [MaybeNullWhen( false )] out ISqlPrimaryKeyBuilder result);
+    [Pure]
+    ISqlPrimaryKeyBuilder? TryGetPrimaryKey(string name);
 
     [Pure]
     ISqlForeignKeyBuilder GetForeignKey(string name);
 
-    bool TryGetForeignKey(string name, [MaybeNullWhen( false )] out ISqlForeignKeyBuilder result);
+    [Pure]
+    ISqlForeignKeyBuilder? TryGetForeignKey(string name);
 
     [Pure]
     ISqlCheckBuilder GetCheck(string name);
 
-    bool TryGetCheck(string name, [MaybeNullWhen( false )] out ISqlCheckBuilder result);
+    [Pure]
+    ISqlCheckBuilder? TryGetCheck(string name);
 
     [Pure]
     ISqlViewBuilder GetView(string name);
 
-    bool TryGetView(string name, [MaybeNullWhen( false )] out ISqlViewBuilder result);
+    [Pure]
+    ISqlViewBuilder? TryGetView(string name);
 
     ISqlTableBuilder CreateTable(string name);
     ISqlTableBuilder GetOrCreateTable(string name);

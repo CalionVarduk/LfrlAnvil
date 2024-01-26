@@ -30,14 +30,35 @@ public partial class SqliteDatabaseBuilderTests
                 result.Objects.Should().BeEmpty();
                 result.Type.Should().Be( SqlObjectType.Schema );
 
-                sut.Schemas.Get( name ).Should().BeSameAs( result );
+                sut.Schemas.GetSchema( name ).Should().BeSameAs( result );
+                sut.Schemas.Count.Should().Be( 2 );
+                sut.Schemas.Should().BeEquivalentTo( sut.Schemas.Default, result );
+            }
+        }
+
+        [Fact]
+        public void Create_ShouldCreateNewSchema_WhenNameIsEmpty()
+        {
+            var sut = SqliteDatabaseBuilderMock.Create();
+            sut.Schemas.Default.SetName( "foo" );
+
+            var result = ((ISqlSchemaBuilderCollection)sut.Schemas).Create( string.Empty );
+
+            using ( new AssertionScope() )
+            {
+                result.Database.Should().BeSameAs( sut );
+                result.Name.Should().BeEmpty();
+                result.FullName.Should().BeEmpty();
+                result.Objects.Should().BeEmpty();
+                result.Type.Should().Be( SqlObjectType.Schema );
+
+                sut.Schemas.GetSchema( string.Empty ).Should().BeSameAs( result );
                 sut.Schemas.Count.Should().Be( 2 );
                 sut.Schemas.Should().BeEquivalentTo( sut.Schemas.Default, result );
             }
         }
 
         [Theory]
-        [InlineData( "" )]
         [InlineData( " " )]
         [InlineData( "\"" )]
         [InlineData( "'" )]
@@ -83,7 +104,29 @@ public partial class SqliteDatabaseBuilderTests
                 result.Objects.Should().BeEmpty();
                 result.Type.Should().Be( SqlObjectType.Schema );
 
-                sut.Schemas.Get( name ).Should().BeSameAs( result );
+                sut.Schemas.GetSchema( name ).Should().BeSameAs( result );
+                sut.Schemas.Count.Should().Be( 2 );
+                sut.Schemas.Should().BeEquivalentTo( sut.Schemas.Default, result );
+            }
+        }
+
+        [Fact]
+        public void GetOrCreate_ShouldCreateNewSchema_WhenNameIsEmpty()
+        {
+            var sut = SqliteDatabaseBuilderMock.Create();
+            sut.Schemas.Default.SetName( "foo" );
+
+            var result = ((ISqlSchemaBuilderCollection)sut.Schemas).GetOrCreate( string.Empty );
+
+            using ( new AssertionScope() )
+            {
+                result.Database.Should().BeSameAs( sut );
+                result.Name.Should().BeEmpty();
+                result.FullName.Should().BeEmpty();
+                result.Objects.Should().BeEmpty();
+                result.Type.Should().Be( SqlObjectType.Schema );
+
+                sut.Schemas.GetSchema( string.Empty ).Should().BeSameAs( result );
                 sut.Schemas.Count.Should().Be( 2 );
                 sut.Schemas.Should().BeEquivalentTo( sut.Schemas.Default, result );
             }
@@ -92,6 +135,7 @@ public partial class SqliteDatabaseBuilderTests
         [Theory]
         [InlineData( " " )]
         [InlineData( "\"" )]
+        [InlineData( "'" )]
         [InlineData( "f\"oo" )]
         public void GetOrCreate_ShouldThrowSqliteObjectBuilderException_WhenNameIsInvalid(string name)
         {
@@ -143,57 +187,49 @@ public partial class SqliteDatabaseBuilderTests
         }
 
         [Fact]
-        public void Get_ShouldReturnExistingSchema()
+        public void GetSchema_ShouldReturnExistingSchema()
         {
             var name = Fixture.Create<string>();
             var sut = SqliteDatabaseBuilderMock.Create();
             var expected = sut.Schemas.Create( name );
 
-            var result = ((ISqlSchemaBuilderCollection)sut.Schemas).Get( name );
+            var result = ((ISqlSchemaBuilderCollection)sut.Schemas).GetSchema( name );
 
             result.Should().BeSameAs( expected );
         }
 
         [Fact]
-        public void Get_ShouldThrowKeyNotFoundException_WhenSchemaDoesNotExist()
+        public void GetSchema_ShouldThrowKeyNotFoundException_WhenSchemaDoesNotExist()
         {
             var name = Fixture.Create<string>();
             var sut = SqliteDatabaseBuilderMock.Create();
 
-            var action = Lambda.Of( () => ((ISqlSchemaBuilderCollection)sut.Schemas).Get( name ) );
+            var action = Lambda.Of( () => ((ISqlSchemaBuilderCollection)sut.Schemas).GetSchema( name ) );
 
             action.Should().ThrowExactly<KeyNotFoundException>();
         }
 
         [Fact]
-        public void TryGet_ShouldReturnExistingSchema()
+        public void TryGetSchema_ShouldReturnExistingSchema()
         {
             var name = Fixture.Create<string>();
             var sut = SqliteDatabaseBuilderMock.Create();
             var expected = sut.Schemas.Create( name );
 
-            var result = ((ISqlSchemaBuilderCollection)sut.Schemas).TryGet( name, out var outResult );
+            var result = ((ISqlSchemaBuilderCollection)sut.Schemas).TryGetSchema( name );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeTrue();
-                outResult.Should().BeSameAs( expected );
-            }
+            result.Should().BeSameAs( expected );
         }
 
         [Fact]
-        public void TryGet_ShouldReturnFalse_WhenSchemaDoesNotExist()
+        public void TryGetSchema_ShouldReturnNull_WhenSchemaDoesNotExist()
         {
             var name = Fixture.Create<string>();
             var sut = SqliteDatabaseBuilderMock.Create();
 
-            var result = ((ISqlSchemaBuilderCollection)sut.Schemas).TryGet( name, out var outResult );
+            var result = ((ISqlSchemaBuilderCollection)sut.Schemas).TryGetSchema( name );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                outResult.Should().BeNull();
-            }
+            result.Should().BeNull();
         }
 
         [Fact]
@@ -223,9 +259,9 @@ public partial class SqliteDatabaseBuilderTests
             var table = schema.Objects.CreateTable( "T1" );
             var column = table.Columns.Create( "C1" );
             var otherColumn = table.Columns.Create( "C2" ).MarkAsNullable();
-            var pk = table.SetPrimaryKey( column.Asc() );
-            var fk = table.ForeignKeys.Create( table.Indexes.Create( otherColumn.Asc() ), table.PrimaryKey!.Index );
-            var chk = table.Checks.Create( table.RecordSet["C1"] != SqlNode.Literal( 0 ) );
+            var pk = table.Constraints.SetPrimaryKey( column.Asc() );
+            var fk = table.Constraints.CreateForeignKey( table.Constraints.CreateIndex( otherColumn.Asc() ), pk.Index );
+            var chk = table.Constraints.CreateCheck( table.RecordSet["C1"] != SqlNode.Literal( 0 ) );
             var view = schema.Objects.CreateView( "V1", table.ToRecordSet().ToDataSource().Select( s => new[] { s.From["C1"].AsSelf() } ) );
             var otherView = schema.Objects.CreateView( "V2", view.ToRecordSet().ToDataSource().Select( s => new[] { s.GetAll() } ) );
 
@@ -275,12 +311,14 @@ public partial class SqliteDatabaseBuilderTests
             var schema = sut.Schemas.Create( Fixture.Create<string>() );
             var table = schema.Objects.CreateTable( "T1" );
             var column = table.Columns.Create( "C1" );
-            table.SetPrimaryKey( column.Asc() );
+            table.Constraints.SetPrimaryKey( column.Asc() );
 
             var otherTable = sut.Schemas.Default.Objects.CreateTable( "T2" );
             var otherColumn = otherTable.Columns.Create( "C2" );
-            otherTable.SetPrimaryKey( otherColumn.Asc() );
-            otherTable.ForeignKeys.Create( otherTable.PrimaryKey!.Index, table.PrimaryKey!.Index );
+            otherTable.Constraints.SetPrimaryKey( otherColumn.Asc() );
+            otherTable.Constraints.CreateForeignKey(
+                otherTable.Constraints.GetPrimaryKey().Index,
+                table.Constraints.GetPrimaryKey().Index );
 
             var result = sut.Schemas.Remove( schema.Name );
 
@@ -294,7 +332,7 @@ public partial class SqliteDatabaseBuilderTests
             var schema = sut.Schemas.Create( Fixture.Create<string>() );
             var table = schema.Objects.CreateTable( "T" );
             var column = table.Columns.Create( "C" );
-            table.SetPrimaryKey( column.Asc() );
+            table.Constraints.SetPrimaryKey( column.Asc() );
 
             sut.Schemas.Default.Objects.CreateView(
                 "V",

@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.MySql.Objects.Builders;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Objects;
-using LfrlAnvil.MySql.Objects.Builders;
 
 namespace LfrlAnvil.MySql.Objects;
 
@@ -18,31 +17,37 @@ public sealed class MySqlSchemaCollection : ISqlSchemaCollection
     {
         Database = database;
 
-        using var tables = builders.Database.ObjectPool.GreedyRent();
+        using var foreignKeys = builders.Database.ObjectPool.GreedyRent();
 
         _map = new Dictionary<string, MySqlSchema>( capacity: builders.Count, comparer: StringComparer.OrdinalIgnoreCase );
         foreach ( var b in builders )
-            _map.Add( b.Name, MySqlSchema.Create( database, b, tables ) );
+        {
+            var schema = new MySqlSchema( Database, b );
+            schema.Objects.AddConstraintsWithoutForeignKeys( b.Objects, foreignKeys );
+            _map.Add( schema.Name, schema );
+        }
 
         Default = _map[builders.Default.Name];
+        foreignKeys.Refresh();
 
-        tables.Refresh();
         MySqlSchemaBuilder? tableSchemaBuilder = null;
         MySqlSchema? tableSchema = null;
 
-        foreach ( var o in tables )
+        foreach ( var builder in foreignKeys )
         {
-            var tableBuilder = ReinterpretCast.To<MySqlTableBuilder>( o );
-            if ( ! ReferenceEquals( tableSchemaBuilder, tableBuilder.Schema ) )
+            var fk = ReinterpretCast.To<MySqlForeignKeyBuilder>( builder );
+            if ( ! ReferenceEquals( tableSchemaBuilder, fk.OriginIndex.Table.Schema ) )
             {
-                tableSchemaBuilder = tableBuilder.Schema;
+                tableSchemaBuilder = fk.OriginIndex.Table.Schema;
                 tableSchema = _map[tableSchemaBuilder.Name];
             }
 
             Assume.IsNotNull( tableSchema );
-            var table = tableSchema.Objects.GetTable( tableBuilder.Name );
-            table.ForeignKeys.Populate( this, tableBuilder.ForeignKeys );
-            tableSchema.Objects.Populate( table.ForeignKeys );
+            var referencedSchema = ReferenceEquals( tableSchemaBuilder, fk.ReferencedIndex.Table.Schema )
+                ? tableSchema
+                : _map[fk.ReferencedIndex.Table.Schema.Name];
+
+            tableSchema.Objects.AddForeignKey( fk, referencedSchema );
         }
     }
 
@@ -60,14 +65,15 @@ public sealed class MySqlSchemaCollection : ISqlSchemaCollection
     }
 
     [Pure]
-    public MySqlSchema Get(string name)
+    public MySqlSchema GetSchema(string name)
     {
         return _map[name];
     }
 
-    public bool TryGet(string name, [MaybeNullWhen( false )] out MySqlSchema result)
+    [Pure]
+    public MySqlSchema? TryGetSchema(string name)
     {
-        return _map.TryGetValue( name, out result );
+        return _map.GetValueOrDefault( name );
     }
 
     [Pure]
@@ -107,21 +113,15 @@ public sealed class MySqlSchemaCollection : ISqlSchemaCollection
     }
 
     [Pure]
-    ISqlSchema ISqlSchemaCollection.Get(string name)
+    ISqlSchema ISqlSchemaCollection.GetSchema(string name)
     {
-        return Get( name );
+        return GetSchema( name );
     }
 
-    bool ISqlSchemaCollection.TryGet(string name, [MaybeNullWhen( false )] out ISqlSchema result)
+    [Pure]
+    ISqlSchema? ISqlSchemaCollection.TryGetSchema(string name)
     {
-        if ( TryGet( name, out var schema ) )
-        {
-            result = schema;
-            return true;
-        }
-
-        result = null;
-        return false;
+        return TryGetSchema( name );
     }
 
     [Pure]

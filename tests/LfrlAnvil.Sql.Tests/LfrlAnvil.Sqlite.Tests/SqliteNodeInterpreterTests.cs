@@ -10,6 +10,7 @@ using LfrlAnvil.Sql.Expressions.Functions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
+using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Objects;
 using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Tests.Helpers;
@@ -4435,7 +4436,7 @@ BEGIN" );
         if ( pkColumnNames.Length == 0 )
             pkColumnNames = columnNames;
 
-        table.SetPrimaryKey( pkColumnNames.Select( n => table.Columns.Get( n ).Asc() ).ToArray() );
+        table.Constraints.SetPrimaryKey( pkColumnNames.Select( n => table.Columns.GetColumn( n ).Asc() ).ToArray() );
         return table;
     }
 
@@ -4459,7 +4460,7 @@ BEGIN" );
     {
         var builder = CreateTableBuilder( schemaName, tableName, columnNames, pkColumnNames );
         var db = new SqliteDatabaseMock( builder.Database );
-        return db.Schemas.Get( schemaName ).Objects.GetTable( tableName );
+        return db.Schemas.GetSchema( schemaName ).Objects.GetTable( tableName );
     }
 
     [Pure]
@@ -4476,7 +4477,7 @@ BEGIN" );
     {
         var builder = CreateViewBuilder( schemaName, viewName, source );
         var db = new SqliteDatabaseMock( builder.Database );
-        return db.Schemas.Get( schemaName ).Objects.GetView( viewName );
+        return db.Schemas.GetSchema( schemaName ).Objects.GetView( viewName );
     }
 
     private sealed class FunctionMock : SqlFunctionExpressionNode

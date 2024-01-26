@@ -1,6 +1,6 @@
 ﻿namespace LfrlAnvil.Sql.Objects.Builders;
 
-public interface ISqlForeignKeyBuilder : ISqlObjectBuilder
+public interface ISqlForeignKeyBuilder : ISqlConstraintBuilder
 {
     ISqlIndexBuilder ReferencedIndex { get; }
     ISqlIndexBuilder OriginIndex { get; }
@@ -8,7 +8,7 @@ public interface ISqlForeignKeyBuilder : ISqlObjectBuilder
     ReferenceBehavior OnUpdateBehavior { get; }
 
     new ISqlForeignKeyBuilder SetName(string name);
-    ISqlForeignKeyBuilder SetDefaultName();
+    new ISqlForeignKeyBuilder SetDefaultName();
     ISqlForeignKeyBuilder SetOnDeleteBehavior(ReferenceBehavior behavior);
     ISqlForeignKeyBuilder SetOnUpdateBehavior(ReferenceBehavior behavior);
 }

@@ -26,11 +26,8 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
     {
         _referencingViews = null;
         Schema = schema;
-        PrimaryKey = null;
         Columns = new SqliteColumnBuilderCollection( this );
-        Indexes = new SqliteIndexBuilderCollection( this );
-        ForeignKeys = new SqliteForeignKeyBuilderCollection( this );
-        Checks = new SqliteCheckBuilderCollection( this );
+        Constraints = new SqliteConstraintBuilderCollection( this );
         _fullName = string.Empty;
         _info = null;
         UpdateFullName();
@@ -39,10 +36,7 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
 
     public SqliteSchemaBuilder Schema { get; }
     public SqliteColumnBuilderCollection Columns { get; }
-    public SqliteIndexBuilderCollection Indexes { get; }
-    public SqliteForeignKeyBuilderCollection ForeignKeys { get; }
-    public SqliteCheckBuilderCollection Checks { get; }
-    public SqlitePrimaryKeyBuilder? PrimaryKey { get; private set; }
+    public SqliteConstraintBuilderCollection Constraints { get; }
     public IReadOnlyCollection<SqliteViewBuilder> ReferencingViews => (_referencingViews?.Values).EmptyIfNull();
 
     public override string FullName => _fullName;
@@ -57,8 +51,12 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
             if ( _referencingViews is not null && _referencingViews.Count > 0 )
                 return false;
 
-            foreach ( var ix in Indexes )
+            foreach ( var constraint in Constraints )
             {
+                if ( constraint.Type != SqlObjectType.Index )
+                    continue;
+
+                var ix = ReinterpretCast.To<SqliteIndexBuilder>( constraint );
                 if ( ! ix.CanRemove )
                     return false;
             }
@@ -68,11 +66,8 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
     }
 
     ISqlSchemaBuilder ISqlTableBuilder.Schema => Schema;
-    ISqlPrimaryKeyBuilder? ISqlTableBuilder.PrimaryKey => PrimaryKey;
     ISqlColumnBuilderCollection ISqlTableBuilder.Columns => Columns;
-    ISqlIndexBuilderCollection ISqlTableBuilder.Indexes => Indexes;
-    ISqlForeignKeyBuilderCollection ISqlTableBuilder.ForeignKeys => ForeignKeys;
-    ISqlCheckBuilderCollection ISqlTableBuilder.Checks => Checks;
+    ISqlConstraintBuilderCollection ISqlTableBuilder.Constraints => Constraints;
     IReadOnlyCollection<ISqlViewBuilder> ISqlTableBuilder.ReferencingViews => ReferencingViews;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
 
@@ -83,41 +78,11 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
         return this;
     }
 
-    public SqlitePrimaryKeyBuilder SetPrimaryKey(ReadOnlyMemory<ISqlIndexColumnBuilder> columns)
-    {
-        EnsureNotRemoved();
-
-        if ( PrimaryKey is null )
-        {
-            var indexColumns = SqliteHelpers.CreateIndexColumns( this, columns, allowNullableColumns: false );
-            PrimaryKey = Schema.Objects.CreatePrimaryKey( this, indexColumns );
-            Database.ChangeTracker.PrimaryKeyUpdated( this, null );
-        }
-        else if ( ! PrimaryKey.Index.AreColumnsEqual( columns ) )
-        {
-            var oldPrimaryKey = PrimaryKey;
-            var indexColumns = SqliteHelpers.CreateIndexColumns( this, columns, allowNullableColumns: false );
-            PrimaryKey = Schema.Objects.ReplacePrimaryKey( this, indexColumns, PrimaryKey );
-            Database.ChangeTracker.PrimaryKeyUpdated( this, oldPrimaryKey );
-        }
-
-        return PrimaryKey;
-    }
-
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal SqlRecordSetInfo? GetCachedInfo()
     {
         return _info;
-    }
-
-    internal void UnassignPrimaryKey()
-    {
-        Assume.IsNotNull( PrimaryKey );
-
-        var oldPrimaryKey = PrimaryKey;
-        PrimaryKey = null;
-        Database.ChangeTracker.PrimaryKeyUpdated( this, oldPrimaryKey );
     }
 
     internal void AddReferencingView(SqliteViewBuilder view)
@@ -138,8 +103,12 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
 
         using ( var buffer = Database.ObjectPool.GreedyRent() )
         {
-            foreach ( var ix in Indexes )
+            foreach ( var constraint in Constraints )
             {
+                if ( constraint.Type != SqlObjectType.Index )
+                    continue;
+
+                var ix = ReinterpretCast.To<SqliteIndexBuilder>( constraint );
                 var count = ix.ReferencingForeignKeys.Count;
                 buffer.Expand( count );
                 ix.ClearReferencingForeignKeysInto( buffer.Slice( buffer.Length - count ) );
@@ -161,8 +130,12 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
                 errors = errors.Extend( ExceptionResources.TableIsReferencedByObject( view ) );
         }
 
-        foreach ( var ix in Indexes )
+        foreach ( var constraint in Constraints )
         {
+            if ( constraint.Type != SqlObjectType.Index )
+                continue;
+
+            var ix = ReinterpretCast.To<SqliteIndexBuilder>( constraint );
             foreach ( var fk in ix.ReferencingForeignKeys )
             {
                 if ( ! fk.IsSelfReference() )
@@ -179,34 +152,13 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
         Assume.Equals( CanRemove, true );
 
         _referencingViews = null;
-        ForeignKeys.Clear();
 
-        using var buffer = Database.ObjectPool.GreedyRent( Columns.Count + Indexes.Count + Checks.Count );
-        var columns = buffer.Slice( 0, Columns.Count );
-        var indexes = buffer.Slice( columns.Length, Indexes.Count );
-        var checks = buffer.Slice( columns.Length + indexes.Length, Checks.Count );
-
+        using var columns = Database.ObjectPool.Rent( Columns.Count );
         Columns.ClearInto( columns );
-        Indexes.ClearInto( indexes );
-        Checks.ClearInto( checks );
 
-        foreach ( var obj in indexes )
-        {
-            var index = ReinterpretCast.To<SqliteIndexBuilder>( obj );
-            var count = index.OriginatingForeignKeys.Count;
-            buffer.Expand( count );
-            index.ClearOriginatingForeignKeysInto( buffer.Slice( buffer.Length - count ) );
-        }
-
-        var foreignKeys = buffer.Slice( checks.StartIndex + checks.Length );
-        foreach ( var fk in foreignKeys )
-            fk.Remove();
-
-        foreach ( var index in indexes )
-            index.Remove();
-
-        foreach ( var check in checks )
-            check.Remove();
+        using var constraints = Constraints.Clear();
+        foreach ( var constraint in constraints )
+            constraint.Remove();
 
         foreach ( var column in columns )
             column.Remove();
@@ -221,7 +173,8 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
             return;
 
         SqliteHelpers.AssertName( name );
-        if ( Schema.Objects.TryGet( name, out var obj ) )
+        var obj = Schema.Objects.TryGetObject( name );
+        if ( obj is not null )
             throw new SqliteObjectBuilderException( ExceptionResources.NameIsAlreadyTaken( obj, name ) );
 
         Rename(
@@ -245,28 +198,10 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
                 t.UpdateFullName();
                 t.Database.ChangeTracker.SchemaNameUpdated( t, t, oldName );
 
-                if ( t.PrimaryKey is not null )
+                foreach ( var constraint in Constraints )
                 {
-                    t.PrimaryKey.UpdateFullName();
-                    t.Database.ChangeTracker.SchemaNameUpdated( t, t.PrimaryKey, oldName );
-                }
-
-                foreach ( var fk in t.ForeignKeys )
-                {
-                    fk.UpdateFullName();
-                    t.Database.ChangeTracker.SchemaNameUpdated( t, fk, oldName );
-                }
-
-                foreach ( var chk in t.Checks )
-                {
-                    chk.UpdateFullName();
-                    t.Database.ChangeTracker.SchemaNameUpdated( t, chk, oldName );
-                }
-
-                foreach ( var ix in t.Indexes )
-                {
-                    ix.UpdateFullName();
-                    t.Database.ChangeTracker.SchemaNameUpdated( t, ix, oldName );
+                    constraint.UpdateFullName();
+                    t.Database.ChangeTracker.SchemaNameUpdated( t, constraint, oldName );
                 }
             } );
     }
@@ -287,8 +222,12 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
         {
             var hasSelfRefForeignKeys = false;
 
-            foreach ( var index in Indexes )
+            foreach ( var constraint in Constraints )
             {
+                if ( constraint.Type != SqlObjectType.Index )
+                    continue;
+
+                var index = ReinterpretCast.To<SqliteIndexBuilder>( constraint );
                 foreach ( var fk in index.ReferencingForeignKeys )
                 {
                     if ( fk.IsSelfReference() )
@@ -319,10 +258,5 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
     ISqlTableBuilder ISqlTableBuilder.SetName(string name)
     {
         return SetName( name );
-    }
-
-    ISqlPrimaryKeyBuilder ISqlTableBuilder.SetPrimaryKey(ReadOnlyMemory<ISqlIndexColumnBuilder> columns)
-    {
-        return SetPrimaryKey( columns );
     }
 }

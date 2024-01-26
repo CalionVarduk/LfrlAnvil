@@ -2,9 +2,8 @@
 
 namespace LfrlAnvil.Sql.Objects;
 
-public interface ISqlIndex : ISqlObject
+public interface ISqlIndex : ISqlConstraint
 {
-    ISqlTable Table { get; }
     ReadOnlyMemory<ISqlIndexColumn> Columns { get; }
     bool IsUnique { get; }
     bool IsPartial { get; }

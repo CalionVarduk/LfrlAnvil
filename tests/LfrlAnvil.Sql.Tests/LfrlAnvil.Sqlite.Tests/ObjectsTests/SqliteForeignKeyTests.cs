@@ -18,15 +18,15 @@ public class SqliteForeignKeyTests : TestsBase
 
         var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
-        var indexBuilder1 = tableBuilder.Indexes.Create( tableBuilder.Columns.Create( "C1" ).Asc() );
-        var indexBuilder2 = tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "C2" ).Asc() ).Index;
-        tableBuilder.ForeignKeys.Create( indexBuilder1, indexBuilder2 )
+        var indexBuilder1 = tableBuilder.Constraints.CreateIndex( tableBuilder.Columns.Create( "C1" ).Asc() );
+        var indexBuilder2 = tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C2" ).Asc() ).Index;
+        tableBuilder.Constraints.CreateForeignKey( indexBuilder1, indexBuilder2 )
             .SetName( "FK_TEST" )
             .SetOnDeleteBehavior( onDeleteBehavior )
             .SetOnUpdateBehavior( onUpdateBehavior );
 
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
-        var schema = db.Schemas.Get( "foo" );
+        var schema = db.Schemas.GetSchema( "foo" );
 
         ISqlForeignKey sut = schema.Objects.GetForeignKey( "FK_TEST" );
         var index = schema.Objects.GetIndex( "IX_T_C1A" );
@@ -59,16 +59,16 @@ public class SqliteForeignKeyTests : TestsBase
 
         var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder1 = schemaBuilder.Objects.CreateTable( "T1" );
-        var indexBuilder1 = tableBuilder1.SetPrimaryKey( tableBuilder1.Columns.Create( "C1" ).Asc() ).Index;
+        var indexBuilder1 = tableBuilder1.Constraints.SetPrimaryKey( tableBuilder1.Columns.Create( "C1" ).Asc() ).Index;
         var tableBuilder2 = schemaBuilder.Objects.CreateTable( "T2" );
-        var indexBuilder2 = tableBuilder2.SetPrimaryKey( tableBuilder2.Columns.Create( "C2" ).Asc() ).Index;
-        tableBuilder1.ForeignKeys.Create( indexBuilder1, indexBuilder2 )
+        var indexBuilder2 = tableBuilder2.Constraints.SetPrimaryKey( tableBuilder2.Columns.Create( "C2" ).Asc() ).Index;
+        tableBuilder1.Constraints.CreateForeignKey( indexBuilder1, indexBuilder2 )
             .SetName( "FK_TEST" )
             .SetOnDeleteBehavior( onDeleteBehavior )
             .SetOnUpdateBehavior( onUpdateBehavior );
 
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
-        var schema = db.Schemas.Get( "foo" );
+        var schema = db.Schemas.GetSchema( "foo" );
 
         ISqlForeignKey sut = schema.Objects.GetForeignKey( "FK_TEST" );
         var index = schema.Objects.GetIndex( "UIX_T1_C1A" );
@@ -102,18 +102,18 @@ public class SqliteForeignKeyTests : TestsBase
         var dbBuilder = SqliteDatabaseBuilderMock.Create();
         var schemaBuilder1 = dbBuilder.Schemas.Create( "foo" );
         var tableBuilder1 = schemaBuilder1.Objects.CreateTable( "T1" );
-        var indexBuilder1 = tableBuilder1.SetPrimaryKey( tableBuilder1.Columns.Create( "C1" ).Asc() ).Index;
+        var indexBuilder1 = tableBuilder1.Constraints.SetPrimaryKey( tableBuilder1.Columns.Create( "C1" ).Asc() ).Index;
         var schemaBuilder2 = dbBuilder.Schemas.Create( "bar" );
         var tableBuilder2 = schemaBuilder2.Objects.CreateTable( "T2" );
-        var indexBuilder2 = tableBuilder2.SetPrimaryKey( tableBuilder2.Columns.Create( "C2" ).Asc() ).Index;
-        tableBuilder1.ForeignKeys.Create( indexBuilder1, indexBuilder2 )
+        var indexBuilder2 = tableBuilder2.Constraints.SetPrimaryKey( tableBuilder2.Columns.Create( "C2" ).Asc() ).Index;
+        tableBuilder1.Constraints.CreateForeignKey( indexBuilder1, indexBuilder2 )
             .SetName( "FK_TEST" )
             .SetOnDeleteBehavior( onDeleteBehavior )
             .SetOnUpdateBehavior( onUpdateBehavior );
 
         var db = new SqliteDatabaseMock( dbBuilder );
-        var schema1 = db.Schemas.Get( "foo" );
-        var schema2 = db.Schemas.Get( "bar" );
+        var schema1 = db.Schemas.GetSchema( "foo" );
+        var schema2 = db.Schemas.GetSchema( "bar" );
 
         ISqlForeignKey sut = schema1.Objects.GetForeignKey( "FK_TEST" );
         var index = schema1.Objects.GetIndex( "UIX_T1_C1A" );

@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using LfrlAnvil.Diagnostics;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.MySql.Extensions;
+using LfrlAnvil.MySql.Internal;
 using LfrlAnvil.MySql.Objects.Builders;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Events;
@@ -145,10 +146,8 @@ public sealed class MySqlDatabaseFactory : ISqlDatabaseFactory
         SqlCreateDatabaseOptions options,
         ref SqlStatementExecutor statementExecutor)
     {
-        var schemaName = options.VersionHistoryName?.Schema ?? "common";
-        var tableName = options.VersionHistoryName?.Object ?? "__VersionHistory";
-
-        var builder = CreateBuilder( connectionChangeEvent, schemaName );
+        var versionHistoryName = options.VersionHistoryName ?? MySqlHelpers.DefaultVersionHistoryName;
+        var builder = CreateBuilder( connectionChangeEvent, versionHistoryName.Schema );
         SetBuilderMode( builder, SqlDatabaseCreateMode.Commit );
         var interpreter = builder.NodeInterpreters.Create( SqlNodeInterpreterContext.Create( capacity: 256 ) );
 
@@ -159,7 +158,8 @@ public sealed class MySqlDatabaseFactory : ISqlDatabaseFactory
                 .Select(
                     schemata.ToDataSource()
                         .AndWhere(
-                            schemata.GetRawField( "schema_name", TypeNullability.Create<string>() ) == SqlNode.Literal( schemaName ) )
+                            schemata.GetRawField( "schema_name", TypeNullability.Create<string>() ) ==
+                            SqlNode.Literal( versionHistoryName.Schema ) )
                         .Exists()
                         .ToValue()
                         .As( "x" ) );
@@ -172,7 +172,7 @@ public sealed class MySqlDatabaseFactory : ISqlDatabaseFactory
             var exists = statementExecutor.ExecuteVersionHistoryQuery( command, static cmd => Convert.ToBoolean( cmd.ExecuteScalar() ) );
             if ( ! exists )
             {
-                builder.ChangeTracker.SchemaCreated( schemaName );
+                builder.ChangeTracker.SchemaCreated( versionHistoryName.Schema );
                 builder.ChangeTracker.CreateGuidFunction();
                 builder.ChangeTracker.CreateDropIndexIfExistsProcedure();
             }
@@ -181,7 +181,8 @@ public sealed class MySqlDatabaseFactory : ISqlDatabaseFactory
                 var routines = SqlNode.RawRecordSet( SqlRecordSetInfo.Create( "information_schema", "routines" ) );
                 var routinesDataSource = routines.ToDataSource()
                     .AndWhere(
-                        routines.GetRawField( "routine_schema", TypeNullability.Create<string>() ) == SqlNode.Literal( schemaName ) );
+                        routines.GetRawField( "routine_schema", TypeNullability.Create<string>() ) ==
+                        SqlNode.Literal( versionHistoryName.Schema ) );
 
                 var routineName = routines.GetRawField( "routine_name", TypeNullability.Create<string>() );
                 var routineType = routines.GetRawField( "routine_type", TypeNullability.Create<string>() );
@@ -230,7 +231,7 @@ public sealed class MySqlDatabaseFactory : ISqlDatabaseFactory
         var dateTimeType =
             (MySqlColumnTypeDefinition<string>)builder.TypeDefinitions.GetByDataType( builder.DataTypes.GetFixedString( length: 27 ) );
 
-        var table = builder.Schemas.Default.Objects.CreateTable( tableName );
+        var table = builder.Schemas.Default.Objects.CreateTable( versionHistoryName.Object );
         var columns = table.Columns;
 
         var ordinal = columns.Create( VersionHistoryInfo.OrdinalName ).SetType( intType );
@@ -241,7 +242,7 @@ public sealed class MySqlDatabaseFactory : ISqlDatabaseFactory
         var description = columns.Create( VersionHistoryInfo.DescriptionName ).SetType( stringType );
         var commitDateUtc = columns.Create( VersionHistoryInfo.CommitDateUtcName ).SetType( dateTimeType );
         var commitDurationInTicks = columns.Create( VersionHistoryInfo.CommitDurationInTicksName ).SetType( longType );
-        table.SetPrimaryKey( ordinal.Asc() );
+        table.Constraints.SetPrimaryKey( ordinal.Asc() );
 
         return new VersionHistoryInfo(
             table,

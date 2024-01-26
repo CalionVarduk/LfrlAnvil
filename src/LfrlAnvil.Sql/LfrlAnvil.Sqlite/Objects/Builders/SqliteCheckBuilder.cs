@@ -9,15 +9,14 @@ using LfrlAnvil.Sqlite.Internal;
 
 namespace LfrlAnvil.Sqlite.Objects.Builders;
 
-public sealed class SqliteCheckBuilder : SqliteObjectBuilder, ISqlCheckBuilder
+public sealed class SqliteCheckBuilder : SqliteConstraintBuilder, ISqlCheckBuilder
 {
     private readonly Dictionary<ulong, SqliteColumnBuilder> _referencedColumns;
     private string _fullName;
 
     internal SqliteCheckBuilder(string name, SqlConditionNode condition, SqliteTableScopeExpressionValidator visitor)
-        : base( visitor.Table.Database.GetNextId(), name, SqlObjectType.Check )
+        : base( visitor.Table, name, SqlObjectType.Check )
     {
-        Table = visitor.Table;
         Condition = condition;
         _referencedColumns = visitor.ReferencedColumns;
         _fullName = string.Empty;
@@ -25,23 +24,26 @@ public sealed class SqliteCheckBuilder : SqliteObjectBuilder, ISqlCheckBuilder
         AddSelfToReferencedColumns();
     }
 
-    public SqliteTableBuilder Table { get; }
     public SqlConditionNode Condition { get; }
     public override string FullName => _fullName;
     public IReadOnlyCollection<SqliteColumnBuilder> ReferencedColumns => _referencedColumns.Values;
     public override SqliteDatabaseBuilder Database => Table.Database;
     IReadOnlyCollection<ISqlColumnBuilder> ISqlCheckBuilder.ReferencedColumns => ReferencedColumns;
-    ISqlTableBuilder ISqlCheckBuilder.Table => Table;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
 
-    public SqliteCheckBuilder SetName(string name)
+    public new SqliteCheckBuilder SetName(string name)
     {
-        EnsureNotRemoved();
-        SetNameCore( name );
+        base.SetName( name );
         return this;
     }
 
-    internal void UpdateFullName()
+    public new SqliteCheckBuilder SetDefaultName()
+    {
+        base.SetDefaultName();
+        return this;
+    }
+
+    internal override void UpdateFullName()
     {
         _fullName = SqliteHelpers.GetFullName( Table.Schema.Name, Name );
     }
@@ -59,6 +61,12 @@ public sealed class SqliteCheckBuilder : SqliteObjectBuilder, ISqlCheckBuilder
         return visitor;
     }
 
+    [Pure]
+    protected override string GetDefaultName()
+    {
+        return SqliteHelpers.GetDefaultCheckName( Table );
+    }
+
     protected override void RemoveCore()
     {
         Assume.Equals( CanRemove, true );
@@ -68,7 +76,7 @@ public sealed class SqliteCheckBuilder : SqliteObjectBuilder, ISqlCheckBuilder
 
         _referencedColumns.Clear();
         Table.Schema.Objects.Remove( Name );
-        Table.Checks.Remove( Name );
+        Table.Constraints.Remove( Name );
 
         Database.ChangeTracker.ObjectRemoved( Table, this );
     }
@@ -80,7 +88,6 @@ public sealed class SqliteCheckBuilder : SqliteObjectBuilder, ISqlCheckBuilder
 
         SqliteHelpers.AssertName( name );
         Table.Schema.Objects.ChangeName( this, name );
-        Table.Checks.ChangeName( this, name );
 
         var oldName = Name;
         Name = name;
@@ -97,5 +104,10 @@ public sealed class SqliteCheckBuilder : SqliteObjectBuilder, ISqlCheckBuilder
     ISqlCheckBuilder ISqlCheckBuilder.SetName(string name)
     {
         return SetName( name );
+    }
+
+    ISqlCheckBuilder ISqlCheckBuilder.SetDefaultName()
+    {
+        return SetDefaultName();
     }
 }

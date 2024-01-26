@@ -1563,7 +1563,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
     [Pure]
     protected static TargetDeleteOrUpdateInfo ExtractTableDeleteOrUpdateInfo(SqlTableNode node)
     {
-        var identityColumns = node.Table.PrimaryKey.Index.Columns.Span;
+        var identityColumns = node.Table.Constraints.PrimaryKey.Index.Columns.Span;
         var identityColumnNames = new string[identityColumns.Length];
         for ( var i = 0; i < identityColumns.Length; ++i )
             identityColumnNames[i] = identityColumns[i].Column.Name;
@@ -1743,7 +1743,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         bool isUpdate)
     {
         string[] identityColumnNames;
-        var primaryKey = node.Table.PrimaryKey;
+        var primaryKey = node.Table.Constraints.TryGetPrimaryKey();
 
         if ( primaryKey is not null )
         {

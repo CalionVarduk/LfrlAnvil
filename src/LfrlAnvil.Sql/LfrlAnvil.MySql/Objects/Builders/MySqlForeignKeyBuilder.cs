@@ -1,15 +1,16 @@
-﻿using LfrlAnvil.MySql.Internal;
+﻿using System.Diagnostics.Contracts;
+using LfrlAnvil.MySql.Internal;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.MySql.Objects.Builders;
 
-public sealed class MySqlForeignKeyBuilder : MySqlObjectBuilder, ISqlForeignKeyBuilder
+public sealed class MySqlForeignKeyBuilder : MySqlConstraintBuilder, ISqlForeignKeyBuilder
 {
     private string? _fullName;
 
     internal MySqlForeignKeyBuilder(MySqlIndexBuilder originIndex, MySqlIndexBuilder referencedIndex, string name)
-        : base( originIndex.Database.GetNextId(), name, SqlObjectType.ForeignKey )
+        : base( originIndex.Table, name, SqlObjectType.ForeignKey )
     {
         OriginIndex = originIndex;
         ReferencedIndex = referencedIndex;
@@ -31,16 +32,16 @@ public sealed class MySqlForeignKeyBuilder : MySqlObjectBuilder, ISqlForeignKeyB
     ISqlIndexBuilder ISqlForeignKeyBuilder.ReferencedIndex => ReferencedIndex;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
 
-    public MySqlForeignKeyBuilder SetName(string name)
+    public new MySqlForeignKeyBuilder SetName(string name)
     {
-        EnsureNotRemoved();
-        SetNameCore( name );
+        base.SetName( name );
         return this;
     }
 
-    public MySqlForeignKeyBuilder SetDefaultName()
+    public new MySqlForeignKeyBuilder SetDefaultName()
     {
-        return SetName( MySqlHelpers.GetDefaultForeignKeyName( OriginIndex, ReferencedIndex ) );
+        base.SetDefaultName();
+        return this;
     }
 
     public MySqlForeignKeyBuilder SetOnDeleteBehavior(ReferenceBehavior behavior)
@@ -71,17 +72,23 @@ public sealed class MySqlForeignKeyBuilder : MySqlObjectBuilder, ISqlForeignKeyB
         return this;
     }
 
-    internal void ResetFullName()
+    internal override void ResetFullName()
     {
         _fullName = null;
     }
 
-    internal void MarkAsRemoved()
+    internal override void MarkAsRemoved()
     {
         Assume.Equals( IsRemoved, false );
         IsRemoved = true;
         OriginIndex.RemoveOriginatingForeignKey( this );
         ReferencedIndex.RemoveReferencingForeignKey( this );
+    }
+
+    [Pure]
+    protected override string GetDefaultName()
+    {
+        return MySqlHelpers.GetDefaultForeignKeyName( OriginIndex, ReferencedIndex );
     }
 
     protected override void RemoveCore()
@@ -92,7 +99,7 @@ public sealed class MySqlForeignKeyBuilder : MySqlObjectBuilder, ISqlForeignKeyB
         ReferencedIndex.RemoveReferencingForeignKey( this );
 
         OriginIndex.Table.Schema.Objects.Remove( Name );
-        OriginIndex.Table.ForeignKeys.Remove( OriginIndex, ReferencedIndex );
+        OriginIndex.Table.Constraints.Remove( Name );
 
         Database.ChangeTracker.ObjectRemoved( OriginIndex.Table, this );
     }

@@ -89,7 +89,8 @@ public sealed class SqliteViewBuilder : SqliteObjectBuilder, ISqlViewBuilder
             return;
 
         SqliteHelpers.AssertName( name );
-        if ( Schema.Objects.TryGet( name, out var obj ) )
+        var obj = Schema.Objects.TryGetObject( name );
+        if ( obj is not null )
             throw new SqliteObjectBuilderException( ExceptionResources.NameIsAlreadyTaken( obj, name ) );
 
         using var buffer = RemoveReferencingViewsIntoBuffer( Database, _referencingViews );

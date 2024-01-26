@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Sql.Objects;
@@ -12,37 +11,44 @@ public interface ISqlObjectCollection : IReadOnlyCollection<ISqlObject>
     bool Contains(string name);
 
     [Pure]
-    ISqlObject Get(string name);
+    ISqlObject GetObject(string name);
 
-    bool TryGet(string name, [MaybeNullWhen( false )] out ISqlObject result);
+    [Pure]
+    ISqlObject? TryGetObject(string name);
 
     [Pure]
     ISqlTable GetTable(string name);
 
-    bool TryGetTable(string name, [MaybeNullWhen( false )] out ISqlTable result);
+    [Pure]
+    ISqlTable? TryGetTable(string name);
 
     [Pure]
     ISqlIndex GetIndex(string name);
 
-    bool TryGetIndex(string name, [MaybeNullWhen( false )] out ISqlIndex result);
+    [Pure]
+    ISqlIndex? TryGetIndex(string name);
 
     [Pure]
     ISqlPrimaryKey GetPrimaryKey(string name);
 
-    bool TryGetPrimaryKey(string name, [MaybeNullWhen( false )] out ISqlPrimaryKey result);
+    [Pure]
+    ISqlPrimaryKey? TryGetPrimaryKey(string name);
 
     [Pure]
     ISqlForeignKey GetForeignKey(string name);
 
-    bool TryGetForeignKey(string name, [MaybeNullWhen( false )] out ISqlForeignKey result);
+    [Pure]
+    ISqlForeignKey? TryGetForeignKey(string name);
 
     [Pure]
     ISqlCheck GetCheck(string name);
 
-    bool TryGetCheck(string name, [MaybeNullWhen( false )] out ISqlCheck result);
+    [Pure]
+    ISqlCheck? TryGetCheck(string name);
 
     [Pure]
     ISqlView GetView(string name);
 
-    bool TryGetView(string name, [MaybeNullWhen( false )] out ISqlView result);
+    [Pure]
+    ISqlView? TryGetView(string name);
 }

@@ -19,12 +19,12 @@ public abstract class SqliteObjectBuilder : ISqlObjectBuilder
         Type = type;
     }
 
+    public ulong Id { get; }
     public SqlObjectType Type { get; }
     public string Name { get; protected set; }
     public bool IsRemoved { get; protected set; }
     public abstract string FullName { get; }
     public abstract SqliteDatabaseBuilder Database { get; }
-    internal ulong Id { get; }
     internal virtual bool CanRemove => true;
 
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;

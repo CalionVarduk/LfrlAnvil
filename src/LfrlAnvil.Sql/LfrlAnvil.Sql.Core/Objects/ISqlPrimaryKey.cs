@@ -1,6 +1,6 @@
 ﻿namespace LfrlAnvil.Sql.Objects;
 
-public interface ISqlPrimaryKey : ISqlObject
+public interface ISqlPrimaryKey : ISqlConstraint
 {
     ISqlIndex Index { get; }
 }

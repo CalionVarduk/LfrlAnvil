@@ -62,11 +62,11 @@ public class MySqlColumnBuilderTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldMarkTableForAlterationAndAutomaticallySetDefaultValue()
+    public void Creation_ShouldMarkTableForAlterationAndAutomaticallySetDefaultValue()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -75,7 +75,7 @@ public class MySqlColumnBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            table.Columns.Get( sut.Name ).Should().BeSameAs( sut );
+            table.Columns.GetColumn( sut.Name ).Should().BeSameAs( sut );
             sut.Name.Should().Be( "C2" );
             sut.FullName.Should().Be( "foo.T.C2" );
             sut.DefaultValue.Should().BeEquivalentTo( SqlNode.Literal<object>( Array.Empty<byte>() ) );
@@ -90,11 +90,11 @@ public class MySqlColumnBuilderTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldMarkTableForAlteration_WithoutDefaultValueWhenColumnIsNullable()
+    public void Creation_ShouldMarkTableForAlteration_WithoutDefaultValueWhenColumnIsNullable()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -103,7 +103,7 @@ public class MySqlColumnBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            table.Columns.Get( sut.Name ).Should().BeSameAs( sut );
+            table.Columns.GetColumn( sut.Name ).Should().BeSameAs( sut );
             sut.Name.Should().Be( "C2" );
             sut.FullName.Should().Be( "foo.T.C2" );
             sut.DefaultValue.Should().BeNull();
@@ -118,11 +118,11 @@ public class MySqlColumnBuilderTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldMarkTableForAlteration_WhenDefaultValueIsDefinedExplicitly()
+    public void Creation_ShouldMarkTableForAlteration_WhenDefaultValueIsDefinedExplicitly()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -131,7 +131,7 @@ public class MySqlColumnBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            table.Columns.Get( sut.Name ).Should().BeSameAs( sut );
+            table.Columns.GetColumn( sut.Name ).Should().BeSameAs( sut );
             sut.Name.Should().Be( "C2" );
             sut.FullName.Should().Be( "foo.T.C2" );
 
@@ -145,11 +145,11 @@ public class MySqlColumnBuilderTests : TestsBase
     }
 
     [Fact]
-    public void Create_WithReusedRemovedColumnName_ShouldTreatTheColumnAsModified()
+    public void Creation_WithReusedRemovedColumnName_ShouldTreatTheColumnAsModified()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var removed = table.Columns.Create( "C2" );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -160,7 +160,7 @@ public class MySqlColumnBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            table.Columns.Get( sut.Name ).Should().BeSameAs( sut );
+            table.Columns.GetColumn( sut.Name ).Should().BeSameAs( sut );
             sut.Name.Should().Be( "C2" );
             sut.FullName.Should().Be( "foo.T.C2" );
             sut.DefaultValue.Should().BeNull();
@@ -176,11 +176,11 @@ public class MySqlColumnBuilderTests : TestsBase
     }
 
     [Fact]
-    public void Create_FollowedByRemove_ShouldDoNothing()
+    public void Creation_FollowedByRemove_ShouldDoNothing()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -196,7 +196,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -216,7 +216,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
         var oldName = sut.Name;
 
@@ -239,7 +239,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
         var oldName = sut.Name;
         var node = sut.Node;
@@ -254,7 +254,7 @@ public class MySqlColumnBuilderTests : TestsBase
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "bar" );
             sut.FullName.Should().Be( "foo.T.bar" );
-            table.Columns.Get( "bar" ).Should().BeSameAs( sut );
+            table.Columns.GetColumn( "bar" ).Should().BeSameAs( sut );
             table.Columns.Contains( oldName ).Should().BeFalse();
             node.Name.Should().Be( "bar" );
 
@@ -277,7 +277,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
         var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetName( name ) );
@@ -292,7 +292,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
         sut.Remove();
 
@@ -308,7 +308,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
         var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetName( "C1" ) );
@@ -323,9 +323,9 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
-        table.Indexes.Create( sut.Asc() );
+        table.Constraints.CreateIndex( sut.Asc() );
 
         var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetName( "C3" ) );
 
@@ -339,7 +339,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
         schema.Objects.CreateView( "V", table.ToRecordSet().ToDataSource().Select( s => new[] { s.From["C2"].AsSelf() } ) );
 
@@ -355,7 +355,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -375,7 +375,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -397,7 +397,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).SetDefaultValue( 123 );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -426,7 +426,7 @@ public class MySqlColumnBuilderTests : TestsBase
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         schema.Database.TypeDefinitions.RegisterDefinition( new TypeDefinitionMock() );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).SetType( schema.Database.TypeDefinitions.GetByDataType( MySqlDataType.Int ) );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -447,7 +447,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
         sut.Remove();
 
@@ -463,9 +463,9 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
-        table.Indexes.Create( sut.Asc() );
+        table.Constraints.CreateIndex( sut.Asc() );
 
         var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetType<int>() );
 
@@ -479,7 +479,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
         schema.Objects.CreateView( "V", table.ToRecordSet().ToDataSource().Select( s => new[] { s.From["C2"].AsSelf() } ) );
 
@@ -496,7 +496,7 @@ public class MySqlColumnBuilderTests : TestsBase
         var definition = MySqlDatabaseBuilderMock.Create().TypeDefinitions.GetByType<int>();
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
         var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetType( definition ) );
@@ -512,7 +512,7 @@ public class MySqlColumnBuilderTests : TestsBase
         var definition = Substitute.For<ISqlColumnTypeDefinition>();
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
         var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetType( definition ) );
@@ -529,7 +529,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).MarkAsNullable( value );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -551,7 +551,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).MarkAsNullable( value );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -573,7 +573,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -600,7 +600,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).MarkAsNullable();
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -627,7 +627,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).MarkAsNullable().SetDefaultValue( new byte[] { 1, 2, 3 } );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -654,7 +654,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).MarkAsNullable();
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -683,7 +683,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).MarkAsNullable( ! value );
         sut.Remove();
 
@@ -701,9 +701,9 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).MarkAsNullable( ! value );
-        table.Indexes.Create( sut.Asc() );
+        table.Constraints.CreateIndex( sut.Asc() );
 
         var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).MarkAsNullable( value ) );
 
@@ -719,7 +719,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).MarkAsNullable( ! value );
         schema.Objects.CreateView( "V", table.ToRecordSet().ToDataSource().Select( s => new[] { s.From["C2"].AsSelf() } ) );
 
@@ -735,7 +735,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).SetDefaultValue( 123 );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -755,7 +755,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).SetDefaultValue( 123 );
         var originalDefaultValue = sut.DefaultValue;
 
@@ -778,7 +778,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).SetDefaultValue( 123 );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -805,7 +805,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).SetDefaultValue( 123 );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -832,7 +832,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).SetType<long>();
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -861,9 +861,9 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
-        table.Indexes.Create( sut.Asc() );
+        table.Constraints.CreateIndex( sut.Asc() );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -889,7 +889,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
         schema.Objects.CreateView( "V", table.ToRecordSet().ToDataSource().Select( s => new[] { s.From["C2"].AsSelf() } ) );
 
@@ -917,7 +917,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
         sut.Remove();
 
@@ -933,7 +933,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
         var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetDefaultValue( table.ToRecordSet().GetField( "C1" ) ) );
@@ -948,7 +948,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -976,7 +976,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
         _ = schema.Database.GetPendingStatements();
@@ -994,9 +994,9 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var t1 = schema.Objects.CreateTable( "T1" );
-        t1.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() );
+        t1.Constraints.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() );
         var sut = t1.Columns.Create( "C2" );
-        t1.Indexes.Create( sut.Asc() );
+        t1.Constraints.CreateIndex( sut.Asc() );
 
         var action = Lambda.Of( () => sut.Remove() );
 
@@ -1008,9 +1008,9 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var t1 = schema.Objects.CreateTable( "T1" );
-        t1.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() );
+        t1.Constraints.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() );
         var sut = t1.Columns.Create( "C2" );
-        t1.Indexes.Create( t1.Columns.Create( "C3" ).Asc() ).SetFilter( t => t["C2"] != null );
+        t1.Constraints.CreateIndex( t1.Columns.Create( "C3" ).Asc() ).SetFilter( t => t["C2"] != null );
 
         var action = Lambda.Of( () => sut.Remove() );
 
@@ -1022,7 +1022,7 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var t1 = schema.Objects.CreateTable( "T1" );
-        t1.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() );
+        t1.Constraints.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() );
         var sut = t1.Columns.Create( "C2" );
         schema.Objects.CreateView( "V", t1.ToRecordSet().ToDataSource().Select( s => new[] { s.From["C2"].AsSelf() } ) );
 
@@ -1036,9 +1036,9 @@ public class MySqlColumnBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var t1 = schema.Objects.CreateTable( "T1" );
-        t1.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() );
+        t1.Constraints.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() );
         var sut = t1.Columns.Create( "C2" );
-        t1.Checks.Create( t1.RecordSet["C2"] != SqlNode.Literal( 0 ) );
+        t1.Constraints.CreateCheck( t1.RecordSet["C2"] != SqlNode.Literal( 0 ) );
 
         var action = Lambda.Of( () => sut.Remove() );
 

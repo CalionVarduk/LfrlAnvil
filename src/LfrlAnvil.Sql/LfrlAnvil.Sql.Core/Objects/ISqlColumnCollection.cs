@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Sql.Objects;
@@ -12,7 +11,8 @@ public interface ISqlColumnCollection : IReadOnlyCollection<ISqlColumn>
     bool Contains(string name);
 
     [Pure]
-    ISqlColumn Get(string name);
+    ISqlColumn GetColumn(string name);
 
-    bool TryGet(string name, [MaybeNullWhen( false )] out ISqlColumn result);
+    [Pure]
+    ISqlColumn? TryGetColumn(string name);
 }

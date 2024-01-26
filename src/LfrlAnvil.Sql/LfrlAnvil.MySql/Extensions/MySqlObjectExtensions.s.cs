@@ -1,37 +1,15 @@
 ﻿using System;
-using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.MySql.Objects;
 using LfrlAnvil.MySql.Objects.Builders;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Objects;
-using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.MySql.Extensions;
 
 public static class MySqlObjectExtensions
 {
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static MySqlIndexBuilder Get(this MySqlIndexBuilderCollection indexes, params ISqlIndexColumnBuilder[] columns)
-    {
-        return indexes.Get( columns );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static MySqlIndexBuilder Create(this MySqlIndexBuilderCollection indexes, params ISqlIndexColumnBuilder[] columns)
-    {
-        return indexes.Create( columns );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static MySqlIndexBuilder GetOrCreate(this MySqlIndexBuilderCollection indexes, params ISqlIndexColumnBuilder[] columns)
-    {
-        return indexes.GetOrCreate( columns );
-    }
-
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static MySqlIndexBuilder SetFilter(this MySqlIndexBuilder index, Func<SqlTableBuilderNode, SqlConditionNode?> filter)
     {
@@ -39,9 +17,56 @@ public static class MySqlObjectExtensions
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static MySqlPrimaryKeyBuilder SetPrimaryKey(this MySqlTableBuilder table, params ISqlIndexColumnBuilder[] columns)
+    public static MySqlPrimaryKeyBuilder SetPrimaryKey(
+        this MySqlConstraintBuilderCollection constraints,
+        params MySqlIndexColumnBuilder[] columns)
     {
-        return table.SetPrimaryKey( columns );
+        var index = constraints.CreateUniqueIndex( columns );
+        return constraints.SetPrimaryKey( index );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static MySqlPrimaryKeyBuilder SetPrimaryKey(
+        this MySqlConstraintBuilderCollection constraints,
+        string name,
+        params MySqlIndexColumnBuilder[] columns)
+    {
+        var index = constraints.CreateUniqueIndex( columns );
+        return constraints.SetPrimaryKey( name, index );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static MySqlIndexBuilder CreateIndex(
+        this MySqlConstraintBuilderCollection constraints,
+        params MySqlIndexColumnBuilder[] columns)
+    {
+        return constraints.CreateIndex( columns );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static MySqlIndexBuilder CreateIndex(
+        this MySqlConstraintBuilderCollection constraints,
+        string name,
+        params MySqlIndexColumnBuilder[] columns)
+    {
+        return constraints.CreateIndex( name, columns );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static MySqlIndexBuilder CreateUniqueIndex(
+        this MySqlConstraintBuilderCollection constraints,
+        params MySqlIndexColumnBuilder[] columns)
+    {
+        return constraints.CreateIndex( columns, isUnique: true );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static MySqlIndexBuilder CreateUniqueIndex(
+        this MySqlConstraintBuilderCollection constraints,
+        string name,
+        params MySqlIndexColumnBuilder[] columns)
+    {
+        return constraints.CreateIndex( name, columns, isUnique: true );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -74,13 +99,6 @@ public static class MySqlObjectExtensions
         where T : struct
     {
         return column.SetDefaultValue( SqlNode.Literal( value ) );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static MySqlIndex Get(this MySqlIndexCollection indexes, params ISqlIndexColumn[] columns)
-    {
-        return indexes.Get( columns );
     }
 
     public static ISqlDatabaseBuilder ForMySql(this ISqlDatabaseBuilder builder, Action<MySqlDatabaseBuilder> action)

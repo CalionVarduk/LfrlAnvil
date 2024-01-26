@@ -17,6 +17,7 @@ namespace LfrlAnvil.Sqlite.Internal;
 
 public static class SqliteHelpers
 {
+    public static readonly SqlSchemaObjectName DefaultVersionHistoryName = SqlSchemaObjectName.Create( "__VersionHistory" );
     private const int StackallocThreshold = 64;
     private const char TextDelimiter = '\'';
     private const char BlobMarker = 'X';
@@ -75,14 +76,17 @@ public static class SqliteHelpers
     [Pure]
     public static string GetDefaultCheckName(SqliteTableBuilder table)
     {
-        return $"CHK_{table.Name}_{table.Checks.Count}";
+        return $"CHK_{table.Name}_{Guid.NewGuid():N}";
     }
 
     [Pure]
-    public static string GetDefaultIndexName(SqliteTableBuilder table, ReadOnlyMemory<SqliteIndexColumnBuilder> columns, bool isUnique)
+    public static string GetDefaultIndexName(SqliteTableBuilder table, ReadOnlyMemory<ISqlIndexColumnBuilder> columns, bool isUnique)
     {
         var builder = new StringBuilder( 32 );
-        builder.Append( isUnique ? "UIX_" : "IX_" ).Append( table.Name );
+        if ( isUnique )
+            builder.Append( 'U' );
+
+        builder.Append( "IX_" ).Append( table.Name );
 
         foreach ( var c in columns )
             builder.Append( '_' ).Append( c.Column.Name ).Append( c.Ordering == OrderBy.Asc ? 'A' : 'D' );
@@ -210,10 +214,7 @@ public static class SqliteHelpers
     }
 
     [Pure]
-    internal static SqliteIndexColumnBuilder[] CreateIndexColumns(
-        SqliteTableBuilder table,
-        ReadOnlyMemory<ISqlIndexColumnBuilder> columns,
-        bool allowNullableColumns = true)
+    internal static SqliteIndexColumnBuilder[] CreateIndexColumns(SqliteTableBuilder table, ReadOnlyMemory<ISqlIndexColumnBuilder> columns)
     {
         if ( columns.Length == 0 )
             throw new SqliteObjectBuilderException( ExceptionResources.IndexMustHaveAtLeastOneColumn );
@@ -239,15 +240,37 @@ public static class SqliteHelpers
 
             if ( c.Column.IsRemoved )
                 errors = errors.Extend( ExceptionResources.ObjectHasBeenRemoved( c.Column ) );
-
-            if ( ! allowNullableColumns && c.Column.IsNullable )
-                errors = errors.Extend( ExceptionResources.ColumnIsNullable( c.Column ) );
         }
 
         if ( errors.Count > 0 )
             throw new SqliteObjectBuilderException( errors );
 
         return result;
+    }
+
+    internal static void AssertPrimaryKey(SqliteTableBuilder table, SqliteIndexBuilder index)
+    {
+        var errors = Chain<string>.Empty;
+        if ( index.IsRemoved )
+            errors = errors.Extend( ExceptionResources.ObjectHasBeenRemoved( index ) );
+
+        if ( ! index.IsUnique )
+            errors = errors.Extend( ExceptionResources.IndexIsNotMarkedAsUnique( index ) );
+
+        if ( index.Filter is not null )
+            errors = errors.Extend( ExceptionResources.IndexIsPartial( index ) );
+
+        if ( ! ReferenceEquals( index.Table, table ) )
+            errors = errors.Extend( ExceptionResources.ObjectDoesNotBelongToTable( index, table ) );
+
+        foreach ( var c in index.Columns )
+        {
+            if ( c.Column.IsNullable )
+                errors = errors.Extend( ExceptionResources.ColumnIsNullable( c.Column ) );
+        }
+
+        if ( errors.Count > 0 )
+            throw new SqliteObjectBuilderException( errors );
     }
 
     internal static void AssertForeignKey(SqliteTableBuilder table, SqliteIndexBuilder originIndex, SqliteIndexBuilder referencedIndex)

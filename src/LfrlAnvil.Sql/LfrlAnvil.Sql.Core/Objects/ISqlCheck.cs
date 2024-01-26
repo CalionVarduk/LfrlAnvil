@@ -1,6 +1,5 @@
 ﻿namespace LfrlAnvil.Sql.Objects;
 
-public interface ISqlCheck : ISqlObject
+public interface ISqlCheck : ISqlConstraint
 {
-    ISqlTable Table { get; }
 }

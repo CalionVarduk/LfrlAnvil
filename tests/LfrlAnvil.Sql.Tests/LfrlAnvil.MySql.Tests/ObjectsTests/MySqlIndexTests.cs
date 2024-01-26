@@ -19,14 +19,14 @@ public class MySqlIndexTests : TestsBase
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         var c1Builder = tableBuilder.Columns.Create( "C1" );
         var c2Builder = tableBuilder.Columns.Create( "C2" );
-        tableBuilder.Indexes.Create( c1Builder.Asc(), c2Builder.Desc() ).SetName( "IX_TEST" ).MarkAsUnique( isUnique );
-        tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "X" ).Asc() );
+        tableBuilder.Constraints.CreateIndex( c1Builder.Asc(), c2Builder.Desc() ).SetName( "IX_TEST" ).MarkAsUnique( isUnique );
+        tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "X" ).Asc() );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        var schema = db.Schemas.Get( "foo" );
+        var schema = db.Schemas.GetSchema( "foo" );
         var table = schema.Objects.GetTable( "T" );
-        var c1 = table.Columns.Get( "C1" );
-        var c2 = table.Columns.Get( "C2" );
+        var c1 = table.Columns.GetColumn( "C1" );
+        var c2 = table.Columns.GetColumn( "C2" );
 
         ISqlIndex sut = schema.Objects.GetIndex( "IX_TEST" );
 
@@ -51,13 +51,13 @@ public class MySqlIndexTests : TestsBase
         var schemaBuilder = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         var c1Builder = tableBuilder.Columns.Create( "C1" );
-        tableBuilder.Indexes.Create( c1Builder.Asc() ).SetName( "IX_TEST" ).SetFilter( SqlNode.True() );
-        tableBuilder.SetPrimaryKey( tableBuilder.Columns.Create( "X" ).Asc() );
+        tableBuilder.Constraints.CreateIndex( c1Builder.Asc() ).SetName( "IX_TEST" ).SetFilter( SqlNode.True() );
+        tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "X" ).Asc() );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        var schema = db.Schemas.Get( "foo" );
+        var schema = db.Schemas.GetSchema( "foo" );
         var table = schema.Objects.GetTable( "T" );
-        var c1 = table.Columns.Get( "C1" );
+        var c1 = table.Columns.GetColumn( "C1" );
 
         ISqlIndex sut = schema.Objects.GetIndex( "IX_TEST" );
 

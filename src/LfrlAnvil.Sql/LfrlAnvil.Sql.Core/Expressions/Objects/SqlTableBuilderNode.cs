@@ -79,13 +79,14 @@ public sealed class SqlTableBuilderNode : SqlRecordSetNode
         [Pure]
         internal SqlColumnBuilderNode Get(string name)
         {
-            return GetNode( _owner.Table.Columns.Get( name ) );
+            return GetNode( _owner.Table.Columns.GetColumn( name ) );
         }
 
         [Pure]
         internal SqlColumnBuilderNode? TryGet(string name)
         {
-            return _owner.Table.Columns.TryGet( name, out var column ) ? GetNode( column ) : null;
+            var column = _owner.Table.Columns.TryGetColumn( name );
+            return column is not null ? GetNode( column ) : null;
         }
 
         [Pure]

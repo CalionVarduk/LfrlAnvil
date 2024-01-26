@@ -269,7 +269,7 @@ internal sealed class SqliteDatabaseChangeTracker
             SqliteObjectChangeDescriptor.PrimaryKey,
             SqliteObjectStatus.Modified,
             oldValue,
-            table.PrimaryKey );
+            table.Constraints.TryGetPrimaryKey() );
 
         AddChange( table, change );
     }
@@ -408,8 +408,12 @@ internal sealed class SqliteDatabaseChangeTracker
             ValidateTable( currentTable );
 
             _ongoingStatements.Add( currentTable.ToCreateNode( useFullConstraintNames: true ) );
-            foreach ( var ix in currentTable.Indexes )
+            foreach ( var constraint in currentTable.Constraints )
             {
+                if ( constraint.Type != SqlObjectType.Index )
+                    continue;
+
+                var ix = ReinterpretCast.To<SqliteIndexBuilder>( constraint );
                 if ( ix.PrimaryKey is null )
                     _ongoingStatements.Add( ix.ToCreateNode() );
             }
@@ -485,7 +489,7 @@ internal sealed class SqliteDatabaseChangeTracker
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static void ValidateTable(SqliteTableBuilder table)
     {
-        if ( table.PrimaryKey is null )
+        if ( table.Constraints.TryGetPrimaryKey() is null )
             ExceptionThrower.Throw( new SqliteObjectBuilderException( ExceptionResources.PrimaryKeyIsMissing( table ) ) );
     }
 
@@ -494,8 +498,12 @@ internal sealed class SqliteDatabaseChangeTracker
         foreach ( var ix in buffer.DroppedIndexNames )
             _ongoingStatements.Add( SqlNode.DropIndex( table.Info, ix ) );
 
-        foreach ( var ix in table.Indexes )
+        foreach ( var constraint in table.Constraints )
         {
+            if ( constraint.Type != SqlObjectType.Index )
+                continue;
+
+            var ix = ReinterpretCast.To<SqliteIndexBuilder>( constraint );
             if ( ix.PrimaryKey is not null || buffer.CreatedIndexes.ContainsKey( ix.Id ) )
                 continue;
 
@@ -565,8 +573,12 @@ internal sealed class SqliteDatabaseChangeTracker
         _ongoingStatements.Add( SqlNode.DropTable( table.Info ) );
         _ongoingStatements.Add( SqlNode.RenameTable( temporaryTableName, table.Info.Name ) );
 
-        foreach ( var ix in table.Indexes )
+        foreach ( var constraint in table.Constraints )
         {
+            if ( constraint.Type != SqlObjectType.Index )
+                continue;
+
+            var ix = ReinterpretCast.To<SqliteIndexBuilder>( constraint );
             if ( ix.PrimaryKey is null )
                 _ongoingStatements.Add( ix.ToCreateNode() );
         }

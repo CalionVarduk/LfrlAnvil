@@ -29,18 +29,18 @@ public static class TableMock
         columnsCollection.Count.Returns( columns.Length );
         columnsCollection.GetEnumerator().Returns( _ => columns.AsEnumerable().GetEnumerator() );
         columnsCollection.Contains( Arg.Any<string>() ).Returns( i => columns.Any( c => c.Name == i.ArgAt<string>( 0 ) ) );
-        columnsCollection.Get( Arg.Any<string>() ).Returns( i => columns.First( c => c.Name == i.ArgAt<string>( 0 ) ) );
-        columnsCollection.TryGet( Arg.Any<string>(), out Arg.Any<ISqlColumn?>() )
-            .Returns(
-                i =>
-                {
-                    i[1] = columns.FirstOrDefault( c => c.Name == i.ArgAt<string>( 0 ) );
-                    return i[1] is not null;
-                } );
+        columnsCollection.GetColumn( Arg.Any<string>() ).Returns( i => columns.First( c => c.Name == i.ArgAt<string>( 0 ) ) );
+        columnsCollection.TryGetColumn( Arg.Any<string>() ).Returns( i => columns.FirstOrDefault( c => c.Name == i.ArgAt<string>( 0 ) ) );
 
         var pk = primaryKey?.Invoke( columnsCollection ) ?? PrimaryKeyMock.Create();
+
+        var constraintsCollection = Substitute.For<ISqlConstraintCollection>();
+        constraintsCollection.Table.Returns( result );
+        constraintsCollection.Count.Returns( 1 );
+        constraintsCollection.PrimaryKey.Returns( pk );
+
         result.Columns.Returns( columnsCollection );
-        result.PrimaryKey.Returns( pk );
+        result.Constraints.Returns( constraintsCollection );
 
         var recordSet = SqlNode.Table( result );
         result.RecordSet.Returns( recordSet );
@@ -75,18 +75,19 @@ public static class TableMock
         columnsCollection.Count.Returns( columns.Length );
         columnsCollection.GetEnumerator().Returns( _ => columns.AsEnumerable().GetEnumerator() );
         columnsCollection.Contains( Arg.Any<string>() ).Returns( i => columns.Any( c => c.Name == i.ArgAt<string>( 0 ) ) );
-        columnsCollection.Get( Arg.Any<string>() ).Returns( i => columns.First( c => c.Name == i.ArgAt<string>( 0 ) ) );
-        columnsCollection.TryGet( Arg.Any<string>(), out Arg.Any<ISqlColumnBuilder?>() )
-            .Returns(
-                i =>
-                {
-                    i[1] = columns.FirstOrDefault( c => c.Name == i.ArgAt<string>( 0 ) );
-                    return i[1] is not null;
-                } );
+        columnsCollection.GetColumn( Arg.Any<string>() ).Returns( i => columns.First( c => c.Name == i.ArgAt<string>( 0 ) ) );
+        columnsCollection.TryGetColumn( Arg.Any<string>() ).Returns( i => columns.FirstOrDefault( c => c.Name == i.ArgAt<string>( 0 ) ) );
 
         var pk = primaryKey?.Invoke( columnsCollection );
+
+        var constraintsCollection = Substitute.For<ISqlConstraintBuilderCollection>();
+        constraintsCollection.Table.Returns( result );
+        constraintsCollection.Count.Returns( pk is null ? 0 : 1 );
+        constraintsCollection.GetPrimaryKey().Returns( _ => pk ?? throw new Exception( "PK is missing" ) );
+        constraintsCollection.TryGetPrimaryKey().Returns( pk );
+
         result.Columns.Returns( columnsCollection );
-        result.PrimaryKey.Returns( pk );
+        result.Constraints.Returns( constraintsCollection );
 
         var recordSet = SqlNode.Table( result );
         result.RecordSet.Returns( recordSet );

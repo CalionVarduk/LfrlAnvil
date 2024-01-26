@@ -56,6 +56,8 @@
     - this would help e.g. for MySql with the different CTE handling between insert into & delete from/update
   - configurable offset without limit (sqlite too): add implicit max limit or throw exception
   - remove MySqlAlterTableNode? change tracker's _ongoingStatements needs it right now
+  - IXs/PKs/FKs => check how mysql handles column type discrepancies and/or prefix length (text/blob)
+    - DB builder may require additional validation
 
 
 - SqlStringConcatAggregateFunctionExpressionNode: add OrderBy extension method only for this node?
@@ -90,16 +92,6 @@
   - a collection of all published events by the connection object should be memorized
   - and replayed for each registered callback, instead of the Closed=>Open event mock
   - event listening should start right after ctor invocation & end right after Open invocation
-
-
-- Version history table:
-  - DB builder should allow to customize the table (& the reader...?)
-  - or at least should know about it => default schema name equals version history table's schema name
-  - also, MySql requires custom functions & procedures, which have to be global
-  - they should be created only when version history table doesn't exist
-  - however, they have to belong to a schema, the default one
-  - so whenever default schema is renamed, they also have to be renamed
-  - & mysql node interpreter needs to know about the default schema name as well
 
 
 ### Reactive.Scheduling
@@ -184,6 +176,13 @@ Implement Sql.Core for PostgreSql
 - SqliteIndexColumnBuilder is a candidate for moving to Sql.Core, as a generic class, where T is a column builder type
   - honestly, pretty much everything could be moved to Sql.Core, as generic abstract classes, that allow to override default behaviors
   - and define new ones
+  - this is a bit bigger than initially assumed:
+    - add public/protected obj builder Id property
+    - add single ReferencingObjects collection
+    - add single ReferencedObjects collection
+    - add possibility to define expression-based IXs (table-scoped validator?)
+    - create common DB builder core class
+    - add possibility to define custom version history table definition & reader delegate (DB builder or DB factory?)
 
 ### Sql.Core: Add DateTime related functions
 Add datetime related functions? kind of depends on other sql dialects

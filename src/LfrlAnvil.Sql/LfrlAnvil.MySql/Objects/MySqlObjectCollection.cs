@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Memory;
+using LfrlAnvil.MySql.Objects.Builders;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Objects;
-using LfrlAnvil.MySql.Objects.Builders;
 
 namespace LfrlAnvil.MySql.Objects;
 
@@ -34,14 +33,15 @@ public sealed class MySqlObjectCollection : ISqlObjectCollection
     }
 
     [Pure]
-    public MySqlObject Get(string name)
+    public MySqlObject GetObject(string name)
     {
         return _map[name];
     }
 
-    public bool TryGet(string name, [MaybeNullWhen( false )] out MySqlObject result)
+    [Pure]
+    public MySqlObject? TryGetObject(string name)
     {
-        return _map.TryGetValue( name, out result );
+        return _map.GetValueOrDefault( name );
     }
 
     [Pure]
@@ -50,9 +50,10 @@ public sealed class MySqlObjectCollection : ISqlObjectCollection
         return GetTypedObject<MySqlTable>( name, SqlObjectType.Table );
     }
 
-    public bool TryGetTable(string name, [MaybeNullWhen( false )] out MySqlTable result)
+    [Pure]
+    public MySqlTable? TryGetTable(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.Table, out result );
+        return TryGetTypedObject<MySqlTable>( name, SqlObjectType.Table );
     }
 
     [Pure]
@@ -61,9 +62,10 @@ public sealed class MySqlObjectCollection : ISqlObjectCollection
         return GetTypedObject<MySqlIndex>( name, SqlObjectType.Index );
     }
 
-    public bool TryGetIndex(string name, [MaybeNullWhen( false )] out MySqlIndex result)
+    [Pure]
+    public MySqlIndex? TryGetIndex(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.Index, out result );
+        return TryGetTypedObject<MySqlIndex>( name, SqlObjectType.Index );
     }
 
     [Pure]
@@ -72,9 +74,10 @@ public sealed class MySqlObjectCollection : ISqlObjectCollection
         return GetTypedObject<MySqlPrimaryKey>( name, SqlObjectType.PrimaryKey );
     }
 
-    public bool TryGetPrimaryKey(string name, [MaybeNullWhen( false )] out MySqlPrimaryKey result)
+    [Pure]
+    public MySqlPrimaryKey? TryGetPrimaryKey(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.PrimaryKey, out result );
+        return TryGetTypedObject<MySqlPrimaryKey>( name, SqlObjectType.PrimaryKey );
     }
 
     [Pure]
@@ -83,9 +86,10 @@ public sealed class MySqlObjectCollection : ISqlObjectCollection
         return GetTypedObject<MySqlForeignKey>( name, SqlObjectType.ForeignKey );
     }
 
-    public bool TryGetForeignKey(string name, [MaybeNullWhen( false )] out MySqlForeignKey result)
+    [Pure]
+    public MySqlForeignKey? TryGetForeignKey(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.ForeignKey, out result );
+        return TryGetTypedObject<MySqlForeignKey>( name, SqlObjectType.ForeignKey );
     }
 
     [Pure]
@@ -94,9 +98,10 @@ public sealed class MySqlObjectCollection : ISqlObjectCollection
         return GetTypedObject<MySqlCheck>( name, SqlObjectType.Check );
     }
 
-    public bool TryGetCheck(string name, [MaybeNullWhen( false )] out MySqlCheck result)
+    [Pure]
+    public MySqlCheck? TryGetCheck(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.Check, out result );
+        return TryGetTypedObject<MySqlCheck>( name, SqlObjectType.Check );
     }
 
     [Pure]
@@ -105,9 +110,10 @@ public sealed class MySqlObjectCollection : ISqlObjectCollection
         return GetTypedObject<MySqlView>( name, SqlObjectType.View );
     }
 
-    public bool TryGetView(string name, [MaybeNullWhen( false )] out MySqlView result)
+    [Pure]
+    public MySqlView? TryGetView(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.View, out result );
+        return TryGetTypedObject<MySqlView>( name, SqlObjectType.View );
     }
 
     [Pure]
@@ -146,7 +152,9 @@ public sealed class MySqlObjectCollection : ISqlObjectCollection
         }
     }
 
-    internal void Populate(MySqlObjectBuilderCollection objects, RentedMemorySequence<MySqlObjectBuilder> tables)
+    internal void AddConstraintsWithoutForeignKeys(
+        MySqlObjectBuilderCollection objects,
+        RentedMemorySequence<MySqlObjectBuilder> foreignKeys)
     {
         foreach ( var b in objects )
         {
@@ -154,25 +162,41 @@ public sealed class MySqlObjectCollection : ISqlObjectCollection
             {
                 case SqlObjectType.Table:
                 {
-                    tables.Push( b );
-                    var tableBuilder = ReinterpretCast.To<MySqlTableBuilder>( b );
-                    var table = new MySqlTable( Schema, tableBuilder );
+                    var builder = ReinterpretCast.To<MySqlTableBuilder>( b );
+                    var table = new MySqlTable( Schema, builder );
                     _map.Add( table.Name, table );
 
-                    foreach ( var ix in table.Indexes )
-                        _map.Add( ix.Name, ix );
+                    foreach ( var cb in builder.Constraints )
+                    {
+                        switch ( cb.Type )
+                        {
+                            case SqlObjectType.Index:
+                            {
+                                var index = table.Constraints.AddIndex( ReinterpretCast.To<MySqlIndexBuilder>( cb ) );
+                                _map.Add( index.Name, index );
+                                break;
+                            }
+                            case SqlObjectType.Check:
+                            {
+                                var check = table.Constraints.AddCheck( ReinterpretCast.To<MySqlCheckBuilder>( cb ) );
+                                _map.Add( check.Name, check );
+                                break;
+                            }
+                            case SqlObjectType.ForeignKey:
+                            {
+                                foreignKeys.Push( cb );
+                                break;
+                            }
+                        }
+                    }
 
-                    foreach ( var chk in table.Checks )
-                        _map.Add( chk.Name, chk );
-
-                    table.SetPrimaryKey( tableBuilder );
-                    _map.Add( table.PrimaryKey.Name, table.PrimaryKey );
+                    var pk = table.Constraints.SetPrimaryKey( builder.Constraints );
+                    _map.Add( pk.Name, pk );
                     break;
                 }
                 case SqlObjectType.View:
                 {
-                    var viewBuilder = ReinterpretCast.To<MySqlViewBuilder>( b );
-                    var view = new MySqlView( Schema, viewBuilder );
+                    var view = new MySqlView( Schema, ReinterpretCast.To<MySqlViewBuilder>( b ) );
                     _map.Add( view.Name, view );
                     break;
                 }
@@ -180,52 +204,44 @@ public sealed class MySqlObjectCollection : ISqlObjectCollection
         }
     }
 
-    internal void Populate(MySqlForeignKeyCollection foreignKeys)
+    internal void AddForeignKey(MySqlForeignKeyBuilder builder, MySqlSchema referencedSchema)
     {
-        foreach ( var fk in foreignKeys )
-            _map.Add( fk.Name, fk );
+        var table = ReinterpretCast.To<MySqlTable>( _map[builder.Table.Name] );
+        var foreignKey = table.Constraints.AddForeignKey(
+            ReinterpretCast.To<MySqlIndex>( _map[builder.OriginIndex.Name] ),
+            ReinterpretCast.To<MySqlIndex>( referencedSchema.Objects._map[builder.ReferencedIndex.Name] ),
+            builder );
+
+        _map.Add( foreignKey.Name, foreignKey );
     }
 
     [Pure]
     private T GetTypedObject<T>(string name, SqlObjectType type)
-        where T : class, ISqlObject
+        where T : MySqlObject
     {
         var obj = _map[name];
-        if ( obj.Type != type )
-            throw new SqlObjectCastException( MySqlDialect.Instance, typeof( T ), obj.GetType() );
-
-        return ReinterpretCast.To<T>( obj );
-    }
-
-    private bool TryGetTypedObject<T>(string name, SqlObjectType type, [MaybeNullWhen( false )] out T result)
-        where T : class, ISqlObject
-    {
-        if ( _map.TryGetValue( name, out var obj ) && obj.Type == type )
-        {
-            result = ReinterpretCast.To<T>( obj );
-            return true;
-        }
-
-        result = null;
-        return false;
+        return obj.Type == type
+            ? ReinterpretCast.To<T>( obj )
+            : throw new SqlObjectCastException( MySqlDialect.Instance, typeof( T ), obj.GetType() );
     }
 
     [Pure]
-    ISqlObject ISqlObjectCollection.Get(string name)
+    private T? TryGetTypedObject<T>(string name, SqlObjectType type)
+        where T : MySqlObject
     {
-        return Get( name );
+        return _map.TryGetValue( name, out var obj ) && obj.Type == type ? ReinterpretCast.To<T>( obj ) : null;
     }
 
-    bool ISqlObjectCollection.TryGet(string name, [MaybeNullWhen( false )] out ISqlObject result)
+    [Pure]
+    ISqlObject ISqlObjectCollection.GetObject(string name)
     {
-        if ( TryGet( name, out var obj ) )
-        {
-            result = obj;
-            return true;
-        }
+        return GetObject( name );
+    }
 
-        result = null;
-        return false;
+    [Pure]
+    ISqlObject? ISqlObjectCollection.TryGetObject(string name)
+    {
+        return TryGetObject( name );
     }
 
     [Pure]
@@ -234,9 +250,10 @@ public sealed class MySqlObjectCollection : ISqlObjectCollection
         return GetTable( name );
     }
 
-    bool ISqlObjectCollection.TryGetTable(string name, [MaybeNullWhen( false )] out ISqlTable result)
+    [Pure]
+    ISqlTable? ISqlObjectCollection.TryGetTable(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.Table, out result );
+        return TryGetTable( name );
     }
 
     [Pure]
@@ -245,9 +262,10 @@ public sealed class MySqlObjectCollection : ISqlObjectCollection
         return GetIndex( name );
     }
 
-    bool ISqlObjectCollection.TryGetIndex(string name, [MaybeNullWhen( false )] out ISqlIndex result)
+    [Pure]
+    ISqlIndex? ISqlObjectCollection.TryGetIndex(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.Index, out result );
+        return TryGetIndex( name );
     }
 
     [Pure]
@@ -256,9 +274,10 @@ public sealed class MySqlObjectCollection : ISqlObjectCollection
         return GetPrimaryKey( name );
     }
 
-    bool ISqlObjectCollection.TryGetPrimaryKey(string name, [MaybeNullWhen( false )] out ISqlPrimaryKey result)
+    [Pure]
+    ISqlPrimaryKey? ISqlObjectCollection.TryGetPrimaryKey(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.PrimaryKey, out result );
+        return TryGetPrimaryKey( name );
     }
 
     [Pure]
@@ -267,9 +286,10 @@ public sealed class MySqlObjectCollection : ISqlObjectCollection
         return GetForeignKey( name );
     }
 
-    bool ISqlObjectCollection.TryGetForeignKey(string name, [MaybeNullWhen( false )] out ISqlForeignKey result)
+    [Pure]
+    ISqlForeignKey? ISqlObjectCollection.TryGetForeignKey(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.ForeignKey, out result );
+        return TryGetForeignKey( name );
     }
 
     [Pure]
@@ -278,9 +298,10 @@ public sealed class MySqlObjectCollection : ISqlObjectCollection
         return GetCheck( name );
     }
 
-    bool ISqlObjectCollection.TryGetCheck(string name, [MaybeNullWhen( false )] out ISqlCheck result)
+    [Pure]
+    ISqlCheck? ISqlObjectCollection.TryGetCheck(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.Check, out result );
+        return TryGetCheck( name );
     }
 
     [Pure]
@@ -289,9 +310,10 @@ public sealed class MySqlObjectCollection : ISqlObjectCollection
         return GetView( name );
     }
 
-    bool ISqlObjectCollection.TryGetView(string name, [MaybeNullWhen( false )] out ISqlView result)
+    [Pure]
+    ISqlView? ISqlObjectCollection.TryGetView(string name)
     {
-        return TryGetTypedObject( name, SqlObjectType.View, out result );
+        return TryGetView( name );
     }
 
     [Pure]

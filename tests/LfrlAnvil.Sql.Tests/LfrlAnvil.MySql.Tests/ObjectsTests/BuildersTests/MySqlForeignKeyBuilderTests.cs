@@ -17,9 +17,9 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
-        var ix2 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
-        var sut = table.ForeignKeys.Create( ix1, ix2 ).SetName( "bar" );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C1" ).Asc() );
+        var ix2 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
+        var sut = table.Constraints.CreateForeignKey( ix1, ix2 ).SetName( "bar" );
 
         var result = sut.ToString();
 
@@ -27,19 +27,19 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldMarkTableForAlteration_WhenForeignKeyReferencesAnotherTable()
+    public void Creation_ShouldMarkTableForAlteration_WhenForeignKeyReferencesAnotherTable()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
 
         var t1 = schema.Objects.CreateTable( "T1" );
-        var ix2 = t1.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() ).Index;
+        var ix2 = t1.Constraints.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() ).Index;
 
         var t2 = schema.Objects.CreateTable( "T2" );
-        var ix1 = t2.SetPrimaryKey( t2.Columns.Create( "C2" ).Asc() ).Index;
+        var ix1 = t2.Constraints.SetPrimaryKey( t2.Columns.Create( "C2" ).Asc() ).Index;
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
-        t2.ForeignKeys.Create( ix1, ix2 );
+        t2.Constraints.CreateForeignKey( ix1, ix2 );
         var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
@@ -54,16 +54,16 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     }
 
     [Fact]
-    public void Create_FollowedByRemove_ShouldDoNothing()
+    public void Creation_FollowedByRemoval_ShouldDoNothing()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
-        var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
-        var sut = table.ForeignKeys.Create( ix1, ix2 );
+        var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
         sut.Remove();
         var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
 
@@ -71,16 +71,16 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldMarkTableForAlteration_WhenForeignKeyIsSelfReference()
+    public void Creation_ShouldMarkTableForAlteration_WhenForeignKeyIsSelfReference()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
-        var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
-        table.ForeignKeys.Create( ix1, ix2 );
+        table.Constraints.CreateForeignKey( ix1, ix2 );
         var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
@@ -99,9 +99,9 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
-        var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
-        var sut = table.ForeignKeys.Create( ix1, ix2 );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -120,9 +120,9 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
-        var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
-        var sut = table.ForeignKeys.Create( ix1, ix2 );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
         var oldName = sut.Name;
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -144,9 +144,9 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
-        var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
-        var sut = table.ForeignKeys.Create( ix1, ix2 );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
         var oldName = sut.Name;
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -159,7 +159,9 @@ public class MySqlForeignKeyBuilderTests : TestsBase
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "bar" );
             sut.FullName.Should().Be( "foo.bar" );
-            schema.Objects.Get( "bar" ).Should().BeSameAs( sut );
+            table.Constraints.GetConstraint( "bar" ).Should().BeSameAs( sut );
+            table.Constraints.Contains( oldName ).Should().BeFalse();
+            schema.Objects.GetObject( "bar" ).Should().BeSameAs( sut );
             schema.Objects.Contains( oldName ).Should().BeFalse();
 
             statements.Should().HaveCount( 1 );
@@ -183,9 +185,9 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
-        var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
-        var sut = table.ForeignKeys.Create( ix1, ix2 );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
 
         var action = Lambda.Of( () => ((ISqlForeignKeyBuilder)sut).SetName( name ) );
 
@@ -199,9 +201,9 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
-        var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
-        var sut = table.ForeignKeys.Create( ix1, ix2 );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
         sut.Remove();
 
         var action = Lambda.Of( () => ((ISqlForeignKeyBuilder)sut).SetName( "bar" ) );
@@ -216,9 +218,9 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
-        var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
-        var sut = table.ForeignKeys.Create( ix1, ix2 );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
 
         var action = Lambda.Of( () => ((ISqlForeignKeyBuilder)sut).SetName( "T" ) );
 
@@ -232,9 +234,9 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
-        var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
-        var sut = table.ForeignKeys.Create( ix1, ix2 );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -253,9 +255,9 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
-        var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
-        var sut = table.ForeignKeys.Create( ix1, ix2 );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -276,9 +278,9 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
-        var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
-        var sut = table.ForeignKeys.Create( ix1, ix2 ).SetName( "bar" );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var sut = table.Constraints.CreateForeignKey( ix1, ix2 ).SetName( "bar" );
         var oldName = sut.Name;
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -291,7 +293,9 @@ public class MySqlForeignKeyBuilderTests : TestsBase
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "FK_T_C2_REF_T" );
             sut.FullName.Should().Be( "foo.FK_T_C2_REF_T" );
-            schema.Objects.Get( "FK_T_C2_REF_T" ).Should().BeSameAs( sut );
+            table.Constraints.GetConstraint( "FK_T_C2_REF_T" ).Should().BeSameAs( sut );
+            table.Constraints.Contains( oldName ).Should().BeFalse();
+            schema.Objects.GetObject( "FK_T_C2_REF_T" ).Should().BeSameAs( sut );
             schema.Objects.Contains( oldName ).Should().BeFalse();
 
             statements.Should().HaveCount( 1 );
@@ -310,9 +314,9 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
-        var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
-        var sut = table.ForeignKeys.Create( ix1, ix2 ).SetName( "bar" );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var sut = table.Constraints.CreateForeignKey( ix1, ix2 ).SetName( "bar" );
         sut.Remove();
 
         var action = Lambda.Of( () => ((ISqlForeignKeyBuilder)sut).SetDefaultName() );
@@ -327,9 +331,9 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
-        var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
-        var sut = table.ForeignKeys.Create( ix1, ix2 ).SetName( "bar" );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var sut = table.Constraints.CreateForeignKey( ix1, ix2 ).SetName( "bar" );
         ix1.SetName( "FK_T_C2_REF_T" );
 
         var action = Lambda.Of( () => ((ISqlForeignKeyBuilder)sut).SetDefaultName() );
@@ -344,9 +348,9 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
-        var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
-        var sut = table.ForeignKeys.Create( ix1, ix2 );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -374,9 +378,9 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
-        var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
-        var sut = table.ForeignKeys.Create( ix1, ix2 );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -395,9 +399,9 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
-        var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
-        var sut = table.ForeignKeys.Create( ix1, ix2 );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -418,9 +422,9 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
-        var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
-        var sut = table.ForeignKeys.Create( ix1, ix2 );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
         sut.Remove();
 
         var action = Lambda.Of( () => ((ISqlForeignKeyBuilder)sut).SetOnDeleteBehavior( ReferenceBehavior.Cascade ) );
@@ -435,9 +439,9 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
-        var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
-        var sut = table.ForeignKeys.Create( ix1, ix2 );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -465,9 +469,9 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
-        var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
-        var sut = table.ForeignKeys.Create( ix1, ix2 );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -486,9 +490,9 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
-        var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
-        var sut = table.ForeignKeys.Create( ix1, ix2 );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -509,9 +513,9 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
-        var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
-        var sut = table.ForeignKeys.Create( ix1, ix2 );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
         sut.Remove();
 
         var action = Lambda.Of( () => ((ISqlForeignKeyBuilder)sut).SetOnUpdateBehavior( ReferenceBehavior.Cascade ) );
@@ -526,9 +530,9 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
-        var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
-        var sut = table.ForeignKeys.Create( ix1, ix2 );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -537,7 +541,7 @@ public class MySqlForeignKeyBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            table.ForeignKeys.Should().BeEmpty();
+            table.Constraints.Contains( sut.Name ).Should().BeFalse();
             schema.Objects.Contains( sut.Name ).Should().BeFalse();
             sut.IsRemoved.Should().BeTrue();
             ix1.OriginatingForeignKeys.Should().BeEmpty();
@@ -557,9 +561,9 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var ix1 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
-        var ix2 = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
-        var sut = table.ForeignKeys.Create( ix1, ix2 );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
 
         _ = schema.Database.GetPendingStatements();
         sut.Remove();
@@ -576,9 +580,9 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     {
         var action = Substitute.For<Action<MySqlForeignKeyBuilder>>();
         var table = MySqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
-        var ix1 = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
-        var ix2 = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
-        var sut = table.ForeignKeys.Create( ix1, ix2 );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C1" ).Asc() );
+        var ix2 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
+        var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
 
         var result = sut.ForMySql( action );
 

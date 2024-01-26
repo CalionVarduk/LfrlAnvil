@@ -186,63 +186,55 @@ public partial class SqliteTableBuilderTests
         }
 
         [Fact]
-        public void Get_ShouldReturnExistingColumn()
+        public void GetColumn_ShouldReturnExistingColumn()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             var expected = sut.Create( "C" );
 
-            var result = ((ISqlColumnBuilderCollection)sut).Get( "C" );
+            var result = ((ISqlColumnBuilderCollection)sut).GetColumn( "C" );
 
             result.Should().BeSameAs( expected );
         }
 
         [Fact]
-        public void Get_ShouldThrowKeyNotFoundException_WhenColumnDoesNotExist()
+        public void GetColumn_ShouldThrowKeyNotFoundException_WhenColumnDoesNotExist()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             sut.Create( "C" );
 
-            var action = Lambda.Of( () => ((ISqlColumnBuilderCollection)sut).Get( "D" ) );
+            var action = Lambda.Of( () => ((ISqlColumnBuilderCollection)sut).GetColumn( "D" ) );
 
             action.Should().ThrowExactly<KeyNotFoundException>();
         }
 
         [Fact]
-        public void TryGet_ShouldReturnExistingColumn()
+        public void TryGetColumn_ShouldReturnExistingColumn()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             var expected = sut.Create( "C" );
 
-            var result = ((ISqlColumnBuilderCollection)sut).TryGet( "C", out var outResult );
+            var result = ((ISqlColumnBuilderCollection)sut).TryGetColumn( "C" );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeTrue();
-                outResult.Should().BeSameAs( expected );
-            }
+            result.Should().BeSameAs( expected );
         }
 
         [Fact]
-        public void TryGet_ShouldReturnFalse_WhenColumnDoesNotExist()
+        public void TryGetColumn_ShouldReturnNull_WhenColumnDoesNotExist()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             sut.Create( "C" );
 
-            var result = ((ISqlColumnBuilderCollection)sut).TryGet( "D", out var outResult );
+            var result = ((ISqlColumnBuilderCollection)sut).TryGetColumn( "D" );
 
-            using ( new AssertionScope() )
-            {
-                result.Should().BeFalse();
-                outResult.Should().BeNull();
-            }
+            result.Should().BeNull();
         }
 
         [Fact]
@@ -287,7 +279,7 @@ public partial class SqliteTableBuilderTests
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
-            table.Indexes.Create( sut.Create( "C" ).Asc() );
+            table.Constraints.CreateIndex( "IX_T", sut.Create( "C" ).Asc() );
 
             var result = sut.Remove( "C" );
 
@@ -305,7 +297,7 @@ public partial class SqliteTableBuilderTests
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             sut.Create( "C1" );
-            table.Indexes.Create( sut.Create( "C2" ).Asc() ).SetFilter( t => t["C1"] != null );
+            table.Constraints.CreateIndex( sut.Create( "C2" ).Asc() ).SetFilter( t => t["C1"] != null );
 
             var result = sut.Remove( "C1" );
 
@@ -323,7 +315,7 @@ public partial class SqliteTableBuilderTests
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             sut.Create( "A" );
-            table.SetPrimaryKey( sut.Create( "B" ).Asc() );
+            table.Constraints.SetPrimaryKey( sut.Create( "B" ).Asc() );
             schema.Objects.CreateView( "V", table.ToRecordSet().ToDataSource().Select( s => new[] { s.From["A"].AsSelf() } ) );
 
             var result = sut.Remove( "A" );
@@ -342,8 +334,8 @@ public partial class SqliteTableBuilderTests
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             sut.Create( "A" );
-            table.SetPrimaryKey( sut.Create( "B" ).Asc() );
-            table.Checks.Create( table.RecordSet["A"] > SqlNode.Literal( 0 ) );
+            table.Constraints.SetPrimaryKey( "PK_T", sut.Create( "B" ).Asc() );
+            table.Constraints.CreateCheck( table.RecordSet["A"] > SqlNode.Literal( 0 ) );
 
             var result = sut.Remove( "A" );
 

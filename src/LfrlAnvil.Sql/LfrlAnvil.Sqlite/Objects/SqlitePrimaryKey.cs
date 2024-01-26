@@ -3,10 +3,10 @@ using LfrlAnvil.Sqlite.Objects.Builders;
 
 namespace LfrlAnvil.Sqlite.Objects;
 
-public sealed class SqlitePrimaryKey : SqliteObject, ISqlPrimaryKey
+public sealed class SqlitePrimaryKey : SqliteConstraint, ISqlPrimaryKey
 {
     internal SqlitePrimaryKey(SqliteIndex index, SqlitePrimaryKeyBuilder builder)
-        : base( builder )
+        : base( index.Table, builder )
     {
         Index = index;
         FullName = builder.FullName;

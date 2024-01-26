@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Sql.Objects;
@@ -34,14 +33,15 @@ public sealed class SqliteColumnCollection : ISqlColumnCollection
     }
 
     [Pure]
-    public SqliteColumn Get(string name)
+    public SqliteColumn GetColumn(string name)
     {
         return _map[name];
     }
 
-    public bool TryGet(string name, [MaybeNullWhen( false )] out SqliteColumn result)
+    [Pure]
+    public SqliteColumn? TryGetColumn(string name)
     {
-        return _map.TryGetValue( name, out result );
+        return _map.GetValueOrDefault( name );
     }
 
     [Pure]
@@ -81,21 +81,15 @@ public sealed class SqliteColumnCollection : ISqlColumnCollection
     }
 
     [Pure]
-    ISqlColumn ISqlColumnCollection.Get(string name)
+    ISqlColumn ISqlColumnCollection.GetColumn(string name)
     {
-        return Get( name );
+        return GetColumn( name );
     }
 
-    bool ISqlColumnCollection.TryGet(string name, [MaybeNullWhen( false )] out ISqlColumn result)
+    [Pure]
+    ISqlColumn? ISqlColumnCollection.TryGetColumn(string name)
     {
-        if ( TryGet( name, out var column ) )
-        {
-            result = column;
-            return true;
-        }
-
-        result = null;
-        return false;
+        return TryGetColumn( name );
     }
 
     [Pure]

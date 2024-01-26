@@ -61,6 +61,26 @@ public partial class SqliteSchemaBuilderTests : TestsBase
     }
 
     [Fact]
+    public void SetName_ShouldUpdateName_WhenNameChangesAndNewNameIsEmpty()
+    {
+        var oldName = Fixture.Create<string>();
+        var db = SqliteDatabaseBuilderMock.Create();
+        db.Schemas.Default.SetName( "foo" );
+        var sut = db.Schemas.Create( oldName );
+
+        var result = ((ISqlSchemaBuilder)sut).SetName( string.Empty );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.Name.Should().BeEmpty();
+            sut.FullName.Should().BeEmpty();
+            db.Schemas.Contains( string.Empty ).Should().BeTrue();
+            db.Schemas.Contains( oldName ).Should().BeFalse();
+        }
+    }
+
+    [Fact]
     public void SetName_ShouldUpdateName_WhenNameChangesAndSchemaHasObjects()
     {
         var (oldName, newName) = ("foo", "bar");
@@ -70,20 +90,20 @@ public partial class SqliteSchemaBuilderTests : TestsBase
         var t1 = sut.Objects.CreateTable( "T1" );
         var c1 = t1.Columns.Create( "C1" );
         var c2 = t1.Columns.Create( "C2" ).MarkAsNullable();
-        var pk1 = t1.SetPrimaryKey( c1.Asc() );
-        var ix1 = t1.Indexes.Create( c2.Asc() );
-        var fk1 = t1.ForeignKeys.Create( ix1, pk1.Index );
-        var chk1 = t1.Checks.Create( c1.Node != SqlNode.Literal( 0 ) );
+        var pk1 = t1.Constraints.SetPrimaryKey( c1.Asc() );
+        var ix1 = t1.Constraints.CreateIndex( c2.Asc() );
+        var fk1 = t1.Constraints.CreateForeignKey( ix1, pk1.Index );
+        var chk1 = t1.Constraints.CreateCheck( "CHK_T1_0", c1.Node != SqlNode.Literal( 0 ) );
 
         var t2 = sut.Objects.CreateTable( "T2" );
         var c3 = t2.Columns.Create( "C3" );
-        var pk2 = t2.SetPrimaryKey( c3.Asc() );
-        var fk2 = t2.ForeignKeys.Create( pk2.Index, pk1.Index );
+        var pk2 = t2.Constraints.SetPrimaryKey( c3.Asc() );
+        var fk2 = t2.Constraints.CreateForeignKey( pk2.Index, pk1.Index );
 
         var t3 = sut.Objects.CreateTable( "T3" );
         var c4 = t3.Columns.Create( "C4" );
-        var pk3 = t3.SetPrimaryKey( c4.Asc() );
-        var chk2 = t3.Checks.Create( c4.Node > SqlNode.Literal( 10 ) );
+        var pk3 = t3.Constraints.SetPrimaryKey( c4.Asc() );
+        var chk2 = t3.Constraints.CreateCheck( "CHK_T3_0", c4.Node > SqlNode.Literal( 10 ) );
 
         var v1 = sut.Objects.CreateView(
             "V1",
@@ -243,32 +263,32 @@ INNER JOIN ""bar_V1"" ON TRUE;" ) );
         var t1 = sut.Objects.CreateTable( "T1" );
         var c1 = t1.Columns.Create( "C1" );
         var c2 = t1.Columns.Create( "C2" ).MarkAsNullable();
-        var pk1 = t1.SetPrimaryKey( c1.Asc() );
-        var ix1 = t1.Indexes.Create( c2.Asc() );
-        var fk1 = t1.ForeignKeys.Create( ix1, pk1.Index );
-        var chk1 = t1.Checks.Create( c1.Node != null );
+        var pk1 = t1.Constraints.SetPrimaryKey( c1.Asc() );
+        var ix1 = t1.Constraints.CreateIndex( c2.Asc() );
+        var fk1 = t1.Constraints.CreateForeignKey( ix1, pk1.Index );
+        var chk1 = t1.Constraints.CreateCheck( c1.Node != null );
 
         var t2 = sut.Objects.CreateTable( "T2" );
         var c3 = t2.Columns.Create( "C3" );
         var c4 = t2.Columns.Create( "C4" );
-        var pk2 = t2.SetPrimaryKey( c3.Asc() );
-        var ix2 = t2.Indexes.Create( c4.Asc() );
-        var fk2 = t2.ForeignKeys.Create( ix2, pk1.Index );
+        var pk2 = t2.Constraints.SetPrimaryKey( c3.Asc() );
+        var ix2 = t2.Constraints.CreateIndex( c4.Asc() );
+        var fk2 = t2.Constraints.CreateForeignKey( ix2, pk1.Index );
 
         var t3 = sut.Objects.CreateTable( "T3" );
         var c5 = t3.Columns.Create( "C5" );
         var c6 = t3.Columns.Create( "C6" );
-        var pk3 = t3.SetPrimaryKey( c5.Asc() );
-        var fk3 = t3.ForeignKeys.Create( pk3.Index, pk2.Index );
-        var chk2 = t3.Checks.Create( c5.Node > SqlNode.Literal( 0 ) );
+        var pk3 = t3.Constraints.SetPrimaryKey( c5.Asc() );
+        var fk3 = t3.Constraints.CreateForeignKey( pk3.Index, pk2.Index );
+        var chk2 = t3.Constraints.CreateCheck( c5.Node > SqlNode.Literal( 0 ) );
 
         var t4 = sut.Objects.CreateTable( "T4" );
         var c7 = t4.Columns.Create( "C7" );
-        var pk4 = t4.SetPrimaryKey( c7.Asc() );
-        var fk4 = t4.ForeignKeys.Create( pk4.Index, pk3.Index );
+        var pk4 = t4.Constraints.SetPrimaryKey( c7.Asc() );
+        var fk4 = t4.Constraints.CreateForeignKey( pk4.Index, pk3.Index );
 
-        var ix3 = t3.Indexes.Create( c6.Asc() );
-        var fk5 = t3.ForeignKeys.Create( ix3, pk4.Index );
+        var ix3 = t3.Constraints.CreateIndex( c6.Asc() );
+        var fk5 = t3.Constraints.CreateForeignKey( ix3, pk4.Index );
 
         var v1 = sut.Objects.CreateView(
             "V1",
@@ -334,7 +354,7 @@ INNER JOIN ""bar_V1"" ON TRUE;" ) );
                       ""C5"" ANY NOT NULL,
                       ""C6"" ANY NOT NULL,
                       CONSTRAINT ""foo_PK_T3"" PRIMARY KEY (""C5"" ASC),
-                      CONSTRAINT ""foo_CHK_T3_0"" CHECK (""C5"" > 0),
+                      CONSTRAINT ""foo_CHK_T3_{GUID}"" CHECK (""C5"" > 0),
                       CONSTRAINT ""foo_FK_T3_C5_REF_T2"" FOREIGN KEY (""C5"") REFERENCES ""foo_T2"" (""C3"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T3__{GUID}__"" (""C5"", ""C6"")
@@ -357,7 +377,7 @@ INNER JOIN ""bar_V1"" ON TRUE;" ) );
     public void Remove_ShouldThrowSqliteObjectBuilderException_WhenAttemptingToRemoveDefaultSchema()
     {
         var db = SqliteDatabaseBuilderMock.Create();
-        var sut = db.Schemas.Default;
+        var sut = db.Schemas.Default.SetName( "foo" );
 
         var action = Lambda.Of( () => sut.Remove() );
 
@@ -373,15 +393,15 @@ INNER JOIN ""bar_V1"" ON TRUE;" ) );
         var sut = db.Schemas.Create( Fixture.Create<string>() );
         var table = sut.Objects.CreateTable( "T1" );
         var column = table.Columns.Create( "C1" );
-        table.SetPrimaryKey( column.Asc() );
+        table.Constraints.SetPrimaryKey( column.Asc() );
 
         var otherTable = db.Schemas.Default.Objects.CreateTable( "T2" );
         var otherColumn = otherTable.Columns.Create( "C2" );
         var otherColumn2 = otherTable.Columns.Create( "C3" );
-        otherTable.SetPrimaryKey( otherColumn.Asc() );
-        var otherIndex = otherTable.Indexes.Create( otherColumn2.Asc() );
-        otherTable.ForeignKeys.Create( otherTable.PrimaryKey!.Index, table.PrimaryKey!.Index );
-        otherTable.ForeignKeys.Create( otherIndex, table.PrimaryKey!.Index );
+        otherTable.Constraints.SetPrimaryKey( otherColumn.Asc() );
+        var otherIndex = otherTable.Constraints.CreateIndex( otherColumn2.Asc() );
+        otherTable.Constraints.CreateForeignKey( otherTable.Constraints.GetPrimaryKey().Index, table.Constraints.GetPrimaryKey().Index );
+        otherTable.Constraints.CreateForeignKey( otherIndex, table.Constraints.GetPrimaryKey().Index );
 
         var action = Lambda.Of( () => sut.Remove() );
 
@@ -397,7 +417,7 @@ INNER JOIN ""bar_V1"" ON TRUE;" ) );
         var sut = db.Schemas.Create( Fixture.Create<string>() );
         var table = sut.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C" );
-        table.SetPrimaryKey( column.Asc() );
+        table.Constraints.SetPrimaryKey( column.Asc() );
 
         db.Schemas.Default.Objects.CreateView( "V", table.ToRecordSet().ToDataSource().Select( s => new[] { s.GetAll() } ) );
 

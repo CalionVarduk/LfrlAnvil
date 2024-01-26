@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
@@ -13,9 +12,10 @@ public interface ISqlSchemaBuilderCollection : IReadOnlyCollection<ISqlSchemaBui
     bool Contains(string name);
 
     [Pure]
-    ISqlSchemaBuilder Get(string name);
+    ISqlSchemaBuilder GetSchema(string name);
 
-    bool TryGet(string name, [MaybeNullWhen( false )] out ISqlSchemaBuilder result);
+    [Pure]
+    ISqlSchemaBuilder? TryGetSchema(string name);
 
     ISqlSchemaBuilder Create(string name);
     ISqlSchemaBuilder GetOrCreate(string name);

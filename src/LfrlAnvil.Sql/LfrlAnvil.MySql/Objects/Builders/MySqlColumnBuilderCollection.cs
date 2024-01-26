@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -49,14 +48,15 @@ public sealed class MySqlColumnBuilderCollection : ISqlColumnBuilderCollection
     }
 
     [Pure]
-    public MySqlColumnBuilder Get(string name)
+    public MySqlColumnBuilder GetColumn(string name)
     {
         return _map[name];
     }
 
-    public bool TryGet(string name, [MaybeNullWhen( false )] out MySqlColumnBuilder result)
+    [Pure]
+    public MySqlColumnBuilder? TryGetColumn(string name)
     {
-        return _map.TryGetValue( name, out result );
+        return _map.GetValueOrDefault( name );
     }
 
     public MySqlColumnBuilder Create(string name)
@@ -155,27 +155,24 @@ public sealed class MySqlColumnBuilderCollection : ISqlColumnBuilderCollection
         _map.Clear();
     }
 
-    internal void Clear()
+    internal void MarkAllAsRemoved()
     {
+        foreach ( var column in _map.Values )
+            column.MarkAsRemoved();
+
         _map.Clear();
     }
 
     [Pure]
-    ISqlColumnBuilder ISqlColumnBuilderCollection.Get(string name)
+    ISqlColumnBuilder ISqlColumnBuilderCollection.GetColumn(string name)
     {
-        return Get( name );
+        return GetColumn( name );
     }
 
-    bool ISqlColumnBuilderCollection.TryGet(string name, [MaybeNullWhen( false )] out ISqlColumnBuilder result)
+    [Pure]
+    ISqlColumnBuilder? ISqlColumnBuilderCollection.TryGetColumn(string name)
     {
-        if ( TryGet( name, out var column ) )
-        {
-            result = column;
-            return true;
-        }
-
-        result = null;
-        return false;
+        return TryGetColumn( name );
     }
 
     ISqlColumnBuilder ISqlColumnBuilderCollection.Create(string name)

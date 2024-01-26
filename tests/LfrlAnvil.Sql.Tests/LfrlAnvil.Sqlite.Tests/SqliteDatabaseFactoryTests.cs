@@ -90,7 +90,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
                 b =>
                 {
                     var t = b.Schemas.Default.Objects.CreateTable( "T" );
-                    t.SetPrimaryKey( t.Columns.Create( "C" ).Asc() );
+                    t.Constraints.SetPrimaryKey( t.Columns.Create( "C" ).Asc() );
                     b.SetDetachedMode();
                 } ),
             SqlDatabaseVersion.Create(
@@ -275,7 +275,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
                 b =>
                 {
                     var t = b.Schemas.Default.Objects.CreateTable( "T" );
-                    t.SetPrimaryKey( t.Columns.Create( "C1" ).SetType<int>().Asc() );
+                    t.Constraints.SetPrimaryKey( t.Columns.Create( "C1" ).SetType<int>().Asc() );
                     t.Columns.Create( "C2" ).SetType<int>().MarkAsNullable();
                     b.AddStatement( "INSERT INTO T (C1, C2) VALUES (1, NULL), (2, 1), (3, 5), (4, 6)" );
                 } ),
@@ -286,8 +286,8 @@ public class SqliteDatabaseFactoryTests : TestsBase
                 {
                     b.Schemas.Default.SetName( "foo" );
                     var t = b.Schemas.Default.Objects.GetTable( "T" );
-                    var ix = t.Indexes.Create( t.Columns.Get( "C2" ).Asc() );
-                    t.ForeignKeys.Create( ix, t.PrimaryKey!.Index );
+                    var ix = t.Constraints.CreateIndex( t.Columns.GetColumn( "C2" ).Asc() );
+                    t.Constraints.CreateForeignKey( ix, t.Constraints.GetPrimaryKey().Index );
                 } ),
             SqlDatabaseVersion.Create(
                 Version.Parse( "0.3" ),
@@ -648,7 +648,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
                 b =>
                 {
                     var table = b.Schemas.Default.Objects.CreateTable( "T" );
-                    table.SetPrimaryKey( table.Columns.Create( "A" ).Asc() );
+                    table.Constraints.SetPrimaryKey( table.Columns.Create( "A" ).Asc() );
                 } ),
             SqlDatabaseVersion.Create(
                 Version.Parse( "0.0.2" ),
@@ -656,7 +656,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
                 {
                     b.Schemas.Default.Objects.GetTable( "T" ).Columns.Create( "B" );
                     var table = b.Schemas.Default.Objects.CreateTable( "U" );
-                    table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
+                    table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
                 } ) );
 
         sut.Create(
@@ -685,7 +685,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
                 b =>
                 {
                     var table = b.Schemas.Default.Objects.CreateTable( "T" );
-                    table.SetPrimaryKey( table.Columns.Create( "A" ).Asc() );
+                    table.Constraints.SetPrimaryKey( table.Columns.Create( "A" ).Asc() );
                 } ),
             SqlDatabaseVersion.Create(
                 Version.Parse( "0.0.2" ),

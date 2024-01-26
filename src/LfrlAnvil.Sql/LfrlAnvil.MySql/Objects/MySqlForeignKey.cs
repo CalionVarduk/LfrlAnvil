@@ -4,10 +4,10 @@ using LfrlAnvil.MySql.Objects.Builders;
 
 namespace LfrlAnvil.MySql.Objects;
 
-public sealed class MySqlForeignKey : MySqlObject, ISqlForeignKey
+public sealed class MySqlForeignKey : MySqlConstraint, ISqlForeignKey
 {
     internal MySqlForeignKey(MySqlIndex originIndex, MySqlIndex referencedIndex, MySqlForeignKeyBuilder builder)
-        : base( builder )
+        : base( originIndex.Table, builder )
     {
         OriginIndex = originIndex;
         ReferencedIndex = referencedIndex;

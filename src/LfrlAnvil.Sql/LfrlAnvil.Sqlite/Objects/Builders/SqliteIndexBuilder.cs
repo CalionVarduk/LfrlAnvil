@@ -14,7 +14,7 @@ using LfrlAnvil.Sqlite.Internal;
 
 namespace LfrlAnvil.Sqlite.Objects.Builders;
 
-public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
+public sealed class SqliteIndexBuilder : SqliteConstraintBuilder, ISqlIndexBuilder
 {
     private Dictionary<ulong, SqliteForeignKeyBuilder>? _originatingForeignKeys;
     private Dictionary<ulong, SqliteForeignKeyBuilder>? _referencingForeignKeys;
@@ -23,9 +23,8 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
     private string _fullName;
 
     internal SqliteIndexBuilder(SqliteTableBuilder table, SqliteIndexColumnBuilder[] columns, string name, bool isUnique)
-        : base( table.Database.GetNextId(), name, SqlObjectType.Index )
+        : base( table, name, SqlObjectType.Index )
     {
-        Table = table;
         IsUnique = isUnique;
         _columns = columns;
         PrimaryKey = null;
@@ -40,7 +39,6 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
             c.Column.AddReferencingIndex( this );
     }
 
-    public SqliteTableBuilder Table { get; }
     public SqlitePrimaryKeyBuilder? PrimaryKey { get; private set; }
     public bool IsUnique { get; private set; }
     public SqlConditionNode? Filter { get; private set; }
@@ -68,7 +66,6 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
         }
     }
 
-    ISqlTableBuilder ISqlIndexBuilder.Table => Table;
     ISqlPrimaryKeyBuilder? ISqlIndexBuilder.PrimaryKey => PrimaryKey;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
     ReadOnlyMemory<ISqlIndexColumnBuilder> ISqlIndexBuilder.Columns => _columns;
@@ -76,15 +73,15 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
     IReadOnlyCollection<ISqlForeignKeyBuilder> ISqlIndexBuilder.ReferencingForeignKeys => ReferencingForeignKeys;
     IReadOnlyCollection<ISqlColumnBuilder> ISqlIndexBuilder.ReferencedFilterColumns => ReferencedFilterColumns;
 
-    public SqliteIndexBuilder SetDefaultName()
+    public new SqliteIndexBuilder SetName(string name)
     {
-        return SetName( SqliteHelpers.GetDefaultIndexName( Table, _columns, IsUnique ) );
+        base.SetName( name );
+        return this;
     }
 
-    public SqliteIndexBuilder SetName(string name)
+    public new SqliteIndexBuilder SetDefaultName()
     {
-        EnsureNotRemoved();
-        SetNameCore( name );
+        base.SetDefaultName();
         return this;
     }
 
@@ -177,27 +174,32 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
         _referencingForeignKeys?.Remove( foreignKey.Id );
     }
 
-    [Pure]
-    internal bool AreColumnsEqual(ReadOnlyMemory<ISqlIndexColumnBuilder> columns)
-    {
-        return Table.Indexes.Comparer.Equals( _columns, columns );
-    }
-
-    internal void UpdateFullName()
+    internal override void UpdateFullName()
     {
         _fullName = SqliteHelpers.GetFullName( Table.Schema.Name, Name );
+    }
+
+    internal void ClearOriginatingForeignKeys()
+    {
+        _originatingForeignKeys = null;
     }
 
     internal void ClearOriginatingForeignKeysInto(RentedMemorySequenceSpan<SqliteObjectBuilder> buffer)
     {
         _originatingForeignKeys?.Values.CopyTo( buffer );
-        _originatingForeignKeys = null;
+        ClearOriginatingForeignKeys();
     }
 
     internal void ClearReferencingForeignKeysInto(RentedMemorySequenceSpan<SqliteObjectBuilder> buffer)
     {
         _referencingForeignKeys?.Values.CopyTo( buffer );
         _referencingForeignKeys?.Clear();
+    }
+
+    [Pure]
+    protected override string GetDefaultName()
+    {
+        return SqliteHelpers.GetDefaultIndexName( Table, _columns, IsUnique );
     }
 
     protected override void AssertRemoval()
@@ -237,7 +239,6 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
             Database.ChangeTracker.PrimaryKeyUpdated( this, pk );
         }
 
-        var columns = _columns;
         foreach ( var c in _columns )
             c.Column.RemoveReferencingIndex( this );
 
@@ -252,7 +253,7 @@ public sealed class SqliteIndexBuilder : SqliteObjectBuilder, ISqlIndexBuilder
         }
 
         Table.Schema.Objects.Remove( Name );
-        Table.Indexes.Remove( columns );
+        Table.Constraints.Remove( Name );
         Database.ChangeTracker.ObjectRemoved( Table, this );
     }
 

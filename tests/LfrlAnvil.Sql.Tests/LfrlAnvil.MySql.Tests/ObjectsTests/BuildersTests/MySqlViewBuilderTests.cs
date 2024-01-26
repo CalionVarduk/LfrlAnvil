@@ -14,7 +14,7 @@ namespace LfrlAnvil.MySql.Tests.ObjectsTests.BuildersTests;
 public class MySqlViewBuilderTests : TestsBase
 {
     [Fact]
-    public void Create_ShouldPrepareCorrectStatement()
+    public void Creation_ShouldPrepareCorrectStatement()
     {
         var db = MySqlDatabaseBuilderMock.Create();
         var schema = db.Schemas.Create( "foo" );
@@ -36,7 +36,7 @@ public class MySqlViewBuilderTests : TestsBase
     }
 
     [Fact]
-    public void Create_FollowedByRemove_ShouldDoNothing()
+    public void Creation_FollowedByRemoval_ShouldDoNothing()
     {
         var db = MySqlDatabaseBuilderMock.Create();
         var schema = db.Schemas.Create( "foo" );
@@ -214,7 +214,7 @@ public class MySqlViewBuilderTests : TestsBase
         var (name1, name2) = Fixture.CreateDistinctCollection<string>( count: 2 );
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Default;
         var other = schema.Objects.CreateTable( name2 );
-        other.SetPrimaryKey( other.Columns.Create( "C" ).Asc() );
+        other.Constraints.SetPrimaryKey( other.Columns.Create( "C" ).Asc() );
         var sut = schema.Objects.CreateView( name1, SqlNode.RawQuery( "SELECT * FROM foo" ) );
 
         var action = Lambda.Of( () => sut.SetName( name2 ) );

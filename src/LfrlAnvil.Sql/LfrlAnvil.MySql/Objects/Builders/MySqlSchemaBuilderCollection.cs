@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -38,14 +37,15 @@ public sealed class MySqlSchemaBuilderCollection : ISqlSchemaBuilderCollection
     }
 
     [Pure]
-    public MySqlSchemaBuilder Get(string name)
+    public MySqlSchemaBuilder GetSchema(string name)
     {
         return _map[name];
     }
 
-    public bool TryGet(string name, [MaybeNullWhen( false )] out MySqlSchemaBuilder result)
+    [Pure]
+    public MySqlSchemaBuilder? TryGetSchema(string name)
     {
-        return _map.TryGetValue( name, out result );
+        return _map.GetValueOrDefault( name );
     }
 
     public MySqlSchemaBuilder Create(string name)
@@ -135,21 +135,15 @@ public sealed class MySqlSchemaBuilderCollection : ISqlSchemaBuilderCollection
     }
 
     [Pure]
-    ISqlSchemaBuilder ISqlSchemaBuilderCollection.Get(string name)
+    ISqlSchemaBuilder ISqlSchemaBuilderCollection.GetSchema(string name)
     {
-        return Get( name );
+        return GetSchema( name );
     }
 
-    bool ISqlSchemaBuilderCollection.TryGet(string name, [MaybeNullWhen( false )] out ISqlSchemaBuilder result)
+    [Pure]
+    ISqlSchemaBuilder? ISqlSchemaBuilderCollection.TryGetSchema(string name)
     {
-        if ( TryGet( name, out var schema ) )
-        {
-            result = schema;
-            return true;
-        }
-
-        result = null;
-        return false;
+        return TryGetSchema( name );
     }
 
     ISqlSchemaBuilder ISqlSchemaBuilderCollection.Create(string name)

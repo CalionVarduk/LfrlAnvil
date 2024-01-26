@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Sql.Objects;
@@ -12,7 +11,8 @@ public interface ISqlViewDataFieldCollection : IReadOnlyCollection<ISqlViewDataF
     bool Contains(string name);
 
     [Pure]
-    ISqlViewDataField Get(string name);
+    ISqlViewDataField GetField(string name);
 
-    bool TryGet(string name, [MaybeNullWhen( false )] out ISqlViewDataField result);
+    [Pure]
+    ISqlViewDataField? TryGetField(string name);
 }

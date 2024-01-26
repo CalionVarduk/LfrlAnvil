@@ -14,10 +14,10 @@ public class SqliteViewDataFieldTests : TestsBase
         schemaBuilder.Objects.CreateView( "V", SqlNode.RawRecordSet( "bar" ).ToDataSource().Select( s => new[] { s.From["a"].AsSelf() } ) );
 
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
-        var schema = db.Schemas.Get( "foo" );
+        var schema = db.Schemas.GetSchema( "foo" );
         var view = schema.Objects.GetView( "V" );
 
-        ISqlViewDataField sut = view.DataFields.Get( "a" );
+        ISqlViewDataField sut = view.DataFields.GetField( "a" );
 
         using ( new AssertionScope() )
         {

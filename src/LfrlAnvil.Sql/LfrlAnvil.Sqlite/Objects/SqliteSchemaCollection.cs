@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Sql;
@@ -18,31 +17,37 @@ public sealed class SqliteSchemaCollection : ISqlSchemaCollection
     {
         Database = database;
 
-        using var tables = builders.Database.ObjectPool.GreedyRent();
+        using var foreignKeys = builders.Database.ObjectPool.GreedyRent();
 
         _map = new Dictionary<string, SqliteSchema>( capacity: builders.Count, comparer: StringComparer.OrdinalIgnoreCase );
         foreach ( var b in builders )
-            _map.Add( b.Name, SqliteSchema.Create( database, b, tables ) );
+        {
+            var schema = new SqliteSchema( Database, b );
+            schema.Objects.AddConstraintsWithoutForeignKeys( b.Objects, foreignKeys );
+            _map.Add( schema.Name, schema );
+        }
 
         Default = _map[builders.Default.Name];
+        foreignKeys.Refresh();
 
-        tables.Refresh();
         SqliteSchemaBuilder? tableSchemaBuilder = null;
         SqliteSchema? tableSchema = null;
 
-        foreach ( var o in tables )
+        foreach ( var builder in foreignKeys )
         {
-            var tableBuilder = ReinterpretCast.To<SqliteTableBuilder>( o );
-            if ( ! ReferenceEquals( tableSchemaBuilder, tableBuilder.Schema ) )
+            var fk = ReinterpretCast.To<SqliteForeignKeyBuilder>( builder );
+            if ( ! ReferenceEquals( tableSchemaBuilder, fk.OriginIndex.Table.Schema ) )
             {
-                tableSchemaBuilder = tableBuilder.Schema;
+                tableSchemaBuilder = fk.OriginIndex.Table.Schema;
                 tableSchema = _map[tableSchemaBuilder.Name];
             }
 
             Assume.IsNotNull( tableSchema );
-            var table = tableSchema.Objects.GetTable( tableBuilder.Name );
-            table.ForeignKeys.Populate( this, tableBuilder.ForeignKeys );
-            tableSchema.Objects.Populate( table.ForeignKeys );
+            var referencedSchema = ReferenceEquals( tableSchemaBuilder, fk.ReferencedIndex.Table.Schema )
+                ? tableSchema
+                : _map[fk.ReferencedIndex.Table.Schema.Name];
+
+            tableSchema.Objects.AddForeignKey( fk, referencedSchema );
         }
     }
 
@@ -60,14 +65,15 @@ public sealed class SqliteSchemaCollection : ISqlSchemaCollection
     }
 
     [Pure]
-    public SqliteSchema Get(string name)
+    public SqliteSchema GetSchema(string name)
     {
         return _map[name];
     }
 
-    public bool TryGet(string name, [MaybeNullWhen( false )] out SqliteSchema result)
+    [Pure]
+    public SqliteSchema? TryGetSchema(string name)
     {
-        return _map.TryGetValue( name, out result );
+        return _map.GetValueOrDefault( name );
     }
 
     [Pure]
@@ -107,21 +113,15 @@ public sealed class SqliteSchemaCollection : ISqlSchemaCollection
     }
 
     [Pure]
-    ISqlSchema ISqlSchemaCollection.Get(string name)
+    ISqlSchema ISqlSchemaCollection.GetSchema(string name)
     {
-        return Get( name );
+        return GetSchema( name );
     }
 
-    bool ISqlSchemaCollection.TryGet(string name, [MaybeNullWhen( false )] out ISqlSchema result)
+    [Pure]
+    ISqlSchema? ISqlSchemaCollection.TryGetSchema(string name)
     {
-        if ( TryGet( name, out var schema ) )
-        {
-            result = schema;
-            return true;
-        }
-
-        result = null;
-        return false;
+        return TryGetSchema( name );
     }
 
     [Pure]

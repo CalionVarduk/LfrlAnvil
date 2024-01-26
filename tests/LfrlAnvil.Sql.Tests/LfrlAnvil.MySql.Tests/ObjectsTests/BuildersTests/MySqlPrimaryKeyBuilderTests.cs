@@ -16,7 +16,7 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var sut = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).SetName( "bar" );
+        var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).SetName( "bar" );
 
         var result = sut.ToString();
 
@@ -24,11 +24,37 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
     }
 
     [Fact]
+    public void Change_ShouldMarkTableForAlteration()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var c1 = table.Columns.Create( "C1" ).SetType<int>();
+        var c2 = table.Columns.Create( "C2" ).SetType<int>();
+        table.Constraints.SetPrimaryKey( c1.Asc() );
+
+        var startStatementCount = schema.Database.GetPendingStatements().Length;
+
+        table.Constraints.SetPrimaryKey( c2.Asc() );
+        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+
+        using ( new AssertionScope() )
+        {
+            statements.Should().HaveCount( 1 );
+            statements.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .SatisfySql(
+                    @"ALTER TABLE `foo`.`T`
+                      DROP PRIMARY KEY,
+                      ADD CONSTRAINT `PK_T` PRIMARY KEY (`C2` ASC);" );
+        }
+    }
+
+    [Fact]
     public void SetName_ShouldDoNothing_WhenNewNameEqualsOldName()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var sut = table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
+        var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -47,7 +73,7 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var sut = table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
+        var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         var oldName = sut.Name;
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -69,7 +95,7 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var sut = table.SetPrimaryKey( table.Columns.Create( "C" ).SetType<int>().Asc() );
+        var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).SetType<int>().Asc() );
         var oldName = sut.Name;
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -82,7 +108,9 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "bar" );
             sut.FullName.Should().Be( "foo.bar" );
-            schema.Objects.Get( "bar" ).Should().BeSameAs( sut );
+            table.Constraints.GetConstraint( "bar" ).Should().BeSameAs( sut );
+            table.Constraints.Contains( oldName ).Should().BeFalse();
+            schema.Objects.GetObject( "bar" ).Should().BeSameAs( sut );
             schema.Objects.Contains( oldName ).Should().BeFalse();
 
             statements.Should().HaveCount( 1 );
@@ -106,24 +134,9 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var sut = table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
+        var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
 
         var action = Lambda.Of( () => ((ISqlPrimaryKeyBuilder)sut).SetName( name ) );
-
-        action.Should()
-            .ThrowExactly<MySqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
-    }
-
-    [Fact]
-    public void SetDefaultName_ShouldThrowMySqlObjectBuilderException_WhenNewNameAlreadyExistsInSchema()
-    {
-        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
-        var table = schema.Objects.CreateTable( "T" );
-        var sut = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).SetName( "bar" );
-        table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).SetName( "PK_T" );
-
-        var action = Lambda.Of( () => ((ISqlPrimaryKeyBuilder)sut).SetDefaultName() );
 
         action.Should()
             .ThrowExactly<MySqlObjectBuilderException>()
@@ -135,7 +148,7 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var sut = table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
+        var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         sut.Remove();
 
         var action = Lambda.Of( () => ((ISqlPrimaryKeyBuilder)sut).SetName( "bar" ) );
@@ -150,7 +163,7 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var sut = table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
+        var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
 
         var action = Lambda.Of( () => ((ISqlPrimaryKeyBuilder)sut).SetName( "T" ) );
 
@@ -164,7 +177,7 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var sut = table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
+        var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -183,7 +196,7 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var sut = table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
+        var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -203,7 +216,7 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var sut = table.SetPrimaryKey( table.Columns.Create( "C" ).SetType<int>().Asc() ).SetName( "bar" );
+        var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).SetType<int>().Asc() ).SetName( "bar" );
         var oldName = sut.Name;
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -216,7 +229,9 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "PK_T" );
             sut.FullName.Should().Be( "foo.PK_T" );
-            schema.Objects.Get( "PK_T" ).Should().BeSameAs( sut );
+            table.Constraints.GetConstraint( "PK_T" ).Should().BeSameAs( sut );
+            table.Constraints.Contains( oldName ).Should().BeFalse();
+            schema.Objects.GetObject( "PK_T" ).Should().BeSameAs( sut );
             schema.Objects.Contains( oldName ).Should().BeFalse();
 
             statements.Should().HaveCount( 1 );
@@ -231,11 +246,26 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
     }
 
     [Fact]
+    public void SetDefaultName_ShouldThrowMySqlObjectBuilderException_WhenNewNameAlreadyExistsInSchema()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).SetName( "bar" );
+        table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).SetName( "PK_T" );
+
+        var action = Lambda.Of( () => ((ISqlPrimaryKeyBuilder)sut).SetDefaultName() );
+
+        action.Should()
+            .ThrowExactly<MySqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+    }
+
+    [Fact]
     public void SetDefaultName_ShouldThrowMySqlObjectBuilderException_WhenPrimaryKeyIsRemoved()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var sut = table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).SetName( "bar" );
+        var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).SetName( "bar" );
         sut.Remove();
 
         var action = Lambda.Of( () => ((ISqlPrimaryKeyBuilder)sut).SetDefaultName() );
@@ -250,18 +280,48 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var sut = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
 
         sut.Remove();
 
         using ( new AssertionScope() )
         {
-            table.PrimaryKey.Should().BeNull();
-            table.Indexes.Contains( sut.Index.Columns.ToArray() ).Should().BeFalse();
+            table.Constraints.TryGetPrimaryKey().Should().BeNull();
+            table.Constraints.Contains( sut.Name ).Should().BeFalse();
+            table.Constraints.Contains( sut.Index.Name ).Should().BeFalse();
             schema.Objects.Contains( sut.Name ).Should().BeFalse();
             schema.Objects.Contains( sut.Index.Name ).Should().BeFalse();
             sut.IsRemoved.Should().BeTrue();
             sut.Index.IsRemoved.Should().BeTrue();
+        }
+    }
+
+    [Fact]
+    public void Remove_ShouldRemovePrimaryKeyAndRemoveSelfReferencingForeignKeysToItsIndex()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var c1 = table.Columns.Create( "C1" );
+        var c2 = table.Columns.Create( "C2" );
+        var sut = table.Constraints.SetPrimaryKey( c1.Asc() );
+        var ix = table.Constraints.CreateIndex( c2.Asc() );
+        var fk = table.Constraints.CreateForeignKey( ix, sut.Index );
+
+        sut.Remove();
+
+        using ( new AssertionScope() )
+        {
+            table.Constraints.TryGetPrimaryKey().Should().BeNull();
+            table.Constraints.Contains( sut.Name ).Should().BeFalse();
+            table.Constraints.Contains( sut.Index.Name ).Should().BeFalse();
+            table.Constraints.Contains( fk.Name ).Should().BeFalse();
+            schema.Objects.Contains( sut.Name ).Should().BeFalse();
+            schema.Objects.Contains( sut.Index.Name ).Should().BeFalse();
+            schema.Objects.Contains( fk.Name ).Should().BeFalse();
+            sut.IsRemoved.Should().BeTrue();
+            sut.Index.IsRemoved.Should().BeTrue();
+            sut.Index.PrimaryKey.Should().BeNull();
+            fk.IsRemoved.Should().BeTrue();
         }
     }
 
@@ -272,11 +332,11 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
         var table = schema.Objects.CreateTable( "T" );
         var c1 = table.Columns.Create( "C1" );
         var c2 = table.Columns.Create( "C2" );
-        var sut = table.SetPrimaryKey( c1.Asc() );
+        var sut = table.Constraints.SetPrimaryKey( c1.Asc() );
 
         _ = schema.Database.GetPendingStatements();
         sut.Remove();
-        table.SetPrimaryKey( c2.Asc() );
+        table.Constraints.SetPrimaryKey( c2.Asc() );
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
         sut.Remove();
@@ -290,9 +350,9 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var t1 = schema.Objects.CreateTable( "T1" );
-        var sut = t1.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() );
+        var sut = t1.Constraints.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() );
         var t2 = schema.Objects.CreateTable( "T2" );
-        t2.ForeignKeys.Create( t2.Indexes.Create( t2.Columns.Create( "C2" ).Asc() ), sut.Index );
+        t2.Constraints.CreateForeignKey( t2.Constraints.CreateIndex( t2.Columns.Create( "C2" ).Asc() ), sut.Index );
 
         var action = Lambda.Of( () => sut.Remove() );
 
@@ -306,7 +366,7 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
     {
         var action = Substitute.For<Action<MySqlPrimaryKeyBuilder>>();
         var table = MySqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
-        var sut = table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
+        var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
 
         var result = sut.ForMySql( action );
 

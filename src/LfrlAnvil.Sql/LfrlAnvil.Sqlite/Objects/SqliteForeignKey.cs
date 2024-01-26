@@ -4,10 +4,10 @@ using LfrlAnvil.Sqlite.Objects.Builders;
 
 namespace LfrlAnvil.Sqlite.Objects;
 
-public sealed class SqliteForeignKey : SqliteObject, ISqlForeignKey
+public sealed class SqliteForeignKey : SqliteConstraint, ISqlForeignKey
 {
     internal SqliteForeignKey(SqliteIndex originIndex, SqliteIndex referencedIndex, SqliteForeignKeyBuilder builder)
-        : base( builder )
+        : base( originIndex.Table, builder )
     {
         OriginIndex = originIndex;
         ReferencedIndex = referencedIndex;

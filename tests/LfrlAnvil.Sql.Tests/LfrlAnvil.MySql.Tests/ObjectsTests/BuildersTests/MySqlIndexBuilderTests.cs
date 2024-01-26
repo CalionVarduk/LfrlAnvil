@@ -18,7 +18,7 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var sut = table.Indexes.Create( table.Columns.Create( "C" ).Asc() ).SetName( "bar" );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C" ).Asc() ).SetName( "bar" );
 
         var result = sut.ToString();
 
@@ -26,16 +26,16 @@ public class MySqlIndexBuilderTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldNotMarkTableForAlteration()
+    public void Creation_ShouldNotMarkTableForAlteration()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var c2 = table.Columns.Create( "C2" ).SetType<int>();
 
         var startStatementsCount = schema.Database.GetPendingStatements().Length;
 
-        table.Indexes.Create( c2.Asc() );
+        table.Constraints.CreateIndex( c2.Asc() );
         var statements = schema.Database.GetPendingStatements().Slice( startStatementsCount ).ToArray();
 
         using ( new AssertionScope() )
@@ -46,16 +46,16 @@ public class MySqlIndexBuilderTests : TestsBase
     }
 
     [Fact]
-    public void Create_FollowedByRemove_ShouldDoNothing()
+    public void Creation_FollowedByRemoval_ShouldDoNothing()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var c2 = table.Columns.Create( "C2" );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
-        var sut = table.Indexes.Create( c2.Asc() );
+        var sut = table.Constraints.CreateIndex( c2.Asc() );
         sut.Remove();
         var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
 
@@ -63,17 +63,17 @@ public class MySqlIndexBuilderTests : TestsBase
     }
 
     [Fact]
-    public void Create_ShouldNotCreateIndex_WhenIndexIsAttachedToPrimaryKey()
+    public void Creation_ShouldNotCreateIndex_WhenIndexIsAttachedToPrimaryKey()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
         var c2 = table.Columns.Create( "C2" ).SetType<int>();
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
-        var sut = table.Indexes.Create( c2.Asc() );
-        table.SetPrimaryKey( sut.Columns.ToArray() );
+        var sut = table.Constraints.CreateUniqueIndex( c2.Asc() );
+        table.Constraints.SetPrimaryKey( sut );
         var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
@@ -82,33 +82,6 @@ public class MySqlIndexBuilderTests : TestsBase
             statements.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      DROP PRIMARY KEY,
-                      ADD CONSTRAINT `PK_T` PRIMARY KEY (`C2` ASC);" );
-        }
-    }
-
-    [Fact]
-    public void AssigningToPrimaryKey_ShouldDropIndexByItsOldName_WhenIndexNameAlsoChanges()
-    {
-        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
-        var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).SetType<int>().Asc() );
-
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
-
-        sut.SetName( "bar" );
-        table.SetPrimaryKey( sut.Columns.ToArray() );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
-
-        using ( new AssertionScope() )
-        {
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    "DROP INDEX `IX_T_C2A` ON `foo`.`T`;",
                     @"ALTER TABLE `foo`.`T`
                       DROP PRIMARY KEY,
                       ADD CONSTRAINT `PK_T` PRIMARY KEY (`C2` ASC);" );
@@ -120,8 +93,8 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -140,14 +113,14 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
         var oldName = sut.Name;
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
         sut.SetName( "bar" );
-        var result = ((ISqlIndexBuilder)sut).SetName( oldName );
+        var result = ((ISqlConstraintBuilder)sut).SetName( oldName );
 
         var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
 
@@ -163,7 +136,7 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var sut = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var oldName = sut.Name;
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -174,8 +147,10 @@ public class MySqlIndexBuilderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
+            table.Constraints.GetConstraint( "bar" ).Should().BeSameAs( sut );
+            table.Constraints.Contains( oldName ).Should().BeFalse();
+            schema.Objects.GetObject( "bar" ).Should().BeSameAs( sut );
             schema.Objects.Contains( oldName ).Should().BeFalse();
-            schema.Objects.Contains( "bar" ).Should().BeTrue();
             statements.Should().BeEmpty();
         }
     }
@@ -185,8 +160,8 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
         var oldName = sut.Name;
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -199,7 +174,9 @@ public class MySqlIndexBuilderTests : TestsBase
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "bar" );
             sut.FullName.Should().Be( "foo.bar" );
-            schema.Objects.Get( "bar" ).Should().BeSameAs( sut );
+            table.Constraints.GetConstraint( "bar" ).Should().BeSameAs( sut );
+            table.Constraints.Contains( oldName ).Should().BeFalse();
+            schema.Objects.GetObject( "bar" ).Should().BeSameAs( sut );
             schema.Objects.Contains( oldName ).Should().BeFalse();
 
             statements.Should().HaveCount( 1 );
@@ -216,9 +193,9 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var pk = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
-        table.ForeignKeys.Create( sut, pk.Index );
+        var pk = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        table.Constraints.CreateForeignKey( sut, pk.Index );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -246,8 +223,8 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
 
         var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).SetName( name ) );
 
@@ -261,8 +238,8 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
         sut.Remove();
 
         var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).SetName( "bar" ) );
@@ -277,8 +254,8 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
 
         var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).SetName( "T" ) );
 
@@ -292,8 +269,8 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -312,13 +289,13 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
         sut.SetName( "bar" );
-        var result = ((ISqlIndexBuilder)sut).SetDefaultName();
+        var result = ((ISqlConstraintBuilder)sut).SetDefaultName();
 
         var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
 
@@ -334,7 +311,7 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var sut = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index.SetName( "bar" );
+        var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index.SetName( "bar" );
         var oldName = sut.Name;
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -345,8 +322,10 @@ public class MySqlIndexBuilderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
+            table.Constraints.GetConstraint( "UIX_T_C1A" ).Should().BeSameAs( sut );
+            table.Constraints.Contains( oldName ).Should().BeFalse();
+            schema.Objects.GetObject( "UIX_T_C1A" ).Should().BeSameAs( sut );
             schema.Objects.Contains( oldName ).Should().BeFalse();
-            schema.Objects.Contains( "UIX_T_C1A" ).Should().BeTrue();
             statements.Should().BeEmpty();
         }
     }
@@ -356,8 +335,8 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" );
         var oldName = sut.Name;
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -370,7 +349,9 @@ public class MySqlIndexBuilderTests : TestsBase
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "IX_T_C2A" );
             sut.FullName.Should().Be( "foo.IX_T_C2A" );
-            schema.Objects.Get( "IX_T_C2A" ).Should().BeSameAs( sut );
+            table.Constraints.GetConstraint( "IX_T_C2A" ).Should().BeSameAs( sut );
+            table.Constraints.Contains( oldName ).Should().BeFalse();
+            schema.Objects.GetObject( "IX_T_C2A" ).Should().BeSameAs( sut );
             schema.Objects.Contains( oldName ).Should().BeFalse();
 
             statements.Should().HaveCount( 1 );
@@ -387,8 +368,8 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" ).MarkAsUnique();
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" ).MarkAsUnique();
         var oldName = sut.Name;
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
@@ -401,7 +382,9 @@ public class MySqlIndexBuilderTests : TestsBase
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "UIX_T_C2A" );
             sut.FullName.Should().Be( "foo.UIX_T_C2A" );
-            schema.Objects.Get( "UIX_T_C2A" ).Should().BeSameAs( sut );
+            table.Constraints.GetConstraint( "UIX_T_C2A" ).Should().BeSameAs( sut );
+            table.Constraints.Contains( oldName ).Should().BeFalse();
+            schema.Objects.GetObject( "UIX_T_C2A" ).Should().BeSameAs( sut );
             schema.Objects.Contains( oldName ).Should().BeFalse();
 
             statements.Should().HaveCount( 1 );
@@ -418,8 +401,8 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" );
         sut.Remove();
 
         var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).SetDefaultName() );
@@ -434,8 +417,8 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var pk = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" );
+        var pk = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" );
         pk.SetName( "IX_T_C2A" );
 
         var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).SetDefaultName() );
@@ -452,8 +435,8 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique( value );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique( value );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -472,8 +455,8 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -492,8 +475,8 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).SetType<int>().Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).SetType<int>().Asc() );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -517,8 +500,8 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).SetType<int>().Asc() ).MarkAsUnique();
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).SetType<int>().Asc() ).MarkAsUnique();
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -542,9 +525,9 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var pk = table.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).SetType<int>().Asc() );
-        table.ForeignKeys.Create( sut, pk.Index );
+        var pk = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).SetType<int>().Asc() );
+        table.Constraints.CreateForeignKey( sut, pk.Index );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -571,7 +554,7 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var sut = table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
+        var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
 
         var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).MarkAsUnique( false ) );
 
@@ -583,9 +566,9 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
-        table.ForeignKeys.Create( table.Indexes.Create( table.Columns.Create( "C3" ).Asc() ), sut );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
+        table.Constraints.CreateForeignKey( table.Constraints.CreateIndex( table.Columns.Create( "C3" ).Asc() ), sut );
 
         var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).MarkAsUnique( false ) );
 
@@ -597,8 +580,8 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
         sut.Remove();
 
         var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).MarkAsUnique() );
@@ -613,8 +596,8 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).SetType<int>().Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).SetType<int>().Asc() );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -638,8 +621,8 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).SetFilter( SqlNode.True() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).SetFilter( SqlNode.True() );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -658,8 +641,8 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -678,9 +661,9 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
         var column = table.Columns.Create( "C2" ).SetType<int>();
-        var sut = table.Indexes.Create( column.Asc() );
+        var sut = table.Constraints.CreateIndex( column.Asc() );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -707,9 +690,9 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
         var column = table.Columns.Create( "C2" ).SetType<int>();
-        var sut = table.Indexes.Create( column.Asc() ).SetFilter( t => t["C2"] != null );
+        var sut = table.Constraints.CreateIndex( column.Asc() ).SetFilter( t => t["C2"] != null );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -736,7 +719,7 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var sut = table.Indexes.Create( table.Columns.Create( "C" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C" ).Asc() );
 
         var action = Lambda.Of(
             () => ((ISqlIndexBuilder)sut).SetFilter( _ => SqlNode.Functions.RecordsAffected() == SqlNode.Literal( 0 ) ) );
@@ -749,7 +732,7 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var sut = table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
+        var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
 
         var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).SetFilter( SqlNode.True() ) );
 
@@ -757,13 +740,13 @@ public class MySqlIndexBuilderTests : TestsBase
     }
 
     [Fact]
-    public void SetFilter_ShouldThrowSqliteObjectBuilderException_WhenReferencedIndexFilterChangesToNonNull()
+    public void SetFilter_ShouldThrowMySqlObjectBuilderException_WhenReferencedIndexFilterChangesToNonNull()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var ix = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
-        table.ForeignKeys.Create( ix, sut );
+        var ix = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
+        table.Constraints.CreateForeignKey( ix, sut );
 
         var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).SetFilter( SqlNode.True() ) );
 
@@ -775,8 +758,8 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
         sut.Remove();
 
         var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).SetFilter( null ) );
@@ -791,9 +774,9 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var pk = table.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).SetType<int>().Asc() );
-        table.ForeignKeys.Create( sut, pk.Index );
+        var pk = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).SetType<int>().Asc() );
+        table.Constraints.CreateForeignKey( sut, pk.Index );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -820,8 +803,8 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).SetType<int>().Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).SetType<int>().Asc() );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -845,14 +828,14 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
-        var ix = table.Indexes.Create( table.Columns.Create( "C2" ).SetType<int>().Asc() ).MarkAsUnique();
-        var sut = table.Indexes.Create( table.Columns.Create( "C3" ).SetType<int>().Asc() ).MarkAsUnique();
-        table.ForeignKeys.Create( sut, ix );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
+        var ix = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).SetType<int>().Asc() ).MarkAsUnique();
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C3" ).SetType<int>().Asc() ).MarkAsUnique();
+        table.Constraints.CreateForeignKey( sut, ix );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
-        table.SetPrimaryKey( sut.Columns.ToArray() );
+        table.Constraints.SetPrimaryKey( sut );
         var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
@@ -873,15 +856,42 @@ public class MySqlIndexBuilderTests : TestsBase
     }
 
     [Fact]
+    public void AssigningToPrimaryKey_ShouldDropIndexByItsOldName_WhenIndexNameAlsoChanges()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
+        var sut = table.Constraints.CreateUniqueIndex( table.Columns.Create( "C2" ).SetType<int>().Asc() );
+
+        var startStatementCount = schema.Database.GetPendingStatements().Length;
+
+        sut.SetName( "bar" );
+        table.Constraints.SetPrimaryKey( sut );
+        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+
+        using ( new AssertionScope() )
+        {
+            statements.Should().HaveCount( 1 );
+            statements.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .SatisfySql(
+                    "DROP INDEX `UIX_T_C2A` ON `foo`.`T`;",
+                    @"ALTER TABLE `foo`.`T`
+                      DROP PRIMARY KEY,
+                      ADD CONSTRAINT `PK_T` PRIMARY KEY (`C2` ASC);" );
+        }
+    }
+
+    [Fact]
     public void Remove_ShouldRemoveIndexAndSelfReferencingForeignKeys()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var pk = table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var pk = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var c2 = table.Columns.Create( "C2" );
-        var sut = table.Indexes.Create( c2.Asc() ).MarkAsUnique();
-        var fk1 = table.ForeignKeys.Create( table.Indexes.Create( table.Columns.Create( "C3" ).Asc() ), sut );
-        var fk2 = table.ForeignKeys.Create( sut, pk.Index );
+        var sut = table.Constraints.CreateIndex( c2.Asc() ).MarkAsUnique();
+        var fk1 = table.Constraints.CreateForeignKey( table.Constraints.CreateIndex( table.Columns.Create( "C3" ).Asc() ), sut );
+        var fk2 = table.Constraints.CreateForeignKey( sut, pk.Index );
 
         var startStatementCount = schema.Database.GetPendingStatements().Length;
 
@@ -890,7 +900,7 @@ public class MySqlIndexBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            table.Indexes.Contains( c2.Asc() ).Should().BeFalse();
+            table.Constraints.Contains( sut.Name ).Should().BeFalse();
             schema.Objects.Contains( sut.Name ).Should().BeFalse();
             sut.IsRemoved.Should().BeTrue();
             sut.OriginatingForeignKeys.Should().BeEmpty();
@@ -916,14 +926,15 @@ public class MySqlIndexBuilderTests : TestsBase
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C" );
-        var pk = table.SetPrimaryKey( column.Asc() );
+        var pk = table.Constraints.SetPrimaryKey( column.Asc() );
         var sut = pk.Index;
 
         sut.Remove();
 
         using ( new AssertionScope() )
         {
-            table.Indexes.Contains( column.Asc() ).Should().BeFalse();
+            table.Constraints.Contains( sut.Name ).Should().BeFalse();
+            table.Constraints.Contains( pk.Name ).Should().BeFalse();
             schema.Objects.Contains( sut.Name ).Should().BeFalse();
             schema.Objects.Contains( pk.Name ).Should().BeFalse();
             sut.IsRemoved.Should().BeTrue();
@@ -931,7 +942,7 @@ public class MySqlIndexBuilderTests : TestsBase
             sut.ReferencingForeignKeys.Should().BeEmpty();
             column.ReferencingIndexes.Should().BeEmpty();
             pk.IsRemoved.Should().BeTrue();
-            table.PrimaryKey.Should().BeNull();
+            table.Constraints.TryGetPrimaryKey().Should().BeNull();
         }
     }
 
@@ -941,13 +952,13 @@ public class MySqlIndexBuilderTests : TestsBase
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C" );
-        var sut = table.Indexes.Create( column.Asc() ).SetFilter( t => t["C"] != null );
+        var sut = table.Constraints.CreateIndex( column.Asc() ).SetFilter( t => t["C"] != null );
 
         sut.Remove();
 
         using ( new AssertionScope() )
         {
-            table.Indexes.Contains( column.Asc() ).Should().BeFalse();
+            table.Constraints.Contains( sut.Name ).Should().BeFalse();
             schema.Objects.Contains( sut.Name ).Should().BeFalse();
             sut.IsRemoved.Should().BeTrue();
             sut.OriginatingForeignKeys.Should().BeEmpty();
@@ -955,7 +966,6 @@ public class MySqlIndexBuilderTests : TestsBase
             sut.ReferencedFilterColumns.Should().BeEmpty();
             column.ReferencingIndexes.Should().BeEmpty();
             column.ReferencingIndexFilters.Should().BeEmpty();
-            table.PrimaryKey.Should().BeNull();
         }
     }
 
@@ -964,8 +974,8 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Indexes.Create( table.Columns.Create( "C2" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
 
         _ = schema.Database.GetPendingStatements();
         sut.Remove();
@@ -982,11 +992,11 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var t1 = schema.Objects.CreateTable( "T1" );
-        t1.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() );
-        var sut = t1.Indexes.Create( t1.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
+        t1.Constraints.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() );
+        var sut = t1.Constraints.CreateIndex( t1.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
         var t2 = schema.Objects.CreateTable( "T2" );
-        var ix = t2.SetPrimaryKey( t2.Columns.Create( "C3" ).Asc() ).Index;
-        t2.ForeignKeys.Create( ix, sut );
+        var ix = t2.Constraints.SetPrimaryKey( t2.Columns.Create( "C3" ).Asc() ).Index;
+        t2.Constraints.CreateForeignKey( ix, sut );
 
         var action = Lambda.Of( () => sut.Remove() );
 
@@ -998,7 +1008,7 @@ public class MySqlIndexBuilderTests : TestsBase
     {
         var action = Substitute.For<Action<MySqlIndexBuilder>>();
         var table = MySqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
-        var sut = table.Indexes.Create( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C1" ).Asc() );
 
         var result = sut.ForMySql( action );
 

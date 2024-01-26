@@ -1,15 +1,16 @@
-﻿using LfrlAnvil.Sql;
+﻿using System.Diagnostics.Contracts;
+using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Internal;
 
 namespace LfrlAnvil.Sqlite.Objects.Builders;
 
-public sealed class SqliteForeignKeyBuilder : SqliteObjectBuilder, ISqlForeignKeyBuilder
+public sealed class SqliteForeignKeyBuilder : SqliteConstraintBuilder, ISqlForeignKeyBuilder
 {
     private string _fullName;
 
     internal SqliteForeignKeyBuilder(SqliteIndexBuilder originIndex, SqliteIndexBuilder referencedIndex, string name)
-        : base( originIndex.Database.GetNextId(), name, SqlObjectType.ForeignKey )
+        : base( originIndex.Table, name, SqlObjectType.ForeignKey )
     {
         OriginIndex = originIndex;
         ReferencedIndex = referencedIndex;
@@ -32,16 +33,16 @@ public sealed class SqliteForeignKeyBuilder : SqliteObjectBuilder, ISqlForeignKe
     ISqlIndexBuilder ISqlForeignKeyBuilder.ReferencedIndex => ReferencedIndex;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
 
-    public SqliteForeignKeyBuilder SetName(string name)
+    public new SqliteForeignKeyBuilder SetName(string name)
     {
-        EnsureNotRemoved();
-        SetNameCore( name );
+        base.SetName( name );
         return this;
     }
 
-    public SqliteForeignKeyBuilder SetDefaultName()
+    public new SqliteForeignKeyBuilder SetDefaultName()
     {
-        return SetName( SqliteHelpers.GetDefaultForeignKeyName( OriginIndex, ReferencedIndex ) );
+        base.SetDefaultName();
+        return this;
     }
 
     public SqliteForeignKeyBuilder SetOnDeleteBehavior(ReferenceBehavior behavior)
@@ -72,7 +73,7 @@ public sealed class SqliteForeignKeyBuilder : SqliteObjectBuilder, ISqlForeignKe
         return this;
     }
 
-    internal void UpdateFullName()
+    internal override void UpdateFullName()
     {
         _fullName = SqliteHelpers.GetFullName( OriginIndex.Table.Schema.Name, Name );
     }
@@ -85,10 +86,16 @@ public sealed class SqliteForeignKeyBuilder : SqliteObjectBuilder, ISqlForeignKe
         OriginIndex.AddOriginatingForeignKey( this );
         ReferencedIndex.AddReferencingForeignKey( this );
 
-        OriginIndex.Table.ForeignKeys.Reactivate( this );
         OriginIndex.Table.Schema.Objects.Reactivate( this );
+        OriginIndex.Table.Constraints.Reactivate( this );
 
         Database.ChangeTracker.ObjectCreated( OriginIndex.Table, this );
+    }
+
+    [Pure]
+    protected override string GetDefaultName()
+    {
+        return SqliteHelpers.GetDefaultForeignKeyName( OriginIndex, ReferencedIndex );
     }
 
     protected override void RemoveCore()
@@ -99,7 +106,7 @@ public sealed class SqliteForeignKeyBuilder : SqliteObjectBuilder, ISqlForeignKe
         ReferencedIndex.RemoveReferencingForeignKey( this );
 
         OriginIndex.Table.Schema.Objects.Remove( Name );
-        OriginIndex.Table.ForeignKeys.Remove( OriginIndex, ReferencedIndex );
+        OriginIndex.Table.Constraints.Remove( Name );
 
         Database.ChangeTracker.ObjectRemoved( OriginIndex.Table, this );
     }

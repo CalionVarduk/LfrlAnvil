@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
@@ -13,9 +12,10 @@ public interface ISqlColumnBuilderCollection : IReadOnlyCollection<ISqlColumnBui
     bool Contains(string name);
 
     [Pure]
-    ISqlColumnBuilder Get(string name);
+    ISqlColumnBuilder GetColumn(string name);
 
-    bool TryGet(string name, [MaybeNullWhen( false )] out ISqlColumnBuilder result);
+    [Pure]
+    ISqlColumnBuilder? TryGetColumn(string name);
 
     ISqlColumnBuilderCollection SetDefaultTypeDefinition(ISqlColumnTypeDefinition definition);
     ISqlColumnBuilder Create(string name);

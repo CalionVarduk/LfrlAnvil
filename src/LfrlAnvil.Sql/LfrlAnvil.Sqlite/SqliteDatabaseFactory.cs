@@ -139,9 +139,9 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
     }
 
     [Pure]
-    private static SqliteDatabaseBuilder CreateBuilder(SqlDatabaseConnectionChangeEvent connectionChangeEvent)
+    private static SqliteDatabaseBuilder CreateBuilder(SqlDatabaseConnectionChangeEvent connectionChangeEvent, string commonSchemaName)
     {
-        var result = new SqliteDatabaseBuilder( connectionChangeEvent.Connection.ServerVersion );
+        var result = new SqliteDatabaseBuilder( connectionChangeEvent.Connection.ServerVersion, commonSchemaName );
         result.AddConnectionChangeCallback( FunctionInitializer );
         InvokePendingConnectionChangeCallbacks( result, connectionChangeEvent );
         return result;
@@ -162,7 +162,8 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         SqlDatabaseConnectionChangeEvent connectionChangeEvent,
         SqlCreateDatabaseOptions options)
     {
-        var builder = CreateBuilder( connectionChangeEvent );
+        var versionHistoryName = options.VersionHistoryName ?? SqliteHelpers.DefaultVersionHistoryName;
+        var builder = CreateBuilder( connectionChangeEvent, versionHistoryName.Schema );
         SetBuilderMode( builder, SqlDatabaseCreateMode.Commit );
 
         var intType = builder.TypeDefinitions.GetByType<int>();
@@ -170,10 +171,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         var stringType = builder.TypeDefinitions.GetByType<string>();
         var dateTimeType = builder.TypeDefinitions.GetByType<DateTime>();
 
-        var schemaName = options.VersionHistoryName?.Schema ?? string.Empty;
-        var tableName = options.VersionHistoryName?.Object ?? "__VersionHistory";
-
-        var table = builder.Schemas.GetOrCreate( schemaName ).Objects.CreateTable( tableName );
+        var table = builder.Schemas.GetOrCreate( versionHistoryName.Schema ).Objects.CreateTable( versionHistoryName.Object );
         var columns = table.Columns;
 
         var ordinal = columns.Create( VersionHistoryInfo.OrdinalName ).SetType( intType );
@@ -184,7 +182,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         var description = columns.Create( VersionHistoryInfo.DescriptionName ).SetType( stringType );
         var commitDateUtc = columns.Create( VersionHistoryInfo.CommitDateUtcName ).SetType( dateTimeType );
         var commitDurationInTicks = columns.Create( VersionHistoryInfo.CommitDurationInTicksName ).SetType( longType );
-        table.SetPrimaryKey( ordinal.Asc() );
+        table.Constraints.SetPrimaryKey( ordinal.Asc() );
 
         return new VersionHistoryInfo(
             table,

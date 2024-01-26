@@ -14,7 +14,7 @@ using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.MySql.Objects.Builders;
 
-public sealed class MySqlIndexBuilder : MySqlObjectBuilder, ISqlIndexBuilder
+public sealed class MySqlIndexBuilder : MySqlConstraintBuilder, ISqlIndexBuilder
 {
     private Dictionary<ulong, MySqlForeignKeyBuilder>? _originatingForeignKeys;
     private Dictionary<ulong, MySqlForeignKeyBuilder>? _referencingForeignKeys;
@@ -23,9 +23,8 @@ public sealed class MySqlIndexBuilder : MySqlObjectBuilder, ISqlIndexBuilder
     private string? _fullName;
 
     internal MySqlIndexBuilder(MySqlTableBuilder table, MySqlIndexColumnBuilder[] columns, string name, bool isUnique)
-        : base( table.Database.GetNextId(), name, SqlObjectType.Index )
+        : base( table, name, SqlObjectType.Index )
     {
-        Table = table;
         IsUnique = isUnique;
         _columns = columns;
         PrimaryKey = null;
@@ -39,7 +38,6 @@ public sealed class MySqlIndexBuilder : MySqlObjectBuilder, ISqlIndexBuilder
             c.Column.AddReferencingIndex( this );
     }
 
-    public MySqlTableBuilder Table { get; }
     public MySqlPrimaryKeyBuilder? PrimaryKey { get; private set; }
     public bool IsUnique { get; private set; }
     public SqlConditionNode? Filter { get; private set; }
@@ -67,7 +65,6 @@ public sealed class MySqlIndexBuilder : MySqlObjectBuilder, ISqlIndexBuilder
         }
     }
 
-    ISqlTableBuilder ISqlIndexBuilder.Table => Table;
     ISqlPrimaryKeyBuilder? ISqlIndexBuilder.PrimaryKey => PrimaryKey;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
     ReadOnlyMemory<ISqlIndexColumnBuilder> ISqlIndexBuilder.Columns => _columns;
@@ -75,15 +72,15 @@ public sealed class MySqlIndexBuilder : MySqlObjectBuilder, ISqlIndexBuilder
     IReadOnlyCollection<ISqlForeignKeyBuilder> ISqlIndexBuilder.ReferencingForeignKeys => ReferencingForeignKeys;
     IReadOnlyCollection<ISqlColumnBuilder> ISqlIndexBuilder.ReferencedFilterColumns => ReferencedFilterColumns;
 
-    public MySqlIndexBuilder SetDefaultName()
+    public new MySqlIndexBuilder SetName(string name)
     {
-        return SetName( MySqlHelpers.GetDefaultIndexName( Table, _columns, IsUnique ) );
+        base.SetName( name );
+        return this;
     }
 
-    public MySqlIndexBuilder SetName(string name)
+    public new MySqlIndexBuilder SetDefaultName()
     {
-        EnsureNotRemoved();
-        SetNameCore( name );
+        base.SetDefaultName();
         return this;
     }
 
@@ -176,21 +173,20 @@ public sealed class MySqlIndexBuilder : MySqlObjectBuilder, ISqlIndexBuilder
         _referencingForeignKeys?.Remove( foreignKey.Id );
     }
 
-    [Pure]
-    internal bool AreColumnsEqual(ReadOnlyMemory<ISqlIndexColumnBuilder> columns)
-    {
-        return Table.Indexes.Comparer.Equals( _columns, columns );
-    }
-
-    internal void ResetFullName()
+    internal override void ResetFullName()
     {
         _fullName = null;
+    }
+
+    internal void ClearOriginatingForeignKeys()
+    {
+        _originatingForeignKeys = null;
     }
 
     internal void ClearOriginatingForeignKeysInto(RentedMemorySequenceSpan<MySqlObjectBuilder> buffer)
     {
         _originatingForeignKeys?.Values.CopyTo( buffer );
-        _originatingForeignKeys = null;
+        ClearOriginatingForeignKeys();
     }
 
     internal void ClearReferencingForeignKeysInto(RentedMemorySequenceSpan<MySqlObjectBuilder> buffer)
@@ -199,9 +195,11 @@ public sealed class MySqlIndexBuilder : MySqlObjectBuilder, ISqlIndexBuilder
         _referencingForeignKeys = null;
     }
 
-    internal void MarkAsRemoved()
+    internal override void MarkAsRemoved()
     {
-        Assume.Equals( IsRemoved, false );
+        if ( IsRemoved )
+            return;
+
         IsRemoved = true;
 
         _originatingForeignKeys = null;
@@ -223,6 +221,12 @@ public sealed class MySqlIndexBuilder : MySqlObjectBuilder, ISqlIndexBuilder
             ClearReferencedFilterColumns();
             Filter = null;
         }
+    }
+
+    [Pure]
+    protected override string GetDefaultName()
+    {
+        return MySqlHelpers.GetDefaultIndexName( Table, _columns, IsUnique );
     }
 
     protected override void AssertRemoval()
@@ -277,7 +281,7 @@ public sealed class MySqlIndexBuilder : MySqlObjectBuilder, ISqlIndexBuilder
         }
 
         Table.Schema.Objects.Remove( Name );
-        Table.Indexes.Remove( columns );
+        Table.Constraints.Remove( Name );
         Database.ChangeTracker.ObjectRemoved( Table, this );
     }
 

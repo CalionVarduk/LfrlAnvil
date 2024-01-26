@@ -1,9 +1,9 @@
 ﻿namespace LfrlAnvil.Sql.Objects.Builders;
 
-public interface ISqlPrimaryKeyBuilder : ISqlObjectBuilder
+public interface ISqlPrimaryKeyBuilder : ISqlConstraintBuilder
 {
     ISqlIndexBuilder Index { get; }
 
     new ISqlPrimaryKeyBuilder SetName(string name);
-    ISqlPrimaryKeyBuilder SetDefaultName();
+    new ISqlPrimaryKeyBuilder SetDefaultName();
 }

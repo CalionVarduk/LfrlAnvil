@@ -20,7 +20,7 @@ public class SqliteTableScopeExpressionValidatorTests : TestsBase
     public SqliteTableScopeExpressionValidatorTests()
     {
         _table = SqliteDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
-        _table.SetPrimaryKey( _table.Columns.Create( "X" ).Asc() );
+        _table.Constraints.SetPrimaryKey( _table.Columns.Create( "X" ).Asc() );
         _sut = new SqliteTableScopeExpressionValidator( _table );
     }
 
@@ -66,7 +66,7 @@ public class SqliteTableScopeExpressionValidatorTests : TestsBase
     public void VisitColumn_ShouldRegisterError()
     {
         var table = _table.Database.Schemas.Default.Objects.CreateTable( "T2" );
-        table.SetPrimaryKey( table.Columns.Create( "A" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "A" ).Asc() );
         var node = new SqliteDatabaseMock( _table.Database ).Schemas.Default.Objects.GetTable( "T2" ).ToRecordSet().GetField( "A" );
 
         _sut.VisitColumn( node );
@@ -832,7 +832,7 @@ public class SqliteTableScopeExpressionValidatorTests : TestsBase
     public void VisitTable_ShouldRegisterError()
     {
         var table = _table.Database.Schemas.Default.Objects.CreateTable( "T2" );
-        table.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         var node = new SqliteDatabaseMock( _table.Database ).Schemas.Default.Objects.GetTable( "T2" ).ToRecordSet();
 
         _sut.VisitTable( node );

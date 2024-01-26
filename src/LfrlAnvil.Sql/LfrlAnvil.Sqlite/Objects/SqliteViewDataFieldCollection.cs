@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Sql.Expressions;
@@ -35,14 +34,15 @@ public sealed class SqliteViewDataFieldCollection : ISqlViewDataFieldCollection
     }
 
     [Pure]
-    public SqliteViewDataField Get(string name)
+    public SqliteViewDataField GetField(string name)
     {
         return _map[name];
     }
 
-    public bool TryGet(string name, [MaybeNullWhen( false )] out SqliteViewDataField result)
+    [Pure]
+    public SqliteViewDataField? TryGetField(string name)
     {
-        return _map.TryGetValue( name, out result );
+        return _map.GetValueOrDefault( name );
     }
 
     [Pure]
@@ -82,21 +82,15 @@ public sealed class SqliteViewDataFieldCollection : ISqlViewDataFieldCollection
     }
 
     [Pure]
-    ISqlViewDataField ISqlViewDataFieldCollection.Get(string name)
+    ISqlViewDataField ISqlViewDataFieldCollection.GetField(string name)
     {
-        return Get( name );
+        return GetField( name );
     }
 
-    bool ISqlViewDataFieldCollection.TryGet(string name, [MaybeNullWhen( false )] out ISqlViewDataField result)
+    [Pure]
+    ISqlViewDataField? ISqlViewDataFieldCollection.TryGetField(string name)
     {
-        if ( TryGet( name, out var column ) )
-        {
-            result = column;
-            return true;
-        }
-
-        result = null;
-        return false;
+        return TryGetField( name );
     }
 
     [Pure]
