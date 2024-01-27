@@ -7,8 +7,6 @@ namespace LfrlAnvil.Sqlite.Objects.Builders;
 
 public sealed class SqliteForeignKeyBuilder : SqliteConstraintBuilder, ISqlForeignKeyBuilder
 {
-    private string _fullName;
-
     internal SqliteForeignKeyBuilder(SqliteIndexBuilder originIndex, SqliteIndexBuilder referencedIndex, string name)
         : base( originIndex.Table, name, SqlObjectType.ForeignKey )
     {
@@ -18,15 +16,12 @@ public sealed class SqliteForeignKeyBuilder : SqliteConstraintBuilder, ISqlForei
         OnUpdateBehavior = ReferenceBehavior.Restrict;
         OriginIndex.AddOriginatingForeignKey( this );
         ReferencedIndex.AddReferencingForeignKey( this );
-        _fullName = string.Empty;
-        UpdateFullName();
     }
 
     public SqliteIndexBuilder OriginIndex { get; }
     public SqliteIndexBuilder ReferencedIndex { get; }
     public ReferenceBehavior OnDeleteBehavior { get; private set; }
     public ReferenceBehavior OnUpdateBehavior { get; private set; }
-    public override string FullName => _fullName;
     public override SqliteDatabaseBuilder Database => OriginIndex.Database;
 
     ISqlIndexBuilder ISqlForeignKeyBuilder.OriginIndex => OriginIndex;
@@ -73,11 +68,6 @@ public sealed class SqliteForeignKeyBuilder : SqliteConstraintBuilder, ISqlForei
         return this;
     }
 
-    internal override void UpdateFullName()
-    {
-        _fullName = SqliteHelpers.GetFullName( OriginIndex.Table.Schema.Name, Name );
-    }
-
     internal void Reactivate()
     {
         Assume.Equals( IsRemoved, true );
@@ -121,7 +111,6 @@ public sealed class SqliteForeignKeyBuilder : SqliteConstraintBuilder, ISqlForei
 
         var oldName = Name;
         Name = name;
-        UpdateFullName();
         Database.ChangeTracker.NameUpdated( OriginIndex.Table, this, oldName );
     }
 

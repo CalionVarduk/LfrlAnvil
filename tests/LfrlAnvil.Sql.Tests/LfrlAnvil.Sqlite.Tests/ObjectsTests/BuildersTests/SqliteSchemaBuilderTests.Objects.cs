@@ -30,7 +30,6 @@ public partial class SqliteSchemaBuilderTests
             {
                 result.Schema.Should().BeSameAs( sut.Schema );
                 result.Name.Should().Be( name );
-                result.FullName.Should().Be( $"foo_{name}" );
                 result.Constraints.TryGetPrimaryKey().Should().BeNull();
                 result.Database.Should().BeSameAs( db );
                 result.ReferencingViews.Should().BeEmpty();
@@ -117,7 +116,6 @@ public partial class SqliteSchemaBuilderTests
             {
                 result.Schema.Should().BeSameAs( sut.Schema );
                 result.Name.Should().Be( name );
-                result.FullName.Should().Be( $"foo_{name}" );
                 result.Constraints.TryGetPrimaryKey().Should().BeNull();
                 result.Database.Should().BeSameAs( db );
                 result.ReferencingViews.Should().BeEmpty();
@@ -223,7 +221,6 @@ public partial class SqliteSchemaBuilderTests
             {
                 result.Schema.Should().BeSameAs( sut.Schema );
                 result.Name.Should().Be( name );
-                result.FullName.Should().Be( $"foo_{name}" );
                 result.Database.Should().BeSameAs( db );
                 result.Source.Should().BeSameAs( source );
                 result.ReferencingViews.Should().BeEmpty();
@@ -263,7 +260,6 @@ public partial class SqliteSchemaBuilderTests
             {
                 result.Schema.Should().BeSameAs( sut.Schema );
                 result.Name.Should().Be( name );
-                result.FullName.Should().Be( $"foo_{name}" );
                 result.Database.Should().BeSameAs( db );
                 result.Source.Should().BeSameAs( source );
                 result.ReferencingViews.Should().BeEmpty();

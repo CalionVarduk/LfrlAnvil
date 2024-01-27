@@ -12,12 +12,10 @@ public static class ViewMock
     [Pure]
     public static ISqlView Create(string name, ISqlSchema schema, SqlQueryExpressionNode? source = null)
     {
-        var fullName = schema.Name.Length > 0 ? $"{schema.Name}.{name}" : name;
         var result = Substitute.For<ISqlView>();
         result.Type.Returns( SqlObjectType.View );
         result.Schema.Returns( schema );
         result.Name.Returns( name );
-        result.FullName.Returns( fullName );
         var info = SqlRecordSetInfo.Create( schema.Name, name );
         result.Info.Returns( info );
 
@@ -29,7 +27,6 @@ public static class ViewMock
                 field.Type.Returns( SqlObjectType.ViewDataField );
                 field.View.Returns( result );
                 field.Name.Returns( x.Key );
-                field.FullName.Returns( $"{fullName}.{x.Key}" );
                 fields.Add( field );
             } );
 
@@ -57,12 +54,10 @@ public static class ViewMock
     [Pure]
     public static ISqlViewBuilder CreateBuilder(string name, ISqlSchemaBuilder schema, SqlQueryExpressionNode? source = null)
     {
-        var fullName = schema.Name.Length > 0 ? $"{schema.Name}.{name}" : name;
         var result = Substitute.For<ISqlViewBuilder>();
         result.Type.Returns( SqlObjectType.View );
         result.Schema.Returns( schema );
         result.Name.Returns( name );
-        result.FullName.Returns( fullName );
         var info = SqlRecordSetInfo.Create( schema.Name, name );
         result.Info.Returns( info );
         result.Source.Returns( source ?? SqlNode.RawQuery( string.Empty ) );

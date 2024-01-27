@@ -18,7 +18,6 @@ public sealed class SqliteViewBuilder : SqliteObjectBuilder, ISqlViewBuilder
 {
     private Dictionary<ulong, SqliteViewBuilder>? _referencingViews;
     private readonly Dictionary<ulong, SqliteObjectBuilder> _referencedObjects;
-    private string _fullName;
     private SqlRecordSetInfo? _info;
     private SqlViewBuilderNode? _recordSet;
 
@@ -33,9 +32,8 @@ public sealed class SqliteViewBuilder : SqliteObjectBuilder, ISqlViewBuilder
         Source = source;
         _referencingViews = null;
         _referencedObjects = visitor.ReferencedObjects;
-        _fullName = string.Empty;
         _info = null;
-        UpdateFullName();
+        ResetInfoCache();
         AddSelfToReferencedObjects();
         _recordSet = null;
     }
@@ -44,7 +42,7 @@ public sealed class SqliteViewBuilder : SqliteObjectBuilder, ISqlViewBuilder
     public SqlQueryExpressionNode Source { get; }
     public IReadOnlyCollection<SqliteObjectBuilder> ReferencedObjects => _referencedObjects.Values;
     public IReadOnlyCollection<SqliteViewBuilder> ReferencingViews => (_referencingViews?.Values).EmptyIfNull();
-    public override string FullName => _fullName;
+
     public SqlRecordSetInfo Info => _info ??= SqlRecordSetInfo.Create( Schema.Name, Name );
     public SqlViewBuilderNode RecordSet => _recordSet ??= SqlNode.View( this );
     public override SqliteDatabaseBuilder Database => Schema.Database;
@@ -55,6 +53,12 @@ public sealed class SqliteViewBuilder : SqliteObjectBuilder, ISqlViewBuilder
     IReadOnlyCollection<ISqlObjectBuilder> ISqlViewBuilder.ReferencedObjects => ReferencedObjects;
     IReadOnlyCollection<ISqlViewBuilder> ISqlViewBuilder.ReferencingViews => ReferencingViews;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
+
+    [Pure]
+    public override string ToString()
+    {
+        return $"[{Type}] {SqliteHelpers.GetFullName( Schema.Name, Name )}";
+    }
 
     public SqliteViewBuilder SetName(string name)
     {
@@ -98,18 +102,11 @@ public sealed class SqliteViewBuilder : SqliteObjectBuilder, ISqlViewBuilder
         Schema.Objects.ChangeName( this, name );
         var oldName = Name;
         Name = name;
-        UpdateFullName();
+        ResetInfoCache();
         Database.ChangeTracker.NameUpdated( this, oldName );
 
         foreach ( var view in buffer )
             ReinterpretCast.To<SqliteViewBuilder>( view ).Reactivate();
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal SqlRecordSetInfo? GetCachedInfo()
-    {
-        return _info;
     }
 
     internal void AddReferencingView(SqliteViewBuilder view)
@@ -123,10 +120,16 @@ public sealed class SqliteViewBuilder : SqliteObjectBuilder, ISqlViewBuilder
         _referencingViews?.Remove( view.Id );
     }
 
-    internal void UpdateFullName()
+    internal void ResetInfoCache()
     {
         _info = null;
-        _fullName = SqliteHelpers.GetFullName( Schema.Name, Name );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal SqlRecordSetInfo? GetCachedInfo()
+    {
+        return _info;
     }
 
     internal void ForceRemove()
@@ -154,7 +157,7 @@ public sealed class SqliteViewBuilder : SqliteObjectBuilder, ISqlViewBuilder
     {
         using var buffer = RemoveReferencingViewsIntoBuffer( Database, _referencingViews );
 
-        UpdateFullName();
+        ResetInfoCache();
         Database.ChangeTracker.SchemaNameUpdated( this, oldName );
 
         foreach ( var view in buffer )

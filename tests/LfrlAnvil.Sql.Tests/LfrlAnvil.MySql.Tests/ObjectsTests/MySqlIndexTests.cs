@@ -36,7 +36,6 @@ public class MySqlIndexTests : TestsBase
             sut.Table.Should().BeSameAs( table );
             sut.Type.Should().Be( SqlObjectType.Index );
             sut.Name.Should().Be( "IX_TEST" );
-            sut.FullName.Should().Be( "foo.IX_TEST" );
             sut.IsUnique.Should().Be( isUnique );
             sut.IsPartial.Should().BeFalse();
             ((MySqlIndex)sut).Columns.ToArray().Should().BeSequentiallyEqualTo( c1.Asc(), c2.Desc() );
@@ -67,7 +66,6 @@ public class MySqlIndexTests : TestsBase
             sut.Table.Should().BeSameAs( table );
             sut.Type.Should().Be( SqlObjectType.Index );
             sut.Name.Should().Be( "IX_TEST" );
-            sut.FullName.Should().Be( "foo.IX_TEST" );
             sut.IsUnique.Should().BeFalse();
             sut.IsPartial.Should().BeTrue();
             sut.Columns.ToArray().Should().BeSequentiallyEqualTo( c1.Asc() );

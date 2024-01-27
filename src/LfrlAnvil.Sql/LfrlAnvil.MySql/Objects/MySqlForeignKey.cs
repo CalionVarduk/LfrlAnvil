@@ -13,14 +13,12 @@ public sealed class MySqlForeignKey : MySqlConstraint, ISqlForeignKey
         ReferencedIndex = referencedIndex;
         OnUpdateBehavior = builder.OnUpdateBehavior;
         OnDeleteBehavior = builder.OnDeleteBehavior;
-        FullName = builder.FullName;
     }
 
     public MySqlIndex OriginIndex { get; }
     public MySqlIndex ReferencedIndex { get; }
     public ReferenceBehavior OnUpdateBehavior { get; }
     public ReferenceBehavior OnDeleteBehavior { get; }
-    public override string FullName { get; }
     public override MySqlDatabase Database => OriginIndex.Database;
 
     ISqlIndex ISqlForeignKey.OriginIndex => OriginIndex;

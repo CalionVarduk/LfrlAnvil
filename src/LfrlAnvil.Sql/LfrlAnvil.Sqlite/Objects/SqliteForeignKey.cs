@@ -13,14 +13,12 @@ public sealed class SqliteForeignKey : SqliteConstraint, ISqlForeignKey
         ReferencedIndex = referencedIndex;
         OnUpdateBehavior = builder.OnUpdateBehavior;
         OnDeleteBehavior = builder.OnDeleteBehavior;
-        FullName = builder.FullName;
     }
 
     public SqliteIndex OriginIndex { get; }
     public SqliteIndex ReferencedIndex { get; }
     public ReferenceBehavior OnUpdateBehavior { get; }
     public ReferenceBehavior OnDeleteBehavior { get; }
-    public override string FullName { get; }
     public override SqliteDatabase Database => OriginIndex.Database;
 
     ISqlIndex ISqlForeignKey.OriginIndex => OriginIndex;

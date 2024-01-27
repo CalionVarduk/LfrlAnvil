@@ -8,18 +8,15 @@ public readonly struct SqlSchemaObjectName : IEquatable<SqlSchemaObjectName>
 {
     private readonly string? _schema;
     private readonly string? _object;
-    private readonly string? _identifier;
 
     private SqlSchemaObjectName(string schema, string obj)
     {
         _schema = schema;
         _object = obj;
-        _identifier = schema.Length > 0 ? $"{schema}.{obj}" : obj;
     }
 
     public string Schema => _schema ?? string.Empty;
     public string Object => _object ?? string.Empty;
-    public string Identifier => _identifier ?? string.Empty;
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -38,7 +35,8 @@ public readonly struct SqlSchemaObjectName : IEquatable<SqlSchemaObjectName>
     [Pure]
     public override string ToString()
     {
-        return Identifier;
+        var schema = Schema;
+        return schema.Length > 0 ? $"{schema}.{Object}" : Object;
     }
 
     [Pure]

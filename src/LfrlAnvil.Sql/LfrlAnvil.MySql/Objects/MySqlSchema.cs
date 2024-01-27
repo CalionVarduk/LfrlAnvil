@@ -14,7 +14,6 @@ public sealed class MySqlSchema : MySqlObject, ISqlSchema
 
     public MySqlObjectCollection Objects { get; }
     public override MySqlDatabase Database { get; }
-    public override string FullName => Name;
 
     ISqlObjectCollection ISqlSchema.Objects => Objects;
 }

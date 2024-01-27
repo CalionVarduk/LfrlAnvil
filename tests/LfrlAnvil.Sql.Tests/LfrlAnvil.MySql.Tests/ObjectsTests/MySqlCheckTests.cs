@@ -28,7 +28,6 @@ public class MySqlCheckTests : TestsBase
             sut.Table.Should().BeSameAs( table );
             sut.Type.Should().Be( SqlObjectType.Check );
             sut.Name.Should().Be( "CHK_T_0" );
-            sut.FullName.Should().Be( "foo.CHK_T_0" );
             sut.ToString().Should().Be( "[Check] foo.CHK_T_0" );
         }
     }

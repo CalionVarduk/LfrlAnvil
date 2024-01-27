@@ -17,7 +17,6 @@ namespace LfrlAnvil.Sqlite.Objects.Builders;
 public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
 {
     private Dictionary<ulong, SqliteViewBuilder>? _referencingViews;
-    private string _fullName;
     private SqlRecordSetInfo? _info;
     private SqlTableBuilderNode? _recordSet;
 
@@ -28,9 +27,8 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
         Schema = schema;
         Columns = new SqliteColumnBuilderCollection( this );
         Constraints = new SqliteConstraintBuilderCollection( this );
-        _fullName = string.Empty;
         _info = null;
-        UpdateFullName();
+        ResetInfoCache();
         _recordSet = null;
     }
 
@@ -39,7 +37,6 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
     public SqliteConstraintBuilderCollection Constraints { get; }
     public IReadOnlyCollection<SqliteViewBuilder> ReferencingViews => (_referencingViews?.Values).EmptyIfNull();
 
-    public override string FullName => _fullName;
     public SqlRecordSetInfo Info => _info ??= SqlRecordSetInfo.Create( Schema.Name, Name );
     public SqlTableBuilderNode RecordSet => _recordSet ??= SqlNode.Table( this );
     public override SqliteDatabaseBuilder Database => Schema.Database;
@@ -71,18 +68,17 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
     IReadOnlyCollection<ISqlViewBuilder> ISqlTableBuilder.ReferencingViews => ReferencingViews;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
 
+    [Pure]
+    public override string ToString()
+    {
+        return $"[{Type}] {SqliteHelpers.GetFullName( Schema.Name, Name )}";
+    }
+
     public SqliteTableBuilder SetName(string name)
     {
         EnsureNotRemoved();
         SetNameCore( name );
         return this;
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal SqlRecordSetInfo? GetCachedInfo()
-    {
-        return _info;
     }
 
     internal void AddReferencingView(SqliteViewBuilder view)
@@ -184,7 +180,7 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
                 t.Schema.Objects.ChangeName( t, n );
                 var oldName = t.Name;
                 t.Name = n;
-                t.UpdateFullName();
+                t.ResetInfoCache();
                 t.Database.ChangeTracker.NameUpdated( t, t, oldName );
             } );
     }
@@ -195,23 +191,24 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
             Name,
             (t, _) =>
             {
-                t.UpdateFullName();
+                t.ResetInfoCache();
                 t.Database.ChangeTracker.SchemaNameUpdated( t, t, oldName );
 
                 foreach ( var constraint in Constraints )
-                {
-                    constraint.UpdateFullName();
                     t.Database.ChangeTracker.SchemaNameUpdated( t, constraint, oldName );
-                }
             } );
     }
 
-    internal void UpdateFullName()
+    internal void ResetInfoCache()
     {
         _info = null;
-        _fullName = SqliteHelpers.GetFullName( Schema.Name, Name );
-        foreach ( var column in Columns )
-            column.ResetFullName();
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal SqlRecordSetInfo? GetCachedInfo()
+    {
+        return _info;
     }
 
     private void Rename(string newName, Action<SqliteTableBuilder, string> update)

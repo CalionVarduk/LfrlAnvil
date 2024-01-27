@@ -2,6 +2,7 @@
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Objects;
+using LfrlAnvil.Sqlite.Internal;
 
 namespace LfrlAnvil.Sqlite.Objects;
 
@@ -21,13 +22,13 @@ public sealed class SqliteIndexColumn : ISqlIndexColumn, IEquatable<SqliteIndexC
     [Pure]
     public override string ToString()
     {
-        return $"{Column.FullName} {Ordering.Name}";
+        return $"{SqliteHelpers.GetFullName( Column.Table.Schema.Name, Column.Table.Name, Column.Name )} {Ordering.Name}";
     }
 
     [Pure]
     public override int GetHashCode()
     {
-        return HashCode.Combine( Column.FullName, Ordering.Value );
+        return HashCode.Combine( Column.Table.Schema.Name, Column.Table.Name, Column.Name, Ordering.Value );
     }
 
     [Pure]

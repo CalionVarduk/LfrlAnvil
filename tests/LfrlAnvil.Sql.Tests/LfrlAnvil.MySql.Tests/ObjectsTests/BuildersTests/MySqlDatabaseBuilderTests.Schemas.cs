@@ -26,7 +26,6 @@ public partial class MySqlDatabaseBuilderTests
             {
                 result.Database.Should().BeSameAs( sut );
                 result.Name.Should().Be( name );
-                result.FullName.Should().Be( name );
                 result.Objects.Should().BeEmpty();
                 result.Type.Should().Be( SqlObjectType.Schema );
 
@@ -79,7 +78,6 @@ public partial class MySqlDatabaseBuilderTests
             {
                 result.Database.Should().BeSameAs( sut );
                 result.Name.Should().Be( name );
-                result.FullName.Should().Be( name );
                 result.Objects.Should().BeEmpty();
                 result.Type.Should().Be( SqlObjectType.Schema );
 

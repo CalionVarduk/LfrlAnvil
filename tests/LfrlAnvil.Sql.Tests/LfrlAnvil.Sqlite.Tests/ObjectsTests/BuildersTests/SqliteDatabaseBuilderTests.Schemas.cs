@@ -26,7 +26,6 @@ public partial class SqliteDatabaseBuilderTests
             {
                 result.Database.Should().BeSameAs( sut );
                 result.Name.Should().Be( name );
-                result.FullName.Should().Be( name );
                 result.Objects.Should().BeEmpty();
                 result.Type.Should().Be( SqlObjectType.Schema );
 
@@ -48,7 +47,6 @@ public partial class SqliteDatabaseBuilderTests
             {
                 result.Database.Should().BeSameAs( sut );
                 result.Name.Should().BeEmpty();
-                result.FullName.Should().BeEmpty();
                 result.Objects.Should().BeEmpty();
                 result.Type.Should().Be( SqlObjectType.Schema );
 
@@ -100,7 +98,6 @@ public partial class SqliteDatabaseBuilderTests
             {
                 result.Database.Should().BeSameAs( sut );
                 result.Name.Should().Be( name );
-                result.FullName.Should().Be( name );
                 result.Objects.Should().BeEmpty();
                 result.Type.Should().Be( SqlObjectType.Schema );
 
@@ -122,7 +119,6 @@ public partial class SqliteDatabaseBuilderTests
             {
                 result.Database.Should().BeSameAs( sut );
                 result.Name.Should().BeEmpty();
-                result.FullName.Should().BeEmpty();
                 result.Objects.Should().BeEmpty();
                 result.Type.Should().Be( SqlObjectType.Schema );
 

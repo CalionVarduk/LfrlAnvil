@@ -733,14 +733,14 @@ public static partial class SqlNode
     }
 
     [Pure]
-    public static SqlPrimaryKeyDefinitionNode PrimaryKey(string name, params SqlOrderByNode[] columns)
+    public static SqlPrimaryKeyDefinitionNode PrimaryKey(SqlSchemaObjectName name, params SqlOrderByNode[] columns)
     {
         return new SqlPrimaryKeyDefinitionNode( name, columns );
     }
 
     [Pure]
     public static SqlForeignKeyDefinitionNode ForeignKey(
-        string name,
+        SqlSchemaObjectName name,
         SqlDataFieldNode[] columns,
         SqlRecordSetNode referencedTable,
         SqlDataFieldNode[] referencedColumns,
@@ -757,7 +757,7 @@ public static partial class SqlNode
     }
 
     [Pure]
-    public static SqlCheckDefinitionNode Check(string name, SqlConditionNode condition)
+    public static SqlCheckDefinitionNode Check(SqlSchemaObjectName name, SqlConditionNode condition)
     {
         return new SqlCheckDefinitionNode( name, condition );
     }

@@ -135,7 +135,6 @@ public static class SqlObjectExtensions
     public static SqlCreateTableNode ToCreateNode(
         this ISqlTableBuilder table,
         SqlRecordSetInfo? customInfo = null,
-        bool useFullConstraintNames = false,
         bool includeForeignKeys = true)
     {
         return SqlNode.CreateTable(
@@ -145,7 +144,7 @@ public static class SqlObjectExtensions
             t =>
             {
                 var constraints = table.Constraints;
-                var primaryKey = constraints.TryGetPrimaryKey()?.ToDefinitionNode( t, useFullConstraintNames );
+                var primaryKey = constraints.TryGetPrimaryKey()?.ToDefinitionNode( t );
 
                 var result = primaryKey is not null
                     ? SqlCreateTableConstraints.Empty.WithPrimaryKey( primaryKey )
@@ -159,12 +158,12 @@ public static class SqlObjectExtensions
                     switch ( constraint.Type )
                     {
                         case SqlObjectType.Check:
-                            checks.Add( ReinterpretCast.To<ISqlCheckBuilder>( constraint ).ToDefinitionNode( useFullConstraintNames ) );
+                            checks.Add( ReinterpretCast.To<ISqlCheckBuilder>( constraint ).ToDefinitionNode() );
                             break;
 
                         case SqlObjectType.ForeignKey:
                             foreignKeys?.Add(
-                                ReinterpretCast.To<ISqlForeignKeyBuilder>( constraint ).ToDefinitionNode( t, useFullConstraintNames ) );
+                                ReinterpretCast.To<ISqlForeignKeyBuilder>( constraint ).ToDefinitionNode( t ) );
 
                             break;
                     }
@@ -200,20 +199,14 @@ public static class SqlObjectExtensions
     }
 
     [Pure]
-    public static SqlPrimaryKeyDefinitionNode ToDefinitionNode(
-        this ISqlPrimaryKeyBuilder primaryKey,
-        SqlRecordSetNode table,
-        bool useFullName = false)
+    public static SqlPrimaryKeyDefinitionNode ToDefinitionNode(this ISqlPrimaryKeyBuilder primaryKey, SqlRecordSetNode table)
     {
         var columns = primaryKey.Index.Columns.ToDefinitionNode( table );
-        return SqlNode.PrimaryKey( useFullName ? primaryKey.FullName : primaryKey.Name, columns );
+        return SqlNode.PrimaryKey( SqlSchemaObjectName.Create( primaryKey.Table.Schema.Name, primaryKey.Name ), columns );
     }
 
     [Pure]
-    public static SqlForeignKeyDefinitionNode ToDefinitionNode(
-        this ISqlForeignKeyBuilder foreignKey,
-        SqlRecordSetNode table,
-        bool useFullName)
+    public static SqlForeignKeyDefinitionNode ToDefinitionNode(this ISqlForeignKeyBuilder foreignKey, SqlRecordSetNode table)
     {
         var refIndex = foreignKey.ReferencedIndex;
         var fkColumns = foreignKey.OriginIndex.Columns;
@@ -247,7 +240,7 @@ public static class SqlObjectExtensions
         }
 
         return SqlNode.ForeignKey(
-            useFullName ? foreignKey.FullName : foreignKey.Name,
+            SqlSchemaObjectName.Create( foreignKey.Table.Schema.Name, foreignKey.Name ),
             columns,
             refIndex.Table.RecordSet,
             referencedColumns,
@@ -256,9 +249,9 @@ public static class SqlObjectExtensions
     }
 
     [Pure]
-    public static SqlCheckDefinitionNode ToDefinitionNode(this ISqlCheckBuilder check, bool useFullName)
+    public static SqlCheckDefinitionNode ToDefinitionNode(this ISqlCheckBuilder check)
     {
-        return SqlNode.Check( useFullName ? check.FullName : check.Name, check.Condition );
+        return SqlNode.Check( SqlSchemaObjectName.Create( check.Table.Schema.Name, check.Name ), check.Condition );
     }
 
     [Pure]
@@ -292,8 +285,7 @@ public static class SqlObjectExtensions
     [Pure]
     public static SqlForeignKeyDefinitionNode[] ToDefinitionRange(
         this IReadOnlyCollection<ISqlForeignKeyBuilder> foreignKeys,
-        SqlRecordSetNode table,
-        bool useFullName = false)
+        SqlRecordSetNode table)
     {
         if ( foreignKeys.Count == 0 )
             return Array.Empty<SqlForeignKeyDefinitionNode>();
@@ -301,13 +293,13 @@ public static class SqlObjectExtensions
         var i = 0;
         var result = new SqlForeignKeyDefinitionNode[foreignKeys.Count];
         foreach ( var fk in foreignKeys )
-            result[i++] = fk.ToDefinitionNode( table, useFullName );
+            result[i++] = fk.ToDefinitionNode( table );
 
         return result;
     }
 
     [Pure]
-    public static SqlCheckDefinitionNode[] ToDefinitionRange(this IReadOnlyCollection<ISqlCheckBuilder> checks, bool useFullName = false)
+    public static SqlCheckDefinitionNode[] ToDefinitionRange(this IReadOnlyCollection<ISqlCheckBuilder> checks)
     {
         if ( checks.Count == 0 )
             return Array.Empty<SqlCheckDefinitionNode>();
@@ -315,7 +307,7 @@ public static class SqlObjectExtensions
         var i = 0;
         var result = new SqlCheckDefinitionNode[checks.Count];
         foreach ( var chk in checks )
-            result[i++] = chk.ToDefinitionNode( useFullName );
+            result[i++] = chk.ToDefinitionNode();
 
         return result;
     }

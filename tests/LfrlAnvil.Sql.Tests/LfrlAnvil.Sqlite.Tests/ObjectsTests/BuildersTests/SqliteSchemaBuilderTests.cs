@@ -36,7 +36,6 @@ public partial class SqliteSchemaBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( name );
-            sut.FullName.Should().Be( name );
             db.Schemas.Contains( name ).Should().BeTrue();
         }
     }
@@ -54,7 +53,6 @@ public partial class SqliteSchemaBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( newName );
-            sut.FullName.Should().Be( newName );
             db.Schemas.Contains( newName ).Should().BeTrue();
             db.Schemas.Contains( oldName ).Should().BeFalse();
         }
@@ -74,7 +72,6 @@ public partial class SqliteSchemaBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().BeEmpty();
-            sut.FullName.Should().BeEmpty();
             db.Schemas.Contains( string.Empty ).Should().BeTrue();
             db.Schemas.Contains( oldName ).Should().BeFalse();
         }
@@ -122,29 +119,8 @@ public partial class SqliteSchemaBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( newName );
-            sut.FullName.Should().Be( newName );
             db.Schemas.Contains( newName ).Should().BeTrue();
             db.Schemas.Contains( oldName ).Should().BeFalse();
-            t1.FullName.Should().Be( "bar_T1" );
-            t2.FullName.Should().Be( "bar_T2" );
-            t3.FullName.Should().Be( "bar_T3" );
-            c1.FullName.Should().Be( "bar_T1.C1" );
-            c2.FullName.Should().Be( "bar_T1.C2" );
-            c3.FullName.Should().Be( "bar_T2.C3" );
-            c4.FullName.Should().Be( "bar_T3.C4" );
-            pk1.FullName.Should().Be( "bar_PK_T1" );
-            pk2.FullName.Should().Be( "bar_PK_T2" );
-            pk3.FullName.Should().Be( "bar_PK_T3" );
-            pk1.Index.FullName.Should().Be( "bar_UIX_T1_C1A" );
-            pk2.Index.FullName.Should().Be( "bar_UIX_T2_C3A" );
-            pk3.Index.FullName.Should().Be( "bar_UIX_T3_C4A" );
-            ix1.FullName.Should().Be( "bar_IX_T1_C2A" );
-            fk1.FullName.Should().Be( "bar_FK_T1_C2_REF_T1" );
-            fk2.FullName.Should().Be( "bar_FK_T2_C3_REF_T1" );
-            chk1.FullName.Should().Be( "bar_CHK_T1_0" );
-            chk2.FullName.Should().Be( "bar_CHK_T3_0" );
-            v1.FullName.Should().Be( "bar_V1" );
-            v2.FullName.Should().Be( "bar_V2" );
 
             statements.Should().Contain( s => s.Sql.Contains( "DROP VIEW \"foo_V1\";" ) );
             statements.Should()

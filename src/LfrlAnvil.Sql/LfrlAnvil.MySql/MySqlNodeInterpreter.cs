@@ -735,7 +735,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
     public override void VisitPrimaryKeyDefinition(SqlPrimaryKeyDefinitionNode node)
     {
         Context.Sql.Append( "CONSTRAINT" ).AppendSpace();
-        AppendDelimitedName( node.Name );
+        AppendDelimitedName( node.Name.Object );
         Context.Sql.AppendSpace().Append( "PRIMARY" ).AppendSpace().Append( "KEY" ).AppendSpace().Append( '(' );
 
         if ( node.Columns.Length > 0 )
@@ -755,7 +755,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
     public override void VisitForeignKeyDefinition(SqlForeignKeyDefinitionNode node)
     {
         Context.Sql.Append( "CONSTRAINT" ).AppendSpace();
-        AppendDelimitedName( node.Name );
+        AppendDelimitedName( node.Name.Object );
         Context.Sql.AppendSpace().Append( "FOREIGN" ).AppendSpace().Append( "KEY" ).AppendSpace().Append( '(' );
 
         if ( node.Columns.Length > 0 )
@@ -792,7 +792,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
     public override void VisitCheckDefinition(SqlCheckDefinitionNode node)
     {
         Context.Sql.Append( "CONSTRAINT" ).AppendSpace();
-        AppendDelimitedName( node.Name );
+        AppendDelimitedName( node.Name.Object );
         Context.Sql.AppendSpace().Append( "CHECK" ).AppendSpace();
         VisitChildWrappedInParentheses( node.Condition );
     }

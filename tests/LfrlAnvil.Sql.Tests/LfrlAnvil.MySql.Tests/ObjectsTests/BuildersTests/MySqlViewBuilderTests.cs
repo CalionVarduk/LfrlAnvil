@@ -73,7 +73,6 @@ public class MySqlViewBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( name );
-            sut.FullName.Should().Be( $"common.{name}" );
             schema.Objects.Contains( name ).Should().BeTrue();
         }
     }
@@ -94,7 +93,6 @@ public class MySqlViewBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( oldName );
-            sut.FullName.Should().Be( $"common.{oldName}" );
             schema.Objects.Contains( oldName ).Should().BeTrue();
             schema.Objects.Contains( newName ).Should().BeFalse();
             statements.Should().BeEmpty();
@@ -118,7 +116,6 @@ public class MySqlViewBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( newName );
-            sut.FullName.Should().Be( "s.bar" );
             sut.Info.Should().Be( SqlRecordSetInfo.Create( "s", "bar" ) );
             recordSet.Info.Should().Be( sut.Info );
             schema.Objects.Contains( newName ).Should().BeTrue();
@@ -155,7 +152,6 @@ public class MySqlViewBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( newName );
-            sut.FullName.Should().Be( "s.V2" );
             schema.Objects.Contains( newName ).Should().BeTrue();
             schema.Objects.Contains( oldName ).Should().BeFalse();
 

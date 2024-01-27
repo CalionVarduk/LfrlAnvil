@@ -20,7 +20,6 @@ public sealed class SqliteIndexBuilder : SqliteConstraintBuilder, ISqlIndexBuild
     private Dictionary<ulong, SqliteForeignKeyBuilder>? _referencingForeignKeys;
     private Dictionary<ulong, SqliteColumnBuilder>? _referencedFilterColumns;
     private SqliteIndexColumnBuilder[] _columns;
-    private string _fullName;
 
     internal SqliteIndexBuilder(SqliteTableBuilder table, SqliteIndexColumnBuilder[] columns, string name, bool isUnique)
         : base( table, name, SqlObjectType.Index )
@@ -32,8 +31,6 @@ public sealed class SqliteIndexBuilder : SqliteConstraintBuilder, ISqlIndexBuild
         _originatingForeignKeys = null;
         _referencingForeignKeys = null;
         _referencedFilterColumns = null;
-        _fullName = string.Empty;
-        UpdateFullName();
 
         foreach ( var c in _columns )
             c.Column.AddReferencingIndex( this );
@@ -47,7 +44,6 @@ public sealed class SqliteIndexBuilder : SqliteConstraintBuilder, ISqlIndexBuild
     public IReadOnlyCollection<SqliteForeignKeyBuilder> ReferencingForeignKeys => (_referencingForeignKeys?.Values).EmptyIfNull();
     public IReadOnlyCollection<SqliteColumnBuilder> ReferencedFilterColumns => (_referencedFilterColumns?.Values).EmptyIfNull();
     public override SqliteDatabaseBuilder Database => Table.Database;
-    public override string FullName => _fullName;
 
     internal override bool CanRemove
     {
@@ -174,11 +170,6 @@ public sealed class SqliteIndexBuilder : SqliteConstraintBuilder, ISqlIndexBuild
         _referencingForeignKeys?.Remove( foreignKey.Id );
     }
 
-    internal override void UpdateFullName()
-    {
-        _fullName = SqliteHelpers.GetFullName( Table.Schema.Name, Name );
-    }
-
     internal void ClearOriginatingForeignKeys()
     {
         _originatingForeignKeys = null;
@@ -267,7 +258,6 @@ public sealed class SqliteIndexBuilder : SqliteConstraintBuilder, ISqlIndexBuild
 
         var oldName = Name;
         Name = name;
-        UpdateFullName();
         Database.ChangeTracker.NameUpdated( Table, this, oldName );
     }
 

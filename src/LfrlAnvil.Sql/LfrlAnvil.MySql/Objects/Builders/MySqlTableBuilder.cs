@@ -16,7 +16,6 @@ namespace LfrlAnvil.MySql.Objects.Builders;
 public sealed class MySqlTableBuilder : MySqlObjectBuilder, ISqlTableBuilder
 {
     private Dictionary<ulong, MySqlViewBuilder>? _referencingViews;
-    private string? _fullName;
     private SqlRecordSetInfo? _info;
     private SqlTableBuilderNode? _recordSet;
 
@@ -27,7 +26,6 @@ public sealed class MySqlTableBuilder : MySqlObjectBuilder, ISqlTableBuilder
         Schema = schema;
         Columns = new MySqlColumnBuilderCollection( this );
         Constraints = new MySqlConstraintBuilderCollection( this );
-        _fullName = null;
         _info = null;
         _recordSet = null;
     }
@@ -36,8 +34,6 @@ public sealed class MySqlTableBuilder : MySqlObjectBuilder, ISqlTableBuilder
     public MySqlColumnBuilderCollection Columns { get; }
     public MySqlConstraintBuilderCollection Constraints { get; }
     public IReadOnlyCollection<MySqlViewBuilder> ReferencingViews => (_referencingViews?.Values).EmptyIfNull();
-
-    public override string FullName => _fullName ??= MySqlHelpers.GetFullName( Schema.Name, Name );
     public SqlRecordSetInfo Info => _info ??= SqlRecordSetInfo.Create( Schema.Name, Name );
     public SqlTableBuilderNode RecordSet => _recordSet ??= SqlNode.Table( this );
     public override MySqlDatabaseBuilder Database => Schema.Database;
@@ -69,18 +65,17 @@ public sealed class MySqlTableBuilder : MySqlObjectBuilder, ISqlTableBuilder
     IReadOnlyCollection<ISqlViewBuilder> ISqlTableBuilder.ReferencingViews => ReferencingViews;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
 
+    [Pure]
+    public override string ToString()
+    {
+        return $"[{Type}] {MySqlHelpers.GetFullName( Schema.Name, Name )}";
+    }
+
     public MySqlTableBuilder SetName(string name)
     {
         EnsureNotRemoved();
         SetNameCore( name );
         return this;
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal SqlRecordSetInfo? GetCachedInfo()
-    {
-        return _info;
     }
 
     internal void MarkAsRemoved()
@@ -165,7 +160,7 @@ public sealed class MySqlTableBuilder : MySqlObjectBuilder, ISqlTableBuilder
         Schema.Objects.ChangeName( this, name );
         var oldName = Name;
         Name = name;
-        ResetFullName();
+        ResetInfoCache();
         Database.ChangeTracker.NameUpdated( this, this, oldName );
 
         foreach ( var view in viewBuffer )
@@ -174,19 +169,20 @@ public sealed class MySqlTableBuilder : MySqlObjectBuilder, ISqlTableBuilder
 
     internal void OnSchemaNameChange(string oldName)
     {
-        ResetFullName();
-        foreach ( var constraint in Constraints )
-            constraint.ResetFullName();
-
+        ResetInfoCache();
         Database.ChangeTracker.SchemaNameUpdated( this, this, oldName );
     }
 
-    internal void ResetFullName()
+    internal void ResetInfoCache()
     {
         _info = null;
-        _fullName = null;
-        foreach ( var column in Columns )
-            column.ResetFullName();
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal SqlRecordSetInfo? GetCachedInfo()
+    {
+        return _info;
     }
 
     ISqlTableBuilder ISqlTableBuilder.SetName(string name)

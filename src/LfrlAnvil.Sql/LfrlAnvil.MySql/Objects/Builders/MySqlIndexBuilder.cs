@@ -20,7 +20,6 @@ public sealed class MySqlIndexBuilder : MySqlConstraintBuilder, ISqlIndexBuilder
     private Dictionary<ulong, MySqlForeignKeyBuilder>? _referencingForeignKeys;
     private Dictionary<ulong, MySqlColumnBuilder>? _referencedFilterColumns;
     private MySqlIndexColumnBuilder[] _columns;
-    private string? _fullName;
 
     internal MySqlIndexBuilder(MySqlTableBuilder table, MySqlIndexColumnBuilder[] columns, string name, bool isUnique)
         : base( table, name, SqlObjectType.Index )
@@ -32,7 +31,6 @@ public sealed class MySqlIndexBuilder : MySqlConstraintBuilder, ISqlIndexBuilder
         _originatingForeignKeys = null;
         _referencingForeignKeys = null;
         _referencedFilterColumns = null;
-        _fullName = null;
 
         foreach ( var c in _columns )
             c.Column.AddReferencingIndex( this );
@@ -46,7 +44,6 @@ public sealed class MySqlIndexBuilder : MySqlConstraintBuilder, ISqlIndexBuilder
     public IReadOnlyCollection<MySqlForeignKeyBuilder> ReferencingForeignKeys => (_referencingForeignKeys?.Values).EmptyIfNull();
     public IReadOnlyCollection<MySqlColumnBuilder> ReferencedFilterColumns => (_referencedFilterColumns?.Values).EmptyIfNull();
     public override MySqlDatabaseBuilder Database => Table.Database;
-    public override string FullName => _fullName ??= MySqlHelpers.GetFullName( Table.Schema.Name, Name );
 
     internal override bool CanRemove
     {
@@ -173,11 +170,6 @@ public sealed class MySqlIndexBuilder : MySqlConstraintBuilder, ISqlIndexBuilder
         _referencingForeignKeys?.Remove( foreignKey.Id );
     }
 
-    internal override void ResetFullName()
-    {
-        _fullName = null;
-    }
-
     internal void ClearOriginatingForeignKeys()
     {
         _originatingForeignKeys = null;
@@ -295,7 +287,6 @@ public sealed class MySqlIndexBuilder : MySqlConstraintBuilder, ISqlIndexBuilder
 
         var oldName = Name;
         Name = name;
-        ResetFullName();
         Database.ChangeTracker.NameUpdated( Table, this, oldName );
     }
 

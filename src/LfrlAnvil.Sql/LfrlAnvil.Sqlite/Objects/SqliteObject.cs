@@ -18,7 +18,6 @@ public abstract class SqliteObject : ISqlObject
 
     public SqlObjectType Type { get; }
     public string Name { get; }
-    public abstract string FullName { get; }
     public abstract SqliteDatabase Database { get; }
 
     ISqlDatabase ISqlObject.Database => Database;
@@ -26,12 +25,6 @@ public abstract class SqliteObject : ISqlObject
     [Pure]
     public override string ToString()
     {
-        return $"[{Type}] {FullName}";
-    }
-
-    [Pure]
-    public sealed override int GetHashCode()
-    {
-        return FullName.GetHashCode();
+        return $"[{Type}] {Name}";
     }
 }

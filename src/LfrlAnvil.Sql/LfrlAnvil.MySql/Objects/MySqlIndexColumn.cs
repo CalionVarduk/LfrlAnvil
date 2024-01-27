@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using LfrlAnvil.MySql.Internal;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Objects;
 
@@ -21,13 +22,13 @@ public sealed class MySqlIndexColumn : ISqlIndexColumn, IEquatable<MySqlIndexCol
     [Pure]
     public override string ToString()
     {
-        return $"{Column.FullName} {Ordering.Name}";
+        return $"{MySqlHelpers.GetFullName( Column.Table.Schema.Name, Column.Table.Name, Column.Name )} {Ordering.Name}";
     }
 
     [Pure]
     public override int GetHashCode()
     {
-        return HashCode.Combine( Column.FullName, Ordering.Value );
+        return HashCode.Combine( Column.Table.Schema.Name, Column.Table.Name, Column.Name, Ordering.Value );
     }
 
     [Pure]

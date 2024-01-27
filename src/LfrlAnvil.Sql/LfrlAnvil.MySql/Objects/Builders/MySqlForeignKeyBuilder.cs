@@ -7,8 +7,6 @@ namespace LfrlAnvil.MySql.Objects.Builders;
 
 public sealed class MySqlForeignKeyBuilder : MySqlConstraintBuilder, ISqlForeignKeyBuilder
 {
-    private string? _fullName;
-
     internal MySqlForeignKeyBuilder(MySqlIndexBuilder originIndex, MySqlIndexBuilder referencedIndex, string name)
         : base( originIndex.Table, name, SqlObjectType.ForeignKey )
     {
@@ -18,14 +16,12 @@ public sealed class MySqlForeignKeyBuilder : MySqlConstraintBuilder, ISqlForeign
         OnUpdateBehavior = ReferenceBehavior.Restrict;
         OriginIndex.AddOriginatingForeignKey( this );
         ReferencedIndex.AddReferencingForeignKey( this );
-        _fullName = null;
     }
 
     public MySqlIndexBuilder OriginIndex { get; }
     public MySqlIndexBuilder ReferencedIndex { get; }
     public ReferenceBehavior OnDeleteBehavior { get; private set; }
     public ReferenceBehavior OnUpdateBehavior { get; private set; }
-    public override string FullName => _fullName ??= MySqlHelpers.GetFullName( OriginIndex.Table.Schema.Name, Name );
     public override MySqlDatabaseBuilder Database => OriginIndex.Database;
 
     ISqlIndexBuilder ISqlForeignKeyBuilder.OriginIndex => OriginIndex;
@@ -72,11 +68,6 @@ public sealed class MySqlForeignKeyBuilder : MySqlConstraintBuilder, ISqlForeign
         return this;
     }
 
-    internal override void ResetFullName()
-    {
-        _fullName = null;
-    }
-
     internal override void MarkAsRemoved()
     {
         Assume.Equals( IsRemoved, false );
@@ -114,7 +105,6 @@ public sealed class MySqlForeignKeyBuilder : MySqlConstraintBuilder, ISqlForeign
 
         var oldName = Name;
         Name = name;
-        ResetFullName();
         Database.ChangeTracker.NameUpdated( OriginIndex.Table, this, oldName );
     }
 

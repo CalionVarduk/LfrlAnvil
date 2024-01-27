@@ -210,7 +210,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
             .Select(
                 master.ToDataSource()
                     .AndWhere( masterType == SqlNode.Literal( "table" ) )
-                    .AndWhere( masterName == SqlNode.Literal( info.Table.FullName ) )
+                    .AndWhere( masterName == SqlNode.Literal( SqliteHelpers.GetFullName( info.Table.Schema.Name, info.Table.Name ) ) )
                     .Exists()
                     .ToValue()
                     .As( "x" ) );
@@ -414,8 +414,9 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
                         statementExecutor.ExecuteNonQuery( statementCommand, statementKey, SqlDatabaseFactoryStatementType.Change );
                     }
 
-                    foreach ( var tableName in builder.ChangeTracker.ModifiedTableNames )
+                    foreach ( var table in builder.ChangeTracker.ModifiedTables )
                     {
+                        var tableName = SqliteHelpers.GetFullName( table.Schema.Name, table.Name );
                         statementKey = statementKey.NextOrdinal();
                         statementCommand.CommandText = $"PRAGMA foreign_key_check('{tableName}');";
 

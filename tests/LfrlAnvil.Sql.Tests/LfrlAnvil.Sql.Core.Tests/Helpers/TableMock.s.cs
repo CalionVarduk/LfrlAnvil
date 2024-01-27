@@ -20,7 +20,6 @@ public static class TableMock
         result.Type.Returns( SqlObjectType.Table );
         result.Schema.Returns( schema );
         result.Name.Returns( name );
-        result.FullName.Returns( fullName );
         var info = SqlRecordSetInfo.Create( schema.Name, name );
         result.Info.Returns( info );
 
@@ -66,7 +65,6 @@ public static class TableMock
         result.Type.Returns( SqlObjectType.Table );
         result.Schema.Returns( schema );
         result.Name.Returns( name );
-        result.FullName.Returns( fullName );
         var info = SqlRecordSetInfo.Create( schema.Name, name );
         result.Info.Returns( info );
 

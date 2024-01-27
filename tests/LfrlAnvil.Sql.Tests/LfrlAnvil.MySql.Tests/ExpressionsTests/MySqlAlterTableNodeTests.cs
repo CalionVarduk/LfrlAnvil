@@ -26,14 +26,26 @@ public class MySqlAlterTableNodeTests : TestsBase
         };
 
         var newColumns = new[] { SqlNode.Column<long>( "C3" ), SqlNode.Column<long>( "C4", isNullable: true ) };
-        var newPrimaryKey = SqlNode.PrimaryKey( "PK", SqlNode.OrderByAsc( table["C5"] ) );
+        var newPrimaryKey = SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), SqlNode.OrderByAsc( table["C5"] ) );
         var newForeignKeys = new[]
         {
-            SqlNode.ForeignKey( "FK_3", new SqlDataFieldNode[] { table["C6"] }, other, new SqlDataFieldNode[] { other["C1"] } ),
-            SqlNode.ForeignKey( "FK_4", new SqlDataFieldNode[] { table["C7"] }, other, new SqlDataFieldNode[] { other["C2"] } )
+            SqlNode.ForeignKey(
+                SqlSchemaObjectName.Create( "FK_3" ),
+                new SqlDataFieldNode[] { table["C6"] },
+                other,
+                new SqlDataFieldNode[] { other["C1"] } ),
+            SqlNode.ForeignKey(
+                SqlSchemaObjectName.Create( "FK_4" ),
+                new SqlDataFieldNode[] { table["C7"] },
+                other,
+                new SqlDataFieldNode[] { other["C2"] } )
         };
 
-        var newChecks = new[] { SqlNode.Check( "CHK_3", SqlNode.True() ), SqlNode.Check( "CHK_4", SqlNode.False() ) };
+        var newChecks = new[]
+        {
+            SqlNode.Check( SqlSchemaObjectName.Create( "CHK_3" ), SqlNode.True() ),
+            SqlNode.Check( SqlSchemaObjectName.Create( "CHK_4" ), SqlNode.False() )
+        };
 
         var sut = new MySqlAlterTableNode(
             info: info,

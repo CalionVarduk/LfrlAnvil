@@ -6,11 +6,7 @@ namespace LfrlAnvil.MySql.Objects;
 public sealed class MySqlCheck : MySqlConstraint, ISqlCheck
 {
     internal MySqlCheck(MySqlTable table, MySqlCheckBuilder builder)
-        : base( table, builder )
-    {
-        FullName = builder.FullName;
-    }
+        : base( table, builder ) { }
 
-    public override string FullName { get; }
     public override MySqlDatabase Database => Table.Database;
 }

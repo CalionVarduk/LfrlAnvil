@@ -7,18 +7,13 @@ namespace LfrlAnvil.Sqlite.Objects.Builders;
 
 public sealed class SqlitePrimaryKeyBuilder : SqliteConstraintBuilder, ISqlPrimaryKeyBuilder
 {
-    private string _fullName;
-
     internal SqlitePrimaryKeyBuilder(SqliteIndexBuilder index, string name)
         : base( index.Table, name, SqlObjectType.PrimaryKey )
     {
         Index = index;
-        _fullName = string.Empty;
-        UpdateFullName();
     }
 
     public SqliteIndexBuilder Index { get; }
-    public override string FullName => _fullName;
     public override SqliteDatabaseBuilder Database => Index.Database;
     internal override bool CanRemove => Index.CanRemove;
 
@@ -35,11 +30,6 @@ public sealed class SqlitePrimaryKeyBuilder : SqliteConstraintBuilder, ISqlPrima
     {
         base.SetDefaultName();
         return this;
-    }
-
-    internal override void UpdateFullName()
-    {
-        _fullName = SqliteHelpers.GetFullName( Index.Table.Schema.Name, Name );
     }
 
     [Pure]
@@ -66,7 +56,6 @@ public sealed class SqlitePrimaryKeyBuilder : SqliteConstraintBuilder, ISqlPrima
 
         var oldName = Name;
         Name = name;
-        UpdateFullName();
         Database.ChangeTracker.NameUpdated( Index.Table, this, oldName );
     }
 

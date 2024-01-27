@@ -69,7 +69,6 @@ public class SqliteViewBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( name );
-            sut.FullName.Should().Be( name );
             schema.Objects.Contains( name ).Should().BeTrue();
         }
     }
@@ -90,7 +89,6 @@ public class SqliteViewBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( oldName );
-            sut.FullName.Should().Be( oldName );
             schema.Objects.Contains( oldName ).Should().BeTrue();
             schema.Objects.Contains( newName ).Should().BeFalse();
             statements.Should().BeEmpty();
@@ -114,7 +112,6 @@ public class SqliteViewBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( newName );
-            sut.FullName.Should().Be( "s_bar" );
             sut.Info.Should().Be( SqlRecordSetInfo.Create( "s", "bar" ) );
             recordSet.Info.Should().Be( sut.Info );
             schema.Objects.Contains( newName ).Should().BeTrue();
@@ -151,7 +148,6 @@ public class SqliteViewBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( newName );
-            sut.FullName.Should().Be( "s_V2" );
             schema.Objects.Contains( newName ).Should().BeTrue();
             schema.Objects.Contains( oldName ).Should().BeFalse();
 

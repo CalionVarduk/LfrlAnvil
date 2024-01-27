@@ -12,20 +12,16 @@ namespace LfrlAnvil.Sqlite.Objects.Builders;
 public sealed class SqliteCheckBuilder : SqliteConstraintBuilder, ISqlCheckBuilder
 {
     private readonly Dictionary<ulong, SqliteColumnBuilder> _referencedColumns;
-    private string _fullName;
 
     internal SqliteCheckBuilder(string name, SqlConditionNode condition, SqliteTableScopeExpressionValidator visitor)
         : base( visitor.Table, name, SqlObjectType.Check )
     {
         Condition = condition;
         _referencedColumns = visitor.ReferencedColumns;
-        _fullName = string.Empty;
-        UpdateFullName();
         AddSelfToReferencedColumns();
     }
 
     public SqlConditionNode Condition { get; }
-    public override string FullName => _fullName;
     public IReadOnlyCollection<SqliteColumnBuilder> ReferencedColumns => _referencedColumns.Values;
     public override SqliteDatabaseBuilder Database => Table.Database;
     IReadOnlyCollection<ISqlColumnBuilder> ISqlCheckBuilder.ReferencedColumns => ReferencedColumns;
@@ -41,11 +37,6 @@ public sealed class SqliteCheckBuilder : SqliteConstraintBuilder, ISqlCheckBuild
     {
         base.SetDefaultName();
         return this;
-    }
-
-    internal override void UpdateFullName()
-    {
-        _fullName = SqliteHelpers.GetFullName( Table.Schema.Name, Name );
     }
 
     [Pure]
@@ -91,7 +82,6 @@ public sealed class SqliteCheckBuilder : SqliteConstraintBuilder, ISqlCheckBuild
 
         var oldName = Name;
         Name = name;
-        UpdateFullName();
         Database.ChangeTracker.NameUpdated( Table, this, oldName );
     }
 

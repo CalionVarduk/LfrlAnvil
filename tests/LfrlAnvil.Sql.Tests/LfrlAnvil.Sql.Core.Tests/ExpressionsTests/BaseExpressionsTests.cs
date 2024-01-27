@@ -788,28 +788,28 @@ VALUES
     {
         var table = SqlNode.RawRecordSet( "foo" );
         var columns = new[] { table["x"].Asc(), table["y"].Desc() };
-        var sut = SqlNode.PrimaryKey( "PK_foo", columns );
+        var sut = SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "bar", "PK_foo" ), columns );
         var text = sut.ToString();
 
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.PrimaryKeyDefinition );
-            sut.Name.Should().Be( "PK_foo" );
+            sut.Name.Should().Be( SqlSchemaObjectName.Create( "bar", "PK_foo" ) );
             sut.Columns.ToArray().Should().BeSequentiallyEqualTo( columns );
-            text.Should().Be( "PRIMARY KEY [PK_foo] (([foo].[x] : ?) ASC, ([foo].[y] : ?) DESC)" );
+            text.Should().Be( "PRIMARY KEY [bar].[PK_foo] (([foo].[x] : ?) ASC, ([foo].[y] : ?) DESC)" );
         }
     }
 
     [Fact]
     public void PrimaryKey_ShouldCreatePrimaryKeyDefinitionNode_WithoutColumns()
     {
-        var sut = SqlNode.PrimaryKey( "PK_foo", Array.Empty<SqlOrderByNode>() );
+        var sut = SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK_foo" ), Array.Empty<SqlOrderByNode>() );
         var text = sut.ToString();
 
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.PrimaryKeyDefinition );
-            sut.Name.Should().Be( "PK_foo" );
+            sut.Name.Should().Be( SqlSchemaObjectName.Create( "PK_foo" ) );
             sut.Columns.ToArray().Should().BeEmpty();
             text.Should().Be( "PRIMARY KEY [PK_foo] ()" );
         }
@@ -822,13 +822,13 @@ VALUES
         var referencedTable = SqlNode.RawRecordSet( "bar" );
         var columns = new SqlDataFieldNode[] { table["x"], table["y"] };
         var referencedColumns = new SqlDataFieldNode[] { referencedTable["x"], referencedTable["y"] };
-        var sut = SqlNode.ForeignKey( "FK_foo_REF_bar", columns, referencedTable, referencedColumns );
+        var sut = SqlNode.ForeignKey( SqlSchemaObjectName.Create( "qux", "FK_foo_REF_bar" ), columns, referencedTable, referencedColumns );
         var text = sut.ToString();
 
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.ForeignKeyDefinition );
-            sut.Name.Should().Be( "FK_foo_REF_bar" );
+            sut.Name.Should().Be( SqlSchemaObjectName.Create( "qux", "FK_foo_REF_bar" ) );
             sut.Columns.ToArray().Should().BeSequentiallyEqualTo( columns );
             sut.ReferencedTable.Should().BeSameAs( referencedTable );
             sut.ReferencedColumns.ToArray().Should().BeSequentiallyEqualTo( referencedColumns );
@@ -836,7 +836,7 @@ VALUES
             sut.OnUpdateBehavior.Should().BeSameAs( ReferenceBehavior.Restrict );
             text.Should()
                 .Be(
-                    "FOREIGN KEY [FK_foo_REF_bar] (([foo].[x] : ?), ([foo].[y] : ?)) REFERENCES [bar] (([bar].[x] : ?), ([bar].[y] : ?)) ON DELETE RESTRICT ON UPDATE RESTRICT" );
+                    "FOREIGN KEY [qux].[FK_foo_REF_bar] (([foo].[x] : ?), ([foo].[y] : ?)) REFERENCES [bar] (([bar].[x] : ?), ([bar].[y] : ?)) ON DELETE RESTRICT ON UPDATE RESTRICT" );
         }
     }
 
@@ -854,7 +854,7 @@ VALUES
         var onUpdateBehavior = onUpdate == ReferenceBehavior.Values.Restrict ? ReferenceBehavior.Restrict : ReferenceBehavior.Cascade;
 
         var sut = SqlNode.ForeignKey(
-            "FK_foo_REF_bar",
+            SqlSchemaObjectName.Create( "FK_foo_REF_bar" ),
             Array.Empty<SqlDataFieldNode>(),
             referencedTable,
             Array.Empty<SqlDataFieldNode>(),
@@ -866,7 +866,7 @@ VALUES
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.ForeignKeyDefinition );
-            sut.Name.Should().Be( "FK_foo_REF_bar" );
+            sut.Name.Should().Be( SqlSchemaObjectName.Create( "FK_foo_REF_bar" ) );
             sut.Columns.ToArray().Should().BeEmpty();
             sut.ReferencedTable.Should().BeSameAs( referencedTable );
             sut.ReferencedColumns.ToArray().Should().BeEmpty();
@@ -883,15 +883,15 @@ VALUES
     {
         var table = SqlNode.RawRecordSet( "foo" );
         var predicate = table["x"] > SqlNode.Literal( 10 );
-        var sut = SqlNode.Check( "CHK_foo", predicate );
+        var sut = SqlNode.Check( SqlSchemaObjectName.Create( "bar", "CHK_foo" ), predicate );
         var text = sut.ToString();
 
         using ( new AssertionScope() )
         {
             sut.NodeType.Should().Be( SqlNodeType.CheckDefinition );
-            sut.Name.Should().Be( "CHK_foo" );
+            sut.Name.Should().Be( SqlSchemaObjectName.Create( "bar", "CHK_foo" ) );
             sut.Condition.Should().BeSameAs( predicate );
-            text.Should().Be( "CHECK [CHK_foo] (([foo].[x] : ?) > (\"10\" : System.Int32))" );
+            text.Should().Be( "CHECK [bar].[CHK_foo] (([foo].[x] : ?) > (\"10\" : System.Int32))" );
         }
     }
 
@@ -916,17 +916,17 @@ VALUES
             constraintsProvider: t =>
             {
                 var qux = SqlNode.RawRecordSet( "qux" );
-                primaryKey = SqlNode.PrimaryKey( "PK_foobar", t["x"].Asc() );
+                primaryKey = SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK_foobar" ), t["x"].Asc() );
                 foreignKeys = new[]
                 {
                     SqlNode.ForeignKey(
-                        "FK_foobar_REF_qux",
+                        SqlSchemaObjectName.Create( "FK_foobar_REF_qux" ),
                         new SqlDataFieldNode[] { t["y"] },
                         qux,
                         new SqlDataFieldNode[] { qux["y"] } )
                 };
 
-                checks = new[] { SqlNode.Check( "CHK_foobar", t["z"] > SqlNode.Literal( 100.0 ) ) };
+                checks = new[] { SqlNode.Check( SqlSchemaObjectName.Create( "CHK_foobar" ), t["z"] > SqlNode.Literal( 100.0 ) ) };
 
                 return SqlCreateTableConstraints.Empty
                     .WithPrimaryKey( primaryKey )

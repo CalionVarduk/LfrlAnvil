@@ -44,7 +44,7 @@ public readonly struct SqlRecordSetInfo : IEquatable<SqlRecordSetInfo>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlRecordSetInfo Create(SqlSchemaObjectName name)
     {
-        return new SqlRecordSetInfo( name: name, isTemporary: false, identifier: name.Identifier );
+        return new SqlRecordSetInfo( name: name, isTemporary: false, identifier: name.ToString() );
     }
 
     [Pure]

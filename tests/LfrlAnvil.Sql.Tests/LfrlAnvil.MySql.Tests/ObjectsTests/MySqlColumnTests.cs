@@ -31,7 +31,6 @@ public class MySqlColumnTests : TestsBase
             sut.Table.Should().BeSameAs( table );
             sut.Type.Should().Be( SqlObjectType.Column );
             sut.Name.Should().Be( "C" );
-            sut.FullName.Should().Be( "common.T.C" );
             sut.IsNullable.Should().Be( isNullable );
             sut.HasDefaultValue.Should().BeFalse();
             sut.TypeDefinition.Should().BeSameAs( db.TypeDefinitions.GetByType( type ) );
@@ -59,7 +58,6 @@ public class MySqlColumnTests : TestsBase
             sut.Table.Should().BeSameAs( table );
             sut.Type.Should().Be( SqlObjectType.Column );
             sut.Name.Should().Be( "C" );
-            sut.FullName.Should().Be( "common.T.C" );
             sut.IsNullable.Should().BeFalse();
             sut.HasDefaultValue.Should().BeTrue();
             sut.TypeDefinition.Should().BeSameAs( db.TypeDefinitions.GetByType<object>() );

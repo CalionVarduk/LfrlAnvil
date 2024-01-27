@@ -41,7 +41,6 @@ public class MySqlForeignKeyTests : TestsBase
             sut.OnUpdateBehavior.Should().BeSameAs( onUpdateBehavior );
             sut.Type.Should().Be( SqlObjectType.ForeignKey );
             sut.Name.Should().Be( "FK_TEST" );
-            sut.FullName.Should().Be( "foo.FK_TEST" );
             sut.ToString().Should().Be( "[ForeignKey] foo.FK_TEST" );
             sut.IsSelfReference().Should().BeTrue();
         }
@@ -83,7 +82,6 @@ public class MySqlForeignKeyTests : TestsBase
             sut.OnUpdateBehavior.Should().BeSameAs( onUpdateBehavior );
             sut.Type.Should().Be( SqlObjectType.ForeignKey );
             sut.Name.Should().Be( "FK_TEST" );
-            sut.FullName.Should().Be( "foo.FK_TEST" );
             sut.ToString().Should().Be( "[ForeignKey] foo.FK_TEST" );
             sut.IsSelfReference().Should().BeFalse();
         }
@@ -128,7 +126,6 @@ public class MySqlForeignKeyTests : TestsBase
             sut.OnUpdateBehavior.Should().BeSameAs( onUpdateBehavior );
             sut.Type.Should().Be( SqlObjectType.ForeignKey );
             sut.Name.Should().Be( "FK_TEST" );
-            sut.FullName.Should().Be( "foo.FK_TEST" );
             sut.ToString().Should().Be( "[ForeignKey] foo.FK_TEST" );
             sut.IsSelfReference().Should().BeFalse();
         }

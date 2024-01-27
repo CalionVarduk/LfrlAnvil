@@ -1513,7 +1513,7 @@ public class SqlNodeVisitorTests : TestsBase
         var table = SqlNode.RawRecordSet( "foo" );
         var columns = new[] { table["a"], table["b"] };
 
-        sut.VisitPrimaryKeyDefinition( SqlNode.PrimaryKey( "PK", columns[0].Asc(), columns[1].Desc() ) );
+        sut.VisitPrimaryKeyDefinition( SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), columns[0].Asc(), columns[1].Desc() ) );
 
         sut.Nodes.Should().BeSequentiallyEqualTo( table, table );
     }
@@ -1527,7 +1527,7 @@ public class SqlNodeVisitorTests : TestsBase
         var otherTable = SqlNode.RawRecordSet( "bar" );
         var otherColumns = new SqlDataFieldNode[] { otherTable["a"], otherTable["b"] };
 
-        sut.VisitForeignKeyDefinition( SqlNode.ForeignKey( "FK", columns, otherTable, otherColumns ) );
+        sut.VisitForeignKeyDefinition( SqlNode.ForeignKey( SqlSchemaObjectName.Create( "FK" ), columns, otherTable, otherColumns ) );
 
         sut.Nodes.Should().BeSequentiallyEqualTo( table, table, otherTable, otherTable, otherTable );
     }
@@ -1538,7 +1538,7 @@ public class SqlNodeVisitorTests : TestsBase
         var sut = new VisitorMock();
         var parameter = SqlNode.Parameter( "a" );
 
-        sut.VisitCheckDefinition( SqlNode.Check( "CHK", SqlNode.RawCondition( "a > @a", parameter ) ) );
+        sut.VisitCheckDefinition( SqlNode.Check( SqlSchemaObjectName.Create( "CHK" ), SqlNode.RawCondition( "a > @a", parameter ) ) );
 
         sut.Nodes.Should().BeSequentiallyEqualTo( parameter );
     }
@@ -1560,14 +1560,14 @@ public class SqlNodeVisitorTests : TestsBase
             },
             constraintsProvider: t =>
                 SqlCreateTableConstraints.Empty
-                    .WithPrimaryKey( SqlNode.PrimaryKey( "PK", t["a"].Asc() ) )
+                    .WithPrimaryKey( SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), t["a"].Asc() ) )
                     .WithForeignKeys(
                         SqlNode.ForeignKey(
-                            "FK",
+                            SqlSchemaObjectName.Create( "FK" ),
                             new SqlDataFieldNode[] { t["b"] },
                             otherTable,
                             new SqlDataFieldNode[] { referencedColumn } ) )
-                    .WithChecks( SqlNode.Check( "CHK", SqlNode.RawCondition( "a > @a", parameters[2] ) ) ) );
+                    .WithChecks( SqlNode.Check( SqlSchemaObjectName.Create( "CHK" ), SqlNode.RawCondition( "a > @a", parameters[2] ) ) ) );
 
         sut.VisitCreateTable( table );
 

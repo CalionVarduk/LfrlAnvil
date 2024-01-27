@@ -29,7 +29,6 @@ public partial class MySqlTableBuilderTests
                 result.Table.Should().BeSameAs( table );
                 result.Database.Should().BeSameAs( table.Database );
                 result.Name.Should().Be( "C" );
-                result.FullName.Should().Be( "foo.T1.C" );
                 result.IsNullable.Should().BeFalse();
                 result.TypeDefinition.Should().BeSameAs( sut.DefaultTypeDefinition );
                 result.DefaultValue.Should().BeNull();
@@ -106,7 +105,6 @@ public partial class MySqlTableBuilderTests
                 result.Table.Should().BeSameAs( table );
                 result.Database.Should().BeSameAs( table.Database );
                 result.Name.Should().Be( "C" );
-                result.FullName.Should().Be( "foo.T1.C" );
                 result.IsNullable.Should().BeFalse();
                 result.TypeDefinition.Should().BeSameAs( sut.DefaultTypeDefinition );
                 result.DefaultValue.Should().BeNull();

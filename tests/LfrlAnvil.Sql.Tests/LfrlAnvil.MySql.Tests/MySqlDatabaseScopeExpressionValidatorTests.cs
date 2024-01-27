@@ -2002,7 +2002,7 @@ public class MySqlDatabaseScopeExpressionValidatorTests : TestsBase
     [Fact]
     public void VisitPrimaryKeyDefinition_ShouldRegisterError()
     {
-        _sut.VisitPrimaryKeyDefinition( SqlNode.PrimaryKey( "PK" ) );
+        _sut.VisitPrimaryKeyDefinition( SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ) ) );
 
         using ( new AssertionScope() )
         {
@@ -2015,7 +2015,11 @@ public class MySqlDatabaseScopeExpressionValidatorTests : TestsBase
     public void VisitForeignKeyDefinition_ShouldRegisterError()
     {
         _sut.VisitForeignKeyDefinition(
-            SqlNode.ForeignKey( "FK", Array.Empty<SqlDataFieldNode>(), SqlNode.RawRecordSet( "foo" ), Array.Empty<SqlDataFieldNode>() ) );
+            SqlNode.ForeignKey(
+                SqlSchemaObjectName.Create( "FK" ),
+                Array.Empty<SqlDataFieldNode>(),
+                SqlNode.RawRecordSet( "foo" ),
+                Array.Empty<SqlDataFieldNode>() ) );
 
         using ( new AssertionScope() )
         {
@@ -2027,7 +2031,7 @@ public class MySqlDatabaseScopeExpressionValidatorTests : TestsBase
     [Fact]
     public void VisitCheckDefinition_ShouldRegisterError()
     {
-        _sut.VisitCheckDefinition( SqlNode.Check( "CHK", SqlNode.True() ) );
+        _sut.VisitCheckDefinition( SqlNode.Check( SqlSchemaObjectName.Create( "CHK" ), SqlNode.True() ) );
 
         using ( new AssertionScope() )
         {

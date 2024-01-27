@@ -28,7 +28,6 @@ public class SqliteCheckTests : TestsBase
             sut.Table.Should().BeSameAs( table );
             sut.Type.Should().Be( SqlObjectType.Check );
             sut.Name.Should().Be( "CHK_T_0" );
-            sut.FullName.Should().Be( "foo_CHK_T_0" );
             sut.ToString().Should().Be( "[Check] foo_CHK_T_0" );
         }
     }

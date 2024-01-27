@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Objects.Builders;
+using LfrlAnvil.Sqlite.Internal;
 
 namespace LfrlAnvil.Sqlite.Objects.Builders;
 
@@ -14,6 +15,12 @@ public abstract class SqliteConstraintBuilder : SqliteObjectBuilder, ISqlConstra
 
     public SqliteTableBuilder Table { get; }
     ISqlTableBuilder ISqlConstraintBuilder.Table => Table;
+
+    [Pure]
+    public override string ToString()
+    {
+        return $"[{Type}] {SqliteHelpers.GetFullName( Table.Schema.Name, Name )}";
+    }
 
     public SqliteConstraintBuilder SetName(string name)
     {
@@ -29,8 +36,6 @@ public abstract class SqliteConstraintBuilder : SqliteObjectBuilder, ISqlConstra
 
     [Pure]
     protected abstract string GetDefaultName();
-
-    internal abstract void UpdateFullName();
 
     ISqlConstraintBuilder ISqlConstraintBuilder.SetName(string name)
     {

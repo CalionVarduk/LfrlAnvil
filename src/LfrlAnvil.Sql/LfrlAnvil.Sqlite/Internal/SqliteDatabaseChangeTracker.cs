@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using LfrlAnvil.Exceptions;
@@ -49,7 +48,7 @@ internal sealed class SqliteDatabaseChangeTracker
     internal SqlDatabaseCreateMode Mode => (SqlDatabaseCreateMode)((_mode & ModeMask) >> 1);
     internal bool IsAttached => (_mode & IsDetachedBit) == 0;
     internal bool IsPreparingStatements => _mode > 0 && IsAttached;
-    internal IEnumerable<string> ModifiedTableNames => _modifiedTables.Values.Select( t => t.FullName );
+    internal IEnumerable<SqliteTableBuilder> ModifiedTables => _modifiedTables.Values;
 
     internal ReadOnlySpan<SqlDatabaseBuilderStatement> GetPendingStatements()
     {
@@ -406,8 +405,8 @@ internal sealed class SqliteDatabaseChangeTracker
         {
             var currentTable = ReinterpretCast.To<SqliteTableBuilder>( CurrentObject );
             ValidateTable( currentTable );
+            _ongoingStatements.Add( currentTable.ToCreateNode() );
 
-            _ongoingStatements.Add( currentTable.ToCreateNode( useFullConstraintNames: true ) );
             foreach ( var constraint in currentTable.Constraints )
             {
                 if ( constraint.Type != SqlObjectType.Index )
@@ -518,8 +517,10 @@ internal sealed class SqliteDatabaseChangeTracker
                 column.UpdateDefaultValueBasedOnDataType();
         }
 
-        var temporaryTableName = SqlRecordSetInfo.Create( CreateTemporaryName( table.FullName ) );
-        var createTemporaryTable = table.ToCreateNode( customInfo: temporaryTableName, useFullConstraintNames: true );
+        var temporaryTableName = SqlRecordSetInfo.Create(
+            CreateTemporaryName( SqliteHelpers.GetFullName( table.Schema.Name, table.Name ) ) );
+
+        var createTemporaryTable = table.ToCreateNode( customInfo: temporaryTableName );
         _ongoingStatements.Add( createTemporaryTable );
 
         var i = 0;

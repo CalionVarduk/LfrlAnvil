@@ -18,7 +18,6 @@ public sealed class MySqlViewBuilder : MySqlObjectBuilder, ISqlViewBuilder
 {
     private Dictionary<ulong, MySqlViewBuilder>? _referencingViews;
     private readonly Dictionary<ulong, MySqlObjectBuilder> _referencedObjects;
-    private string? _fullName;
     private SqlRecordSetInfo? _info;
     private SqlViewBuilderNode? _recordSet;
 
@@ -33,7 +32,6 @@ public sealed class MySqlViewBuilder : MySqlObjectBuilder, ISqlViewBuilder
         Source = source;
         _referencingViews = null;
         _referencedObjects = visitor.ReferencedObjects;
-        _fullName = null;
         _info = null;
         AddSelfToReferencedObjects();
         _recordSet = null;
@@ -43,7 +41,6 @@ public sealed class MySqlViewBuilder : MySqlObjectBuilder, ISqlViewBuilder
     public SqlQueryExpressionNode Source { get; }
     public IReadOnlyCollection<MySqlObjectBuilder> ReferencedObjects => _referencedObjects.Values;
     public IReadOnlyCollection<MySqlViewBuilder> ReferencingViews => (_referencingViews?.Values).EmptyIfNull();
-    public override string FullName => _fullName ??= MySqlHelpers.GetFullName( Schema.Name, Name );
     public SqlRecordSetInfo Info => _info ??= SqlRecordSetInfo.Create( Schema.Name, Name );
     public SqlViewBuilderNode RecordSet => _recordSet ??= SqlNode.View( this );
     public override MySqlDatabaseBuilder Database => Schema.Database;
@@ -54,6 +51,12 @@ public sealed class MySqlViewBuilder : MySqlObjectBuilder, ISqlViewBuilder
     IReadOnlyCollection<ISqlObjectBuilder> ISqlViewBuilder.ReferencedObjects => ReferencedObjects;
     IReadOnlyCollection<ISqlViewBuilder> ISqlViewBuilder.ReferencingViews => ReferencingViews;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
+
+    [Pure]
+    public override string ToString()
+    {
+        return $"[{Type}] {MySqlHelpers.GetFullName( Schema.Name, Name )}";
+    }
 
     public MySqlViewBuilder SetName(string name)
     {
@@ -103,18 +106,11 @@ public sealed class MySqlViewBuilder : MySqlObjectBuilder, ISqlViewBuilder
         Schema.Objects.ChangeName( this, name );
         var oldName = Name;
         Name = name;
-        ResetFullName();
+        ResetInfoCache();
         Database.ChangeTracker.NameUpdated( this, oldName );
 
         foreach ( var view in buffer )
             ReinterpretCast.To<MySqlViewBuilder>( view ).Reactivate();
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal SqlRecordSetInfo? GetCachedInfo()
-    {
-        return _info;
     }
 
     internal void AddReferencingView(MySqlViewBuilder view)
@@ -128,10 +124,16 @@ public sealed class MySqlViewBuilder : MySqlObjectBuilder, ISqlViewBuilder
         _referencingViews?.Remove( view.Id );
     }
 
-    internal void ResetFullName()
+    internal void ResetInfoCache()
     {
         _info = null;
-        _fullName = null;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal SqlRecordSetInfo? GetCachedInfo()
+    {
+        return _info;
     }
 
     internal void MarkAsRemoved()

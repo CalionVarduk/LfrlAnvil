@@ -5,7 +5,6 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
-using System.Text;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
@@ -51,37 +50,7 @@ public static class ExceptionResources
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string NameIsAlreadyTaken(ISqlObjectBuilder obj, string name)
     {
-        return $"'{name}' is already taken by {obj}.";
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string ForeignKeyAlreadyExists(ISqlIndexBuilder index, ISqlIndexBuilder referencingIndex)
-    {
-        return $"Foreign key '{index.FullName}' => '{referencingIndex.FullName}' already exists.";
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string CheckAlreadyExists(string name)
-    {
-        return $"Check '{name}' already exists.";
-    }
-
-    [Pure]
-    public static string IndexAlreadyExists(ReadOnlyMemory<ISqlIndexColumnBuilder> columns)
-    {
-        var builder = new StringBuilder( 48 );
-        builder.Append( "Index with columns (" );
-
-        if ( columns.Length > 0 )
-        {
-            foreach ( var c in columns )
-                builder.Append( c.Column.Name ).Append( ' ' ).Append( c.Ordering.Name );
-        }
-
-        builder.Append( ") already exists." );
-        return builder.ToString();
+        return $"Name '{name}' is already taken by {obj}.";
     }
 
     [Pure]
@@ -95,21 +64,21 @@ public static class ExceptionResources
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string DetectedExternalForeignKey(ISqlForeignKeyBuilder foreignKey)
     {
-        return $"Detected an external '{foreignKey.FullName}' foreign key.";
+        return $"Detected an external {foreignKey}.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string DetectedExternalReferencingView(ISqlViewBuilder view, ISqlObjectBuilder obj)
     {
-        return $"Detected an external '{view.FullName}' referencing view in {obj}.";
+        return $"{obj} is referenced by external {view}.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string ObjectDoesNotBelongToTable(ISqlObjectBuilder obj, ISqlTableBuilder expectedTable)
     {
-        return $"{obj} does not belong to table '{expectedTable.FullName}'.";
+        return $"{obj} does not belong to {expectedTable}.";
     }
 
     [Pure]
@@ -139,7 +108,7 @@ public static class ExceptionResources
     {
         var type = column.TypeDefinition.RuntimeType.GetDebugString();
         var otherType = otherColumn.TypeDefinition.RuntimeType.GetDebugString();
-        return $"Type '{type}' of column '{column.FullName}' is incompatible with type '{otherType}' of column '{otherColumn.FullName}'.";
+        return $"Type '{type}' of {column} is incompatible with type '{otherType}' of {otherColumn}.";
     }
 
     [Pure]

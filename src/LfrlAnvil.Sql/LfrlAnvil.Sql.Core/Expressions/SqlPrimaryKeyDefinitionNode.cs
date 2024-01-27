@@ -5,13 +5,13 @@ namespace LfrlAnvil.Sql.Expressions;
 
 public sealed class SqlPrimaryKeyDefinitionNode : SqlNodeBase
 {
-    internal SqlPrimaryKeyDefinitionNode(string name, SqlOrderByNode[] columns)
+    internal SqlPrimaryKeyDefinitionNode(SqlSchemaObjectName name, SqlOrderByNode[] columns)
         : base( SqlNodeType.PrimaryKeyDefinition )
     {
         Name = name;
         Columns = columns;
     }
 
-    public string Name { get; }
+    public SqlSchemaObjectName Name { get; }
     public ReadOnlyMemory<SqlOrderByNode> Columns { get; }
 }

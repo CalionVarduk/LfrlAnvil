@@ -184,7 +184,6 @@ public class SqliteIndexBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "bar" );
-            sut.FullName.Should().Be( "foo_bar" );
             table.Constraints.GetConstraint( "bar" ).Should().BeSameAs( sut );
             table.Constraints.Contains( oldName ).Should().BeFalse();
             schema.Objects.GetObject( "bar" ).Should().BeSameAs( sut );
@@ -360,7 +359,6 @@ public class SqliteIndexBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "IX_T_C2A" );
-            sut.FullName.Should().Be( "foo_IX_T_C2A" );
             table.Constraints.GetConstraint( "IX_T_C2A" ).Should().BeSameAs( sut );
             table.Constraints.Contains( oldName ).Should().BeFalse();
             schema.Objects.GetObject( "IX_T_C2A" ).Should().BeSameAs( sut );
@@ -394,7 +392,6 @@ public class SqliteIndexBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "UIX_T_C2A" );
-            sut.FullName.Should().Be( "foo_UIX_T_C2A" );
             table.Constraints.GetConstraint( "UIX_T_C2A" ).Should().BeSameAs( sut );
             table.Constraints.Contains( oldName ).Should().BeFalse();
             schema.Objects.GetObject( "UIX_T_C2A" ).Should().BeSameAs( sut );

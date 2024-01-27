@@ -24,7 +24,6 @@ public static class SchemaMock
         var result = Substitute.For<ISqlSchema>();
         result.Type.Returns( SqlObjectType.Schema );
         result.Name.Returns( name );
-        result.FullName.Returns( name );
         return result;
     }
 
@@ -34,7 +33,6 @@ public static class SchemaMock
         var result = Substitute.For<ISqlSchemaBuilder>();
         result.Type.Returns( SqlObjectType.Schema );
         result.Name.Returns( name );
-        result.FullName.Returns( name );
         return result;
     }
 }

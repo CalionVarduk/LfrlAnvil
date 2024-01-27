@@ -9,11 +9,9 @@ public sealed class SqlitePrimaryKey : SqliteConstraint, ISqlPrimaryKey
         : base( index.Table, builder )
     {
         Index = index;
-        FullName = builder.FullName;
     }
 
     public SqliteIndex Index { get; }
-    public override string FullName { get; }
     public override SqliteDatabase Database => Index.Database;
 
     ISqlIndex ISqlPrimaryKey.Index => Index;

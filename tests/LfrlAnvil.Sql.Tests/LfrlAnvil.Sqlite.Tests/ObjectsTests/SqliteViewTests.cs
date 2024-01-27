@@ -35,7 +35,6 @@ public class SqliteViewTests : TestsBase
             sut.Schema.Should().BeSameAs( schema );
             sut.Type.Should().Be( SqlObjectType.View );
             sut.Name.Should().Be( "V" );
-            sut.FullName.Should().Be( "foo_V" );
             sut.Info.Should().Be( viewBuilder.Info );
             sut.RecordSet.View.Should().BeSameAs( sut );
             sut.RecordSet.Info.Should().Be( sut.Info );

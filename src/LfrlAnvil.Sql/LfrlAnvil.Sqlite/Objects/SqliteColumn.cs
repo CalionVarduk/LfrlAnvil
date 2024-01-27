@@ -9,7 +9,6 @@ namespace LfrlAnvil.Sqlite.Objects;
 
 public sealed class SqliteColumn : SqliteObject, ISqlColumn
 {
-    private string? _fullName;
     private SqlColumnNode? _node;
 
     internal SqliteColumn(SqliteTable table, SqliteColumnBuilder builder)
@@ -19,7 +18,6 @@ public sealed class SqliteColumn : SqliteObject, ISqlColumn
         TypeDefinition = builder.TypeDefinition;
         IsNullable = builder.IsNullable;
         HasDefaultValue = builder.DefaultValue is not null;
-        _fullName = builder.GetCachedFullName();
         _node = null;
     }
 
@@ -27,9 +25,14 @@ public sealed class SqliteColumn : SqliteObject, ISqlColumn
     public SqliteColumnTypeDefinition TypeDefinition { get; }
     public bool IsNullable { get; }
     public bool HasDefaultValue { get; }
-    public override string FullName => _fullName ??= SqliteHelpers.GetFullFieldName( Table.FullName, Name );
     public SqlColumnNode Node => _node ??= Table.RecordSet[Name];
     public override SqliteDatabase Database => Table.Schema.Database;
+
+    [Pure]
+    public override string ToString()
+    {
+        return $"[{Type}] {SqliteHelpers.GetFullName( Table.Schema.Name, Table.Name, Name )}";
+    }
 
     [Pure]
     public SqliteIndexColumn Asc()

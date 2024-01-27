@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using LfrlAnvil.MySql.Internal;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Objects.Builders;
 
@@ -21,7 +22,7 @@ public sealed class MySqlIndexColumnBuilder : ISqlIndexColumnBuilder, IEquatable
     [Pure]
     public override string ToString()
     {
-        return $"{Column.FullName} {Ordering.Name}";
+        return $"{MySqlHelpers.GetFullName( Column.Table.Schema.Name, Column.Table.Name, Column.Name )} {Ordering.Name}";
     }
 
     [Pure]

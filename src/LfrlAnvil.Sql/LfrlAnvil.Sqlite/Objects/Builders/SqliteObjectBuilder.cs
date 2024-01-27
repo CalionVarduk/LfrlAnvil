@@ -23,7 +23,6 @@ public abstract class SqliteObjectBuilder : ISqlObjectBuilder
     public SqlObjectType Type { get; }
     public string Name { get; protected set; }
     public bool IsRemoved { get; protected set; }
-    public abstract string FullName { get; }
     public abstract SqliteDatabaseBuilder Database { get; }
     internal virtual bool CanRemove => true;
 
@@ -32,7 +31,7 @@ public abstract class SqliteObjectBuilder : ISqlObjectBuilder
     [Pure]
     public override string ToString()
     {
-        return $"[{Type}] {FullName}";
+        return $"[{Type}] {Name}";
     }
 
     [Pure]

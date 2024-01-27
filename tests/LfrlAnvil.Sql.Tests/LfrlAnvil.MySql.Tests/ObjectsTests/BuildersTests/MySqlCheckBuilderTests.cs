@@ -42,7 +42,6 @@ public class MySqlCheckBuilderTests : TestsBase
         {
             table.Constraints.GetCheck( sut.Name ).Should().BeSameAs( sut );
             sut.Name.Should().MatchRegex( "CHK_T_[0-9a-fA-F]{32}" );
-            sut.FullName.Should().Be( $"foo.{sut.Name}" );
             sut.ReferencedColumns.Should().BeSequentiallyEqualTo( column );
             column.ReferencingChecks.Should().BeSequentiallyEqualTo( sut );
 
@@ -132,7 +131,6 @@ public class MySqlCheckBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "bar" );
-            sut.FullName.Should().Be( "foo.bar" );
             table.Constraints.GetConstraint( "bar" ).Should().BeSameAs( sut );
             table.Constraints.Contains( oldName ).Should().BeFalse();
             schema.Objects.GetObject( "bar" ).Should().BeSameAs( sut );
@@ -234,7 +232,6 @@ public class MySqlCheckBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().MatchRegex( "CHK_T_[0-9a-fA-F]{32}" );
-            sut.FullName.Should().Be( $"foo.{result.Name}" );
             table.Constraints.GetConstraint( result.Name ).Should().BeSameAs( sut );
             table.Constraints.Contains( oldName ).Should().BeFalse();
             schema.Objects.GetObject( result.Name ).Should().BeSameAs( sut );

@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using System.Runtime.CompilerServices;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
@@ -19,7 +18,6 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
     private Dictionary<ulong, SqliteIndexBuilder>? _referencingIndexFilters;
     private Dictionary<ulong, SqliteViewBuilder>? _referencingViews;
     private Dictionary<ulong, SqliteCheckBuilder>? _referencingChecks;
-    private string? _fullName;
     private SqlColumnBuilderNode? _node;
 
     internal SqliteColumnBuilder(SqliteTableBuilder table, string name, SqliteColumnTypeDefinition typeDefinition)
@@ -30,7 +28,6 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
         TypeDefinition = typeDefinition;
         IsNullable = false;
         DefaultValue = null;
-        _fullName = null;
         _referencingIndexes = null;
         _referencingIndexFilters = null;
         _referencingViews = null;
@@ -43,7 +40,6 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
     public bool IsNullable { get; private set; }
     public SqlExpressionNode? DefaultValue { get; private set; }
     public override SqliteDatabaseBuilder Database => Table.Database;
-    public override string FullName => _fullName ??= SqliteHelpers.GetFullFieldName( Table.FullName, Name );
     public SqlColumnBuilderNode Node => _node ??= Table.RecordSet[Name];
     public IReadOnlyCollection<SqliteIndexBuilder> ReferencingIndexes => (_referencingIndexes?.Values).EmptyIfNull();
     public IReadOnlyCollection<SqliteIndexBuilder> ReferencingIndexFilters => (_referencingIndexFilters?.Values).EmptyIfNull();
@@ -63,6 +59,12 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
     IReadOnlyCollection<ISqlViewBuilder> ISqlColumnBuilder.ReferencingViews => ReferencingViews;
     IReadOnlyCollection<ISqlCheckBuilder> ISqlColumnBuilder.ReferencingChecks => ReferencingChecks;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
+
+    [Pure]
+    public override string ToString()
+    {
+        return $"[{Type}] {SqliteHelpers.GetFullName( Table.Schema.Name, Table.Name, Name )}";
+    }
 
     public SqliteColumnBuilder SetName(string name)
     {
@@ -221,20 +223,7 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
 
         var oldName = Name;
         Name = name;
-        ResetFullName();
         Database.ChangeTracker.NameUpdated( Table, this, oldName );
-    }
-
-    internal void ResetFullName()
-    {
-        _fullName = null;
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal string? GetCachedFullName()
-    {
-        return _fullName;
     }
 
     private void EnsureMutable()

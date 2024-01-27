@@ -32,7 +32,6 @@ public class MySqlTableTests : TestsBase
             sut.Schema.Should().BeSameAs( schema );
             sut.Type.Should().Be( SqlObjectType.Table );
             sut.Name.Should().Be( "T" );
-            sut.FullName.Should().Be( "foo.T" );
             sut.Info.Should().Be( tableBuilder.Info );
             sut.RecordSet.Table.Should().BeSameAs( sut );
             sut.RecordSet.Info.Should().Be( sut.Info );

@@ -32,7 +32,6 @@ public partial class MySqlDatabaseBuilderTests : TestsBase
 
             sut.Schemas.Default.Database.Should().BeSameAs( sut );
             sut.Schemas.Default.Name.Should().Be( "common" );
-            sut.Schemas.Default.FullName.Should().Be( "common" );
             ((ISqlSchemaBuilder)sut.Schemas.Default).Database.Should().BeSameAs( sut.Schemas.Default.Database );
             ((ISqlSchemaBuilder)sut.Schemas.Default).Objects.Should().BeSameAs( sut.Schemas.Default.Objects );
 

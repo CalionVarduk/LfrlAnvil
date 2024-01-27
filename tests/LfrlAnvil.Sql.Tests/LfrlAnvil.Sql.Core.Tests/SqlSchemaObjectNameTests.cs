@@ -11,7 +11,6 @@ public class SqlSchemaObjectNameTests : TestsBase
         {
             sut.Schema.Should().BeEmpty();
             sut.Object.Should().BeEmpty();
-            sut.Identifier.Should().BeEmpty();
         }
     }
 
@@ -24,7 +23,6 @@ public class SqlSchemaObjectNameTests : TestsBase
         {
             sut.Schema.Should().BeEmpty();
             sut.Object.Should().Be( "foo" );
-            sut.Identifier.Should().Be( "foo" );
         }
     }
 
@@ -37,16 +35,17 @@ public class SqlSchemaObjectNameTests : TestsBase
         {
             sut.Schema.Should().Be( "foo" );
             sut.Object.Should().Be( "bar" );
-            sut.Identifier.Should().Be( "foo.bar" );
         }
     }
 
-    [Fact]
-    public void ToString_ShouldReturnIdentifier()
+    [Theory]
+    [InlineData( "foo", "bar", "foo.bar" )]
+    [InlineData( "", "bar", "bar" )]
+    public void ToString_ShouldReturnCorrectText(string schema, string obj, string expected)
     {
-        var sut = SqlSchemaObjectName.Create( "foo", "bar" );
+        var sut = SqlSchemaObjectName.Create( schema, obj );
         var result = sut.ToString();
-        result.Should().Be( sut.Identifier );
+        result.Should().Be( expected );
     }
 
     [Fact]

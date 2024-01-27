@@ -539,7 +539,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
     public override void VisitPrimaryKeyDefinition(SqlPrimaryKeyDefinitionNode node)
     {
         Context.Sql.Append( "PRIMARY" ).AppendSpace().Append( "KEY" ).AppendSpace();
-        AppendDelimitedName( node.Name );
+        AppendDelimitedSchemaObjectName( node.Name );
         Context.Sql.AppendSpace().Append( '(' );
 
         if ( node.Columns.Length > 0 )
@@ -559,7 +559,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
     public override void VisitForeignKeyDefinition(SqlForeignKeyDefinitionNode node)
     {
         Context.Sql.Append( "FOREIGN" ).AppendSpace().Append( "KEY" ).AppendSpace();
-        AppendDelimitedName( node.Name );
+        AppendDelimitedSchemaObjectName( node.Name );
         Context.Sql.AppendSpace().Append( '(' );
 
         if ( node.Columns.Length > 0 )
@@ -596,7 +596,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
     public override void VisitCheckDefinition(SqlCheckDefinitionNode node)
     {
         Context.Sql.Append( "CHECK" ).AppendSpace();
-        AppendDelimitedName( node.Name );
+        AppendDelimitedSchemaObjectName( node.Name );
         Context.Sql.AppendSpace();
         VisitChildWrappedInParentheses( node.Condition );
     }

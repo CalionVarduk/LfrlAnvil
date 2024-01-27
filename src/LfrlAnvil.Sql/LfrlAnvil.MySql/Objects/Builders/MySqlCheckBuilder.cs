@@ -12,19 +12,16 @@ namespace LfrlAnvil.MySql.Objects.Builders;
 public sealed class MySqlCheckBuilder : MySqlConstraintBuilder, ISqlCheckBuilder
 {
     private readonly Dictionary<ulong, MySqlColumnBuilder> _referencedColumns;
-    private string? _fullName;
 
     internal MySqlCheckBuilder(string name, SqlConditionNode condition, MySqlTableScopeExpressionValidator visitor)
         : base( visitor.Table, name, SqlObjectType.Check )
     {
         Condition = condition;
         _referencedColumns = visitor.ReferencedColumns;
-        _fullName = null;
         AddSelfToReferencedColumns();
     }
 
     public SqlConditionNode Condition { get; }
-    public override string FullName => _fullName ??= MySqlHelpers.GetFullName( Table.Schema.Name, Name );
     public IReadOnlyCollection<MySqlColumnBuilder> ReferencedColumns => _referencedColumns.Values;
     public override MySqlDatabaseBuilder Database => Table.Database;
     IReadOnlyCollection<ISqlColumnBuilder> ISqlCheckBuilder.ReferencedColumns => ReferencedColumns;
@@ -40,11 +37,6 @@ public sealed class MySqlCheckBuilder : MySqlConstraintBuilder, ISqlCheckBuilder
     {
         base.SetDefaultName();
         return this;
-    }
-
-    internal override void ResetFullName()
-    {
-        _fullName = null;
     }
 
     internal override void MarkAsRemoved()
@@ -101,7 +93,6 @@ public sealed class MySqlCheckBuilder : MySqlConstraintBuilder, ISqlCheckBuilder
 
         var oldName = Name;
         Name = name;
-        ResetFullName();
         Database.ChangeTracker.NameUpdated( Table, this, oldName );
     }
 

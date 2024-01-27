@@ -1,15 +1,14 @@
 ﻿using System.Diagnostics.Contracts;
+using LfrlAnvil.MySql.Internal;
+using LfrlAnvil.MySql.Objects.Builders;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Objects;
-using LfrlAnvil.MySql.Internal;
-using LfrlAnvil.MySql.Objects.Builders;
 
 namespace LfrlAnvil.MySql.Objects;
 
 public sealed class MySqlColumn : MySqlObject, ISqlColumn
 {
-    private string? _fullName;
     private SqlColumnNode? _node;
 
     internal MySqlColumn(MySqlTable table, MySqlColumnBuilder builder)
@@ -19,7 +18,6 @@ public sealed class MySqlColumn : MySqlObject, ISqlColumn
         TypeDefinition = builder.TypeDefinition;
         IsNullable = builder.IsNullable;
         HasDefaultValue = builder.DefaultValue is not null;
-        _fullName = builder.GetCachedFullName();
         _node = null;
     }
 
@@ -27,9 +25,14 @@ public sealed class MySqlColumn : MySqlObject, ISqlColumn
     public MySqlColumnTypeDefinition TypeDefinition { get; }
     public bool IsNullable { get; }
     public bool HasDefaultValue { get; }
-    public override string FullName => _fullName ??= MySqlHelpers.GetFullFieldName( Table.FullName, Name );
     public SqlColumnNode Node => _node ??= Table.RecordSet[Name];
     public override MySqlDatabase Database => Table.Schema.Database;
+
+    [Pure]
+    public override string ToString()
+    {
+        return $"[{Type}] {MySqlHelpers.GetFullName( Table.Schema.Name, Table.Name, Name )}";
+    }
 
     [Pure]
     public MySqlIndexColumn Asc()

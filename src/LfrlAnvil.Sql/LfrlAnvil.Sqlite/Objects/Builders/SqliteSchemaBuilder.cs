@@ -19,7 +19,6 @@ public sealed class SqliteSchemaBuilder : SqliteObjectBuilder, ISqlSchemaBuilder
 
     public SqliteObjectBuilderCollection Objects { get; }
     public override SqliteDatabaseBuilder Database { get; }
-    public override string FullName => Name;
 
     internal override bool CanRemove
     {

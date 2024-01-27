@@ -99,7 +99,6 @@ public partial class SqliteTableBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( name );
-            sut.FullName.Should().Be( name );
             schema.Objects.Contains( name ).Should().BeTrue();
         }
     }
@@ -121,7 +120,6 @@ public partial class SqliteTableBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( oldName );
-            sut.FullName.Should().Be( oldName );
             schema.Objects.Contains( oldName ).Should().BeTrue();
             schema.Objects.Contains( newName ).Should().BeFalse();
             statements.Should().BeEmpty();
@@ -146,7 +144,6 @@ public partial class SqliteTableBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( newName );
-            sut.FullName.Should().Be( "s_bar" );
             sut.Info.Should().Be( SqlRecordSetInfo.Create( "s", "bar" ) );
             recordSet.Info.Should().Be( sut.Info );
             schema.Objects.Contains( newName ).Should().BeTrue();
@@ -177,7 +174,6 @@ public partial class SqliteTableBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( newName );
-            sut.FullName.Should().Be( "s_bar" );
             schema.Objects.Contains( newName ).Should().BeTrue();
             schema.Objects.Contains( oldName ).Should().BeFalse();
             fk.IsRemoved.Should().BeFalse();
@@ -236,8 +232,6 @@ public partial class SqliteTableBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "U" );
-            sut.FullName.Should().Be( "foo_U" );
-            c1.FullName.Should().Be( "foo_U.C1" );
             schema.Objects.Contains( "U" ).Should().BeTrue();
             schema.Objects.Contains( "T1" ).Should().BeFalse();
             fk1.IsRemoved.Should().BeFalse();
@@ -357,7 +351,6 @@ public partial class SqliteTableBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "U" );
-            sut.FullName.Should().Be( "foo_U" );
             schema.Objects.Contains( "U" ).Should().BeTrue();
             schema.Objects.Contains( "T1" ).Should().BeFalse();
             fk1.IsRemoved.Should().BeFalse();
@@ -500,7 +493,6 @@ public partial class SqliteTableBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "U" );
-            sut.FullName.Should().Be( "foo_U" );
             schema.Objects.Contains( "U" ).Should().BeTrue();
             schema.Objects.Contains( "T1" ).Should().BeFalse();
             fk1.IsRemoved.Should().BeFalse();
@@ -585,7 +577,6 @@ public partial class SqliteTableBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "U" );
-            sut.FullName.Should().Be( "foo_U" );
             schema.Objects.Contains( "U" ).Should().BeTrue();
             schema.Objects.Contains( "T1" ).Should().BeFalse();
             fk1.IsRemoved.Should().BeFalse();
@@ -668,7 +659,6 @@ public partial class SqliteTableBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "U" );
-            sut.FullName.Should().Be( "foo_U" );
             schema.Objects.Contains( "U" ).Should().BeTrue();
             schema.Objects.Contains( "T" ).Should().BeFalse();
             v1.IsRemoved.Should().BeFalse();
@@ -728,7 +718,6 @@ public partial class SqliteTableBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "U" );
-            sut.FullName.Should().Be( "foo_U" );
             schema.Objects.Contains( "U" ).Should().BeTrue();
             schema.Objects.Contains( "T" ).Should().BeFalse();
             v1.IsRemoved.Should().BeFalse();

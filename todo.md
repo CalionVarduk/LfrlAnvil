@@ -26,10 +26,6 @@
 |    23    |   Reactive.State    |                       Extension ideas                       |                   [link](#reactivestate-extension-ideas)                    |                         -                          |
 
 ### Scribbles:
-- Sql objects/builders:
-  - try to get rid of FullName property
-
-
 - SqlNodeInterpreter:
   - True, False & ConditionValue maybe should by default be TRUE, FALSE & node.Condition?
   - for sqlite & mysql that would be fine, postgresql is probably also fine with that

@@ -6,7 +6,7 @@ namespace LfrlAnvil.Sql.Expressions;
 public sealed class SqlForeignKeyDefinitionNode : SqlNodeBase
 {
     internal SqlForeignKeyDefinitionNode(
-        string name,
+        SqlSchemaObjectName name,
         SqlDataFieldNode[] columns,
         SqlRecordSetNode referencedTable,
         SqlDataFieldNode[] referencedColumns,
@@ -22,7 +22,7 @@ public sealed class SqlForeignKeyDefinitionNode : SqlNodeBase
         OnUpdateBehavior = onUpdateBehavior;
     }
 
-    public string Name { get; }
+    public SqlSchemaObjectName Name { get; }
     public ReadOnlyMemory<SqlDataFieldNode> Columns { get; }
     public SqlRecordSetNode ReferencedTable { get; }
     public ReadOnlyMemory<SqlDataFieldNode> ReferencedColumns { get; }

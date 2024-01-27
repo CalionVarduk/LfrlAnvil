@@ -1,4 +1,6 @@
-﻿using LfrlAnvil.MySql.Objects.Builders;
+﻿using System.Diagnostics.Contracts;
+using LfrlAnvil.MySql.Internal;
+using LfrlAnvil.MySql.Objects.Builders;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
@@ -15,7 +17,6 @@ public sealed class MySqlTable : MySqlObject, ISqlTable
         : base( builder )
     {
         Schema = schema;
-        FullName = builder.FullName;
         Columns = new MySqlColumnCollection( this, builder.Columns );
         Constraints = new MySqlConstraintCollection( this, builder.Constraints.Count );
         _info = builder.GetCachedInfo();
@@ -25,7 +26,6 @@ public sealed class MySqlTable : MySqlObject, ISqlTable
     public MySqlSchema Schema { get; }
     public MySqlColumnCollection Columns { get; }
     public MySqlConstraintCollection Constraints { get; }
-    public override string FullName { get; }
     public SqlRecordSetInfo Info => _info ??= SqlRecordSetInfo.Create( Schema.Name, Name );
     public SqlTableNode RecordSet => _recordSet ??= SqlNode.Table( this );
     public override MySqlDatabase Database => Schema.Database;
@@ -33,4 +33,10 @@ public sealed class MySqlTable : MySqlObject, ISqlTable
     ISqlSchema ISqlTable.Schema => Schema;
     ISqlColumnCollection ISqlTable.Columns => Columns;
     ISqlConstraintCollection ISqlTable.Constraints => Constraints;
+
+    [Pure]
+    public override string ToString()
+    {
+        return $"[{Type}] {MySqlHelpers.GetFullName( Schema.Name, Name )}";
+    }
 }

@@ -34,7 +34,6 @@ public partial class MySqlTableBuilderTests
             {
                 result.Columns.ToArray().Should().BeSequentiallyEqualTo( c1, c2 );
                 result.Name.Should().Be( expectedName );
-                result.FullName.Should().Be( $"foo.{expectedName}" );
                 result.Table.Should().BeSameAs( table );
                 result.Database.Should().BeSameAs( table.Database );
                 result.Type.Should().Be( SqlObjectType.Index );
@@ -71,7 +70,6 @@ public partial class MySqlTableBuilderTests
             {
                 result.Columns.ToArray().Should().BeSequentiallyEqualTo( c1, c2 );
                 result.Name.Should().Be( "IX_T" );
-                result.FullName.Should().Be( "foo.IX_T" );
                 result.Table.Should().BeSameAs( table );
                 result.Database.Should().BeSameAs( table.Database );
                 result.Type.Should().Be( SqlObjectType.Index );
@@ -254,13 +252,11 @@ public partial class MySqlTableBuilderTests
             {
                 result.Should().BeSameAs( table.Constraints.TryGetPrimaryKey() );
                 result.Name.Should().Be( "PK_T" );
-                result.FullName.Should().Be( "foo.PK_T" );
                 result.Type.Should().Be( SqlObjectType.PrimaryKey );
                 result.Database.Should().BeSameAs( schema.Database );
                 result.Index.Table.Should().BeSameAs( table );
                 result.Index.IsUnique.Should().BeTrue();
                 result.Index.Name.Should().Be( "UIX_T_CA" );
-                result.Index.FullName.Should().Be( "foo.UIX_T_CA" );
                 result.Index.OriginatingForeignKeys.Should().BeEmpty();
                 result.Index.ReferencingForeignKeys.Should().BeEmpty();
                 result.Index.Columns.ToArray().Should().BeSequentiallyEqualTo( column.Asc() );
@@ -313,7 +309,6 @@ public partial class MySqlTableBuilderTests
                 result.Should().BeSameAs( oldPk );
                 result.Should().BeSameAs( table.Constraints.TryGetPrimaryKey() );
                 result.Name.Should().Be( "PK_NEW" );
-                result.FullName.Should().Be( "foo.PK_NEW" );
             }
         }
 
@@ -333,13 +328,11 @@ public partial class MySqlTableBuilderTests
             {
                 result.Should().BeSameAs( table.Constraints.TryGetPrimaryKey() );
                 result.Name.Should().Be( "PK_T" );
-                result.FullName.Should().Be( "foo.PK_T" );
                 result.Type.Should().Be( SqlObjectType.PrimaryKey );
                 result.Database.Should().BeSameAs( schema.Database );
                 result.Index.Table.Should().BeSameAs( table );
                 result.Index.IsUnique.Should().BeTrue();
                 result.Index.Name.Should().Be( "UIX_T_C2A" );
-                result.Index.FullName.Should().Be( "foo.UIX_T_C2A" );
                 result.Index.OriginatingForeignKeys.Should().BeEmpty();
                 result.Index.ReferencingForeignKeys.Should().BeEmpty();
                 result.Index.Columns.ToArray().Should().BeSequentiallyEqualTo( c2.Asc() );
@@ -374,13 +367,11 @@ public partial class MySqlTableBuilderTests
             {
                 result.Should().BeSameAs( table.Constraints.TryGetPrimaryKey() );
                 result.Name.Should().Be( "PK_NEW" );
-                result.FullName.Should().Be( "foo.PK_NEW" );
                 result.Type.Should().Be( SqlObjectType.PrimaryKey );
                 result.Database.Should().BeSameAs( schema.Database );
                 result.Index.Table.Should().BeSameAs( table );
                 result.Index.IsUnique.Should().BeTrue();
                 result.Index.Name.Should().Be( "UIX_T_C2A" );
-                result.Index.FullName.Should().Be( "foo.UIX_T_C2A" );
                 result.Index.OriginatingForeignKeys.Should().BeEmpty();
                 result.Index.ReferencingForeignKeys.Should().BeEmpty();
                 result.Index.Columns.ToArray().Should().BeSequentiallyEqualTo( c2.Asc() );
@@ -416,13 +407,11 @@ public partial class MySqlTableBuilderTests
             {
                 result.Should().BeSameAs( table.Constraints.TryGetPrimaryKey() );
                 result.Name.Should().Be( "UIX_T_C1A" );
-                result.FullName.Should().Be( "foo.UIX_T_C1A" );
                 result.Type.Should().Be( SqlObjectType.PrimaryKey );
                 result.Database.Should().BeSameAs( schema.Database );
                 result.Index.Table.Should().BeSameAs( table );
                 result.Index.IsUnique.Should().BeTrue();
                 result.Index.Name.Should().Be( "UIX_T_C2A" );
-                result.Index.FullName.Should().Be( "foo.UIX_T_C2A" );
                 result.Index.OriginatingForeignKeys.Should().BeEmpty();
                 result.Index.ReferencingForeignKeys.Should().BeEmpty();
                 result.Index.Columns.ToArray().Should().BeSequentiallyEqualTo( c2.Asc() );
@@ -621,7 +610,6 @@ public partial class MySqlTableBuilderTests
                 result.OriginIndex.Should().BeSameAs( ix1 );
                 result.ReferencedIndex.Should().BeSameAs( ix2 );
                 result.Name.Should().Be( "FK_T_C1_REF_T" );
-                result.FullName.Should().Be( "foo.FK_T_C1_REF_T" );
                 result.Database.Should().BeSameAs( table.Database );
                 result.Type.Should().Be( SqlObjectType.ForeignKey );
                 result.OnUpdateBehavior.Should().Be( ReferenceBehavior.Restrict );
@@ -656,7 +644,6 @@ public partial class MySqlTableBuilderTests
                 result.OriginIndex.Should().BeSameAs( ix1 );
                 result.ReferencedIndex.Should().BeSameAs( ix2 );
                 result.Name.Should().Be( "FK_T2_C2_REF_T1" );
-                result.FullName.Should().Be( "foo.FK_T2_C2_REF_T1" );
                 result.Database.Should().BeSameAs( t1.Database );
                 result.Type.Should().Be( SqlObjectType.ForeignKey );
                 result.OnUpdateBehavior.Should().Be( ReferenceBehavior.Restrict );
@@ -693,7 +680,6 @@ public partial class MySqlTableBuilderTests
                 result.OriginIndex.Should().BeSameAs( ix1 );
                 result.ReferencedIndex.Should().BeSameAs( ix2 );
                 result.Name.Should().Be( "FK_T2_C2_REF_foo_T1" );
-                result.FullName.Should().Be( "bar.FK_T2_C2_REF_foo_T1" );
                 result.Database.Should().BeSameAs( t1.Database );
                 result.Type.Should().Be( SqlObjectType.ForeignKey );
                 result.OnUpdateBehavior.Should().Be( ReferenceBehavior.Restrict );
@@ -727,7 +713,6 @@ public partial class MySqlTableBuilderTests
                 result.OriginIndex.Should().BeSameAs( ix1 );
                 result.ReferencedIndex.Should().BeSameAs( ix2 );
                 result.Name.Should().Be( "FK_T" );
-                result.FullName.Should().Be( "foo.FK_T" );
                 result.Database.Should().BeSameAs( table.Database );
                 result.Type.Should().Be( SqlObjectType.ForeignKey );
                 result.OnUpdateBehavior.Should().Be( ReferenceBehavior.Restrict );
@@ -1033,7 +1018,6 @@ public partial class MySqlTableBuilderTests
             using ( new AssertionScope() )
             {
                 result.Name.Should().MatchRegex( "CHK_T_[0-9a-fA-F]{32}" );
-                result.FullName.Should().Be( $"foo.{result.Name}" );
                 result.Table.Should().BeSameAs( table );
                 result.Database.Should().BeSameAs( table.Database );
                 result.Type.Should().Be( SqlObjectType.Check );
@@ -1062,7 +1046,6 @@ public partial class MySqlTableBuilderTests
             using ( new AssertionScope() )
             {
                 result.Name.Should().Be( "CHK" );
-                result.FullName.Should().Be( "foo.CHK" );
                 result.Table.Should().BeSameAs( table );
                 result.Database.Should().BeSameAs( table.Database );
                 result.Type.Should().Be( SqlObjectType.Check );

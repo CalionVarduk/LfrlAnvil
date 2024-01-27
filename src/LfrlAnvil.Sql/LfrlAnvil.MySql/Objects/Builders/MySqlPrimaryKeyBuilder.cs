@@ -7,17 +7,13 @@ namespace LfrlAnvil.MySql.Objects.Builders;
 
 public sealed class MySqlPrimaryKeyBuilder : MySqlConstraintBuilder, ISqlPrimaryKeyBuilder
 {
-    private string? _fullName;
-
     internal MySqlPrimaryKeyBuilder(MySqlIndexBuilder index, string name)
         : base( index.Table, name, SqlObjectType.PrimaryKey )
     {
         Index = index;
-        _fullName = null;
     }
 
     public MySqlIndexBuilder Index { get; }
-    public override string FullName => _fullName ??= MySqlHelpers.GetFullName( Index.Table.Schema.Name, Name );
     public override MySqlDatabaseBuilder Database => Index.Database;
     internal override bool CanRemove => Index.CanRemove;
 
@@ -34,11 +30,6 @@ public sealed class MySqlPrimaryKeyBuilder : MySqlConstraintBuilder, ISqlPrimary
     {
         base.SetDefaultName();
         return this;
-    }
-
-    internal override void ResetFullName()
-    {
-        _fullName = null;
     }
 
     internal override void MarkAsRemoved()
@@ -70,7 +61,6 @@ public sealed class MySqlPrimaryKeyBuilder : MySqlConstraintBuilder, ISqlPrimary
 
         var oldName = Name;
         Name = name;
-        ResetFullName();
         Database.ChangeTracker.NameUpdated( Index.Table, this, oldName );
     }
 

@@ -9,11 +9,9 @@ public sealed class MySqlPrimaryKey : MySqlConstraint, ISqlPrimaryKey
         : base( index.Table, builder )
     {
         Index = index;
-        FullName = builder.FullName;
     }
 
     public MySqlIndex Index { get; }
-    public override string FullName { get; }
     public override MySqlDatabase Database => Index.Database;
 
     ISqlIndex ISqlPrimaryKey.Index => Index;

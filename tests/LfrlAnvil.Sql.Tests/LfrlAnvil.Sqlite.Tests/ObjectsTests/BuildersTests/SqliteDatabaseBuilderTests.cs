@@ -32,7 +32,6 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
 
             sut.Schemas.Default.Database.Should().BeSameAs( sut );
             sut.Schemas.Default.Name.Should().BeEmpty();
-            sut.Schemas.Default.FullName.Should().BeEmpty();
             ((ISqlSchemaBuilder)sut.Schemas.Default).Database.Should().BeSameAs( sut.Schemas.Default.Database );
             ((ISqlSchemaBuilder)sut.Schemas.Default).Objects.Should().BeSameAs( sut.Schemas.Default.Objects );
 

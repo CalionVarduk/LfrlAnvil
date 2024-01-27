@@ -27,7 +27,6 @@ public class SqliteSchemaTests : TestsBase
         {
             sut.Database.Should().BeSameAs( db );
             sut.Name.Should().Be( "foo" );
-            sut.FullName.Should().Be( "foo" );
             sut.Type.Should().Be( SqlObjectType.Schema );
 
             sut.Objects.Schema.Should().BeSameAs( sut );

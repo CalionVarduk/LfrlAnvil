@@ -14,7 +14,6 @@ public sealed class SqliteSchema : SqliteObject, ISqlSchema
 
     public SqliteObjectCollection Objects { get; }
     public override SqliteDatabase Database { get; }
-    public override string FullName => Name;
 
     ISqlObjectCollection ISqlSchema.Objects => Objects;
 }

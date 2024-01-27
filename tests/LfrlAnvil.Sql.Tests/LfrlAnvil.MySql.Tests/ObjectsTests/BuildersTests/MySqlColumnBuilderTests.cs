@@ -77,7 +77,6 @@ public class MySqlColumnBuilderTests : TestsBase
         {
             table.Columns.GetColumn( sut.Name ).Should().BeSameAs( sut );
             sut.Name.Should().Be( "C2" );
-            sut.FullName.Should().Be( "foo.T.C2" );
             sut.DefaultValue.Should().BeEquivalentTo( SqlNode.Literal<object>( Array.Empty<byte>() ) );
 
             statements.Should().HaveCount( 1 );
@@ -105,7 +104,6 @@ public class MySqlColumnBuilderTests : TestsBase
         {
             table.Columns.GetColumn( sut.Name ).Should().BeSameAs( sut );
             sut.Name.Should().Be( "C2" );
-            sut.FullName.Should().Be( "foo.T.C2" );
             sut.DefaultValue.Should().BeNull();
 
             statements.Should().HaveCount( 1 );
@@ -133,7 +131,6 @@ public class MySqlColumnBuilderTests : TestsBase
         {
             table.Columns.GetColumn( sut.Name ).Should().BeSameAs( sut );
             sut.Name.Should().Be( "C2" );
-            sut.FullName.Should().Be( "foo.T.C2" );
 
             statements.Should().HaveCount( 1 );
             statements.ElementAtOrDefault( 0 )
@@ -162,7 +159,6 @@ public class MySqlColumnBuilderTests : TestsBase
         {
             table.Columns.GetColumn( sut.Name ).Should().BeSameAs( sut );
             sut.Name.Should().Be( "C2" );
-            sut.FullName.Should().Be( "foo.T.C2" );
             sut.DefaultValue.Should().BeNull();
             removed.IsRemoved.Should().BeTrue();
 
@@ -253,7 +249,6 @@ public class MySqlColumnBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "bar" );
-            sut.FullName.Should().Be( "foo.T.bar" );
             table.Columns.GetColumn( "bar" ).Should().BeSameAs( sut );
             table.Columns.Contains( oldName ).Should().BeFalse();
             node.Name.Should().Be( "bar" );

@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using System.Runtime.CompilerServices;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.MySql.Exceptions;
 using LfrlAnvil.MySql.Internal;
@@ -19,7 +18,6 @@ public sealed class MySqlColumnBuilder : MySqlObjectBuilder, ISqlColumnBuilder
     private Dictionary<ulong, MySqlIndexBuilder>? _referencingIndexFilters;
     private Dictionary<ulong, MySqlViewBuilder>? _referencingViews;
     private Dictionary<ulong, MySqlCheckBuilder>? _referencingChecks;
-    private string? _fullName;
     private SqlColumnBuilderNode? _node;
 
     internal MySqlColumnBuilder(MySqlTableBuilder table, string name, MySqlColumnTypeDefinition typeDefinition)
@@ -30,7 +28,6 @@ public sealed class MySqlColumnBuilder : MySqlObjectBuilder, ISqlColumnBuilder
         TypeDefinition = typeDefinition;
         IsNullable = false;
         DefaultValue = null;
-        _fullName = null;
         _referencingIndexes = null;
         _referencingIndexFilters = null;
         _referencingViews = null;
@@ -43,7 +40,6 @@ public sealed class MySqlColumnBuilder : MySqlObjectBuilder, ISqlColumnBuilder
     public bool IsNullable { get; private set; }
     public SqlExpressionNode? DefaultValue { get; private set; }
     public override MySqlDatabaseBuilder Database => Table.Database;
-    public override string FullName => _fullName ??= MySqlHelpers.GetFullFieldName( Table.FullName, Name );
     public SqlColumnBuilderNode Node => _node ??= Table.RecordSet[Name];
     public IReadOnlyCollection<MySqlIndexBuilder> ReferencingIndexes => (_referencingIndexes?.Values).EmptyIfNull();
     public IReadOnlyCollection<MySqlIndexBuilder> ReferencingIndexFilters => (_referencingIndexFilters?.Values).EmptyIfNull();
@@ -63,6 +59,12 @@ public sealed class MySqlColumnBuilder : MySqlObjectBuilder, ISqlColumnBuilder
     IReadOnlyCollection<ISqlViewBuilder> ISqlColumnBuilder.ReferencingViews => ReferencingViews;
     IReadOnlyCollection<ISqlCheckBuilder> ISqlColumnBuilder.ReferencingChecks => ReferencingChecks;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
+
+    [Pure]
+    public override string ToString()
+    {
+        return $"[{Type}] {MySqlHelpers.GetFullName( Table.Schema.Name, Table.Name, Name )}";
+    }
 
     public MySqlColumnBuilder SetName(string name)
     {
@@ -232,20 +234,7 @@ public sealed class MySqlColumnBuilder : MySqlObjectBuilder, ISqlColumnBuilder
 
         var oldName = Name;
         Name = name;
-        ResetFullName();
         Database.ChangeTracker.NameUpdated( Table, this, oldName );
-    }
-
-    internal void ResetFullName()
-    {
-        _fullName = null;
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal string? GetCachedFullName()
-    {
-        return _fullName;
     }
 
     private void EnsureMutable()

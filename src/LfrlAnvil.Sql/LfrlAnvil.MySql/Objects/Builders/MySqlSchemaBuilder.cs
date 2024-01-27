@@ -20,7 +20,6 @@ public sealed class MySqlSchemaBuilder : MySqlObjectBuilder, ISqlSchemaBuilder
 
     public MySqlObjectBuilderCollection Objects { get; }
     public override MySqlDatabaseBuilder Database { get; }
-    public override string FullName => Name;
 
     internal override bool CanRemove
     {
@@ -186,7 +185,7 @@ public sealed class MySqlSchemaBuilder : MySqlObjectBuilder, ISqlSchemaBuilder
         foreach ( var obj in viewBuffer )
         {
             var view = ReinterpretCast.To<MySqlViewBuilder>( obj );
-            view.ResetFullName();
+            view.ResetInfoCache();
             view.Reactivate();
         }
 

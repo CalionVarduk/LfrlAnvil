@@ -44,9 +44,9 @@ public static class SqliteHelpers
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string GetFullFieldName(string fullTableName, string name)
+    public static string GetFullName(string schemaName, string recordSetName, string name)
     {
-        return $"{fullTableName}.{name}";
+        return schemaName.Length > 0 ? $"{schemaName}_{recordSetName}.{name}" : $"{recordSetName}.{name}";
     }
 
     [Pure]
@@ -65,11 +65,13 @@ public static class SqliteHelpers
         foreach ( var c in originIndex.Columns )
             builder.Append( '_' ).Append( c.Column.Name );
 
-        var refName = ReferenceEquals( originIndex.Table.Schema, referencedIndex.Table.Schema )
-            ? referencedIndex.Table.Name
-            : referencedIndex.Table.FullName;
+        builder
+            .Append( "_REF_" )
+            .Append(
+                ReferenceEquals( originIndex.Table.Schema, referencedIndex.Table.Schema )
+                    ? referencedIndex.Table.Name
+                    : GetFullName( referencedIndex.Table.Schema.Name, referencedIndex.Table.Name ) );
 
-        builder.Append( "_REF_" ).Append( refName );
         return builder.ToString();
     }
 

@@ -445,10 +445,7 @@ internal sealed class MySqlDatabaseChangeTracker
 
             if ( foreignKeys is not null )
             {
-                var foreignKeyDefinitions = new SqlForeignKeyDefinitionNode[foreignKeys.Count];
-                for ( var i = 0; i < foreignKeyDefinitions.Length; ++i )
-                    foreignKeyDefinitions[i] = foreignKeys[i].ToDefinitionNode( createTable.RecordSet, useFullName: false );
-
+                var foreignKeyDefinitions = foreignKeys.ToDefinitionRange( createTable.RecordSet );
                 _ongoingStatements.Add( MySqlAlterTableNode.CreateAddForeignKeys( currentTable.Info, foreignKeyDefinitions ) );
             }
         }

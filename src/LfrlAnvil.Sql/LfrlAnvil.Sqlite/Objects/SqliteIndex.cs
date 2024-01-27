@@ -13,7 +13,6 @@ public sealed class SqliteIndex : SqliteConstraint, ISqlIndex
     {
         IsUnique = builder.IsUnique;
         IsPartial = builder.Filter is not null;
-        FullName = builder.FullName;
 
         var i = 0;
         var builderColumns = builder.Columns.Span;
@@ -27,7 +26,6 @@ public sealed class SqliteIndex : SqliteConstraint, ISqlIndex
 
     public bool IsUnique { get; }
     public bool IsPartial { get; }
-    public override string FullName { get; }
     public ReadOnlyMemory<SqliteIndexColumn> Columns => _columns;
     public override SqliteDatabase Database => Table.Database;
 

@@ -41,14 +41,14 @@ internal static class MySqlHelpers
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string GetFullName(string schemaName, string name)
     {
-        return schemaName.Length > 0 ? $"{schemaName}.{name}" : name;
+        return $"{schemaName}.{name}";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string GetFullFieldName(string fullTableName, string name)
+    public static string GetFullName(string schemaName, string recordSetName, string name)
     {
-        return $"{fullTableName}.{name}";
+        return $"{schemaName}.{recordSetName}.{name}";
     }
 
     [Pure]

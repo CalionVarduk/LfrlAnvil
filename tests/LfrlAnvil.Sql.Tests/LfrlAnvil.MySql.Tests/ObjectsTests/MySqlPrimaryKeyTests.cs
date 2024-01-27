@@ -26,7 +26,6 @@ public class MySqlPrimaryKeyTests : TestsBase
             sut.Index.Should().BeSameAs( index );
             sut.Type.Should().Be( SqlObjectType.PrimaryKey );
             sut.Name.Should().Be( "PK_TEST" );
-            sut.FullName.Should().Be( "foo.PK_TEST" );
             sut.ToString().Should().Be( "[PrimaryKey] foo.PK_TEST" );
         }
     }

@@ -2,6 +2,7 @@
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Objects.Builders;
+using LfrlAnvil.Sqlite.Internal;
 
 namespace LfrlAnvil.Sqlite.Objects.Builders;
 
@@ -21,7 +22,7 @@ public sealed class SqliteIndexColumnBuilder : ISqlIndexColumnBuilder, IEquatabl
     [Pure]
     public override string ToString()
     {
-        return $"{Column.FullName} {Ordering.Name}";
+        return $"{SqliteHelpers.GetFullName( Column.Table.Schema.Name, Column.Table.Name, Column.Name )} {Ordering.Name}";
     }
 
     [Pure]
