@@ -52,6 +52,13 @@ public readonly struct ReadOnlyArray<T> : IReadOnlyList<T>
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public IReadOnlyList<T> GetUnderlyingArray()
+    {
+        return _source;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Enumerator GetEnumerator()
     {
         return new Enumerator( _source );

@@ -81,6 +81,17 @@ public class ReadOnlyArrayTests : TestsBase
     }
 
     [Fact]
+    public void GetUnderlyingArray_ShouldReturnSourceArray()
+    {
+        var source = Fixture.CreateMany<string>().ToArray();
+        var sut = ReadOnlyArray.Create( source );
+
+        var result = sut.GetUnderlyingArray();
+
+        result.Should().BeSameAs( source );
+    }
+
+    [Fact]
     public void ReadOnlyArrayConversionOperator_ShouldReturnCorrectArray()
     {
         var source = Fixture.CreateMany<string>( count: 10 ).ToArray();
