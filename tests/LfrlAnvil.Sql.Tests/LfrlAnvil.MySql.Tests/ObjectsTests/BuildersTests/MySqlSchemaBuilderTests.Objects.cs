@@ -32,7 +32,6 @@ public partial class MySqlSchemaBuilderTests
                 result.Name.Should().Be( name );
                 result.Constraints.TryGetPrimaryKey().Should().BeNull();
                 result.Database.Should().BeSameAs( db );
-                result.ReferencingViews.Should().BeEmpty();
                 result.Type.Should().Be( SqlObjectType.Table );
                 sut.Count.Should().Be( 1 );
                 sut.Should().BeEquivalentTo( result );
@@ -47,11 +46,11 @@ public partial class MySqlSchemaBuilderTests
                 result.Constraints.Count.Should().Be( 0 );
 
                 result.Info.Should().Be( SqlRecordSetInfo.Create( "foo", name ) );
-                result.RecordSet.Table.Should().BeSameAs( result );
-                result.RecordSet.Info.Should().Be( result.Info );
-                result.RecordSet.Alias.Should().BeNull();
-                result.RecordSet.Identifier.Should().Be( result.Info.Identifier );
-                result.RecordSet.IsOptional.Should().BeFalse();
+                result.Node.Table.Should().BeSameAs( result );
+                result.Node.Info.Should().Be( result.Info );
+                result.Node.Alias.Should().BeNull();
+                result.Node.Identifier.Should().Be( result.Info.Identifier );
+                result.Node.IsOptional.Should().BeFalse();
             }
         }
 
@@ -118,7 +117,6 @@ public partial class MySqlSchemaBuilderTests
                 result.Name.Should().Be( name );
                 result.Constraints.TryGetPrimaryKey().Should().BeNull();
                 result.Database.Should().BeSameAs( db );
-                result.ReferencingViews.Should().BeEmpty();
                 result.Type.Should().Be( SqlObjectType.Table );
                 sut.Count.Should().Be( 1 );
                 sut.Should().BeEquivalentTo( result );
@@ -223,7 +221,6 @@ public partial class MySqlSchemaBuilderTests
                 result.Name.Should().Be( name );
                 result.Database.Should().BeSameAs( db );
                 result.Source.Should().BeSameAs( source );
-                result.ReferencingViews.Should().BeEmpty();
                 result.ReferencedObjects.Should().HaveCount( 2 );
                 result.ReferencedObjects.Should().BeEquivalentTo( table, column );
                 result.Type.Should().Be( SqlObjectType.View );
@@ -237,11 +234,11 @@ public partial class MySqlSchemaBuilderTests
                 column.ReferencingViews.Should().BeEquivalentTo( result );
 
                 result.Info.Should().Be( SqlRecordSetInfo.Create( "foo", name ) );
-                result.RecordSet.View.Should().BeSameAs( result );
-                result.RecordSet.Info.Should().Be( result.Info );
-                result.RecordSet.Alias.Should().BeNull();
-                result.RecordSet.Identifier.Should().Be( result.Info.Identifier );
-                result.RecordSet.IsOptional.Should().BeFalse();
+                result.Node.View.Should().BeSameAs( result );
+                result.Node.Info.Should().Be( result.Info );
+                result.Node.Alias.Should().BeNull();
+                result.Node.Identifier.Should().Be( result.Info.Identifier );
+                result.Node.IsOptional.Should().BeFalse();
             }
         }
 
@@ -262,7 +259,6 @@ public partial class MySqlSchemaBuilderTests
                 result.Name.Should().Be( name );
                 result.Database.Should().BeSameAs( db );
                 result.Source.Should().BeSameAs( source );
-                result.ReferencingViews.Should().BeEmpty();
                 result.ReferencedObjects.Should().HaveCount( 1 );
                 result.ReferencedObjects.Should().BeEquivalentTo( view );
                 result.Type.Should().Be( SqlObjectType.View );
@@ -351,7 +347,7 @@ public partial class MySqlSchemaBuilderTests
             var t = sut.CreateTable( "T" );
             var c = t.Columns.Create( "C" );
             t.Constraints.SetPrimaryKey( c.Asc() ).SetName( "PK" ).Index.SetName( "IX" );
-            t.Constraints.CreateCheck( t.RecordSet["C"] != null ).SetName( "CHK" );
+            t.Constraints.CreateCheck( t.Node["C"] != null ).SetName( "CHK" );
             sut.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
 
             var result = sut.Contains( name );
@@ -367,7 +363,7 @@ public partial class MySqlSchemaBuilderTests
             ISqlObjectBuilderCollection sut = db.Schemas.Create( "foo" ).Objects;
             var expected = sut.CreateTable( name );
 
-            var result = sut.GetObject( name );
+            var result = sut.Get( name );
 
             result.Should().BeSameAs( expected );
         }
@@ -379,7 +375,7 @@ public partial class MySqlSchemaBuilderTests
             var db = MySqlDatabaseBuilderMock.Create();
             ISqlObjectBuilderCollection sut = db.Schemas.Create( "foo" ).Objects;
 
-            var action = Lambda.Of( () => sut.GetObject( name ) );
+            var action = Lambda.Of( () => sut.Get( name ) );
 
             action.Should().ThrowExactly<KeyNotFoundException>();
         }
@@ -392,7 +388,7 @@ public partial class MySqlSchemaBuilderTests
             ISqlObjectBuilderCollection sut = db.Schemas.Create( "foo" ).Objects;
             var expected = sut.CreateTable( name );
 
-            var result = sut.TryGetObject( name );
+            var result = sut.TryGet( name );
 
             result.Should().BeSameAs( expected );
         }
@@ -404,7 +400,7 @@ public partial class MySqlSchemaBuilderTests
             var db = MySqlDatabaseBuilderMock.Create();
             ISqlObjectBuilderCollection sut = db.Schemas.Create( "foo" ).Objects;
 
-            var result = sut.TryGetObject( name );
+            var result = sut.TryGet( name );
 
             result.Should().BeNull();
         }

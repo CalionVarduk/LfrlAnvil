@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions.Objects;
+using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Expressions;
 
@@ -72,7 +73,7 @@ public abstract class SqlQueryExpressionNode : SqlExpressionNode, ISqlStatementN
         internal DataFieldVisitor(SqlRecordSetNode recordSet, int capacity)
         {
             _recordSet = recordSet;
-            DataFields = new Dictionary<string, SqlQueryDataFieldNode>( capacity: capacity, comparer: StringComparer.OrdinalIgnoreCase );
+            DataFields = new Dictionary<string, SqlQueryDataFieldNode>( capacity: capacity, comparer: SqlHelpers.NameComparer );
         }
 
         internal Dictionary<string, SqlQueryDataFieldNode> DataFields { get; }
@@ -111,7 +112,7 @@ public abstract class SqlQueryExpressionNode : SqlExpressionNode, ISqlStatementN
 
         internal DataFieldCounter()
         {
-            _names = new HashSet<string>( StringComparer.OrdinalIgnoreCase );
+            _names = new HashSet<string>( SqlHelpers.NameComparer );
             Count = 0;
         }
 

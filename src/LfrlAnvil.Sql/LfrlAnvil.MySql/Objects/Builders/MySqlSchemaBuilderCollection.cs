@@ -130,18 +130,18 @@ public sealed class MySqlSchemaBuilderCollection : ISqlSchemaBuilderCollection
     private MySqlSchemaBuilder CreateNewSchema(string name)
     {
         var result = new MySqlSchemaBuilder( Database, name );
-        Database.ChangeTracker.SchemaCreated( name );
+        Database.Changes.SchemaCreated( name );
         return result;
     }
 
     [Pure]
-    ISqlSchemaBuilder ISqlSchemaBuilderCollection.GetSchema(string name)
+    ISqlSchemaBuilder ISqlSchemaBuilderCollection.Get(string name)
     {
         return GetSchema( name );
     }
 
     [Pure]
-    ISqlSchemaBuilder? ISqlSchemaBuilderCollection.TryGetSchema(string name)
+    ISqlSchemaBuilder? ISqlSchemaBuilderCollection.TryGet(string name)
     {
         return TryGetSchema( name );
     }

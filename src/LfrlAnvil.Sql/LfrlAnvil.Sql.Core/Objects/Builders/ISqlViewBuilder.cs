@@ -9,9 +9,8 @@ public interface ISqlViewBuilder : ISqlObjectBuilder
     ISqlSchemaBuilder Schema { get; }
     SqlQueryExpressionNode Source { get; }
     IReadOnlyCollection<ISqlObjectBuilder> ReferencedObjects { get; }
-    IReadOnlyCollection<ISqlViewBuilder> ReferencingViews { get; }
     SqlRecordSetInfo Info { get; }
-    SqlViewBuilderNode RecordSet { get; }
+    SqlViewBuilderNode Node { get; }
 
     new ISqlViewBuilder SetName(string name);
 }

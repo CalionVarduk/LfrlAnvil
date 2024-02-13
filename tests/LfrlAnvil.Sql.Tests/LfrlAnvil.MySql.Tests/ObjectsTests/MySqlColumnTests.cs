@@ -34,7 +34,7 @@ public class MySqlColumnTests : TestsBase
             sut.IsNullable.Should().Be( isNullable );
             sut.HasDefaultValue.Should().BeFalse();
             sut.TypeDefinition.Should().BeSameAs( db.TypeDefinitions.GetByType( type ) );
-            sut.Node.Should().BeSameAs( table.RecordSet["C"] );
+            sut.Node.Should().BeSameAs( table.Node["C"] );
             sut.ToString().Should().Be( "[Column] common.T.C" );
         }
     }
@@ -61,7 +61,7 @@ public class MySqlColumnTests : TestsBase
             sut.IsNullable.Should().BeFalse();
             sut.HasDefaultValue.Should().BeTrue();
             sut.TypeDefinition.Should().BeSameAs( db.TypeDefinitions.GetByType<object>() );
-            sut.Node.Should().BeSameAs( table.RecordSet["C"] );
+            sut.Node.Should().BeSameAs( table.Node["C"] );
             sut.ToString().Should().Be( "[Column] common.T.C" );
         }
     }

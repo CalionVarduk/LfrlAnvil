@@ -12,10 +12,10 @@ public interface ISqlColumnBuilderCollection : IReadOnlyCollection<ISqlColumnBui
     bool Contains(string name);
 
     [Pure]
-    ISqlColumnBuilder GetColumn(string name);
+    ISqlColumnBuilder Get(string name);
 
     [Pure]
-    ISqlColumnBuilder? TryGetColumn(string name);
+    ISqlColumnBuilder? TryGet(string name);
 
     ISqlColumnBuilderCollection SetDefaultTypeDefinition(ISqlColumnTypeDefinition definition);
     ISqlColumnBuilder Create(string name);

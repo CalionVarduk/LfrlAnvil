@@ -25,7 +25,7 @@ public sealed class SqliteColumn : SqliteObject, ISqlColumn
     public SqliteColumnTypeDefinition TypeDefinition { get; }
     public bool IsNullable { get; }
     public bool HasDefaultValue { get; }
-    public SqlColumnNode Node => _node ??= Table.RecordSet[Name];
+    public SqlColumnNode Node => _node ??= Table.Node[Name];
     public override SqliteDatabase Database => Table.Schema.Database;
 
     [Pure]

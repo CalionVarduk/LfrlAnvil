@@ -18,15 +18,15 @@ public partial class MySqlTableBuilderTests : TestsBase
     {
         var db = MySqlDatabaseBuilderMock.Create();
         var schema = db.Schemas.Create( "foo" );
-        db.ChangeTracker.ClearStatements();
+        db.Changes.ClearStatements();
         var sut = schema.Objects.CreateTable( "T" );
         var ix1 = sut.Constraints.CreateIndex( sut.Columns.Create( "C1" ).SetType<int>().Asc() );
         var ix2 = sut.Constraints.SetPrimaryKey( sut.Columns.Create( "C2" ).SetType<int>().Asc() ).Index;
         sut.Constraints.CreateIndex( sut.Columns.Create( "C3" ).SetType<long>().Asc(), sut.Columns.Create( "C4" ).SetType<long>().Desc() );
         sut.Constraints.CreateForeignKey( ix1, ix2 );
-        sut.Constraints.CreateCheck( sut.RecordSet["C1"] > SqlNode.Literal( 0 ) );
+        sut.Constraints.CreateCheck( sut.Node["C1"] > SqlNode.Literal( 0 ) );
 
-        var statements = db.GetPendingStatements().ToArray();
+        var statements = db.Changes.GetPendingActions().ToArray();
 
         using ( new AssertionScope() )
         {
@@ -54,12 +54,12 @@ public partial class MySqlTableBuilderTests : TestsBase
     {
         var db = MySqlDatabaseBuilderMock.Create();
         var schema = db.Schemas.Create( "foo" );
-        db.ChangeTracker.ClearStatements();
+        db.Changes.ClearStatements();
         var sut = schema.Objects.CreateTable( "T" );
         sut.Constraints.SetPrimaryKey( sut.Columns.Create( "C" ).Asc() );
         sut.Remove();
 
-        var statements = db.GetPendingStatements().ToArray();
+        var statements = db.Changes.GetPendingActions().ToArray();
 
         statements.Should().BeEmpty();
     }
@@ -72,7 +72,7 @@ public partial class MySqlTableBuilderTests : TestsBase
         sut.Columns.Create( "C" );
 
         var action = Lambda.Of(
-            () => { _ = db.GetPendingStatements(); } );
+            () => { _ = db.Changes.GetPendingActions(); } );
 
         action.Should()
             .ThrowExactly<MySqlObjectBuilderException>()
@@ -115,10 +115,10 @@ public partial class MySqlTableBuilderTests : TestsBase
         var sut = schema.Objects.CreateTable( oldName );
         sut.Constraints.SetPrimaryKey( sut.Columns.Create( "C" ).Asc() );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlTableBuilder)sut).SetName( newName ).SetName( oldName );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -137,12 +137,12 @@ public partial class MySqlTableBuilderTests : TestsBase
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "s" );
         var sut = schema.Objects.CreateTable( oldName );
         sut.Constraints.SetPrimaryKey( sut.Columns.Create( "C" ).Asc() );
-        var recordSet = sut.RecordSet;
+        var recordSet = sut.Node;
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlTableBuilder)sut).SetName( newName );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -169,10 +169,10 @@ public partial class MySqlTableBuilderTests : TestsBase
         var fk = sut.Constraints.CreateForeignKey( sut.Constraints.CreateIndex( c2.Asc() ), pk.Index );
         sut.Constraints.CreateCheck( c1.Node > SqlNode.Literal( 0 ) );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlTableBuilder)sut).SetName( newName );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -210,10 +210,10 @@ public partial class MySqlTableBuilderTests : TestsBase
         var fk2 = t2.Constraints.CreateForeignKey( pk2.Index, pk1.Index );
         var fk3 = t3.Constraints.CreateForeignKey( t3.Constraints.CreateIndex( c4.Asc() ), pk1.Index );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlTableBuilder)sut).SetName( "U" );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -259,11 +259,11 @@ public partial class MySqlTableBuilderTests : TestsBase
         var fk3 = t2.Constraints.CreateForeignKey( pk2.Index, pk1.Index );
         var fk4 = t3.Constraints.CreateForeignKey( t3.Constraints.CreateIndex( c4.Asc() ), pk1.Index );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         t3.Columns.Create( "C6" ).SetType<int>();
         var result = ((ISqlTableBuilder)sut).SetName( "U" );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -303,11 +303,11 @@ public partial class MySqlTableBuilderTests : TestsBase
         var pk2 = t2.Constraints.SetPrimaryKey( c2.Asc() );
         var fk1 = t2.Constraints.CreateForeignKey( pk2.Index, pk1.Index );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         sut.Columns.Create( "C3" ).SetType<int>();
         var result = ((ISqlTableBuilder)sut).SetName( "U" );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -343,11 +343,11 @@ public partial class MySqlTableBuilderTests : TestsBase
         var t3 = schema.Objects.CreateTable( "T3" );
         t3.Constraints.SetPrimaryKey( t3.Columns.Create( "C3" ).Asc() );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         t3.Columns.Create( "C4" ).SetType<int>();
         var result = ((ISqlTableBuilder)sut).SetName( "U" );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -386,10 +386,10 @@ public partial class MySqlTableBuilderTests : TestsBase
 
         var v3 = schema.Objects.CreateView( "V3", v1.ToRecordSet().ToDataSource().Select( s => new[] { s.GetAll() } ) );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlTableBuilder)sut).SetName( "U" );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -444,11 +444,11 @@ public partial class MySqlTableBuilderTests : TestsBase
 
         var v3 = schema.Objects.CreateView( "V3", v1.ToRecordSet().ToDataSource().Select( s => new[] { s.GetAll() } ) );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         sut.Columns.Create( "D" ).SetType<int>();
         var result = ((ISqlTableBuilder)sut).SetName( "U" );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -552,10 +552,10 @@ public partial class MySqlTableBuilderTests : TestsBase
         var fk = sut.Constraints.CreateForeignKey( ix, pk.Index );
         var chk = sut.Constraints.CreateCheck( column.Node > SqlNode.Literal( 0 ) );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         sut.Remove();
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -635,13 +635,13 @@ public partial class MySqlTableBuilderTests : TestsBase
         var a = sut.Columns.Create( "A" );
         var b = sut.Columns.Create( "B" );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         a.SetName( "C" );
         b.SetName( "A" );
         a.SetName( "B" );
 
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -666,7 +666,7 @@ public partial class MySqlTableBuilderTests : TestsBase
         var c = sut.Columns.Create( "C" );
         var d = sut.Columns.Create( "D" );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         a.SetName( "E" );
         b.SetName( "A" );
@@ -674,7 +674,7 @@ public partial class MySqlTableBuilderTests : TestsBase
         d.SetName( "C" );
         a.SetName( "D" );
 
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -694,14 +694,14 @@ public partial class MySqlTableBuilderTests : TestsBase
     public void MultipleColumnNameChange_ShouldGenerateCorrectScript_WhenThereAreTemporaryNameConflicts()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
-        schema.Database.ChangeTracker.ClearStatements();
+        schema.Database.Changes.ClearStatements();
         var sut = schema.Objects.CreateTable( "T" );
         sut.Constraints.SetPrimaryKey( sut.Columns.Create( "P" ).Asc() );
         var a = sut.Columns.Create( "A" );
         var b = sut.Columns.Create( "B" );
         var c = sut.Columns.Create( "C" );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         a.SetName( "X" );
         b.SetName( "Y" );
@@ -709,7 +709,7 @@ public partial class MySqlTableBuilderTests : TestsBase
         b.SetName( "C" );
         a.SetName( "B" );
 
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -735,7 +735,7 @@ public partial class MySqlTableBuilderTests : TestsBase
         var c4 = sut.Columns.Create( "C4" ).SetType<int>();
         var ix = sut.Constraints.CreateIndex( c2.Asc() );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         sut.SetName( "U" );
         c3.SetName( "X" );
@@ -743,7 +743,7 @@ public partial class MySqlTableBuilderTests : TestsBase
         ix.Remove();
         sut.Constraints.CreateIndex( c2.Asc(), c3.Desc() );
 
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -766,12 +766,12 @@ public partial class MySqlTableBuilderTests : TestsBase
         var builder = MySqlDatabaseBuilderMock.Create();
         var sut = builder.Schemas.Create( "s" ).Objects.CreateTable( "foo" );
         sut.Constraints.SetPrimaryKey( sut.Columns.Create( "a" ).Asc() );
-        _ = builder.GetPendingStatements();
+        _ = builder.Changes.GetPendingActions();
 
         sut.SetName( "bar" );
         sut.Remove();
 
-        var result = builder.GetPendingStatements()[^1].Sql;
+        var result = builder.Changes.GetPendingActions()[^1].Sql;
 
         result.Should().SatisfySql( "DROP TABLE `s`.`foo`;" );
     }

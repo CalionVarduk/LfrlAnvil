@@ -12,7 +12,10 @@ namespace LfrlAnvil.Sql.Expressions.Visitors;
 public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
 {
     public SqlNodeDebugInterpreter()
-        : base( SqlNodeInterpreterContext.Create(), beginNameDelimiter: '[', endNameDelimiter: ']' ) { }
+        : this( SqlNodeInterpreterContext.Create() ) { }
+
+    public SqlNodeDebugInterpreter(SqlNodeInterpreterContext context)
+        : base( context, beginNameDelimiter: '[', endNameDelimiter: ']' ) { }
 
     public override void VisitRawDataField(SqlRawDataFieldNode node)
     {

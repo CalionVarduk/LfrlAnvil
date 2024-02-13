@@ -36,11 +36,11 @@ public class MySqlViewTests : TestsBase
             sut.Type.Should().Be( SqlObjectType.View );
             sut.Name.Should().Be( "V" );
             sut.Info.Should().Be( viewBuilder.Info );
-            sut.RecordSet.View.Should().BeSameAs( sut );
-            sut.RecordSet.Info.Should().Be( sut.Info );
-            sut.RecordSet.Alias.Should().BeNull();
-            sut.RecordSet.Identifier.Should().Be( sut.Info.Identifier );
-            sut.RecordSet.IsOptional.Should().BeFalse();
+            sut.Node.View.Should().BeSameAs( sut );
+            sut.Node.Info.Should().Be( sut.Info );
+            sut.Node.Alias.Should().BeNull();
+            sut.Node.Identifier.Should().Be( sut.Info.Identifier );
+            sut.Node.IsOptional.Should().BeFalse();
             sut.ToString().Should().Be( "[View] foo.V" );
 
             sut.DataFields.Count.Should().Be( 3 );

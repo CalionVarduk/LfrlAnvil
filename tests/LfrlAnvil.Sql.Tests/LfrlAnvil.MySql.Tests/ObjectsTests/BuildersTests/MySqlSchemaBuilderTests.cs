@@ -47,10 +47,10 @@ public partial class MySqlSchemaBuilderTests : TestsBase
         var db = MySqlDatabaseBuilderMock.Create();
         var sut = db.Schemas.Create( oldName );
 
-        var startStatementCount = db.GetPendingStatements().Length;
+        var startStatementCount = db.Changes.GetPendingActions().Length;
 
         var result = ((ISqlSchemaBuilder)sut).SetName( newName );
-        var statements = db.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = db.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -73,10 +73,10 @@ public partial class MySqlSchemaBuilderTests : TestsBase
         var db = MySqlDatabaseBuilderMock.Create();
         var sut = db.Schemas.GetSchema( oldName );
 
-        var startStatementCount = db.GetPendingStatements().Length;
+        var startStatementCount = db.Changes.GetPendingActions().Length;
 
         var result = ((ISqlSchemaBuilder)sut).SetName( newName );
-        var statements = db.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = db.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -99,10 +99,10 @@ public partial class MySqlSchemaBuilderTests : TestsBase
         db.Schemas.Default.SetName( "x" );
         var sut = db.Schemas.Create( oldName );
 
-        var startStatementCount = db.GetPendingStatements().Length;
+        var startStatementCount = db.Changes.GetPendingActions().Length;
 
         var result = ((ISqlSchemaBuilder)sut).SetName( newName );
-        var statements = db.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = db.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -149,10 +149,10 @@ public partial class MySqlSchemaBuilderTests : TestsBase
             "V2",
             t1.ToRecordSet().Join( v1.ToRecordSet().InnerOn( SqlNode.True() ) ).Select( s => new[] { s.GetAll() } ) );
 
-        var startStatementCount = db.GetPendingStatements().Length;
+        var startStatementCount = db.Changes.GetPendingActions().Length;
 
         var result = ((ISqlSchemaBuilder)sut).SetName( newName );
-        var statements = db.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = db.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -168,13 +168,19 @@ public partial class MySqlSchemaBuilderTests : TestsBase
             statements.ElementAtOrDefault( 2 ).Sql.Should().SatisfySql( "CREATE SCHEMA `bar`;" );
 
             statements.Should()
-                .Contain( s => s.Sql.Replace( Environment.NewLine, string.Empty ) == "ALTER TABLE `foo`.`T1` RENAME TO `bar`.`T1`;" );
+                .Contain(
+                    s => s.Sql != null &&
+                        s.Sql.Replace( Environment.NewLine, string.Empty ) == "ALTER TABLE `foo`.`T1` RENAME TO `bar`.`T1`;" );
 
             statements.Should()
-                .Contain( s => s.Sql.Replace( Environment.NewLine, string.Empty ) == "ALTER TABLE `foo`.`T2` RENAME TO `bar`.`T2`;" );
+                .Contain(
+                    s => s.Sql != null &&
+                        s.Sql.Replace( Environment.NewLine, string.Empty ) == "ALTER TABLE `foo`.`T2` RENAME TO `bar`.`T2`;" );
 
             statements.Should()
-                .Contain( s => s.Sql.Replace( Environment.NewLine, string.Empty ) == "ALTER TABLE `foo`.`T3` RENAME TO `bar`.`T3`;" );
+                .Contain(
+                    s => s.Sql != null &&
+                        s.Sql.Replace( Environment.NewLine, string.Empty ) == "ALTER TABLE `foo`.`T3` RENAME TO `bar`.`T3`;" );
 
             statements.ElementAtOrDefault( 6 ).Sql.Should().SatisfySql( "DROP SCHEMA `foo`;" );
 
@@ -323,10 +329,10 @@ INNER JOIN `bar`.`V1` ON TRUE;" );
             "V2",
             t1.ToRecordSet().Join( v1.ToRecordSet().InnerOn( SqlNode.True() ) ).Select( s => new[] { s.GetAll() } ) );
 
-        var startStatementCount = db.GetPendingStatements().Length;
+        var startStatementCount = db.Changes.GetPendingActions().Length;
 
         sut.Remove();
-        var statements = db.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = db.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {

@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using LfrlAnvil.Expressions;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Exceptions;
+using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Statements.Compilers;
 
@@ -614,7 +615,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
 
         internal SyncOrdinalsCollection(int count)
         {
-            Source = new Dictionary<string, ParameterExpression>( capacity: count, comparer: StringComparer.OrdinalIgnoreCase );
+            Source = new Dictionary<string, ParameterExpression>( capacity: count, comparer: SqlHelpers.NameComparer );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -649,7 +650,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         internal AsyncOrdinalsCollection(SqlQueryReaderFactory factory, int count)
         {
             _factory = factory;
-            _source = new Dictionary<string, Expression>( capacity: count, comparer: StringComparer.OrdinalIgnoreCase );
+            _source = new Dictionary<string, Expression>( capacity: count, comparer: SqlHelpers.NameComparer );
             _getOrdinalCalls = new List<Expression>( capacity: count );
         }
 

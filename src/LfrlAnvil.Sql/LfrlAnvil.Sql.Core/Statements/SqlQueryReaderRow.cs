@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Statements;
 
@@ -52,7 +53,7 @@ public readonly struct SqlQueryReaderRow
     public Dictionary<string, object?> ToDictionary()
     {
         var fields = Source.Fields;
-        var result = new Dictionary<string, object?>( capacity: fields.Length, comparer: StringComparer.OrdinalIgnoreCase );
+        var result = new Dictionary<string, object?>( capacity: fields.Length, comparer: SqlHelpers.NameComparer );
         foreach ( var field in fields )
             result.Add( field.Name, Source.GetValue( Index, field.Ordinal ) );
 

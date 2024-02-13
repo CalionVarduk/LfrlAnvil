@@ -19,7 +19,7 @@ public sealed class MySqlViewDataField : MySqlObject, ISqlViewDataField
 
     public MySqlView View { get; }
     public override MySqlDatabase Database => View.Database;
-    public SqlViewDataFieldNode Node => _node ??= View.RecordSet[Name];
+    public SqlViewDataFieldNode Node => _node ??= View.Node[Name];
 
     ISqlView ISqlViewDataField.View => View;
 

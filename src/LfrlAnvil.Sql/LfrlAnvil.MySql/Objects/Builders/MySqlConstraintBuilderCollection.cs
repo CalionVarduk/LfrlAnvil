@@ -110,19 +110,19 @@ public sealed class MySqlConstraintBuilderCollection : ISqlConstraintBuilderColl
             var oldPrimaryKey = _primaryKey;
             _primaryKey = Table.Schema.Objects.CreatePrimaryKey( Table, name, index, oldPrimaryKey );
             _map.Add( name, _primaryKey );
-            Table.Database.ChangeTracker.PrimaryKeyUpdated( Table, oldPrimaryKey );
+            Table.Database.Changes.PrimaryKeyUpdated( Table, oldPrimaryKey );
             return _primaryKey;
         }
 
         return _primaryKey.SetName( name );
     }
 
-    public MySqlIndexBuilder CreateIndex(ReadOnlyMemory<ISqlIndexColumnBuilder> columns, bool isUnique = false)
+    public MySqlIndexBuilder CreateIndex(ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns, bool isUnique = false)
     {
         return CreateIndex( MySqlHelpers.GetDefaultIndexName( Table, columns, isUnique ), columns, isUnique );
     }
 
-    public MySqlIndexBuilder CreateIndex(string name, ReadOnlyMemory<ISqlIndexColumnBuilder> columns, bool isUnique = false)
+    public MySqlIndexBuilder CreateIndex(string name, ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns, bool isUnique = false)
     {
         Table.EnsureNotRemoved();
         var result = Table.Schema.Objects.CreateIndex( Table, name, columns, isUnique );
@@ -166,7 +166,7 @@ public sealed class MySqlConstraintBuilderCollection : ISqlConstraintBuilderColl
         {
             var oldPrimaryKey = _primaryKey;
             _primaryKey = null;
-            Table.Database.ChangeTracker.PrimaryKeyUpdated( Table, oldPrimaryKey );
+            Table.Database.Changes.PrimaryKeyUpdated( Table, oldPrimaryKey );
         }
 
         obj.Remove();
@@ -246,7 +246,7 @@ public sealed class MySqlConstraintBuilderCollection : ISqlConstraintBuilderColl
         {
             var oldPrimaryKey = _primaryKey;
             _primaryKey = null;
-            Table.Database.ChangeTracker.PrimaryKeyUpdated( Table, oldPrimaryKey );
+            Table.Database.Changes.PrimaryKeyUpdated( Table, oldPrimaryKey );
         }
 
         return buffer;
@@ -285,13 +285,13 @@ public sealed class MySqlConstraintBuilderCollection : ISqlConstraintBuilderColl
     }
 
     [Pure]
-    ISqlConstraintBuilder ISqlConstraintBuilderCollection.GetConstraint(string name)
+    ISqlConstraintBuilder ISqlConstraintBuilderCollection.Get(string name)
     {
         return GetConstraint( name );
     }
 
     [Pure]
-    ISqlConstraintBuilder? ISqlConstraintBuilderCollection.TryGetConstraint(string name)
+    ISqlConstraintBuilder? ISqlConstraintBuilderCollection.TryGet(string name)
     {
         return TryGetConstraint( name );
     }
@@ -354,14 +354,14 @@ public sealed class MySqlConstraintBuilderCollection : ISqlConstraintBuilderColl
         return SetPrimaryKey( name, MySqlHelpers.CastOrThrow<MySqlIndexBuilder>( index ) );
     }
 
-    ISqlIndexBuilder ISqlConstraintBuilderCollection.CreateIndex(ReadOnlyMemory<ISqlIndexColumnBuilder> columns, bool isUnique)
+    ISqlIndexBuilder ISqlConstraintBuilderCollection.CreateIndex(ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns, bool isUnique)
     {
         return CreateIndex( columns, isUnique );
     }
 
     ISqlIndexBuilder ISqlConstraintBuilderCollection.CreateIndex(
         string name,
-        ReadOnlyMemory<ISqlIndexColumnBuilder> columns,
+        ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns,
         bool isUnique)
     {
         return CreateIndex( name, columns, isUnique );

@@ -77,7 +77,7 @@ public partial class ObjectExpressionsTests
                 result.Name.Should().Be( "Col0" );
                 result.RecordSet.Should().BeSameAs( sut );
                 var column = result as SqlColumnBuilderNode;
-                (column?.Value).Should().BeSameAs( table.Columns.GetColumn( "Col0" ) );
+                (column?.Value).Should().BeSameAs( table.Columns.Get( "Col0" ) );
                 (column?.Type).Should().Be( TypeNullability.Create<int>() );
                 text.Should().Be( "[foo].[Col0] : System.Int32" );
             }
@@ -113,7 +113,7 @@ public partial class ObjectExpressionsTests
             using ( new AssertionScope() )
             {
                 result.NodeType.Should().Be( SqlNodeType.ColumnBuilder );
-                result.Value.Should().BeSameAs( table.Columns.GetColumn( "Col0" ) );
+                result.Value.Should().BeSameAs( table.Columns.Get( "Col0" ) );
                 result.Name.Should().Be( "Col0" );
                 result.RecordSet.Should().BeSameAs( sut );
                 result.Type.Should().Be( TypeNullability.Create<int>() );
@@ -132,7 +132,7 @@ public partial class ObjectExpressionsTests
             using ( new AssertionScope() )
             {
                 result.NodeType.Should().Be( SqlNodeType.ColumnBuilder );
-                result.Value.Should().BeSameAs( table.Columns.GetColumn( "Col0" ) );
+                result.Value.Should().BeSameAs( table.Columns.Get( "Col0" ) );
                 result.Name.Should().Be( "Col0" );
                 result.RecordSet.Should().BeSameAs( sut );
                 result.Type.Should().Be( TypeNullability.Create<int>( isNullable: true ) );
@@ -151,7 +151,7 @@ public partial class ObjectExpressionsTests
             using ( new AssertionScope() )
             {
                 result.NodeType.Should().Be( SqlNodeType.ColumnBuilder );
-                result.Value.Should().BeSameAs( table.Columns.GetColumn( "Col0" ) );
+                result.Value.Should().BeSameAs( table.Columns.Get( "Col0" ) );
                 result.Name.Should().Be( "Col0" );
                 result.RecordSet.Should().BeSameAs( sut );
                 result.Type.Should().Be( TypeNullability.Create<int>( isNullable: true ) );
@@ -170,7 +170,7 @@ public partial class ObjectExpressionsTests
             using ( new AssertionScope() )
             {
                 result.NodeType.Should().Be( SqlNodeType.ColumnBuilder );
-                result.Value.Should().BeSameAs( table.Columns.GetColumn( "Col0" ) );
+                result.Value.Should().BeSameAs( table.Columns.Get( "Col0" ) );
                 result.Name.Should().Be( "Col0" );
                 result.RecordSet.Should().BeSameAs( sut );
                 result.Type.Should().Be( TypeNullability.Create<int>() );

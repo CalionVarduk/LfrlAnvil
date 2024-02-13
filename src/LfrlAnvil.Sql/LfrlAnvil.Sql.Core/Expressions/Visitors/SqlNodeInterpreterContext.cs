@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using LfrlAnvil.Extensions;
+using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Expressions.Visitors;
 
@@ -97,7 +98,7 @@ public sealed class SqlNodeInterpreterContext
     {
         if ( _parameters is null )
         {
-            _parameters = new Dictionary<string, TypeNullability?>( comparer: StringComparer.OrdinalIgnoreCase );
+            _parameters = new Dictionary<string, TypeNullability?>( comparer: SqlHelpers.NameComparer );
             _parameters.Add( name, type );
             return;
         }

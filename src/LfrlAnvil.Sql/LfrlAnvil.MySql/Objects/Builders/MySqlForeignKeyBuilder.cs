@@ -48,7 +48,7 @@ public sealed class MySqlForeignKeyBuilder : MySqlConstraintBuilder, ISqlForeign
         {
             var oldBehavior = OnDeleteBehavior;
             OnDeleteBehavior = behavior;
-            Database.ChangeTracker.OnDeleteBehaviorUpdated( this, oldBehavior );
+            Database.Changes.OnDeleteBehaviorUpdated( this, oldBehavior );
         }
 
         return this;
@@ -62,7 +62,7 @@ public sealed class MySqlForeignKeyBuilder : MySqlConstraintBuilder, ISqlForeign
         {
             var oldBehavior = OnUpdateBehavior;
             OnUpdateBehavior = behavior;
-            Database.ChangeTracker.OnUpdateBehaviorUpdated( this, oldBehavior );
+            Database.Changes.OnUpdateBehaviorUpdated( this, oldBehavior );
         }
 
         return this;
@@ -92,7 +92,7 @@ public sealed class MySqlForeignKeyBuilder : MySqlConstraintBuilder, ISqlForeign
         OriginIndex.Table.Schema.Objects.Remove( Name );
         OriginIndex.Table.Constraints.Remove( Name );
 
-        Database.ChangeTracker.ObjectRemoved( OriginIndex.Table, this );
+        Database.Changes.ObjectRemoved( OriginIndex.Table, this );
     }
 
     protected override void SetNameCore(string name)
@@ -105,7 +105,7 @@ public sealed class MySqlForeignKeyBuilder : MySqlConstraintBuilder, ISqlForeign
 
         var oldName = Name;
         Name = name;
-        Database.ChangeTracker.NameUpdated( OriginIndex.Table, this, oldName );
+        Database.Changes.NameUpdated( OriginIndex.Table, this, oldName );
     }
 
     ISqlForeignKeyBuilder ISqlForeignKeyBuilder.SetName(string name)

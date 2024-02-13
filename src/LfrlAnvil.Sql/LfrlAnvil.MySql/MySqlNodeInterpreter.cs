@@ -1747,10 +1747,12 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
 
         if ( primaryKey is not null )
         {
-            var identityColumns = primaryKey.Index.Columns.Span;
-            identityColumnNames = new string[identityColumns.Length];
-            for ( var i = 0; i < identityColumns.Length; ++i )
-                identityColumnNames[i] = identityColumns[i].Column.Name;
+            var identityColumns = primaryKey.Index.Columns;
+            identityColumnNames = new string[identityColumns.Count];
+
+            var i = 0;
+            foreach ( var c in identityColumns )
+                identityColumnNames[i++] = c.Column.Name;
         }
         else
         {

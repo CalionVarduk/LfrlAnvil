@@ -5,7 +5,6 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using LfrlAnvil.Exceptions;
-using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Objects.Builders;
@@ -82,7 +81,10 @@ public static class SqliteHelpers
     }
 
     [Pure]
-    public static string GetDefaultIndexName(SqliteTableBuilder table, ReadOnlyMemory<ISqlIndexColumnBuilder> columns, bool isUnique)
+    public static string GetDefaultIndexName(
+        SqliteTableBuilder table,
+        ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns,
+        bool isUnique)
     {
         var builder = new StringBuilder( 32 );
         if ( isUnique )
@@ -216,32 +218,33 @@ public static class SqliteHelpers
     }
 
     [Pure]
-    internal static SqliteIndexColumnBuilder[] CreateIndexColumns(SqliteTableBuilder table, ReadOnlyMemory<ISqlIndexColumnBuilder> columns)
+    internal static SqlIndexColumnBuilder<ISqlColumnBuilder>[] CreateIndexColumns(
+        SqliteTableBuilder table,
+        ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns)
     {
-        if ( columns.Length == 0 )
+        if ( columns.Count == 0 )
             throw new SqliteObjectBuilderException( ExceptionResources.IndexMustHaveAtLeastOneColumn );
 
         var errors = Chain<string>.Empty;
         var uniqueColumnIds = new HashSet<ulong>();
 
-        var span = columns.Span;
-        var result = new SqliteIndexColumnBuilder[span.Length];
-        for ( var i = 0; i < span.Length; ++i )
+        var result = new SqlIndexColumnBuilder<ISqlColumnBuilder>[columns.Count];
+        for ( var i = 0; i < columns.Count; ++i )
         {
-            var c = CastOrThrow<SqliteIndexColumnBuilder>( span[i] );
-            result[i] = c;
+            var column = CastOrThrow<SqliteColumnBuilder>( columns[i].Column );
+            result[i] = columns[i];
 
-            if ( ! uniqueColumnIds.Add( c.Column.Id ) )
+            if ( ! uniqueColumnIds.Add( column.Id ) )
             {
-                errors = errors.Extend( ExceptionResources.ColumnIsDuplicated( c.Column ) );
+                errors = errors.Extend( ExceptionResources.ColumnIsDuplicated( column ) );
                 continue;
             }
 
-            if ( ! ReferenceEquals( c.Column.Table, table ) )
-                errors = errors.Extend( ExceptionResources.ObjectDoesNotBelongToTable( c.Column, table ) );
+            if ( ! ReferenceEquals( column.Table, table ) )
+                errors = errors.Extend( ExceptionResources.ObjectDoesNotBelongToTable( column, table ) );
 
-            if ( c.Column.IsRemoved )
-                errors = errors.Extend( ExceptionResources.ObjectHasBeenRemoved( c.Column ) );
+            if ( column.IsRemoved )
+                errors = errors.Extend( ExceptionResources.ObjectHasBeenRemoved( column ) );
         }
 
         if ( errors.Count > 0 )
@@ -300,8 +303,8 @@ public static class SqliteHelpers
         if ( referencedIndex.Filter is not null )
             errors = errors.Extend( ExceptionResources.IndexIsPartial( referencedIndex ) );
 
-        var indexColumns = originIndex.Columns.Span;
-        var referencedIndexColumns = referencedIndex.Columns.Span;
+        var indexColumns = originIndex.Columns;
+        var referencedIndexColumns = referencedIndex.Columns;
 
         foreach ( var c in referencedIndexColumns )
         {
@@ -309,11 +312,11 @@ public static class SqliteHelpers
                 errors = errors.Extend( ExceptionResources.ColumnIsNullable( c.Column ) );
         }
 
-        if ( indexColumns.Length != referencedIndexColumns.Length )
+        if ( indexColumns.Count != referencedIndexColumns.Count )
             errors = errors.Extend( ExceptionResources.ForeignKeyOriginIndexAndReferencedIndexMustHaveTheSameAmountOfColumns );
         else
         {
-            for ( var i = 0; i < indexColumns.Length; ++i )
+            for ( var i = 0; i < indexColumns.Count; ++i )
             {
                 var column = indexColumns[i].Column;
                 var refColumn = referencedIndexColumns[i].Column;

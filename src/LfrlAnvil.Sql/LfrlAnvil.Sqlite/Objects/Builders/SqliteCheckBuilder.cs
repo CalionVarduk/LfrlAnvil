@@ -69,7 +69,7 @@ public sealed class SqliteCheckBuilder : SqliteConstraintBuilder, ISqlCheckBuild
         Table.Schema.Objects.Remove( Name );
         Table.Constraints.Remove( Name );
 
-        Database.ChangeTracker.ObjectRemoved( Table, this );
+        Database.Changes.ObjectRemoved( Table, this );
     }
 
     protected override void SetNameCore(string name)
@@ -82,7 +82,7 @@ public sealed class SqliteCheckBuilder : SqliteConstraintBuilder, ISqlCheckBuild
 
         var oldName = Name;
         Name = name;
-        Database.ChangeTracker.NameUpdated( Table, this, oldName );
+        Database.Changes.NameUpdated( Table, this, oldName );
     }
 
     private void AddSelfToReferencedColumns()

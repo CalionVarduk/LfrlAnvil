@@ -48,7 +48,7 @@ public sealed class SqliteForeignKeyBuilder : SqliteConstraintBuilder, ISqlForei
         {
             var oldBehavior = OnDeleteBehavior;
             OnDeleteBehavior = behavior;
-            Database.ChangeTracker.OnDeleteBehaviorUpdated( this, oldBehavior );
+            Database.Changes.OnDeleteBehaviorUpdated( this, oldBehavior );
         }
 
         return this;
@@ -62,7 +62,7 @@ public sealed class SqliteForeignKeyBuilder : SqliteConstraintBuilder, ISqlForei
         {
             var oldBehavior = OnUpdateBehavior;
             OnUpdateBehavior = behavior;
-            Database.ChangeTracker.OnUpdateBehaviorUpdated( this, oldBehavior );
+            Database.Changes.OnUpdateBehaviorUpdated( this, oldBehavior );
         }
 
         return this;
@@ -79,7 +79,7 @@ public sealed class SqliteForeignKeyBuilder : SqliteConstraintBuilder, ISqlForei
         OriginIndex.Table.Schema.Objects.Reactivate( this );
         OriginIndex.Table.Constraints.Reactivate( this );
 
-        Database.ChangeTracker.ObjectCreated( OriginIndex.Table, this );
+        Database.Changes.ObjectCreated( OriginIndex.Table, this );
     }
 
     [Pure]
@@ -98,7 +98,7 @@ public sealed class SqliteForeignKeyBuilder : SqliteConstraintBuilder, ISqlForei
         OriginIndex.Table.Schema.Objects.Remove( Name );
         OriginIndex.Table.Constraints.Remove( Name );
 
-        Database.ChangeTracker.ObjectRemoved( OriginIndex.Table, this );
+        Database.Changes.ObjectRemoved( OriginIndex.Table, this );
     }
 
     protected override void SetNameCore(string name)
@@ -111,7 +111,7 @@ public sealed class SqliteForeignKeyBuilder : SqliteConstraintBuilder, ISqlForei
 
         var oldName = Name;
         Name = name;
-        Database.ChangeTracker.NameUpdated( OriginIndex.Table, this, oldName );
+        Database.Changes.NameUpdated( OriginIndex.Table, this, oldName );
     }
 
     ISqlForeignKeyBuilder ISqlForeignKeyBuilder.SetName(string name)

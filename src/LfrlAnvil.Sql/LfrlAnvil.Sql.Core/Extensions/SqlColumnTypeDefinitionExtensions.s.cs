@@ -13,6 +13,27 @@ public static class SqlColumnTypeDefinitionExtensions
     }
 
     [Pure]
+    public static ISqlColumnTypeDefinition<T>? TryGetByType<T>(this ISqlColumnTypeDefinitionProvider provider)
+        where T : notnull
+    {
+        return (ISqlColumnTypeDefinition<T>?)provider.TryGetByType( typeof( T ) );
+    }
+
+    [Pure]
+    public static SqlColumnTypeDefinition<T> GetByType<T>(this SqlColumnTypeDefinitionProvider provider)
+        where T : notnull
+    {
+        return (SqlColumnTypeDefinition<T>)provider.GetByType( typeof( T ) );
+    }
+
+    [Pure]
+    public static SqlColumnTypeDefinition<T>? TryGetByType<T>(this SqlColumnTypeDefinitionProvider provider)
+        where T : notnull
+    {
+        return (SqlColumnTypeDefinition<T>?)provider.TryGetByType( typeof( T ) );
+    }
+
+    [Pure]
     public static object? TryToNullableParameterValue(this ISqlColumnTypeDefinition definition, object? value)
     {
         return value is null ? DBNull.Value : definition.TryToParameterValue( value );

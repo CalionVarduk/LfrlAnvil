@@ -32,10 +32,10 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
         var c2 = table.Columns.Create( "C2" ).SetType<int>();
         table.Constraints.SetPrimaryKey( c1.Asc() );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         table.Constraints.SetPrimaryKey( c2.Asc() );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -56,10 +56,10 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlPrimaryKeyBuilder)sut).SetName( sut.Name );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -76,12 +76,12 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
         var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         var oldName = sut.Name;
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         sut.SetName( "bar" );
         var result = ((ISqlPrimaryKeyBuilder)sut).SetName( oldName );
 
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -98,10 +98,10 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
         var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).SetType<int>().Asc() );
         var oldName = sut.Name;
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlPrimaryKeyBuilder)sut).SetName( "bar" );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -178,10 +178,10 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlPrimaryKeyBuilder)sut).SetDefaultName();
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -197,11 +197,11 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         sut.SetName( "bar" );
         var result = ((ISqlPrimaryKeyBuilder)sut).SetDefaultName();
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -218,10 +218,10 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
         var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).SetType<int>().Asc() ).SetName( "bar" );
         var oldName = sut.Name;
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlPrimaryKeyBuilder)sut).SetDefaultName();
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -332,13 +332,13 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
         var c2 = table.Columns.Create( "C2" );
         var sut = table.Constraints.SetPrimaryKey( c1.Asc() );
 
-        _ = schema.Database.GetPendingStatements();
+        _ = schema.Database.Changes.GetPendingActions();
         sut.Remove();
         table.Constraints.SetPrimaryKey( c2.Asc() );
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         sut.Remove();
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         statements.Should().BeEmpty();
     }

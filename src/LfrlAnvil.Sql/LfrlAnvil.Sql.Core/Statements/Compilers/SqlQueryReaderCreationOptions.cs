@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Statements.Compilers;
 
@@ -104,7 +105,7 @@ public readonly struct SqlQueryReaderCreationOptions
 
         var result = new Dictionary<string, SqlQueryMemberConfiguration>(
             capacity: configurations.Length,
-            comparer: StringComparer.OrdinalIgnoreCase );
+            comparer: SqlHelpers.NameComparer );
 
         foreach ( var cfg in configurations )
         {

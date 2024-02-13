@@ -19,7 +19,7 @@ public sealed class SqliteViewDataField : SqliteObject, ISqlViewDataField
 
     public SqliteView View { get; }
     public override SqliteDatabase Database => View.Database;
-    public SqlViewDataFieldNode Node => _node ??= View.RecordSet[Name];
+    public SqlViewDataFieldNode Node => _node ??= View.Node[Name];
 
     ISqlView ISqlViewDataField.View => View;
 

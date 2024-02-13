@@ -135,7 +135,7 @@ public sealed class SqliteColumnBuilderCollection : ISqlColumnBuilderCollection
     private SqliteColumnBuilder CreateNewColumn(string name)
     {
         var result = new SqliteColumnBuilder( Table, name, DefaultTypeDefinition );
-        Table.Database.ChangeTracker.ObjectCreated( Table, result );
+        Table.Database.Changes.ObjectCreated( Table, result );
         return result;
     }
 
@@ -156,13 +156,13 @@ public sealed class SqliteColumnBuilderCollection : ISqlColumnBuilderCollection
     }
 
     [Pure]
-    ISqlColumnBuilder ISqlColumnBuilderCollection.GetColumn(string name)
+    ISqlColumnBuilder ISqlColumnBuilderCollection.Get(string name)
     {
         return GetColumn( name );
     }
 
     [Pure]
-    ISqlColumnBuilder? ISqlColumnBuilderCollection.TryGetColumn(string name)
+    ISqlColumnBuilder? ISqlColumnBuilderCollection.TryGet(string name)
     {
         return TryGetColumn( name );
     }

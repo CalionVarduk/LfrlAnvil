@@ -33,11 +33,11 @@ public class MySqlTableTests : TestsBase
             sut.Type.Should().Be( SqlObjectType.Table );
             sut.Name.Should().Be( "T" );
             sut.Info.Should().Be( tableBuilder.Info );
-            sut.RecordSet.Table.Should().BeSameAs( sut );
-            sut.RecordSet.Info.Should().Be( sut.Info );
-            sut.RecordSet.Alias.Should().BeNull();
-            sut.RecordSet.Identifier.Should().Be( sut.Info.Identifier );
-            sut.RecordSet.IsOptional.Should().BeFalse();
+            sut.Node.Table.Should().BeSameAs( sut );
+            sut.Node.Info.Should().Be( sut.Info );
+            sut.Node.Alias.Should().BeNull();
+            sut.Node.Identifier.Should().Be( sut.Info.Identifier );
+            sut.Node.IsOptional.Should().BeFalse();
             sut.ToString().Should().Be( "[Table] foo.T" );
 
             sut.Columns.Count.Should().Be( 1 );

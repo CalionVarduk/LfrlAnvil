@@ -16,6 +16,7 @@ using LfrlAnvil.Sql.Expressions.Functions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
+using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using MySqlConnector;
 
@@ -2641,7 +2642,7 @@ WHERE `bar`.`a` < 10" );
     public void Visit_ShouldInterpretUpdateSingleDataSource_WithCteAndWhereAndOrderByAndLimit()
     {
         var dataSource = CreateTable( "s", "foo", "a" )
-            .RecordSet
+            .Node
             .ToDataSource()
             .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
             .AndWhere( s => s["s.foo"]["a"].InQuery( SqlNode.RawQuery( "SELECT cba.c FROM cba" ) ) )
@@ -3360,7 +3361,7 @@ WHERE EXISTS (
                 "s",
                 "v",
                 SqlNode.RawRecordSet( "bar" ).ToDataSource().Select( s => new[] { s.From["a"].AsSelf(), s.From["b"].AsSelf() } ) )
-            .RecordSet;
+            .Node;
 
         var foo = table.ToRecordSet( "f" );
 
@@ -4386,7 +4387,7 @@ SELECT * FROM qux" );
     [InlineData( true, "UNIQUE INDEX" )]
     public void Visit_ShouldInterpretCreateIndex(bool isUnique, string expectedType)
     {
-        var qux = CreateTable( "foo", "qux", new[] { "a", "b" }, "a" ).RecordSet;
+        var qux = CreateTable( "foo", "qux", new[] { "a", "b" }, "a" ).Node;
         var node = SqlNode.CreateIndex(
             SqlSchemaObjectName.Create( "foo", "bar" ),
             isUnique: isUnique,
@@ -4424,7 +4425,7 @@ SELECT * FROM qux" );
     [InlineData( true, "UNIQUE INDEX" )]
     public void Visit_ShouldInterpretCreateIndex_WithReplaceIfExists(bool isUnique, string expectedType)
     {
-        var qux = CreateTable( "foo", "qux", new[] { "a", "b" }, "a" ).RecordSet;
+        var qux = CreateTable( "foo", "qux", new[] { "a", "b" }, "a" ).Node;
         var node = SqlNode.CreateIndex(
             SqlSchemaObjectName.Create( "foo", "bar" ),
             isUnique: isUnique,
@@ -4461,7 +4462,7 @@ CREATE {expectedType} `bar` ON `foo`.`qux` (`a` ASC, `b` DESC)" );
     [Fact]
     public void Visit_ShouldInterpretCreateIndex_WithPrefixedColumnType()
     {
-        var qux = CreateTableBuilder<string>( "foo", "qux", new[] { "a" }, "a" ).RecordSet;
+        var qux = CreateTableBuilder<string>( "foo", "qux", new[] { "a" }, "a" ).Node;
         var node = SqlNode.CreateIndex(
             SqlSchemaObjectName.Create( "foo", "bar" ),
             isUnique: false,
@@ -4781,7 +4782,8 @@ END;" );
         foreach ( var c in columnNames )
             table.Columns.Create( c ).SetType<TColumnType>();
 
-        table.Constraints.SetPrimaryKey( pkColumnNames.Select( n => table.Columns.GetColumn( n ).Asc() ).ToArray() );
+        var pkColumns = pkColumnNames.Select( n => table.Columns.GetColumn( n ).Asc().UnsafeReinterpretAs<ISqlColumnBuilder>() ).ToArray();
+        table.Constraints.SetPrimaryKey( pkColumns );
         return table;
     }
 

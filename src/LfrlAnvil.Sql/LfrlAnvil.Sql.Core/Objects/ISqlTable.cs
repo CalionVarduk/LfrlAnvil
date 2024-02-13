@@ -8,5 +8,5 @@ public interface ISqlTable : ISqlObject
     ISqlColumnCollection Columns { get; }
     ISqlConstraintCollection Constraints { get; }
     SqlRecordSetInfo Info { get; }
-    SqlTableNode RecordSet { get; }
+    SqlTableNode Node { get; }
 }

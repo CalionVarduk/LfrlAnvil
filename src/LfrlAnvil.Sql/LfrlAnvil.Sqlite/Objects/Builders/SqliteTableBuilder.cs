@@ -38,10 +38,10 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
     public IReadOnlyCollection<SqliteViewBuilder> ReferencingViews => (_referencingViews?.Values).EmptyIfNull();
 
     public SqlRecordSetInfo Info => _info ??= SqlRecordSetInfo.Create( Schema.Name, Name );
-    public SqlTableBuilderNode RecordSet => _recordSet ??= SqlNode.Table( this );
+    public SqlTableBuilderNode Node => _recordSet ??= SqlNode.Table( this );
     public override SqliteDatabaseBuilder Database => Schema.Database;
 
-    internal override bool CanRemove
+    public override bool CanRemove
     {
         get
         {
@@ -65,7 +65,6 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
     ISqlSchemaBuilder ISqlTableBuilder.Schema => Schema;
     ISqlColumnBuilderCollection ISqlTableBuilder.Columns => Columns;
     ISqlConstraintBuilderCollection ISqlTableBuilder.Constraints => Constraints;
-    IReadOnlyCollection<ISqlViewBuilder> ISqlTableBuilder.ReferencingViews => ReferencingViews;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
 
     [Pure]
@@ -160,7 +159,7 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
             column.Remove();
 
         Schema.Objects.Remove( Name );
-        Database.ChangeTracker.ObjectRemoved( this, this );
+        Database.Changes.ObjectRemoved( this, this );
     }
 
     protected override void SetNameCore(string name)
@@ -181,7 +180,7 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
                 var oldName = t.Name;
                 t.Name = n;
                 t.ResetInfoCache();
-                t.Database.ChangeTracker.NameUpdated( t, t, oldName );
+                t.Database.Changes.NameUpdated( t, t, oldName );
             } );
     }
 
@@ -192,10 +191,10 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
             (t, _) =>
             {
                 t.ResetInfoCache();
-                t.Database.ChangeTracker.SchemaNameUpdated( t, t, oldName );
+                t.Database.Changes.SchemaNameUpdated( t, t, oldName );
 
                 foreach ( var constraint in Constraints )
-                    t.Database.ChangeTracker.SchemaNameUpdated( t, constraint, oldName );
+                    t.Database.Changes.SchemaNameUpdated( t, constraint, oldName );
             } );
     }
 
@@ -242,7 +241,7 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
             update( this, newName );
 
             if ( hasSelfRefForeignKeys )
-                Database.ChangeTracker.ReconstructionRequested( this );
+                Database.Changes.ReconstructionRequested( this );
 
             foreach ( var fk in fkBuffer )
                 ReinterpretCast.To<SqliteForeignKeyBuilder>( fk ).Reactivate();

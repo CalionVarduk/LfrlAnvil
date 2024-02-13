@@ -139,13 +139,13 @@ public sealed class SqliteSchemaBuilderCollection : ISqlSchemaBuilderCollection
     }
 
     [Pure]
-    ISqlSchemaBuilder ISqlSchemaBuilderCollection.GetSchema(string name)
+    ISqlSchemaBuilder ISqlSchemaBuilderCollection.Get(string name)
     {
         return GetSchema( name );
     }
 
     [Pure]
-    ISqlSchemaBuilder? ISqlSchemaBuilderCollection.TryGetSchema(string name)
+    ISqlSchemaBuilder? ISqlSchemaBuilderCollection.TryGet(string name)
     {
         return TryGetSchema( name );
     }

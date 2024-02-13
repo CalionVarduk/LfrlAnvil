@@ -12,10 +12,10 @@ public interface ISqlObjectBuilderCollection : IReadOnlyCollection<ISqlObjectBui
     bool Contains(string name);
 
     [Pure]
-    ISqlObjectBuilder GetObject(string name);
+    ISqlObjectBuilder Get(string name);
 
     [Pure]
-    ISqlObjectBuilder? TryGetObject(string name);
+    ISqlObjectBuilder? TryGet(string name);
 
     [Pure]
     ISqlTableBuilder GetTable(string name);

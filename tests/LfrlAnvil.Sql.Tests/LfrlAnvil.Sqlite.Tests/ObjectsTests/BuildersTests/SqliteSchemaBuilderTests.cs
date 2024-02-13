@@ -110,10 +110,10 @@ public partial class SqliteSchemaBuilderTests : TestsBase
             "V2",
             t1.ToRecordSet().Join( v1.ToRecordSet().InnerOn( SqlNode.True() ) ).Select( s => new[] { s.GetAll() } ) );
 
-        var startStatementCount = db.GetPendingStatements().Length;
+        var startStatementCount = db.Changes.GetPendingActions().Length;
 
         var result = ((ISqlSchemaBuilder)sut).SetName( newName );
-        var statements = db.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = db.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -122,31 +122,35 @@ public partial class SqliteSchemaBuilderTests : TestsBase
             db.Schemas.Contains( newName ).Should().BeTrue();
             db.Schemas.Contains( oldName ).Should().BeFalse();
 
-            statements.Should().Contain( s => s.Sql.Contains( "DROP VIEW \"foo_V1\";" ) );
+            statements.Should().Contain( s => s.Sql != null && s.Sql.Contains( "DROP VIEW \"foo_V1\";" ) );
             statements.Should()
                 .Contain(
-                    s => s.Sql.Contains(
-                        @"CREATE VIEW ""bar_V1"" AS
+                    s => s.Sql != null &&
+                        s.Sql.Contains(
+                            @"CREATE VIEW ""bar_V1"" AS
 SELECT
   *
 FROM ""bar_T2""
 INNER JOIN ""bar_T3"" ON TRUE;" ) );
 
-            statements.Should().Contain( s => s.Sql.Contains( "DROP VIEW \"foo_V2\";" ) );
+            statements.Should().Contain( s => s.Sql != null && s.Sql.Contains( "DROP VIEW \"foo_V2\";" ) );
             statements.Should()
                 .Contain(
-                    s => s.Sql.Contains(
-                        @"CREATE VIEW ""bar_V2"" AS
+                    s => s.Sql != null &&
+                        s.Sql.Contains(
+                            @"CREATE VIEW ""bar_V2"" AS
 SELECT
   *
 FROM ""bar_T1""
 INNER JOIN ""bar_V1"" ON TRUE;" ) );
 
-            statements.Should().Contain( s => s.Sql.Contains( "DROP INDEX \"foo_IX_T1_C2A\";" ) );
-            statements.Should().Contain( s => s.Sql.Contains( "CREATE INDEX \"bar_IX_T1_C2A\" ON \"bar_T1\" (\"C2\" ASC);" ) );
-            statements.Should().Contain( s => s.Sql.Contains( "ALTER TABLE \"foo_T1\" RENAME TO \"bar_T1\";" ) );
-            statements.Should().Contain( s => s.Sql.Contains( "ALTER TABLE \"foo_T2\" RENAME TO \"bar_T2\";" ) );
-            statements.Should().Contain( s => s.Sql.Contains( "ALTER TABLE \"foo_T3\" RENAME TO \"bar_T3\";" ) );
+            statements.Should().Contain( s => s.Sql != null && s.Sql.Contains( "DROP INDEX \"foo_IX_T1_C2A\";" ) );
+            statements.Should()
+                .Contain( s => s.Sql != null && s.Sql.Contains( "CREATE INDEX \"bar_IX_T1_C2A\" ON \"bar_T1\" (\"C2\" ASC);" ) );
+
+            statements.Should().Contain( s => s.Sql != null && s.Sql.Contains( "ALTER TABLE \"foo_T1\" RENAME TO \"bar_T1\";" ) );
+            statements.Should().Contain( s => s.Sql != null && s.Sql.Contains( "ALTER TABLE \"foo_T2\" RENAME TO \"bar_T2\";" ) );
+            statements.Should().Contain( s => s.Sql != null && s.Sql.Contains( "ALTER TABLE \"foo_T3\" RENAME TO \"bar_T3\";" ) );
         }
     }
 
@@ -274,10 +278,10 @@ INNER JOIN ""bar_V1"" ON TRUE;" ) );
             "V2",
             t1.ToRecordSet().Join( v1.ToRecordSet().InnerOn( SqlNode.True() ) ).Select( s => new[] { s.GetAll() } ) );
 
-        var startStatementCount = db.GetPendingStatements().Length;
+        var startStatementCount = db.Changes.GetPendingActions().Length;
 
         sut.Remove();
-        var statements = db.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = db.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {

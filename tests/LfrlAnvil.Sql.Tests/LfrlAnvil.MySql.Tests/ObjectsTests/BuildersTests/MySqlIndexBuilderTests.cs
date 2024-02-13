@@ -33,10 +33,10 @@ public class MySqlIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var c2 = table.Columns.Create( "C2" ).SetType<int>();
 
-        var startStatementsCount = schema.Database.GetPendingStatements().Length;
+        var startStatementsCount = schema.Database.Changes.GetPendingActions().Length;
 
         table.Constraints.CreateIndex( c2.Asc() );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementsCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementsCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -53,11 +53,11 @@ public class MySqlIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var c2 = table.Columns.Create( "C2" );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var sut = table.Constraints.CreateIndex( c2.Asc() );
         sut.Remove();
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         statements.Should().BeEmpty();
     }
@@ -70,11 +70,11 @@ public class MySqlIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
         var c2 = table.Columns.Create( "C2" ).SetType<int>();
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var sut = table.Constraints.CreateUniqueIndex( c2.Asc() );
         table.Constraints.SetPrimaryKey( sut );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -96,10 +96,10 @@ public class MySqlIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlIndexBuilder)sut).SetName( sut.Name );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -117,12 +117,12 @@ public class MySqlIndexBuilderTests : TestsBase
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
         var oldName = sut.Name;
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         sut.SetName( "bar" );
         var result = ((ISqlConstraintBuilder)sut).SetName( oldName );
 
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -139,10 +139,10 @@ public class MySqlIndexBuilderTests : TestsBase
         var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var oldName = sut.Name;
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlIndexBuilder)sut).SetName( "bar" );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -164,10 +164,10 @@ public class MySqlIndexBuilderTests : TestsBase
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
         var oldName = sut.Name;
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlIndexBuilder)sut).SetName( "bar" );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -196,10 +196,10 @@ public class MySqlIndexBuilderTests : TestsBase
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
         table.Constraints.CreateForeignKey( sut, pk.Index );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         sut.SetName( "bar" );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -271,10 +271,10 @@ public class MySqlIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlIndexBuilder)sut).SetDefaultName();
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -291,12 +291,12 @@ public class MySqlIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         sut.SetName( "bar" );
         var result = ((ISqlConstraintBuilder)sut).SetDefaultName();
 
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -313,10 +313,10 @@ public class MySqlIndexBuilderTests : TestsBase
         var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index.SetName( "bar" );
         var oldName = sut.Name;
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlIndexBuilder)sut).SetDefaultName();
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -338,10 +338,10 @@ public class MySqlIndexBuilderTests : TestsBase
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" );
         var oldName = sut.Name;
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlIndexBuilder)sut).SetDefaultName();
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -370,10 +370,10 @@ public class MySqlIndexBuilderTests : TestsBase
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" ).MarkAsUnique();
         var oldName = sut.Name;
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlIndexBuilder)sut).SetDefaultName();
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -435,10 +435,10 @@ public class MySqlIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique( value );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlIndexBuilder)sut).MarkAsUnique( value );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -455,10 +455,10 @@ public class MySqlIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlIndexBuilder)sut).MarkAsUnique().MarkAsUnique( false );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -475,10 +475,10 @@ public class MySqlIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).SetType<int>().Asc() );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlIndexBuilder)sut).MarkAsUnique();
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -500,10 +500,10 @@ public class MySqlIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).SetType<int>().Asc() ).MarkAsUnique();
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlIndexBuilder)sut).MarkAsUnique( false );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -526,10 +526,10 @@ public class MySqlIndexBuilderTests : TestsBase
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).SetType<int>().Asc() );
         table.Constraints.CreateForeignKey( sut, pk.Index );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         sut.MarkAsUnique();
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -596,10 +596,10 @@ public class MySqlIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).SetType<int>().Asc() );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlIndexBuilder)sut).MarkAsUnique().SetName( "bar" );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -621,10 +621,10 @@ public class MySqlIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).SetFilter( SqlNode.True() );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlIndexBuilder)sut).SetFilter( SqlNode.True() );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -641,10 +641,10 @@ public class MySqlIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlIndexBuilder)sut).SetFilter( SqlNode.True() ).SetFilter( null );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -662,10 +662,10 @@ public class MySqlIndexBuilderTests : TestsBase
         var column = table.Columns.Create( "C2" ).SetType<int>();
         var sut = table.Constraints.CreateIndex( column.Asc() );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = sut.SetFilter( t => t["C2"] != null );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -691,10 +691,10 @@ public class MySqlIndexBuilderTests : TestsBase
         var column = table.Columns.Create( "C2" ).SetType<int>();
         var sut = table.Constraints.CreateIndex( column.Asc() ).SetFilter( t => t["C2"] != null );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlIndexBuilder)sut).SetFilter( null );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -775,10 +775,10 @@ public class MySqlIndexBuilderTests : TestsBase
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).SetType<int>().Asc() );
         table.Constraints.CreateForeignKey( sut, pk.Index );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         sut.SetFilter( SqlNode.True() );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -803,10 +803,10 @@ public class MySqlIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).SetType<int>().Asc() );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlIndexBuilder)sut).MarkAsUnique().SetFilter( t => t["C2"] != null ).SetName( "bar" );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -830,10 +830,10 @@ public class MySqlIndexBuilderTests : TestsBase
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C3" ).SetType<int>().Asc() ).MarkAsUnique();
         table.Constraints.CreateForeignKey( sut, ix );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         table.Constraints.SetPrimaryKey( sut );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -860,11 +860,11 @@ public class MySqlIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
         var sut = table.Constraints.CreateUniqueIndex( table.Columns.Create( "C2" ).SetType<int>().Asc() );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         sut.SetName( "bar" );
         table.Constraints.SetPrimaryKey( sut );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -890,10 +890,10 @@ public class MySqlIndexBuilderTests : TestsBase
         var fk1 = table.Constraints.CreateForeignKey( table.Constraints.CreateIndex( table.Columns.Create( "C3" ).Asc() ), sut );
         var fk2 = table.Constraints.CreateForeignKey( sut, pk.Index );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         sut.SetName( "bar" ).Remove();
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -974,12 +974,12 @@ public class MySqlIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
 
-        _ = schema.Database.GetPendingStatements();
+        _ = schema.Database.Changes.GetPendingActions();
         sut.Remove();
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         sut.Remove();
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         statements.Should().BeEmpty();
     }

@@ -1,6 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
 
@@ -64,7 +64,7 @@ public sealed class SqlNewTableNode : SqlRecordSetNode
     private Dictionary<string, SqlRawDataFieldNode> CreateColumnFields()
     {
         var columns = CreationNode.Columns.Span;
-        var result = new Dictionary<string, SqlRawDataFieldNode>( capacity: columns.Length, comparer: StringComparer.OrdinalIgnoreCase );
+        var result = new Dictionary<string, SqlRawDataFieldNode>( capacity: columns.Length, comparer: SqlHelpers.NameComparer );
 
         foreach ( var column in columns )
             result.Add( column.Name, new SqlRawDataFieldNode( this, column.Name, IsOptional ? column.Type.MakeNullable() : column.Type ) );

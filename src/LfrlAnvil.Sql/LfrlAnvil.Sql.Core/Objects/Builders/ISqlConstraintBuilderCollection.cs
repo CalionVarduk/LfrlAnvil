@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql.Expressions.Logical;
 
@@ -13,10 +12,10 @@ public interface ISqlConstraintBuilderCollection : IReadOnlyCollection<ISqlConst
     bool Contains(string name);
 
     [Pure]
-    ISqlConstraintBuilder GetConstraint(string name);
+    ISqlConstraintBuilder Get(string name);
 
     [Pure]
-    ISqlConstraintBuilder? TryGetConstraint(string name);
+    ISqlConstraintBuilder? TryGet(string name);
 
     [Pure]
     ISqlPrimaryKeyBuilder GetPrimaryKey();
@@ -44,8 +43,8 @@ public interface ISqlConstraintBuilderCollection : IReadOnlyCollection<ISqlConst
 
     ISqlPrimaryKeyBuilder SetPrimaryKey(ISqlIndexBuilder index);
     ISqlPrimaryKeyBuilder SetPrimaryKey(string name, ISqlIndexBuilder index);
-    ISqlIndexBuilder CreateIndex(ReadOnlyMemory<ISqlIndexColumnBuilder> columns, bool isUnique = false);
-    ISqlIndexBuilder CreateIndex(string name, ReadOnlyMemory<ISqlIndexColumnBuilder> columns, bool isUnique = false);
+    ISqlIndexBuilder CreateIndex(ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns, bool isUnique = false);
+    ISqlIndexBuilder CreateIndex(string name, ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns, bool isUnique = false);
     ISqlForeignKeyBuilder CreateForeignKey(ISqlIndexBuilder originIndex, ISqlIndexBuilder referencedIndex);
     ISqlForeignKeyBuilder CreateForeignKey(string name, ISqlIndexBuilder originIndex, ISqlIndexBuilder referencedIndex);
     ISqlCheckBuilder CreateCheck(SqlConditionNode condition);

@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using LfrlAnvil.Sql.Expressions.Visitors;
+using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Statements.Compilers;
 
@@ -99,7 +100,7 @@ public readonly struct SqlParameterBinderCreationOptions
 
         var members = new Dictionary<string, SqlParameterConfiguration>(
             capacity: configurations.Length,
-            comparer: StringComparer.OrdinalIgnoreCase );
+            comparer: SqlHelpers.NameComparer );
 
         if ( sourceType is null )
         {
@@ -114,7 +115,7 @@ public readonly struct SqlParameterBinderCreationOptions
 
         var selectors = new Dictionary<string, SqlParameterConfiguration>(
             capacity: configurations.Length,
-            comparer: StringComparer.OrdinalIgnoreCase );
+            comparer: SqlHelpers.NameComparer );
 
         foreach ( var cfg in configurations )
         {

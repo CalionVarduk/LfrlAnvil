@@ -173,11 +173,7 @@ Implement Sql.Core for PostgreSql
   - honestly, pretty much everything could be moved to Sql.Core, as generic abstract classes, that allow to override default behaviors
   - and define new ones
   - this is a bit bigger than initially assumed:
-    - add public/protected obj builder Id property
-    - add single ReferencingObjects collection
-    - add single ReferencedObjects collection
     - add possibility to define expression-based IXs (table-scoped validator?)
-    - create common DB builder core class
     - add possibility to define custom version history table definition & reader delegate (DB builder or DB factory?)
 
 ### Sql.Core: Add DateTime related functions

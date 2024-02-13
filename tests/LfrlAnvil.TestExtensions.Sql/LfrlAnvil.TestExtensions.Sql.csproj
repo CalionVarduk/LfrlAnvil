@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\LfrlAnvil.Sql\LfrlAnvil.Sql.Core\LfrlAnvil.Sql.Core.csproj" />
+    <ProjectReference Include="..\LfrlAnvil.TestExtensions\LfrlAnvil.TestExtensions.csproj" />
+  </ItemGroup>
+  
+</Project>

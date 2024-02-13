@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using System.Linq;
 using System.Reflection;
 using LfrlAnvil.MySql.Internal;
 using LfrlAnvil.MySql.Internal.TypeDefinitions;
@@ -105,9 +104,15 @@ public sealed class MySqlColumnTypeDefinitionProvider : ISqlColumnTypeDefinition
     }
 
     [Pure]
-    public IEnumerable<MySqlColumnTypeDefinition> GetAll()
+    public IReadOnlyCollection<MySqlColumnTypeDefinition> GetTypeDefinitions()
     {
-        return _definitionsByType.Values.Union( _defaultDefinitionsByTypeName.Values.Append( _defaultObject ) );
+        return _definitionsByType.Values;
+    }
+
+    [Pure]
+    public IReadOnlyCollection<MySqlColumnTypeDefinition> GetDataTypeDefinitions()
+    {
+        return _defaultDefinitionsByTypeName.Values;
     }
 
     [Pure]
@@ -160,7 +165,7 @@ public sealed class MySqlColumnTypeDefinitionProvider : ISqlColumnTypeDefinition
     }
 
     [Pure]
-    internal MySqlColumnTypeDefinition? TryGetByType(Type type)
+    public MySqlColumnTypeDefinition? TryGetByType(Type type)
     {
         if ( _definitionsByType.TryGetValue( type, out var result ) )
             return result;
@@ -182,9 +187,22 @@ public sealed class MySqlColumnTypeDefinitionProvider : ISqlColumnTypeDefinition
     }
 
     [Pure]
-    IEnumerable<ISqlColumnTypeDefinition> ISqlColumnTypeDefinitionProvider.GetAll()
+    public bool Contains(MySqlColumnTypeDefinition definition)
     {
-        return GetAll();
+        return ReferenceEquals( TryGetByType( definition.RuntimeType ), definition ) ||
+            ReferenceEquals( GetByDataType( definition.DataType ), definition );
+    }
+
+    [Pure]
+    IReadOnlyCollection<ISqlColumnTypeDefinition> ISqlColumnTypeDefinitionProvider.GetTypeDefinitions()
+    {
+        return GetTypeDefinitions();
+    }
+
+    [Pure]
+    IReadOnlyCollection<ISqlColumnTypeDefinition> ISqlColumnTypeDefinitionProvider.GetDataTypeDefinitions()
+    {
+        return GetDataTypeDefinitions();
     }
 
     [Pure]
@@ -197,6 +215,18 @@ public sealed class MySqlColumnTypeDefinitionProvider : ISqlColumnTypeDefinition
     ISqlColumnTypeDefinition ISqlColumnTypeDefinitionProvider.GetByType(Type type)
     {
         return GetByType( type );
+    }
+
+    [Pure]
+    ISqlColumnTypeDefinition? ISqlColumnTypeDefinitionProvider.TryGetByType(Type type)
+    {
+        return TryGetByType( type );
+    }
+
+    [Pure]
+    bool ISqlColumnTypeDefinitionProvider.Contains(ISqlColumnTypeDefinition definition)
+    {
+        return definition is MySqlColumnTypeDefinition d && Contains( d );
     }
 
     ISqlColumnTypeDefinitionProvider ISqlColumnTypeDefinitionProvider.RegisterDefinition<T>(ISqlColumnTypeDefinition<T> definition)

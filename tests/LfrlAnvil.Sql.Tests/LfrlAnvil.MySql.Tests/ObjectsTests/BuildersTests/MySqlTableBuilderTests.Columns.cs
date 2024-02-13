@@ -32,11 +32,7 @@ public partial class MySqlTableBuilderTests
                 result.IsNullable.Should().BeFalse();
                 result.TypeDefinition.Should().BeSameAs( sut.DefaultTypeDefinition );
                 result.DefaultValue.Should().BeNull();
-                result.ReferencingIndexes.Should().BeEmpty();
-                result.ReferencingViews.Should().BeEmpty();
-                result.ReferencingIndexFilters.Should().BeEmpty();
-                result.ReferencingChecks.Should().BeEmpty();
-                result.Node.Should().BeEquivalentTo( table.RecordSet["C"] );
+                result.Node.Should().BeEquivalentTo( table.Node["C"] );
                 sut.Count.Should().Be( 1 );
                 sut.Should().BeSequentiallyEqualTo( result );
             }
@@ -108,11 +104,7 @@ public partial class MySqlTableBuilderTests
                 result.IsNullable.Should().BeFalse();
                 result.TypeDefinition.Should().BeSameAs( sut.DefaultTypeDefinition );
                 result.DefaultValue.Should().BeNull();
-                result.ReferencingIndexes.Should().BeEmpty();
-                result.ReferencingViews.Should().BeEmpty();
-                result.ReferencingIndexFilters.Should().BeEmpty();
-                result.ReferencingChecks.Should().BeEmpty();
-                result.Node.Should().BeEquivalentTo( table.RecordSet["C"] );
+                result.Node.Should().BeEquivalentTo( table.Node["C"] );
                 sut.Count.Should().Be( 1 );
                 sut.Should().BeSequentiallyEqualTo( result );
             }
@@ -191,7 +183,7 @@ public partial class MySqlTableBuilderTests
             var sut = table.Columns;
             var expected = sut.Create( "C" );
 
-            var result = ((ISqlColumnBuilderCollection)sut).GetColumn( "C" );
+            var result = ((ISqlColumnBuilderCollection)sut).Get( "C" );
 
             result.Should().BeSameAs( expected );
         }
@@ -204,7 +196,7 @@ public partial class MySqlTableBuilderTests
             var sut = table.Columns;
             sut.Create( "C" );
 
-            var action = Lambda.Of( () => ((ISqlColumnBuilderCollection)sut).GetColumn( "D" ) );
+            var action = Lambda.Of( () => ((ISqlColumnBuilderCollection)sut).Get( "D" ) );
 
             action.Should().ThrowExactly<KeyNotFoundException>();
         }
@@ -217,7 +209,7 @@ public partial class MySqlTableBuilderTests
             var sut = table.Columns;
             var expected = sut.Create( "C" );
 
-            var result = ((ISqlColumnBuilderCollection)sut).TryGetColumn( "C" );
+            var result = ((ISqlColumnBuilderCollection)sut).TryGet( "C" );
 
             result.Should().BeSameAs( expected );
         }
@@ -230,7 +222,7 @@ public partial class MySqlTableBuilderTests
             var sut = table.Columns;
             sut.Create( "C" );
 
-            var result = ((ISqlColumnBuilderCollection)sut).TryGetColumn( "D" );
+            var result = ((ISqlColumnBuilderCollection)sut).TryGet( "D" );
 
             result.Should().BeNull();
         }
@@ -333,7 +325,7 @@ public partial class MySqlTableBuilderTests
             var sut = table.Columns;
             sut.Create( "A" );
             table.Constraints.SetPrimaryKey( "PK_T", sut.Create( "B" ).Asc() );
-            table.Constraints.CreateCheck( table.RecordSet["A"] > SqlNode.Literal( 0 ) );
+            table.Constraints.CreateCheck( table.Node["A"] > SqlNode.Literal( 0 ) );
 
             var result = sut.Remove( "A" );
 

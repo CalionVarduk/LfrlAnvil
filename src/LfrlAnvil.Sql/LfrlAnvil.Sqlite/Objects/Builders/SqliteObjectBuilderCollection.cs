@@ -164,7 +164,7 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
             throw new SqliteObjectBuilderException( ExceptionResources.NameIsAlreadyTaken( obj, name ) );
 
         var view = new SqliteViewBuilder( Schema, name, source, visitor );
-        Schema.Database.ChangeTracker.ObjectCreated( view );
+        Schema.Database.Changes.ObjectCreated( view );
         obj = view;
         return view;
     }
@@ -234,7 +234,7 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
     internal SqliteIndexBuilder CreateIndex(
         SqliteTableBuilder table,
         string name,
-        ReadOnlyMemory<ISqlIndexColumnBuilder> columns,
+        ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns,
         bool isUnique)
     {
         SqliteHelpers.AssertName( name );
@@ -246,7 +246,7 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
 
         var result = new SqliteIndexBuilder( table, indexColumns, name, isUnique );
         obj = result;
-        Schema.Database.ChangeTracker.ObjectCreated( table, result );
+        Schema.Database.Changes.ObjectCreated( table, result );
         return result;
     }
 
@@ -266,7 +266,7 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
 
         var primaryKey = new SqlitePrimaryKeyBuilder( index, name );
         _map[name] = primaryKey;
-        Schema.Database.ChangeTracker.ObjectCreated( table, primaryKey );
+        Schema.Database.Changes.ObjectCreated( table, primaryKey );
         index.AssignPrimaryKey( primaryKey );
         return primaryKey;
     }
@@ -286,7 +286,7 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
 
         var result = new SqliteForeignKeyBuilder( originIndex, referencedIndex, name );
         obj = result;
-        Schema.Database.ChangeTracker.ObjectCreated( originIndex.Table, result );
+        Schema.Database.Changes.ObjectCreated( originIndex.Table, result );
         return result;
     }
 
@@ -301,7 +301,7 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
 
         var result = new SqliteCheckBuilder( name, condition, visitor );
         obj = result;
-        Schema.Database.ChangeTracker.ObjectCreated( table, result );
+        Schema.Database.Changes.ObjectCreated( table, result );
         return result;
     }
 
@@ -370,7 +370,7 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
     private SqliteTableBuilder CreateNewTable(string name)
     {
         var result = new SqliteTableBuilder( Schema, name );
-        Schema.Database.ChangeTracker.ObjectCreated( result, result );
+        Schema.Database.Changes.ObjectCreated( result, result );
         return result;
     }
 
@@ -392,13 +392,13 @@ public sealed class SqliteObjectBuilderCollection : ISqlObjectBuilderCollection
     }
 
     [Pure]
-    ISqlObjectBuilder ISqlObjectBuilderCollection.GetObject(string name)
+    ISqlObjectBuilder ISqlObjectBuilderCollection.Get(string name)
     {
         return GetObject( name );
     }
 
     [Pure]
-    ISqlObjectBuilder? ISqlObjectBuilderCollection.TryGetObject(string name)
+    ISqlObjectBuilder? ISqlObjectBuilderCollection.TryGet(string name)
     {
         return TryGetObject( name );
     }

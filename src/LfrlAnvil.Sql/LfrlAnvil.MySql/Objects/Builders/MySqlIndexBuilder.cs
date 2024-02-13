@@ -19,9 +19,9 @@ public sealed class MySqlIndexBuilder : MySqlConstraintBuilder, ISqlIndexBuilder
     private Dictionary<ulong, MySqlForeignKeyBuilder>? _originatingForeignKeys;
     private Dictionary<ulong, MySqlForeignKeyBuilder>? _referencingForeignKeys;
     private Dictionary<ulong, MySqlColumnBuilder>? _referencedFilterColumns;
-    private MySqlIndexColumnBuilder[] _columns;
+    private SqlIndexColumnBuilder<ISqlColumnBuilder>[] _columns;
 
-    internal MySqlIndexBuilder(MySqlTableBuilder table, MySqlIndexColumnBuilder[] columns, string name, bool isUnique)
+    internal MySqlIndexBuilder(MySqlTableBuilder table, SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns, string name, bool isUnique)
         : base( table, name, SqlObjectType.Index )
     {
         IsUnique = isUnique;
@@ -33,19 +33,19 @@ public sealed class MySqlIndexBuilder : MySqlConstraintBuilder, ISqlIndexBuilder
         _referencedFilterColumns = null;
 
         foreach ( var c in _columns )
-            c.Column.AddReferencingIndex( this );
+            ReinterpretCast.To<MySqlColumnBuilder>( c.Column ).AddReferencingIndex( this );
     }
 
     public MySqlPrimaryKeyBuilder? PrimaryKey { get; private set; }
     public bool IsUnique { get; private set; }
     public SqlConditionNode? Filter { get; private set; }
-    public ReadOnlyMemory<MySqlIndexColumnBuilder> Columns => _columns;
+    public ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> Columns => _columns;
     public IReadOnlyCollection<MySqlForeignKeyBuilder> OriginatingForeignKeys => (_originatingForeignKeys?.Values).EmptyIfNull();
     public IReadOnlyCollection<MySqlForeignKeyBuilder> ReferencingForeignKeys => (_referencingForeignKeys?.Values).EmptyIfNull();
     public IReadOnlyCollection<MySqlColumnBuilder> ReferencedFilterColumns => (_referencedFilterColumns?.Values).EmptyIfNull();
     public override MySqlDatabaseBuilder Database => Table.Database;
 
-    internal override bool CanRemove
+    public override bool CanRemove
     {
         get
         {
@@ -64,9 +64,7 @@ public sealed class MySqlIndexBuilder : MySqlConstraintBuilder, ISqlIndexBuilder
 
     ISqlPrimaryKeyBuilder? ISqlIndexBuilder.PrimaryKey => PrimaryKey;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
-    ReadOnlyMemory<ISqlIndexColumnBuilder> ISqlIndexBuilder.Columns => _columns;
-    IReadOnlyCollection<ISqlForeignKeyBuilder> ISqlIndexBuilder.OriginatingForeignKeys => OriginatingForeignKeys;
-    IReadOnlyCollection<ISqlForeignKeyBuilder> ISqlIndexBuilder.ReferencingForeignKeys => ReferencingForeignKeys;
+    IReadOnlyCollection<SqlIndexColumnBuilder<ISqlColumnBuilder>> ISqlIndexBuilder.Columns => _columns;
     IReadOnlyCollection<ISqlColumnBuilder> ISqlIndexBuilder.ReferencedFilterColumns => ReferencedFilterColumns;
 
     public new MySqlIndexBuilder SetName(string name)
@@ -91,7 +89,7 @@ public sealed class MySqlIndexBuilder : MySqlConstraintBuilder, ISqlIndexBuilder
                 AssertDropUnique();
 
             IsUnique = enabled;
-            Database.ChangeTracker.IsUniqueUpdated( this );
+            Database.Changes.IsUniqueUpdated( this );
         }
 
         return this;
@@ -131,7 +129,7 @@ public sealed class MySqlIndexBuilder : MySqlConstraintBuilder, ISqlIndexBuilder
 
             var oldValue = Filter;
             Filter = filter;
-            Database.ChangeTracker.IsFilterUpdated( this, oldValue );
+            Database.Changes.IsFilterUpdated( this, oldValue );
         }
 
         return this;
@@ -144,7 +142,7 @@ public sealed class MySqlIndexBuilder : MySqlConstraintBuilder, ISqlIndexBuilder
         Assume.IsNull( Filter );
 
         PrimaryKey = primaryKey;
-        Database.ChangeTracker.PrimaryKeyUpdated( this, null );
+        Database.Changes.PrimaryKeyUpdated( this, null );
     }
 
     internal void AddOriginatingForeignKey(MySqlForeignKeyBuilder foreignKey)
@@ -204,9 +202,9 @@ public sealed class MySqlIndexBuilder : MySqlConstraintBuilder, ISqlIndexBuilder
         }
 
         foreach ( var c in _columns )
-            c.Column.RemoveReferencingIndex( this );
+            ReinterpretCast.To<MySqlColumnBuilder>( c.Column ).RemoveReferencingIndex( this );
 
-        _columns = Array.Empty<MySqlIndexColumnBuilder>();
+        _columns = Array.Empty<SqlIndexColumnBuilder<ISqlColumnBuilder>>();
 
         if ( Filter is not null )
         {
@@ -255,26 +253,26 @@ public sealed class MySqlIndexBuilder : MySqlConstraintBuilder, ISqlIndexBuilder
             var pk = PrimaryKey;
             PrimaryKey.Remove();
             PrimaryKey = null;
-            Database.ChangeTracker.PrimaryKeyUpdated( this, pk );
+            Database.Changes.PrimaryKeyUpdated( this, pk );
         }
 
         var columns = _columns;
         foreach ( var c in _columns )
-            c.Column.RemoveReferencingIndex( this );
+            ReinterpretCast.To<MySqlColumnBuilder>( c.Column ).RemoveReferencingIndex( this );
 
-        _columns = Array.Empty<MySqlIndexColumnBuilder>();
+        _columns = Array.Empty<SqlIndexColumnBuilder<ISqlColumnBuilder>>();
 
         if ( Filter is not null )
         {
             var filter = Filter;
             ClearReferencedFilterColumns();
             Filter = null;
-            Database.ChangeTracker.IsFilterUpdated( this, filter );
+            Database.Changes.IsFilterUpdated( this, filter );
         }
 
         Table.Schema.Objects.Remove( Name );
         Table.Constraints.Remove( Name );
-        Database.ChangeTracker.ObjectRemoved( Table, this );
+        Database.Changes.ObjectRemoved( Table, this );
     }
 
     protected override void SetNameCore(string name)
@@ -287,7 +285,7 @@ public sealed class MySqlIndexBuilder : MySqlConstraintBuilder, ISqlIndexBuilder
 
         var oldName = Name;
         Name = name;
-        Database.ChangeTracker.NameUpdated( Table, this, oldName );
+        Database.Changes.NameUpdated( Table, this, oldName );
     }
 
     private void AssertDropUnique()

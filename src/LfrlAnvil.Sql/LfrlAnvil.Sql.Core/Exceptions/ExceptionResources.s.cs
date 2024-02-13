@@ -36,8 +36,28 @@ public static class ExceptionResources
     public const string SourceTypeCannotBeOpenGeneric = "Source type cannot be an open generic type.";
     public const string SourceTypeCannotBeNullable = "Source type cannot be nullable.";
 
+    internal const string SchemaQuickRemovalIsUnsupported = "Schema quick-removal is unsupported.";
+
     internal static readonly string DataReaderDoesNotSupportAsyncQueries =
         $"Only data readers of type '{typeof( DbDataReader ).GetDebugString()}' support asynchronous queries.";
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string ReferenceExists<T>(SqlObjectBuilderReference<T> reference)
+        where T : class, ISqlObjectBuilder
+    {
+        return reference.Source.Property is null
+            ? $"{reference.Target} is referenced by {reference.Source.Object}."
+            : $"{reference.Target} is referenced by property '{reference.Source.Property}' of {reference.Source.Object}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string ReferenceDoesNotExist<T>(SqlObjectBuilderReferenceSource<T> source)
+        where T : class, ISqlObjectBuilder
+    {
+        return $"Reference {source} does not exist.";
+    }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

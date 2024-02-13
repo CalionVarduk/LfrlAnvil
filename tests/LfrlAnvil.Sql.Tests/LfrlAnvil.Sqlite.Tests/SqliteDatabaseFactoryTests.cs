@@ -81,7 +81,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
     public void Create_ShouldCorrectlyResetBuilderStateBetweenVersions(SqlDatabaseCreateMode mode)
     {
         bool? isAttached = null;
-        SqlDatabaseBuilderStatement[]? pendingStatements = null;
+        SqlDatabaseBuilderCommandAction[]? pendingStatements = null;
 
         var sut = new SqliteDatabaseFactory();
         var history = new SqlDatabaseVersionHistory(
@@ -91,14 +91,14 @@ public class SqliteDatabaseFactoryTests : TestsBase
                 {
                     var t = b.Schemas.Default.Objects.CreateTable( "T" );
                     t.Constraints.SetPrimaryKey( t.Columns.Create( "C" ).Asc() );
-                    b.SetDetachedMode();
+                    b.Changes.Attach( false );
                 } ),
             SqlDatabaseVersion.Create(
                 Version.Parse( "0.2" ),
                 b =>
                 {
-                    isAttached = b.IsAttached;
-                    pendingStatements = b.GetPendingStatements().ToArray();
+                    isAttached = b.Changes.IsAttached;
+                    pendingStatements = b.Changes.GetPendingActions().ToArray();
                 } ) );
 
         sut.Create( "DataSource=:memory:", history, SqlCreateDatabaseOptions.Default.SetMode( mode ) );
@@ -277,7 +277,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
                     var t = b.Schemas.Default.Objects.CreateTable( "T" );
                     t.Constraints.SetPrimaryKey( t.Columns.Create( "C1" ).SetType<int>().Asc() );
                     t.Columns.Create( "C2" ).SetType<int>().MarkAsNullable();
-                    b.AddStatement( "INSERT INTO T (C1, C2) VALUES (1, NULL), (2, 1), (3, 5), (4, 6)" );
+                    b.Changes.AddStatement( "INSERT INTO T (C1, C2) VALUES (1, NULL), (2, 1), (3, 5), (4, 6)" );
                 } ),
             SqlDatabaseVersion.Create(
                 Version.Parse( "0.2" ),
@@ -286,7 +286,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
                 {
                     b.Schemas.Default.SetName( "foo" );
                     var t = b.Schemas.Default.Objects.GetTable( "T" );
-                    var ix = t.Constraints.CreateIndex( t.Columns.GetColumn( "C2" ).Asc() );
+                    var ix = t.Constraints.CreateIndex( t.Columns.Get( "C2" ).Asc() );
                     t.Constraints.CreateForeignKey( ix, t.Constraints.GetPrimaryKey().Index );
                 } ),
             SqlDatabaseVersion.Create(
@@ -689,7 +689,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
                 } ),
             SqlDatabaseVersion.Create(
                 Version.Parse( "0.0.2" ),
-                b => b.AddStatement( "INSERT INTO T (A, B) VALUES (1, 1)" ) ) );
+                b => b.Changes.AddStatement( "INSERT INTO T (A, B) VALUES (1, 1)" ) ) );
 
         var min = DateTime.UtcNow;
 
@@ -870,21 +870,21 @@ public class SqliteDatabaseFactoryTests : TestsBase
                 Version.Parse( "0.1" ),
                 b =>
                 {
-                    version1Modes.Add( (b.Mode, b.IsAttached) );
-                    b.SetDetachedMode();
+                    version1Modes.Add( (b.Changes.Mode, b.Changes.IsAttached) );
+                    b.Changes.Attach( false );
                 } );
 
             var version2 = SqlDatabaseVersion.Create(
                 Version.Parse( "0.2" ),
                 b =>
                 {
-                    version2Modes.Add( (b.Mode, b.IsAttached) );
-                    b.SetDetachedMode();
+                    version2Modes.Add( (b.Changes.Mode, b.Changes.IsAttached) );
+                    b.Changes.Attach( false );
                 } );
 
             var version3 = SqlDatabaseVersion.Create(
                 Version.Parse( "0.3" ),
-                b => { version3Modes.Add( (b.Mode, b.IsAttached) ); } );
+                b => { version3Modes.Add( (b.Changes.Mode, b.Changes.IsAttached) ); } );
 
             try
             {

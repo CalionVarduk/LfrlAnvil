@@ -25,7 +25,7 @@ public class MySqlViewDataFieldTests : TestsBase
             sut.View.Should().BeSameAs( view );
             sut.Type.Should().Be( SqlObjectType.ViewDataField );
             sut.Name.Should().Be( "a" );
-            sut.Node.Should().BeSameAs( view.RecordSet["a"] );
+            sut.Node.Should().BeSameAs( view.Node["a"] );
             sut.ToString().Should().Be( "[ViewDataField] foo.V.a" );
         }
     }

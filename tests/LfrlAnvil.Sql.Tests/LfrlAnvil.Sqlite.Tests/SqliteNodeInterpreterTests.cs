@@ -10,6 +10,7 @@ using LfrlAnvil.Sql.Expressions.Functions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
+using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Objects;
 using LfrlAnvil.Sqlite.Objects.Builders;
@@ -3192,7 +3193,7 @@ WHERE EXISTS (
                 string.Empty,
                 "v",
                 SqlNode.RawRecordSet( "bar" ).ToDataSource().Select( s => new[] { s.From["a"].AsSelf(), s.From["b"].AsSelf() } ) )
-            .RecordSet;
+            .Node;
 
         var foo = table.ToRecordSet( "f" );
 
@@ -4446,7 +4447,8 @@ BEGIN" );
         if ( pkColumnNames.Length == 0 )
             pkColumnNames = columnNames;
 
-        table.Constraints.SetPrimaryKey( pkColumnNames.Select( n => table.Columns.GetColumn( n ).Asc() ).ToArray() );
+        var pkColumns = pkColumnNames.Select( n => table.Columns.GetColumn( n ).Asc().UnsafeReinterpretAs<ISqlColumnBuilder>() ).ToArray();
+        table.Constraints.SetPrimaryKey( pkColumns );
         return table;
     }
 

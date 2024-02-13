@@ -80,7 +80,7 @@ public sealed class MySqlCheckBuilder : MySqlConstraintBuilder, ISqlCheckBuilder
         Table.Schema.Objects.Remove( Name );
         Table.Constraints.Remove( Name );
 
-        Database.ChangeTracker.ObjectRemoved( Table, this );
+        Database.Changes.ObjectRemoved( Table, this );
     }
 
     protected override void SetNameCore(string name)
@@ -93,7 +93,7 @@ public sealed class MySqlCheckBuilder : MySqlConstraintBuilder, ISqlCheckBuilder
 
         var oldName = Name;
         Name = name;
-        Database.ChangeTracker.NameUpdated( Table, this, oldName );
+        Database.Changes.NameUpdated( Table, this, oldName );
     }
 
     private void AddSelfToReferencedColumns()

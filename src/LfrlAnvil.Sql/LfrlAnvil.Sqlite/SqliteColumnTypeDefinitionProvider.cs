@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using System.Linq;
 using System.Reflection;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
@@ -64,15 +63,15 @@ public sealed class SqliteColumnTypeDefinitionProvider : ISqlColumnTypeDefinitio
     }
 
     [Pure]
-    public IEnumerable<SqliteColumnTypeDefinition> GetAll()
+    public IReadOnlyCollection<SqliteColumnTypeDefinition> GetTypeDefinitions()
     {
-        return _definitionsByType.Values
-            .Append( _defaultInteger )
-            .Append( _defaultReal )
-            .Append( _defaultText )
-            .Append( _defaultBlob )
-            .Append( _defaultAny )
-            .Distinct();
+        return _definitionsByType.Values;
+    }
+
+    [Pure]
+    public IReadOnlyCollection<SqliteColumnTypeDefinition> GetDataTypeDefinitions()
+    {
+        return new SqliteColumnTypeDefinition[] { _defaultInteger, _defaultReal, _defaultText, _defaultBlob, _defaultAny };
     }
 
     [Pure]
@@ -95,7 +94,7 @@ public sealed class SqliteColumnTypeDefinitionProvider : ISqlColumnTypeDefinitio
     }
 
     [Pure]
-    internal SqliteColumnTypeDefinition? TryGetByType(Type type)
+    public SqliteColumnTypeDefinition? TryGetByType(Type type)
     {
         if ( _definitionsByType.TryGetValue( type, out var result ) )
             return result;
@@ -117,9 +116,22 @@ public sealed class SqliteColumnTypeDefinitionProvider : ISqlColumnTypeDefinitio
     }
 
     [Pure]
-    IEnumerable<ISqlColumnTypeDefinition> ISqlColumnTypeDefinitionProvider.GetAll()
+    public bool Contains(SqliteColumnTypeDefinition definition)
     {
-        return GetAll();
+        return ReferenceEquals( TryGetByType( definition.RuntimeType ), definition ) ||
+            ReferenceEquals( GetByDataType( definition.DataType ), definition );
+    }
+
+    [Pure]
+    IReadOnlyCollection<ISqlColumnTypeDefinition> ISqlColumnTypeDefinitionProvider.GetTypeDefinitions()
+    {
+        return GetTypeDefinitions();
+    }
+
+    [Pure]
+    IReadOnlyCollection<ISqlColumnTypeDefinition> ISqlColumnTypeDefinitionProvider.GetDataTypeDefinitions()
+    {
+        return GetDataTypeDefinitions();
     }
 
     [Pure]
@@ -132,6 +144,18 @@ public sealed class SqliteColumnTypeDefinitionProvider : ISqlColumnTypeDefinitio
     ISqlColumnTypeDefinition ISqlColumnTypeDefinitionProvider.GetByType(Type type)
     {
         return GetByType( type );
+    }
+
+    [Pure]
+    ISqlColumnTypeDefinition? ISqlColumnTypeDefinitionProvider.TryGetByType(Type type)
+    {
+        return TryGetByType( type );
+    }
+
+    [Pure]
+    bool ISqlColumnTypeDefinitionProvider.Contains(ISqlColumnTypeDefinition definition)
+    {
+        return definition is SqliteColumnTypeDefinition d && Contains( d );
     }
 
     ISqlColumnTypeDefinitionProvider ISqlColumnTypeDefinitionProvider.RegisterDefinition<T>(ISqlColumnTypeDefinition<T> definition)

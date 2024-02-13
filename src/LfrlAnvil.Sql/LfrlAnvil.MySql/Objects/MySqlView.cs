@@ -25,7 +25,7 @@ public sealed class MySqlView : MySqlObject, ISqlView
     public MySqlSchema Schema { get; }
     public MySqlViewDataFieldCollection DataFields { get; }
     public SqlRecordSetInfo Info => _info ??= SqlRecordSetInfo.Create( Schema.Name, Name );
-    public SqlViewNode RecordSet => _recordSet ??= SqlNode.View( this );
+    public SqlViewNode Node => _recordSet ??= SqlNode.View( this );
     public override MySqlDatabase Database => Schema.Database;
 
     ISqlSchema ISqlView.Schema => Schema;

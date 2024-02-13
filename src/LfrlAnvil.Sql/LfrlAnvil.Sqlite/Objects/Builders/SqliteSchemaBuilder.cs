@@ -20,7 +20,7 @@ public sealed class SqliteSchemaBuilder : SqliteObjectBuilder, ISqlSchemaBuilder
     public SqliteObjectBuilderCollection Objects { get; }
     public override SqliteDatabaseBuilder Database { get; }
 
-    internal override bool CanRemove
+    public override bool CanRemove
     {
         get
         {

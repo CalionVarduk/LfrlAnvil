@@ -113,6 +113,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.MySql", "src\Lfrl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.MySql.Tests", "tests\LfrlAnvil.Sql.Tests\LfrlAnvil.MySql.Tests\LfrlAnvil.MySql.Tests.csproj", "{FE2169AD-6B04-4572-B901-35D45689CCC4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.TestExtensions.Sql", "tests\LfrlAnvil.TestExtensions.Sql\LfrlAnvil.TestExtensions.Sql.csproj", "{F9EAB9B2-5E20-45E8-8E2C-7E415EA2C896}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -275,6 +277,10 @@ Global
 		{FE2169AD-6B04-4572-B901-35D45689CCC4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FE2169AD-6B04-4572-B901-35D45689CCC4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FE2169AD-6B04-4572-B901-35D45689CCC4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F9EAB9B2-5E20-45E8-8E2C-7E415EA2C896}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F9EAB9B2-5E20-45E8-8E2C-7E415EA2C896}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F9EAB9B2-5E20-45E8-8E2C-7E415EA2C896}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F9EAB9B2-5E20-45E8-8E2C-7E415EA2C896}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -325,6 +331,7 @@ Global
 		{5D025DE8-88F2-44A7-B0B9-D2972BD4A616} = {8A1D7AD5-2FB3-41C5-8F38-7120106B427B}
 		{2F38DCB8-8304-48E7-B3D6-3A5ACD4B5A96} = {0BAE0616-F6DE-418E-A8A1-D64775B3A16B}
 		{FE2169AD-6B04-4572-B901-35D45689CCC4} = {8A1D7AD5-2FB3-41C5-8F38-7120106B427B}
+		{F9EAB9B2-5E20-45E8-8E2C-7E415EA2C896} = {09DABFA2-E13A-419B-9EEC-11A014E1243C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3FEF45BB-2269-4080-B6FD-C782F257A901}

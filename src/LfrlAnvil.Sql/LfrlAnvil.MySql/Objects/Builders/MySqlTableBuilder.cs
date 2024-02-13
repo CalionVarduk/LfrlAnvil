@@ -35,10 +35,10 @@ public sealed class MySqlTableBuilder : MySqlObjectBuilder, ISqlTableBuilder
     public MySqlConstraintBuilderCollection Constraints { get; }
     public IReadOnlyCollection<MySqlViewBuilder> ReferencingViews => (_referencingViews?.Values).EmptyIfNull();
     public SqlRecordSetInfo Info => _info ??= SqlRecordSetInfo.Create( Schema.Name, Name );
-    public SqlTableBuilderNode RecordSet => _recordSet ??= SqlNode.Table( this );
+    public SqlTableBuilderNode Node => _recordSet ??= SqlNode.Table( this );
     public override MySqlDatabaseBuilder Database => Schema.Database;
 
-    internal override bool CanRemove
+    public override bool CanRemove
     {
         get
         {
@@ -62,7 +62,6 @@ public sealed class MySqlTableBuilder : MySqlObjectBuilder, ISqlTableBuilder
     ISqlSchemaBuilder ISqlTableBuilder.Schema => Schema;
     ISqlColumnBuilderCollection ISqlTableBuilder.Columns => Columns;
     ISqlConstraintBuilderCollection ISqlTableBuilder.Constraints => Constraints;
-    IReadOnlyCollection<ISqlViewBuilder> ISqlTableBuilder.ReferencingViews => ReferencingViews;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
 
     [Pure]
@@ -142,7 +141,7 @@ public sealed class MySqlTableBuilder : MySqlObjectBuilder, ISqlTableBuilder
             column.Remove();
 
         Schema.Objects.Remove( Name );
-        Database.ChangeTracker.ObjectRemoved( this, this );
+        Database.Changes.ObjectRemoved( this, this );
     }
 
     protected override void SetNameCore(string name)
@@ -161,7 +160,7 @@ public sealed class MySqlTableBuilder : MySqlObjectBuilder, ISqlTableBuilder
         var oldName = Name;
         Name = name;
         ResetInfoCache();
-        Database.ChangeTracker.NameUpdated( this, this, oldName );
+        Database.Changes.NameUpdated( this, this, oldName );
 
         foreach ( var view in viewBuffer )
             ReinterpretCast.To<MySqlViewBuilder>( view ).Reactivate();
@@ -170,7 +169,7 @@ public sealed class MySqlTableBuilder : MySqlObjectBuilder, ISqlTableBuilder
     internal void OnSchemaNameChange(string oldName)
     {
         ResetInfoCache();
-        Database.ChangeTracker.SchemaNameUpdated( this, this, oldName );
+        Database.Changes.SchemaNameUpdated( this, this, oldName );
     }
 
     internal void ResetInfoCache()

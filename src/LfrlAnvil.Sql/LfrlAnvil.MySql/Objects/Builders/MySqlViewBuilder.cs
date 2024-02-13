@@ -42,14 +42,13 @@ public sealed class MySqlViewBuilder : MySqlObjectBuilder, ISqlViewBuilder
     public IReadOnlyCollection<MySqlObjectBuilder> ReferencedObjects => _referencedObjects.Values;
     public IReadOnlyCollection<MySqlViewBuilder> ReferencingViews => (_referencingViews?.Values).EmptyIfNull();
     public SqlRecordSetInfo Info => _info ??= SqlRecordSetInfo.Create( Schema.Name, Name );
-    public SqlViewBuilderNode RecordSet => _recordSet ??= SqlNode.View( this );
+    public SqlViewBuilderNode Node => _recordSet ??= SqlNode.View( this );
     public override MySqlDatabaseBuilder Database => Schema.Database;
 
-    internal override bool CanRemove => _referencingViews is null || _referencingViews.Count == 0;
+    public override bool CanRemove => _referencingViews is null || _referencingViews.Count == 0;
 
     ISqlSchemaBuilder ISqlViewBuilder.Schema => Schema;
     IReadOnlyCollection<ISqlObjectBuilder> ISqlViewBuilder.ReferencedObjects => ReferencedObjects;
-    IReadOnlyCollection<ISqlViewBuilder> ISqlViewBuilder.ReferencingViews => ReferencingViews;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
 
     [Pure]
@@ -88,7 +87,7 @@ public sealed class MySqlViewBuilder : MySqlObjectBuilder, ISqlViewBuilder
         _referencingViews = null;
 
         Schema.Objects.ForceRemove( this );
-        Schema.Database.ChangeTracker.ObjectRemoved( this );
+        Schema.Database.Changes.ObjectRemoved( this );
     }
 
     protected override void SetNameCore(string name)
@@ -107,7 +106,7 @@ public sealed class MySqlViewBuilder : MySqlObjectBuilder, ISqlViewBuilder
         var oldName = Name;
         Name = name;
         ResetInfoCache();
-        Database.ChangeTracker.NameUpdated( this, oldName );
+        Database.Changes.NameUpdated( this, oldName );
 
         foreach ( var view in buffer )
             ReinterpretCast.To<MySqlViewBuilder>( view ).Reactivate();
@@ -151,7 +150,7 @@ public sealed class MySqlViewBuilder : MySqlObjectBuilder, ISqlViewBuilder
         IsRemoved = false;
         AddSelfToReferencedObjects();
         Schema.Objects.Reactivate( this );
-        Schema.Database.ChangeTracker.ObjectCreated( this );
+        Schema.Database.Changes.ObjectCreated( this );
     }
 
     internal static RentedMemorySequence<MySqlObjectBuilder> RemoveReferencingViewsIntoBuffer(
@@ -218,7 +217,7 @@ public sealed class MySqlViewBuilder : MySqlObjectBuilder, ISqlViewBuilder
         IsRemoved = true;
         RemoveSelfFromReferencedObjects();
         Schema.Objects.ForceRemove( this );
-        Schema.Database.ChangeTracker.ObjectRemoved( this );
+        Schema.Database.Changes.ObjectRemoved( this );
     }
 
     private void AddSelfToReferencedObjects()

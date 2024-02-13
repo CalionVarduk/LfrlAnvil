@@ -21,7 +21,7 @@ public sealed class MySqlSchemaBuilder : MySqlObjectBuilder, ISqlSchemaBuilder
     public MySqlObjectBuilderCollection Objects { get; }
     public override MySqlDatabaseBuilder Database { get; }
 
-    internal override bool CanRemove
+    public override bool CanRemove
     {
         get
         {
@@ -155,7 +155,7 @@ public sealed class MySqlSchemaBuilder : MySqlObjectBuilder, ISqlSchemaBuilder
 
         Objects.Clear();
         Database.Schemas.Remove( Name );
-        Database.ChangeTracker.SchemaDropped( Name );
+        Database.Changes.SchemaDropped( Name );
     }
 
     protected override void SetNameCore(string name)
@@ -171,7 +171,7 @@ public sealed class MySqlSchemaBuilder : MySqlObjectBuilder, ISqlSchemaBuilder
         Name = name;
 
         if ( ! Name.Equals( Database.CommonSchemaName, StringComparison.OrdinalIgnoreCase ) )
-            Database.ChangeTracker.SchemaCreated( Name );
+            Database.Changes.SchemaCreated( Name );
 
         foreach ( var obj in Objects )
         {
@@ -180,7 +180,7 @@ public sealed class MySqlSchemaBuilder : MySqlObjectBuilder, ISqlSchemaBuilder
         }
 
         if ( ! oldName.Equals( Database.CommonSchemaName, StringComparison.OrdinalIgnoreCase ) )
-            Database.ChangeTracker.SchemaDropped( oldName );
+            Database.Changes.SchemaDropped( oldName );
 
         foreach ( var obj in viewBuffer )
         {

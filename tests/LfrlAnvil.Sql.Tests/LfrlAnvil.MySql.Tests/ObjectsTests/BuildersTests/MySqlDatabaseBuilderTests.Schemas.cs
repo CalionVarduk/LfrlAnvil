@@ -147,7 +147,7 @@ public partial class MySqlDatabaseBuilderTests
             var sut = MySqlDatabaseBuilderMock.Create();
             var expected = sut.Schemas.Create( name );
 
-            var result = ((ISqlSchemaBuilderCollection)sut.Schemas).GetSchema( name );
+            var result = ((ISqlSchemaBuilderCollection)sut.Schemas).Get( name );
 
             result.Should().BeSameAs( expected );
         }
@@ -158,7 +158,7 @@ public partial class MySqlDatabaseBuilderTests
             var name = Fixture.Create<string>();
             var sut = MySqlDatabaseBuilderMock.Create();
 
-            var action = Lambda.Of( () => ((ISqlSchemaBuilderCollection)sut.Schemas).GetSchema( name ) );
+            var action = Lambda.Of( () => ((ISqlSchemaBuilderCollection)sut.Schemas).Get( name ) );
 
             action.Should().ThrowExactly<KeyNotFoundException>();
         }
@@ -170,7 +170,7 @@ public partial class MySqlDatabaseBuilderTests
             var sut = MySqlDatabaseBuilderMock.Create();
             var expected = sut.Schemas.Create( name );
 
-            var result = ((ISqlSchemaBuilderCollection)sut.Schemas).TryGetSchema( name );
+            var result = ((ISqlSchemaBuilderCollection)sut.Schemas).TryGet( name );
 
             result.Should().BeSameAs( expected );
         }
@@ -181,7 +181,7 @@ public partial class MySqlDatabaseBuilderTests
             var name = Fixture.Create<string>();
             var sut = MySqlDatabaseBuilderMock.Create();
 
-            var result = ((ISqlSchemaBuilderCollection)sut.Schemas).TryGetSchema( name );
+            var result = ((ISqlSchemaBuilderCollection)sut.Schemas).TryGet( name );
 
             result.Should().BeNull();
         }
@@ -215,7 +215,7 @@ public partial class MySqlDatabaseBuilderTests
             var otherColumn = table.Columns.Create( "C2" ).MarkAsNullable();
             var pk = table.Constraints.SetPrimaryKey( column.Asc() );
             var fk = table.Constraints.CreateForeignKey( table.Constraints.CreateIndex( otherColumn.Asc() ), pk.Index );
-            var chk = table.Constraints.CreateCheck( table.RecordSet["C1"] != SqlNode.Literal( 0 ) );
+            var chk = table.Constraints.CreateCheck( table.Node["C1"] != SqlNode.Literal( 0 ) );
             var view = schema.Objects.CreateView( "V1", table.ToRecordSet().ToDataSource().Select( s => new[] { s.From["C1"].AsSelf() } ) );
             var otherView = schema.Objects.CreateView( "V2", view.ToRecordSet().ToDataSource().Select( s => new[] { s.GetAll() } ) );
 

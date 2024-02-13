@@ -15,7 +15,7 @@ public sealed class MySqlPrimaryKeyBuilder : MySqlConstraintBuilder, ISqlPrimary
 
     public MySqlIndexBuilder Index { get; }
     public override MySqlDatabaseBuilder Database => Index.Database;
-    internal override bool CanRemove => Index.CanRemove;
+    public override bool CanRemove => Index.CanRemove;
 
     ISqlIndexBuilder ISqlPrimaryKeyBuilder.Index => Index;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
@@ -48,7 +48,7 @@ public sealed class MySqlPrimaryKeyBuilder : MySqlConstraintBuilder, ISqlPrimary
         Index.Remove();
         Index.Table.Schema.Objects.Remove( Name );
         Index.Table.Constraints.Remove( Name );
-        Database.ChangeTracker.ObjectRemoved( Index.Table, this );
+        Database.Changes.ObjectRemoved( Index.Table, this );
     }
 
     protected override void SetNameCore(string name)
@@ -61,7 +61,7 @@ public sealed class MySqlPrimaryKeyBuilder : MySqlConstraintBuilder, ISqlPrimary
 
         var oldName = Name;
         Name = name;
-        Database.ChangeTracker.NameUpdated( Index.Table, this, oldName );
+        Database.Changes.NameUpdated( Index.Table, this, oldName );
     }
 
     ISqlPrimaryKeyBuilder ISqlPrimaryKeyBuilder.SetName(string name)

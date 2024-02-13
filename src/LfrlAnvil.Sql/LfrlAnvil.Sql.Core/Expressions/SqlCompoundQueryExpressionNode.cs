@@ -4,6 +4,7 @@ using System.Diagnostics.Contracts;
 using System.Runtime.InteropServices;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Expressions.Traits;
+using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Expressions;
 
@@ -81,7 +82,7 @@ public sealed class SqlCompoundQueryExpressionNode : SqlExtendableQueryExpressio
             _queryCount = queryCount;
             _origins = new Dictionary<string, List<SqlSelectCompoundFieldNode.Origin>>(
                 capacity: firstQuery.Selection.Length,
-                comparer: StringComparer.OrdinalIgnoreCase );
+                comparer: SqlHelpers.NameComparer );
         }
 
         internal int QueryIndex { get; set; }

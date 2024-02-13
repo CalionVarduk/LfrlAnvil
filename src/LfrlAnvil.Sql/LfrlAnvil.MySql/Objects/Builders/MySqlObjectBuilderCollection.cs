@@ -163,7 +163,7 @@ public sealed class MySqlObjectBuilderCollection : ISqlObjectBuilderCollection
             throw new MySqlObjectBuilderException( ExceptionResources.NameIsAlreadyTaken( obj, name ) );
 
         var view = new MySqlViewBuilder( Schema, name, source, visitor );
-        Schema.Database.ChangeTracker.ObjectCreated( view );
+        Schema.Database.Changes.ObjectCreated( view );
         obj = view;
         return view;
     }
@@ -233,7 +233,7 @@ public sealed class MySqlObjectBuilderCollection : ISqlObjectBuilderCollection
     internal MySqlIndexBuilder CreateIndex(
         MySqlTableBuilder table,
         string name,
-        ReadOnlyMemory<ISqlIndexColumnBuilder> columns,
+        ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns,
         bool isUnique)
     {
         MySqlHelpers.AssertName( name );
@@ -245,7 +245,7 @@ public sealed class MySqlObjectBuilderCollection : ISqlObjectBuilderCollection
 
         var result = new MySqlIndexBuilder( table, indexColumns, name, isUnique );
         obj = result;
-        Schema.Database.ChangeTracker.ObjectCreated( table, result );
+        Schema.Database.Changes.ObjectCreated( table, result );
         return result;
     }
 
@@ -265,7 +265,7 @@ public sealed class MySqlObjectBuilderCollection : ISqlObjectBuilderCollection
 
         var primaryKey = new MySqlPrimaryKeyBuilder( index, name );
         _map[name] = primaryKey;
-        Schema.Database.ChangeTracker.ObjectCreated( table, primaryKey );
+        Schema.Database.Changes.ObjectCreated( table, primaryKey );
         index.AssignPrimaryKey( primaryKey );
         return primaryKey;
     }
@@ -285,7 +285,7 @@ public sealed class MySqlObjectBuilderCollection : ISqlObjectBuilderCollection
 
         var result = new MySqlForeignKeyBuilder( originIndex, referencedIndex, name );
         obj = result;
-        Schema.Database.ChangeTracker.ObjectCreated( originIndex.Table, result );
+        Schema.Database.Changes.ObjectCreated( originIndex.Table, result );
         return result;
     }
 
@@ -300,7 +300,7 @@ public sealed class MySqlObjectBuilderCollection : ISqlObjectBuilderCollection
 
         var result = new MySqlCheckBuilder( name, condition, visitor );
         obj = result;
-        Schema.Database.ChangeTracker.ObjectCreated( table, result );
+        Schema.Database.Changes.ObjectCreated( table, result );
         return result;
     }
 
@@ -347,7 +347,7 @@ public sealed class MySqlObjectBuilderCollection : ISqlObjectBuilderCollection
     private MySqlTableBuilder CreateNewTable(string name)
     {
         var result = new MySqlTableBuilder( Schema, name );
-        Schema.Database.ChangeTracker.ObjectCreated( result, result );
+        Schema.Database.Changes.ObjectCreated( result, result );
         return result;
     }
 
@@ -369,13 +369,13 @@ public sealed class MySqlObjectBuilderCollection : ISqlObjectBuilderCollection
     }
 
     [Pure]
-    ISqlObjectBuilder ISqlObjectBuilderCollection.GetObject(string name)
+    ISqlObjectBuilder ISqlObjectBuilderCollection.Get(string name)
     {
         return GetObject( name );
     }
 
     [Pure]
-    ISqlObjectBuilder? ISqlObjectBuilderCollection.TryGetObject(string name)
+    ISqlObjectBuilder? ISqlObjectBuilderCollection.TryGet(string name)
     {
         return TryGetObject( name );
     }

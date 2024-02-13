@@ -13,13 +13,13 @@ public static class SqliteObjectExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqliteIndexBuilder SetFilter(this SqliteIndexBuilder index, Func<SqlTableBuilderNode, SqlConditionNode?> filter)
     {
-        return index.SetFilter( filter( index.Table.RecordSet ) );
+        return index.SetFilter( filter( index.Table.Node ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlitePrimaryKeyBuilder SetPrimaryKey(
         this SqliteConstraintBuilderCollection constraints,
-        params SqliteIndexColumnBuilder[] columns)
+        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
     {
         var index = constraints.CreateUniqueIndex( columns );
         return constraints.SetPrimaryKey( index );
@@ -29,7 +29,7 @@ public static class SqliteObjectExtensions
     public static SqlitePrimaryKeyBuilder SetPrimaryKey(
         this SqliteConstraintBuilderCollection constraints,
         string name,
-        params SqliteIndexColumnBuilder[] columns)
+        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
     {
         var index = constraints.CreateUniqueIndex( columns );
         return constraints.SetPrimaryKey( name, index );
@@ -38,7 +38,7 @@ public static class SqliteObjectExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqliteIndexBuilder CreateIndex(
         this SqliteConstraintBuilderCollection constraints,
-        params SqliteIndexColumnBuilder[] columns)
+        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
     {
         return constraints.CreateIndex( columns );
     }
@@ -47,7 +47,7 @@ public static class SqliteObjectExtensions
     public static SqliteIndexBuilder CreateIndex(
         this SqliteConstraintBuilderCollection constraints,
         string name,
-        params SqliteIndexColumnBuilder[] columns)
+        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
     {
         return constraints.CreateIndex( name, columns );
     }
@@ -55,7 +55,7 @@ public static class SqliteObjectExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqliteIndexBuilder CreateUniqueIndex(
         this SqliteConstraintBuilderCollection constraints,
-        params SqliteIndexColumnBuilder[] columns)
+        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
     {
         return constraints.CreateIndex( columns, isUnique: true );
     }
@@ -64,7 +64,7 @@ public static class SqliteObjectExtensions
     public static SqliteIndexBuilder CreateUniqueIndex(
         this SqliteConstraintBuilderCollection constraints,
         string name,
-        params SqliteIndexColumnBuilder[] columns)
+        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
     {
         return constraints.CreateIndex( name, columns, isUnique: true );
     }

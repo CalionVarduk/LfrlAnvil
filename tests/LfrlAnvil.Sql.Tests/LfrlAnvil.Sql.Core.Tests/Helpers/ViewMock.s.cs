@@ -40,7 +40,7 @@ public static class ViewMock
         result.DataFields.Returns( dataFields );
 
         var recordSet = SqlNode.View( result );
-        result.RecordSet.Returns( recordSet );
+        result.Node.Returns( recordSet );
         foreach ( var field in fields )
         {
             var fieldName = field.Name;
@@ -61,7 +61,7 @@ public static class ViewMock
         var info = SqlRecordSetInfo.Create( schema.Name, name );
         result.Info.Returns( info );
         result.Source.Returns( source ?? SqlNode.RawQuery( string.Empty ) );
-        result.RecordSet.Returns( SqlNode.View( result ) );
+        result.Node.Returns( SqlNode.View( result ) );
         return result;
     }
 

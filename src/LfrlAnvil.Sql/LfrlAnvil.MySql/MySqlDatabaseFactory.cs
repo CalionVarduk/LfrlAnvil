@@ -56,7 +56,7 @@ public sealed class MySqlDatabaseFactory : ISqlDatabaseFactory
 
             foreach ( var version in versions.Committed )
             {
-                builder.SetAttachedMode();
+                builder.Changes.Attach();
                 version.Apply( builder );
             }
 
@@ -132,12 +132,12 @@ public sealed class MySqlDatabaseFactory : ISqlDatabaseFactory
 
     private static void SetBuilderMode(MySqlDatabaseBuilder builder, SqlDatabaseCreateMode mode)
     {
-        builder.ChangeTracker.SetMode( mode );
+        builder.Changes.SetMode( mode );
     }
 
     private static void ClearBuilderStatements(MySqlDatabaseBuilder builder)
     {
-        builder.ChangeTracker.ClearStatements();
+        builder.Changes.ClearStatements();
     }
 
     [Pure]
@@ -172,9 +172,9 @@ public sealed class MySqlDatabaseFactory : ISqlDatabaseFactory
             var exists = statementExecutor.ExecuteVersionHistoryQuery( command, static cmd => Convert.ToBoolean( cmd.ExecuteScalar() ) );
             if ( ! exists )
             {
-                builder.ChangeTracker.SchemaCreated( versionHistoryName.Schema );
-                builder.ChangeTracker.CreateGuidFunction();
-                builder.ChangeTracker.CreateDropIndexIfExistsProcedure();
+                builder.Changes.SchemaCreated( versionHistoryName.Schema );
+                builder.Changes.CreateGuidFunction();
+                builder.Changes.CreateDropIndexIfExistsProcedure();
             }
             else
             {
@@ -203,7 +203,7 @@ public sealed class MySqlDatabaseFactory : ISqlDatabaseFactory
 
                 exists = statementExecutor.ExecuteVersionHistoryQuery( command, static cmd => Convert.ToBoolean( cmd.ExecuteScalar() ) );
                 if ( ! exists )
-                    builder.ChangeTracker.CreateGuidFunction();
+                    builder.Changes.CreateGuidFunction();
 
                 query = SqlNode.DummyDataSource()
                     .Select(
@@ -221,7 +221,7 @@ public sealed class MySqlDatabaseFactory : ISqlDatabaseFactory
 
                 exists = statementExecutor.ExecuteVersionHistoryQuery( command, static cmd => Convert.ToBoolean( cmd.ExecuteScalar() ) );
                 if ( ! exists )
-                    builder.ChangeTracker.CreateDropIndexIfExistsProcedure();
+                    builder.Changes.CreateDropIndexIfExistsProcedure();
             }
         }
 
@@ -288,10 +288,10 @@ public sealed class MySqlDatabaseFactory : ISqlDatabaseFactory
             {
                 using ( var transaction = CreateTransaction( command ) )
                 {
-                    var statements = info.Table.Database.GetPendingStatements();
-                    foreach ( var statement in statements )
+                    var actions = info.Table.Database.Changes.GetPendingActions();
+                    foreach ( var action in actions )
                     {
-                        statement.Apply( command );
+                        action.Apply( command );
                         statementExecutor.ExecuteVersionHistoryNonQuery( command );
                     }
 
@@ -324,7 +324,7 @@ public sealed class MySqlDatabaseFactory : ISqlDatabaseFactory
     [Pure]
     private static SqlQueryReaderExecutor<SqlDatabaseVersionRecord> CreateVersionRecordsQuery(in VersionHistoryInfo info)
     {
-        var dataSource = info.Table.RecordSet.ToDataSource();
+        var dataSource = info.Table.Node.ToDataSource();
         var query = dataSource.Select( dataSource.GetAll() ).OrderBy( info.Ordinal.Node.Asc() );
         info.Interpreter.VisitDataSourceQuery( query );
 
@@ -388,12 +388,12 @@ public sealed class MySqlDatabaseFactory : ISqlDatabaseFactory
     {
         foreach ( var version in versions.Uncommitted )
         {
-            builder.SetAttachedMode();
+            builder.Changes.Attach();
 
             try
             {
                 version.Apply( builder );
-                _ = builder.GetPendingStatements();
+                _ = builder.Changes.GetPendingActions();
                 InvokePendingConnectionChangeCallbacks( builder, connectionChangeEvent );
             }
             finally
@@ -438,11 +438,11 @@ public sealed class MySqlDatabaseFactory : ISqlDatabaseFactory
 
         foreach ( var version in versions.Uncommitted )
         {
-            builder.SetAttachedMode();
+            builder.Changes.Attach();
             var start = Stopwatch.GetTimestamp();
 
             version.Apply( builder );
-            var statements = builder.GetPendingStatements();
+            var actions = builder.Changes.GetPendingActions();
             InvokePendingConnectionChangeCallbacks( builder, connectionChangeEvent );
             var versionOrdinal = nextVersionOrdinal;
             var statementKey = SqlDatabaseFactoryStatementKey.Create( version.Value );
@@ -454,10 +454,10 @@ public sealed class MySqlDatabaseFactory : ISqlDatabaseFactory
                     using var transaction = CreateTransaction( statementCommand );
                     insertVersionCommand.Transaction = transaction;
 
-                    foreach ( var statement in statements )
+                    foreach ( var action in actions )
                     {
                         statementKey = statementKey.NextOrdinal();
-                        statement.Apply( statementCommand );
+                        action.Apply( statementCommand );
                         statementExecutor.ExecuteNonQuery( statementCommand, statementKey, SqlDatabaseFactoryStatementType.Change );
                     }
 
@@ -564,7 +564,7 @@ public sealed class MySqlDatabaseFactory : ISqlDatabaseFactory
                 pCommitDateUtc,
                 SqlNode.Literal( 0 ) )
             .ToInsertInto(
-                info.Table.RecordSet,
+                info.Table.Node,
                 info.Ordinal.Node,
                 info.VersionMajor.Node,
                 info.VersionMinor.Node,
@@ -603,7 +603,7 @@ public sealed class MySqlDatabaseFactory : ISqlDatabaseFactory
     [Pure]
     private static MySqlCommand PrepareDeleteVersionRecordsCommand(MySqlConnection connection, in VersionHistoryInfo info)
     {
-        var deleteFrom = info.Table.RecordSet.ToDataSource().ToDeleteFrom();
+        var deleteFrom = info.Table.Node.ToDataSource().ToDeleteFrom();
         info.Interpreter.VisitDeleteFrom( deleteFrom );
 
         var command = connection.CreateCommand();
@@ -653,7 +653,7 @@ public sealed class MySqlDatabaseFactory : ISqlDatabaseFactory
         var pCommitDuration = SqlNode.Parameter( VersionHistoryInfo.CommitDurationInTicksName, info.CommitDurationInTicks.Node.Type );
         var pOrdinal = SqlNode.Parameter( VersionHistoryInfo.OrdinalName, info.Ordinal.Node.Type );
 
-        var update = info.Table.RecordSet
+        var update = info.Table.Node
             .ToDataSource()
             .AndWhere( info.Ordinal.Node == pOrdinal )
             .ToUpdate( info.CommitDurationInTicks.Node.Assign( pCommitDuration ) );

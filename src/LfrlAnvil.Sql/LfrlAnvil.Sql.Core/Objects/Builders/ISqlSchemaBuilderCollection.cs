@@ -12,10 +12,10 @@ public interface ISqlSchemaBuilderCollection : IReadOnlyCollection<ISqlSchemaBui
     bool Contains(string name);
 
     [Pure]
-    ISqlSchemaBuilder GetSchema(string name);
+    ISqlSchemaBuilder Get(string name);
 
     [Pure]
-    ISqlSchemaBuilder? TryGetSchema(string name);
+    ISqlSchemaBuilder? TryGet(string name);
 
     ISqlSchemaBuilder Create(string name);
     ISqlSchemaBuilder GetOrCreate(string name);

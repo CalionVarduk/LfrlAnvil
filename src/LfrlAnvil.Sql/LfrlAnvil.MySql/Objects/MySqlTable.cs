@@ -27,7 +27,7 @@ public sealed class MySqlTable : MySqlObject, ISqlTable
     public MySqlColumnCollection Columns { get; }
     public MySqlConstraintCollection Constraints { get; }
     public SqlRecordSetInfo Info => _info ??= SqlRecordSetInfo.Create( Schema.Name, Name );
-    public SqlTableNode RecordSet => _recordSet ??= SqlNode.Table( this );
+    public SqlTableNode Node => _recordSet ??= SqlNode.Table( this );
     public override MySqlDatabase Database => Schema.Database;
 
     ISqlSchema ISqlTable.Schema => Schema;

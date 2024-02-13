@@ -19,7 +19,7 @@ public class SqliteViewBuilderTests : TestsBase
         var db = SqliteDatabaseBuilderMock.Create();
         db.Schemas.Create( "foo" ).Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
 
-        var statements = db.GetPendingStatements().ToArray();
+        var statements = db.Changes.GetPendingActions().ToArray();
 
         using ( new AssertionScope() )
         {
@@ -40,7 +40,7 @@ public class SqliteViewBuilderTests : TestsBase
         var sut = db.Schemas.Create( "foo" ).Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
         sut.Remove();
 
-        var statements = db.GetPendingStatements().ToArray();
+        var statements = db.Changes.GetPendingActions().ToArray();
 
         statements.Should().BeEmpty();
     }
@@ -80,10 +80,10 @@ public class SqliteViewBuilderTests : TestsBase
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
         var sut = schema.Objects.CreateView( oldName, SqlNode.RawQuery( "SELECT * FROM foo" ) );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlViewBuilder)sut).SetName( newName ).SetName( oldName );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -101,12 +101,12 @@ public class SqliteViewBuilderTests : TestsBase
         var (oldName, newName) = ("foo", "bar");
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "s" );
         var sut = schema.Objects.CreateView( oldName, SqlNode.RawQuery( "SELECT * FROM foo" ) );
-        var recordSet = sut.RecordSet;
+        var recordSet = sut.Node;
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlViewBuilder)sut).SetName( newName );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -139,10 +139,10 @@ public class SqliteViewBuilderTests : TestsBase
             "W3",
             sut.ToRecordSet().Join( w1.ToRecordSet().InnerOn( SqlNode.True() ) ).Select( s => new[] { s.GetAll() } ) );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlViewBuilder)sut).SetName( newName );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -237,10 +237,10 @@ public class SqliteViewBuilderTests : TestsBase
         var otherView = schema.Objects.CreateView( "W", SqlNode.RawQuery( "SELECT * FROM foo" ) );
         var sut = schema.Objects.CreateView( "V", otherView.ToRecordSet().ToDataSource().Select( s => new[] { s.GetAll() } ) );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         sut.Remove();
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -290,12 +290,12 @@ public class SqliteViewBuilderTests : TestsBase
     {
         var builder = SqliteDatabaseBuilderMock.Create();
         var sut = builder.Schemas.Create( "s" ).Objects.CreateView( "foo", SqlNode.RawQuery( "SELECT * FROM foo" ) );
-        _ = builder.GetPendingStatements();
+        _ = builder.Changes.GetPendingActions();
 
         sut.SetName( "bar" );
         sut.Remove();
 
-        var result = builder.GetPendingStatements()[^1].Sql;
+        var result = builder.Changes.GetPendingActions()[^1].Sql;
 
         result.Should().SatisfySql( "DROP VIEW \"s_foo\";" );
     }

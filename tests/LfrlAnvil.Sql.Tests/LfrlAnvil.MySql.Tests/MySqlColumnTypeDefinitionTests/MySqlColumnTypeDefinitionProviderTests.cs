@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using System.Linq;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
@@ -725,7 +726,7 @@ public class MySqlColumnTypeDefinitionProviderTests : TestsBase
     public void GetAll_ShouldReturnAllRegisteredDefinitions()
     {
         var sut = (MySqlColumnTypeDefinitionProvider)_sut;
-        var result = _sut.GetAll();
+        var result = _sut.GetTypeDefinitions().Concat( _sut.GetDataTypeDefinitions() ).Distinct();
 
         result.Should()
             .BeEquivalentTo(
@@ -763,7 +764,7 @@ public class MySqlColumnTypeDefinitionProviderTests : TestsBase
         var baseDefinition = _sut.GetByType<long>();
         _sut.RegisterDefinition( new NewInt64TypeDefinition() );
         var sut = (MySqlColumnTypeDefinitionProvider)_sut;
-        var result = _sut.GetAll();
+        var result = _sut.GetTypeDefinitions().Concat( _sut.GetDataTypeDefinitions() ).Distinct();
 
         result.Should()
             .BeEquivalentTo(

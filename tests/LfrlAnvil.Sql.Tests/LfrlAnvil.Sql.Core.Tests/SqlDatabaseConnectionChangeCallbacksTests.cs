@@ -1,4 +1,5 @@
-﻿using LfrlAnvil.Sql.Objects.Builders;
+﻿using LfrlAnvil.Sql.Internal;
+using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sql.Tests;

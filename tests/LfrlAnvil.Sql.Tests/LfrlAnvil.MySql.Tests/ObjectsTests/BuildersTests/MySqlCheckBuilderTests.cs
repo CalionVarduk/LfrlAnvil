@@ -33,10 +33,10 @@ public class MySqlCheckBuilderTests : TestsBase
         var column = table.Columns.Create( "C" );
         table.Constraints.SetPrimaryKey( column.Asc() );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var sut = table.Constraints.CreateCheck( column.Node > SqlNode.Literal( 0 ) );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -61,11 +61,11 @@ public class MySqlCheckBuilderTests : TestsBase
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
-        var sut = table.Constraints.CreateCheck( table.RecordSet["C"] > SqlNode.Literal( 0 ) );
+        var sut = table.Constraints.CreateCheck( table.Node["C"] > SqlNode.Literal( 0 ) );
         sut.Remove();
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         statements.Should().BeEmpty();
     }
@@ -76,12 +76,12 @@ public class MySqlCheckBuilderTests : TestsBase
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
-        var sut = table.Constraints.CreateCheck( table.RecordSet["C"] > SqlNode.Literal( 0 ) );
+        var sut = table.Constraints.CreateCheck( table.Node["C"] > SqlNode.Literal( 0 ) );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlCheckBuilder)sut).SetName( sut.Name );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -96,15 +96,15 @@ public class MySqlCheckBuilderTests : TestsBase
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
-        var sut = table.Constraints.CreateCheck( table.RecordSet["C"] > SqlNode.Literal( 0 ) );
+        var sut = table.Constraints.CreateCheck( table.Node["C"] > SqlNode.Literal( 0 ) );
         var oldName = sut.Name;
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         sut.SetName( "bar" );
         var result = ((ISqlCheckBuilder)sut).SetName( oldName );
 
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -119,13 +119,13 @@ public class MySqlCheckBuilderTests : TestsBase
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
-        var sut = table.Constraints.CreateCheck( table.RecordSet["C"] > SqlNode.Literal( 0 ) );
+        var sut = table.Constraints.CreateCheck( table.Node["C"] > SqlNode.Literal( 0 ) );
         var oldName = sut.Name;
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlCheckBuilder)sut).SetName( "bar" );
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -157,7 +157,7 @@ public class MySqlCheckBuilderTests : TestsBase
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
-        var sut = table.Constraints.CreateCheck( table.RecordSet["C"] > SqlNode.Literal( 0 ) );
+        var sut = table.Constraints.CreateCheck( table.Node["C"] > SqlNode.Literal( 0 ) );
 
         var action = Lambda.Of( () => ((ISqlCheckBuilder)sut).SetName( name ) );
 
@@ -172,7 +172,7 @@ public class MySqlCheckBuilderTests : TestsBase
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
-        var sut = table.Constraints.CreateCheck( table.RecordSet["C"] > SqlNode.Literal( 0 ) );
+        var sut = table.Constraints.CreateCheck( table.Node["C"] > SqlNode.Literal( 0 ) );
         sut.Remove();
 
         var action = Lambda.Of( () => ((ISqlCheckBuilder)sut).SetName( "bar" ) );
@@ -188,8 +188,8 @@ public class MySqlCheckBuilderTests : TestsBase
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
-        var other = table.Constraints.CreateCheck( table.RecordSet["C"] != null );
-        var sut = table.Constraints.CreateCheck( table.RecordSet["C"] > SqlNode.Literal( 0 ) );
+        var other = table.Constraints.CreateCheck( table.Node["C"] != null );
+        var sut = table.Constraints.CreateCheck( table.Node["C"] > SqlNode.Literal( 0 ) );
 
         var action = Lambda.Of( () => ((ISqlCheckBuilder)sut).SetName( other.Name ) );
 
@@ -204,8 +204,8 @@ public class MySqlCheckBuilderTests : TestsBase
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
-        table.Constraints.CreateCheck( table.RecordSet["C"] != null );
-        var sut = table.Constraints.CreateCheck( table.RecordSet["C"] > SqlNode.Literal( 0 ) );
+        table.Constraints.CreateCheck( table.Node["C"] != null );
+        var sut = table.Constraints.CreateCheck( table.Node["C"] > SqlNode.Literal( 0 ) );
 
         var action = Lambda.Of( () => ((ISqlCheckBuilder)sut).SetName( "PK_T" ) );
 
@@ -223,10 +223,10 @@ public class MySqlCheckBuilderTests : TestsBase
         var sut = table.Constraints.CreateCheck( SqlNode.True() ).SetName( "bar" );
         var oldName = sut.Name;
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         var result = ((ISqlCheckBuilder)sut).SetDefaultName();
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -272,10 +272,10 @@ public class MySqlCheckBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( column.Asc() );
         var sut = table.Constraints.CreateCheck( column.Node > SqlNode.Literal( 0 ) );
 
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         sut.SetName( "bar" ).Remove();
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         using ( new AssertionScope() )
         {
@@ -299,14 +299,14 @@ public class MySqlCheckBuilderTests : TestsBase
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
-        var sut = table.Constraints.CreateCheck( table.RecordSet["C"] > SqlNode.Literal( 0 ) );
+        var sut = table.Constraints.CreateCheck( table.Node["C"] > SqlNode.Literal( 0 ) );
 
-        _ = schema.Database.GetPendingStatements();
+        _ = schema.Database.Changes.GetPendingActions();
         sut.Remove();
-        var startStatementCount = schema.Database.GetPendingStatements().Length;
+        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
         sut.Remove();
-        var statements = schema.Database.GetPendingStatements().Slice( startStatementCount ).ToArray();
+        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
 
         statements.Should().BeEmpty();
     }

@@ -27,7 +27,7 @@ public sealed class SqliteTable : SqliteObject, ISqlTable
     public SqliteColumnCollection Columns { get; }
     public SqliteConstraintCollection Constraints { get; }
     public SqlRecordSetInfo Info => _info ??= SqlRecordSetInfo.Create( Schema.Name, Name );
-    public SqlTableNode RecordSet => _recordSet ??= SqlNode.Table( this );
+    public SqlTableNode Node => _recordSet ??= SqlNode.Table( this );
     public override SqliteDatabase Database => Schema.Database;
 
     ISqlSchema ISqlTable.Schema => Schema;

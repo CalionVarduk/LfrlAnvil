@@ -640,7 +640,7 @@ public class SqliteSchemaTests : TestsBase
         var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C" ).Asc() );
-        tableBuilder.Constraints.CreateCheck( "CHK_T_0", tableBuilder.RecordSet["C"] > SqlNode.Literal( 0 ) );
+        tableBuilder.Constraints.CreateCheck( "CHK_T_0", tableBuilder.Node["C"] > SqlNode.Literal( 0 ) );
 
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
         ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
@@ -660,7 +660,7 @@ public class SqliteSchemaTests : TestsBase
         var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C" ).Asc() );
-        tableBuilder.Constraints.CreateCheck( tableBuilder.RecordSet["C"] > SqlNode.Literal( 0 ) );
+        tableBuilder.Constraints.CreateCheck( tableBuilder.Node["C"] > SqlNode.Literal( 0 ) );
 
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
         ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
@@ -676,7 +676,7 @@ public class SqliteSchemaTests : TestsBase
         var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C" ).Asc() );
-        tableBuilder.Constraints.CreateCheck( tableBuilder.RecordSet["C"] > SqlNode.Literal( 0 ) );
+        tableBuilder.Constraints.CreateCheck( tableBuilder.Node["C"] > SqlNode.Literal( 0 ) );
 
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
         ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
@@ -692,7 +692,7 @@ public class SqliteSchemaTests : TestsBase
         var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C" ).Asc() );
-        tableBuilder.Constraints.CreateCheck( "CHK_T_0", tableBuilder.RecordSet["C"] > SqlNode.Literal( 0 ) );
+        tableBuilder.Constraints.CreateCheck( "CHK_T_0", tableBuilder.Node["C"] > SqlNode.Literal( 0 ) );
 
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
         ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
@@ -713,7 +713,7 @@ public class SqliteSchemaTests : TestsBase
         var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C" ).Asc() );
-        tableBuilder.Constraints.CreateCheck( tableBuilder.RecordSet["C"] > SqlNode.Literal( 0 ) );
+        tableBuilder.Constraints.CreateCheck( tableBuilder.Node["C"] > SqlNode.Literal( 0 ) );
 
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
         ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
@@ -729,7 +729,7 @@ public class SqliteSchemaTests : TestsBase
         var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C" ).Asc() );
-        tableBuilder.Constraints.CreateCheck( tableBuilder.RecordSet["C"] > SqlNode.Literal( 0 ) );
+        tableBuilder.Constraints.CreateCheck( tableBuilder.Node["C"] > SqlNode.Literal( 0 ) );
 
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
         ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;

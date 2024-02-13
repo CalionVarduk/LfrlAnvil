@@ -10,10 +10,10 @@ public static class ColumnTypeDefinitionProviderMock
     public static ISqlColumnTypeDefinitionProvider Create(params ISqlColumnTypeDefinition[] definitions)
     {
         var result = Substitute.For<ISqlColumnTypeDefinitionProvider>();
-        result.GetAll().Returns( definitions );
+        result.GetTypeDefinitions().Returns( definitions );
         result.GetByType( Arg.Any<Type>() ).Returns( i => definitions.Single( d => d.RuntimeType == i.ArgAt<Type>( 0 ) ) );
         result.GetByDataType( Arg.Any<ISqlDataType>() )
-            .Returns( i => definitions.Single( d => d.DataType == i.ArgAt<ISqlDataType>( 0 ) ) );
+            .Returns( i => definitions.Single( d => ReferenceEquals( d.DataType, i.ArgAt<ISqlDataType>( 0 ) ) ) );
 
         return result;
     }

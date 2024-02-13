@@ -3,7 +3,7 @@
     <ItemGroup>
         <ProjectReference Include="..\..\..\src\LfrlAnvil.Functional\LfrlAnvil.Functional.csproj" />
         <ProjectReference Include="..\..\..\src\LfrlAnvil.Sql\LfrlAnvil.Sqlite\LfrlAnvil.Sqlite.csproj" />
-        <ProjectReference Include="..\..\LfrlAnvil.TestExtensions\LfrlAnvil.TestExtensions.csproj" />
+        <ProjectReference Include="..\..\LfrlAnvil.TestExtensions.Sql\LfrlAnvil.TestExtensions.Sql.csproj" />
     </ItemGroup>
 
 </Project>

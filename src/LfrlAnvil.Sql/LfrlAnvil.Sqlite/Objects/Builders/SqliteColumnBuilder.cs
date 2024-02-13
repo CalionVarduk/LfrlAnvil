@@ -40,24 +40,20 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
     public bool IsNullable { get; private set; }
     public SqlExpressionNode? DefaultValue { get; private set; }
     public override SqliteDatabaseBuilder Database => Table.Database;
-    public SqlColumnBuilderNode Node => _node ??= Table.RecordSet[Name];
+    public SqlColumnBuilderNode Node => _node ??= Table.Node[Name];
     public IReadOnlyCollection<SqliteIndexBuilder> ReferencingIndexes => (_referencingIndexes?.Values).EmptyIfNull();
     public IReadOnlyCollection<SqliteIndexBuilder> ReferencingIndexFilters => (_referencingIndexFilters?.Values).EmptyIfNull();
     public IReadOnlyCollection<SqliteViewBuilder> ReferencingViews => (_referencingViews?.Values).EmptyIfNull();
     public IReadOnlyCollection<SqliteCheckBuilder> ReferencingChecks => (_referencingChecks?.Values).EmptyIfNull();
 
-    internal override bool CanRemove =>
+    public override bool CanRemove =>
         (_referencingIndexes is null || _referencingIndexes.Count == 0) &&
         (_referencingIndexFilters is null || _referencingIndexFilters.Count == 0) &&
         (_referencingViews is null || _referencingViews.Count == 0) &&
         (_referencingChecks is null || _referencingChecks.Count == 0);
 
     ISqlTableBuilder ISqlColumnBuilder.Table => Table;
-    IReadOnlyCollection<ISqlIndexBuilder> ISqlColumnBuilder.ReferencingIndexes => ReferencingIndexes;
-    IReadOnlyCollection<ISqlIndexBuilder> ISqlColumnBuilder.ReferencingIndexFilters => ReferencingIndexFilters;
     ISqlColumnTypeDefinition ISqlColumnBuilder.TypeDefinition => TypeDefinition;
-    IReadOnlyCollection<ISqlViewBuilder> ISqlColumnBuilder.ReferencingViews => ReferencingViews;
-    IReadOnlyCollection<ISqlCheckBuilder> ISqlColumnBuilder.ReferencingChecks => ReferencingChecks;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
 
     [Pure]
@@ -88,7 +84,7 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
             SetDefaultValue( null );
             var oldDefinition = TypeDefinition;
             TypeDefinition = definition;
-            Database.ChangeTracker.TypeDefinitionUpdated( this, oldDefinition );
+            Database.Changes.TypeDefinitionUpdated( this, oldDefinition );
         }
 
         return this;
@@ -102,7 +98,7 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
         {
             EnsureMutable();
             IsNullable = enabled;
-            Database.ChangeTracker.IsNullableUpdated( this );
+            Database.Changes.IsNullableUpdated( this );
         }
 
         return this;
@@ -126,22 +122,22 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
 
             var oldValue = DefaultValue;
             DefaultValue = value;
-            Database.ChangeTracker.DefaultValueUpdated( this, oldValue );
+            Database.Changes.DefaultValueUpdated( this, oldValue );
         }
 
         return this;
     }
 
     [Pure]
-    public SqliteIndexColumnBuilder Asc()
+    public SqlIndexColumnBuilder<SqliteColumnBuilder> Asc()
     {
-        return SqliteIndexColumnBuilder.Asc( this );
+        return SqlIndexColumnBuilder.CreateAsc( this );
     }
 
     [Pure]
-    public SqliteIndexColumnBuilder Desc()
+    public SqlIndexColumnBuilder<SqliteColumnBuilder> Desc()
     {
-        return SqliteIndexColumnBuilder.Desc( this );
+        return SqlIndexColumnBuilder.CreateDesc( this );
     }
 
     internal void AddReferencingIndex(SqliteIndexBuilder index)
@@ -209,7 +205,7 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
         _referencingChecks = null;
 
         Table.Columns.Remove( Name );
-        Database.ChangeTracker.ObjectRemoved( Table, this );
+        Database.Changes.ObjectRemoved( Table, this );
     }
 
     protected override void SetNameCore(string name)
@@ -223,7 +219,7 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
 
         var oldName = Name;
         Name = name;
-        Database.ChangeTracker.NameUpdated( Table, this, oldName );
+        Database.Changes.NameUpdated( Table, this, oldName );
     }
 
     private void EnsureMutable()
@@ -279,13 +275,13 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
     }
 
     [Pure]
-    ISqlIndexColumnBuilder ISqlColumnBuilder.Asc()
+    SqlIndexColumnBuilder<ISqlColumnBuilder> ISqlColumnBuilder.Asc()
     {
         return Asc();
     }
 
     [Pure]
-    ISqlIndexColumnBuilder ISqlColumnBuilder.Desc()
+    SqlIndexColumnBuilder<ISqlColumnBuilder> ISqlColumnBuilder.Desc()
     {
         return Desc();
     }

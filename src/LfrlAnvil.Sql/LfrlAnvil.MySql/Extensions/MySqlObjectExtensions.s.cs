@@ -13,13 +13,13 @@ public static class MySqlObjectExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static MySqlIndexBuilder SetFilter(this MySqlIndexBuilder index, Func<SqlTableBuilderNode, SqlConditionNode?> filter)
     {
-        return index.SetFilter( filter( index.Table.RecordSet ) );
+        return index.SetFilter( filter( index.Table.Node ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static MySqlPrimaryKeyBuilder SetPrimaryKey(
         this MySqlConstraintBuilderCollection constraints,
-        params MySqlIndexColumnBuilder[] columns)
+        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
     {
         var index = constraints.CreateUniqueIndex( columns );
         return constraints.SetPrimaryKey( index );
@@ -29,7 +29,7 @@ public static class MySqlObjectExtensions
     public static MySqlPrimaryKeyBuilder SetPrimaryKey(
         this MySqlConstraintBuilderCollection constraints,
         string name,
-        params MySqlIndexColumnBuilder[] columns)
+        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
     {
         var index = constraints.CreateUniqueIndex( columns );
         return constraints.SetPrimaryKey( name, index );
@@ -38,7 +38,7 @@ public static class MySqlObjectExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static MySqlIndexBuilder CreateIndex(
         this MySqlConstraintBuilderCollection constraints,
-        params MySqlIndexColumnBuilder[] columns)
+        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
     {
         return constraints.CreateIndex( columns );
     }
@@ -47,7 +47,7 @@ public static class MySqlObjectExtensions
     public static MySqlIndexBuilder CreateIndex(
         this MySqlConstraintBuilderCollection constraints,
         string name,
-        params MySqlIndexColumnBuilder[] columns)
+        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
     {
         return constraints.CreateIndex( name, columns );
     }
@@ -55,7 +55,7 @@ public static class MySqlObjectExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static MySqlIndexBuilder CreateUniqueIndex(
         this MySqlConstraintBuilderCollection constraints,
-        params MySqlIndexColumnBuilder[] columns)
+        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
     {
         return constraints.CreateIndex( columns, isUnique: true );
     }
@@ -64,7 +64,7 @@ public static class MySqlObjectExtensions
     public static MySqlIndexBuilder CreateUniqueIndex(
         this MySqlConstraintBuilderCollection constraints,
         string name,
-        params MySqlIndexColumnBuilder[] columns)
+        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
     {
         return constraints.CreateIndex( name, columns, isUnique: true );
     }

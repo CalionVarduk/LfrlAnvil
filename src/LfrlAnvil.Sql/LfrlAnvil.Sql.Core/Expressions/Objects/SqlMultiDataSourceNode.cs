@@ -4,6 +4,7 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Expressions.Traits;
+using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
 
@@ -160,7 +161,7 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static Dictionary<string, SqlRecordSetNode> CreateRecordSetDictionary(int capacity)
     {
-        return new Dictionary<string, SqlRecordSetNode>( capacity: capacity, comparer: StringComparer.OrdinalIgnoreCase );
+        return new Dictionary<string, SqlRecordSetNode>( capacity: capacity, comparer: SqlHelpers.NameComparer );
     }
 
     private static int AddNextJoin(

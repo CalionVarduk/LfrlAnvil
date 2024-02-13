@@ -15,8 +15,8 @@ public sealed class SqliteIndex : SqliteConstraint, ISqlIndex
         IsPartial = builder.Filter is not null;
 
         var i = 0;
-        var builderColumns = builder.Columns.Span;
-        _columns = new SqliteIndexColumn[builderColumns.Length];
+        var builderColumns = builder.Columns;
+        _columns = new SqliteIndexColumn[builderColumns.Count];
         foreach ( var c in builderColumns )
         {
             var column = table.Columns.GetColumn( c.Column.Name );

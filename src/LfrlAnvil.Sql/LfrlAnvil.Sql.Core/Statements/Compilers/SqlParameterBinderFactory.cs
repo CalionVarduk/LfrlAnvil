@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions.Visitors;
+using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Statements.Compilers;
 
@@ -199,7 +200,7 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
 
     private void ValidateParameterNameDuplicates(ReadOnlySpan<StatementParameterInfo> sources)
     {
-        var names = new HashSet<string>( capacity: sources.Length, comparer: StringComparer.OrdinalIgnoreCase );
+        var names = new HashSet<string>( capacity: sources.Length, comparer: SqlHelpers.NameComparer );
         HashSet<string>? duplicatedNames = null;
 
         foreach ( var s in sources )
@@ -207,7 +208,7 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
             if ( names.Add( s.Name ) )
                 continue;
 
-            duplicatedNames ??= new HashSet<string>( comparer: StringComparer.OrdinalIgnoreCase );
+            duplicatedNames ??= new HashSet<string>( comparer: SqlHelpers.NameComparer );
             duplicatedNames.Add( s.Name );
         }
 
@@ -223,7 +224,7 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
 
     private void ValidateContext(ReadOnlySpan<StatementParameterInfo> sources, SqlNodeInterpreterContext context)
     {
-        var existingParameters = new HashSet<string>( capacity: sources.Length, comparer: StringComparer.OrdinalIgnoreCase );
+        var existingParameters = new HashSet<string>( capacity: sources.Length, comparer: SqlHelpers.NameComparer );
         var parameterErrors = Chain<string>.Empty;
 
         foreach ( var s in sources )

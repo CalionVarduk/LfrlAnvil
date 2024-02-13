@@ -1,17 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Generators;
 using LfrlAnvil.Memory;
 using LfrlAnvil.Sql;
-using LfrlAnvil.Sql.Exceptions;
-using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Extensions;
+using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.Sql.Statements;
 using LfrlAnvil.Sql.Statements.Compilers;
-using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Internal;
 
 namespace LfrlAnvil.Sqlite.Objects.Builders;
@@ -30,7 +26,7 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
         QueryReaders = new SqliteQueryReaderFactory( TypeDefinitions );
         ParameterBinders = new SqliteParameterBinderFactory( TypeDefinitions );
         Schemas = new SqliteSchemaBuilderCollection( this, defaultSchemaName );
-        ChangeTracker = new SqliteDatabaseChangeTracker( this );
+        Changes = new SqliteDatabaseChangeTracker( this );
         ObjectPool = new MemorySequencePool<SqliteObjectBuilder>( minSegmentLength: 32 );
         ConnectionChanges = SqlDatabaseConnectionChangeCallbacks.Create();
     }
@@ -43,9 +39,9 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
     public SqliteSchemaBuilderCollection Schemas { get; }
     public string ServerVersion { get; }
     public SqlDialect Dialect => SqliteDialect.Instance;
-    public SqlDatabaseCreateMode Mode => ChangeTracker.Mode;
-    public bool IsAttached => ChangeTracker.IsAttached;
-    internal SqliteDatabaseChangeTracker ChangeTracker { get; }
+    public SqlDatabaseCreateMode Mode => Changes.Mode;
+    public bool IsAttached => Changes.IsAttached;
+    public SqliteDatabaseChangeTracker Changes { get; }
     internal MemorySequencePool<SqliteObjectBuilder> ObjectPool { get; }
     internal SqlDatabaseConnectionChangeCallbacks ConnectionChanges { get; private set; }
     ISqlDataTypeProvider ISqlDatabaseBuilder.DataTypes => DataTypes;
@@ -54,61 +50,7 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
     ISqlQueryReaderFactory ISqlDatabaseBuilder.QueryReaders => QueryReaders;
     ISqlParameterBinderFactory ISqlDatabaseBuilder.ParameterBinders => ParameterBinders;
     ISqlSchemaBuilderCollection ISqlDatabaseBuilder.Schemas => Schemas;
-
-    public ReadOnlySpan<SqlDatabaseBuilderStatement> GetPendingStatements()
-    {
-        return ChangeTracker.GetPendingStatements();
-    }
-
-    public void AddStatement(ISqlStatementNode statement)
-    {
-        var context = NodeInterpreters.Create().Interpret( statement.Node );
-        if ( context.Parameters.Count > 0 )
-            throw new SqliteObjectBuilderException( Chain.Create( ExceptionResources.StatementIsParameterized( statement, context ) ) );
-
-        ChangeTracker.AddStatement( SqlDatabaseBuilderStatement.Create( context ) );
-    }
-
-    public void AddParameterizedStatement(
-        ISqlStatementNode statement,
-        IEnumerable<KeyValuePair<string, object?>> parameters,
-        SqlParameterBinderCreationOptions? options = null)
-    {
-        var context = NodeInterpreters.Create().Interpret( statement.Node );
-        var opt = options ?? SqlParameterBinderCreationOptions.Default;
-        var executor = ParameterBinders.Create( opt.SetContext( context ) ).Bind( parameters );
-        ChangeTracker.AddStatement( SqlDatabaseBuilderStatement.Create( context, executor ) );
-    }
-
-    public void AddParameterizedStatement<TSource>(
-        ISqlStatementNode statement,
-        TSource parameters,
-        SqlParameterBinderCreationOptions? options = null)
-        where TSource : notnull
-    {
-        var context = NodeInterpreters.Create().Interpret( statement.Node );
-        var opt = options ?? SqlParameterBinderCreationOptions.Default;
-        var executor = ParameterBinders.Create<TSource>( opt.SetContext( context ) ).Bind( parameters );
-        ChangeTracker.AddStatement( SqlDatabaseBuilderStatement.Create( context, executor ) );
-    }
-
-    public SqliteDatabaseBuilder SetNodeInterpreterFactory(SqliteNodeInterpreterFactory factory)
-    {
-        NodeInterpreters = factory;
-        return this;
-    }
-
-    public SqliteDatabaseBuilder SetAttachedMode(bool enabled = true)
-    {
-        ChangeTracker.SetAttachedMode( enabled );
-        return this;
-    }
-
-    public SqliteDatabaseBuilder SetDetachedMode(bool enabled = true)
-    {
-        ChangeTracker.SetAttachedMode( ! enabled );
-        return this;
-    }
+    ISqlDatabaseChangeTracker ISqlDatabaseBuilder.Changes => Changes;
 
     public SqliteDatabaseBuilder AddConnectionChangeCallback(Action<SqlDatabaseConnectionChangeEvent> callback)
     {
@@ -134,7 +76,7 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
         if ( foreignKeys.Length == 0 )
             return;
 
-        PrepareReferencingForeignKeysForRemoval( foreignKeys, table.Database.ChangeTracker.CurrentObject, table );
+        PrepareReferencingForeignKeysForRemoval( foreignKeys, table.Database.Changes.ActiveObject, table );
 
         foreach ( var obj in foreignKeys )
         {
@@ -187,21 +129,6 @@ public sealed class SqliteDatabaseBuilder : ISqlDatabaseBuilder
                 var fk2 = ReinterpretCast.To<SqliteForeignKeyBuilder>( b );
                 return fk1.OriginIndex.Table.Id.CompareTo( fk2.OriginIndex.Table.Id );
             } );
-    }
-
-    ISqlDatabaseBuilder ISqlDatabaseBuilder.SetNodeInterpreterFactory(ISqlNodeInterpreterFactory factory)
-    {
-        return SetNodeInterpreterFactory( SqliteHelpers.CastOrThrow<SqliteNodeInterpreterFactory>( factory ) );
-    }
-
-    ISqlDatabaseBuilder ISqlDatabaseBuilder.SetDetachedMode(bool enabled)
-    {
-        return SetDetachedMode( enabled );
-    }
-
-    ISqlDatabaseBuilder ISqlDatabaseBuilder.SetAttachedMode(bool enabled)
-    {
-        return SetAttachedMode( enabled );
     }
 
     ISqlDatabaseBuilder ISqlDatabaseBuilder.AddConnectionChangeCallback(Action<SqlDatabaseConnectionChangeEvent> callback)

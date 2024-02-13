@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Statements;
 
@@ -109,7 +110,7 @@ public sealed class SqlQueryReaderRowCollection : IReadOnlyList<SqlQueryReaderRo
     [Pure]
     private static Dictionary<string, int> CreateFieldOrdinals(ReadOnlySpan<SqlResultSetField> fields)
     {
-        var result = new Dictionary<string, int>( capacity: fields.Length, comparer: StringComparer.OrdinalIgnoreCase );
+        var result = new Dictionary<string, int>( capacity: fields.Length, comparer: SqlHelpers.NameComparer );
         foreach ( var field in fields )
             result.Add( field.Name, field.Ordinal );
 

@@ -18,12 +18,12 @@ public static class PrimaryKeyMock
     }
 
     [Pure]
-    public static ISqlPrimaryKeyBuilder CreateBuilder(params ISqlIndexColumnBuilder[] columns)
+    public static ISqlPrimaryKeyBuilder CreateBuilder(params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
     {
         var result = Substitute.For<ISqlPrimaryKeyBuilder>();
         result.Type.Returns( SqlObjectType.PrimaryKey );
         var index = Substitute.For<ISqlIndexBuilder>();
-        index.Columns.Returns( new ReadOnlyMemory<ISqlIndexColumnBuilder>( columns ) );
+        index.Columns.Returns( columns );
         result.Index.Returns( index );
         return result;
     }

@@ -63,7 +63,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
 
             foreach ( var version in versions.Committed )
             {
-                builder.SetAttachedMode();
+                builder.Changes.Attach();
                 version.Apply( builder );
             }
 
@@ -149,12 +149,12 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
 
     private static void SetBuilderMode(SqliteDatabaseBuilder builder, SqlDatabaseCreateMode mode)
     {
-        builder.ChangeTracker.SetMode( mode );
+        builder.Changes.SetMode( mode );
     }
 
     private static void ClearBuilderStatements(SqliteDatabaseBuilder builder)
     {
-        builder.ChangeTracker.ClearStatements();
+        builder.Changes.ClearStatements();
     }
 
     [Pure]
@@ -228,10 +228,10 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
             {
                 using ( var transaction = CreateTransaction( command ) )
                 {
-                    var statements = info.Table.Database.GetPendingStatements();
-                    foreach ( var statement in statements )
+                    var actions = info.Table.Database.Changes.GetPendingActions();
+                    foreach ( var action in actions )
                     {
-                        statement.Apply( command );
+                        action.Apply( command );
                         statementExecutor.ExecuteVersionHistoryNonQuery( command );
                     }
 
@@ -264,7 +264,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
     [Pure]
     private static SqlQueryReaderExecutor<SqlDatabaseVersionRecord> CreateVersionRecordsQuery(in VersionHistoryInfo info)
     {
-        var dataSource = info.Table.RecordSet.ToDataSource();
+        var dataSource = info.Table.Node.ToDataSource();
         var query = dataSource.Select( dataSource.GetAll() ).OrderBy( info.Ordinal.Node.Asc() );
         info.Interpreter.VisitDataSourceQuery( query );
 
@@ -328,12 +328,12 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
     {
         foreach ( var version in versions.Uncommitted )
         {
-            builder.SetAttachedMode();
+            builder.Changes.Attach();
 
             try
             {
                 version.Apply( builder );
-                _ = builder.GetPendingStatements();
+                _ = builder.Changes.GetPendingActions();
                 InvokePendingConnectionChangeCallbacks( builder, connectionChangeEvent );
             }
             finally
@@ -382,11 +382,11 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         foreach ( var version in versions.Uncommitted )
         {
             fkCheckFailures.Clear();
-            builder.SetAttachedMode();
+            builder.Changes.Attach();
             var start = Stopwatch.GetTimestamp();
 
             version.Apply( builder );
-            var statements = builder.GetPendingStatements();
+            var actions = builder.Changes.GetPendingActions();
             InvokePendingConnectionChangeCallbacks( builder, connectionChangeEvent );
             var versionOrdinal = nextVersionOrdinal;
             var pragmaSwapped = false;
@@ -407,14 +407,14 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
                     using var transaction = CreateTransaction( statementCommand );
                     insertVersionCommand.Transaction = transaction;
 
-                    foreach ( var statement in statements )
+                    foreach ( var action in actions )
                     {
                         statementKey = statementKey.NextOrdinal();
-                        statement.Apply( statementCommand );
+                        action.Apply( statementCommand );
                         statementExecutor.ExecuteNonQuery( statementCommand, statementKey, SqlDatabaseFactoryStatementType.Change );
                     }
 
-                    foreach ( var table in builder.ChangeTracker.ModifiedTables )
+                    foreach ( var table in builder.Changes.ModifiedTables )
                     {
                         var tableName = SqliteHelpers.GetFullName( table.Schema.Name, table.Name );
                         statementKey = statementKey.NextOrdinal();
@@ -587,7 +587,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
                 pCommitDateUtc,
                 SqlNode.Literal( 0 ) )
             .ToInsertInto(
-                info.Table.RecordSet,
+                info.Table.Node,
                 info.Ordinal.Node,
                 info.VersionMajor.Node,
                 info.VersionMinor.Node,
@@ -626,7 +626,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
     [Pure]
     private static SqliteCommand PrepareDeleteVersionRecordsCommand(SqliteConnection connection, in VersionHistoryInfo info)
     {
-        var deleteFrom = info.Table.RecordSet.ToDataSource().ToDeleteFrom();
+        var deleteFrom = info.Table.Node.ToDataSource().ToDeleteFrom();
         info.Interpreter.VisitDeleteFrom( deleteFrom );
 
         var command = connection.CreateCommand();
@@ -676,7 +676,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         var pCommitDuration = SqlNode.Parameter( VersionHistoryInfo.CommitDurationInTicksName, info.CommitDurationInTicks.Node.Type );
         var pOrdinal = SqlNode.Parameter( VersionHistoryInfo.OrdinalName, info.Ordinal.Node.Type );
 
-        var update = info.Table.RecordSet
+        var update = info.Table.Node
             .ToDataSource()
             .AndWhere( info.Ordinal.Node == pOrdinal )
             .ToUpdate( info.CommitDurationInTicks.Node.Assign( pCommitDuration ) );

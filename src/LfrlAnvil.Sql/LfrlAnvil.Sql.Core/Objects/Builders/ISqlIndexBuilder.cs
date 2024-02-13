@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using LfrlAnvil.Sql.Expressions.Logical;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
 
 public interface ISqlIndexBuilder : ISqlConstraintBuilder
 {
-    ReadOnlyMemory<ISqlIndexColumnBuilder> Columns { get; }
-    IReadOnlyCollection<ISqlForeignKeyBuilder> ReferencingForeignKeys { get; }
-    IReadOnlyCollection<ISqlForeignKeyBuilder> OriginatingForeignKeys { get; }
+    IReadOnlyCollection<SqlIndexColumnBuilder<ISqlColumnBuilder>> Columns { get; }
     IReadOnlyCollection<ISqlColumnBuilder> ReferencedFilterColumns { get; }
     ISqlPrimaryKeyBuilder? PrimaryKey { get; }
     bool IsUnique { get; }

@@ -7,7 +7,11 @@
     <ItemGroup>
         <ProjectReference Include="..\..\..\src\LfrlAnvil.Sql\LfrlAnvil.Sql.Core\LfrlAnvil.Sql.Core.csproj" />
         <ProjectReference Include="..\..\..\src\LfrlAnvil.Functional\LfrlAnvil.Functional.csproj" />
-        <ProjectReference Include="..\..\LfrlAnvil.TestExtensions\LfrlAnvil.TestExtensions.csproj" />
+        <ProjectReference Include="..\..\LfrlAnvil.TestExtensions.Sql\LfrlAnvil.TestExtensions.Sql.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="LfrlAnvil.TestExtensions.Sql" />
     </ItemGroup>
 
 </Project>

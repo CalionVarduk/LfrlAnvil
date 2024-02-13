@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.Contracts;
+﻿using System;
+using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Exceptions;
 using LfrlAnvil.MySql.Exceptions;
@@ -24,9 +25,10 @@ public abstract class MySqlObjectBuilder : ISqlObjectBuilder
     public string Name { get; protected set; }
     public bool IsRemoved { get; protected set; }
     public abstract MySqlDatabaseBuilder Database { get; }
-    internal virtual bool CanRemove => true;
+    public virtual bool CanRemove => true;
 
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
+    SqlObjectBuilderReferenceCollection<ISqlObjectBuilder> ISqlObjectBuilder.ReferencingObjects => throw new NotImplementedException();
 
     [Pure]
     public override string ToString()

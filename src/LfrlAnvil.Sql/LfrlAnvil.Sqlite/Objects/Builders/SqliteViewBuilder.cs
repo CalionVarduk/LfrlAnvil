@@ -44,14 +44,13 @@ public sealed class SqliteViewBuilder : SqliteObjectBuilder, ISqlViewBuilder
     public IReadOnlyCollection<SqliteViewBuilder> ReferencingViews => (_referencingViews?.Values).EmptyIfNull();
 
     public SqlRecordSetInfo Info => _info ??= SqlRecordSetInfo.Create( Schema.Name, Name );
-    public SqlViewBuilderNode RecordSet => _recordSet ??= SqlNode.View( this );
+    public SqlViewBuilderNode Node => _recordSet ??= SqlNode.View( this );
     public override SqliteDatabaseBuilder Database => Schema.Database;
 
-    internal override bool CanRemove => _referencingViews is null || _referencingViews.Count == 0;
+    public override bool CanRemove => _referencingViews is null || _referencingViews.Count == 0;
 
     ISqlSchemaBuilder ISqlViewBuilder.Schema => Schema;
     IReadOnlyCollection<ISqlObjectBuilder> ISqlViewBuilder.ReferencedObjects => ReferencedObjects;
-    IReadOnlyCollection<ISqlViewBuilder> ISqlViewBuilder.ReferencingViews => ReferencingViews;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
 
     [Pure]
@@ -103,7 +102,7 @@ public sealed class SqliteViewBuilder : SqliteObjectBuilder, ISqlViewBuilder
         var oldName = Name;
         Name = name;
         ResetInfoCache();
-        Database.ChangeTracker.NameUpdated( this, oldName );
+        Database.Changes.NameUpdated( this, oldName );
 
         foreach ( var view in buffer )
             ReinterpretCast.To<SqliteViewBuilder>( view ).Reactivate();
@@ -141,7 +140,7 @@ public sealed class SqliteViewBuilder : SqliteObjectBuilder, ISqlViewBuilder
         _referencingViews = null;
 
         Schema.Objects.ForceRemove( this );
-        Schema.Database.ChangeTracker.ObjectRemoved( this );
+        Schema.Database.Changes.ObjectRemoved( this );
     }
 
     internal void Reactivate()
@@ -150,7 +149,7 @@ public sealed class SqliteViewBuilder : SqliteObjectBuilder, ISqlViewBuilder
         IsRemoved = false;
         AddSelfToReferencedObjects();
         Schema.Objects.Reactivate( this );
-        Schema.Database.ChangeTracker.ObjectCreated( this );
+        Schema.Database.Changes.ObjectCreated( this );
     }
 
     internal void OnSchemaNameChange(string oldName)
@@ -158,7 +157,7 @@ public sealed class SqliteViewBuilder : SqliteObjectBuilder, ISqlViewBuilder
         using var buffer = RemoveReferencingViewsIntoBuffer( Database, _referencingViews );
 
         ResetInfoCache();
-        Database.ChangeTracker.SchemaNameUpdated( this, oldName );
+        Database.Changes.SchemaNameUpdated( this, oldName );
 
         foreach ( var view in buffer )
             ReinterpretCast.To<SqliteViewBuilder>( view ).Reactivate();
@@ -228,7 +227,7 @@ public sealed class SqliteViewBuilder : SqliteObjectBuilder, ISqlViewBuilder
         IsRemoved = true;
         RemoveSelfFromReferencedObjects();
         Schema.Objects.ForceRemove( this );
-        Schema.Database.ChangeTracker.ObjectRemoved( this );
+        Schema.Database.Changes.ObjectRemoved( this );
     }
 
     private void AddSelfToReferencedObjects()

@@ -25,7 +25,7 @@ public sealed class MySqlColumn : MySqlObject, ISqlColumn
     public MySqlColumnTypeDefinition TypeDefinition { get; }
     public bool IsNullable { get; }
     public bool HasDefaultValue { get; }
-    public SqlColumnNode Node => _node ??= Table.RecordSet[Name];
+    public SqlColumnNode Node => _node ??= Table.Node[Name];
     public override MySqlDatabase Database => Table.Schema.Database;
 
     [Pure]

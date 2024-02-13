@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+﻿using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
 
@@ -11,10 +10,6 @@ public interface ISqlColumnBuilder : ISqlObjectBuilder
     ISqlColumnTypeDefinition TypeDefinition { get; }
     bool IsNullable { get; }
     SqlExpressionNode? DefaultValue { get; }
-    IReadOnlyCollection<ISqlIndexBuilder> ReferencingIndexes { get; }
-    IReadOnlyCollection<ISqlIndexBuilder> ReferencingIndexFilters { get; }
-    IReadOnlyCollection<ISqlViewBuilder> ReferencingViews { get; }
-    IReadOnlyCollection<ISqlCheckBuilder> ReferencingChecks { get; }
     SqlColumnBuilderNode Node { get; }
 
     new ISqlColumnBuilder SetName(string name);
@@ -23,8 +18,8 @@ public interface ISqlColumnBuilder : ISqlObjectBuilder
     ISqlColumnBuilder SetDefaultValue(SqlExpressionNode? value);
 
     [Pure]
-    ISqlIndexColumnBuilder Asc();
+    SqlIndexColumnBuilder<ISqlColumnBuilder> Asc();
 
     [Pure]
-    ISqlIndexColumnBuilder Desc();
+    SqlIndexColumnBuilder<ISqlColumnBuilder> Desc();
 }

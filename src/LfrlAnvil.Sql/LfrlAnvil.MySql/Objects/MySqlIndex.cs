@@ -15,8 +15,8 @@ public sealed class MySqlIndex : MySqlConstraint, ISqlIndex
         IsPartial = builder.Filter is not null;
 
         var i = 0;
-        var builderColumns = builder.Columns.Span;
-        _columns = new MySqlIndexColumn[builderColumns.Length];
+        var builderColumns = builder.Columns;
+        _columns = new MySqlIndexColumn[builderColumns.Count];
         foreach ( var c in builderColumns )
         {
             var column = table.Columns.GetColumn( c.Column.Name );

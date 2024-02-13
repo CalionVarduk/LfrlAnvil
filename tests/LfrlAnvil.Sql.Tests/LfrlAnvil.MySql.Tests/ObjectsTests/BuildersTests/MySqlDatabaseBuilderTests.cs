@@ -42,7 +42,7 @@ public partial class MySqlDatabaseBuilderTests : TestsBase
 
             sut.Dialect.Should().BeSameAs( MySqlDialect.Instance );
             sut.IsAttached.Should().BeTrue();
-            sut.GetPendingStatements().ToArray().Should().BeEmpty();
+            sut.Changes.GetPendingActions().ToArray().Should().BeEmpty();
             sut.ServerVersion.Should().NotBeEmpty();
 
             ((ISqlDatabaseBuilder)sut).DataTypes.Should().BeSameAs( sut.DataTypes );
@@ -60,8 +60,8 @@ public partial class MySqlDatabaseBuilderTests : TestsBase
         var statement = Fixture.Create<string>();
         var sut = MySqlDatabaseBuilderMock.Create();
 
-        sut.AddStatement( statement );
-        var result = sut.GetPendingStatements().ToArray();
+        sut.Changes.AddStatement( statement );
+        var result = sut.Changes.GetPendingActions().ToArray();
 
         result.Select( s => s.Sql ).Should().BeSequentiallyEqualTo( $"{statement}{Environment.NewLine}" );
     }
@@ -71,14 +71,14 @@ public partial class MySqlDatabaseBuilderTests : TestsBase
     {
         var statement = Fixture.Create<string>();
         var sut = MySqlDatabaseBuilderMock.Create();
-        sut.ChangeTracker.SetMode( SqlDatabaseCreateMode.Commit );
+        sut.Changes.SetMode( SqlDatabaseCreateMode.Commit );
 
         var table = sut.Schemas.Default.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C" );
         table.Constraints.SetPrimaryKey( column.Asc() );
 
-        sut.AddStatement( statement );
-        var result = sut.GetPendingStatements().ToArray();
+        sut.Changes.AddStatement( statement );
+        var result = sut.Changes.GetPendingActions().ToArray();
 
         using ( new AssertionScope() )
         {
@@ -91,11 +91,12 @@ public partial class MySqlDatabaseBuilderTests : TestsBase
     public void AddStatement_ShouldDoNothing_WhenBuilderIsDetached()
     {
         var statement = Fixture.Create<string>();
-        var sut = MySqlDatabaseBuilderMock.Create().SetDetachedMode();
+        var sut = MySqlDatabaseBuilderMock.Create();
+        sut.Changes.SetDetachedMode();
 
-        sut.AddStatement( statement );
+        sut.Changes.AddStatement( statement );
 
-        sut.GetPendingStatements().Length.Should().Be( 0 );
+        sut.Changes.GetPendingActions().Length.Should().Be( 0 );
     }
 
     [Fact]
@@ -103,18 +104,20 @@ public partial class MySqlDatabaseBuilderTests : TestsBase
     {
         var statement = Fixture.Create<string>();
         var sut = MySqlDatabaseBuilderMock.Create();
-        sut.ChangeTracker.SetMode( SqlDatabaseCreateMode.NoChanges );
+        sut.Changes.SetMode( SqlDatabaseCreateMode.NoChanges );
 
-        sut.AddStatement( statement );
+        sut.Changes.AddStatement( statement );
 
-        sut.GetPendingStatements().Length.Should().Be( 0 );
+        sut.Changes.GetPendingActions().Length.Should().Be( 0 );
     }
 
     [Fact]
     public void AddStatement_ShouldThrowMySqlObjectBuilderException_WhenStatementContainsParameters()
     {
         var sut = MySqlDatabaseBuilderMock.Create();
-        var action = Lambda.Of( () => sut.AddStatement( SqlNode.RawStatement( Fixture.Create<string>(), SqlNode.Parameter( "a" ) ) ) );
+        var action = Lambda.Of(
+            () => sut.Changes.AddStatement( SqlNode.RawStatement( Fixture.Create<string>(), SqlNode.Parameter( "a" ) ) ) );
+
         action.Should().ThrowExactly<MySqlObjectBuilderException>();
     }
 
@@ -124,16 +127,16 @@ public partial class MySqlDatabaseBuilderTests : TestsBase
         var statement = Fixture.Create<string>();
         var sut = MySqlDatabaseBuilderMock.Create();
 
-        sut.AddParameterizedStatement(
+        sut.Changes.AddParameterizedStatement(
             SqlNode.RawStatement( statement, SqlNode.Parameter( "a" ) ),
             new[] { KeyValuePair.Create( "a", (object?)1 ) }.AsEnumerable() );
 
-        var result = sut.GetPendingStatements().ToArray();
+        var result = sut.Changes.GetPendingActions().ToArray();
 
         using ( new AssertionScope() )
         {
             result.Select( s => s.Sql ).Should().BeSequentiallyEqualTo( $"{statement}{Environment.NewLine}" );
-            result.ElementAtOrDefault( 0 ).BeforeCallback.Should().NotBeNull();
+            result.ElementAtOrDefault( 0 ).Callback.Should().NotBeNull();
         }
     }
 
@@ -142,23 +145,23 @@ public partial class MySqlDatabaseBuilderTests : TestsBase
     {
         var statement = Fixture.Create<string>();
         var sut = MySqlDatabaseBuilderMock.Create();
-        sut.ChangeTracker.SetMode( SqlDatabaseCreateMode.Commit );
+        sut.Changes.SetMode( SqlDatabaseCreateMode.Commit );
 
         var table = sut.Schemas.Default.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C" );
         table.Constraints.SetPrimaryKey( column.Asc() );
 
-        sut.AddParameterizedStatement(
+        sut.Changes.AddParameterizedStatement(
             SqlNode.RawStatement( statement, SqlNode.Parameter( "a" ) ),
             new[] { KeyValuePair.Create( "a", (object?)1 ) }.AsEnumerable() );
 
-        var result = sut.GetPendingStatements().ToArray();
+        var result = sut.Changes.GetPendingActions().ToArray();
 
         using ( new AssertionScope() )
         {
             result.Should().HaveCount( 2 );
             result[^1].Sql.Should().Be( $"{statement}{Environment.NewLine}" );
-            result[^1].BeforeCallback.Should().NotBeNull();
+            result[^1].Callback.Should().NotBeNull();
         }
     }
 
@@ -166,13 +169,14 @@ public partial class MySqlDatabaseBuilderTests : TestsBase
     public void AddParameterizedStatement_TypeErased_ShouldDoNothing_WhenBuilderIsDetached()
     {
         var statement = Fixture.Create<string>();
-        var sut = MySqlDatabaseBuilderMock.Create().SetDetachedMode();
+        var sut = MySqlDatabaseBuilderMock.Create();
+        sut.Changes.SetDetachedMode();
 
-        sut.AddParameterizedStatement(
+        sut.Changes.AddParameterizedStatement(
             SqlNode.RawStatement( statement, SqlNode.Parameter( "a" ) ),
             new[] { KeyValuePair.Create( "a", (object?)1 ) }.AsEnumerable() );
 
-        sut.GetPendingStatements().Length.Should().Be( 0 );
+        sut.Changes.GetPendingActions().Length.Should().Be( 0 );
     }
 
     [Fact]
@@ -180,13 +184,13 @@ public partial class MySqlDatabaseBuilderTests : TestsBase
     {
         var statement = Fixture.Create<string>();
         var sut = MySqlDatabaseBuilderMock.Create();
-        sut.ChangeTracker.SetMode( SqlDatabaseCreateMode.NoChanges );
+        sut.Changes.SetMode( SqlDatabaseCreateMode.NoChanges );
 
-        sut.AddParameterizedStatement(
+        sut.Changes.AddParameterizedStatement(
             SqlNode.RawStatement( statement, SqlNode.Parameter( "a" ) ),
             new[] { KeyValuePair.Create( "a", (object?)1 ) }.AsEnumerable() );
 
-        sut.GetPendingStatements().Length.Should().Be( 0 );
+        sut.Changes.GetPendingActions().Length.Should().Be( 0 );
     }
 
     [Fact]
@@ -195,13 +199,13 @@ public partial class MySqlDatabaseBuilderTests : TestsBase
         var statement = Fixture.Create<string>();
         var sut = MySqlDatabaseBuilderMock.Create();
 
-        sut.AddParameterizedStatement( SqlNode.RawStatement( statement, SqlNode.Parameter<int>( "a" ) ), new Source { A = 1 } );
-        var result = sut.GetPendingStatements().ToArray();
+        sut.Changes.AddParameterizedStatement( SqlNode.RawStatement( statement, SqlNode.Parameter<int>( "a" ) ), new Source { A = 1 } );
+        var result = sut.Changes.GetPendingActions().ToArray();
 
         using ( new AssertionScope() )
         {
             result.Select( s => s.Sql ).Should().BeSequentiallyEqualTo( $"{statement}{Environment.NewLine}" );
-            result.ElementAtOrDefault( 0 ).BeforeCallback.Should().NotBeNull();
+            result.ElementAtOrDefault( 0 ).Callback.Should().NotBeNull();
         }
     }
 
@@ -210,20 +214,20 @@ public partial class MySqlDatabaseBuilderTests : TestsBase
     {
         var statement = Fixture.Create<string>();
         var sut = MySqlDatabaseBuilderMock.Create();
-        sut.ChangeTracker.SetMode( SqlDatabaseCreateMode.Commit );
+        sut.Changes.SetMode( SqlDatabaseCreateMode.Commit );
 
         var table = sut.Schemas.Default.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C" );
         table.Constraints.SetPrimaryKey( column.Asc() );
 
-        sut.AddParameterizedStatement( SqlNode.RawStatement( statement, SqlNode.Parameter<int>( "a" ) ), new Source { A = 1 } );
-        var result = sut.GetPendingStatements().ToArray();
+        sut.Changes.AddParameterizedStatement( SqlNode.RawStatement( statement, SqlNode.Parameter<int>( "a" ) ), new Source { A = 1 } );
+        var result = sut.Changes.GetPendingActions().ToArray();
 
         using ( new AssertionScope() )
         {
             result.Should().HaveCount( 2 );
             result[^1].Sql.Should().Be( $"{statement}{Environment.NewLine}" );
-            result[^1].BeforeCallback.Should().NotBeNull();
+            result[^1].Callback.Should().NotBeNull();
         }
     }
 
@@ -231,11 +235,12 @@ public partial class MySqlDatabaseBuilderTests : TestsBase
     public void AddParameterizedStatement_Generic_ShouldDoNothing_WhenBuilderIsDetached()
     {
         var statement = Fixture.Create<string>();
-        var sut = MySqlDatabaseBuilderMock.Create().SetDetachedMode();
+        var sut = MySqlDatabaseBuilderMock.Create();
+        sut.Changes.SetDetachedMode();
 
-        sut.AddParameterizedStatement( SqlNode.RawStatement( statement, SqlNode.Parameter<int>( "a" ) ), new Source { A = 1 } );
+        sut.Changes.AddParameterizedStatement( SqlNode.RawStatement( statement, SqlNode.Parameter<int>( "a" ) ), new Source { A = 1 } );
 
-        sut.GetPendingStatements().Length.Should().Be( 0 );
+        sut.Changes.GetPendingActions().Length.Should().Be( 0 );
     }
 
     [Fact]
@@ -243,11 +248,11 @@ public partial class MySqlDatabaseBuilderTests : TestsBase
     {
         var statement = Fixture.Create<string>();
         var sut = MySqlDatabaseBuilderMock.Create();
-        sut.ChangeTracker.SetMode( SqlDatabaseCreateMode.NoChanges );
+        sut.Changes.SetMode( SqlDatabaseCreateMode.NoChanges );
 
-        sut.AddParameterizedStatement( SqlNode.RawStatement( statement, SqlNode.Parameter<int>( "a" ) ), new Source { A = 1 } );
+        sut.Changes.AddParameterizedStatement( SqlNode.RawStatement( statement, SqlNode.Parameter<int>( "a" ) ), new Source { A = 1 } );
 
-        sut.GetPendingStatements().Length.Should().Be( 0 );
+        sut.Changes.GetPendingActions().Length.Should().Be( 0 );
     }
 
     [Fact]
@@ -255,7 +260,7 @@ public partial class MySqlDatabaseBuilderTests : TestsBase
     {
         var sut = MySqlDatabaseBuilderMock.Create();
         var action = Lambda.Of(
-            () => sut.AddParameterizedStatement(
+            () => sut.Changes.AddParameterizedStatement(
                 SqlNode.RawStatement( Fixture.Create<string>(), SqlNode.Parameter<string>( "a" ) ),
                 new Source { A = 1 } ) );
 
@@ -265,57 +270,43 @@ public partial class MySqlDatabaseBuilderTests : TestsBase
     [Fact]
     public void ObjectChanges_ShouldDoNothing_WhenBuilderIsDetached()
     {
-        var sut = MySqlDatabaseBuilderMock.Create().SetDetachedMode();
+        var sut = MySqlDatabaseBuilderMock.Create();
+        sut.Changes.SetDetachedMode();
 
         sut.Schemas.Default.SetName( "s" );
         var table = sut.Schemas.Default.Objects.CreateTable( "T" );
         var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "D" ).Asc() ).MarkAsUnique().SetFilter( SqlNode.True() );
         var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
         var fk = table.Constraints.CreateForeignKey( ix1, ix2 );
-        table.Constraints.CreateCheck( table.RecordSet["C"] != SqlNode.Literal( 0 ) );
+        table.Constraints.CreateCheck( table.Node["C"] != SqlNode.Literal( 0 ) );
         fk.SetOnDeleteBehavior( ReferenceBehavior.Cascade ).SetOnUpdateBehavior( ReferenceBehavior.Cascade );
         var column = table.Columns.Create( "E" );
         column.SetName( "F" ).MarkAsNullable().SetType<int>().SetDefaultValue( 123 );
         table.SetName( "U" );
         column.Remove();
 
-        sut.GetPendingStatements().Length.Should().Be( 0 );
+        sut.Changes.GetPendingActions().Length.Should().Be( 0 );
     }
 
     [Fact]
     public void ObjectCreation_ShouldDoNothing_WhenBuilderIsInNoChangesMode()
     {
         var sut = MySqlDatabaseBuilderMock.Create();
-        sut.ChangeTracker.SetMode( SqlDatabaseCreateMode.NoChanges );
+        sut.Changes.SetMode( SqlDatabaseCreateMode.NoChanges );
 
         sut.Schemas.Default.SetName( "s" );
         var table = sut.Schemas.Default.Objects.CreateTable( "T" );
         var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "D" ).Asc() ).MarkAsUnique().SetFilter( SqlNode.True() );
         var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
         var fk = table.Constraints.CreateForeignKey( ix1, ix2 );
-        table.Constraints.CreateCheck( table.RecordSet["C"] != SqlNode.Literal( 0 ) );
+        table.Constraints.CreateCheck( table.Node["C"] != SqlNode.Literal( 0 ) );
         fk.SetOnDeleteBehavior( ReferenceBehavior.Cascade ).SetOnUpdateBehavior( ReferenceBehavior.Cascade );
         var column = table.Columns.Create( "E" );
         column.SetName( "F" ).MarkAsNullable().SetType<string>().SetDefaultValue( "123" );
         table.SetName( "U" );
         column.Remove();
 
-        sut.GetPendingStatements().Length.Should().Be( 0 );
-    }
-
-    [Fact]
-    public void SetNodeInterpreterFactory_ShouldUpdateNodeInterpreterFactory()
-    {
-        var sut = MySqlDatabaseBuilderMock.Create();
-        var expected = new MySqlNodeInterpreterFactory( sut.TypeDefinitions, "common" );
-
-        var result = ((ISqlDatabaseBuilder)sut).SetNodeInterpreterFactory( expected );
-
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.NodeInterpreters.Should().BeSameAs( expected );
-        }
+        sut.Changes.GetPendingActions().Length.Should().Be( 0 );
     }
 
     [Theory]
@@ -323,13 +314,14 @@ public partial class MySqlDatabaseBuilderTests : TestsBase
     [InlineData( false )]
     public void SetAttachedMode_ShouldUpdateIsAttached(bool enabled)
     {
-        var sut = MySqlDatabaseBuilderMock.Create().SetAttachedMode( ! enabled );
+        var sut = MySqlDatabaseBuilderMock.Create();
+        sut.Changes.Attach( ! enabled );
 
-        var result = ((ISqlDatabaseBuilder)sut).SetAttachedMode( enabled );
+        var result = ((ISqlDatabaseBuilder)sut).Changes.Attach( enabled );
 
         using ( new AssertionScope() )
         {
-            result.Should().BeSameAs( sut );
+            result.Should().BeSameAs( sut.Changes );
             sut.IsAttached.Should().Be( enabled );
         }
     }
@@ -339,11 +331,11 @@ public partial class MySqlDatabaseBuilderTests : TestsBase
     {
         var sut = MySqlDatabaseBuilderMock.Create();
 
-        var result = ((ISqlDatabaseBuilder)sut).SetAttachedMode();
+        var result = ((ISqlDatabaseBuilder)sut).Changes.Attach();
 
         using ( new AssertionScope() )
         {
-            result.Should().BeSameAs( sut );
+            result.Should().BeSameAs( sut.Changes );
             sut.IsAttached.Should().BeTrue();
         }
     }
@@ -353,13 +345,14 @@ public partial class MySqlDatabaseBuilderTests : TestsBase
     [InlineData( false )]
     public void SetDetachedMode_ShouldUpdateIsAttached(bool enabled)
     {
-        var sut = MySqlDatabaseBuilderMock.Create().SetDetachedMode( ! enabled );
+        var sut = MySqlDatabaseBuilderMock.Create();
+        sut.Changes.SetDetachedMode( ! enabled );
 
-        var result = ((ISqlDatabaseBuilder)sut).SetDetachedMode( enabled );
+        var result = ((ISqlDatabaseBuilder)sut).Changes.Attach( ! enabled );
 
         using ( new AssertionScope() )
         {
-            result.Should().BeSameAs( sut );
+            result.Should().BeSameAs( sut.Changes );
             sut.IsAttached.Should().Be( ! enabled );
         }
     }
@@ -367,13 +360,14 @@ public partial class MySqlDatabaseBuilderTests : TestsBase
     [Fact]
     public void SetDetachedMode_ShouldDoNothing_WhenBuilderIsAlreadyDetached()
     {
-        var sut = MySqlDatabaseBuilderMock.Create().SetDetachedMode();
+        var sut = MySqlDatabaseBuilderMock.Create();
+        sut.Changes.SetDetachedMode();
 
-        var result = ((ISqlDatabaseBuilder)sut).SetDetachedMode();
+        var result = ((ISqlDatabaseBuilder)sut).Changes.Attach( false );
 
         using ( new AssertionScope() )
         {
-            result.Should().BeSameAs( sut );
+            result.Should().BeSameAs( sut.Changes );
             sut.IsAttached.Should().BeFalse();
         }
     }
@@ -387,8 +381,8 @@ public partial class MySqlDatabaseBuilderTests : TestsBase
         var column = table.Columns.Create( "C" );
         table.Constraints.SetPrimaryKey( column.Asc() );
 
-        sut.SetDetachedMode();
-        var result = sut.GetPendingStatements().ToArray();
+        sut.Changes.SetDetachedMode();
+        var result = sut.Changes.GetPendingActions().ToArray();
 
         result.Should().HaveCount( 1 );
     }

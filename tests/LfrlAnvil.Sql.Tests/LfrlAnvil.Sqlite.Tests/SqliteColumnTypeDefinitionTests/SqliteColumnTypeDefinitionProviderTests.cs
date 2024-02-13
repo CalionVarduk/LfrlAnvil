@@ -1,4 +1,5 @@
-﻿using LfrlAnvil.Functional;
+﻿using System.Linq;
+using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Extensions;
@@ -440,7 +441,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
     public void GetAll_ShouldReturnAllRegisteredDefinitions()
     {
         var sut = (SqliteColumnTypeDefinitionProvider)_sut;
-        var result = _sut.GetAll();
+        var result = _sut.GetTypeDefinitions().Concat( _sut.GetDataTypeDefinitions() ).Distinct();
 
         result.Should()
             .BeEquivalentTo(
@@ -474,7 +475,7 @@ public class SqliteColumnTypeDefinitionProviderTests : TestsBase
         var baseDefinition = _sut.GetByType<long>();
         _sut.RegisterDefinition( new NewInt64TypeDefinition() );
         var sut = (SqliteColumnTypeDefinitionProvider)_sut;
-        var result = _sut.GetAll();
+        var result = _sut.GetTypeDefinitions().Concat( _sut.GetDataTypeDefinitions() ).Distinct();
 
         result.Should()
             .BeEquivalentTo(

@@ -1,6 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
@@ -65,7 +65,7 @@ public sealed class SqlViewNode : SqlRecordSetNode
     private Dictionary<string, SqlViewDataFieldNode> CreateDataFields()
     {
         var dataFields = View.DataFields;
-        var result = new Dictionary<string, SqlViewDataFieldNode>( capacity: dataFields.Count, comparer: StringComparer.OrdinalIgnoreCase );
+        var result = new Dictionary<string, SqlViewDataFieldNode>( capacity: dataFields.Count, comparer: SqlHelpers.NameComparer );
 
         foreach ( var field in dataFields )
             result.Add( field.Name, new SqlViewDataFieldNode( this, field ) );
