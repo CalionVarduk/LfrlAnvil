@@ -37,13 +37,13 @@ public sealed class MySqlConstraintBuilderCollection : ISqlConstraintBuilderColl
     }
 
     [Pure]
-    public MySqlConstraintBuilder GetConstraint(string name)
+    public MySqlConstraintBuilder Get(string name)
     {
         return _map[name];
     }
 
     [Pure]
-    public MySqlConstraintBuilder? TryGetConstraint(string name)
+    public MySqlConstraintBuilder? TryGet(string name)
     {
         return _map.GetValueOrDefault( name );
     }
@@ -287,13 +287,13 @@ public sealed class MySqlConstraintBuilderCollection : ISqlConstraintBuilderColl
     [Pure]
     ISqlConstraintBuilder ISqlConstraintBuilderCollection.Get(string name)
     {
-        return GetConstraint( name );
+        return Get( name );
     }
 
     [Pure]
     ISqlConstraintBuilder? ISqlConstraintBuilderCollection.TryGet(string name)
     {
-        return TryGetConstraint( name );
+        return TryGet( name );
     }
 
     [Pure]

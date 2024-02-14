@@ -28,8 +28,8 @@ public static class TableMock
         columnsCollection.Count.Returns( columns.Length );
         columnsCollection.GetEnumerator().Returns( _ => columns.AsEnumerable().GetEnumerator() );
         columnsCollection.Contains( Arg.Any<string>() ).Returns( i => columns.Any( c => c.Name == i.ArgAt<string>( 0 ) ) );
-        columnsCollection.GetColumn( Arg.Any<string>() ).Returns( i => columns.First( c => c.Name == i.ArgAt<string>( 0 ) ) );
-        columnsCollection.TryGetColumn( Arg.Any<string>() ).Returns( i => columns.FirstOrDefault( c => c.Name == i.ArgAt<string>( 0 ) ) );
+        columnsCollection.Get( Arg.Any<string>() ).Returns( i => columns.First( c => c.Name == i.ArgAt<string>( 0 ) ) );
+        columnsCollection.TryGet( Arg.Any<string>() ).Returns( i => columns.FirstOrDefault( c => c.Name == i.ArgAt<string>( 0 ) ) );
 
         var pk = primaryKey?.Invoke( columnsCollection ) ?? PrimaryKeyMock.Create();
 

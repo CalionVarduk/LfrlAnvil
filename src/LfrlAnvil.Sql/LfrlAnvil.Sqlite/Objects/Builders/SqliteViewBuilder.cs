@@ -92,7 +92,7 @@ public sealed class SqliteViewBuilder : SqliteObjectBuilder, ISqlViewBuilder
             return;
 
         SqliteHelpers.AssertName( name );
-        var obj = Schema.Objects.TryGetObject( name );
+        var obj = Schema.Objects.TryGet( name );
         if ( obj is not null )
             throw new SqliteObjectBuilderException( ExceptionResources.NameIsAlreadyTaken( obj, name ) );
 

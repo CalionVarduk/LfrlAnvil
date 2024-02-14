@@ -48,13 +48,13 @@ public sealed class MySqlColumnBuilderCollection : ISqlColumnBuilderCollection
     }
 
     [Pure]
-    public MySqlColumnBuilder GetColumn(string name)
+    public MySqlColumnBuilder Get(string name)
     {
         return _map[name];
     }
 
     [Pure]
-    public MySqlColumnBuilder? TryGetColumn(string name)
+    public MySqlColumnBuilder? TryGet(string name)
     {
         return _map.GetValueOrDefault( name );
     }
@@ -166,13 +166,13 @@ public sealed class MySqlColumnBuilderCollection : ISqlColumnBuilderCollection
     [Pure]
     ISqlColumnBuilder ISqlColumnBuilderCollection.Get(string name)
     {
-        return GetColumn( name );
+        return Get( name );
     }
 
     [Pure]
     ISqlColumnBuilder? ISqlColumnBuilderCollection.TryGet(string name)
     {
-        return TryGetColumn( name );
+        return TryGet( name );
     }
 
     ISqlColumnBuilder ISqlColumnBuilderCollection.Create(string name)

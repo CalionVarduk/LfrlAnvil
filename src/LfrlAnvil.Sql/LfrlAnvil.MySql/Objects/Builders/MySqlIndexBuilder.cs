@@ -64,7 +64,7 @@ public sealed class MySqlIndexBuilder : MySqlConstraintBuilder, ISqlIndexBuilder
 
     ISqlPrimaryKeyBuilder? ISqlIndexBuilder.PrimaryKey => PrimaryKey;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
-    IReadOnlyCollection<SqlIndexColumnBuilder<ISqlColumnBuilder>> ISqlIndexBuilder.Columns => _columns;
+    IReadOnlyList<SqlIndexColumnBuilder<ISqlColumnBuilder>> ISqlIndexBuilder.Columns => _columns;
     IReadOnlyCollection<ISqlColumnBuilder> ISqlIndexBuilder.ReferencedFilterColumns => ReferencedFilterColumns;
 
     public new MySqlIndexBuilder SetName(string name)

@@ -216,6 +216,12 @@ public abstract class SqlConstraintBuilderCollection : SqlBuilderApi, ISqlConstr
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void Add(SqlConstraintBuilder obj)
+    {
+        _map.Add( obj.Name, obj );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void Remove(SqlConstraintBuilder obj)
     {
         _map.Remove( obj.Name );

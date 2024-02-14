@@ -1139,10 +1139,11 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
     [Pure]
     protected static TargetDeleteOrUpdateInfo ExtractTableDeleteOrUpdateInfo(SqlTableNode node)
     {
-        var identityColumns = node.Table.Constraints.PrimaryKey.Index.Columns.Span;
-        var identityColumnNames = new string[identityColumns.Length];
-        for ( var i = 0; i < identityColumns.Length; ++i )
-            identityColumnNames[i] = identityColumns[i].Column.Name;
+        var i = 0;
+        var identityColumns = node.Table.Constraints.PrimaryKey.Index.Columns;
+        var identityColumnNames = new string[identityColumns.Count];
+        foreach ( var c in identityColumns )
+            identityColumnNames[i++] = c.Column.Name;
 
         return new TargetDeleteOrUpdateInfo( node, node.AsSelf(), identityColumnNames );
     }

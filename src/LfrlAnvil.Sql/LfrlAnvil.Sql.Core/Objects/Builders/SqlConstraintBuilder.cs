@@ -11,6 +11,12 @@ public abstract class SqlConstraintBuilder : SqlObjectBuilder, ISqlConstraintBui
         Table = table;
     }
 
+    protected SqlConstraintBuilder(SqlTableBuilder table, string name)
+        : base( table.Database, name )
+    {
+        Table = table;
+    }
+
     public SqlTableBuilder Table { get; }
     ISqlTableBuilder ISqlConstraintBuilder.Table => Table;
 

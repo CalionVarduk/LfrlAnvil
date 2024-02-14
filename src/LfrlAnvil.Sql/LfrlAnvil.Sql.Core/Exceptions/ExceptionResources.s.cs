@@ -37,6 +37,7 @@ public static class ExceptionResources
     public const string SourceTypeCannotBeNullable = "Source type cannot be nullable.";
 
     internal const string SchemaQuickRemovalIsUnsupported = "Schema quick-removal is unsupported.";
+    internal const string UnknownObjectsAreUnsupported = "Unknown objects are unsupported.";
 
     internal static readonly string DataReaderDoesNotSupportAsyncQueries =
         $"Only data readers of type '{typeof( DbDataReader ).GetDebugString()}' support asynchronous queries.";

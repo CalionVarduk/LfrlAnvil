@@ -34,13 +34,13 @@ public sealed class SqliteViewDataFieldCollection : ISqlViewDataFieldCollection
     }
 
     [Pure]
-    public SqliteViewDataField GetField(string name)
+    public SqliteViewDataField Get(string name)
     {
         return _map[name];
     }
 
     [Pure]
-    public SqliteViewDataField? TryGetField(string name)
+    public SqliteViewDataField? TryGet(string name)
     {
         return _map.GetValueOrDefault( name );
     }
@@ -82,15 +82,15 @@ public sealed class SqliteViewDataFieldCollection : ISqlViewDataFieldCollection
     }
 
     [Pure]
-    ISqlViewDataField ISqlViewDataFieldCollection.GetField(string name)
+    ISqlViewDataField ISqlViewDataFieldCollection.Get(string name)
     {
-        return GetField( name );
+        return Get( name );
     }
 
     [Pure]
-    ISqlViewDataField? ISqlViewDataFieldCollection.TryGetField(string name)
+    ISqlViewDataField? ISqlViewDataFieldCollection.TryGet(string name)
     {
-        return TryGetField( name );
+        return TryGet( name );
     }
 
     [Pure]

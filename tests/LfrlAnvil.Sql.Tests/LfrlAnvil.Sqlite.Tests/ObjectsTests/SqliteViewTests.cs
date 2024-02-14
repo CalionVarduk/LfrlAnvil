@@ -22,12 +22,12 @@ public class SqliteViewTests : TestsBase
                 .Select( s => new[] { s.From["a"].AsSelf(), s.From["b"].As( "x" ), s.From["c"].AsSelf() } ) );
 
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
-        var schema = db.Schemas.GetSchema( "foo" );
+        var schema = db.Schemas.Get( "foo" );
 
         ISqlView sut = schema.Objects.GetView( "V" );
-        var a = sut.DataFields.GetField( "a" );
-        var x = sut.DataFields.GetField( "x" );
-        var c = sut.DataFields.GetField( "c" );
+        var a = sut.DataFields.Get( "a" );
+        var x = sut.DataFields.Get( "x" );
+        var c = sut.DataFields.Get( "c" );
 
         using ( new AssertionScope() )
         {
@@ -79,7 +79,7 @@ public class SqliteViewTests : TestsBase
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
         ISqlViewDataFieldCollection sut = db.Schemas.Default.Objects.GetView( "V" ).DataFields;
 
-        var result = sut.GetField( "F2" );
+        var result = sut.Get( "F2" );
 
         result.Should().BeSameAs( sut.First( f => f.Name == "F2" ) );
     }
@@ -95,7 +95,7 @@ public class SqliteViewTests : TestsBase
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
         ISqlViewDataFieldCollection sut = db.Schemas.Default.Objects.GetView( "V" ).DataFields;
 
-        var action = Lambda.Of( () => sut.GetField( "F2" ) );
+        var action = Lambda.Of( () => sut.Get( "F2" ) );
 
         action.Should().ThrowExactly<KeyNotFoundException>();
     }
@@ -111,7 +111,7 @@ public class SqliteViewTests : TestsBase
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
         ISqlViewDataFieldCollection sut = db.Schemas.Default.Objects.GetView( "V" ).DataFields;
 
-        var result = sut.TryGetField( "F2" );
+        var result = sut.TryGet( "F2" );
 
         result.Should().BeSameAs( sut.First( f => f.Name == "F2" ) );
     }
@@ -127,7 +127,7 @@ public class SqliteViewTests : TestsBase
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
         ISqlViewDataFieldCollection sut = db.Schemas.Default.Objects.GetView( "V" ).DataFields;
 
-        var result = sut.TryGetField( "F2" );
+        var result = sut.TryGet( "F2" );
 
         result.Should().BeNull();
     }

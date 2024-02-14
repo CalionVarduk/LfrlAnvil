@@ -12,8 +12,8 @@ public interface ISqlSchemaCollection : IReadOnlyCollection<ISqlSchema>
     bool Contains(string name);
 
     [Pure]
-    ISqlSchema GetSchema(string name);
+    ISqlSchema Get(string name);
 
     [Pure]
-    ISqlSchema? TryGetSchema(string name);
+    ISqlSchema? TryGet(string name);
 }

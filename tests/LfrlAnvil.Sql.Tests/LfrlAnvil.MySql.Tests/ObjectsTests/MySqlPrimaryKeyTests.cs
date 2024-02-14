@@ -15,7 +15,7 @@ public class MySqlPrimaryKeyTests : TestsBase
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() ).SetName( "PK_TEST" );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        var schema = db.Schemas.GetSchema( "foo" );
+        var schema = db.Schemas.Get( "foo" );
 
         ISqlPrimaryKey sut = schema.Objects.GetTable( "T" ).Constraints.PrimaryKey;
         var index = schema.Objects.GetIndex( "UIX_T_C1A" );

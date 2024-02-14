@@ -12,8 +12,8 @@ public interface ISqlColumn : ISqlObject
     SqlColumnNode Node { get; }
 
     [Pure]
-    ISqlIndexColumn Asc();
+    SqlIndexColumn<ISqlColumn> Asc();
 
     [Pure]
-    ISqlIndexColumn Desc();
+    SqlIndexColumn<ISqlColumn> Desc();
 }

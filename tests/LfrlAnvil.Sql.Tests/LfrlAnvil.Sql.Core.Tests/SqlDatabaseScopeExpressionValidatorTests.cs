@@ -4,16 +4,15 @@ using LfrlAnvil.Sql.Expressions.Functions;
 using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
+using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Internal;
-using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Tests.Helpers;
 
 namespace LfrlAnvil.Sql.Tests;
 
-// TODO: uncomment tests when ready
 public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 {
-    private readonly SqlSchemaBuilder _schema;
+    private readonly SqlSchemaBuilderMock _schema;
     private readonly SqlSchemaScopeExpressionValidator _sut;
 
     public SqlSchemaScopeExpressionValidatorTests()
@@ -48,21 +47,21 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         }
     }
 
-    // [Fact]
-    // public void VisitRawDataField_ShouldVisitRecordSet_WithErrors()
-    // {
-    //     var table = _schema.Objects.CreateTable( "T" );
-    //     table.Constraints.SetPrimaryKey( table.Columns.Create( "A" ).Asc() );
-    //     var node = SqlNode.RawDataField( SqlDatabaseMock.Create( _db ).Schemas.Default.Objects.GetTable( "T" ).RecordSet, "b" );
-    //
-    //     _sut.VisitRawDataField( node );
-    //
-    //     using ( new AssertionScope() )
-    //     {
-    //         _sut.GetErrors().Should().HaveCount( 1 );
-    //         _sut.GetReferencedObjects().Should().BeEmpty();
-    //     }
-    // }
+    [Fact]
+    public void VisitRawDataField_ShouldVisitRecordSet_WithErrors()
+    {
+        var table = _schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "A" ).Asc() );
+        var node = SqlNode.RawDataField( SqlDatabaseMock.Create( _schema.Database ).Schemas.Default.Objects.GetTable( "T" ).Node, "b" );
+
+        _sut.VisitRawDataField( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 1 );
+            _sut.GetReferencedObjects().Should().BeEmpty();
+        }
+    }
 
     [Fact]
     public void VisitNull_ShouldDoNothing()
@@ -101,21 +100,21 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         }
     }
 
-    // [Fact]
-    // public void VisitColumn_ShouldRegisterError()
-    // {
-    //     var table = _schema.Objects.CreateTable( "T" );
-    //     table.Constraints.SetPrimaryKey( table.Columns.Create( "A" ).Asc() );
-    //     var node = SqlDatabaseMock.Create( _db ).Schemas.Default.Objects.GetTable( "T" ).RecordSet.GetField( "A" );
-    //
-    //     _sut.VisitColumn( node );
-    //
-    //     using ( new AssertionScope() )
-    //     {
-    //         _sut.GetErrors().Should().HaveCount( 1 );
-    //         _sut.GetReferencedObjects().Should().BeEmpty();
-    //     }
-    // }
+    [Fact]
+    public void VisitColumn_ShouldRegisterError()
+    {
+        var table = _schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "A" ).Asc() );
+        var node = SqlDatabaseMock.Create( _schema.Database ).Schemas.Default.Objects.GetTable( "T" ).Node.GetField( "A" );
+
+        _sut.VisitColumn( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 1 );
+            _sut.GetReferencedObjects().Should().BeEmpty();
+        }
+    }
 
     [Fact]
     public void VisitColumnBuilder_ShouldBeSuccessful_WhenColumnBelongsToTheSameDatabaseAndIsNotRemoved()
@@ -220,23 +219,23 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         }
     }
 
-    // [Fact]
-    // public void VisitViewDataField_ShouldRegisterError()
-    // {
-    //     _schema.Objects.CreateView(
-    //         "V",
-    //         SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["a"].AsSelf() } ) );
-    //
-    //     var node = SqlDatabaseMock.Create( _db ).Schemas.Default.Objects.GetView( "V" ).RecordSet.GetField( "a" );
-    //
-    //     _sut.VisitViewDataField( node );
-    //
-    //     using ( new AssertionScope() )
-    //     {
-    //         _sut.GetErrors().Should().HaveCount( 1 );
-    //         _sut.GetReferencedObjects().Should().BeEmpty();
-    //     }
-    // }
+    [Fact]
+    public void VisitViewDataField_ShouldRegisterError()
+    {
+        _schema.Objects.CreateView(
+            "V",
+            SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["a"].AsSelf() } ) );
+
+        var node = SqlDatabaseMock.Create( _schema.Database ).Schemas.Default.Objects.GetView( "V" ).Node.GetField( "a" );
+
+        _sut.VisitViewDataField( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 1 );
+            _sut.GetReferencedObjects().Should().BeEmpty();
+        }
+    }
 
     [Fact]
     public void VisitNegate_ShouldVisitValue()
@@ -1343,21 +1342,21 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         }
     }
 
-    // [Fact]
-    // public void VisitTable_ShouldRegisterError()
-    // {
-    //     var table = _schema.Objects.CreateTable( "T" );
-    //     table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
-    //     var node = SqlDatabaseMock.Create( _db ).Schemas.Default.Objects.GetTable( "T" ).RecordSet;
-    //
-    //     _sut.VisitTable( node );
-    //
-    //     using ( new AssertionScope() )
-    //     {
-    //         _sut.GetErrors().Should().HaveCount( 1 );
-    //         _sut.GetReferencedObjects().Should().BeEmpty();
-    //     }
-    // }
+    [Fact]
+    public void VisitTable_ShouldRegisterError()
+    {
+        var table = _schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
+        var node = SqlDatabaseMock.Create( _schema.Database ).Schemas.Default.Objects.GetTable( "T" ).Node;
+
+        _sut.VisitTable( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 1 );
+            _sut.GetReferencedObjects().Should().BeEmpty();
+        }
+    }
 
     [Fact]
     public void VisitTableBuilder_ShouldBeSuccessful_WhenTableBelongsToTheSameDatabaseAndIsNotRemoved()
@@ -1421,20 +1420,20 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
         }
     }
 
-    // [Fact]
-    // public void VisitView_ShouldRegisterError()
-    // {
-    //     _schema.Objects.CreateView( "V", SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.GetAll() } ) );
-    //     var node = SqlDatabaseMock.Create( _db ).Schemas.Default.Objects.GetView( "V" ).RecordSet;
-    //
-    //     _sut.VisitView( node );
-    //
-    //     using ( new AssertionScope() )
-    //     {
-    //         _sut.GetErrors().Should().HaveCount( 1 );
-    //         _sut.GetReferencedObjects().Should().BeEmpty();
-    //     }
-    // }
+    [Fact]
+    public void VisitView_ShouldRegisterError()
+    {
+        _schema.Objects.CreateView( "V", SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.GetAll() } ) );
+        var node = SqlDatabaseMock.Create( _schema.Database ).Schemas.Default.Objects.GetView( "V" ).Node;
+
+        _sut.VisitView( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 1 );
+            _sut.GetReferencedObjects().Should().BeEmpty();
+        }
+    }
 
     [Fact]
     public void VisitViewBuilder_ShouldBeSuccessful_WhenViewBelongsToTheSameDatabaseAndIsNotRemoved()

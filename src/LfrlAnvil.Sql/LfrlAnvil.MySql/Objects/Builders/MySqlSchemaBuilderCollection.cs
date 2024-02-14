@@ -37,13 +37,13 @@ public sealed class MySqlSchemaBuilderCollection : ISqlSchemaBuilderCollection
     }
 
     [Pure]
-    public MySqlSchemaBuilder GetSchema(string name)
+    public MySqlSchemaBuilder Get(string name)
     {
         return _map[name];
     }
 
     [Pure]
-    public MySqlSchemaBuilder? TryGetSchema(string name)
+    public MySqlSchemaBuilder? TryGet(string name)
     {
         return _map.GetValueOrDefault( name );
     }
@@ -137,13 +137,13 @@ public sealed class MySqlSchemaBuilderCollection : ISqlSchemaBuilderCollection
     [Pure]
     ISqlSchemaBuilder ISqlSchemaBuilderCollection.Get(string name)
     {
-        return GetSchema( name );
+        return Get( name );
     }
 
     [Pure]
     ISqlSchemaBuilder? ISqlSchemaBuilderCollection.TryGet(string name)
     {
-        return TryGetSchema( name );
+        return TryGet( name );
     }
 
     ISqlSchemaBuilder ISqlSchemaBuilderCollection.Create(string name)

@@ -110,6 +110,13 @@ public abstract class SqlTableBuilder : SqlObjectBuilder, ISqlTableBuilder
         _info = null;
     }
 
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal SqlRecordSetInfo? GetCachedInfo()
+    {
+        return _info;
+    }
+
     ISqlTableBuilder ISqlTableBuilder.SetName(string name)
     {
         return SetName( name );

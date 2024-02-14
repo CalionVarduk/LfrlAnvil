@@ -23,7 +23,7 @@ public class MySqlColumnTests : TestsBase
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
         var table = db.Schemas.Default.Objects.GetTable( "T" );
 
-        ISqlColumn sut = table.Columns.GetColumn( "C" );
+        ISqlColumn sut = table.Columns.Get( "C" );
 
         using ( new AssertionScope() )
         {
@@ -50,7 +50,7 @@ public class MySqlColumnTests : TestsBase
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
         var table = db.Schemas.Default.Objects.GetTable( "T" );
 
-        ISqlColumn sut = table.Columns.GetColumn( "C" );
+        ISqlColumn sut = table.Columns.Get( "C" );
 
         using ( new AssertionScope() )
         {

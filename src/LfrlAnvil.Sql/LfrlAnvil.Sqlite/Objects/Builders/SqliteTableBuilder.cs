@@ -168,7 +168,7 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
             return;
 
         SqliteHelpers.AssertName( name );
-        var obj = Schema.Objects.TryGetObject( name );
+        var obj = Schema.Objects.TryGet( name );
         if ( obj is not null )
             throw new SqliteObjectBuilderException( ExceptionResources.NameIsAlreadyTaken( obj, name ) );
 

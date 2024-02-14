@@ -18,7 +18,7 @@ public class SqliteCheckTests : TestsBase
         tableBuilder.Constraints.CreateCheck( "CHK_T_0", column.Node > SqlNode.Literal( 0 ) );
 
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
-        var table = db.Schemas.GetSchema( "foo" ).Objects.GetTable( "T" );
+        var table = db.Schemas.Get( "foo" ).Objects.GetTable( "T" );
 
         ISqlCheck sut = table.Constraints.GetCheck( "CHK_T_0" );
 

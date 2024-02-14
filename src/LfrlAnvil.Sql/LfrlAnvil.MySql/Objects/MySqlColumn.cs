@@ -35,28 +35,28 @@ public sealed class MySqlColumn : MySqlObject, ISqlColumn
     }
 
     [Pure]
-    public MySqlIndexColumn Asc()
+    public SqlIndexColumn<MySqlColumn> Asc()
     {
-        return MySqlIndexColumn.Asc( this );
+        return SqlIndexColumn.CreateAsc( this );
     }
 
     [Pure]
-    public MySqlIndexColumn Desc()
+    public SqlIndexColumn<MySqlColumn> Desc()
     {
-        return MySqlIndexColumn.Desc( this );
+        return SqlIndexColumn.CreateDesc( this );
     }
 
     ISqlTable ISqlColumn.Table => Table;
     ISqlColumnTypeDefinition ISqlColumn.TypeDefinition => TypeDefinition;
 
     [Pure]
-    ISqlIndexColumn ISqlColumn.Asc()
+    SqlIndexColumn<ISqlColumn> ISqlColumn.Asc()
     {
         return Asc();
     }
 
     [Pure]
-    ISqlIndexColumn ISqlColumn.Desc()
+    SqlIndexColumn<ISqlColumn> ISqlColumn.Desc()
     {
         return Desc();
     }

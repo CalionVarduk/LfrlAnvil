@@ -32,18 +32,20 @@ public sealed class MySqlDatabase : ISqlDatabase
         Version version)
     {
         _connectionString = connectionString;
+        VersionRecordsQuery = versionRecordsQuery;
         Version = version;
+        Dialect = builder.Dialect;
         DataTypes = builder.DataTypes;
         TypeDefinitions = builder.TypeDefinitions;
         NodeInterpreters = builder.NodeInterpreters;
         QueryReaders = builder.QueryReaders;
         ParameterBinders = builder.ParameterBinders;
         ServerVersion = builder.ServerVersion;
-        VersionRecordsQuery = versionRecordsQuery;
         Schemas = new MySqlSchemaCollection( this, builder.Schemas );
         _connectionChangeCallbacks = builder.ConnectionChanges.GetCallbacksArray();
     }
 
+    public SqlDialect Dialect { get; }
     public Version Version { get; }
     public MySqlSchemaCollection Schemas { get; }
     public MySqlDataTypeProvider DataTypes { get; }
@@ -121,7 +123,7 @@ public sealed class MySqlDatabase : ISqlDatabase
     }
 
     [Pure]
-    async ValueTask<DbConnection> ISqlDatabase.ConnectAsync(CancellationToken cancellationToken)
+    async ValueTask<IDbConnection> ISqlDatabase.ConnectAsync(CancellationToken cancellationToken)
     {
         return await ConnectAsync( cancellationToken ).ConfigureAwait( false );
     }

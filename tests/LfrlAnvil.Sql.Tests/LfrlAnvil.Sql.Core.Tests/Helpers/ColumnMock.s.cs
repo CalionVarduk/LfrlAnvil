@@ -18,13 +18,8 @@ public static class ColumnMock
         typeDef.RuntimeType.Returns( typeof( T ) );
         result.TypeDefinition.Returns( typeDef );
 
-        var asc = Substitute.For<ISqlIndexColumn>();
-        asc.Column.Returns( result );
-        asc.Ordering.Returns( OrderBy.Asc );
-
-        var desc = Substitute.For<ISqlIndexColumn>();
-        desc.Column.Returns( result );
-        desc.Ordering.Returns( OrderBy.Desc );
+        var asc = SqlIndexColumn.CreateAsc( result );
+        var desc = SqlIndexColumn.CreateDesc( result );
 
         result.Asc().Returns( asc );
         result.Desc().Returns( desc );

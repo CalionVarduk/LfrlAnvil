@@ -19,7 +19,7 @@ public class SqlIndexColumnBuilderTests : TestsBase
     }
 
     [Fact]
-    public void CreateDesc_ShouldCreateWithAscOrdering()
+    public void CreateDesc_ShouldCreateWithDescOrdering()
     {
         var column = SqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" ).Columns.Create( "C" );
         var sut = SqlIndexColumnBuilder.CreateDesc( column );

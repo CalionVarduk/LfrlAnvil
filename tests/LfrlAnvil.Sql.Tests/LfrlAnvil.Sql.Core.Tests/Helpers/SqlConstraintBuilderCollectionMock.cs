@@ -98,4 +98,11 @@ public sealed class SqlConstraintBuilderCollectionMock : SqlConstraintBuilderCol
     {
         return ReinterpretCast.To<SqlCheckBuilderMock>( base.CreateCheck( name, condition ) );
     }
+
+    public SqlUnknownObjectBuilderMock CreateUnknown(string name, bool useDefaultImplementation, bool deferCreation)
+    {
+        var result = new SqlUnknownObjectBuilderMock( Table, name, useDefaultImplementation, deferCreation );
+        AddToCollection( this, result );
+        return result;
+    }
 }

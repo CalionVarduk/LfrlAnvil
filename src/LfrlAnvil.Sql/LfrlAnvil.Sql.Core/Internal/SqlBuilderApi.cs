@@ -33,6 +33,19 @@ public abstract class SqlBuilderApi
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    protected static void AddToCollection(SqlObjectBuilderCollection collection, SqlObjectBuilder obj)
+    {
+        collection.Add( obj );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    protected static void AddToCollection(SqlConstraintBuilderCollection collection, SqlConstraintBuilder obj)
+    {
+        AddToCollection( obj.Table.Schema.Objects, obj );
+        collection.Add( obj );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     protected static void ChangeNameInCollection(SqlColumnBuilderCollection collection, SqlColumnBuilder obj, string newName)
     {
         collection.ChangeName( obj, newName );

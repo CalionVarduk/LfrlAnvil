@@ -34,13 +34,13 @@ public sealed class MySqlViewDataFieldCollection : ISqlViewDataFieldCollection
     }
 
     [Pure]
-    public MySqlViewDataField GetField(string name)
+    public MySqlViewDataField Get(string name)
     {
         return _map[name];
     }
 
     [Pure]
-    public MySqlViewDataField? TryGetField(string name)
+    public MySqlViewDataField? TryGet(string name)
     {
         return _map.GetValueOrDefault( name );
     }
@@ -82,15 +82,15 @@ public sealed class MySqlViewDataFieldCollection : ISqlViewDataFieldCollection
     }
 
     [Pure]
-    ISqlViewDataField ISqlViewDataFieldCollection.GetField(string name)
+    ISqlViewDataField ISqlViewDataFieldCollection.Get(string name)
     {
-        return GetField( name );
+        return Get( name );
     }
 
     [Pure]
-    ISqlViewDataField? ISqlViewDataFieldCollection.TryGetField(string name)
+    ISqlViewDataField? ISqlViewDataFieldCollection.TryGet(string name)
     {
-        return TryGetField( name );
+        return TryGet( name );
     }
 
     [Pure]

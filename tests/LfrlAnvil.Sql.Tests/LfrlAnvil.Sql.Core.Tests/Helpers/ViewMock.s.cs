@@ -35,8 +35,8 @@ public static class ViewMock
         dataFields.Count.Returns( fields.Count );
         dataFields.GetEnumerator().Returns( _ => fields.GetEnumerator() );
         dataFields.Contains( Arg.Any<string>() ).Returns( i => fields.Any( f => f.Name == i.ArgAt<string>( 0 ) ) );
-        dataFields.GetField( Arg.Any<string>() ).Returns( i => fields.First( f => f.Name == i.ArgAt<string>( 0 ) ) );
-        dataFields.TryGetField( Arg.Any<string>() ).Returns( i => fields.FirstOrDefault( f => f.Name == i.ArgAt<string>( 0 ) ) );
+        dataFields.Get( Arg.Any<string>() ).Returns( i => fields.First( f => f.Name == i.ArgAt<string>( 0 ) ) );
+        dataFields.TryGet( Arg.Any<string>() ).Returns( i => fields.FirstOrDefault( f => f.Name == i.ArgAt<string>( 0 ) ) );
         result.DataFields.Returns( dataFields );
 
         var recordSet = SqlNode.View( result );

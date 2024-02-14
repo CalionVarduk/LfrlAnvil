@@ -7,12 +7,12 @@ namespace LfrlAnvil.Sql.Tests.Helpers;
 public static class PrimaryKeyMock
 {
     [Pure]
-    public static ISqlPrimaryKey Create(params ISqlIndexColumn[] columns)
+    public static ISqlPrimaryKey Create(params SqlIndexColumn<ISqlColumn>[] columns)
     {
         var result = Substitute.For<ISqlPrimaryKey>();
         result.Type.Returns( SqlObjectType.PrimaryKey );
         var index = Substitute.For<ISqlIndex>();
-        index.Columns.Returns( new ReadOnlyMemory<ISqlIndexColumn>( columns ) );
+        index.Columns.Returns( columns );
         result.Index.Returns( index );
         return result;
     }

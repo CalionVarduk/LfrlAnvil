@@ -33,13 +33,13 @@ public sealed class SqliteObjectCollection : ISqlObjectCollection
     }
 
     [Pure]
-    public SqliteObject GetObject(string name)
+    public SqliteObject Get(string name)
     {
         return _map[name];
     }
 
     [Pure]
-    public SqliteObject? TryGetObject(string name)
+    public SqliteObject? TryGet(string name)
     {
         return _map.GetValueOrDefault( name );
     }
@@ -231,15 +231,15 @@ public sealed class SqliteObjectCollection : ISqlObjectCollection
     }
 
     [Pure]
-    ISqlObject ISqlObjectCollection.GetObject(string name)
+    ISqlObject ISqlObjectCollection.Get(string name)
     {
-        return GetObject( name );
+        return Get( name );
     }
 
     [Pure]
-    ISqlObject? ISqlObjectCollection.TryGetObject(string name)
+    ISqlObject? ISqlObjectCollection.TryGet(string name)
     {
-        return TryGetObject( name );
+        return TryGet( name );
     }
 
     [Pure]

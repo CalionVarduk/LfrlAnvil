@@ -356,6 +356,12 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void Add(SqlObjectBuilder obj)
+    {
+        _map.Add( obj.Name, obj );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void Remove(SqlObjectBuilder obj)
     {
         _map.Remove( obj.Name );

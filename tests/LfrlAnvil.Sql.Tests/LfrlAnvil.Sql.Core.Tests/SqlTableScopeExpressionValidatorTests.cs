@@ -6,15 +6,13 @@ using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Internal;
-using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Tests.Helpers;
 
 namespace LfrlAnvil.Sql.Tests;
 
-// TODO: uncomment tests when ready
 public class SqlTableScopeExpressionValidatorTests : TestsBase
 {
-    private readonly SqlTableBuilder _table;
+    private readonly SqlTableBuilderMock _table;
     private readonly SqlTableScopeExpressionValidator _sut;
 
     public SqlTableScopeExpressionValidatorTests()
@@ -62,17 +60,17 @@ public class SqlTableScopeExpressionValidatorTests : TestsBase
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 
-    // [Fact]
-    // public void VisitColumn_ShouldRegisterError()
-    // {
-    //     var table = _table.Database.Schemas.Default.Objects.CreateTable( "T2" );
-    //     table.Constraints.SetPrimaryKey( table.Columns.Create( "A" ).Asc() );
-    //     var node = SqlDatabaseMock.Create( _table.Database ).Schemas.Default.Objects.GetTable( "T2" ).RecordSet.GetField( "A" );
-    //
-    //     _sut.VisitColumn( node );
-    //
-    //     _sut.GetErrors().Should().HaveCount( 1 );
-    // }
+    [Fact]
+    public void VisitColumn_ShouldRegisterError()
+    {
+        var table = _table.Database.Schemas.Default.Objects.CreateTable( "T2" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "A" ).Asc() );
+        var node = SqlDatabaseMock.Create( _table.Database ).Schemas.Default.Objects.GetTable( "T2" ).Node.GetField( "A" );
+
+        _sut.VisitColumn( node );
+
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
 
     [Fact]
     public void VisitColumnBuilder_ShouldBeSuccessful_WhenColumnBelongsToTheSameTableAndIsNotRemoved()
@@ -135,19 +133,19 @@ public class SqlTableScopeExpressionValidatorTests : TestsBase
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 
-    // [Fact]
-    // public void VisitViewDataField_ShouldRegisterError()
-    // {
-    //     _table.Database.Schemas.Default.Objects.CreateView(
-    //         "V",
-    //         SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["a"].AsSelf() } ) );
-    //
-    //     var node = SqlDatabaseMock.Create( _table.Database ).Schemas.Default.Objects.GetView( "V" ).RecordSet.GetField( "a" );
-    //
-    //     _sut.VisitViewDataField( node );
-    //
-    //     _sut.GetErrors().Should().HaveCount( 1 );
-    // }
+    [Fact]
+    public void VisitViewDataField_ShouldRegisterError()
+    {
+        _table.Database.Schemas.Default.Objects.CreateView(
+            "V",
+            SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["a"].AsSelf() } ) );
+
+        var node = SqlDatabaseMock.Create( _table.Database ).Schemas.Default.Objects.GetView( "V" ).Node.GetField( "a" );
+
+        _sut.VisitViewDataField( node );
+
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
 
     [Fact]
     public void VisitNegate_ShouldVisitValue()
@@ -828,17 +826,17 @@ public class SqlTableScopeExpressionValidatorTests : TestsBase
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 
-    // [Fact]
-    // public void VisitTable_ShouldRegisterError()
-    // {
-    //     var table = _table.Database.Schemas.Default.Objects.CreateTable( "T2" );
-    //     table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
-    //     var node = SqlDatabaseMock.Create( _table.Database ).Schemas.Default.Objects.GetTable( "T2" ).RecordSet;
-    //
-    //     _sut.VisitTable( node );
-    //
-    //     _sut.GetErrors().Should().HaveCount( 1 );
-    // }
+    [Fact]
+    public void VisitTable_ShouldRegisterError()
+    {
+        var table = _table.Database.Schemas.Default.Objects.CreateTable( "T2" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
+        var node = SqlDatabaseMock.Create( _table.Database ).Schemas.Default.Objects.GetTable( "T2" ).Node;
+
+        _sut.VisitTable( node );
+
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
 
     [Fact]
     public void VisitTableBuilder_ShouldDoNothing_WhenTableIsTheSame()
@@ -859,19 +857,19 @@ public class SqlTableScopeExpressionValidatorTests : TestsBase
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 
-    // [Fact]
-    // public void VisitView_ShouldRegisterError()
-    // {
-    //     _table.Database.Schemas.Default.Objects.CreateView(
-    //         "V",
-    //         SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.GetAll() } ) );
-    //
-    //     var node = SqlDatabaseMock.Create( _table.Database ).Schemas.Default.Objects.GetView( "V" ).RecordSet;
-    //
-    //     _sut.VisitView( node );
-    //
-    //     _sut.GetErrors().Should().HaveCount( 1 );
-    // }
+    [Fact]
+    public void VisitView_ShouldRegisterError()
+    {
+        _table.Database.Schemas.Default.Objects.CreateView(
+            "V",
+            SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.GetAll() } ) );
+
+        var node = SqlDatabaseMock.Create( _table.Database ).Schemas.Default.Objects.GetView( "V" ).Node;
+
+        _sut.VisitView( node );
+
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
 
     [Fact]
     public void VisitViewBuilder_ShouldRegisterError()

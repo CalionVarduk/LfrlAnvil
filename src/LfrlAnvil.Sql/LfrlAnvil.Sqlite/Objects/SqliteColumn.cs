@@ -35,28 +35,28 @@ public sealed class SqliteColumn : SqliteObject, ISqlColumn
     }
 
     [Pure]
-    public SqliteIndexColumn Asc()
+    public SqlIndexColumn<SqliteColumn> Asc()
     {
-        return SqliteIndexColumn.Asc( this );
+        return SqlIndexColumn.CreateAsc( this );
     }
 
     [Pure]
-    public SqliteIndexColumn Desc()
+    public SqlIndexColumn<SqliteColumn> Desc()
     {
-        return SqliteIndexColumn.Desc( this );
+        return SqlIndexColumn.CreateDesc( this );
     }
 
     ISqlTable ISqlColumn.Table => Table;
     ISqlColumnTypeDefinition ISqlColumn.TypeDefinition => TypeDefinition;
 
     [Pure]
-    ISqlIndexColumn ISqlColumn.Asc()
+    SqlIndexColumn<ISqlColumn> ISqlColumn.Asc()
     {
         return Asc();
     }
 
     [Pure]
-    ISqlIndexColumn ISqlColumn.Desc()
+    SqlIndexColumn<ISqlColumn> ISqlColumn.Desc()
     {
         return Desc();
     }

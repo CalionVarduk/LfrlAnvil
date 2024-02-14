@@ -36,13 +36,13 @@ public sealed class MySqlObjectBuilderCollection : ISqlObjectBuilderCollection
     }
 
     [Pure]
-    public MySqlObjectBuilder GetObject(string name)
+    public MySqlObjectBuilder Get(string name)
     {
         return _map[name];
     }
 
     [Pure]
-    public MySqlObjectBuilder? TryGetObject(string name)
+    public MySqlObjectBuilder? TryGet(string name)
     {
         return _map.GetValueOrDefault( name );
     }
@@ -371,13 +371,13 @@ public sealed class MySqlObjectBuilderCollection : ISqlObjectBuilderCollection
     [Pure]
     ISqlObjectBuilder ISqlObjectBuilderCollection.Get(string name)
     {
-        return GetObject( name );
+        return Get( name );
     }
 
     [Pure]
     ISqlObjectBuilder? ISqlObjectBuilderCollection.TryGet(string name)
     {
-        return TryGetObject( name );
+        return TryGet( name );
     }
 
     [Pure]

@@ -48,13 +48,13 @@ public sealed class SqliteColumnBuilderCollection : ISqlColumnBuilderCollection
     }
 
     [Pure]
-    public SqliteColumnBuilder GetColumn(string name)
+    public SqliteColumnBuilder Get(string name)
     {
         return _map[name];
     }
 
     [Pure]
-    public SqliteColumnBuilder? TryGetColumn(string name)
+    public SqliteColumnBuilder? TryGet(string name)
     {
         return _map.GetValueOrDefault( name );
     }
@@ -158,13 +158,13 @@ public sealed class SqliteColumnBuilderCollection : ISqlColumnBuilderCollection
     [Pure]
     ISqlColumnBuilder ISqlColumnBuilderCollection.Get(string name)
     {
-        return GetColumn( name );
+        return Get( name );
     }
 
     [Pure]
     ISqlColumnBuilder? ISqlColumnBuilderCollection.TryGet(string name)
     {
-        return TryGetColumn( name );
+        return TryGet( name );
     }
 
     ISqlColumnBuilder ISqlColumnBuilderCollection.Create(string name)

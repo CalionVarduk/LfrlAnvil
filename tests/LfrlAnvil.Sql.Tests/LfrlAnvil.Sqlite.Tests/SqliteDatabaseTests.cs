@@ -56,7 +56,7 @@ public class SqliteDatabaseTests : TestsBase
         var db = new SqliteDatabaseMock( dbBuilder );
         ISqlSchemaCollection sut = db.Schemas;
 
-        var result = sut.GetSchema( "foo" );
+        var result = sut.Get( "foo" );
 
         result.Should().BeSameAs( sut.Default );
     }
@@ -69,7 +69,7 @@ public class SqliteDatabaseTests : TestsBase
         var db = new SqliteDatabaseMock( dbBuilder );
         ISqlSchemaCollection sut = db.Schemas;
 
-        var action = Lambda.Of( () => sut.GetSchema( "bar" ) );
+        var action = Lambda.Of( () => sut.Get( "bar" ) );
 
         action.Should().ThrowExactly<KeyNotFoundException>();
     }
@@ -82,7 +82,7 @@ public class SqliteDatabaseTests : TestsBase
         var db = new SqliteDatabaseMock( dbBuilder );
         ISqlSchemaCollection sut = db.Schemas;
 
-        var result = sut.TryGetSchema( "foo" );
+        var result = sut.TryGet( "foo" );
 
         result.Should().BeSameAs( sut.Default );
     }
@@ -95,7 +95,7 @@ public class SqliteDatabaseTests : TestsBase
         var db = new SqliteDatabaseMock( dbBuilder );
         ISqlSchemaCollection sut = db.Schemas;
 
-        var result = sut.TryGetSchema( "bar" );
+        var result = sut.TryGet( "bar" );
 
         result.Should().BeNull();
     }

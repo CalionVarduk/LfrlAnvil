@@ -4447,7 +4447,7 @@ BEGIN" );
         if ( pkColumnNames.Length == 0 )
             pkColumnNames = columnNames;
 
-        var pkColumns = pkColumnNames.Select( n => table.Columns.GetColumn( n ).Asc().UnsafeReinterpretAs<ISqlColumnBuilder>() ).ToArray();
+        var pkColumns = pkColumnNames.Select( n => table.Columns.Get( n ).Asc().UnsafeReinterpretAs<ISqlColumnBuilder>() ).ToArray();
         table.Constraints.SetPrimaryKey( pkColumns );
         return table;
     }
@@ -4472,7 +4472,7 @@ BEGIN" );
     {
         var builder = CreateTableBuilder( schemaName, tableName, columnNames, pkColumnNames );
         var db = new SqliteDatabaseMock( builder.Database );
-        return db.Schemas.GetSchema( schemaName ).Objects.GetTable( tableName );
+        return db.Schemas.Get( schemaName ).Objects.GetTable( tableName );
     }
 
     [Pure]
@@ -4489,7 +4489,7 @@ BEGIN" );
     {
         var builder = CreateViewBuilder( schemaName, viewName, source );
         var db = new SqliteDatabaseMock( builder.Database );
-        return db.Schemas.GetSchema( schemaName ).Objects.GetView( viewName );
+        return db.Schemas.Get( schemaName ).Objects.GetView( viewName );
     }
 
     private sealed class FunctionMock : SqlFunctionExpressionNode

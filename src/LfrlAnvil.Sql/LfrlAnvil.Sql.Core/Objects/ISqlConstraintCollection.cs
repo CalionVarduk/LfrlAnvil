@@ -12,10 +12,10 @@ public interface ISqlConstraintCollection : IReadOnlyCollection<ISqlConstraint>
     bool Contains(string name);
 
     [Pure]
-    ISqlConstraint GetConstraint(string name);
+    ISqlConstraint Get(string name);
 
     [Pure]
-    ISqlConstraint? TryGetConstraint(string nam);
+    ISqlConstraint? TryGet(string nam);
 
     [Pure]
     ISqlIndex GetIndex(string name);

@@ -107,9 +107,9 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "bar" );
-            table.Constraints.GetConstraint( "bar" ).Should().BeSameAs( sut );
+            table.Constraints.Get( "bar" ).Should().BeSameAs( sut );
             table.Constraints.Contains( oldName ).Should().BeFalse();
-            schema.Objects.GetObject( "bar" ).Should().BeSameAs( sut );
+            schema.Objects.Get( "bar" ).Should().BeSameAs( sut );
             schema.Objects.Contains( oldName ).Should().BeFalse();
 
             statements.Should().HaveCount( 1 );
@@ -227,9 +227,9 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "PK_T" );
-            table.Constraints.GetConstraint( "PK_T" ).Should().BeSameAs( sut );
+            table.Constraints.Get( "PK_T" ).Should().BeSameAs( sut );
             table.Constraints.Contains( oldName ).Should().BeFalse();
-            schema.Objects.GetObject( "PK_T" ).Should().BeSameAs( sut );
+            schema.Objects.Get( "PK_T" ).Should().BeSameAs( sut );
             schema.Objects.Contains( oldName ).Should().BeFalse();
 
             statements.Should().HaveCount( 1 );

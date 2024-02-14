@@ -22,6 +22,9 @@ public abstract class SqlObjectBuilder : SqlBuilderApi, ISqlObjectBuilder
         ReferencedTargets = null;
     }
 
+    protected SqlObjectBuilder(SqlDatabaseBuilder database, string name)
+        : this( database, SqlObjectType.Unknown, name ) { }
+
     public ulong Id { get; }
     public SqlDatabaseBuilder Database { get; }
     public SqlObjectType Type { get; }

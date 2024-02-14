@@ -23,10 +23,10 @@ public class SqliteIndexTests : TestsBase
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "X" ).Asc() );
 
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
-        var schema = db.Schemas.GetSchema( "foo" );
+        var schema = db.Schemas.Get( "foo" );
         var table = schema.Objects.GetTable( "T" );
-        var c1 = table.Columns.GetColumn( "C1" );
-        var c2 = table.Columns.GetColumn( "C2" );
+        var c1 = table.Columns.Get( "C1" );
+        var c2 = table.Columns.Get( "C2" );
 
         ISqlIndex sut = schema.Objects.GetIndex( "IX_TEST" );
 
@@ -38,8 +38,8 @@ public class SqliteIndexTests : TestsBase
             sut.Name.Should().Be( "IX_TEST" );
             sut.IsUnique.Should().Be( isUnique );
             sut.IsPartial.Should().BeFalse();
-            ((SqliteIndex)sut).Columns.ToArray().Should().BeSequentiallyEqualTo( c1.Asc(), c2.Desc() );
-            sut.Columns.ToArray().Should().BeSequentiallyEqualTo( c1.Asc(), c2.Desc() );
+            ((SqliteIndex)sut).Columns.Should().BeSequentiallyEqualTo( c1.Asc(), c2.Desc() );
+            sut.Columns.Should().BeSequentiallyEqualTo( c1.Asc(), c2.Desc() );
             sut.ToString().Should().Be( "[Index] foo_IX_TEST" );
         }
     }
@@ -54,9 +54,9 @@ public class SqliteIndexTests : TestsBase
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "X" ).Asc() );
 
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
-        var schema = db.Schemas.GetSchema( "foo" );
+        var schema = db.Schemas.Get( "foo" );
         var table = schema.Objects.GetTable( "T" );
-        var c1 = table.Columns.GetColumn( "C1" );
+        var c1 = table.Columns.Get( "C1" );
 
         ISqlIndex sut = schema.Objects.GetIndex( "IX_TEST" );
 
@@ -68,7 +68,7 @@ public class SqliteIndexTests : TestsBase
             sut.Name.Should().Be( "IX_TEST" );
             sut.IsUnique.Should().BeFalse();
             sut.IsPartial.Should().BeTrue();
-            sut.Columns.ToArray().Should().BeSequentiallyEqualTo( c1.Asc() );
+            sut.Columns.Should().BeSequentiallyEqualTo( c1.Asc() );
             sut.ToString().Should().Be( "[Index] foo_IX_TEST" );
         }
     }

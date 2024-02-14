@@ -4782,7 +4782,7 @@ END;" );
         foreach ( var c in columnNames )
             table.Columns.Create( c ).SetType<TColumnType>();
 
-        var pkColumns = pkColumnNames.Select( n => table.Columns.GetColumn( n ).Asc().UnsafeReinterpretAs<ISqlColumnBuilder>() ).ToArray();
+        var pkColumns = pkColumnNames.Select( n => table.Columns.Get( n ).Asc().UnsafeReinterpretAs<ISqlColumnBuilder>() ).ToArray();
         table.Constraints.SetPrimaryKey( pkColumns );
         return table;
     }
@@ -4811,7 +4811,7 @@ END;" );
     {
         var builder = CreateTableBuilder<int>( schemaName, tableName, columnNames, pkColumnNames );
         var db = MySqlDatabaseMock.Create( builder.Database );
-        return db.Schemas.GetSchema( schemaName ).Objects.GetTable( tableName );
+        return db.Schemas.Get( schemaName ).Objects.GetTable( tableName );
     }
 
     [Pure]
@@ -4828,7 +4828,7 @@ END;" );
     {
         var builder = CreateViewBuilder( schemaName, viewName, source );
         var db = MySqlDatabaseMock.Create( builder.Database );
-        return db.Schemas.GetSchema( schemaName ).Objects.GetView( viewName );
+        return db.Schemas.Get( schemaName ).Objects.GetView( viewName );
     }
 
     private sealed class FunctionMock : SqlFunctionExpressionNode

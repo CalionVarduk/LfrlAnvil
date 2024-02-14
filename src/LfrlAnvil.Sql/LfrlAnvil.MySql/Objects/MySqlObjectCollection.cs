@@ -33,13 +33,13 @@ public sealed class MySqlObjectCollection : ISqlObjectCollection
     }
 
     [Pure]
-    public MySqlObject GetObject(string name)
+    public MySqlObject Get(string name)
     {
         return _map[name];
     }
 
     [Pure]
-    public MySqlObject? TryGetObject(string name)
+    public MySqlObject? TryGet(string name)
     {
         return _map.GetValueOrDefault( name );
     }
@@ -233,15 +233,15 @@ public sealed class MySqlObjectCollection : ISqlObjectCollection
     }
 
     [Pure]
-    ISqlObject ISqlObjectCollection.GetObject(string name)
+    ISqlObject ISqlObjectCollection.Get(string name)
     {
-        return GetObject( name );
+        return Get( name );
     }
 
     [Pure]
-    ISqlObject? ISqlObjectCollection.TryGetObject(string name)
+    ISqlObject? ISqlObjectCollection.TryGet(string name)
     {
-        return TryGetObject( name );
+        return TryGet( name );
     }
 
     [Pure]

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Data;
-using System.Data.Common;
 using System.Diagnostics.Contracts;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,6 +23,7 @@ public abstract class SqliteDatabase : ISqlDatabase
         Version version)
     {
         Version = version;
+        Dialect = builder.Dialect;
         DataTypes = builder.DataTypes;
         TypeDefinitions = builder.TypeDefinitions;
         NodeInterpreters = builder.NodeInterpreters;
@@ -34,6 +34,7 @@ public abstract class SqliteDatabase : ISqlDatabase
         Schemas = new SqliteSchemaCollection( this, builder.Schemas );
     }
 
+    public SqlDialect Dialect { get; }
     public Version Version { get; }
     public SqliteSchemaCollection Schemas { get; }
     public SqliteDataTypeProvider DataTypes { get; }
@@ -75,7 +76,7 @@ public abstract class SqliteDatabase : ISqlDatabase
     }
 
     [Pure]
-    async ValueTask<DbConnection> ISqlDatabase.ConnectAsync(CancellationToken cancellationToken)
+    async ValueTask<IDbConnection> ISqlDatabase.ConnectAsync(CancellationToken cancellationToken)
     {
         return await ConnectAsync( cancellationToken ).ConfigureAwait( false );
     }

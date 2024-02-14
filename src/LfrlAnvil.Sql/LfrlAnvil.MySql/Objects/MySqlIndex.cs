@@ -1,12 +1,12 @@
-﻿using System;
-using LfrlAnvil.Sql.Objects;
+﻿using System.Collections.Generic;
 using LfrlAnvil.MySql.Objects.Builders;
+using LfrlAnvil.Sql.Objects;
 
 namespace LfrlAnvil.MySql.Objects;
 
 public sealed class MySqlIndex : MySqlConstraint, ISqlIndex
 {
-    private readonly MySqlIndexColumn[] _columns;
+    private readonly SqlIndexColumn<ISqlColumn>[] _columns;
 
     internal MySqlIndex(MySqlTable table, MySqlIndexBuilder builder)
         : base( table, builder )
@@ -16,18 +16,18 @@ public sealed class MySqlIndex : MySqlConstraint, ISqlIndex
 
         var i = 0;
         var builderColumns = builder.Columns;
-        _columns = new MySqlIndexColumn[builderColumns.Count];
+        _columns = new SqlIndexColumn<ISqlColumn>[builderColumns.Count];
         foreach ( var c in builderColumns )
         {
-            var column = table.Columns.GetColumn( c.Column.Name );
-            _columns[i++] = new MySqlIndexColumn( column, c.Ordering );
+            var column = table.Columns.Get( c.Column.Name );
+            _columns[i++] = SqlIndexColumn.Create( column, c.Ordering );
         }
     }
 
     public bool IsUnique { get; }
     public bool IsPartial { get; }
-    public ReadOnlyMemory<MySqlIndexColumn> Columns => _columns;
+    public ReadOnlyArray<SqlIndexColumn<ISqlColumn>> Columns => _columns;
     public override MySqlDatabase Database => Table.Database;
 
-    ReadOnlyMemory<ISqlIndexColumn> ISqlIndex.Columns => _columns;
+    IReadOnlyList<SqlIndexColumn<ISqlColumn>> ISqlIndex.Columns => _columns;
 }

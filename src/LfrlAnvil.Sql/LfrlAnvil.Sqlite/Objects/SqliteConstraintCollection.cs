@@ -46,13 +46,13 @@ public sealed class SqliteConstraintCollection : ISqlConstraintCollection
     }
 
     [Pure]
-    public SqliteConstraint GetConstraint(string name)
+    public SqliteConstraint Get(string name)
     {
         return _map[name];
     }
 
     [Pure]
-    public SqliteConstraint? TryGetConstraint(string name)
+    public SqliteConstraint? TryGet(string name)
     {
         return _map.GetValueOrDefault( name );
     }
@@ -186,15 +186,15 @@ public sealed class SqliteConstraintCollection : ISqlConstraintCollection
     }
 
     [Pure]
-    ISqlConstraint ISqlConstraintCollection.GetConstraint(string name)
+    ISqlConstraint ISqlConstraintCollection.Get(string name)
     {
-        return GetConstraint( name );
+        return Get( name );
     }
 
     [Pure]
-    ISqlConstraint? ISqlConstraintCollection.TryGetConstraint(string name)
+    ISqlConstraint? ISqlConstraintCollection.TryGet(string name)
     {
-        return TryGetConstraint( name );
+        return TryGet( name );
     }
 
     [Pure]

@@ -65,13 +65,13 @@ public sealed class SqliteSchemaCollection : ISqlSchemaCollection
     }
 
     [Pure]
-    public SqliteSchema GetSchema(string name)
+    public SqliteSchema Get(string name)
     {
         return _map[name];
     }
 
     [Pure]
-    public SqliteSchema? TryGetSchema(string name)
+    public SqliteSchema? TryGet(string name)
     {
         return _map.GetValueOrDefault( name );
     }
@@ -113,15 +113,15 @@ public sealed class SqliteSchemaCollection : ISqlSchemaCollection
     }
 
     [Pure]
-    ISqlSchema ISqlSchemaCollection.GetSchema(string name)
+    ISqlSchema ISqlSchemaCollection.Get(string name)
     {
-        return GetSchema( name );
+        return Get( name );
     }
 
     [Pure]
-    ISqlSchema? ISqlSchemaCollection.TryGetSchema(string name)
+    ISqlSchema? ISqlSchemaCollection.TryGet(string name)
     {
-        return TryGetSchema( name );
+        return TryGet( name );
     }
 
     [Pure]

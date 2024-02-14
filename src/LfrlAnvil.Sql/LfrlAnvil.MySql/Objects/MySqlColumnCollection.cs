@@ -33,13 +33,13 @@ public sealed class MySqlColumnCollection : ISqlColumnCollection
     }
 
     [Pure]
-    public MySqlColumn GetColumn(string name)
+    public MySqlColumn Get(string name)
     {
         return _map[name];
     }
 
     [Pure]
-    public MySqlColumn? TryGetColumn(string name)
+    public MySqlColumn? TryGet(string name)
     {
         return _map.GetValueOrDefault( name );
     }
@@ -81,15 +81,15 @@ public sealed class MySqlColumnCollection : ISqlColumnCollection
     }
 
     [Pure]
-    ISqlColumn ISqlColumnCollection.GetColumn(string name)
+    ISqlColumn ISqlColumnCollection.Get(string name)
     {
-        return GetColumn( name );
+        return Get( name );
     }
 
     [Pure]
-    ISqlColumn? ISqlColumnCollection.TryGetColumn(string name)
+    ISqlColumn? ISqlColumnCollection.TryGet(string name)
     {
-        return TryGetColumn( name );
+        return TryGet( name );
     }
 
     [Pure]

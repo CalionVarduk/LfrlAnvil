@@ -225,6 +225,13 @@ public static class SqlHelpers
         return new SqlObjectCastException( database.Dialect, expected, actual );
     }
 
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlObjectCastException CreateObjectCastException(ISqlDatabase database, Type expected, Type actual)
+    {
+        return new SqlObjectCastException( database.Dialect, expected, actual );
+    }
+
     public static RentedMemorySequence<SqlObjectBuilder> GetReferencingObjectsInOrderOfCreation(
         SqlObjectBuilder obj,
         Func<SqlObjectBuilderReference<SqlObjectBuilder>, bool>? filter = null)

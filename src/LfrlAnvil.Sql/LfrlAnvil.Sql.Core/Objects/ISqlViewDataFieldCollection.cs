@@ -11,8 +11,8 @@ public interface ISqlViewDataFieldCollection : IReadOnlyCollection<ISqlViewDataF
     bool Contains(string name);
 
     [Pure]
-    ISqlViewDataField GetField(string name);
+    ISqlViewDataField Get(string name);
 
     [Pure]
-    ISqlViewDataField? TryGetField(string name);
+    ISqlViewDataField? TryGet(string name);
 }

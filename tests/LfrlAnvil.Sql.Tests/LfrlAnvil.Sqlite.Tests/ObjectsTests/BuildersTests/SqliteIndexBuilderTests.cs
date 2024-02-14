@@ -158,9 +158,9 @@ public class SqliteIndexBuilderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            table.Constraints.GetConstraint( "bar" ).Should().BeSameAs( sut );
+            table.Constraints.Get( "bar" ).Should().BeSameAs( sut );
             table.Constraints.Contains( oldName ).Should().BeFalse();
-            schema.Objects.GetObject( "bar" ).Should().BeSameAs( sut );
+            schema.Objects.Get( "bar" ).Should().BeSameAs( sut );
             schema.Objects.Contains( oldName ).Should().BeFalse();
             statements.Should().BeEmpty();
         }
@@ -184,9 +184,9 @@ public class SqliteIndexBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "bar" );
-            table.Constraints.GetConstraint( "bar" ).Should().BeSameAs( sut );
+            table.Constraints.Get( "bar" ).Should().BeSameAs( sut );
             table.Constraints.Contains( oldName ).Should().BeFalse();
-            schema.Objects.GetObject( "bar" ).Should().BeSameAs( sut );
+            schema.Objects.Get( "bar" ).Should().BeSameAs( sut );
             schema.Objects.Contains( oldName ).Should().BeFalse();
 
             statements.Should().HaveCount( 1 );
@@ -333,9 +333,9 @@ public class SqliteIndexBuilderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            table.Constraints.GetConstraint( "UIX_T_C1A" ).Should().BeSameAs( sut );
+            table.Constraints.Get( "UIX_T_C1A" ).Should().BeSameAs( sut );
             table.Constraints.Contains( oldName ).Should().BeFalse();
-            schema.Objects.GetObject( "UIX_T_C1A" ).Should().BeSameAs( sut );
+            schema.Objects.Get( "UIX_T_C1A" ).Should().BeSameAs( sut );
             schema.Objects.Contains( oldName ).Should().BeFalse();
             statements.Should().BeEmpty();
         }
@@ -359,9 +359,9 @@ public class SqliteIndexBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "IX_T_C2A" );
-            table.Constraints.GetConstraint( "IX_T_C2A" ).Should().BeSameAs( sut );
+            table.Constraints.Get( "IX_T_C2A" ).Should().BeSameAs( sut );
             table.Constraints.Contains( oldName ).Should().BeFalse();
-            schema.Objects.GetObject( "IX_T_C2A" ).Should().BeSameAs( sut );
+            schema.Objects.Get( "IX_T_C2A" ).Should().BeSameAs( sut );
             schema.Objects.Contains( oldName ).Should().BeFalse();
 
             statements.Should().HaveCount( 1 );
@@ -392,9 +392,9 @@ public class SqliteIndexBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "UIX_T_C2A" );
-            table.Constraints.GetConstraint( "UIX_T_C2A" ).Should().BeSameAs( sut );
+            table.Constraints.Get( "UIX_T_C2A" ).Should().BeSameAs( sut );
             table.Constraints.Contains( oldName ).Should().BeFalse();
-            schema.Objects.GetObject( "UIX_T_C2A" ).Should().BeSameAs( sut );
+            schema.Objects.Get( "UIX_T_C2A" ).Should().BeSameAs( sut );
             schema.Objects.Contains( oldName ).Should().BeFalse();
 
             statements.Should().HaveCount( 1 );

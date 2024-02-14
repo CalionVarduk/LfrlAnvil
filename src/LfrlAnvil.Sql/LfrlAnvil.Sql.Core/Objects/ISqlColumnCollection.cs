@@ -11,8 +11,8 @@ public interface ISqlColumnCollection : IReadOnlyCollection<ISqlColumn>
     bool Contains(string name);
 
     [Pure]
-    ISqlColumn GetColumn(string name);
+    ISqlColumn Get(string name);
 
     [Pure]
-    ISqlColumn? TryGetColumn(string name);
+    ISqlColumn? TryGet(string name);
 }

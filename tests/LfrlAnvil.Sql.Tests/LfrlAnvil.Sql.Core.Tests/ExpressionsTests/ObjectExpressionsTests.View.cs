@@ -84,7 +84,7 @@ public partial class ObjectExpressionsTests
                 result.Name.Should().Be( "Col0" );
                 result.RecordSet.Should().BeSameAs( sut );
                 var field = result as SqlViewDataFieldNode;
-                (field?.Value).Should().BeSameAs( view.DataFields.GetField( "Col0" ) );
+                (field?.Value).Should().BeSameAs( view.DataFields.Get( "Col0" ) );
                 text.Should().Be( "[foo].[Col0]" );
             }
         }
@@ -123,7 +123,7 @@ public partial class ObjectExpressionsTests
             using ( new AssertionScope() )
             {
                 result.NodeType.Should().Be( SqlNodeType.ViewDataField );
-                result.Value.Should().BeSameAs( view.DataFields.GetField( "Col0" ) );
+                result.Value.Should().BeSameAs( view.DataFields.Get( "Col0" ) );
                 result.Name.Should().Be( "Col0" );
                 result.RecordSet.Should().BeSameAs( sut );
                 text.Should().Be( "[foo].[Col0]" );
@@ -145,7 +145,7 @@ public partial class ObjectExpressionsTests
             using ( new AssertionScope() )
             {
                 result.NodeType.Should().Be( SqlNodeType.ViewDataField );
-                result.Value.Should().BeSameAs( view.DataFields.GetField( "Col0" ) );
+                result.Value.Should().BeSameAs( view.DataFields.Get( "Col0" ) );
                 result.Name.Should().Be( "Col0" );
                 result.RecordSet.Should().BeSameAs( sut );
                 text.Should().Be( "[bar].[Col0]" );

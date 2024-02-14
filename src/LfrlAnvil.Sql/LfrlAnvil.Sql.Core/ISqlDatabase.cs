@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Data;
-using System.Data.Common;
 using System.Diagnostics.Contracts;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,6 +13,7 @@ namespace LfrlAnvil.Sql;
 
 public interface ISqlDatabase : IDisposable
 {
+    SqlDialect Dialect { get; }
     ISqlSchemaCollection Schemas { get; }
     ISqlDataTypeProvider DataTypes { get; }
     ISqlColumnTypeDefinitionProvider TypeDefinitions { get; }
@@ -21,14 +21,14 @@ public interface ISqlDatabase : IDisposable
     ISqlQueryReaderFactory QueryReaders { get; }
     ISqlParameterBinderFactory ParameterBinders { get; }
     Version Version { get; }
-    public string ServerVersion { get; }
+    string ServerVersion { get; }
     SqlQueryReaderExecutor<SqlDatabaseVersionRecord> VersionRecordsQuery { get; }
 
     [Pure]
     IDbConnection Connect();
 
     [Pure]
-    ValueTask<DbConnection> ConnectAsync(CancellationToken cancellationToken = default);
+    ValueTask<IDbConnection> ConnectAsync(CancellationToken cancellationToken = default);
 
     [Pure]
     SqlDatabaseVersionRecord[] GetRegisteredVersions();

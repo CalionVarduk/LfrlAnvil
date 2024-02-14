@@ -20,7 +20,7 @@ public class MySqlSchemaTests : TestsBase
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
 
-        ISqlSchema sut = db.Schemas.GetSchema( "foo" );
+        ISqlSchema sut = db.Schemas.Get( "foo" );
         var table = sut.Objects.GetTable( "T" );
 
         using ( new AssertionScope() )
@@ -51,7 +51,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.CreateForeignKey( indexBuilder1, indexBuilder2 );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var result = sut.Contains( name );
 
@@ -66,9 +66,9 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
-        var result = sut.GetObject( "T" );
+        var result = sut.Get( "T" );
 
         using ( new AssertionScope() )
         {
@@ -85,9 +85,9 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
-        var action = Lambda.Of( () => sut.GetObject( "U" ) );
+        var action = Lambda.Of( () => sut.Get( "U" ) );
 
         action.Should().ThrowExactly<KeyNotFoundException>();
     }
@@ -100,9 +100,9 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
-        var result = sut.TryGetObject( "T" );
+        var result = sut.TryGet( "T" );
 
         using ( new AssertionScope() )
         {
@@ -120,9 +120,9 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
-        var result = sut.TryGetObject( "U" );
+        var result = sut.TryGet( "U" );
 
         result.Should().BeNull();
     }
@@ -135,7 +135,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var result = sut.GetTable( "T" );
 
@@ -154,7 +154,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var action = Lambda.Of( () => sut.GetTable( "U" ) );
 
@@ -169,7 +169,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var action = Lambda.Of( () => sut.GetTable( "PK_T" ) );
 
@@ -184,7 +184,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var result = sut.TryGetTable( "T" );
 
@@ -204,7 +204,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var result = sut.TryGetTable( "U" );
 
@@ -219,7 +219,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var result = sut.TryGetTable( "PK_T" );
 
@@ -234,7 +234,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var result = sut.GetPrimaryKey( "PK_T" );
 
@@ -253,7 +253,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var action = Lambda.Of( () => sut.GetPrimaryKey( "U" ) );
 
@@ -268,7 +268,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var action = Lambda.Of( () => sut.GetPrimaryKey( "T" ) );
 
@@ -283,7 +283,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var result = sut.TryGetPrimaryKey( "PK_T" );
 
@@ -303,7 +303,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var result = sut.TryGetPrimaryKey( "U" );
 
@@ -318,7 +318,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var result = sut.TryGetPrimaryKey( "T" );
 
@@ -333,7 +333,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var result = sut.GetIndex( "UIX_T_C1A" );
 
@@ -352,7 +352,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var action = Lambda.Of( () => sut.GetIndex( "U" ) );
 
@@ -367,7 +367,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var action = Lambda.Of( () => sut.GetIndex( "T" ) );
 
@@ -382,7 +382,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var result = sut.TryGetIndex( "UIX_T_C1A" );
 
@@ -402,7 +402,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var result = sut.TryGetIndex( "U" );
 
@@ -417,7 +417,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var result = sut.TryGetIndex( "T" );
 
@@ -434,7 +434,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.CreateForeignKey( indexBuilder1, indexBuilder2 );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var result = sut.GetForeignKey( "FK_T_C2_REF_T" );
 
@@ -455,7 +455,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.CreateForeignKey( indexBuilder1, indexBuilder2 );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var action = Lambda.Of( () => sut.GetForeignKey( "U" ) );
 
@@ -472,7 +472,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.CreateForeignKey( indexBuilder1, indexBuilder2 );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var action = Lambda.Of( () => sut.GetForeignKey( "T" ) );
 
@@ -489,7 +489,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.CreateForeignKey( indexBuilder1, indexBuilder2 );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var result = sut.TryGetForeignKey( "FK_T_C2_REF_T" );
 
@@ -511,7 +511,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.CreateForeignKey( indexBuilder1, indexBuilder2 );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var result = sut.TryGetForeignKey( "U" );
 
@@ -528,7 +528,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.CreateForeignKey( indexBuilder1, indexBuilder2 );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var result = sut.TryGetForeignKey( "T" );
 
@@ -542,7 +542,7 @@ public class MySqlSchemaTests : TestsBase
         schemaBuilder.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var result = sut.GetView( "V" );
 
@@ -561,7 +561,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C" ).Asc() );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var action = Lambda.Of( () => sut.GetView( "V" ) );
 
@@ -576,7 +576,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C" ).Asc() );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var action = Lambda.Of( () => sut.GetView( "T" ) );
 
@@ -590,7 +590,7 @@ public class MySqlSchemaTests : TestsBase
         schemaBuilder.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var result = sut.TryGetView( "V" );
 
@@ -612,7 +612,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.CreateForeignKey( indexBuilder1, indexBuilder2 );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var result = sut.TryGetView( "U" );
 
@@ -627,7 +627,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C" ).Asc() );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var result = sut.TryGetView( "T" );
 
@@ -643,7 +643,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.CreateCheck( "CHK_T_0", tableBuilder.Node["C"] > SqlNode.Literal( 0 ) );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var result = sut.GetCheck( "CHK_T_0" );
 
@@ -663,7 +663,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.CreateCheck( tableBuilder.Node["C"] > SqlNode.Literal( 0 ) );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var action = Lambda.Of( () => sut.GetCheck( "U" ) );
 
@@ -679,7 +679,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.CreateCheck( tableBuilder.Node["C"] > SqlNode.Literal( 0 ) );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var action = Lambda.Of( () => sut.GetCheck( "T" ) );
 
@@ -695,7 +695,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.CreateCheck( "CHK_T_0", tableBuilder.Node["C"] > SqlNode.Literal( 0 ) );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var result = sut.TryGetCheck( "CHK_T_0" );
 
@@ -716,7 +716,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.CreateCheck( tableBuilder.Node["C"] > SqlNode.Literal( 0 ) );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var result = sut.TryGetCheck( "U" );
 
@@ -732,7 +732,7 @@ public class MySqlSchemaTests : TestsBase
         tableBuilder.Constraints.CreateCheck( tableBuilder.Node["C"] > SqlNode.Literal( 0 ) );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlObjectCollection sut = db.Schemas.GetSchema( "foo" ).Objects;
+        ISqlObjectCollection sut = db.Schemas.Get( "foo" ).Objects;
 
         var result = sut.TryGetCheck( "T" );
 

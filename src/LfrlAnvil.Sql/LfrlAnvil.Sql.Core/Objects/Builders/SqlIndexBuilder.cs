@@ -63,7 +63,7 @@ public abstract class SqlIndexBuilder : SqlConstraintBuilder, ISqlIndexBuilder
 
     ISqlPrimaryKeyBuilder? ISqlIndexBuilder.PrimaryKey => PrimaryKey;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
-    IReadOnlyCollection<SqlIndexColumnBuilder<ISqlColumnBuilder>> ISqlIndexBuilder.Columns => _columns.GetUnderlyingArray();
+    IReadOnlyList<SqlIndexColumnBuilder<ISqlColumnBuilder>> ISqlIndexBuilder.Columns => _columns.GetUnderlyingArray();
     IReadOnlyCollection<ISqlColumnBuilder> ISqlIndexBuilder.ReferencedFilterColumns => _referencedFilterColumns.GetUnderlyingArray();
 
     public new SqlIndexBuilder SetName(string name)

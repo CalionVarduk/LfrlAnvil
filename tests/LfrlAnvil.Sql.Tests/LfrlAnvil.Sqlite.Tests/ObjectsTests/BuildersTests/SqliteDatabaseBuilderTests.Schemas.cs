@@ -29,7 +29,7 @@ public partial class SqliteDatabaseBuilderTests
                 result.Objects.Should().BeEmpty();
                 result.Type.Should().Be( SqlObjectType.Schema );
 
-                sut.Schemas.GetSchema( name ).Should().BeSameAs( result );
+                sut.Schemas.Get( name ).Should().BeSameAs( result );
                 sut.Schemas.Count.Should().Be( 2 );
                 sut.Schemas.Should().BeEquivalentTo( sut.Schemas.Default, result );
             }
@@ -50,7 +50,7 @@ public partial class SqliteDatabaseBuilderTests
                 result.Objects.Should().BeEmpty();
                 result.Type.Should().Be( SqlObjectType.Schema );
 
-                sut.Schemas.GetSchema( string.Empty ).Should().BeSameAs( result );
+                sut.Schemas.Get( string.Empty ).Should().BeSameAs( result );
                 sut.Schemas.Count.Should().Be( 2 );
                 sut.Schemas.Should().BeEquivalentTo( sut.Schemas.Default, result );
             }
@@ -101,7 +101,7 @@ public partial class SqliteDatabaseBuilderTests
                 result.Objects.Should().BeEmpty();
                 result.Type.Should().Be( SqlObjectType.Schema );
 
-                sut.Schemas.GetSchema( name ).Should().BeSameAs( result );
+                sut.Schemas.Get( name ).Should().BeSameAs( result );
                 sut.Schemas.Count.Should().Be( 2 );
                 sut.Schemas.Should().BeEquivalentTo( sut.Schemas.Default, result );
             }
@@ -122,7 +122,7 @@ public partial class SqliteDatabaseBuilderTests
                 result.Objects.Should().BeEmpty();
                 result.Type.Should().Be( SqlObjectType.Schema );
 
-                sut.Schemas.GetSchema( string.Empty ).Should().BeSameAs( result );
+                sut.Schemas.Get( string.Empty ).Should().BeSameAs( result );
                 sut.Schemas.Count.Should().Be( 2 );
                 sut.Schemas.Should().BeEquivalentTo( sut.Schemas.Default, result );
             }

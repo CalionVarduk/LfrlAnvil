@@ -122,6 +122,13 @@ public abstract class SqlViewBuilder : SqlObjectBuilder, ISqlViewBuilder
         _info = null;
     }
 
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal SqlRecordSetInfo? GetCachedInfo()
+    {
+        return _info;
+    }
+
     ISqlViewBuilder ISqlViewBuilder.SetName(string name)
     {
         return SetName( name );

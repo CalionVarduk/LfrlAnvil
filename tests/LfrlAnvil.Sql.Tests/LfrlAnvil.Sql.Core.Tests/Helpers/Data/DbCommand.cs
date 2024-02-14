@@ -10,6 +10,11 @@ public sealed class DbCommand : System.Data.Common.DbCommand
 {
     private readonly List<string> _audit = new List<string>();
 
+    public DbCommand(DbConnection? connection = null)
+    {
+        Connection = connection;
+    }
+
     [AllowNull]
     public override string CommandText { get; set; }
 
@@ -22,7 +27,7 @@ public sealed class DbCommand : System.Data.Common.DbCommand
     public new DbDataParameterCollection Parameters { get; } = new DbDataParameterCollection();
     public IReadOnlyList<string> Audit => _audit;
 
-    protected override DbConnection? DbConnection { get; set; }
+    protected override System.Data.Common.DbConnection? DbConnection { get; set; }
     protected override DbTransaction? DbTransaction { get; set; }
     protected override DbParameterCollection DbParameterCollection => Parameters;
 

@@ -141,9 +141,9 @@ public class SqliteCheckBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "bar" );
-            table.Constraints.GetConstraint( "bar" ).Should().BeSameAs( sut );
+            table.Constraints.Get( "bar" ).Should().BeSameAs( sut );
             table.Constraints.Contains( oldName ).Should().BeFalse();
-            schema.Objects.GetObject( "bar" ).Should().BeSameAs( sut );
+            schema.Objects.Get( "bar" ).Should().BeSameAs( sut );
             schema.Objects.Contains( oldName ).Should().BeFalse();
 
             statements.Should().HaveCount( 1 );
@@ -251,9 +251,9 @@ public class SqliteCheckBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().MatchRegex( "CHK_T_[0-9a-fA-F]{32}" );
-            table.Constraints.GetConstraint( result.Name ).Should().BeSameAs( sut );
+            table.Constraints.Get( result.Name ).Should().BeSameAs( sut );
             table.Constraints.Contains( oldName ).Should().BeFalse();
-            schema.Objects.GetObject( result.Name ).Should().BeSameAs( sut );
+            schema.Objects.Get( result.Name ).Should().BeSameAs( sut );
             schema.Objects.Contains( oldName ).Should().BeFalse();
 
             statements.Should().HaveCount( 1 );

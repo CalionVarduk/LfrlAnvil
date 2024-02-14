@@ -21,10 +21,10 @@ public class SqliteTableTests : TestsBase
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
 
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
-        var schema = db.Schemas.GetSchema( "foo" );
+        var schema = db.Schemas.Get( "foo" );
 
         ISqlTable sut = schema.Objects.GetTable( "T" );
-        var c1 = sut.Columns.GetColumn( "C1" );
+        var c1 = sut.Columns.Get( "C1" );
 
         using ( new AssertionScope() )
         {
@@ -92,9 +92,9 @@ public class SqliteTableTests : TestsBase
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
         ISqlColumnCollection sut = db.Schemas.Default.Objects.GetTable( "T" ).Columns;
 
-        var result = sut.GetColumn( "C2" );
+        var result = sut.Get( "C2" );
 
-        result.Should().BeSameAs( sut.Table.Constraints.PrimaryKey.Index.Columns.Span[0].Column );
+        result.Should().BeSameAs( sut.Table.Constraints.PrimaryKey.Index.Columns[0].Column );
     }
 
     [Fact]
@@ -107,7 +107,7 @@ public class SqliteTableTests : TestsBase
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
         ISqlColumnCollection sut = db.Schemas.Default.Objects.GetTable( "T" ).Columns;
 
-        var action = Lambda.Of( () => sut.GetColumn( "C2" ) );
+        var action = Lambda.Of( () => sut.Get( "C2" ) );
 
         action.Should().ThrowExactly<KeyNotFoundException>();
     }
@@ -123,9 +123,9 @@ public class SqliteTableTests : TestsBase
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
         ISqlColumnCollection sut = db.Schemas.Default.Objects.GetTable( "T" ).Columns;
 
-        var result = sut.TryGetColumn( "C2" );
+        var result = sut.TryGet( "C2" );
 
-        result.Should().BeSameAs( sut.Table.Constraints.PrimaryKey.Index.Columns.Span[0].Column );
+        result.Should().BeSameAs( sut.Table.Constraints.PrimaryKey.Index.Columns[0].Column );
     }
 
     [Fact]
@@ -138,7 +138,7 @@ public class SqliteTableTests : TestsBase
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
         ISqlColumnCollection sut = db.Schemas.Default.Objects.GetTable( "T" ).Columns;
 
-        var result = sut.TryGetColumn( "C2" );
+        var result = sut.TryGet( "C2" );
 
         result.Should().BeNull();
     }
@@ -175,7 +175,7 @@ public class SqliteTableTests : TestsBase
         var table = db.Schemas.Default.Objects.GetTable( "T" );
         ISqlConstraintCollection sut = table.Constraints;
 
-        var result = sut.GetConstraint( "PK_T" );
+        var result = sut.Get( "PK_T" );
 
         using ( new AssertionScope() )
         {
@@ -196,7 +196,7 @@ public class SqliteTableTests : TestsBase
         var table = db.Schemas.Default.Objects.GetTable( "T" );
         ISqlConstraintCollection sut = table.Constraints;
 
-        var action = Lambda.Of( () => sut.GetConstraint( "foo" ) );
+        var action = Lambda.Of( () => sut.Get( "foo" ) );
 
         action.Should().ThrowExactly<KeyNotFoundException>();
     }
@@ -213,7 +213,7 @@ public class SqliteTableTests : TestsBase
         var table = db.Schemas.Default.Objects.GetTable( "T" );
         ISqlConstraintCollection sut = table.Constraints;
 
-        var result = sut.TryGetConstraint( "PK_T" );
+        var result = sut.TryGet( "PK_T" );
 
         using ( new AssertionScope() )
         {
@@ -235,7 +235,7 @@ public class SqliteTableTests : TestsBase
         var table = db.Schemas.Default.Objects.GetTable( "T" );
         ISqlConstraintCollection sut = table.Constraints;
 
-        var result = sut.TryGetConstraint( "foo" );
+        var result = sut.TryGet( "foo" );
 
         result.Should().BeNull();
     }

@@ -71,7 +71,7 @@ public partial class MySqlSchemaBuilderTests : TestsBase
         var oldName = "common";
         var newName = Fixture.Create<string>();
         var db = MySqlDatabaseBuilderMock.Create();
-        var sut = db.Schemas.GetSchema( oldName );
+        var sut = db.Schemas.Get( oldName );
 
         var startStatementCount = db.Changes.GetPendingActions().Length;
 

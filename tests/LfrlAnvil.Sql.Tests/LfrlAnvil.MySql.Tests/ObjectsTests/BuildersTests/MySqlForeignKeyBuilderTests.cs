@@ -158,9 +158,9 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "bar" );
-            table.Constraints.GetConstraint( "bar" ).Should().BeSameAs( sut );
+            table.Constraints.Get( "bar" ).Should().BeSameAs( sut );
             table.Constraints.Contains( oldName ).Should().BeFalse();
-            schema.Objects.GetObject( "bar" ).Should().BeSameAs( sut );
+            schema.Objects.Get( "bar" ).Should().BeSameAs( sut );
             schema.Objects.Contains( oldName ).Should().BeFalse();
 
             statements.Should().HaveCount( 1 );
@@ -291,9 +291,9 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "FK_T_C2_REF_T" );
-            table.Constraints.GetConstraint( "FK_T_C2_REF_T" ).Should().BeSameAs( sut );
+            table.Constraints.Get( "FK_T_C2_REF_T" ).Should().BeSameAs( sut );
             table.Constraints.Contains( oldName ).Should().BeFalse();
-            schema.Objects.GetObject( "FK_T_C2_REF_T" ).Should().BeSameAs( sut );
+            schema.Objects.Get( "FK_T_C2_REF_T" ).Should().BeSameAs( sut );
             schema.Objects.Contains( oldName ).Should().BeFalse();
 
             statements.Should().HaveCount( 1 );

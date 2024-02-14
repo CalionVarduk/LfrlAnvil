@@ -26,7 +26,7 @@ public class SqliteForeignKeyTests : TestsBase
             .SetOnUpdateBehavior( onUpdateBehavior );
 
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
-        var schema = db.Schemas.GetSchema( "foo" );
+        var schema = db.Schemas.Get( "foo" );
 
         ISqlForeignKey sut = schema.Objects.GetForeignKey( "FK_TEST" );
         var index = schema.Objects.GetIndex( "IX_T_C1A" );
@@ -67,7 +67,7 @@ public class SqliteForeignKeyTests : TestsBase
             .SetOnUpdateBehavior( onUpdateBehavior );
 
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
-        var schema = db.Schemas.GetSchema( "foo" );
+        var schema = db.Schemas.Get( "foo" );
 
         ISqlForeignKey sut = schema.Objects.GetForeignKey( "FK_TEST" );
         var index = schema.Objects.GetIndex( "UIX_T1_C1A" );
@@ -110,8 +110,8 @@ public class SqliteForeignKeyTests : TestsBase
             .SetOnUpdateBehavior( onUpdateBehavior );
 
         var db = new SqliteDatabaseMock( dbBuilder );
-        var schema1 = db.Schemas.GetSchema( "foo" );
-        var schema2 = db.Schemas.GetSchema( "bar" );
+        var schema1 = db.Schemas.Get( "foo" );
+        var schema2 = db.Schemas.Get( "bar" );
 
         ISqlForeignKey sut = schema1.Objects.GetForeignKey( "FK_TEST" );
         var index = schema1.Objects.GetIndex( "UIX_T1_C1A" );

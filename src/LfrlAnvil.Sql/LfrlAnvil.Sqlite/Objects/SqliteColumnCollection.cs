@@ -33,13 +33,13 @@ public sealed class SqliteColumnCollection : ISqlColumnCollection
     }
 
     [Pure]
-    public SqliteColumn GetColumn(string name)
+    public SqliteColumn Get(string name)
     {
         return _map[name];
     }
 
     [Pure]
-    public SqliteColumn? TryGetColumn(string name)
+    public SqliteColumn? TryGet(string name)
     {
         return _map.GetValueOrDefault( name );
     }
@@ -81,15 +81,15 @@ public sealed class SqliteColumnCollection : ISqlColumnCollection
     }
 
     [Pure]
-    ISqlColumn ISqlColumnCollection.GetColumn(string name)
+    ISqlColumn ISqlColumnCollection.Get(string name)
     {
-        return GetColumn( name );
+        return Get( name );
     }
 
     [Pure]
-    ISqlColumn? ISqlColumnCollection.TryGetColumn(string name)
+    ISqlColumn? ISqlColumnCollection.TryGet(string name)
     {
-        return TryGetColumn( name );
+        return TryGet( name );
     }
 
     [Pure]

@@ -11,10 +11,10 @@ public interface ISqlObjectCollection : IReadOnlyCollection<ISqlObject>
     bool Contains(string name);
 
     [Pure]
-    ISqlObject GetObject(string name);
+    ISqlObject Get(string name);
 
     [Pure]
-    ISqlObject? TryGetObject(string name);
+    ISqlObject? TryGet(string name);
 
     [Pure]
     ISqlTable GetTable(string name);

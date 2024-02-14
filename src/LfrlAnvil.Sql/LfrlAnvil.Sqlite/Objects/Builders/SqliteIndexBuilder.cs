@@ -64,7 +64,7 @@ public sealed class SqliteIndexBuilder : SqliteConstraintBuilder, ISqlIndexBuild
 
     ISqlPrimaryKeyBuilder? ISqlIndexBuilder.PrimaryKey => PrimaryKey;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
-    IReadOnlyCollection<SqlIndexColumnBuilder<ISqlColumnBuilder>> ISqlIndexBuilder.Columns => _columns;
+    IReadOnlyList<SqlIndexColumnBuilder<ISqlColumnBuilder>> ISqlIndexBuilder.Columns => _columns;
     IReadOnlyCollection<ISqlColumnBuilder> ISqlIndexBuilder.ReferencedFilterColumns => ReferencedFilterColumns;
 
     public new SqliteIndexBuilder SetName(string name)

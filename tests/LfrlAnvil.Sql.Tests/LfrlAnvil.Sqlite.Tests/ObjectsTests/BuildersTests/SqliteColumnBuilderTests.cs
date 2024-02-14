@@ -75,7 +75,7 @@ public class SqliteColumnBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            table.Columns.GetColumn( sut.Name ).Should().BeSameAs( sut );
+            table.Columns.Get( sut.Name ).Should().BeSameAs( sut );
             sut.Name.Should().Be( "C2" );
             sut.DefaultValue.Should().BeEquivalentTo( SqlNode.Literal<object>( Array.Empty<byte>() ) );
 
@@ -113,7 +113,7 @@ public class SqliteColumnBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            table.Columns.GetColumn( sut.Name ).Should().BeSameAs( sut );
+            table.Columns.Get( sut.Name ).Should().BeSameAs( sut );
             sut.Name.Should().Be( "C2" );
             sut.DefaultValue.Should().BeNull();
 
@@ -151,7 +151,7 @@ public class SqliteColumnBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            table.Columns.GetColumn( sut.Name ).Should().BeSameAs( sut );
+            table.Columns.Get( sut.Name ).Should().BeSameAs( sut );
             sut.Name.Should().Be( "C2" );
 
             statements.Should().HaveCount( 1 );
@@ -190,7 +190,7 @@ public class SqliteColumnBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            table.Columns.GetColumn( sut.Name ).Should().BeSameAs( sut );
+            table.Columns.Get( sut.Name ).Should().BeSameAs( sut );
             sut.Name.Should().Be( "C2" );
             sut.DefaultValue.Should().BeNull();
             removed.IsRemoved.Should().BeTrue();
@@ -293,7 +293,7 @@ public class SqliteColumnBuilderTests : TestsBase
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "bar" );
-            table.Columns.GetColumn( "bar" ).Should().BeSameAs( sut );
+            table.Columns.Get( "bar" ).Should().BeSameAs( sut );
             table.Columns.Contains( oldName ).Should().BeFalse();
             node.Name.Should().Be( "bar" );
 
