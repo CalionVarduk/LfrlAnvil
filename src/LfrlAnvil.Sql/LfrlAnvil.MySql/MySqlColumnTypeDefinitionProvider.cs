@@ -96,6 +96,8 @@ public sealed class MySqlColumnTypeDefinitionProvider : ISqlColumnTypeDefinition
         };
     }
 
+    public SqlDialect Dialect => MySqlDialect.Instance;
+
     public MySqlColumnTypeDefinitionProvider RegisterDefinition<T>(MySqlColumnTypeDefinition<T> definition)
         where T : notnull
     {
@@ -227,10 +229,5 @@ public sealed class MySqlColumnTypeDefinitionProvider : ISqlColumnTypeDefinition
     bool ISqlColumnTypeDefinitionProvider.Contains(ISqlColumnTypeDefinition definition)
     {
         return definition is MySqlColumnTypeDefinition d && Contains( d );
-    }
-
-    ISqlColumnTypeDefinitionProvider ISqlColumnTypeDefinitionProvider.RegisterDefinition<T>(ISqlColumnTypeDefinition<T> definition)
-    {
-        return RegisterDefinition( MySqlHelpers.CastOrThrow<MySqlColumnTypeDefinition<T>>( definition ) );
     }
 }

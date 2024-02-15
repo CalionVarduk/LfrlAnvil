@@ -6,6 +6,8 @@ namespace LfrlAnvil.Sql;
 
 public interface ISqlColumnTypeDefinitionProvider
 {
+    SqlDialect Dialect { get; }
+
     [Pure]
     IReadOnlyCollection<ISqlColumnTypeDefinition> GetTypeDefinitions();
 
@@ -23,8 +25,4 @@ public interface ISqlColumnTypeDefinitionProvider
 
     [Pure]
     bool Contains(ISqlColumnTypeDefinition definition);
-
-    // TODO: remove in the future
-    ISqlColumnTypeDefinitionProvider RegisterDefinition<T>(ISqlColumnTypeDefinition<T> definition)
-        where T : notnull;
 }

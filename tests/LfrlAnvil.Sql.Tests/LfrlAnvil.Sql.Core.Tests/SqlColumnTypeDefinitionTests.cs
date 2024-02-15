@@ -136,4 +136,32 @@ public class SqlColumnTypeDefinitionTests : TestsBase
         var result = sut.ToNullableParameterValue( null );
         result.Should().BeSameAs( DBNull.Value );
     }
+
+    [Fact]
+    public void ToDbLiteral_ForEnumType_ShouldInvokeBaseTypeDefinition()
+    {
+        var @base = new SqlColumnTypeDefinitionMock<int>( SqlDataTypeMock.Integer, 0 );
+        var sut = new SqlColumnTypeEnumDefinitionMock<TestEnum, int>( @base );
+
+        var result = sut.ToDbLiteral( TestEnum.B );
+
+        result.Should().Be( "1" );
+    }
+
+    [Fact]
+    public void ToParameterValue_ForEnumType_ShouldInvokeBaseTypeDefinition()
+    {
+        var @base = new SqlColumnTypeDefinitionMock<int>( SqlDataTypeMock.Integer, 0 );
+        var sut = new SqlColumnTypeEnumDefinitionMock<TestEnum, int>( @base );
+
+        var result = sut.ToParameterValue( TestEnum.B );
+
+        result.Should().Be( 1 );
+    }
+
+    public enum TestEnum
+    {
+        A = 0,
+        B = 1
+    };
 }

@@ -12,7 +12,6 @@ using ExceptionResources = LfrlAnvil.Sql.Exceptions.ExceptionResources;
 namespace LfrlAnvil.Sql.Objects.Builders;
 
 // TODO:
-// THEN, create type definition provider builder
 // THEN, refactor db builder further, with dedicated configuration object (allows to override default providers)
 // ^ it may actually be enough to define a struct, since actual configuration has to be exposed for concrete db builders
 // THEN, create core db factory (this could also use nsubstitute mocks replacement) (also, db builder command action may need some rethinking)

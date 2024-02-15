@@ -49,6 +49,6 @@ public sealed class SqlDatabaseBuilderMock : SqlDatabaseBuilder
     [Pure]
     public static SqlDatabaseBuilderMock Create()
     {
-        return new SqlDatabaseBuilderMock( new SqlColumnTypeDefinitionProviderMock() );
+        return new SqlDatabaseBuilderMock( new SqlColumnTypeDefinitionProviderMock( new SqlColumnTypeDefinitionProviderBuilderMock() ) );
     }
 }

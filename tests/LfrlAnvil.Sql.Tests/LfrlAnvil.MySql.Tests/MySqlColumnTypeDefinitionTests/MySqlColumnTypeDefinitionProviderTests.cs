@@ -1,8 +1,6 @@
 ﻿using System.Data;
 using System.Linq;
-using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
-using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Extensions;
 using MySqlConnector;
 
@@ -695,34 +693,6 @@ public class MySqlColumnTypeDefinitionProviderTests : TestsBase
     }
 
     [Fact]
-    public void RegisterDefinition_ShouldAddNewTypeDefinition()
-    {
-        var definition = new CodeTypeDefinition();
-        var result = _sut.RegisterDefinition( definition );
-
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( _sut );
-            _sut.GetByType( typeof( Code ) ).Should().BeSameAs( definition );
-        }
-    }
-
-    [Fact]
-    public void RegisterDefinition_ShouldOverrideExistingTypeDefinition()
-    {
-        var previousDefinition = _sut.GetByType<long>();
-        var definition = new NewInt64TypeDefinition();
-        var result = _sut.RegisterDefinition( definition );
-
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( _sut );
-            _sut.GetByType( typeof( long ) ).Should().BeSameAs( definition );
-            _sut.GetByDataType( MySqlDataType.BigInt ).Should().BeSameAs( previousDefinition );
-        }
-    }
-
-    [Fact]
     public void GetAll_ShouldReturnAllRegisteredDefinitions()
     {
         var sut = (MySqlColumnTypeDefinitionProvider)_sut;
@@ -756,87 +726,6 @@ public class MySqlColumnTypeDefinitionProviderTests : TestsBase
                 sut.GetByDataType( MySqlDataType.VarChar ),
                 sut.GetByDataType( MySqlDataType.Binary ),
                 sut.GetByDataType( MySqlDataType.VarBinary ) );
-    }
-
-    [Fact]
-    public void GetAll_ShouldReturnAllRegisteredDefinitions_WhenBaseTypeDefinitionWasChanged()
-    {
-        var baseDefinition = _sut.GetByType<long>();
-        _sut.RegisterDefinition( new NewInt64TypeDefinition() );
-        var sut = (MySqlColumnTypeDefinitionProvider)_sut;
-        var result = _sut.GetTypeDefinitions().Concat( _sut.GetDataTypeDefinitions() ).Distinct();
-
-        result.Should()
-            .BeEquivalentTo(
-                sut.GetByType<bool>(),
-                sut.GetByType<byte>(),
-                sut.GetByType<sbyte>(),
-                sut.GetByType<ushort>(),
-                sut.GetByType<short>(),
-                sut.GetByType<uint>(),
-                sut.GetByType<int>(),
-                sut.GetByType<ulong>(),
-                sut.GetByType<long>(),
-                sut.GetByType<TimeSpan>(),
-                sut.GetByType<float>(),
-                sut.GetByType<double>(),
-                sut.GetByType<DateTime>(),
-                sut.GetByType<DateTimeOffset>(),
-                sut.GetByType<DateOnly>(),
-                sut.GetByType<TimeOnly>(),
-                sut.GetByType<decimal>(),
-                sut.GetByType<char>(),
-                sut.GetByType<string>(),
-                sut.GetByType<Guid>(),
-                sut.GetByType<byte[]>(),
-                sut.GetByType<object>(),
-                sut.GetByDataType( MySqlDataType.Char ),
-                sut.GetByDataType( MySqlDataType.VarChar ),
-                sut.GetByDataType( MySqlDataType.Binary ),
-                sut.GetByDataType( MySqlDataType.VarBinary ),
-                baseDefinition );
-    }
-
-    [Fact]
-    public void RegisterDefinition_ShouldThrowSqlObjectCastException_WhenTypeDefinitionTypeIsInvalid()
-    {
-        var action = Lambda.Of( () => _sut.RegisterDefinition( Substitute.For<ISqlColumnTypeDefinition<Code>>() ) );
-        action.Should().ThrowExactly<SqlObjectCastException>();
-    }
-
-    private sealed class NewInt64TypeDefinition : MySqlColumnTypeDefinition<long>
-    {
-        internal NewInt64TypeDefinition()
-            : base( MySqlDataType.Text, 0L, static (reader, ordinal) => long.Parse( reader.GetString( ordinal ) ) ) { }
-
-        public override string ToDbLiteral(long value)
-        {
-            return $"'{value}'";
-        }
-
-        public override object ToParameterValue(long value)
-        {
-            return value.ToString();
-        }
-    }
-
-    private sealed class CodeTypeDefinition : MySqlColumnTypeDefinition<Code>
-    {
-        internal CodeTypeDefinition()
-            : base(
-                MySqlDataType.Text,
-                new Code( string.Empty ),
-                static (reader, ordinal) => new Code( reader.GetString( ordinal ) ) ) { }
-
-        public override string ToDbLiteral(Code value)
-        {
-            return $"'{value.Value}'";
-        }
-
-        public override object ToParameterValue(Code value)
-        {
-            return value.Value;
-        }
     }
 }
 

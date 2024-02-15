@@ -55,6 +55,8 @@ public sealed class SqliteColumnTypeDefinitionProvider : ISqlColumnTypeDefinitio
         };
     }
 
+    public SqlDialect Dialect => SqliteDialect.Instance;
+
     public SqliteColumnTypeDefinitionProvider RegisterDefinition<T>(SqliteColumnTypeDefinition<T> definition)
         where T : notnull
     {
@@ -156,10 +158,5 @@ public sealed class SqliteColumnTypeDefinitionProvider : ISqlColumnTypeDefinitio
     bool ISqlColumnTypeDefinitionProvider.Contains(ISqlColumnTypeDefinition definition)
     {
         return definition is SqliteColumnTypeDefinition d && Contains( d );
-    }
-
-    ISqlColumnTypeDefinitionProvider ISqlColumnTypeDefinitionProvider.RegisterDefinition<T>(ISqlColumnTypeDefinition<T> definition)
-    {
-        return RegisterDefinition( SqliteHelpers.CastOrThrow<SqliteColumnTypeDefinition<T>>( definition ) );
     }
 }

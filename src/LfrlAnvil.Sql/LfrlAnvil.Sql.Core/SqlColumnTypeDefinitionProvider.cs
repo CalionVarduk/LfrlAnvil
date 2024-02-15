@@ -1,24 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using LfrlAnvil.Sql.Exceptions;
 
 namespace LfrlAnvil.Sql;
 
-// TODO:
-// rename to Factory? then we'll have FactoryBuilder?
-// also, due to enums & data types, this needs to be synchronized, thread-safe
-// reader-writer lock?
-// or, when db builder is active, allow for changes (builders are by design single threaded)
-// and when db builder is done, then db factory will Lock() the provider
 public abstract class SqlColumnTypeDefinitionProvider : ISqlColumnTypeDefinitionProvider
 {
-    private readonly Dictionary<Type, SqlColumnTypeDefinition> _definitionsByType;
+    private static readonly MethodInfo CreateEnumTypeDefinitionGenericMethod = typeof( SqlColumnTypeDefinitionProvider )
+        .GetMethod( nameof( CreateEnumTypeDefinition ), BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.DeclaredOnly )!;
 
-    protected SqlColumnTypeDefinitionProvider()
+    private readonly Dictionary<Type, SqlColumnTypeDefinition> _definitionsByType;
+    protected bool IsLocked;
+
+    protected SqlColumnTypeDefinitionProvider(SqlColumnTypeDefinitionProviderBuilder builder)
     {
-        _definitionsByType = new Dictionary<Type, SqlColumnTypeDefinition>();
+        Dialect = builder.Dialect;
+        _definitionsByType = builder.Definitions;
+        IsLocked = false;
     }
+
+    public SqlDialect Dialect { get; }
 
     [Pure]
     public IReadOnlyCollection<SqlColumnTypeDefinition> GetTypeDefinitions()
@@ -36,9 +40,54 @@ public abstract class SqlColumnTypeDefinitionProvider : ISqlColumnTypeDefinition
     }
 
     [Pure]
-    public virtual SqlColumnTypeDefinition? TryGetByType(Type type)
+    public SqlColumnTypeDefinition? TryGetByType(Type type)
     {
-        return _definitionsByType.GetValueOrDefault( type );
+        if ( _definitionsByType.TryGetValue( type, out var definition ) )
+            return definition;
+
+        if ( IsLocked )
+            return null;
+
+        if ( type.IsEnum )
+        {
+            var underlyingType = type.GetEnumUnderlyingType();
+            if ( _definitionsByType.TryGetValue( underlyingType, out definition ) )
+            {
+                var method = CreateEnumTypeDefinitionGenericMethod.MakeGenericMethod( type, underlyingType );
+                definition = ReinterpretCast.To<SqlColumnTypeDefinition>( method.Invoke( this, new object[] { definition } ) );
+                Assume.IsNotNull( definition );
+                Assume.Equals( definition.RuntimeType, type );
+                _definitionsByType.Add( definition.RuntimeType, definition );
+                return definition;
+            }
+        }
+
+        definition = TryCreateUnknownTypeDefinition( type );
+        if ( definition is not null )
+        {
+            Assume.Equals( definition.RuntimeType, type );
+            _definitionsByType.Add( definition.RuntimeType, definition );
+        }
+
+        return definition;
+    }
+
+    [Pure]
+    protected abstract SqlColumnTypeDefinition<TEnum> CreateEnumTypeDefinition<TEnum, TUnderlying>(
+        SqlColumnTypeDefinition<TUnderlying> underlyingTypeDefinition)
+        where TEnum : struct, Enum
+        where TUnderlying : unmanaged;
+
+    [Pure]
+    protected virtual SqlColumnTypeDefinition? TryCreateUnknownTypeDefinition(Type type)
+    {
+        return null;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void Lock()
+    {
+        IsLocked = true;
     }
 
     [Pure]
@@ -54,17 +103,6 @@ public abstract class SqlColumnTypeDefinitionProvider : ISqlColumnTypeDefinition
 
     [Pure]
     public abstract SqlColumnTypeDefinition GetByDataType(ISqlDataType type);
-
-    public ISqlColumnTypeDefinitionProvider RegisterDefinition<T>(ISqlColumnTypeDefinition<T> definition)
-        where T : notnull
-    {
-        throw new NotImplementedException( "to be removed" );
-    }
-
-    protected bool TryAddDefinition(SqlColumnTypeDefinition definition)
-    {
-        return _definitionsByType.TryAdd( definition.RuntimeType, definition );
-    }
 
     [Pure]
     IReadOnlyCollection<ISqlColumnTypeDefinition> ISqlColumnTypeDefinitionProvider.GetTypeDefinitions()

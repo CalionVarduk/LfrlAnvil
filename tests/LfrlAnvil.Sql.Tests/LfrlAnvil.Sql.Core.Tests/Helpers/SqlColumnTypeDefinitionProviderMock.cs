@@ -8,28 +8,12 @@ public sealed class SqlColumnTypeDefinitionProviderMock : SqlColumnTypeDefinitio
 {
     private readonly Dictionary<SqlDataTypeMock, SqlColumnTypeDefinition> _definitionsByDataType;
 
-    public SqlColumnTypeDefinitionProviderMock()
+    public SqlColumnTypeDefinitionProviderMock(SqlColumnTypeDefinitionProviderBuilderMock builder)
+        : base( builder )
     {
-        var definitions = new SqlColumnTypeDefinition[]
-        {
-            new SqlColumnTypeDefinitionMock<int>( SqlDataTypeMock.Integer, 0 ),
-            new SqlColumnTypeDefinitionMock<bool>( SqlDataTypeMock.Boolean, false ),
-            new SqlColumnTypeDefinitionMock<double>( SqlDataTypeMock.Real, 0.0 ),
-            new SqlColumnTypeDefinitionMock<string>( SqlDataTypeMock.Text, string.Empty ),
-            new SqlColumnTypeDefinitionMock<byte[]>( SqlDataTypeMock.Binary, Array.Empty<byte>() ),
-            new SqlColumnTypeDefinitionMock<object>( SqlDataTypeMock.Object, Array.Empty<byte>() )
-        };
-
         _definitionsByDataType = new Dictionary<SqlDataTypeMock, SqlColumnTypeDefinition>();
-
-        foreach ( var d in definitions )
-        {
-            _definitionsByDataType.Add( ReinterpretCast.To<SqlDataTypeMock>( d.DataType ), d );
-            TryAddDefinition( d );
-        }
-
-        TryAddDefinition( new SqlColumnTypeDefinitionMock<long>( SqlDataTypeMock.Integer, 0L ) );
-        TryAddDefinition( new SqlColumnTypeDefinitionMock<float>( SqlDataTypeMock.Real, 0.0f ) );
+        foreach ( var definition in builder.DefaultDefinitions )
+            _definitionsByDataType.Add( (SqlDataTypeMock)definition.DataType, definition );
     }
 
     [Pure]
@@ -41,6 +25,22 @@ public sealed class SqlColumnTypeDefinitionProviderMock : SqlColumnTypeDefinitio
     [Pure]
     public override SqlColumnTypeDefinition GetByDataType(ISqlDataType type)
     {
-        return _definitionsByDataType[SqlHelpers.CastOrThrow<SqlDataTypeMock>( SqlDialectMock.Instance, type )];
+        return _definitionsByDataType[SqlHelpers.CastOrThrow<SqlDataTypeMock>( Dialect, type )];
+    }
+
+    [Pure]
+    protected override SqlColumnTypeDefinition<TEnum> CreateEnumTypeDefinition<TEnum, TUnderlying>(
+        SqlColumnTypeDefinition<TUnderlying> underlyingTypeDefinition)
+    {
+        return new SqlColumnTypeEnumDefinitionMock<TEnum, TUnderlying>(
+            ReinterpretCast.To<SqlColumnTypeDefinitionMock<TUnderlying>>( underlyingTypeDefinition ) );
+    }
+
+    [Pure]
+    protected override SqlColumnTypeDefinition? TryCreateUnknownTypeDefinition(Type type)
+    {
+        return type == typeof( byte )
+            ? new SqlColumnTypeDefinitionMock<byte>( SqlDataTypeMock.Integer, 0 )
+            : base.TryCreateUnknownTypeDefinition( type );
     }
 }
