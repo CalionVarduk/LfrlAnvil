@@ -18,7 +18,7 @@ public class SqlAsyncQueryReaderTests : TestsBase
             new[] { new SqlResultSetField( 0, "a" ), new SqlResultSetField( 1, "b" ) },
             new List<object?> { "foo", 3, "lorem", 5 } );
 
-        var reader = new DbDataReader();
+        var reader = new DbDataReaderMock();
         var options = new SqlQueryReaderOptions();
         var cancellationTokenSource = new CancellationTokenSource();
         var dialect = new SqlDialect( "foo" );
@@ -53,7 +53,7 @@ public class SqlAsyncQueryReaderTests : TestsBase
                 new object[] { "lorem", 5 }
             } );
 
-        var reader = new DbDataReader();
+        var reader = new DbDataReaderMock();
         var options = new SqlQueryReaderOptions();
         var cancellationTokenSource = new CancellationTokenSource();
         var dialect = new SqlDialect( "foo" );

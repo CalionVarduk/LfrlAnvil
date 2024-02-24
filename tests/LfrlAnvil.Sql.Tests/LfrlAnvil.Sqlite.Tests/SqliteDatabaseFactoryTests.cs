@@ -169,7 +169,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
             history,
             SqlCreateDatabaseOptions.Default
                 .SetMode( SqlDatabaseCreateMode.Commit )
-                .SetVersionHistoryPersistenceMode( SqlDatabaseVersionHistoryPersistenceMode.AllRecords ) );
+                .SetVersionHistoryPersistenceMode( SqlDatabaseVersionHistoryMode.AllRecords ) );
 
         var end = DateTime.UtcNow;
         var versions = result.Database.GetRegisteredVersions();
@@ -236,7 +236,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
             history,
             SqlCreateDatabaseOptions.Default
                 .SetMode( SqlDatabaseCreateMode.Commit )
-                .SetVersionHistoryPersistenceMode( SqlDatabaseVersionHistoryPersistenceMode.LastRecordOnly ) );
+                .SetVersionHistoryPersistenceMode( SqlDatabaseVersionHistoryMode.LastRecordOnly ) );
 
         var end = DateTime.UtcNow;
         var versions = result.Database.GetRegisteredVersions();

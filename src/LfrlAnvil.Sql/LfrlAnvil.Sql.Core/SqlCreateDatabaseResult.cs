@@ -26,7 +26,8 @@ public readonly struct SqlCreateDatabaseResult<TDatabase>
     public TDatabase Database { get; }
     public Exception? Exception { get; }
     public Version OldVersion => _versions.Current;
-    public Version NewVersion => _appliedVersionCount > 0 ? _versions.Uncommitted[_appliedVersionCount - 1].Value : OldVersion;
+    public Version NewVersion => Database.Version;
+    public ReadOnlySpan<SqlDatabaseVersion> OriginalVersions => _versions.Committed;
     public ReadOnlySpan<SqlDatabaseVersion> CommittedVersions => _versions.Uncommitted.Slice( 0, _appliedVersionCount );
     public ReadOnlySpan<SqlDatabaseVersion> PendingVersions => _versions.Uncommitted.Slice( _appliedVersionCount );
 

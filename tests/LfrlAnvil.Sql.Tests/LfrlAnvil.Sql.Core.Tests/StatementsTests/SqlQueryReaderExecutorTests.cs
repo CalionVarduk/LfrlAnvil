@@ -32,7 +32,7 @@ public class SqlQueryReaderExecutorTests : TestsBase
             new List<object?> { "foo", 3, "lorem", 5 } );
 
         var sql = "SELECT * FROM foo";
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var @delegate = Substitute.For<Func<IDataReader, SqlQueryReaderOptions, SqlQueryReaderResult>>();
         @delegate.WithAnyArgs( _ => expected );
         var reader = new SqlQueryReader( new SqlDialect( "foo" ), @delegate );
@@ -75,7 +75,7 @@ public class SqlQueryReaderExecutorTests : TestsBase
             } );
 
         var sql = "SELECT * FROM foo";
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var @delegate = Substitute.For<Func<IDataReader, SqlQueryReaderOptions, SqlQueryReaderResult<object[]>>>();
         @delegate.WithAnyArgs( _ => expected );
         var reader = new SqlQueryReader<object[]>( new SqlDialect( "foo" ), @delegate );

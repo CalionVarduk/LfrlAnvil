@@ -19,7 +19,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void Create_TypeErased_ShouldCreateQueryReaderThatReturnsCorrectResult_WhenDataReaderIsEmpty()
     {
-        var reader = new DbDataReader();
+        var reader = new DbDataReaderMock();
         var sut = Factory.CreateFactory();
         var queryReader = sut.Create();
 
@@ -37,7 +37,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void Create_TypeErased_ShouldCreateQueryReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty()
     {
-        var reader = new DbDataReader(
+        var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
                 Rows: new[]
@@ -74,7 +74,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void Create_TypeErased_ShouldCreateQueryReaderThatReturnsCorrectResult_WhenDataReaderIsEmpty_WithIncludedFieldTypes()
     {
-        var reader = new DbDataReader();
+        var reader = new DbDataReaderMock();
         var sut = Factory.CreateFactory();
         var queryReader = sut.Create(
             SqlQueryReaderCreationOptions.Default.SetResultSetFieldsPersistenceMode(
@@ -94,7 +94,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void Create_TypeErased_ShouldCreateQueryReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty_WithIncludedFieldTypes()
     {
-        var reader = new DbDataReader(
+        var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
                 Rows: new[]
@@ -141,7 +141,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateQueryReaderThatReturnsCorrectResult_WhenDataReaderIsEmpty()
     {
-        var reader = new DbDataReader();
+        var reader = new DbDataReaderMock();
         var sut = Factory.CreateFactory();
         var queryReader = sut.Create<Row>();
 
@@ -159,7 +159,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateQueryReaderThatReturnsCorrectResult_WhenDataReaderIsEmpty_WithIncludedFields()
     {
-        var reader = new DbDataReader();
+        var reader = new DbDataReaderMock();
         var sut = Factory.CreateFactory();
         var queryReader = sut.Create<Row>(
             SqlQueryReaderCreationOptions.Default.SetResultSetFieldsPersistenceMode(
@@ -179,7 +179,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateQueryReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty()
     {
-        var reader = new DbDataReader(
+        var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
                 Rows: new[]
@@ -212,7 +212,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateQueryReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty_WithIncludedFields()
     {
-        var reader = new DbDataReader(
+        var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
                 Rows: new[]
@@ -254,7 +254,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateQueryReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty_WithIncludedFieldTypes()
     {
-        var reader = new DbDataReader(
+        var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
                 Rows: new[]
@@ -305,7 +305,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateQueryReaderThatReturnsCorrectResult_WhenRowTypeContainsParameterizedConstructor()
     {
-        var reader = new DbDataReader(
+        var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
                 Rows: new[]
@@ -336,7 +336,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateQueryReaderThatReturnsCorrectResult_WhenRowTypeContainsDifferentTypesOfValidMembers()
     {
-        var reader = new DbDataReader(
+        var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
                 Rows: new[]
@@ -367,7 +367,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateQueryReaderThatReturnsCorrectResult_WhenReaderIsGivenExplicitOptions()
     {
-        var reader = new DbDataReader(
+        var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
                 Rows: new[]
@@ -400,7 +400,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateQueryReaderThatReturnsCorrectResult_WhenMemberIsIgnored()
     {
-        var reader = new DbDataReader(
+        var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
                 Rows: new[]
@@ -432,7 +432,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateQueryReaderThatReturnsCorrectResult_WhenMemberIsFromOtherSourceField()
     {
-        var reader = new DbDataReader(
+        var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "e" },
                 Rows: new[]
@@ -464,7 +464,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateQueryReaderThatReturnsCorrectResult_WithCustomMappedMember()
     {
-        var reader = new DbDataReader(
+        var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
                 Rows: new[]
@@ -480,7 +480,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                 SqlQueryReaderCreationOptions.Default.With(
                     SqlQueryMemberConfiguration.From(
                         "c",
-                        (ISqlDataRecordFacade<DbDataReader> r) => (double)(r.Record.GetInt32( r.Record.GetOrdinal( "a" ) ) +
+                        (ISqlDataRecordFacade<DbDataReaderMock> r) => (double)(r.Record.GetInt32( r.Record.GetOrdinal( "a" ) ) +
                             r.Record.GetString( r.Record.GetOrdinal( "b" ) ).Length) ) ) );
 
         var result = queryReader.Read( reader );
@@ -502,7 +502,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateQueryReaderThatReturnsCorrectResult_WithCustomMappedMemberUsingFacadeMethods()
     {
-        var reader = new DbDataReader(
+        var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
                 Rows: new[]
@@ -518,7 +518,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                 SqlQueryReaderCreationOptions.Default.With(
                     SqlQueryMemberConfiguration.From(
                         "c",
-                        (ISqlDataRecordFacade<DbDataReader> r) =>
+                        (ISqlDataRecordFacade<DbDataReaderMock> r) =>
                             r.IsNull( "d" )
                                 ? r.Record.GetDouble( r.GetOrdinal( "c" ) )
                                 : r.Get<int>( "a" ) + r.GetNullable( "c", -1.0 ) + r.GetNullable<double>( "c" ) ) ) );
@@ -542,7 +542,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateQueryReaderThatReturnsCorrectResult_WithAlwaysTestingForNullEnabled()
     {
-        var reader = new DbDataReader(
+        var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
                 Rows: new[]
@@ -577,7 +577,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateQueryReaderThatReturnsCorrectResult_WithAlwaysTestingForNullEnabledAndValidParameterizedCtor()
     {
-        var reader = new DbDataReader(
+        var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
                 Rows: new[]
@@ -660,7 +660,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public async Task CreateAsync_TypeErased_ShouldCreateAsyncQueryReaderThatReturnsCorrectResult_WhenDataReaderIsEmpty()
     {
-        var reader = new DbDataReader();
+        var reader = new DbDataReaderMock();
         var sut = Factory.CreateFactory();
         var queryReader = sut.CreateAsync();
 
@@ -678,7 +678,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public async Task CreateAsync_TypeErased_ShouldCreateAsyncQueryReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty()
     {
-        var reader = new DbDataReader(
+        var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
                 Rows: new[]
@@ -716,7 +716,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     public async Task
         CreateAsync_TypeErased_ShouldCreateAsyncQueryReaderThatReturnsCorrectResult_WhenDataReaderIsEmpty_WithIncludedFieldTypes()
     {
-        var reader = new DbDataReader();
+        var reader = new DbDataReaderMock();
         var sut = Factory.CreateFactory();
         var queryReader = sut.CreateAsync(
             SqlQueryReaderCreationOptions.Default.SetResultSetFieldsPersistenceMode(
@@ -737,7 +737,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     public async Task
         CreateAsync_TypeErased_ShouldCreateAsyncQueryReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty_WithIncludedFieldTypes()
     {
-        var reader = new DbDataReader(
+        var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
                 Rows: new[]
@@ -784,7 +784,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public async Task CreateAsync_Generic_ShouldCreateAsyncQueryReaderThatReturnsCorrectResult_WhenDataReaderIsEmpty()
     {
-        var reader = new DbDataReader();
+        var reader = new DbDataReaderMock();
         var sut = Factory.CreateFactory();
         var queryReader = sut.CreateAsync<Row>();
 
@@ -802,7 +802,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public async Task CreateAsync_Generic_ShouldCreateAsyncQueryReaderThatReturnsCorrectResult_WhenDataReaderIsEmpty_WithIncludedFields()
     {
-        var reader = new DbDataReader();
+        var reader = new DbDataReaderMock();
         var sut = Factory.CreateFactory();
         var queryReader = sut.CreateAsync<Row>(
             SqlQueryReaderCreationOptions.Default.SetResultSetFieldsPersistenceMode(
@@ -822,7 +822,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public async Task CreateAsync_Generic_ShouldCreateAsyncQueryReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty()
     {
-        var reader = new DbDataReader(
+        var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
                 Rows: new[]
@@ -855,7 +855,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public async Task CreateAsync_Generic_ShouldCreateAsyncQueryReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty_WithIncludedFields()
     {
-        var reader = new DbDataReader(
+        var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
                 Rows: new[]
@@ -898,7 +898,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     public async Task
         CreateAsync_Generic_ShouldCreateAsyncQueryReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty_WithIncludedFieldTypes()
     {
-        var reader = new DbDataReader(
+        var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
                 Rows: new[]
@@ -949,7 +949,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public async Task CreateAsync_Generic_ShouldCreateAsyncQueryReaderThatReturnsCorrectResult_WhenRowTypeContainsParameterizedConstructor()
     {
-        var reader = new DbDataReader(
+        var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
                 Rows: new[]
@@ -981,7 +981,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     public async Task
         CreateAsync_Generic_ShouldCreateAsyncQueryReaderThatReturnsCorrectResult_WhenRowTypeContainsDifferentTypesOfValidMembers()
     {
-        var reader = new DbDataReader(
+        var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
                 Rows: new[]
@@ -1012,7 +1012,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public async Task CreateAsync_Generic_ShouldCreateAsyncQueryReaderThatReturnsCorrectResult_WhenReaderIsGivenExplicitOptions()
     {
-        var reader = new DbDataReader(
+        var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
                 Rows: new[]
@@ -1045,7 +1045,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public async Task CreateAsync_Generic_ShouldCreateAsyncQueryReaderThatReturnsCorrectResult_WhenMemberIsIgnored()
     {
-        var reader = new DbDataReader(
+        var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
                 Rows: new[]
@@ -1077,7 +1077,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public async Task CreateAsync_Generic_ShouldCreateAsyncQueryReaderThatReturnsCorrectResult_WhenMemberIsFromOtherSourceField()
     {
-        var reader = new DbDataReader(
+        var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "e" },
                 Rows: new[]
@@ -1110,7 +1110,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public async Task CreateAsync_Generic_ShouldCreateAsyncQueryReaderThatReturnsCorrectResult_WithCustomMappedMember()
     {
-        var reader = new DbDataReader(
+        var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
                 Rows: new[]
@@ -1126,7 +1126,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                 SqlQueryReaderCreationOptions.Default.With(
                     SqlQueryMemberConfiguration.From(
                         "c",
-                        (ISqlDataRecordFacade<DbDataReader> r) => (double)(r.Record.GetInt32( r.Record.GetOrdinal( "a" ) ) +
+                        (ISqlDataRecordFacade<DbDataReaderMock> r) => (double)(r.Record.GetInt32( r.Record.GetOrdinal( "a" ) ) +
                             r.Record.GetString( r.Record.GetOrdinal( "b" ) ).Length) ) ) );
 
         var result = await queryReader.ReadAsync( reader );
@@ -1148,7 +1148,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public async Task CreateAsync_Generic_ShouldCreateAsyncQueryReaderThatReturnsCorrectResult_WithCustomMappedMemberUsingFacadeMethods()
     {
-        var reader = new DbDataReader(
+        var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
                 Rows: new[]
@@ -1164,7 +1164,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                 SqlQueryReaderCreationOptions.Default.With(
                     SqlQueryMemberConfiguration.From(
                         "c",
-                        (ISqlDataRecordFacade<DbDataReader> r) =>
+                        (ISqlDataRecordFacade<DbDataReaderMock> r) =>
                             r.IsNull( "d" )
                                 ? r.Record.GetDouble( r.GetOrdinal( "c" ) )
                                 : r.Get<int>( "a" ) + r.GetNullable( "c", -1.0 ) + r.GetNullable<double>( "c" ) ) ) );
@@ -1188,7 +1188,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public async Task CreateAsync_Generic_ShouldCreateAsyncQueryReaderThatReturnsCorrectResult_WithAlwaysTestingForNullEnabled()
     {
-        var reader = new DbDataReader(
+        var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
                 Rows: new[]
@@ -1224,7 +1224,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     public async Task
         CreateAsync_Generic_ShouldCreateAsyncQueryReaderThatReturnsCorrectResult_WithAlwaysTestingForNullEnabledAndValidParameterizedCtor()
     {
-        var reader = new DbDataReader(
+        var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
                 Rows: new[]
@@ -1364,7 +1364,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
     public sealed record RowRecord(int A, string B, double? C, bool? D);
 
-    private sealed class Factory : SqlQueryReaderFactory<DbDataReader>
+    private sealed class Factory : SqlQueryReaderFactory<DbDataReaderMock>
     {
         private Factory(SqlDialect dialect)
             : base( dialect, ColumnTypeDefinitionProviderMock.Default( dialect ) ) { }

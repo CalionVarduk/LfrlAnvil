@@ -11,35 +11,35 @@ public class SqlParameterBinderExpressionTests : TestsBase
     [Fact]
     public void Compile_ShouldCreateCorrectParameterBinder()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var dialect = new SqlDialect( "foo" );
         var sourceType = typeof( string );
 
-        var createParameterMethod = typeof( DbCommand ).GetMethod( nameof( DbCommand.CreateParameter ) )!;
-        var parametersProperty = typeof( DbCommand ).GetProperty(
-            nameof( DbCommand.Parameters ),
+        var createParameterMethod = typeof( DbCommandMock ).GetMethod( nameof( DbCommandMock.CreateParameter ) )!;
+        var parametersProperty = typeof( DbCommandMock ).GetProperty(
+            nameof( DbCommandMock.Parameters ),
             BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly )!;
 
-        var addMethod = typeof( DbDataParameterCollection ).GetMethod(
-            nameof( DbDataParameterCollection.Add ),
+        var addMethod = typeof( DbDataParameterCollectionMock ).GetMethod(
+            nameof( DbDataParameterCollectionMock.Add ),
             BindingFlags.Public | BindingFlags.Instance,
-            new[] { typeof( DbDataParameter ) } )!;
+            new[] { typeof( DbDataParameterMock ) } )!;
 
-        var nameProperty = typeof( DbDataParameter ).GetProperty( nameof( DbDataParameter.ParameterName ) )!;
-        var valueProperty = typeof( DbDataParameter ).GetProperty( nameof( DbDataParameter.Value ) )!;
+        var nameProperty = typeof( DbDataParameterMock ).GetProperty( nameof( DbDataParameterMock.ParameterName ) )!;
+        var valueProperty = typeof( DbDataParameterMock ).GetProperty( nameof( DbDataParameterMock.Value ) )!;
         var lengthProperty = sourceType.GetProperty( nameof( string.Length ) )!;
 
         var cmdParameter = Expression.Parameter( typeof( IDbCommand ), "cmd" );
         var sourceParameter = Expression.Parameter( sourceType, "source" );
-        var cmdVariable = Expression.Variable( typeof( DbCommand ), "fooCmd" );
-        var parameterVariable = Expression.Variable( typeof( DbDataParameter ), "parameter" );
+        var cmdVariable = Expression.Variable( typeof( DbCommandMock ), "fooCmd" );
+        var parameterVariable = Expression.Variable( typeof( DbDataParameterMock ), "parameter" );
         var lengthConst = Expression.Constant( "length" );
         var valueConst = Expression.Constant( "value" );
 
         var expression = Expression.Lambda<Action<IDbCommand, string>>(
             Expression.Block(
                 new[] { cmdVariable, parameterVariable },
-                Expression.Assign( cmdVariable, Expression.Convert( cmdParameter, typeof( DbCommand ) ) ),
+                Expression.Assign( cmdVariable, Expression.Convert( cmdParameter, typeof( DbCommandMock ) ) ),
                 Expression.Assign( parameterVariable, Expression.Call( cmdVariable, createParameterMethod ) ),
                 Expression.Assign( Expression.MakeMemberAccess( parameterVariable, nameProperty ), lengthConst ),
                 Expression.Assign(

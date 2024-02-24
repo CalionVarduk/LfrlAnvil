@@ -14,7 +14,7 @@ public class SqlAsyncMultiDataReaderTests : TestsBase
     [Fact]
     public void Ctor_ShouldCreateCorrectReader()
     {
-        var reader = new DbDataReader();
+        var reader = new DbDataReaderMock();
         var sut = reader.MultiAsync();
         sut.Reader.Should().BeSameAs( reader );
     }
@@ -22,7 +22,7 @@ public class SqlAsyncMultiDataReaderTests : TestsBase
     [Fact]
     public void Dispose_ShouldDoNothing_WhenReaderIsClosed()
     {
-        var reader = new DbDataReader { ThrowOnDispose = true };
+        var reader = new DbDataReaderMock { ThrowOnDispose = true };
         var sut = reader.MultiAsync();
         var action = Lambda.Of( () => sut.Dispose() );
         action.Should().NotThrow();
@@ -31,7 +31,7 @@ public class SqlAsyncMultiDataReaderTests : TestsBase
     [Fact]
     public void Dispose_ShouldDisposeReader()
     {
-        var reader = new DbDataReader( new ResultSet( new[] { "A" }, new[] { new object[] { "foo" }, new object[] { "bar" } } ) );
+        var reader = new DbDataReaderMock( new ResultSet( new[] { "A" }, new[] { new object[] { "foo" }, new object[] { "bar" } } ) );
         var sut = reader.MultiAsync();
         sut.Dispose();
         reader.IsClosed.Should().BeTrue();
@@ -41,7 +41,7 @@ public class SqlAsyncMultiDataReaderTests : TestsBase
     public async Task DisposeAsync_ShouldDoNothing_WhenReaderIsClosed()
     {
         Exception? exception = null;
-        var reader = new DbDataReader { ThrowOnDispose = true };
+        var reader = new DbDataReaderMock { ThrowOnDispose = true };
         var sut = reader.MultiAsync();
         try
         {
@@ -58,7 +58,7 @@ public class SqlAsyncMultiDataReaderTests : TestsBase
     [Fact]
     public async Task DisposeAsync_ShouldDisposeReader()
     {
-        var reader = new DbDataReader( new ResultSet( new[] { "A" }, new[] { new object[] { "foo" }, new object[] { "bar" } } ) );
+        var reader = new DbDataReaderMock( new ResultSet( new[] { "A" }, new[] { new object[] { "foo" }, new object[] { "bar" } } ) );
         var sut = reader.MultiAsync();
         await sut.DisposeAsync();
         reader.IsClosed.Should().BeTrue();
@@ -67,7 +67,7 @@ public class SqlAsyncMultiDataReaderTests : TestsBase
     [Fact]
     public async Task ReadAsync_TypeErased_ShouldReadCorrectResultSetsAndCallDisposeOnceDone()
     {
-        var command = new DbCommand
+        var command = new DbCommandMock
         {
             ResultSets = new[]
             {
@@ -109,7 +109,7 @@ public class SqlAsyncMultiDataReaderTests : TestsBase
     [Fact]
     public async Task ReadAsync_Generic_ShouldReadCorrectResultSetsAndCallDisposeOnceDone()
     {
-        var command = new DbCommand
+        var command = new DbCommandMock
         {
             ResultSets = new[]
             {
@@ -138,7 +138,7 @@ public class SqlAsyncMultiDataReaderTests : TestsBase
     [Fact]
     public async Task ReadAsync_WithCustomValueTaskDelegate_ShouldReadCorrectResultSetsAndCallDisposeOnceDone()
     {
-        var command = new DbCommand
+        var command = new DbCommandMock
         {
             ResultSets = new[]
             {
@@ -166,7 +166,7 @@ public class SqlAsyncMultiDataReaderTests : TestsBase
     [Fact]
     public async Task ReadAsync_WithCustomTaskDelegate_ShouldReadCorrectResultSetsAndCallDisposeOnceDone()
     {
-        var command = new DbCommand
+        var command = new DbCommandMock
         {
             ResultSets = new[]
             {
@@ -194,7 +194,7 @@ public class SqlAsyncMultiDataReaderTests : TestsBase
     [Fact]
     public async Task ReadAllAsync_ShouldReadAllAvailableResultSetsAndCallDisposeOnceDone()
     {
-        var command = new DbCommand
+        var command = new DbCommandMock
         {
             ResultSets = new[]
             {
@@ -240,7 +240,7 @@ public class SqlAsyncMultiDataReaderTests : TestsBase
 
     public sealed record ThirdRow(bool M, double? N);
 
-    private sealed class QueryFactory : SqlQueryReaderFactory<DbDataReader>
+    private sealed class QueryFactory : SqlQueryReaderFactory<DbDataReaderMock>
     {
         public QueryFactory(SqlDialect dialect)
             : base( dialect, ColumnTypeDefinitionProviderMock.Default( dialect ) ) { }

@@ -231,7 +231,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
                     var actions = info.Table.Database.Changes.GetPendingActions();
                     foreach ( var action in actions )
                     {
-                        action.Apply( command );
+                        action.PrepareCommand( command );
                         statementExecutor.ExecuteVersionHistoryNonQuery( command );
                     }
 
@@ -348,7 +348,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
     private static (Exception? Exception, int AppliedVersions) ApplyVersionsInCommitMode(
         SqlDatabaseConnectionChangeEvent connectionChangeEvent,
         SqlDatabaseVersionHistory.DatabaseComparisonResult versions,
-        SqlDatabaseVersionHistoryPersistenceMode versionHistoryPersistenceMode,
+        SqlDatabaseVersionHistoryMode versionHistoryPersistenceMode,
         in VersionHistoryInfo versionHistory,
         ref SqlStatementExecutor statementExecutor)
     {
@@ -369,7 +369,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
         var pDescription = insertVersionCommand.Parameters[5];
         var pCommitDateUtc = insertVersionCommand.Parameters[6];
 
-        using var deleteVersionsCommand = versionHistoryPersistenceMode == SqlDatabaseVersionHistoryPersistenceMode.LastRecordOnly
+        using var deleteVersionsCommand = versionHistoryPersistenceMode == SqlDatabaseVersionHistoryMode.LastRecordOnly
             ? OptionalDisposable.Create( PrepareDeleteVersionRecordsCommand( connection, in versionHistory ) )
             : OptionalDisposable<SqliteCommand>.Empty;
 
@@ -410,7 +410,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
                     foreach ( var action in actions )
                     {
                         statementKey = statementKey.NextOrdinal();
-                        action.Apply( statementCommand );
+                        action.PrepareCommand( statementCommand );
                         statementExecutor.ExecuteNonQuery( statementCommand, statementKey, SqlDatabaseFactoryStatementType.Change );
                     }
 
@@ -841,7 +841,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
 
         internal void ExecuteNonQuery(SqliteCommand command, SqlDatabaseFactoryStatementKey key, SqlDatabaseFactoryStatementType type)
         {
-            var @event = SqlDatabaseFactoryStatementEvent.Create( key, command, type );
+            var @event = SqlDatabaseFactoryStatementEvent.Create( command, key, type );
             var start = Stopwatch.GetTimestamp();
 
             OnBeforeStatementExecution( @event );
@@ -876,7 +876,7 @@ public sealed class SqliteDatabaseFactory : ISqlDatabaseFactory
             Func<SqliteCommand, T> resultSelector)
         {
             T result;
-            var @event = SqlDatabaseFactoryStatementEvent.Create( key, command, type );
+            var @event = SqlDatabaseFactoryStatementEvent.Create( command, key, type );
             var start = Stopwatch.GetTimestamp();
 
             OnBeforeStatementExecution( @event );

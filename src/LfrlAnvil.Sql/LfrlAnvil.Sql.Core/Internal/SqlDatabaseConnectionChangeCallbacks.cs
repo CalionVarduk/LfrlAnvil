@@ -7,7 +7,7 @@ using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.Sql.Internal;
 
-// TODO: could probably be internal?
+// TODO: remove when ready
 public readonly struct SqlDatabaseConnectionChangeCallbacks
 {
     private readonly List<Action<SqlDatabaseConnectionChangeEvent>> _callbacks;

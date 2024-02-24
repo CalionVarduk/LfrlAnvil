@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using LfrlAnvil.Sql.Internal;
+﻿using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
@@ -30,10 +29,10 @@ public partial class SqlDatabaseBuilderTests : TestsBase
             sut.Changes.Database.Should().BeSameAs( sut );
             sut.Changes.Mode.Should().Be( SqlDatabaseCreateMode.DryRun );
             sut.Changes.IsAttached.Should().BeTrue();
-            sut.Changes.ActiveObject.Should().BeSameAs( sut.Schemas.Default );
-            sut.Changes.ActiveObjectExistenceState.Should().Be( SqlObjectExistenceState.Created );
+            sut.Changes.ActiveObject.Should().BeNull();
+            sut.Changes.ActiveObjectExistenceState.Should().Be( default( SqlObjectExistenceState ) );
             sut.Changes.IsActive.Should().BeTrue();
-            sut.Changes.GetPendingActions().ToArray().Select( a => a.Sql ).Should().BeSequentiallyEqualTo( "CREATE [Schema] common;" );
+            sut.Changes.GetPendingActions().ToArray().Should().BeEmpty();
 
             ((ISqlDatabaseBuilder)sut).DataTypes.Should().BeSameAs( sut.DataTypes );
             ((ISqlDatabaseBuilder)sut).TypeDefinitions.Should().BeSameAs( sut.TypeDefinitions );

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -13,7 +14,16 @@ namespace LfrlAnvil.Sql.Internal;
 
 public static class SqlHelpers
 {
+    public const string VersionHistoryOrdinalName = "Ordinal";
+    public const string VersionHistoryVersionMajorName = "VersionMajor";
+    public const string VersionHistoryVersionMinorName = "VersionMinor";
+    public const string VersionHistoryVersionBuildName = "VersionBuild";
+    public const string VersionHistoryVersionRevisionName = "VersionRevision";
+    public const string VersionHistoryDescriptionName = "Description";
+    public const string VersionHistoryCommitDateUtcName = "CommitDateUtc";
+    public const string VersionHistoryCommitDurationInTicksName = "CommitDurationInTicks";
     public static readonly StringComparer NameComparer = StringComparer.OrdinalIgnoreCase;
+    public static readonly Func<IDbCommand, int> ExecuteNonQueryDelegate = static cmd => cmd.ExecuteNonQuery();
 
     [Pure]
     public static string GetFullName(string schemaName, string name, char separator = '.')

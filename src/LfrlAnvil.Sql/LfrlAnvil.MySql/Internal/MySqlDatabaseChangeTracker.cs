@@ -49,6 +49,7 @@ public sealed class MySqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
 
     public MySqlObjectBuilder? ActiveObject { get; private set; }
     public SqlObjectExistenceState ActiveObjectExistenceState { get; private set; }
+    public TimeSpan? ActionTimeout { get; }
     public SqlDatabaseCreateMode Mode => (SqlDatabaseCreateMode)((_mode & ModeMask) >> 1);
     public bool IsAttached => (_mode & IsDetachedBit) == 0;
     internal bool IsPreparingStatements => _mode > 0 && IsAttached;
@@ -64,13 +65,13 @@ public sealed class MySqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         return CollectionsMarshal.AsSpan( _pendingActions );
     }
 
-    public ISqlDatabaseChangeTracker AddAction(Action<IDbCommand> action)
+    public ISqlDatabaseChangeTracker AddAction(Action<IDbCommand> action, Action<IDbCommand>? setup = null)
     {
         if ( _ongoingPropertyChanges.Count > 0 )
             CompletePendingChanges();
 
         if ( IsPreparingStatements )
-            _pendingActions.Add( SqlDatabaseBuilderCommandAction.CreateCallback( action ) );
+            _pendingActions.Add( SqlDatabaseBuilderCommandAction.CreateCustom( action, setup ) );
 
         return this;
     }
@@ -723,6 +724,11 @@ public sealed class MySqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
     }
 
     bool ISqlDatabaseChangeTracker.TryGetOriginalValue(ISqlObjectBuilder target, SqlObjectChangeDescriptor descriptor, out object? result)
+    {
+        throw new NotImplementedException();
+    }
+
+    ISqlDatabaseChangeTracker ISqlDatabaseChangeTracker.SetActionTimeout(TimeSpan? value)
     {
         throw new NotImplementedException();
     }

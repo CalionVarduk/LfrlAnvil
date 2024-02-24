@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using LfrlAnvil.Exceptions;
 using LfrlAnvil.Generators;
 using LfrlAnvil.Memory;
@@ -12,12 +14,6 @@ using ExceptionResources = LfrlAnvil.Sql.Exceptions.ExceptionResources;
 namespace LfrlAnvil.Sql.Objects.Builders;
 
 // TODO:
-// THEN, refactor db builder further, with dedicated configuration object (allows to override default providers)
-// ^ it may actually be enough to define a struct, since actual configuration has to be exposed for concrete db builders
-// THEN, create core db factory (this could also use nsubstitute mocks replacement) (also, db builder command action may need some rethinking)
-// ^ or at least create an internal loggable IDbCommand (could be publicly available, with a before+after callbacks + time tracking)
-// ^ if made public, then could use an async version as well
-// ^ also, I keep forgetting, ExecuteScalar wrapper for query/multi readers
 // THEN, create better core node interpreter
 // THEN, create db version object that works with core classes rather than interfaces
 // THEN, core might actually be done?
@@ -25,11 +21,12 @@ namespace LfrlAnvil.Sql.Objects.Builders;
 // THEN, update mysql to work fully with new core
 // THEN, change IXs so that they accept an array of SqlOrderByNode
 // ^ including extensions that still allow to provide 'bare' indexed columns
-// THEN (?), add possibility to registered generated/computed columns (low priority)
+// THEN (?), add possibility to register generated/computed columns (low priority)
 
 public abstract class SqlDatabaseBuilder : SqlBuilderApi, ISqlDatabaseBuilder
 {
     private readonly UlongSequenceGenerator _idGenerator;
+    private readonly List<Action<SqlDatabaseConnectionChangeEvent>> _connectionChangeCallbacks;
 
     protected SqlDatabaseBuilder(
         SqlDialect dialect,
@@ -49,7 +46,7 @@ public abstract class SqlDatabaseBuilder : SqlBuilderApi, ISqlDatabaseBuilder
         Assume.Equals( parameterBinders.ColumnTypeDefinitions, typeDefinitions );
 
         ObjectPool = new MemorySequencePool<SqlObjectBuilder>( minSegmentLength: 32 );
-        ConnectionChanges = SqlDatabaseConnectionChangeCallbacks.Create();
+        _connectionChangeCallbacks = new List<Action<SqlDatabaseConnectionChangeEvent>>();
         _idGenerator = new UlongSequenceGenerator();
         DataTypes = dataTypes;
         TypeDefinitions = typeDefinitions;
@@ -62,7 +59,6 @@ public abstract class SqlDatabaseBuilder : SqlBuilderApi, ISqlDatabaseBuilder
         Changes.SetDatabase( this );
         Schemas = schemas;
         Schemas.SetDatabase( this );
-        // TODO: SetDefault may have to be called later, when DB ctor/init is fully done
         Schemas.SetDefault( defaultSchemaName );
     }
 
@@ -76,7 +72,9 @@ public abstract class SqlDatabaseBuilder : SqlBuilderApi, ISqlDatabaseBuilder
     public SqlSchemaBuilderCollection Schemas { get; }
     public SqlDatabaseChangeTracker Changes { get; }
     internal MemorySequencePool<SqlObjectBuilder> ObjectPool { get; }
-    internal SqlDatabaseConnectionChangeCallbacks ConnectionChanges { get; private set; }
+
+    internal ReadOnlySpan<Action<SqlDatabaseConnectionChangeEvent>> ConnectionChangeCallbacks =>
+        CollectionsMarshal.AsSpan( _connectionChangeCallbacks );
 
     ISqlSchemaBuilderCollection ISqlDatabaseBuilder.Schemas => Schemas;
     ISqlColumnTypeDefinitionProvider ISqlDatabaseBuilder.TypeDefinitions => TypeDefinitions;
@@ -86,7 +84,7 @@ public abstract class SqlDatabaseBuilder : SqlBuilderApi, ISqlDatabaseBuilder
 
     public SqlDatabaseBuilder AddConnectionChangeCallback(Action<SqlDatabaseConnectionChangeEvent> callback)
     {
-        ConnectionChanges.AddCallback( callback );
+        _connectionChangeCallbacks.Add( callback );
         return this;
     }
 
@@ -107,14 +105,6 @@ public abstract class SqlDatabaseBuilder : SqlBuilderApi, ISqlDatabaseBuilder
     internal ulong GetNextId()
     {
         return _idGenerator.Generate();
-    }
-
-    [Pure]
-    internal ReadOnlySpan<Action<SqlDatabaseConnectionChangeEvent>> GetPendingConnectionChangeCallbacks()
-    {
-        var result = ConnectionChanges.GetPendingCallbacks();
-        ConnectionChanges = ConnectionChanges.UpdateFirstPendingCallbackIndex();
-        return result;
     }
 
     ISqlDatabaseBuilder ISqlDatabaseBuilder.AddConnectionChangeCallback(Action<SqlDatabaseConnectionChangeEvent> callback)

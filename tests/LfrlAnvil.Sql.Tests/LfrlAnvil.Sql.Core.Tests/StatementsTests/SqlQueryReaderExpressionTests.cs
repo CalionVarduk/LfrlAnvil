@@ -19,7 +19,7 @@ public class SqlQueryReaderExpressionTests : TestsBase
                 new object[] { "lorem", 5 }
             } );
 
-        var reader = new DbDataReader();
+        var reader = new DbDataReaderMock();
         var dialect = new SqlDialect( "foo" );
         var rowType = typeof( object[] );
 

@@ -1,6 +1,6 @@
 ﻿namespace LfrlAnvil.Sql;
 
-public enum SqlDatabaseVersionHistoryPersistenceMode : byte
+public enum SqlDatabaseVersionHistoryMode : byte
 {
     AllRecords = 0,
     LastRecordOnly = 1

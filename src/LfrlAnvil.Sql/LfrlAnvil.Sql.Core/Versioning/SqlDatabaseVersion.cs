@@ -18,7 +18,7 @@ public abstract class SqlDatabaseVersion
     [Pure]
     public static SqlDatabaseVersion Create(Version value, string? description, Action<ISqlDatabaseBuilder> apply)
     {
-        return new SqlDatabaseLambdaVersion( value, description ?? string.Empty, apply );
+        return new SqlDatabaseLambdaVersion( value, description, apply );
     }
 
     [Pure]

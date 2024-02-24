@@ -24,6 +24,7 @@ public sealed class SqlColumnTypeDefinitionProviderBuilderMock : SqlColumnTypeDe
 
         AddOrUpdate( new SqlColumnTypeDefinitionMock<long>( SqlDataTypeMock.Integer, 0L ) );
         AddOrUpdate( new SqlColumnTypeDefinitionMock<float>( SqlDataTypeMock.Real, 0.0f ) );
+        AddOrUpdate( new SqlColumnTypeDefinitionMock<DateTime>( SqlDataTypeMock.Text, DateTime.UnixEpoch ) );
     }
 
     [Pure]

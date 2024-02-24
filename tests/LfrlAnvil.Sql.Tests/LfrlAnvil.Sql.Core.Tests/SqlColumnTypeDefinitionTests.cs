@@ -69,7 +69,7 @@ public class SqlColumnTypeDefinitionTests : TestsBase
     [InlineData( false )]
     public void SetParameterInfo_ShouldInvokeTypedSetParameterInfo_WhenParameterTypeIsCompatible(bool isNullable)
     {
-        var parameter = new DbDataParameter();
+        var parameter = new DbDataParameterMock();
         var sut = new SqlColumnTypeDefinitionMock<string>( SqlDataTypeMock.Text, string.Empty );
 
         ((ISqlColumnTypeDefinition)sut).SetParameterInfo( parameter, isNullable );

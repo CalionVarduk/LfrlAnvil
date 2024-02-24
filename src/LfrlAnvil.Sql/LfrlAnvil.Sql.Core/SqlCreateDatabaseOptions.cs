@@ -13,7 +13,9 @@ public readonly record struct SqlCreateDatabaseOptions
 
     public readonly SqlDatabaseCreateMode Mode;
     public readonly SqlSchemaObjectName? VersionHistoryName;
-    public readonly SqlDatabaseVersionHistoryPersistenceMode VersionHistoryPersistenceMode;
+    public readonly SqlDatabaseVersionHistoryMode VersionHistoryPersistenceMode;
+    public readonly SqlDatabaseVersionHistoryMode VersionHistoryQueryMode;
+    public readonly TimeSpan? CommandTimeout;
 
     private readonly List<ISqlDatabaseFactoryStatementListener>? _statementListeners;
     private readonly int _statementListenerCount;
@@ -21,12 +23,16 @@ public readonly record struct SqlCreateDatabaseOptions
     private SqlCreateDatabaseOptions(
         SqlDatabaseCreateMode mode,
         SqlSchemaObjectName? versionHistoryName,
-        SqlDatabaseVersionHistoryPersistenceMode versionHistoryPersistenceMode,
+        SqlDatabaseVersionHistoryMode versionHistoryPersistenceMode,
+        SqlDatabaseVersionHistoryMode versionHistoryQueryMode,
+        TimeSpan? commandTimeout,
         List<ISqlDatabaseFactoryStatementListener>? statementListeners)
     {
         Mode = mode;
         VersionHistoryName = versionHistoryName;
         VersionHistoryPersistenceMode = versionHistoryPersistenceMode;
+        VersionHistoryQueryMode = versionHistoryQueryMode;
+        CommandTimeout = commandTimeout;
         _statementListeners = statementListeners;
         _statementListenerCount = statementListeners?.Count ?? 0;
     }
@@ -42,20 +48,57 @@ public readonly record struct SqlCreateDatabaseOptions
     public SqlCreateDatabaseOptions SetMode(SqlDatabaseCreateMode mode)
     {
         Ensure.IsDefined( mode );
-        return new SqlCreateDatabaseOptions( mode, VersionHistoryName, VersionHistoryPersistenceMode, _statementListeners );
+        return new SqlCreateDatabaseOptions(
+            mode,
+            VersionHistoryName,
+            VersionHistoryPersistenceMode,
+            VersionHistoryQueryMode,
+            CommandTimeout,
+            _statementListeners );
     }
 
     [Pure]
     public SqlCreateDatabaseOptions SetVersionHistoryName(SqlSchemaObjectName? name)
     {
-        return new SqlCreateDatabaseOptions( Mode, name, VersionHistoryPersistenceMode, _statementListeners );
+        return new SqlCreateDatabaseOptions(
+            Mode,
+            name,
+            VersionHistoryPersistenceMode,
+            VersionHistoryQueryMode,
+            CommandTimeout,
+            _statementListeners );
     }
 
     [Pure]
-    public SqlCreateDatabaseOptions SetVersionHistoryPersistenceMode(SqlDatabaseVersionHistoryPersistenceMode mode)
+    public SqlCreateDatabaseOptions SetVersionHistoryPersistenceMode(SqlDatabaseVersionHistoryMode mode)
     {
         Ensure.IsDefined( mode );
-        return new SqlCreateDatabaseOptions( Mode, VersionHistoryName, mode, _statementListeners );
+        return new SqlCreateDatabaseOptions( Mode, VersionHistoryName, mode, VersionHistoryQueryMode, CommandTimeout, _statementListeners );
+    }
+
+    [Pure]
+    public SqlCreateDatabaseOptions SetVersionHistoryQueryMode(SqlDatabaseVersionHistoryMode mode)
+    {
+        Ensure.IsDefined( mode );
+        return new SqlCreateDatabaseOptions(
+            Mode,
+            VersionHistoryName,
+            VersionHistoryPersistenceMode,
+            mode,
+            CommandTimeout,
+            _statementListeners );
+    }
+
+    [Pure]
+    public SqlCreateDatabaseOptions SetCommandTimeout(TimeSpan? timeout)
+    {
+        return new SqlCreateDatabaseOptions(
+            Mode,
+            VersionHistoryName,
+            VersionHistoryPersistenceMode,
+            VersionHistoryQueryMode,
+            timeout,
+            _statementListeners );
     }
 
     [Pure]
@@ -63,6 +106,12 @@ public readonly record struct SqlCreateDatabaseOptions
     {
         var listeners = _statementListeners ?? new List<ISqlDatabaseFactoryStatementListener>();
         listeners.Add( listener );
-        return new SqlCreateDatabaseOptions( Mode, VersionHistoryName, VersionHistoryPersistenceMode, listeners );
+        return new SqlCreateDatabaseOptions(
+            Mode,
+            VersionHistoryName,
+            VersionHistoryPersistenceMode,
+            VersionHistoryQueryMode,
+            CommandTimeout,
+            listeners );
     }
 }

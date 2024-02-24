@@ -136,7 +136,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Select( s => s.Sql ).Should().BeSequentiallyEqualTo( $"{statement}{Environment.NewLine}" );
-            result.ElementAtOrDefault( 0 ).Callback.Should().NotBeNull();
+            result.ElementAtOrDefault( 0 ).OnCommandSetup.Should().NotBeNull();
         }
     }
 
@@ -161,7 +161,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
         {
             result.Should().HaveCount( 2 );
             result[^1].Sql.Should().Be( $"{statement}{Environment.NewLine}" );
-            result[^1].Callback.Should().NotBeNull();
+            result[^1].OnCommandSetup.Should().NotBeNull();
         }
     }
 
@@ -205,7 +205,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Select( s => s.Sql ).Should().BeSequentiallyEqualTo( $"{statement}{Environment.NewLine}" );
-            result.ElementAtOrDefault( 0 ).Callback.Should().NotBeNull();
+            result.ElementAtOrDefault( 0 ).OnCommandSetup.Should().NotBeNull();
         }
     }
 
@@ -227,7 +227,7 @@ public partial class SqliteDatabaseBuilderTests : TestsBase
         {
             result.Should().HaveCount( 2 );
             result[^1].Sql.Should().Be( $"{statement}{Environment.NewLine}" );
-            result[^1].Callback.Should().NotBeNull();
+            result[^1].OnCommandSetup.Should().NotBeNull();
         }
     }
 

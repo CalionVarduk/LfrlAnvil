@@ -49,7 +49,7 @@ public class SqlColumnTypeDefinitionProviderBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            typeDefinitions.Count.Should().Be( 9 );
+            typeDefinitions.Count.Should().Be( 10 );
             typeDefinitions.Select( t => (t.DataType, t.RuntimeType) )
                 .Should()
                 .BeEquivalentTo(
@@ -61,7 +61,8 @@ public class SqlColumnTypeDefinitionProviderBuilderTests : TestsBase
                     (SqlDataTypeMock.Object, typeof( object )),
                     (SqlDataTypeMock.Integer, typeof( long )),
                     (SqlDataTypeMock.Real, typeof( float )),
-                    (SqlDataTypeMock.Integer, typeof( uint )) );
+                    (SqlDataTypeMock.Integer, typeof( uint )),
+                    (SqlDataTypeMock.Text, typeof( DateTime )) );
 
             dataTypeDefinitions.Count.Should().Be( 6 );
             dataTypeDefinitions.Select( t => t.DataType )

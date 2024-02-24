@@ -144,12 +144,14 @@ public partial class SqlDatabaseBuilderTests
         [InlineData( SqlDatabaseCreateMode.DryRun )]
         public void AddAction_ShouldAddNewAction(SqlDatabaseCreateMode mode)
         {
-            var callback = Substitute.For<Action<IDbCommand>>();
+            var timeout = Fixture.Create<TimeSpan>();
+            var actionCallback = Substitute.For<Action<IDbCommand>>();
+            var setupCallback = Substitute.For<Action<IDbCommand>>();
             var sut = SqlDatabaseBuilderMock.Create().Changes;
-            sut.CompletePendingChanges().SetMode( mode );
+            sut.CompletePendingChanges().SetActionTimeout( timeout ).SetMode( mode );
 
             var actionCount = sut.Database.GetPendingActionCount();
-            var result = ((ISqlDatabaseChangeTracker)sut).AddAction( callback );
+            var result = ((ISqlDatabaseChangeTracker)sut).AddAction( actionCallback, setupCallback );
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
             using ( new AssertionScope() )
@@ -159,19 +161,22 @@ public partial class SqlDatabaseBuilderTests
                 sut.ActiveObjectExistenceState.Should().Be( default( SqlObjectExistenceState ) );
                 actions.Should().HaveCount( 1 );
                 actions.ElementAtOrDefault( 0 ).Sql.Should().BeNull();
-                actions.ElementAtOrDefault( 0 ).Callback.Should().BeSameAs( callback );
+                actions.ElementAtOrDefault( 0 ).OnCommandSetup.Should().BeSameAs( setupCallback );
+                actions.ElementAtOrDefault( 0 ).Timeout.Should().Be( timeout );
             }
         }
 
         [Fact]
         public void AddAction_ShouldAddNewStatement_WhenThereArePendingChanges()
         {
-            var callback = Substitute.For<Action<IDbCommand>>();
-            var sut = SqlDatabaseBuilderMock.Create().Changes;
+            var timeout = Fixture.Create<TimeSpan>();
+            var actionCallback = Substitute.For<Action<IDbCommand>>();
+            var setupCallback = Substitute.For<Action<IDbCommand>>();
+            var sut = SqlDatabaseBuilderMock.Create().Changes.SetActionTimeout( timeout );
 
             var actionCount = sut.Database.GetPendingActionCount();
             sut.Database.Schemas.Default.Objects.CreateTable( "T" );
-            var result = sut.AddAction( callback );
+            var result = sut.AddAction( actionCallback, setupCallback );
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
             using ( new AssertionScope() )
@@ -182,7 +187,8 @@ public partial class SqlDatabaseBuilderTests
                 actions.Should().HaveCount( 2 );
                 actions.ElementAtOrDefault( 0 ).Sql.Should().Be( "CREATE [Table] common.T;" );
                 actions.ElementAtOrDefault( 1 ).Sql.Should().BeNull();
-                actions.ElementAtOrDefault( 1 ).Callback.Should().BeSameAs( callback );
+                actions.ElementAtOrDefault( 1 ).OnCommandSetup.Should().BeSameAs( setupCallback );
+                actions.ElementAtOrDefault( 1 ).Timeout.Should().Be( timeout );
             }
         }
 
@@ -219,9 +225,10 @@ public partial class SqlDatabaseBuilderTests
         [InlineData( SqlDatabaseCreateMode.DryRun )]
         public void AddStatement_ShouldAddNewStatement(SqlDatabaseCreateMode mode)
         {
+            var timeout = Fixture.Create<TimeSpan>();
             var statement = Fixture.Create<string>();
             var sut = SqlDatabaseBuilderMock.Create().Changes;
-            sut.CompletePendingChanges().SetMode( mode );
+            sut.CompletePendingChanges().SetActionTimeout( timeout ).SetMode( mode );
 
             var actionCount = sut.Database.GetPendingActionCount();
             var result = ((ISqlDatabaseChangeTracker)sut).AddStatement( statement );
@@ -234,14 +241,16 @@ public partial class SqlDatabaseBuilderTests
                 sut.ActiveObjectExistenceState.Should().Be( default( SqlObjectExistenceState ) );
                 actions.Should().HaveCount( 1 );
                 actions.ElementAtOrDefault( 0 ).Sql.Should().Be( $"{statement}{Environment.NewLine}" );
+                actions.ElementAtOrDefault( 0 ).Timeout.Should().Be( timeout );
             }
         }
 
         [Fact]
         public void AddStatement_ShouldAddNewStatement_WhenThereArePendingChanges()
         {
+            var timeout = Fixture.Create<TimeSpan>();
             var statement = Fixture.Create<string>();
-            var sut = SqlDatabaseBuilderMock.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes.SetActionTimeout( timeout );
 
             var actionCount = sut.Database.GetPendingActionCount();
             sut.Database.Schemas.Default.Objects.CreateTable( "T" );
@@ -256,6 +265,7 @@ public partial class SqlDatabaseBuilderTests
                 actions.Should().HaveCount( 2 );
                 actions.ElementAtOrDefault( 0 ).Sql.Should().Be( "CREATE [Table] common.T;" );
                 actions.ElementAtOrDefault( 1 ).Sql.Should().Be( $"{statement}{Environment.NewLine}" );
+                actions.ElementAtOrDefault( 1 ).Timeout.Should().Be( timeout );
             }
         }
 
@@ -304,9 +314,10 @@ public partial class SqlDatabaseBuilderTests
         [InlineData( SqlDatabaseCreateMode.DryRun )]
         public void AddParameterizedStatement_TypeErased_ShouldAddNewStatement(SqlDatabaseCreateMode mode)
         {
+            var timeout = Fixture.Create<TimeSpan>();
             var statement = Fixture.Create<string>();
             var sut = SqlDatabaseBuilderMock.Create().Changes;
-            sut.CompletePendingChanges().SetMode( mode );
+            sut.CompletePendingChanges().SetActionTimeout( timeout ).SetMode( mode );
 
             var actionCount = sut.Database.GetPendingActionCount();
             var result = ((ISqlDatabaseChangeTracker)sut).AddParameterizedStatement(
@@ -322,15 +333,17 @@ public partial class SqlDatabaseBuilderTests
                 sut.ActiveObjectExistenceState.Should().Be( default( SqlObjectExistenceState ) );
                 actions.Should().HaveCount( 1 );
                 actions.ElementAtOrDefault( 0 ).Sql.Should().Be( $"{statement}{Environment.NewLine}" );
-                actions.ElementAtOrDefault( 0 ).Callback.Should().NotBeNull();
+                actions.ElementAtOrDefault( 0 ).OnCommandSetup.Should().NotBeNull();
+                actions.ElementAtOrDefault( 0 ).Timeout.Should().Be( timeout );
             }
         }
 
         [Fact]
         public void AddParameterizedStatement_TypeErased_ShouldAddNewStatement_WhenThereArePendingChanges()
         {
+            var timeout = Fixture.Create<TimeSpan>();
             var statement = Fixture.Create<string>();
-            var sut = SqlDatabaseBuilderMock.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes.SetActionTimeout( timeout );
 
             var actionCount = sut.Database.GetPendingActionCount();
             sut.Database.Schemas.Default.Objects.CreateTable( "T" );
@@ -348,7 +361,8 @@ public partial class SqlDatabaseBuilderTests
                 actions.Should().HaveCount( 2 );
                 actions.ElementAtOrDefault( 0 ).Sql.Should().Be( "CREATE [Table] common.T;" );
                 actions.ElementAtOrDefault( 1 ).Sql.Should().Be( $"{statement}{Environment.NewLine}" );
-                actions.ElementAtOrDefault( 1 ).Callback.Should().NotBeNull();
+                actions.ElementAtOrDefault( 1 ).OnCommandSetup.Should().NotBeNull();
+                actions.ElementAtOrDefault( 1 ).Timeout.Should().Be( timeout );
             }
         }
 
@@ -391,9 +405,10 @@ public partial class SqlDatabaseBuilderTests
         [InlineData( SqlDatabaseCreateMode.DryRun )]
         public void AddParameterizedStatement_Generic_ShouldAddNewStatement(SqlDatabaseCreateMode mode)
         {
+            var timeout = Fixture.Create<TimeSpan>();
             var statement = Fixture.Create<string>();
             var sut = SqlDatabaseBuilderMock.Create().Changes;
-            sut.CompletePendingChanges().SetMode( mode );
+            sut.CompletePendingChanges().SetActionTimeout( timeout ).SetMode( mode );
 
             var actionCount = sut.Database.GetPendingActionCount();
             var result = ((ISqlDatabaseChangeTracker)sut).AddParameterizedStatement(
@@ -409,16 +424,18 @@ public partial class SqlDatabaseBuilderTests
                 sut.ActiveObjectExistenceState.Should().Be( default( SqlObjectExistenceState ) );
                 actions.Should().HaveCount( 1 );
                 actions.ElementAtOrDefault( 0 ).Sql.Should().Be( $"{statement}{Environment.NewLine}" );
-                actions.ElementAtOrDefault( 0 ).Callback.Should().NotBeNull();
+                actions.ElementAtOrDefault( 0 ).OnCommandSetup.Should().NotBeNull();
+                actions.ElementAtOrDefault( 0 ).Timeout.Should().Be( timeout );
             }
         }
 
         [Fact]
         public void AddParameterizedStatement_Generic_ShouldAddNewStatement_WhenThereArePendingChanges()
         {
+            var timeout = Fixture.Create<TimeSpan>();
             var statement = Fixture.Create<string>();
             var sut = SqlDatabaseBuilderMock.Create().Changes;
-            sut.CompletePendingChanges().SetMode( SqlDatabaseCreateMode.Commit );
+            sut.CompletePendingChanges().SetActionTimeout( timeout ).SetMode( SqlDatabaseCreateMode.Commit );
 
             var actionCount = sut.Database.GetPendingActionCount();
             sut.Database.Schemas.Default.Objects.CreateTable( "T" );
@@ -436,7 +453,8 @@ public partial class SqlDatabaseBuilderTests
                 actions.Should().HaveCount( 2 );
                 actions.ElementAtOrDefault( 0 ).Sql.Should().Be( "CREATE [Table] common.T;" );
                 actions.ElementAtOrDefault( 1 ).Sql.Should().Be( $"{statement}{Environment.NewLine}" );
-                actions.ElementAtOrDefault( 1 ).Callback.Should().NotBeNull();
+                actions.ElementAtOrDefault( 1 ).OnCommandSetup.Should().NotBeNull();
+                actions.ElementAtOrDefault( 1 ).Timeout.Should().Be( timeout );
             }
         }
 
@@ -780,6 +798,23 @@ public partial class SqlDatabaseBuilderTests
             {
                 result.Should().BeSameAs( sut );
                 result.IsAttached.Should().Be( ! enabled );
+            }
+        }
+
+        [Theory]
+        [InlineData( null )]
+        [InlineData( 100L )]
+        public void SetActionTimeout_ShouldUpdateActionTimeout(long? seconds)
+        {
+            var timeout = seconds is null ? (TimeSpan?)null : TimeSpan.FromSeconds( seconds.Value );
+            ISqlDatabaseChangeTracker sut = SqlDatabaseBuilderMock.Create().Changes;
+
+            var result = sut.SetActionTimeout( timeout );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeSameAs( sut );
+                result.ActionTimeout.Should().Be( timeout );
             }
         }
 

@@ -13,7 +13,7 @@ public class SqlMultiDataReaderTests : TestsBase
     [Fact]
     public void Ctor_ShouldCreateCorrectReader()
     {
-        var reader = new DbDataReader();
+        var reader = new DbDataReaderMock();
         var sut = reader.Multi();
         sut.Reader.Should().BeSameAs( reader );
     }
@@ -21,7 +21,7 @@ public class SqlMultiDataReaderTests : TestsBase
     [Fact]
     public void Dispose_ShouldDoNothing_WhenReaderIsClosed()
     {
-        var reader = new DbDataReader { ThrowOnDispose = true };
+        var reader = new DbDataReaderMock { ThrowOnDispose = true };
         var sut = reader.Multi();
         var action = Lambda.Of( () => sut.Dispose() );
         action.Should().NotThrow();
@@ -30,7 +30,7 @@ public class SqlMultiDataReaderTests : TestsBase
     [Fact]
     public void Dispose_ShouldDisposeReader()
     {
-        var reader = new DbDataReader( new ResultSet( new[] { "A" }, new[] { new object[] { "foo" }, new object[] { "bar" } } ) );
+        var reader = new DbDataReaderMock( new ResultSet( new[] { "A" }, new[] { new object[] { "foo" }, new object[] { "bar" } } ) );
         var sut = reader.Multi();
         sut.Dispose();
         reader.IsClosed.Should().BeTrue();
@@ -39,7 +39,7 @@ public class SqlMultiDataReaderTests : TestsBase
     [Fact]
     public void Read_TypeErased_ShouldReadCorrectResultSetsAndCallDisposeOnceDone()
     {
-        var command = new DbCommand
+        var command = new DbCommandMock
         {
             ResultSets = new[]
             {
@@ -81,7 +81,7 @@ public class SqlMultiDataReaderTests : TestsBase
     [Fact]
     public void Read_Generic_ShouldReadCorrectResultSetsAndCallDisposeOnceDone()
     {
-        var command = new DbCommand
+        var command = new DbCommandMock
         {
             ResultSets = new[]
             {
@@ -110,7 +110,7 @@ public class SqlMultiDataReaderTests : TestsBase
     [Fact]
     public void Read_WithCustomDelegate_ShouldReadCorrectResultSetsAndCallDisposeOnceDone()
     {
-        var command = new DbCommand
+        var command = new DbCommandMock
         {
             ResultSets = new[]
             {
@@ -138,7 +138,7 @@ public class SqlMultiDataReaderTests : TestsBase
     [Fact]
     public void ReadAll_ShouldReadAllAvailableResultSetsAndCallDisposeOnceDone()
     {
-        var command = new DbCommand
+        var command = new DbCommandMock
         {
             ResultSets = new[]
             {
@@ -184,7 +184,7 @@ public class SqlMultiDataReaderTests : TestsBase
 
     public sealed record ThirdRow(bool M, double? N);
 
-    private sealed class QueryFactory : SqlQueryReaderFactory<DbDataReader>
+    private sealed class QueryFactory : SqlQueryReaderFactory<DbDataReaderMock>
     {
         public QueryFactory(SqlDialect dialect)
             : base( dialect, ColumnTypeDefinitionProviderMock.Default( dialect ) ) { }

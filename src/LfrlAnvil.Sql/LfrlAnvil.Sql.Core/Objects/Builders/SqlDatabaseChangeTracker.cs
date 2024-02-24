@@ -30,12 +30,13 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
     {
         ActiveObjectExistenceState = SqlObjectExistenceState.Unchanged;
         ActiveObject = null;
+        ActionTimeout = null;
         _pendingActions = null;
         _activeChanges = null;
         _database = null;
         _interpreterContext = null;
         _changeAggregator = null;
-        _mode = (byte)SqlDatabaseCreateMode.DryRun << 1;
+        _mode = 0;
     }
 
     public SqlDatabaseBuilder Database
@@ -49,6 +50,7 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
 
     public SqlObjectBuilder? ActiveObject { get; private set; }
     public SqlObjectExistenceState ActiveObjectExistenceState { get; private set; }
+    public TimeSpan? ActionTimeout { get; private set; }
     public SqlDatabaseCreateMode Mode => (SqlDatabaseCreateMode)((_mode & ModeMask) >> 1);
     public bool IsAttached => (_mode & IsDetachedBit) == 0;
     public bool IsActive => _mode > 0 && IsAttached;
@@ -94,11 +96,11 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         return true;
     }
 
-    public SqlDatabaseChangeTracker AddAction(Action<IDbCommand> action)
+    public SqlDatabaseChangeTracker AddAction(Action<IDbCommand> action, Action<IDbCommand>? setup = null)
     {
         CompletePendingChanges();
         if ( IsActive )
-            AddAction( SqlDatabaseBuilderCommandAction.CreateCallback( action ) );
+            AddAction( SqlDatabaseBuilderCommandAction.CreateCustom( action, setup, ActionTimeout ) );
 
         return this;
     }
@@ -118,7 +120,7 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
                     Database,
                     ExceptionResources.StatementIsParameterized( statement, interpreter.Context ) );
 
-            AddAction( SqlDatabaseBuilderCommandAction.CreateSql( interpreter.Context.Sql.AppendLine().ToString() ) );
+            AddAction( SqlDatabaseBuilderCommandAction.CreateSql( interpreter.Context.Sql.AppendLine().ToString(), ActionTimeout ) );
             interpreter.Context.Clear();
         }
         catch
@@ -145,7 +147,9 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
             interpreter.Visit( statement.Node );
             var opt = options ?? SqlParameterBinderCreationOptions.Default;
             var executor = Database.ParameterBinders.Create( opt.SetContext( interpreter.Context ) ).Bind( parameters );
-            AddAction( SqlDatabaseBuilderCommandAction.CreateSql( interpreter.Context.Sql.AppendLine().ToString(), executor ) );
+            AddAction(
+                SqlDatabaseBuilderCommandAction.CreateSql( interpreter.Context.Sql.AppendLine().ToString(), executor, ActionTimeout ) );
+
             interpreter.Context.Clear();
         }
         catch
@@ -173,7 +177,9 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
             interpreter.Visit( statement.Node );
             var opt = options ?? SqlParameterBinderCreationOptions.Default;
             var executor = Database.ParameterBinders.Create<TSource>( opt.SetContext( interpreter.Context ) ).Bind( parameters );
-            AddAction( SqlDatabaseBuilderCommandAction.CreateSql( interpreter.Context.Sql.AppendLine().ToString(), executor ) );
+            AddAction(
+                SqlDatabaseBuilderCommandAction.CreateSql( interpreter.Context.Sql.AppendLine().ToString(), executor, ActionTimeout ) );
+
             interpreter.Context.Clear();
         }
         catch
@@ -229,6 +235,12 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
             AddAction( action.Value );
 
         ClearActiveObjectState();
+        return this;
+    }
+
+    public SqlDatabaseChangeTracker SetActionTimeout(TimeSpan? value)
+    {
+        ActionTimeout = value;
         return this;
     }
 
@@ -499,6 +511,11 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         _mode = (byte)((int)mode << 1);
     }
 
+    internal void ClearPendingActions()
+    {
+        _pendingActions?.Clear();
+    }
+
     private void HandleIsRemovedChange(SqlObjectBuilder target)
     {
         if ( ReferenceEquals( ActiveObject, target ) )
@@ -585,9 +602,9 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         return TryGetOriginalValue( SqlHelpers.CastOrThrow<SqlObjectBuilder>( Database, target ), descriptor, out result );
     }
 
-    ISqlDatabaseChangeTracker ISqlDatabaseChangeTracker.AddAction(Action<IDbCommand> action)
+    ISqlDatabaseChangeTracker ISqlDatabaseChangeTracker.AddAction(Action<IDbCommand> action, Action<IDbCommand>? setup)
     {
-        return AddAction( action );
+        return AddAction( action, setup );
     }
 
     ISqlDatabaseChangeTracker ISqlDatabaseChangeTracker.AddStatement(ISqlStatementNode statement)
@@ -620,5 +637,10 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
     ISqlDatabaseChangeTracker ISqlDatabaseChangeTracker.CompletePendingChanges()
     {
         return CompletePendingChanges();
+    }
+
+    ISqlDatabaseChangeTracker ISqlDatabaseChangeTracker.SetActionTimeout(TimeSpan? value)
+    {
+        return SetActionTimeout( value );
     }
 }

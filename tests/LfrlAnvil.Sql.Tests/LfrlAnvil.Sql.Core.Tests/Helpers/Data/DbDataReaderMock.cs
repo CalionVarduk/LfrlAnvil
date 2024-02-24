@@ -1,24 +1,26 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Diagnostics.Contracts;
 using System.Linq;
 
 namespace LfrlAnvil.Sql.Tests.Helpers.Data;
 
-public sealed class DbDataReader : System.Data.Common.DbDataReader
+public sealed class DbDataReaderMock : DbDataReader
 {
     private int _setIndex;
     private int _rowIndex;
 
-    public DbDataReader(params ResultSet[] sets)
+    public DbDataReaderMock(params ResultSet[] sets)
     {
         Sets = sets;
         _setIndex = 0;
         _rowIndex = -1;
     }
 
-    public DbCommand? Command { get; init; }
+    public DbCommandMock? Command { get; init; }
+    public int Id { get; init; } = -1;
     public bool ThrowOnDispose { get; init; }
     public ResultSet[] Sets { get; }
     public override bool HasRows => _rowIndex < FieldCount;
@@ -28,6 +30,12 @@ public sealed class DbDataReader : System.Data.Common.DbDataReader
     public override int FieldCount => IsClosed ? 0 : Sets[_setIndex].FieldNames.Length;
     public override object this[int i] => GetValue( i );
     public override object this[string name] => GetValue( GetOrdinal( name ) );
+
+    [Pure]
+    public override string ToString()
+    {
+        return $"DbDataReader[{Id}]";
+    }
 
     [Pure]
     public override bool GetBoolean(int ordinal)
@@ -177,7 +185,7 @@ public sealed class DbDataReader : System.Data.Common.DbDataReader
 
         _setIndex = Sets.Length;
         _rowIndex = -1;
-        ((IList<string>?)Command?.Audit)?.Add( "DbDataReader.Close" );
+        Command?.AddAudit( this, nameof( Close ) );
     }
 
     [Pure]

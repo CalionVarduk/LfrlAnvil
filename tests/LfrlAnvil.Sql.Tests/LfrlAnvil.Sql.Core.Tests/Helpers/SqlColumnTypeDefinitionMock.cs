@@ -1,9 +1,9 @@
-﻿using System.Data.Common;
-using System.Diagnostics.Contracts;
+﻿using System.Diagnostics.Contracts;
+using LfrlAnvil.Sql.Tests.Helpers.Data;
 
 namespace LfrlAnvil.Sql.Tests.Helpers;
 
-public sealed class SqlColumnTypeDefinitionMock<T> : SqlColumnTypeDefinition<T, DbDataRecord, DbParameter>
+public sealed class SqlColumnTypeDefinitionMock<T> : SqlColumnTypeDefinition<T, DbDataReaderMock, DbDataParameterMock>
     where T : notnull
 {
     public SqlColumnTypeDefinitionMock(SqlDataTypeMock dataType, T defaultValue)
@@ -22,7 +22,7 @@ public sealed class SqlColumnTypeDefinitionMock<T> : SqlColumnTypeDefinition<T, 
         return value;
     }
 
-    public override void SetParameterInfo(DbParameter parameter, bool isNullable)
+    public override void SetParameterInfo(DbDataParameterMock parameter, bool isNullable)
     {
         base.SetParameterInfo( parameter, isNullable );
         parameter.IsNullable = isNullable;

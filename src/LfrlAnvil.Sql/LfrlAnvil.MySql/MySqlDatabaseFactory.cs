@@ -291,7 +291,7 @@ public sealed class MySqlDatabaseFactory : ISqlDatabaseFactory
                     var actions = info.Table.Database.Changes.GetPendingActions();
                     foreach ( var action in actions )
                     {
-                        action.Apply( command );
+                        action.PrepareCommand( command );
                         statementExecutor.ExecuteVersionHistoryNonQuery( command );
                     }
 
@@ -408,7 +408,7 @@ public sealed class MySqlDatabaseFactory : ISqlDatabaseFactory
     private static (Exception? Exception, int AppliedVersions) ApplyVersionsInCommitMode(
         SqlDatabaseConnectionChangeEvent connectionChangeEvent,
         SqlDatabaseVersionHistory.DatabaseComparisonResult versions,
-        SqlDatabaseVersionHistoryPersistenceMode versionHistoryPersistenceMode,
+        SqlDatabaseVersionHistoryMode versionHistoryPersistenceMode,
         in VersionHistoryInfo versionHistory,
         ref SqlStatementExecutor statementExecutor)
     {
@@ -427,7 +427,7 @@ public sealed class MySqlDatabaseFactory : ISqlDatabaseFactory
         var pDescription = insertVersionCommand.Parameters[5];
         var pCommitDateUtc = insertVersionCommand.Parameters[6];
 
-        using var deleteVersionsCommand = versionHistoryPersistenceMode == SqlDatabaseVersionHistoryPersistenceMode.LastRecordOnly
+        using var deleteVersionsCommand = versionHistoryPersistenceMode == SqlDatabaseVersionHistoryMode.LastRecordOnly
             ? OptionalDisposable.Create( PrepareDeleteVersionRecordsCommand( connection, in versionHistory ) )
             : OptionalDisposable<MySqlCommand>.Empty;
 
@@ -457,7 +457,7 @@ public sealed class MySqlDatabaseFactory : ISqlDatabaseFactory
                     foreach ( var action in actions )
                     {
                         statementKey = statementKey.NextOrdinal();
-                        action.Apply( statementCommand );
+                        action.PrepareCommand( statementCommand );
                         statementExecutor.ExecuteNonQuery( statementCommand, statementKey, SqlDatabaseFactoryStatementType.Change );
                     }
 
@@ -745,7 +745,7 @@ public sealed class MySqlDatabaseFactory : ISqlDatabaseFactory
 
         internal void ExecuteNonQuery(MySqlCommand command, SqlDatabaseFactoryStatementKey key, SqlDatabaseFactoryStatementType type)
         {
-            var @event = SqlDatabaseFactoryStatementEvent.Create( key, command, type );
+            var @event = SqlDatabaseFactoryStatementEvent.Create( command, key, type );
             var start = Stopwatch.GetTimestamp();
 
             OnBeforeStatementExecution( @event );
@@ -780,7 +780,7 @@ public sealed class MySqlDatabaseFactory : ISqlDatabaseFactory
             Func<MySqlCommand, T> resultSelector)
         {
             T result;
-            var @event = SqlDatabaseFactoryStatementEvent.Create( key, command, type );
+            var @event = SqlDatabaseFactoryStatementEvent.Create( command, key, type );
             var start = Stopwatch.GetTimestamp();
 
             OnBeforeStatementExecution( @event );

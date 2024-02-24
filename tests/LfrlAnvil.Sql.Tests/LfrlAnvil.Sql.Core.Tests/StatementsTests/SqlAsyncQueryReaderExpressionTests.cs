@@ -13,17 +13,17 @@ public class SqlAsyncQueryReaderExpressionTests : TestsBase
     [Fact]
     public async Task Compile_ShouldCreateCorrectAsyncQueryReader()
     {
-        var reader = new DbDataReader(
+        var reader = new DbDataReaderMock(
             new ResultSet( new[] { "a", "b" }, new[] { new object[] { "foo", 3 }, new object[] { "lorem", 5 } } ) );
 
         var dialect = new SqlDialect( "foo" );
         var rowType = typeof( object[] );
 
         var initExpression = Lambda.ExpressionOf(
-            (DbDataReader r) => new SqlAsyncReaderInitResult( new[] { r.GetOrdinal( "a" ), r.GetOrdinal( "b" ) }, null ) );
+            (DbDataReaderMock r) => new SqlAsyncReaderInitResult( new[] { r.GetOrdinal( "a" ), r.GetOrdinal( "b" ) }, null ) );
 
-        var createRowExpression = Lambda.ExpressionOf( (DbDataReader r, int[] o) => o.Select( r.GetValue ).ToArray() );
-        var expression = SqlAsyncLambdaExpression<DbDataReader, object[]>.Create( initExpression, createRowExpression );
+        var createRowExpression = Lambda.ExpressionOf( (DbDataReaderMock r, int[] o) => o.Select( r.GetValue ).ToArray() );
+        var expression = SqlAsyncLambdaExpression<DbDataReaderMock, object[]>.Create( initExpression, createRowExpression );
         var @base = new SqlAsyncQueryReaderExpression( dialect, rowType, expression );
         var sut = new SqlAsyncQueryReaderExpression<object[]>( @base );
 

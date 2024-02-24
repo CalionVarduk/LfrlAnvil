@@ -18,7 +18,7 @@ public class SqlColumnTypeDefinitionProviderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            result.Count.Should().Be( 8 );
+            result.Count.Should().Be( 9 );
             result.Select( t => (t.DataType, t.RuntimeType) )
                 .Should()
                 .BeEquivalentTo(
@@ -29,7 +29,8 @@ public class SqlColumnTypeDefinitionProviderTests : TestsBase
                     (SqlDataTypeMock.Binary, typeof( byte[] )),
                     (SqlDataTypeMock.Object, typeof( object )),
                     (SqlDataTypeMock.Integer, typeof( long )),
-                    (SqlDataTypeMock.Real, typeof( float )) );
+                    (SqlDataTypeMock.Real, typeof( float )),
+                    (SqlDataTypeMock.Text, typeof( DateTime )) );
         }
     }
 

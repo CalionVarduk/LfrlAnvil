@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Statements;
+using LfrlAnvil.Sql.Tests.Helpers.Data;
 using LfrlAnvil.Sql.Versioning;
 
 namespace LfrlAnvil.Sql.Tests.Helpers;
@@ -14,6 +15,7 @@ public sealed class SqlDatabaseMock : SqlDatabase
 {
     public SqlDatabaseMock(
         SqlDatabaseBuilderMock builder,
+        DbConnectionStringBuilder? connectionString = null,
         Version? version = null,
         Func<IEnumerable<SqlDatabaseVersionRecord>>? versionRecordsProvider = null)
         : base(
@@ -25,8 +27,12 @@ public sealed class SqlDatabaseMock : SqlDatabase
                     (_, _) => versionRecordsProvider is null
                         ? SqlQueryReaderResult<SqlDatabaseVersionRecord>.Empty
                         : new SqlQueryReaderResult<SqlDatabaseVersionRecord>( null, versionRecordsProvider().ToList() ) )
-                .Bind( string.Empty ) ) { }
+                .Bind( string.Empty ) )
+    {
+        ConnectionString = connectionString;
+    }
 
+    public DbConnectionStringBuilder? ConnectionString { get; }
     public new SqlSchemaCollectionMock Schemas => ReinterpretCast.To<SqlSchemaCollectionMock>( base.Schemas );
 
     [Pure]
@@ -52,8 +58,8 @@ public sealed class SqlDatabaseMock : SqlDatabase
     }
 
     [Pure]
-    private static DbConnection CreateConnection()
+    private DbConnection CreateConnection()
     {
-        return new Data.DbConnection();
+        return new DbConnectionMock( ServerVersion ) { ConnectionString = ConnectionString?.ToString() ?? string.Empty };
     }
 }

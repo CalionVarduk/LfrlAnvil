@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
 using LfrlAnvil.Sql.Statements;
@@ -15,8 +16,8 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     [Fact]
     public async Task BeginTransactionAsync_ShouldReturnTransaction()
     {
-        var expected = Substitute.ForPartsOf<System.Data.Common.DbTransaction>();
-        var sut = Substitute.ForPartsOf<System.Data.Common.DbConnection>();
+        var expected = Substitute.ForPartsOf<DbTransaction>();
+        var sut = Substitute.ForPartsOf<DbConnection>();
         sut.BeginTransaction( Arg.Any<IsolationLevel>() ).Returns( expected );
 
         var result = await sut.BeginTransactionAsync( IsolationLevel.Serializable );
@@ -27,7 +28,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     [Fact]
     public void Query_TypeErased_WithReader_ShouldInvokeReader()
     {
-        var command = new DbCommand
+        var command = new DbCommandMock
         {
             ResultSets = new[] { new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ) }
         };
@@ -48,7 +49,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     [Fact]
     public void Query_Generic_WithReader_ShouldInvokeReader()
     {
-        var command = new DbCommand
+        var command = new DbCommandMock
         {
             ResultSets = new[] { new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ) }
         };
@@ -67,7 +68,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     public void Query_TypeErased_WithExecutor_ShouldSetCommandTextAndInvokeReader()
     {
         var sql = "SELECT * FROM foo";
-        var command = new DbCommand
+        var command = new DbCommandMock
         {
             ResultSets = new[] { new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ) }
         };
@@ -90,7 +91,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     public void Query_Generic_WithExecutor_ShouldSetCommandTextAndInvokeReader()
     {
         var sql = "SELECT * FROM foo";
-        var command = new DbCommand
+        var command = new DbCommandMock
         {
             ResultSets = new[] { new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ) }
         };
@@ -109,7 +110,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     [Fact]
     public async Task QueryAsync_TypeErased_WithReader_ShouldInvokeReader()
     {
-        var command = new DbCommand
+        var command = new DbCommandMock
         {
             ResultSets = new[] { new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ) }
         };
@@ -130,7 +131,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     [Fact]
     public async Task QueryAsync_Generic_WithReader_ShouldInvokeReader()
     {
-        var command = new DbCommand
+        var command = new DbCommandMock
         {
             ResultSets = new[] { new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ) }
         };
@@ -149,7 +150,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     public async Task QueryAsync_TypeErased_WithExecutor_ShouldSetCommandTextAndInvokeReader()
     {
         var sql = "SELECT * FROM foo";
-        var command = new DbCommand
+        var command = new DbCommandMock
         {
             ResultSets = new[] { new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ) }
         };
@@ -172,7 +173,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     public async Task QueryAsync_Generic_WithExecutor_ShouldSetCommandTextAndInvokeReader()
     {
         var sql = "SELECT * FROM foo";
-        var command = new DbCommand
+        var command = new DbCommandMock
         {
             ResultSets = new[] { new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ) }
         };
@@ -192,7 +193,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     public void Execute_ShouldInvokeStatementExecution()
     {
         var expected = Fixture.Create<int>();
-        var command = new DbCommand { NonQueryResult = expected };
+        var command = new DbCommandMock { NonQueryResult = expected };
 
         var result = command.Execute();
 
@@ -203,7 +204,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     public async Task ExecuteAsync_ShouldInvokeStatementExecution()
     {
         var expected = Fixture.Create<int>();
-        var command = new DbCommand { NonQueryResult = expected };
+        var command = new DbCommandMock { NonQueryResult = expected };
 
         var result = await command.ExecuteAsync();
 
@@ -214,7 +215,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     public void SetText_ShouldSetCommandTextAndReturnCommand()
     {
         var sql = "SELECT * FROM foo";
-        var command = new DbCommand();
+        var command = new DbCommandMock();
 
         var result = command.SetText( sql );
 
@@ -234,7 +235,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     public void SetTimeout_ShouldSetCommandTimeoutAndReturnCommand(int milliseconds, int expectedSeconds)
     {
         var timeout = TimeSpan.FromMilliseconds( milliseconds );
-        var command = new DbCommand();
+        var command = new DbCommandMock();
 
         var result = command.SetTimeout( timeout );
 
@@ -248,7 +249,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     [Fact]
     public void Parameterize_TypeErased_ShouldSetParametersAndReturnCommand()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var factory = new ParameterFactory( new SqlDialect( "foo" ) );
 
         var result = command.Parameterize( factory.Create().Bind( new[] { KeyValuePair.Create( "a", (object?)1 ) } ) );
@@ -268,7 +269,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     [Fact]
     public void Parameterize_Generic_ShouldSetParametersAndReturnCommand()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var factory = new ParameterFactory( new SqlDialect( "foo" ) );
 
         var result = command.Parameterize( factory.Create<Source>().Bind( new Source { A = 1 } ) );
@@ -292,13 +293,13 @@ public class SqlStatementObjectExtensionsTests : TestsBase
         public int A { get; init; }
     }
 
-    private sealed class QueryFactory : SqlQueryReaderFactory<DbDataReader>
+    private sealed class QueryFactory : SqlQueryReaderFactory<DbDataReaderMock>
     {
         public QueryFactory(SqlDialect dialect)
             : base( dialect, ColumnTypeDefinitionProviderMock.Default( dialect ) ) { }
     }
 
-    private sealed class ParameterFactory : SqlParameterBinderFactory<DbCommand>
+    private sealed class ParameterFactory : SqlParameterBinderFactory<DbCommandMock>
     {
         public ParameterFactory(SqlDialect dialect)
             : base( dialect, ColumnTypeDefinitionProviderMock.Default( dialect ) ) { }

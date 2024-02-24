@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.Common;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
@@ -9,6 +10,7 @@ namespace LfrlAnvil.Sql.Events;
 public readonly record struct SqlDatabaseFactoryStatementEvent(
     SqlDatabaseFactoryStatementKey Key,
     string Sql,
+    TimeSpan Timeout,
     IReadOnlyList<KeyValuePair<string, object?>> Parameters,
     SqlDatabaseFactoryStatementType Type,
     DateTime UtcStartDate)
@@ -16,19 +18,28 @@ public readonly record struct SqlDatabaseFactoryStatementEvent(
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlDatabaseFactoryStatementEvent Create(
+        IDbCommand command,
         SqlDatabaseFactoryStatementKey key,
-        DbCommand command,
         SqlDatabaseFactoryStatementType type)
     {
         var parameters = GetCommandParameters( command );
-        return new SqlDatabaseFactoryStatementEvent( key, command.CommandText, parameters, type, DateTime.UtcNow );
+        return new SqlDatabaseFactoryStatementEvent(
+            key,
+            command.CommandText,
+            TimeSpan.FromSeconds( command.CommandTimeout ),
+            parameters,
+            type,
+            DateTime.UtcNow );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static KeyValuePair<string, object?>[] GetCommandParameters(DbCommand command)
+    private static KeyValuePair<string, object?>[] GetCommandParameters(IDbCommand command)
     {
-        var commandParameters = command.Parameters;
+        if ( command is not DbCommand dbCommand )
+            return Array.Empty<KeyValuePair<string, object?>>();
+
+        var commandParameters = dbCommand.Parameters;
         var commandParameterCount = commandParameters.Count;
         if ( commandParameterCount == 0 )
             return Array.Empty<KeyValuePair<string, object?>>();

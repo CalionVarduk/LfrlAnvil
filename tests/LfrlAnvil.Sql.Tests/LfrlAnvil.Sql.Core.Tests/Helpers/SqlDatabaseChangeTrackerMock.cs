@@ -9,12 +9,12 @@ public sealed class SqlDatabaseChangeTrackerMock : SqlDatabaseChangeTracker
 {
     protected override SqlDatabaseBuilderCommandAction? PrepareCreateObjectAction(SqlObjectBuilder obj)
     {
-        return SqlDatabaseBuilderCommandAction.CreateSql( $"CREATE {obj};" );
+        return SqlDatabaseBuilderCommandAction.CreateSql( $"CREATE {obj};", ActionTimeout );
     }
 
     protected override SqlDatabaseBuilderCommandAction? PrepareRemoveObjectAction(SqlObjectBuilder obj)
     {
-        return SqlDatabaseBuilderCommandAction.CreateSql( $"REMOVE {obj};" );
+        return SqlDatabaseBuilderCommandAction.CreateSql( $"REMOVE {obj};", ActionTimeout );
     }
 
     protected override SqlDatabaseBuilderCommandAction? PrepareAlterObjectAction(
@@ -23,7 +23,7 @@ public sealed class SqlDatabaseChangeTrackerMock : SqlDatabaseChangeTracker
     {
         var aggregator = ReinterpretCast.To<SqlDatabaseChangeAggregatorMock>( changeAggregator );
         var aggregatedChanges = string.Join( $"{Environment.NewLine}  ", aggregator.ChangeQueue.Order().Prepend( $"ALTER {obj}" ) );
-        return SqlDatabaseBuilderCommandAction.CreateSql( $"{aggregatedChanges};" );
+        return SqlDatabaseBuilderCommandAction.CreateSql( $"{aggregatedChanges};", ActionTimeout );
     }
 
     [Pure]

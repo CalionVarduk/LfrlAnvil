@@ -10,6 +10,8 @@ namespace LfrlAnvil.Sql.Objects.Builders;
 public interface ISqlDatabaseChangeTracker
 {
     ISqlObjectBuilder? ActiveObject { get; }
+    SqlObjectExistenceState ActiveObjectExistenceState { get; }
+    TimeSpan? ActionTimeout { get; }
     SqlDatabaseCreateMode Mode { get; }
     bool IsAttached { get; }
     ISqlDatabaseBuilder Database { get; }
@@ -24,7 +26,7 @@ public interface ISqlDatabaseChangeTracker
 
     bool TryGetOriginalValue(ISqlObjectBuilder target, SqlObjectChangeDescriptor descriptor, out object? result);
 
-    ISqlDatabaseChangeTracker AddAction(Action<IDbCommand> action);
+    ISqlDatabaseChangeTracker AddAction(Action<IDbCommand> action, Action<IDbCommand>? setup = null);
     ISqlDatabaseChangeTracker AddStatement(ISqlStatementNode statement);
 
     ISqlDatabaseChangeTracker AddParameterizedStatement(
@@ -40,4 +42,5 @@ public interface ISqlDatabaseChangeTracker
 
     ISqlDatabaseChangeTracker Attach(bool enabled = true);
     ISqlDatabaseChangeTracker CompletePendingChanges();
+    ISqlDatabaseChangeTracker SetActionTimeout(TimeSpan? value);
 }

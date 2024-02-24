@@ -26,7 +26,7 @@ public class SqlParameterBinderExecutorTests : TestsBase
     [Fact]
     public void Execute_ForTypeErased_ShouldInvokeBinder()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var @delegate = Substitute.For<Action<IDbCommand, IEnumerable<KeyValuePair<string, object?>>>>();
         var source = new[] { KeyValuePair.Create( "a", (object?)0 ), KeyValuePair.Create( "b", (object?)1 ) };
         var binder = new SqlParameterBinder( new SqlDialect( "foo" ), @delegate );
@@ -55,7 +55,7 @@ public class SqlParameterBinderExecutorTests : TestsBase
     [Fact]
     public void Execute_ForGeneric_ShouldInvokeBinder()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var @delegate = Substitute.For<Action<IDbCommand, string>>();
         var source = Fixture.Create<string>();
         var binder = new SqlParameterBinder<string>( new SqlDialect( "foo" ), @delegate );

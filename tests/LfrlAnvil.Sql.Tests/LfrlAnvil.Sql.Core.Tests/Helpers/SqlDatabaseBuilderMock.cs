@@ -6,11 +6,11 @@ namespace LfrlAnvil.Sql.Tests.Helpers;
 
 public sealed class SqlDatabaseBuilderMock : SqlDatabaseBuilder
 {
-    private SqlDatabaseBuilderMock(SqlColumnTypeDefinitionProviderMock typeDefinitions)
+    private SqlDatabaseBuilderMock(SqlColumnTypeDefinitionProviderMock typeDefinitions, string serverVersion, string defaultSchemaName)
         : base(
             SqlDialectMock.Instance,
-            "0.0.0",
-            "common",
+            serverVersion,
+            defaultSchemaName,
             new SqlDataTypeProviderMock(),
             typeDefinitions,
             new SqlNodeInterpreterFactoryMock(),
@@ -47,8 +47,14 @@ public sealed class SqlDatabaseBuilderMock : SqlDatabaseBuilder
     }
 
     [Pure]
-    public static SqlDatabaseBuilderMock Create()
+    public static SqlDatabaseBuilderMock Create(string serverVersion = "0.0.0", string defaultSchemaName = "common")
     {
-        return new SqlDatabaseBuilderMock( new SqlColumnTypeDefinitionProviderMock( new SqlColumnTypeDefinitionProviderBuilderMock() ) );
+        var result = new SqlDatabaseBuilderMock(
+            new SqlColumnTypeDefinitionProviderMock( new SqlColumnTypeDefinitionProviderBuilderMock() ),
+            serverVersion,
+            defaultSchemaName );
+
+        result.Changes.SetMode( SqlDatabaseCreateMode.DryRun );
+        return result;
     }
 }

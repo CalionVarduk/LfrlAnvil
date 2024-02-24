@@ -19,7 +19,8 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_TypeErased_ShouldCreateCorrectParameterBinder_WhenSourceIsEmpty()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
+        command.Parameters.Add( new DbDataParameterMock() );
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create();
 
@@ -28,14 +29,14 @@ public class SqlParameterBinderFactoryTests : TestsBase
         using ( new AssertionScope() )
         {
             parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Audit.Should().BeSequentiallyEqualTo( "Clear" );
+            command.Parameters.GetAll().Should().BeEmpty();
         }
     }
 
     [Fact]
     public void Create_TypeErased_ShouldCreateCorrectParameterBinder_WhenSourceIsNotEmpty()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create();
 
@@ -56,7 +57,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_TypeErased_ShouldCreateCorrectParameterBinder_WithAllowedNullValue()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create( SqlParameterBinderCreationOptions.Default.EnableIgnoringOfNullValues( false ) );
 
@@ -77,7 +78,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_TypeErased_ShouldCreateCorrectParameterBinder_WithIgnoredNullValue()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create();
 
@@ -93,7 +94,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_TypeErased_ShouldCreateCorrectParameterBinder_WithPreExistingCommandParameters()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var p1 = command.CreateParameter();
         var p2 = command.CreateParameter();
         command.Parameters.Add( p1 );
@@ -131,9 +132,8 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_TypeErased_ShouldCreateCorrectParameterBinder_WithAllPreExistingParametersBeingExcess()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         command.Parameters.Add( command.CreateParameter() );
-        command.Parameters.ClearAudit();
 
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create();
@@ -143,7 +143,6 @@ public class SqlParameterBinderFactoryTests : TestsBase
         using ( new AssertionScope() )
         {
             parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Audit.Should().BeSequentiallyEqualTo( "Clear" );
             command.Parameters.Should().BeEmpty();
         }
     }
@@ -151,12 +150,11 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_TypeErased_ShouldCreateCorrectParameterBinder_WithSomePreExistingParametersBeingExcess()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var p1 = command.CreateParameter();
         command.Parameters.Add( p1 );
         command.Parameters.Add( command.CreateParameter() );
         command.Parameters.Add( command.CreateParameter() );
-        command.Parameters.ClearAudit();
 
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create();
@@ -166,7 +164,6 @@ public class SqlParameterBinderFactoryTests : TestsBase
         using ( new AssertionScope() )
         {
             parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Audit.Should().BeSequentiallyEqualTo( "GetParameter('0')", "RemoveAt(2)", "RemoveAt(1)" );
             command.Parameters.Should().HaveCount( 1 );
             command.Parameters[0].Should().BeSameAs( p1 );
             command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
@@ -180,7 +177,8 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_TypeErased_ShouldCreateCorrectParameterBinder_WithReducedCollections_WhenSourceIsEmpty()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
+        command.Parameters.Add( new DbDataParameterMock() );
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create( SqlParameterBinderCreationOptions.Default.EnableCollectionReduction() );
 
@@ -189,14 +187,14 @@ public class SqlParameterBinderFactoryTests : TestsBase
         using ( new AssertionScope() )
         {
             parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Audit.Should().BeSequentiallyEqualTo( "Clear" );
+            command.Parameters.Should().BeEmpty();
         }
     }
 
     [Fact]
     public void Create_TypeErased_ShouldCreateCorrectParameterBinder_WithReducedCollections_WhenSourceIsNotEmpty()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create( SqlParameterBinderCreationOptions.Default.EnableCollectionReduction() );
 
@@ -217,7 +215,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_TypeErased_ShouldCreateCorrectParameterBinder_WithReducedCollections_WithAllowedNullValue()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create(
             SqlParameterBinderCreationOptions.Default.EnableCollectionReduction().EnableIgnoringOfNullValues( false ) );
@@ -239,7 +237,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_TypeErased_ShouldCreateCorrectParameterBinder_WithReducedCollections_WithIgnoredNullValue()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create( SqlParameterBinderCreationOptions.Default.EnableCollectionReduction() );
 
@@ -255,7 +253,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_TypeErased_ShouldCreateCorrectParameterBinder_WithReducedCollections_WhenSourceContainsStringValue()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create( SqlParameterBinderCreationOptions.Default.EnableCollectionReduction() );
 
@@ -276,7 +274,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_TypeErased_ShouldCreateCorrectParameterBinder_WithReducedCollections_WhenSourceContainsByteArrayValue()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create( SqlParameterBinderCreationOptions.Default.EnableCollectionReduction() );
 
@@ -297,7 +295,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_TypeErased_ShouldCreateCorrectParameterBinder_WithReducedCollections_WhenSourceContainsEmptyReducibleCollection()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create( SqlParameterBinderCreationOptions.Default.EnableCollectionReduction() );
 
@@ -313,7 +311,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_TypeErased_ShouldCreateCorrectParameterBinder_WithReducedCollections_WhenSourceContainsNonEmptyReducibleCollection()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create( SqlParameterBinderCreationOptions.Default.EnableCollectionReduction() );
 
@@ -340,7 +338,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     public void
         Create_TypeErased_ShouldCreateCorrectParameterBinder_WithReducedCollections_WhenSourceContainsReducibleCollectionWithIgnoredNullElements()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create( SqlParameterBinderCreationOptions.Default.EnableCollectionReduction() );
 
@@ -362,7 +360,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     public void
         Create_TypeErased_ShouldCreateCorrectParameterBinder_WithReducedCollections_WhenSourceContainsReducibleCollectionWithAllowedNullElements()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create(
             SqlParameterBinderCreationOptions.Default.EnableCollectionReduction().EnableIgnoringOfNullValues( false ) );
@@ -389,9 +387,8 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_TypeErased_ShouldCreateCorrectParameterBinder_WithReducedCollectionsAndAllPreExistingParametersBeingExcess()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         command.Parameters.Add( command.CreateParameter() );
-        command.Parameters.ClearAudit();
 
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create( SqlParameterBinderCreationOptions.Default.EnableCollectionReduction() );
@@ -401,7 +398,6 @@ public class SqlParameterBinderFactoryTests : TestsBase
         using ( new AssertionScope() )
         {
             parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Audit.Should().BeSequentiallyEqualTo( "Clear" );
             command.Parameters.Should().BeEmpty();
         }
     }
@@ -409,12 +405,11 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_TypeErased_ShouldCreateCorrectParameterBinder_WithReducedCollectionsAndSomePreExistingParametersBeingExcess()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var p1 = command.CreateParameter();
         command.Parameters.Add( p1 );
         command.Parameters.Add( command.CreateParameter() );
         command.Parameters.Add( command.CreateParameter() );
-        command.Parameters.ClearAudit();
 
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create( SqlParameterBinderCreationOptions.Default.EnableCollectionReduction() );
@@ -424,7 +419,6 @@ public class SqlParameterBinderFactoryTests : TestsBase
         using ( new AssertionScope() )
         {
             parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Audit.Should().BeSequentiallyEqualTo( "GetParameter('0')", "RemoveAt(2)", "RemoveAt(1)" );
             command.Parameters.Should().HaveCount( 1 );
             command.Parameters[0].Should().BeSameAs( p1 );
             command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
@@ -438,7 +432,8 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenSourceIsNotProvided()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
+        command.Parameters.Add( new DbDataParameterMock() );
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<Source>();
 
@@ -447,14 +442,14 @@ public class SqlParameterBinderFactoryTests : TestsBase
         using ( new AssertionScope() )
         {
             parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Audit.Should().BeSequentiallyEqualTo( "Clear" );
+            command.Parameters.Should().BeEmpty();
         }
     }
 
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenSourceIsProvided()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<Source>();
 
@@ -490,7 +485,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenSourceTypeContainsFieldMembers()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<SourceWithFields>();
         parameterBinder.Bind( command, new SourceWithFields { A = 10, B = "foo" } );
@@ -515,7 +510,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenMemberIsIgnored()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<Source>(
             SqlParameterBinderCreationOptions.Default.With( SqlParameterConfiguration.IgnoreMember( "A" ) ) );
@@ -537,7 +532,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenSourceTypeContainsWriteOnlyPropertyMembers()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<SourceWithWriteOnlyProperty>(
             SqlParameterBinderCreationOptions.Default.With( SqlParameterConfiguration.IgnoreMember( "_b" ) ) );
@@ -559,7 +554,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenParameterIsFromOtherSourceMember()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<Source>(
             SqlParameterBinderCreationOptions.Default.With( SqlParameterConfiguration.From( "E", "B" ) ) );
@@ -586,7 +581,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenCustomSelectorOfRefTypeIsDefined()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<Source>(
             SqlParameterBinderCreationOptions.Default
@@ -616,7 +611,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenCustomSelectorOfValueTypeIsDefined()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<Source>(
             SqlParameterBinderCreationOptions.Default
@@ -645,7 +640,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenCustomSelectorOverridesSourceMember()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<Source>(
             SqlParameterBinderCreationOptions.Default
@@ -670,7 +665,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenSourceTypeIsValidInRelationToProvidedContext()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var interpreter = new SqlNodeDebugInterpreter();
         interpreter.Visit( SqlNode.Parameter<int>( "a", isNullable: true ) );
         interpreter.Visit( SqlNode.Parameter<string>( "b", isNullable: true ) );
@@ -713,7 +708,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenProvidedContextContainsTypelessParameterThatExistsInSourceType()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var interpreter = new SqlNodeDebugInterpreter();
         interpreter.Visit( SqlNode.Parameter( "a" ) );
 
@@ -742,7 +737,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenSourceMemberIsScalarNotNullRefType()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<GenericSource<string>>();
 
@@ -763,7 +758,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenSourceMemberIsScalarNotNullValueType()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<GenericSource<int>>();
 
@@ -784,7 +779,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenSourceMemberIsScalarNullableRefTypeWithValue()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<GenericSource<string?>>();
 
@@ -805,7 +800,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenSourceMemberIsScalarNullableRefTypeWithIgnoredNull()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<GenericSource<string?>>();
 
@@ -821,7 +816,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenSourceMemberIsScalarNullableRefTypeWithIncludedNull()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<GenericSource<string?>>(
             SqlParameterBinderCreationOptions.Default.EnableIgnoringOfNullValues( false ) );
@@ -843,7 +838,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenSourceMemberIsScalarNullableValueTypeWithValue()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<GenericSource<int?>>();
 
@@ -864,7 +859,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenSourceMemberIsScalarNullableValueTypeWithIgnoredNull()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<GenericSource<int?>>();
 
@@ -880,7 +875,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenSourceMemberIsScalarNullableValueTypeWithIncludedNull()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<GenericSource<int?>>(
             SqlParameterBinderCreationOptions.Default.EnableIgnoringOfNullValues( false ) );
@@ -902,7 +897,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenSourceMemberIsNotNullCollectionWithNotNullValueTypeElements()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<GenericSource<int[]>>( SqlParameterBinderCreationOptions.Default.EnableCollectionReduction() );
 
@@ -933,7 +928,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenSourceMemberIsNotNullCollectionWithIgnoredNullableValueTypeElements()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<GenericSource<int?[]>>( SqlParameterBinderCreationOptions.Default.EnableCollectionReduction() );
 
@@ -959,7 +954,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenSourceMemberIsNotNullCollectionWithIncludedNullableValueTypeElements()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<GenericSource<int?[]>>(
             SqlParameterBinderCreationOptions.Default.EnableCollectionReduction().EnableIgnoringOfNullValues( false ) );
@@ -991,7 +986,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenSourceMemberIsNotNullCollectionWithNotNullRefTypeElements()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<GenericSource<string[]>>( SqlParameterBinderCreationOptions.Default.EnableCollectionReduction() );
 
@@ -1022,7 +1017,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenSourceMemberIsNotNullCollectionWithIgnoredNullableRefTypeElements()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<GenericSource<string?[]>>( SqlParameterBinderCreationOptions.Default.EnableCollectionReduction() );
 
@@ -1048,7 +1043,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenSourceMemberIsNotNullCollectionWithIncludedNullableRefTypeElements()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<GenericSource<string?[]>>(
             SqlParameterBinderCreationOptions.Default.EnableCollectionReduction().EnableIgnoringOfNullValues( false ) );
@@ -1080,7 +1075,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenSourceMemberIsIgnoredNutNullEmptyCollection()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<GenericSource<int[]>>( SqlParameterBinderCreationOptions.Default.EnableCollectionReduction() );
 
@@ -1096,7 +1091,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenSourceMemberIsIgnoredNullableCollection()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<GenericSource<int[]?>>( SqlParameterBinderCreationOptions.Default.EnableCollectionReduction() );
 
@@ -1112,7 +1107,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenSourceMemberIsIncludedNullableCollection()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<GenericSource<int[]?>>(
             SqlParameterBinderCreationOptions.Default.EnableCollectionReduction().EnableIgnoringOfNullValues( false ) );
@@ -1129,7 +1124,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenSourceMemberIsOfStringTypeWithReducedCollections()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<GenericSource<string>>( SqlParameterBinderCreationOptions.Default.EnableCollectionReduction() );
 
@@ -1150,7 +1145,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenSourceMemberIsOfByteArrayTypeWithReducedCollections()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<GenericSource<byte[]>>( SqlParameterBinderCreationOptions.Default.EnableCollectionReduction() );
 
@@ -1171,9 +1166,8 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WithAllPreExistingParametersBeingExcess()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         command.Parameters.Add( command.CreateParameter() );
-        command.Parameters.ClearAudit();
 
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<Source>();
@@ -1183,7 +1177,6 @@ public class SqlParameterBinderFactoryTests : TestsBase
         using ( new AssertionScope() )
         {
             parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Audit.Should().BeSequentiallyEqualTo( "Clear" );
             command.Parameters.Should().BeEmpty();
         }
     }
@@ -1191,12 +1184,11 @@ public class SqlParameterBinderFactoryTests : TestsBase
     [Fact]
     public void Create_Generic_ShouldCreateCorrectParameterBinder_WithSomePreExistingParametersBeingExcess()
     {
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var p1 = command.CreateParameter();
         command.Parameters.Add( p1 );
         command.Parameters.Add( command.CreateParameter() );
         command.Parameters.Add( command.CreateParameter() );
-        command.Parameters.ClearAudit();
 
         var sut = Factory.CreateFactory();
         var parameterBinder = sut.Create<Source>();
@@ -1206,7 +1198,6 @@ public class SqlParameterBinderFactoryTests : TestsBase
         using ( new AssertionScope() )
         {
             parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
-            command.Parameters.Audit.Should().BeSequentiallyEqualTo( "get: [indexer](0)", "RemoveAt(2)", "RemoveAt(1)" );
             command.Parameters.Should().HaveCount( 1 );
             command.Parameters[0].Should().BeSameAs( p1 );
             command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
@@ -1406,7 +1397,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
         return KeyValuePair.Create( name, value );
     }
 
-    private sealed class Factory : SqlParameterBinderFactory<DbCommand>
+    private sealed class Factory : SqlParameterBinderFactory<DbCommandMock>
     {
         private Factory(SqlDialect dialect)
             : base( dialect, ColumnTypeDefinitionProviderMock.Default( dialect ) ) { }

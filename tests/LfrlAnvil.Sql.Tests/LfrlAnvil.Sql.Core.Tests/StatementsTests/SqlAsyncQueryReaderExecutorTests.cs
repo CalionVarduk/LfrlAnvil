@@ -34,7 +34,7 @@ public class SqlAsyncQueryReaderExecutorTests : TestsBase
             new List<object?> { "foo", 3, "lorem", 5 } );
 
         var sql = "SELECT * FROM foo";
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var @delegate = Substitute.For<Func<IDataReader, SqlQueryReaderOptions, CancellationToken, ValueTask<SqlQueryReaderResult>>>();
         @delegate.WithAnyArgs( _ => ValueTask.FromResult( expected ) );
         var reader = new SqlAsyncQueryReader( new SqlDialect( "foo" ), @delegate );
@@ -79,7 +79,7 @@ public class SqlAsyncQueryReaderExecutorTests : TestsBase
             } );
 
         var sql = "SELECT * FROM foo";
-        var command = new DbCommand();
+        var command = new DbCommandMock();
         var @delegate = Substitute
             .For<Func<IDataReader, SqlQueryReaderOptions, CancellationToken, ValueTask<SqlQueryReaderResult<object[]>>>>();
 

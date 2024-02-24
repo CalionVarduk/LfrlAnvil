@@ -60,20 +60,7 @@
 
 
 - ISqlDatabaseBuilder:
-  - TypeDefinitions, NodeInterpreters, QueryReaders, ParameterBinders
-  - should be provided through ctor, and be immutable
-  - TypeDefinitions should, in addition, have a dedicated builder that allows to register custom types, instead of mutable methods
   - also, add IDefaultNameProvider => allows to override default name generation (PK, FK, IX, CHK, anything else?)
-
-
-- MySqlColumnTypeDefinition:
-  - this is pretty much the same, compared to sqlite implementation
-  - create a base SqlColumnTypeDefinition<TDataType> where TDataType : ISqlDataType
-  - create a base SqlColumnTypeDefinition<TDataType, TDataReader, T> where TDataType : ISqlDataType where TDataReader : IDataReader
-  - concrete types can extend SqlColumnTypeDefinition<,,> directly
-  - it may be a little bit awkward with type definition provider, since its implementations should return type definitions
-  - of type linked to the dialect type
-  - & there are generic extension methods for that, so be careful there
 
 
 - MySqlHelpers & sqlite versions are pretty much the same => move to Sql.Core?
@@ -84,10 +71,10 @@
   - DB objects should have an additional method that allows to provide custom user/password & maybe other options as well
 
 
-- Initial DB factory connection change event:
-  - a collection of all published events by the connection object should be memorized
-  - and replayed for each registered callback, instead of the Closed=>Open event mock
-  - event listening should start right after ctor invocation & end right after Open invocation
+- Concrete DB factories:
+  - their providers require some options (like e.g. sqlite's persistent connection mode)
+  - that allow to customize how db factory behaves (e.g. type definition provider builder customization)
+  - Core can't really handle that... maaaybe name provider/validator could be Core'd
 
 
 ### Reactive.Scheduling
@@ -172,9 +159,9 @@ Implement Sql.Core for PostgreSql
 - SqliteIndexColumnBuilder is a candidate for moving to Sql.Core, as a generic class, where T is a column builder type
   - honestly, pretty much everything could be moved to Sql.Core, as generic abstract classes, that allow to override default behaviors
   - and define new ones
+  - Add generic/type-erased ExecuteScalar to query/multi readers
   - this is a bit bigger than initially assumed:
     - add possibility to define expression-based IXs (table-scoped validator?)
-    - add possibility to define custom version history table definition & reader delegate (DB builder or DB factory?)
 
 ### Sql.Core: Add DateTime related functions
 Add datetime related functions? kind of depends on other sql dialects

@@ -14,7 +14,9 @@ public class SqlCreateDatabaseOptionsTests : TestsBase
         {
             sut.Mode.Should().Be( SqlDatabaseCreateMode.NoChanges );
             sut.VersionHistoryName.Should().BeNull();
-            sut.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryPersistenceMode.AllRecords );
+            sut.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
+            sut.VersionHistoryQueryMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
+            sut.CommandTimeout.Should().BeNull();
             sut.GetStatementListeners().ToArray().Should().BeEmpty();
         }
     }
@@ -32,7 +34,9 @@ public class SqlCreateDatabaseOptionsTests : TestsBase
         {
             result.Mode.Should().Be( mode );
             result.VersionHistoryName.Should().BeNull();
-            result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryPersistenceMode.AllRecords );
+            result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
+            result.VersionHistoryQueryMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
+            result.CommandTimeout.Should().BeNull();
             result.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( sut.GetStatementListeners().ToArray() );
         }
     }
@@ -48,7 +52,9 @@ public class SqlCreateDatabaseOptionsTests : TestsBase
         {
             result.Mode.Should().Be( SqlDatabaseCreateMode.NoChanges );
             result.VersionHistoryName.Should().Be( name );
-            result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryPersistenceMode.AllRecords );
+            result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
+            result.VersionHistoryQueryMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
+            result.CommandTimeout.Should().BeNull();
             result.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( sut.GetStatementListeners().ToArray() );
         }
     }
@@ -63,15 +69,17 @@ public class SqlCreateDatabaseOptionsTests : TestsBase
         {
             result.Mode.Should().Be( SqlDatabaseCreateMode.NoChanges );
             result.VersionHistoryName.Should().BeNull();
-            result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryPersistenceMode.AllRecords );
+            result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
+            result.VersionHistoryQueryMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
+            result.CommandTimeout.Should().BeNull();
             result.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( sut.GetStatementListeners().ToArray() );
         }
     }
 
     [Theory]
-    [InlineData( SqlDatabaseVersionHistoryPersistenceMode.AllRecords )]
-    [InlineData( SqlDatabaseVersionHistoryPersistenceMode.LastRecordOnly )]
-    public void SetVersionHistoryPersistenceMode_ShouldUpdateModeCorrectly(SqlDatabaseVersionHistoryPersistenceMode mode)
+    [InlineData( SqlDatabaseVersionHistoryMode.AllRecords )]
+    [InlineData( SqlDatabaseVersionHistoryMode.LastRecordOnly )]
+    public void SetVersionHistoryPersistenceMode_ShouldUpdateModeCorrectly(SqlDatabaseVersionHistoryMode mode)
     {
         var sut = SqlCreateDatabaseOptions.Default;
         var result = sut.SetVersionHistoryPersistenceMode( mode );
@@ -81,6 +89,47 @@ public class SqlCreateDatabaseOptionsTests : TestsBase
             result.Mode.Should().Be( SqlDatabaseCreateMode.NoChanges );
             result.VersionHistoryName.Should().BeNull();
             result.VersionHistoryPersistenceMode.Should().Be( mode );
+            result.VersionHistoryQueryMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
+            result.CommandTimeout.Should().BeNull();
+            result.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( sut.GetStatementListeners().ToArray() );
+        }
+    }
+
+    [Theory]
+    [InlineData( SqlDatabaseVersionHistoryMode.AllRecords )]
+    [InlineData( SqlDatabaseVersionHistoryMode.LastRecordOnly )]
+    public void SetVersionHistoryQueryMode_ShouldUpdateModeCorrectly(SqlDatabaseVersionHistoryMode mode)
+    {
+        var sut = SqlCreateDatabaseOptions.Default;
+        var result = sut.SetVersionHistoryQueryMode( mode );
+
+        using ( new AssertionScope() )
+        {
+            result.Mode.Should().Be( SqlDatabaseCreateMode.NoChanges );
+            result.VersionHistoryName.Should().BeNull();
+            result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
+            result.VersionHistoryQueryMode.Should().Be( mode );
+            result.CommandTimeout.Should().BeNull();
+            result.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( sut.GetStatementListeners().ToArray() );
+        }
+    }
+
+    [Theory]
+    [InlineData( null )]
+    [InlineData( 100L )]
+    public void SetCommandTimeout_ShouldUpdateTimeoutCorrectly(long? seconds)
+    {
+        var value = seconds is null ? (TimeSpan?)null : TimeSpan.FromSeconds( seconds.Value );
+        var sut = SqlCreateDatabaseOptions.Default;
+        var result = sut.SetCommandTimeout( value );
+
+        using ( new AssertionScope() )
+        {
+            result.Mode.Should().Be( SqlDatabaseCreateMode.NoChanges );
+            result.VersionHistoryName.Should().BeNull();
+            result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
+            result.VersionHistoryQueryMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
+            result.CommandTimeout.Should().Be( value );
             result.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( sut.GetStatementListeners().ToArray() );
         }
     }
@@ -97,7 +146,9 @@ public class SqlCreateDatabaseOptionsTests : TestsBase
         {
             result.Mode.Should().Be( SqlDatabaseCreateMode.NoChanges );
             result.VersionHistoryName.Should().BeNull();
-            result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryPersistenceMode.AllRecords );
+            result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
+            result.VersionHistoryQueryMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
+            result.CommandTimeout.Should().BeNull();
             result.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( listener );
         }
     }
@@ -115,7 +166,9 @@ public class SqlCreateDatabaseOptionsTests : TestsBase
         {
             result.Mode.Should().Be( SqlDatabaseCreateMode.NoChanges );
             result.VersionHistoryName.Should().BeNull();
-            result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryPersistenceMode.AllRecords );
+            result.VersionHistoryPersistenceMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
+            result.VersionHistoryQueryMode.Should().Be( SqlDatabaseVersionHistoryMode.AllRecords );
+            result.CommandTimeout.Should().BeNull();
             result.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( listener1, listener2 );
             sut.GetStatementListeners().ToArray().Should().BeSequentiallyEqualTo( listener1 );
         }

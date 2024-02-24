@@ -12,7 +12,7 @@ public static class ColumnTypeDefinitionMock
     [Pure]
     public static ISqlColumnTypeDefinition<T> Create<T>(
         ISqlDataType dataType,
-        Expression<Func<DbDataReader, int, T>> outputMapping,
+        Expression<Func<DbDataReaderMock, int, T>> outputMapping,
         T? defaultValue = default)
         where T : notnull
     {
@@ -29,7 +29,7 @@ public static class ColumnTypeDefinitionMock
             .Do(
                 i =>
                 {
-                    var p = i.ArgAt<DbDataParameter>( 0 );
+                    var p = i.ArgAt<DbDataParameterMock>( 0 );
                     p.IsNullable = i.ArgAt<bool>( 1 );
                     p.DbType = dbType;
                 } );
