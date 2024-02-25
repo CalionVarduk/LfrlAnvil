@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions.Arithmetic;
@@ -264,12 +266,12 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public virtual void VisitTrue(SqlTrueNode node)
     {
-        Context.Sql.Append( '1' ).AppendSpace().Append( '=' ).AppendSpace().Append( '1' );
+        Context.Sql.Append( "TRUE" );
     }
 
     public virtual void VisitFalse(SqlFalseNode node)
     {
-        Context.Sql.Append( '1' ).AppendSpace().Append( '=' ).AppendSpace().Append( '0' );
+        Context.Sql.Append( "FALSE" );
     }
 
     public virtual void VisitEqualTo(SqlEqualToConditionNode node)
@@ -328,10 +330,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public virtual void VisitConditionValue(SqlConditionValueNode node)
     {
-        Context.Sql.Append( "CASE" ).AppendSpace().Append( "WHEN" ).AppendSpace();
         this.Visit( node.Condition );
-        Context.Sql.AppendSpace().Append( "THEN" ).AppendSpace().Append( '1' );
-        Context.Sql.AppendSpace().Append( "ELSE" ).AppendSpace().Append( '0' ).AppendSpace().Append( "END" );
     }
 
     public virtual void VisitBetween(SqlBetweenConditionNode node)
@@ -483,17 +482,23 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             _ => "INNER"
         };
 
-        Context.Sql.Append( joinType ).AppendSpace().Append( "JOIN" ).AppendSpace();
-        this.Visit( node.InnerRecordSet );
-
-        if ( node.JoinType == SqlJoinType.Cross )
-            return;
-
-        Context.Sql.AppendSpace().Append( "ON" ).AppendSpace();
-        this.Visit( node.OnExpression );
+        AppendJoin( joinType, node );
     }
 
-    public abstract void VisitDataSource(SqlDataSourceNode node);
+    public virtual void VisitDataSource(SqlDataSourceNode node)
+    {
+        if ( node is SqlDummyDataSourceNode )
+            return;
+
+        Context.Sql.Append( "FROM" ).AppendSpace();
+        this.Visit( node.From );
+
+        foreach ( var join in node.Joins )
+        {
+            Context.AppendIndent();
+            VisitJoinOn( join );
+        }
+    }
 
     public virtual void VisitSelectField(SqlSelectFieldNode node)
     {
@@ -545,8 +550,36 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             AppendMultilineSql( node.Sql );
     }
 
-    public abstract void VisitDataSourceQuery(SqlDataSourceQueryExpressionNode node);
-    public abstract void VisitCompoundQuery(SqlCompoundQueryExpressionNode node);
+    public virtual void VisitDataSourceQuery(SqlDataSourceQueryExpressionNode node)
+    {
+        var isChild = Context.ChildDepth > 0;
+        if ( isChild )
+            Context.AppendIndent();
+
+        var traits = ExtractDataSourceTraits( ExtractDataSourceTraits( node.DataSource.Traits ), node.Traits );
+        VisitDataSourceBeforeTraits( in traits );
+        VisitDataSourceQuerySelection( node, in traits );
+        VisitDataSource( node.DataSource );
+        VisitDataSourceAfterTraits( in traits );
+
+        if ( isChild )
+            Context.AppendShortIndent();
+    }
+
+    public virtual void VisitCompoundQuery(SqlCompoundQueryExpressionNode node)
+    {
+        var isChild = Context.ChildDepth > 0;
+        if ( isChild )
+            Context.AppendIndent();
+
+        var traits = ExtractQueryTraits( default, node.Traits );
+        VisitQueryBeforeTraits( in traits );
+        VisitCompoundQueryComponents( node, in traits );
+        VisitQueryAfterTraits( in traits );
+
+        if ( isChild )
+            Context.AppendShortIndent();
+    }
 
     public virtual void VisitCompoundQueryComponent(SqlCompoundQueryComponentNode node)
     {
@@ -775,7 +808,13 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     }
 
     public abstract void VisitDeleteFrom(SqlDeleteFromNode node);
-    public abstract void VisitTruncate(SqlTruncateNode node);
+
+    public virtual void VisitTruncate(SqlTruncateNode node)
+    {
+        Context.Sql.Append( "TRUNCATE" ).AppendSpace().Append( "TABLE" ).AppendSpace();
+        AppendDelimitedRecordSetName( node.Table );
+    }
+
     public abstract void VisitColumnDefinition(SqlColumnDefinitionNode node);
     public abstract void VisitPrimaryKeyDefinition(SqlPrimaryKeyDefinitionNode node);
     public abstract void VisitForeignKeyDefinition(SqlForeignKeyDefinitionNode node);
@@ -826,7 +865,22 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         throw new UnrecognizedSqlNodeException( this, node );
     }
 
-    public abstract void AppendDelimitedRecordSetName(SqlRecordSetNode node);
+    public virtual void AppendDelimitedRecordSetName(SqlRecordSetNode node)
+    {
+        if ( node.IsAliased )
+        {
+            AppendDelimitedName( node.Alias );
+            return;
+        }
+
+        if ( node.NodeType == SqlNodeType.RawRecordSet && ReinterpretCast.To<SqlRawRecordSetNode>( node ).IsInfoRaw )
+        {
+            Context.Sql.Append( node.Info.Name.Object );
+            return;
+        }
+
+        AppendDelimitedRecordSetInfo( node.Info );
+    }
 
     public void AppendDelimitedName(string name)
     {
@@ -842,19 +896,16 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         AppendDelimitedName( alias );
     }
 
+    public virtual void AppendDelimitedTemporaryObjectName(string name)
+    {
+        Context.Sql.Append( "TEMP" ).AppendDot();
+        AppendDelimitedName( name );
+    }
+
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public void AppendDelimitedSchemaObjectName(SqlSchemaObjectName name)
     {
         AppendDelimitedSchemaObjectName( name.Schema, name.Object );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public void AppendDelimitedRecordSetInfo(SqlRecordSetInfo info)
-    {
-        if ( info.IsTemporary )
-            AppendDelimitedTemporaryObjectName( info.Name.Object );
-        else
-            AppendDelimitedSchemaObjectName( info.Name );
     }
 
     public virtual void AppendDelimitedSchemaObjectName(string schemaName, string objName)
@@ -868,10 +919,13 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         AppendDelimitedName( objName );
     }
 
-    public virtual void AppendDelimitedTemporaryObjectName(string name)
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public void AppendDelimitedRecordSetInfo(SqlRecordSetInfo info)
     {
-        Context.Sql.Append( "TEMP" ).AppendDot();
-        AppendDelimitedName( name );
+        if ( info.IsTemporary )
+            AppendDelimitedTemporaryObjectName( info.Name.Object );
+        else
+            AppendDelimitedSchemaObjectName( info.Name );
     }
 
     public void AppendDelimitedDataFieldName(SqlRecordSetInfo recordSet, string name)
@@ -1292,6 +1346,91 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         Context.Sql.Append( ')' );
     }
 
+    protected void AppendJoin(string joinType, SqlDataSourceJoinOnNode node)
+    {
+        Context.Sql.Append( joinType ).AppendSpace().Append( "JOIN" ).AppendSpace();
+        this.Visit( node.InnerRecordSet );
+
+        if ( node.JoinType == SqlJoinType.Cross )
+            return;
+
+        Context.Sql.AppendSpace().Append( "ON" ).AppendSpace();
+        this.Visit( node.OnExpression );
+    }
+
+    protected virtual void VisitDataSourceQuerySelection(SqlDataSourceQueryExpressionNode node, in SqlDataSourceTraits traits)
+    {
+        Context.Sql.Append( "SELECT" );
+        VisitOptionalDistinctMarker( traits.Distinct );
+
+        using ( Context.TempIndentIncrease() )
+        {
+            foreach ( var selection in node.Selection )
+            {
+                Context.AppendIndent();
+                this.Visit( selection );
+                Context.Sql.AppendComma();
+            }
+        }
+
+        Context.Sql.ShrinkBy( 1 );
+        Context.AppendIndent();
+    }
+
+    protected virtual void VisitCompoundQueryComponents(SqlCompoundQueryExpressionNode node, in SqlQueryTraits traits)
+    {
+        VisitChild( node.FirstQuery );
+        foreach ( var component in node.FollowingQueries )
+        {
+            Context.AppendIndent();
+            VisitCompoundQueryComponent( component );
+        }
+    }
+
+    protected void VisitInsertIntoFields(SqlInsertIntoNode node)
+    {
+        Context.Sql.Append( "INSERT INTO" ).AppendSpace();
+        AppendDelimitedRecordSetName( node.RecordSet );
+        Context.Sql.AppendSpace().Append( '(' );
+
+        if ( node.DataFields.Length > 0 )
+        {
+            foreach ( var dataField in node.DataFields )
+            {
+                AppendDelimitedName( dataField.Name );
+                Context.Sql.AppendComma().AppendSpace();
+            }
+
+            Context.Sql.ShrinkBy( 2 );
+        }
+
+        Context.Sql.Append( ')' );
+    }
+
+    protected virtual void VisitDataSourceBeforeTraits(in SqlDataSourceTraits traits)
+    {
+        VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions, traits.ContainsRecursiveCommonTableExpression );
+    }
+
+    protected virtual void VisitDataSourceAfterTraits(in SqlDataSourceTraits traits)
+    {
+        VisitOptionalFilterCondition( traits.Filter );
+        VisitOptionalAggregationRange( traits.Aggregations );
+        VisitOptionalAggregationFilterCondition( traits.AggregationFilter );
+        VisitOptionalWindowRange( traits.Windows );
+        VisitOptionalOrderingRange( traits.Ordering );
+    }
+
+    protected virtual void VisitQueryBeforeTraits(in SqlQueryTraits traits)
+    {
+        VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions, traits.ContainsRecursiveCommonTableExpression );
+    }
+
+    protected virtual void VisitQueryAfterTraits(in SqlQueryTraits traits)
+    {
+        VisitOptionalOrderingRange( traits.Ordering );
+    }
+
     protected virtual void VisitRowsWindowFrame(SqlWindowFrameNode node)
     {
         Context.Sql.Append( "ROWS" ).AppendSpace().Append( "BETWEEN" ).AppendSpace();
@@ -1475,4 +1614,458 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     [Pure]
     protected abstract bool DoesChildNodeRequireParentheses(SqlNodeBase node);
+
+    protected void VisitColumnDefinition(
+        SqlColumnDefinitionNode node,
+        ISqlColumnTypeDefinitionProvider typeDefinitions,
+        Func<SqlExpressionNode, ISqlColumnTypeDefinition, bool> requiresDefaultValueParentheses)
+    {
+        var typeDefinition = node.TypeDefinition ?? typeDefinitions.GetByType( node.Type.UnderlyingType );
+        AppendDelimitedName( node.Name );
+        Context.Sql.AppendSpace().Append( typeDefinition.DataType.Name );
+
+        if ( ! node.Type.IsNullable )
+            Context.Sql.AppendSpace().Append( "NOT" ).AppendSpace().Append( "NULL" );
+
+        if ( node.DefaultValue is not null )
+        {
+            Context.Sql.AppendSpace().Append( "DEFAULT" ).AppendSpace();
+
+            if ( requiresDefaultValueParentheses( node.DefaultValue, typeDefinition ) )
+                VisitChildWrappedInParentheses( node.DefaultValue );
+            else
+                this.Visit( node.DefaultValue );
+        }
+    }
+
+    protected void VisitCreateTableDefinition(SqlCreateTableNode node)
+    {
+        using ( Context.TempIndentIncrease() )
+        {
+            foreach ( var column in node.Columns )
+            {
+                Context.AppendIndent();
+                VisitColumnDefinition( column );
+                Context.Sql.AppendComma();
+            }
+
+            if ( node.PrimaryKey is not null )
+            {
+                Context.AppendIndent();
+                VisitPrimaryKeyDefinition( node.PrimaryKey );
+                Context.Sql.AppendComma();
+            }
+
+            foreach ( var foreignKey in node.ForeignKeys )
+            {
+                Context.AppendIndent();
+                VisitForeignKeyDefinition( foreignKey );
+                Context.Sql.AppendComma();
+            }
+
+            foreach ( var check in node.Checks )
+            {
+                Context.AppendIndent();
+                VisitCheckDefinition( check );
+                Context.Sql.AppendComma();
+            }
+
+            if ( node.Columns.Length > 0 || node.PrimaryKey is not null || node.ForeignKeys.Length > 0 || node.Checks.Length > 0 )
+                Context.Sql.ShrinkBy( 1 );
+        }
+    }
+
+    [Pure]
+    protected static SqlFilterTraitNode CreateComplexDeleteOrUpdateFilter(ChangeTargetInfo targetInfo, SqlDataSourceNode dataSource)
+    {
+        var traits = Chain<SqlTraitNode>.Empty;
+        foreach ( var trait in dataSource.Traits )
+        {
+            if ( trait.NodeType != SqlNodeType.CommonTableExpressionTrait )
+                traits = traits.Extend( trait );
+        }
+
+        var pkBaseColumnNode = targetInfo.BaseTarget.GetUnsafeField( targetInfo.IdentityColumnNames[0] );
+        var pkColumnNode = targetInfo.Target.GetUnsafeField( targetInfo.IdentityColumnNames[0] );
+
+        if ( targetInfo.IdentityColumnNames.Length == 1 )
+        {
+            dataSource = dataSource.SetTraits( traits );
+            return SqlNode.FilterTrait( pkBaseColumnNode.InQuery( dataSource.Select( pkColumnNode.AsSelf() ) ), isConjunction: true );
+        }
+
+        var pkFilter = pkBaseColumnNode == pkColumnNode;
+        foreach ( var name in targetInfo.IdentityColumnNames.AsSpan( 1 ) )
+        {
+            pkBaseColumnNode = targetInfo.BaseTarget.GetUnsafeField( name );
+            pkColumnNode = targetInfo.Target.GetUnsafeField( name );
+            pkFilter = pkFilter.And( pkBaseColumnNode == pkColumnNode );
+        }
+
+        traits = traits.Extend( SqlNode.FilterTrait( pkFilter, isConjunction: true ) );
+        dataSource = dataSource.SetTraits( traits );
+        return SqlNode.FilterTrait( dataSource.Exists(), isConjunction: true );
+    }
+
+    [Pure]
+    protected static SqlUpdateNode CreateSimplifiedUpdateWithComplexAssignments(
+        ChangeTargetInfo targetInfo,
+        SqlUpdateNode node,
+        ReadOnlySpan<int> indexesOfComplexAssignments)
+    {
+        Ensure.IsNotNull( targetInfo.Target.Alias );
+        Assume.IsGreaterThan( indexesOfComplexAssignments.Length, 0 );
+
+        var updateTraits = Chain<SqlTraitNode>.Empty;
+        var cteTraits = Chain<SqlTraitNode>.Empty;
+        foreach ( var trait in node.DataSource.Traits )
+        {
+            if ( trait.NodeType == SqlNodeType.CommonTableExpressionTrait )
+                updateTraits = updateTraits.Extend( trait );
+            else
+                cteTraits = cteTraits.Extend( trait );
+        }
+
+        var cteIdentityFieldNames = new string[targetInfo.IdentityColumnNames.Length];
+        var cteComplexAssignmentFieldNames = new string[indexesOfComplexAssignments.Length];
+        var cteSelection = new SqlSelectNode[targetInfo.IdentityColumnNames.Length + indexesOfComplexAssignments.Length];
+        var assignments = node.Assignments.ToArray();
+
+        var i = 0;
+        foreach ( var name in targetInfo.IdentityColumnNames )
+        {
+            var fieldName = $"ID_{name}_{i}";
+            cteIdentityFieldNames[i] = fieldName;
+            cteSelection[i] = targetInfo.Target.GetUnsafeField( name ).As( fieldName );
+            ++i;
+        }
+
+        foreach ( var assignmentIndex in indexesOfComplexAssignments )
+        {
+            var assignment = assignments[assignmentIndex];
+            var fieldName = $"VAL_{assignment.DataField.Name}_{assignmentIndex}";
+            cteComplexAssignmentFieldNames[i - cteIdentityFieldNames.Length] = fieldName;
+            cteSelection[i++] = assignment.Value.As( fieldName );
+        }
+
+        var cte = node.DataSource.SetTraits( cteTraits ).Select( cteSelection ).ToCte( $"_{Guid.NewGuid():N}" );
+        var cteDataSource = cte.RecordSet.ToDataSource();
+
+        var pkBaseColumnNode = targetInfo.BaseTarget.GetUnsafeField( targetInfo.IdentityColumnNames[0] );
+        var pkCteColumnNode = cteDataSource.From.GetUnsafeField( cteIdentityFieldNames[0] );
+        var pkFilter = pkBaseColumnNode == pkCteColumnNode;
+
+        i = 1;
+        foreach ( var name in targetInfo.IdentityColumnNames.AsSpan( 1 ) )
+        {
+            pkBaseColumnNode = targetInfo.BaseTarget.GetUnsafeField( name );
+            pkCteColumnNode = cteDataSource.From.GetUnsafeField( cteIdentityFieldNames[i++] );
+            pkFilter = pkFilter.And( pkBaseColumnNode == pkCteColumnNode );
+        }
+
+        var pkFilterTrait = SqlNode.FilterTrait( pkFilter, isConjunction: true );
+        var filteredCteDataSource = cteDataSource.SetTraits(
+            Chain.Create<SqlTraitNode>( pkFilterTrait ).Extend( SqlNode.LimitTrait( SqlNode.Literal( 1 ) ) ) );
+
+        i = 0;
+        foreach ( var assignmentIndex in indexesOfComplexAssignments )
+        {
+            var assignment = assignments[assignmentIndex];
+            var selection = filteredCteDataSource.From.GetUnsafeField( cteComplexAssignmentFieldNames[i++] ).AsSelf();
+            assignments[assignmentIndex] = assignment.DataField.Assign( filteredCteDataSource.Select( selection ) );
+        }
+
+        SqlConditionNode updateFilter = cteIdentityFieldNames.Length == 1
+            ? targetInfo.BaseTarget.GetUnsafeField( targetInfo.IdentityColumnNames[0] )
+                .InQuery( cteDataSource.Select( cteDataSource.From.GetUnsafeField( cteIdentityFieldNames[0] ).AsSelf() ) )
+            : cteDataSource.AddTrait( pkFilterTrait ).Exists();
+
+        updateTraits = updateTraits
+            .Extend( SqlNode.CommonTableExpressionTrait( cte ) )
+            .Extend( SqlNode.FilterTrait( updateFilter, isConjunction: true ) );
+
+        return targetInfo.BaseTarget.ToDataSource().SetTraits( updateTraits ).ToUpdate( assignments );
+    }
+
+    [Pure]
+    protected static ChangeTargetInfo ExtractTableDeleteOrUpdateInfo(SqlTableNode node)
+    {
+        var i = 0;
+        var identityColumns = node.Table.Constraints.PrimaryKey.Index.Columns;
+        var identityColumnNames = new string[identityColumns.Count];
+        foreach ( var c in identityColumns )
+            identityColumnNames[i++] = c.Column.Name;
+
+        return new ChangeTargetInfo( node, node.AsSelf(), identityColumnNames );
+    }
+
+    [Pure]
+    protected ChangeTargetInfo ExtractTableBuilderDeleteInfo(SqlDeleteFromNode node, SqlTableBuilderNode target)
+    {
+        return ExtractTableBuilderDeleteOrUpdateInfo( node, target, isUpdate: false );
+    }
+
+    [Pure]
+    protected ChangeTargetInfo ExtractTableBuilderUpdateInfo(SqlUpdateNode node, SqlTableBuilderNode target)
+    {
+        return ExtractTableBuilderDeleteOrUpdateInfo( node, target, isUpdate: true );
+    }
+
+    [Pure]
+    protected ChangeTargetInfo ExtractNewTableDeleteInfo(
+        SqlDeleteFromNode node,
+        SqlNewTableNode target)
+    {
+        return ExtractNewTableDeleteOrUpdateInfo( node, target, isUpdate: false );
+    }
+
+    [Pure]
+    protected ChangeTargetInfo ExtractNewTableUpdateInfo(SqlUpdateNode node, SqlNewTableNode target)
+    {
+        return ExtractNewTableDeleteOrUpdateInfo( node, target, isUpdate: true );
+    }
+
+    [Pure]
+    protected ChangeTargetInfo ExtractTargetDeleteInfo(SqlDeleteFromNode node)
+    {
+        var from = node.DataSource.From;
+        var info = from.NodeType switch
+        {
+            SqlNodeType.Table => ExtractTableDeleteOrUpdateInfo( ReinterpretCast.To<SqlTableNode>( from ) ),
+            SqlNodeType.TableBuilder => ExtractTableBuilderDeleteInfo(
+                node,
+                ReinterpretCast.To<SqlTableBuilderNode>( from ) ),
+            SqlNodeType.NewTable => ExtractNewTableDeleteInfo(
+                node,
+                ReinterpretCast.To<SqlNewTableNode>( from ) ),
+            _ => throw new SqlNodeVisitorException( ExceptionResources.DeleteTargetIsNotTable, this, node )
+        };
+
+        if ( ! from.IsAliased )
+            throw new SqlNodeVisitorException( ExceptionResources.DeleteTargetIsNotAliased, this, node );
+
+        return info;
+    }
+
+    [Pure]
+    protected ChangeTargetInfo ExtractTargetUpdateInfo(SqlUpdateNode node)
+    {
+        var from = node.DataSource.From;
+        var info = from.NodeType switch
+        {
+            SqlNodeType.Table => ExtractTableDeleteOrUpdateInfo( ReinterpretCast.To<SqlTableNode>( from ) ),
+            SqlNodeType.TableBuilder => ExtractTableBuilderUpdateInfo(
+                node,
+                ReinterpretCast.To<SqlTableBuilderNode>( from ) ),
+            SqlNodeType.NewTable => ExtractNewTableUpdateInfo(
+                node,
+                ReinterpretCast.To<SqlNewTableNode>( from ) ),
+            _ => throw new SqlNodeVisitorException( ExceptionResources.UpdateTargetIsNotTable, this, node )
+        };
+
+        if ( ! from.IsAliased )
+            throw new SqlNodeVisitorException( ExceptionResources.UpdateTargetIsNotAliased, this, node );
+
+        return info;
+    }
+
+    [Pure]
+    protected static ComplexUpdateAssignmentsVisitor? CreateUpdateAssignmentsVisitor(SqlUpdateNode node)
+    {
+        if ( node.DataSource.Joins.Length == 0 )
+            return null;
+
+        var result = new ComplexUpdateAssignmentsVisitor( node.DataSource );
+        result.VisitAssignmentRange( node.Assignments.Span );
+        return result;
+    }
+
+    protected readonly record struct ChangeTargetInfo(SqlRecordSetNode Target, SqlRecordSetNode BaseTarget, string[] IdentityColumnNames);
+
+    protected sealed class ComplexUpdateAssignmentsVisitor : SqlNodeVisitor
+    {
+        private readonly SqlRecordSetNode[] _joinedRecordSets;
+        private List<int>? _indexesOfComplexAssignments;
+        private int _nextAssignmentIndex;
+
+        internal ComplexUpdateAssignmentsVisitor(SqlDataSourceNode dataSource)
+        {
+            Assume.IsGreaterThan( dataSource.Joins.Length, 0 );
+
+            var index = 0;
+            _joinedRecordSets = new SqlRecordSetNode[dataSource.Joins.Length];
+            foreach ( var join in dataSource.Joins )
+                _joinedRecordSets[index++] = join.InnerRecordSet;
+
+            _indexesOfComplexAssignments = null;
+            _nextAssignmentIndex = 0;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public bool ContainsComplexAssignments()
+        {
+            return _indexesOfComplexAssignments is not null;
+        }
+
+        [Pure]
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public ReadOnlySpan<int> GetIndexesOfComplexAssignments()
+        {
+            return CollectionsMarshal.AsSpan( _indexesOfComplexAssignments );
+        }
+
+        public override void VisitRawDataField(SqlRawDataFieldNode node)
+        {
+            VisitDataField( node );
+        }
+
+        public override void VisitColumn(SqlColumnNode node)
+        {
+            VisitDataField( node );
+        }
+
+        public override void VisitColumnBuilder(SqlColumnBuilderNode node)
+        {
+            VisitDataField( node );
+        }
+
+        public override void VisitQueryDataField(SqlQueryDataFieldNode node)
+        {
+            VisitDataField( node );
+        }
+
+        public override void VisitViewDataField(SqlViewDataFieldNode node)
+        {
+            VisitDataField( node );
+        }
+
+        public override void VisitCustom(SqlNodeBase node)
+        {
+            if ( node is SqlDataFieldNode dataField )
+                VisitDataField( dataField );
+        }
+
+        internal void VisitAssignmentRange(ReadOnlySpan<SqlValueAssignmentNode> assignments)
+        {
+            Assume.Equals( _nextAssignmentIndex, 0 );
+            foreach ( var assignment in assignments )
+            {
+                this.Visit( assignment.Value );
+                ++_nextAssignmentIndex;
+            }
+        }
+
+        private void VisitDataField(SqlDataFieldNode node)
+        {
+            if ( Array.IndexOf( _joinedRecordSets, node.RecordSet ) == -1 )
+                return;
+
+            if ( _indexesOfComplexAssignments is null )
+            {
+                _indexesOfComplexAssignments = new List<int> { _nextAssignmentIndex };
+                return;
+            }
+
+            if ( _indexesOfComplexAssignments[^1] != _nextAssignmentIndex )
+                _indexesOfComplexAssignments.Add( _nextAssignmentIndex );
+        }
+    }
+
+    [Pure]
+    private ChangeTargetInfo ExtractTableBuilderDeleteOrUpdateInfo(
+        SqlNodeBase source,
+        SqlTableBuilderNode node,
+        bool isUpdate)
+    {
+        string[] identityColumnNames;
+        var primaryKey = node.Table.Constraints.TryGetPrimaryKey();
+
+        if ( primaryKey is not null )
+        {
+            var identityColumns = primaryKey.Index.Columns;
+            identityColumnNames = new string[identityColumns.Count];
+
+            var i = 0;
+            foreach ( var c in identityColumns )
+                identityColumnNames[i++] = c.Column.Name;
+        }
+        else
+        {
+            var index = 0;
+            var identityColumns = node.Table.Columns;
+            if ( identityColumns.Count == 0 )
+            {
+                var reason = isUpdate
+                    ? ExceptionResources.UpdateTargetDoesNotHaveAnyColumns
+                    : ExceptionResources.DeleteTargetDoesNotHaveAnyColumns;
+
+                throw new SqlNodeVisitorException( reason, this, source );
+            }
+
+            identityColumnNames = new string[identityColumns.Count];
+            foreach ( var column in identityColumns )
+                identityColumnNames[index++] = column.Name;
+        }
+
+        return new ChangeTargetInfo( node, node.AsSelf(), identityColumnNames );
+    }
+
+    [Pure]
+    private ChangeTargetInfo ExtractNewTableDeleteOrUpdateInfo(
+        SqlNodeBase source,
+        SqlNewTableNode node,
+        bool isUpdate)
+    {
+        string[] identityColumnNames;
+        var primaryKey = node.CreationNode.PrimaryKey;
+
+        if ( primaryKey is not null )
+        {
+            var identityColumns = primaryKey.Columns.Span;
+            if ( identityColumns.Length == 0 )
+            {
+                var reason = isUpdate
+                    ? ExceptionResources.UpdateTargetDoesNotHaveAnyColumns
+                    : ExceptionResources.DeleteTargetDoesNotHaveAnyColumns;
+
+                throw new SqlNodeVisitorException( reason, this, source );
+            }
+
+            identityColumnNames = new string[identityColumns.Length];
+            for ( var i = 0; i < identityColumns.Length; ++i )
+            {
+                if ( identityColumns[i].Expression is not SqlDataFieldNode dataField )
+                {
+                    var reason = ExceptionResources.DeleteOrUpdateTargetPrimaryKeyColumnIsComplexExpression(
+                        isUpdate,
+                        i,
+                        identityColumns[i].Expression );
+
+                    throw new SqlNodeVisitorException( reason, this, source );
+                }
+
+                identityColumnNames[i] = dataField.Name;
+            }
+        }
+        else
+        {
+            var index = 0;
+            var identityColumns = node.CreationNode.Columns.Span;
+            if ( identityColumns.Length == 0 )
+            {
+                var reason = isUpdate
+                    ? ExceptionResources.UpdateTargetDoesNotHaveAnyColumns
+                    : ExceptionResources.DeleteTargetDoesNotHaveAnyColumns;
+
+                throw new SqlNodeVisitorException( reason, this, source );
+            }
+
+            identityColumnNames = new string[identityColumns.Length];
+            foreach ( var column in identityColumns )
+                identityColumnNames[index++] = column.Name;
+        }
+
+        return new ChangeTargetInfo( node, node.AsSelf(), identityColumnNames );
+    }
 }

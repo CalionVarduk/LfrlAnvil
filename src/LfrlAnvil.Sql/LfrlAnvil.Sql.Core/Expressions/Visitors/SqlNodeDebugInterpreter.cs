@@ -292,16 +292,6 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
         VisitSimpleAggregateFunction( "AGG", $"{{{node.GetType().GetDebugString()}}}", node );
     }
 
-    public override void VisitTrue(SqlTrueNode node)
-    {
-        Context.Sql.Append( "TRUE" );
-    }
-
-    public override void VisitFalse(SqlFalseNode node)
-    {
-        Context.Sql.Append( "FALSE" );
-    }
-
     public override void VisitEqualTo(SqlEqualToConditionNode node)
     {
         VisitInfixBinaryOperator( node.Left, symbol: "==", node.Right );
@@ -612,41 +602,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
 
         AppendDelimitedRecordSetInfo( node.Info );
         Context.Sql.AppendSpace().Append( '(' );
-
-        using ( Context.TempIndentIncrease() )
-        {
-            foreach ( var column in node.Columns )
-            {
-                Context.AppendIndent();
-                VisitColumnDefinition( column );
-                Context.Sql.AppendComma();
-            }
-
-            if ( node.PrimaryKey is not null )
-            {
-                Context.AppendIndent();
-                VisitPrimaryKeyDefinition( node.PrimaryKey );
-                Context.Sql.AppendComma();
-            }
-
-            foreach ( var foreignKey in node.ForeignKeys )
-            {
-                Context.AppendIndent();
-                VisitForeignKeyDefinition( foreignKey );
-                Context.Sql.AppendComma();
-            }
-
-            foreach ( var check in node.Checks )
-            {
-                Context.AppendIndent();
-                VisitCheckDefinition( check );
-                Context.Sql.AppendComma();
-            }
-
-            if ( node.Columns.Length > 0 || node.PrimaryKey is not null || node.ForeignKeys.Length > 0 || node.Checks.Length > 0 )
-                Context.Sql.ShrinkBy( 1 );
-        }
-
+        VisitCreateTableDefinition( node );
         Context.AppendIndent().Append( ')' );
     }
 

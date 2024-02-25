@@ -334,8 +334,8 @@ INNER JOIN ""bar_V1"" ON TRUE;" ) );
                       ""C5"" ANY NOT NULL,
                       ""C6"" ANY NOT NULL,
                       CONSTRAINT ""foo_PK_T3"" PRIMARY KEY (""C5"" ASC),
-                      CONSTRAINT ""foo_CHK_T3_{GUID}"" CHECK (""C5"" > 0),
-                      CONSTRAINT ""foo_FK_T3_C5_REF_T2"" FOREIGN KEY (""C5"") REFERENCES ""foo_T2"" (""C3"") ON DELETE RESTRICT ON UPDATE RESTRICT
+                      CONSTRAINT ""foo_FK_T3_C5_REF_T2"" FOREIGN KEY (""C5"") REFERENCES ""foo_T2"" (""C3"") ON DELETE RESTRICT ON UPDATE RESTRICT,
+                      CONSTRAINT ""foo_CHK_T3_{GUID}"" CHECK (""C5"" > 0)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T3__{GUID}__"" (""C5"", ""C6"")
                     SELECT

@@ -26,30 +26,17 @@
 |    23    |   Reactive.State    |                       Extension ideas                       |                   [link](#reactivestate-extension-ideas)                    |                         -                          |
 
 ### Scribbles:
-- SqlNodeInterpreter:
-  - True, False & ConditionValue maybe should by default be TRUE, FALSE & node.Condition?
-  - for sqlite & mysql that would be fine, postgresql is probably also fine with that
-
-
 - MySqlNodeInterpreter:
   - allow to disable IX prefixes altogether? so blob/text would be added to sql without prefix, which will throw mysql exception
   - also, IX prefix value should be configurable
-  - VisitJoinOn => base should have sealed template method impl with protected virtual methods per join type
   - configure FULL JOIN for MySql: append anyway or throw exception
-  - VisitDataSource => base impl, protected virtual for dummy & non-dummy sources
-  - VisitInsertInto => base impl, protected virtual for data source query, compound query & other
-  - VisitUpdate/VisitDeleteFrom => base impl(?) & a lot of code is the same for mysql & sqlite (wacky data sources) => move to Sql.Core
-  - VisitForeignKeyDefinition => builder should create tables without FKs initially & blob/text columns are invalid
+  - VisitForeignKeyDefinition => blob/text columns are invalid
   - IX filter configuration: ignore silently, throw exception or add anyway (applies to DB builder as well)
   - create/drop TEMP view configuration: ignore temp silently or throw exception
-  - AppendDelimitedRecordSetName is the same for sqlite => move to Sql.Core?
   - not every aggregate function supports every trait (applies to sqlite too) => configurable?
     - options: add anyway, silently ignore or throw exception
   - custom traits handling configuration (sqlite too): silently ignore or throw exception
   - configuration for aggregate function filter trait: silently ignore, throw exception or append as switch
-  - VisitInsertIntoFields & VisitCompoundQueryComponents => move to Sql.Core?
-  - Visit[X]BeforeTraits & Visit[X]AfterTraits (sqlite too) => could be moved to Sql.Core as virtual & could receive the source node as parameter
-    - this would help e.g. for MySql with the different CTE handling between insert into & delete from/update
   - configurable offset without limit (sqlite too): add implicit max limit or throw exception
   - remove MySqlAlterTableNode? change tracker's _ongoingStatements needs it right now
   - IXs/PKs/FKs => check how mysql handles column type discrepancies and/or prefix length (text/blob)
@@ -60,10 +47,7 @@
 
 
 - ISqlDatabaseBuilder:
-  - also, add IDefaultNameProvider => allows to override default name generation (PK, FK, IX, CHK, anything else?)
-
-
-- MySqlHelpers & sqlite versions are pretty much the same => move to Sql.Core?
+  - add IDefaultNameProvider => allows to override default name generation (PK, FK, IX, CHK, anything else?)
 
 
 - Connection strings:
@@ -155,13 +139,8 @@ ideas for other LfrlAnvil.Computable projects:
 Implement Sql.Core for PostgreSql
 
 ### Sql.Core: Create generic abstractions based on Sqlite & MySql objects
-- SqliteColumnTypeDefinition is a candidate for moving to Sql.Core, as a generic class, where T is an sql data type
-- SqliteIndexColumnBuilder is a candidate for moving to Sql.Core, as a generic class, where T is a column builder type
-  - honestly, pretty much everything could be moved to Sql.Core, as generic abstract classes, that allow to override default behaviors
-  - and define new ones
   - Add generic/type-erased ExecuteScalar to query/multi readers
-  - this is a bit bigger than initially assumed:
-    - add possibility to define expression-based IXs (table-scoped validator?)
+  - add possibility to define expression-based IXs (table-scoped validator?)
 
 ### Sql.Core: Add DateTime related functions
 Add datetime related functions? kind of depends on other sql dialects
@@ -195,7 +174,7 @@ Add nodes for JSON column manipulation (read value, set value etc.)
 - update: v3.8.3 (2014-02-03) is now the oldest supported version, unless CTEs aren't used (WITH clause)
 
 ### Sql.Core: Add Visitor for node CLR type extraction
-Add sql node visitor that allows to extract node's type (+ add Type to ViewDataField)
+- Add sql node visitor that allows to extract node's type (+ add Type to ViewDataField)
 
 ### Sql.Core: Add Custom node tree validators
 - Add possibility to register custom view/default-value/index-filter validators in db builders

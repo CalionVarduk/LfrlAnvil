@@ -14,8 +14,6 @@ using ExceptionResources = LfrlAnvil.Sql.Exceptions.ExceptionResources;
 namespace LfrlAnvil.Sql.Objects.Builders;
 
 // TODO:
-// THEN, create better core node interpreter
-// THEN, core might actually be done?
 // THEN, update sqlite to work fully with new core
 // THEN, update mysql to work fully with new core
 // THEN, create db version object that works with core classes rather than interfaces
