@@ -217,7 +217,7 @@ public static class TypeExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static StringBuilder AppendOpenGenericArgumentString(StringBuilder builder, Type type)
     {
-        Assume.Equals( type.IsGenericParameter, true );
+        Assume.True( type.IsGenericParameter );
         AppendDebugString( builder, type );
 
         if ( (type.GenericParameterAttributes & GenericParameterAttributes.Contravariant) != GenericParameterAttributes.None )

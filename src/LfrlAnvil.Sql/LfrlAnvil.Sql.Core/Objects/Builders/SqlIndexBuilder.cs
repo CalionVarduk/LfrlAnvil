@@ -297,7 +297,7 @@ public abstract class SqlIndexBuilder : SqlConstraintBuilder, ISqlIndexBuilder
     {
         Assume.Equals( primaryKey.Table, Table );
         Assume.IsNull( PrimaryKey );
-        Assume.Equals( IsUnique, true );
+        Assume.True( IsUnique );
         Assume.IsNull( Filter );
         PrimaryKey = primaryKey;
         AfterPrimaryKeyChange( null );

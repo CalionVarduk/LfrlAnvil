@@ -788,14 +788,14 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         [Pure]
         internal static ResultSetToolbox Create(in Toolbox toolbox)
         {
-            Assume.Equals( toolbox.IsInitialized, true );
+            Assume.True( toolbox.IsInitialized );
             return new ResultSetToolbox( in toolbox );
         }
 
         [Pure]
         internal BlockExpression CreateResultSetFieldsInitLoop(HashSet<string> usedColumnNames, bool includeTypes)
         {
-            Assume.Equals( IsInitialized, true );
+            Assume.True( IsInitialized );
 
             var fieldName = FieldNameArray[0];
             var loop = Expression.Loop(
@@ -831,7 +831,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
 
         internal RowTypeToolbox(Type rowType, in Toolbox toolbox)
         {
-            Assume.Equals( toolbox.IsInitialized, true );
+            Assume.True( toolbox.IsInitialized );
 
             var rowListType = typeof( List<> ).MakeGenericType( rowType );
             var parameterlessRowListCtor = TypeHelpers.GetListDefaultCtor( rowListType );
@@ -1041,7 +1041,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         {
             var reader = _readerCallsToolbox.Factory._toolbox.Reader;
             _parameter = parameter;
-            Assume.Equals( parameter.Type.IsGenericType, true );
+            Assume.True( parameter.Type.IsGenericType );
             Assume.Equals( parameter.Type.GetGenericTypeDefinition(), typeof( ISqlDataRecordFacade<> ) );
             var facadeReaderType = parameter.Type.GetGenericArguments()[0];
             Assume.True( reader.Type.IsAssignableTo( facadeReaderType ) );
@@ -1096,7 +1096,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
             if ( node.Method.Name == nameof( ISqlDataRecordFacade<IDataReader>.GetOrdinal ) )
             {
                 Assume.ContainsExactly( node.Arguments, 1 );
-                Assume.Equals( node.Method.IsGenericMethod, false );
+                Assume.False( node.Method.IsGenericMethod );
                 return ordinal;
             }
 
@@ -1104,12 +1104,12 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
             if ( node.Method.Name == nameof( ISqlDataRecordFacade<IDataReader>.IsNull ) )
             {
                 Assume.ContainsExactly( node.Arguments, 1 );
-                Assume.Equals( node.Method.IsGenericMethod, false );
+                Assume.False( node.Method.IsGenericMethod );
                 return factory._toolbox.CreateIsDbNullCall( ordinal );
             }
 
             var valueType = node.Type;
-            Assume.Equals( node.Method.IsGenericMethod, true );
+            Assume.True( node.Method.IsGenericMethod );
             Assume.Equals( valueType, node.Method.GetGenericArguments()[0] );
 
             var mapping = factory.ColumnTypeDefinitions.GetByType( valueType ).OutputMapping;

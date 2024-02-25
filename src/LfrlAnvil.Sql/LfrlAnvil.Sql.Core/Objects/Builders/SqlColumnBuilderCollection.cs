@@ -97,7 +97,7 @@ public abstract class SqlColumnBuilderCollection : SqlBuilderApi, ISqlColumnBuil
             return false;
 
         column.Remove();
-        Assume.Equals( _map.ContainsKey( name ), false );
+        Assume.False( _map.ContainsKey( name ) );
         return true;
     }
 
@@ -119,8 +119,8 @@ public abstract class SqlColumnBuilderCollection : SqlBuilderApi, ISqlColumnBuil
     {
         Assume.IsNull( _table );
         Assume.Equals( table.Columns, this );
-        Assume.Equals( table.IsRemoved, false );
-        Assume.Equals( table.Database.TypeDefinitions.Contains( DefaultTypeDefinition ), true );
+        Assume.False( table.IsRemoved );
+        Assume.True( table.Database.TypeDefinitions.Contains( DefaultTypeDefinition ) );
         _table = table;
     }
 

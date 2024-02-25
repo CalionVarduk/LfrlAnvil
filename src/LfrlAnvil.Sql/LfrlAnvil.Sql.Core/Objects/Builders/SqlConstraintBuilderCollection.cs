@@ -168,7 +168,7 @@ public abstract class SqlConstraintBuilderCollection : SqlBuilderApi, ISqlConstr
             return false;
 
         obj.Remove();
-        Assume.Equals( _map.ContainsKey( name ), false );
+        Assume.False( _map.ContainsKey( name ) );
         return true;
     }
 
@@ -203,7 +203,7 @@ public abstract class SqlConstraintBuilderCollection : SqlBuilderApi, ISqlConstr
     {
         Assume.IsNull( _table );
         Assume.Equals( table.Constraints, this );
-        Assume.Equals( table.IsRemoved, false );
+        Assume.False( table.IsRemoved );
         _table = table;
     }
 

@@ -60,7 +60,7 @@ internal sealed class MacroDeclaration
         ExpressionBuilderRootState state,
         IReadOnlyList<IntermediateToken> parameterTokens)
     {
-        Assume.Equals( token.IsFromParameter, true );
+        Assume.True( token.IsFromParameter );
 
         foreach ( var parameterToken in parameterTokens )
         {

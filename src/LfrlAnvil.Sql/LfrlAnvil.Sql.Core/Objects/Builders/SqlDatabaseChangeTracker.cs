@@ -216,7 +216,7 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         switch ( ActiveObjectExistenceState )
         {
             case SqlObjectExistenceState.Created:
-                Assume.Equals( _activeChanges is null || _activeChanges.Count == 0, true );
+                Assume.True( _activeChanges is null || _activeChanges.Count == 0 );
                 action = PrepareCreateObjectAction( ActiveObject );
                 break;
 
@@ -310,7 +310,7 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         T originalValue,
         T newValue)
     {
-        Assume.Equals( IsActive, true );
+        Assume.True( IsActive );
 
         if ( ! ReferenceEquals( ActiveObject, activeObject ) )
         {
@@ -389,14 +389,14 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
 
     internal void Created(SqlObjectBuilder activeObject, SqlObjectBuilder target)
     {
-        Assume.Equals( target.IsRemoved, false );
+        Assume.False( target.IsRemoved );
         if ( IsActive )
             AddIsRemovedChange( activeObject, target );
     }
 
     internal void Removed(SqlObjectBuilder activeObject, SqlObjectBuilder target)
     {
-        Assume.Equals( target.IsRemoved, true );
+        Assume.True( target.IsRemoved );
         if ( IsActive )
             AddIsRemovedChange( activeObject, target );
     }

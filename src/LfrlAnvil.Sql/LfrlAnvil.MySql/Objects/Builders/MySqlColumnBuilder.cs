@@ -192,7 +192,7 @@ public sealed class MySqlColumnBuilder : MySqlObjectBuilder, ISqlColumnBuilder
 
     internal void MarkAsRemoved()
     {
-        Assume.Equals( IsRemoved, false );
+        Assume.False( IsRemoved );
         IsRemoved = true;
 
         _referencingIndexes = null;
@@ -208,7 +208,7 @@ public sealed class MySqlColumnBuilder : MySqlObjectBuilder, ISqlColumnBuilder
 
     protected override void RemoveCore()
     {
-        Assume.Equals( CanRemove, true );
+        Assume.True( CanRemove );
 
         _referencingIndexes = null;
         _referencingIndexFilters = null;

@@ -79,7 +79,7 @@ public sealed class MySqlTableBuilder : MySqlObjectBuilder, ISqlTableBuilder
 
     internal void MarkAsRemoved()
     {
-        Assume.Equals( IsRemoved, false );
+        Assume.False( IsRemoved );
         IsRemoved = true;
         _referencingViews = null;
         Columns.MarkAllAsRemoved();
@@ -126,7 +126,7 @@ public sealed class MySqlTableBuilder : MySqlObjectBuilder, ISqlTableBuilder
 
     protected override void RemoveCore()
     {
-        Assume.Equals( CanRemove, true );
+        Assume.True( CanRemove );
 
         _referencingViews = null;
 

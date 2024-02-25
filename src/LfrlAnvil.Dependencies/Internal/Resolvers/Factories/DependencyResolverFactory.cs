@@ -180,7 +180,7 @@ internal class DependencyResolverFactory
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     protected void SetState(DependencyResolverFactoryState state)
     {
-        Assume.Equals( IsFinished, false );
+        Assume.False( IsFinished );
         State = state;
     }
 

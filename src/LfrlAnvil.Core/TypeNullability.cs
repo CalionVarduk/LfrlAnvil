@@ -105,7 +105,7 @@ public readonly struct TypeNullability : IEquatable<TypeNullability>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static TypeNullability CreateFromRefType(Type type, bool isNullable)
     {
-        Assume.Equals( type.IsValueType, false );
+        Assume.False( type.IsValueType );
         return new TypeNullability( isNullable, type, type );
     }
 
@@ -113,7 +113,7 @@ public readonly struct TypeNullability : IEquatable<TypeNullability>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static TypeNullability CreateFromValueType(Type type)
     {
-        Assume.Equals( type.IsValueType, true );
+        Assume.True( type.IsValueType );
 
         var underlyingNullableType = Nullable.GetUnderlyingType( type );
         return underlyingNullableType is not null
@@ -125,7 +125,7 @@ public readonly struct TypeNullability : IEquatable<TypeNullability>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static TypeNullability CreateFromValueType(Type type, bool isNullable)
     {
-        Assume.Equals( type.IsValueType, true );
+        Assume.True( type.IsValueType );
 
         var underlyingNullableType = Nullable.GetUnderlyingType( type );
         return underlyingNullableType is not null
@@ -137,7 +137,7 @@ public readonly struct TypeNullability : IEquatable<TypeNullability>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static TypeNullability CreateFromNonNullValueType(Type type, bool isNullable)
     {
-        Assume.Equals( type.IsValueType, true );
+        Assume.True( type.IsValueType );
         var actualType = isNullable ? typeof( Nullable<> ).MakeGenericType( type ) : type;
         return new TypeNullability( isNullable, actualType, type );
     }

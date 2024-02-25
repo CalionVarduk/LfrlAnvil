@@ -204,7 +204,7 @@ public readonly ref struct RentedMemorySequenceSpan<T>
                 return false;
 
             Assume.IsNotNull( _node );
-            Assume.Equals( _node.IsReusable, false );
+            Assume.False( _node.IsReusable );
 
             --_remaining;
             var elementIndex = _index.Element + 1;

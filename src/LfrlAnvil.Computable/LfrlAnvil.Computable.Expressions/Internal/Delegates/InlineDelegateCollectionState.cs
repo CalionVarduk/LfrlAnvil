@@ -47,7 +47,7 @@ internal sealed class InlineDelegateCollectionState
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void LockParameters()
     {
-        Assume.Equals( _isLastStateActive, true );
+        Assume.True( _isLastStateActive );
         _isLastStateActive = false;
     }
 
@@ -55,7 +55,7 @@ internal sealed class InlineDelegateCollectionState
     internal void Register(ExpressionBuilderState state)
     {
         Assume.IsNotEmpty( _registeredStates );
-        Assume.Equals( _isLastStateActive, false );
+        Assume.False( _isLastStateActive );
 
         _registeredStates.Push( new StateRegistration( state.Id ) );
         _isLastStateActive = true;
@@ -64,9 +64,9 @@ internal sealed class InlineDelegateCollectionState
     internal bool TryAddParameter(Type type, StringSegment name)
     {
         Assume.IsNotEmpty( _registeredStates );
-        Assume.Equals( _isLastStateActive, true );
+        Assume.True( _isLastStateActive );
 
-        ref var parameterExpression = ref CollectionsMarshal.GetValueRefOrAddDefault( _parametersMap, name, out var exists )!;
+        ref var parameterExpression = ref CollectionsMarshal.GetValueRefOrAddDefault( _parametersMap, name, out var exists );
         if ( exists )
             return false;
 
@@ -82,7 +82,7 @@ internal sealed class InlineDelegateCollectionState
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ParameterExpression? TryGetParameter(ExpressionBuilderState state, StringSegment name)
     {
-        Assume.Equals( _isLastStateActive, false );
+        Assume.False( _isLastStateActive );
 
         if ( ! _parametersMap.TryGetValue( name, out var parameter ) )
             return null;
@@ -97,21 +97,21 @@ internal sealed class InlineDelegateCollectionState
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void AddArgumentCapture(ExpressionBuilderState state, int index)
     {
-        Assume.Equals( _isLastStateActive, false );
+        Assume.False( _isLastStateActive );
         AddParameterCapture( state.Id, _localTerms.ParameterExpression, 0, index );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void AddVariableCapture(ExpressionBuilderState state, ParameterExpression variable)
     {
-        Assume.Equals( _isLastStateActive, false );
+        Assume.False( _isLastStateActive );
         AddParameterCapture( state.Id, variable, 0 );
     }
 
     internal Expression FinalizeLastState(Expression lambdaBody, bool compileWhenStatic)
     {
         Assume.IsNotEmpty( _registeredStates );
-        Assume.Equals( _isLastStateActive, false );
+        Assume.False( _isLastStateActive );
 
         var state = _registeredStates.Pop();
         var parentStateId = GetParentStateId();
@@ -130,7 +130,7 @@ internal sealed class InlineDelegateCollectionState
 
     internal Result? CreateCompilableDelegates()
     {
-        Assume.Equals( AreAllStatesFinalized, true );
+        Assume.True( AreAllStatesFinalized );
         Assume.ContainsExactly( _nestedStateFinalization, 1 );
 
         _capturedParametersByState.Clear();
@@ -153,7 +153,7 @@ internal sealed class InlineDelegateCollectionState
         (FinalizedDelegate Finalization, ClosureExpressionFactory? Closure)? parent)
     {
         Assume.IsNotNull( finalization.LambdaPlaceholder );
-        Assume.Equals( finalization.IsUsed, true );
+        Assume.True( finalization.IsUsed );
 
         ClosureExpressionFactory? closure = null;
         NewExpression? closureCtorCall = null;

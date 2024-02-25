@@ -17,7 +17,7 @@ internal sealed class RangeDependencyResolverFactory : DependencyResolverFactory
         DependencyResolverFactory[]? factories)
         : base( implementorKey, DependencyLifetime.Transient )
     {
-        Assume.Equals( implementorKey.Value.Type.IsGenericType, true );
+        Assume.True( implementorKey.Value.Type.IsGenericType );
         Assume.Equals(
             implementorKey.Value.Type.GetGenericTypeDefinition(),
             typeof( IEnumerable<> ),

@@ -41,7 +41,7 @@ public sealed class MySqlCheckBuilder : MySqlConstraintBuilder, ISqlCheckBuilder
 
     internal override void MarkAsRemoved()
     {
-        Assume.Equals( IsRemoved, false );
+        Assume.False( IsRemoved );
         IsRemoved = true;
 
         foreach ( var column in _referencedColumns.Values )
@@ -71,7 +71,7 @@ public sealed class MySqlCheckBuilder : MySqlConstraintBuilder, ISqlCheckBuilder
 
     protected override void RemoveCore()
     {
-        Assume.Equals( CanRemove, true );
+        Assume.True( CanRemove );
 
         foreach ( var column in _referencedColumns.Values )
             column.RemoveReferencingCheck( this );

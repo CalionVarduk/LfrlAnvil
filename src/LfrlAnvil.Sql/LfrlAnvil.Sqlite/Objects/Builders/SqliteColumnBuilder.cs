@@ -197,7 +197,7 @@ public sealed class SqliteColumnBuilder : SqliteObjectBuilder, ISqlColumnBuilder
 
     protected override void RemoveCore()
     {
-        Assume.Equals( CanRemove, true );
+        Assume.True( CanRemove );
 
         _referencingIndexes = null;
         _referencingIndexFilters = null;

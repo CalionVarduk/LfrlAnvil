@@ -446,7 +446,7 @@ public sealed class SqliteDatabaseChangeTracker : ISqlDatabaseChangeTracker
 
     private void AddChange(SqliteObjectBuilder obj, SqliteDatabasePropertyChange change)
     {
-        Assume.Equals( IsPreparingStatements, true );
+        Assume.True( IsPreparingStatements );
 
         if ( ! ReferenceEquals( ActiveObject, obj ) )
         {
@@ -722,7 +722,7 @@ public sealed class SqliteDatabaseChangeTracker : ISqlDatabaseChangeTracker
             ulong id,
             ref SqliteAlterTableBuffer.ColumnRename rename)
         {
-            Assume.Equals( rename.IsPending, false );
+            Assume.False( rename.IsPending );
 
             if ( buffer.ColumnIdsByCurrentName.TryGetValue( rename.NewName, out var idByName ) )
             {

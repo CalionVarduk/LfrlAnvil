@@ -24,7 +24,7 @@ public abstract class SqlDatabaseChangeAggregator
                 HandleCreation( target );
                 break;
             case SqlObjectExistenceState.Removed:
-                Assume.Equals( Changes.ContainsChange( target, SqlObjectChangeDescriptor.IsRemoved ), true );
+                Assume.True( Changes.ContainsChange( target, SqlObjectChangeDescriptor.IsRemoved ) );
                 if ( descriptor.Equals( SqlObjectChangeDescriptor.IsRemoved ) )
                     HandleRemoval( target );
 

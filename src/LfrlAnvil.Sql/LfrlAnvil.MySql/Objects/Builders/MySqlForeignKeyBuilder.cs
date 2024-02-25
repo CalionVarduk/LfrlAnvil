@@ -70,7 +70,7 @@ public sealed class MySqlForeignKeyBuilder : MySqlConstraintBuilder, ISqlForeign
 
     internal override void MarkAsRemoved()
     {
-        Assume.Equals( IsRemoved, false );
+        Assume.False( IsRemoved );
         IsRemoved = true;
         OriginIndex.RemoveOriginatingForeignKey( this );
         ReferencedIndex.RemoveReferencingForeignKey( this );
@@ -84,7 +84,7 @@ public sealed class MySqlForeignKeyBuilder : MySqlConstraintBuilder, ISqlForeign
 
     protected override void RemoveCore()
     {
-        Assume.Equals( CanRemove, true );
+        Assume.True( CanRemove );
 
         OriginIndex.RemoveOriginatingForeignKey( this );
         ReferencedIndex.RemoveReferencingForeignKey( this );

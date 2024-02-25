@@ -80,7 +80,7 @@ public sealed class MySqlViewBuilder : MySqlObjectBuilder, ISqlViewBuilder
 
     protected override void RemoveCore()
     {
-        Assume.Equals( CanRemove, true );
+        Assume.True( CanRemove );
 
         RemoveSelfFromReferencedObjects();
         _referencedObjects.Clear();
@@ -137,7 +137,7 @@ public sealed class MySqlViewBuilder : MySqlObjectBuilder, ISqlViewBuilder
 
     internal void MarkAsRemoved()
     {
-        Assume.Equals( IsRemoved, false );
+        Assume.False( IsRemoved );
         IsRemoved = true;
         RemoveSelfFromReferencedObjects();
         _referencedObjects.Clear();
@@ -146,7 +146,7 @@ public sealed class MySqlViewBuilder : MySqlObjectBuilder, ISqlViewBuilder
 
     internal void Reactivate()
     {
-        Assume.Equals( IsRemoved, true );
+        Assume.True( IsRemoved );
         IsRemoved = false;
         AddSelfToReferencedObjects();
         Schema.Objects.Reactivate( this );
@@ -213,7 +213,7 @@ public sealed class MySqlViewBuilder : MySqlObjectBuilder, ISqlViewBuilder
 
     private void RemovePartially()
     {
-        Assume.Equals( IsRemoved, false );
+        Assume.False( IsRemoved );
         IsRemoved = true;
         RemoveSelfFromReferencedObjects();
         Schema.Objects.ForceRemove( this );

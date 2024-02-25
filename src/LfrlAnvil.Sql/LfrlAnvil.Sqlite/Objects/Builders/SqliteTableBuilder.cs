@@ -93,7 +93,7 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
 
     internal void ForceRemove()
     {
-        Assume.Equals( IsRemoved, false );
+        Assume.False( IsRemoved );
         IsRemoved = true;
 
         using ( var buffer = Database.ObjectPool.GreedyRent() )
@@ -144,7 +144,7 @@ public sealed class SqliteTableBuilder : SqliteObjectBuilder, ISqlTableBuilder
 
     protected override void RemoveCore()
     {
-        Assume.Equals( CanRemove, true );
+        Assume.True( CanRemove );
 
         _referencingViews = null;
 

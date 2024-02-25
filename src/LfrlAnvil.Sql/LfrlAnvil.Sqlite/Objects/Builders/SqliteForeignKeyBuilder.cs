@@ -70,7 +70,7 @@ public sealed class SqliteForeignKeyBuilder : SqliteConstraintBuilder, ISqlForei
 
     internal void Reactivate()
     {
-        Assume.Equals( IsRemoved, true );
+        Assume.True( IsRemoved );
         IsRemoved = false;
 
         OriginIndex.AddOriginatingForeignKey( this );
@@ -90,7 +90,7 @@ public sealed class SqliteForeignKeyBuilder : SqliteConstraintBuilder, ISqlForei
 
     protected override void RemoveCore()
     {
-        Assume.Equals( CanRemove, true );
+        Assume.True( CanRemove );
 
         OriginIndex.RemoveOriginatingForeignKey( this );
         ReferencedIndex.RemoveReferencingForeignKey( this );

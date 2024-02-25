@@ -138,7 +138,7 @@ public sealed class MySqlIndexBuilder : MySqlConstraintBuilder, ISqlIndexBuilder
     internal void AssignPrimaryKey(MySqlPrimaryKeyBuilder primaryKey)
     {
         Assume.IsNull( PrimaryKey );
-        Assume.Equals( IsUnique, true );
+        Assume.True( IsUnique );
         Assume.IsNull( Filter );
 
         PrimaryKey = primaryKey;
@@ -153,7 +153,7 @@ public sealed class MySqlIndexBuilder : MySqlConstraintBuilder, ISqlIndexBuilder
 
     internal void AddReferencingForeignKey(MySqlForeignKeyBuilder foreignKey)
     {
-        Assume.Equals( IsUnique, true );
+        Assume.True( IsUnique );
         _referencingForeignKeys ??= new Dictionary<ulong, MySqlForeignKeyBuilder>();
         _referencingForeignKeys.Add( foreignKey.Id, foreignKey );
     }
@@ -238,7 +238,7 @@ public sealed class MySqlIndexBuilder : MySqlConstraintBuilder, ISqlIndexBuilder
 
     protected override void RemoveCore()
     {
-        Assume.Equals( CanRemove, true );
+        Assume.True( CanRemove );
 
         var fkCount = OriginatingForeignKeys.Count;
         using var buffer = Database.ObjectPool.Rent( fkCount + ReferencingForeignKeys.Count );

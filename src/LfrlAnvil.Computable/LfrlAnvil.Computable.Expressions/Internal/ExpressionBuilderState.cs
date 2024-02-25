@@ -114,7 +114,7 @@ internal class ExpressionBuilderState
 
     internal Chain<ParsedExpressionBuilderError> TryHandleExpressionEndAsInlineDelegate()
     {
-        Assume.Equals( IsRoot, false );
+        Assume.False( IsRoot );
 
         var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
         return self.ParentState.Expects( Expectation.InlineDelegateResolution ) && ! IsHandlingInlineDelegateParameters()
@@ -634,7 +634,7 @@ internal class ExpressionBuilderState
             return Chain<ParsedExpressionBuilderError>.Empty;
         }
 
-        Assume.Equals( IsRoot, false );
+        Assume.False( IsRoot );
 
         var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
         self.ParentState._expectation &= ~Expectation.ArrayResolution;
@@ -704,7 +704,7 @@ internal class ExpressionBuilderState
 
         if ( Expects( Expectation.ArrayElementsStart ) )
         {
-            Assume.Equals( IsRoot, false );
+            Assume.False( IsRoot );
             var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
             self.ParentState._expectation &= ~Expectation.ConstructorResolution;
             _expectation = Expectation.Operand | Expectation.OpenedParenthesis | Expectation.PrefixUnaryConstruct;
@@ -785,7 +785,7 @@ internal class ExpressionBuilderState
 
     private Chain<ParsedExpressionBuilderError> HandleInlineDelegateBodyEnd(IntermediateToken? token)
     {
-        Assume.Equals( IsRoot, false );
+        Assume.False( IsRoot );
         Assume.IsNotNull( _delegateCollectionState );
 
         var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
@@ -813,7 +813,7 @@ internal class ExpressionBuilderState
 
     private Chain<ParsedExpressionBuilderError> HandleCallParametersOrInlineDelegateBodyEnd(IntermediateToken token)
     {
-        Assume.Equals( IsRoot, false );
+        Assume.False( IsRoot );
         AssumeTokenType( token, IntermediateTokenType.ClosedParenthesis );
 
         var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
@@ -974,7 +974,7 @@ internal class ExpressionBuilderState
 
     private Chain<ParsedExpressionBuilderError> HandleVariableResolution(IntermediateToken token, Expression expression)
     {
-        Assume.Equals( IsRoot, true );
+        Assume.True( IsRoot );
         AssumeStateExpectation( Expectation.VariableResolution );
         Assume.IsNotNull( LastHandledToken );
 
@@ -997,7 +997,7 @@ internal class ExpressionBuilderState
 
     private Chain<ParsedExpressionBuilderError> HandleMacroResolution(IntermediateToken token)
     {
-        Assume.Equals( IsRoot, true );
+        Assume.True( IsRoot );
         AssumeStateExpectation( Expectation.MacroResolution );
         Assume.IsNotNull( LastHandledToken );
         Assume.IsEmpty( _operandStack );
@@ -1059,7 +1059,7 @@ internal class ExpressionBuilderState
 
     private Chain<ParsedExpressionBuilderError> HandleArrayElementsOrIndexerParametersOrInlineDelegateBodyEnd(IntermediateToken token)
     {
-        Assume.Equals( IsRoot, false );
+        Assume.False( IsRoot );
         AssumeTokenType( token, IntermediateTokenType.ClosedSquareBracket );
 
         var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
@@ -1287,7 +1287,7 @@ internal class ExpressionBuilderState
 
         if ( Expects( Expectation.Assignment ) )
         {
-            Assume.Equals( IsRoot, false );
+            Assume.False( IsRoot );
 
             var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
             _expectation = self.ParentState.Expects( Expectation.VariableResolution )
@@ -1310,7 +1310,7 @@ internal class ExpressionBuilderState
 
     private Chain<ParsedExpressionBuilderError> HandleMacroToken(IntermediateToken token)
     {
-        Assume.Equals( IsRoot, false );
+        Assume.False( IsRoot );
         AssumeStateExpectation( Expectation.MacroEnd );
 
         var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );

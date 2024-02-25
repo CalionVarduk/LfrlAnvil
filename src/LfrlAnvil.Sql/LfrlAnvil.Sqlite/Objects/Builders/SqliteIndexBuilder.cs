@@ -138,7 +138,7 @@ public sealed class SqliteIndexBuilder : SqliteConstraintBuilder, ISqlIndexBuild
     internal void AssignPrimaryKey(SqlitePrimaryKeyBuilder primaryKey)
     {
         Assume.IsNull( PrimaryKey );
-        Assume.Equals( IsUnique, true );
+        Assume.True( IsUnique );
         Assume.IsNull( Filter );
 
         PrimaryKey = primaryKey;
@@ -153,7 +153,7 @@ public sealed class SqliteIndexBuilder : SqliteConstraintBuilder, ISqlIndexBuild
 
     internal void AddReferencingForeignKey(SqliteForeignKeyBuilder foreignKey)
     {
-        Assume.Equals( IsUnique, true );
+        Assume.True( IsUnique );
         _referencingForeignKeys ??= new Dictionary<ulong, SqliteForeignKeyBuilder>();
         _referencingForeignKeys.Add( foreignKey.Id, foreignKey );
     }
@@ -210,7 +210,7 @@ public sealed class SqliteIndexBuilder : SqliteConstraintBuilder, ISqlIndexBuild
 
     protected override void RemoveCore()
     {
-        Assume.Equals( CanRemove, true );
+        Assume.True( CanRemove );
 
         var fkCount = OriginatingForeignKeys.Count;
         using var buffer = Database.ObjectPool.Rent( fkCount + ReferencingForeignKeys.Count );

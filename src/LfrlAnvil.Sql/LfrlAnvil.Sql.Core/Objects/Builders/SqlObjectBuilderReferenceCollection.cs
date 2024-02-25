@@ -89,7 +89,7 @@ public readonly struct SqlObjectBuilderReferenceCollection<T> : IReadOnlyCollect
         {
             get
             {
-                Assume.Equals( _isEmpty, false );
+                Assume.False( _isEmpty );
                 var current = _enumerator.Current;
                 return SqlObjectBuilderReference.Create( current.Key, current.Value ).UnsafeReinterpretAs<T>();
             }

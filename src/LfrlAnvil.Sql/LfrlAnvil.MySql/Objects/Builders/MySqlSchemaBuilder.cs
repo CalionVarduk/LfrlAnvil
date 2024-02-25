@@ -137,7 +137,7 @@ public sealed class MySqlSchemaBuilder : MySqlObjectBuilder, ISqlSchemaBuilder
 
     protected override void RemoveCore()
     {
-        Assume.Equals( CanRemove, true );
+        Assume.True( CanRemove );
 
         foreach ( var obj in Objects )
         {

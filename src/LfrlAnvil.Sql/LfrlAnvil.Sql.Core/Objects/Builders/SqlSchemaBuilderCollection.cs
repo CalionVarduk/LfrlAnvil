@@ -95,7 +95,7 @@ public abstract class SqlSchemaBuilderCollection : SqlBuilderApi, ISqlSchemaBuil
 
         Assume.NotEquals( schema, Default );
         schema.Remove();
-        Assume.Equals( _map.ContainsKey( name ), false );
+        Assume.False( _map.ContainsKey( name ) );
         return true;
     }
 

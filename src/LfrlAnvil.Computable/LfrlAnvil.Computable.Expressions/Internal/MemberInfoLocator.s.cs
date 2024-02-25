@@ -275,7 +275,7 @@ internal static class MemberInfoLocator
         ParameterInfo[] parameters,
         Type[] parameterTypes)
     {
-        Assume.Equals( method.IsGenericMethodDefinition, true );
+        Assume.True( method.IsGenericMethodDefinition );
 
         const int nonGenericParameterIndex = int.MinValue;
         var genericArgs = method.GetGenericArguments();

@@ -411,7 +411,7 @@ internal static class StateMachineOptimizer
         var stateMappings = new Dictionary<TState, Ref<TState>>( stateComparer );
         foreach ( var (pair, _) in equivalency.StatePairs )
         {
-            Assume.Equals( pair.HasSecond, true );
+            Assume.True( pair.HasSecond );
             Assume.IsNotNull( pair.Second );
 
             if ( stateMappings.TryGetValue( pair.First, out var mapping ) )

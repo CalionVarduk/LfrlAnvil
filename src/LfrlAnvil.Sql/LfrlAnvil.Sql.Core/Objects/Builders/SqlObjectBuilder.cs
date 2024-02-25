@@ -70,7 +70,7 @@ public abstract class SqlObjectBuilder : SqlBuilderApi, ISqlObjectBuilder
             return;
 
         BeforeRemove();
-        Assume.Equals( CanRemove, true );
+        Assume.True( CanRemove );
         IsRemoved = true;
         AfterRemove();
     }

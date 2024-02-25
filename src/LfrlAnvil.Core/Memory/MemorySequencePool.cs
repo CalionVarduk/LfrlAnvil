@@ -87,7 +87,7 @@ public class MemorySequencePool<T>
                     if ( node is null )
                         break;
 
-                    Assume.Equals( node.IsReusable, false );
+                    Assume.False( node.IsReusable );
                 }
 
                 yield return new RentedMemorySequence<T>( node );
@@ -637,7 +637,7 @@ public class MemorySequencePool<T>
 
                     if ( Prev.Prev is not null )
                     {
-                        Assume.Equals( Prev.Prev.IsReusable, false );
+                        Assume.False( Prev.Prev.IsReusable );
                         Prev.Prev.Next = null;
                         Prev.Prev = null;
                     }
@@ -717,7 +717,7 @@ public class MemorySequencePool<T>
             else
             {
                 Assume.IsNotNull( Next.Next );
-                Assume.Equals( Next.Next.IsReusable, false );
+                Assume.False( Next.Next.IsReusable );
                 Pool.RemoveFromFragmentationHeap( Next );
 
                 Prev.Next = Next.Next;

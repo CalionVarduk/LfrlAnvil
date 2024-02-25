@@ -16,7 +16,7 @@ public struct RentedMemorySequence<T> : IReadOnlyList<T>, ICollection<T>, IDispo
 
     internal RentedMemorySequence(MemorySequencePool<T>.Node node)
     {
-        Assume.Equals( node.IsReusable, false );
+        Assume.False( node.IsReusable );
         _node = node;
         Length = _node.Length;
     }
@@ -231,7 +231,7 @@ public struct RentedMemorySequence<T> : IReadOnlyList<T>, ICollection<T>, IDispo
                 return false;
 
             Assume.IsNotNull( _node );
-            Assume.Equals( _node.IsReusable, false );
+            Assume.False( _node.IsReusable );
 
             --_remaining;
             var elementIndex = _index.Element + 1;

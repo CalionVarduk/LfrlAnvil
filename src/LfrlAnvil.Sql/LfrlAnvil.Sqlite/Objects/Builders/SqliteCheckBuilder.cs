@@ -60,7 +60,7 @@ public sealed class SqliteCheckBuilder : SqliteConstraintBuilder, ISqlCheckBuild
 
     protected override void RemoveCore()
     {
-        Assume.Equals( CanRemove, true );
+        Assume.True( CanRemove );
 
         foreach ( var column in _referencedColumns.Values )
             column.RemoveReferencingCheck( this );

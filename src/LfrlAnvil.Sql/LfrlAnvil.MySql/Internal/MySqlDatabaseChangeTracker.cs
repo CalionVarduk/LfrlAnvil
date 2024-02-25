@@ -402,7 +402,7 @@ public sealed class MySqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
     internal void CreateGuidFunction()
     {
         Assume.IsEmpty( _ongoingPropertyChanges );
-        Assume.Equals( IsPreparingStatements, true );
+        Assume.True( IsPreparingStatements );
         var interpreter = _database.NodeInterpreters.Create( GetNodeInterpreterContext() );
         MySqlHelpers.AppendCreateGuidFunctionStatement( interpreter, _database.CommonSchemaName );
         _pendingActions.Add( SqlDatabaseBuilderCommandAction.CreateSql( interpreter.Context.Sql.AppendLine().ToString() ) );
@@ -412,7 +412,7 @@ public sealed class MySqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
     internal void CreateDropIndexIfExistsProcedure()
     {
         Assume.IsEmpty( _ongoingPropertyChanges );
-        Assume.Equals( IsPreparingStatements, true );
+        Assume.True( IsPreparingStatements );
         var interpreter = _database.NodeInterpreters.Create( GetNodeInterpreterContext() );
         MySqlHelpers.AppendDropIndexIfExistsProcedureStatement( interpreter, _database.CommonSchemaName );
         _pendingActions.Add( SqlDatabaseBuilderCommandAction.CreateSql( interpreter.Context.Sql.AppendLine().ToString() ) );
@@ -471,7 +471,7 @@ public sealed class MySqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
 
     private void AddChange(MySqlObjectBuilder obj, MySqlDatabasePropertyChange change)
     {
-        Assume.Equals( IsPreparingStatements, true );
+        Assume.True( IsPreparingStatements );
 
         if ( ! ReferenceEquals( ActiveObject, obj ) )
         {

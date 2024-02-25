@@ -188,7 +188,7 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
             return false;
 
         obj.Remove();
-        Assume.Equals( _map.ContainsKey( name ), false );
+        Assume.False( _map.ContainsKey( name ) );
         return true;
     }
 
@@ -268,7 +268,7 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
     {
         Assume.IsNull( _schema );
         Assume.Equals( schema.Objects, this );
-        Assume.Equals( schema.IsRemoved, false );
+        Assume.False( schema.IsRemoved );
         _schema = schema;
     }
 

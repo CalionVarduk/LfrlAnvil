@@ -132,7 +132,7 @@ public sealed class SqliteSchemaBuilder : SqliteObjectBuilder, ISqlSchemaBuilder
 
     protected override void RemoveCore()
     {
-        Assume.Equals( CanRemove, true );
+        Assume.True( CanRemove );
 
         using var tableBuffer = Objects.CopyTablesIntoBuffer();
         using var viewBuffer = Objects.CopyViewsIntoBuffer();
