@@ -1,16 +1,15 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics.Contracts;
 using System.Reflection;
 using System.Threading.Tasks;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Statements;
 using LfrlAnvil.Sql.Statements.Compilers;
-using LfrlAnvil.Sql.Tests.Helpers;
-using LfrlAnvil.Sql.Tests.Helpers.Data;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Mocks;
+using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
 namespace LfrlAnvil.Sql.Tests.StatementsTests;
 
@@ -20,7 +19,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     public void Create_TypeErased_ShouldCreateQueryReaderThatReturnsCorrectResult_WhenDataReaderIsEmpty()
     {
         var reader = new DbDataReaderMock();
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.Create();
 
         var result = queryReader.Read( reader );
@@ -47,7 +46,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                     new object?[] { 3, "lorem", 10.0, null }
                 } ) );
 
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.Create();
 
         var result = queryReader.Read( reader );
@@ -75,7 +74,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     public void Create_TypeErased_ShouldCreateQueryReaderThatReturnsCorrectResult_WhenDataReaderIsEmpty_WithIncludedFieldTypes()
     {
         var reader = new DbDataReaderMock();
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.Create(
             SqlQueryReaderCreationOptions.Default.SetResultSetFieldsPersistenceMode(
                 SqlQueryReaderResultSetFieldsPersistenceMode.PersistWithTypes ) );
@@ -104,7 +103,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                     new object?[] { 3, "lorem", 10.0, null }
                 } ) );
 
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.Create(
             SqlQueryReaderCreationOptions.Default.SetResultSetFieldsPersistenceMode(
                 SqlQueryReaderResultSetFieldsPersistenceMode.PersistWithTypes ) );
@@ -142,7 +141,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     public void Create_Generic_ShouldCreateQueryReaderThatReturnsCorrectResult_WhenDataReaderIsEmpty()
     {
         var reader = new DbDataReaderMock();
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.Create<Row>();
 
         var result = queryReader.Read( reader );
@@ -160,7 +159,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     public void Create_Generic_ShouldCreateQueryReaderThatReturnsCorrectResult_WhenDataReaderIsEmpty_WithIncludedFields()
     {
         var reader = new DbDataReaderMock();
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.Create<Row>(
             SqlQueryReaderCreationOptions.Default.SetResultSetFieldsPersistenceMode(
                 SqlQueryReaderResultSetFieldsPersistenceMode.Persist ) );
@@ -189,7 +188,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                     new object?[] { 3, "lorem", 10.0, null }
                 } ) );
 
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.Create<Row>();
         var result = queryReader.Read( reader );
 
@@ -222,7 +221,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                     new object?[] { 3, "lorem", 10.0, null }
                 } ) );
 
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.Create<Row>(
             SqlQueryReaderCreationOptions.Default.SetResultSetFieldsPersistenceMode(
                 SqlQueryReaderResultSetFieldsPersistenceMode.Persist ) );
@@ -264,7 +263,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                     new object?[] { 3, "lorem", 10.0, null }
                 } ) );
 
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.Create<Row>(
             SqlQueryReaderCreationOptions.Default.SetResultSetFieldsPersistenceMode(
                 SqlQueryReaderResultSetFieldsPersistenceMode.PersistWithTypes ) );
@@ -315,7 +314,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                     new object?[] { 3, "lorem", 10.0, null }
                 } ) );
 
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.Create<RowRecord>();
         var result = queryReader.Read( reader );
 
@@ -346,7 +345,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                     new object?[] { 3, "lorem", 10.0, null }
                 } ) );
 
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.Create<RowWithDifferentMemberTypes>();
         var result = queryReader.Read( reader );
 
@@ -377,7 +376,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                     new object?[] { 3, "lorem", 10.0, null }
                 } ) );
 
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.Create<Row>();
 
         var result = queryReader.Read( reader, new SqlQueryReaderOptions( InitialBufferCapacity: 50 ) );
@@ -410,7 +409,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                     new object?[] { 3, "lorem", 10.0, null }
                 } ) );
 
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.Create<Row>( SqlQueryReaderCreationOptions.Default.With( SqlQueryMemberConfiguration.Ignore( "c" ) ) );
 
         var result = queryReader.Read( reader );
@@ -442,7 +441,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                     new object?[] { 3, "lorem", 10.0, null }
                 } ) );
 
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.Create<Row>( SqlQueryReaderCreationOptions.Default.With( SqlQueryMemberConfiguration.From( "d", "e" ) ) );
 
         var result = queryReader.Read( reader );
@@ -474,7 +473,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                     new object?[] { 3, "lorem", 10.0, null }
                 } ) );
 
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader =
             sut.Create<Row>(
                 SqlQueryReaderCreationOptions.Default.With(
@@ -512,7 +511,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                     new object?[] { 3, "lorem", 10.0, null }
                 } ) );
 
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader =
             sut.Create<Row>(
                 SqlQueryReaderCreationOptions.Default.With(
@@ -552,7 +551,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                     new object?[] { 3, null, 10.0, "y" }
                 } ) );
 
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.Create<UnsafeRow>(
             SqlQueryReaderCreationOptions.Default.EnableAlwaysTestingForNull()
                 .SetRowTypeMemberPredicate(
@@ -587,7 +586,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                     new object?[] { 3, null, 10.0, "y" }
                 } ) );
 
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.Create<UnsafeRow>( SqlQueryReaderCreationOptions.Default.EnableAlwaysTestingForNull() );
 
         var result = queryReader.Read( reader );
@@ -608,7 +607,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void CreateExpression_ShouldThrowSqlCompilerException_WhenRowTypeIsAbstract()
     {
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var action = Lambda.Of( () => sut.CreateExpression<IEnumerable>() );
         action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
     }
@@ -616,7 +615,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void CreateExpression_ShouldThrowSqlCompilerException_WhenRowTypeIsGenericDefinition()
     {
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var action = Lambda.Of( () => sut.CreateExpression( typeof( IEnumerable<> ) ) );
         action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
     }
@@ -624,7 +623,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void CreateExpression_ShouldThrowSqlCompilerException_WhenRowTypeIsNullableValue()
     {
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var action = Lambda.Of( () => sut.CreateExpression( typeof( int? ) ) );
         action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
     }
@@ -632,7 +631,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void CreateExpression_ShouldThrowSqlCompilerException_WhenNoValidConstructorForRowTypeIsFound()
     {
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var action = Lambda.Of(
             () => sut.CreateExpression<RowRecord>( SqlQueryReaderCreationOptions.Default.SetRowTypeConstructorPredicate( _ => false ) ) );
 
@@ -642,7 +641,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void CreateExpression_ShouldThrowSqlCompilerException_WhenRowTypeHasNoMembers()
     {
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var action = Lambda.Of( () => sut.CreateExpression<object>() );
         action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
     }
@@ -650,7 +649,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void CreateExpression_ShouldThrowSqlCompilerException_WhenNoValidMemberForRowTypeIsFound()
     {
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var action = Lambda.Of(
             () => sut.CreateExpression<Row>( SqlQueryReaderCreationOptions.Default.SetRowTypeMemberPredicate( _ => false ) ) );
 
@@ -661,7 +660,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     public async Task CreateAsync_TypeErased_ShouldCreateAsyncQueryReaderThatReturnsCorrectResult_WhenDataReaderIsEmpty()
     {
         var reader = new DbDataReaderMock();
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.CreateAsync();
 
         var result = await queryReader.ReadAsync( reader );
@@ -688,7 +687,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                     new object?[] { 3, "lorem", 10.0, null }
                 } ) );
 
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.CreateAsync();
 
         var result = await queryReader.ReadAsync( reader );
@@ -717,7 +716,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
         CreateAsync_TypeErased_ShouldCreateAsyncQueryReaderThatReturnsCorrectResult_WhenDataReaderIsEmpty_WithIncludedFieldTypes()
     {
         var reader = new DbDataReaderMock();
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.CreateAsync(
             SqlQueryReaderCreationOptions.Default.SetResultSetFieldsPersistenceMode(
                 SqlQueryReaderResultSetFieldsPersistenceMode.PersistWithTypes ) );
@@ -747,7 +746,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                     new object?[] { 3, "lorem", 10.0, null }
                 } ) );
 
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.CreateAsync(
             SqlQueryReaderCreationOptions.Default.SetResultSetFieldsPersistenceMode(
                 SqlQueryReaderResultSetFieldsPersistenceMode.PersistWithTypes ) );
@@ -785,7 +784,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     public async Task CreateAsync_Generic_ShouldCreateAsyncQueryReaderThatReturnsCorrectResult_WhenDataReaderIsEmpty()
     {
         var reader = new DbDataReaderMock();
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.CreateAsync<Row>();
 
         var result = await queryReader.ReadAsync( reader );
@@ -803,7 +802,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     public async Task CreateAsync_Generic_ShouldCreateAsyncQueryReaderThatReturnsCorrectResult_WhenDataReaderIsEmpty_WithIncludedFields()
     {
         var reader = new DbDataReaderMock();
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.CreateAsync<Row>(
             SqlQueryReaderCreationOptions.Default.SetResultSetFieldsPersistenceMode(
                 SqlQueryReaderResultSetFieldsPersistenceMode.Persist ) );
@@ -832,7 +831,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                     new object?[] { 3, "lorem", 10.0, null }
                 } ) );
 
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.CreateAsync<Row>();
         var result = await queryReader.ReadAsync( reader );
 
@@ -865,7 +864,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                     new object?[] { 3, "lorem", 10.0, null }
                 } ) );
 
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.CreateAsync<Row>(
             SqlQueryReaderCreationOptions.Default.SetResultSetFieldsPersistenceMode(
                 SqlQueryReaderResultSetFieldsPersistenceMode.Persist ) );
@@ -908,7 +907,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                     new object?[] { 3, "lorem", 10.0, null }
                 } ) );
 
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.CreateAsync<Row>(
             SqlQueryReaderCreationOptions.Default.SetResultSetFieldsPersistenceMode(
                 SqlQueryReaderResultSetFieldsPersistenceMode.PersistWithTypes ) );
@@ -959,7 +958,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                     new object?[] { 3, "lorem", 10.0, null }
                 } ) );
 
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.CreateAsync<RowRecord>();
         var result = await queryReader.ReadAsync( reader );
 
@@ -991,7 +990,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                     new object?[] { 3, "lorem", 10.0, null }
                 } ) );
 
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.CreateAsync<RowWithDifferentMemberTypes>();
         var result = await queryReader.ReadAsync( reader );
 
@@ -1022,7 +1021,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                     new object?[] { 3, "lorem", 10.0, null }
                 } ) );
 
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.CreateAsync<Row>();
 
         var result = await queryReader.ReadAsync( reader, new SqlQueryReaderOptions( InitialBufferCapacity: 50 ) );
@@ -1055,7 +1054,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                     new object?[] { 3, "lorem", 10.0, null }
                 } ) );
 
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.CreateAsync<Row>( SqlQueryReaderCreationOptions.Default.With( SqlQueryMemberConfiguration.Ignore( "c" ) ) );
 
         var result = await queryReader.ReadAsync( reader );
@@ -1087,7 +1086,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                     new object?[] { 3, "lorem", 10.0, null }
                 } ) );
 
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader =
             sut.CreateAsync<Row>( SqlQueryReaderCreationOptions.Default.With( SqlQueryMemberConfiguration.From( "d", "e" ) ) );
 
@@ -1120,7 +1119,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                     new object?[] { 3, "lorem", 10.0, null }
                 } ) );
 
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader =
             sut.CreateAsync<Row>(
                 SqlQueryReaderCreationOptions.Default.With(
@@ -1158,7 +1157,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                     new object?[] { 3, "lorem", 10.0, null }
                 } ) );
 
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader =
             sut.CreateAsync<Row>(
                 SqlQueryReaderCreationOptions.Default.With(
@@ -1198,7 +1197,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                     new object?[] { 3, null, 10.0, "y" }
                 } ) );
 
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.CreateAsync<UnsafeRow>(
             SqlQueryReaderCreationOptions.Default.EnableAlwaysTestingForNull()
                 .SetRowTypeMemberPredicate(
@@ -1234,7 +1233,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
                     new object?[] { 3, null, 10.0, "y" }
                 } ) );
 
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.CreateAsync<UnsafeRow>( SqlQueryReaderCreationOptions.Default.EnableAlwaysTestingForNull() );
 
         var result = await queryReader.ReadAsync( reader );
@@ -1256,7 +1255,11 @@ public class SqlQueryReaderFactoryTests : TestsBase
     public void CreateAsyncExpression_ShouldThrowSqlCompilerException_WhenDataReaderTypeDoesNotSupportAsyncOperations()
     {
         var dialect = new SqlDialect( "foo" );
-        var sut = new SqlQueryReaderFactory( typeof( IDataReader ), dialect, ColumnTypeDefinitionProviderMock.Default( dialect ) );
+        var sut = new SqlQueryReaderFactory(
+            typeof( IDataReader ),
+            dialect,
+            new SqlColumnTypeDefinitionProviderMock( new SqlColumnTypeDefinitionProviderBuilderMock() ) );
+
         var action = Lambda.Of( () => sut.CreateAsyncExpression<Row>() );
         action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
     }
@@ -1264,7 +1267,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void CreateAsyncExpression_ShouldThrowSqlCompilerException_WhenRowTypeIsAbstract()
     {
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var action = Lambda.Of( () => sut.CreateAsyncExpression<IEnumerable>() );
         action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
     }
@@ -1272,7 +1275,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void CreateAsyncExpression_ShouldThrowSqlCompilerException_WhenRowTypeIsGenericDefinition()
     {
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var action = Lambda.Of( () => sut.CreateAsyncExpression( typeof( IEnumerable<> ) ) );
         action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
     }
@@ -1280,7 +1283,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void CreateAsyncExpression_ShouldThrowSqlCompilerException_WhenRowTypeIsNullableValue()
     {
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var action = Lambda.Of( () => sut.CreateAsyncExpression( typeof( int? ) ) );
         action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
     }
@@ -1288,7 +1291,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void CreateAsyncExpression_ShouldThrowSqlCompilerException_WhenNoValidConstructorForRowTypeIsFound()
     {
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var action = Lambda.Of(
             () => sut.CreateAsyncExpression<RowRecord>(
                 SqlQueryReaderCreationOptions.Default.SetRowTypeConstructorPredicate( _ => false ) ) );
@@ -1299,7 +1302,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void CreateAsyncExpression_ShouldThrowSqlCompilerException_WhenRowTypeHasNoMembers()
     {
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var action = Lambda.Of( () => sut.CreateAsyncExpression<object>() );
         action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
     }
@@ -1307,7 +1310,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     [Fact]
     public void CreateAsyncExpression_ShouldThrowSqlCompilerException_WhenNoValidMemberForRowTypeIsFound()
     {
-        var sut = Factory.CreateFactory();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var action = Lambda.Of(
             () => sut.CreateAsyncExpression<Row>( SqlQueryReaderCreationOptions.Default.SetRowTypeMemberPredicate( _ => false ) ) );
 
@@ -1363,17 +1366,4 @@ public class SqlQueryReaderFactoryTests : TestsBase
     }
 
     public sealed record RowRecord(int A, string B, double? C, bool? D);
-
-    private sealed class Factory : SqlQueryReaderFactory<DbDataReaderMock>
-    {
-        private Factory(SqlDialect dialect)
-            : base( dialect, ColumnTypeDefinitionProviderMock.Default( dialect ) ) { }
-
-        [Pure]
-        public static Factory CreateFactory()
-        {
-            var dialect = new SqlDialect( "foo" );
-            return new Factory( dialect );
-        }
-    }
 }

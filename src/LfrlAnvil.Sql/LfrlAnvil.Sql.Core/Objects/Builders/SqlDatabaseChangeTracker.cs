@@ -492,7 +492,7 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
 
     internal void AddAction(SqlDatabaseBuilderCommandAction action)
     {
-        Assume.Equals( IsActive, true );
+        Assume.True( IsActive );
         _pendingActions ??= new List<SqlDatabaseBuilderCommandAction>();
         _pendingActions.Add( action );
     }
@@ -504,7 +504,7 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         _database = database;
     }
 
-    internal void SetMode(SqlDatabaseCreateMode mode)
+    internal void SetModeAndAttach(SqlDatabaseCreateMode mode)
     {
         Assume.IsDefined( mode );
         Assume.IsNull( ActiveObject );

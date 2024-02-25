@@ -7,6 +7,7 @@ using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Tests.Helpers;
+using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests;
 
@@ -17,7 +18,7 @@ public class SqlTableScopeExpressionValidatorTests : TestsBase
 
     public SqlTableScopeExpressionValidatorTests()
     {
-        _table = SqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
+        _table = SqlDatabaseBuilderMockFactory.Create().Schemas.Default.Objects.CreateTable( "T" );
         _table.Constraints.SetPrimaryKey( _table.Columns.Create( "X" ).Asc() );
         _sut = new SqlTableScopeExpressionValidator( _table );
     }

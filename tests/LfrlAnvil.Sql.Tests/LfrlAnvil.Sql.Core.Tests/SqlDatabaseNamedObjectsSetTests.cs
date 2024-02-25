@@ -22,7 +22,7 @@ public class SqlDatabaseNamedObjectsSetTests : TestsBase
     [Fact]
     public void Add_ShouldAddNewObject()
     {
-        var obj = SqlDatabaseBuilderMock.Create().Schemas.Default;
+        var obj = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
         var sut = SqlDatabaseNamedObjectsSet<SqlObjectBuilder>.Create();
 
         var result = sut.Add( "foo", obj );
@@ -38,7 +38,7 @@ public class SqlDatabaseNamedObjectsSetTests : TestsBase
     [Fact]
     public void Add_ShouldReturnFalse_WhenNameAlreadyExists()
     {
-        var obj = SqlDatabaseBuilderMock.Create().Schemas.Default;
+        var obj = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
         var sut = SqlDatabaseNamedObjectsSet<SqlObjectBuilder>.Create();
         sut.Add( "foo", obj );
 
@@ -55,7 +55,7 @@ public class SqlDatabaseNamedObjectsSetTests : TestsBase
     [Fact]
     public void Remove_ShouldRemoveExistingObject()
     {
-        var obj = SqlDatabaseBuilderMock.Create().Schemas.Default;
+        var obj = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
         var sut = SqlDatabaseNamedObjectsSet<SqlObjectBuilder>.Create();
         sut.Add( "foo", obj );
 
@@ -87,7 +87,7 @@ public class SqlDatabaseNamedObjectsSetTests : TestsBase
     [Fact]
     public void TryGetObject_ShouldReturnObject_WhenNameExists()
     {
-        var obj = SqlDatabaseBuilderMock.Create().Schemas.Default;
+        var obj = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
         var sut = SqlDatabaseNamedObjectsSet<SqlObjectBuilder>.Create();
         sut.Add( "foo", obj );
 
@@ -107,7 +107,7 @@ public class SqlDatabaseNamedObjectsSetTests : TestsBase
     [Fact]
     public void Clear_ShouldRemoveAllObjects()
     {
-        var obj = SqlDatabaseBuilderMock.Create().Schemas.Default;
+        var obj = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
         var sut = SqlDatabaseNamedObjectsSet<SqlObjectBuilder>.Create();
         sut.Add( "foo", obj );
 

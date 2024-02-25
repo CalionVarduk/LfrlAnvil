@@ -1,6 +1,7 @@
 ﻿using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Tests.Helpers;
+using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ObjectsTests;
 
@@ -14,7 +15,7 @@ public class SqlForeignKeyTests : TestsBase
         var onDeleteBehavior = onDelete == "CASCADE" ? ReferenceBehavior.Cascade : ReferenceBehavior.Restrict;
         var onUpdateBehavior = onUpdate == "CASCADE" ? ReferenceBehavior.Cascade : ReferenceBehavior.Restrict;
 
-        var schemaBuilder = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schemaBuilder = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         var indexBuilder1 = tableBuilder.Constraints.CreateIndex( tableBuilder.Columns.Create( "C1" ).Asc() );
         var indexBuilder2 = tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C2" ).Asc() ).Index;
@@ -54,7 +55,7 @@ public class SqlForeignKeyTests : TestsBase
         var onDeleteBehavior = onDelete == "CASCADE" ? ReferenceBehavior.Cascade : ReferenceBehavior.Restrict;
         var onUpdateBehavior = onUpdate == "CASCADE" ? ReferenceBehavior.Cascade : ReferenceBehavior.Restrict;
 
-        var schemaBuilder = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schemaBuilder = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var tableBuilder1 = schemaBuilder.Objects.CreateTable( "T1" );
         var indexBuilder1 = tableBuilder1.Constraints.SetPrimaryKey( tableBuilder1.Columns.Create( "C1" ).Asc() ).Index;
         var tableBuilder2 = schemaBuilder.Objects.CreateTable( "T2" );
@@ -95,7 +96,7 @@ public class SqlForeignKeyTests : TestsBase
         var onDeleteBehavior = onDelete == "CASCADE" ? ReferenceBehavior.Cascade : ReferenceBehavior.Restrict;
         var onUpdateBehavior = onUpdate == "CASCADE" ? ReferenceBehavior.Cascade : ReferenceBehavior.Restrict;
 
-        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
         var schemaBuilder1 = dbBuilder.Schemas.Create( "foo" );
         var tableBuilder1 = schemaBuilder1.Objects.CreateTable( "T1" );
         var indexBuilder1 = tableBuilder1.Constraints.SetPrimaryKey( tableBuilder1.Columns.Create( "C1" ).Asc() ).Index;

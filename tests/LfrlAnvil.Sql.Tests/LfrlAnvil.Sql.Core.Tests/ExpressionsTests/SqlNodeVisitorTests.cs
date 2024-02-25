@@ -7,8 +7,8 @@ using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
-using LfrlAnvil.Sql.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
 
@@ -64,7 +64,7 @@ public class SqlNodeVisitorTests : TestsBase
     public void VisitColumn_ShouldVisitRecordSet()
     {
         var sut = new VisitorMock();
-        var recordSet = TableMock.Create( "foo", ColumnMock.Create<int>( "bar" ) ).ToRecordSet();
+        var recordSet = SqlTableMock.Create<int>( "foo", new[] { "bar" } ).Node;
 
         sut.VisitColumn( recordSet["bar"] );
 
@@ -75,7 +75,7 @@ public class SqlNodeVisitorTests : TestsBase
     public void VisitColumnBuilder_ShouldVisitRecordSet()
     {
         var sut = new VisitorMock();
-        var recordSet = TableMock.CreateBuilder( "foo", ColumnMock.CreateBuilder<int>( "bar" ) ).ToRecordSet();
+        var recordSet = SqlTableBuilderMock.Create<int>( "foo", new[] { "bar" } ).Node;
 
         sut.VisitColumnBuilder( recordSet["bar"] );
 
@@ -86,7 +86,7 @@ public class SqlNodeVisitorTests : TestsBase
     public void VisitQueryDataField_ShouldVisitRecordSet()
     {
         var sut = new VisitorMock();
-        var recordSet = ViewMock.CreateBuilder(
+        var recordSet = SqlViewBuilderMock.Create(
                 "qux",
                 SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( x => new[] { x.From.GetUnsafeField( "bar" ).AsSelf() } ) )
             .ToRecordSet();
@@ -100,7 +100,7 @@ public class SqlNodeVisitorTests : TestsBase
     public void VisitViewDataField_ShouldVisitRecordSet()
     {
         var sut = new VisitorMock();
-        var recordSet = ViewMock.Create(
+        var recordSet = SqlViewMock.Create(
                 "qux",
                 SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( x => new[] { x.From.GetUnsafeField( "bar" ).AsSelf() } ) )
             .ToRecordSet();
@@ -1019,7 +1019,7 @@ public class SqlNodeVisitorTests : TestsBase
     public void VisitTable_ShouldDoNothing()
     {
         var sut = new Visitor();
-        var action = Lambda.Of( () => sut.VisitTable( TableMock.Create( "foo" ).ToRecordSet() ) );
+        var action = Lambda.Of( () => sut.VisitTable( SqlTableMock.Create<int>( "foo", new[] { "a" } ).Node ) );
         action.Should().NotThrow();
     }
 
@@ -1027,7 +1027,7 @@ public class SqlNodeVisitorTests : TestsBase
     public void VisitTableBuilder_ShouldDoNothing()
     {
         var sut = new Visitor();
-        var action = Lambda.Of( () => sut.VisitTableBuilder( TableMock.CreateBuilder( "foo" ).ToRecordSet() ) );
+        var action = Lambda.Of( () => sut.VisitTableBuilder( SqlTableBuilderMock.Create<int>( "foo", new[] { "a" } ).Node ) );
         action.Should().NotThrow();
     }
 
@@ -1035,7 +1035,7 @@ public class SqlNodeVisitorTests : TestsBase
     public void VisitView_ShouldDoNothing()
     {
         var sut = new Visitor();
-        var action = Lambda.Of( () => sut.VisitView( ViewMock.Create( "foo" ).ToRecordSet() ) );
+        var action = Lambda.Of( () => sut.VisitView( SqlViewMock.Create( "foo" ).ToRecordSet() ) );
         action.Should().NotThrow();
     }
 
@@ -1043,7 +1043,7 @@ public class SqlNodeVisitorTests : TestsBase
     public void VisitViewBuilder_ShouldDoNothing()
     {
         var sut = new Visitor();
-        var action = Lambda.Of( () => sut.VisitViewBuilder( ViewMock.CreateBuilder( "foo" ).ToRecordSet() ) );
+        var action = Lambda.Of( () => sut.VisitViewBuilder( SqlViewBuilderMock.Create( "foo" ).ToRecordSet() ) );
         action.Should().NotThrow();
     }
 

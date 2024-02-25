@@ -1,6 +1,7 @@
 ﻿using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Tests.Helpers;
+using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests;
 
@@ -9,7 +10,7 @@ public class SqlIndexColumnTests : TestsBase
     [Fact]
     public void CreateAsc_ShouldCreateWithAscOrdering()
     {
-        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
         var table = dbBuilder.Schemas.Default.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         var db = SqlDatabaseMock.Create( dbBuilder );
@@ -27,7 +28,7 @@ public class SqlIndexColumnTests : TestsBase
     [Fact]
     public void CreateDesc_ShouldCreateWithDescOrdering()
     {
-        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
         var table = dbBuilder.Schemas.Default.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         var db = SqlDatabaseMock.Create( dbBuilder );
@@ -45,7 +46,7 @@ public class SqlIndexColumnTests : TestsBase
     [Fact]
     public void ToString_ShouldReturnCorrectResult()
     {
-        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
         var table = dbBuilder.Schemas.Default.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         var db = SqlDatabaseMock.Create( dbBuilder );
@@ -61,7 +62,7 @@ public class SqlIndexColumnTests : TestsBase
     [Fact]
     public void GetHashCode_ShouldReturnCorrectResult()
     {
-        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
         var table = dbBuilder.Schemas.Default.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         var db = SqlDatabaseMock.Create( dbBuilder );
@@ -78,7 +79,7 @@ public class SqlIndexColumnTests : TestsBase
     [Fact]
     public void UnsafeReinterpretAs_ShouldReturnSelfWithProvidedColumnType()
     {
-        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
         var table = dbBuilder.Schemas.Default.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         var db = SqlDatabaseMock.Create( dbBuilder );
@@ -98,7 +99,7 @@ public class SqlIndexColumnTests : TestsBase
     [Fact]
     public void SqlIndexColumnBuilderConversionOperator_ShouldReturnSelfWithBaseColumnType()
     {
-        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
         var table = dbBuilder.Schemas.Default.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         var db = SqlDatabaseMock.Create( dbBuilder );
@@ -118,7 +119,7 @@ public class SqlIndexColumnTests : TestsBase
     [Fact]
     public void EqualityOperator_ShouldReturnTrue_WhenColumnAndOrderingAreTheSame()
     {
-        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
         var table = dbBuilder.Schemas.Default.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         var db = SqlDatabaseMock.Create( dbBuilder );
@@ -134,7 +135,7 @@ public class SqlIndexColumnTests : TestsBase
     [Fact]
     public void EqualityOperator_ShouldReturnFalse_WhenOrderingIsDifferent()
     {
-        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
         var table = dbBuilder.Schemas.Default.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         var db = SqlDatabaseMock.Create( dbBuilder );
@@ -150,7 +151,7 @@ public class SqlIndexColumnTests : TestsBase
     [Fact]
     public void EqualityOperator_ShouldReturnFalse_WhenColumnIsDifferent()
     {
-        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
         var table = dbBuilder.Schemas.Default.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         table.Columns.Create( "D" );
@@ -168,7 +169,7 @@ public class SqlIndexColumnTests : TestsBase
     [Fact]
     public void InequalityOperator_ShouldReturnFalse_WhenColumnAndOrderingAreTheSame()
     {
-        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
         var table = dbBuilder.Schemas.Default.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         var db = SqlDatabaseMock.Create( dbBuilder );
@@ -184,7 +185,7 @@ public class SqlIndexColumnTests : TestsBase
     [Fact]
     public void InequalityOperator_ShouldReturnTrue_WhenOrderingIsDifferent()
     {
-        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
         var table = dbBuilder.Schemas.Default.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         var db = SqlDatabaseMock.Create( dbBuilder );
@@ -200,7 +201,7 @@ public class SqlIndexColumnTests : TestsBase
     [Fact]
     public void InequalityOperator_ShouldReturnTrue_WhenColumnIsDifferent()
     {
-        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
         var table = dbBuilder.Schemas.Default.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         table.Columns.Create( "D" );

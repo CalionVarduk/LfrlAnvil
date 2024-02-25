@@ -1,8 +1,8 @@
 ﻿using System.Linq;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Traits;
-using LfrlAnvil.Sql.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
 
@@ -70,13 +70,13 @@ public partial class BaseExpressionsTests
         [Fact]
         public void Selection_ShouldFlattenSelectAllNodesToKnownFields()
         {
-            var set1 = TableMock.Create( "T1", ColumnMock.CreateMany<int>( areNullable: false, "a", "b" ) ).ToRecordSet().ToDataSource();
-            var t2 = TableMock.Create( "T2", ColumnMock.CreateMany<int>( areNullable: false, "a", "b" ) ).ToRecordSet();
-            var t3 = TableMock.Create( "T3", ColumnMock.Create<int>( "c" ) ).ToRecordSet();
+            var set1 = SqlTableMock.Create<int>( "T1", new[] { "a", "b" } ).Node.ToDataSource();
+            var t2 = SqlTableMock.Create<int>( "T2", new[] { "a", "b" } ).Node;
+            var t3 = SqlTableMock.Create<int>( "T3", new[] { "c" } ).Node;
             var set2 = t2.Join( t3.InnerOn( t2["a"] == t3["c"] ) );
 
             var select1 = set1.GetAll();
-            var select2 = set2["T2"].GetAll();
+            var select2 = set2["common.T2"].GetAll();
 
             var query1 = set1.Select( select1 );
             var query2 = set2.Select( select2 );
@@ -94,16 +94,16 @@ public partial class BaseExpressionsTests
                 (element1?.Name).Should().Be( "a" );
                 (element1?.Origins.ToArray()).Should()
                     .BeSequentiallyEqualTo(
-                        new SqlSelectCompoundFieldNode.Origin( QueryIndex: 0, Selection: select1, Expression: set1["T1"]["a"] ),
-                        new SqlSelectCompoundFieldNode.Origin( QueryIndex: 1, Selection: select2, Expression: set2["T2"]["a"] ) );
+                        new SqlSelectCompoundFieldNode.Origin( QueryIndex: 0, Selection: select1, Expression: set1["common.T1"]["a"] ),
+                        new SqlSelectCompoundFieldNode.Origin( QueryIndex: 1, Selection: select2, Expression: set2["common.T2"]["a"] ) );
 
                 var element2 = result.ElementAtOrDefault( 1 ) as SqlSelectCompoundFieldNode;
                 (element2?.NodeType).Should().Be( SqlNodeType.SelectCompoundField );
                 (element2?.Name).Should().Be( "b" );
                 (element2?.Origins.ToArray()).Should()
                     .BeSequentiallyEqualTo(
-                        new SqlSelectCompoundFieldNode.Origin( QueryIndex: 0, Selection: select1, Expression: set1["T1"]["b"] ),
-                        new SqlSelectCompoundFieldNode.Origin( QueryIndex: 1, Selection: select2, Expression: set2["T2"]["b"] ) );
+                        new SqlSelectCompoundFieldNode.Origin( QueryIndex: 0, Selection: select1, Expression: set1["common.T1"]["b"] ),
+                        new SqlSelectCompoundFieldNode.Origin( QueryIndex: 1, Selection: select2, Expression: set2["common.T2"]["b"] ) );
             }
         }
 

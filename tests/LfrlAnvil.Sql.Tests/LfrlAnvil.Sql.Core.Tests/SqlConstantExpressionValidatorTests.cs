@@ -7,12 +7,13 @@ using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Tests.Helpers;
+using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests;
 
 public class SqlConstantExpressionValidatorTests : TestsBase
 {
-    private readonly SqlDatabaseBuilderMock _db = SqlDatabaseBuilderMock.Create();
+    private readonly SqlDatabaseBuilderMock _db = SqlDatabaseBuilderMockFactory.Create();
     private readonly SqlConstantExpressionValidator _sut = new SqlConstantExpressionValidator();
 
     [Fact]

@@ -60,7 +60,7 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
                 connection,
                 ref executor );
 
-            builder.Changes.SetMode( SqlDatabaseCreateMode.NoChanges );
+            builder.Changes.SetModeAndAttach( SqlDatabaseCreateMode.NoChanges );
             stateChanges.SetBuilder( builder );
 
             var versionHistoryRecordsQuery = CreateVersionHistoryRecordsQuery( versionHistoryTable, nodeInterpreter );
@@ -278,7 +278,7 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
         SqlDatabaseBuilder builder,
         ReadOnlySpan<SqlDatabaseVersion> versions)
     {
-        builder.Changes.SetMode( SqlDatabaseCreateMode.DryRun );
+        builder.Changes.SetModeAndAttach( SqlDatabaseCreateMode.DryRun );
 
         foreach ( var version in versions )
         {
@@ -304,7 +304,7 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
         DbConnection connection,
         ref SqlDatabaseFactoryStatementExecutor executor)
     {
-        builder.Changes.SetMode( SqlDatabaseCreateMode.Commit );
+        builder.Changes.SetModeAndAttach( SqlDatabaseCreateMode.Commit );
         context.OnBeforeVersionRangeApplication( builder, connection, ref executor );
 
         using var command = connection.CreateCommand();
@@ -441,7 +441,7 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
             ref executor );
 
         nodeInterpreter.Context.Clear();
-        builder.Changes.SetMode( SqlDatabaseCreateMode.DryRun );
+        builder.Changes.SetModeAndAttach( SqlDatabaseCreateMode.DryRun );
         builder.Changes.Attach( attach );
 
         var table = builder.Schemas.Default.Objects.CreateTable( name.Object );

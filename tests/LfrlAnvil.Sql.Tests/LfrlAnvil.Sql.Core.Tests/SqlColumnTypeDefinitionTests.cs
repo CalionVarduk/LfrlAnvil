@@ -1,7 +1,7 @@
 ﻿using System.Data;
 using LfrlAnvil.Sql.Extensions;
-using LfrlAnvil.Sql.Tests.Helpers;
-using LfrlAnvil.Sql.Tests.Helpers.Data;
+using LfrlAnvil.TestExtensions.Sql.Mocks;
+using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
 namespace LfrlAnvil.Sql.Tests;
 
@@ -69,7 +69,7 @@ public class SqlColumnTypeDefinitionTests : TestsBase
     [InlineData( false )]
     public void SetParameterInfo_ShouldInvokeTypedSetParameterInfo_WhenParameterTypeIsCompatible(bool isNullable)
     {
-        var parameter = new DbDataParameterMock();
+        var parameter = new DbParameterMock();
         var sut = new SqlColumnTypeDefinitionMock<string>( SqlDataTypeMock.Text, string.Empty );
 
         ((ISqlColumnTypeDefinition)sut).SetParameterInfo( parameter, isNullable );

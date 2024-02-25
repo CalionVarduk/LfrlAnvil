@@ -3,9 +3,9 @@ using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Sql.Statements;
-using LfrlAnvil.Sql.Tests.Helpers.Data;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
+using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
 namespace LfrlAnvil.Sql.Tests.StatementsTests;
 

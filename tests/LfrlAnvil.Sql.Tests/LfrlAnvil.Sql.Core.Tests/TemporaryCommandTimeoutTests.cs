@@ -1,5 +1,5 @@
 ﻿using LfrlAnvil.Sql.Internal;
-using LfrlAnvil.Sql.Tests.Helpers.Data;
+using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
 namespace LfrlAnvil.Sql.Tests;
 

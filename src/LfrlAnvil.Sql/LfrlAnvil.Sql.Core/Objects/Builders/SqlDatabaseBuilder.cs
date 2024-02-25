@@ -15,10 +15,13 @@ namespace LfrlAnvil.Sql.Objects.Builders;
 
 // TODO:
 // THEN, create better core node interpreter
-// THEN, create db version object that works with core classes rather than interfaces
 // THEN, core might actually be done?
 // THEN, update sqlite to work fully with new core
 // THEN, update mysql to work fully with new core
+// THEN, create db version object that works with core classes rather than interfaces
+//  ^ requires sqlite & mysql brought up to speed
+//  ^ add ISqlDatabaseVersion interface & make SqlDatabaseVersion be its implementation that works with SqlDatabaseBuilder type
+//  ^ each dialect can have its own [DIALECT]DatabaseVersion classes, but that's low priority
 // THEN, change IXs so that they accept an array of SqlOrderByNode
 // ^ including extensions that still allow to provide 'bare' indexed columns
 // THEN (?), add possibility to register generated/computed columns (low priority)

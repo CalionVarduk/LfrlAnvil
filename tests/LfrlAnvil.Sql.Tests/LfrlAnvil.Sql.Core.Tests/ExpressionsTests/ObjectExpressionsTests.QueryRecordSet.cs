@@ -2,7 +2,7 @@
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
-using LfrlAnvil.Sql.Tests.Helpers;
+using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
 
@@ -13,8 +13,8 @@ public partial class ObjectExpressionsTests
         [Fact]
         public void GetKnownFields_ShouldReturnAllKnownRecordSetsFields_WithSelectAll()
         {
-            var t1 = TableMock.Create( "T1", ColumnMock.CreateMany<int>( areNullable: false, "a", "b" ) ).ToRecordSet();
-            var t2 = TableMock.Create( "T2", ColumnMock.CreateMany<int>( areNullable: false, "c", "d" ) ).ToRecordSet();
+            var t1 = SqlTableMock.Create<int>( "T1", new[] { "a", "b" } ).Node;
+            var t2 = SqlTableMock.Create<int>( "T2", new[] { "c", "d" } ).Node;
             var dataSource = t1.Join( SqlNode.InnerJoinOn( t2, SqlNode.True() ) );
             var sut = dataSource.Select( dataSource.GetAll() ).AsSet( "foo" );
 
@@ -30,8 +30,8 @@ public partial class ObjectExpressionsTests
         [Fact]
         public void GetKnownFields_ShouldReturnAllKnownSingleRecordSetFields_WithSelectAllFromRecordSet()
         {
-            var t1 = TableMock.Create( "T1", ColumnMock.CreateMany<int>( areNullable: false, "a", "b" ) ).ToRecordSet();
-            var t2 = TableMock.Create( "T2", ColumnMock.CreateMany<int>( areNullable: false, "c", "d" ) ).ToRecordSet();
+            var t1 = SqlTableMock.Create<int>( "T1", new[] { "a", "b" } ).Node;
+            var t2 = SqlTableMock.Create<int>( "T2", new[] { "c", "d" } ).Node;
             var dataSource = t1.Join( SqlNode.InnerJoinOn( t2, SqlNode.True() ) );
             var sut = dataSource.Select( dataSource.From.GetAll() ).AsSet( "foo" );
 
@@ -47,13 +47,13 @@ public partial class ObjectExpressionsTests
         [Fact]
         public void GetKnownFields_ShouldReturnExplicitSelections_WithFieldSelectionsOnly()
         {
-            var t1 = TableMock.Create( "T1", ColumnMock.CreateMany<int>( areNullable: false, "a", "b" ) ).ToRecordSet();
-            var t2 = TableMock.Create( "T2", ColumnMock.CreateMany<int>( areNullable: false, "c", "d" ) ).ToRecordSet();
+            var t1 = SqlTableMock.Create<int>( "T1", new[] { "a", "b" } ).Node;
+            var t2 = SqlTableMock.Create<int>( "T2", new[] { "c", "d" } ).Node;
             var dataSource = t1.Join( SqlNode.InnerJoinOn( t2, SqlNode.True() ) );
             var sut = dataSource.Select(
-                    dataSource["T1"]["a"].AsSelf(),
-                    dataSource["T2"]["d"].AsSelf(),
-                    dataSource["T1"].GetUnsafeField( "e" ).AsSelf() )
+                    dataSource["common.T1"]["a"].AsSelf(),
+                    dataSource["common.T2"]["d"].AsSelf(),
+                    dataSource["common.T1"].GetUnsafeField( "e" ).AsSelf() )
                 .AsSet( "foo" );
 
             var result = sut.GetKnownFields();
@@ -98,7 +98,7 @@ public partial class ObjectExpressionsTests
         [Fact]
         public void GetUnsafeField_ShouldReturnQueryDataFieldNode_WhenNameIsKnown()
         {
-            var dataSource = TableMock.Create( "t", ColumnMock.Create<int>( "a" ) ).ToRecordSet().ToDataSource();
+            var dataSource = SqlTableMock.Create<int>( "t", new[] { "a" } ).Node.ToDataSource();
             var selection = dataSource.GetAll();
             var sut = dataSource.Select( selection ).AsSet( "foo" );
             var result = sut.GetUnsafeField( "a" );
@@ -111,7 +111,7 @@ public partial class ObjectExpressionsTests
                 result.RecordSet.Should().BeSameAs( sut );
                 var dataField = result as SqlQueryDataFieldNode;
                 (dataField?.Selection).Should().BeSameAs( selection );
-                (dataField?.Expression).Should().BeSameAs( dataSource["t"]["a"] );
+                (dataField?.Expression).Should().BeSameAs( dataSource["common.t"]["a"] );
                 text.Should().Be( "[foo].[a]" );
             }
         }
@@ -119,7 +119,7 @@ public partial class ObjectExpressionsTests
         [Fact]
         public void GetUnsafeField_ShouldReturnRawDataFieldNode_WhenNameIsNotKnown()
         {
-            var dataSource = TableMock.Create( "t", ColumnMock.Create<int>( "a" ) ).ToRecordSet().ToDataSource();
+            var dataSource = SqlTableMock.Create<int>( "t", new[] { "a" } ).Node.ToDataSource();
             var sut = dataSource.Select( dataSource.GetAll() ).AsSet( "foo" );
             var result = sut.GetUnsafeField( "b" );
             var text = result.ToString();
@@ -138,7 +138,7 @@ public partial class ObjectExpressionsTests
         [Fact]
         public void GetField_ShouldReturnQueryDataFieldNode_WhenNameIsKnown()
         {
-            var dataSource = TableMock.Create( "t", ColumnMock.Create<int>( "a" ) ).ToRecordSet().ToDataSource();
+            var dataSource = SqlTableMock.Create<int>( "t", new[] { "a" } ).Node.ToDataSource();
             var selection = dataSource.GetAll();
             var sut = dataSource.Select( selection ).AsSet( "foo" );
             var result = sut.GetField( "a" );
@@ -150,7 +150,7 @@ public partial class ObjectExpressionsTests
                 result.Name.Should().Be( "a" );
                 result.RecordSet.Should().BeSameAs( sut );
                 result.Selection.Should().BeSameAs( selection );
-                result.Expression.Should().BeSameAs( dataSource["t"]["a"] );
+                result.Expression.Should().BeSameAs( dataSource["common.t"]["a"] );
                 text.Should().Be( "[foo].[a]" );
             }
         }
@@ -158,7 +158,7 @@ public partial class ObjectExpressionsTests
         [Fact]
         public void GetField_ShouldThrowKeyNotFoundException_WhenNameIsNotKnown()
         {
-            var dataSource = TableMock.Create( "t", ColumnMock.Create<int>( "a" ) ).ToRecordSet().ToDataSource();
+            var dataSource = SqlTableMock.Create<int>( "t", new[] { "a" } ).Node.ToDataSource();
             var sut = dataSource.Select( dataSource.GetAll() ).AsSet( "foo" );
 
             var action = Lambda.Of( () => sut.GetField( "b" ) );
@@ -169,7 +169,7 @@ public partial class ObjectExpressionsTests
         [Fact]
         public void Indexer_ShouldBeEquivalentToGetField()
         {
-            var dataSource = TableMock.Create( "t", ColumnMock.Create<int>( "a" ) ).ToRecordSet().ToDataSource();
+            var dataSource = SqlTableMock.Create<int>( "t", new[] { "a" } ).Node.ToDataSource();
             var sut = dataSource.Select( dataSource.GetAll() ).AsSet( "foo" );
 
             var result = sut["a"];
@@ -180,7 +180,7 @@ public partial class ObjectExpressionsTests
         [Fact]
         public void GetRawField_ShouldReturnRawDataFieldNode()
         {
-            var dataSource = TableMock.Create( "t", ColumnMock.Create<int>( "a" ) ).ToRecordSet().ToDataSource();
+            var dataSource = SqlTableMock.Create<int>( "t", new[] { "a" } ).Node.ToDataSource();
             var sut = dataSource.Select( dataSource.GetAll() ).AsSet( "foo" );
             var result = sut.GetRawField( "bar", TypeNullability.Create<int>() );
             var text = result.ToString();
@@ -200,7 +200,7 @@ public partial class ObjectExpressionsTests
         [InlineData( true )]
         public void MarkAsOptional_ShouldReturnSelf_WhenOptionalityDoesNotChange(bool optional)
         {
-            var dataSource = TableMock.Create( "t", ColumnMock.Create<int>( "a" ) ).ToRecordSet().ToDataSource();
+            var dataSource = SqlTableMock.Create<int>( "t", new[] { "a" } ).Node.ToDataSource();
             var sut = dataSource.Select( dataSource.GetAll() ).AsSet( "foo" ).MarkAsOptional( optional );
 
             var result = sut.MarkAsOptional( optional );
@@ -213,7 +213,7 @@ public partial class ObjectExpressionsTests
         [InlineData( true )]
         public void MarkAsOptional_ShouldReturnQueryRecordSetNode_WhenOptionalityChanges(bool optional)
         {
-            var dataSource = TableMock.Create( "t", ColumnMock.Create<int>( "a" ) ).ToRecordSet().ToDataSource();
+            var dataSource = SqlTableMock.Create<int>( "t", new[] { "a" } ).Node.ToDataSource();
             var sut = dataSource.Select( dataSource.GetAll() ).AsSet( "foo" ).MarkAsOptional( ! optional );
             var result = sut.MarkAsOptional( optional );
 
@@ -232,8 +232,8 @@ public partial class ObjectExpressionsTests
         [Fact]
         public void FieldInit_ShouldThrowArgumentException_WhenMultipleKnownFieldsWithSameNameExist()
         {
-            var dataSource = TableMock.Create( "t", ColumnMock.Create<int>( "a" ) ).ToRecordSet().ToDataSource();
-            var sut = dataSource.Select( dataSource["t"].GetAll(), dataSource["t"]["a"].AsSelf() ).AsSet( "foo" );
+            var dataSource = SqlTableMock.Create<int>( "t", new[] { "a" } ).Node.ToDataSource();
+            var sut = dataSource.Select( dataSource["common.t"].GetAll(), dataSource["common.t"]["a"].AsSelf() ).AsSet( "foo" );
 
             var action = Lambda.Of( () => sut.GetField( "a" ) );
 

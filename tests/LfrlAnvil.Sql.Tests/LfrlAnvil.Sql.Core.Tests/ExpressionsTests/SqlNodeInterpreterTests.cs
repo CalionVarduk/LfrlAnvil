@@ -2,8 +2,8 @@
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
-using LfrlAnvil.Sql.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
 
@@ -51,8 +51,8 @@ public class SqlNodeInterpreterTests : TestsBase
         var limit = SqlNode.Literal( 11 );
         var offset = SqlNode.Literal( 21 );
         var over = SqlNode.WindowTrait( windows1 );
-        var custom1 = new TraitNodeMock();
-        var custom2 = new TraitNodeMock();
+        var custom1 = new SqlTraitNodeMock();
+        var custom2 = new SqlTraitNodeMock();
 
         var traits = Chain.Create<SqlTraitNode>(
             new SqlTraitNode[]
@@ -125,7 +125,7 @@ public class SqlNodeInterpreterTests : TestsBase
         var aggregation = SqlNode.AggregationTrait( SqlNode.RawExpression( "B" ) );
         var aggregationFilter = SqlNode.AggregationFilterTrait( SqlNode.RawCondition( "B > 15" ), isConjunction: true );
         var over = SqlNode.WindowTrait( windows.Windows.Span[0] );
-        var custom = new TraitNodeMock();
+        var custom = new SqlTraitNodeMock();
 
         var traits = Chain.Create<SqlTraitNode>(
             new SqlTraitNode[]
@@ -182,7 +182,7 @@ public class SqlNodeInterpreterTests : TestsBase
         var windows = SqlNode.WindowDefinitionTrait( SqlNode.WindowDefinition( "W", new[] { SqlNode.RawExpression( "C" ).Asc() } ) );
         var over = SqlNode.WindowTrait( windows.Windows.Span[0] );
         var sort = SqlNode.SortTrait( SqlNode.OrderByAsc( SqlNode.RawExpression( "A" ) ) );
-        var custom = new TraitNodeMock();
+        var custom = new SqlTraitNodeMock();
 
         var traits = Chain.Create<SqlTraitNode>(
             new SqlTraitNode[]

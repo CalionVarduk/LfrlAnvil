@@ -6,9 +6,9 @@ using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
-using LfrlAnvil.Sql.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
+using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
 
@@ -17,7 +17,7 @@ public partial class BaseExpressionsTests : TestsBase
     [Fact]
     public void CustomToString_ShouldReturnTypeInfo()
     {
-        var sut = new NodeMock();
+        var sut = new SqlNodeMock();
         var result = sut.ToString();
         result.Should().Be( $"{{{sut.GetType().GetDebugString()}}}" );
     }
@@ -25,7 +25,7 @@ public partial class BaseExpressionsTests : TestsBase
     [Fact]
     public void CustomFunctionToString_ShouldReturnTypeInfoAndArguments()
     {
-        var sut = new FunctionNodeMock( new[] { SqlNode.Null(), SqlNode.Literal( 5 ) } );
+        var sut = new SqlFunctionNodeMock( new[] { SqlNode.Null(), SqlNode.Literal( 5 ) } );
         var result = sut.ToString();
         result.Should().Be( $"{{{sut.GetType().GetDebugString()}}}((NULL), (\"5\" : System.Int32))" );
     }
@@ -33,7 +33,7 @@ public partial class BaseExpressionsTests : TestsBase
     [Fact]
     public void CustomAggregateFunctionToString_ShouldReturnTypeInfoAndArgumentsAndTraits()
     {
-        var sut = new AggregateFunctionNodeMock( new[] { SqlNode.Null(), SqlNode.Literal( 5 ) }, Chain<SqlTraitNode>.Empty )
+        var sut = new SqlAggregateFunctionNodeMock( new[] { SqlNode.Null(), SqlNode.Literal( 5 ) }, Chain<SqlTraitNode>.Empty )
             .AddTrait( SqlNode.DistinctTrait() );
 
         var result = sut.ToString();
@@ -47,7 +47,7 @@ public partial class BaseExpressionsTests : TestsBase
     [Fact]
     public void CustomWindowFrameToString_ShouldReturnTypeInfoAndBoundaries()
     {
-        var sut = new WindowFrameMock( SqlWindowFrameBoundary.UnboundedPreceding, SqlWindowFrameBoundary.UnboundedFollowing );
+        var sut = new SqlWindowFrameMock( SqlWindowFrameBoundary.UnboundedPreceding, SqlWindowFrameBoundary.UnboundedFollowing );
         var result = sut.ToString();
         result.Should().Be( $"{{{sut.GetType().GetDebugString()}}} BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING" );
     }
@@ -731,7 +731,7 @@ VALUES
     [Fact]
     public void Column_ShouldCreateColumnDefinitionNode_WithDbType()
     {
-        var typeDef = ColumnTypeDefinitionMock.Create( DataTypeMock.Create( new SqlDialect( "foo" ), "INT" ), (r, o) => r.GetInt32( o ) );
+        var typeDef = new SqlColumnTypeDefinitionMock<int>( SqlDataTypeMock.Integer, 0 );
         var sut = SqlNode.Column( "foo", typeDef );
         var text = sut.ToString();
 
@@ -749,7 +749,7 @@ VALUES
     [Fact]
     public void Column_ShouldCreateColumnDefinitionNode_WithDbTypeAndNullableType()
     {
-        var typeDef = ColumnTypeDefinitionMock.Create( DataTypeMock.Create( new SqlDialect( "foo" ), "INT" ), (r, o) => r.GetInt32( o ) );
+        var typeDef = new SqlColumnTypeDefinitionMock<int>( SqlDataTypeMock.Integer, 0 );
         var sut = SqlNode.Column( "foo", typeDef, isNullable: true );
         var text = sut.ToString();
 
@@ -767,7 +767,7 @@ VALUES
     [Fact]
     public void Column_ShouldCreateColumnDefinitionNode_WithDbTypeAndDefaultValue()
     {
-        var typeDef = ColumnTypeDefinitionMock.Create( DataTypeMock.Create( new SqlDialect( "foo" ), "INT" ), (r, o) => r.GetInt32( o ) );
+        var typeDef = new SqlColumnTypeDefinitionMock<int>( SqlDataTypeMock.Integer, 0 );
         var defaultValue = SqlNode.Literal( "abc" ).Concat( SqlNode.Literal( "def" ) );
         var sut = SqlNode.Column( "foo", typeDef, defaultValue: defaultValue );
         var text = sut.ToString();

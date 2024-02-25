@@ -6,6 +6,7 @@ using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ObjectsTests.BuildersTests;
 
@@ -14,7 +15,7 @@ public partial class SqlSchemaBuilderTests : TestsBase
     [Fact]
     public void ToString_ShouldReturnCorrectResult()
     {
-        var db = SqlDatabaseBuilderMock.Create();
+        var db = SqlDatabaseBuilderMockFactory.Create();
         var sut = db.Schemas.Create( "foo" );
 
         var result = sut.ToString();
@@ -25,7 +26,7 @@ public partial class SqlSchemaBuilderTests : TestsBase
     [Fact]
     public void Creation_ShouldMarkSchemaForCreation()
     {
-        var db = SqlDatabaseBuilderMock.Create();
+        var db = SqlDatabaseBuilderMockFactory.Create();
 
         var actionCount = db.GetPendingActionCount();
         var sut = db.Schemas.Create( "foo" );
@@ -44,7 +45,7 @@ public partial class SqlSchemaBuilderTests : TestsBase
     [Fact]
     public void Creation_FollowedByRemoval_ShouldDoNothing()
     {
-        var db = SqlDatabaseBuilderMock.Create();
+        var db = SqlDatabaseBuilderMockFactory.Create();
 
         var actionCount = db.GetPendingActionCount();
         var sut = db.Schemas.Create( "foo" );
@@ -57,7 +58,7 @@ public partial class SqlSchemaBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldDoNothing_WhenNewNameEqualsOldName()
     {
-        var db = SqlDatabaseBuilderMock.Create();
+        var db = SqlDatabaseBuilderMockFactory.Create();
         var sut = db.Schemas.Create( "foo" );
 
         var actionCount = db.GetPendingActionCount();
@@ -74,7 +75,7 @@ public partial class SqlSchemaBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldDoNothing_WhenNameChangeIsFollowedByChangeToOriginal()
     {
-        var db = SqlDatabaseBuilderMock.Create();
+        var db = SqlDatabaseBuilderMockFactory.Create();
         var sut = db.Schemas.Create( "foo" );
         var oldName = sut.Name;
 
@@ -93,7 +94,7 @@ public partial class SqlSchemaBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldUpdateName_WhenNewNameIsDifferentFromOldName()
     {
-        var db = SqlDatabaseBuilderMock.Create();
+        var db = SqlDatabaseBuilderMockFactory.Create();
         var sut = db.Schemas.Create( "foo" );
 
         var actionCount = db.GetPendingActionCount();
@@ -119,7 +120,7 @@ public partial class SqlSchemaBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldUpdateName_WhenNewNameIsDifferentFromOldNameAndSchemaContainsTablesAndViews()
     {
-        var db = SqlDatabaseBuilderMock.Create();
+        var db = SqlDatabaseBuilderMockFactory.Create();
         var sut = db.Schemas.Create( "foo" );
 
         var table = sut.Objects.CreateTable( "T" );
@@ -162,7 +163,7 @@ public partial class SqlSchemaBuilderTests : TestsBase
     [InlineData( "f\'oo" )]
     public void SetName_ShouldThrowSqlObjectBuilderException_WhenNameIsInvalid(string name)
     {
-        var db = SqlDatabaseBuilderMock.Create();
+        var db = SqlDatabaseBuilderMockFactory.Create();
         var sut = db.Schemas.Create( "foo" );
 
         var action = Lambda.Of( () => sut.SetName( name ) );
@@ -175,7 +176,7 @@ public partial class SqlSchemaBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldThrowSqlObjectBuilderException_WhenSchemaIsRemoved()
     {
-        var db = SqlDatabaseBuilderMock.Create();
+        var db = SqlDatabaseBuilderMockFactory.Create();
         var sut = db.Schemas.Create( "foo" );
         sut.Remove();
 
@@ -189,7 +190,7 @@ public partial class SqlSchemaBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldThrowSqlObjectBuilderException_WhenNewNameAlreadyExistsInSchemas()
     {
-        var db = SqlDatabaseBuilderMock.Create();
+        var db = SqlDatabaseBuilderMockFactory.Create();
         var sut = db.Schemas.Create( "foo" );
         var other = db.Schemas.Create( "bar" );
 
@@ -203,7 +204,7 @@ public partial class SqlSchemaBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldRemoveSchemaAndQuickRemoveObjects()
     {
-        var db = SqlDatabaseBuilderMock.Create();
+        var db = SqlDatabaseBuilderMockFactory.Create();
         var sut = db.Schemas.Create( "foo" );
         var otherTable = sut.Objects.CreateTable( "U" );
         var otherPk = otherTable.Constraints.SetPrimaryKey( otherTable.Columns.Create( "D1" ).Asc() );
@@ -264,7 +265,7 @@ public partial class SqlSchemaBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldDoNothing_WhenSchemaIsRemoved()
     {
-        var db = SqlDatabaseBuilderMock.Create();
+        var db = SqlDatabaseBuilderMockFactory.Create();
         var sut = db.Schemas.Create( "foo" );
 
         db.Changes.CompletePendingChanges();
@@ -280,7 +281,7 @@ public partial class SqlSchemaBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldThrowSqlObjectBuilderException_WhenSchemaIsDefault()
     {
-        var db = SqlDatabaseBuilderMock.Create();
+        var db = SqlDatabaseBuilderMockFactory.Create();
         var sut = db.Schemas.Default;
 
         var action = Lambda.Of( () => sut.Remove() );
@@ -293,7 +294,7 @@ public partial class SqlSchemaBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldThrowSqlObjectBuilderException_WhenSchemaIsReferencedByForeignKeyFromAnotherSchema()
     {
-        var db = SqlDatabaseBuilderMock.Create();
+        var db = SqlDatabaseBuilderMockFactory.Create();
         var sut = db.Schemas.Create( "foo" );
         var table = sut.Objects.CreateTable( "T1" );
         var pk = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
@@ -312,7 +313,7 @@ public partial class SqlSchemaBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldThrowSqlObjectBuilderException_WhenSchemaIsReferencedByViewFromAnotherSchema()
     {
-        var db = SqlDatabaseBuilderMock.Create();
+        var db = SqlDatabaseBuilderMockFactory.Create();
         var sut = db.Schemas.Create( "foo" );
         var table = sut.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
@@ -329,7 +330,7 @@ public partial class SqlSchemaBuilderTests : TestsBase
     [Fact]
     public void QuickRemove_ShouldThrowNotSupportedException()
     {
-        var db = SqlDatabaseBuilderMock.Create();
+        var db = SqlDatabaseBuilderMockFactory.Create();
         var sut = db.Schemas.Create( "foo" );
 
         var action = Lambda.Of( () => SqlDatabaseBuilderMock.QuickRemove( sut ) );
@@ -340,7 +341,7 @@ public partial class SqlSchemaBuilderTests : TestsBase
     [Fact]
     public void ISqlSchemaBuilder_SetName_ShouldBeEquivalentToSetName()
     {
-        var db = SqlDatabaseBuilderMock.Create();
+        var db = SqlDatabaseBuilderMockFactory.Create();
         var sut = db.Schemas.Create( "foo" );
 
         var actionCount = db.GetPendingActionCount();
@@ -366,7 +367,7 @@ public partial class SqlSchemaBuilderTests : TestsBase
     [Fact]
     public void ISqlObjectBuilder_SetName_ShouldBeEquivalentToSetName()
     {
-        var db = SqlDatabaseBuilderMock.Create();
+        var db = SqlDatabaseBuilderMockFactory.Create();
         var sut = db.Schemas.Create( "foo" );
 
         var actionCount = db.GetPendingActionCount();

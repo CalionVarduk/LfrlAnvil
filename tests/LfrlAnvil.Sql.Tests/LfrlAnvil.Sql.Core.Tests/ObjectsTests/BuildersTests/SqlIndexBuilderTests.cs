@@ -6,6 +6,7 @@ using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ObjectsTests.BuildersTests;
 
@@ -14,7 +15,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void ToString_ShouldReturnCorrectResult()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C" ).Asc() ).SetName( "bar" );
 
@@ -26,7 +27,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void Creation_ShouldMarkTableForAlteration()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         SqlColumnBuilder c2 = table.Columns.Create( "C2" );
@@ -58,7 +59,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void Creation_FollowedByRemoval_ShouldDoNothing()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var c2 = table.Columns.Create( "C2" );
@@ -74,7 +75,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldDoNothing_WhenNewNameEqualsOldName()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
@@ -93,7 +94,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldDoNothing_WhenNameChangeIsFollowedByChangeToOriginal()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
@@ -114,7 +115,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldUpdateName_WhenNewNameIsDifferentFromOldName()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
@@ -149,7 +150,7 @@ public class SqlIndexBuilderTests : TestsBase
     [InlineData( "f\'oo" )]
     public void SetName_ShouldThrowSqlObjectBuilderException_WhenNameIsInvalid(string name)
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
@@ -164,7 +165,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldThrowSqlObjectBuilderException_WhenIndexIsRemoved()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
@@ -180,7 +181,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldThrowSqlObjectBuilderException_WhenNewNameAlreadyExistsInSchemaObjects()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
@@ -195,7 +196,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void SetDefaultName_ShouldDoNothing_WhenNewNameEqualsOldName()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
@@ -214,7 +215,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void SetDefaultName_ShouldDoNothing_WhenNameChangeIsFollowedByChangeToOriginal()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
@@ -234,7 +235,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void SetDefaultName_ShouldUpdateName_WhenNewNameIsDifferentFromOldName()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" );
@@ -264,7 +265,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void SetDefaultName_ShouldUpdateName_WhenNewNameIsDifferentFromOldNameAndIndexIsUnique()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" ).MarkAsUnique();
@@ -294,7 +295,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void SetDefaultName_ShouldThrowSqlObjectBuilderException_WhenIndexIsRemoved()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" );
@@ -310,7 +311,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void SetDefaultName_ShouldThrowSqlObjectBuilderException_WhenNewNameAlreadyExistsInSchemaObjects()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var pk = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" );
@@ -328,7 +329,7 @@ public class SqlIndexBuilderTests : TestsBase
     [InlineData( false )]
     public void MarkAsUnique_ShouldDoNothing_WhenUniquenessFlagDoesNotChange(bool value)
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique( value );
@@ -347,7 +348,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void MarkAsUnique_ShouldDoNothing_WhenValueChangeIsFollowedByChangeToOriginal()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
@@ -367,7 +368,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void MarkAsUnique_ShouldUpdateIsUnique_WhenValueChangesToTrue()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
@@ -393,7 +394,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void MarkAsUnique_ShouldUpdateIsUnique_WhenValueChangesToFalse()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
@@ -419,7 +420,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void MarkAsUnique_ShouldThrowSqlObjectBuilderException_WhenPrimaryKeyIndexUniquenessChangesToFalse()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
 
@@ -433,7 +434,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void MarkAsUnique_ShouldThrowSqlObjectBuilderException_WhenUniquenessChangesToFalseAndIndexIsReferencedByForeignKey()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
@@ -449,7 +450,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void MarkAsUnique_ShouldThrowSqlObjectBuilderException_WhenIndexIsRemoved()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
@@ -465,7 +466,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void SetFilter_ShouldDoNothing_WhenValueDoesNotChange()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).SetFilter( SqlNode.True() );
@@ -484,7 +485,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void SetFilter_ShouldDoNothing_WhenValueChangeIsFollowedByChangeToOriginal()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
@@ -504,7 +505,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void SetFilter_ShouldUpdateFilterAndFilterColumns_WhenValueChangesToNonNull()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var column = table.Columns.Create( "C2" );
@@ -538,7 +539,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void SetFilter_ShouldUpdateFilterAndFilterColumns_WhenValueChangesToNull()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var column = table.Columns.Create( "C2" );
@@ -570,7 +571,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void SetFilter_ShouldThrowSqlObjectBuilderException_WhenFilterIsInvalid()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C" ).Asc() );
 
@@ -584,7 +585,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void SetFilter_ShouldThrowSqlObjectBuilderException_WhenPrimaryKeyIndexFilterChangesToNonNull()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
 
@@ -598,7 +599,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void SetFilter_ShouldThrowSqlObjectBuilderException_WhenReferencedIndexFilterChangesToNonNull()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var ix = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
@@ -614,7 +615,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void SetFilter_ShouldThrowSqlObjectBuilderException_WhenIndexIsRemoved()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
@@ -630,7 +631,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldRemoveIndexAndClearReferencedColumnsAndReferencedFilterColumns()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var c2 = table.Columns.Create( "C2" );
@@ -662,7 +663,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldRemoveIndexAndAssignedPrimaryKey()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C" );
         var pk = table.Constraints.SetPrimaryKey( column.Asc() );
@@ -698,7 +699,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldDoNothing_WhenIndexIsRemoved()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
@@ -716,7 +717,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldThrowSqlObjectBuilderException_WhenIndexHasOriginatingForeignKey()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var ix = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
@@ -732,7 +733,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldThrowSqlObjectBuilderException_WhenIndexHasReferencingForeignKey()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var ix = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
@@ -748,7 +749,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void QuickRemove_ShouldClearReferencingObjectsAndReferencedColumnsAndReferencedFilterColumns()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var ix = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var column = table.Columns.Create( "C2" );
@@ -782,7 +783,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void QuickRemove_ShouldClearPrimaryKey()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C" );
         var pk = table.Constraints.SetPrimaryKey( column.Asc() );
@@ -813,7 +814,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void QuickRemove_ShouldDoNothing_WhenIndexIsRemoved()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
@@ -831,7 +832,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void ISqlIndexBuilder_SetName_ShouldBeEquivalentToSetName()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
@@ -862,7 +863,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void ISqlConstraintBuilder_SetName_ShouldBeEquivalentToSetName()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
@@ -893,7 +894,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void ISqlObjectBuilder_SetName_ShouldBeEquivalentToSetName()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
@@ -924,7 +925,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void ISqlIndexBuilder_SetDefaultName_ShouldBeEquivalentToSetDefaultName()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" );
@@ -954,7 +955,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void ISqlConstraintBuilder_SetDefaultName_ShouldBeEquivalentToSetDefaultName()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" );
@@ -984,7 +985,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void ISqlIndexBuilder_MarkAsUnique_ShouldBeEquivalentToMarkAsUnique()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
@@ -1010,7 +1011,7 @@ public class SqlIndexBuilderTests : TestsBase
     [Fact]
     public void ISqlIndexBuilder_SetFilter_ShouldBeEquivalentToSetFilter()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var column = table.Columns.Create( "C2" );

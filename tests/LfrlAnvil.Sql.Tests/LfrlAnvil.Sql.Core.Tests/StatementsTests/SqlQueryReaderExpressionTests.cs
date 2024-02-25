@@ -2,7 +2,7 @@
 using System.Data;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Statements;
-using LfrlAnvil.Sql.Tests.Helpers.Data;
+using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
 namespace LfrlAnvil.Sql.Tests.StatementsTests;
 

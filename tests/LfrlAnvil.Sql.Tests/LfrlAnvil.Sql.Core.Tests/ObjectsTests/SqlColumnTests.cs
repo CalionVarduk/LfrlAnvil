@@ -2,6 +2,7 @@
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Tests.Helpers;
+using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ObjectsTests;
 
@@ -14,7 +15,7 @@ public class SqlColumnTests : TestsBase
     [InlineData( typeof( string ), false )]
     public void Properties_ShouldBeCorrectlyCopiedFromBuilder(Type type, bool isNullable)
     {
-        var schemaBuilder = SqlDatabaseBuilderMock.Create().Schemas.Default;
+        var schemaBuilder = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.Columns.Create( "C" ).SetType( type ).MarkAsNullable( isNullable );
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "X" ).Asc() );
@@ -41,7 +42,7 @@ public class SqlColumnTests : TestsBase
     [Fact]
     public void Properties_ShouldBeCorrectlyCopiedFromBuilder_WithDefaultValue()
     {
-        var schemaBuilder = SqlDatabaseBuilderMock.Create().Schemas.Default;
+        var schemaBuilder = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.Columns.Create( "C" ).SetDefaultValue( SqlNode.Literal( 0 ) );
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "X" ).Asc() );
@@ -68,7 +69,7 @@ public class SqlColumnTests : TestsBase
     [Fact]
     public void Asc_ShouldReturnCorrectResult()
     {
-        var schemaBuilder = SqlDatabaseBuilderMock.Create().Schemas.Default;
+        var schemaBuilder = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C" ).Asc() );
 
@@ -88,7 +89,7 @@ public class SqlColumnTests : TestsBase
     [Fact]
     public void Desc_ShouldReturnCorrectResult()
     {
-        var schemaBuilder = SqlDatabaseBuilderMock.Create().Schemas.Default;
+        var schemaBuilder = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C" ).Asc() );
 

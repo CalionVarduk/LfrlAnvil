@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Data;
 using LfrlAnvil.Sql.Statements;
-using LfrlAnvil.Sql.Tests.Helpers.Data;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
 namespace LfrlAnvil.Sql.Tests.StatementsTests;
 
@@ -12,7 +12,7 @@ public class SqlParameterBinderTests : TestsBase
     public void Bind_ForTypeErased_ShouldClearParameters_WhenSourceIsNull()
     {
         var command = new DbCommandMock();
-        command.Parameters.Add( new DbDataParameterMock() );
+        command.Parameters.Add( new DbParameterMock() );
         var dialect = new SqlDialect( "foo" );
         var @delegate = Substitute.For<Action<IDbCommand, IEnumerable<KeyValuePair<string, object?>>>>();
         var sut = new SqlParameterBinder( dialect, @delegate );
@@ -51,7 +51,7 @@ public class SqlParameterBinderTests : TestsBase
     public void Bind_ForGeneric_ShouldClearParameters_WhenSourceIsNull()
     {
         var command = new DbCommandMock();
-        command.Parameters.Add( new DbDataParameterMock() );
+        command.Parameters.Add( new DbParameterMock() );
         var dialect = new SqlDialect( "foo" );
         var @delegate = Substitute.For<Action<IDbCommand, string>>();
         var sut = new SqlParameterBinder<string>( dialect, @delegate );

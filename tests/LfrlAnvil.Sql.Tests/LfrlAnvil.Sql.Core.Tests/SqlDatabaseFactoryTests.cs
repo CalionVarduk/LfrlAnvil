@@ -5,10 +5,10 @@ using System.Linq;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Events;
 using LfrlAnvil.Sql.Extensions;
-using LfrlAnvil.Sql.Tests.Helpers;
-using LfrlAnvil.Sql.Tests.Helpers.Data;
 using LfrlAnvil.Sql.Versioning;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Mocks;
+using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
 namespace LfrlAnvil.Sql.Tests;
 
@@ -1283,7 +1283,6 @@ SET
         var caughtEvents = new List<string>();
 
         var sut = new SqlDatabaseFactoryMock( createVersionHistoryTable: true );
-        sut.Connection.EnqueueResultSets( Array.Empty<ResultSet>() );
         sut.Connection.EnqueueResultSets(
             new[]
             {
@@ -1348,7 +1347,6 @@ SELECT
         var caughtEvents = new List<string>();
 
         var sut = new SqlDatabaseFactoryMock( createVersionHistoryTable: true );
-        sut.Connection.EnqueueResultSets( Array.Empty<ResultSet>() );
         sut.Connection.EnqueueResultSets(
             new[]
             {

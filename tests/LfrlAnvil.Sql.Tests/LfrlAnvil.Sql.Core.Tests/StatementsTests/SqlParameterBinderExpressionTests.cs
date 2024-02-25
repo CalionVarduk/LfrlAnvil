@@ -2,7 +2,7 @@
 using System.Linq.Expressions;
 using System.Reflection;
 using LfrlAnvil.Sql.Statements;
-using LfrlAnvil.Sql.Tests.Helpers.Data;
+using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
 namespace LfrlAnvil.Sql.Tests.StatementsTests;
 
@@ -20,19 +20,19 @@ public class SqlParameterBinderExpressionTests : TestsBase
             nameof( DbCommandMock.Parameters ),
             BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly )!;
 
-        var addMethod = typeof( DbDataParameterCollectionMock ).GetMethod(
-            nameof( DbDataParameterCollectionMock.Add ),
+        var addMethod = typeof( DbParameterCollectionMock ).GetMethod(
+            nameof( DbParameterCollectionMock.Add ),
             BindingFlags.Public | BindingFlags.Instance,
-            new[] { typeof( DbDataParameterMock ) } )!;
+            new[] { typeof( DbParameterMock ) } )!;
 
-        var nameProperty = typeof( DbDataParameterMock ).GetProperty( nameof( DbDataParameterMock.ParameterName ) )!;
-        var valueProperty = typeof( DbDataParameterMock ).GetProperty( nameof( DbDataParameterMock.Value ) )!;
+        var nameProperty = typeof( DbParameterMock ).GetProperty( nameof( DbParameterMock.ParameterName ) )!;
+        var valueProperty = typeof( DbParameterMock ).GetProperty( nameof( DbParameterMock.Value ) )!;
         var lengthProperty = sourceType.GetProperty( nameof( string.Length ) )!;
 
         var cmdParameter = Expression.Parameter( typeof( IDbCommand ), "cmd" );
         var sourceParameter = Expression.Parameter( sourceType, "source" );
         var cmdVariable = Expression.Variable( typeof( DbCommandMock ), "fooCmd" );
-        var parameterVariable = Expression.Variable( typeof( DbDataParameterMock ), "parameter" );
+        var parameterVariable = Expression.Variable( typeof( DbParameterMock ), "parameter" );
         var lengthConst = Expression.Constant( "length" );
         var valueConst = Expression.Constant( "value" );
 

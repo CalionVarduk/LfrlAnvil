@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Data;
 using LfrlAnvil.Sql.Statements;
-using LfrlAnvil.Sql.Tests.Helpers.Data;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
 namespace LfrlAnvil.Sql.Tests.StatementsTests;
 

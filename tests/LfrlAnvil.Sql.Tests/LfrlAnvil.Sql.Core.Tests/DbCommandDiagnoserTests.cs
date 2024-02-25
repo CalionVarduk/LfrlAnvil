@@ -2,8 +2,8 @@
 using System.Threading.Tasks;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Internal;
-using LfrlAnvil.Sql.Tests.Helpers.Data;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
 namespace LfrlAnvil.Sql.Tests;
 

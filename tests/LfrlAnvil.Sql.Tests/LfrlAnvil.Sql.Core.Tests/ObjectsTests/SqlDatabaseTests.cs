@@ -8,6 +8,7 @@ using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Tests.Helpers;
 using LfrlAnvil.Sql.Versioning;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ObjectsTests;
 
@@ -16,7 +17,7 @@ public class SqlDatabaseTests : TestsBase
     [Fact]
     public void Properties_ShouldBeCorrectlyCopiedFromBuilder()
     {
-        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
         ISqlDatabase sut = SqlDatabaseMock.Create( dbBuilder );
 
         using ( new AssertionScope() )
@@ -39,7 +40,7 @@ public class SqlDatabaseTests : TestsBase
     [Fact]
     public void Dispose_ShouldNotThrow()
     {
-        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
         ISqlDatabase sut = SqlDatabaseMock.Create( dbBuilder );
 
         var action = Lambda.Of( () => sut.Dispose() );
@@ -50,7 +51,7 @@ public class SqlDatabaseTests : TestsBase
     [Fact]
     public void Connect_ShouldCallConnectImplementation()
     {
-        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
         ISqlDatabase sut = SqlDatabaseMock.Create( dbBuilder );
 
         var result = sut.Connect();
@@ -61,7 +62,7 @@ public class SqlDatabaseTests : TestsBase
     [Fact]
     public async Task ConnectAsync_ShouldCallConnectImplementation()
     {
-        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
         ISqlDatabase sut = SqlDatabaseMock.Create( dbBuilder );
 
         var result = await sut.ConnectAsync();
@@ -72,7 +73,7 @@ public class SqlDatabaseTests : TestsBase
     [Fact]
     public void GetRegisteredVersions_ShouldReturnEmptyArray_WhenVersionRecordsQueryReturnsEmptyResult()
     {
-        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
         var versionRecordsProvider = Lambda.Of( Enumerable.Empty<SqlDatabaseVersionRecord> );
         ISqlDatabase sut = new SqlDatabaseMock( dbBuilder, versionRecordsProvider: versionRecordsProvider );
 
@@ -90,7 +91,7 @@ public class SqlDatabaseTests : TestsBase
             new SqlDatabaseVersionRecord( 1, new Version( "0.2" ), "2nd version", DateTime.UtcNow, TimeSpan.FromSeconds( 2 ) )
         };
 
-        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
         var versionRecordsProvider = Lambda.Of( () => expected );
         ISqlDatabase sut = new SqlDatabaseMock( dbBuilder, versionRecordsProvider: versionRecordsProvider );
 
@@ -105,7 +106,7 @@ public class SqlDatabaseTests : TestsBase
     [InlineData( "bar", false )]
     public void Schemas_Contains_ShouldReturnTrue_WhenSchemaExists(string name, bool expected)
     {
-        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
         dbBuilder.Schemas.Create( "foo" );
         var db = SqlDatabaseMock.Create( dbBuilder );
         ISqlSchemaCollection sut = db.Schemas;
@@ -118,7 +119,7 @@ public class SqlDatabaseTests : TestsBase
     [Fact]
     public void Schemas_Get_ShouldReturnExistingSchema()
     {
-        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
         dbBuilder.Schemas.Default.SetName( "foo" );
         var db = SqlDatabaseMock.Create( dbBuilder );
         ISqlSchemaCollection sut = db.Schemas;
@@ -131,7 +132,7 @@ public class SqlDatabaseTests : TestsBase
     [Fact]
     public void Schemas_Get_ShouldThrowKeyNotFoundException_WhenSchemaDoesNotExist()
     {
-        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
         dbBuilder.Schemas.Default.SetName( "foo" );
         var db = SqlDatabaseMock.Create( dbBuilder );
         ISqlSchemaCollection sut = db.Schemas;
@@ -144,7 +145,7 @@ public class SqlDatabaseTests : TestsBase
     [Fact]
     public void Schemas_TryGet_ShouldReturnExistingSchema()
     {
-        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
         dbBuilder.Schemas.Default.SetName( "foo" );
         var db = SqlDatabaseMock.Create( dbBuilder );
         ISqlSchemaCollection sut = db.Schemas;
@@ -157,7 +158,7 @@ public class SqlDatabaseTests : TestsBase
     [Fact]
     public void Schemas_TryGet_ShouldReturnNull_WhenSchemaDoesNotExist()
     {
-        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
         dbBuilder.Schemas.Default.SetName( "foo" );
         var db = SqlDatabaseMock.Create( dbBuilder );
         ISqlSchemaCollection sut = db.Schemas;
@@ -170,7 +171,7 @@ public class SqlDatabaseTests : TestsBase
     [Fact]
     public void Schemas_GetEnumerator_ShouldReturnCorrectResult()
     {
-        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
         dbBuilder.Schemas.Create( "foo" );
         var sut = SqlDatabaseMock.Create( dbBuilder ).Schemas;
         var schema = sut.Get( "foo" );
@@ -189,7 +190,7 @@ public class SqlDatabaseTests : TestsBase
     [Fact]
     public void Creation_ShouldHandleCorrectUnknownObject()
     {
-        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
         var table = dbBuilder.Schemas.Default.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         table.Constraints.CreateUnknown( "UNK", useDefaultImplementation: false, deferCreation: false );
@@ -208,7 +209,7 @@ public class SqlDatabaseTests : TestsBase
     [Fact]
     public void Creation_ShouldHandleCorrectUnknownObject_WithDeferredCreation()
     {
-        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
         var table = dbBuilder.Schemas.Default.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         table.Constraints.CreateUnknown( "UNK", useDefaultImplementation: false, deferCreation: true );
@@ -227,7 +228,7 @@ public class SqlDatabaseTests : TestsBase
     [Fact]
     public void Creation_ShouldThrowNotSupportedException_WhenIncorrectUnknownObjectExists()
     {
-        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
         var table = dbBuilder.Schemas.Default.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         table.Constraints.CreateUnknown( "UNK", useDefaultImplementation: true, deferCreation: false );
@@ -240,7 +241,7 @@ public class SqlDatabaseTests : TestsBase
     [Fact]
     public void Creation_ShouldThrowNotSupportedException_WhenIncorrectUnknownObjectExists_WithDeferredCreation()
     {
-        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
         var table = dbBuilder.Schemas.Default.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         table.Constraints.CreateUnknown( "UNK", useDefaultImplementation: true, deferCreation: true );

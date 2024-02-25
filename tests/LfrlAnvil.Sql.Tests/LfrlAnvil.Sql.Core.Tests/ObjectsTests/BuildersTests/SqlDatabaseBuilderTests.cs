@@ -2,6 +2,7 @@
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ObjectsTests.BuildersTests;
 
@@ -10,7 +11,7 @@ public partial class SqlDatabaseBuilderTests : TestsBase
     [Fact]
     public void Ctor_ShouldCreateBuilderWithDefaultSchema()
     {
-        var sut = SqlDatabaseBuilderMock.Create();
+        var sut = SqlDatabaseBuilderMockFactory.Create();
 
         using ( new AssertionScope() )
         {
@@ -51,7 +52,7 @@ public partial class SqlDatabaseBuilderTests : TestsBase
     [Fact]
     public void AddConnectionChangeCallback_ShouldNotThrow()
     {
-        ISqlDatabaseBuilder sut = SqlDatabaseBuilderMock.Create();
+        ISqlDatabaseBuilder sut = SqlDatabaseBuilderMockFactory.Create();
         var result = sut.AddConnectionChangeCallback( _ => { } );
         result.Should().BeSameAs( sut );
     }
@@ -59,7 +60,7 @@ public partial class SqlDatabaseBuilderTests : TestsBase
     [Fact]
     public void SqlHelpers_GetReferencingObjectsInOrderOfCreation_ShouldReturnCorrectResult_WhenObjectIsNotReferenced()
     {
-        var obj = SqlDatabaseBuilderMock.Create().Schemas.Default;
+        var obj = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
         var result = SqlHelpers.GetReferencingObjectsInOrderOfCreation( obj );
         result.Should().BeEmpty();
     }
@@ -67,7 +68,7 @@ public partial class SqlDatabaseBuilderTests : TestsBase
     [Fact]
     public void SqlHelpers_GetReferencingObjectsInOrderOfCreation_ShouldReturnCorrectResult_WhenAllReferencesAreFilteredOut()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Default;
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
         var obj = schema.Objects.CreateTable( "T" );
         SqlDatabaseBuilderMock.AddReference( obj, SqlObjectBuilderReferenceSource.Create( schema ) );
 
@@ -79,7 +80,7 @@ public partial class SqlDatabaseBuilderTests : TestsBase
     [Fact]
     public void SqlHelpers_GetReferencingObjectsInOrderOfCreation_ShouldReturnCorrectResult_WhenAllObjectsAreIncluded()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Default;
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
         var table = schema.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C1" );
         var obj = table.Columns.Create( "C2" );
@@ -95,7 +96,7 @@ public partial class SqlDatabaseBuilderTests : TestsBase
     [Fact]
     public void SqlHelpers_GetReferencingObjectsInOrderOfCreation_ShouldReturnCorrectResult_WhenSomeObjectsAreFilteredOut()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Default;
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
         var table = schema.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C1" );
         var obj = table.Columns.Create( "C2" );

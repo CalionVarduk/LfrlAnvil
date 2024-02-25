@@ -3,6 +3,7 @@ using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests;
 
@@ -11,7 +12,7 @@ public class SqlObjectBuilderReferenceCollectionTests : TestsBase
     [Fact]
     public void Object_ShouldHaveEmptyCollection_WhenItNotHaveAnyReferences()
     {
-        var obj = SqlDatabaseBuilderMock.Create().Schemas.Default;
+        var obj = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
         var sut = obj.ReferencingObjects;
 
         using ( new AssertionScope() )
@@ -24,7 +25,7 @@ public class SqlObjectBuilderReferenceCollectionTests : TestsBase
     [Fact]
     public void Object_ShouldHaveCorrectCollection_WhenItHasReferences()
     {
-        var obj = SqlDatabaseBuilderMock.Create().Schemas.Default;
+        var obj = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
         var r1 = SqlObjectBuilderReferenceSource.Create( obj.Objects.CreateTable( "T" ) );
         var r2 = SqlObjectBuilderReferenceSource.Create( obj.Objects.CreateTable( "U" ) );
         SqlDatabaseBuilderMock.AddReference( obj, r1 );
@@ -43,7 +44,7 @@ public class SqlObjectBuilderReferenceCollectionTests : TestsBase
     [InlineData( null )]
     public void Contains_ShouldReturnFalse_WhenReferenceDoesNotExist(string? property)
     {
-        var obj = SqlDatabaseBuilderMock.Create().Schemas.Default;
+        var obj = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
         var sut = obj.ReferencingObjects;
 
         var result = sut.Contains( SqlObjectBuilderReferenceSource.Create( obj.Objects.CreateTable( "T" ), property ) );
@@ -56,7 +57,7 @@ public class SqlObjectBuilderReferenceCollectionTests : TestsBase
     [InlineData( null )]
     public void Contains_ShouldReturnTrue_WhenReferenceExists(string? property)
     {
-        var obj = SqlDatabaseBuilderMock.Create().Schemas.Default;
+        var obj = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
         var table = obj.Objects.CreateTable( "T" );
         SqlDatabaseBuilderMock.AddReference( obj, SqlObjectBuilderReferenceSource.Create( table ) );
         SqlDatabaseBuilderMock.AddReference( obj, SqlObjectBuilderReferenceSource.Create( table, "foo" ) );
@@ -72,7 +73,7 @@ public class SqlObjectBuilderReferenceCollectionTests : TestsBase
     [InlineData( null )]
     public void GetReference_ShouldThrowSqlObjectBuilderException_WhenReferenceDoesNotExist(string? property)
     {
-        var obj = SqlDatabaseBuilderMock.Create().Schemas.Default;
+        var obj = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
         var sut = obj.ReferencingObjects;
 
         var action = Lambda.Of(
@@ -88,7 +89,7 @@ public class SqlObjectBuilderReferenceCollectionTests : TestsBase
     [InlineData( null )]
     public void GetReference_ShouldReturnCorrectResult_WhenReferenceExists(string? property)
     {
-        var obj = SqlDatabaseBuilderMock.Create().Schemas.Default;
+        var obj = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
         var table = obj.Objects.CreateTable( "T" );
         SqlDatabaseBuilderMock.AddReference( obj, SqlObjectBuilderReferenceSource.Create( table ) );
         SqlDatabaseBuilderMock.AddReference( obj, SqlObjectBuilderReferenceSource.Create( table, "foo" ) );
@@ -108,7 +109,7 @@ public class SqlObjectBuilderReferenceCollectionTests : TestsBase
     [InlineData( null )]
     public void TryGetReference_ShouldReturnNull_WhenReferenceDoesNotExist(string? property)
     {
-        var obj = SqlDatabaseBuilderMock.Create().Schemas.Default;
+        var obj = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
         var sut = obj.ReferencingObjects;
 
         var result = sut.TryGetReference( SqlObjectBuilderReferenceSource.Create( obj.Objects.CreateTable( "T" ), property ) );
@@ -121,7 +122,7 @@ public class SqlObjectBuilderReferenceCollectionTests : TestsBase
     [InlineData( null )]
     public void TryGetReference_ShouldReturnCorrectResult_WhenReferenceExists(string? property)
     {
-        var obj = SqlDatabaseBuilderMock.Create().Schemas.Default;
+        var obj = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
         var table = obj.Objects.CreateTable( "T" );
         SqlDatabaseBuilderMock.AddReference( obj, SqlObjectBuilderReferenceSource.Create( table ) );
         SqlDatabaseBuilderMock.AddReference( obj, SqlObjectBuilderReferenceSource.Create( table, "foo" ) );
@@ -140,7 +141,7 @@ public class SqlObjectBuilderReferenceCollectionTests : TestsBase
     [Fact]
     public void UnsafeReinterpretAs_ShouldReturnCorrectCollection()
     {
-        var obj = SqlDatabaseBuilderMock.Create().Schemas.Default;
+        var obj = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
         var r1 = SqlObjectBuilderReferenceSource.Create( obj.Objects.CreateTable( "T" ) );
         var r2 = SqlObjectBuilderReferenceSource.Create( obj.Objects.CreateTable( "U" ) );
         SqlDatabaseBuilderMock.AddReference( obj, r1 );
@@ -162,7 +163,7 @@ public class SqlObjectBuilderReferenceCollectionTests : TestsBase
     [Fact]
     public void SqlObjectBuilderReferenceCollectionConversionOperator_ShouldReturnCorrectCollection()
     {
-        var obj = SqlDatabaseBuilderMock.Create().Schemas.Default;
+        var obj = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
         var r1 = SqlObjectBuilderReferenceSource.Create( obj.Objects.CreateTable( "T" ) );
         var r2 = SqlObjectBuilderReferenceSource.Create( obj.Objects.CreateTable( "U" ) );
         SqlDatabaseBuilderMock.AddReference( obj, r1 );

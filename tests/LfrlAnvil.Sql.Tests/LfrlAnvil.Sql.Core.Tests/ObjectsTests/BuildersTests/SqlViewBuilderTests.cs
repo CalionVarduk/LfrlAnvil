@@ -6,6 +6,7 @@ using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ObjectsTests.BuildersTests;
 
@@ -14,7 +15,7 @@ public class SqlViewBuilderTests : TestsBase
     [Fact]
     public void ToString_ShouldReturnCorrectResult()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateView( "bar", SqlNode.RawQuery( "SELECT * FROM foo" ) );
 
         var result = sut.ToString();
@@ -25,7 +26,7 @@ public class SqlViewBuilderTests : TestsBase
     [Fact]
     public void Creation_ShouldMarkViewForCreation()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
 
         var actionCount = schema.Database.GetPendingActionCount();
         var sut = schema.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM bar" ) );
@@ -45,7 +46,7 @@ public class SqlViewBuilderTests : TestsBase
     [Fact]
     public void Creation_FollowedByRemoval_ShouldDoNothing()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
 
         var actionCount = schema.Database.GetPendingActionCount();
         var sut = schema.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM bar" ) );
@@ -58,7 +59,7 @@ public class SqlViewBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldDoNothing_WhenNewNameEqualsOldName()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM bar" ) );
 
         var actionCount = schema.Database.GetPendingActionCount();
@@ -75,7 +76,7 @@ public class SqlViewBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldDoNothing_WhenNameChangeIsFollowedByChangeToOriginal()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM bar" ) );
         var oldName = sut.Name;
 
@@ -94,7 +95,7 @@ public class SqlViewBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldUpdateName_WhenNewNameIsDifferentFromOldName()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM bar" ) );
         var oldName = sut.Name;
         var recordSet = sut.Node;
@@ -129,7 +130,7 @@ public class SqlViewBuilderTests : TestsBase
     [InlineData( "f\'oo" )]
     public void SetName_ShouldThrowSqlObjectBuilderException_WhenNameIsInvalid(string name)
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM bar" ) );
 
         var action = Lambda.Of( () => sut.SetName( name ) );
@@ -142,7 +143,7 @@ public class SqlViewBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldThrowSqlObjectBuilderException_WhenViewIsRemoved()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM bar" ) );
         sut.Remove();
 
@@ -156,7 +157,7 @@ public class SqlViewBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldThrowSqlObjectBuilderException_WhenNewNameAlreadyExistsInSchemaObjects()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var other = schema.Objects.CreateTable( "T" );
         other.Constraints.SetPrimaryKey( other.Columns.Create( "C" ).Asc() );
         var sut = schema.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM bar" ) );
@@ -171,7 +172,7 @@ public class SqlViewBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldRemoveViewAndClearReferencedObjects()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C" );
         var sut = schema.Objects.CreateView( "V", table.Node.ToDataSource().Select( s => new[] { s.From["C"].AsSelf() } ) );
@@ -198,7 +199,7 @@ public class SqlViewBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldDoNothing_WhenViewIsRemoved()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM bar" ) );
 
         schema.Database.Changes.CompletePendingChanges();
@@ -214,7 +215,7 @@ public class SqlViewBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldThrowSqlObjectBuilderException_WhenViewIsReferencedByAnyView()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM bar" ) );
         schema.Objects.CreateView( "W", sut.Node.ToDataSource().Select( s => new[] { s.GetAll() } ) );
 
@@ -228,7 +229,7 @@ public class SqlViewBuilderTests : TestsBase
     [Fact]
     public void QuickRemove_ShouldClearReferencingObjectsAndReferencedObjects()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C" );
         var sut = schema.Objects.CreateView( "V", table.Node.ToDataSource().Select( s => new[] { s.From["C"].AsSelf() } ) );
@@ -262,7 +263,7 @@ public class SqlViewBuilderTests : TestsBase
     [Fact]
     public void QuickRemove_ShouldDoNothing_WhenViewIsRemoved()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM bar" ) );
 
         schema.Database.Changes.CompletePendingChanges();
@@ -278,7 +279,7 @@ public class SqlViewBuilderTests : TestsBase
     [Fact]
     public void ISqlViewBuilder_SetName_ShouldBeEquivalentToSetName()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM bar" ) );
         var recordSet = sut.Node;
         _ = sut.Info;
@@ -308,7 +309,7 @@ public class SqlViewBuilderTests : TestsBase
     [Fact]
     public void ISqlObjectBuilder_SetName_ShouldBeEquivalentToSetName()
     {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM bar" ) );
         var recordSet = sut.Node;
         _ = sut.Info;

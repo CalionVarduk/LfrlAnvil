@@ -7,6 +7,7 @@ using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Tests.Helpers;
+using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests;
 
@@ -17,7 +18,7 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
 
     public SqlSchemaScopeExpressionValidatorTests()
     {
-        _schema = SqlDatabaseBuilderMock.Create().Schemas.Default;
+        _schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
         _sut = new SqlSchemaScopeExpressionValidator( _schema );
     }
 
@@ -152,7 +153,7 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     [Fact]
     public void VisitColumnBuilder_ShouldRegisterError_WhenColumnDoesNotBelongToTheSameDatabase()
     {
-        var table = SqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
+        var table = SqlDatabaseBuilderMockFactory.Create().Schemas.Default.Objects.CreateTable( "T" );
         table.Columns.Create( "A" );
         var node = table.Node.GetField( "A" );
 
@@ -1392,7 +1393,7 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     [Fact]
     public void VisitTableBuilder_ShouldRegisterError_WhenTableDoesNotBelongToTheSameDatabase()
     {
-        var table = SqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
+        var table = SqlDatabaseBuilderMockFactory.Create().Schemas.Default.Objects.CreateTable( "T" );
         var node = table.Node;
 
         _sut.VisitTableBuilder( node );
@@ -1469,7 +1470,7 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     [Fact]
     public void VisitViewBuilder_ShouldRegisterError_WhenViewDoesNotBelongToTheSameDatabase()
     {
-        var view = SqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
+        var view = SqlDatabaseBuilderMockFactory.Create().Schemas.Default.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM foo" ) );
         var node = view.Node;
 
         _sut.VisitViewBuilder( node );

@@ -3,9 +3,9 @@ using System.Linq;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
-using LfrlAnvil.Sql.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
+using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
 
@@ -177,7 +177,7 @@ public partial class ObjectExpressionsTests : TestsBase
     [Fact]
     public void Table_ShouldCreateTableNode()
     {
-        var table = TableMock.Create( "foo" );
+        var table = SqlTableMock.Create<int>( "foo", new[] { "a" } );
         var sut = table.ToRecordSet();
         var text = sut.ToString();
 
@@ -186,38 +186,18 @@ public partial class ObjectExpressionsTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.Table );
             sut.Info.Should().Be( table.Info );
             sut.Alias.Should().BeNull();
-            sut.Identifier.Should().Be( "foo" );
+            sut.Identifier.Should().Be( "common.foo" );
             sut.Table.Should().BeSameAs( table );
             sut.IsAliased.Should().BeFalse();
             sut.IsOptional.Should().BeFalse();
-            text.Should().Be( "[foo]" );
-        }
-    }
-
-    [Fact]
-    public void Table_ShouldCreateTableNode_WithSchemaName()
-    {
-        var table = TableMock.Create( "foo", SchemaMock.Create( "s" ) );
-        var sut = table.ToRecordSet();
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Table );
-            sut.Info.Should().Be( table.Info );
-            sut.Alias.Should().BeNull();
-            sut.Identifier.Should().Be( "s.foo" );
-            sut.Table.Should().BeSameAs( table );
-            sut.IsAliased.Should().BeFalse();
-            sut.IsOptional.Should().BeFalse();
-            text.Should().Be( "[s].[foo]" );
+            text.Should().Be( "[common].[foo]" );
         }
     }
 
     [Fact]
     public void Table_ShouldCreateTableNode_WithAlias()
     {
-        var table = TableMock.Create( "foo" );
+        var table = SqlTableMock.Create<int>( "foo", new[] { "a" } );
         var sut = table.ToRecordSet( "bar" );
         var text = sut.ToString();
 
@@ -230,35 +210,14 @@ public partial class ObjectExpressionsTests : TestsBase
             sut.Table.Should().BeSameAs( table );
             sut.IsAliased.Should().BeTrue();
             sut.IsOptional.Should().BeFalse();
-            text.Should().Be( "[foo] AS [bar]" );
-        }
-    }
-
-    [Fact]
-    public void Table_ShouldCreateTableNode_WithAliasAndSchemaName()
-    {
-        var table = TableMock.Create( "foo", SchemaMock.Create( "s" ) );
-        var sut = table.ToRecordSet( "bar" );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.Table );
-            sut.Info.Should().Be( table.Info );
-            sut.Alias.Should().Be( "bar" );
-            sut.Identifier.Should().Be( "bar" );
-            sut.Table.Should().BeSameAs( table );
-            sut.IsAliased.Should().BeTrue();
-            sut.IsOptional.Should().BeFalse();
-            text.Should().Be( "[s].[foo] AS [bar]" );
+            text.Should().Be( "[common].[foo] AS [bar]" );
         }
     }
 
     [Fact]
     public void TableBuilder_ShouldCreateTableBuilderNode()
     {
-        var pk = PrimaryKeyMock.CreateBuilder();
-        var table = TableMock.CreateBuilder( "foo", SchemaMock.CreateBuilder(), _ => pk );
+        var table = SqlTableBuilderMock.Create<int>( "foo", new[] { "a" } );
         var sut = table.ToRecordSet();
         var text = sut.ToString();
 
@@ -267,40 +226,18 @@ public partial class ObjectExpressionsTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.TableBuilder );
             sut.Info.Should().Be( table.Info );
             sut.Alias.Should().BeNull();
-            sut.Identifier.Should().Be( "foo" );
+            sut.Identifier.Should().Be( "common.foo" );
             sut.Table.Should().BeSameAs( table );
             sut.IsAliased.Should().BeFalse();
             sut.IsOptional.Should().BeFalse();
-            text.Should().Be( "[foo]" );
-        }
-    }
-
-    [Fact]
-    public void TableBuilder_ShouldCreateTableBuilderNode_WithSchemaName()
-    {
-        var pk = PrimaryKeyMock.CreateBuilder();
-        var table = TableMock.CreateBuilder( "foo", SchemaMock.CreateBuilder( "s" ), _ => pk );
-        var sut = table.ToRecordSet();
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.TableBuilder );
-            sut.Info.Should().Be( table.Info );
-            sut.Alias.Should().BeNull();
-            sut.Identifier.Should().Be( "s.foo" );
-            sut.Table.Should().BeSameAs( table );
-            sut.IsAliased.Should().BeFalse();
-            sut.IsOptional.Should().BeFalse();
-            text.Should().Be( "[s].[foo]" );
+            text.Should().Be( "[common].[foo]" );
         }
     }
 
     [Fact]
     public void TableBuilder_ShouldCreateTableBuilderNode_WithAlias()
     {
-        var pk = PrimaryKeyMock.CreateBuilder();
-        var table = TableMock.CreateBuilder( "foo", SchemaMock.CreateBuilder(), _ => pk );
+        var table = SqlTableBuilderMock.Create<int>( "foo", new[] { "a" } );
         var sut = table.ToRecordSet( "bar" );
         var text = sut.ToString();
 
@@ -313,35 +250,14 @@ public partial class ObjectExpressionsTests : TestsBase
             sut.Table.Should().BeSameAs( table );
             sut.IsAliased.Should().BeTrue();
             sut.IsOptional.Should().BeFalse();
-            text.Should().Be( "[foo] AS [bar]" );
-        }
-    }
-
-    [Fact]
-    public void TableBuilder_ShouldCreateTableBuilderNode_WithAliasAndSchemaName()
-    {
-        var pk = PrimaryKeyMock.CreateBuilder();
-        var table = TableMock.CreateBuilder( "foo", SchemaMock.CreateBuilder( "s" ), _ => pk );
-        var sut = table.ToRecordSet( "bar" );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.TableBuilder );
-            sut.Info.Should().Be( table.Info );
-            sut.Alias.Should().Be( "bar" );
-            sut.Identifier.Should().Be( "bar" );
-            sut.Table.Should().BeSameAs( table );
-            sut.IsAliased.Should().BeTrue();
-            sut.IsOptional.Should().BeFalse();
-            text.Should().Be( "[s].[foo] AS [bar]" );
+            text.Should().Be( "[common].[foo] AS [bar]" );
         }
     }
 
     [Fact]
     public void View_ShouldCreateViewNode()
     {
-        var view = ViewMock.Create( "foo" );
+        var view = SqlViewMock.Create( "foo" );
         var sut = view.ToRecordSet();
         var text = sut.ToString();
 
@@ -350,38 +266,18 @@ public partial class ObjectExpressionsTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.View );
             sut.Info.Should().Be( view.Info );
             sut.Alias.Should().BeNull();
-            sut.Identifier.Should().Be( "foo" );
+            sut.Identifier.Should().Be( "common.foo" );
             sut.View.Should().BeSameAs( view );
             sut.IsAliased.Should().BeFalse();
             sut.IsOptional.Should().BeFalse();
-            text.Should().Be( "[foo]" );
-        }
-    }
-
-    [Fact]
-    public void View_ShouldCreateViewNode_WithSchemaName()
-    {
-        var view = ViewMock.Create( "foo", SchemaMock.Create( "s" ) );
-        var sut = view.ToRecordSet();
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.View );
-            sut.Info.Should().Be( view.Info );
-            sut.Alias.Should().BeNull();
-            sut.Identifier.Should().Be( "s.foo" );
-            sut.View.Should().BeSameAs( view );
-            sut.IsAliased.Should().BeFalse();
-            sut.IsOptional.Should().BeFalse();
-            text.Should().Be( "[s].[foo]" );
+            text.Should().Be( "[common].[foo]" );
         }
     }
 
     [Fact]
     public void View_ShouldCreateViewNode_WithAlias()
     {
-        var view = ViewMock.Create( "foo" );
+        var view = SqlViewMock.Create( "foo" );
         var sut = view.ToRecordSet( "bar" );
         var text = sut.ToString();
 
@@ -394,34 +290,14 @@ public partial class ObjectExpressionsTests : TestsBase
             sut.View.Should().BeSameAs( view );
             sut.IsAliased.Should().BeTrue();
             sut.IsOptional.Should().BeFalse();
-            text.Should().Be( "[foo] AS [bar]" );
-        }
-    }
-
-    [Fact]
-    public void View_ShouldCreateViewNode_WithAliasAndSchemaName()
-    {
-        var view = ViewMock.Create( "foo", SchemaMock.Create( "s" ) );
-        var sut = view.ToRecordSet( "bar" );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.View );
-            sut.Info.Should().Be( view.Info );
-            sut.Alias.Should().Be( "bar" );
-            sut.Identifier.Should().Be( "bar" );
-            sut.View.Should().BeSameAs( view );
-            sut.IsAliased.Should().BeTrue();
-            sut.IsOptional.Should().BeFalse();
-            text.Should().Be( "[s].[foo] AS [bar]" );
+            text.Should().Be( "[common].[foo] AS [bar]" );
         }
     }
 
     [Fact]
     public void ViewBuilder_ShouldCreateViewBuilderNode()
     {
-        var view = ViewMock.CreateBuilder( "foo" );
+        var view = SqlViewBuilderMock.Create( "foo" );
         var sut = view.ToRecordSet();
         var text = sut.ToString();
 
@@ -430,38 +306,18 @@ public partial class ObjectExpressionsTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.ViewBuilder );
             sut.Info.Should().Be( view.Info );
             sut.Alias.Should().BeNull();
-            sut.Identifier.Should().Be( "foo" );
+            sut.Identifier.Should().Be( "common.foo" );
             sut.View.Should().BeSameAs( view );
             sut.IsAliased.Should().BeFalse();
             sut.IsOptional.Should().BeFalse();
-            text.Should().Be( "[foo]" );
-        }
-    }
-
-    [Fact]
-    public void ViewBuilder_ShouldCreateViewBuilderNode_WithSchemaName()
-    {
-        var view = ViewMock.CreateBuilder( "foo", SchemaMock.CreateBuilder( "s" ) );
-        var sut = view.ToRecordSet();
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.ViewBuilder );
-            sut.Info.Should().Be( view.Info );
-            sut.Alias.Should().BeNull();
-            sut.Identifier.Should().Be( "s.foo" );
-            sut.View.Should().BeSameAs( view );
-            sut.IsAliased.Should().BeFalse();
-            sut.IsOptional.Should().BeFalse();
-            text.Should().Be( "[s].[foo]" );
+            text.Should().Be( "[common].[foo]" );
         }
     }
 
     [Fact]
     public void ViewBuilder_ShouldCreateViewBuilderNode_WithAlias()
     {
-        var view = ViewMock.CreateBuilder( "foo" );
+        var view = SqlViewBuilderMock.Create( "foo" );
         var sut = view.ToRecordSet( "bar" );
         var text = sut.ToString();
 
@@ -474,27 +330,7 @@ public partial class ObjectExpressionsTests : TestsBase
             sut.View.Should().BeSameAs( view );
             sut.IsAliased.Should().BeTrue();
             sut.IsOptional.Should().BeFalse();
-            text.Should().Be( "[foo] AS [bar]" );
-        }
-    }
-
-    [Fact]
-    public void ViewBuilder_ShouldCreateViewBuilderNode_WithAliasAndSchemaName()
-    {
-        var view = ViewMock.CreateBuilder( "foo", SchemaMock.CreateBuilder( "s" ) );
-        var sut = view.ToRecordSet( "bar" );
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.ViewBuilder );
-            sut.Info.Should().Be( view.Info );
-            sut.Alias.Should().Be( "bar" );
-            sut.Identifier.Should().Be( "bar" );
-            sut.View.Should().BeSameAs( view );
-            sut.IsAliased.Should().BeTrue();
-            sut.IsOptional.Should().BeFalse();
-            text.Should().Be( "[s].[foo] AS [bar]" );
+            text.Should().Be( "[common].[foo] AS [bar]" );
         }
     }
 
@@ -1326,7 +1162,7 @@ INNER JOIN [qux] ON FALSE" );
     [Fact]
     public void BaseDataSourceNodeAddTrait_ShouldCallSetTraits()
     {
-        var sut = new DataSourceNodeMock().AddTrait( SqlNode.DistinctTrait() );
+        var sut = new SqlDataSourceNodeMock().AddTrait( SqlNode.DistinctTrait() );
 
         using ( new AssertionScope() )
         {

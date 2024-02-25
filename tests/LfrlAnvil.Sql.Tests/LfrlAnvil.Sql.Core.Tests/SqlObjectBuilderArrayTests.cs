@@ -9,7 +9,7 @@ public class SqlObjectBuilderArrayTests : TestsBase
     [Fact]
     public void From_ShouldCreateCorrectArray()
     {
-        var table = SqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
+        var table = SqlDatabaseBuilderMockFactory.Create().Schemas.Default.Objects.CreateTable( "T" );
         var c1 = table.Columns.Create( "C1" );
         var c2 = table.Columns.Create( "C2" );
 
@@ -28,7 +28,7 @@ public class SqlObjectBuilderArrayTests : TestsBase
     [Fact]
     public void UnsafeReinterpretAs_ShouldReturnCorrectArray()
     {
-        var table = SqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
+        var table = SqlDatabaseBuilderMockFactory.Create().Schemas.Default.Objects.CreateTable( "T" );
         var c1 = table.Columns.Create( "C1" );
         var c2 = table.Columns.Create( "C2" );
         var sut = SqlObjectBuilderArray<ISqlObjectBuilder>.From<SqlObjectBuilder>( new SqlObjectBuilder[] { table, c1, c2 } );

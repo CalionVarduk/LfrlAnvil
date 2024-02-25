@@ -3,9 +3,9 @@ using System.Threading.Tasks;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Statements;
 using LfrlAnvil.Sql.Statements.Compilers;
-using LfrlAnvil.Sql.Tests.Helpers;
-using LfrlAnvil.Sql.Tests.Helpers.Data;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Mocks;
+using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
 namespace LfrlAnvil.Sql.Tests.StatementsTests;
 
@@ -67,17 +67,12 @@ public class SqlAsyncMultiDataReaderTests : TestsBase
     [Fact]
     public async Task ReadAsync_TypeErased_ShouldReadCorrectResultSetsAndCallDisposeOnceDone()
     {
-        var command = new DbCommandMock
-        {
-            ResultSets = new[]
-            {
-                new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ),
-                new ResultSet( new[] { "X", "Y" }, new[] { new object[] { "x1", "y1" }, new object?[] { "x2", null } } ),
-                new ResultSet( new[] { "M", "N" }, new[] { new object[] { true, 5.0 }, new object?[] { false, null } } )
-            }
-        };
+        var command = new DbCommandMock(
+            new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ),
+            new ResultSet( new[] { "X", "Y" }, new[] { new object[] { "x1", "y1" }, new object?[] { "x2", null } } ),
+            new ResultSet( new[] { "M", "N" }, new[] { new object[] { true, 5.0 }, new object?[] { false, null } } ) );
 
-        var factory = new QueryFactory( new SqlDialect( "foo" ) );
+        var factory = SqlQueryReaderFactoryMock.CreateInstance();
         var reader = factory.CreateAsync();
         var sut = await command.MultiQueryAsync();
 
@@ -87,7 +82,7 @@ public class SqlAsyncMultiDataReaderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            command.Audit.LastOrDefault().Should().Be( "DbDataReader.Close" );
+            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
 
             set1.Rows.Should().NotBeNull();
             (set1.Rows?.Count).Should().Be( 2 );
@@ -109,17 +104,12 @@ public class SqlAsyncMultiDataReaderTests : TestsBase
     [Fact]
     public async Task ReadAsync_Generic_ShouldReadCorrectResultSetsAndCallDisposeOnceDone()
     {
-        var command = new DbCommandMock
-        {
-            ResultSets = new[]
-            {
-                new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ),
-                new ResultSet( new[] { "X", "Y" }, new[] { new object[] { "x1", "y1" }, new object?[] { "x2", null } } ),
-                new ResultSet( new[] { "M", "N" }, new[] { new object[] { true, 5.0 }, new object?[] { false, null } } )
-            }
-        };
+        var command = new DbCommandMock(
+            new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ),
+            new ResultSet( new[] { "X", "Y" }, new[] { new object[] { "x1", "y1" }, new object?[] { "x2", null } } ),
+            new ResultSet( new[] { "M", "N" }, new[] { new object[] { true, 5.0 }, new object?[] { false, null } } ) );
 
-        var factory = new QueryFactory( new SqlDialect( "foo" ) );
+        var factory = SqlQueryReaderFactoryMock.CreateInstance();
         var sut = await command.MultiQueryAsync();
 
         var set1 = await sut.ReadAsync( factory.CreateAsync<FirstRow>() );
@@ -128,7 +118,7 @@ public class SqlAsyncMultiDataReaderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            command.Audit.LastOrDefault().Should().Be( "DbDataReader.Close" );
+            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
             set1.Rows.Should().BeSequentiallyEqualTo( new FirstRow( 1, "foo" ), new FirstRow( 2, "bar" ) );
             set2.Rows.Should().BeSequentiallyEqualTo( new SecondRow( "x1", "y1" ), new SecondRow( "x2", null ) );
             set3.Rows.Should().BeSequentiallyEqualTo( new ThirdRow( true, 5.0 ), new ThirdRow( false, null ) );
@@ -138,15 +128,10 @@ public class SqlAsyncMultiDataReaderTests : TestsBase
     [Fact]
     public async Task ReadAsync_WithCustomValueTaskDelegate_ShouldReadCorrectResultSetsAndCallDisposeOnceDone()
     {
-        var command = new DbCommandMock
-        {
-            ResultSets = new[]
-            {
-                new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ),
-                new ResultSet( new[] { "X", "Y" }, new[] { new object[] { "x1", "y1" }, new object?[] { "x2", null } } ),
-                new ResultSet( new[] { "M", "N" }, new[] { new object[] { true, 5.0 }, new object?[] { false, null } } )
-            }
-        };
+        var command = new DbCommandMock(
+            new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ),
+            new ResultSet( new[] { "X", "Y" }, new[] { new object[] { "x1", "y1" }, new object?[] { "x2", null } } ),
+            new ResultSet( new[] { "M", "N" }, new[] { new object[] { true, 5.0 }, new object?[] { false, null } } ) );
 
         var sut = await command.MultiQueryAsync();
 
@@ -156,7 +141,7 @@ public class SqlAsyncMultiDataReaderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            command.Audit.LastOrDefault().Should().Be( "DbDataReader.Close" );
+            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
             set1.Should().Be( 1 );
             set2.Should().Be( "foo" );
             set3.Should().Be( true );
@@ -166,15 +151,10 @@ public class SqlAsyncMultiDataReaderTests : TestsBase
     [Fact]
     public async Task ReadAsync_WithCustomTaskDelegate_ShouldReadCorrectResultSetsAndCallDisposeOnceDone()
     {
-        var command = new DbCommandMock
-        {
-            ResultSets = new[]
-            {
-                new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ),
-                new ResultSet( new[] { "X", "Y" }, new[] { new object[] { "x1", "y1" }, new object?[] { "x2", null } } ),
-                new ResultSet( new[] { "M", "N" }, new[] { new object[] { true, 5.0 }, new object?[] { false, null } } )
-            }
-        };
+        var command = new DbCommandMock(
+            new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ),
+            new ResultSet( new[] { "X", "Y" }, new[] { new object[] { "x1", "y1" }, new object?[] { "x2", null } } ),
+            new ResultSet( new[] { "M", "N" }, new[] { new object[] { true, 5.0 }, new object?[] { false, null } } ) );
 
         var sut = await command.MultiQueryAsync();
 
@@ -184,7 +164,7 @@ public class SqlAsyncMultiDataReaderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            command.Audit.LastOrDefault().Should().Be( "DbDataReader.Close" );
+            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
             set1.Should().Be( 1 );
             set2.Should().Be( "foo" );
             set3.Should().Be( true );
@@ -194,24 +174,19 @@ public class SqlAsyncMultiDataReaderTests : TestsBase
     [Fact]
     public async Task ReadAllAsync_ShouldReadAllAvailableResultSetsAndCallDisposeOnceDone()
     {
-        var command = new DbCommandMock
-        {
-            ResultSets = new[]
-            {
-                new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ),
-                new ResultSet( new[] { "X", "Y" }, new[] { new object[] { "x1", "y1" }, new object?[] { "x2", null } } ),
-                new ResultSet( new[] { "M", "N" }, new[] { new object[] { true, 5.0 }, new object?[] { false, null } } )
-            }
-        };
+        var command = new DbCommandMock(
+            new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ),
+            new ResultSet( new[] { "X", "Y" }, new[] { new object[] { "x1", "y1" }, new object?[] { "x2", null } } ),
+            new ResultSet( new[] { "M", "N" }, new[] { new object[] { true, 5.0 }, new object?[] { false, null } } ) );
 
-        var factory = new QueryFactory( new SqlDialect( "foo" ) );
+        var factory = SqlQueryReaderFactoryMock.CreateInstance();
         var sut = await command.MultiQueryAsync();
 
         var result = await sut.ReadAllAsync( factory.CreateAsync() );
 
         using ( new AssertionScope() )
         {
-            command.Audit.LastOrDefault().Should().Be( "DbDataReader.Close" );
+            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
             result.Should().HaveCount( 3 );
             var set1 = result.ElementAtOrDefault( 0 );
             var set2 = result.ElementAtOrDefault( 1 );
@@ -239,10 +214,4 @@ public class SqlAsyncMultiDataReaderTests : TestsBase
     public sealed record SecondRow(string X, string? Y);
 
     public sealed record ThirdRow(bool M, double? N);
-
-    private sealed class QueryFactory : SqlQueryReaderFactory<DbDataReaderMock>
-    {
-        public QueryFactory(SqlDialect dialect)
-            : base( dialect, ColumnTypeDefinitionProviderMock.Default( dialect ) ) { }
-    }
 }

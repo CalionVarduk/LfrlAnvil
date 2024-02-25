@@ -13,7 +13,7 @@ public abstract class SqlColumnBuilderCollection : SqlBuilderApi, ISqlColumnBuil
     private readonly Dictionary<string, SqlColumnBuilder> _map;
     private SqlTableBuilder? _table;
 
-    internal SqlColumnBuilderCollection(SqlColumnTypeDefinition defaultTypeDefinition)
+    protected SqlColumnBuilderCollection(SqlColumnTypeDefinition defaultTypeDefinition)
     {
         _table = null;
         _map = new Dictionary<string, SqlColumnBuilder>( SqlHelpers.NameComparer );
