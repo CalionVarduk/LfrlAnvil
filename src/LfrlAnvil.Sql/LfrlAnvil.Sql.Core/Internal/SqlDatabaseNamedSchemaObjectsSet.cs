@@ -5,12 +5,12 @@ using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.Sql.Internal;
 
-public readonly struct SqlDatabaseNamedObjectsSet<T>
+public readonly struct SqlDatabaseNamedSchemaObjectsSet<T>
     where T : SqlObjectBuilder
 {
-    private readonly Dictionary<string, T> _map;
+    private readonly Dictionary<SqlSchemaObjectName, T> _map;
 
-    private SqlDatabaseNamedObjectsSet(Dictionary<string, T> map)
+    private SqlDatabaseNamedSchemaObjectsSet(Dictionary<SqlSchemaObjectName, T> map)
     {
         _map = map;
     }
@@ -19,26 +19,26 @@ public readonly struct SqlDatabaseNamedObjectsSet<T>
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlDatabaseNamedObjectsSet<T> Create()
+    public static SqlDatabaseNamedSchemaObjectsSet<T> Create()
     {
-        return new SqlDatabaseNamedObjectsSet<T>( new Dictionary<string, T>( SqlHelpers.NameComparer ) );
+        return new SqlDatabaseNamedSchemaObjectsSet<T>( new Dictionary<SqlSchemaObjectName, T>() );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public bool Add(string name, T obj)
+    public bool Add(SqlSchemaObjectName name, T obj)
     {
         return _map.TryAdd( name, obj );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public T? Remove(string name)
+    public T? Remove(SqlSchemaObjectName name)
     {
         return _map.Remove( name, out var removed ) ? removed : null;
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public T? TryGetObject(string name)
+    public T? TryGetObject(SqlSchemaObjectName name)
     {
         return _map.GetValueOrDefault( name );
     }
@@ -58,19 +58,19 @@ public readonly struct SqlDatabaseNamedObjectsSet<T>
 
     public struct Enumerator
     {
-        private Dictionary<string, T>.Enumerator _base;
+        private Dictionary<SqlSchemaObjectName, T>.Enumerator _base;
 
-        internal Enumerator(Dictionary<string, T> map)
+        internal Enumerator(Dictionary<SqlSchemaObjectName, T> map)
         {
             _base = map.GetEnumerator();
         }
 
-        public SqlNamedObject<T> Current
+        public SqlNamedSchemaObject<T> Current
         {
             get
             {
                 var current = _base.Current;
-                return new SqlNamedObject<T>( current.Key, current.Value );
+                return new SqlNamedSchemaObject<T>( current.Key, current.Value );
             }
         }
 

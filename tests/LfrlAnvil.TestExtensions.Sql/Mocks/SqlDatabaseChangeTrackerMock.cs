@@ -7,23 +7,21 @@ namespace LfrlAnvil.TestExtensions.Sql.Mocks;
 
 public sealed class SqlDatabaseChangeTrackerMock : SqlDatabaseChangeTracker
 {
-    protected override SqlDatabaseBuilderCommandAction? PrepareCreateObjectAction(SqlObjectBuilder obj)
+    protected override void CompletePendingCreateObjectChanges(SqlObjectBuilder obj)
     {
-        return SqlDatabaseBuilderCommandAction.CreateSql( $"CREATE {obj};", ActionTimeout );
+        AddAction( SqlDatabaseBuilderCommandAction.CreateSql( $"CREATE {obj};", ActionTimeout ) );
     }
 
-    protected override SqlDatabaseBuilderCommandAction? PrepareRemoveObjectAction(SqlObjectBuilder obj)
+    protected override void CompletePendingRemoveObjectChanges(SqlObjectBuilder obj)
     {
-        return SqlDatabaseBuilderCommandAction.CreateSql( $"REMOVE {obj};", ActionTimeout );
+        AddAction( SqlDatabaseBuilderCommandAction.CreateSql( $"REMOVE {obj};", ActionTimeout ) );
     }
 
-    protected override SqlDatabaseBuilderCommandAction? PrepareAlterObjectAction(
-        SqlObjectBuilder obj,
-        SqlDatabaseChangeAggregator changeAggregator)
+    protected override void CompletePendingAlterObjectChanges(SqlObjectBuilder obj, SqlDatabaseChangeAggregator changeAggregator)
     {
         var aggregator = ReinterpretCast.To<SqlDatabaseChangeAggregatorMock>( changeAggregator );
         var aggregatedChanges = string.Join( $"{Environment.NewLine}  ", aggregator.ChangeQueue.Order().Prepend( $"ALTER {obj}" ) );
-        return SqlDatabaseBuilderCommandAction.CreateSql( $"{aggregatedChanges};", ActionTimeout );
+        AddAction( SqlDatabaseBuilderCommandAction.CreateSql( $"{aggregatedChanges};", ActionTimeout ) );
     }
 
     [Pure]

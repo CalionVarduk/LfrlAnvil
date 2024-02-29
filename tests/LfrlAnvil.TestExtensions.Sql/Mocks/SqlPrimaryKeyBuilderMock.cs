@@ -9,6 +9,7 @@ public sealed class SqlPrimaryKeyBuilderMock : SqlPrimaryKeyBuilder
 
     public new SqlDatabaseBuilderMock Database => ReinterpretCast.To<SqlDatabaseBuilderMock>( base.Database );
     public new SqlTableBuilderMock Table => ReinterpretCast.To<SqlTableBuilderMock>( base.Table );
+    public new SqlIndexBuilderMock Index => ReinterpretCast.To<SqlIndexBuilderMock>( base.Index );
 
     public new SqlPrimaryKeyBuilderMock SetName(string name)
     {

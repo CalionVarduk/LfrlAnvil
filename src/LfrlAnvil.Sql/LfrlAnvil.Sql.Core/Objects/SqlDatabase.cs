@@ -31,6 +31,7 @@ public abstract class SqlDatabase : ISqlDatabase
         ParameterBinders = builder.ParameterBinders;
         Schemas = schemas;
         Schemas.SetDatabase( this, builder.Schemas );
+        TypeDefinitions.Lock();
     }
 
     public SqlDialect Dialect { get; }

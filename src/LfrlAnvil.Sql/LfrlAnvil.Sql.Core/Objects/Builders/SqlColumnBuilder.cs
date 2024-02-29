@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 using LfrlAnvil.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
@@ -183,6 +184,12 @@ public abstract class SqlColumnBuilder : SqlObjectBuilder, ISqlColumnBuilder
         if ( ! Database.TypeDefinitions.Contains( definition ) )
             ExceptionThrower.Throw(
                 SqlHelpers.CreateObjectBuilderException( Database, ExceptionResources.UnrecognizedTypeDefinition( definition ) ) );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    protected void SetDefaultValueBasedOnDataType()
+    {
+        DefaultValue = TypeDefinition.DefaultValue;
     }
 
     ISqlColumnBuilder ISqlColumnBuilder.SetName(string name)

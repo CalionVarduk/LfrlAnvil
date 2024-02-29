@@ -5,12 +5,12 @@ using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sql.Tests;
 
-public class SqlDatabaseNamedObjectsSetTests : TestsBase
+public class SqlDatabaseNamedSchemaObjectsSetTests : TestsBase
 {
     [Fact]
     public void Create_ShouldReturnEmptySet()
     {
-        var sut = SqlDatabaseNamedObjectsSet<SqlObjectBuilder>.Create();
+        var sut = SqlDatabaseNamedSchemaObjectsSet<SqlObjectBuilder>.Create();
 
         using ( new AssertionScope() )
         {
@@ -23,15 +23,17 @@ public class SqlDatabaseNamedObjectsSetTests : TestsBase
     public void Add_ShouldAddNewObject()
     {
         var obj = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
-        var sut = SqlDatabaseNamedObjectsSet<SqlObjectBuilder>.Create();
+        var sut = SqlDatabaseNamedSchemaObjectsSet<SqlObjectBuilder>.Create();
 
-        var result = sut.Add( "foo", obj );
+        var result = sut.Add( SqlSchemaObjectName.Create( "foo", "bar" ), obj );
 
         using ( new AssertionScope() )
         {
             result.Should().BeTrue();
             sut.Count.Should().Be( 1 );
-            ToArray( sut ).Should().BeSequentiallyEqualTo( new SqlNamedObject<SqlObjectBuilder>( "foo", obj ) );
+            ToArray( sut )
+                .Should()
+                .BeSequentiallyEqualTo( new SqlNamedSchemaObject<SqlObjectBuilder>( SqlSchemaObjectName.Create( "foo", "bar" ), obj ) );
         }
     }
 
@@ -39,16 +41,18 @@ public class SqlDatabaseNamedObjectsSetTests : TestsBase
     public void Add_ShouldReturnFalse_WhenNameAlreadyExists()
     {
         var obj = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
-        var sut = SqlDatabaseNamedObjectsSet<SqlObjectBuilder>.Create();
-        sut.Add( "foo", obj );
+        var sut = SqlDatabaseNamedSchemaObjectsSet<SqlObjectBuilder>.Create();
+        sut.Add( SqlSchemaObjectName.Create( "foo", "bar" ), obj );
 
-        var result = sut.Add( "foo", obj.Objects.CreateTable( "T" ) );
+        var result = sut.Add( SqlSchemaObjectName.Create( "foo", "bar" ), obj.Objects.CreateTable( "T" ) );
 
         using ( new AssertionScope() )
         {
             result.Should().BeFalse();
             sut.Count.Should().Be( 1 );
-            ToArray( sut ).Should().BeSequentiallyEqualTo( new SqlNamedObject<SqlObjectBuilder>( "foo", obj ) );
+            ToArray( sut )
+                .Should()
+                .BeSequentiallyEqualTo( new SqlNamedSchemaObject<SqlObjectBuilder>( SqlSchemaObjectName.Create( "foo", "bar" ), obj ) );
         }
     }
 
@@ -56,10 +60,10 @@ public class SqlDatabaseNamedObjectsSetTests : TestsBase
     public void Remove_ShouldRemoveExistingObject()
     {
         var obj = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
-        var sut = SqlDatabaseNamedObjectsSet<SqlObjectBuilder>.Create();
-        sut.Add( "foo", obj );
+        var sut = SqlDatabaseNamedSchemaObjectsSet<SqlObjectBuilder>.Create();
+        sut.Add( SqlSchemaObjectName.Create( "foo", "bar" ), obj );
 
-        var result = sut.Remove( "foo" );
+        var result = sut.Remove( SqlSchemaObjectName.Create( "foo", "bar" ) );
 
         using ( new AssertionScope() )
         {
@@ -72,9 +76,9 @@ public class SqlDatabaseNamedObjectsSetTests : TestsBase
     [Fact]
     public void Remove_ShouldReturnNull_WhenNameDoesNotExist()
     {
-        var sut = SqlDatabaseNamedObjectsSet<SqlObjectBuilder>.Create();
+        var sut = SqlDatabaseNamedSchemaObjectsSet<SqlObjectBuilder>.Create();
 
-        var result = sut.Remove( "foo" );
+        var result = sut.Remove( SqlSchemaObjectName.Create( "foo", "bar" ) );
 
         using ( new AssertionScope() )
         {
@@ -88,10 +92,10 @@ public class SqlDatabaseNamedObjectsSetTests : TestsBase
     public void TryGetObject_ShouldReturnObject_WhenNameExists()
     {
         var obj = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
-        var sut = SqlDatabaseNamedObjectsSet<SqlObjectBuilder>.Create();
-        sut.Add( "foo", obj );
+        var sut = SqlDatabaseNamedSchemaObjectsSet<SqlObjectBuilder>.Create();
+        sut.Add( SqlSchemaObjectName.Create( "foo", "bar" ), obj );
 
-        var result = sut.TryGetObject( "foo" );
+        var result = sut.TryGetObject( SqlSchemaObjectName.Create( "foo", "bar" ) );
 
         result.Should().BeSameAs( obj );
     }
@@ -99,8 +103,8 @@ public class SqlDatabaseNamedObjectsSetTests : TestsBase
     [Fact]
     public void TryGetObject_ShouldReturnNul_WhenNameDoesNotExist()
     {
-        var sut = SqlDatabaseNamedObjectsSet<SqlObjectBuilder>.Create();
-        var result = sut.TryGetObject( "foo" );
+        var sut = SqlDatabaseNamedSchemaObjectsSet<SqlObjectBuilder>.Create();
+        var result = sut.TryGetObject( SqlSchemaObjectName.Create( "foo", "bar" ) );
         result.Should().BeNull();
     }
 
@@ -108,8 +112,8 @@ public class SqlDatabaseNamedObjectsSetTests : TestsBase
     public void Clear_ShouldRemoveAllObjects()
     {
         var obj = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
-        var sut = SqlDatabaseNamedObjectsSet<SqlObjectBuilder>.Create();
-        sut.Add( "foo", obj );
+        var sut = SqlDatabaseNamedSchemaObjectsSet<SqlObjectBuilder>.Create();
+        sut.Add( SqlSchemaObjectName.Create( "foo", "bar" ), obj );
 
         sut.Clear();
 
@@ -120,11 +124,11 @@ public class SqlDatabaseNamedObjectsSetTests : TestsBase
         }
     }
 
-    private static SqlNamedObject<T>[] ToArray<T>(SqlDatabaseNamedObjectsSet<T> set)
+    private static SqlNamedSchemaObject<T>[] ToArray<T>(SqlDatabaseNamedSchemaObjectsSet<T> set)
         where T : SqlObjectBuilder
     {
         var i = 0;
-        var result = new SqlNamedObject<T>[set.Count];
+        var result = new SqlNamedSchemaObject<T>[set.Count];
         foreach ( var obj in set )
             result[i++] = obj;
 

@@ -212,27 +212,23 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         if ( ActiveObject is null )
             return this;
 
-        SqlDatabaseBuilderCommandAction? action = null;
         switch ( ActiveObjectExistenceState )
         {
             case SqlObjectExistenceState.Created:
                 Assume.True( _activeChanges is null || _activeChanges.Count == 0 );
-                action = PrepareCreateObjectAction( ActiveObject );
+                CompletePendingCreateObjectChanges( ActiveObject );
                 break;
 
             case SqlObjectExistenceState.Removed:
-                action = PrepareRemoveObjectAction( ActiveObject );
+                CompletePendingRemoveObjectChanges( ActiveObject );
                 break;
 
             default:
                 if ( _activeChanges is not null && _activeChanges.Count > 0 )
-                    action = PrepareAlterObjectAction( ActiveObject );
+                    CompletePendingAlterObjectChanges( ActiveObject );
 
                 break;
         }
-
-        if ( action is not null )
-            AddAction( action.Value );
 
         ClearActiveObjectState();
         return this;
@@ -311,6 +307,7 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         T newValue)
     {
         Assume.True( IsActive );
+        Assume.False( Equals( originalValue, newValue ) );
 
         if ( ! ReferenceEquals( ActiveObject, activeObject ) )
         {
@@ -323,7 +320,8 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
 
         if ( descriptor.Equals( SqlObjectChangeDescriptor.IsRemoved ) )
         {
-            HandleIsRemovedChange( target );
+            Assume.IsNotNull( newValue );
+            HandleIsRemovedChange( target, (bool)(object)newValue );
             return;
         }
 
@@ -346,12 +344,9 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
             _activeChanges.Remove( changeKey );
     }
 
-    protected abstract SqlDatabaseBuilderCommandAction? PrepareCreateObjectAction(SqlObjectBuilder obj);
-    protected abstract SqlDatabaseBuilderCommandAction? PrepareRemoveObjectAction(SqlObjectBuilder obj);
-
-    protected abstract SqlDatabaseBuilderCommandAction? PrepareAlterObjectAction(
-        SqlObjectBuilder obj,
-        SqlDatabaseChangeAggregator changeAggregator);
+    protected abstract void CompletePendingCreateObjectChanges(SqlObjectBuilder obj);
+    protected abstract void CompletePendingRemoveObjectChanges(SqlObjectBuilder obj);
+    protected abstract void CompletePendingAlterObjectChanges(SqlObjectBuilder obj, SqlDatabaseChangeAggregator changeAggregator);
 
     [Pure]
     protected abstract SqlDatabaseChangeAggregator CreateAlterObjectChangeAggregator();
@@ -374,7 +369,14 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         return _interpreterContext ??= SqlNodeInterpreterContext.Create( capacity: 2048 );
     }
 
-    protected SqlDatabaseBuilderCommandAction? PrepareAlterObjectAction(SqlObjectBuilder obj)
+    protected void AddAction(SqlDatabaseBuilderCommandAction action)
+    {
+        Assume.True( IsActive );
+        _pendingActions ??= new List<SqlDatabaseBuilderCommandAction>();
+        _pendingActions.Add( action );
+    }
+
+    protected void CompletePendingAlterObjectChanges(SqlObjectBuilder obj)
     {
         Assume.IsNotNull( _activeChanges );
 
@@ -382,9 +384,8 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         foreach ( var (key, payload) in _activeChanges )
             changeAggregator.Add( payload.Target, key.Descriptor, payload.OriginalValue );
 
-        var result = PrepareAlterObjectAction( obj, changeAggregator );
+        CompletePendingAlterObjectChanges( obj, changeAggregator );
         changeAggregator.Clear();
-        return result;
     }
 
     internal void Created(SqlObjectBuilder activeObject, SqlObjectBuilder target)
@@ -490,13 +491,6 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
             AddOnUpdateBehaviorChange( target, originalValue );
     }
 
-    internal void AddAction(SqlDatabaseBuilderCommandAction action)
-    {
-        Assume.True( IsActive );
-        _pendingActions ??= new List<SqlDatabaseBuilderCommandAction>();
-        _pendingActions.Add( action );
-    }
-
     internal void SetDatabase(SqlDatabaseBuilder database)
     {
         Assume.IsNull( _database );
@@ -516,11 +510,11 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         _pendingActions?.Clear();
     }
 
-    private void HandleIsRemovedChange(SqlObjectBuilder target)
+    private void HandleIsRemovedChange(SqlObjectBuilder target, bool isRemoved)
     {
         if ( ReferenceEquals( ActiveObject, target ) )
         {
-            if ( ! target.IsRemoved )
+            if ( ! isRemoved )
                 ActiveObjectExistenceState = SqlObjectExistenceState.Created;
             else if ( ActiveObjectExistenceState == SqlObjectExistenceState.Unchanged )
             {
@@ -540,7 +534,7 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
             return;
 
         var changeKey = new ChangeKey( target.Id, SqlObjectChangeDescriptor.IsRemoved );
-        if ( ! target.IsRemoved )
+        if ( ! isRemoved )
             AddActiveChangeEntry( changeKey, new ChangePayload( target, Boxed.True ) );
         else
         {
