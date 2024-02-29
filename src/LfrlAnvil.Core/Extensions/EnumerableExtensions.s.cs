@@ -723,18 +723,29 @@ public static class EnumerableExtensions
     }
 
     [Pure]
-    public static (List<T> Passed, List<T> Failed) Partition<T>(this IEnumerable<T> source, Func<T, bool> predicate)
+    public static PartitionResult<T> Partition<T>(this IEnumerable<T> source, Func<T, bool> predicate)
     {
-        var passed = new List<T>();
-        var failed = new List<T>();
+        using var enumerator = source.GetEnumerator();
+        if ( ! enumerator.MoveNext() )
+            return default;
 
-        foreach ( var e in source )
+        var passedCount = 0;
+        var items = source.TryGetNonEnumeratedCount( out var count ) ? new List<T>( capacity: count ) : new List<T>();
+
+        do
         {
-            var target = predicate( e ) ? passed : failed;
-            target.Add( e );
-        }
+            var current = enumerator.Current;
+            items.Add( current );
 
-        return (passed, failed);
+            if ( ! predicate( current ) )
+                continue;
+
+            (items[^1], items[passedCount]) = (items[passedCount], items[^1]);
+            ++passedCount;
+        }
+        while ( enumerator.MoveNext() );
+
+        return new PartitionResult<T>( items, passedCount );
     }
 
     [Pure]

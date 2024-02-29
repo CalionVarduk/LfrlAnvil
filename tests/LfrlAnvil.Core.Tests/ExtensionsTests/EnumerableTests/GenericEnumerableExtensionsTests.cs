@@ -1039,19 +1039,41 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Fact]
-    public void Partition_ShouldReturnResultWithPassedContainingElementsThatReturnedTrueInPredicate_AndFailedContainingOtherElements()
+    public void Partition_ShouldReturnEmptyResult_WhenSourceIsEmpty()
     {
-        var sut = Fixture.CreateDistinctSortedCollection<T>( count: 10 );
-        var pivot = sut[6];
-        var expectedPassed = sut.Take( 7 );
-        var expectedFailed = sut.Skip( 7 );
-
-        var (passed, failed) = sut.Partition( e => Comparer.Compare( e, pivot ) <= 0 );
+        var sut = Array.Empty<T>();
+        var result = sut.Partition( _ => true );
 
         using ( new AssertionScope() )
         {
-            passed.Should().BeSequentiallyEqualTo( expectedPassed );
-            failed.Should().BeSequentiallyEqualTo( expectedFailed );
+            result.Items.Should().BeEmpty();
+            result.PassedItems.Should().BeEmpty();
+            result.PassedItemsSpan.ToArray().Should().BeEmpty();
+            result.FailedItems.Should().BeEmpty();
+            result.FailedItemsSpan.ToArray().Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void Partition_ShouldReturnResultWithPassedContainingElementsThatReturnedTrueInPredicate_AndFailedContainingOtherElements()
+    {
+        var sut = Fixture.CreateDistinctCollection<T>( count: 10 );
+        var expectedPassed = new[] { sut[0], sut[2], sut[4], sut[6], sut[8] };
+        var expectedFailed = new[] { sut[1], sut[3], sut[5], sut[7], sut[9] };
+
+        var index = 0;
+        var result = sut.Partition( _ => (index++).IsEven() );
+
+        using ( new AssertionScope() )
+        {
+            result.Items.Should().HaveCount( sut.Count );
+            result.Items.Should().BeEquivalentTo( sut );
+            result.PassedItems.Should().HaveCount( expectedPassed.Length );
+            result.PassedItems.Should().BeEquivalentTo( expectedPassed );
+            result.PassedItemsSpan.ToArray().Should().BeSequentiallyEqualTo( result.PassedItems );
+            result.FailedItems.Should().HaveCount( expectedFailed.Length );
+            result.FailedItems.Should().BeEquivalentTo( expectedFailed );
+            result.FailedItemsSpan.ToArray().Should().BeSequentiallyEqualTo( result.FailedItems );
         }
     }
 
