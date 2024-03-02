@@ -4,11 +4,11 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Sql.Statements;
 
-public readonly record struct SqlScalarReaderExecutor(SqlScalarReader Reader, string Sql)
+public readonly record struct SqlScalarQueryReaderExecutor(SqlScalarQueryReader Reader, string Sql)
 {
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public SqlScalarResult Execute(IDbCommand command)
+    public SqlScalarQueryResult Execute(IDbCommand command)
     {
         command.CommandText = Sql;
         using var reader = command.ExecuteReader();
@@ -16,11 +16,11 @@ public readonly record struct SqlScalarReaderExecutor(SqlScalarReader Reader, st
     }
 }
 
-public readonly record struct SqlScalarReaderExecutor<T>(SqlScalarReader<T> Reader, string Sql)
+public readonly record struct SqlScalarQueryReaderExecutor<T>(SqlScalarQueryReader<T> Reader, string Sql)
 {
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public SqlScalarResult<T> Execute(IDbCommand command)
+    public SqlScalarQueryResult<T> Execute(IDbCommand command)
     {
         command.CommandText = Sql;
         using var reader = command.ExecuteReader();

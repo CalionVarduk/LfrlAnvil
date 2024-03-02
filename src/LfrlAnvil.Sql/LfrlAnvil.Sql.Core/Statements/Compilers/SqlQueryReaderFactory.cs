@@ -24,7 +24,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
     private Toolbox _toolbox;
     private ResultSetToolbox _resultSetToolbox;
     private MethodInfo? _createAsyncQueryReaderExpressionMethod;
-    private MethodInfo? _createAsyncScalarReaderExpressionMethod;
+    private MethodInfo? _createAsyncScalarQueryReaderExpressionMethod;
 
     internal SqlQueryReaderFactory(Type dataReaderType, SqlDialect dialect, ISqlColumnTypeDefinitionProvider columnTypeDefinitions)
     {
@@ -35,7 +35,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         _toolbox = default;
         _resultSetToolbox = default;
         _createAsyncQueryReaderExpressionMethod = null;
-        _createAsyncScalarReaderExpressionMethod = null;
+        _createAsyncScalarQueryReaderExpressionMethod = null;
         SupportsAsync = DataReaderType.IsAssignableTo( typeof( DbDataReader ) );
     }
 
@@ -111,19 +111,19 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
     }
 
     [Pure]
-    public SqlScalarReader CreateScalar()
+    public SqlScalarQueryReader CreateScalar()
     {
-        return new SqlScalarReader( Dialect, ReadScalar );
+        return new SqlScalarQueryReader( Dialect, ReadScalar );
     }
 
     [Pure]
-    public SqlAsyncScalarReader CreateAsyncScalar()
+    public SqlAsyncScalarQueryReader CreateAsyncScalar()
     {
-        return new SqlAsyncScalarReader( Dialect, ReadScalarAsync );
+        return new SqlAsyncScalarQueryReader( Dialect, ReadScalarAsync );
     }
 
     [Pure]
-    public SqlScalarReaderExpression CreateScalarExpression(Type resultType, bool isNullable = false)
+    public SqlScalarQueryReaderExpression CreateScalarExpression(Type resultType, bool isNullable = false)
     {
         var errors = Chain<string>.Empty;
         if ( resultType.IsAbstract )
@@ -137,11 +137,11 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
 
         var body = CreateScalarLambdaExpressionBody( resultType, isNullable );
         var lambda = Expression.Lambda( body, _toolbox.AbstractReader );
-        return new SqlScalarReaderExpression( Dialect, resultType, lambda );
+        return new SqlScalarQueryReaderExpression( Dialect, resultType, lambda );
     }
 
     [Pure]
-    public SqlAsyncScalarReaderExpression CreateAsyncScalarExpression(Type resultType, bool isNullable = false)
+    public SqlAsyncScalarQueryReaderExpression CreateAsyncScalarExpression(Type resultType, bool isNullable = false)
     {
         var errors = Chain<string>.Empty;
         if ( ! SupportsAsync )
@@ -156,11 +156,11 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         if ( errors.Count > 0 )
             throw new SqlCompilerException( Dialect, errors );
 
-        var expression = CreateAsyncScalarReaderExpression( resultType, isNullable );
-        return new SqlAsyncScalarReaderExpression( Dialect, resultType, expression );
+        var expression = CreateAsyncScalarQueryReaderExpression( resultType, isNullable );
+        return new SqlAsyncScalarQueryReaderExpression( Dialect, resultType, expression );
     }
 
-    private ISqlAsyncLambdaExpression CreateAsyncQueryReaderExpression(Type rowType, SqlQueryReaderCreationOptions options)
+    private ISqlAsyncQueryLambdaExpression CreateAsyncQueryReaderExpression(Type rowType, SqlQueryReaderCreationOptions options)
     {
         if ( _createAsyncQueryReaderExpressionMethod is null )
         {
@@ -184,7 +184,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         {
             var result = closedAsyncQueryReaderExpressionMethod.Invoke( this, new object[] { options } );
             Assume.IsNotNull( result );
-            return ReinterpretCast.To<ISqlAsyncLambdaExpression>( result );
+            return ReinterpretCast.To<ISqlAsyncQueryLambdaExpression>( result );
         }
         catch ( TargetInvocationException e )
         {
@@ -193,7 +193,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         }
     }
 
-    private SqlAsyncLambdaExpression<TDataReader, TRow> CreateAsyncQueryReaderExpression<TDataReader, TRow>(
+    private SqlAsyncQueryLambdaExpression<TDataReader, TRow> CreateAsyncQueryReaderExpression<TDataReader, TRow>(
         SqlQueryReaderCreationOptions creationOptions)
         where TDataReader : DbDataReader
         where TRow : notnull
@@ -213,12 +213,12 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         var persistResultSetFieldTypes = creationOptions.ResultSetFieldsPersistenceMode ==
             SqlQueryReaderResultSetFieldsPersistenceMode.PersistWithTypes;
 
-        Expression<Func<TDataReader, SqlAsyncReaderInitResult>> initExpression;
+        Expression<Func<TDataReader, SqlAsyncQueryReaderInitResult>> initExpression;
         if ( persistResultSetFields )
         {
             InitializeResultSetToolbox();
 
-            initExpression = Expression.Lambda<Func<TDataReader, SqlAsyncReaderInitResult>>(
+            initExpression = Expression.Lambda<Func<TDataReader, SqlAsyncQueryReaderInitResult>>(
                 Expression.Block(
                     new[] { _resultSetToolbox.ResultSetFields },
                     _resultSetToolbox.CreateResultSetFieldsInitLoop( ordinals.GetUsedFieldNames(), persistResultSetFieldTypes ),
@@ -230,7 +230,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         }
         else
         {
-            initExpression = Expression.Lambda<Func<TDataReader, SqlAsyncReaderInitResult>>(
+            initExpression = Expression.Lambda<Func<TDataReader, SqlAsyncQueryReaderInitResult>>(
                 Expression.New( _toolbox.AsyncReaderInitResultCtor, ordinals.CreateOrdinalsArray(), _toolbox.DefaultResultSetArray ),
                 _toolbox.Reader );
         }
@@ -244,7 +244,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
                 _toolbox.AsyncOrdinals,
                 _resultSetToolbox.ResultSetFields );
 
-            return SqlAsyncLambdaExpression<TDataReader, TRow>.Create( initExpression, createRowExpression );
+            return SqlAsyncQueryLambdaExpression<TDataReader, TRow>.Create( initExpression, createRowExpression );
         }
         else
         {
@@ -253,37 +253,37 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
                 _toolbox.Reader,
                 _toolbox.AsyncOrdinals );
 
-            return SqlAsyncLambdaExpression<TDataReader, TRow>.Create( initExpression, createRowExpression );
+            return SqlAsyncQueryLambdaExpression<TDataReader, TRow>.Create( initExpression, createRowExpression );
         }
     }
 
-    private ISqlAsyncScalarLambdaExpression CreateAsyncScalarReaderExpression(Type resultType, bool isNullable)
+    private ISqlAsyncScalarQueryLambdaExpression CreateAsyncScalarQueryReaderExpression(Type resultType, bool isNullable)
     {
-        if ( _createAsyncScalarReaderExpressionMethod is null )
+        if ( _createAsyncScalarQueryReaderExpressionMethod is null )
         {
             var methods = typeof( SqlQueryReaderFactory ).GetMethods(
                 BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly );
 
             foreach ( var m in methods )
             {
-                if ( m.IsGenericMethod && m.Name == nameof( CreateAsyncScalarReaderExpression ) )
+                if ( m.IsGenericMethod && m.Name == nameof( CreateAsyncScalarQueryReaderExpression ) )
                 {
-                    _createAsyncScalarReaderExpressionMethod = m;
+                    _createAsyncScalarQueryReaderExpressionMethod = m;
                     break;
                 }
             }
 
-            Assume.IsNotNull( _createAsyncScalarReaderExpressionMethod );
+            Assume.IsNotNull( _createAsyncScalarQueryReaderExpressionMethod );
         }
 
-        var closedAsyncScalarReaderExpressionMethod = _createAsyncScalarReaderExpressionMethod
+        var closedAsyncScalarQueryReaderExpressionMethod = _createAsyncScalarQueryReaderExpressionMethod
             .MakeGenericMethod( DataReaderType, resultType );
 
         try
         {
-            var result = closedAsyncScalarReaderExpressionMethod.Invoke( this, new object[] { isNullable } );
+            var result = closedAsyncScalarQueryReaderExpressionMethod.Invoke( this, new object[] { isNullable } );
             Assume.IsNotNull( result );
-            return ReinterpretCast.To<ISqlAsyncScalarLambdaExpression>( result );
+            return ReinterpretCast.To<ISqlAsyncScalarQueryLambdaExpression>( result );
         }
         catch ( TargetInvocationException e )
         {
@@ -292,7 +292,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         }
     }
 
-    private SqlAsyncScalarLambdaExpression<TDataReader, T> CreateAsyncScalarReaderExpression<TDataReader, T>(bool isNullable)
+    private SqlAsyncScalarQueryLambdaExpression<TDataReader, T> CreateAsyncScalarQueryReaderExpression<TDataReader, T>(bool isNullable)
         where TDataReader : DbDataReader
     {
         Assume.Equals( typeof( TDataReader ), DataReaderType );
@@ -307,8 +307,8 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         var valueReadCall = scalarToolbox.CreateValueReadCall( typeDefinition, isNullable, in _toolbox );
         var body = scalarToolbox.CreateResultCtorCall( valueReadCall );
 
-        var readRowExpression = Expression.Lambda<Func<TDataReader, SqlScalarResult<T>>>( body, _toolbox.Reader );
-        return SqlAsyncScalarLambdaExpression<TDataReader, T>.Create( readRowExpression );
+        var readRowExpression = Expression.Lambda<Func<TDataReader, SqlScalarQueryResult<T>>>( body, _toolbox.Reader );
+        return SqlAsyncScalarQueryLambdaExpression<TDataReader, T>.Create( readRowExpression );
     }
 
     [Pure]
@@ -738,24 +738,24 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
     }
 
     [Pure]
-    private static SqlScalarResult ReadScalar(IDataReader reader)
+    private static SqlScalarQueryResult ReadScalar(IDataReader reader)
     {
         if ( ! reader.Read() )
-            return SqlScalarResult.Empty;
+            return SqlScalarQueryResult.Empty;
 
         var value = reader.GetValue( 0 );
-        return new SqlScalarResult( ReferenceEquals( value, DBNull.Value ) ? null : value );
+        return new SqlScalarQueryResult( ReferenceEquals( value, DBNull.Value ) ? null : value );
     }
 
     [Pure]
-    private static async ValueTask<SqlScalarResult> ReadScalarAsync(IDataReader reader, CancellationToken cancellationToken)
+    private static async ValueTask<SqlScalarQueryResult> ReadScalarAsync(IDataReader reader, CancellationToken cancellationToken)
     {
         var dbReader = (DbDataReader)reader;
         if ( ! await dbReader.ReadAsync( cancellationToken ).ConfigureAwait( false ) )
-            return SqlScalarResult.Empty;
+            return SqlScalarQueryResult.Empty;
 
         var value = dbReader.GetValue( 0 );
-        return new SqlScalarResult( ReferenceEquals( value, DBNull.Value ) ? null : value );
+        return new SqlScalarQueryResult( ReferenceEquals( value, DBNull.Value ) ? null : value );
     }
 
     private interface IOrdinalsCollection
@@ -1019,7 +1019,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
 
         internal ScalarToolbox(Type resultType)
         {
-            ResultCtor = TypeHelpers.GetScalarResultCtor( resultType );
+            ResultCtor = TypeHelpers.GetScalarQueryResultCtor( resultType );
             DefaultResult = Expression.Default( resultType );
         }
 
@@ -1027,7 +1027,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         internal MemberExpression CreateEmptyResultAccess()
         {
             Assume.IsNotNull( ResultCtor.DeclaringType );
-            var field = TypeHelpers.GetScalarResultEmptyField( ResultCtor.DeclaringType );
+            var field = TypeHelpers.GetScalarQueryResultEmptyField( ResultCtor.DeclaringType );
             return Expression.MakeMemberAccess( null, field );
         }
 

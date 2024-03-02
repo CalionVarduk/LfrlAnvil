@@ -6,14 +6,14 @@ using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
 namespace LfrlAnvil.Sql.Tests.StatementsTests;
 
-public class SqlScalarReaderExecutorTests : TestsBase
+public class SqlScalarQueryReaderExecutorTests : TestsBase
 {
     [Fact]
     public void Bind_Extension_ForTypeErased_ShouldCreateCorrectExecutor()
     {
         var sql = "SELECT * FROM foo";
-        var @delegate = Substitute.For<Func<IDataReader, SqlScalarResult>>();
-        var reader = new SqlScalarReader( new SqlDialect( "foo" ), @delegate );
+        var @delegate = Substitute.For<Func<IDataReader, SqlScalarQueryResult>>();
+        var reader = new SqlScalarQueryReader( new SqlDialect( "foo" ), @delegate );
         var sut = reader.Bind( sql );
 
         using ( new AssertionScope() )
@@ -26,13 +26,13 @@ public class SqlScalarReaderExecutorTests : TestsBase
     [Fact]
     public void Execute_ForTypeErased_ShouldSetCommandTextAndInvokeDelegate()
     {
-        var expected = new SqlScalarResult( "foo" );
+        var expected = new SqlScalarQueryResult( "foo" );
 
         var sql = "SELECT * FROM foo";
         var command = new DbCommandMock();
-        var @delegate = Substitute.For<Func<IDataReader, SqlScalarResult>>();
+        var @delegate = Substitute.For<Func<IDataReader, SqlScalarQueryResult>>();
         @delegate.WithAnyArgs( _ => expected );
-        var reader = new SqlScalarReader( new SqlDialect( "foo" ), @delegate );
+        var reader = new SqlScalarQueryReader( new SqlDialect( "foo" ), @delegate );
         var sut = reader.Bind( sql );
 
         var result = sut.Execute( command );
@@ -49,8 +49,8 @@ public class SqlScalarReaderExecutorTests : TestsBase
     public void Bind_Extension_ForGeneric_ShouldCreateCorrectExecutor()
     {
         var sql = "SELECT * FROM foo";
-        var @delegate = Substitute.For<Func<IDataReader, SqlScalarResult<int>>>();
-        var reader = new SqlScalarReader<int>( new SqlDialect( "foo" ), @delegate );
+        var @delegate = Substitute.For<Func<IDataReader, SqlScalarQueryResult<int>>>();
+        var reader = new SqlScalarQueryReader<int>( new SqlDialect( "foo" ), @delegate );
         var sut = reader.Bind( sql );
 
         using ( new AssertionScope() )
@@ -63,13 +63,13 @@ public class SqlScalarReaderExecutorTests : TestsBase
     [Fact]
     public void Execute_ForGeneric_ShouldSetCommandTextAndInvokeDelegate()
     {
-        var expected = new SqlScalarResult<int>( 42 );
+        var expected = new SqlScalarQueryResult<int>( 42 );
 
         var sql = "SELECT * FROM foo";
         var command = new DbCommandMock();
-        var @delegate = Substitute.For<Func<IDataReader, SqlScalarResult<int>>>();
+        var @delegate = Substitute.For<Func<IDataReader, SqlScalarQueryResult<int>>>();
         @delegate.WithAnyArgs( _ => expected );
-        var reader = new SqlScalarReader<int>( new SqlDialect( "foo" ), @delegate );
+        var reader = new SqlScalarQueryReader<int>( new SqlDialect( "foo" ), @delegate );
         var sut = reader.Bind( sql );
 
         var result = sut.Execute( command );

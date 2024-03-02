@@ -20,10 +20,10 @@ public class SqlAsyncQueryReaderExpressionTests : TestsBase
         var rowType = typeof( object[] );
 
         var initExpression = Lambda.ExpressionOf(
-            (DbDataReaderMock r) => new SqlAsyncReaderInitResult( new[] { r.GetOrdinal( "a" ), r.GetOrdinal( "b" ) }, null ) );
+            (DbDataReaderMock r) => new SqlAsyncQueryReaderInitResult( new[] { r.GetOrdinal( "a" ), r.GetOrdinal( "b" ) }, null ) );
 
         var createRowExpression = Lambda.ExpressionOf( (DbDataReaderMock r, int[] o) => o.Select( r.GetValue ).ToArray() );
-        var expression = SqlAsyncLambdaExpression<DbDataReaderMock, object[]>.Create( initExpression, createRowExpression );
+        var expression = SqlAsyncQueryLambdaExpression<DbDataReaderMock, object[]>.Create( initExpression, createRowExpression );
         var @base = new SqlAsyncQueryReaderExpression( dialect, rowType, expression );
         var sut = new SqlAsyncQueryReaderExpression<object[]>( @base );
 

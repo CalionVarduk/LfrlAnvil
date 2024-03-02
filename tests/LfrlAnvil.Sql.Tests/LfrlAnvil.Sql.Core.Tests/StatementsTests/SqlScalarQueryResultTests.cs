@@ -3,12 +3,12 @@ using LfrlAnvil.Sql.Statements;
 
 namespace LfrlAnvil.Sql.Tests.StatementsTests;
 
-public class SqlScalarResultTests : TestsBase
+public class SqlScalarQueryResultTests : TestsBase
 {
     [Fact]
     public void Default_TypeErased_ShouldNotHaveValue()
     {
-        var sut = default( SqlScalarResult );
+        var sut = default( SqlScalarQueryResult );
 
         using ( new AssertionScope() )
         {
@@ -20,7 +20,7 @@ public class SqlScalarResultTests : TestsBase
     [Fact]
     public void Empty_TypeErased_ShouldNotHaveValue()
     {
-        var sut = SqlScalarResult.Empty;
+        var sut = SqlScalarQueryResult.Empty;
 
         using ( new AssertionScope() )
         {
@@ -34,7 +34,7 @@ public class SqlScalarResultTests : TestsBase
     [InlineData( null )]
     public void Ctor_TypeErased_ShouldCreateWithValue(object? value)
     {
-        var sut = new SqlScalarResult( value );
+        var sut = new SqlScalarQueryResult( value );
 
         using ( new AssertionScope() )
         {
@@ -46,7 +46,7 @@ public class SqlScalarResultTests : TestsBase
     [Fact]
     public void ToString_TypeErased_ShouldReturnCorrectResult_ForEmpty()
     {
-        var sut = SqlScalarResult.Empty;
+        var sut = SqlScalarQueryResult.Empty;
         var result = sut.ToString();
         result.Should().Be( "Empty()" );
     }
@@ -54,7 +54,7 @@ public class SqlScalarResultTests : TestsBase
     [Fact]
     public void ToString_TypeErased_ShouldReturnCorrectResult_ForNonEmpty()
     {
-        var sut = new SqlScalarResult( "foo" );
+        var sut = new SqlScalarQueryResult( "foo" );
         var result = sut.ToString();
         result.Should().Be( "Value(foo)" );
     }
@@ -62,7 +62,7 @@ public class SqlScalarResultTests : TestsBase
     [Fact]
     public void GetHashCode_TypeErased_ShouldReturnCorrectResult()
     {
-        var sut = new SqlScalarResult( "foo" );
+        var sut = new SqlScalarQueryResult( "foo" );
         var expected = HashCode.Combine( true, "foo" );
 
         var result = sut.GetHashCode();
@@ -74,7 +74,7 @@ public class SqlScalarResultTests : TestsBase
     public void GetValue_TypeErased_ShouldReturnValue_WhenItExists()
     {
         var expected = "foo";
-        var sut = new SqlScalarResult( expected );
+        var sut = new SqlScalarQueryResult( expected );
 
         var result = sut.GetValue();
 
@@ -84,7 +84,7 @@ public class SqlScalarResultTests : TestsBase
     [Fact]
     public void GetValue_TypeErased_ShouldThrowInvalidOperationException_WhenValueDoesNotExist()
     {
-        var sut = SqlScalarResult.Empty;
+        var sut = SqlScalarQueryResult.Empty;
         var action = Lambda.Of( () => sut.GetValue() );
         action.Should().ThrowExactly<InvalidOperationException>();
     }
@@ -93,7 +93,7 @@ public class SqlScalarResultTests : TestsBase
     public void GetValueOrDefault_TypeErased_ShouldReturnValue_WhenItExists()
     {
         var expected = "foo";
-        var sut = new SqlScalarResult( expected );
+        var sut = new SqlScalarQueryResult( expected );
 
         var result = sut.GetValueOrDefault( "bar" );
 
@@ -104,7 +104,7 @@ public class SqlScalarResultTests : TestsBase
     public void GetValueOrDefault_TypeErased_ShouldReturnDefaultValue_WhenValueDoesNotExist()
     {
         var expected = "foo";
-        var sut = SqlScalarResult.Empty;
+        var sut = SqlScalarQueryResult.Empty;
 
         var result = sut.GetValueOrDefault( expected );
 
@@ -117,7 +117,7 @@ public class SqlScalarResultTests : TestsBase
     [InlineData( 42, "foo", false )]
     public void EqualityOperator_TypeErased_ShouldReturnCorrectResult_ForNonEmpty(object? a, object? b, bool expected)
     {
-        var result = new SqlScalarResult( a ) == new SqlScalarResult( b );
+        var result = new SqlScalarQueryResult( a ) == new SqlScalarQueryResult( b );
         result.Should().Be( expected );
     }
 
@@ -127,8 +127,8 @@ public class SqlScalarResultTests : TestsBase
     [InlineData( true, false, false )]
     public void EqualityOperator_TypeErased_ShouldReturnCorrectResult_ForEmpty(bool isFirstEmpty, bool isSecondEmpty, bool expected)
     {
-        var a = isFirstEmpty ? SqlScalarResult.Empty : new SqlScalarResult( null );
-        var b = isSecondEmpty ? SqlScalarResult.Empty : new SqlScalarResult( null );
+        var a = isFirstEmpty ? SqlScalarQueryResult.Empty : new SqlScalarQueryResult( null );
+        var b = isSecondEmpty ? SqlScalarQueryResult.Empty : new SqlScalarQueryResult( null );
 
         var result = a == b;
 
@@ -141,7 +141,7 @@ public class SqlScalarResultTests : TestsBase
     [InlineData( 42, "foo", true )]
     public void InequalityOperator_TypeErased_ShouldReturnCorrectResult_ForNonEmpty(object? a, object? b, bool expected)
     {
-        var result = new SqlScalarResult( a ) != new SqlScalarResult( b );
+        var result = new SqlScalarQueryResult( a ) != new SqlScalarQueryResult( b );
         result.Should().Be( expected );
     }
 
@@ -151,8 +151,8 @@ public class SqlScalarResultTests : TestsBase
     [InlineData( true, false, true )]
     public void InequalityOperator_TypeErased_ShouldReturnCorrectResult_ForEmpty(bool isFirstEmpty, bool isSecondEmpty, bool expected)
     {
-        var a = isFirstEmpty ? SqlScalarResult.Empty : new SqlScalarResult( null );
-        var b = isSecondEmpty ? SqlScalarResult.Empty : new SqlScalarResult( null );
+        var a = isFirstEmpty ? SqlScalarQueryResult.Empty : new SqlScalarQueryResult( null );
+        var b = isSecondEmpty ? SqlScalarQueryResult.Empty : new SqlScalarQueryResult( null );
 
         var result = a != b;
 
@@ -162,7 +162,7 @@ public class SqlScalarResultTests : TestsBase
     [Fact]
     public void Default_Generic_ShouldNotHaveValue()
     {
-        var sut = default( SqlScalarResult<string> );
+        var sut = default( SqlScalarQueryResult<string> );
 
         using ( new AssertionScope() )
         {
@@ -174,7 +174,7 @@ public class SqlScalarResultTests : TestsBase
     [Fact]
     public void Empty_Generic_ShouldNotHaveValue()
     {
-        var sut = SqlScalarResult<string>.Empty;
+        var sut = SqlScalarQueryResult<string>.Empty;
 
         using ( new AssertionScope() )
         {
@@ -188,7 +188,7 @@ public class SqlScalarResultTests : TestsBase
     [InlineData( null )]
     public void Ctor_Generic_ShouldCreateWithValue(string? value)
     {
-        var sut = new SqlScalarResult<string>( value );
+        var sut = new SqlScalarQueryResult<string>( value );
 
         using ( new AssertionScope() )
         {
@@ -200,7 +200,7 @@ public class SqlScalarResultTests : TestsBase
     [Fact]
     public void ToString_Generic_ShouldReturnCorrectResult_ForEmpty()
     {
-        var sut = SqlScalarResult<string>.Empty;
+        var sut = SqlScalarQueryResult<string>.Empty;
         var result = sut.ToString();
         result.Should().Be( "Empty<System.String>()" );
     }
@@ -208,7 +208,7 @@ public class SqlScalarResultTests : TestsBase
     [Fact]
     public void ToString_Generic_ShouldReturnCorrectResult_ForNonEmpty()
     {
-        var sut = new SqlScalarResult<string>( "foo" );
+        var sut = new SqlScalarQueryResult<string>( "foo" );
         var result = sut.ToString();
         result.Should().Be( "Value<System.String>(foo)" );
     }
@@ -216,7 +216,7 @@ public class SqlScalarResultTests : TestsBase
     [Fact]
     public void GetHashCode_Generic_ShouldReturnCorrectResult()
     {
-        var sut = new SqlScalarResult<string>( "foo" );
+        var sut = new SqlScalarQueryResult<string>( "foo" );
         var expected = HashCode.Combine( true, "foo" );
 
         var result = sut.GetHashCode();
@@ -228,7 +228,7 @@ public class SqlScalarResultTests : TestsBase
     public void GetValue_Generic_ShouldReturnValue_WhenItExists()
     {
         var expected = "foo";
-        var sut = new SqlScalarResult<string>( expected );
+        var sut = new SqlScalarQueryResult<string>( expected );
 
         var result = sut.GetValue();
 
@@ -238,7 +238,7 @@ public class SqlScalarResultTests : TestsBase
     [Fact]
     public void GetValue_Generic_ShouldThrowInvalidOperationException_WhenValueDoesNotExist()
     {
-        var sut = SqlScalarResult<string>.Empty;
+        var sut = SqlScalarQueryResult<string>.Empty;
         var action = Lambda.Of( () => sut.GetValue() );
         action.Should().ThrowExactly<InvalidOperationException>();
     }
@@ -247,7 +247,7 @@ public class SqlScalarResultTests : TestsBase
     public void GetValueOrDefault_Generic_ShouldReturnValue_WhenItExists()
     {
         var expected = "foo";
-        var sut = new SqlScalarResult<string>( expected );
+        var sut = new SqlScalarQueryResult<string>( expected );
 
         var result = sut.GetValueOrDefault( "bar" );
 
@@ -258,7 +258,7 @@ public class SqlScalarResultTests : TestsBase
     public void GetValueOrDefault_Generic_ShouldReturnDefaultValue_WhenValueDoesNotExist()
     {
         var expected = "foo";
-        var sut = SqlScalarResult<string>.Empty;
+        var sut = SqlScalarQueryResult<string>.Empty;
 
         var result = sut.GetValueOrDefault( expected );
 
@@ -270,7 +270,7 @@ public class SqlScalarResultTests : TestsBase
     [InlineData( "foo", "bar", false )]
     public void EqualityOperator_Generic_ShouldReturnCorrectResult_ForNonEmpty(string? a, string? b, bool expected)
     {
-        var result = new SqlScalarResult<string>( a ) == new SqlScalarResult<string>( b );
+        var result = new SqlScalarQueryResult<string>( a ) == new SqlScalarQueryResult<string>( b );
         result.Should().Be( expected );
     }
 
@@ -280,8 +280,8 @@ public class SqlScalarResultTests : TestsBase
     [InlineData( true, false, false )]
     public void EqualityOperator_Generic_ShouldReturnCorrectResult_ForEmpty(bool isFirstEmpty, bool isSecondEmpty, bool expected)
     {
-        var a = isFirstEmpty ? SqlScalarResult<string>.Empty : new SqlScalarResult<string>( null );
-        var b = isSecondEmpty ? SqlScalarResult<string>.Empty : new SqlScalarResult<string>( null );
+        var a = isFirstEmpty ? SqlScalarQueryResult<string>.Empty : new SqlScalarQueryResult<string>( null );
+        var b = isSecondEmpty ? SqlScalarQueryResult<string>.Empty : new SqlScalarQueryResult<string>( null );
 
         var result = a == b;
 
@@ -293,7 +293,7 @@ public class SqlScalarResultTests : TestsBase
     [InlineData( "foo", "bar", true )]
     public void InequalityOperator_Generic_ShouldReturnCorrectResult_ForNonEmpty(string? a, string? b, bool expected)
     {
-        var result = new SqlScalarResult<string>( a ) != new SqlScalarResult<string>( b );
+        var result = new SqlScalarQueryResult<string>( a ) != new SqlScalarQueryResult<string>( b );
         result.Should().Be( expected );
     }
 
@@ -303,8 +303,8 @@ public class SqlScalarResultTests : TestsBase
     [InlineData( true, false, true )]
     public void InequalityOperator_Generic_ShouldReturnCorrectResult_ForEmpty(bool isFirstEmpty, bool isSecondEmpty, bool expected)
     {
-        var a = isFirstEmpty ? SqlScalarResult<string>.Empty : new SqlScalarResult<string>( null );
-        var b = isSecondEmpty ? SqlScalarResult<string>.Empty : new SqlScalarResult<string>( null );
+        var a = isFirstEmpty ? SqlScalarQueryResult<string>.Empty : new SqlScalarQueryResult<string>( null );
+        var b = isSecondEmpty ? SqlScalarQueryResult<string>.Empty : new SqlScalarQueryResult<string>( null );
 
         var result = a != b;
 

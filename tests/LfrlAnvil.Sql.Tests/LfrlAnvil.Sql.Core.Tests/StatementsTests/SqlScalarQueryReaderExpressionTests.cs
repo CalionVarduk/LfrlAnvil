@@ -5,20 +5,20 @@ using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
 namespace LfrlAnvil.Sql.Tests.StatementsTests;
 
-public class SqlScalarReaderExpressionTests : TestsBase
+public class SqlScalarQueryReaderExpressionTests : TestsBase
 {
     [Fact]
-    public void Compile_ShouldCreateCorrectQueryReader()
+    public void Compile_ShouldCreateCorrectScalarQueryReader()
     {
-        var expected = new SqlScalarResult<string>( "foo" );
+        var expected = new SqlScalarQueryResult<string>( "foo" );
 
         var reader = new DbDataReaderMock();
         var dialect = new SqlDialect( "foo" );
         var resultType = typeof( string );
 
         var expression = Lambda.ExpressionOf( (IDataReader r) => expected );
-        var @base = new SqlScalarReaderExpression( dialect, resultType, expression );
-        var sut = new SqlScalarReaderExpression<string>( @base );
+        var @base = new SqlScalarQueryReaderExpression( dialect, resultType, expression );
+        var sut = new SqlScalarQueryReaderExpression<string>( @base );
 
         var queryReader = sut.Compile();
         var result = queryReader.Read( reader );

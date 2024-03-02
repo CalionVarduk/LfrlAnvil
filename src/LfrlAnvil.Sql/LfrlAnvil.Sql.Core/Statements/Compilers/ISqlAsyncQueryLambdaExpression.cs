@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace LfrlAnvil.Sql.Statements.Compilers;
 
-public interface ISqlAsyncLambdaExpression
+public interface ISqlAsyncQueryLambdaExpression
 {
     [Pure]
     Delegate Compile();
 }
 
-public interface ISqlAsyncLambdaExpression<TRow> : ISqlAsyncLambdaExpression
+public interface ISqlAsyncQueryLambdaExpression<TRow> : ISqlAsyncQueryLambdaExpression
     where TRow : notnull
 {
     [Pure]

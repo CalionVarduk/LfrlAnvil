@@ -8,14 +8,14 @@ using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
 namespace LfrlAnvil.Sql.Tests.StatementsTests;
 
-public class SqlAsyncScalarReaderExecutorTests : TestsBase
+public class SqlAsyncScalarQueryReaderExecutorTests : TestsBase
 {
     [Fact]
     public void Bind_Extension_ForTypeErased_ShouldCreateCorrectExecutor()
     {
         var sql = "SELECT * FROM foo";
-        var @delegate = Substitute.For<Func<IDataReader, CancellationToken, ValueTask<SqlScalarResult>>>();
-        var reader = new SqlAsyncScalarReader( new SqlDialect( "foo" ), @delegate );
+        var @delegate = Substitute.For<Func<IDataReader, CancellationToken, ValueTask<SqlScalarQueryResult>>>();
+        var reader = new SqlAsyncScalarQueryReader( new SqlDialect( "foo" ), @delegate );
         var sut = reader.Bind( sql );
 
         using ( new AssertionScope() )
@@ -28,13 +28,13 @@ public class SqlAsyncScalarReaderExecutorTests : TestsBase
     [Fact]
     public async Task ExecuteAsync_ForTypeErased_ShouldSetCommandTextAndInvokeDelegate()
     {
-        var expected = new SqlScalarResult( "bar" );
+        var expected = new SqlScalarQueryResult( "bar" );
 
         var sql = "SELECT * FROM foo";
         var command = new DbCommandMock();
-        var @delegate = Substitute.For<Func<IDataReader, CancellationToken, ValueTask<SqlScalarResult>>>();
+        var @delegate = Substitute.For<Func<IDataReader, CancellationToken, ValueTask<SqlScalarQueryResult>>>();
         @delegate.WithAnyArgs( _ => ValueTask.FromResult( expected ) );
-        var reader = new SqlAsyncScalarReader( new SqlDialect( "foo" ), @delegate );
+        var reader = new SqlAsyncScalarQueryReader( new SqlDialect( "foo" ), @delegate );
         var sut = reader.Bind( sql );
 
         var result = await sut.ExecuteAsync( command );
@@ -51,8 +51,8 @@ public class SqlAsyncScalarReaderExecutorTests : TestsBase
     public void Bind_Extension_ForGeneric_ShouldCreateCorrectExecutor()
     {
         var sql = "SELECT * FROM foo";
-        var @delegate = Substitute.For<Func<IDataReader, CancellationToken, ValueTask<SqlScalarResult<int>>>>();
-        var reader = new SqlAsyncScalarReader<int>( new SqlDialect( "foo" ), @delegate );
+        var @delegate = Substitute.For<Func<IDataReader, CancellationToken, ValueTask<SqlScalarQueryResult<int>>>>();
+        var reader = new SqlAsyncScalarQueryReader<int>( new SqlDialect( "foo" ), @delegate );
         var sut = reader.Bind( sql );
 
         using ( new AssertionScope() )
@@ -65,13 +65,13 @@ public class SqlAsyncScalarReaderExecutorTests : TestsBase
     [Fact]
     public async Task ExecuteAsync_ForGeneric_ShouldSetCommandTextAndInvokeDelegate()
     {
-        var expected = new SqlScalarResult<int>( 42 );
+        var expected = new SqlScalarQueryResult<int>( 42 );
 
         var sql = "SELECT * FROM foo";
         var command = new DbCommandMock();
-        var @delegate = Substitute.For<Func<IDataReader, CancellationToken, ValueTask<SqlScalarResult<int>>>>();
+        var @delegate = Substitute.For<Func<IDataReader, CancellationToken, ValueTask<SqlScalarQueryResult<int>>>>();
         @delegate.WithAnyArgs( _ => ValueTask.FromResult( expected ) );
-        var reader = new SqlAsyncScalarReader<int>( new SqlDialect( "foo" ), @delegate );
+        var reader = new SqlAsyncScalarQueryReader<int>( new SqlDialect( "foo" ), @delegate );
         var sut = reader.Bind( sql );
 
         var result = await sut.ExecuteAsync( command );

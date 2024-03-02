@@ -95,7 +95,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     }
 
     [Fact]
-    public void Query_TypeErased_WithReader_ShouldInvokeScalarReader()
+    public void Query_TypeErased_WithReader_ShouldInvokeScalarQueryReader()
     {
         var command = new DbCommandMock(
             new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ) );
@@ -112,7 +112,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     }
 
     [Fact]
-    public void Query_Generic_WithReader_ShouldInvokeScalarReader()
+    public void Query_Generic_WithReader_ShouldInvokeScalarQueryReader()
     {
         var command = new DbCommandMock(
             new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ) );
@@ -129,7 +129,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     }
 
     [Fact]
-    public void Query_TypeErased_WithExecutor_ShouldSetCommandTextAndInvokeScalarReader()
+    public void Query_TypeErased_WithExecutor_ShouldSetCommandTextAndInvokeScalarQueryReader()
     {
         var sql = "SELECT * FROM foo";
         var command = new DbCommandMock(
@@ -148,7 +148,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     }
 
     [Fact]
-    public void Query_Generic_WithExecutor_ShouldSetCommandTextAndInvokeScalarReader()
+    public void Query_Generic_WithExecutor_ShouldSetCommandTextAndInvokeScalarQueryReader()
     {
         var sql = "SELECT * FROM foo";
         var command = new DbCommandMock(
@@ -241,7 +241,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     }
 
     [Fact]
-    public async Task QueryAsync_TypeErased_WithReader_ShouldInvokeScalarReader()
+    public async Task QueryAsync_TypeErased_WithReader_ShouldInvokeScalarQueryReader()
     {
         var command = new DbCommandMock(
             new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ) );
@@ -258,7 +258,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     }
 
     [Fact]
-    public async Task QueryAsync_Generic_WithReader_ShouldInvokeScalarReader()
+    public async Task QueryAsync_Generic_WithReader_ShouldInvokeScalarQueryReader()
     {
         var command = new DbCommandMock(
             new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ) );
@@ -275,7 +275,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     }
 
     [Fact]
-    public async Task QueryAsync_TypeErased_WithExecutor_ShouldSetCommandTextAndInvokeScalarReader()
+    public async Task QueryAsync_TypeErased_WithExecutor_ShouldSetCommandTextAndInvokeScalarQueryReader()
     {
         var sql = "SELECT * FROM foo";
         var command = new DbCommandMock(
@@ -294,7 +294,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     }
 
     [Fact]
-    public async Task QueryAsync_Generic_WithExecutor_ShouldSetCommandTextAndInvokeScalarReader()
+    public async Task QueryAsync_Generic_WithExecutor_ShouldSetCommandTextAndInvokeScalarQueryReader()
     {
         var sql = "SELECT * FROM foo";
         var command = new DbCommandMock(

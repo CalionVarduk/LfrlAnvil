@@ -9,14 +9,14 @@ using System.Threading.Tasks;
 
 namespace LfrlAnvil.Sql.Statements.Compilers;
 
-public sealed class SqlAsyncLambdaExpression<TDataReader, TRow> : ISqlAsyncLambdaExpression<TRow>
+public sealed class SqlAsyncQueryLambdaExpression<TDataReader, TRow> : ISqlAsyncQueryLambdaExpression<TRow>
     where TDataReader : DbDataReader
     where TRow : notnull
 {
     private readonly bool _populatesFieldTypes;
 
-    private SqlAsyncLambdaExpression(
-        Expression<Func<TDataReader, SqlAsyncReaderInitResult>> initExpression,
+    private SqlAsyncQueryLambdaExpression(
+        Expression<Func<TDataReader, SqlAsyncQueryReaderInitResult>> initExpression,
         LambdaExpression readRowExpression,
         bool populatesFieldTypes)
     {
@@ -25,25 +25,25 @@ public sealed class SqlAsyncLambdaExpression<TDataReader, TRow> : ISqlAsyncLambd
         _populatesFieldTypes = populatesFieldTypes;
     }
 
-    public Expression<Func<TDataReader, SqlAsyncReaderInitResult>> InitExpression { get; }
+    public Expression<Func<TDataReader, SqlAsyncQueryReaderInitResult>> InitExpression { get; }
     public LambdaExpression ReadRowExpression { get; }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlAsyncLambdaExpression<TDataReader, TRow> Create(
-        Expression<Func<TDataReader, SqlAsyncReaderInitResult>> initExpression,
+    public static SqlAsyncQueryLambdaExpression<TDataReader, TRow> Create(
+        Expression<Func<TDataReader, SqlAsyncQueryReaderInitResult>> initExpression,
         Expression<Func<TDataReader, int[], TRow>> readRowExpression)
     {
-        return new SqlAsyncLambdaExpression<TDataReader, TRow>( initExpression, readRowExpression, populatesFieldTypes: false );
+        return new SqlAsyncQueryLambdaExpression<TDataReader, TRow>( initExpression, readRowExpression, populatesFieldTypes: false );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlAsyncLambdaExpression<TDataReader, TRow> Create(
-        Expression<Func<TDataReader, SqlAsyncReaderInitResult>> initExpression,
+    public static SqlAsyncQueryLambdaExpression<TDataReader, TRow> Create(
+        Expression<Func<TDataReader, SqlAsyncQueryReaderInitResult>> initExpression,
         Expression<Func<TDataReader, int[], SqlResultSetField[], TRow>> readRowExpression)
     {
-        return new SqlAsyncLambdaExpression<TDataReader, TRow>( initExpression, readRowExpression, populatesFieldTypes: true );
+        return new SqlAsyncQueryLambdaExpression<TDataReader, TRow>( initExpression, readRowExpression, populatesFieldTypes: true );
     }
 
     [Pure]
@@ -101,7 +101,7 @@ public sealed class SqlAsyncLambdaExpression<TDataReader, TRow> : ISqlAsyncLambd
     }
 
     [Pure]
-    Delegate ISqlAsyncLambdaExpression.Compile()
+    Delegate ISqlAsyncQueryLambdaExpression.Compile()
     {
         return Compile();
     }

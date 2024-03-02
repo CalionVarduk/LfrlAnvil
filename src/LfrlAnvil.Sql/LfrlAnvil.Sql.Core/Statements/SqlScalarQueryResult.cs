@@ -7,11 +7,11 @@ using LfrlAnvil.Sql.Exceptions;
 
 namespace LfrlAnvil.Sql.Statements;
 
-public readonly struct SqlScalarResult : IEquatable<SqlScalarResult>
+public readonly struct SqlScalarQueryResult : IEquatable<SqlScalarQueryResult>
 {
-    public static readonly SqlScalarResult Empty = new SqlScalarResult();
+    public static readonly SqlScalarQueryResult Empty = new SqlScalarQueryResult();
 
-    public SqlScalarResult(object? value)
+    public SqlScalarQueryResult(object? value)
     {
         HasValue = true;
         Value = value;
@@ -35,11 +35,11 @@ public readonly struct SqlScalarResult : IEquatable<SqlScalarResult>
     [Pure]
     public override bool Equals(object? obj)
     {
-        return obj is SqlScalarResult r && Equals( r );
+        return obj is SqlScalarQueryResult r && Equals( r );
     }
 
     [Pure]
-    public bool Equals(SqlScalarResult other)
+    public bool Equals(SqlScalarQueryResult other)
     {
         if ( ! HasValue )
             return ! other.HasValue;
@@ -62,23 +62,23 @@ public readonly struct SqlScalarResult : IEquatable<SqlScalarResult>
     }
 
     [Pure]
-    public static bool operator ==(SqlScalarResult left, SqlScalarResult right)
+    public static bool operator ==(SqlScalarQueryResult left, SqlScalarQueryResult right)
     {
         return left.Equals( right );
     }
 
     [Pure]
-    public static bool operator !=(SqlScalarResult left, SqlScalarResult right)
+    public static bool operator !=(SqlScalarQueryResult left, SqlScalarQueryResult right)
     {
         return ! left.Equals( right );
     }
 }
 
-public readonly struct SqlScalarResult<T> : IEquatable<SqlScalarResult<T>>
+public readonly struct SqlScalarQueryResult<T> : IEquatable<SqlScalarQueryResult<T>>
 {
-    public static readonly SqlScalarResult<T> Empty = new SqlScalarResult<T>();
+    public static readonly SqlScalarQueryResult<T> Empty = new SqlScalarQueryResult<T>();
 
-    public SqlScalarResult(T? value)
+    public SqlScalarQueryResult(T? value)
     {
         HasValue = true;
         Value = value;
@@ -103,11 +103,11 @@ public readonly struct SqlScalarResult<T> : IEquatable<SqlScalarResult<T>>
     [Pure]
     public override bool Equals(object? obj)
     {
-        return obj is SqlScalarResult<T> r && Equals( r );
+        return obj is SqlScalarQueryResult<T> r && Equals( r );
     }
 
     [Pure]
-    public bool Equals(SqlScalarResult<T> other)
+    public bool Equals(SqlScalarQueryResult<T> other)
     {
         if ( ! HasValue )
             return ! other.HasValue;
@@ -130,13 +130,13 @@ public readonly struct SqlScalarResult<T> : IEquatable<SqlScalarResult<T>>
     }
 
     [Pure]
-    public static bool operator ==(SqlScalarResult<T> left, SqlScalarResult<T> right)
+    public static bool operator ==(SqlScalarQueryResult<T> left, SqlScalarQueryResult<T> right)
     {
         return left.Equals( right );
     }
 
     [Pure]
-    public static bool operator !=(SqlScalarResult<T> left, SqlScalarResult<T> right)
+    public static bool operator !=(SqlScalarQueryResult<T> left, SqlScalarQueryResult<T> right)
     {
         return ! left.Equals( right );
     }

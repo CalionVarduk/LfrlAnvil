@@ -78,7 +78,7 @@ public static class SqlStatementObjectExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlScalarResult Query(this IDbCommand command, SqlScalarReader reader)
+    public static SqlScalarQueryResult Query(this IDbCommand command, SqlScalarQueryReader reader)
     {
         using var r = command.ExecuteReader();
         return reader.Read( r );
@@ -86,7 +86,7 @@ public static class SqlStatementObjectExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlScalarResult<T> Query<T>(this IDbCommand command, SqlScalarReader<T> reader)
+    public static SqlScalarQueryResult<T> Query<T>(this IDbCommand command, SqlScalarQueryReader<T> reader)
     {
         using var r = command.ExecuteReader();
         return reader.Read( r );
@@ -94,14 +94,14 @@ public static class SqlStatementObjectExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlScalarResult Query(this IDbCommand command, SqlScalarReaderExecutor executor)
+    public static SqlScalarQueryResult Query(this IDbCommand command, SqlScalarQueryReaderExecutor executor)
     {
         return executor.Execute( command );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlScalarResult<T> Query<T>(this IDbCommand command, SqlScalarReaderExecutor<T> executor)
+    public static SqlScalarQueryResult<T> Query<T>(this IDbCommand command, SqlScalarQueryReaderExecutor<T> executor)
     {
         return executor.Execute( command );
     }
@@ -162,16 +162,16 @@ public static class SqlStatementObjectExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlScalarReaderExecutor Bind(this SqlScalarReader reader, string sql)
+    public static SqlScalarQueryReaderExecutor Bind(this SqlScalarQueryReader reader, string sql)
     {
-        return new SqlScalarReaderExecutor( reader, sql );
+        return new SqlScalarQueryReaderExecutor( reader, sql );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlScalarReaderExecutor<T> Bind<T>(this SqlScalarReader<T> reader, string sql)
+    public static SqlScalarQueryReaderExecutor<T> Bind<T>(this SqlScalarQueryReader<T> reader, string sql)
     {
-        return new SqlScalarReaderExecutor<T>( reader, sql );
+        return new SqlScalarQueryReaderExecutor<T>( reader, sql );
     }
 
     [Pure]
@@ -255,9 +255,9 @@ public static class SqlStatementObjectExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static async ValueTask<SqlScalarResult> QueryAsync(
+    public static async ValueTask<SqlScalarQueryResult> QueryAsync(
         this IDbCommand command,
-        SqlAsyncScalarReader reader,
+        SqlAsyncScalarQueryReader reader,
         CancellationToken cancellationToken = default)
     {
         await using var r = await ((DbCommand)command).ExecuteReaderAsync( cancellationToken ).ConfigureAwait( false );
@@ -266,9 +266,9 @@ public static class SqlStatementObjectExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static async ValueTask<SqlScalarResult<T>> QueryAsync<T>(
+    public static async ValueTask<SqlScalarQueryResult<T>> QueryAsync<T>(
         this IDbCommand command,
-        SqlAsyncScalarReader<T> reader,
+        SqlAsyncScalarQueryReader<T> reader,
         CancellationToken cancellationToken = default)
     {
         await using var r = await ((DbCommand)command).ExecuteReaderAsync( cancellationToken ).ConfigureAwait( false );
@@ -277,9 +277,9 @@ public static class SqlStatementObjectExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static ValueTask<SqlScalarResult> QueryAsync(
+    public static ValueTask<SqlScalarQueryResult> QueryAsync(
         this IDbCommand command,
-        SqlAsyncScalarReaderExecutor executor,
+        SqlAsyncScalarQueryReaderExecutor executor,
         CancellationToken cancellationToken = default)
     {
         return executor.ExecuteAsync( command, cancellationToken );
@@ -287,9 +287,9 @@ public static class SqlStatementObjectExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static ValueTask<SqlScalarResult<T>> QueryAsync<T>(
+    public static ValueTask<SqlScalarQueryResult<T>> QueryAsync<T>(
         this IDbCommand command,
-        SqlAsyncScalarReaderExecutor<T> executor,
+        SqlAsyncScalarQueryReaderExecutor<T> executor,
         CancellationToken cancellationToken = default)
     {
         return executor.ExecuteAsync( command, cancellationToken );
@@ -318,15 +318,15 @@ public static class SqlStatementObjectExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlAsyncScalarReaderExecutor Bind(this SqlAsyncScalarReader reader, string sql)
+    public static SqlAsyncScalarQueryReaderExecutor Bind(this SqlAsyncScalarQueryReader reader, string sql)
     {
-        return new SqlAsyncScalarReaderExecutor( reader, sql );
+        return new SqlAsyncScalarQueryReaderExecutor( reader, sql );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlAsyncScalarReaderExecutor<T> Bind<T>(this SqlAsyncScalarReader<T> reader, string sql)
+    public static SqlAsyncScalarQueryReaderExecutor<T> Bind<T>(this SqlAsyncScalarQueryReader<T> reader, string sql)
     {
-        return new SqlAsyncScalarReaderExecutor<T>( reader, sql );
+        return new SqlAsyncScalarQueryReaderExecutor<T>( reader, sql );
     }
 }

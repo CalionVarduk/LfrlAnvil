@@ -76,7 +76,7 @@ public readonly struct SqlAsyncMultiDataReader : IDisposable, IAsyncDisposable
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public async ValueTask<SqlScalarResult> ReadAsync(SqlAsyncScalarReader reader, CancellationToken cancellationToken = default)
+    public async ValueTask<SqlScalarQueryResult> ReadAsync(SqlAsyncScalarQueryReader reader, CancellationToken cancellationToken = default)
     {
         var result = await reader.ReadAsync( Reader, cancellationToken ).ConfigureAwait( false );
         if ( ! await Reader.NextResultAsync( cancellationToken ).ConfigureAwait( false ) )
@@ -87,7 +87,9 @@ public readonly struct SqlAsyncMultiDataReader : IDisposable, IAsyncDisposable
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public async ValueTask<SqlScalarResult<T>> ReadAsync<T>(SqlAsyncScalarReader<T> reader, CancellationToken cancellationToken = default)
+    public async ValueTask<SqlScalarQueryResult<T>> ReadAsync<T>(
+        SqlAsyncScalarQueryReader<T> reader,
+        CancellationToken cancellationToken = default)
     {
         var result = await reader.ReadAsync( Reader, cancellationToken ).ConfigureAwait( false );
         if ( ! await Reader.NextResultAsync( cancellationToken ).ConfigureAwait( false ) )

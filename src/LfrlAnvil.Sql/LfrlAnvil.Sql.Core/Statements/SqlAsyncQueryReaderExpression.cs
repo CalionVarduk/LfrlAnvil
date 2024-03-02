@@ -5,7 +5,7 @@ using LfrlAnvil.Sql.Statements.Compilers;
 
 namespace LfrlAnvil.Sql.Statements;
 
-public readonly record struct SqlAsyncQueryReaderExpression(SqlDialect Dialect, Type RowType, ISqlAsyncLambdaExpression Expression);
+public readonly record struct SqlAsyncQueryReaderExpression(SqlDialect Dialect, Type RowType, ISqlAsyncQueryLambdaExpression Expression);
 
 public readonly struct SqlAsyncQueryReaderExpression<TRow>
     where TRow : notnull
@@ -14,11 +14,11 @@ public readonly struct SqlAsyncQueryReaderExpression<TRow>
     {
         Assume.Equals( @base.RowType, typeof( TRow ) );
         Dialect = @base.Dialect;
-        Expression = ReinterpretCast.To<ISqlAsyncLambdaExpression<TRow>>( @base.Expression );
+        Expression = ReinterpretCast.To<ISqlAsyncQueryLambdaExpression<TRow>>( @base.Expression );
     }
 
     public SqlDialect Dialect { get; }
-    public ISqlAsyncLambdaExpression<TRow> Expression { get; }
+    public ISqlAsyncQueryLambdaExpression<TRow> Expression { get; }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

@@ -56,7 +56,7 @@ internal static class TypeHelpers
     [Pure]
     internal static ConstructorInfo GetAsyncReaderInitResultCtor()
     {
-        var result = typeof( SqlAsyncReaderInitResult ).GetConstructor(
+        var result = typeof( SqlAsyncQueryReaderInitResult ).GetConstructor(
             PublicMember,
             new[] { typeof( int[] ), typeof( SqlResultSetField[] ) } );
 
@@ -149,18 +149,18 @@ internal static class TypeHelpers
     }
 
     [Pure]
-    internal static ConstructorInfo GetScalarResultCtor(Type type)
+    internal static ConstructorInfo GetScalarQueryResultCtor(Type type)
     {
-        var scalarResultType = typeof( SqlScalarResult<> ).MakeGenericType( type );
+        var scalarResultType = typeof( SqlScalarQueryResult<> ).MakeGenericType( type );
         var result = scalarResultType.GetConstructor( PublicMember, new[] { type } );
         Assume.IsNotNull( result );
         return result;
     }
 
     [Pure]
-    internal static FieldInfo GetScalarResultEmptyField(Type type)
+    internal static FieldInfo GetScalarQueryResultEmptyField(Type type)
     {
-        var result = type.GetField( nameof( SqlScalarResult.Empty ), BindingFlags.Public | BindingFlags.Static );
+        var result = type.GetField( nameof( SqlScalarQueryResult.Empty ), BindingFlags.Public | BindingFlags.Static );
         Assume.IsNotNull( result );
         return result;
     }

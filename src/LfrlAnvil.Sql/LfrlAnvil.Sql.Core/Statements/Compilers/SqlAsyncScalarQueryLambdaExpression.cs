@@ -9,25 +9,26 @@ using System.Threading.Tasks;
 
 namespace LfrlAnvil.Sql.Statements.Compilers;
 
-public sealed class SqlAsyncScalarLambdaExpression<TDataReader, T> : ISqlAsyncScalarLambdaExpression<T>
+public sealed class SqlAsyncScalarQueryLambdaExpression<TDataReader, T> : ISqlAsyncScalarQueryLambdaExpression<T>
     where TDataReader : DbDataReader
 {
-    private SqlAsyncScalarLambdaExpression(Expression<Func<TDataReader, SqlScalarResult<T>>> readResultExpression)
+    private SqlAsyncScalarQueryLambdaExpression(Expression<Func<TDataReader, SqlScalarQueryResult<T>>> readResultExpression)
     {
         ReadResultExpression = readResultExpression;
     }
 
-    public Expression<Func<TDataReader, SqlScalarResult<T>>> ReadResultExpression { get; }
+    public Expression<Func<TDataReader, SqlScalarQueryResult<T>>> ReadResultExpression { get; }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlAsyncScalarLambdaExpression<TDataReader, T> Create(Expression<Func<TDataReader, SqlScalarResult<T>>> readRowExpression)
+    public static SqlAsyncScalarQueryLambdaExpression<TDataReader, T> Create(
+        Expression<Func<TDataReader, SqlScalarQueryResult<T>>> readRowExpression)
     {
-        return new SqlAsyncScalarLambdaExpression<TDataReader, T>( readRowExpression );
+        return new SqlAsyncScalarQueryLambdaExpression<TDataReader, T>( readRowExpression );
     }
 
     [Pure]
-    public Func<IDataReader, CancellationToken, ValueTask<SqlScalarResult<T>>> Compile()
+    public Func<IDataReader, CancellationToken, ValueTask<SqlScalarQueryResult<T>>> Compile()
     {
         var readRowDelegate = ReadResultExpression.Compile();
 
@@ -36,12 +37,12 @@ public sealed class SqlAsyncScalarLambdaExpression<TDataReader, T> : ISqlAsyncSc
             var concreteReader = (TDataReader)reader;
             return await concreteReader.ReadAsync( cancellationToken ).ConfigureAwait( false )
                 ? readRowDelegate( concreteReader )
-                : SqlScalarResult<T>.Empty;
+                : SqlScalarQueryResult<T>.Empty;
         };
     }
 
     [Pure]
-    Delegate ISqlAsyncScalarLambdaExpression.Compile()
+    Delegate ISqlAsyncScalarQueryLambdaExpression.Compile()
     {
         return Compile();
     }

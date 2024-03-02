@@ -8,19 +8,19 @@ using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
 namespace LfrlAnvil.Sql.Tests.StatementsTests;
 
-public class SqlAsyncScalarReaderTests : TestsBase
+public class SqlAsyncScalarQueryReaderTests : TestsBase
 {
     [Fact]
     public async Task ReadAsync_ForTypeErased_ShouldInvokeDelegate()
     {
-        var expected = new SqlScalarResult( "foo" );
+        var expected = new SqlScalarQueryResult( "foo" );
 
         var reader = new DbDataReaderMock();
         var cancellationTokenSource = new CancellationTokenSource();
         var dialect = new SqlDialect( "foo" );
-        var @delegate = Substitute.For<Func<IDataReader, CancellationToken, ValueTask<SqlScalarResult>>>();
+        var @delegate = Substitute.For<Func<IDataReader, CancellationToken, ValueTask<SqlScalarQueryResult>>>();
         @delegate.WithAnyArgs( _ => ValueTask.FromResult( expected ) );
-        var sut = new SqlAsyncScalarReader( dialect, @delegate );
+        var sut = new SqlAsyncScalarQueryReader( dialect, @delegate );
 
         var result = await sut.ReadAsync( reader, cancellationTokenSource.Token );
 
@@ -41,14 +41,14 @@ public class SqlAsyncScalarReaderTests : TestsBase
     [Fact]
     public async Task ReadAsync_ForGeneric_ShouldInvokeDelegate()
     {
-        var expected = new SqlScalarResult<int>( 42 );
+        var expected = new SqlScalarQueryResult<int>( 42 );
 
         var reader = new DbDataReaderMock();
         var cancellationTokenSource = new CancellationTokenSource();
         var dialect = new SqlDialect( "foo" );
-        var @delegate = Substitute.For<Func<IDataReader, CancellationToken, ValueTask<SqlScalarResult<int>>>>();
+        var @delegate = Substitute.For<Func<IDataReader, CancellationToken, ValueTask<SqlScalarQueryResult<int>>>>();
         @delegate.WithAnyArgs( _ => ValueTask.FromResult( expected ) );
-        var sut = new SqlAsyncScalarReader<int>( dialect, @delegate );
+        var sut = new SqlAsyncScalarQueryReader<int>( dialect, @delegate );
 
         var result = await sut.ReadAsync( reader, cancellationTokenSource.Token );
 

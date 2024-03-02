@@ -5,21 +5,21 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Sql.Statements;
 
-public readonly record struct SqlScalarReader(SqlDialect Dialect, Func<IDataReader, SqlScalarResult> Delegate)
+public readonly record struct SqlScalarQueryReader(SqlDialect Dialect, Func<IDataReader, SqlScalarQueryResult> Delegate)
 {
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public SqlScalarResult Read(IDataReader reader)
+    public SqlScalarQueryResult Read(IDataReader reader)
     {
         return Delegate( reader );
     }
 }
 
-public readonly record struct SqlScalarReader<T>(SqlDialect Dialect, Func<IDataReader, SqlScalarResult<T>> Delegate)
+public readonly record struct SqlScalarQueryReader<T>(SqlDialect Dialect, Func<IDataReader, SqlScalarQueryResult<T>> Delegate)
 {
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public SqlScalarResult<T> Read(IDataReader reader)
+    public SqlScalarQueryResult<T> Read(IDataReader reader)
     {
         return Delegate( reader );
     }

@@ -1318,7 +1318,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     }
 
     [Fact]
-    public void CreateScalar_TypeErased_ShouldCreateScalarReaderThatReturnsCorrectResult_WhenDataReaderIsEmpty()
+    public void CreateScalar_TypeErased_ShouldCreateScalarQueryReaderThatReturnsCorrectResult_WhenDataReaderIsEmpty()
     {
         var reader = new DbDataReaderMock();
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
@@ -1329,12 +1329,12 @@ public class SqlQueryReaderFactoryTests : TestsBase
         using ( new AssertionScope() )
         {
             scalarReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.Should().Be( SqlScalarResult.Empty );
+            result.Should().Be( SqlScalarQueryResult.Empty );
         }
     }
 
     [Fact]
-    public void CreateScalar_TypeErased_ShouldCreateScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty()
+    public void CreateScalar_TypeErased_ShouldCreateScalarQueryReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty()
     {
         var reader = new DbDataReaderMock(
             new ResultSet(
@@ -1359,7 +1359,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     }
 
     [Fact]
-    public void CreateScalar_TypeErased_ShouldCreateScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmptyAndResultIsNull()
+    public void CreateScalar_TypeErased_ShouldCreateScalarQueryReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmptyAndResultIsNull()
     {
         var reader = new DbDataReaderMock(
             new ResultSet(
@@ -1384,7 +1384,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     }
 
     [Fact]
-    public void CreateScalar_Generic_ShouldCreateScalarReaderThatReturnsCorrectResult_WhenDataReaderIsEmpty()
+    public void CreateScalar_Generic_ShouldCreateScalarQueryReaderThatReturnsCorrectResult_WhenDataReaderIsEmpty()
     {
         var reader = new DbDataReaderMock();
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
@@ -1395,12 +1395,12 @@ public class SqlQueryReaderFactoryTests : TestsBase
         using ( new AssertionScope() )
         {
             queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.Should().Be( SqlScalarResult<int>.Empty );
+            result.Should().Be( SqlScalarQueryResult<int>.Empty );
         }
     }
 
     [Fact]
-    public void CreateScalar_Generic_ShouldCreateScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty_ForNonNullValueType()
+    public void CreateScalar_Generic_ShouldCreateScalarQueryReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty_ForNonNullValueType()
     {
         var reader = new DbDataReaderMock(
             new ResultSet(
@@ -1425,7 +1425,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
     [Fact]
     public void
-        CreateScalar_Generic_ShouldCreateScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmptyAndResultIsNull_ForNonNullValueType()
+        CreateScalar_Generic_ShouldCreateScalarQueryReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmptyAndResultIsNull_ForNonNullValueType()
     {
         var reader = new DbDataReaderMock(
             new ResultSet(
@@ -1449,7 +1449,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     }
 
     [Fact]
-    public void CreateScalar_Generic_ShouldCreateScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty_ForNullableValueType()
+    public void CreateScalar_Generic_ShouldCreateScalarQueryReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty_ForNullableValueType()
     {
         var reader = new DbDataReaderMock(
             new ResultSet(
@@ -1474,7 +1474,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
     [Fact]
     public void
-        CreateScalar_Generic_ShouldCreateScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmptyAndResultIsNull_ForNullableValueType()
+        CreateScalar_Generic_ShouldCreateScalarQueryReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmptyAndResultIsNull_ForNullableValueType()
     {
         var reader = new DbDataReaderMock(
             new ResultSet(
@@ -1498,7 +1498,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     }
 
     [Fact]
-    public void CreateScalar_Generic_ShouldCreateScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty_ForRefType()
+    public void CreateScalar_Generic_ShouldCreateScalarQueryReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty_ForRefType()
     {
         var reader = new DbDataReaderMock(
             new ResultSet(
@@ -1523,7 +1523,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
     [Fact]
     public void
-        CreateScalar_Generic_ShouldCreateScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmptyAndResultIsNull_ForRefType()
+        CreateScalar_Generic_ShouldCreateScalarQueryReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmptyAndResultIsNull_ForRefType()
     {
         var reader = new DbDataReaderMock(
             new ResultSet(
@@ -1563,7 +1563,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     }
 
     [Fact]
-    public async Task CreateAsyncScalar_TypeErased_ShouldCreateAsyncScalarReaderThatReturnsCorrectResult_WhenDataReaderIsEmpty()
+    public async Task CreateAsyncScalar_TypeErased_ShouldCreateAsyncScalarQueryReaderThatReturnsCorrectResult_WhenDataReaderIsEmpty()
     {
         var reader = new DbDataReaderMock();
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
@@ -1574,12 +1574,12 @@ public class SqlQueryReaderFactoryTests : TestsBase
         using ( new AssertionScope() )
         {
             scalarReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.Should().Be( SqlScalarResult.Empty );
+            result.Should().Be( SqlScalarQueryResult.Empty );
         }
     }
 
     [Fact]
-    public async Task CreateAsyncScalar_TypeErased_ShouldCreateAsyncScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty()
+    public async Task CreateAsyncScalar_TypeErased_ShouldCreateAsyncScalarQueryReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty()
     {
         var reader = new DbDataReaderMock(
             new ResultSet(
@@ -1605,7 +1605,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
     [Fact]
     public async Task
-        CreateAsyncScalar_TypeErased_ShouldCreateAsyncScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmptyAndResultIsNull()
+        CreateAsyncScalar_TypeErased_ShouldCreateAsyncScalarQueryReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmptyAndResultIsNull()
     {
         var reader = new DbDataReaderMock(
             new ResultSet(
@@ -1630,7 +1630,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     }
 
     [Fact]
-    public async Task CreateAsyncScalar_Generic_ShouldCreateAsyncScalarReaderThatReturnsCorrectResult_WhenDataReaderIsEmpty()
+    public async Task CreateAsyncScalar_Generic_ShouldCreateAsyncScalarQueryReaderThatReturnsCorrectResult_WhenDataReaderIsEmpty()
     {
         var reader = new DbDataReaderMock();
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
@@ -1641,13 +1641,13 @@ public class SqlQueryReaderFactoryTests : TestsBase
         using ( new AssertionScope() )
         {
             queryReader.Dialect.Should().BeSameAs( sut.Dialect );
-            result.Should().Be( SqlScalarResult<int>.Empty );
+            result.Should().Be( SqlScalarQueryResult<int>.Empty );
         }
     }
 
     [Fact]
     public async Task
-        CreateAsyncScalar_Generic_ShouldCreateAsyncScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty_ForNonNullValueType()
+        CreateAsyncScalar_Generic_ShouldCreateAsyncScalarQueryReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty_ForNonNullValueType()
     {
         var reader = new DbDataReaderMock(
             new ResultSet(
@@ -1672,7 +1672,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
     [Fact]
     public async Task
-        CreateAsyncScalar_Generic_ShouldCreateAsyncScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmptyAndResultIsNull_ForNonNullValueType()
+        CreateAsyncScalar_Generic_ShouldCreateAsyncScalarQueryReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmptyAndResultIsNull_ForNonNullValueType()
     {
         var reader = new DbDataReaderMock(
             new ResultSet(
@@ -1697,7 +1697,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
     [Fact]
     public async Task
-        CreateAsyncScalar_Generic_ShouldCreateAsyncScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty_ForNullableValueType()
+        CreateAsyncScalar_Generic_ShouldCreateAsyncScalarQueryReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty_ForNullableValueType()
     {
         var reader = new DbDataReaderMock(
             new ResultSet(
@@ -1722,7 +1722,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
     [Fact]
     public async Task
-        CreateAsyncScalar_Generic_ShouldCreateAsyncScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmptyAndResultIsNull_ForNullableValueType()
+        CreateAsyncScalar_Generic_ShouldCreateAsyncScalarQueryReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmptyAndResultIsNull_ForNullableValueType()
     {
         var reader = new DbDataReaderMock(
             new ResultSet(
@@ -1746,7 +1746,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
     }
 
     [Fact]
-    public async Task CreateAsyncScalar_Generic_ShouldCreateAsyncScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty_ForRefType()
+    public async Task CreateAsyncScalar_Generic_ShouldCreateAsyncScalarQueryReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty_ForRefType()
     {
         var reader = new DbDataReaderMock(
             new ResultSet(
@@ -1771,7 +1771,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
 
     [Fact]
     public async Task
-        CreateAsyncScalar_Generic_ShouldCreateAsyncScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmptyAndResultIsNull_ForRefType()
+        CreateAsyncScalar_Generic_ShouldCreateAsyncScalarQueryReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmptyAndResultIsNull_ForRefType()
     {
         var reader = new DbDataReaderMock(
             new ResultSet(

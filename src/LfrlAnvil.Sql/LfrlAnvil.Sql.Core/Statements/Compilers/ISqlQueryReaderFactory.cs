@@ -21,14 +21,14 @@ public interface ISqlQueryReaderFactory
     SqlAsyncQueryReaderExpression CreateAsyncExpression(Type rowType, SqlQueryReaderCreationOptions? options = null);
 
     [Pure]
-    SqlScalarReader CreateScalar();
+    SqlScalarQueryReader CreateScalar();
 
     [Pure]
-    SqlAsyncScalarReader CreateAsyncScalar();
+    SqlAsyncScalarQueryReader CreateAsyncScalar();
 
     [Pure]
-    SqlScalarReaderExpression CreateScalarExpression(Type resultType, bool isNullable = false);
+    SqlScalarQueryReaderExpression CreateScalarExpression(Type resultType, bool isNullable = false);
 
     [Pure]
-    SqlAsyncScalarReaderExpression CreateAsyncScalarExpression(Type resultType, bool isNullable = false);
+    SqlAsyncScalarQueryReaderExpression CreateAsyncScalarExpression(Type resultType, bool isNullable = false);
 }
