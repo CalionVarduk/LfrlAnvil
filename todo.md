@@ -91,7 +91,7 @@ project idea:
 - extends Benchmarking project with Terminal project capabilities (writes benchmark "events" to console)
 
 ### Dependencies: Reader/Writer Lock
-instead of 'lock', there should be a lot more reading (resolving dependencies) then writing (creating scopes)
+- instead of 'lock', there should be a lot more reading (resolving dependencies) then writing (creating scopes)
 
 ### Dependencies: Generic dependency types
 - add support for open generic constructable dependency types
@@ -139,7 +139,6 @@ ideas for other LfrlAnvil.Computable projects:
 Implement Sql.Core for PostgreSql
 
 ### Sql.Core: Create generic abstractions based on Sqlite & MySql objects
-  - Add generic/type-erased ExecuteScalar to query/multi readers
   - add possibility to define expression-based IXs (table-scoped validator?)
 
 ### Sql.Core: Add DateTime related functions

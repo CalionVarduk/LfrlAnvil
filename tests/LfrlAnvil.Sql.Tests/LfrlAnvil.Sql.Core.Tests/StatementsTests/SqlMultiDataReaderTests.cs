@@ -98,6 +98,67 @@ public class SqlMultiDataReaderTests : TestsBase
     }
 
     [Fact]
+    public void Read_TypeErased_ShouldReadCorrectScalarsAndCallDisposeOnceDone()
+    {
+        var command = new DbCommandMock(
+            new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ),
+            new ResultSet( new[] { "X", "Y" }, new[] { new object[] { "x1", "y1" }, new object?[] { "x2", null } } ),
+            new ResultSet( new[] { "M", "N" }, new[] { new object[] { true, 5.0 }, new object?[] { false, null } } ) );
+
+        var factory = SqlQueryReaderFactoryMock.CreateInstance();
+        var reader = factory.CreateScalar();
+        var sut = command.MultiQuery();
+
+        var result1 = sut.Read( reader );
+        var result2 = sut.Read( reader );
+        var result3 = sut.Read( reader );
+
+        using ( new AssertionScope() )
+        {
+            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
+
+            result1.HasValue.Should().BeTrue();
+            result1.Value.Should().Be( 1 );
+
+            result2.HasValue.Should().BeTrue();
+            result2.Value.Should().Be( "x1" );
+
+            result3.HasValue.Should().BeTrue();
+            result3.Value.Should().Be( true );
+        }
+    }
+
+    [Fact]
+    public void Read_Generic_ShouldReadCorrectScalarsAndCallDisposeOnceDone()
+    {
+        var command = new DbCommandMock(
+            new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ),
+            new ResultSet( new[] { "X", "Y" }, new[] { new object[] { "x1", "y1" }, new object?[] { "x2", null } } ),
+            new ResultSet( new[] { "M", "N" }, new[] { new object[] { true, 5.0 }, new object?[] { false, null } } ) );
+
+        var factory = SqlQueryReaderFactoryMock.CreateInstance();
+        var sut = command.MultiQuery();
+
+        var result1 = sut.Read( factory.CreateScalar<int>() );
+        var result2 = sut.Read( factory.CreateScalar<string>() );
+        var result3 = sut.Read( factory.CreateScalar<bool>() );
+
+        using ( new AssertionScope() )
+        {
+            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
+
+            result1.HasValue.Should().BeTrue();
+            result1.Value.Should().Be( 1 );
+
+            result2.HasValue.Should().BeTrue();
+            result2.Value.Should().Be( "x1" );
+
+            result3.HasValue.Should().BeTrue();
+            result3.Value.Should().Be( true );
+        }
+    }
+
+    [Fact]
     public void Read_WithCustomDelegate_ShouldReadCorrectResultSetsAndCallDisposeOnceDone()
     {
         var command = new DbCommandMock(

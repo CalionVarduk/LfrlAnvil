@@ -149,6 +149,23 @@ internal static class TypeHelpers
     }
 
     [Pure]
+    internal static ConstructorInfo GetScalarResultCtor(Type type)
+    {
+        var scalarResultType = typeof( SqlScalarResult<> ).MakeGenericType( type );
+        var result = scalarResultType.GetConstructor( PublicMember, new[] { type } );
+        Assume.IsNotNull( result );
+        return result;
+    }
+
+    [Pure]
+    internal static FieldInfo GetScalarResultEmptyField(Type type)
+    {
+        var result = type.GetField( nameof( SqlScalarResult.Empty ), BindingFlags.Public | BindingFlags.Static );
+        Assume.IsNotNull( result );
+        return result;
+    }
+
+    [Pure]
     internal static MethodInfo GetColumnTypeDefinitionToParameterValueMethod(Type type, Type valueType)
     {
         var result = type.FindMember(

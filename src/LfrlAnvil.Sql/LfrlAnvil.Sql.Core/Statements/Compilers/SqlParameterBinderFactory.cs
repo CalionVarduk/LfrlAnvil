@@ -49,13 +49,13 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
     {
         var errors = Chain<string>.Empty;
         if ( sourceType.IsAbstract )
-            errors = errors.Extend( ExceptionResources.SourceTypeCannotBeAbstract );
+            errors = errors.Extend( ExceptionResources.TypeCannotBeAbstract );
 
         if ( sourceType.IsGenericTypeDefinition )
-            errors = errors.Extend( ExceptionResources.SourceTypeCannotBeOpenGeneric );
+            errors = errors.Extend( ExceptionResources.TypeCannotBeOpenGeneric );
 
         if ( sourceType.IsValueType && Nullable.GetUnderlyingType( sourceType ) is not null )
-            errors = errors.Extend( ExceptionResources.SourceTypeCannotBeNullable );
+            errors = errors.Extend( ExceptionResources.TypeCannotBeNullable );
 
         if ( errors.Count > 0 )
             throw new SqlCompilerException( Dialect, errors );

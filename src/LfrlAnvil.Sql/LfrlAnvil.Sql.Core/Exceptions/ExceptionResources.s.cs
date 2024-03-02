@@ -27,15 +27,13 @@ public static class ExceptionResources
         "Foreign key origin index and referenced index must have the same amount of columns.";
 
     public const string DummyDataSourceDoesNotContainAnyRecordSets = "Dummy data source does not contain any record sets.";
-    public const string RowTypeCannotBeAbstract = "Row type cannot be abstract.";
-    public const string RowTypeCannotBeOpenGeneric = "Row type cannot be an open generic type.";
-    public const string RowTypeCannotBeNullable = "Row type cannot be nullable.";
+    public const string TypeCannotBeAbstract = "Type cannot be abstract.";
+    public const string TypeCannotBeOpenGeneric = "Type cannot be an open generic type.";
+    public const string TypeCannotBeNullable = "Type cannot be nullable.";
     public const string RowTypeDoesNotHaveValidCtor = "Row type doesn't have a valid constructor.";
     public const string RowTypeDoesNotHaveAnyValidMembers = "Row type doesn't have any valid members.";
-    public const string SourceTypeCannotBeAbstract = "Source type cannot be abstract.";
-    public const string SourceTypeCannotBeOpenGeneric = "Source type cannot be an open generic type.";
-    public const string SourceTypeCannotBeNullable = "Source type cannot be nullable.";
 
+    internal const string ScalarResultDoesNotHaveValue = "Scalar result does not have a value.";
     internal const string SchemaQuickRemovalIsUnsupported = "Schema quick-removal is unsupported.";
     internal const string UnknownObjectsAreUnsupported = "Unknown objects are unsupported.";
 

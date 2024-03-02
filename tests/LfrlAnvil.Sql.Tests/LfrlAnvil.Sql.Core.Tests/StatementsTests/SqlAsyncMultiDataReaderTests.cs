@@ -126,6 +126,67 @@ public class SqlAsyncMultiDataReaderTests : TestsBase
     }
 
     [Fact]
+    public async Task ReadAsync_TypeErased_ShouldReadCorrectScalarsAndCallDisposeOnceDone()
+    {
+        var command = new DbCommandMock(
+            new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ),
+            new ResultSet( new[] { "X", "Y" }, new[] { new object[] { "x1", "y1" }, new object?[] { "x2", null } } ),
+            new ResultSet( new[] { "M", "N" }, new[] { new object[] { true, 5.0 }, new object?[] { false, null } } ) );
+
+        var factory = SqlQueryReaderFactoryMock.CreateInstance();
+        var reader = factory.CreateAsyncScalar();
+        var sut = await command.MultiQueryAsync();
+
+        var result1 = await sut.ReadAsync( reader );
+        var result2 = await sut.ReadAsync( reader );
+        var result3 = await sut.ReadAsync( reader );
+
+        using ( new AssertionScope() )
+        {
+            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
+
+            result1.HasValue.Should().BeTrue();
+            result1.Value.Should().Be( 1 );
+
+            result2.HasValue.Should().BeTrue();
+            result2.Value.Should().Be( "x1" );
+
+            result3.HasValue.Should().BeTrue();
+            result3.Value.Should().Be( true );
+        }
+    }
+
+    [Fact]
+    public async Task ReadAsync_Generic_ShouldReadCorrectScalarsAndCallDisposeOnceDone()
+    {
+        var command = new DbCommandMock(
+            new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ),
+            new ResultSet( new[] { "X", "Y" }, new[] { new object[] { "x1", "y1" }, new object?[] { "x2", null } } ),
+            new ResultSet( new[] { "M", "N" }, new[] { new object[] { true, 5.0 }, new object?[] { false, null } } ) );
+
+        var factory = SqlQueryReaderFactoryMock.CreateInstance();
+        var sut = await command.MultiQueryAsync();
+
+        var result1 = await sut.ReadAsync( factory.CreateAsyncScalar<int>() );
+        var result2 = await sut.ReadAsync( factory.CreateAsyncScalar<string>() );
+        var result3 = await sut.ReadAsync( factory.CreateAsyncScalar<bool>() );
+
+        using ( new AssertionScope() )
+        {
+            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
+
+            result1.HasValue.Should().BeTrue();
+            result1.Value.Should().Be( 1 );
+
+            result2.HasValue.Should().BeTrue();
+            result2.Value.Should().Be( "x1" );
+
+            result3.HasValue.Should().BeTrue();
+            result3.Value.Should().Be( true );
+        }
+    }
+
+    [Fact]
     public async Task ReadAsync_WithCustomValueTaskDelegate_ShouldReadCorrectResultSetsAndCallDisposeOnceDone()
     {
         var command = new DbCommandMock(

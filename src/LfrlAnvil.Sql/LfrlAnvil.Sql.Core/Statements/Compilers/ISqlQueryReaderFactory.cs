@@ -19,4 +19,16 @@ public interface ISqlQueryReaderFactory
 
     [Pure]
     SqlAsyncQueryReaderExpression CreateAsyncExpression(Type rowType, SqlQueryReaderCreationOptions? options = null);
+
+    [Pure]
+    SqlScalarReader CreateScalar();
+
+    [Pure]
+    SqlAsyncScalarReader CreateAsyncScalar();
+
+    [Pure]
+    SqlScalarReaderExpression CreateScalarExpression(Type resultType, bool isNullable = false);
+
+    [Pure]
+    SqlAsyncScalarReaderExpression CreateAsyncScalarExpression(Type resultType, bool isNullable = false);
 }

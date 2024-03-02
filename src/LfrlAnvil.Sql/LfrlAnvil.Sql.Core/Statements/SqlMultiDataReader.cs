@@ -58,6 +58,28 @@ public readonly struct SqlMultiDataReader : IDisposable
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public SqlScalarResult Read(SqlScalarReader reader)
+    {
+        var result = reader.Read( Reader );
+        if ( ! Reader.NextResult() )
+            Reader.Dispose();
+
+        return result;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public SqlScalarResult<T> Read<T>(SqlScalarReader<T> reader)
+    {
+        var result = reader.Read( Reader );
+        if ( ! Reader.NextResult() )
+            Reader.Dispose();
+
+        return result;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public TResult Read<TResult>(Func<IDataReader, TResult> reader)
     {
         var result = reader( Reader );

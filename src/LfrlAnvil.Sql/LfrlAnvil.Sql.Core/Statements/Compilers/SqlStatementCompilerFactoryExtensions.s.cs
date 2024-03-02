@@ -44,6 +44,36 @@ public static class SqlStatementCompilerFactoryExtensions
     }
 
     [Pure]
+    public static SqlScalarReaderExpression<T> CreateScalarExpression<T>(this ISqlQueryReaderFactory factory, bool isNullable = false)
+    {
+        var expression = factory.CreateScalarExpression( typeof( T ), isNullable );
+        return new SqlScalarReaderExpression<T>( expression );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlScalarReader<T> CreateScalar<T>(this ISqlQueryReaderFactory factory, bool isNullable = false)
+    {
+        return factory.CreateScalarExpression<T>( isNullable ).Compile();
+    }
+
+    [Pure]
+    public static SqlAsyncScalarReaderExpression<T> CreateAsyncScalarExpression<T>(
+        this ISqlQueryReaderFactory factory,
+        bool isNullable = false)
+    {
+        var expression = factory.CreateAsyncScalarExpression( typeof( T ), isNullable );
+        return new SqlAsyncScalarReaderExpression<T>( expression );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlAsyncScalarReader<T> CreateAsyncScalar<T>(this ISqlQueryReaderFactory factory, bool isNullable = false)
+    {
+        return factory.CreateAsyncScalarExpression<T>( isNullable ).Compile();
+    }
+
+    [Pure]
     public static SqlParameterBinderExpression<TSource> CreateExpression<TSource>(
         this ISqlParameterBinderFactory factory,
         SqlParameterBinderCreationOptions? options = null)

@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Data;
-using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
 using LfrlAnvil.Sql.Statements;
@@ -16,13 +15,9 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     [Fact]
     public async Task BeginTransactionAsync_ShouldReturnTransaction()
     {
-        var expected = Substitute.ForPartsOf<DbTransaction>();
-        var sut = Substitute.ForPartsOf<DbConnection>();
-        sut.BeginTransaction( Arg.Any<IsolationLevel>() ).Returns( expected );
-
-        var result = await sut.BeginTransactionAsync( IsolationLevel.Serializable );
-
-        result.Should().BeSameAs( expected );
+        var sut = new DbConnectionMock();
+        var result = await ((IDbConnection)sut).BeginTransactionAsync( IsolationLevel.Serializable );
+        result.Should().BeSameAs( sut.CreatedTransactions[0] );
     }
 
     [Fact]
@@ -100,6 +95,78 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     }
 
     [Fact]
+    public void Query_TypeErased_WithReader_ShouldInvokeScalarReader()
+    {
+        var command = new DbCommandMock(
+            new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ) );
+
+        var factory = SqlQueryReaderFactoryMock.CreateInstance();
+        var result = command.Query( factory.CreateScalar() );
+
+        using ( new AssertionScope() )
+        {
+            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
+            result.HasValue.Should().BeTrue();
+            result.Value.Should().Be( 1 );
+        }
+    }
+
+    [Fact]
+    public void Query_Generic_WithReader_ShouldInvokeScalarReader()
+    {
+        var command = new DbCommandMock(
+            new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ) );
+
+        var factory = SqlQueryReaderFactoryMock.CreateInstance();
+        var result = command.Query( factory.CreateScalar<int>() );
+
+        using ( new AssertionScope() )
+        {
+            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
+            result.HasValue.Should().BeTrue();
+            result.Value.Should().Be( 1 );
+        }
+    }
+
+    [Fact]
+    public void Query_TypeErased_WithExecutor_ShouldSetCommandTextAndInvokeScalarReader()
+    {
+        var sql = "SELECT * FROM foo";
+        var command = new DbCommandMock(
+            new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ) );
+
+        var factory = SqlQueryReaderFactoryMock.CreateInstance();
+        var result = command.Query( factory.CreateScalar().Bind( sql ) );
+
+        using ( new AssertionScope() )
+        {
+            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
+            command.CommandText.Should().BeSameAs( sql );
+            result.HasValue.Should().BeTrue();
+            result.Value.Should().Be( 1 );
+        }
+    }
+
+    [Fact]
+    public void Query_Generic_WithExecutor_ShouldSetCommandTextAndInvokeScalarReader()
+    {
+        var sql = "SELECT * FROM foo";
+        var command = new DbCommandMock(
+            new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ) );
+
+        var factory = SqlQueryReaderFactoryMock.CreateInstance();
+        var result = command.Query( factory.CreateScalar<int>().Bind( sql ) );
+
+        using ( new AssertionScope() )
+        {
+            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
+            command.CommandText.Should().BeSameAs( sql );
+            result.HasValue.Should().BeTrue();
+            result.Value.Should().Be( 1 );
+        }
+    }
+
+    [Fact]
     public async Task QueryAsync_TypeErased_WithReader_ShouldInvokeReader()
     {
         var command = new DbCommandMock(
@@ -170,6 +237,78 @@ public class SqlStatementObjectExtensionsTests : TestsBase
             command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
             command.CommandText.Should().BeSameAs( sql );
             result.Rows.Should().BeSequentiallyEqualTo( new Row( 1, "foo" ), new Row( 2, "bar" ) );
+        }
+    }
+
+    [Fact]
+    public async Task QueryAsync_TypeErased_WithReader_ShouldInvokeScalarReader()
+    {
+        var command = new DbCommandMock(
+            new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ) );
+
+        var factory = SqlQueryReaderFactoryMock.CreateInstance();
+        var result = await command.QueryAsync( factory.CreateAsyncScalar() );
+
+        using ( new AssertionScope() )
+        {
+            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
+            result.HasValue.Should().BeTrue();
+            result.Value.Should().Be( 1 );
+        }
+    }
+
+    [Fact]
+    public async Task QueryAsync_Generic_WithReader_ShouldInvokeScalarReader()
+    {
+        var command = new DbCommandMock(
+            new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ) );
+
+        var factory = SqlQueryReaderFactoryMock.CreateInstance();
+        var result = await command.QueryAsync( factory.CreateAsyncScalar<int>() );
+
+        using ( new AssertionScope() )
+        {
+            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
+            result.HasValue.Should().BeTrue();
+            result.Value.Should().Be( 1 );
+        }
+    }
+
+    [Fact]
+    public async Task QueryAsync_TypeErased_WithExecutor_ShouldSetCommandTextAndInvokeScalarReader()
+    {
+        var sql = "SELECT * FROM foo";
+        var command = new DbCommandMock(
+            new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ) );
+
+        var factory = SqlQueryReaderFactoryMock.CreateInstance();
+        var result = await command.QueryAsync( factory.CreateAsyncScalar().Bind( sql ) );
+
+        using ( new AssertionScope() )
+        {
+            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
+            command.CommandText.Should().BeSameAs( sql );
+            result.HasValue.Should().BeTrue();
+            result.Value.Should().Be( 1 );
+        }
+    }
+
+    [Fact]
+    public async Task QueryAsync_Generic_WithExecutor_ShouldSetCommandTextAndInvokeScalarReader()
+    {
+        var sql = "SELECT * FROM foo";
+        var command = new DbCommandMock(
+            new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ) );
+
+        var factory = SqlQueryReaderFactoryMock.CreateInstance();
+        var result = await command.QueryAsync( factory.CreateAsyncScalar<int>().Bind( sql ) );
+
+        using ( new AssertionScope() )
+        {
+            command.Audit.LastOrDefault().Should().Be( "DbDataReader[0].Close" );
+            command.CommandText.Should().BeSameAs( sql );
+            result.HasValue.Should().BeTrue();
+            result.Value.Should().Be( 1 );
         }
     }
 

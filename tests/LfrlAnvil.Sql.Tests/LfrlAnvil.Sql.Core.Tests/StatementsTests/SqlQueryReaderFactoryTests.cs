@@ -1317,6 +1317,520 @@ public class SqlQueryReaderFactoryTests : TestsBase
         action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
     }
 
+    [Fact]
+    public void CreateScalar_TypeErased_ShouldCreateScalarReaderThatReturnsCorrectResult_WhenDataReaderIsEmpty()
+    {
+        var reader = new DbDataReaderMock();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
+        var scalarReader = sut.CreateScalar();
+
+        var result = scalarReader.Read( reader );
+
+        using ( new AssertionScope() )
+        {
+            scalarReader.Dialect.Should().BeSameAs( sut.Dialect );
+            result.Should().Be( SqlScalarResult.Empty );
+        }
+    }
+
+    [Fact]
+    public void CreateScalar_TypeErased_ShouldCreateScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty()
+    {
+        var reader = new DbDataReaderMock(
+            new ResultSet(
+                FieldNames: new[] { "a", "b", "c", "d" },
+                Rows: new[]
+                {
+                    new object?[] { 1, "foo", 5.0, true },
+                    new object?[] { 2, "bar", null, false }
+                } ) );
+
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
+        var scalarReader = sut.CreateScalar();
+
+        var result = scalarReader.Read( reader );
+
+        using ( new AssertionScope() )
+        {
+            scalarReader.Dialect.Should().BeSameAs( sut.Dialect );
+            result.HasValue.Should().BeTrue();
+            result.Value.Should().Be( 1 );
+        }
+    }
+
+    [Fact]
+    public void CreateScalar_TypeErased_ShouldCreateScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmptyAndResultIsNull()
+    {
+        var reader = new DbDataReaderMock(
+            new ResultSet(
+                FieldNames: new[] { "a", "b", "c", "d" },
+                Rows: new[]
+                {
+                    new object?[] { null, "foo", 5.0, true },
+                    new object?[] { 2, "bar", null, false }
+                } ) );
+
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
+        var scalarReader = sut.CreateScalar();
+
+        var result = scalarReader.Read( reader );
+
+        using ( new AssertionScope() )
+        {
+            scalarReader.Dialect.Should().BeSameAs( sut.Dialect );
+            result.HasValue.Should().BeTrue();
+            result.Value.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void CreateScalar_Generic_ShouldCreateScalarReaderThatReturnsCorrectResult_WhenDataReaderIsEmpty()
+    {
+        var reader = new DbDataReaderMock();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
+        var queryReader = sut.CreateScalar<int>();
+
+        var result = queryReader.Read( reader );
+
+        using ( new AssertionScope() )
+        {
+            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
+            result.Should().Be( SqlScalarResult<int>.Empty );
+        }
+    }
+
+    [Fact]
+    public void CreateScalar_Generic_ShouldCreateScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty_ForNonNullValueType()
+    {
+        var reader = new DbDataReaderMock(
+            new ResultSet(
+                FieldNames: new[] { "a", "b", "c", "d" },
+                Rows: new[]
+                {
+                    new object?[] { 1, "foo", 5.0, true },
+                    new object?[] { 2, "bar", null, false }
+                } ) );
+
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
+        var queryReader = sut.CreateScalar<int>();
+        var result = queryReader.Read( reader );
+
+        using ( new AssertionScope() )
+        {
+            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
+            result.HasValue.Should().BeTrue();
+            result.Value.Should().Be( 1 );
+        }
+    }
+
+    [Fact]
+    public void
+        CreateScalar_Generic_ShouldCreateScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmptyAndResultIsNull_ForNonNullValueType()
+    {
+        var reader = new DbDataReaderMock(
+            new ResultSet(
+                FieldNames: new[] { "a", "b", "c", "d" },
+                Rows: new[]
+                {
+                    new object?[] { null, "foo", 5.0, true },
+                    new object?[] { 2, "bar", null, false }
+                } ) );
+
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
+        var queryReader = sut.CreateScalar<int>( isNullable: true );
+        var result = queryReader.Read( reader );
+
+        using ( new AssertionScope() )
+        {
+            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
+            result.HasValue.Should().BeTrue();
+            result.Value.Should().Be( 0 );
+        }
+    }
+
+    [Fact]
+    public void CreateScalar_Generic_ShouldCreateScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty_ForNullableValueType()
+    {
+        var reader = new DbDataReaderMock(
+            new ResultSet(
+                FieldNames: new[] { "a", "b", "c", "d" },
+                Rows: new[]
+                {
+                    new object?[] { 1, "foo", 5.0, true },
+                    new object?[] { 2, "bar", null, false }
+                } ) );
+
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
+        var queryReader = sut.CreateScalar<int?>();
+        var result = queryReader.Read( reader );
+
+        using ( new AssertionScope() )
+        {
+            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
+            result.HasValue.Should().BeTrue();
+            result.Value.Should().Be( 1 );
+        }
+    }
+
+    [Fact]
+    public void
+        CreateScalar_Generic_ShouldCreateScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmptyAndResultIsNull_ForNullableValueType()
+    {
+        var reader = new DbDataReaderMock(
+            new ResultSet(
+                FieldNames: new[] { "a", "b", "c", "d" },
+                Rows: new[]
+                {
+                    new object?[] { null, "foo", 5.0, true },
+                    new object?[] { 2, "bar", null, false }
+                } ) );
+
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
+        var queryReader = sut.CreateScalar<int?>();
+        var result = queryReader.Read( reader );
+
+        using ( new AssertionScope() )
+        {
+            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
+            result.HasValue.Should().BeTrue();
+            result.Value.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void CreateScalar_Generic_ShouldCreateScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty_ForRefType()
+    {
+        var reader = new DbDataReaderMock(
+            new ResultSet(
+                FieldNames: new[] { "a", "b", "c", "d" },
+                Rows: new[]
+                {
+                    new object?[] { "foo", 1, 5.0, true },
+                    new object?[] { "bar", 2, null, false }
+                } ) );
+
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
+        var queryReader = sut.CreateScalar<string>();
+        var result = queryReader.Read( reader );
+
+        using ( new AssertionScope() )
+        {
+            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
+            result.HasValue.Should().BeTrue();
+            result.Value.Should().Be( "foo" );
+        }
+    }
+
+    [Fact]
+    public void
+        CreateScalar_Generic_ShouldCreateScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmptyAndResultIsNull_ForRefType()
+    {
+        var reader = new DbDataReaderMock(
+            new ResultSet(
+                FieldNames: new[] { "a", "b", "c", "d" },
+                Rows: new[]
+                {
+                    new object?[] { null, 1, 5.0, true },
+                    new object?[] { "bar", 2, null, false }
+                } ) );
+
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
+        var queryReader = sut.CreateScalar<string>( isNullable: true );
+        var result = queryReader.Read( reader );
+
+        using ( new AssertionScope() )
+        {
+            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
+            result.HasValue.Should().BeTrue();
+            result.Value.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void CreateScalarExpression_ShouldThrowSqlCompilerException_WhenResultTypeIsAbstract()
+    {
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
+        var action = Lambda.Of( () => sut.CreateScalarExpression<IEnumerable>() );
+        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+    }
+
+    [Fact]
+    public void CreateScalarExpression_ShouldThrowSqlCompilerException_WhenResultTypeIsGenericDefinition()
+    {
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
+        var action = Lambda.Of( () => sut.CreateScalarExpression( typeof( IEnumerable<> ) ) );
+        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+    }
+
+    [Fact]
+    public async Task CreateAsyncScalar_TypeErased_ShouldCreateAsyncScalarReaderThatReturnsCorrectResult_WhenDataReaderIsEmpty()
+    {
+        var reader = new DbDataReaderMock();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
+        var scalarReader = sut.CreateAsyncScalar();
+
+        var result = await scalarReader.ReadAsync( reader );
+
+        using ( new AssertionScope() )
+        {
+            scalarReader.Dialect.Should().BeSameAs( sut.Dialect );
+            result.Should().Be( SqlScalarResult.Empty );
+        }
+    }
+
+    [Fact]
+    public async Task CreateAsyncScalar_TypeErased_ShouldCreateAsyncScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty()
+    {
+        var reader = new DbDataReaderMock(
+            new ResultSet(
+                FieldNames: new[] { "a", "b", "c", "d" },
+                Rows: new[]
+                {
+                    new object?[] { 1, "foo", 5.0, true },
+                    new object?[] { 2, "bar", null, false }
+                } ) );
+
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
+        var scalarReader = sut.CreateAsyncScalar();
+
+        var result = await scalarReader.ReadAsync( reader );
+
+        using ( new AssertionScope() )
+        {
+            scalarReader.Dialect.Should().BeSameAs( sut.Dialect );
+            result.HasValue.Should().BeTrue();
+            result.Value.Should().Be( 1 );
+        }
+    }
+
+    [Fact]
+    public async Task
+        CreateAsyncScalar_TypeErased_ShouldCreateAsyncScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmptyAndResultIsNull()
+    {
+        var reader = new DbDataReaderMock(
+            new ResultSet(
+                FieldNames: new[] { "a", "b", "c", "d" },
+                Rows: new[]
+                {
+                    new object?[] { null, "foo", 5.0, true },
+                    new object?[] { 2, "bar", null, false }
+                } ) );
+
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
+        var scalarReader = sut.CreateAsyncScalar();
+
+        var result = await scalarReader.ReadAsync( reader );
+
+        using ( new AssertionScope() )
+        {
+            scalarReader.Dialect.Should().BeSameAs( sut.Dialect );
+            result.HasValue.Should().BeTrue();
+            result.Value.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public async Task CreateAsyncScalar_Generic_ShouldCreateAsyncScalarReaderThatReturnsCorrectResult_WhenDataReaderIsEmpty()
+    {
+        var reader = new DbDataReaderMock();
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
+        var queryReader = sut.CreateAsyncScalar<int>();
+
+        var result = await queryReader.ReadAsync( reader );
+
+        using ( new AssertionScope() )
+        {
+            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
+            result.Should().Be( SqlScalarResult<int>.Empty );
+        }
+    }
+
+    [Fact]
+    public async Task
+        CreateAsyncScalar_Generic_ShouldCreateAsyncScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty_ForNonNullValueType()
+    {
+        var reader = new DbDataReaderMock(
+            new ResultSet(
+                FieldNames: new[] { "a", "b", "c", "d" },
+                Rows: new[]
+                {
+                    new object?[] { 1, "foo", 5.0, true },
+                    new object?[] { 2, "bar", null, false }
+                } ) );
+
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
+        var queryReader = sut.CreateAsyncScalar<int>();
+        var result = await queryReader.ReadAsync( reader );
+
+        using ( new AssertionScope() )
+        {
+            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
+            result.HasValue.Should().BeTrue();
+            result.Value.Should().Be( 1 );
+        }
+    }
+
+    [Fact]
+    public async Task
+        CreateAsyncScalar_Generic_ShouldCreateAsyncScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmptyAndResultIsNull_ForNonNullValueType()
+    {
+        var reader = new DbDataReaderMock(
+            new ResultSet(
+                FieldNames: new[] { "a", "b", "c", "d" },
+                Rows: new[]
+                {
+                    new object?[] { null, "foo", 5.0, true },
+                    new object?[] { 2, "bar", null, false }
+                } ) );
+
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
+        var queryReader = sut.CreateAsyncScalar<int>( isNullable: true );
+        var result = await queryReader.ReadAsync( reader );
+
+        using ( new AssertionScope() )
+        {
+            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
+            result.HasValue.Should().BeTrue();
+            result.Value.Should().Be( 0 );
+        }
+    }
+
+    [Fact]
+    public async Task
+        CreateAsyncScalar_Generic_ShouldCreateAsyncScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty_ForNullableValueType()
+    {
+        var reader = new DbDataReaderMock(
+            new ResultSet(
+                FieldNames: new[] { "a", "b", "c", "d" },
+                Rows: new[]
+                {
+                    new object?[] { 1, "foo", 5.0, true },
+                    new object?[] { 2, "bar", null, false }
+                } ) );
+
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
+        var queryReader = sut.CreateAsyncScalar<int?>();
+        var result = await queryReader.ReadAsync( reader );
+
+        using ( new AssertionScope() )
+        {
+            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
+            result.HasValue.Should().BeTrue();
+            result.Value.Should().Be( 1 );
+        }
+    }
+
+    [Fact]
+    public async Task
+        CreateAsyncScalar_Generic_ShouldCreateAsyncScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmptyAndResultIsNull_ForNullableValueType()
+    {
+        var reader = new DbDataReaderMock(
+            new ResultSet(
+                FieldNames: new[] { "a", "b", "c", "d" },
+                Rows: new[]
+                {
+                    new object?[] { null, "foo", 5.0, true },
+                    new object?[] { 2, "bar", null, false }
+                } ) );
+
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
+        var queryReader = sut.CreateAsyncScalar<int?>();
+        var result = await queryReader.ReadAsync( reader );
+
+        using ( new AssertionScope() )
+        {
+            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
+            result.HasValue.Should().BeTrue();
+            result.Value.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public async Task CreateAsyncScalar_Generic_ShouldCreateAsyncScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty_ForRefType()
+    {
+        var reader = new DbDataReaderMock(
+            new ResultSet(
+                FieldNames: new[] { "a", "b", "c", "d" },
+                Rows: new[]
+                {
+                    new object?[] { "foo", 1, 5.0, true },
+                    new object?[] { "bar", 2, null, false }
+                } ) );
+
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
+        var queryReader = sut.CreateAsyncScalar<string>();
+        var result = await queryReader.ReadAsync( reader );
+
+        using ( new AssertionScope() )
+        {
+            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
+            result.HasValue.Should().BeTrue();
+            result.Value.Should().Be( "foo" );
+        }
+    }
+
+    [Fact]
+    public async Task
+        CreateAsyncScalar_Generic_ShouldCreateAsyncScalarReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmptyAndResultIsNull_ForRefType()
+    {
+        var reader = new DbDataReaderMock(
+            new ResultSet(
+                FieldNames: new[] { "a", "b", "c", "d" },
+                Rows: new[]
+                {
+                    new object?[] { null, 1, 5.0, true },
+                    new object?[] { "bar", 2, null, false }
+                } ) );
+
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
+        var queryReader = sut.CreateAsyncScalar<string>( isNullable: true );
+        var result = await queryReader.ReadAsync( reader );
+
+        using ( new AssertionScope() )
+        {
+            queryReader.Dialect.Should().BeSameAs( sut.Dialect );
+            result.HasValue.Should().BeTrue();
+            result.Value.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void CreateAsyncScalarExpression_ShouldThrowSqlCompilerException_WhenDataReaderTypeDoesNotSupportAsyncOperations()
+    {
+        var dialect = new SqlDialect( "foo" );
+        var sut = new SqlQueryReaderFactory(
+            typeof( IDataReader ),
+            dialect,
+            new SqlColumnTypeDefinitionProviderMock( new SqlColumnTypeDefinitionProviderBuilderMock() ) );
+
+        var action = Lambda.Of( () => sut.CreateAsyncScalarExpression<int>() );
+        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+    }
+
+    [Fact]
+    public void CreateAsyncScalarExpression_ShouldThrowSqlCompilerException_WhenResultTypeIsAbstract()
+    {
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
+        var action = Lambda.Of( () => sut.CreateAsyncScalarExpression<IEnumerable>() );
+        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+    }
+
+    [Fact]
+    public void CreateAsyncScalarExpression_ShouldThrowSqlCompilerException_WhenResultTypeIsGenericDefinition()
+    {
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
+        var action = Lambda.Of( () => sut.CreateAsyncScalarExpression( typeof( IEnumerable<> ) ) );
+        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+    }
+
+    [Fact]
+    public void CreateAsyncScalarExpression_ShouldThrowException_WhenTargetInvocationExceptionIsThrown()
+    {
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
+        var action = Lambda.Of( () => sut.CreateAsyncScalarExpression<Row>() );
+        action.Should().ThrowExactly<KeyNotFoundException>();
+    }
+
     public sealed class Row
     {
         public int A { get; init; }
