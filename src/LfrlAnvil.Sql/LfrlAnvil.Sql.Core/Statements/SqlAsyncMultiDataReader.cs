@@ -34,11 +34,9 @@ public readonly struct SqlAsyncMultiDataReader : IDisposable, IAsyncDisposable
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public async ValueTask<List<SqlQueryReaderResult>> ReadAllAsync(
-        SqlAsyncQueryReader reader,
-        CancellationToken cancellationToken = default)
+    public async ValueTask<List<SqlQueryResult>> ReadAllAsync(SqlAsyncQueryReader reader, CancellationToken cancellationToken = default)
     {
-        var result = new List<SqlQueryReaderResult>();
+        var result = new List<SqlQueryResult>();
         while ( ! Reader.IsClosed )
             result.Add( await ReadAsync( reader, null, cancellationToken ).ConfigureAwait( false ) );
 
@@ -47,7 +45,7 @@ public readonly struct SqlAsyncMultiDataReader : IDisposable, IAsyncDisposable
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public async ValueTask<SqlQueryReaderResult> ReadAsync(
+    public async ValueTask<SqlQueryResult> ReadAsync(
         SqlAsyncQueryReader reader,
         SqlQueryReaderOptions? options = null,
         CancellationToken cancellationToken = default)
@@ -61,7 +59,7 @@ public readonly struct SqlAsyncMultiDataReader : IDisposable, IAsyncDisposable
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public async ValueTask<SqlQueryReaderResult<TRow>> ReadAsync<TRow>(
+    public async ValueTask<SqlQueryResult<TRow>> ReadAsync<TRow>(
         SqlAsyncQueryReader<TRow> reader,
         SqlQueryReaderOptions? options = null,
         CancellationToken cancellationToken = default)

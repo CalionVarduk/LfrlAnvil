@@ -25,8 +25,8 @@ public sealed class SqlDatabaseMock : SqlDatabase
             new SqlQueryReader<SqlDatabaseVersionRecord>(
                     builder.Dialect,
                     (_, _) => versionRecordsProvider is null
-                        ? SqlQueryReaderResult<SqlDatabaseVersionRecord>.Empty
-                        : new SqlQueryReaderResult<SqlDatabaseVersionRecord>( null, versionRecordsProvider().ToList() ) )
+                        ? SqlQueryResult<SqlDatabaseVersionRecord>.Empty
+                        : new SqlQueryResult<SqlDatabaseVersionRecord>( null, versionRecordsProvider().ToList() ) )
                 .Bind( string.Empty ) )
     {
         ConnectionString = connectionString;

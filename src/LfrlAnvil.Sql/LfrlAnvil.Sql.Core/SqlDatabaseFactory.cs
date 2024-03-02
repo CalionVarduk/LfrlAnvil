@@ -210,14 +210,14 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
     }
 
     [Pure]
-    protected virtual Func<IDataReader, SqlQueryReaderOptions, SqlQueryReaderResult<SqlDatabaseVersionRecord>>
+    protected virtual Func<IDataReader, SqlQueryReaderOptions, SqlQueryResult<SqlDatabaseVersionRecord>>
         GetVersionHistoryRecordsQueryDelegate(SqlQueryReaderFactory queryReaders)
     {
         return static (reader, options) =>
         {
             var dbReader = (DbDataReader)reader;
             if ( ! dbReader.Read() )
-                return SqlQueryReaderResult<SqlDatabaseVersionRecord>.Empty;
+                return SqlQueryResult<SqlDatabaseVersionRecord>.Empty;
 
             var rows = options.CreateList<SqlDatabaseVersionRecord>();
 
@@ -254,7 +254,7 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
             }
             while ( dbReader.Read() );
 
-            return new SqlQueryReaderResult<SqlDatabaseVersionRecord>( resultSetFields: null, rows );
+            return new SqlQueryResult<SqlDatabaseVersionRecord>( resultSetFields: null, rows );
         };
     }
 

@@ -5,12 +5,12 @@ using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sql.Tests.StatementsTests;
 
-public partial class SqlQueryReaderResultTests : TestsBase
+public partial class SqlQueryResultTests : TestsBase
 {
     [Fact]
     public void Default_TypeErased_ShouldBeEmpty()
     {
-        var sut = default( SqlQueryReaderResult );
+        var sut = default( SqlQueryResult );
 
         using ( new AssertionScope() )
         {
@@ -23,7 +23,7 @@ public partial class SqlQueryReaderResultTests : TestsBase
     [Fact]
     public void Empty_TypeErased_ShouldBeEmpty()
     {
-        var sut = SqlQueryReaderResult.Empty;
+        var sut = SqlQueryResult.Empty;
 
         using ( new AssertionScope() )
         {
@@ -42,7 +42,7 @@ public partial class SqlQueryReaderResultTests : TestsBase
             new SqlResultSetField( 1, "b" )
         };
 
-        var sut = new SqlQueryReaderResult( resultSetFields, new List<object?>() );
+        var sut = new SqlQueryResult( resultSetFields, new List<object?>() );
 
         using ( new AssertionScope() )
         {
@@ -55,7 +55,7 @@ public partial class SqlQueryReaderResultTests : TestsBase
     [Fact]
     public void Ctor_TypeErased_ShouldThrowArgumentOutOfRangeException_WhenNonEmptyWithEmptyFields()
     {
-        var action = Lambda.Of( () => new SqlQueryReaderResult( Array.Empty<SqlResultSetField>(), new List<object?> { "foo", 3 } ) );
+        var action = Lambda.Of( () => new SqlQueryResult( Array.Empty<SqlResultSetField>(), new List<object?> { "foo", 3 } ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
 
@@ -68,7 +68,7 @@ public partial class SqlQueryReaderResultTests : TestsBase
             new SqlResultSetField( 1, "b" )
         };
 
-        var action = Lambda.Of( () => new SqlQueryReaderResult( resultSetFields, new List<object?> { "foo", 3, true } ) );
+        var action = Lambda.Of( () => new SqlQueryResult( resultSetFields, new List<object?> { "foo", 3, true } ) );
         action.Should().ThrowExactly<ArgumentException>();
     }
 
@@ -84,7 +84,7 @@ public partial class SqlQueryReaderResultTests : TestsBase
         };
 
         var cells = new List<object?> { "foo", 3, true, 1.0, "bar", 3, false, 2.0, "lorem", 5, false, 5.0 };
-        var sut = new SqlQueryReaderResult( resultSetFields, cells );
+        var sut = new SqlQueryResult( resultSetFields, cells );
 
         using ( new AssertionScope() )
         {
@@ -99,7 +99,7 @@ public partial class SqlQueryReaderResultTests : TestsBase
     [Fact]
     public void Default_Generic_ShouldBeEmpty()
     {
-        var sut = default( SqlQueryReaderResult<object[]> );
+        var sut = default( SqlQueryResult<object[]> );
 
         using ( new AssertionScope() )
         {
@@ -112,7 +112,7 @@ public partial class SqlQueryReaderResultTests : TestsBase
     [Fact]
     public void Empty_Generic_ShouldBeEmpty()
     {
-        var sut = SqlQueryReaderResult<object[]>.Empty;
+        var sut = SqlQueryResult<object[]>.Empty;
 
         using ( new AssertionScope() )
         {
@@ -125,7 +125,7 @@ public partial class SqlQueryReaderResultTests : TestsBase
     [Fact]
     public void Ctor_Generic_ShouldCreateEmpty_WhenRowsAreEmpty()
     {
-        var sut = new SqlQueryReaderResult<object[]>( null, new List<object[]>() );
+        var sut = new SqlQueryResult<object[]>( null, new List<object[]>() );
 
         using ( new AssertionScope() )
         {
@@ -150,7 +150,7 @@ public partial class SqlQueryReaderResultTests : TestsBase
             new object[] { "lorem", 5 }
         };
 
-        var sut = new SqlQueryReaderResult<object[]>( resultSetFields, rows );
+        var sut = new SqlQueryResult<object[]>( resultSetFields, rows );
 
         using ( new AssertionScope() )
         {

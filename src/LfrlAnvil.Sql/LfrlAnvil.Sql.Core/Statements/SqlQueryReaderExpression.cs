@@ -15,12 +15,12 @@ public readonly struct SqlQueryReaderExpression<TRow>
     {
         Assume.Equals( @base.RowType, typeof( TRow ) );
         Dialect = @base.Dialect;
-        Expression = ReinterpretCast.To<Expression<Func<IDataReader, SqlQueryReaderOptions, SqlQueryReaderResult<TRow>>>>(
+        Expression = ReinterpretCast.To<Expression<Func<IDataReader, SqlQueryReaderOptions, SqlQueryResult<TRow>>>>(
             @base.Expression );
     }
 
     public SqlDialect Dialect { get; }
-    public Expression<Func<IDataReader, SqlQueryReaderOptions, SqlQueryReaderResult<TRow>>> Expression { get; }
+    public Expression<Func<IDataReader, SqlQueryReaderOptions, SqlQueryResult<TRow>>> Expression { get; }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

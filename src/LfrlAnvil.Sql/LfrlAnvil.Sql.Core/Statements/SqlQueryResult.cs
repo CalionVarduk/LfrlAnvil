@@ -4,13 +4,13 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace LfrlAnvil.Sql.Statements;
 
-public readonly struct SqlQueryReaderResult
+public readonly struct SqlQueryResult
 {
-    public static readonly SqlQueryReaderResult Empty = default;
+    public static readonly SqlQueryResult Empty = default;
 
     private readonly SqlResultSetField[]? _resultSetFields;
 
-    public SqlQueryReaderResult(SqlResultSetField[] resultSetFields, List<object?> cells)
+    public SqlQueryResult(SqlResultSetField[] resultSetFields, List<object?> cells)
     {
         _resultSetFields = resultSetFields;
         Rows = cells.Count == 0 ? null : new SqlQueryReaderRowCollection( _resultSetFields, cells );
@@ -23,14 +23,14 @@ public readonly struct SqlQueryReaderResult
     public bool IsEmpty => Rows is null;
 }
 
-public readonly struct SqlQueryReaderResult<TRow>
+public readonly struct SqlQueryResult<TRow>
     where TRow : notnull
 {
-    public static readonly SqlQueryReaderResult<TRow> Empty = default;
+    public static readonly SqlQueryResult<TRow> Empty = default;
 
     private readonly SqlResultSetField[]? _resultSetFields;
 
-    public SqlQueryReaderResult(SqlResultSetField[]? resultSetFields, List<TRow> rows)
+    public SqlQueryResult(SqlResultSetField[]? resultSetFields, List<TRow> rows)
     {
         _resultSetFields = resultSetFields;
         Rows = rows.Count == 0 ? null : rows;

@@ -14,7 +14,7 @@ public class SqlAsyncQueryReaderTests : TestsBase
     [Fact]
     public async Task ReadAsync_ForTypeErased_ShouldInvokeDelegate()
     {
-        var expected = new SqlQueryReaderResult(
+        var expected = new SqlQueryResult(
             new[] { new SqlResultSetField( 0, "a" ), new SqlResultSetField( 1, "b" ) },
             new List<object?> { "foo", 3, "lorem", 5 } );
 
@@ -22,7 +22,7 @@ public class SqlAsyncQueryReaderTests : TestsBase
         var options = new SqlQueryReaderOptions();
         var cancellationTokenSource = new CancellationTokenSource();
         var dialect = new SqlDialect( "foo" );
-        var @delegate = Substitute.For<Func<IDataReader, SqlQueryReaderOptions, CancellationToken, ValueTask<SqlQueryReaderResult>>>();
+        var @delegate = Substitute.For<Func<IDataReader, SqlQueryReaderOptions, CancellationToken, ValueTask<SqlQueryResult>>>();
         @delegate.WithAnyArgs( _ => ValueTask.FromResult( expected ) );
         var sut = new SqlAsyncQueryReader( dialect, @delegate );
 
@@ -45,7 +45,7 @@ public class SqlAsyncQueryReaderTests : TestsBase
     [Fact]
     public async Task ReadAsync_ForGeneric_ShouldInvokeDelegate()
     {
-        var expected = new SqlQueryReaderResult<object[]>(
+        var expected = new SqlQueryResult<object[]>(
             new[] { new SqlResultSetField( 0, "a" ), new SqlResultSetField( 1, "b" ) },
             new List<object[]>
             {
@@ -58,7 +58,7 @@ public class SqlAsyncQueryReaderTests : TestsBase
         var cancellationTokenSource = new CancellationTokenSource();
         var dialect = new SqlDialect( "foo" );
         var @delegate = Substitute
-            .For<Func<IDataReader, SqlQueryReaderOptions, CancellationToken, ValueTask<SqlQueryReaderResult<object[]>>>>();
+            .For<Func<IDataReader, SqlQueryReaderOptions, CancellationToken, ValueTask<SqlQueryResult<object[]>>>>();
 
         @delegate.WithAnyArgs( _ => ValueTask.FromResult( expected ) );
         var sut = new SqlAsyncQueryReader<object[]>( dialect, @delegate );

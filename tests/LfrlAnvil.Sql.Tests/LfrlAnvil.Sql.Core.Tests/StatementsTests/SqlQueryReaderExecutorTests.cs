@@ -13,7 +13,7 @@ public class SqlQueryReaderExecutorTests : TestsBase
     public void Bind_Extension_ForTypeErased_ShouldCreateCorrectExecutor()
     {
         var sql = "SELECT * FROM foo";
-        var @delegate = Substitute.For<Func<IDataReader, SqlQueryReaderOptions, SqlQueryReaderResult>>();
+        var @delegate = Substitute.For<Func<IDataReader, SqlQueryReaderOptions, SqlQueryResult>>();
         var reader = new SqlQueryReader( new SqlDialect( "foo" ), @delegate );
         var sut = reader.Bind( sql );
 
@@ -27,13 +27,13 @@ public class SqlQueryReaderExecutorTests : TestsBase
     [Fact]
     public void Execute_ForTypeErased_ShouldSetCommandTextAndInvokeDelegate()
     {
-        var expected = new SqlQueryReaderResult(
+        var expected = new SqlQueryResult(
             new[] { new SqlResultSetField( 0, "a" ), new SqlResultSetField( 1, "b" ) },
             new List<object?> { "foo", 3, "lorem", 5 } );
 
         var sql = "SELECT * FROM foo";
         var command = new DbCommandMock();
-        var @delegate = Substitute.For<Func<IDataReader, SqlQueryReaderOptions, SqlQueryReaderResult>>();
+        var @delegate = Substitute.For<Func<IDataReader, SqlQueryReaderOptions, SqlQueryResult>>();
         @delegate.WithAnyArgs( _ => expected );
         var reader = new SqlQueryReader( new SqlDialect( "foo" ), @delegate );
         var sut = reader.Bind( sql );
@@ -52,7 +52,7 @@ public class SqlQueryReaderExecutorTests : TestsBase
     public void Bind_Extension_ForGeneric_ShouldCreateCorrectExecutor()
     {
         var sql = "SELECT * FROM foo";
-        var @delegate = Substitute.For<Func<IDataReader, SqlQueryReaderOptions, SqlQueryReaderResult<object[]>>>();
+        var @delegate = Substitute.For<Func<IDataReader, SqlQueryReaderOptions, SqlQueryResult<object[]>>>();
         var reader = new SqlQueryReader<object[]>( new SqlDialect( "foo" ), @delegate );
         var sut = reader.Bind( sql );
 
@@ -66,7 +66,7 @@ public class SqlQueryReaderExecutorTests : TestsBase
     [Fact]
     public void Execute_ForGeneric_ShouldSetCommandTextAndInvokeDelegate()
     {
-        var expected = new SqlQueryReaderResult<object[]>(
+        var expected = new SqlQueryResult<object[]>(
             new[] { new SqlResultSetField( 0, "a" ), new SqlResultSetField( 1, "b" ) },
             new List<object[]>
             {
@@ -76,7 +76,7 @@ public class SqlQueryReaderExecutorTests : TestsBase
 
         var sql = "SELECT * FROM foo";
         var command = new DbCommandMock();
-        var @delegate = Substitute.For<Func<IDataReader, SqlQueryReaderOptions, SqlQueryReaderResult<object[]>>>();
+        var @delegate = Substitute.For<Func<IDataReader, SqlQueryReaderOptions, SqlQueryResult<object[]>>>();
         @delegate.WithAnyArgs( _ => expected );
         var reader = new SqlQueryReader<object[]>( new SqlDialect( "foo" ), @delegate );
         var sut = reader.Bind( sql );

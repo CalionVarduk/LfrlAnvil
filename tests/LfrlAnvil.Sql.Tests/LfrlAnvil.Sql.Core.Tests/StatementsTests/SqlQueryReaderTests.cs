@@ -12,14 +12,14 @@ public class SqlQueryReaderTests : TestsBase
     [Fact]
     public void Read_ForTypeErased_ShouldInvokeDelegate()
     {
-        var expected = new SqlQueryReaderResult(
+        var expected = new SqlQueryResult(
             new[] { new SqlResultSetField( 0, "a" ), new SqlResultSetField( 1, "b" ) },
             new List<object?> { "foo", 3, "lorem", 5 } );
 
         var reader = new DbDataReaderMock();
         var options = new SqlQueryReaderOptions();
         var dialect = new SqlDialect( "foo" );
-        var @delegate = Substitute.For<Func<IDataReader, SqlQueryReaderOptions, SqlQueryReaderResult>>();
+        var @delegate = Substitute.For<Func<IDataReader, SqlQueryReaderOptions, SqlQueryResult>>();
         @delegate.WithAnyArgs( _ => expected );
         var sut = new SqlQueryReader( dialect, @delegate );
 
@@ -37,7 +37,7 @@ public class SqlQueryReaderTests : TestsBase
     [Fact]
     public void Read_ForGeneric_ShouldInvokeDelegate()
     {
-        var expected = new SqlQueryReaderResult<object[]>(
+        var expected = new SqlQueryResult<object[]>(
             new[] { new SqlResultSetField( 0, "a" ), new SqlResultSetField( 1, "b" ) },
             new List<object[]>
             {
@@ -48,7 +48,7 @@ public class SqlQueryReaderTests : TestsBase
         var reader = new DbDataReaderMock();
         var options = new SqlQueryReaderOptions();
         var dialect = new SqlDialect( "foo" );
-        var @delegate = Substitute.For<Func<IDataReader, SqlQueryReaderOptions, SqlQueryReaderResult<object[]>>>();
+        var @delegate = Substitute.For<Func<IDataReader, SqlQueryReaderOptions, SqlQueryResult<object[]>>>();
         @delegate.WithAnyArgs( _ => expected );
         var sut = new SqlQueryReader<object[]>( dialect, @delegate );
 

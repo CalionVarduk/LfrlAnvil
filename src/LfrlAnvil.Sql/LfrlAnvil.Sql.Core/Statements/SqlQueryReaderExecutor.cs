@@ -8,7 +8,7 @@ public readonly record struct SqlQueryReaderExecutor(SqlQueryReader Reader, stri
 {
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public SqlQueryReaderResult Execute(IDbCommand command, SqlQueryReaderOptions? options = null)
+    public SqlQueryResult Execute(IDbCommand command, SqlQueryReaderOptions? options = null)
     {
         command.CommandText = Sql;
         using var reader = command.ExecuteReader();
@@ -21,7 +21,7 @@ public readonly record struct SqlQueryReaderExecutor<TRow>(SqlQueryReader<TRow> 
 {
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public SqlQueryReaderResult<TRow> Execute(IDbCommand command, SqlQueryReaderOptions? options = null)
+    public SqlQueryResult<TRow> Execute(IDbCommand command, SqlQueryReaderOptions? options = null)
     {
         command.CommandText = Sql;
         using var reader = command.ExecuteReader();

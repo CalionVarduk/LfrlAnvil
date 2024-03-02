@@ -11,7 +11,7 @@ public readonly record struct SqlAsyncQueryReaderExecutor(SqlAsyncQueryReader Re
 {
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public async ValueTask<SqlQueryReaderResult> ExecuteAsync(
+    public async ValueTask<SqlQueryResult> ExecuteAsync(
         IDbCommand command,
         SqlQueryReaderOptions? options = null,
         CancellationToken cancellationToken = default)
@@ -27,7 +27,7 @@ public readonly record struct SqlAsyncQueryReaderExecutor<TRow>(SqlAsyncQueryRea
 {
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public async ValueTask<SqlQueryReaderResult<TRow>> ExecuteAsync(
+    public async ValueTask<SqlQueryResult<TRow>> ExecuteAsync(
         IDbCommand command,
         SqlQueryReaderOptions? options = null,
         CancellationToken cancellationToken = default)

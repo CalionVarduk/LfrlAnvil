@@ -37,7 +37,7 @@ public static class SqlStatementObjectExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlQueryReaderResult Query(this IDbCommand command, SqlQueryReader reader, SqlQueryReaderOptions? options = null)
+    public static SqlQueryResult Query(this IDbCommand command, SqlQueryReader reader, SqlQueryReaderOptions? options = null)
     {
         using var r = command.ExecuteReader();
         return reader.Read( r, options );
@@ -45,7 +45,7 @@ public static class SqlStatementObjectExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlQueryReaderResult<TRow> Query<TRow>(
+    public static SqlQueryResult<TRow> Query<TRow>(
         this IDbCommand command,
         SqlQueryReader<TRow> reader,
         SqlQueryReaderOptions? options = null)
@@ -57,17 +57,14 @@ public static class SqlStatementObjectExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlQueryReaderResult Query(
-        this IDbCommand command,
-        SqlQueryReaderExecutor executor,
-        SqlQueryReaderOptions? options = null)
+    public static SqlQueryResult Query(this IDbCommand command, SqlQueryReaderExecutor executor, SqlQueryReaderOptions? options = null)
     {
         return executor.Execute( command, options );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlQueryReaderResult<TRow> Query<TRow>(
+    public static SqlQueryResult<TRow> Query<TRow>(
         this IDbCommand command,
         SqlQueryReaderExecutor<TRow> executor,
         SqlQueryReaderOptions? options = null)
@@ -207,7 +204,7 @@ public static class SqlStatementObjectExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static async ValueTask<SqlQueryReaderResult> QueryAsync(
+    public static async ValueTask<SqlQueryResult> QueryAsync(
         this IDbCommand command,
         SqlAsyncQueryReader reader,
         SqlQueryReaderOptions? options = null,
@@ -219,7 +216,7 @@ public static class SqlStatementObjectExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static async ValueTask<SqlQueryReaderResult<TRow>> QueryAsync<TRow>(
+    public static async ValueTask<SqlQueryResult<TRow>> QueryAsync<TRow>(
         this IDbCommand command,
         SqlAsyncQueryReader<TRow> reader,
         SqlQueryReaderOptions? options = null,
@@ -232,7 +229,7 @@ public static class SqlStatementObjectExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static ValueTask<SqlQueryReaderResult> QueryAsync(
+    public static ValueTask<SqlQueryResult> QueryAsync(
         this IDbCommand command,
         SqlAsyncQueryReaderExecutor executor,
         SqlQueryReaderOptions? options = null,
@@ -243,7 +240,7 @@ public static class SqlStatementObjectExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static ValueTask<SqlQueryReaderResult<TRow>> QueryAsync<TRow>(
+    public static ValueTask<SqlQueryResult<TRow>> QueryAsync<TRow>(
         this IDbCommand command,
         SqlAsyncQueryReaderExecutor<TRow> executor,
         SqlQueryReaderOptions? options = null,

@@ -640,10 +640,10 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
     }
 
     [Pure]
-    private static SqlQueryReaderResult ReadRows(IDataReader reader, SqlQueryReaderOptions options)
+    private static SqlQueryResult ReadRows(IDataReader reader, SqlQueryReaderOptions options)
     {
         if ( ! reader.Read() )
-            return SqlQueryReaderResult.Empty;
+            return SqlQueryResult.Empty;
 
         var fields = CreateResultSetFields( reader, includeTypeNames: false );
         var cells = CreateCellsBuffer( options, fields.Length );
@@ -658,14 +658,14 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         }
         while ( reader.Read() );
 
-        return new SqlQueryReaderResult( fields, cells );
+        return new SqlQueryResult( fields, cells );
     }
 
     [Pure]
-    private static SqlQueryReaderResult ReadRowsWithFieldTypes(IDataReader reader, SqlQueryReaderOptions options)
+    private static SqlQueryResult ReadRowsWithFieldTypes(IDataReader reader, SqlQueryReaderOptions options)
     {
         if ( ! reader.Read() )
-            return SqlQueryReaderResult.Empty;
+            return SqlQueryResult.Empty;
 
         var fields = CreateResultSetFields( reader, includeTypeNames: true );
         var cells = CreateCellsBuffer( options, fields.Length );
@@ -681,18 +681,18 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         }
         while ( reader.Read() );
 
-        return new SqlQueryReaderResult( fields, cells );
+        return new SqlQueryResult( fields, cells );
     }
 
     [Pure]
-    private static async ValueTask<SqlQueryReaderResult> ReadRowsAsync(
+    private static async ValueTask<SqlQueryResult> ReadRowsAsync(
         IDataReader reader,
         SqlQueryReaderOptions options,
         CancellationToken cancellationToken)
     {
         var dbReader = (DbDataReader)reader;
         if ( ! await dbReader.ReadAsync( cancellationToken ).ConfigureAwait( false ) )
-            return SqlQueryReaderResult.Empty;
+            return SqlQueryResult.Empty;
 
         var fields = CreateResultSetFields( dbReader, includeTypeNames: false );
         var cells = CreateCellsBuffer( options, fields.Length );
@@ -707,18 +707,18 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         }
         while ( await dbReader.ReadAsync( cancellationToken ).ConfigureAwait( false ) );
 
-        return new SqlQueryReaderResult( fields, cells );
+        return new SqlQueryResult( fields, cells );
     }
 
     [Pure]
-    private static async ValueTask<SqlQueryReaderResult> ReadRowsWithFieldTypesAsync(
+    private static async ValueTask<SqlQueryResult> ReadRowsWithFieldTypesAsync(
         IDataReader reader,
         SqlQueryReaderOptions options,
         CancellationToken cancellationToken)
     {
         var dbReader = (DbDataReader)reader;
         if ( ! await dbReader.ReadAsync( cancellationToken ).ConfigureAwait( false ) )
-            return SqlQueryReaderResult.Empty;
+            return SqlQueryResult.Empty;
 
         var fields = CreateResultSetFields( dbReader, includeTypeNames: true );
         var cells = CreateCellsBuffer( options, fields.Length );
@@ -734,7 +734,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         }
         while ( await dbReader.ReadAsync( cancellationToken ).ConfigureAwait( false ) );
 
-        return new SqlQueryReaderResult( fields, cells );
+        return new SqlQueryResult( fields, cells );
     }
 
     [Pure]
@@ -992,7 +992,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
             var rowListCtorWithCapacity = TypeHelpers.GetListCtorWithCapacity( rowListType );
             RowsAddMethod = TypeHelpers.GetListAddMethod( rowListType, rowType );
 
-            var queryResultType = typeof( SqlQueryReaderResult<> ).MakeGenericType( rowType );
+            var queryResultType = typeof( SqlQueryResult<> ).MakeGenericType( rowType );
             QueryResult = Expression.Variable( queryResultType, "result" );
             QueryResultCtor = TypeHelpers.GetQueryReaderResultCtor( queryResultType, toolbox.ResultSetFieldArrayType, rowListType );
 

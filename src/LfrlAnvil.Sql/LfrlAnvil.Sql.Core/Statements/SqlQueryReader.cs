@@ -7,11 +7,11 @@ namespace LfrlAnvil.Sql.Statements;
 
 public readonly record struct SqlQueryReader(
     SqlDialect Dialect,
-    Func<IDataReader, SqlQueryReaderOptions, SqlQueryReaderResult> Delegate)
+    Func<IDataReader, SqlQueryReaderOptions, SqlQueryResult> Delegate)
 {
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public SqlQueryReaderResult Read(IDataReader reader, SqlQueryReaderOptions? options = null)
+    public SqlQueryResult Read(IDataReader reader, SqlQueryReaderOptions? options = null)
     {
         return Delegate( reader, options ?? default );
     }
@@ -19,12 +19,12 @@ public readonly record struct SqlQueryReader(
 
 public readonly record struct SqlQueryReader<TRow>(
     SqlDialect Dialect,
-    Func<IDataReader, SqlQueryReaderOptions, SqlQueryReaderResult<TRow>> Delegate)
+    Func<IDataReader, SqlQueryReaderOptions, SqlQueryResult<TRow>> Delegate)
     where TRow : notnull
 {
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public SqlQueryReaderResult<TRow> Read(IDataReader reader, SqlQueryReaderOptions? options = null)
+    public SqlQueryResult<TRow> Read(IDataReader reader, SqlQueryReaderOptions? options = null)
     {
         return Delegate( reader, options ?? default );
     }

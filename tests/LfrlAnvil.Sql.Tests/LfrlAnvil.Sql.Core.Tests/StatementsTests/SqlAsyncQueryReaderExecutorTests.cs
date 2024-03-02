@@ -15,7 +15,7 @@ public class SqlAsyncQueryReaderExecutorTests : TestsBase
     public void Bind_Extension_ForTypeErased_ShouldCreateCorrectExecutor()
     {
         var sql = "SELECT * FROM foo";
-        var @delegate = Substitute.For<Func<IDataReader, SqlQueryReaderOptions, CancellationToken, ValueTask<SqlQueryReaderResult>>>();
+        var @delegate = Substitute.For<Func<IDataReader, SqlQueryReaderOptions, CancellationToken, ValueTask<SqlQueryResult>>>();
         var reader = new SqlAsyncQueryReader( new SqlDialect( "foo" ), @delegate );
         var sut = reader.Bind( sql );
 
@@ -29,13 +29,13 @@ public class SqlAsyncQueryReaderExecutorTests : TestsBase
     [Fact]
     public async Task ExecuteAsync_ForTypeErased_ShouldSetCommandTextAndInvokeDelegate()
     {
-        var expected = new SqlQueryReaderResult(
+        var expected = new SqlQueryResult(
             new[] { new SqlResultSetField( 0, "a" ), new SqlResultSetField( 1, "b" ) },
             new List<object?> { "foo", 3, "lorem", 5 } );
 
         var sql = "SELECT * FROM foo";
         var command = new DbCommandMock();
-        var @delegate = Substitute.For<Func<IDataReader, SqlQueryReaderOptions, CancellationToken, ValueTask<SqlQueryReaderResult>>>();
+        var @delegate = Substitute.For<Func<IDataReader, SqlQueryReaderOptions, CancellationToken, ValueTask<SqlQueryResult>>>();
         @delegate.WithAnyArgs( _ => ValueTask.FromResult( expected ) );
         var reader = new SqlAsyncQueryReader( new SqlDialect( "foo" ), @delegate );
         var sut = reader.Bind( sql );
@@ -55,7 +55,7 @@ public class SqlAsyncQueryReaderExecutorTests : TestsBase
     {
         var sql = "SELECT * FROM foo";
         var @delegate = Substitute
-            .For<Func<IDataReader, SqlQueryReaderOptions, CancellationToken, ValueTask<SqlQueryReaderResult<object[]>>>>();
+            .For<Func<IDataReader, SqlQueryReaderOptions, CancellationToken, ValueTask<SqlQueryResult<object[]>>>>();
 
         var reader = new SqlAsyncQueryReader<object[]>( new SqlDialect( "foo" ), @delegate );
         var sut = reader.Bind( sql );
@@ -70,7 +70,7 @@ public class SqlAsyncQueryReaderExecutorTests : TestsBase
     [Fact]
     public async Task ExecuteAsync_ForGeneric_ShouldSetCommandTextAndInvokeDelegate()
     {
-        var expected = new SqlQueryReaderResult<object[]>(
+        var expected = new SqlQueryResult<object[]>(
             new[] { new SqlResultSetField( 0, "a" ), new SqlResultSetField( 1, "b" ) },
             new List<object[]>
             {
@@ -81,7 +81,7 @@ public class SqlAsyncQueryReaderExecutorTests : TestsBase
         var sql = "SELECT * FROM foo";
         var command = new DbCommandMock();
         var @delegate = Substitute
-            .For<Func<IDataReader, SqlQueryReaderOptions, CancellationToken, ValueTask<SqlQueryReaderResult<object[]>>>>();
+            .For<Func<IDataReader, SqlQueryReaderOptions, CancellationToken, ValueTask<SqlQueryResult<object[]>>>>();
 
         @delegate.WithAnyArgs( _ => ValueTask.FromResult( expected ) );
         var reader = new SqlAsyncQueryReader<object[]>( new SqlDialect( "foo" ), @delegate );

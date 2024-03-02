@@ -334,11 +334,11 @@ public sealed class MySqlDatabaseFactory : ISqlDatabaseFactory
         return new SqlQueryReader<SqlDatabaseVersionRecord>( MySqlDialect.Instance, Executor ).Bind( sql );
 
         [Pure]
-        static SqlQueryReaderResult<SqlDatabaseVersionRecord> Executor(IDataReader reader, SqlQueryReaderOptions options)
+        static SqlQueryResult<SqlDatabaseVersionRecord> Executor(IDataReader reader, SqlQueryReaderOptions options)
         {
             var mySqlReader = (MySqlDataReader)reader;
             if ( ! mySqlReader.Read() )
-                return SqlQueryReaderResult<SqlDatabaseVersionRecord>.Empty;
+                return SqlQueryResult<SqlDatabaseVersionRecord>.Empty;
 
             var rows = options.InitialBufferCapacity is not null
                 ? new List<SqlDatabaseVersionRecord>( capacity: options.InitialBufferCapacity.Value )
@@ -377,7 +377,7 @@ public sealed class MySqlDatabaseFactory : ISqlDatabaseFactory
             }
             while ( mySqlReader.Read() );
 
-            return new SqlQueryReaderResult<SqlDatabaseVersionRecord>( resultSetFields: null, rows );
+            return new SqlQueryResult<SqlDatabaseVersionRecord>( resultSetFields: null, rows );
         }
     }
 

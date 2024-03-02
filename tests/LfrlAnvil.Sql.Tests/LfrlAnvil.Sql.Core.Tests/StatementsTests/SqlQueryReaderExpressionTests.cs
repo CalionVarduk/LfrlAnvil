@@ -11,7 +11,7 @@ public class SqlQueryReaderExpressionTests : TestsBase
     [Fact]
     public void Compile_ShouldCreateCorrectQueryReader()
     {
-        var expected = new SqlQueryReaderResult<object[]>(
+        var expected = new SqlQueryResult<object[]>(
             new[] { new SqlResultSetField( 0, "a" ), new SqlResultSetField( 1, "b" ) },
             new List<object[]>
             {

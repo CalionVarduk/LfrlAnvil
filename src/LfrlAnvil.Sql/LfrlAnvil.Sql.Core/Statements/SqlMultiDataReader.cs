@@ -24,9 +24,9 @@ public readonly struct SqlMultiDataReader : IDisposable
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public List<SqlQueryReaderResult> ReadAll(SqlQueryReader reader)
+    public List<SqlQueryResult> ReadAll(SqlQueryReader reader)
     {
-        var result = new List<SqlQueryReaderResult>();
+        var result = new List<SqlQueryResult>();
         while ( ! Reader.IsClosed )
             result.Add( Read( reader ) );
 
@@ -35,7 +35,7 @@ public readonly struct SqlMultiDataReader : IDisposable
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public SqlQueryReaderResult Read(SqlQueryReader reader, SqlQueryReaderOptions? options = null)
+    public SqlQueryResult Read(SqlQueryReader reader, SqlQueryReaderOptions? options = null)
     {
         var result = reader.Read( Reader, options );
         if ( ! Reader.NextResult() )
@@ -46,7 +46,7 @@ public readonly struct SqlMultiDataReader : IDisposable
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public SqlQueryReaderResult<TRow> Read<TRow>(SqlQueryReader<TRow> reader, SqlQueryReaderOptions? options = null)
+    public SqlQueryResult<TRow> Read<TRow>(SqlQueryReader<TRow> reader, SqlQueryReaderOptions? options = null)
         where TRow : notnull
     {
         var result = reader.Read( Reader, options );

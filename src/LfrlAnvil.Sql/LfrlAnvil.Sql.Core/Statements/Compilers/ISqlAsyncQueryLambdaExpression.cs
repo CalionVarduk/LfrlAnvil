@@ -16,5 +16,5 @@ public interface ISqlAsyncQueryLambdaExpression<TRow> : ISqlAsyncQueryLambdaExpr
     where TRow : notnull
 {
     [Pure]
-    new Func<IDataReader, SqlQueryReaderOptions, CancellationToken, ValueTask<SqlQueryReaderResult<TRow>>> Compile();
+    new Func<IDataReader, SqlQueryReaderOptions, CancellationToken, ValueTask<SqlQueryResult<TRow>>> Compile();
 }

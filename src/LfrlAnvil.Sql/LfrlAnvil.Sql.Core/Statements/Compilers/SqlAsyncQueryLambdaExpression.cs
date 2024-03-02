@@ -47,7 +47,7 @@ public sealed class SqlAsyncQueryLambdaExpression<TDataReader, TRow> : ISqlAsync
     }
 
     [Pure]
-    public Func<IDataReader, SqlQueryReaderOptions, CancellationToken, ValueTask<SqlQueryReaderResult<TRow>>> Compile()
+    public Func<IDataReader, SqlQueryReaderOptions, CancellationToken, ValueTask<SqlQueryResult<TRow>>> Compile()
     {
         var initDelegate = InitExpression.Compile();
 
@@ -60,7 +60,7 @@ public sealed class SqlAsyncQueryLambdaExpression<TDataReader, TRow> : ISqlAsync
             {
                 var concreteReader = (TDataReader)reader;
                 if ( ! await concreteReader.ReadAsync( cancellationToken ).ConfigureAwait( false ) )
-                    return SqlQueryReaderResult<TRow>.Empty;
+                    return SqlQueryResult<TRow>.Empty;
 
                 var (ordinals, resultSetFields) = initDelegate( concreteReader );
                 Assume.IsNotNull( resultSetFields );
@@ -72,7 +72,7 @@ public sealed class SqlAsyncQueryLambdaExpression<TDataReader, TRow> : ISqlAsync
                 }
                 while ( await concreteReader.ReadAsync( cancellationToken ).ConfigureAwait( false ) );
 
-                return new SqlQueryReaderResult<TRow>( resultSetFields, rows );
+                return new SqlQueryResult<TRow>( resultSetFields, rows );
             };
         }
         else
@@ -84,7 +84,7 @@ public sealed class SqlAsyncQueryLambdaExpression<TDataReader, TRow> : ISqlAsync
             {
                 var concreteReader = (TDataReader)reader;
                 if ( ! await concreteReader.ReadAsync( cancellationToken ).ConfigureAwait( false ) )
-                    return SqlQueryReaderResult<TRow>.Empty;
+                    return SqlQueryResult<TRow>.Empty;
 
                 var (ordinals, resultSetFields) = initDelegate( concreteReader );
                 var rows = options.CreateList<TRow>();
@@ -95,7 +95,7 @@ public sealed class SqlAsyncQueryLambdaExpression<TDataReader, TRow> : ISqlAsync
                 }
                 while ( await concreteReader.ReadAsync( cancellationToken ).ConfigureAwait( false ) );
 
-                return new SqlQueryReaderResult<TRow>( resultSetFields, rows );
+                return new SqlQueryResult<TRow>( resultSetFields, rows );
             };
         }
     }

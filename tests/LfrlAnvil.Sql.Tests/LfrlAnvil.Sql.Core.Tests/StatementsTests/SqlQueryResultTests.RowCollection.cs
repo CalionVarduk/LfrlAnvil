@@ -5,7 +5,7 @@ using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sql.Tests.StatementsTests;
 
-public partial class SqlQueryReaderResultTests
+public partial class SqlQueryResultTests
 {
     public class RowCollection : TestsBase
     {
@@ -25,7 +25,7 @@ public partial class SqlQueryReaderResultTests
             };
 
             var cells = new List<object?> { "foo", 3, true };
-            var sut = new SqlQueryReaderResult( resultSetFields, cells ).Rows!;
+            var sut = new SqlQueryResult( resultSetFields, cells ).Rows!;
 
             var result = sut.ContainsField( name );
 
@@ -46,7 +46,7 @@ public partial class SqlQueryReaderResultTests
             };
 
             var cells = new List<object?> { "foo", 3, true };
-            var sut = new SqlQueryReaderResult( resultSetFields, cells ).Rows!;
+            var sut = new SqlQueryResult( resultSetFields, cells ).Rows!;
 
             var result = sut.GetOrdinal( name );
 
@@ -64,7 +64,7 @@ public partial class SqlQueryReaderResultTests
             };
 
             var cells = new List<object?> { "foo", 3, true };
-            var sut = new SqlQueryReaderResult( resultSetFields, cells ).Rows!;
+            var sut = new SqlQueryResult( resultSetFields, cells ).Rows!;
 
             var action = Lambda.Of( () => sut.GetOrdinal( "x" ) );
 
@@ -87,7 +87,7 @@ public partial class SqlQueryReaderResultTests
             };
 
             var cells = new List<object?> { "foo", 3, true };
-            var sut = new SqlQueryReaderResult( resultSetFields, cells ).Rows!;
+            var sut = new SqlQueryResult( resultSetFields, cells ).Rows!;
 
             var result = sut.TryGetOrdinal( name, out var outResult );
 
@@ -112,7 +112,7 @@ public partial class SqlQueryReaderResultTests
             };
 
             var cells = new List<object?> { "foo", 3, true, 1.0, "bar", 3, false, 2.0, "lorem", 5, false, 5.0 };
-            var sut = new SqlQueryReaderResult( resultSetFields, cells ).Rows!;
+            var sut = new SqlQueryResult( resultSetFields, cells ).Rows!;
 
             var action = Lambda.Of( () => sut[index] );
 
@@ -134,7 +134,7 @@ public partial class SqlQueryReaderResultTests
             };
 
             var cells = new List<object?> { "foo", 3, true, 1.0, "bar", 3, false, 2.0, "lorem", 5, false, 5.0 };
-            var sut = new SqlQueryReaderResult( resultSetFields, cells ).Rows!;
+            var sut = new SqlQueryResult( resultSetFields, cells ).Rows!;
 
             var result = sut[index];
 
@@ -157,7 +157,7 @@ public partial class SqlQueryReaderResultTests
             };
 
             var cells = new List<object?> { "foo", 3, true, 1.0, "bar", 3, false, 2.0, "lorem", 5, false, 5.0 };
-            var sut = new SqlQueryReaderResult( resultSetFields, cells ).Rows!;
+            var sut = new SqlQueryResult( resultSetFields, cells ).Rows!;
 
             sut.Should().BeSequentiallyEqualTo( sut[0], sut[1], sut[2] );
         }
